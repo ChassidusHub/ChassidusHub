@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# packages/mafteiach-index: raw HTTP response cache and the full generated
+# dataset are deliberately not committed - see that package's README for why
+# (resumable/reproducible from the crawler code instead of a data dump).
+packages/mafteiach-index/.cache/
+packages/mafteiach-index/data/
