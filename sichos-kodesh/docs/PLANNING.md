@@ -1,10 +1,16 @@
 # Sichos Kodesh Offline App — Architecture & Plan
 
-This supersedes the original planning brief. The kvius/scheduling engine
-described here is no longer just a design — it's built, tested, and lives at
-[`packages/kvius-engine`](../packages/kvius-engine). Everything else
-(content, rights, mobile app, backend) is still a plan pending the decisions
-listed at the bottom.
+This supersedes the original planning brief. Two pieces described here are no
+longer just a design:
+- The kvius/scheduling engine — built, tested, at
+  [`packages/kvius-engine`](../packages/kvius-engine).
+- The farbrengen ground-truth indexer — built, tested, at
+  [`packages/mafteiach-index`](../packages/mafteiach-index), crawling
+  mafteiach.app for the real per-occasion mugah/bilti-mugah/audio/video
+  breakdown (see "Sichos/Farbrengen Ground-Truth Data" below).
+
+Everything else (content rights, mobile app, backend) is still a plan
+pending the decisions listed at the bottom.
 
 ## Overview
 
@@ -125,8 +131,60 @@ other:
 | berel.me/kvius(+5786) | Static per-year PDF via Drive redirect, not a live calculator. | Superseded by this repo's engine — consider offering it back. |
 | berel.me/taste | Live weekly PDF "taste" of the farbrengen matched to the week's parsha, with email subscribe + archive. | Closest prior art for "auto-deliver content matched to the current calendar week," for text; validates the demand/mechanism, not directly reusable for video. |
 | berel.me/f | Claimed "Full Farbrengen video Index from JEM." | Unverified (403 here) — needs a human browser check or a direct ask to Berel. |
-| berel.me/findasicha, /today, /hebrewdate, Mafteiach.app | Adjacent Likkutei Sichos / date-lookup tools. | Not core-path, but useful for a later "related text" feature and worth knowing exist so we don't rebuild them. |
+| berel.me/findasicha, /today, /hebrewdate | Adjacent Likkutei Sichos / date-lookup tools. | Not core-path, but useful for a later "related text" feature and worth knowing exist so we don't rebuild them. |
+| **Mafteiach.app** | **Not** just an adjacent lookup tool — turned out to be the actual ground-truth source for this app's core dataset. See below. | Now indexed: [`packages/mafteiach-index`](../packages/mafteiach-index). |
 | JEM (jem.tv / jemedia.org) | Official restorer/rights-holder for most recordings; per-request licensing, no bulk API. | The actual rights gate for shipping any self-hosted media. |
+
+## Sichos/Farbrengen Ground-Truth Data
+
+The open question from the first draft of this doc — "which years the Rebbe
+farbrenged on a given matched Shabbos... is real-world data the engine
+cannot derive" — has a real answer now: **mafteiach.app**. Direct
+inspection (not the original brief's assumption) found:
+
+- Its `robots.txt` has no restrictions at all — unlike lahak.org, which
+  403s a plain fetch and runs on Chabad.org's platform (whose `robots.txt`
+  disallows most sections and is the actual commercial rights-holder for
+  its hanachos), and unlike berel.me's charts, which are PDF/PNG print
+  exports with no underlying data file to fetch at all.
+- Per farbrengen/sicha occasion, it tracks **exactly** the breakdown this
+  app needs: mugah (Rebbe-edited) vs. bilti mugah (unedited hanacha) text,
+  each with links to source scans and printed-volume citations; audio
+  (linking to **ashreinu.app** — confirming, independently, this doc's
+  earlier finding that Ashreinu is JEM's own audio app, not a separate
+  product); video (embedded YouTube ids); English translations; maamarim;
+  and mafteiach.app's own editorial content-outline per occasion.
+- **Confirmed real scope**: 3,424 unique indexed occasions across the
+  site's real coverage (one combined pre-Nesius bucket for 5690-5710, then
+  individual years 5711-5752) — not the 60+ years × 50-150/year that
+  brute-forcing every year number naively suggested. Two nuances the
+  indexer had to reverse-engineer and now handles correctly, documented in
+  full in that package's README: (1) requesting a year outside real
+  coverage silently renders 5711's content instead of 404ing, so the
+  crawler uses the site's own sidebar nav as the source of truth for valid
+  years rather than trusting every year number; (2) a leap year's Adar is
+  encoded as `06A`/`06B` (Adar Rishon/Sheini) rather than shifting Nisan's
+  month number the way `HDate`'s native numbering does.
+- The crawler (`packages/mafteiach-index`) is rate-limited (~750ms between
+  requests), caches every response so it's resumable and never re-fetches,
+  and identifies itself honestly (a descriptive User-Agent naming the
+  project and its purpose) rather than impersonating a browser.
+- **Deliberately not committed to this repo**: the full scraped dataset
+  and the raw-response cache. Most of what's indexed is either links/
+  citations (fine — a citation isn't the cited work) or mafteiach.app's own
+  written content-outline per occasion, which is their copyrightable
+  expression, not a bare fact. The crawler code + tests + real fixtures are
+  committed so the dataset is fully reproducible; actually publishing or
+  shipping their editorial text in-app should go through the same kind of
+  conversation already planned with Berel and JEM, not just because it was
+  technically fetchable.
+
+This changes the Phase 1 rights-and-data picture materially: the
+**bibliographic ground truth** (which dates had a farbrengen, what exists
+for it) is now something this repo can generate and keep current itself,
+independent of Berel's or JEM's cooperation. What still depends on those
+conversations is exactly one thing: **the right to redistribute the actual
+media/text**, not knowledge of which media/text exists.
 
 ## Data Model
 
@@ -180,6 +238,13 @@ Notes:
   the rights situation above, the catalog needs to represent "we know this
   exists but can't distribute it yet" as a real, queryable state, not just
   omit the row.
+- `mafteiach-index`'s `FarbrengenRecord` (see that package's `types.ts`) is
+  the natural seed for this table, not a separate thing to reconcile by
+  hand: `detail.audio.hasContent || detail.video.hasContent` answers "does
+  a recording exist" directly, `detail.mugah` / `detail.biltiMugah` answer
+  the muga/hanacha question, and `hebrewDate`/`occasionLabel` map onto this
+  schema's own fields. `sourceRightsStatus` still has to be set by a human
+  either way — mafteiach.app tracks *existence*, not *distribution rights*.
 
 ## Backend & Storage
 
@@ -303,17 +368,29 @@ Largely unchanged from the original brief's direction, with one addition:
 - **Phase 0 — done**: kvius/scheduling engine (this repo,
   `packages/kvius-engine`), fully tested, demoed against the real current
   Hebrew date.
+- **Phase 0.5 — done**: farbrengen ground-truth indexer
+  (`packages/mafteiach-index`), crawling mafteiach.app's real coverage
+  (3,424 unique occasions, 5690-5752) for the mugah/bilti-mugah/audio/video
+  breakdown per occasion. This resolves the bibliographic half of "which
+  years the Rebbe farbrenged on a given matched Shabbos" independent of
+  Berel/JEM outreach — what those conversations still gate is
+  redistribution rights, not knowledge of what exists.
 - **Phase 1 — rights & data (the actual long pole)**: RebbeDrive
   partnership conversation → Berel Marozov conversation (demo the live
-  engine) → JEM licensing conversation. Decide the rights strategy before
-  writing any more app code that assumes self-hosted media. Cross-check the
+  kvius engine) → JEM licensing conversation → a conversation with
+  mafteiach.app's maintainers about terms for using their editorial
+  content-outline text (not the bibliographic metadata, which needs no
+  permission to use internally). Decide the rights strategy before writing
+  any more app code that assumes self-hosted media. Cross-check the
   engine's computed matched-years list against berel.me's chart once
-  accessible.
-- **Phase 2 — MVP**: static JSON catalog for a small pilot (3–5
-  kvius-matched year clusters, whatever's actually cleared), CDN-hosted
-  media (or link-out to JEM/RebbeDrive players if media isn't cleared yet),
-  React Native/Expo app: pick a source year from `findMatchingYears`, view
-  the engine-computed schedule, download individual items, offline
+  accessible, and against the now-real mafteiach-index dataset.
+- **Phase 2 — MVP**: build the actual `CatalogEntry` table by joining
+  `findMatchingYears`' output against the mafteiach-index dataset (real
+  data now, not a placeholder), for a small pilot (3–5 kvius-matched year
+  clusters, whatever's actually cleared for media). CDN-hosted media (or
+  link-out to JEM/RebbeDrive/ashreinu.app players if media isn't cleared
+  yet). React Native/Expo app: pick a source year from `findMatchingYears`,
+  view the engine-computed schedule, download individual items, offline
   playback.
 - **Phase 3 — v1**: month/year batch download + zip bundling, gap-handling
   UI (surface `'gap'` occasions and let the user set manual overrides),
@@ -355,15 +432,27 @@ Largely unchanged from the original brief's direction, with one addition:
 6. **JEM outreach hasn't happened** — contact is known
    (support@jemedia.org / 718-774-6000) but this is a business/legal track
    with its own timeline, not something further engineering unblocks.
-7. **Engine correctness vs. external ground truth**: the engine's
+7. **Engine correctness vs. external ground truth**: the kvius engine's
    calendar math is internally tested (symmetry, structural invariants
-   across matched years) but the actual list of "which years the Rebbe
-   farbrenged on a given matched Shabbos" is real-world data the engine
-   cannot derive — it depends entirely on whichever content source (JEM,
-   RebbeDrive, Berel's chart) ends up backing the catalog.
-8. **Diaspora vs. Israel (`il`)** content strategy — some fixed-date
+   across matched years); the real-world "which years the Rebbe farbrenged
+   on a given matched Shabbos" question is now substantially answered by
+   `mafteiach-index`'s 3,424-entry dataset rather than an unknown depending
+   on JEM/RebbeDrive/Berel — what remains is cross-checking that dataset
+   against berel.me's chart and JEM's/RebbeDrive's own catalogs for gaps or
+   disagreements, not deriving it from nothing.
+8. **mafteiach.app outreach hasn't happened either** — parallel to the
+   Berel/JEM conversations: let them know this indexing exists, ask about
+   terms for using their editorial content-outline text specifically (the
+   bibliographic metadata needs no permission to use internally, but
+   publishing their summaries in-app is a separate ask), and find out if
+   they'd rather provide a real export/API than have anyone re-scrape it.
+9. **Diaspora vs. Israel (`il`)** content strategy — some fixed-date
    occasions (notably day-count around Yom Tov) genuinely differ; decide
    whether the app supports both audiences from day one or launches
    Diaspora-only.
-9. **Storage/CDN budget owner** — not decided; relevant once real media
-   volume/size estimates exist from Phase 1.
+10. **Storage/CDN budget owner** — not decided; relevant once real media
+    volume/size estimates exist from Phase 1.
+11. **`hagahos`/`hosofos` sections in mafteiach-index are unverified** —
+    the generic link-extraction parser was never exercised against a real
+    example with content for those two section kinds; spot-check once the
+    full crawl output exists, per that package's README.
