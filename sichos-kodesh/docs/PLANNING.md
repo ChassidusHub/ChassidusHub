@@ -165,6 +165,33 @@ inspection (not the original brief's assumption) found:
   years rather than trusting every year number; (2) a leap year's Adar is
   encoded as `06A`/`06B` (Adar Rishon/Sheini) rather than shifting Nisan's
   month number the way `HDate`'s native numbering does.
+- **Full crawl completed** (all 3,424 entries, 5690-5752). Real breakdown:
+
+  | Has... | Count | % of 3,424 |
+  |---|---|---|
+  | Mugah text | 2,011 | 59% |
+  | Bilti-mugah (hanacha) text | 3,067 | 90% |
+  | Any recording (audio or video) | 1,311 | 38% |
+  | — audio (ashreinu.app) | 1,303 | 38% |
+  | — video (YouTube) | 518 | 15% |
+  | Maamorim | 1,544 | 45% |
+  | English translation | 1,245 | 36% |
+  | mafteiach.app content-outline | 2,723 | 80% |
+  | Hagahos (annotations) | 1,287 | 38% |
+  | Hosofos (addenda) | 309 | 9% |
+  | Neither text nor recording (label/date only) | 66 | 2% |
+
+  (Rows aren't mutually exclusive — most entries have several.) The
+  headline finding for the app's core feature: **only 38% of indexed
+  occasions have any recording at all** — the overwhelming majority of
+  what exists is text (hanacha/mugah), not audio/video. This directly
+  shapes the gap-handling story: the kvius engine's `'nearestKviusYear'`
+  fallback strategy isn't a rare edge case, it's the common path if the
+  app's initial scope is recordings only. It also reframes the product
+  question worth raising with the user: whether v1 should offer *text*
+  content (hanachos/mugah sichos as reading material) alongside — or even
+  before — audio/video, given recordings are the minority of what actually
+  exists for most of the Rebbe's tenure.
 - The crawler (`packages/mafteiach-index`) is rate-limited (~750ms between
   requests), caches every response so it's resumable and never re-fetches,
   and identifies itself honestly (a descriptive User-Agent naming the
@@ -452,7 +479,10 @@ Largely unchanged from the original brief's direction, with one addition:
    Diaspora-only.
 10. **Storage/CDN budget owner** — not decided; relevant once real media
     volume/size estimates exist from Phase 1.
-11. **`hagahos`/`hosofos` sections in mafteiach-index are unverified** —
-    the generic link-extraction parser was never exercised against a real
-    example with content for those two section kinds; spot-check once the
-    full crawl output exists, per that package's README.
+11. ~~`hagahos`/`hosofos` sections in mafteiach-index are unverified~~ —
+    **resolved**: spot-checked against real examples once the full crawl
+    completed. `hagahos` is a plain link list as assumed; `hosofos` turned
+    out to be free-text-with-inline-links (like `tochenInyanim`), not a
+    link list — caught before it corrupted the dataset, fixed, and the full
+    crawl re-run (all cache hits, no re-scraping needed) to pick up the
+    corrected parser. Both now have real-example regression tests.
