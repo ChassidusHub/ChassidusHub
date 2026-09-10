@@ -20,6 +20,24 @@ function cachePathFor(cacheDir: string, url: string): string {
   return path.join(cacheDir, `${safe}.txt`);
 }
 
+/** Separate namespace from `fetchText`'s plain-text cache, since this one needs to store the ETag alongside the body. */
+function revalidationCachePathFor(cacheDir: string, url: string): string {
+  const safe = url.replace(/^https?:\/\//, '').replace(/[^a-zA-Z0-9]+/g, '_');
+  return path.join(cacheDir, 'etag', `${safe}.json`);
+}
+
+interface RevalidationCacheEntry {
+  etag: string | null;
+  body: string;
+}
+
+export interface RevalidationResult {
+  body: string;
+  etag: string | null;
+  /** false only when a 304 confirmed the cached body is still current; true for a first fetch or a genuine change. */
+  changed: boolean;
+}
+
 /**
  * A rate-limited, caching HTTP client. Every unique URL is fetched at most
  * once ever (across process runs) — repeated crawls, retries after a crash,
@@ -55,6 +73,46 @@ export class PoliteFetcher {
         await writeFile(cachePath, text, 'utf8');
         await sleep(this.delayMs);
         return text;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  }
+
+  /**
+   * Like `fetchText`, but for incremental sync: sends `If-None-Match` when
+   * a prior ETag is cached, so an unchanged page costs mafteiach.app a
+   * cheap 304 (a real request still counts against politeness/rate limits
+   * — this doesn't skip the delay — but it's a small response instead of
+   * the full body, and it's how the sync tells "unchanged" from "new/edited"
+   * instead of just guessing from a TTL).
+   */
+  async fetchWithRevalidation(url: string): Promise<RevalidationResult> {
+    const cachePath = revalidationCachePathFor(this.cacheDir, url);
+    const cachedRaw = await readFile(cachePath, 'utf8').catch(() => null);
+    const cached: RevalidationCacheEntry | null = cachedRaw ? JSON.parse(cachedRaw) : null;
+
+    await mkdir(path.dirname(cachePath), { recursive: true });
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      if (attempt > 0) await sleep(this.delayMs * 2 ** attempt);
+      try {
+        const headers: Record<string, string> = { 'User-Agent': this.userAgent };
+        if (cached?.etag) headers['If-None-Match'] = cached.etag;
+
+        const response = await fetch(url, { headers });
+        await sleep(this.delayMs);
+
+        if (response.status === 304 && cached) {
+          return { body: cached.body, etag: cached.etag, changed: false };
+        }
+        if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
+
+        const body = await response.text();
+        const etag = response.headers.get('etag');
+        await writeFile(cachePath, JSON.stringify({ etag, body } satisfies RevalidationCacheEntry), 'utf8');
+        return { body, etag, changed: true };
       } catch (error) {
         lastError = error;
       }

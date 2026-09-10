@@ -89,6 +89,52 @@ an interruption, or after a parser bugfix, replays from cache instead of
 re-hitting the site. It also sends an honest, identifying User-Agent
 (the crawler's purpose and a contact point), not a browser impersonation.
 
+## The database (`db.ts`) and keeping it up to date (`sync.ts`)
+
+Flat per-year JSON files (what `crawl` produces) are fine for a one-off
+dataset, but not for "does year Y have a recording for occasion X" queries
+or for tracking what changed over time. `openDatabase()` builds a SQLite
+store (via Node's built-in `node:sqlite` — experimental, but no
+native-compile dependency) with one `occasions` row per farbrengen
+(boolean columns for `has_mugah` / `has_bilti_mugah` / `has_audio` /
+`has_video` / etc. for fast filtering, matching the app's `CatalogEntry`
+model in `docs/PLANNING.md`), a normalized `links` child table for the
+actual citation URLs, and `first_seen_at` / `last_changed_at` / `etag`
+columns that back incremental sync:
+
+```
+npm run load-db                    # one-time: migrate an existing crawl's data/*.json into mafteiach.db
+npm run sync                       # incremental refresh against the live site
+```
+
+`syncAll()` (`src/sync.ts`) is what "keep the index up to date" actually
+means here: it re-checks every listing page (cheap, ~44 requests) to find
+occasions the site added or delisted, then revalidates every currently
+listed occasion's detail fragment via conditional GET (`If-None-Match` —
+mafteiach.app does send real ETags, confirmed live). A full sync is still
+~3,400 requests, but nearly all of them come back as a cheap `304` when
+nothing changed — only genuinely new or edited occasions get re-parsed and
+written to the DB, and `last_changed_at` is only bumped when the content
+actually differs (`contentHash()` fingerprints everything but crawl
+bookkeeping). `upsertRecord()` is the single write path both `load-db` and
+`sync` go through, so the two never drift out of sync with each other.
+Delisted occasions (in the DB but no longer on the live site — hasn't
+happened yet, but the sync reports it if it does) are surfaced in
+`SyncResult.missingIds`, never auto-deleted; a human should look at why
+before removing anything.
+
+`syncAll` takes a `fetcher: RevalidatingFetcher` (the one method it needs
+from `PoliteFetcher`) rather than constructing one itself, specifically so
+its new-id/changed/missing-id logic has real unit tests
+(`tests/sync.test.ts`) against a fake in-memory site instead of needing a
+live network call for every test run — the actual ETag/304 mechanism is
+covered separately by one real request pair against mafteiach.app, not by
+re-running the full crawl in tests.
+
+There's no cron/scheduler wired up here — `sync` is a command to run
+periodically (weekly or monthly is plenty for an archive this static),
+not something this package runs on its own.
+
 ## What's committed vs. generated locally
 
 `data/` and `.cache/` are gitignored, deliberately — not because scraping
@@ -113,9 +159,35 @@ conversation to have, not a blocker to indexing metadata for internal use).
   (maamor title, an internal `/maamorim/{id}` page, per-edition
   sub-sections) and could be modeled more precisely if maamarim become a
   first-class feature rather than secondary to sichos/farbrengens.
-- `hagahos` (annotations/corrections) and `hosofos` (addenda) sections are
-  parsed with the same generic link extractor but weren't verified against
-  a real example with content (none turned up in the fixtures sampled) —
-  treat as best-effort until spot-checked against the full crawl output.
 - Some early (pre-Nesius) entries have `hebrewDate` ending in `-00` — an
   explicit "day unknown" placeholder in the source data, not a bug here.
+
+## What this doesn't cover (mafteiach.app has more than farbrengens)
+
+This package only crawls `/all/by_year/...` (and the two alternate views
+`/all/moadim/...` / `/all/parshiyos/...`, which are confirmed to be the
+*same* farbrengen ids re-grouped by holiday/parsha, not new content — not
+worth crawling separately). The site has real additional sections this
+package does not touch at all, confirmed by direct inspection but not yet
+indexed:
+
+| Section | URL pattern | id space | Page shape |
+|---|---|---|---|
+| Likkutei Sichos | `/likkutei_sichos/by_volume/{n}` (also `by_parsha`, `by_moad`) | its own per-sicha ids (e.g. `/likkutei_sichos/{id}/kitzur`) | full server-rendered HTML per volume, not the JS-fragment pattern; every sicha listed inline (no per-item AJAX fetch needed) |
+| Maamorim (standalone index) | `/maamorim` | small sequential ids via `loadMaamorFragment(event, id)`, distinct from farbrengen ids | same JS-fragment pattern as farbrengens |
+| Hadranim | `/hadranim/by_masechta` (also `by_year`) | not yet mapped | full server-rendered HTML, same family as Likkutei Sichos |
+| General letters | `/michtavim_klolim_new/by_moed` (also `by_year`) | not yet mapped | full server-rendered HTML; per-letter tabs look like farbrengens (מוגה/English/תוכן ענינים) |
+| Diaries (yomanim) | `/yomanim/by_year` | not yet mapped | full server-rendered HTML |
+
+Extending to these is a real option (same politeness/caching approach
+would apply directly), but **Likkutei Sichos specifically needs a more
+careful line than farbrengens did**: it's Rabbi Schneerson's actively
+published, currently-sold book series, not archival hanachos. Indexing
+bibliographic facts (volume/sicha number, parsha, page range, kitzur/
+English/mugah *availability flags*, links) is the same category of thing
+already done for farbrengens — but before storing any "teaser" text
+alongside it, it needs to be confirmed which of that text is mafteiach.app's
+own editorial writing (safe, like `tochenInyanim`) versus a direct
+excerpt of the copyrighted sicha itself (not safe to bulk-store). That
+determination hasn't been made yet, so no Likkutei Sichos crawler has been
+built pending it.
