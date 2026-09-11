@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import type { AnyNode } from 'domhandler';
 import { extractHtmlLiteral } from './htmlLiteral.js';
 import type { FarbrengenDetail, LinkRef, LinkSection } from './types.js';
 
@@ -33,7 +34,7 @@ const GROUP_HEADING_SELECTOR = 'h5, .maamor-header, .maamor-section-title';
 function extractLinks($: Cheerio$, panel: ReturnType<Cheerio$>): LinkRef[] {
   const links: LinkRef[] = [];
   let currentGroup: string | undefined;
-  panel.find(`${GROUP_HEADING_SELECTOR}, a[href]`).each((_, el) => {
+  panel.find(`${GROUP_HEADING_SELECTOR}, a[href]`).each((_, el: AnyNode) => {
     const $el = $(el);
     if ($el.is(GROUP_HEADING_SELECTOR)) {
       const text = $el.text().replace(/:\s*$/, '').trim();
