@@ -1,6 +1,7 @@
 /**
  * Sichos Kodesh - thin MVP: pick a kvius-matched year, see this week's
- * matched occasion, download it, play/read fully offline.
+ * matched occasion, download it, play/read fully offline. Also supports
+ * browsing any indexed year directly, without a kvius match.
  *
  * @format
  */
@@ -11,19 +12,30 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { YearPickerScreen } from './src/screens/YearPickerScreen';
 import { ThisWeekScreen } from './src/screens/ThisWeekScreen';
+import { YearBrowserScreen } from './src/screens/YearBrowserScreen';
+
+type View = { kind: 'pick' } | { kind: 'thisWeek'; sourceYear: number } | { kind: 'browseYear'; hebrewYear: number };
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const targetYear = currentHebrewYear();
-  const [sourceYear, setSourceYear] = useState<number | null>(null);
+  const [view, setView] = useState<View>({ kind: 'pick' });
 
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      {sourceYear === null ? (
-        <YearPickerScreen targetYear={targetYear} onSelectYear={setSourceYear} />
-      ) : (
-        <ThisWeekScreen targetYear={targetYear} sourceYear={sourceYear} onBack={() => setSourceYear(null)} />
+      {view.kind === 'thisWeek' && (
+        <ThisWeekScreen targetYear={targetYear} sourceYear={view.sourceYear} onBack={() => setView({ kind: 'pick' })} />
+      )}
+      {view.kind === 'browseYear' && (
+        <YearBrowserScreen hebrewYear={view.hebrewYear} onBack={() => setView({ kind: 'pick' })} />
+      )}
+      {view.kind === 'pick' && (
+        <YearPickerScreen
+          targetYear={targetYear}
+          onSelectKviusYear={(sourceYear) => setView({ kind: 'thisWeek', sourceYear })}
+          onSelectBrowseYear={(hebrewYear) => setView({ kind: 'browseYear', hebrewYear })}
+        />
       )}
     </SafeAreaProvider>
   );

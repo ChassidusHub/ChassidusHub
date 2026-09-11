@@ -49,14 +49,37 @@ function resolveOccasionKeyToHebrewDateKey(
   return occasion ? toMafteiachHebrewDateKey(occasion.hebrewDate) : null;
 }
 
-/** A `hasRecording` predicate (see kvius-engine's `GapResolutionContext`) backed by the built catalog. */
-export function hasRecording(
+/**
+ * Every Hebrew year in the catalog with at least one real, downloadable
+ * entry (audio or a PDF) - sorted ascending. For "browse any year" mode:
+ * unlike `findMatchingYears`, this isn't constrained to years that are
+ * kvius-matched to the current year, so week/date alignment against
+ * "this week" doesn't apply - it's a plain listing of what a given year
+ * actually has, for a user who wants to explore rather than follow along.
+ */
+export function browsableYears(catalog: CatalogByYear): number[] {
+  return Object.keys(catalog)
+    .map(Number)
+    .filter((year) => (catalog[year] ?? []).some((entry) => entry.audio.length > 0 || entry.pdfs.length > 0))
+    .sort((a, b) => a - b);
+}
+
+/**
+ * A `hasRecording` predicate (see kvius-engine's `GapResolutionContext`) backed
+ * by the built catalog. Named `hasContent`, not `hasAudio`: it counts an entry
+ * with PDFs but no audio as real, showable content, not a gap - a real,
+ * verified case (e.g. Nitzavim/Vayeilech, the last Shabbos before Rosh
+ * Hashana, regularly has mugah/bilti-mugah PDF transcripts but zero JEM
+ * audio across every kvius-matched year checked). Gating on audio alone
+ * would hide real downloadable PDFs behind a "no recording" gap message.
+ */
+export function hasContent(
   catalog: CatalogByYear,
   il: boolean,
   fixedOccasions: FixedOccasionDef[],
 ): (hebrewYear: number, occasionKey: string) => boolean {
   return (hebrewYear, occasionKey) => {
     const entry = findCatalogEntryForOccasion(catalog, hebrewYear, occasionKey, il, fixedOccasions);
-    return !!entry && entry.audio.length > 0;
+    return !!entry && (entry.audio.length > 0 || entry.pdfs.length > 0);
   };
 }

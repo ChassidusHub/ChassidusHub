@@ -70,6 +70,36 @@ h1 {
   cursor: pointer;
 }
 
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  padding: 8px 4px 10px;
+  margin-right: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin: 0 0 16px;
+}
+
 .year-list {
   list-style: none;
   margin: 0;

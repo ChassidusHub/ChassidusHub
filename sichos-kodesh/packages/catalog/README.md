@@ -40,6 +40,15 @@ year — the engine's gap-handling machinery calls `hasRecording` for every
 kvius-matched fallback candidate, so "which date is `occasionKey` in *this*
 year" must be re-resolved per year, not cached from the target year.
 
+`hasContent(catalog, il, fixedOccasions)` is the predicate this package
+supplies for that touchpoint — named `hasContent`, not `hasAudio`: an
+entry with PDFs but no audio counts as real content, not a gap. This is a
+real, verified case, not a hypothetical — Nitzavim/Vayeilech (the last
+Shabbos before Rosh Hashana) regularly has mugah/bilti-mugah PDF
+transcripts with zero JEM audio across every kvius-matched year checked.
+Gating on audio alone would hide real, downloadable PDFs behind a "no
+recording" gap message.
+
 `fixedOccasions.ts` ships a small **starter** list (Yud-Tes Kislev, Yud
 Shevat, Purim, Lag BaOmer, Yud-Beis Tammuz, Chai Elul, Simchas Torah —
 Diaspora dates only for now) — deliberately not exhaustive. Without it,

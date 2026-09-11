@@ -4,12 +4,16 @@ import type { MatchingYearResult, MatchingYearsOptions } from './types.js';
 /**
  * Hebrew year bounds of the real Sichos Kodesh catalog this app is built
  * from: `packages/mafteiach-index`'s crawled dataset (3,424 occasions),
- * verified directly against the database rather than assumed. A kvius
- * match outside this range can never resolve to a real recording, so
- * `findMatchingYears` clamps to it by default - otherwise the year picker
- * would routinely offer years guaranteed to be a gap.
+ * verified directly against the database rather than assumed. MAX is the
+ * dataset's actual last year. MIN is 5710, not the dataset's earliest year
+ * (5690) - coverage before 5710 is sparse (1-14 occasions/year vs. 36+
+ * starting exactly at 5710, verified against the database), predating the
+ * Rebbe's own Sichos Kodesh that this app is about. A kvius match outside
+ * this range can never resolve to a real recording, so `findMatchingYears`
+ * clamps to it by default - otherwise the year picker would routinely
+ * offer years guaranteed to be a gap.
  */
-export const MIN_HISTORICAL_YEAR = 5690;
+export const MIN_HISTORICAL_YEAR = 5710;
 export const MAX_HISTORICAL_YEAR = 5752;
 
 /**
