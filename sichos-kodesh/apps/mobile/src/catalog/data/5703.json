@@ -5,13 +5,7 @@
     "hebrewDate": "5703-07-12",
     "occasionLabel": "מצרע, שבת הגדול",
     "audio": [],
-    "pdfs": [
-      {
-        "section": "mugah",
-        "label": "רשימות חוברת קעח",
-        "driveFileId": "1NmMWSg_Vd2nxiWeQb-u6oNzHLkG8V8GS"
-      }
-    ]
+    "pdfs": []
   },
   {
     "occasionId": 11116130,
@@ -33,13 +27,7 @@
     "hebrewDate": "5703-08-23",
     "occasionLabel": "כ\"ג-ה אייר, בר מצוה",
     "audio": [],
-    "pdfs": [
-      {
-        "section": "mugah",
-        "label": "רשימות חוברת קל",
-        "driveFileId": "1sDujU2iAoQS_v3nP0TBIMz9FN0zZBcC7"
-      }
-    ]
+    "pdfs": []
   },
   {
     "occasionId": 11116132,
@@ -52,11 +40,6 @@
         "section": "biltiMugah",
         "label": "אג\"ק ח\"א אגרת פה",
         "driveFileId": "1KedVFigWBWf1BBbkBbOiVFfMvJGzH-_C"
-      },
-      {
-        "section": "mugah",
-        "label": "רשימות חוברת קא",
-        "driveFileId": "1TQv_sAaMvFtt7AyT947LZXhjcgzus2Rb"
       }
     ]
   },
@@ -80,17 +63,6 @@
     "hebrewDate": "5703-12-00",
     "occasionLabel": "תחלת אלול(?), נחום אבלים דרמ\"מ קונין",
     "audio": [],
-    "pdfs": [
-      {
-        "section": "mugah",
-        "label": "רשימות חוברת קפב",
-        "driveFileId": "1AHQZ4O6ElUNthcNdmX5MrJz7tGIeMukm"
-      },
-      {
-        "section": "hosofos",
-        "label": "צילום כתי\"ק הרשימה",
-        "driveFileId": "1lPgwYBtwMy-N5yRMqOQLjrN7gXxrl4IJ"
-      }
-    ]
+    "pdfs": []
   }
 ]

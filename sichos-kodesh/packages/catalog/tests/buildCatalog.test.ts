@@ -60,6 +60,24 @@ describe('buildCatalog', () => {
     expect(entry!.pdfs).toEqual([{ section: 'mugah', label: 'מוגה', driveFileId: '1abcDEF23456' }]);
   });
 
+  it('excludes a reshima-labeled PDF (private notes / the Reshimos series), even from an otherwise real mugah link', () => {
+    const record = makeRecord({
+      detail: {
+        ...makeRecord().detail,
+        mugah: {
+          hasContent: true,
+          links: [
+            { label: 'מוגה', url: 'https://drive.google.com/file/d/1abcDEF23456/view' },
+            { label: 'רשימת כ"ק אד"ש', url: 'https://drive.google.com/file/d/1reshimaXXXXX/view' },
+          ],
+        },
+      },
+    });
+    upsertRecord(db, record, null, '2026-01-01T00:00:00.000Z');
+    const [entry] = buildCatalog(db)[5711]!;
+    expect(entry!.pdfs).toEqual([{ section: 'mugah', label: 'מוגה', driveFileId: '1abcDEF23456' }]);
+  });
+
   it('does not extract a PDF from a non-Drive link in a PDF-eligible section', () => {
     const record = makeRecord({
       detail: { ...makeRecord().detail, mugah: { hasContent: true, links: [{ label: 'x', url: 'https://www.chabad.org/x' }] } },
