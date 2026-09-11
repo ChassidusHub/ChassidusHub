@@ -40,6 +40,7 @@ describe('parseFragmentPage', () => {
 
     expect(detail.video.hasContent).toBe(true);
     expect(detail.video.youtubeIds).toEqual(['WB0UI77OY8A']);
+    expect(detail.video.links).toEqual([]);
 
     expect(detail.biltiMugah.hasContent).toBe(true);
     expect(detail.mugah.hasContent).toBe(false);
@@ -88,5 +89,22 @@ describe('parseFragmentPage', () => {
     expect(detail.hosofos.text).toContain('ל"ג בעומר');
     expect(detail.hosofos.links.length).toBeGreaterThan(0);
     expect(detail.hosofos.links[0]!.url).toMatch(/^https:\/\/drive\.google\.com\//);
+  });
+
+  it('parses a plain outbound video link (chabad.org player), the other real video shape besides a YouTube embed', () => {
+    const detail = parseFragmentPage(fixture('fragment-11113130-external-video-link.raw.js'), 11113130);
+    expect(detail.video.hasContent).toBe(true);
+    expect(detail.video.youtubeIds).toEqual([]);
+    expect(detail.video.links).toHaveLength(1);
+    expect(detail.video.links[0]!.url).toContain('chabad.org');
+  });
+
+  it('parses a pre-Nesius fragment (reduced 3-button template): the "מוגה"-class slot holds Reshimos, not an edited sicha', () => {
+    const detail = parseFragmentPage(fixture('fragment-11116108-pre-nesius-reshimos.raw.js'), 11116108);
+    // Same CSS class as a post-Nesius mugah sicha, so it lands in the same field - see the FarbrengenDetail doc comment.
+    expect(detail.mugah.hasContent).toBe(true);
+    expect(detail.mugah.links.length).toBeGreaterThan(0);
+    expect(detail.biltiMugah.hasContent).toBe(false); // the "הנחות" slot is always disabled pre-Nesius in the real corpus
+    expect(detail.hosofos.hasContent).toBe(true);
   });
 });

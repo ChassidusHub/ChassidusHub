@@ -152,6 +152,67 @@ mafteiach.app's maintainers about terms (the same outreach already planned
 for Berel Marozov and JEM in `docs/PLANNING.md` — this is one more
 conversation to have, not a blocker to indexing metadata for internal use).
 
+## Completeness audit (every button/class, verified against the full 3,424-record corpus)
+
+After the first full crawl, every `farbrengen-detail-button` class actually
+appearing across all 3,424 cached raw responses was inventoried directly
+(not sampled) to check for anything the parser might be silently dropping.
+Two real findings, both fixed:
+
+1. **Video has two distinct real shapes, only one of which was originally
+   handled.** A `sicha_video-button` embeds a YouTube player
+   (`addYouTubeEmbed(id, ...)`) — but 153 of the 671 video-bearing
+   occasions (23%) instead use a plain outbound `<a class="...
+   video-button button">`, exactly like `audio`. Real hosts, confirmed by
+   inspecting every one: `videos.jem.tv` (70), `drive.google.com` (69),
+   `www.chabad.org` (7, its "Living Torah" player), `jemtv.page.link` (3),
+   `jem.tv` (1), `player.vimeo.com` (1), and a legacy `www.770live.com`
+   (1). `VideoSection` now has a `links: LinkRef[]` field alongside
+   `youtubeIds` — `hasContent` is true if either is non-empty. This was a
+   real gap (153 occasions incorrectly reported as having no video), not
+   just an unmodeled edge case, so it's called out here rather than only
+   in a commit message.
+2. **Pre-Nesius entries (`isPreNesius: true`) use a reduced 3-button
+   template**, not the usual 9: only `biltiMugah` (labeled "הנחות," always
+   disabled in the real data), `mugah` (labeled "רשימות" / Reshimos —
+   diary-style notes, not an edited sicha, but rendered with the *same*
+   CSS class as a post-Nesius מוגה, so it lands in the same field), and
+   `hosofos`. No data was lost by this (the class-based detection already
+   handled it correctly), but the semantic meaning of `mugah` for a
+   pre-Nesius record differs from a post-Nesius one — documented on
+   `FarbrengenDetail` in `types.ts`, and a caller that cares about the
+   distinction should branch on `isPreNesius`.
+
+Corrected full-corpus stats after both fixes (3,424 total occasions,
+5690-5752):
+
+| Has... | Count | % |
+|---|---|---|
+| Bilti-mugah (hanacha) text | 3,067 | 90% |
+| Content-outline (mafteiach's own summary) | 2,723 | 80% |
+| Mugah text (or Reshimos, pre-Nesius) | 2,011 | 59% |
+| Maamorim | 1,544 | 45% |
+| **Any recording (audio or video)** | **1,314** | **38%** |
+| Hagahos | 1,287 | 38% |
+| Audio | 1,303 | 38% |
+| — via ashreinu.app | 1,303 | 38% |
+| Video | 671 | 20% |
+| — via embedded YouTube | 518 | 15% |
+| — via a direct outbound link | 153 | 4% |
+| English translation | 1,245 | 36% |
+| Hosofos | 309 | 9% |
+
+(The "any recording" total, 1,314, is barely above the audio-only total of
+1,303 despite video adding 671 — almost every video-bearing occasion also
+has audio, so the union grows by only 3 net for the 153 newly-found video
+links, and by 13 net overall.)
+
+No other button classes exist anywhere in the corpus beyond the 11
+accounted for above (verified by inventorying the literal class strings
+across every cached response, not just the samples used to build the
+parser) — this audit is what "capture every content type completely," not
+just "handle the examples I happened to check," actually looks like.
+
 ## Known gaps / not yet modeled precisely
 
 - `maamorim` link extraction is generic (same "nearest preceding heading"

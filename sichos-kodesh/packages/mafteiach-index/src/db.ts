@@ -152,6 +152,7 @@ export function upsertRecord(db: DatabaseSync, record: FarbrengenRecord, etag: s
       ['english', d.english.links],
       ['hagahos', d.hagahos.links],
       ['audio', d.audio.links],
+      ['video', d.video.links],
       ['tochenInyanim', d.tochenInyanim.links],
       ['hosofos', d.hosofos.links],
     ];

@@ -20,7 +20,7 @@ function makeRecord(overrides: Partial<FarbrengenRecord> = {}): FarbrengenRecord
       mugah: { hasContent: true, links: [{ label: 'a', url: 'https://example.com/a', group: 'הנחה' }] },
       maamorim: emptySection(),
       audio: { hasContent: false, links: [] },
-      video: { hasContent: false, youtubeIds: [] },
+      video: { hasContent: false, youtubeIds: [], links: [] },
       english: emptySection(),
       tochenInyanim: { hasContent: true, text: 'a short synthetic note', links: [] },
       hagahos: emptySection(),
@@ -102,11 +102,23 @@ describe('db', () => {
 
   it('stores video ids in their own table', () => {
     const withVideo = makeRecord({
-      detail: { ...makeRecord().detail, video: { hasContent: true, youtubeIds: ['abc123'] } },
+      detail: { ...makeRecord().detail, video: { hasContent: true, youtubeIds: ['abc123'], links: [] } },
     });
     upsertRecord(db, withVideo, null, '2026-01-01T00:00:00.000Z');
     const rows = db.prepare('SELECT youtube_id FROM video_ids WHERE occasion_id = ?').all(1);
     expect(rows).toEqual([{ youtube_id: 'abc123' }]);
+  });
+
+  it('stores a non-YouTube video link (chabad.org/Vimeo/etc.) in the links table under section "video"', () => {
+    const withExternalVideo = makeRecord({
+      detail: {
+        ...makeRecord().detail,
+        video: { hasContent: true, youtubeIds: [], links: [{ label: 'video', url: 'https://www.chabad.org/example' }] },
+      },
+    });
+    upsertRecord(db, withExternalVideo, null, '2026-01-01T00:00:00.000Z');
+    const rows = db.prepare("SELECT url FROM links WHERE occasion_id = ? AND section = 'video'").all(1);
+    expect(rows).toEqual([{ url: 'https://www.chabad.org/example' }]);
   });
 
   it('allKnownIds reflects every inserted occasion', () => {
