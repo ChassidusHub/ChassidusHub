@@ -2,9 +2,10 @@
 
 A real, installable, offline-first Progressive Web App version of the
 Sichos Kodesh MVP — same feature slice as `apps/mobile` (pick a
-kvius-matched source year, see this week's matched occasion, download the
-audio/PDF, play/read fully offline), built for testing on any device with a
-browser rather than requiring a sideloaded APK.
+kvius-matched source year, see this week's matched occasions - Shabbos and
+weekdays alike, download the audio/PDF, play/read fully offline), built for
+testing on any device with a browser rather than requiring a sideloaded
+APK.
 
 This isn't a token "installable" gesture: the app shell (JS/CSS/catalog
 data) is precached by its service worker so it loads and runs with no
@@ -21,9 +22,10 @@ within an already-downloaded audio file works offline too, matching what
   candidates only) and **Browse any year** (`browsableYears` via
   `@sichos-kodesh/catalog`, every indexed year, no kvius match required).
 - `src/screens/ThisWeekScreen.tsx` — calls `resolveThisWeek` (from
-  `@sichos-kodesh/catalog`, shared with `apps/mobile`) for the current
-  Hebrew week against a kvius-matched source year, and shows what's
-  actually available from the bundled catalog data.
+  `@sichos-kodesh/catalog`, shared with `apps/mobile`) for every occasion
+  with real content anywhere in the current Hebrew week against a
+  kvius-matched source year - Shabbos and weekday farbrengens alike - and
+  lists what's actually available from the bundled catalog data.
 - `src/screens/YearBrowserScreen.tsx` — lists every occasion a browsed
   year actually has (no kvius engine involved - a browsed year has no
   guaranteed week/date alignment with the current Hebrew year, so there's

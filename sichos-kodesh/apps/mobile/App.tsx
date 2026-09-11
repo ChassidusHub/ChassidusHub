@@ -25,7 +25,7 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       {view.kind === 'thisWeek' && (
-        <ThisWeekScreen targetYear={targetYear} sourceYear={view.sourceYear} onBack={() => setView({ kind: 'pick' })} />
+        <ThisWeekScreen sourceYear={view.sourceYear} onBack={() => setView({ kind: 'pick' })} />
       )}
       {view.kind === 'browseYear' && (
         <YearBrowserScreen hebrewYear={view.hebrewYear} onBack={() => setView({ kind: 'pick' })} />

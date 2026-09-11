@@ -1,11 +1,11 @@
 # @sichos-kodesh/mobile
 
 A thin, end-to-end proof of the whole pipeline: pick a kvius-matched
-Hebrew year, see this week's (or an imminent fixed-date occasion's)
-matched content, download it, and play/read it fully offline. See
-`docs/PLANNING.md`'s "Mobile App & Offline Downloads" section for the
-full architecture context and what's deliberately deferred to later
-phases.
+Hebrew year, see every occasion with real content in the current Hebrew
+week - Shabbos and weekday farbrengens alike - download it, and play/read
+it fully offline. See `docs/PLANNING.md`'s "Mobile App & Offline
+Downloads" section for the full architecture context and what's
+deliberately deferred to later phases.
 
 Bare React Native CLI, **not Expo** — a plain Gradle Android project that
 produces a real installable APK, no Expo/EAS account needed.
@@ -13,9 +13,11 @@ produces a real installable APK, no Expo/EAS account needed.
 ## What's real here vs. deliberately deferred
 
 Built and working:
-- `@sichos-kodesh/kvius-engine` runs on-device to compute the matched
-  schedule (`resolveThisWeek`, from `@sichos-kodesh/catalog` — shared
-  with `apps/web`, not duplicated per app).
+- `@sichos-kodesh/catalog`'s `resolveThisWeek` (shared with `apps/web`, not
+  duplicated per app) resolves every occasion with real content anywhere
+  in the current Hebrew week against the chosen source year - a plain
+  day-by-day catalog lookup, not the engine's `occasionKey` machinery (see
+  that package's README for why kvius-matched years make that safe).
 - `@sichos-kodesh/catalog`'s bundled JSON (`src/catalog/data/`, generated
   from the real crawled dataset — 3,424 occasions, regenerate with
   `npm run build-catalog` in `packages/catalog`) backs the

@@ -1,73 +1,135 @@
-import { buildFixedDateSchedule, buildWeeklySchedule, findMatchingYears } from '@sichos-kodesh/kvius-engine';
+import { HDate } from '@hebcal/core';
+import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { describe, expect, it } from 'vitest';
-import { STARTER_FIXED_OCCASIONS } from '../src/fixedOccasions.js';
 import { toMafteiachHebrewDateKey } from '../src/hebrewDateKey.js';
 import type { CatalogByYear } from '../src/catalogLookup.js';
 import { resolveThisWeek } from '../src/resolveThisWeek.js';
 import type { CatalogEntry } from '../src/types.js';
 
-const IL = false;
-
-function makeEntry(hebrewYear: number, hebrewDate: string, hasAudio: boolean): CatalogEntry {
+function makeEntry(hebrewYear: number, hebrewDate: string, label: string, hasAudio: boolean): CatalogEntry {
   return {
-    occasionId: 1,
+    occasionId: hebrewYear * 1000 + hebrewDate.length,
     hebrewYear,
     hebrewDate,
-    occasionLabel: 'test',
+    occasionLabel: label,
     audio: hasAudio ? [{ workerFilename: 'x.mp3', durationMs: 1000 }] : [],
     pdfs: [],
   };
 }
 
 describe('resolveThisWeek', () => {
-  it("resolves this week's regular Shabbos occasion to the source year's matching recording", () => {
+  it("resolves this week's Shabbos occasion to the source year's matching date", () => {
     const targetYear = 5786;
     const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
-    const weekIndex = 5;
 
-    const targetWeek = buildWeeklySchedule(targetYear, IL)[weekIndex]!;
-    const sourceWeek = buildWeeklySchedule(sourceYear, IL)[weekIndex]!;
-    const sourceKey = toMafteiachHebrewDateKey(sourceWeek.hebrewDate);
+    // A real Shabbos in targetYear - translate to sourceYear the same way the engine does.
+    const targetShabbos = new HDate(15, 7, targetYear).onOrAfter(6); // some Shabbos on/after 15 Tishrei
+    const sourceKey = toMafteiachHebrewDateKey({ year: sourceYear, month: targetShabbos.getMonth(), day: targetShabbos.getDate() });
 
-    const catalog: CatalogByYear = { [sourceYear]: [makeEntry(sourceYear, sourceKey, true)] };
-    const today = new Date(`${targetWeek.gregorianDate}T00:00:00.000Z`);
+    const catalog: CatalogByYear = { [sourceYear]: [makeEntry(sourceYear, sourceKey, 'Shabbos', true)] };
+    const today = new Date(`${targetShabbos.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
 
-    const result = resolveThisWeek(targetYear, sourceYear, IL, catalog, today);
+    const result = resolveThisWeek(sourceYear, catalog, today);
 
-    expect(result.resolution.status).toBe('primary');
-    expect(result.resolution.resolvedYear).toBe(sourceYear);
-    expect(result.entry?.audio).toHaveLength(1);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.entry.occasionLabel).toBe('Shabbos');
+    expect(result[0]!.entry.audio).toHaveLength(1);
   });
 
-  it('reports a gap (no crash) when neither the source year nor any fallback has a recording', () => {
+  it('returns an empty array (no crash) when nothing in the source year has content this week', () => {
     const targetYear = 5786;
     const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
-    const today = new Date(`${buildWeeklySchedule(targetYear, IL)[5]!.gregorianDate}T00:00:00.000Z`);
+    const today = new Date(`${new HDate(15, 7, targetYear).greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
 
-    const result = resolveThisWeek(targetYear, sourceYear, IL, {}, today);
+    const result = resolveThisWeek(sourceYear, {}, today);
 
-    expect(result.resolution.status).toBe('gap');
-    expect(result.resolution.resolvedYear).toBeNull();
-    expect(result.entry).toBeUndefined();
+    expect(result).toEqual([]);
   });
 
-  it('prioritizes an upcoming fixed-date occasion (within 7 days) over the regular weekly Shabbos', () => {
+  it('includes a weekday occasion (e.g. Yud Shevat) alongside the same week\'s Shabbos, not Shabbos alone', () => {
     const targetYear = 5786;
     const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
-    const yudShevatDef = STARTER_FIXED_OCCASIONS.find((d) => d.key === 'yud-shevat')!;
 
-    const targetYudShevat = buildFixedDateSchedule(targetYear, [yudShevatDef])[0]!;
-    const sourceYudShevat = buildFixedDateSchedule(sourceYear, [yudShevatDef])[0]!;
-    const sourceKey = toMafteiachHebrewDateKey(sourceYudShevat.hebrewDate);
+    // Yud Shevat in targetYear, and whichever Shabbos falls in the same Sun-Sat week.
+    const targetYudShevat = new HDate(10, 11, targetYear);
+    const weekEnd = targetYudShevat.onOrAfter(6);
+    const weekStart = new HDate(weekEnd.abs() - 6);
 
-    const catalog: CatalogByYear = { [sourceYear]: [makeEntry(sourceYear, sourceKey, true)] };
-    // 3 days before Yud Shevat, still within the 7-day lookahead window.
-    const today = new Date(new Date(`${targetYudShevat.gregorianDate}T00:00:00.000Z`).getTime() - 3 * 24 * 60 * 60 * 1000);
+    const yudShevatKey = toMafteiachHebrewDateKey({ year: sourceYear, month: targetYudShevat.getMonth(), day: targetYudShevat.getDate() });
+    const shabbosKey = toMafteiachHebrewDateKey({ year: sourceYear, month: weekEnd.getMonth(), day: weekEnd.getDate() });
 
-    const result = resolveThisWeek(targetYear, sourceYear, IL, catalog, today);
+    const catalog: CatalogByYear = {
+      [sourceYear]: [makeEntry(sourceYear, yudShevatKey, 'Yud Shevat', true), makeEntry(sourceYear, shabbosKey, 'Shabbos', true)],
+    };
+    // Land "today" mid-week, after Yud Shevat's weekday but before that week's Shabbos, so both are still in-window.
+    const today = new Date(`${weekStart.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
 
-    expect(result.occasionKey).toBe('yud-shevat');
-    expect(result.label).toBe('Yud Shevat');
-    expect(result.resolution.status).toBe('primary');
+    const result = resolveThisWeek(sourceYear, catalog, today);
+
+    const labels = result.map((r) => r.entry.occasionLabel).sort();
+    expect(labels).toEqual(['Shabbos', 'Yud Shevat'].sort());
+  });
+
+  it('omits an occasion with neither audio nor a PDF (a real gap, not shown as content)', () => {
+    const targetYear = 5786;
+    const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
+    const targetShabbos = new HDate(15, 7, targetYear).onOrAfter(6);
+    const sourceKey = toMafteiachHebrewDateKey({ year: sourceYear, month: targetShabbos.getMonth(), day: targetShabbos.getDate() });
+
+    const catalog: CatalogByYear = { [sourceYear]: [makeEntry(sourceYear, sourceKey, 'Shabbos', false)] };
+    const today = new Date(`${targetShabbos.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
+
+    expect(resolveThisWeek(sourceYear, catalog, today)).toEqual([]);
+  });
+
+  it('returns occasions in day order across the week', () => {
+    const targetYear = 5786;
+    const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
+
+    const weekEnd = new HDate(15, 7, targetYear).onOrAfter(6);
+    const weekStart = new HDate(weekEnd.abs() - 6);
+    const midWeek = new HDate(weekStart.abs() + 2);
+
+    const startKey = toMafteiachHebrewDateKey({ year: sourceYear, month: weekStart.getMonth(), day: weekStart.getDate() });
+    const midKey = toMafteiachHebrewDateKey({ year: sourceYear, month: midWeek.getMonth(), day: midWeek.getDate() });
+    const endKey = toMafteiachHebrewDateKey({ year: sourceYear, month: weekEnd.getMonth(), day: weekEnd.getDate() });
+
+    const catalog: CatalogByYear = {
+      [sourceYear]: [
+        makeEntry(sourceYear, endKey, 'end', true),
+        makeEntry(sourceYear, startKey, 'start', true),
+        makeEntry(sourceYear, midKey, 'mid', true),
+      ],
+    };
+    const today = new Date(`${weekStart.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
+
+    const result = resolveThisWeek(sourceYear, catalog, today);
+    expect(result.map((r) => r.entry.occasionLabel)).toEqual(['start', 'mid', 'end']);
+  });
+
+  it('excludes days that roll into the next Hebrew year, rather than misattributing sourceYear\'s own unrelated same-month-day date', () => {
+    const targetYear = 5786;
+    const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
+
+    const nextRoshHashanaAbs = new HDate(1, 7, targetYear + 1).abs();
+    const erevRoshHashana = new HDate(nextRoshHashanaAbs - 1); // Never Shabbos - Rosh Hashana can't fall on Sunday.
+    const today = new Date(`${erevRoshHashana.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
+
+    const erevKey = toMafteiachHebrewDateKey({ year: sourceYear, month: erevRoshHashana.getMonth(), day: erevRoshHashana.getDate() });
+    // sourceYear's own Rosh Hashana (Tishrei 1) - a real, unrelated date a full year earlier in sourceYear's own
+    // calendar. A naive month/day translation of the new Hebrew year's Rosh Hashana (which falls in this same
+    // Sun-Sat week) would wrongly land on this exact key.
+    const sourceOwnRoshHashanaKey = toMafteiachHebrewDateKey({ year: sourceYear, month: 7, day: 1 });
+
+    const catalog: CatalogByYear = {
+      [sourceYear]: [
+        makeEntry(sourceYear, erevKey, 'Erev Rosh Hashana', true),
+        makeEntry(sourceYear, sourceOwnRoshHashanaKey, "sourceYear's own Rosh Hashana - must not leak in", true),
+      ],
+    };
+
+    const result = resolveThisWeek(sourceYear, catalog, today);
+
+    expect(result.map((r) => r.entry.occasionLabel)).toEqual(['Erev Rosh Hashana']);
   });
 });
