@@ -12,3 +12,11 @@ packages/mafteiach-index/data/
 packages/mafteiach-index/*.db
 packages/mafteiach-index/*.db-shm
 packages/mafteiach-index/*.db-wal
+
+# packages/jem-index: same reasoning - JEM's ccdb responses and the crawled
+# catalog are a local build artifact, reproducible from the crawler code.
+packages/jem-index/.cache/
+packages/jem-index/data/
+packages/jem-index/*.db
+packages/jem-index/*.db-shm
+packages/jem-index/*.db-wal

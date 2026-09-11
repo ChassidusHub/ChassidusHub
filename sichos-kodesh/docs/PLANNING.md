@@ -471,6 +471,14 @@ Largely unchanged from the original brief's direction, with one addition:
 6. **JEM outreach hasn't happened** — contact is known
    (support@jemedia.org / 718-774-6000) but this is a business/legal track
    with its own timeline, not something further engineering unblocks.
+   **Update**: JEM's own private "ccdb" API (behind ashreinu.app) is
+   confirmed live, unauthenticated, and technically usable end-to-end —
+   see `packages/jem-index`. This doesn't change the outreach need (using
+   it in a shipped app still requires that conversation), but it means an
+   independent, JEM-sourced catalog of what recordings exist (names, real
+   Hebrew dates, durations, direct CloudFront URLs) now exists for internal
+   use regardless of whether live JEM integration is ever adopted — see
+   that package's README for the full stats.
 7. **Engine correctness vs. external ground truth**: the kvius engine's
    calendar math is internally tested (symmetry, structural invariants
    across matched years); the real-world "which years the Rebbe farbrenged
