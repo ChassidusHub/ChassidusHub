@@ -1,6 +1,6 @@
 import { buildMatchedSchedule } from '@sichos-kodesh/kvius-engine';
 import type { MatchedFixedEntry, MatchedWeeklyEntry, OccasionResolution } from '@sichos-kodesh/kvius-engine';
-import { findCatalogEntryForOccasion, hasRecording } from './catalogLookup.js';
+import { findCatalogEntryForOccasion, hasContent } from './catalogLookup.js';
 import type { CatalogByYear } from './catalogLookup.js';
 import { STARTER_FIXED_OCCASIONS } from './fixedOccasions.js';
 import type { CatalogEntry } from './types.js';
@@ -40,7 +40,7 @@ export function resolveThisWeek(
   const schedule = buildMatchedSchedule(targetYear, sourceYear, {
     il,
     gapStrategy: 'skip',
-    hasRecording: hasRecording(catalog, il, STARTER_FIXED_OCCASIONS),
+    hasRecording: hasContent(catalog, il, STARTER_FIXED_OCCASIONS),
     fixedOccasions: STARTER_FIXED_OCCASIONS,
   });
 

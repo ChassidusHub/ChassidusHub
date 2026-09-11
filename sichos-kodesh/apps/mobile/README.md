@@ -14,11 +14,23 @@ produces a real installable APK, no Expo/EAS account needed.
 
 Built and working:
 - `@sichos-kodesh/kvius-engine` runs on-device to compute the matched
-  schedule (`src/engine/resolveThisWeek.ts`).
+  schedule (`resolveThisWeek`, from `@sichos-kodesh/catalog` — shared
+  with `apps/web`, not duplicated per app).
 - `@sichos-kodesh/catalog`'s bundled JSON (`src/catalog/data/`, generated
   from the real crawled dataset — 3,424 occasions, regenerate with
   `npm run build-catalog` in `packages/catalog`) backs the
-  "does this occasion have a recording" lookups.
+  "does this occasion have real content" lookups (`hasContent` — audio
+  *or* a PDF counts; a transcript with no audio is still real content,
+  not a gap).
+- Two ways to pick a year, both on `YearPickerScreen`: **Follow along**
+  (kvius-matched years only, via `findMatchingYears`, leads to
+  `ThisWeekScreen`'s auto-resolved current occasion) and **Browse any
+  year** (every indexed year via `browsableYears`, no kvius match
+  required, leads to `YearBrowserScreen`'s full list of that year's
+  occasions — there's no "this week" to compute for a year with no
+  guaranteed week/date alignment to the current one).
+- `src/components/OccasionDetail.tsx` — the shared download/play card
+  used by both `ThisWeekScreen` and `YearBrowserScreen`.
 - Real downloads through `services/media-proxy`'s `/jem-audio/:filename`
   and `/drive/:fileId` routes (`src/download/download.ts`), basic
   play/pause via `react-native-sound`, PDFs opened through the OS's own
@@ -51,9 +63,6 @@ workspace packages:
 
 ```sh
 npm install                       # from the repo root
-npm run build --workspace=@sichos-kodesh/kvius-engine
-npm run build --workspace=@sichos-kodesh/mafteiach-index
-npm run build --workspace=@sichos-kodesh/catalog
 ```
 
 Then, from `apps/mobile`:
@@ -66,21 +75,30 @@ npm test
 npm run lint
 ```
 
+`@sichos-kodesh/kvius-engine` and `@sichos-kodesh/catalog` are resolved
+via their built `dist/` output, not source — `start`/`android`/`ios`/
+`test`/`typecheck` all build both first automatically (`pre<script>` npm
+hooks), so no separate manual build step is needed.
+
 ### Getting an APK without a full local Android setup
 
-`.github/workflows/android-apk.yml` builds a debug APK on every push and
-publishes it to a floating **`latest-dev-build`** GitHub Release — one
-stable link, always the newest build. Download the APK from there and
-sideload it (enable "install from unknown sources" for your browser or
-file manager first) rather than setting up the full Android SDK locally.
+The CI workflows that built a debug APK on every push
+(`android-apk.yml`, publishing to a floating `latest-dev-build` GitHub
+Release) and a signed release `.aab` (`android-aab.yml`) are removed for
+now — testing focus shifted to `apps/web`, a real installable PWA that
+needs no build pipeline or sideloading at all (see that package's
+README). To get an APK again: `npm run android` with a local Android
+SDK/emulator/device attached, or bring back an equivalent GitHub Actions
+workflow (see this file's git history for the removed ones).
 
 ## Google Play (Internal testing track)
 
-`.github/workflows/android-aab.yml` builds a signed release `.aab` (what
+Not currently pursued — see the note above; this section is kept for
+when Android CI comes back. The plan was a signed release `.aab` (what
 Play actually wants — it splits per-device at install time, so the real
 download is a fraction of the debug APK's size, which bundles all four
-CPU architectures unsplit). Manually triggered (`workflow_dispatch`), not
-run on every push — a release build is deliberate, not automatic.
+CPU architectures unsplit), built via `workflow_dispatch`, not on every
+push — a release build is deliberate, not automatic.
 
 Needs 4 repository secrets first (Settings → Secrets and variables →
 Actions): `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,

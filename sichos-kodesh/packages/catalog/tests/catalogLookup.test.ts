@@ -1,6 +1,6 @@
 import { buildWeeklySchedule, findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { describe, expect, it } from 'vitest';
-import { findCatalogEntryForOccasion, hasRecording } from '../src/catalogLookup.js';
+import { browsableYears, findCatalogEntryForOccasion, hasContent } from '../src/catalogLookup.js';
 import { STARTER_FIXED_OCCASIONS } from '../src/fixedOccasions.js';
 import { toMafteiachHebrewDateKey } from '../src/hebrewDateKey.js';
 import type { CatalogByYear, CatalogEntry } from '../src/index.js';
@@ -48,23 +48,46 @@ describe('findCatalogEntryForOccasion', () => {
   });
 });
 
-describe('hasRecording', () => {
-  it('is true only when the resolved entry has at least one audio recording', () => {
+describe('hasContent', () => {
+  it('is true when the resolved entry has at least one audio recording', () => {
     const catalog: CatalogByYear = {
       5711: [entry({ hebrewDate: '5711-05-10', audio: [{ workerFilename: 'a.mp3', durationMs: 1000 }] })],
     };
-    const predicate = hasRecording(catalog, false, STARTER_FIXED_OCCASIONS);
+    const predicate = hasContent(catalog, false, STARTER_FIXED_OCCASIONS);
     expect(predicate(5711, 'yud-shevat')).toBe(true);
   });
 
-  it('is false when the entry exists but has no audio (a text-only or empty occasion)', () => {
-    const catalog: CatalogByYear = { 5711: [entry({ hebrewDate: '5711-05-10', audio: [] })] };
-    const predicate = hasRecording(catalog, false, STARTER_FIXED_OCCASIONS);
+  it('is true when the entry has a PDF but no audio - a real transcript is real content, not a gap', () => {
+    const catalog: CatalogByYear = {
+      5711: [entry({ hebrewDate: '5711-05-10', audio: [], pdfs: [{ section: 'mugah', label: 'Mugah', driveFileId: 'abc' }] })],
+    };
+    const predicate = hasContent(catalog, false, STARTER_FIXED_OCCASIONS);
+    expect(predicate(5711, 'yud-shevat')).toBe(true);
+  });
+
+  it('is false when the entry exists but has neither audio nor a PDF (a genuinely empty occasion)', () => {
+    const catalog: CatalogByYear = { 5711: [entry({ hebrewDate: '5711-05-10', audio: [], pdfs: [] })] };
+    const predicate = hasContent(catalog, false, STARTER_FIXED_OCCASIONS);
     expect(predicate(5711, 'yud-shevat')).toBe(false);
   });
 
   it('is false when the year is not in the catalog at all', () => {
-    const predicate = hasRecording({}, false, STARTER_FIXED_OCCASIONS);
+    const predicate = hasContent({}, false, STARTER_FIXED_OCCASIONS);
     expect(predicate(5711, 'yud-shevat')).toBe(false);
+  });
+});
+
+describe('browsableYears', () => {
+  it('returns only years with at least one entry that has audio or a PDF, sorted ascending', () => {
+    const catalog: CatalogByYear = {
+      5713: [entry({ hebrewYear: 5713, audio: [], pdfs: [] })], // present but genuinely empty
+      5711: [entry({ hebrewYear: 5711, audio: [{ workerFilename: 'a.mp3', durationMs: 1 }] })],
+      5712: [entry({ hebrewYear: 5712, pdfs: [{ section: 'mugah', label: 'Mugah', driveFileId: 'x' }] })],
+    };
+    expect(browsableYears(catalog)).toEqual([5711, 5712]);
+  });
+
+  it('returns an empty list for an empty catalog', () => {
+    expect(browsableYears({})).toEqual([]);
   });
 });

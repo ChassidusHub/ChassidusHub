@@ -49,14 +49,16 @@ describe('findMatchingYears', () => {
       expect(hebrewYear).toBeGreaterThanOrEqual(MIN_HISTORICAL_YEAR);
       expect(hebrewYear).toBeLessThanOrEqual(MAX_HISTORICAL_YEAR);
     }
-    // Verified directly against packages/mafteiach-index's real database
-    // (MIN(hebrew_year)=5690, MAX(hebrew_year)=5752, 3424 rows).
-    expect(results.map((r) => r.hebrewYear)).toEqual([5742, 5735, 5715, 5691]);
+    // Verified directly against packages/mafteiach-index's real database:
+    // coverage before 5710 is sparse (1-14 occasions/year) - it predates
+    // the Rebbe's own Sichos Kodesh, so MIN_HISTORICAL_YEAR is 5710, not
+    // the dataset's earliest crawled year (5690).
+    expect(results.map((r) => r.hebrewYear)).toEqual([5742, 5735, 5715]);
   });
 
   it('clamps an explicit out-of-range window to the historical range by default', () => {
     const wide = findMatchingYears(5786, { fromYear: 5600, toYear: 5850 });
-    expect(wide.map((r) => r.hebrewYear)).toEqual([5742, 5735, 5715, 5691]);
+    expect(wide.map((r) => r.hebrewYear)).toEqual([5742, 5735, 5715]);
     // 5769 kvius-matches 5786 too, but it's outside the catalog's range and must not appear.
     expect(wide.some((r) => r.hebrewYear === 5769)).toBe(false);
   });

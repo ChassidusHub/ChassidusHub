@@ -392,10 +392,11 @@ schedules) but not against an external ground truth yet.
   evaporates once there's no managed workflow to begin with, and the
   user's explicit preference is a plain Gradle Android project that
   produces installable APKs directly (`./gradlew assembleDebug`), not an
-  Expo/EAS-managed build. See `.github/workflows/android-apk.yml`: a debug
-  APK is built and published to a floating `latest-dev-build` GitHub
-  Release on every push — one stable download link, no Mac, no paid Apple
-  account, no EAS account needed to get a build onto a device.
+  Expo/EAS-managed build. Originally built via a CI workflow that
+  published a debug APK to a floating GitHub Release on every push -
+  **removed for now** (testing shifted to `apps/web`, a real installable
+  PWA needing no build pipeline or sideloading); see `apps/mobile/README.md`
+  and this file's git history to bring it back.
 - A real, non-obvious wrinkle hit building this: **npm workspace hoisting
   breaks React Native's default Gradle config** for an app that isn't at
   the repo root. `apps/mobile/android/settings.gradle`'s generated
@@ -488,14 +489,23 @@ response for seeking) enforces the same-origin policy that
 - **Phase 2 — MVP, done (private/pre-launch)**: `packages/catalog` joins
   `packages/mafteiach-index`'s crawled dataset (all 3,424 occasions, not a
   pilot subset) into the app-facing `CatalogEntry` shape and bridges the
-  engine's `occasionKey` scheme to real dates. `apps/mobile` (bare React
-  Native, see above) picks a source year from `findMatchingYears`, shows
-  the current week's (or an imminent fixed-date occasion's) matched
-  content, downloads it through `services/media-proxy`, and plays/opens it
-  fully offline. Deliberately thin: one occasion at a time, no batch
-  download, no gap-handling UI beyond a plain "no recording available"
-  message — see `apps/mobile`'s own scope notes for what's intentionally
-  deferred to Phase 3.
+  engine's `occasionKey` scheme to real dates. `apps/mobile` and
+  `apps/web` (see above) offer two ways to pick a year: **follow along**
+  (a source year from `findMatchingYears`, kvius-matched to the current
+  year — shows the current week's, or an imminent fixed-date occasion's,
+  matched content, auto-resolved) and **browse any year** (every indexed
+  year via `browsableYears`, no kvius match required — lists that year's
+  whole occasion set directly, since there's no "this week" to compute
+  without a kvius match). Either way, content downloads through
+  `services/media-proxy` and plays/opens fully offline. `hasContent`
+  (not `hasAudio`) gates what counts as real - a PDF transcript with no
+  audio is real content, not a gap; gating on audio alone caused every
+  kvius-matched year to wrongly show "no recording" for occasions that
+  had real PDFs but no JEM audio (e.g. Nitzavim/Vayeilech, the last
+  Shabbos before Rosh Hashana). Deliberately thin: one occasion at a time
+  in follow-along mode, no batch download, no gap-handling UI beyond a
+  plain "nothing indexed" message — see `apps/mobile`'s own scope notes
+  for what's intentionally deferred to Phase 3.
 - **Phase 3 — v1**: month/year batch download + zip bundling, gap-handling
   UI (surface `'gap'` occasions and let the user set manual overrides),
   push notification when the week's content is ready, minimal

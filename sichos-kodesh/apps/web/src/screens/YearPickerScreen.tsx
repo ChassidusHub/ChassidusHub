@@ -1,33 +1,68 @@
+import { useState } from 'react';
+import { browsableYears } from '@sichos-kodesh/catalog';
 import { findMatchingYears, kviusCode } from '@sichos-kodesh/kvius-engine';
+import catalog from '../catalog/data';
 
 interface Props {
   targetYear: number;
-  onSelectYear: (hebrewYear: number) => void;
+  onSelectKviusYear: (hebrewYear: number) => void;
+  onSelectBrowseYear: (hebrewYear: number) => void;
 }
 
-export function YearPickerScreen({ targetYear, onSelectYear }: Props) {
+export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowseYear }: Props) {
+  const [tab, setTab] = useState<'kvius' | 'browse'>('kvius');
+
   // No range options: defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR],
   // the real span of packages/mafteiach-index's crawled catalog - every
   // candidate offered here is a year that could actually have a recording,
   // not just a kvius-matched one with nothing behind it.
   const matches = findMatchingYears(targetYear);
+  const allYears = browsableYears(catalog);
 
   return (
     <div className="screen">
-      <h1>Follow along with...</h1>
+      <h1>Sichos Kodesh</h1>
       <p className="subtitle">
         Hebrew year {targetYear} (kvius {kviusCode(targetYear)})
       </p>
-      <ul className="year-list">
-        {matches.map((item) => (
-          <li key={item.hebrewYear}>
-            <button className="year-row" onClick={() => onSelectYear(item.hebrewYear)}>
-              <span className="year-row-year">{item.hebrewYear}</span>
-              <span className="year-row-distance">{item.distance} years ago</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+
+      <div className="tabs">
+        <button className={tab === 'kvius' ? 'tab tab-active' : 'tab'} onClick={() => setTab('kvius')}>
+          Follow along
+        </button>
+        <button className={tab === 'browse' ? 'tab tab-active' : 'tab'} onClick={() => setTab('browse')}>
+          Browse any year
+        </button>
+      </div>
+
+      {tab === 'kvius' ? (
+        <>
+          <p className="tab-help">Kvius-matched years - the week/date structure lines up with {targetYear}, so "this week" resolves automatically.</p>
+          <ul className="year-list">
+            {matches.map((item) => (
+              <li key={item.hebrewYear}>
+                <button className="year-row" onClick={() => onSelectKviusYear(item.hebrewYear)}>
+                  <span className="year-row-year">{item.hebrewYear}</span>
+                  <span className="year-row-distance">{item.distance} years ago</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <p className="tab-help">Every year with something indexed - explore freely, no kvius match required.</p>
+          <ul className="year-list">
+            {allYears.map((year) => (
+              <li key={year}>
+                <button className="year-row" onClick={() => onSelectBrowseYear(year)}>
+                  <span className="year-row-year">{year}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
