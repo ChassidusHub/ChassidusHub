@@ -41,9 +41,12 @@ npm run build    # typecheck + production build (dist/), incl. service worker
 npm run preview  # serve the production build locally
 ```
 
-`packages/catalog` must be built first (`npm run build` in that package)
-since this app resolves it via `dist/`, not source — `npm install` at the
-repo root plus a normal workspace build handles this automatically.
+`@sichos-kodesh/kvius-engine` and `@sichos-kodesh/catalog` are resolved via
+their built `dist/` output, not source, same as any consumer of those
+packages. `npm run build`/`npm run typecheck` here build both first
+automatically (`prebuild`/`pretypecheck` npm hooks), so `npm install` +
+`npm run build` from a completely fresh checkout works standalone — this
+is what Vercel's deploy actually runs.
 
 ## Deployment
 

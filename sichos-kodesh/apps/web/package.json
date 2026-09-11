@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
     "build": "tsc -b && vite build",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
     "typecheck": "tsc -b --noEmit",
     "lint": "oxlint",
     "preview": "vite preview",

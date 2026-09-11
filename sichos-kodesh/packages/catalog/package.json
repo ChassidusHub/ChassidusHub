@@ -15,9 +15,12 @@
     "dist"
   ],
   "scripts": {
+    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine",
     "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build -w @sichos-kodesh/kvius-engine",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "build-catalog": "tsx bin/build.ts"
   },

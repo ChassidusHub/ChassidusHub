@@ -7,7 +7,9 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
+    "pretest": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
     "test": "jest",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
