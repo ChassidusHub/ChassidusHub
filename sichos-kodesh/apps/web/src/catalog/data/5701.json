@@ -1,0 +1,120 @@
+[
+  {
+    "occasionId": 11116119,
+    "hebrewYear": 5701,
+    "hebrewDate": "5701-02-16",
+    "occasionLabel": "ט\"ז-י\"ז מרחשון [ביהכ\"נ. ניצא]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קמד",
+        "driveFileId": "1C49kP1lXbY7vvKGGch1iKMi9lc3QNf4L"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116243,
+    "hebrewYear": 5701,
+    "hebrewDate": "5701-04-21",
+    "occasionLabel": "כ\"א-כ\"ד טבת [ניצא]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קנ",
+        "driveFileId": "1UNmsltnylUNJOR1TCf2Nun7rS80qBRAu"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116260,
+    "hebrewYear": 5701,
+    "hebrewDate": "5701-05-15",
+    "occasionLabel": "ט\"ו בשבט תש\"א [מארסיי]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "קובץ הערות - מאריסטאן, י\"א ניסן תשפ\"ה (הנחה ע\"פ רמז\"ח שכטר)",
+        "driveFileId": "1dyz0Hq12nVJpSLxAB-VfCOt0HfRToZdI"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116120,
+    "hebrewYear": 5701,
+    "hebrewDate": "5701-10-01",
+    "occasionLabel": "ליל ב' תמוז, בהתוועדות ה\"קבלת פנים\"",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "קונטרס כ\"ח סיון - יובל שנים",
+        "driveFileId": "1j8eh7LNTFbF7a_kXgO0OV-wFtddtz_KJ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחות קודש ע' 24 (בתוספת פרטים בהערות)",
+        "driveFileId": "1xUlqYXHyROZEJpRTP5PPGc0jnz1OltRG"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116121,
+    "hebrewYear": 5701,
+    "hebrewDate": "5701-10-24",
+    "occasionLabel": "מטו\"מ, מבה\"ח מנ\"א",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ועד הנחות בלה\"ק / שיחות קודש ע' 26",
+        "driveFileId": "1q_e2UQfKhqOoaISTBfHWjysuNCorxBBO"
+      },
+      {
+        "section": "mugah",
+        "label": "תוכן ס\"ב-ג - רשימות חוברת קפט",
+        "driveFileId": "1XIf7KN0l7cNDDHKEin1TBxUGVfoewY6L"
+      },
+      {
+        "section": "hosofos",
+        "label": "צילום הרשימה בכתי\"ק",
+        "driveFileId": "1XIf7KN0l7cNDDHKEin1TBxUGVfoewY6L"
+      },
+      {
+        "section": "hosofos",
+        "label": "פתח דבר הוצאה הראשונה",
+        "driveFileId": "17JnnRhlJFx6QGYwx25jiwZ08B5ErBavI"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116122,
+    "hebrewYear": 5701,
+    "hebrewDate": "5701-11-23",
+    "occasionLabel": "עקב, מבה\"ח אלול",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "hosofos",
+        "label": "זכרונות רי\"ל פוזנר - שיחות קודש קודם הנשיאות ע' 29",
+        "driveFileId": "1JZT8kYTHqxsz9liTLMR6dCQt7K4xKJS9"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116182,
+    "hebrewYear": 5701,
+    "hebrewDate": "5701-12-30",
+    "occasionLabel": "התוועדויות שבת מברכים",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "hosofos",
+        "label": "זכרונות חסידים - שיחות קודש קודם הנשיאות ע' 182",
+        "driveFileId": "1oWofb8PFQUBT7Fjkk1aYK0exUBDBUeU3"
+      }
+    ]
+  }
+]

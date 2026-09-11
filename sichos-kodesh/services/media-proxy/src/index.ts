@@ -37,6 +37,29 @@ export const JEM_AUDIO_FILENAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}\.(mp3|m4a|opus)$
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days - Phase 1's only caching until R2 lands
 const JEM_AUDIO_CDN_BASE = 'https://dtgj2yu3gmlic.cloudfront.net';
 
+/**
+ * apps/mobile (React Native fetch) never needed this - no same-origin
+ * policy there. apps/web does: a plain `<audio src>`/`<a href>` doesn't
+ * enforce CORS, but a service worker caching those requests in `cors`
+ * mode (needed so Workbox's range-request handling can read Content-Length
+ * to slice cached responses for seeking - impossible on an opaque no-cors
+ * response) does. `Access-Control-Allow-Origin: *` is safe here: every
+ * route serves public, unauthenticated, read-only content with no cookies
+ * or credentials involved.
+ */
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+  'Access-Control-Allow-Headers': 'Range',
+  'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Length',
+};
+
+export function withCors(response: Response): Response {
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(CORS_HEADERS)) headers.set(key, value);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 export interface Env {
   // Reserved for Phase 2 (R2 bucket binding). Intentionally empty in Phase 1.
 }
@@ -146,12 +169,18 @@ async function handleJemAudio(filename: string, range: string | null): Promise<R
 
 export default {
   async fetch(request: Request, _env: Env, ctx: ExecutionContext): Promise<Response> {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
     const url = new URL(request.url);
     const range = request.headers.get('Range');
 
     // Only whole-file responses go through the simple Phase-1 cache - a
     // ranged request always round-trips live, so a player seeking within a
-    // track never risks getting served a mismatched cached slice.
+    // track never risks getting served a mismatched cached slice. The
+    // cached copy already carries CORS headers (added below before it's
+    // stored), so a cache hit needs no extra wrapping.
     const cache = caches.default;
     const cacheKey = new Request(url.toString(), request);
     if (!range) {
@@ -167,9 +196,10 @@ export default {
     } else if (jemAudioMatch) {
       response = await handleJemAudio(jemAudioMatch[1]!, range);
     } else {
-      return new Response('Not found', { status: 404 });
+      response = new Response('Not found', { status: 404 });
     }
 
+    response = withCors(response);
     if (!range && response.status === 200) {
       ctx.waitUntil(cache.put(cacheKey, response.clone()));
     }

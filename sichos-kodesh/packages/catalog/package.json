@@ -1,0 +1,39 @@
+{
+  "name": "@sichos-kodesh/catalog",
+  "version": "0.1.0",
+  "description": "Joins packages/mafteiach-index's crawled dataset into the app-facing CatalogEntry shape, bridges kvius-engine's occasionKey scheme to mafteiach's Hebrew-date keys, and builds the static per-year JSON bundled into apps/mobile.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine",
+    "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build -w @sichos-kodesh/kvius-engine",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "build-catalog": "tsx bin/build.ts"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@hebcal/core": "^6.9.2",
+    "@sichos-kodesh/kvius-engine": "^0.1.0"
+  },
+  "devDependencies": {
+    "@sichos-kodesh/mafteiach-index": "^0.1.0",
+    "@types/node": "^22.20.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  }
+}

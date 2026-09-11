@@ -92,8 +92,13 @@ npm run dev       # wrangler dev - local test server
 npm run deploy    # wrangler deploy - requires `wrangler login` or a CLOUDFLARE_API_TOKEN first
 ```
 
-This repo doesn't have Cloudflare account credentials — `wrangler login`
-(interactive) or a `CLOUDFLARE_API_TOKEN` environment variable needs to be
-set up locally or in CI before `deploy` will work. The free Workers plan
-(100k requests/day) is enough to start; upgrade to the $5/mo plan (10M
-requests/month) only once real usage approaches that.
+`wrangler login` (interactive) or a `CLOUDFLARE_API_TOKEN` environment
+variable needs to be set up before `deploy` will work. The free Workers
+plan (100k requests/day) is enough to start; upgrade to the $5/mo plan
+(10M requests/month) only once real usage approaches that.
+
+**Deployed and live**: `https://sichos-kodesh-media-proxy.shmuky.workers.dev`
+(free tier) - verified with a real ranged request against a known audio
+file (`206 Partial Content`, correct `Content-Range`, no leaked origin
+headers). `apps/mobile/src/config.ts`'s `MEDIA_PROXY_BASE_URL` points here.
+Redeploying (`npm run deploy`) updates this same URL in place.

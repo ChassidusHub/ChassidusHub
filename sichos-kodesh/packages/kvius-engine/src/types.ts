@@ -70,10 +70,14 @@ export interface FixedDateOccasion {
 }
 
 export interface MatchingYearsOptions {
-  fromYear: number;
-  toYear: number;
+  /** Lower bound for the scan. Defaults to MIN_HISTORICAL_YEAR (5690). */
+  fromYear?: number;
+  /** Upper bound for the scan. Defaults to MAX_HISTORICAL_YEAR (5752). */
+  toYear?: number;
   /** Include the target year itself in the results (as a distance-0 match). Default false. */
   includeTarget?: boolean;
+  /** Search outside [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR] instead of clamping to it. Default false. */
+  allowOutOfHistoricalRange?: boolean;
 }
 
 export interface MatchingYearResult {

@@ -1,0 +1,110 @@
+[
+  {
+    "occasionId": 11116185,
+    "hebrewYear": 5706,
+    "hebrewDate": "5706-01-00",
+    "occasionLabel": "שמבה\"ש, לתלמידי הישיבות",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "hosofos",
+        "label": "תיאור ההתוועדות - קובץ ליובאוויטש - שיחות קודש קודם הנשיאות ע' 186-187",
+        "driveFileId": "1OQ_lkDNzKbSK73TlQhtOTCn0TUNI_Kai"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116244,
+    "hebrewYear": 5706,
+    "hebrewDate": "5706-08-25",
+    "occasionLabel": "כ\"ה אייר, בחגיגת אירגון בית הספר לנערות בית רבקה",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת ל",
+        "driveFileId": "1oRJXbaPSDRrsIl3QU_O2HUaV9hDag5a6"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116145,
+    "hebrewYear": 5706,
+    "hebrewDate": "5706-09-05",
+    "occasionLabel": "ליל חג השבועות",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחות קודש ע' 102",
+        "driveFileId": "13lP2vrvM1Qv8m87ZqBi4M78xW0WOy-_A"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116146,
+    "hebrewYear": 5706,
+    "hebrewDate": "5706-09-13",
+    "occasionLabel": "י\"ג סיון, בעת קבלת פנים",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קמט",
+        "driveFileId": "1mG3k56NtJ4WuVGUJAGW7KXtKwsRan_ff"
+      },
+      {
+        "section": "hosofos",
+        "label": "צילום הרשימה בכתי\"ק (מקדש ישראל ע' 27)",
+        "driveFileId": "1AjcLLeujFsessNG5qVVbmlK6Vn_CZknU"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116250,
+    "hebrewYear": 5706,
+    "hebrewDate": "5706-10-11",
+    "occasionLabel": "י\"א תמוז, בחתונה",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קס",
+        "driveFileId": "1gWmqJ-YDj1bUWDgnKLAw9lXgdzCHN85g"
+      },
+      {
+        "section": "hosofos",
+        "label": "צילום כתי\"ק הרשימה - מקדש ישראל ע' 28",
+        "driveFileId": "1ix5EGb9vMHOHrcxqE6j3kUGFMGq2g-J3"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116147,
+    "hebrewYear": 5706,
+    "hebrewDate": "5706-11-13",
+    "occasionLabel": "ואתחנן, נחמו, י\"ג מנ\"א",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחות קודש ע' 103",
+        "driveFileId": "1O8iM5VmMFwGhf1XKxjIPXHQeHq9OL_gu"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116148,
+    "hebrewYear": 5706,
+    "hebrewDate": "5706-12-18",
+    "occasionLabel": "תבא, ח\"י אלול",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחות קודש ע' 104",
+        "driveFileId": "1rXC_yJWlJGUqwqCcxyVDwYxmXpHMn8mx"
+      }
+    ]
+  }
+]

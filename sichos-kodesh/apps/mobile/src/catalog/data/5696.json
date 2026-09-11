@@ -1,0 +1,40 @@
+[
+  {
+    "occasionId": 11116115,
+    "hebrewYear": 5696,
+    "hebrewDate": "5696-01-00",
+    "occasionLabel": "חג הסוכות [מקצתו בביהכנ\"ס]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת סו",
+        "driveFileId": "1RPIHvn1e973b1h-qu520UCpYuad6cMH_"
+      },
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת מח",
+        "driveFileId": "1ulJT6oL7f3bqCtm8UxWxsw1nVpGNam0Q"
+      },
+      {
+        "section": "hosofos",
+        "label": "התוועדויות בתו\"ת באטוואצק - זכרונות חסידים - שיחות קודש קודם הנשיאות ע' 179-180",
+        "driveFileId": "1TD4kc347sgw5ObvJj0DYcDVA9UnvNTNx"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116116,
+    "hebrewYear": 5696,
+    "hebrewDate": "5696-03-00",
+    "occasionLabel": "חנוכה [מקצתו בביהכנ\"ס 17]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קכה-קכו",
+        "driveFileId": "1DCJFP9WrawXhEZHsKenEGEOC3Z4nTaU5"
+      }
+    ]
+  }
+]

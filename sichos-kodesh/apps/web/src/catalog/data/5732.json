@@ -1,0 +1,1123 @@
+[
+  {
+    "occasionId": 11114071,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-02",
+    "occasionLabel": "יום ב' דר\"ה",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1a7XhI2UptwovxDh6ADMSlQwTyJXssGmf"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114072,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-06",
+    "occasionLabel": "וילך, ש\"ת, ו' תשרי",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1sMN4RNGbPpy9gs0J8xlsv17VZAcKgqjS"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114073,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-09",
+    "occasionLabel": "ערב יו\"כ, אחרי מנחה",
+    "audio": [
+      {
+        "workerFilename": "AR0019712.mp3",
+        "durationMs": 94746
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1jy8tILCk7WnjUtj3LlPOtVzSL923btul"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114074,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-09b",
+    "occasionLabel": "ערב יו\"כ, ברכת הבנים",
+    "audio": [
+      {
+        "workerFilename": "AR0019713.mp3",
+        "durationMs": 93675
+      }
+    ],
+    "pdfs": []
+  },
+  {
+    "occasionId": 11114075,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-13",
+    "occasionLabel": "האזינו, י\"ג תשרי",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1tMyeSJJdq60B_e6MqZKWraKVOr6nKuap"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114076,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-14",
+    "occasionLabel": "ערב חה\"ס, בעת מסירת האתרוגים",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1BFIsxs_ak9r_3YXuXt2HmNXAhpkZKZjB"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114077,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-14b",
+    "occasionLabel": "ערב חה\"ס, בעת נתינת הד' מינים ליוצאי רוסיא",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1eajF0uM7VJ5h1Y0kVIsFHEVhc43TInIC"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116106,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-17",
+    "occasionLabel": "חוה\"מ סוכות, יחידות להת' יוצאי רוסיא",
+    "audio": [],
+    "pdfs": []
+  },
+  {
+    "occasionId": 11114078,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-20",
+    "occasionLabel": "יום ו' דחה\"ס, שבת חוה\"מ, קודם התפלה",
+    "audio": [],
+    "pdfs": []
+  },
+  {
+    "occasionId": 11114079,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-22",
+    "occasionLabel": "ליל שמח\"ת, לפני הקפות",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1u-z7ZgYY4fu8Sbm27u2ABmKozs9TtmTB"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114080,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-23",
+    "occasionLabel": "יום שמח\"ת",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "10jqOKOQkJTU3HIsCyY_8IkYxBN0Ss_R6"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1NiPMJJOBA8oKhHl0YiCo6dfsEEc3iYOA"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2 [העתקת מענה]",
+        "driveFileId": "1rmOauvPV7uZGjGAeXu0MhpYICCEjpc-J"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114081,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-27",
+    "occasionLabel": "בראשית, מבה\"ח מ\"ח",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1J7BSP5cfjpeXQtFBY1FDRNxDj4SVDb4N"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [העתקת מענה]",
+        "driveFileId": "1dpZ8mGU7A4beL1tByWKdemEEODAxz6Ef"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114082,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-27b",
+    "occasionLabel": "מוצש\"פ בראשית",
+    "audio": [
+      {
+        "workerFilename": "AR0015601.mp3",
+        "durationMs": 1403193
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [העתקת מענה]",
+        "driveFileId": "1dpZ8mGU7A4beL1tByWKdemEEODAxz6Ef"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116293,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-01-28",
+    "occasionLabel": "יחידות לעולים חדשים מרוסי', תושבי נחלת הר חב\"ד",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "דברי משיח (י\"ל בקובץ השבועי, לש\"פ בראשית תשפ\"ו - המכון להפצת כו')",
+        "driveFileId": "1dbMnXk-qREf-AYYQBwsNmGDHv92UcJi1"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114083,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-02-25",
+    "occasionLabel": "חיי שרה, מבה\"ח כסלו",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1q-j8366mq3JEx-oOF1POtOvuc-RnzaoR"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114084,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-03-09",
+    "occasionLabel": "ויצא, ט' כסלו",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1tr-TwRxNuzGnU3trSHzMOAVJU9sRnB67"
+      },
+      {
+        "section": "maamorim",
+        "label": "לקו\"ש ח\"י ע' 92 (ויצא א)",
+        "driveFileId": "1idDRRmzoFUp0pbSUtyXO_OqOaPJlkq5m"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1ylrloEvWcAMJkzswMyLCTCsTDZSVlbAg"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114085,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-03-19",
+    "occasionLabel": "י\"ט כסלו",
+    "audio": [
+      {
+        "workerFilename": "AR0015854.mp3",
+        "durationMs": 550112
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1yh9_d3-_oCsGqZHD3J7bNwaMx2lZ4xrT"
+      },
+      {
+        "section": "maamorim",
+        "label": "לקו\"ש חט\"ז ע' 434 (ויקהל ב)",
+        "driveFileId": "1I_26B3sUMCv-6RiYfXokBljSukn8MW6U"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "0B_UwzYOTIwDTT0NjNmVDdG14ZFE"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114086,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-03-23",
+    "occasionLabel": "וישב, מבה\"ח טבת",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1TUw01H7mwW-623nP35-eh-T395SrHEvd"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1Vkl4RWoeeH67qxgQxtmikL2OIjLSakca"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114087,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-03-30",
+    "occasionLabel": "מקץ, חנוכה, אדר\"ח טבת",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1p0uUHn3CRWTDJeU6oK2a0cDs6h9alxqR"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 448 בשוה\"ג",
+        "driveFileId": "1ZBk-Pg405kqIM0Vrqh2IW7Cy0AGB61Ch"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114088,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-04-07",
+    "occasionLabel": "ויגש ז' טבת",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1ub6kRlwlVXv4NQffHJpb4atzqIW8IPlg"
+      },
+      {
+        "section": "maamorim",
+        "label": "לקו\"ש חכ\"ה ע' 258 (ויגש ב)",
+        "driveFileId": "1KHyv8_4CmJIksrtruItKPkYTCI8txv-q"
+      },
+      {
+        "section": "maamorim",
+        "label": "לקו\"ש ח\"ל ע' 215 (ויגש א)",
+        "driveFileId": "1eUNmNiwX-s0Yb9F4WfuSjMWb6axmgkf9"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114089,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-04-14",
+    "occasionLabel": "ויחי, י\"ד טבת",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1I7MRdQ6yPzoUJVEKDaj7XleadlvK6w61"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [צעטל להמניחים להוסיף בהנחה]",
+        "driveFileId": "1DDmmg85J9emMJqxAW7JW1yIhUZEZxHzy"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114090,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-04-24",
+    "occasionLabel": "כ\"ד טבת",
+    "audio": [
+      {
+        "workerFilename": "AR0015591.mp3",
+        "durationMs": 214543
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "13i5VVTudlhOAebvXpOtC_fK21lrNeFy5"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114091,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-04-28",
+    "occasionLabel": "וארא, מבה\"ח שבט",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1IbDkeRjcpdZi-LDt1I2tQL__gHxuyEL7"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114092,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-05-10",
+    "occasionLabel": "יו\"ד שבט",
+    "audio": [
+      {
+        "workerFilename": "AR0015157.mp3",
+        "durationMs": 323239
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1R2D3KYZ5fS_PjjxvjQ6tYMfpVORvwjZj"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1MxyS1iBTprI9J-7itfosyeUd9AJwg88A"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 3",
+        "driveFileId": "1xvGMgKMUdRd4MfSehUgRLj7bNLOTN3ox"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114093,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-05-13",
+    "occasionLabel": "בשלח, י\"ג שבט",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1AuhlpkJwu_dupiFCky01n0mWrV0KcA0X"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ סה\"מ באתי לגני ח\"א",
+        "driveFileId": "1UEsggwYj_zfPbltVGZr8cKDHjPX76tTF"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114094,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-05-15",
+    "occasionLabel": "ט\"ו בשבט",
+    "audio": [
+      {
+        "workerFilename": "AR0015583.mp3",
+        "durationMs": 1610422
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1_E5v-w_ZVIIeXaZjGT06UYMuzrftJH4b"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1MxyS1iBTprI9J-7itfosyeUd9AJwg88A"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114095,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-05-27",
+    "occasionLabel": "משפטים, פ' שקלים, מבה\"ח אדר",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1CgddjZeHnXjoBZvBT6LZfous88nL_kbU"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [LNS בקשר למבצע פורים]",
+        "driveFileId": "14sIEqsROi_bxzuVlOrWQtxEC8XSDKm9r"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1MxyS1iBTprI9J-7itfosyeUd9AJwg88A"
+      },
+      {
+        "section": "hosofos",
+        "label": "Lubavitch News Service - Feb 15, 1972",
+        "driveFileId": "1LrzucKEfmRor62LyX4cQi3RzlxwI1yhN"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114096,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-06-11",
+    "occasionLabel": "תצוה, פ' זכור, י\"א אדר",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1Z79z1tkeTA4f7dB5e5lBby-zJZbzyUpl"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114097,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-06-14",
+    "occasionLabel": "פורים",
+    "audio": [
+      {
+        "workerFilename": "AR0015380.mp3",
+        "durationMs": 348577
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1l7m3WnJlXAeo6K5s9wGjpmbwCO_4I-KD"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114098,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-06-18",
+    "occasionLabel": "תשא, פ' פרה, ח\"י אדר",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1mGnByjaOYXR8YgGlwVr1eGZnt2vznhEA"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114099,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-06-25",
+    "occasionLabel": "ויק\"פ, פ' החודש, מבה\"ח ניסן",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1jNV5ptGON0lkcJS1npVhx8yWDJrJFeyc"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114100,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-03",
+    "occasionLabel": "ויקרא, ג' ניסן",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1VzjWFITJzc6GECv3thiwbHFhdJMNwRnT"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1Sw0oTJviUSxoJfLxsAU45M0ZdqJYkz9t"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114101,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-10",
+    "occasionLabel": "צו, שבת הגדול",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1fLY1QlTR_87WskEUiB6fALuizqIjj2cj"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114102,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-11",
+    "occasionLabel": "מוצאי י\"א ניסן - שבעים שנה",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1320.mp3",
+        "durationMs": 751000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "19GQ2eEvOkKjqVWzqvy-Tfgd8unmhjXy7"
+      },
+      {
+        "section": "mugah",
+        "label": "הגדה של פסח ח\"ב ע' תרמב בשוה\"ג (מכתב כללי)",
+        "driveFileId": "1hVGezDwD0TgVZHMKS6SnCEVmcA64h5AA"
+      },
+      {
+        "section": "mugah",
+        "label": "הגדה של פסח ח\"ב ע' תנט (הדרן על מסכת פסחים)",
+        "driveFileId": "1R8nbdRUtDDeAUNEmjAmxd_7jgw3jLWhN"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1I0e-iynS9-oDJQyCDDlzVcLur7kF3f8r"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2 [העתקה]",
+        "driveFileId": "0B_UwzYOTIwDTQ1FvZXVqVkJpeXc"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114103,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-15",
+    "occasionLabel": "יום א' דחה\"פ",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1yuyelvmHaLiiOL9D_M5b33KoYwYnp1Gl"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1ryPdKzo0hin25T-Wqv7MOrIBeTbCpCGz"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114104,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-16",
+    "occasionLabel": "יום ב' דחה\"פ",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1jRlR4zHhbXyadHWNcYCELVl4UoezSWk5"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114105,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-21",
+    "occasionLabel": "שביעי של פסח",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1ghzOw0ZnOK0yykUXqZJ9r4wDpHoUWFvc"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114106,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-22",
+    "occasionLabel": "אחש\"פ",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1OC7QaKvMnwC6kPLVcBhqCqNnpB6TN72Z"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114107,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-24",
+    "occasionLabel": "שמיני, מבה\"ח אייר",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1DlXLk2eVKdt58rJbkE6NCSKmKnFDwvJg"
+      },
+      {
+        "section": "mugah",
+        "label": "הגדה של פסח ח\"ב ע' רנט (הדרן על מסכת פסחים)",
+        "driveFileId": "1R8nbdRUtDDeAUNEmjAmxd_7jgw3jLWhN"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114108,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-07-29",
+    "occasionLabel": "ליל אדר\"ח אייר",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1330.mp3",
+        "durationMs": 1906000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1dFhTrWEn0pm7EGhUHcxFYaaJUyoLfGqi"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114109,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-08-02",
+    "occasionLabel": "ב' אייר, שיחה להת' החוזרים לאה\"ק ת\"ו ולצרפת",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1335.mp3",
+        "durationMs": 416000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1HO-kVeEJqL40BUBxPVp3laq8uW_cH5Zr"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114110,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-08-29",
+    "occasionLabel": "במדבר, מבה\"ח וער\"ח סיון",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1wfMrD5y_iAZ2M4r6TEusDdlqOwrfsBYh"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114111,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-09-01",
+    "occasionLabel": "ר\"ח סיון, שיחה לנשי ובנות חב\"ד",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1336.mp3",
+        "durationMs": 1868000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1crpnw-_T3YiXir0S1xsmI-Ktlq4ktm8W"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114112,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-09-04",
+    "occasionLabel": "ליל ערב חה\"ש",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1337.mp3",
+        "durationMs": 1866000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "17DixmQyQ9XyUg5dt6mPWTUIrrDtECW2g"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [העתקת מענה לשאלה בהמאמר]",
+        "driveFileId": "1L6aoRD14j-_KU7Wx4JlJ8UE1CKwCIp1U"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114113,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-09-07",
+    "occasionLabel": "יום ב' דחה\"ש",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1_3sORjD0XNfFAtSaqUoWsnnQDdw3QpLW"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1AYttARwp1elIznRxgNSs7Kmeg9MkWC-S"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114114,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-09-14",
+    "occasionLabel": "נשא, י\"ד סיון",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "19sPDeRM_gv8F4wFA-k5kW0Gl8gjilLUw"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1Y-sObppJk8KPDPZBADCrBKDGqfRbG13M"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114115,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-09-26",
+    "occasionLabel": "כ\"ו סיון, שיחה להמסיימות ד\"בית רבקה\" ולהמדריכות ד\"מחנה אמונה\" ו\"פרדס חנה\" תחי'",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1340.mp3",
+        "durationMs": 1042000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1b2TeJvZoIDbqjhbFtYP1vS1Jq5YopxVa"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114116,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-09-28",
+    "occasionLabel": "שלח, מבה\"ח תמוז",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1F5iWqPgMulqbOMxI4uCAvo7QliTtqdYb"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114117,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-10-12",
+    "occasionLabel": "חו\"ב, י\"ב תמוז",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1a-sTwDz4L61IduHxeL3d0QJX9lwmVtjk"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114118,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-10-13",
+    "occasionLabel": "מוצאי י\"ג תמוז",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1341.mp3",
+        "durationMs": 1957000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1-diCarTWeE0YAS7zaTUgjtAk6A-JfVx8"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114119,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-10-19",
+    "occasionLabel": "פנחס, י\"ט תמוז",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1JFnZ0hULvGWpOoexfUE51GN27gxbBniW"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1y5r3vZeYcn9eFRqYQ22B_BEy5oIbNgKq"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1tKd_VDtWgE9sIZ32X75uFPBkTAJzCStg"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114120,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-10-26",
+    "occasionLabel": "מטו\"מ, מבה\"ח מנ\"א",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "187VzMVldVmRX2YcKkJ6oWsEm_XKksrnB"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "0B_UwzYOTIwDTS1NoakVXRDN4TzQ"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1TMZ-b-2UYw06l0TW_Ll1Gt9BLMYOkGP-"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114121,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-11-20",
+    "occasionLabel": "כ' מנ\"א",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1353.mp3",
+        "durationMs": 979000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1BUP_6tR3H7hfnyyEkrBU91PreKR5oRev"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114122,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-11-25",
+    "occasionLabel": "ראה, מבה\"ח אלול",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1ESYRhKoSXGsf1sXOjDG6hWgyxi0LVR0U"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114123,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-11-29",
+    "occasionLabel": "ליל אדר\"ח אלול",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1361.mp3",
+        "durationMs": 1791000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1fwz3IlTvT56I2iZYKAtvIfBkA7_QCkTu"
+      },
+      {
+        "section": "maamorim",
+        "label": "הנחה מילולית",
+        "driveFileId": "1BHIl8xW_3JjMuIe9IGfNnHZI1NoaQXYj"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [עלי ההגהה המלאים (קונטרס ר\"ח אלול תשמ\"ט)]",
+        "driveFileId": "1NaSwjPQBmJot52Mj_IQWyrUJNzETJeoO"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1BaE-gCEFtWeOJIBs0m0U5yrr_NHwHYW2"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114124,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-12-16",
+    "occasionLabel": "תבא, ט\"ז אלול",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1UF-lG_ASUQvsKle2VT0CNgSMn3oRp7pB"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114125,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-12-18",
+    "occasionLabel": "מוצאי ח\"י אלול",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1364.mp3",
+        "durationMs": 1749000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1kFdLg3XXE9cSrGlqxLmx1hzf523FkZ7b"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114126,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-12-23",
+    "occasionLabel": "נצו\"י כ\"ג אלול",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1fViCNmBYONfqDcMp5hizTBwgOWzojHru"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114127,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-12-26",
+    "occasionLabel": "כ\"ו אלול, שיחה להעסקניות דישיבות תות\"ל ו\"בית רבקה\" תחי'",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1369.mp3",
+        "durationMs": 964000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1jZi_kC5-_GemOx9px0xpwJgdglF1IByH"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114128,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-12-28",
+    "occasionLabel": "ליל ערב ר\"ה, כ\"ט אלול",
+    "audio": [
+      {
+        "workerFilename": "JEMSK1370.mp3",
+        "durationMs": 574000
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1UehfrLQIKbwA7C71vJmr1WVD3wPdQabl"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [עלי ההגהה המלאים דהמאמר]",
+        "driveFileId": "1CDwwDhUkjk38_Ju99b_SA1d19vmvX2_o"
+      }
+    ]
+  },
+  {
+    "occasionId": 11114129,
+    "hebrewYear": 5732,
+    "hebrewDate": "5732-12-29b",
+    "occasionLabel": "ערב ר\"ה, ברכה",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "מתורגם - תו\"מ התוועדויות",
+        "driveFileId": "1m-SEeEik9R2lPV9i7GAj6Su8hRQJEKuz"
+      }
+    ]
+  }
+]

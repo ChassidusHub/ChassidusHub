@@ -1,0 +1,9 @@
+{
+  "name": "sichos-kodesh",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ]
+}

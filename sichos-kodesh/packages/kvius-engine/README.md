@@ -31,6 +31,14 @@ happened to type into a chart.
   then — under the `'nearestKviusYear'` strategy — the nearest other
   kvius-matched year that actually has a recording. Never silently guesses; a
   fully unresolved occasion comes back as `{ status: 'gap', resolvedYear: null }`.
+- **Historical bounds** (`MIN_HISTORICAL_YEAR` / `MAX_HISTORICAL_YEAR`, both
+  exported): 5690-5752, the real span of `packages/mafteiach-index`'s
+  crawled catalog (verified against the database, not assumed).
+  `findMatchingYears` defaults to, and clamps any explicit range to, this
+  span by default — a kvius match outside it can never resolve to an actual
+  recording, so there's no reason to ever offer one as a candidate. Pass
+  `allowOutOfHistoricalRange: true` to search past it (calendar-math
+  testing/demos only; neither app does this).
 
 ## Usage
 
@@ -38,13 +46,13 @@ happened to type into a chart.
 import { buildMatchedSchedule, findMatchingYears } from '@sichos-kodesh/kvius-engine';
 
 const targetYear = 5786; // current Hebrew year
-const candidates = findMatchingYears(targetYear, { fromYear: 5680, toYear: 5785 });
+const candidates = findMatchingYears(targetYear); // defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR]
 const sourceYear = candidates[0].hebrewYear; // user picks one of these
 
 const schedule = buildMatchedSchedule(targetYear, sourceYear, {
   il: false, // Diaspora vs Israel Sedra schedule
   gapStrategy: 'nearestKviusYear',
-  matchingYearsRange: { fromYear: 5680, toYear: 5785 },
+  matchingYearsRange: { fromYear: 5690, toYear: 5752 },
   hasRecording: (year, occasionKey) => catalog.has(year, occasionKey), // app-supplied
   fixedOccasions: [
     { key: 'yud-tes-kislev', label: 'Yud-Tes Kislev', day: 19, month: 9 },

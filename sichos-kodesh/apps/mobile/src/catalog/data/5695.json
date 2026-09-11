@@ -1,0 +1,35 @@
+[
+  {
+    "occasionId": 11116112,
+    "hebrewYear": 5695,
+    "hebrewDate": "5695-01-00",
+    "occasionLabel": "שמבה\"ש [ורשא]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת כג",
+        "driveFileId": "1_nkSfIfAG69tKPXf8q-JoYN4DCAo0bt5"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116114,
+    "hebrewYear": 5695,
+    "hebrewDate": "5695-10-00",
+    "occasionLabel": "קיץ [בישיבת תו\"ת, ורשא]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "חלק א': ימי מלך ח\"א ע' 444 / שיחות קודש ע' 16",
+        "driveFileId": "1W_ZUFt4vBvdiyG8KNnqvkz9g5K_MQOKh"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "חלק ב': כפר חב\"ד גליון 1159 / שיחות קודש ע' 18",
+        "driveFileId": "1tDyCEM9919XyO4e1FuNUaZgvzSKD-hL_"
+      }
+    ]
+  }
+]
