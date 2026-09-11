@@ -1,7 +1,10 @@
 import { buildFixedDateSchedule, buildWeeklySchedule, findMatchingYears } from '@sichos-kodesh/kvius-engine';
-import { STARTER_FIXED_OCCASIONS, toMafteiachHebrewDateKey } from '@sichos-kodesh/catalog';
-import type { CatalogByYear, CatalogEntry } from '@sichos-kodesh/catalog';
-import { resolveThisWeek } from '../src/engine/resolveThisWeek';
+import { describe, expect, it } from 'vitest';
+import { STARTER_FIXED_OCCASIONS } from '../src/fixedOccasions.js';
+import { toMafteiachHebrewDateKey } from '../src/hebrewDateKey.js';
+import type { CatalogByYear } from '../src/catalogLookup.js';
+import { resolveThisWeek } from '../src/resolveThisWeek.js';
+import type { CatalogEntry } from '../src/types.js';
 
 const IL = false;
 
@@ -17,7 +20,7 @@ function makeEntry(hebrewYear: number, hebrewDate: string, hasAudio: boolean): C
 }
 
 describe('resolveThisWeek', () => {
-  it('resolves this week\'s regular Shabbos occasion to the source year\'s matching recording', () => {
+  it("resolves this week's regular Shabbos occasion to the source year's matching recording", () => {
     const targetYear = 5786;
     const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
     const weekIndex = 5;

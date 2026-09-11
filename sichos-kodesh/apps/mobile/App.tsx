@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { currentHebrewYear } from './src/engine/currentHebrewYear';
+import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { YearPickerScreen } from './src/screens/YearPickerScreen';
 import { ThisWeekScreen } from './src/screens/ThisWeekScreen';
 

@@ -6,6 +6,7 @@ import {
   fetchFromDrive,
   fetchFromJemAudioCdn,
   JEM_AUDIO_FILENAME_PATTERN,
+  withCors,
 } from '../src/index.js';
 
 describe('driveDownloadUrl', () => {
@@ -118,5 +119,29 @@ describe('fetchFromDrive', () => {
 
     const result = await fetchFromDrive('abc123');
     expect(result.status).toBe(502);
+  });
+});
+
+describe('withCors', () => {
+  it('adds Access-Control-Allow-Origin and a permissive method/header set', () => {
+    const wrapped = withCors(new Response('bytes', { status: 200 }));
+    expect(wrapped.headers.get('access-control-allow-origin')).toBe('*');
+    expect(wrapped.headers.get('access-control-allow-methods')).toContain('GET');
+    expect(wrapped.headers.get('access-control-allow-headers')).toContain('Range');
+  });
+
+  it('exposes Content-Range/Accept-Ranges/Content-Length so a service worker can slice a cached response for seeking', () => {
+    const wrapped = withCors(new Response('bytes'));
+    const exposed = wrapped.headers.get('access-control-expose-headers') ?? '';
+    expect(exposed).toContain('Content-Range');
+    expect(exposed).toContain('Accept-Ranges');
+    expect(exposed).toContain('Content-Length');
+  });
+
+  it('preserves the original status and existing headers rather than discarding them', () => {
+    const original = new Response('not found', { status: 404, headers: { 'content-type': 'text/plain' } });
+    const wrapped = withCors(original);
+    expect(wrapped.status).toBe(404);
+    expect(wrapped.headers.get('content-type')).toBe('text/plain');
   });
 });

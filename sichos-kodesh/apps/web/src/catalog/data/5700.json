@@ -1,0 +1,86 @@
+[
+  {
+    "occasionId": 11116117,
+    "hebrewYear": 5700,
+    "hebrewDate": "5700-07-02",
+    "occasionLabel": "ב' ניסן [ביהכ\"נ. פאריז]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת נג",
+        "driveFileId": "128TyAOAHPNVoycIjDARgoi2nZLP8Fti0"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116257,
+    "hebrewYear": 5700,
+    "hebrewDate": "5700-09-00",
+    "occasionLabel": "אייר-סיון(?) ה'ת\"ש, טרם צאתו את פאריז",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "hosofos",
+        "label": "קובץ כ\"ח סיון - יובל שנים ע' 12",
+        "driveFileId": "1uLh6fSMWXvG24Ck39nU9kC9hhgDUrhLr"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116238,
+    "hebrewYear": 5700,
+    "hebrewDate": "5700-09-30",
+    "occasionLabel": "חקת, אדר\"ח תמוז [וישי]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת מט",
+        "driveFileId": "1zZJP80xALcTSxehGK3ujhHqPHl6P_dC5"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116239,
+    "hebrewYear": 5700,
+    "hebrewDate": "5700-10-14",
+    "occasionLabel": "פנחס, י\"ד תמוז [וישי]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קב-קג",
+        "driveFileId": "1FlknDLAP4yJ-bfXQvubmnaLFBbDyhg-7"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116240,
+    "hebrewYear": 5700,
+    "hebrewDate": "5700-10-21",
+    "occasionLabel": "מטות, כ\"א תמוז [וישי]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת נא",
+        "driveFileId": "1FVvMncYvnhlSorAOMzdCWz6sPsErOp_q"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116242,
+    "hebrewYear": 5700,
+    "hebrewDate": "5700-11-17",
+    "occasionLabel": "ואתחנן, נחמו, י\"ג מנ\"א [וישי]",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת יג",
+        "driveFileId": "1UQEmBRa6KoDMhmHNjwGpoD9wOCOgepsu"
+      }
+    ]
+  }
+]

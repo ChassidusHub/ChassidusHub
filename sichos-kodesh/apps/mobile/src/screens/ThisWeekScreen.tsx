@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { resolveThisWeek } from '@sichos-kodesh/catalog';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
 import catalog from '../catalog/data';
@@ -7,7 +8,6 @@ import { downloadAudio, downloadPdf } from '../download/download';
 import { openPdf } from '../download/openPdf';
 import { loadLocalSound } from '../audio/playLocalFile';
 import type { LoadedSound } from '../audio/playLocalFile';
-import { resolveThisWeek } from '../engine/resolveThisWeek';
 
 interface Props {
   targetYear: number;

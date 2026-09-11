@@ -416,18 +416,44 @@ schedules) but not against an external ground truth yet.
   `ACTION_VIEW` intent — no bundled PDF renderer needed).
 - **Client-side kvius computation: decided, on-device for now.** The
   engine (and its GPL-2.0 `@hebcal/core` dependency — see open question #1)
-  runs directly inside the app bundle, computed live in
-  `apps/mobile/src/engine/resolveThisWeek.ts`. Safe for now because nothing
-  is distributed to anyone yet (no App Store/TestFlight/Play build shared
-  outside this repo) — **revisit before any real release**, per open
-  question #1's options.
+  runs directly inside the app bundle, computed live via
+  `resolveThisWeek`/`currentHebrewYear` (`packages/catalog/src/resolveThisWeek.ts`).
+  Safe for now because nothing is distributed to anyone yet (no App
+  Store/TestFlight/Play build shared outside this repo) — **revisit before
+  any real release**, per open question #1's options.
 - **Bridging the engine's abstract `occasionKey` to real data**: needed
   its own package, `packages/catalog` — the engine has no idea what
   Hebrew date `"week:12"` actually falls on in a given year (that's only
   stable *across* kvius-matched years), and mafteiach-index's `hebrew_date`
   strings use a different month-numbering convention than the engine's
   `HDate`-native one. See that package's README for the full bridge and
-  its real, verified date-key conversion.
+  its real, verified date-key conversion. `resolveThisWeek` and
+  `currentHebrewYear` live here (not in `apps/mobile`) specifically so
+  `apps/web` can share the exact same scheduling logic without
+  re-implementing it.
+
+## Web App (`apps/web`) — same MVP slice, for testing without a device
+
+A second, real client for the same thin MVP slice: a Vite + React +
+TypeScript **installable, offline-first PWA** (`vite-plugin-pwa`,
+`generateSW` mode), sharing `packages/catalog` and
+`packages/kvius-engine` with `apps/mobile` via the same npm workspace —
+same year-picker/this-week screens, same download-then-play-fully-offline
+behavior, just in a browser instead of a sideloaded APK. Built so testing
+doesn't require an Android device: any browser (desktop or mobile) can
+install it and use it fully offline after the first load. See
+`apps/web/README.md` for the real offline-caching details (service worker
+precache for the app shell, `CacheFirst` + Workbox range-request support
+for already-downloaded media, matching what `apps/mobile` gets from a
+local file). Deployed to Vercel.
+
+`services/media-proxy` needed one real addition to support a browser
+client: **CORS headers** (`Access-Control-Allow-Origin: *` — safe, since
+every route serves public, unauthenticated, read-only content) plus an
+`OPTIONS` preflight handler, since a service worker fetching in `cors`
+mode (required so Workbox can read `Content-Length` to slice a cached
+response for seeking) enforces the same-origin policy that
+`apps/mobile`'s plain `fetch` never had to deal with.
 
 ## Phased Roadmap
 
@@ -493,8 +519,9 @@ schedules) but not against an external ground truth yet.
    scoped — but it's real work, don't do it speculatively before knowing
    whether the app actually needs fully offline schedule computation).
    **Update**: decided (a-for-now) for the thin MVP — the engine runs
-   on-device (`apps/mobile/src/engine/resolveThisWeek.ts`), since nothing
-   is distributed to anyone yet and this is easy to change later (the
+   on-device (`packages/catalog/src/resolveThisWeek.ts`, shared by both
+   `apps/mobile` and `apps/web`), since nothing is distributed to anyone
+   yet and this is easy to change later (the
    engine is a clean, swappable dependency, not entangled with the rest of
    the app). This is **not** a final decision — revisit properly (options
    a/b/c above still all apply) before any real release.

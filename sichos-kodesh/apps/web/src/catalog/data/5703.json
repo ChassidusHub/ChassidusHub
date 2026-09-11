@@ -1,0 +1,96 @@
+[
+  {
+    "occasionId": 11116254,
+    "hebrewYear": 5703,
+    "hebrewDate": "5703-07-12",
+    "occasionLabel": "מצרע, שבת הגדול",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קעח",
+        "driveFileId": "1NmMWSg_Vd2nxiWeQb-u6oNzHLkG8V8GS"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116130,
+    "hebrewYear": 5703,
+    "hebrewDate": "5703-08-01",
+    "occasionLabel": "ליל ב' אייר",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחות קודש ע' 31",
+        "driveFileId": "1plVLA8nHFIMY3wxHjTrPdijO-U5P0In4"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116131,
+    "hebrewYear": 5703,
+    "hebrewDate": "5703-08-23",
+    "occasionLabel": "כ\"ג-ה אייר, בר מצוה",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קל",
+        "driveFileId": "1sDujU2iAoQS_v3nP0TBIMz9FN0zZBcC7"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116132,
+    "hebrewYear": 5703,
+    "hebrewDate": "5703-09-17",
+    "occasionLabel": "י\"ז סיון, סיום ש\"ס משנה בע\"פ",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "אג\"ק ח\"א אגרת פה",
+        "driveFileId": "1KedVFigWBWf1BBbkBbOiVFfMvJGzH-_C"
+      },
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קא",
+        "driveFileId": "1TQv_sAaMvFtt7AyT947LZXhjcgzus2Rb"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116133,
+    "hebrewYear": 5703,
+    "hebrewDate": "5703-11-13",
+    "occasionLabel": "ואתחנן, נחמו, י\"ג מנ\"א",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "צדי\"ק למלך ח\"ה",
+        "driveFileId": "1TAu6TwMwoXgXOmDeAAyDeBlpRRcADpbb"
+      }
+    ]
+  },
+  {
+    "occasionId": 11116134,
+    "hebrewYear": 5703,
+    "hebrewDate": "5703-12-00",
+    "occasionLabel": "תחלת אלול(?), נחום אבלים דרמ\"מ קונין",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "רשימות חוברת קפב",
+        "driveFileId": "1AHQZ4O6ElUNthcNdmX5MrJz7tGIeMukm"
+      },
+      {
+        "section": "hosofos",
+        "label": "צילום כתי\"ק הרשימה",
+        "driveFileId": "1lPgwYBtwMy-N5yRMqOQLjrN7gXxrl4IJ"
+      }
+    ]
+  }
+]

@@ -1,7 +1,9 @@
 import { buildMatchedSchedule } from '@sichos-kodesh/kvius-engine';
 import type { MatchedFixedEntry, MatchedWeeklyEntry, OccasionResolution } from '@sichos-kodesh/kvius-engine';
-import { findCatalogEntryForOccasion, hasRecording, STARTER_FIXED_OCCASIONS } from '@sichos-kodesh/catalog';
-import type { CatalogByYear, CatalogEntry } from '@sichos-kodesh/catalog';
+import { findCatalogEntryForOccasion, hasRecording } from './catalogLookup.js';
+import type { CatalogByYear } from './catalogLookup.js';
+import { STARTER_FIXED_OCCASIONS } from './fixedOccasions.js';
+import type { CatalogEntry } from './types.js';
 
 export interface ThisOccasion {
   label: string;
@@ -21,6 +23,9 @@ export interface ThisOccasion {
  * deliberate MVP simplification - showing every upcoming occasion in a
  * list is real, straightforward follow-up work, not core to proving the
  * download-and-play-offline pipeline this pass exists to prove.
+ *
+ * Shared by apps/mobile and apps/web - both need the identical
+ * kvius-to-catalog resolution, not two independently-maintained copies.
  */
 export function resolveThisWeek(
   targetYear: number,
