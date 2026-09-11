@@ -109,9 +109,38 @@ export async function fetchFromDrive(fileId: string): Promise<Response> {
   });
 }
 
-/** JEM's CloudFront distribution serves audio directly - no interstitial, no auth. Confirmed live. `range` is forwarded as-is so a player can seek within a track. */
+const AUDIO_FILE_EXTENSIONS = ['mp3', 'm4a', 'opus'] as const;
+
+/**
+ * JEM's CloudFront distribution serves audio directly - no interstitial,
+ * no auth. Confirmed live. `range` is forwarded as-is so a player can seek
+ * within a track.
+ *
+ * The extension in `filename` comes from packages/mafteiach-index's crawl
+ * of JEM's own ccdb API, which isn't always reliable about which of
+ * mp3/m4a/opus a recording actually is - confirmed directly against
+ * CloudFront: every "AR"-prefixed recording in the crawled dataset (586 of
+ * 1,268 total, not a rare edge case) is recorded as .mp3 but 404s there,
+ * while the exact same base filename exists as .m4a and .opus. Rather than
+ * trust the stored extension, try the other real ones on a 404/error
+ * before giving up - at most 2 extra upstream requests, and only when the
+ * first one fails, so the common case (already-correct extension) pays no
+ * added latency.
+ */
 export async function fetchFromJemAudioCdn(filename: string, range?: string | null): Promise<Response> {
-  return fetch(`${JEM_AUDIO_CDN_BASE}/${filename}`, range ? { headers: { Range: range } } : undefined);
+  const opts = range ? { headers: { Range: range } } : undefined;
+  const first = await fetch(`${JEM_AUDIO_CDN_BASE}/${filename}`, opts);
+  if (first.ok || first.status === 206) return first;
+
+  const dotIndex = filename.lastIndexOf('.');
+  const base = dotIndex === -1 ? filename : filename.slice(0, dotIndex);
+  const triedExt = dotIndex === -1 ? '' : filename.slice(dotIndex + 1);
+  for (const ext of AUDIO_FILE_EXTENSIONS) {
+    if (ext === triedExt) continue;
+    const alt = await fetch(`${JEM_AUDIO_CDN_BASE}/${base}.${ext}`, opts);
+    if (alt.ok || alt.status === 206) return alt;
+  }
+  return first; // none of the alternates worked either - return the original failure
 }
 
 /**
