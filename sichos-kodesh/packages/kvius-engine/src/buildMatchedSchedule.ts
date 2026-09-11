@@ -1,6 +1,6 @@
 import { resolveOccasion } from './gapHandling.js';
 import { kviusSignature, sameKvius } from './hebrewCalendar.js';
-import { MAX_HISTORICAL_YEAR, findMatchingYears } from './matching.js';
+import { findMatchingYears } from './matching.js';
 import { buildFixedDateSchedule, buildWeeklySchedule, weeklyOccasionKey } from './schedule.js';
 import type { BuildMatchedScheduleOptions, GapResolutionContext, MatchedSchedule } from './types.js';
 
@@ -13,19 +13,13 @@ import type { BuildMatchedScheduleOptions, GapResolutionContext, MatchedSchedule
  *
  * Throws if `sourceYear` isn't actually kvius-matched to `targetYear` —
  * callers should only offer years from {@link findMatchingYears} as source
- * year choices in the first place. Also throws if sourceYear is after 5752
- * unless allowPost5752 is true.
+ * year choices in the first place.
  */
 export function buildMatchedSchedule(
   targetYear: number,
   sourceYear: number,
   options: BuildMatchedScheduleOptions,
 ): MatchedSchedule {
-  if (sourceYear > MAX_HISTORICAL_YEAR && !options.allowPost5752) {
-    throw new RangeError(
-      `Hebrew year ${sourceYear} is after ${MAX_HISTORICAL_YEAR}; the Sichos Kodesh catalog ends in 5752.`,
-    );
-  }
   if (!sameKvius(kviusSignature(targetYear), kviusSignature(sourceYear))) {
     throw new RangeError(
       `Hebrew year ${sourceYear} is not kvius-matched to ${targetYear}; only offer source years returned by findMatchingYears()`,

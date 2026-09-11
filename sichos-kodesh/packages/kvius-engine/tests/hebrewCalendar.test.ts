@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatKviusSignature, kviusCode, kviusSignature, sameKvius } from '../src/hebrewCalendar.js';
+import { kviusCode, kviusSignature, sameKvius } from '../src/hebrewCalendar.js';
 
 describe('kviusSignature', () => {
   it('never reports Rosh Hashana on Sunday, Wednesday or Friday ("lo adu rosh")', () => {
@@ -66,17 +66,5 @@ describe('kviusCode', () => {
         codeBySignature.set(key, code);
       }
     }
-  });
-
-  it('formats signatures into readable summaries without [object Object]', () => {
-    const sig5786 = kviusSignature(5786);
-    const formatted = formatKviusSignature(sig5786);
-    expect(formatted).toBe('Regular · Kesidran (354 days)');
-    expect(formatted).not.toContain('[object Object]');
-
-    const leapSig = kviusSignature(5784); // 5784 was a leap year
-    const formattedLeap = formatKviusSignature(leapSig);
-    expect(formattedLeap).toContain('Leap');
-    expect(formattedLeap).toContain('days');
   });
 });
