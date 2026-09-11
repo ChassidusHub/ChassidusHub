@@ -44,7 +44,7 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
     };
   }, [pdf.driveFileId, pdf.resourceKey]);
 
-  const audio = entry.audio[0];
+  const hasAudio = entry.audio.length > 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,12 +60,12 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
       {state.status === 'ready' && (
         <Pdf
           source={{ uri: `file://${state.path}` }}
-          style={audio ? [styles.pdf, styles.pdfWithPlayer] : styles.pdf}
+          style={hasAudio ? [styles.pdf, styles.pdfWithPlayer] : styles.pdf}
           onError={(error) => setState({ status: 'error', message: String(error) })}
         />
       )}
 
-      {audio && <BottomAudioPlayer workerFilename={audio.workerFilename} />}
+      {hasAudio && <BottomAudioPlayer audio={entry.audio} />}
     </SafeAreaView>
   );
 }

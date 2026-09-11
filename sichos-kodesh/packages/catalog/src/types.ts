@@ -15,6 +15,15 @@ export interface CatalogAudio {
   /** The filename services/media-proxy's /jem-audio/:filename route expects - extracted from the resolved JEM CloudFront URL. */
   workerFilename: string;
   durationMs: number;
+  /**
+   * ccdb's own chapter label for this recording within its farbrengen
+   * (e.g. "Sicha 1", "Sicha 2", "Ma'amar") - a farbrengen is usually
+   * several separate recordings, not one, and `entry.audio`'s array
+   * order is already the real chapter/playback order (see
+   * packages/mafteiach-index's jemAudio.ts). Omitted on the rare
+   * recording ccdb itself doesn't name.
+   */
+  chapterName?: string;
 }
 
 export interface CatalogPdf {

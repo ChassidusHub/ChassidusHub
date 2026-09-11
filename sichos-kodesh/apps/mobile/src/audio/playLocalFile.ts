@@ -1,7 +1,8 @@
 import Sound from 'react-native-sound';
 
 export interface LoadedSound {
-  play: () => void;
+  /** `onEnd` (react-native-sound's own completion callback) fires once playback finishes on its own - BottomAudioPlayer uses it to auto-advance to the next chapter. */
+  play: (onEnd?: (success: boolean) => void) => void;
   pause: () => void;
   stop: () => void;
   release: () => void;
@@ -19,7 +20,7 @@ export function loadLocalSound(absolutePath: string): Promise<LoadedSound> {
         return;
       }
       resolve({
-        play: () => sound.play(),
+        play: (onEnd) => sound.play(onEnd),
         pause: () => sound.pause(),
         stop: () => sound.stop(),
         release: () => sound.release(),

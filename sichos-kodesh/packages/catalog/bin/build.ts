@@ -3,6 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MIN_HISTORICAL_YEAR } from '@sichos-kodesh/kvius-engine';
 import { buildCatalog } from '../src/buildCatalog.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,7 +18,13 @@ const outDir = arg('out', path.join(__dirname, '..', 'data'));
 
 const db = new DatabaseSync(dbPath, { readOnly: true });
 const byYear = buildCatalog(db);
-const years = Object.keys(byYear).sort((a, b) => Number(a) - Number(b));
+// Same floor as browsableYears/findMatchingYears: this app is scoped to the
+// current Rebbe's own Sichos Kodesh (5710 onward), not the Previous Rebbe's
+// pre-Nesius farbrengens - no bundled app ever looks up an earlier year, so
+// there's no reason to ship those year files at all.
+const years = Object.keys(byYear)
+  .filter((year) => Number(year) >= MIN_HISTORICAL_YEAR)
+  .sort((a, b) => Number(a) - Number(b));
 
 await mkdir(outDir, { recursive: true });
 let totalEntries = 0;

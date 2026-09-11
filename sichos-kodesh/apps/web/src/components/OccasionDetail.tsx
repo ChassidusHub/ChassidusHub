@@ -65,10 +65,12 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
       {entry.audio.length > 0 && (
         <section className="category">
           <p className="category-header">Audio</p>
-          {entry.audio.map((audio) => {
+          {entry.audio.map((audio, index) => {
             const state = audioStates[audio.workerFilename] ?? { status: 'idle' as const };
+            const chapterLabel = audio.chapterName ?? (entry.audio.length > 1 ? `Track ${index + 1}` : null);
             return (
               <div key={audio.workerFilename} className="card">
+                {chapterLabel && <p className="pdf-label">{chapterLabel}</p>}
                 {state.status === 'idle' && (
                   <button className="button" onClick={() => handleDownloadAudio(audio)}>
                     Download audio

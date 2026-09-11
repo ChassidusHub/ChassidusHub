@@ -70,7 +70,7 @@ export interface FixedDateOccasion {
 }
 
 export interface MatchingYearsOptions {
-  /** Lower bound for the scan. Defaults to MIN_HISTORICAL_YEAR (5690). */
+  /** Lower bound for the scan. Defaults to MIN_HISTORICAL_YEAR (5710). */
   fromYear?: number;
   /** Upper bound for the scan. Defaults to MAX_HISTORICAL_YEAR (5752). */
   toYear?: number;

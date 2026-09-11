@@ -18,6 +18,19 @@ import type { FarbrengenRecord, LinkRef } from './types.js';
  */
 export function openDatabase(path: string): DatabaseSync {
   const db = new DatabaseSync(path);
+
+  // One-time migration: `jem_audio` grew a `chapter_index`/`chapter_name`
+  // pair (see below) after the fix for a real bug where only one
+  // recording per farbrengen was ever resolved. This table is entirely
+  // derived (re-resolvable from ccdb via bin/resolveJemAudio.ts, never
+  // scraped ground truth like `occasions`/`links`), so an existing
+  // pre-migration table is just dropped and rebuilt rather than migrated
+  // in place - the next resolve run repopulates it correctly.
+  const existingJemAudioColumns = db.prepare("PRAGMA table_info(jem_audio)").all() as { name: string }[];
+  if (existingJemAudioColumns.length > 0 && !existingJemAudioColumns.some((c) => c.name === 'chapter_index')) {
+    db.exec('DROP TABLE jem_audio');
+  }
+
   db.exec(`
     PRAGMA journal_mode = WAL;
 
@@ -70,10 +83,16 @@ export function openDatabase(path: string): DatabaseSync {
 
     -- Resolved via JEM's own "ccdb" API (see src/jemAudio.ts) from the ashreinu.app
     -- player links already in the links table above - the direct, playable CDN
-    -- URL for each audio recording, not just the player-page link.
+    -- URL for each audio recording, not just the player-page link. One occasion
+    -- can have several rows (a farbrengen's separate sichas/maamar, each its own
+    -- recording) - chapter_index is their real playback order (as ccdb's own
+    -- sub_events order lists them), chapter_name their real ccdb label (e.g.
+    -- "Sicha 1", "Sicha 2", "Ma'amar") for a chapters-style player.
     CREATE TABLE IF NOT EXISTS jem_audio (
       occasion_id INTEGER NOT NULL REFERENCES occasions(id) ON DELETE CASCADE,
       ccdb_event_id INTEGER NOT NULL,
+      chapter_index INTEGER NOT NULL,
+      chapter_name TEXT,
       duration_ms INTEGER NOT NULL,
       url TEXT NOT NULL,
       file_format TEXT NOT NULL,
@@ -193,6 +212,9 @@ export function allKnownIds(db: DatabaseSync): number[] {
 
 export interface ResolvedJemAudio {
   ccdbEventId: number;
+  /** Real playback/chapter order (0-based) - see jem_audio's own schema comment. Assigned by the caller from the resolved recording's position, not derived here, since one recording can flatten into more than one row (rare multi-format assets) that must share the same index. */
+  chapterIndex: number;
+  chapterName: string | null;
   durationMs: number;
   url: string;
   fileFormat: string;
@@ -202,9 +224,9 @@ export interface ResolvedJemAudio {
 export function replaceJemAudio(db: DatabaseSync, occasionId: number, recordings: ResolvedJemAudio[], now: string): void {
   db.prepare('DELETE FROM jem_audio WHERE occasion_id = ?').run(occasionId);
   const insert = db.prepare(
-    'INSERT INTO jem_audio (occasion_id, ccdb_event_id, duration_ms, url, file_format, resolved_at) VALUES (?, ?, ?, ?, ?, ?)',
+    'INSERT INTO jem_audio (occasion_id, ccdb_event_id, chapter_index, chapter_name, duration_ms, url, file_format, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
   );
   for (const r of recordings) {
-    insert.run(occasionId, r.ccdbEventId, r.durationMs, r.url, r.fileFormat, now);
+    insert.run(occasionId, r.ccdbEventId, r.chapterIndex, r.chapterName, r.durationMs, r.url, r.fileFormat, now);
   }
 }
