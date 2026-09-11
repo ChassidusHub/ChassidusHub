@@ -1,5 +1,6 @@
-import { Fragment, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
+import type { WeekOccasion } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
 
@@ -10,6 +11,20 @@ interface Props {
 
 export function ThisWeekScreen({ sourceYear, onBack }: Props) {
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
+  const [selected, setSelected] = useState<WeekOccasion | null>(null);
+
+  if (selected) {
+    return (
+      <div className="screen">
+        <button className="back-link" onClick={() => setSelected(null)}>
+          {'< back to this week'}
+        </button>
+        <h1>{selected.entry.occasionLabel}</h1>
+        <p className="subtitle">{selected.gregorianDate}</p>
+        <OccasionDetail key={selected.entry.occasionId} entry={selected.entry} />
+      </div>
+    );
+  }
 
   return (
     <div className="screen">
@@ -23,14 +38,16 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
         <p className="gap-message">Nothing indexed for this week in {sourceYear} or nearby kvius-matched years.</p>
       )}
 
-      {occasions.map(({ entry, gregorianDate }) => (
-        <Fragment key={entry.occasionId}>
-          <h2 className="occasion-header">
-            {entry.occasionLabel} <span className="subtitle">({gregorianDate})</span>
-          </h2>
-          <OccasionDetail entry={entry} />
-        </Fragment>
-      ))}
+      <ul className="year-list">
+        {occasions.map((occasion) => (
+          <li key={occasion.entry.occasionId}>
+            <button className="year-row" onClick={() => setSelected(occasion)}>
+              <span className="year-row-year">{occasion.entry.occasionLabel}</span>
+              <span className="year-row-distance">{occasion.gregorianDate}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
+import type { WeekOccasion } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
 
@@ -9,12 +10,32 @@ interface Props {
   onBack: () => void;
 }
 
+function Separator() {
+  return <View style={styles.separator} />;
+}
+
 export function ThisWeekScreen({ sourceYear, onBack }: Props) {
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
+  const [selected, setSelected] = useState<WeekOccasion | null>(null);
+
+  if (selected) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Pressable onPress={() => setSelected(null)}>
+            <Text style={styles.back}>{'< back to this week'}</Text>
+          </Pressable>
+          <Text style={styles.title}>{selected.entry.occasionLabel}</Text>
+          <Text style={styles.subtitle}>{selected.gregorianDate}</Text>
+          <OccasionDetail key={selected.entry.occasionId} entry={selected.entry} />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         <Pressable onPress={onBack}>
           <Text style={styles.back}>{'< change year'}</Text>
         </Pressable>
@@ -24,16 +45,19 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
         {occasions.length === 0 && (
           <Text style={styles.gap}>Nothing indexed for this week in {sourceYear} or nearby kvius-matched years.</Text>
         )}
-
-        {occasions.map(({ entry, gregorianDate }) => (
-          <View key={entry.occasionId} style={styles.occasion}>
-            <Text style={styles.sectionHeader}>
-              {entry.occasionLabel} ({gregorianDate})
-            </Text>
-            <OccasionDetail entry={entry} />
-          </View>
-        ))}
-      </ScrollView>
+      </View>
+      <FlatList
+        data={occasions}
+        keyExtractor={(item) => String(item.entry.occasionId)}
+        renderItem={({ item }) => (
+          <Pressable style={styles.row} onPress={() => setSelected(item)}>
+            <Text style={styles.rowText}>{item.entry.occasionLabel}</Text>
+            <Text style={styles.rowSubtext}>{item.gregorianDate}</Text>
+          </Pressable>
+        )}
+        ItemSeparatorComponent={Separator}
+        contentContainerStyle={styles.list}
+      />
     </SafeAreaView>
   );
 }
@@ -41,10 +65,13 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
+  list: { paddingHorizontal: 16 },
   back: { color: '#3366cc', marginBottom: 12 },
   title: { fontSize: 24, fontWeight: '600' },
   subtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
-  occasion: { marginBottom: 16 },
-  sectionHeader: { fontSize: 16, fontWeight: '600', color: '#333', marginTop: 8, marginBottom: 8 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14 },
+  rowText: { fontSize: 16, flexShrink: 1 },
+  rowSubtext: { fontSize: 13, color: '#888' },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#ccc' },
   gap: { fontSize: 15, color: '#a33', marginTop: 16 },
 });

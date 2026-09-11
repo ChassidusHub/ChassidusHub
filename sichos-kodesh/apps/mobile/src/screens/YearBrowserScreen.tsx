@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
+import { mafteiachMonthName } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
@@ -9,8 +10,25 @@ interface Props {
   onBack: () => void;
 }
 
+interface MonthSection {
+  title: string;
+  data: CatalogEntry[];
+}
+
 function Separator() {
   return <View style={styles.separator} />;
+}
+
+/** Entries are already sorted chronologically (see buildCatalog) - grouping consecutive same-month runs is enough. */
+function groupByMonth(entries: CatalogEntry[]): MonthSection[] {
+  const sections: MonthSection[] = [];
+  for (const entry of entries) {
+    const month = mafteiachMonthName(entry.hebrewDate);
+    const last = sections[sections.length - 1];
+    if (last && last.title === month) last.data.push(entry);
+    else sections.push({ title: month, data: [entry] });
+  }
+  return sections;
 }
 
 /**
@@ -41,6 +59,8 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
     );
   }
 
+  const sections = groupByMonth(entries);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -52,9 +72,10 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
           {entries.length} occasion{entries.length === 1 ? '' : 's'} indexed
         </Text>
       </View>
-      <FlatList
-        data={entries}
+      <SectionList
+        sections={sections}
         keyExtractor={(item) => String(item.occasionId)}
+        renderSectionHeader={({ section }) => <Text style={styles.sectionHeader}>{section.title}</Text>}
         renderItem={({ item }) => (
           <Pressable style={styles.row} onPress={() => setSelected(item)}>
             <Text style={styles.rowText}>{item.occasionLabel}</Text>
@@ -67,6 +88,7 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
         )}
         ItemSeparatorComponent={Separator}
         contentContainerStyle={styles.list}
+        stickySectionHeadersEnabled={false}
       />
     </SafeAreaView>
   );
@@ -79,6 +101,7 @@ const styles = StyleSheet.create({
   back: { color: '#3366cc', marginBottom: 12 },
   title: { fontSize: 22, fontWeight: '600' },
   subtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
+  sectionHeader: { fontSize: 13, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 16, marginBottom: 4 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14 },
   rowText: { fontSize: 16, flexShrink: 1 },
   rowSubtext: { fontSize: 13, color: '#888' },

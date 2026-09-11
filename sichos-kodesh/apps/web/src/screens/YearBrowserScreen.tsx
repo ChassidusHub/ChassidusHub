@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { mafteiachMonthName } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
@@ -6,6 +7,23 @@ import { OccasionDetail } from '../components/OccasionDetail';
 interface Props {
   hebrewYear: number;
   onBack: () => void;
+}
+
+interface MonthGroup {
+  month: string;
+  entries: CatalogEntry[];
+}
+
+/** Entries are already sorted chronologically (see buildCatalog) - grouping consecutive same-month runs is enough. */
+function groupByMonth(entries: CatalogEntry[]): MonthGroup[] {
+  const groups: MonthGroup[] = [];
+  for (const entry of entries) {
+    const month = mafteiachMonthName(entry.hebrewDate);
+    const last = groups[groups.length - 1];
+    if (last && last.month === month) last.entries.push(entry);
+    else groups.push({ month, entries: [entry] });
+  }
+  return groups;
 }
 
 /**
@@ -34,6 +52,8 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
     );
   }
 
+  const monthGroups = groupByMonth(entries);
+
   return (
     <div className="screen">
       <button className="back-link" onClick={onBack}>
@@ -41,20 +61,25 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
       </button>
       <h1>Hebrew year {hebrewYear}</h1>
       <p className="subtitle">{entries.length} occasion{entries.length === 1 ? '' : 's'} indexed</p>
-      <ul className="year-list">
-        {entries.map((entry) => (
-          <li key={entry.occasionId}>
-            <button className="year-row" onClick={() => setSelected(entry)}>
-              <span className="year-row-year">{entry.occasionLabel}</span>
-              <span className="year-row-distance">
-                {entry.audio.length > 0 ? 'audio' : ''}
-                {entry.audio.length > 0 && entry.pdfs.length > 0 ? ' + ' : ''}
-                {entry.pdfs.length > 0 ? `${entry.pdfs.length} pdf${entry.pdfs.length === 1 ? '' : 's'}` : ''}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {monthGroups.map((group) => (
+        <div key={group.month}>
+          <p className="category-header">{group.month}</p>
+          <ul className="year-list">
+            {group.entries.map((entry) => (
+              <li key={entry.occasionId}>
+                <button className="year-row" onClick={() => setSelected(entry)}>
+                  <span className="year-row-year">{entry.occasionLabel}</span>
+                  <span className="year-row-distance">
+                    {entry.audio.length > 0 ? 'audio' : ''}
+                    {entry.audio.length > 0 && entry.pdfs.length > 0 ? ' + ' : ''}
+                    {entry.pdfs.length > 0 ? `${entry.pdfs.length} pdf${entry.pdfs.length === 1 ? '' : 's'}` : ''}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }

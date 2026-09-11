@@ -49,20 +49,6 @@ h1 {
   margin: 0 0 20px;
 }
 
-.occasion-header {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 24px 0 12px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-.occasion-header:first-of-type {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
 .category-header {
   color: var(--muted);
   font-size: 0.8125rem;
