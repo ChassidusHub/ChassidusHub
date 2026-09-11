@@ -53,11 +53,12 @@ Built and working:
   each recording's real name (e.g. "Sicha 1", "Ma'amar") and duration, and
   auto-advance into the next chapter when one ends.
 - A settings screen (`src/screens/SettingsScreen.tsx`) lets the user
-  prefer one printed edition (Sefer HaSichos/HaMaamarim vs. Toras
-  Menachem, persisted via AsyncStorage) - `OccasionDetail` puts PDFs
-  matching that preference first within each category (see
-  `packages/catalog`'s `classifyPdfEdition`/`sortPdfsByEditionPreference`),
-  without hiding the other edition.
+  prefer one hanacha (Sichos Kodesh, Sefer HaSichos/HaMaamarim, or Toras
+  Menachem - three real, distinct transcript series, persisted via
+  AsyncStorage) - `OccasionDetail` puts PDFs matching that preference
+  first within each category (see `packages/catalog`'s
+  `classifyPdfEdition`/`sortPdfsByEditionPreference`), without hiding the
+  other editions.
 
 Deliberately not built yet (see `docs/PLANNING.md`'s Phase 3):
 - Batch month/year downloads, zip bundling.

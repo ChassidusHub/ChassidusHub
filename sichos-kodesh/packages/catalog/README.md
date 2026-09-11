@@ -101,15 +101,18 @@ not a date one.
 
 ## Preferred printed edition (`pdfEdition.ts`)
 
-Many mugah/biltiMugah/maamorim occasions have PDFs citing two parallel
-printed series for the same content: the "Sefer" family (סה"ש - Sefer
-HaSichos, סה"מ - Sefer HaMaamarim) or Toras Menachem (תו"מ).
-`classifyPdfEdition(label)` detects which (a label can cite both, e.g.
-"סה"ש/ תו"מ התוועדויות"); `sortPdfsByEditionPreference(pdfs, preference)`
-stable-sorts a section's PDFs so ones matching the user's stored
-preference come first, without hiding the rest - real citation variety is
-part of what this dataset is for, a preference just picks what shows up
-first.
+mugah/biltiMugah/maamorim/hosofos occasions have PDFs citing one of three
+real, distinct hanachos (transcripts) - not variants of each other, so
+conflating them is a real bug, not a simplification: **Sichos Kodesh**
+(שיחו"ק - the original, less-edited yearly transcripts this app is named
+for, and by far the largest series in the real data, e.g. 2,446 of
+biltiMugah's citations), the **Sefer** family (סה"ש - Sefer HaSichos, סה"מ
+- Sefer HaMaamarim), and **Toras Menachem** (תו"מ). `classifyPdfEdition(label)`
+detects which (a label can cite more than one, e.g. "סה"ש/ תו"מ
+התוועדויות"); `sortPdfsByEditionPreference(pdfs, preference)` stable-sorts a
+section's PDFs so ones matching the user's stored preference come first,
+without hiding the rest - real citation variety is part of what this
+dataset is for, a preference just picks what shows up first.
 
 ## Building the catalog (`buildCatalog.ts` / `bin/build.ts`)
 
