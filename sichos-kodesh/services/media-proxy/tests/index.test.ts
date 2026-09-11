@@ -76,6 +76,48 @@ describe('fetchFromJemAudioCdn', () => {
       headers: { Range: 'bytes=0-1023' },
     });
   });
+
+  it('falls back to .m4a then .opus when the stored extension 404s - real "AR"-prefixed recordings are mislabeled .mp3 in mafteiach-index but only exist as .m4a/.opus on CloudFront', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('not found', { status: 404 }))
+      .mockResolvedValueOnce(new Response('real audio bytes', { status: 200 }));
+    const result = await fetchFromJemAudioCdn('AR0017467.mp3');
+    expect(await result.text()).toBe('real audio bytes');
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(1, 'https://dtgj2yu3gmlic.cloudfront.net/AR0017467.mp3', undefined);
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(2, 'https://dtgj2yu3gmlic.cloudfront.net/AR0017467.m4a', undefined);
+  });
+
+  it('tries .opus only after both the original extension and .m4a fail', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('not found', { status: 404 }))
+      .mockResolvedValueOnce(new Response('not found', { status: 404 }))
+      .mockResolvedValueOnce(new Response('real audio bytes', { status: 200 }));
+    const result = await fetchFromJemAudioCdn('AR0017467.mp3');
+    expect(await result.text()).toBe('real audio bytes');
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(3, 'https://dtgj2yu3gmlic.cloudfront.net/AR0017467.opus', undefined);
+  });
+
+  it('preserves a Range header across the fallback attempts', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('not found', { status: 404 }))
+      .mockResolvedValueOnce(new Response('partial bytes', { status: 206 }));
+    await fetchFromJemAudioCdn('AR0017467.mp3', 'bytes=0-1023');
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(2, 'https://dtgj2yu3gmlic.cloudfront.net/AR0017467.m4a', {
+      headers: { Range: 'bytes=0-1023' },
+    });
+  });
+
+  it('returns the original failure when no extension works, rather than an alternate error', async () => {
+    const originalFailure = new Response('not found', { status: 404 });
+    globalThis.fetch = vi.fn().mockResolvedValue(originalFailure);
+    const result = await fetchFromJemAudioCdn('AR0017467.mp3');
+    expect(result).toBe(originalFailure);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3); // mp3 (original) + m4a + opus
+  });
 });
 
 describe('fetchFromDrive', () => {
