@@ -3,6 +3,7 @@ export { extractDriveFileId } from './driveLinks.js';
 export { toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 export { browsableYears, entryHasContent, findCatalogEntryForOccasion, hasContent } from './catalogLookup.js';
 export { STARTER_FIXED_OCCASIONS } from './fixedOccasions.js';
+export { PDF_SECTION_LABELS, PDF_SECTION_ORDER } from './pdfSections.js';
 export { currentHebrewYear } from './currentHebrewYear.js';
 export { resolveThisWeek } from './resolveThisWeek.js';
 export type { CatalogByYear } from './catalogLookup.js';

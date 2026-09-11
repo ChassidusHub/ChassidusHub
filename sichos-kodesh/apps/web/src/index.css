@@ -49,10 +49,31 @@ h1 {
   margin: 0 0 20px;
 }
 
-.section-header {
+.occasion-header {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 24px 0 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.occasion-header:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.category-header {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   margin: 16px 0 8px;
+}
+
+.category:first-of-type .category-header {
+  margin-top: 0;
 }
 
 .gap-message {
