@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractDriveFileId } from '../src/driveLinks.js';
+import { extractDriveFileId, isReshimosLabel } from '../src/driveLinks.js';
 
 describe('extractDriveFileId', () => {
   it('extracts the file id from a real share-link shape (view, sharing param)', () => {
@@ -20,5 +20,27 @@ describe('extractDriveFileId', () => {
 
   it('returns null for a Drive URL that is not the /file/d/ share shape', () => {
     expect(extractDriveFileId('https://drive.google.com/drive/folders/1abc')).toBeNull();
+  });
+});
+
+describe('isReshimosLabel', () => {
+  it('matches real reshima-labeled PDF links from the crawled dataset', () => {
+    // Verified against the real database: these exact labels exist on
+    // PDF links in packages/mafteiach-index/mafteiach.db.
+    for (const label of [
+      'רשימת כ"ק אד"ש',
+      'רשימות חוברת יג',
+      'רשימת הגהות לקונ\' בענין מקדש מעט זה בית רבינו שבבבל',
+      'צילום הרשימה בכתי"ק',
+      'רשימה - מאמר',
+    ]) {
+      expect(isReshimosLabel(label)).toBe(true);
+    }
+  });
+
+  it('does not match a real sicha/maamar link label', () => {
+    // Real mugah link label from a genuine farbrengen occasion (5740, ליל י"ג שבט).
+    expect(isReshimosLabel(`שיחו"ק/ ח"כ ע' 574`)).toBe(false);
+    expect(isReshimosLabel('תו"מ התוועדויות')).toBe(false);
   });
 });

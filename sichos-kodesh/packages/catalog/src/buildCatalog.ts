@@ -1,5 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
-import { extractDriveFileId } from './driveLinks.js';
+import { extractDriveFileId, isReshimosLabel } from './driveLinks.js';
 import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from './types.js';
 
 const PDF_SECTIONS: readonly PdfSection[] = ['mugah', 'biltiMugah', 'maamorim', 'hagahos', 'hosofos'];
@@ -40,7 +40,10 @@ function workerFilenameFromUrl(url: string): string | null {
  * bin/resolveJemAudio.ts) and Drive-hosted PDF links are included - a
  * catalog entry with neither is a genuine gap, kept in the output (not
  * filtered out) so the app can show "nothing available" rather than
- * silently omitting the occasion.
+ * silently omitting the occasion. Reshima-labeled PDF links (see
+ * `isReshimosLabel`) are dropped - this app is scoped to farbrengen
+ * sichos/maamarim, not the Rebbe's private notes or the separate
+ * "Reshimos" series (a real future feature, not in scope now).
  */
 export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
   const occasions = db.prepare('SELECT id, hebrew_year, hebrew_date, occasion_label FROM occasions').all() as unknown as OccasionRow[];
@@ -61,6 +64,7 @@ export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
 
   const pdfsByOccasion = new Map<number, CatalogPdf[]>();
   for (const row of linkRows) {
+    if (isReshimosLabel(row.label)) continue; // a reshima (the Rebbe's private notes, or the separate "Reshimos" series) isn't a sicha/farbrengen transcript
     const driveFileId = extractDriveFileId(row.url);
     if (!driveFileId) continue; // not every link in these sections is a Drive share link (sie.org, chabad.org, etc.)
     const list = pdfsByOccasion.get(row.occasion_id) ?? [];

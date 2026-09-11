@@ -291,11 +291,6 @@
       },
       {
         "section": "hosofos",
-        "label": "רשימת כ\"ק אד\"ש",
-        "driveFileId": "10zBRpLHcMVCLY3GGUQb-k31u2Q3tOHX6"
-      },
-      {
-        "section": "hosofos",
         "label": "עם פענוחים",
         "driveFileId": "12pW3ebzQM-yyTCp2iSIdpVZUgZ_RC2Vc"
       }
@@ -433,11 +428,6 @@
         "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1W69UsH_QERHSON7icC1vfYOPHzwsnTul"
-      },
-      {
-        "section": "hagahos",
-        "label": "חתונות ובר מצוה - רשימה",
-        "driveFileId": "1RyX3I45Kgfu9uTGMNx5G338xUt39XYeo"
       }
     ]
   },
@@ -497,11 +487,6 @@
       },
       {
         "section": "hagahos",
-        "label": "חתונות ובר מצוה - רשימה",
-        "driveFileId": "1RyX3I45Kgfu9uTGMNx5G338xUt39XYeo"
-      },
-      {
-        "section": "hagahos",
         "label": "הגהות (קונטרס לכה דודי) - ליקוט יד כסלו",
         "driveFileId": "1M99W6eWQyjg2Pa95EBKDe8_1x2fKRdYl"
       }
@@ -540,11 +525,6 @@
       },
       {
         "section": "hagahos",
-        "label": "רשימה - מאמר",
-        "driveFileId": "153Vwrkj1dRLCj-E_FsPjQlc8h3eb9XYN"
-      },
-      {
-        "section": "hagahos",
         "label": "הגהות על המאמר",
         "driveFileId": "1mkwy8oKUEg8cOnpjZWGw5UYXYa_a6_W2"
       },
@@ -552,11 +532,6 @@
         "section": "hagahos",
         "label": "עלי הגהה - שיחה - לקו\"ש ח\"א ע' 195",
         "driveFileId": "15Cd9LEYsML6sFCvSotJ3zmKbdR9_UnNI"
-      },
-      {
-        "section": "hosofos",
-        "label": "רשימת כ\"ק אד\"ש",
-        "driveFileId": "1sNJTRdwC4QVVes2MHc1lU1fB9TJmeeWO"
       }
     ]
   },
@@ -595,16 +570,6 @@
         "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1b1pfDCnHzbz8bpipqv7wlbu8fcab6bSV"
-      },
-      {
-        "section": "hagahos",
-        "label": "רשימה - מאמר",
-        "driveFileId": "1QXD-8CoRqVXE0mzkbUeJVW6j2eczNwaa"
-      },
-      {
-        "section": "hosofos",
-        "label": "רשימת כ\"ק אד\"ש",
-        "driveFileId": "1NymgDMBD7chN1rBWY4JChTy-Dw8vo4K3"
       }
     ]
   },
@@ -634,21 +599,6 @@
     "occasionLabel": "ג' ניסן, שיחה בקבלת פנים",
     "audio": [],
     "pdfs": [
-      {
-        "section": "hagahos",
-        "label": "עמוד הראשון של רשימת כ\"ק אד\"ש",
-        "driveFileId": "18dJtvR4Llco42jg4EckYs5z1oDFiGSXd"
-      },
-      {
-        "section": "hagahos",
-        "label": "חתונות ובר מצוה - רשימה",
-        "driveFileId": "1RyX3I45Kgfu9uTGMNx5G338xUt39XYeo"
-      },
-      {
-        "section": "hosofos",
-        "label": "רשימת כ\"ק אד\"ש",
-        "driveFileId": "1E3AkXdHz8kpZFCr6_2UyX0OjJuRao9zK"
-      },
       {
         "section": "hosofos",
         "label": "עם פענוחים",
@@ -1060,11 +1010,6 @@
         "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1oQ7hqvboFocXB2H54jYQMkiyr3BWJb5m"
-      },
-      {
-        "section": "hagahos",
-        "label": "חתונות ובר מצוה - רשימה",
-        "driveFileId": "1RyX3I45Kgfu9uTGMNx5G338xUt39XYeo"
       }
     ]
   },
