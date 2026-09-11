@@ -97,3 +97,9 @@ This repo doesn't have Cloudflare account credentials — `wrangler login`
 set up locally or in CI before `deploy` will work. The free Workers plan
 (100k requests/day) is enough to start; upgrade to the $5/mo plan (10M
 requests/month) only once real usage approaches that.
+
+Until this is deployed for real, `apps/mobile/src/config.ts`'s
+`MEDIA_PROXY_BASE_URL` is a placeholder (`https://REPLACE-ME.workers.dev`)
+- after running `wrangler deploy`, paste the real `*.workers.dev` URL it
+prints in place of that placeholder (or point it at a `wrangler dev` LAN
+address for local testing without deploying at all).

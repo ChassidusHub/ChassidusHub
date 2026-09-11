@@ -376,31 +376,58 @@ schedules) but not against an external ground truth yet.
 
 ## Mobile App & Offline Downloads
 
-Largely unchanged from the original brief's direction, with one addition:
-
-- **Framework: React Native (Expo, with a dev client for native modules)**
-  — the concrete reason to prefer this over Flutter here is that the kvius
-  engine is TypeScript and can be a **directly shared package** between
-  backend and app in one repo/monorepo, with zero re-implementation or
-  cross-language serialization of the scheduling logic. That's a real
-  engineering win specific to this project's shape, not just a generic
-  "React Native is popular" argument.
-- **Background/resumable downloads**: `react-native-background-downloader`
-  (wraps native `URLSession` background config on iOS, `DownloadManager` on
-  Android) rather than `fetch`/blob-based downloading, which doesn't
-  reliably survive backgrounding — especially on iOS, where the OS
-  fully owns background download scheduling and a plain in-JS fetch will
-  be killed. iOS additionally caps concurrent background transfers and
-  gives no hard timing guarantee on resumption; Android's WorkManager path
-  is more flexible but still wants a foreground service for large,
-  user-visible downloads (month/year bundles).
-- **Offline packaging**: unchanged from the original brief — zip the
-  month/year batch server-side or at CDN-build time, single resumable
-  download, unzip locally right after (e.g. `react-native-zip-archive` or
-  equivalent), captions burned in or bundled so playback never calls out.
-- **Client-side kvius computation**: see the licensing flag directly below
-  before deciding whether the engine ships inside the app bundle or stays
-  server-side.
+- **Framework: React Native, bare CLI (not Expo)** — the concrete reason to
+  prefer React Native over Flutter here is unchanged: the kvius engine is
+  TypeScript and can be a **directly shared package** between backend and
+  app in one repo/monorepo (see `apps/mobile`'s dependency on
+  `@sichos-kodesh/kvius-engine` and `@sichos-kodesh/catalog` via npm
+  workspaces), with zero re-implementation or cross-language serialization
+  of the scheduling logic. The earlier plan called for Expo specifically
+  for its dev-client tooling around native modules — that rationale
+  evaporates once there's no managed workflow to begin with, and the
+  user's explicit preference is a plain Gradle Android project that
+  produces installable APKs directly (`./gradlew assembleDebug`), not an
+  Expo/EAS-managed build. See `.github/workflows/android-apk.yml`: a debug
+  APK is built and published to a floating `latest-dev-build` GitHub
+  Release on every push — one stable download link, no Mac, no paid Apple
+  account, no EAS account needed to get a build onto a device.
+- A real, non-obvious wrinkle hit building this: **npm workspace hoisting
+  breaks React Native's default Gradle config** for an app that isn't at
+  the repo root. `apps/mobile/android/settings.gradle`'s generated
+  `includeBuild("../node_modules/@react-native/gradle-plugin")` assumes
+  the package lives in the app's own `node_modules`, but workspace
+  hoisting puts it at the repo root instead — fixed by adjusting the
+  relative path to `../../../node_modules/...` (documented inline in that
+  file). Anyone regenerating `android/` from a fresh RN CLI template in
+  this repo will need to reapply that fix.
+- **Downloads, as built for the thin MVP**: `react-native-blob-util`
+  (`apps/mobile/src/download/download.ts`) for single-file foreground
+  downloads through `services/media-proxy`'s `/jem-audio/:filename` and
+  `/drive/:fileId` routes. `react-native-background-downloader` (surviving
+  app backgrounding, needed once batch month/year downloads are real) is
+  deliberately deferred to Phase 3 — a single on-demand download doesn't
+  need it, and pulling it in now would be scope the thin MVP doesn't
+  require.
+- **Offline packaging**: unchanged from the original brief for batch
+  downloads (zip the month/year batch, single resumable download, unzip
+  locally) — real Phase 3 work, not built yet. For the thin MVP, one file
+  at a time is downloaded and played/opened directly (audio via
+  `react-native-sound`, PDFs via the OS's own viewer through an Android
+  `ACTION_VIEW` intent — no bundled PDF renderer needed).
+- **Client-side kvius computation: decided, on-device for now.** The
+  engine (and its GPL-2.0 `@hebcal/core` dependency — see open question #1)
+  runs directly inside the app bundle, computed live in
+  `apps/mobile/src/engine/resolveThisWeek.ts`. Safe for now because nothing
+  is distributed to anyone yet (no App Store/TestFlight/Play build shared
+  outside this repo) — **revisit before any real release**, per open
+  question #1's options.
+- **Bridging the engine's abstract `occasionKey` to real data**: needed
+  its own package, `packages/catalog` — the engine has no idea what
+  Hebrew date `"week:12"` actually falls on in a given year (that's only
+  stable *across* kvius-matched years), and mafteiach-index's `hebrew_date`
+  strings use a different month-numbering convention than the engine's
+  `HDate`-native one. See that package's README for the full bridge and
+  its real, verified date-key conversion.
 
 ## Phased Roadmap
 
@@ -419,18 +446,25 @@ Largely unchanged from the original brief's direction, with one addition:
   kvius engine) → JEM licensing conversation → a conversation with
   mafteiach.app's maintainers about terms for using their editorial
   content-outline text (not the bibliographic metadata, which needs no
-  permission to use internally). Decide the rights strategy before writing
-  any more app code that assumes self-hosted media. Cross-check the
-  engine's computed matched-years list against berel.me's chart once
-  accessible, and against the now-real mafteiach-index dataset.
-- **Phase 2 — MVP**: build the actual `CatalogEntry` table by joining
-  `findMatchingYears`' output against the mafteiach-index dataset (real
-  data now, not a placeholder), for a small pilot (3–5 kvius-matched year
-  clusters, whatever's actually cleared for media). CDN-hosted media (or
-  link-out to JEM/RebbeDrive/ashreinu.app players if media isn't cleared
-  yet). React Native/Expo app: pick a source year from `findMatchingYears`,
-  view the engine-computed schedule, download individual items, offline
-  playback.
+  permission to use internally). **Still hasn't happened** — but per the
+  user's explicit direction, Phase 2 proceeded anyway for **private,
+  pre-launch development only** (nothing distributed to anyone outside
+  this repo): the same posture already established for JEM's ccdb API and
+  the Google Drive fallback. Decide the rights strategy before any real
+  release; cross-check the engine's computed matched-years list against
+  berel.me's chart once accessible, and against the now-real
+  mafteiach-index dataset.
+- **Phase 2 — MVP, done (private/pre-launch)**: `packages/catalog` joins
+  `packages/mafteiach-index`'s crawled dataset (all 3,424 occasions, not a
+  pilot subset) into the app-facing `CatalogEntry` shape and bridges the
+  engine's `occasionKey` scheme to real dates. `apps/mobile` (bare React
+  Native, see above) picks a source year from `findMatchingYears`, shows
+  the current week's (or an imminent fixed-date occasion's) matched
+  content, downloads it through `services/media-proxy`, and plays/opens it
+  fully offline. Deliberately thin: one occasion at a time, no batch
+  download, no gap-handling UI beyond a plain "no recording available"
+  message — see `apps/mobile`'s own scope notes for what's intentionally
+  deferred to Phase 3.
 - **Phase 3 — v1**: month/year batch download + zip bundling, gap-handling
   UI (surface `'gap'` occasions and let the user set manual overrides),
   push notification when the week's content is ready, minimal
@@ -458,6 +492,12 @@ Largely unchanged from the original brief's direction, with one addition:
    are public-domain math/halacha, so this is legally safe and technically
    scoped — but it's real work, don't do it speculatively before knowing
    whether the app actually needs fully offline schedule computation).
+   **Update**: decided (a-for-now) for the thin MVP — the engine runs
+   on-device (`apps/mobile/src/engine/resolveThisWeek.ts`), since nothing
+   is distributed to anyone yet and this is easy to change later (the
+   engine is a clean, swappable dependency, not entangled with the rest of
+   the app). This is **not** a final decision — revisit properly (options
+   a/b/c above still all apply) before any real release.
 2. **Rights strategy is undecided** and gates everything downstream —
    self-host with JEM license, partner with RebbeDrive, or link-out only.
 3. **RebbeDrive partnership feasibility is untested** — no outreach made

@@ -20,3 +20,8 @@ packages/jem-index/data/
 packages/jem-index/*.db
 packages/jem-index/*.db-shm
 packages/jem-index/*.db-wal
+
+# packages/catalog's own standalone output dir (its committed output lives
+# bundled inside apps/mobile/src/catalog/data instead, generated from real
+# bibliographic metadata only - see that package's README).
+packages/catalog/data/
