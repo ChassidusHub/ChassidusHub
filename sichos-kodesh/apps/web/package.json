@@ -17,6 +17,7 @@
     "@hebcal/core": "^6.9.2",
     "@sichos-kodesh/catalog": "^0.1.0",
     "@sichos-kodesh/kvius-engine": "^0.1.0",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

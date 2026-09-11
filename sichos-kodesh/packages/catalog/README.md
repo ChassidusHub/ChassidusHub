@@ -75,6 +75,33 @@ catalog. The one exception: a day that rolls into the *next* Hebrew year
 `sourceYear`, since kvius matching is per-year — those days are skipped
 rather than mismatched.
 
+## Display helpers for a browsed year and a PDF section (`mafteiachMonth.ts`, `pdfSections.ts`)
+
+`mafteiachMonthName(hebrewDate)` names a raw mafteiach-index date key's
+month (Tishrei..Elul, splitting a leap year's Adar I/Adar II) - used by
+both apps to group a browsed year's occasion list under month headers
+instead of one long flat list.
+
+`PDF_SECTION_ORDER` / `PDF_SECTION_LABELS` give a display order and short
+label for each `PdfSection` (mugah, biltiMugah, maamorim, hagahos,
+hosofos) - both apps group an occasion's PDFs under a category header per
+section, since several real labels are short and generic on their own
+(hagahos's "צילום 1"/"צילום 2" - literally "scan 1"/"scan 2", real site
+text, not a bug) and only make sense next to a header saying what they're
+scans *of*.
+
+## Preferred printed edition (`pdfEdition.ts`)
+
+Many mugah/biltiMugah/maamorim occasions have PDFs citing two parallel
+printed series for the same content: the "Sefer" family (סה"ש - Sefer
+HaSichos, סה"מ - Sefer HaMaamarim) or Toras Menachem (תו"מ).
+`classifyPdfEdition(label)` detects which (a label can cite both, e.g.
+"סה"ש/ תו"מ התוועדויות"); `sortPdfsByEditionPreference(pdfs, preference)`
+stable-sorts a section's PDFs so ones matching the user's stored
+preference come first, without hiding the rest - real citation variety is
+part of what this dataset is for, a preference just picks what shows up
+first.
+
 ## Building the catalog (`buildCatalog.ts` / `bin/build.ts`)
 
 Reads `packages/mafteiach-index`'s `occasions` / `links` / `jem_audio`

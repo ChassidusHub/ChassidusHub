@@ -26,18 +26,30 @@ Built and working:
   not a gap).
 - Two ways to pick a year, both on `YearPickerScreen`: **Follow along**
   (kvius-matched years only, via `findMatchingYears`, leads to
-  `ThisWeekScreen`'s auto-resolved current occasion) and **Browse any
+  `ThisWeekScreen`'s list of this week's occasions) and **Browse any
   year** (every indexed year via `browsableYears`, no kvius match
-  required, leads to `YearBrowserScreen`'s full list of that year's
-  occasions — there's no "this week" to compute for a year with no
-  guaranteed week/date alignment to the current one).
-- `src/components/OccasionDetail.tsx` — the shared download/play card
-  used by both `ThisWeekScreen` and `YearBrowserScreen`.
+  required, leads to `YearBrowserScreen`'s list of that year's occasions,
+  grouped by Hebrew month — there's no "this week" to compute for a year
+  with no guaranteed week/date alignment to the current one). Both
+  screens are list-then-detail: tap a date to see its categories/downloads.
+- `src/components/OccasionDetail.tsx` — the shared download/read card
+  used by both `ThisWeekScreen` and `YearBrowserScreen`. Groups content
+  into labeled categories (Audio, then each PDF section present, sorted so
+  a PDF matching the user's edition preference comes first) rather than
+  one flat pile of buttons.
 - Real downloads through `services/media-proxy`'s `/jem-audio/:filename`
   and `/drive/:fileId` routes (`src/download/download.ts`), basic
-  play/pause via `react-native-sound`, PDFs opened through the OS's own
-  viewer via an Android `ACTION_VIEW` intent (`src/download/openPdf.ts`)
-  — no bundled PDF renderer.
+  play/pause via `react-native-sound`, PDFs rendered directly in-app via
+  `react-native-pdf` (`src/screens/PdfViewerScreen.tsx`) rather than
+  handed off to the OS's own viewer - so an occasion's own recording can
+  keep playing in a persistent bottom bar (`BottomAudioPlayer`) while its
+  pages are scrolled through.
+- A settings screen (`src/screens/SettingsScreen.tsx`) lets the user
+  prefer one printed edition (Sefer HaSichos/HaMaamarim vs. Toras
+  Menachem, persisted via AsyncStorage) - `OccasionDetail` puts PDFs
+  matching that preference first within each category (see
+  `packages/catalog`'s `classifyPdfEdition`/`sortPdfsByEditionPreference`),
+  without hiding the other edition.
 
 Deliberately not built yet (see `docs/PLANNING.md`'s Phase 3):
 - Batch month/year downloads, zip bundling.
@@ -45,9 +57,6 @@ Deliberately not built yet (see `docs/PLANNING.md`'s Phase 3):
   a single foreground download is enough for one file at a time.
 - A gap-handling UI with manual overrides (a gap just shows a plain
   message right now).
-- Only one occasion is shown at a time (an imminent fixed-date occasion
-  takes priority over the regular Shabbos schedule within a 7-day
-  lookahead) — a list view is real, straightforward follow-up work.
 
 ## Media proxy
 

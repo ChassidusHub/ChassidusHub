@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 import { mafteiachMonthName } from '@sichos-kodesh/catalog';
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, CatalogPdf } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
+import { PdfViewerScreen } from './PdfViewerScreen';
 
 interface Props {
   hebrewYear: number;
@@ -43,6 +44,11 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
   // indexed the occasion but nothing was resolved for it) is not worth a dead-end row.
   const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
   const [selected, setSelected] = useState<CatalogEntry | null>(null);
+  const [viewingPdf, setViewingPdf] = useState<CatalogPdf | null>(null);
+
+  if (selected && viewingPdf) {
+    return <PdfViewerScreen key={viewingPdf.driveFileId} entry={selected} pdf={viewingPdf} onBack={() => setViewingPdf(null)} />;
+  }
 
   if (selected) {
     return (
@@ -53,7 +59,7 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
           </Pressable>
           <Text style={styles.title}>{selected.occasionLabel}</Text>
           <Text style={styles.subtitle}>{selected.hebrewDate}</Text>
-          <OccasionDetail key={selected.occasionId} entry={selected} />
+          <OccasionDetail key={selected.occasionId} entry={selected} onOpenPdf={setViewingPdf} />
         </ScrollView>
       </SafeAreaView>
     );

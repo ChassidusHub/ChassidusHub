@@ -418,8 +418,10 @@ schedules) but not against an external ground truth yet.
   downloads (zip the month/year batch, single resumable download, unzip
   locally) — real Phase 3 work, not built yet. For the thin MVP, one file
   at a time is downloaded and played/opened directly (audio via
-  `react-native-sound`, PDFs via the OS's own viewer through an Android
-  `ACTION_VIEW` intent — no bundled PDF renderer needed).
+  `react-native-sound`; PDFs rendered directly in-app via `react-native-pdf`
+  on mobile / `pdfjs-dist` on web, with an occasion's own recording
+  playable in a persistent bottom bar underneath, rather than handed off to
+  the OS's/browser's own viewer).
 - **Client-side kvius computation: decided, on-device for now.** The
   engine (and its GPL-2.0 `@hebcal/core` dependency — see open question #1)
   runs directly inside the app bundle, computed live via

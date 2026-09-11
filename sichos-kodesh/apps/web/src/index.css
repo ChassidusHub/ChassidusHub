@@ -160,3 +160,104 @@ h1 {
   text-decoration: none;
   box-sizing: border-box;
 }
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.year-row-selected {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* PDF viewer */
+
+.pdf-viewer-screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+}
+
+.pdf-viewer-screen.has-player {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+.pdf-viewer-header {
+  margin-bottom: 12px;
+}
+
+.pdf-viewer-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.pdf-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-page {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Bottom audio player - stays put while the PDF above it scrolls, so an
+   occasion's recording can keep playing while its pages are read. */
+
+.bottom-player {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
+.bottom-player-toggle {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+
+.bottom-player-scrub {
+  flex: 1;
+  min-width: 0;
+}
+
+.bottom-player-range {
+  width: 100%;
+}
+
+.bottom-player-times {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.75rem;
+}

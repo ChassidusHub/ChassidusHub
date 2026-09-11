@@ -9,13 +9,14 @@ interface Props {
   targetYear: number;
   onSelectKviusYear: (hebrewYear: number) => void;
   onSelectBrowseYear: (hebrewYear: number) => void;
+  onOpenSettings: () => void;
 }
 
 function Separator() {
   return <View style={styles.separator} />;
 }
 
-export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowseYear }: Props) {
+export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowseYear, onOpenSettings }: Props) {
   const [tab, setTab] = useState<'kvius' | 'browse'>('kvius');
 
   // No range options: defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR],
@@ -27,7 +28,12 @@ export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowse
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Sichos Kodesh</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Sichos Kodesh</Text>
+        <Pressable onPress={onOpenSettings}>
+          <Text style={styles.settingsLink}>⚙</Text>
+        </Pressable>
+      </View>
       <Text style={styles.subtitle}>
         Hebrew year {targetYear} (kvius {kviusCode(targetYear)})
       </Text>
@@ -81,6 +87,8 @@ export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowse
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  settingsLink: { fontSize: 20, color: '#888' },
   title: { fontSize: 22, fontWeight: '600' },
   subtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
   tabs: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#ccc', marginBottom: 4 },
