@@ -128,10 +128,27 @@ export async function fetchFromJemAudioCdn(filename: string, range?: string | nu
  * (an easy thing to silently get wrong: a proxy that ignores the client's
  * Range header and always returns 200-with-everything still "works" in
  * that audio plays, but seeking breaks or re-downloads the whole file).
+ *
+ * `contentType`, when passed, overrides whatever upstream sent - needed
+ * because Drive's `uc?export=download` endpoint returns a generic
+ * `application/octet-stream` for every file regardless of its real type
+ * (confirmed with a real PDF), so trusting it would stop a browser from
+ * ever rendering a PDF inline.
+ *
+ * `Content-Disposition: inline` (not `attachment`), when a filename is
+ * given: apps/web opens this same URL directly (`window.open`/`<a
+ * target="_blank">`) so a browser shows the PDF, not a forced download -
+ * `attachment` overrides that regardless of Content-Type and silently
+ * routes the file to the Downloads folder instead, which looks exactly
+ * like "nothing happened." `inline` still carries the filename as a
+ * save-as hint. This has no effect on apps/mobile, which downloads bytes
+ * directly via react-native-blob-util and opens the local file through
+ * its own explicit `application/pdf` Android intent - neither header from
+ * this response is consulted there.
  */
-function cleanResponseHeaders(upstream: Response, filename: string | null): Headers {
+export function cleanResponseHeaders(upstream: Response, filename: string | null, contentType?: string): Headers {
   const headers = new Headers({
-    'Content-Type': upstream.headers.get('content-type') ?? 'application/octet-stream',
+    'Content-Type': contentType ?? upstream.headers.get('content-type') ?? 'application/octet-stream',
     'Cache-Control': `public, max-age=${CACHE_TTL_SECONDS}`,
     'Accept-Ranges': upstream.headers.get('accept-ranges') ?? 'bytes',
   });
@@ -140,7 +157,7 @@ function cleanResponseHeaders(upstream: Response, filename: string | null): Head
   const contentRange = upstream.headers.get('content-range');
   if (contentRange) headers.set('Content-Range', contentRange);
   if (filename) {
-    headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    headers.set('Content-Disposition', `inline; filename="${encodeURIComponent(filename)}"`);
   }
   return headers;
 }
@@ -153,7 +170,13 @@ async function handleDrive(fileId: string, filename: string | null): Promise<Res
   if (!upstream.ok) {
     return new Response(`Upstream fetch failed with status ${upstream.status}`, { status: 502 });
   }
-  return new Response(upstream.body, { status: upstream.status, headers: cleanResponseHeaders(upstream, filename) });
+  // /drive/:fileId only ever serves the mugah/biltiMugah/maamorim/hagahos/hosofos
+  // PDF links packages/catalog extracts - always a PDF, so force the type
+  // rather than trust Drive's generic upstream content-type.
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: cleanResponseHeaders(upstream, filename, 'application/pdf'),
+  });
 }
 
 async function handleJemAudio(filename: string, range: string | null): Promise<Response> {
