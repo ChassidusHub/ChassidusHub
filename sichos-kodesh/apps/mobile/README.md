@@ -35,13 +35,12 @@ Deliberately not built yet (see `docs/PLANNING.md`'s Phase 3):
   takes priority over the regular Shabbos schedule within a 7-day
   lookahead) — a list view is real, straightforward follow-up work.
 
-## Before running this for real
+## Media proxy
 
-`src/config.ts`'s `MEDIA_PROXY_BASE_URL` is a placeholder
-(`https://REPLACE-ME.workers.dev`) — `services/media-proxy` has never
-been deployed live (see that package's README). Either run
-`wrangler deploy` from `services/media-proxy` and paste the real URL in,
-or point it at a `wrangler dev` LAN address for local testing.
+`src/config.ts`'s `MEDIA_PROXY_BASE_URL` points at the live deployed
+Worker (`services/media-proxy`) - verified working with a real ranged
+request. Redeploying that service updates the same URL in place; no
+change needed here unless the Worker itself is renamed or moved.
 
 ## Running it
 
