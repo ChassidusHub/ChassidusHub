@@ -31,6 +31,11 @@ export default defineConfig({
       workbox: {
         // The catalog data + JS/CSS app shell - precached so the app itself works offline immediately.
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // Bundled catalog data (all years, inlined into the JS chunk) has grown
+        // past workbox's 2 MiB default as more PDF links/resourceKeys were
+        // recovered from the real dataset - raise the cap rather than drop
+        // precaching, since offline-from-first-load is the point.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             // Matches the deployed services/media-proxy origin - see src/config.ts. Both
