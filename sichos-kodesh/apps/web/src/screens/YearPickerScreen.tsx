@@ -7,9 +7,10 @@ interface Props {
   targetYear: number;
   onSelectKviusYear: (hebrewYear: number) => void;
   onSelectBrowseYear: (hebrewYear: number) => void;
+  onOpenSettings: () => void;
 }
 
-export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowseYear }: Props) {
+export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowseYear, onOpenSettings }: Props) {
   const [tab, setTab] = useState<'kvius' | 'browse'>('kvius');
 
   // No range options: defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR],
@@ -21,7 +22,12 @@ export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowse
 
   return (
     <div className="screen">
-      <h1>Sichos Kodesh</h1>
+      <div className="header-row">
+        <h1>Sichos Kodesh</h1>
+        <button className="settings-link" onClick={onOpenSettings} aria-label="Settings">
+          ⚙
+        </button>
+      </div>
       <p className="subtitle">
         Hebrew year {targetYear} (kvius {kviusCode(targetYear)})
       </p>

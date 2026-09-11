@@ -5,6 +5,8 @@ export { browsableYears, entryHasContent, findCatalogEntryForOccasion, hasConten
 export { STARTER_FIXED_OCCASIONS } from './fixedOccasions.js';
 export { PDF_SECTION_LABELS, PDF_SECTION_ORDER } from './pdfSections.js';
 export { mafteiachMonthName, mafteiachMonthToken } from './mafteiachMonth.js';
+export { classifyPdfEdition, sortPdfsByEditionPreference } from './pdfEdition.js';
+export type { PdfEdition } from './pdfEdition.js';
 export { currentHebrewYear } from './currentHebrewYear.js';
 export { resolveThisWeek } from './resolveThisWeek.js';
 export type { CatalogByYear } from './catalogLookup.js';

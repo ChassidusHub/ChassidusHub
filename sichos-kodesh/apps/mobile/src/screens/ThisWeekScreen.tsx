@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
-import type { WeekOccasion } from '@sichos-kodesh/catalog';
+import type { CatalogPdf, WeekOccasion } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
+import { PdfViewerScreen } from './PdfViewerScreen';
 
 interface Props {
   sourceYear: number;
@@ -17,6 +18,11 @@ function Separator() {
 export function ThisWeekScreen({ sourceYear, onBack }: Props) {
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
   const [selected, setSelected] = useState<WeekOccasion | null>(null);
+  const [viewingPdf, setViewingPdf] = useState<CatalogPdf | null>(null);
+
+  if (selected && viewingPdf) {
+    return <PdfViewerScreen key={viewingPdf.driveFileId} entry={selected.entry} pdf={viewingPdf} onBack={() => setViewingPdf(null)} />;
+  }
 
   if (selected) {
     return (
@@ -27,7 +33,7 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
           </Pressable>
           <Text style={styles.title}>{selected.entry.occasionLabel}</Text>
           <Text style={styles.subtitle}>{selected.gregorianDate}</Text>
-          <OccasionDetail key={selected.entry.occasionId} entry={selected.entry} />
+          <OccasionDetail key={selected.entry.occasionId} entry={selected.entry} onOpenPdf={setViewingPdf} />
         </ScrollView>
       </SafeAreaView>
     );

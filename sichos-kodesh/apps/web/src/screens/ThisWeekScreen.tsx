@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
-import type { WeekOccasion } from '@sichos-kodesh/catalog';
+import type { CatalogPdf, WeekOccasion } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
+import { PdfViewerScreen } from './PdfViewerScreen';
 
 interface Props {
   sourceYear: number;
@@ -12,6 +13,11 @@ interface Props {
 export function ThisWeekScreen({ sourceYear, onBack }: Props) {
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
   const [selected, setSelected] = useState<WeekOccasion | null>(null);
+  const [viewingPdf, setViewingPdf] = useState<CatalogPdf | null>(null);
+
+  if (selected && viewingPdf) {
+    return <PdfViewerScreen key={viewingPdf.driveFileId} entry={selected.entry} pdf={viewingPdf} onBack={() => setViewingPdf(null)} />;
+  }
 
   if (selected) {
     return (
@@ -21,7 +27,7 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
         </button>
         <h1>{selected.entry.occasionLabel}</h1>
         <p className="subtitle">{selected.gregorianDate}</p>
-        <OccasionDetail key={selected.entry.occasionId} entry={selected.entry} />
+        <OccasionDetail key={selected.entry.occasionId} entry={selected.entry} onOpenPdf={setViewingPdf} />
       </div>
     );
   }

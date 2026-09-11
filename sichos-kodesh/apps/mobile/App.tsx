@@ -13,8 +13,13 @@ import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { YearPickerScreen } from './src/screens/YearPickerScreen';
 import { ThisWeekScreen } from './src/screens/ThisWeekScreen';
 import { YearBrowserScreen } from './src/screens/YearBrowserScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 
-type View = { kind: 'pick' } | { kind: 'thisWeek'; sourceYear: number } | { kind: 'browseYear'; hebrewYear: number };
+type View =
+  | { kind: 'pick' }
+  | { kind: 'thisWeek'; sourceYear: number }
+  | { kind: 'browseYear'; hebrewYear: number }
+  | { kind: 'settings' };
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -30,11 +35,13 @@ function App() {
       {view.kind === 'browseYear' && (
         <YearBrowserScreen hebrewYear={view.hebrewYear} onBack={() => setView({ kind: 'pick' })} />
       )}
+      {view.kind === 'settings' && <SettingsScreen onBack={() => setView({ kind: 'pick' })} />}
       {view.kind === 'pick' && (
         <YearPickerScreen
           targetYear={targetYear}
           onSelectKviusYear={(sourceYear) => setView({ kind: 'thisWeek', sourceYear })}
           onSelectBrowseYear={(hebrewYear) => setView({ kind: 'browseYear', hebrewYear })}
+          onOpenSettings={() => setView({ kind: 'settings' })}
         />
       )}
     </SafeAreaProvider>
