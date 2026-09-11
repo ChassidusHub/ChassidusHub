@@ -68,9 +68,26 @@ function parseAudioSection($: Cheerio$): FarbrengenDetail['audio'] {
   return { hasContent: links.length > 0, links };
 }
 
-function parseVideoSection(rawHtml: string): FarbrengenDetail['video'] {
+/**
+ * Video has two distinct real shapes, confirmed against the full crawled
+ * corpus (not just a couple of examples): a `sicha_video-button` that
+ * embeds a YouTube player via `addYouTubeEmbed(id, ...)`, or - about a
+ * quarter of all video occasions - a plain outbound `<a class="...
+ * video-button button">` (chabad.org's Living Torah player, JEM's
+ * videos.jem.tv, Vimeo, Drive, and a legacy 770live.com all appear as real
+ * hosts). A fragment's video slot is always one or the other, never both,
+ * but both are checked unconditionally rather than assuming that.
+ */
+function parseVideoSection($: Cheerio$, rawHtml: string): FarbrengenDetail['video'] {
   const youtubeIds = [...rawHtml.matchAll(/addYouTubeEmbed\('([^']+)'/g)].map((m) => m[1]!);
-  return { hasContent: youtubeIds.length > 0, youtubeIds };
+  const links: LinkRef[] = [];
+  $('a[class*="video-button"]').each((_, el) => {
+    const $el = $(el);
+    const url = $el.attr('href');
+    if (!url) return;
+    links.push({ label: $el.text().trim() || 'video', url });
+  });
+  return { hasContent: youtubeIds.length > 0 || links.length > 0, youtubeIds, links };
 }
 
 /** Shared by `tochenInyanim` and `hosofos`: free-text editorial content, possibly with inline links, wrapped in a `.trix-content` block. */
@@ -103,7 +120,7 @@ export function parseFragmentPage(rawResponse: string, id: number): FarbrengenDe
     detail[key] = parseLinkSection($, contentClass);
   }
   detail.audio = parseAudioSection($);
-  detail.video = parseVideoSection(html);
+  detail.video = parseVideoSection($, html);
   detail.tochenInyanim = parseNoteSection($, 'tochen_inyonim-content');
   detail.hosofos = parseNoteSection($, 'hosofos-content');
   return detail;

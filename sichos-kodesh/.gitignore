@@ -8,3 +8,6 @@ dist/
 # (resumable/reproducible from the crawler code instead of a data dump).
 packages/mafteiach-index/.cache/
 packages/mafteiach-index/data/
+packages/mafteiach-index/*.db
+packages/mafteiach-index/*.db-shm
+packages/mafteiach-index/*.db-wal

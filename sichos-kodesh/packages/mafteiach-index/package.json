@@ -18,8 +18,10 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "crawl": "tsx bin/crawl.ts"
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "crawl": "tsx bin/crawl.ts",
+    "load-db": "tsx bin/loadIntoDb.ts",
+    "sync": "tsx bin/sync.ts"
   },
   "license": "ISC",
   "dependencies": {

@@ -21,6 +21,16 @@ export interface VideoSection {
   hasContent: boolean;
   /** YouTube video ids embedded via mafteiach.app's addYouTubeEmbed(id, ...) calls. */
   youtubeIds: string[];
+  /**
+   * Direct video links mafteiach.app renders as a plain outbound link
+   * (like `audio`) rather than an embedded YouTube player - confirmed
+   * real hosts: chabad.org's Living Torah player, JEM's videos.jem.tv /
+   * jem.tv / jemtv.page.link, player.vimeo.com, drive.google.com, and a
+   * legacy 770live.com. `hasContent` is true if either this or
+   * `youtubeIds` is non-empty - a farbrengen's video slot is always one
+   * or the other, never both.
+   */
+  links: LinkRef[];
 }
 
 /**
@@ -46,6 +56,15 @@ export interface NoteSection {
  * `hosofos` ("more" / addenda) is free-text like `tochenInyanim` — verified
  * against real examples of both (see tests/fixtures), not assumed
  * symmetric just because they're presented as similar-looking tabs.
+ *
+ * Pre-Nesius entries (`isPreNesius: true`) use a reduced 3-button template
+ * instead of the usual 9, confirmed against real examples: `biltiMugah`'s
+ * slot is always disabled (labeled "הנחות" but never populated anywhere in
+ * the real dataset), and the slot labeled "רשימות" (Reshimos - diary-style
+ * notes, not an edited sicha) reuses the *same* CSS class as `mugah`, so
+ * it lands in `mugah.links` here. No data is lost, but for a pre-Nesius
+ * record `mugah` means "Reshimos," not "an edited sicha" - a caller
+ * distinguishing the two should branch on `isPreNesius`.
  */
 export interface FarbrengenDetail {
   id: number;

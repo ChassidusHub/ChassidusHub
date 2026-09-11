@@ -169,17 +169,29 @@ inspection (not the original brief's assumption) found:
 
   | Has... | Count | % of 3,424 |
   |---|---|---|
-  | Mugah text | 2,011 | 59% |
+  | Mugah text (or Reshimos, for pre-Nesius entries) | 2,011 | 59% |
   | Bilti-mugah (hanacha) text | 3,067 | 90% |
-  | Any recording (audio or video) | 1,311 | 38% |
+  | **Any recording (audio or video)** | **1,314** | **38%** |
   | — audio (ashreinu.app) | 1,303 | 38% |
-  | — video (YouTube) | 518 | 15% |
+  | — video, total | 671 | 20% |
+  | — — via embedded YouTube | 518 | 15% |
+  | — — via a direct outbound link (chabad.org, JEM, Vimeo, etc.) | 153 | 4% |
   | Maamorim | 1,544 | 45% |
   | English translation | 1,245 | 36% |
   | mafteiach.app content-outline | 2,723 | 80% |
   | Hagahos (annotations) | 1,287 | 38% |
   | Hosofos (addenda) | 309 | 9% |
-  | Neither text nor recording (label/date only) | 66 | 2% |
+
+  A post-crawl completeness audit (inventorying every button/class
+  literally appearing across all 3,424 cached responses, not just the
+  samples used to build the parser) caught one real gap: 153 of those 671
+  video-bearing occasions turned out to use a plain outbound link
+  (mirroring how `audio` already worked) rather than an embedded YouTube
+  player, and were originally reported as having no video at all. Fixed —
+  see `packages/mafteiach-index/README.md`'s "Completeness audit" section
+  for the full writeup, including a second finding (pre-Nesius entries use
+  a reduced 3-button template where the מוגה-labeled slot actually holds
+  Reshimos/diary notes) that needed no code fix, just documentation.
 
   (Rows aren't mutually exclusive — most entries have several.) The
   headline finding for the app's core feature: **only 38% of indexed
