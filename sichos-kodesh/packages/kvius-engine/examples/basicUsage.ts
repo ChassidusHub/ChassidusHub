@@ -1,5 +1,12 @@
 import { HDate } from '@hebcal/core';
-import { buildMatchedSchedule, findMatchingYears, kviusCode, kviusSignature } from '../src/index.js';
+import {
+  MAX_HISTORICAL_YEAR,
+  MIN_HISTORICAL_YEAR,
+  buildMatchedSchedule,
+  findMatchingYears,
+  kviusCode,
+  kviusSignature,
+} from '../src/index.js';
 
 const today = new HDate(new Date());
 const targetYear = today.getFullYear();
@@ -8,8 +15,11 @@ console.log(`Today: ${today.render('en')} (Hebrew year ${targetYear})`);
 console.log('Kvius signature:', kviusSignature(targetYear));
 console.log('Kvius code:', kviusCode(targetYear));
 
-const matches = findMatchingYears(targetYear, { fromYear: targetYear - 120, toYear: targetYear - 1 });
-console.log(`\n${matches.length} kvius-matched years in the last 120 years:`);
+// No range options: defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR] -
+// the real span of packages/mafteiach-index's crawled catalog - so this is
+// exactly the candidate list the app's year picker actually shows.
+const matches = findMatchingYears(targetYear);
+console.log(`\n${matches.length} kvius-matched years in the real catalog (${MIN_HISTORICAL_YEAR}-${MAX_HISTORICAL_YEAR}):`);
 console.log(matches.map((m) => m.hebrewYear).join(', '));
 
 const sourceYear = matches[0]?.hebrewYear;
@@ -33,7 +43,7 @@ const hasRecording = (year: number, occasionKey: string) => {
 const schedule = buildMatchedSchedule(targetYear, sourceYear, {
   il: false,
   gapStrategy: 'nearestKviusYear',
-  matchingYearsRange: { fromYear: targetYear - 200, toYear: targetYear - 1 },
+  matchingYearsRange: { fromYear: MIN_HISTORICAL_YEAR, toYear: MAX_HISTORICAL_YEAR },
   hasRecording,
   fixedOccasions: [
     { key: 'yud-tes-kislev', label: 'Yud-Tes Kislev', day: 19, month: 9 },

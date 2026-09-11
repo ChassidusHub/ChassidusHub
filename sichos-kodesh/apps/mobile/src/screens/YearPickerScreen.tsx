@@ -8,14 +8,16 @@ interface Props {
   onSelectYear: (hebrewYear: number) => void;
 }
 
-const MATCH_RANGE_YEARS = 120;
-
 function Separator() {
   return <View style={styles.separator} />;
 }
 
 export function YearPickerScreen({ targetYear, onSelectYear }: Props) {
-  const matches = findMatchingYears(targetYear, { fromYear: targetYear - MATCH_RANGE_YEARS, toYear: targetYear });
+  // No range options: defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR],
+  // the real span of packages/mafteiach-index's crawled catalog - every
+  // candidate offered here is a year that could actually have a recording,
+  // not just a kvius-matched one with nothing behind it.
+  const matches = findMatchingYears(targetYear);
 
   return (
     <SafeAreaView style={styles.container}>

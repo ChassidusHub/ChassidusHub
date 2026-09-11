@@ -1,7 +1,7 @@
 export { buildMatchedSchedule } from './buildMatchedSchedule.js';
 export { resolveOccasion } from './gapHandling.js';
 export { getYearSedra, kviusCode, kviusSignature, sameKvius } from './hebrewCalendar.js';
-export { findMatchingYears } from './matching.js';
+export { MAX_HISTORICAL_YEAR, MIN_HISTORICAL_YEAR, findMatchingYears } from './matching.js';
 export { buildFixedDateSchedule, buildWeeklySchedule, weeklyOccasionKey } from './schedule.js';
 export type {
   BuildMatchedScheduleOptions,

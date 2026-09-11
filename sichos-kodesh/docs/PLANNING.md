@@ -317,7 +317,7 @@ Proposed MVP-to-v1 path, cost- and complexity-conscious:
 ## Kvius / Scheduling Engine — as built
 
 Lives at [`packages/kvius-engine`](../packages/kvius-engine), TypeScript,
-built on `@hebcal/core`, 32 passing tests, runnable demo
+built on `@hebcal/core`, 36 passing tests, runnable demo
 (`npm run example`) that prints a real schedule for today's actual Hebrew
 date.
 
@@ -328,10 +328,15 @@ date.
   day-of-week-to-date structure. Computed from `HDate`, not a lookup table.
 - `kviusCode(hebrewYear)` → the traditional 3-letter Hebrew mnemonic (e.g.
   `גכה`), for display parity with berel.me-style charts.
-- `findMatchingYears(targetYear, { fromYear, toYear })` → every year in
+- `findMatchingYears(targetYear, { fromYear?, toYear? })` → every year in
   range with an identical signature to `targetYear`, sorted nearest-first.
   This is the picker list for "which year do you want to follow along
-  with."
+  with." Defaults to, and clamps any explicit range to,
+  `[MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR]` (5690-5752 - verified
+  directly against `packages/mafteiach-index`'s real database, not a
+  guess) since a match outside the real catalog's span can never resolve
+  to an actual recording; pass `allowOutOfHistoricalRange: true` to search
+  past it (used by the engine's own demo/tests, not by either app).
 - `buildWeeklySchedule(hebrewYear, il)` → one entry per Shabbat (~50–55/year)
   with its parsha or displacing holiday, keyed by a 0-based `weekIndex`
   anchored to the first Shabbat on/after Rosh Hashana. **Proven invariant
@@ -361,11 +366,11 @@ date.
   schedule genuinely differs in some years — not optional/defaulted away.
 
 **Real output, computed live** (see `npm run example` under
-`packages/kvius-engine`, run 2026‑09‑10, current Hebrew year 5786):
+`packages/kvius-engine`, run 2026‑09‑11, current Hebrew year 5786):
 
 ```
 Kvius code: גכה
-Matched years (last 120): 5769, 5766, 5762, 5742, 5735, 5715, 5691, 5688, 5671
+4 kvius-matched years in the real catalog (5690-5752): 5742, 5735, 5715, 5691
 ```
 
 Worth cross-checking this list against berel.me's `/kvius5786` PDF once a
