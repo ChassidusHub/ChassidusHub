@@ -20,7 +20,10 @@ within an already-downloaded audio file works offline too, matching what
 - `src/screens/YearPickerScreen.tsx` — two tabs: **Follow along**
   (`findMatchingYears` via `@sichos-kodesh/kvius-engine`, kvius-matched
   candidates only) and **Browse any year** (`browsableYears` via
-  `@sichos-kodesh/catalog`, every indexed year, no kvius match required).
+  `@sichos-kodesh/catalog`, every indexed year from 5710 onward, no kvius
+  match required - this app is scoped to the current Rebbe's own sichos,
+  not the Previous Rebbe's pre-Nesius farbrengens; unrelated to reshimos
+  exclusion, which is a separate link-level filter).
 - `src/screens/ThisWeekScreen.tsx` — calls `resolveThisWeek` (from
   `@sichos-kodesh/catalog`, shared with `apps/mobile`) for every occasion
   with real content anywhere in the current Hebrew week against a
@@ -45,6 +48,13 @@ within an already-downloaded audio file works offline too, matching what
   is a real high-severity vulnerability, above a certain point it depends
   on a very recently standardized JS method not every current browser has
   yet.
+- `src/components/BottomAudioPlayer.tsx` — a farbrengen is usually several
+  separate recordings, not one (real examples run to 8-10: a few sichos, a
+  maamar, niggunim between them - see `packages/mafteiach-index`'s
+  `jemAudio.ts`), so this plays through an occasion's `audio` array as real
+  chapters, Spotify/YouTube-style: prev/next skip, an expandable chapter
+  list with each recording's real name (e.g. "Sicha 1", "Ma'amar") and
+  duration, and auto-advance into the next chapter when one ends.
 - `src/screens/SettingsScreen.tsx` — lets the user prefer one printed
   edition (Sefer HaSichos/HaMaamarim vs. Toras Menachem, persisted via
   `localStorage`) for occasions whose PDFs cite both (see

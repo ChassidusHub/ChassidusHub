@@ -7,7 +7,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A001.mp3",
-        "durationMs": 1038000
+        "durationMs": 1038000,
+        "chapterName": "Chazarah"
       }
     ],
     "pdfs": [
@@ -51,7 +52,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A004.mp3",
-        "durationMs": 1334000
+        "durationMs": 1334000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -75,7 +77,23 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170.mp3",
-        "durationMs": 944000
+        "durationMs": 944000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3170A006.mp3",
+        "durationMs": 823000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A007.mp3",
+        "durationMs": 955000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A008.mp3",
+        "durationMs": 1804000,
+        "chapterName": "Sicha 3"
       }
     ],
     "pdfs": [
@@ -99,7 +117,38 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A009.mp3",
-        "durationMs": 2555000
+        "durationMs": 2555000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A010.mp3",
+        "durationMs": 1437000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A011.mp3",
+        "durationMs": 1287000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3170A012.mp3",
+        "durationMs": 1672000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3170A013.mp3",
+        "durationMs": 2271000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3170A014.mp3",
+        "durationMs": 758000,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "JEMSK3170A015.mp3",
+        "durationMs": 540000,
+        "chapterName": "Sicha 7"
       }
     ],
     "pdfs": [
@@ -147,7 +196,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A016.mp3",
-        "durationMs": 1587000
+        "durationMs": 1587000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -176,7 +226,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A017.mp3",
-        "durationMs": 393000
+        "durationMs": 393000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -205,7 +256,38 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A018.mp3",
-        "durationMs": 1986000
+        "durationMs": 1986000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A019.mp3",
+        "durationMs": 1602000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A020.mp3",
+        "durationMs": 2711000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3170A021.mp3",
+        "durationMs": 1517000,
+        "chapterName": "Ma’amar"
+      },
+      {
+        "workerFilename": "JEMSK3170A022.mp3",
+        "durationMs": 669000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3170A023.mp3",
+        "durationMs": 1530000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3170A024.mp3",
+        "durationMs": 1878000,
+        "chapterName": "Sicha 6"
       }
     ],
     "pdfs": [
@@ -244,7 +326,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A025.mp3",
-        "durationMs": 63000
+        "durationMs": 63000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -263,11 +346,13 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A026.mp3",
-        "durationMs": 1062000
+        "durationMs": 1062000,
+        "chapterName": "Chazarah"
       },
       {
         "workerFilename": "JEMSK3170A027.mp3",
-        "durationMs": 158000
+        "durationMs": 158000,
+        "chapterName": "Chazarah"
       }
     ],
     "pdfs": [
@@ -310,7 +395,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A028.mp3",
-        "durationMs": 1127000
+        "durationMs": 1127000,
+        "chapterName": "Chazarah"
       }
     ],
     "pdfs": [
@@ -339,7 +425,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A029.mp3",
-        "durationMs": 2748000
+        "durationMs": 2748000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -363,7 +450,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A030.mp3",
-        "durationMs": 3751000
+        "durationMs": 3751000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -382,7 +470,23 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A032.mp3",
-        "durationMs": 1521000
+        "durationMs": 1521000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A033.mp3",
+        "durationMs": 1284000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A034.mp3",
+        "durationMs": 1730000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3170A031.mp3",
+        "durationMs": 666000,
+        "chapterName": "Twelve Pesukim"
       }
     ],
     "pdfs": [
@@ -401,7 +505,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A035.mp3",
-        "durationMs": 3692000
+        "durationMs": 3692000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -430,7 +535,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A036.mp3",
-        "durationMs": 6481000
+        "durationMs": 6481000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -449,7 +555,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A037.mp3",
-        "durationMs": 3056000
+        "durationMs": 3056000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -521,7 +628,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A038.mp3",
-        "durationMs": 52000
+        "durationMs": 52000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": []
@@ -534,7 +642,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A046.mp3",
-        "durationMs": 139000
+        "durationMs": 139000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": []
@@ -547,7 +656,38 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A039.mp3",
-        "durationMs": 241000
+        "durationMs": 241000,
+        "chapterName": "Guests – French"
+      },
+      {
+        "workerFilename": "JEMSK3170A040.mp3",
+        "durationMs": 272000,
+        "chapterName": "Guests – Yiddish"
+      },
+      {
+        "workerFilename": "JEMSK3170A041.mp3",
+        "durationMs": 252000,
+        "chapterName": "Guests – Hebrew"
+      },
+      {
+        "workerFilename": "JEMSK3170A043.mp3",
+        "durationMs": 135000,
+        "chapterName": "Choson-Kallah"
+      },
+      {
+        "workerFilename": "JEMSK3170A044.mp3",
+        "durationMs": 209000,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "JEMSK3170A045.mp3",
+        "durationMs": 395000,
+        "chapterName": "Temimim"
+      },
+      {
+        "workerFilename": "JEMSK3170A042.mp3",
+        "durationMs": 137000,
+        "chapterName": "Guests – English"
       }
     ],
     "pdfs": []
@@ -589,7 +729,33 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A047.mp3",
-        "durationMs": 3522000
+        "durationMs": 3522000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A048.mp3",
+        "durationMs": 1731000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A049.mp3",
+        "durationMs": 2064000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3170A050.mp3",
+        "durationMs": 858000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3170A051.mp3",
+        "durationMs": 155000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3170A052.mp3",
+        "durationMs": 270000,
+        "chapterName": "Sicha 6"
       }
     ],
     "pdfs": [
@@ -608,7 +774,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A053.mp3",
-        "durationMs": 81000
+        "durationMs": 81000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": []
@@ -621,7 +788,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A054.mp3",
-        "durationMs": 3627000
+        "durationMs": 3627000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -640,7 +808,13 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A055.mp3",
-        "durationMs": 782000
+        "durationMs": 782000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3170A056.mp3",
+        "durationMs": 4329000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -659,7 +833,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A057.mp3",
-        "durationMs": 75000
+        "durationMs": 75000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": []
@@ -854,7 +1029,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A058.mp3",
-        "durationMs": 30000
+        "durationMs": 30000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -956,39 +1132,48 @@
     "audio": [
       {
         "workerFilename": "JEMSK4841.mp3",
-        "durationMs": 2506000
+        "durationMs": 2506000,
+        "chapterName": "Sicha 1"
       },
       {
         "workerFilename": "JEMSK4842.mp3",
-        "durationMs": 3665000
+        "durationMs": 3665000,
+        "chapterName": "Sicha 2"
       },
       {
         "workerFilename": "JEMSK4843.mp3",
-        "durationMs": 4412000
+        "durationMs": 4412000,
+        "chapterName": "Sicha 3"
       },
       {
         "workerFilename": "JEMSK4844.mp3",
-        "durationMs": 4945000
+        "durationMs": 4945000,
+        "chapterName": "Sicha 4"
       },
       {
         "workerFilename": "JEMSK4845.mp3",
-        "durationMs": 650000
+        "durationMs": 650000,
+        "chapterName": "Ma’amar"
       },
       {
         "workerFilename": "JEMSK4846.mp3",
-        "durationMs": 480000
+        "durationMs": 480000,
+        "chapterName": "Sicha 5"
       },
       {
         "workerFilename": "JEMSK4847.mp3",
-        "durationMs": 389000
+        "durationMs": 389000,
+        "chapterName": "Sicha 6"
       },
       {
         "workerFilename": "JEMSK4848.mp3",
-        "durationMs": 1214000
+        "durationMs": 1214000,
+        "chapterName": "Sicha 7"
       },
       {
         "workerFilename": "JEMSK4849.mp3",
-        "durationMs": 366000
+        "durationMs": 366000,
+        "chapterName": "Sicha 8"
       }
     ],
     "pdfs": [
@@ -1022,7 +1207,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A068.mp3",
-        "durationMs": 185000
+        "durationMs": 185000,
+        "chapterName": "Guests – French"
+      },
+      {
+        "workerFilename": "JEMSK3170A069.mp3",
+        "durationMs": 196000,
+        "chapterName": "Guests – Hebrew"
+      },
+      {
+        "workerFilename": "JEMSK3170A070.mp3",
+        "durationMs": 256000,
+        "chapterName": "Guests – Yiddish"
+      },
+      {
+        "workerFilename": "AR0015520.mp3",
+        "durationMs": 320659,
+        "chapterName": "Bar Mitzvah"
+      },
+      {
+        "workerFilename": "AR0015521.mp3",
+        "durationMs": 180956,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": [
@@ -1090,8 +1296,24 @@
     "occasionLabel": "כ\"ח כסלו, אור לנר ה' דחנוכה, אחרי מנחה, שיחה לצבאות ה'",
     "audio": [
       {
+        "workerFilename": "JEMSK3170A073.mp3",
+        "durationMs": 1083000,
+        "chapterName": "Hadlokas Neiros, Twelve Pesukim"
+      },
+      {
         "workerFilename": "JEMSK3170A074.mp3",
-        "durationMs": 1155000
+        "durationMs": 1155000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A075.mp3",
+        "durationMs": 2245000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A076.mp3",
+        "durationMs": 901000,
+        "chapterName": "Sicha 3"
       }
     ],
     "pdfs": [
@@ -1179,7 +1401,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A078.mp3",
-        "durationMs": 4414000
+        "durationMs": 4414000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -1320,7 +1543,33 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A079.mp3",
-        "durationMs": 3183000
+        "durationMs": 3183000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A080.mp3",
+        "durationMs": 5029000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A081.mp3",
+        "durationMs": 2054000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3170A082.mp3",
+        "durationMs": 2226000,
+        "chapterName": "Ma’amar"
+      },
+      {
+        "workerFilename": "JEMSK3170A083.mp3",
+        "durationMs": 2440000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3170A084.mp3",
+        "durationMs": 703000,
+        "chapterName": "Sicha 5"
       }
     ],
     "pdfs": [
@@ -1374,7 +1623,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A088.mp3",
-        "durationMs": 190000
+        "durationMs": 190000,
+        "chapterName": "Guests – French"
+      },
+      {
+        "workerFilename": "JEMSK3170A089.mp3",
+        "durationMs": 204000,
+        "chapterName": "Guests – Yiddish"
+      },
+      {
+        "workerFilename": "JEMSK3170A090.mp3",
+        "durationMs": 287000,
+        "chapterName": "Guests – Hebrew"
+      },
+      {
+        "workerFilename": "JEMSK3170A091.mp3",
+        "durationMs": 251000,
+        "chapterName": "Bar Mitzvah"
+      },
+      {
+        "workerFilename": "JEMSK3170A092.mp3",
+        "durationMs": 219000,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": []
@@ -1465,7 +1735,23 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A093.mp3",
-        "durationMs": 952000
+        "durationMs": 952000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3170A094.mp3",
+        "durationMs": 1497000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A095.mp3",
+        "durationMs": 1183000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A096.mp3",
+        "durationMs": 1778000,
+        "chapterName": "Sicha 3"
       }
     ],
     "pdfs": [
@@ -1558,7 +1844,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A098.mp3",
-        "durationMs": 3262000
+        "durationMs": 3262000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -1626,7 +1913,33 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A099.mp3",
-        "durationMs": 1981000
+        "durationMs": 1981000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A100.mp3",
+        "durationMs": 4828000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A101.mp3",
+        "durationMs": 1774000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3170A102.mp3",
+        "durationMs": 1299000,
+        "chapterName": "Ma’amar"
+      },
+      {
+        "workerFilename": "JEMSK3170A103.mp3",
+        "durationMs": 3115000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3170A104.mp3",
+        "durationMs": 634000,
+        "chapterName": "Sicha 5"
       }
     ],
     "pdfs": [
@@ -1650,7 +1963,23 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A106.mp3",
-        "durationMs": 1829000
+        "durationMs": 1829000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3170A107.mp3",
+        "durationMs": 1917000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3170A108.mp3",
+        "durationMs": 925000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3170A105.mp3",
+        "durationMs": 699000,
+        "chapterName": "Twelve Pesukim"
       }
     ],
     "pdfs": [
@@ -1669,7 +1998,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170A109.mp3",
-        "durationMs": 114000
+        "durationMs": 114000,
+        "chapterName": "Guests – French"
+      },
+      {
+        "workerFilename": "JEMSK3170A110.mp3",
+        "durationMs": 212000,
+        "chapterName": "Guests – Yiddish"
+      },
+      {
+        "workerFilename": "JEMSK3170A111.mp3",
+        "durationMs": 192000,
+        "chapterName": "Guests – Hebrew"
+      },
+      {
+        "workerFilename": "JEMSK3170A112.mp3",
+        "durationMs": 260000,
+        "chapterName": "Bar Mitzvah"
+      },
+      {
+        "workerFilename": "JEMSK3170A113.mp3",
+        "durationMs": 202000,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": []
@@ -1716,7 +2066,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3192.mp3",
-        "durationMs": 30000
+        "durationMs": 30000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": []
@@ -1766,7 +2117,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3170B.mp3",
-        "durationMs": 275000
+        "durationMs": 275000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -1785,7 +2137,48 @@
     "audio": [
       {
         "workerFilename": "JEMSK3171.mp3",
-        "durationMs": 2302000
+        "durationMs": 2302000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3172.mp3",
+        "durationMs": 2941000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3173.mp3",
+        "durationMs": 1742000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3174.mp3",
+        "durationMs": 1515000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3175.mp3",
+        "durationMs": 1750000,
+        "chapterName": "Ma’amar"
+      },
+      {
+        "workerFilename": "JEMSK3176.mp3",
+        "durationMs": 2363000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3177.mp3",
+        "durationMs": 1367000,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "JEMSK3178.mp3",
+        "durationMs": 214000,
+        "chapterName": "Sicha 7"
+      },
+      {
+        "workerFilename": "JEMSK3179.mp3",
+        "durationMs": 454000,
+        "chapterName": "Sicha 8"
       }
     ],
     "pdfs": [
@@ -1853,7 +2246,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3180.mp3",
-        "durationMs": 1712000
+        "durationMs": 1712000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3181.mp3",
+        "durationMs": 2205000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3182.mp3",
+        "durationMs": 2269000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3183.mp3",
+        "durationMs": 1857000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3184.mp3",
+        "durationMs": 1177000,
+        "chapterName": "Sicha 5"
       }
     ],
     "pdfs": [
@@ -1880,7 +2294,13 @@
     "audio": [
       {
         "workerFilename": "JEMSK3185.mp3",
-        "durationMs": 535000
+        "durationMs": 535000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3186.mp3",
+        "durationMs": 3669000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -1943,7 +2363,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3187.mp3",
-        "durationMs": 237000
+        "durationMs": 237000,
+        "chapterName": "Guests – French"
+      },
+      {
+        "workerFilename": "JEMSK3188.mp3",
+        "durationMs": 327000,
+        "chapterName": "Guests – Yiddish"
+      },
+      {
+        "workerFilename": "JEMSK3189.mp3",
+        "durationMs": 274000,
+        "chapterName": "Guests – Hebrew"
+      },
+      {
+        "workerFilename": "JEMSK3190.mp3",
+        "durationMs": 297000,
+        "chapterName": "Bar Mitzvah"
+      },
+      {
+        "workerFilename": "JEMSK3191.mp3",
+        "durationMs": 247000,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": []
@@ -1990,7 +2431,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3193.mp3",
-        "durationMs": 1267000
+        "durationMs": 1267000,
+        "chapterName": "Private Audience"
       }
     ],
     "pdfs": [
@@ -2049,7 +2491,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3194.mp3",
-        "durationMs": 305000
+        "durationMs": 305000,
+        "chapterName": "Private Audience"
       }
     ],
     "pdfs": []
@@ -2062,7 +2505,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3195.mp3",
-        "durationMs": 2605000
+        "durationMs": 2605000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3196.mp3",
+        "durationMs": 3754000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3197.mp3",
+        "durationMs": 1863000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3198.mp3",
+        "durationMs": 2612000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3199.mp3",
+        "durationMs": 708000,
+        "chapterName": "Sicha 5"
       }
     ],
     "pdfs": [
@@ -2081,7 +2545,23 @@
     "audio": [
       {
         "workerFilename": "JEMSK3200.mp3",
-        "durationMs": 466000
+        "durationMs": 466000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3201.mp3",
+        "durationMs": 1725000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3202.mp3",
+        "durationMs": 1734000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3203.mp3",
+        "durationMs": 1359000,
+        "chapterName": "Sicha 3"
       }
     ],
     "pdfs": [
@@ -2120,7 +2600,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3204.mp3",
-        "durationMs": 604000
+        "durationMs": 604000,
+        "chapterName": "Private Audience"
       }
     ],
     "pdfs": []
@@ -2182,7 +2663,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3205.mp3",
-        "durationMs": 5011000
+        "durationMs": 5011000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2235,7 +2717,43 @@
     "audio": [
       {
         "workerFilename": "JEMSK3206.mp3",
-        "durationMs": 1355000
+        "durationMs": 1355000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3207.mp3",
+        "durationMs": 1665000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3208.mp3",
+        "durationMs": 1288000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3209.mp3",
+        "durationMs": 1494000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3210.mp3",
+        "durationMs": 1394000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3211.mp3",
+        "durationMs": 1684000,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "JEMSK3212.mp3",
+        "durationMs": 863000,
+        "chapterName": "Sicha 7"
+      },
+      {
+        "workerFilename": "JEMSK3213.mp3",
+        "durationMs": 345000,
+        "chapterName": "Sicha 8"
       }
     ],
     "pdfs": [
@@ -2351,7 +2869,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3214.mp3",
-        "durationMs": 186000
+        "durationMs": 186000,
+        "chapterName": "Guests – French"
+      },
+      {
+        "workerFilename": "JEMSK3215.mp3",
+        "durationMs": 204000,
+        "chapterName": "Guests – Yiddish"
+      },
+      {
+        "workerFilename": "JEMSK3216.mp3",
+        "durationMs": 245000,
+        "chapterName": "Guests – Hebrew"
+      },
+      {
+        "workerFilename": "JEMSK3217.mp3",
+        "durationMs": 261000,
+        "chapterName": "Bar Mitzvah"
+      },
+      {
+        "workerFilename": "JEMSK3218.mp3",
+        "durationMs": 268000,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": []
@@ -2364,7 +2903,23 @@
     "audio": [
       {
         "workerFilename": "JEMSK3219.mp3",
-        "durationMs": 953000
+        "durationMs": 953000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3220.mp3",
+        "durationMs": 1351000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3221.mp3",
+        "durationMs": 920000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3222.mp3",
+        "durationMs": 1866000,
+        "chapterName": "Sicha 3"
       }
     ],
     "pdfs": [
@@ -2393,7 +2948,33 @@
     "audio": [
       {
         "workerFilename": "JEMSK3223.mp3",
-        "durationMs": 2611000
+        "durationMs": 2611000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3224.mp3",
+        "durationMs": 2345000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3225.mp3",
+        "durationMs": 2169000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3226.mp3",
+        "durationMs": 1047000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3227.mp3",
+        "durationMs": 437000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3228.mp3",
+        "durationMs": 349000,
+        "chapterName": "Sicha 6"
       }
     ],
     "pdfs": [
@@ -2436,7 +3017,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3229.mp3",
-        "durationMs": 2543000
+        "durationMs": 2543000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2489,7 +3071,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3230.mp3",
-        "durationMs": 49000
+        "durationMs": 49000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -2508,7 +3091,43 @@
     "audio": [
       {
         "workerFilename": "JEMSK3231.mp3",
-        "durationMs": 3617000
+        "durationMs": 3617000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3232.mp3",
+        "durationMs": 2926000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3233.mp3",
+        "durationMs": 3276000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3234.mp3",
+        "durationMs": 1462000,
+        "chapterName": "Ma’amar"
+      },
+      {
+        "workerFilename": "JEMSK3235.mp3",
+        "durationMs": 1861000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3236.mp3",
+        "durationMs": 327000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3237.mp3",
+        "durationMs": 192000,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "JEMSK3238.mp3",
+        "durationMs": 461000,
+        "chapterName": "Sicha 7"
       }
     ],
     "pdfs": [
@@ -2571,7 +3190,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK3239.mp3",
-        "durationMs": 273000
+        "durationMs": 273000,
+        "chapterName": "Guests – French"
+      },
+      {
+        "workerFilename": "JEMSK3240.mp3",
+        "durationMs": 251000,
+        "chapterName": "Guests – Yiddish"
+      },
+      {
+        "workerFilename": "JEMSK3241.mp3",
+        "durationMs": 284000,
+        "chapterName": "Guests – Hebrew"
+      },
+      {
+        "workerFilename": "JEMSK3242.mp3",
+        "durationMs": 215000,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "JEMSK3243.mp3",
+        "durationMs": 221000,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": []
@@ -2584,7 +3224,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3245.mp3",
-        "durationMs": 4363000
+        "durationMs": 4363000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2653,7 +3294,33 @@
     "audio": [
       {
         "workerFilename": "JEMSK3246.mp3",
-        "durationMs": 2736000
+        "durationMs": 2736000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3247.mp3",
+        "durationMs": 1428000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3248.mp3",
+        "durationMs": 3685000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3249.mp3",
+        "durationMs": 1074000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3250.mp3",
+        "durationMs": 1485000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3251.mp3",
+        "durationMs": 268000,
+        "chapterName": "Sicha 6"
       }
     ],
     "pdfs": [
@@ -2795,7 +3462,13 @@
     "audio": [
       {
         "workerFilename": "JEMSK3252.mp3",
-        "durationMs": 875000
+        "durationMs": 875000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3253.mp3",
+        "durationMs": 4435000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2858,7 +3531,13 @@
     "audio": [
       {
         "workerFilename": "JEMSK3254.mp3",
-        "durationMs": 1698000
+        "durationMs": 1698000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK3255.mp3",
+        "durationMs": 3266000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2882,7 +3561,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3256.mp3",
-        "durationMs": 2881000
+        "durationMs": 2881000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2935,7 +3615,33 @@
     "audio": [
       {
         "workerFilename": "JEMSK3257.mp3",
-        "durationMs": 1700000
+        "durationMs": 1700000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK3258.mp3",
+        "durationMs": 2046000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK3259.mp3",
+        "durationMs": 1511000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK3260.mp3",
+        "durationMs": 1481000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK3261.mp3",
+        "durationMs": 2234000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK3262.mp3",
+        "durationMs": 712000,
+        "chapterName": "Sicha 6"
       }
     ],
     "pdfs": [
@@ -2959,7 +3665,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK3263.mp3",
-        "durationMs": 230000
+        "durationMs": 230000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [

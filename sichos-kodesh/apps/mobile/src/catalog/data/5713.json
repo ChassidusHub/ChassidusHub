@@ -119,7 +119,18 @@
     "hebrewYear": 5713,
     "hebrewDate": "5713-01-17",
     "occasionLabel": "ליל ד' דחה\"ס, ב' דחוה\"מ, שמב\"ה",
-    "audio": [],
+    "audio": [
+      {
+        "workerFilename": "AR0018053.mp3",
+        "durationMs": 1927050,
+        "chapterName": "Sicha"
+      },
+      {
+        "workerFilename": "AR0018046.mp3",
+        "durationMs": 1927050,
+        "chapterName": "Farbrengen, Chai Tishrei, 5713"
+      }
+    ],
     "pdfs": [
       {
         "section": "biltiMugah",
@@ -146,7 +157,13 @@
     "audio": [
       {
         "workerFilename": "AR0018053.mp3",
-        "durationMs": 1927050
+        "durationMs": 1927050,
+        "chapterName": "Sicha"
+      },
+      {
+        "workerFilename": "AR0018046.mp3",
+        "durationMs": 1927050,
+        "chapterName": "Farbrengen, Chai Tishrei, 5713"
       }
     ],
     "pdfs": [
@@ -1080,7 +1097,18 @@
     "audio": [
       {
         "workerFilename": "AR0016464.mp3",
-        "durationMs": 78001
+        "durationMs": 78001,
+        "chapterName": "Ani Ma’amin"
+      },
+      {
+        "workerFilename": "AR0016465.mp3",
+        "durationMs": 491937,
+        "chapterName": "Sicha"
+      },
+      {
+        "workerFilename": "AR0016466.mp3",
+        "durationMs": 16587,
+        "chapterName": "End of Parade"
       }
     ],
     "pdfs": [

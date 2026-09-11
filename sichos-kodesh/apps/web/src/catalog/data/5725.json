@@ -105,7 +105,13 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-09c",
     "occasionLabel": "ערב יו\"כ, לפני כל נדרי, לאנ\"ש שי'",
-    "audio": [],
+    "audio": [
+      {
+        "workerFilename": "AR0020029.mp3",
+        "durationMs": 27428,
+        "chapterName": "Brachah, Erev Yom Kippur, 5725"
+      }
+    ],
     "pdfs": [
       {
         "section": "biltiMugah",
@@ -751,7 +757,108 @@
     "audio": [
       {
         "workerFilename": "JEMSK0801A.mp3",
-        "durationMs": 426000
+        "durationMs": 426000,
+        "chapterName": "Nigun 1"
+      },
+      {
+        "workerFilename": "JEMSK0801B.mp3",
+        "durationMs": 1294000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK0801C.mp3",
+        "durationMs": 402000,
+        "chapterName": "Nigun 2"
+      },
+      {
+        "workerFilename": "JEMSK0802A.mp3",
+        "durationMs": 907000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK0802B.mp3",
+        "durationMs": 875000,
+        "chapterName": "Nigun 3"
+      },
+      {
+        "workerFilename": "JEMSK0802C.mp3",
+        "durationMs": 1526000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK0803A.mp3",
+        "durationMs": 291000,
+        "chapterName": "Nigun 4"
+      },
+      {
+        "workerFilename": "JEMSK0803B.mp3",
+        "durationMs": 94000,
+        "chapterName": "Ma’amar Nigun"
+      },
+      {
+        "workerFilename": "AR0015702.mp3",
+        "durationMs": 1233319,
+        "chapterName": "Ma’amar"
+      },
+      {
+        "workerFilename": "JEMSK0804A.mp3",
+        "durationMs": 1719000,
+        "chapterName": "Nigun 5"
+      },
+      {
+        "workerFilename": "JEMSK0804B.mp3",
+        "durationMs": 3462000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK0805A.mp3",
+        "durationMs": 301000,
+        "chapterName": "Nigun 6"
+      },
+      {
+        "workerFilename": "JEMSK0805B.mp3",
+        "durationMs": 95000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK0806A.mp3",
+        "durationMs": 530000,
+        "chapterName": "Nigun 7"
+      },
+      {
+        "workerFilename": "JEMSK0806B.mp3",
+        "durationMs": 2949000,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "JEMSK0807A.mp3",
+        "durationMs": 502000,
+        "chapterName": "Nigun 8"
+      },
+      {
+        "workerFilename": "JEMSK0807B.mp3",
+        "durationMs": 777000,
+        "chapterName": "Sicha 7"
+      },
+      {
+        "workerFilename": "JEMSK0808A.mp3",
+        "durationMs": 322000,
+        "chapterName": "Nigun 9"
+      },
+      {
+        "workerFilename": "JEMSK0808B.mp3",
+        "durationMs": 563000,
+        "chapterName": "Sicha 8"
+      },
+      {
+        "workerFilename": "JEMSK0809A.mp3",
+        "durationMs": 506000,
+        "chapterName": "Nigun 10"
+      },
+      {
+        "workerFilename": "JEMSK0809B.mp3",
+        "durationMs": 39000,
+        "chapterName": "End of Farbrengen"
       }
     ],
     "pdfs": [
@@ -1062,8 +1169,144 @@
     "occasionLabel": "יו\"ד שבט",
     "audio": [
       {
+        "workerFilename": "AR0017179.mp3",
+        "durationMs": 350040,
+        "chapterName": "V'harikosi Lachem Bracha (slow)"
+      },
+      {
         "workerFilename": "AR0017167.mp3",
-        "durationMs": 785345
+        "durationMs": 785345,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "AR0017180.mp3",
+        "durationMs": 317361,
+        "chapterName": "Nigun Shabbos V'Yom Tov"
+      },
+      {
+        "workerFilename": "AR0017168.mp3",
+        "durationMs": 1705012,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "AR0017181.mp3",
+        "durationMs": 631980,
+        "chapterName": "Hu Elokeinu"
+      },
+      {
+        "workerFilename": "AR0017169.mp3",
+        "durationMs": 2252460,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "AR0017182.mp3",
+        "durationMs": 458657,
+        "chapterName": "Klimovitcher Nigun"
+      },
+      {
+        "workerFilename": "AR0017170.mp3",
+        "durationMs": 917368,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "AR0017183.mp3",
+        "durationMs": 334236,
+        "chapterName": "Beinoni"
+      },
+      {
+        "workerFilename": "AR0017172.mp3",
+        "durationMs": 1699970,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "AR0017184.mp3",
+        "durationMs": 483813,
+        "chapterName": "Nigun Hisva'adus"
+      },
+      {
+        "workerFilename": "AR0017173.mp3",
+        "durationMs": 967993,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "AR0017185.mp3",
+        "durationMs": 337266,
+        "chapterName": "Tzamah Lecha Nafshi (Slow)"
+      },
+      {
+        "workerFilename": "AR0017187.mp3",
+        "durationMs": 183013,
+        "chapterName": "Ma’amar Nigun"
+      },
+      {
+        "workerFilename": "AR0017197.mp3",
+        "durationMs": 2007405,
+        "chapterName": "Ma’amar"
+      },
+      {
+        "workerFilename": "AR0017188.mp3",
+        "durationMs": 1166053,
+        "chapterName": "Two Nigunim"
+      },
+      {
+        "workerFilename": "AR0017174.mp3",
+        "durationMs": 3647190,
+        "chapterName": "Sicha 7"
+      },
+      {
+        "workerFilename": "AR0017189.mp3",
+        "durationMs": 598204,
+        "chapterName": "Two Nigunim"
+      },
+      {
+        "workerFilename": "AR0017175.mp3",
+        "durationMs": 1724995,
+        "chapterName": "Sicha 8"
+      },
+      {
+        "workerFilename": "AR0017190.mp3",
+        "durationMs": 248920,
+        "chapterName": "Lechatchila Ariber"
+      },
+      {
+        "workerFilename": "AR0017191.mp3",
+        "durationMs": 350380,
+        "chapterName": "Magbis"
+      },
+      {
+        "workerFilename": "AR0017192.mp3",
+        "durationMs": 166008,
+        "chapterName": "V’harikosi Lachem Bracha (Fast)"
+      },
+      {
+        "workerFilename": "AR0017176.mp3",
+        "durationMs": 628271,
+        "chapterName": "Sicha 9"
+      },
+      {
+        "workerFilename": "AR0017193.mp3",
+        "durationMs": 12408,
+        "chapterName": "Yemin Hashem"
+      },
+      {
+        "workerFilename": "AR0017177.mp3",
+        "durationMs": 235154,
+        "chapterName": "Sicha 10"
+      },
+      {
+        "workerFilename": "AR0017194.mp3",
+        "durationMs": 224287,
+        "chapterName": "Yemin Hashem 2"
+      },
+      {
+        "workerFilename": "AR0017178.mp3",
+        "durationMs": 134556,
+        "chapterName": "Sicha 11"
+      },
+      {
+        "workerFilename": "AR0017195.mp3",
+        "durationMs": 334236,
+        "chapterName": "End of Farbrengen"
       }
     ],
     "pdfs": [
@@ -1473,7 +1716,153 @@
     "audio": [
       {
         "workerFilename": "AR0015247.mp3",
-        "durationMs": 598157
+        "durationMs": 598157,
+        "chapterName": "Nigun 1"
+      },
+      {
+        "workerFilename": "AR0015248.mp3",
+        "durationMs": 1204250,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "AR0015249.mp3",
+        "durationMs": 245139,
+        "chapterName": "Nigun 2"
+      },
+      {
+        "workerFilename": "AR0015250.mp3",
+        "durationMs": 1010840,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "AR0015251.mp3",
+        "durationMs": 287196,
+        "chapterName": "Nigun 3"
+      },
+      {
+        "workerFilename": "AR0015252.mp3",
+        "durationMs": 1383894,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "AR0015253.mp3",
+        "durationMs": 608319,
+        "chapterName": "Nigun 4"
+      },
+      {
+        "workerFilename": "AR0015254.mp3",
+        "durationMs": 2334595,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "AR0015255.mp3",
+        "durationMs": 509681,
+        "chapterName": "Nigun 5"
+      },
+      {
+        "workerFilename": "AR0015256.mp3",
+        "durationMs": 1464796,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "AR0015257.mp3",
+        "durationMs": 230484,
+        "chapterName": "Nigun 6"
+      },
+      {
+        "workerFilename": "AR0015258.mp3",
+        "durationMs": 174321,
+        "chapterName": "Ma'amar Nigun"
+      },
+      {
+        "workerFilename": "AR0015259.mp3",
+        "durationMs": 1668185,
+        "chapterName": "Ma'amar"
+      },
+      {
+        "workerFilename": "AR0015260.mp3",
+        "durationMs": 1463228,
+        "chapterName": "Nigun 7"
+      },
+      {
+        "workerFilename": "AR0015261.mp3",
+        "durationMs": 987460,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "AR0015262.mp3",
+        "durationMs": 382386,
+        "chapterName": "Nigun 8"
+      },
+      {
+        "workerFilename": "AR0015263.mp3",
+        "durationMs": 178213,
+        "chapterName": "Sicha 7"
+      },
+      {
+        "workerFilename": "AR0015264.mp3",
+        "durationMs": 913037,
+        "chapterName": "Nigun 9"
+      },
+      {
+        "workerFilename": "AR0015265.mp3",
+        "durationMs": 1325955,
+        "chapterName": "Sicha 8"
+      },
+      {
+        "workerFilename": "AR0015266.mp3",
+        "durationMs": 140126,
+        "chapterName": "Nigun 10"
+      },
+      {
+        "workerFilename": "AR0015267.mp3",
+        "durationMs": 1962193,
+        "chapterName": "Sicha 9"
+      },
+      {
+        "workerFilename": "AR0015268.mp3",
+        "durationMs": 215281,
+        "chapterName": "Nigun 11"
+      },
+      {
+        "workerFilename": "AR0015269.mp3",
+        "durationMs": 40652,
+        "chapterName": "Sicha 10"
+      },
+      {
+        "workerFilename": "AR0015270.mp3",
+        "durationMs": 309191,
+        "chapterName": "Nigun 12"
+      },
+      {
+        "workerFilename": "AR0015271.mp3",
+        "durationMs": 166040,
+        "chapterName": "Sicha 11"
+      },
+      {
+        "workerFilename": "AR0015272.mp3",
+        "durationMs": 213348,
+        "chapterName": "Nigun 13"
+      },
+      {
+        "workerFilename": "AR0015273.mp3",
+        "durationMs": 492910,
+        "chapterName": "Sicha 12"
+      },
+      {
+        "workerFilename": "AR0015274.mp3",
+        "durationMs": 529351,
+        "chapterName": "Daled Bavos"
+      },
+      {
+        "workerFilename": "AR0015275.mp3",
+        "durationMs": 362402,
+        "chapterName": "Nigun 14"
+      },
+      {
+        "workerFilename": "AR0015276.mp3",
+        "durationMs": 64659,
+        "chapterName": "End of Farbrengen"
       }
     ],
     "pdfs": [
@@ -2061,7 +2450,13 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-08-14",
     "occasionLabel": "י\"ד אייר, שיחה לנשי ובנות חב\"ד",
-    "audio": [],
+    "audio": [
+      {
+        "workerFilename": "AR0020118.mp3",
+        "durationMs": 1522860,
+        "chapterName": "Kinus N'Shei Chabad, Pesach Sheini, 5725"
+      }
+    ],
     "pdfs": [
       {
         "section": "biltiMugah",
@@ -2356,7 +2751,8 @@
     "audio": [
       {
         "workerFilename": "AR0016537.mp3",
-        "durationMs": 1245178
+        "durationMs": 1245178,
+        "chapterName": "Sicha to Graduating Students, Chof Sivan, 5725"
       }
     ],
     "pdfs": [
@@ -2504,7 +2900,118 @@
     "audio": [
       {
         "workerFilename": "AR0016198.mp3",
-        "durationMs": 447373
+        "durationMs": 447373,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "AR0016199.mp3",
+        "durationMs": 536372,
+        "chapterName": "Nyet Nyet Nikavo"
+      },
+      {
+        "workerFilename": "AR0016200.mp3",
+        "durationMs": 276532,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "AR0016226.mp3",
+        "durationMs": 482925,
+        "chapterName": "Yud Beis Tammuz Nigun"
+      },
+      {
+        "workerFilename": "AR0016231.mp3",
+        "durationMs": 2493857,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "AR0016232.mp3",
+        "durationMs": 488542,
+        "chapterName": "Nyet Nyet Nikavo 2"
+      },
+      {
+        "workerFilename": "AR0016233.mp3",
+        "durationMs": 1018279,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "AR0016234.mp3",
+        "durationMs": 372218,
+        "chapterName": "Klimovitcher Nigun"
+      },
+      {
+        "workerFilename": "AR0016235.mp3",
+        "durationMs": 1067102,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "AR0016236.mp3",
+        "durationMs": 398393,
+        "chapterName": "Hu Elokeinu"
+      },
+      {
+        "workerFilename": "AR0016237.mp3",
+        "durationMs": 687124,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "AR0016238.mp3",
+        "durationMs": 430393,
+        "chapterName": "Nyet Nyet Nikavo 2"
+      },
+      {
+        "workerFilename": "AR0016239.mp3",
+        "durationMs": 182831,
+        "chapterName": "Ma’amar Nigun"
+      },
+      {
+        "workerFilename": "AR0016240.mp3",
+        "durationMs": 1996669,
+        "chapterName": "Ma'amar"
+      },
+      {
+        "workerFilename": "AR0016241.mp3",
+        "durationMs": 968463,
+        "chapterName": "Two Nigunim"
+      },
+      {
+        "workerFilename": "AR0016242.mp3",
+        "durationMs": 1420643,
+        "chapterName": "Sicha 7"
+      },
+      {
+        "workerFilename": "AR0016243.mp3",
+        "durationMs": 234083,
+        "chapterName": "Mipi Kel"
+      },
+      {
+        "workerFilename": "AR0016244.mp3",
+        "durationMs": 563330,
+        "chapterName": "Sicha 8"
+      },
+      {
+        "workerFilename": "AR0016245.mp3",
+        "durationMs": 433658,
+        "chapterName": "Viharikosi Lachem Brachah"
+      },
+      {
+        "workerFilename": "AR0016248.mp3",
+        "durationMs": 244506,
+        "chapterName": "Sicha 9"
+      },
+      {
+        "workerFilename": "AR0016249.mp3",
+        "durationMs": 820976,
+        "chapterName": "The Alter Rebbe's Nigun"
+      },
+      {
+        "workerFilename": "AR0016250.mp3",
+        "durationMs": 549093,
+        "chapterName": "Sicha 10"
+      },
+      {
+        "workerFilename": "AR0016251.mp3",
+        "durationMs": 361325,
+        "chapterName": "End of Farbrengen"
       }
     ],
     "pdfs": [
@@ -2706,7 +3213,33 @@
     "audio": [
       {
         "workerFilename": "JEMSK0851A.mp3",
-        "durationMs": 1592000
+        "durationMs": 1592000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK0851B.mp3",
+        "durationMs": 341000,
+        "chapterName": "Nigun 1"
+      },
+      {
+        "workerFilename": "JEMSK0852A.mp3",
+        "durationMs": 732000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK0852B.mp3",
+        "durationMs": 683000,
+        "chapterName": "Nigun 2"
+      },
+      {
+        "workerFilename": "JEMSK0853A.mp3",
+        "durationMs": 1447000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK0853B.mp3",
+        "durationMs": 67000,
+        "chapterName": "End of Farbrengen"
       }
     ],
     "pdfs": [
@@ -2854,7 +3387,88 @@
     "audio": [
       {
         "workerFilename": "JEMSK0854A.mp3",
-        "durationMs": 485000
+        "durationMs": 485000,
+        "chapterName": "Nigun 1"
+      },
+      {
+        "workerFilename": "JEMSK0854B.mp3",
+        "durationMs": 2210000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK0855A.mp3",
+        "durationMs": 544000,
+        "chapterName": "Nigun 2"
+      },
+      {
+        "workerFilename": "JEMSK0855B.mp3",
+        "durationMs": 792000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK0856A.mp3",
+        "durationMs": 268000,
+        "chapterName": "Nigun 3"
+      },
+      {
+        "workerFilename": "JEMSK0856B.mp3",
+        "durationMs": 1170000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK0857A.mp3",
+        "durationMs": 211000,
+        "chapterName": "Nigun 4"
+      },
+      {
+        "workerFilename": "JEMSK0857B.mp3",
+        "durationMs": 1161000,
+        "chapterName": "Sicha 4"
+      },
+      {
+        "workerFilename": "JEMSK0858A.mp3",
+        "durationMs": 838000,
+        "chapterName": "Nigun 5"
+      },
+      {
+        "workerFilename": "JEMSK0858B.mp3",
+        "durationMs": 1240000,
+        "chapterName": "Sicha 5"
+      },
+      {
+        "workerFilename": "JEMSK0859A.mp3",
+        "durationMs": 222000,
+        "chapterName": "Nigun 6"
+      },
+      {
+        "workerFilename": "JEMSK0859B.mp3",
+        "durationMs": 784000,
+        "chapterName": "Sicha 6"
+      },
+      {
+        "workerFilename": "JEMSK0860A.mp3",
+        "durationMs": 355000,
+        "chapterName": "Nigun 7"
+      },
+      {
+        "workerFilename": "JEMSK0860B.mp3",
+        "durationMs": 1460000,
+        "chapterName": "Sicha 7"
+      },
+      {
+        "workerFilename": "JEMSK0861A.mp3",
+        "durationMs": 269000,
+        "chapterName": "Nigun 8"
+      },
+      {
+        "workerFilename": "JEMSK0861B.mp3",
+        "durationMs": 727000,
+        "chapterName": "Sicha 8"
+      },
+      {
+        "workerFilename": "JEMSK0861C.mp3",
+        "durationMs": 210000,
+        "chapterName": "End of Farbrengen"
       }
     ],
     "pdfs": [
@@ -3117,7 +3731,8 @@
     "audio": [
       {
         "workerFilename": "AR0021218.mp3",
-        "durationMs": 478078
+        "durationMs": 478078,
+        "chapterName": "Sicha to Supporters of Tomchei Temimim, Chof Daled Elul, 5725"
       }
     ],
     "pdfs": [

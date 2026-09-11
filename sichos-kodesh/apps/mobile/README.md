@@ -27,23 +27,31 @@ Built and working:
 - Two ways to pick a year, both on `YearPickerScreen`: **Follow along**
   (kvius-matched years only, via `findMatchingYears`, leads to
   `ThisWeekScreen`'s list of this week's occasions) and **Browse any
-  year** (every indexed year via `browsableYears`, no kvius match
-  required, leads to `YearBrowserScreen`'s list of that year's occasions,
-  grouped by Hebrew month — there's no "this week" to compute for a year
-  with no guaranteed week/date alignment to the current one). Both
-  screens are list-then-detail: tap a date to see its categories/downloads.
+  year** (every indexed year from 5710 onward via `browsableYears`, no
+  kvius match required, leads to `YearBrowserScreen`'s list of that year's
+  occasions, grouped by Hebrew month — there's no "this week" to compute
+  for a year with no guaranteed week/date alignment to the current one).
+  The 5710 floor matches this app's scope: the current Rebbe's own
+  sichos, not the Previous Rebbe's pre-Nesius farbrengens; reshimos
+  exclusion is a separate, unrelated link-level filter. Both screens are
+  list-then-detail: tap a date to see its categories/downloads.
 - `src/components/OccasionDetail.tsx` — the shared download/read card
   used by both `ThisWeekScreen` and `YearBrowserScreen`. Groups content
   into labeled categories (Audio, then each PDF section present, sorted so
   a PDF matching the user's edition preference comes first) rather than
   one flat pile of buttons.
 - Real downloads through `services/media-proxy`'s `/jem-audio/:filename`
-  and `/drive/:fileId` routes (`src/download/download.ts`), basic
-  play/pause via `react-native-sound`, PDFs rendered directly in-app via
-  `react-native-pdf` (`src/screens/PdfViewerScreen.tsx`) rather than
-  handed off to the OS's own viewer - so an occasion's own recording can
-  keep playing in a persistent bottom bar (`BottomAudioPlayer`) while its
-  pages are scrolled through.
+  and `/drive/:fileId` routes (`src/download/download.ts`), play/pause via
+  `react-native-sound`, PDFs rendered directly in-app via `react-native-pdf`
+  (`src/screens/PdfViewerScreen.tsx`) rather than handed off to the OS's own
+  viewer - so an occasion's own recording can keep playing in a persistent
+  bottom bar (`BottomAudioPlayer`) while its pages are scrolled through. A
+  farbrengen is usually several separate recordings, not one (real
+  examples run to 8-10: a few sichos, a maamar, niggunim between them),
+  so `BottomAudioPlayer` plays through them as real chapters,
+  Spotify/YouTube-style: prev/next skip, an expandable chapter list with
+  each recording's real name (e.g. "Sicha 1", "Ma'amar") and duration, and
+  auto-advance into the next chapter when one ends.
 - A settings screen (`src/screens/SettingsScreen.tsx`) lets the user
   prefer one printed edition (Sefer HaSichos/HaMaamarim vs. Toras
   Menachem, persisted via AsyncStorage) - `OccasionDetail` puts PDFs
