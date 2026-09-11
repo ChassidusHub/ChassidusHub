@@ -33,6 +33,7 @@
  */
 
 export const DRIVE_ID_PATTERN = /^[a-zA-Z0-9_-]{10,64}$/;
+export const DRIVE_RESOURCE_KEY_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 export const JEM_AUDIO_FILENAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}\.(mp3|m4a|opus)$/;
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days - Phase 1's only caching until R2 lands
 const JEM_AUDIO_CDN_BASE = 'https://dtgj2yu3gmlic.cloudfront.net';
@@ -64,11 +65,12 @@ export interface Env {
   // Reserved for Phase 2 (R2 bucket binding). Intentionally empty in Phase 1.
 }
 
-export function driveDownloadUrl(fileId: string, confirmToken?: string): string {
+export function driveDownloadUrl(fileId: string, confirmToken?: string, resourceKey?: string | null): string {
   const url = new URL('https://drive.google.com/uc');
   url.searchParams.set('export', 'download');
   url.searchParams.set('id', fileId);
   if (confirmToken) url.searchParams.set('confirm', confirmToken);
+  if (resourceKey) url.searchParams.set('resourcekey', resourceKey);
   return url.toString();
 }
 
@@ -85,8 +87,19 @@ export function extractConfirmToken(html: string): string | null {
   return match ? match[1]! : null;
 }
 
-export async function fetchFromDrive(fileId: string): Promise<Response> {
-  const first = await fetch(driveDownloadUrl(fileId), { redirect: 'follow' });
+/**
+ * `resourceKey`: Google added "resource keys" as an extra access
+ * requirement for links shared before a 2021 security change - a file
+ * that needs one 404s/redirects to a sign-in page without it, even
+ * though it's genuinely public. Confirmed directly: 253 of this app's
+ * real crawled Drive links carry a `resourcekey=` param in their
+ * original share URL, and a sample of those otherwise fail with the
+ * plain `id=` request and succeed once `resourcekey` is forwarded too -
+ * this isn't a rare edge case, it's roughly 4% of all Drive PDF links
+ * genuinely requiring it to be reachable at all.
+ */
+export async function fetchFromDrive(fileId: string, resourceKey?: string | null): Promise<Response> {
+  const first = await fetch(driveDownloadUrl(fileId, undefined, resourceKey), { redirect: 'follow' });
   const contentType = first.headers.get('content-type') ?? '';
 
   if (!contentType.includes('text/html')) {
@@ -103,7 +116,7 @@ export async function fetchFromDrive(fileId: string): Promise<Response> {
   }
 
   const cookie = first.headers.get('set-cookie') ?? undefined;
-  return fetch(driveDownloadUrl(fileId, token), {
+  return fetch(driveDownloadUrl(fileId, token, resourceKey), {
     redirect: 'follow',
     headers: cookie ? { cookie } : undefined,
   });
@@ -191,11 +204,14 @@ export function cleanResponseHeaders(upstream: Response, filename: string | null
   return headers;
 }
 
-async function handleDrive(fileId: string, filename: string | null): Promise<Response> {
+async function handleDrive(fileId: string, filename: string | null, resourceKey: string | null): Promise<Response> {
   if (!DRIVE_ID_PATTERN.test(fileId)) {
     return new Response('Invalid file id', { status: 400 });
   }
-  const upstream = await fetchFromDrive(fileId);
+  if (resourceKey && !DRIVE_RESOURCE_KEY_PATTERN.test(resourceKey)) {
+    return new Response('Invalid resource key', { status: 400 });
+  }
+  const upstream = await fetchFromDrive(fileId, resourceKey);
   if (!upstream.ok) {
     return new Response(`Upstream fetch failed with status ${upstream.status}`, { status: 502 });
   }
@@ -244,7 +260,7 @@ export default {
     const driveMatch = /^\/drive\/([^/]+)$/.exec(url.pathname);
     const jemAudioMatch = /^\/jem-audio\/([^/]+)$/.exec(url.pathname);
     if (driveMatch) {
-      response = await handleDrive(driveMatch[1]!, url.searchParams.get('filename'));
+      response = await handleDrive(driveMatch[1]!, url.searchParams.get('filename'), url.searchParams.get('resourcekey'));
     } else if (jemAudioMatch) {
       response = await handleJemAudio(jemAudioMatch[1]!, range);
     } else {

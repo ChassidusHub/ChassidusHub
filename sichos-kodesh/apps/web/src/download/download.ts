@@ -38,10 +38,9 @@ export function downloadAudio(workerFilename: string, onProgress?: (p: DownloadP
   return fetchWithProgress(`${MEDIA_PROXY_BASE_URL}/jem-audio/${workerFilename}`, onProgress);
 }
 
-/** Downloads (and caches) one PDF through /drive/:fileId. */
-export function downloadPdf(driveFileId: string, onProgress?: (p: DownloadProgress) => void): Promise<Response> {
-  const filename = `${driveFileId}.pdf`;
-  return fetchWithProgress(`${MEDIA_PROXY_BASE_URL}/drive/${driveFileId}?filename=${encodeURIComponent(filename)}`, onProgress);
+/** Downloads (and caches) one PDF through /drive/:fileId. `resourceKey` is required for links shared before Google's 2021 resource-key change (see CatalogPdf.resourceKey) - omitted, the file 404s/redirects to a Google sign-in page even though it's genuinely public. */
+export function downloadPdf(driveFileId: string, resourceKey?: string, onProgress?: (p: DownloadProgress) => void): Promise<Response> {
+  return fetchWithProgress(pdfUrl(driveFileId, resourceKey), onProgress);
 }
 
 /** The playable/openable URL for an already-downloaded (or not-yet-downloaded - the browser fetches on demand either way) audio file. */
@@ -50,7 +49,9 @@ export function audioUrl(workerFilename: string): string {
 }
 
 /** The openable URL for a PDF - opened in a new tab via the browser's native PDF viewer. */
-export function pdfUrl(driveFileId: string): string {
+export function pdfUrl(driveFileId: string, resourceKey?: string): string {
   const filename = `${driveFileId}.pdf`;
-  return `${MEDIA_PROXY_BASE_URL}/drive/${driveFileId}?filename=${encodeURIComponent(filename)}`;
+  const params = new URLSearchParams({ filename });
+  if (resourceKey) params.set('resourcekey', resourceKey);
+  return `${MEDIA_PROXY_BASE_URL}/drive/${driveFileId}?${params.toString()}`;
 }

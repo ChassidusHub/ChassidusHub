@@ -8,6 +8,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "16Jh9HN8iZFkIOLpVNAfe5z0AYhDspz53"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1suqxu07sbqdIBBIlasodiHg-bSaNy6xx"
       },
@@ -32,8 +37,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "14OM9_CxDj2YAaZgB6LXIWHiXrZ041or-"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1IeenowjCUZ5YZxbteifoZQ6VmwCecwsC"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "המלך במסיבו",
+        "driveFileId": "1kpRqQrDc7kIuDSMdxWcuW_4QuHcElUxf"
       }
     ]
   },
@@ -46,8 +61,38 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1xeALyrVtLL-67ASZglqsJnV5pwjqPBvI"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1pJdubPgiHa_DCyk3f4wOZFjfIHEHCeP6"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ט ע' 204 (האזינו  א)",
+        "driveFileId": "1wHsP8agVE2sp82FfRala_e62GJWnqTmH"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ד ע' 143 (האזינו-ש\"ת)",
+        "driveFileId": "1RcFlnxNvPWQ4yXWQKstn4T0Kt5Kbj4uO"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 339 (האזינו ב)",
+        "driveFileId": "1ntGinpab5nD090F2-ksoHR7zyY23ds3l"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ט ע' 203 (יום הכיפורים)",
+        "driveFileId": "1sl0ZuHH4phihN0QUHEvsqFSjMMYCkRYW"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ד ע' 200 (עשי\"ת)",
+        "driveFileId": "1lzZcx4OTdSJAlW4gxHOaWHf8lgD7GoeD"
       },
       {
         "section": "maamorim",
@@ -80,8 +125,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "14zOzy7inl_oFkIPw2c49r-GAJN8YK5FQ"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "13KVQM7heydShJfidL8VhEjQze0tCd8mx"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ט ע' 204 (האזינו א)",
+        "driveFileId": "1wHsP8agVE2sp82FfRala_e62GJWnqTmH"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ט ע' 203 (יום הכיפורים)",
+        "driveFileId": "1sl0ZuHH4phihN0QUHEvsqFSjMMYCkRYW"
       },
       {
         "section": "maamorim",
@@ -97,6 +157,11 @@
     "occasionLabel": "ערב יו\"כ, אחרי מנחה",
     "audio": [],
     "pdfs": [
+      {
+        "section": "mugah",
+        "label": "שיחו\"ק/ ח\"ט ע' 380",
+        "driveFileId": "1uoKvbRmcPf6ZoKXwip2gw7P5Y2wuZ6uY"
+      },
       {
         "section": "mugah",
         "label": "[תרגום - תו\"מ התוועדויות]",
@@ -118,6 +183,11 @@
     "pdfs": [
       {
         "section": "mugah",
+        "label": "שיחו\"ק/ ח\"ט ע' 380",
+        "driveFileId": "1uoKvbRmcPf6ZoKXwip2gw7P5Y2wuZ6uY"
+      },
+      {
+        "section": "mugah",
         "label": "[תרגום - תו\"מ התוועדויות]",
         "driveFileId": "1kSiiPlGsbXwUJBL05LxKXEGDlWE-YImd"
       }
@@ -132,8 +202,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "180StDixKCNxGap6GGynmlbAeeKap3UpQ"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1f_jOwKogxNU0WQLm6N-51rWo5e0dEcdm"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "המלך במסיבו",
+        "driveFileId": "11YiRxwRnf-Hm2qHuZNqTnJxX96sduAhs"
       }
     ]
   },
@@ -144,6 +224,11 @@
     "occasionLabel": "יום ב' דחה\"ס",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1_7fxo0iVppe0-hZqGECap49Wu9tUJpoZ"
+      },
       {
         "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
@@ -170,8 +255,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "1D9Gc88LPHEXJVjt0QkHnRswuDvpD2uRF"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1aSd-_5d1ugCqXd50HTmwdiflqwtK_05s"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "המלך במסיבו",
+        "driveFileId": "14F8-6coHs2ZZ_fQXLV5dRDMBYY6dhODu"
       }
     ]
   },
@@ -182,6 +277,11 @@
     "occasionLabel": "שבת חוה\"מ סוכות",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1PeZC7uw1BWYNP8-JXbXaBsoFcm66y5tO"
+      },
       {
         "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
@@ -222,6 +322,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1saBxePt9MKrlKA4vrYDQRUmbJ3B2F02c"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1Kni4z9ck5HPhIMyz6_zGvcLEL7DyxG6J"
       },
@@ -241,8 +346,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1tPVhPTqlwyF9GKMf_VVN7QaXF-Tru8qz"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1kZ0Gpm_ETR_qhGA62RVyri0SRKLJpX3X"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ד ע' 127 (וילך א)",
+        "driveFileId": "1BQKBkYQ0VlYpJcxkHpIrgy_zzRstcsUH"
       },
       {
         "section": "maamorim",
@@ -279,8 +394,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1KsMe0inUEetGcbFF8Ia2DvpRlEu57sAX"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1VcZrg0-6hpUQ7RWX123koQV5oj2zpOiC"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 16 (בראשית ב)",
+        "driveFileId": "12ctUmiFISCbk4mqu0Mn84DiurmC-629g"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (בראשית א)",
+        "driveFileId": "1JdTbo36X21ZOAkH36EsBi6nxzRyA4fWW"
       },
       {
         "section": "maamorim",
@@ -296,6 +426,11 @@
     "occasionLabel": "בראשית, (התוועדות ב' המשך לשמח\"ת)",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1jciUNViGmzlIAtymfZNa8YgYbqa8QZtU"
+      },
       {
         "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
@@ -314,7 +449,8 @@
       {
         "section": "hagahos",
         "label": "צילום 1",
-        "driveFileId": "0B_UwzYOTIwDTMnNSN1RGc0NLSTQ"
+        "driveFileId": "0B_UwzYOTIwDTMnNSN1RGc0NLSTQ",
+        "resourceKey": "0-csWpm0bAUUQDqjegWUsnyQ"
       }
     ]
   },
@@ -327,8 +463,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1TaiKuLcqFTRcLST_ZIR6uflc8XeCU7Tw"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1Vk6Cphv795_VcT_4WXjeSRWvY1vJaZji"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 36 (נח א)",
+        "driveFileId": "1vQD2F1Kn8o88r-WnOcQ1MU_7YFlPcOZo"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ו ע' 63 (נח ה)",
+        "driveFileId": "1L-uLjtH1I7qbEqTPNEbCAb9PrVAWazc8"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (ראש חודש)",
+        "driveFileId": "1p2cxylMa-H7yQYmz3Mj8IUQ5WZmLWqeS"
       },
       {
         "section": "maamorim",
@@ -351,8 +507,48 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1w3YFQQ5yPYCxXbUjtzy-mA6Pz3DuciQp"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "16FTxGhDiTjReMAFR20jhDiB7-dRofdER"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 112 (תולדות א)",
+        "driveFileId": "1dYT98P9mPrjS4u1jFmMDqLrlzM4yykcU"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 121 (תולדות ב)",
+        "driveFileId": "1bLTCwiNsxkf069EJ9PtSrEBbi8p-BFm0"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ו ע' 221 (תולדות ה)",
+        "driveFileId": "1RRybqIfvdwZoLz8M8_p95pwLPIyQCL1Y"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ה ע' 113 (תולדות ג)",
+        "driveFileId": "1P7pbDxvcLtmw8vp7vpgy6JdWRBLjPIvM"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ה",
+        "driveFileId": "1a0Dfx1Tm1Ox4EGkxL_hFyxJPHklO1mqg"
+      },
+      {
+        "section": "maamorim",
+        "label": "בהוס' לסה\"מ (בראשית ב)",
+        "driveFileId": "1lwUPmH21saAlxGF7ijPf7jN2CR0aYZJR"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1KpALaCc2InfHZH8RR-2It8jCT0xUb5QP"
       },
       {
         "section": "hagahos",
@@ -390,13 +586,48 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1x25OtGkhKxhj_dR3gyUKq8dUWDpkfupK"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1xEg-ndi04Zwimx7rBkWOcKdw4eNsptq4"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 163 (וישלח ב)",
+        "driveFileId": "1MxeqGKV4xDlqEKaTUW3SGQpSZquspME3"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ו ע' 281 (וישלח-י\"ט כסלו)",
+        "driveFileId": "1hwUbtVBqeVoxbPU_t6TNjVJyD04zCdc0"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ל ע' 161 (וישלח ג)",
+        "driveFileId": "1n0N-UQlBi3yH_PueCsK0D1KZnScHo4Jz"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ה ע' 113 (תולדות ג)",
+        "driveFileId": "1P7pbDxvcLtmw8vp7vpgy6JdWRBLjPIvM"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (דרושי חתונה - הוצאת המכון כו')",
+        "driveFileId": "12x_IX8IGtd91ieRLJ7ry9mF2rcZaxdnj"
       },
       {
         "section": "maamorim",
         "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
         "driveFileId": "1ZwBmZDX7I5aKe4-2gzFkbdyVCvMitZSM"
+      },
+      {
+        "section": "hosofos",
+        "label": "צילום ההגהה",
+        "driveFileId": "1h4AA6NL4W3Tk-EIQkwR_KgETxgRdkj1I"
       }
     ]
   },
@@ -414,8 +645,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1A1DeHGa6fJ3wRJIxPeBH5Kh7hNPqGSRC"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1720tF-o689LdC3pXD4XGO-gbSM3Z5lUj"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 172 (י\"ט כסלו)",
+        "driveFileId": "16wt62Fsm5hElEmu6nKXBT3TZ2KV6guC3"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (יו\"ד-י\"ט כסלו)",
+        "driveFileId": "1IfvAWaqBZ3eT1g6VxLUxqnV5RMHbddhv"
       },
       {
         "section": "maamorim",
@@ -438,8 +684,33 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1mWnzVUAO3zbDnltUE73SPo9uNEO7ed6Z"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1XoxW0PR7PEIcq2UzwP_Eus91QgxbxcZe"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 172 (י\"ט כסלו  א)",
+        "driveFileId": "16wt62Fsm5hElEmu6nKXBT3TZ2KV6guC3"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ה ע' 156 (וישב א)",
+        "driveFileId": "1gmnB2IHAwZP9OmRbNlv6kX6jRbDGm-uQ"
+      },
+      {
+        "section": "maamorim",
+        "label": "בהוס' לסה\"מ מלוקט ח\"א",
+        "driveFileId": "1u0IKWNF1Bf4b60XH8gZ1GVf5beGSUY6M"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (בראשית ב)",
+        "driveFileId": "1zr2-X6sykjISLCCtoOyTdIZoXYNRGFeu"
       },
       {
         "section": "maamorim",
@@ -472,8 +743,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1SIfrb7VwfyzpeWvR_RJc7lPbj1Detn0h"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "10__SNG2J7fcfEc0UhyCNpv074Zb_BADn"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 202 (מקץ ב)",
+        "driveFileId": "1I6Gbe0tsngwiFhSVolO6n4TQOgLu9cP1"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (חנוכה)",
+        "driveFileId": "1UYEmErp-Fyz6Iig0jDAJi1CToPSCfAmj"
+      },
+      {
+        "section": "maamorim",
+        "label": "שיחו\"ק תשכ\"ז ח\"א ע' 226",
+        "driveFileId": "1y2y1KfQQ2_c7Ds0A2w0wZgOFcqwiOXIR"
       },
       {
         "section": "maamorim",
@@ -483,7 +774,8 @@
       {
         "section": "hagahos",
         "label": "צילום 1",
-        "driveFileId": "0B_UwzYOTIwDTMlA1OEczMmZVREU"
+        "driveFileId": "0B_UwzYOTIwDTMlA1OEczMmZVREU",
+        "resourceKey": "0-f9kCd03q2ogO3qI4-G0fkg"
       }
     ]
   },
@@ -493,7 +785,13 @@
     "hebrewDate": "5727-04-05",
     "occasionLabel": "ליל ו' טבת, בעת ביקור אדמו\"ר מרחמיסטריבקע",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "1U4-k4mEB8KdyIwEkIFGXuqR_v6WHvTrB"
+      }
+    ]
   },
   {
     "occasionId": 11113766,
@@ -504,8 +802,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1PqiBceHldTcyLDMwzxoUD8X8VPCg3DbM"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1Bmf6e2-aRHxVujJCi1ZDd8keOkUSGPcn"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 251 (ויחי א)",
+        "driveFileId": "1sl-g0tClITSpLza1ize0VUGHLdkv_lna"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ה ע' 211 (ויחי א)",
+        "driveFileId": "1_wmL-lM-AeRC1o7kbpsyPXikNHlgRm7O"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (בראשית ב)",
+        "driveFileId": "1wOit2mAOOkB53CHjlQ2w6di-uWzq_yCb"
       },
       {
         "section": "maamorim",
@@ -523,8 +841,38 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1fwXOZpY4hVMIBT64OUvJdqaCQcPBi7z-"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1Zgrdkfxi1aYaFjklcAIGOE8rsw-OHJmF"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ה ע' 251 (ויחי א)",
+        "driveFileId": "1sl-g0tClITSpLza1ize0VUGHLdkv_lna"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ז ע' 79 (וארא ד)",
+        "driveFileId": "1id2bZpTaLx2HbTYi_Q4YiuBspW9JOr05"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"א ע' 45 (וארא ג)",
+        "driveFileId": "1CqoPyv6p2wQ4iGCTIR6MvXm-cMDTtIzk"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ו ע' 33 (וארא ב)",
+        "driveFileId": "1IUWEjuiJ2bPXSdsUdGTiEpkLNb7TVTjx"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (שמות א)",
+        "driveFileId": "1rh8pvpKq5QvGcYfRZAZ_rXtNNjIAG7X8"
       },
       {
         "section": "maamorim",
@@ -557,18 +905,30 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1Ykq8Aeng76j8fjHbvnMIiB3kKyC5Y6_2"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1JmeQupevdHVFBitfufPhin3ylj8TMP5j"
       },
       {
+        "section": "mugah",
+        "label": "חי\"א ע' 55 (בשלח ב)",
+        "driveFileId": "19qDFU0Ae3t9BU6UmwlgOBExFgUlPfkXs"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [ר\"פ בכתי\"ק דמאמר באתי לגני]",
-        "driveFileId": "0B_UwzYOTIwDTMXpqUXZ5SnRSQU0"
+        "driveFileId": "0B_UwzYOTIwDTMXpqUXZ5SnRSQU0",
+        "resourceKey": "0-w33Y0_YpwnRExsBrFF7peQ"
       },
       {
         "section": "hagahos",
         "label": "צילום 2 [לקו\"ש חי\"א בשלח ב (1)]",
-        "driveFileId": "0B_UwzYOTIwDTSDNyOC1UYWVjSWM"
+        "driveFileId": "0B_UwzYOTIwDTSDNyOC1UYWVjSWM",
+        "resourceKey": "0-U1Y3xzzBcMTrqYPK7NZkDQ"
       },
       {
         "section": "hagahos",
@@ -591,8 +951,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1Zwg-eftll7uFAvcNqejLSSonZ-9kkPmf"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1RouVQdrwis0ZX3e_mlntFFxsVt9DUGvm"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"א ע' 55 (בשלח ב)",
+        "driveFileId": "19qDFU0Ae3t9BU6UmwlgOBExFgUlPfkXs"
       },
       {
         "section": "maamorim",
@@ -607,7 +977,8 @@
       {
         "section": "hagahos",
         "label": "צילום 1 [ר\"פ בכתי\"ק דמאמר באתי לגני]",
-        "driveFileId": "0B_UwzYOTIwDTMXpqUXZ5SnRSQU0"
+        "driveFileId": "0B_UwzYOTIwDTMXpqUXZ5SnRSQU0",
+        "resourceKey": "0-w33Y0_YpwnRExsBrFF7peQ"
       },
       {
         "section": "hagahos",
@@ -635,6 +1006,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1e48doTt2WQKxY8Srh7Wupq6QstlZI9So"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1Xe93pRBJSe508nWshsSk-CHhwVfYlcHu"
       }
@@ -649,8 +1025,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1pWM3d7hC1cAhVbRbmbTsmsZjIvfSUJwt"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1bZzQhmYnGTGZl37Ud0S9tc-TdFzaeDBP"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"א ע' 99 (משפטים ב)",
+        "driveFileId": "1WjvLoJ1ly9-RO3C9uTqex7fBV7_R1Bff"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"א ע' 428 (יתרו - ביאור בשעהיוה\"א פ\"ה)",
+        "driveFileId": "1znXkPHX2L_onE45zNOcGg_D5GgFk4ISZ"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (שמות ב)",
+        "driveFileId": "1Vnq2DnyTB1HPsJlpteIu7975c3__BIRg"
       },
       {
         "section": "maamorim",
@@ -678,8 +1074,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1q1uB1XYCBKTY_U495ra8uhvaZhNR72rX"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "163jfosINp4tJm_d5NZPPuOpu7P3n0YXz"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ו ע' 170 (תצוה א)",
+        "driveFileId": "1pVBxfDTzxuLHciud2x4Wjrt3ZjL-KtTQ"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ז ע' 342 (תצוה-ז' אדר)",
+        "driveFileId": "1QAcqEpHxg3TSEJItOGOPdioMIojLb99g"
       },
       {
         "section": "maamorim",
@@ -697,8 +1108,38 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1CY8_RUMOjAh2Sd20HUPyEobWawyjW9Sh"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1K-DlQiAZHFzuzYlK9K7n8uL2A0knq10s"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"א ע' 139 (תשא א)",
+        "driveFileId": "1uxMhd3p3istyV_fiOdC8VFCM6J-8JBWA"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ז ע' 342 (תצוה-ז' אדר)",
+        "driveFileId": "1QAcqEpHxg3TSEJItOGOPdioMIojLb99g"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ו ע' 209 (פורים קטן)",
+        "driveFileId": "1JrRfwHy3W6RHGN3mhQTGMZlyNwE6mxNO"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (פורים)",
+        "driveFileId": "1czwk4j69o95L3jVbKK91OyHxY-rz66Es"
+      },
+      {
+        "section": "maamorim",
+        "label": "שיחו\"ק תשכ\"ז ח\"א ע' 386",
+        "driveFileId": "1DSzU0YK2k13it8Fv5VPvdL7HSUXlQCfr"
       },
       {
         "section": "maamorim",
@@ -721,6 +1162,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1cxPC1EcInI4Ea1HyNhzdNTd8s2MAevn_"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1nSlX96-xvh1s48e90wfWuIWpNgqrrIZg"
       }
@@ -735,8 +1181,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1V7Z2rgnAA_WrPojVMz_TqD8-xMv1lKzb"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1TBgZsrOiHRbcBmjUUEcWqL1fBeRGdem-"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ו ע' 225 (פקודי א)",
+        "driveFileId": "14-IYN2GOsCuU6gqVTiFTBg5zxxW58Bl4"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ז ע' 475 (פקודי ג)",
+        "driveFileId": "1dlbPMid6-00EjcnXgFv_V8r6OWWqC_H6"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (ד' פרשיות א)",
+        "driveFileId": "1FDYFx7-ZCiS7P-zR3FBHrH-OjCqpM8It"
       },
       {
         "section": "maamorim",
@@ -759,8 +1225,33 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1QKzDCzITBk0mPFIhGIj0NRsJ_0kiGISQ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "1veqx6X4uEMnjM4ECPUw4JRODtmQ5B3GR"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1M1xJF8h1KNWQBq6C35Rw6rqOpXK-k2u4"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 363 (חה\"ס ג)",
+        "driveFileId": "1YqQcg0eX5Bqxa1pQ7j2VXJ88m9cU_Mfa"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"א ע' 170 (פורים א)",
+        "driveFileId": "1f1khyX8oYcuWKagLbTUk-BDQhsiPw-Kp"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ו ע' 161 (פורים א)",
+        "driveFileId": "10kGI0XE5ziq13geMiMMqceWmDrjHVgsZ"
       },
       {
         "section": "mugah",
@@ -774,8 +1265,18 @@
       },
       {
         "section": "maamorim",
+        "label": "סה\"מ (פורים)",
+        "driveFileId": "1HjlErKUguhh-0gYBSmk0h7sRustVxah8"
+      },
+      {
+        "section": "maamorim",
         "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
         "driveFileId": "1jQRvaqOXr_1aMkfCSlec2lCviLnNYVD5"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1aeQEoYfOXajoUygsNqGtMriAkdhxzuvI"
       }
     ]
   },
@@ -788,13 +1289,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1XuoqnKbapmw1KaLZBKU8tacvWT3W77sa"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1y_zfQPB5mf54xogolYfygh-UkQ4B1EIv"
       },
       {
         "section": "mugah",
+        "label": "ח\"ז ע' 80 (תזריע ב)",
+        "driveFileId": "1p6UQ_QD6XzlPpG7iZ0vFDYyAQV1jIJAq"
+      },
+      {
+        "section": "mugah",
         "label": "קטע מהשיחה - י\"ל מהמזכירות - אנגלית",
         "driveFileId": "1ibSvEez4O0HL0VN7k0B79ubpcQrWrHwr"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (ד' פרשיות ב)",
+        "driveFileId": "1SclG0lf6Pc1VYPzHaxB_3K6XJyTTgSX7"
       },
       {
         "section": "maamorim",
@@ -812,8 +1328,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1bNTBi0D2d358IEx5t3F7DJpX8HP8mz5b"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1zEHQODEpjWc0l-Hgtv9sBMYTCPKzdLXk"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ב ע' 33 (שבת הגדול)",
+        "driveFileId": "1-KdRcma_7kX7eh-8p24YOO93X-ZRCqat"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (פסח א)",
+        "driveFileId": "1dnFxd_ploI8PdRjOYVreSJTx0oWBvqec"
       },
       {
         "section": "maamorim",
@@ -828,7 +1359,13 @@
     "hebrewDate": "5727-07-14",
     "occasionLabel": "ליל א' דחה\"פ, ברכה להת'",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "1Af0OiHwF92W81hZoFUgAjHzLOJ9Sftpz"
+      }
+    ]
   },
   {
     "occasionId": 11113780,
@@ -839,6 +1376,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1BRov0DRMD47_pl-vvWGoBJyRcWJpQ26p"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1BjPFPEnwYWyklFs3j9HxetrmOJXF1CHW"
       },
@@ -846,6 +1388,16 @@
         "section": "maamorim",
         "label": "הנחה פרטית - רי\"ס",
         "driveFileId": "1XcUNwErxAWAGK1qzdC2IZyXB6SCsd2sf"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (פסח א)",
+        "driveFileId": "1sPNkBC-ox3585foLQ_y6FGJFjoknNMhT"
+      },
+      {
+        "section": "maamorim",
+        "label": "שיחו\"ק תשכ\"ז ח\"ב ע' 50",
+        "driveFileId": "1TmRX-2JQxrMXWdllh_tmihZNo8bjrREF"
       },
       {
         "section": "maamorim",
@@ -863,8 +1415,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "1Rs_D5lx6kQub2DNQ2HF73c0BC1gZ9dQO"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1y7KpNzM1yBRgEeNAqvxjP47RbBea1Msv"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "המלך במסיבו",
+        "driveFileId": "16BW0m_8tF5gaxyJSgfUsvS7vFI4BZI7M"
       }
     ]
   },
@@ -877,13 +1439,43 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1vAlLAwPebn3PsaLoof_p-VZe__z92-xd"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1I0lgZh_ho9XM5gF5HNoSSERvnseSXU8X"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "בטא\"ח מס' מ ע' 3",
+        "driveFileId": "18noUQ94lZzMj7wFisxqxVeGRYyJztrYk"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ו ע' 69 (בא ב)",
+        "driveFileId": "1Q6J4GOx8i0LyMN3Ilt2bHXtI3VnhZF-B"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ב ע' 30 (ימים אחרונים דחג הפסח)",
+        "driveFileId": "1NSm4vqrykO57uwvNPrDmUA8ZoetxfQm5"
       },
       {
         "section": "mugah",
         "label": "בהוס' לסה\"ש תשמ\"ח ח\"ב/ בהוס' לתו\"מ התוועדויות תשמ\"ח ח\"ב (הדרן על ש\"ס משנה)",
         "driveFileId": "1MiSoGmr0JXYVUNV3Yyaxx0ifO7S3DEbd"
+      },
+      {
+        "section": "maamorim",
+        "label": "בהוס' לסה\"מ מלוקט ח\"א",
+        "driveFileId": "1cj_xSaSkL75e8P0-iPC9N_1C_04u-SCg"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (פסח ב)",
+        "driveFileId": "1KYpF8_Wo2w8knnSqwhj-3oCIwiK3fC-G"
       },
       {
         "section": "maamorim",
@@ -911,8 +1503,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "1b1bPNt6yju7Na5nPXIEyN7MCJBMaCzfL"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1TZyiUBj9i3baAZWBQL8z37vD_uBmIoXQ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "המלך במסיבו",
+        "driveFileId": "1l77FUlTfPXtNpuMbny_Wm-8U2K0ZqjsF"
       }
     ]
   },
@@ -925,13 +1527,38 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1Sz8NVI0GillE9e3FhLw9mpN5ZAvPwuHm"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1Z6vOc7u3uhmq9FW-ZPRRLvK1Cs74Nggc"
       },
       {
         "section": "mugah",
+        "label": "ח\"ו ע' 69 (בא ב)",
+        "driveFileId": "1Q6J4GOx8i0LyMN3Ilt2bHXtI3VnhZF-B"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ז ע' 215 (קדושים ב)",
+        "driveFileId": "1ApEVpzz9PiClK6Yfo0iw8gtnnn3lAZk3"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ו ע' 7 (שמות ב)",
+        "driveFileId": "1dZNRB4zJAjZU7m91GyB2bRR21MkZLNDZ"
+      },
+      {
+        "section": "mugah",
         "label": "בהוס' לסה\"ש תשמ\"ח ח\"ב/ בהוס' לתו\"מ התוועדויות תשמ\"ח ח\"ב (הדרן על ש\"ס משנה)",
         "driveFileId": "1MiSoGmr0JXYVUNV3Yyaxx0ifO7S3DEbd"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (ויקרא)",
+        "driveFileId": "1l7k4XIDA0CQydwCaNw8ZW0MXFbwwew2c"
       },
       {
         "section": "maamorim",
@@ -941,7 +1568,8 @@
       {
         "section": "hagahos",
         "label": "צילום 1",
-        "driveFileId": "0B_UwzYOTIwDTTk9IU2M4Q1VGYVU"
+        "driveFileId": "0B_UwzYOTIwDTTk9IU2M4Q1VGYVU",
+        "resourceKey": "0-x7hsW5NUN_GbfrmbApfpEg"
       }
     ]
   },
@@ -959,8 +1587,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "18YRD2uvAZLu3OEe5TlM-ti1v6b7hScZP"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1AZtpXE23Iq-Zes91ikbgra7ndXF18BiE"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ז ע' 331 (ל\"ג בעומר)",
+        "driveFileId": "1h3YOGmnqqhdwIlPYhJiuFTRFvmSmjLQZ"
+      },
+      {
+        "section": "mugah",
+        "label": "י\"ל בקו' בפנ\"ע - באנגלית",
+        "driveFileId": "11KBeCE7r5-WDT-y1pxQ6By2U8oxO8W0r"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1XA_cl9L7elNJxCm743CEow5rAl2B3vFl"
       }
     ]
   },
@@ -973,8 +1621,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1J3agxA0EE1ojoDUyevxAwQUaVGayI1-9"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1uMzMiwhbmmwF63qYhomFNe2lKPqk4ERp"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ג ע' 9 (במדבר ב)",
+        "driveFileId": "14E6FO6KJ_4pvh7OuQe-wJtmlydhEpRA9"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (ימי הספירה)",
+        "driveFileId": "1q576WI_DKHz5lI6fsN7QatClZ860w8DC"
+      },
+      {
+        "section": "maamorim",
+        "label": "שיחו\"ק תשכ\"ז ח\"ב ע' 115",
+        "driveFileId": "15K9JGbnsQXkuK0Z8rEV5MFKGb2ktjbim"
       },
       {
         "section": "maamorim",
@@ -997,6 +1665,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1wmkSc1OIM8C5EHktlyNYSIfo18wmmRv7"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1ijldn_CNKhFoV2O_CaJGf1fWR2LQSLTW"
       }
@@ -1009,6 +1682,11 @@
     "occasionLabel": "ליל א' דחה\"ש, לפנות בוקר",
     "audio": [],
     "pdfs": [
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (שבועות)",
+        "driveFileId": "1dR8-cAqsZH2GgWsy6yyFxC4lQIRPhRzR"
+      },
       {
         "section": "maamorim",
         "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
@@ -1025,8 +1703,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1XcXBCvKAnZIAWYRmITgvH4Va_IutvY6m"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1OsdvDzM-U5IZ5oDYN2_vWkxpnULzwul5"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ח ע' 21 (חה\"ש)",
+        "driveFileId": "11qH-KZ32RaNnZqAHfckIC21CQ7c48a5m"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 121 (עקב ה)",
+        "driveFileId": "1fQWa2QFMv1vFVHwoVJyQAweuDDCbfZeQ"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (שבועות)",
+        "driveFileId": "1EOj-Yfj5YmYzIaBbWtSDDhSbi7p3EZ9N"
       },
       {
         "section": "maamorim",
@@ -1049,8 +1747,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "בהוס' לשיחו\"ק",
+        "driveFileId": "18cpfgQHyJAjMkgfp_tC13DLBh-JjqQ8S"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1iY4fuFa3dFrb1R0Dk_WQQawOXoEenosM"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "המלך במסיבו",
+        "driveFileId": "1hdCBUOL1dlRnD_iJRDeeQM_OJ_6Pxk7c"
       }
     ]
   },
@@ -1063,8 +1771,43 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1ijba4DThskIldiP4qee4Oq7uueXvfDqP"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1W9XDsrcuh2wPScOzLTQKbWllRxazzD25"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ב ע' 103 (אמור ב)",
+        "driveFileId": "17sr_8xJfLPqkQnr1IIDN9dA13VtjJkLO"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ג ע' 24 (בהעלותך א)",
+        "driveFileId": "1Og2F-l7DXGlI02jsBDVejQ6zaTot8Mrs"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 121 (עקב ה)",
+        "driveFileId": "1fQWa2QFMv1vFVHwoVJyQAweuDDCbfZeQ"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 171 (שופטים ב)",
+        "driveFileId": "1q0EyP8Xp434suNAruryG3tR8tH8BEURW"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ד",
+        "driveFileId": "1XcD3zmlmWvIr7YF2ae7hs1bbgIYozUwp"
+      },
+      {
+        "section": "maamorim",
+        "label": "בהוס' לסה\"מ (במדבר א)",
+        "driveFileId": "1UYEmErp-Fyz6Iig0jDAJi1CToPSCfAmj"
       },
       {
         "section": "hagahos",
@@ -1074,7 +1817,8 @@
       {
         "section": "hagahos",
         "label": "צילום 2 [מענה למניחים]",
-        "driveFileId": "0B_UwzYOTIwDTTVZUS2ZfS3JDcnc"
+        "driveFileId": "0B_UwzYOTIwDTTVZUS2ZfS3JDcnc",
+        "resourceKey": "0-nvjXwxOTGr0Ui33Woqt73w"
       },
       {
         "section": "hagahos",
@@ -1102,6 +1846,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1K0lqs0TedBlxoPqxj6rFho4KXHNWtjd4"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1BXtsvxOOpShPdUOmXGv-aG72a_o7XC2i"
       }
@@ -1116,8 +1865,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "158tFbCyBVpXiITL8bTCX5kzCAxgY_bF6"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1pQRiCAOHUMHpHnfWqO3M6b-MovwwqE7c"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ח ע' 102 (קרח א)",
+        "driveFileId": "118ovIT79ok8ZRWDNlFlCQaqaVvhUGgUV"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ג ע' 123 (קרח ב) [תשמ\"ב]",
+        "driveFileId": "17yYI3LnPBzRdoA_1LdTG816f0070Mf2N"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (במדבר ב)",
+        "driveFileId": "1laHElNF0gKwyrknl_8GZBmkm9kMWvtT4"
       },
       {
         "section": "maamorim",
@@ -1135,8 +1904,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1md3zxXdn0AZ7eN690a5Nb_6rABfz4sqc"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1P3UQQF38yFWJIGW7yInfRAvLUKxMrlm-"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ג ע' 123 (קרח ב) [תשמ\"ב]",
+        "driveFileId": "17yYI3LnPBzRdoA_1LdTG816f0070Mf2N"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (ראש חודש)",
+        "driveFileId": "1p2cxylMa-H7yQYmz3Mj8IUQ5WZmLWqeS"
       },
       {
         "section": "maamorim",
@@ -1159,8 +1943,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "19QMCAw4RPRRPQVCtf-Idl9-4ftUXGTS-"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1GSSk91a04bqCeOwjmRO4cFaj2FUnlOxs"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ד ע' 160 (תבא ג)",
+        "driveFileId": "1QgmQOCEdYhi40uo185zVK-n2nlcwMOHI"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (י\"ב-י\"ג תמוז)",
+        "driveFileId": "1CHc_zgLhdYZ5JdwyfghvOW-hZtyssorZ"
       },
       {
         "section": "maamorim",
@@ -1188,13 +1987,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1FrfJnu8HlEWloS7oY0JBhdyY5XHfRqG-"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1M9qQkHuSs7_6dpWvt2EK8a_N8Y3TXCMY"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ג ע' 176 (פנחס ג)",
+        "driveFileId": "1AtHnICzDOegSB_uypazwNzLUgvEdtD1B"
       },
       {
         "section": "maamorim",
         "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
         "driveFileId": "1P4Rnlwkl0TiAV48Zuteu5BKp7tSTJqqh"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (י\"ב-י\"ג תמוז)",
+        "driveFileId": "1ZZNlTFtvkKfGgM6BDBtQK-bGRBlNBNXk"
       },
       {
         "section": "maamorim",
@@ -1204,7 +2018,8 @@
       {
         "section": "hagahos",
         "label": "צילום 1",
-        "driveFileId": "0B_UwzYOTIwDTNmVsSmxnRnRITG8"
+        "driveFileId": "0B_UwzYOTIwDTNmVsSmxnRnRITG8",
+        "resourceKey": "0-tLroTUj6Q3TTNHyjUK_Ebg"
       }
     ]
   },
@@ -1217,13 +2032,38 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "(1) שיחו\"ק",
+        "driveFileId": "1hF0HfUcNVsSN64tPA27cu7Pu3cd4cm8m"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "(2) שיחו\"ק (נוסח ב)",
+        "driveFileId": "1hGajUlRauWk0m1BZIEsRbYHuM_LV-Y68"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1K6tnEsyb4oJlcnbcfsMAb2wF0U-tbnK-"
       },
       {
         "section": "mugah",
+        "label": "ח\"ח ע' 192 (מסעי א)",
+        "driveFileId": "1TAcHD5bkkyUbyQzhMHteKisj6Rk2rk5u"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ח ע' 78 (חוקת ב)",
+        "driveFileId": "1XEl2QA64TnHCEI4bW6ETqMEdvbjiIa2u"
+      },
+      {
+        "section": "mugah",
         "label": "הנחה (של הרי\"י וויינבערג) עבור הרדיו",
         "driveFileId": "1oQ2-Vc5jH4_Gs_4-h5DLbsPMvU8ki_WK"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (אב-אלול)",
+        "driveFileId": "19Fvlq2JqdIvb5qIjD6xqEXf_1MdSDDql"
       },
       {
         "section": "maamorim",
@@ -1256,8 +2096,43 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1Y6W1FA8kNjnKGlKnBLmU2EoU1vZpoVZY"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1v3BEA-sDQ4N5WZFXgVfL4hG3cHM1CZXU"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 94 (עקב ב)",
+        "driveFileId": "126OGD2NBFg4iECk-sfWeuixLodkzMpAj"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 129 (עשרים באב)",
+        "driveFileId": "1jDuEJWt0oLW7XrQtAXXUR5GVDefiW52j"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ב",
+        "driveFileId": "1IhHilq1AGtzUdvsquvZ_WhwSSqWGsa-p"
+      },
+      {
+        "section": "maamorim",
+        "label": "בהוס' לסה\"מ (דברים א)",
+        "driveFileId": "1e7EQ0Jswbf_6vatvJdjHhQoY00KVB2KF"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ג",
+        "driveFileId": "1xXwSpnG2u75HNLHEo4QD0oJc87v9aDpz"
+      },
+      {
+        "section": "maamorim",
+        "label": "בהוס' לסה\"מ (דברים א)",
+        "driveFileId": "1Quhd2sCBlsmciF3AsDyoKwAeMBu02w0h"
       },
       {
         "section": "hagahos",
@@ -1290,8 +2165,28 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1RbEblcb57K0vVjTrsV7fm2BYpNr6fyQE"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1RhwUZkXgzX4nCq6fM9XbrNCIW2PWy2p3"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ט ע' 158 (אלול א)",
+        "driveFileId": "1jhZOuj6EbIiJx3p2maxJAdtC-K1A7nEa"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ט ע' 79 (ראה ב)",
+        "driveFileId": "16hKmyybHcFZbBWk8JgiYR93qNSkmqOBR"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (אב-אלול)",
+        "driveFileId": "1C8YChtFTKDo2D2mMgb3f6RSpj0HGbPDN"
       },
       {
         "section": "maamorim",
@@ -1309,8 +2204,33 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1W71IsQtAKCnnWmcg_KyFyuUIDOoxIhiw"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1fXwYrjoTu4HTLK4rQIEVu3WWS05B0w6C"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ט ע' 121 (שופטים ב)",
+        "driveFileId": "1vgYs3PVUy8mj3XBAsXwhH-wuibTsN7C-"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ד ע' 64 (שופטים א)",
+        "driveFileId": "1eiUZtbjCnA9XKPzgglQB0GkGMCbEQF1S"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ט ע' 95 (שופטים א)",
+        "driveFileId": "10BSqR4lIVsPJ4Q0ajpOmXe82qM6XO5XD"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (דברים א)",
+        "driveFileId": "1PpmFKfy3DRDerlARvV5MRCoIeQ7ESBsD"
       },
       {
         "section": "maamorim",
@@ -1338,8 +2258,18 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1bgRZ6ObC9lSSPv2pz1-o_6Pc0XnSBp_X"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1rN3pu37xqq2twePgvT3dbxGnzt_DXdYp"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ט ע' 133 (תצא א)",
+        "driveFileId": "1be_OyaC8eF5RV5YFt3sWM6MjzCiGfIVP"
       },
       {
         "section": "maamorim",
@@ -1357,8 +2287,33 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "171Hy8IQQCzp2p8r-rvDF9M6e9QcYGJC7"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1cIzm99vVZS7klnWGKmy0Y9-mcVUSPC3G"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "בטא\"ח מס' לא ע' 3",
+        "driveFileId": "1tJ-6pMwCKazn8F5q3GCDtQFf3u6oXDG3"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ט ע' 152 (תבא א)",
+        "driveFileId": "10qy_XSK7USctNJokbU8_x81__Z2o3nPB"
+      },
+      {
+        "section": "mugah",
+        "label": "חי\"ד ע' 99 (תבא ב)",
+        "driveFileId": "1bds7-5H5hX1g_glO7FyL-9-63ixNt7MN"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ד",
+        "driveFileId": "16p22Pi9QbWFpezzkPatrzmEVOySDW2qB"
       },
       {
         "section": "hagahos",
@@ -1373,7 +2328,8 @@
       {
         "section": "hagahos",
         "label": "צילום 3 [מענה לשאלות בהתועדות]",
-        "driveFileId": "0B_UwzYOTIwDTcnRWS1diN0ZqT28"
+        "driveFileId": "0B_UwzYOTIwDTcnRWS1diN0ZqT28",
+        "resourceKey": "0-EVI3YamuD1x6rQ_TXU4U-A"
       },
       {
         "section": "hagahos",
@@ -1396,6 +2352,11 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1G_Tmu3nDwLDoHRn27FsxZiHoPt6QD9vd"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1FST6tqzUAuzEsPRdE9YfmIkt1esk3UNR"
       },
@@ -1415,8 +2376,23 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1VaVa2S6WmOwCEybn65vPM8C8iWh3LLY8"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תו\"מ התוועדויות",
         "driveFileId": "1aydXE-85fluN9wnksZWguC5af_umJi0B"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ט ע' 175 (נצבים א)",
+        "driveFileId": "1minosQv_S6jjv179xBCkVqfljTpOIiSe"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ (דברים ב)",
+        "driveFileId": "15EV8LcaFLl5mtWyPwn7SGudTeL_XqjUu"
       },
       {
         "section": "maamorim",
@@ -1426,7 +2402,8 @@
       {
         "section": "hagahos",
         "label": "צילום 1",
-        "driveFileId": "0B_UwzYOTIwDTN3JKMHpqeF9hZGc"
+        "driveFileId": "0B_UwzYOTIwDTN3JKMHpqeF9hZGc",
+        "resourceKey": "0-bnV7mnfdDbors31E5j6P5w"
       }
     ]
   },
@@ -1437,6 +2414,11 @@
     "occasionLabel": "ערב ר\"ה, ברכה",
     "audio": [],
     "pdfs": [
+      {
+        "section": "mugah",
+        "label": "שיחו\"ק תשכ\"ח/ ח\"ט ע' 362",
+        "driveFileId": "1USJDHb0ohzCNyKCuYniCdloHNLY3t3P2"
+      },
       {
         "section": "mugah",
         "label": "[תרגום - תו\"מ התוועדויות תשכ\"ז]",

@@ -1,5 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
-import { extractDriveFileId, isReshimosLabel } from './driveLinks.js';
+import { extractDriveFileId, extractDriveResourceKey, isReshimosLabel } from './driveLinks.js';
 import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from './types.js';
 
 const PDF_SECTIONS: readonly PdfSection[] = ['mugah', 'biltiMugah', 'maamorim', 'hagahos', 'hosofos'];
@@ -67,8 +67,9 @@ export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
     if (isReshimosLabel(row.label)) continue; // a reshima (the Rebbe's private notes, or the separate "Reshimos" series) isn't a sicha/farbrengen transcript
     const driveFileId = extractDriveFileId(row.url);
     if (!driveFileId) continue; // not every link in these sections is a Drive share link (sie.org, chabad.org, etc.)
+    const resourceKey = extractDriveResourceKey(row.url) ?? undefined;
     const list = pdfsByOccasion.get(row.occasion_id) ?? [];
-    list.push({ section: row.section as PdfSection, label: row.label, driveFileId });
+    list.push({ section: row.section as PdfSection, label: row.label, driveFileId, ...(resourceKey && { resourceKey }) });
     pdfsByOccasion.set(row.occasion_id, list);
   }
 

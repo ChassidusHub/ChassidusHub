@@ -44,15 +44,15 @@ export function OccasionDetail({ entry }: Props) {
     const opened = window.open('', '_blank');
     setPdfStates((prev) => ({ ...prev, [pdf.driveFileId]: { status: 'downloading', percent: 0 } }));
     try {
-      await downloadPdf(pdf.driveFileId, ({ received, total }) =>
+      await downloadPdf(pdf.driveFileId, pdf.resourceKey, ({ received, total }) =>
         setPdfStates((prev) => ({
           ...prev,
           [pdf.driveFileId]: { status: 'downloading', percent: total > 0 ? Math.round((received / total) * 100) : 0 },
         })),
       );
       setPdfStates((prev) => ({ ...prev, [pdf.driveFileId]: { status: 'ready' } }));
-      if (opened) opened.location.href = pdfUrl(pdf.driveFileId);
-      else window.open(pdfUrl(pdf.driveFileId), '_blank');
+      if (opened) opened.location.href = pdfUrl(pdf.driveFileId, pdf.resourceKey);
+      else window.open(pdfUrl(pdf.driveFileId, pdf.resourceKey), '_blank');
     } catch (error) {
       opened?.close();
       setPdfStates((prev) => ({ ...prev, [pdf.driveFileId]: { status: 'idle' } }));
@@ -86,7 +86,7 @@ export function OccasionDetail({ entry }: Props) {
             )}
             {state.status === 'downloading' && <p>Downloading... {state.percent}%</p>}
             {state.status === 'ready' && (
-              <a className="button" href={pdfUrl(pdf.driveFileId)} target="_blank" rel="noreferrer">
+              <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
                 Open PDF
               </a>
             )}

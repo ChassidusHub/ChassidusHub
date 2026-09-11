@@ -49,7 +49,7 @@ export function OccasionDetail({ entry }: Props) {
 
   async function handleDownloadPdf(pdf: CatalogPdf) {
     try {
-      const path = await downloadPdf(pdf.driveFileId);
+      const path = await downloadPdf(pdf.driveFileId, pdf.resourceKey);
       await openPdf(path);
     } catch (error) {
       Alert.alert('Download failed', String(error));
