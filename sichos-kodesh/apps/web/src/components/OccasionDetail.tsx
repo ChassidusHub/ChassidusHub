@@ -34,6 +34,14 @@ export function OccasionDetail({ entry }: Props) {
   }
 
   async function handleDownloadPdf(pdf: CatalogPdf) {
+    // Open the tab synchronously, in the same call stack as the click -
+    // opening it only after the `await downloadPdf` below resolves is a
+    // real bug: browsers (Safari in particular) treat a `window.open`
+    // that runs after an async gap as no longer tied to the user's click
+    // and silently block it as a popup, which looks exactly like nothing
+    // happened. Redirect this already-open blank tab once the download
+    // completes instead of opening a new one then.
+    const opened = window.open('', '_blank');
     setPdfStates((prev) => ({ ...prev, [pdf.driveFileId]: { status: 'downloading', percent: 0 } }));
     try {
       await downloadPdf(pdf.driveFileId, ({ received, total }) =>
@@ -43,8 +51,10 @@ export function OccasionDetail({ entry }: Props) {
         })),
       );
       setPdfStates((prev) => ({ ...prev, [pdf.driveFileId]: { status: 'ready' } }));
-      window.open(pdfUrl(pdf.driveFileId), '_blank');
+      if (opened) opened.location.href = pdfUrl(pdf.driveFileId);
+      else window.open(pdfUrl(pdf.driveFileId), '_blank');
     } catch (error) {
+      opened?.close();
       setPdfStates((prev) => ({ ...prev, [pdf.driveFileId]: { status: 'idle' } }));
       alert(`Download failed: ${String(error)}`);
     }

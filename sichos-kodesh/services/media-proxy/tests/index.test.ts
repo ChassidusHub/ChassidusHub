@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  cleanResponseHeaders,
   DRIVE_ID_PATTERN,
   driveDownloadUrl,
   extractConfirmToken,
@@ -119,6 +120,38 @@ describe('fetchFromDrive', () => {
 
     const result = await fetchFromDrive('abc123');
     expect(result.status).toBe(502);
+  });
+});
+
+describe('cleanResponseHeaders', () => {
+  it('uses an explicit contentType override instead of trusting upstream - Drive returns application/octet-stream for every file regardless of its real type', () => {
+    const upstream = new Response('bytes', { headers: { 'content-type': 'application/octet-stream' } });
+    const headers = cleanResponseHeaders(upstream, null, 'application/pdf');
+    expect(headers.get('Content-Type')).toBe('application/pdf');
+  });
+
+  it('falls back to upstream content-type, then application/octet-stream, when no override is given', () => {
+    const withType = cleanResponseHeaders(new Response('bytes', { headers: { 'content-type': 'audio/mpeg' } }), null);
+    expect(withType.get('Content-Type')).toBe('audio/mpeg');
+
+    // A string body makes the Response constructor infer its own
+    // text/plain content-type, so use a null body to simulate upstream
+    // genuinely sending no Content-Type header at all.
+    const withoutType = cleanResponseHeaders(new Response(null), null);
+    expect(withoutType.get('Content-Type')).toBe('application/octet-stream');
+  });
+
+  it('sets Content-Disposition: inline (not attachment) with a filename, so a browser renders the PDF instead of force-downloading it', () => {
+    const headers = cleanResponseHeaders(new Response('bytes'), 'example.pdf', 'application/pdf');
+    const disposition = headers.get('Content-Disposition');
+    expect(disposition).toContain('inline');
+    expect(disposition).not.toContain('attachment');
+    expect(disposition).toContain('example.pdf');
+  });
+
+  it('omits Content-Disposition entirely when no filename is given (the audio route)', () => {
+    const headers = cleanResponseHeaders(new Response('bytes'), null);
+    expect(headers.has('Content-Disposition')).toBe(false);
   });
 });
 
