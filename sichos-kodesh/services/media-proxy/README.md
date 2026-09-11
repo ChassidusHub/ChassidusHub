@@ -1,11 +1,12 @@
 # @sichos-kodesh/media-proxy
 
-A Cloudflare Worker that proxies Google Drive-hosted hanacha/maamar PDFs so
-the app never shows a user a `drive.google.com` URL, a Drive viewer, or any
-other source-site UI. Every download goes through this Worker's own domain;
-from the client's perspective a file "just downloads," the way a track
-downloads in Spotify — then it's saved locally and opened in the app's own
-PDF viewer.
+A Cloudflare Worker that proxies Google Drive-hosted hanacha/maamar PDFs
+and JEM's CloudFront-hosted audio so the app never shows a user a
+`drive.google.com` or `cloudfront.net` URL, a Drive viewer, or any other
+source-site UI. Every download/stream goes through this Worker's own
+domain; from the client's perspective a file "just downloads" and audio
+"just plays," the way a track does in Spotify — then it's saved locally
+and opened/played in the app's own PDF viewer and audio player.
 
 ## Why this exists (Phase 1 of the storage plan in `docs/PLANNING.md`)
 
@@ -24,20 +25,16 @@ This is deliberately the *first* step, not the whole plan:
   source and handles the confirm-token dance. Uses Cloudflare's free edge
   Cache API as a light optimization (same file requested twice within 7
   days is served from cache, not re-fetched from Drive).
-- **Phase 2 (not built yet)**: add an R2 bucket behind the same
-  `/drive/:fileId` route — first request fetches from Drive and writes to
-  R2, every request after that serves straight from R2. The client-facing
-  API doesn't change; only what's behind it does. R2's pricing (as of this
+- **Phase 2 (not built yet)**: add an R2 bucket behind the same route
+  shapes — first request fetches from the real source and writes to R2,
+  every request after that serves straight from R2. The client-facing API
+  doesn't change; only what's behind it does. R2's pricing (as of this
   writing: 10GB storage / 1M writes / 10M reads free, then $0.015/GB-month
   storage with **egress always free** — unlike S3) is why R2 specifically,
   not another object store: for a media-serving app, free egress is the
   whole ballgame.
 
-## Scope: Drive (text) only, not audio or video, on purpose
-
-This Worker only proxies Drive links — the hanacha/maamar PDFs. Audio
-(ashreinu.app) and video (YouTube, JEM's videos.jem.tv, etc.) are
-deliberately **not** wired up here yet:
+## Scope: Drive (text) + JEM audio; video still deliberately excluded
 
 - **Video via YouTube** genuinely can't be proxied this way regardless of
   the underlying content's rights status — downloading video from YouTube
@@ -45,26 +42,27 @@ deliberately **not** wired up here yet:
   Service issue, separate from whatever rights JEM has released. Treat
   YouTube-sourced video as stream-via-embedded-player-when-online, not an
   offline download target, unless that changes.
-- **Audio via ashreinu.app** turned out to be more involved than expected:
-  the links mafteiach.app has aren't direct file URLs, they're
-  `ashreinu.app/#/player/...` SPA routes. Investigating ashreinu.app's own
-  client bundle found that JEM runs real infrastructure for this — a
-  CloudFront CDN serving `.opus`/`.m4a`/`.mp3` files directly, and a
-  structured "ccdb" API (years → dates → events → audio) behind AWS API
-  Gateway. That's genuinely useful intel, but it's JEM's **private,
-  undocumented** backend, not a published third-party API — proxying it
-  quietly is a different thing than proxying a Drive link someone already
-  shared, even under the same generally-permissive rights posture. This
-  belongs in the planned JEM outreach conversation (`docs/PLANNING.md`) as
-  a concrete "can we build against this properly" ask, not something to
-  wire up unilaterally. If JEM says yes, extending this Worker (or adding
-  a sibling one) with the same proxy pattern is straightforward — the hard
-  part (finding the real API shape) is already done.
+- **Audio via ashreinu.app / JEM** *is* wired up (`/jem-audio/:filename`).
+  The links mafteiach.app has aren't direct file URLs, they're
+  `ashreinu.app/#/player/...` SPA routes — resolving those to real files
+  needed a separate step (see `packages/mafteiach-index`'s `jemAudio.ts`
+  and `jem_audio` table): investigating ashreinu.app's own client bundle
+  found JEM runs real infrastructure for this — a CloudFront CDN serving
+  `.opus`/`.m4a`/`.mp3` files directly, and a structured "ccdb" API
+  (years → dates → events → audio recordings) behind AWS API Gateway,
+  confirmed live and **unauthenticated**. This is JEM's private,
+  undocumented backend, not a published third-party API — it's being used
+  now for private, pre-launch development (this project has no live users
+  yet), with a real conversation with JEM about formalizing this planned
+  before it ships to anyone else. If that conversation doesn't land, the
+  fallback is the released Google Drive audio folder instead — same
+  `/drive/:fileId` route this Worker already has, no new code needed.
 
 ## Usage
 
 ```
 GET /drive/:fileId?filename=optional-name.pdf
+GET /jem-audio/:filename          # e.g. /jem-audio/JEMSK0001.mp3
 ```
 
 `fileId` is Google Drive's file id (the same id embedded in the
@@ -74,11 +72,22 @@ server-side from the stored URL; this Worker takes the bare id, never a
 full Drive URL, so it can validate the input shape before proxying
 anything.
 
+`filename` for `/jem-audio/` is the CloudFront object name resolved by
+`packages/mafteiach-index`'s JEM audio resolver and stored in its
+`jem_audio` table (e.g. `JEMSK0001.mp3`, `AR0017467.mp3`) — again, never a
+full CloudFront URL.
+
+Both routes forward an incoming `Range` header to the upstream source and
+relay a real `206 Partial Content` with `Content-Range` back — needed for
+an audio player to seek within a track without re-downloading the whole
+file. Ranged requests always round-trip live and skip the Phase-1 cache,
+so a player never risks being served a stale or mismatched cached slice.
+
 ## Development & deployment
 
 ```
 npm install
-npm test         # vitest - confirm-token extraction, URL building, mocked-fetch flow
+npm test         # vitest - confirm-token extraction, URL/filename validation, mocked-fetch flow (Drive + JEM audio, incl. Range forwarding)
 npm run dev       # wrangler dev - local test server
 npm run deploy    # wrangler deploy - requires `wrangler login` or a CLOUDFLARE_API_TOKEN first
 ```

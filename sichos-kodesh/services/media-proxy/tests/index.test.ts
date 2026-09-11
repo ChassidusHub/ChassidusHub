@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DRIVE_ID_PATTERN, driveDownloadUrl, extractConfirmToken, fetchFromDrive } from '../src/index.js';
+import {
+  DRIVE_ID_PATTERN,
+  driveDownloadUrl,
+  extractConfirmToken,
+  fetchFromDrive,
+  fetchFromJemAudioCdn,
+  JEM_AUDIO_FILENAME_PATTERN,
+} from '../src/index.js';
 
 describe('driveDownloadUrl', () => {
   it('builds the plain download URL without a confirm token', () => {
@@ -31,6 +38,41 @@ describe('extractConfirmToken', () => {
 
   it('returns null when the page has no confirm token', () => {
     expect(extractConfirmToken('<html>not a Drive page</html>')).toBeNull();
+  });
+});
+
+describe('JEM_AUDIO_FILENAME_PATTERN', () => {
+  it('accepts realistic JEM CDN filenames across all three formats', () => {
+    for (const name of ['JEMSK0001.mp3', 'AR0017467.m4a', 'AR0016451.opus']) {
+      expect(JEM_AUDIO_FILENAME_PATTERN.test(name)).toBe(true);
+    }
+  });
+
+  it('rejects path traversal, unrelated hosts, or unexpected extensions', () => {
+    for (const bad of ['../etc/passwd', 'http://evil.com/x.mp3', 'file.exe', 'file', '']) {
+      expect(JEM_AUDIO_FILENAME_PATTERN.test(bad)).toBe(false);
+    }
+  });
+});
+
+describe('fetchFromJemAudioCdn', () => {
+  const originalFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('fetches from the CloudFront distribution by filename, not an arbitrary host', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response('audio bytes'));
+    await fetchFromJemAudioCdn('JEMSK0001.mp3');
+    expect(globalThis.fetch).toHaveBeenCalledWith('https://dtgj2yu3gmlic.cloudfront.net/JEMSK0001.mp3', undefined);
+  });
+
+  it('forwards a Range header when the caller wants to seek within the track', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response('partial bytes', { status: 206 }));
+    await fetchFromJemAudioCdn('JEMSK0001.mp3', 'bytes=0-1023');
+    expect(globalThis.fetch).toHaveBeenCalledWith('https://dtgj2yu3gmlic.cloudfront.net/JEMSK0001.mp3', {
+      headers: { Range: 'bytes=0-1023' },
+    });
   });
 });
 

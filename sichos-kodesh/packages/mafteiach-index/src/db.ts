@@ -67,6 +67,20 @@ export function openDatabase(path: string): DatabaseSync {
     );
 
     CREATE INDEX IF NOT EXISTS idx_video_ids_occasion ON video_ids(occasion_id);
+
+    -- Resolved via JEM's own "ccdb" API (see src/jemAudio.ts) from the ashreinu.app
+    -- player links already in the links table above - the direct, playable CDN
+    -- URL for each audio recording, not just the player-page link.
+    CREATE TABLE IF NOT EXISTS jem_audio (
+      occasion_id INTEGER NOT NULL REFERENCES occasions(id) ON DELETE CASCADE,
+      ccdb_event_id INTEGER NOT NULL,
+      duration_ms INTEGER NOT NULL,
+      url TEXT NOT NULL,
+      file_format TEXT NOT NULL,
+      resolved_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_jem_audio_occasion ON jem_audio(occasion_id);
   `);
   return db;
 }
@@ -175,4 +189,22 @@ export function getEtag(db: DatabaseSync, id: number): string | null {
 
 export function allKnownIds(db: DatabaseSync): number[] {
   return (db.prepare('SELECT id FROM occasions').all() as { id: number }[]).map((r) => r.id);
+}
+
+export interface ResolvedJemAudio {
+  ccdbEventId: number;
+  durationMs: number;
+  url: string;
+  fileFormat: string;
+}
+
+/** Replaces any previously-resolved audio for this occasion with the freshly-resolved set (idempotent re-resolution, not an ever-growing append). */
+export function replaceJemAudio(db: DatabaseSync, occasionId: number, recordings: ResolvedJemAudio[], now: string): void {
+  db.prepare('DELETE FROM jem_audio WHERE occasion_id = ?').run(occasionId);
+  const insert = db.prepare(
+    'INSERT INTO jem_audio (occasion_id, ccdb_event_id, duration_ms, url, file_format, resolved_at) VALUES (?, ?, ?, ?, ?, ?)',
+  );
+  for (const r of recordings) {
+    insert.run(occasionId, r.ccdbEventId, r.durationMs, r.url, r.fileFormat, now);
+  }
 }
