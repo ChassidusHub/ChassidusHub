@@ -66,3 +66,14 @@ export function kviusCode(hebrewYear: number): string {
 export function getYearSedra(hebrewYear: number, il: boolean): Sedra {
   return getSedra(hebrewYear, il);
 }
+
+/**
+ * Formats a kvius signature into a clean human-readable summary,
+ * e.g. "Regular · Kesidran (354 days)" or "Leap · Shalem (385 days)".
+ */
+export function formatKviusSignature(sig: KviusSignature): string {
+  const leapText = sig.leap ? 'Leap' : 'Regular';
+  const typeText = sig.yearType.charAt(0).toUpperCase() + sig.yearType.slice(1);
+  return `${leapText} · ${typeText} (${sig.yearLength} days)`;
+}
+

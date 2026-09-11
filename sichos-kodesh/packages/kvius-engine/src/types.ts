@@ -70,10 +70,16 @@ export interface FixedDateOccasion {
 }
 
 export interface MatchingYearsOptions {
-  fromYear: number;
-  toYear: number;
+  /** Lower bound for scan. If omitted, defaults to MIN_HISTORICAL_YEAR (5710). */
+  fromYear?: number;
+  /** Upper bound for scan. If omitted, defaults to MAX_HISTORICAL_YEAR (5752). */
+  toYear?: number;
   /** Include the target year itself in the results (as a distance-0 match). Default false. */
   includeTarget?: boolean;
+  /** Allow searching beyond MAX_HISTORICAL_YEAR (5752). Default false. */
+  allowPost5752?: boolean;
+  /** Allow searching prior to MIN_HISTORICAL_YEAR (5710). Default false. */
+  allowPre5710?: boolean;
 }
 
 export interface MatchingYearResult {
@@ -124,6 +130,7 @@ export interface BuildMatchedScheduleOptions {
   hasRecording: (hebrewYear: number, occasionKey: string) => boolean;
   manualOverrides?: Record<string, number>;
   /** Required when gapStrategy is 'nearestKviusYear': the year range to search for kvius-matched fallback candidates. */
-  matchingYearsRange?: { fromYear: number; toYear: number };
+  matchingYearsRange?: { fromYear: number; toYear?: number; allowPost5752?: boolean };
   fixedOccasions?: FixedOccasionDef[];
+  allowPost5752?: boolean;
 }
