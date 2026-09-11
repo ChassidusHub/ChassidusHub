@@ -1,0 +1,6 @@
+{
+  "name": "Sichos Kodesh",
+  "description": "Offline-first app and scheduling engine for the Rebbe's recorded Sichos Kodesh and Farbrengens with kvius-matched auto-download.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
