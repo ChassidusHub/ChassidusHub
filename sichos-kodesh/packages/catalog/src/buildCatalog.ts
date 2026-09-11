@@ -1,8 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { extractDriveFileId, extractDriveResourceKey, isReshimosLabel } from './driveLinks.js';
+import { PDF_SECTION_ORDER } from './pdfSections.js';
 import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from './types.js';
-
-const PDF_SECTIONS: readonly PdfSection[] = ['mugah', 'biltiMugah', 'maamorim', 'hagahos', 'hosofos'];
 
 interface OccasionRow {
   id: number;
@@ -48,10 +47,10 @@ function workerFilenameFromUrl(url: string): string | null {
 export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
   const occasions = db.prepare('SELECT id, hebrew_year, hebrew_date, occasion_label FROM occasions').all() as unknown as OccasionRow[];
   const audioRows = db.prepare('SELECT occasion_id, duration_ms, url FROM jem_audio').all() as unknown as JemAudioRow[];
-  const placeholders = PDF_SECTIONS.map(() => '?').join(',');
+  const placeholders = PDF_SECTION_ORDER.map(() => '?').join(',');
   const linkRows = db
     .prepare(`SELECT occasion_id, section, label, url FROM links WHERE section IN (${placeholders})`)
-    .all(...PDF_SECTIONS) as unknown as LinkRow[];
+    .all(...PDF_SECTION_ORDER) as unknown as LinkRow[];
 
   const audioByOccasion = new Map<number, CatalogAudio[]>();
   for (const row of audioRows) {

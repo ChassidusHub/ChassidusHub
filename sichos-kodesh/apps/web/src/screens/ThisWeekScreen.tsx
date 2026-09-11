@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
@@ -24,12 +24,12 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
       )}
 
       {occasions.map(({ entry, gregorianDate }) => (
-        <div key={entry.occasionId}>
-          <h2 className="section-header">
+        <Fragment key={entry.occasionId}>
+          <h2 className="occasion-header">
             {entry.occasionLabel} <span className="subtitle">({gregorianDate})</span>
           </h2>
           <OccasionDetail entry={entry} />
-        </div>
+        </Fragment>
       ))}
     </div>
   );
