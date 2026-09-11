@@ -1,63 +1,71 @@
-import { buildMatchedSchedule } from '@sichos-kodesh/kvius-engine';
-import type { MatchedFixedEntry, MatchedWeeklyEntry, OccasionResolution } from '@sichos-kodesh/kvius-engine';
-import { findCatalogEntryForOccasion, hasContent } from './catalogLookup.js';
+import { HDate } from '@hebcal/core';
+import { entryHasContent } from './catalogLookup.js';
 import type { CatalogByYear } from './catalogLookup.js';
-import { STARTER_FIXED_OCCASIONS } from './fixedOccasions.js';
+import { toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 import type { CatalogEntry } from './types.js';
 
-export interface ThisOccasion {
-  label: string;
-  occasionKey: string;
+export interface WeekOccasion {
+  /** Raw mafteiach-index date key, in `sourceYear` - see `toMafteiachHebrewDateKey`. */
+  hebrewDate: string;
+  /** The real, current-week Gregorian date this occasion's weekday falls on. */
   gregorianDate: string;
-  resolution: OccasionResolution;
-  /** The actual downloadable content for `resolution.resolvedYear`, if the resolution isn't a gap. */
-  entry?: CatalogEntry;
+  entry: CatalogEntry;
 }
 
 /**
- * Picks the single most relevant occasion to show right now: an upcoming
- * fixed-date occasion (Yud-Tes Kislev, Purim, etc.) within the next 7 days
- * takes priority over the regular Shabbos schedule, since those are the
- * occasions users most associate with a specific date. Falls back to this
- * week's (nearest upcoming) Shabbos otherwise. A single-occasion view is a
- * deliberate MVP simplification - showing every upcoming occasion in a
- * list is real, straightforward follow-up work, not core to proving the
- * download-and-play-offline pipeline this pass exists to prove.
+ * Every occasion with real content (audio or a PDF) that falls anywhere in
+ * the current Hebrew week (Sunday through Shabbos) - not Shabbos alone.
+ * Farbrengens happened on weekdays as often as on Shabbos (Yud-Tes Kislev,
+ * Yud Shevat, Yud-Beis Tammuz...), and a Shabbos-only view was hiding all
+ * of them.
+ *
+ * Two kvius-matched years share identical leap status and month-length
+ * pattern (that's the definition of a kvius match - see `sameKvius` in
+ * kvius-engine's `hebrewCalendar.ts`), so a given Hebrew (month, day) is
+ * always the same number of days after Tishrei 1 in both years, and -
+ * combined with their matching Rosh Hashana weekday - always falls on the
+ * same weekday too. That means this week's dates translate directly into
+ * `sourceYear` by reusing the same month/day values as-is: no per-occasion
+ * engine matching (`buildMatchedSchedule`/`FixedOccasionDef`) is needed,
+ * just a day-by-day catalog lookup - and it naturally covers weekday
+ * farbrengens and Shabbos identically, since the catalog only ever
+ * contains days with a real recorded occasion.
+ *
+ * The one week a year that straddles Rosh Hashana is a real exception to
+ * that direct-translation trick: `sourceYear` is only kvius-matched to
+ * *this* Hebrew year, not necessarily to the next one, so a day that has
+ * already rolled into the new Hebrew year has no well-defined day in
+ * `sourceYear` to borrow - translating it naively would silently pull in
+ * an unrelated date a full year off in `sourceYear` (e.g. mapping the new
+ * Rosh Hashana onto `sourceYear`'s *own*, entirely different, Rosh
+ * Hashana). Those days are skipped rather than mismatched; the caller can
+ * always look up the new year's own matched source year for what comes
+ * after.
  *
  * Shared by apps/mobile and apps/web - both need the identical
  * kvius-to-catalog resolution, not two independently-maintained copies.
  */
-export function resolveThisWeek(
-  targetYear: number,
-  sourceYear: number,
-  il: boolean,
-  catalog: CatalogByYear,
-  today: Date = new Date(),
-): ThisOccasion {
-  const todayISO = today.toISOString().slice(0, 10);
-  const sevenDaysOut = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+export function resolveThisWeek(sourceYear: number, catalog: CatalogByYear, today: Date = new Date()): WeekOccasion[] {
+  const todayH = new HDate(today);
+  const targetYear = todayH.getFullYear();
+  const weekEndH = todayH.onOrAfter(6); // Shabbos on or after today.
+  const weekEndAbs = weekEndH.abs();
+  const weekStartAbs = weekEndAbs - 6; // The preceding Sunday.
 
-  const schedule = buildMatchedSchedule(targetYear, sourceYear, {
-    il,
-    gapStrategy: 'skip',
-    hasRecording: hasContent(catalog, il, STARTER_FIXED_OCCASIONS),
-    fixedOccasions: STARTER_FIXED_OCCASIONS,
-  });
+  const sourceEntries = catalog[sourceYear] ?? [];
+  const results: WeekOccasion[] = [];
 
-  const upcomingFixed = schedule.fixedDate.find((f) => f.gregorianDate >= todayISO && f.gregorianDate <= sevenDaysOut);
-  const chosen: MatchedFixedEntry | MatchedWeeklyEntry =
-    upcomingFixed ?? schedule.weekly.find((w) => w.gregorianDate >= todayISO) ?? schedule.weekly[schedule.weekly.length - 1]!;
+  for (let abs = weekStartAbs; abs <= weekEndAbs; abs++) {
+    const dayH = new HDate(abs);
+    if (dayH.getFullYear() !== targetYear) continue; // Crosses into an adjacent Hebrew year - see above.
+    const hebrewDate = toMafteiachHebrewDateKey({ year: sourceYear, month: dayH.getMonth(), day: dayH.getDate() });
+    const gregorianDate = dayH.greg().toISOString().slice(0, 10);
+    for (const entry of sourceEntries) {
+      if (entry.hebrewDate === hebrewDate && entryHasContent(entry)) {
+        results.push({ hebrewDate, gregorianDate, entry });
+      }
+    }
+  }
 
-  // Both MatchedFixedEntry and MatchedWeeklyEntry carry `occasionKey` directly (buildMatchedSchedule
-  // adds it to both), but only the fixed-date one has a genuine `label` - a weekly entry's closest
-  // equivalent is its parsha/holiday.
-  const isFixed = 'label' in chosen;
-  const label = isFixed ? (chosen as MatchedFixedEntry).label : ((chosen as MatchedWeeklyEntry).parsha?.join(' / ') ?? (chosen as MatchedWeeklyEntry).holiday ?? 'Shabbos');
-
-  const entry =
-    chosen.resolution.resolvedYear !== null
-      ? findCatalogEntryForOccasion(catalog, chosen.resolution.resolvedYear, chosen.occasionKey, il, STARTER_FIXED_OCCASIONS)
-      : undefined;
-
-  return { label, occasionKey: chosen.occasionKey, gregorianDate: chosen.gregorianDate, resolution: chosen.resolution, entry };
+  return results;
 }

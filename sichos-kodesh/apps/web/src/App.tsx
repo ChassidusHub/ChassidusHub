@@ -11,7 +11,7 @@ function App() {
   const [view, setView] = useState<View>({ kind: 'pick' });
 
   if (view.kind === 'thisWeek') {
-    return <ThisWeekScreen targetYear={targetYear} sourceYear={view.sourceYear} onBack={() => setView({ kind: 'pick' })} />;
+    return <ThisWeekScreen sourceYear={view.sourceYear} onBack={() => setView({ kind: 'pick' })} />;
   }
   if (view.kind === 'browseYear') {
     return <YearBrowserScreen hebrewYear={view.hebrewYear} onBack={() => setView({ kind: 'pick' })} />;

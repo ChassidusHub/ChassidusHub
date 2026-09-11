@@ -55,6 +55,26 @@ Diaspora dates only for now) — deliberately not exhaustive. Without it,
 Screen 2 would only ever be able to show Shabbos-anchored occasions, and
 several of the most iconic farbrengens are weekday-anchored.
 
+## This week's occasions (`resolveThisWeek.ts`)
+
+`resolveThisWeek(sourceYear, catalog, today?)` returns every occasion with
+real content (audio or a PDF) anywhere in the current Hebrew week (Sunday
+through Shabbos) — not just the closest Shabbos. Farbrengens happen on
+weekdays as often as on Shabbos (Yud-Tes Kislev, Yud Shevat, Erev Rosh
+Hashana...), so an earlier Shabbos-only version of this was hiding most of
+a typical week's real content.
+
+It doesn't use the `occasionKey`/`FixedOccasionDef` machinery above at all:
+two kvius-matched years share an identical month-length pattern (that's the
+definition of a kvius match), so a given Hebrew (month, day) always falls
+the same number of days after Tishrei 1 — and therefore on the same weekday
+— in both years. This week's dates translate into `sourceYear` by reusing
+the same month/day values directly, then looking each one up in the
+catalog. The one exception: a day that rolls into the *next* Hebrew year
+(the week containing Rosh Hashana) has no well-defined match in
+`sourceYear`, since kvius matching is per-year — those days are skipped
+rather than mismatched.
+
 ## Building the catalog (`buildCatalog.ts` / `bin/build.ts`)
 
 Reads `packages/mafteiach-index`'s `occasions` / `links` / `jem_audio`

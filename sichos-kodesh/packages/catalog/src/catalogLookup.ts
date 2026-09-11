@@ -50,6 +50,18 @@ function resolveOccasionKeyToHebrewDateKey(
 }
 
 /**
+ * True when an entry has real, downloadable content (audio or a PDF), not
+ * just a bibliographic record. Named for content, not audio: an entry with
+ * PDFs but no audio is real, showable content, not a gap - a real, verified
+ * case (e.g. Nitzavim/Vayeilech, the last Shabbos before Rosh Hashana,
+ * regularly has mugah/bilti-mugah PDF transcripts but zero JEM audio across
+ * every kvius-matched year checked).
+ */
+export function entryHasContent(entry: CatalogEntry): boolean {
+  return entry.audio.length > 0 || entry.pdfs.length > 0;
+}
+
+/**
  * Every Hebrew year in the catalog with at least one real, downloadable
  * entry (audio or a PDF) - sorted ascending. For "browse any year" mode:
  * unlike `findMatchingYears`, this isn't constrained to years that are
@@ -60,7 +72,7 @@ function resolveOccasionKeyToHebrewDateKey(
 export function browsableYears(catalog: CatalogByYear): number[] {
   return Object.keys(catalog)
     .map(Number)
-    .filter((year) => (catalog[year] ?? []).some((entry) => entry.audio.length > 0 || entry.pdfs.length > 0))
+    .filter((year) => (catalog[year] ?? []).some(entryHasContent))
     .sort((a, b) => a - b);
 }
 
@@ -80,6 +92,6 @@ export function hasContent(
 ): (hebrewYear: number, occasionKey: string) => boolean {
   return (hebrewYear, occasionKey) => {
     const entry = findCatalogEntryForOccasion(catalog, hebrewYear, occasionKey, il, fixedOccasions);
-    return !!entry && (entry.audio.length > 0 || entry.pdfs.length > 0);
+    return !!entry && entryHasContent(entry);
   };
 }
