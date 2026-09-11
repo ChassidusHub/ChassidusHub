@@ -74,6 +74,45 @@ stable link, always the newest build. Download the APK from there and
 sideload it (enable "install from unknown sources" for your browser or
 file manager first) rather than setting up the full Android SDK locally.
 
+## Google Play (Internal testing track)
+
+`.github/workflows/android-aab.yml` builds a signed release `.aab` (what
+Play actually wants — it splits per-device at install time, so the real
+download is a fraction of the debug APK's size, which bundles all four
+CPU architectures unsplit). Manually triggered (`workflow_dispatch`), not
+run on every push — a release build is deliberate, not automatic.
+
+Needs 4 repository secrets first (Settings → Secrets and variables →
+Actions): `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` — generated once with:
+
+```sh
+keytool -genkeypair -v -storetype PKCS12 \
+  -keystore sichos-kodesh-upload.keystore -alias sichos-kodesh-upload \
+  -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 sichos-kodesh-upload.keystore   # -> ANDROID_KEYSTORE_BASE64
+```
+
+**Keep that `.keystore` file somewhere safe outside this repo** (it's
+gitignored — `*.keystore` except `debug.keystore` — and must never be
+committed). It's the app's Play "upload key" identity; with Google Play
+App Signing (recommended, required for new Play apps) Google holds the
+true signing key and the upload key can be reset via Play Console if
+lost, so losing it is a support-flow delay, not catastrophic — but it's
+still a real credential, not something to leave lying around.
+
+Once the workflow runs, download `app-release.aab` from the run's
+artifacts and upload it manually via Play Console → your app → **Internal
+testing** → Create release. This is deliberately a manual, occasional step
+rather than an automated Play-publish pipeline — see `docs/PLANNING.md`'s
+rights discussion for why even internal testing (real people other than
+you installing it) is a bigger step than local sideloading, worth doing
+deliberately rather than on every push.
+
+For local release builds outside CI: copy
+`android/keystore.properties.example` to `android/keystore.properties`
+(gitignored) and fill in the real values.
+
 ### A real, non-obvious monorepo wrinkle
 
 `android/settings.gradle`'s `includeBuild(...)` path was adjusted from

@@ -1,0 +1,65 @@
+name: Android Release AAB
+
+# Builds a signed Android App Bundle (.aab) for uploading to Google Play
+# (Internal testing track, per docs/PLANNING.md's rights-gating discussion -
+# this is NOT wired to auto-publish to Play; the .aab is a workflow artifact
+# you download and upload yourself). Manually triggered, not run on every
+# push - a release build is a deliberate action, not something to produce
+# on every commit.
+#
+# Needs these repository secrets (Settings -> Secrets and variables ->
+# Actions -> New repository secret) - see apps/mobile/README.md for how
+# they were generated:
+#   ANDROID_KEYSTORE_BASE64   - `base64 -w0 sichos-kodesh-upload.keystore`
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install workspace dependencies
+        run: npm install
+
+      - name: Build workspace library packages
+        run: |
+          npm run build --workspace=@sichos-kodesh/kvius-engine
+          npm run build --workspace=@sichos-kodesh/mafteiach-index
+          npm run build --workspace=@sichos-kodesh/catalog
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Decode release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed release AAB
+        working-directory: apps/mobile/android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
