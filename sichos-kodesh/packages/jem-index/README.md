@@ -99,6 +99,32 @@ content-hash check means a fully-cached, fully-unchanged re-run only bumps
 crawl of 5711 (51 nodes) run twice: first run `inserted=51`, second run
 `inserted=0 unchanged=51`.
 
+## Full crawl results (real numbers, not an estimate)
+
+A full run against the live API (43 years, 2,911 top-level events)
+completed cleanly with zero errors:
+
+| Metric | Count |
+|---|---|
+| Hebrew years covered | 43 (5709-5752) |
+| Top-level events | 2,911 |
+| Total nodes (top-level + every descendant sicha/tefillah/etc.) | 8,941 |
+| Nodes with their own audio recording | 8,140 |
+| Audio recordings (deduplicated) | 8,142 |
+| Total audio duration | **2,722.1 hours** (~113 days) |
+| File format | 100% mp3 |
+
+This is well beyond `mafteiach-index`'s 1,303 audio-bearing occasions
+(564 combined hours) — not a discrepancy, but a real difference in scope.
+JEM's own catalog isn't limited to farbrengens: the top-level event `type`
+breakdown includes Shacharis (491), Minchah (447), Ma'ariv (419), Sicha
+(274), Children's Rallies, private audiences, and dozens of other davening/
+gathering occasion types, alongside 461 Farbrengens. The three outlier
+years mentioned during scoping (5748: 591 top-level events, 5725: 555,
+5749: 305) are explained by this — those are the years with the densest
+day-by-day recording coverage (largely post-Gimmel Tammuz), not a data
+error. 1,278 nodes additionally have `has_transcript: true`.
+
 ## What's committed vs. generated locally
 
 `.cache/`, `data/`, and `*.db*` are gitignored — same reasoning as
