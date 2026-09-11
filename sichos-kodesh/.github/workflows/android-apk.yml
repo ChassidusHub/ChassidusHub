@@ -10,7 +10,6 @@ on:
   push:
     branches:
       - claude/kvius-engine-dev-qp43u7
-  pull_request:
 
 permissions:
   contents: write
@@ -51,7 +50,6 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Publish to the latest-dev-build release
-        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-dev-build
