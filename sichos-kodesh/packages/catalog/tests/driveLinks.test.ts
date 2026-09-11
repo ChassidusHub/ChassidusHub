@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractDriveFileId, isReshimosLabel } from '../src/driveLinks.js';
+import { extractDriveFileId, extractDriveResourceKey, isReshimosLabel } from '../src/driveLinks.js';
 
 describe('extractDriveFileId', () => {
   it('extracts the file id from a real share-link shape (view, sharing param)', () => {
@@ -14,12 +14,55 @@ describe('extractDriveFileId', () => {
     );
   });
 
-  it('returns null for a non-Drive URL', () => {
-    expect(extractDriveFileId('https://www.sie.org/templates/sie/article_cdo/aid/2328350/jewish/x.htm')).toBeNull();
+  it('extracts the file id from the open?id= shape - the majority shape in the real dataset (52%), previously dropped entirely', () => {
+    // Real, verified-accessible link from packages/mafteiach-index's database
+    // (occasion 11114925, a "ליקוט" mugah link) - confirmed against the real
+    // Drive backend to be a genuine, publicly-accessible PDF, not dead content.
+    expect(extractDriveFileId('https://drive.google.com/open?id=1NkOtSSm6fTmFXTfE48ORLrygLfwBC5Wu')).toBe(
+      '1NkOtSSm6fTmFXTfE48ORLrygLfwBC5Wu',
+    );
   });
 
-  it('returns null for a Drive URL that is not the /file/d/ share shape', () => {
+  it('extracts the file id from the uc?...&id= download-link shape', () => {
+    expect(extractDriveFileId('https://drive.google.com/uc?export=download&id=1abcDEF23456')).toBe('1abcDEF23456');
+  });
+
+  it('returns null for a non-Drive URL, even one with an id= query param', () => {
+    expect(extractDriveFileId('https://www.sie.org/templates/sie/article_cdo/aid/2328350/jewish/x.htm')).toBeNull();
+    expect(extractDriveFileId('https://docs.google.com/document/d/1abc/edit?id=1abc')).toBeNull();
+  });
+
+  it('returns null for a Drive URL that is neither share shape (e.g. a folder link)', () => {
     expect(extractDriveFileId('https://drive.google.com/drive/folders/1abc')).toBeNull();
+  });
+
+  it('returns null for a malformed URL rather than throwing', () => {
+    expect(extractDriveFileId('not a url at all')).toBeNull();
+  });
+});
+
+describe('extractDriveResourceKey', () => {
+  it('extracts the resource key from a real link that requires one', () => {
+    // Real link from occasion 11114925 (packages/mafteiach-index database) -
+    // confirmed directly against Google Drive: 404s/redirects to sign-in
+    // without this key, returns the real file with it.
+    expect(
+      extractDriveResourceKey(
+        'https://drive.google.com/file/d/0B_UwzYOTIwDTRkRBaVVvWm9XbFE/view?usp=sharing&resourcekey=0-gm0KFPq6Fi6FXwvfD45KzA',
+      ),
+    ).toBe('0-gm0KFPq6Fi6FXwvfD45KzA');
+  });
+
+  it('returns null when the link has no resource key (the common case)', () => {
+    expect(extractDriveResourceKey('https://drive.google.com/file/d/1KF7cbUcsjkEQvfs5bFzhRNbTVBevhUBe/view?usp=sharing')).toBeNull();
+  });
+
+  it('returns null for a non-Drive URL, even one with a resourcekey param', () => {
+    expect(extractDriveResourceKey('https://www.sie.org/x?resourcekey=abc')).toBeNull();
+  });
+
+  it('returns null for a malformed URL rather than throwing', () => {
+    expect(extractDriveResourceKey('not a url at all')).toBeNull();
   });
 });
 

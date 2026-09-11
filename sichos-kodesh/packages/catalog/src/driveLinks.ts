@@ -1,15 +1,50 @@
 /**
- * ~93% of mafteiach-index's mugah/biltiMugah/maamorim/hagahos/hosofos
- * links are plain `drive.google.com/file/d/{fileId}/view` share links
- * (confirmed against the real crawled dataset) - exactly the shape
- * services/media-proxy's `/drive/:fileId` route already handles. This
- * extracts the bare file id so the catalog can reference it directly.
+ * mafteiach-index's mugah/biltiMugah/maamorim/hagahos/hosofos links use
+ * two real drive.google.com URL shapes, close to evenly split - verified
+ * directly against the database (15,741 PDF-section links): 5,923
+ * (38%) as `/file/d/{fileId}/view`, 8,214 (52%) as `open?id={fileId}`
+ * (or the equivalent `uc?...&id={fileId}` download-link shape) - an
+ * earlier version of this function only handled the first shape, which
+ * silently dropped the *majority* of real, publicly-accessible content
+ * from the catalog, not a rare variant. The remaining ~10% are other
+ * hosts entirely (chabad.org, sie.org, YouTube, ...), correctly excluded.
  */
-const DRIVE_FILE_ID_PATTERN = /\/file\/d\/([a-zA-Z0-9_-]+)/;
-
 export function extractDriveFileId(url: string): string | null {
-  const match = DRIVE_FILE_ID_PATTERN.exec(url);
-  return match ? match[1]! : null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.hostname !== 'drive.google.com') return null;
+
+  const pathMatch = /\/file\/d\/([a-zA-Z0-9_-]+)/.exec(parsed.pathname);
+  if (pathMatch) return pathMatch[1]!;
+
+  const id = parsed.searchParams.get('id');
+  return id && /^[a-zA-Z0-9_-]+$/.test(id) ? id : null;
+}
+
+/**
+ * A `resourcekey=` query param on a Drive share URL, present on links
+ * shared before Google's 2021 resource-key security change - required as
+ * the `resourcekey` param on services/media-proxy's `/drive/:fileId` or
+ * the file 404s/redirects to a Google sign-in page, even though it's
+ * genuinely public. Verified directly: 253 of ~14k real Drive PDF links
+ * in the dataset carry one, and a sample otherwise-failing link succeeds
+ * once this is forwarded.
+ */
+export function extractDriveResourceKey(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.hostname !== 'drive.google.com') return null;
+
+  const key = parsed.searchParams.get('resourcekey');
+  return key && /^[a-zA-Z0-9_-]+$/.test(key) ? key : null;
 }
 
 /**

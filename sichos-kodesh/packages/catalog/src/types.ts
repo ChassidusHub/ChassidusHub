@@ -22,6 +22,13 @@ export interface CatalogPdf {
   label: string;
   /** The Drive file id services/media-proxy's /drive/:fileId route expects. */
   driveFileId: string;
+  /**
+   * Present for links shared before Google's 2021 resource-key change
+   * (verified: 253 of ~14k Drive PDF links in the real dataset) - required
+   * as the `resourcekey` query param on /drive/:fileId or the file 404s/
+   * redirects to a Google sign-in page, even though it's genuinely public.
+   */
+  resourceKey?: string;
 }
 
 export interface CatalogEntry {

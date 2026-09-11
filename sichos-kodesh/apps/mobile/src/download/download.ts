@@ -19,9 +19,11 @@ export function downloadAudio(workerFilename: string, onProgress?: (p: DownloadP
   return downloadTo(`${MEDIA_PROXY_BASE_URL}/jem-audio/${workerFilename}`, workerFilename, onProgress);
 }
 
-/** Downloads one PDF via services/media-proxy's /drive/:fileId route - never a direct drive.google.com URL. */
-export function downloadPdf(driveFileId: string, onProgress?: (p: DownloadProgress) => void): Promise<string> {
+/** Downloads one PDF via services/media-proxy's /drive/:fileId route - never a direct drive.google.com URL. `resourceKey` is required for links shared before Google's 2021 resource-key change (see CatalogPdf.resourceKey) - omitted, the file 404s/redirects to a Google sign-in page even though it's genuinely public. */
+export function downloadPdf(driveFileId: string, resourceKey?: string, onProgress?: (p: DownloadProgress) => void): Promise<string> {
   const filename = `${driveFileId}.pdf`;
-  const url = `${MEDIA_PROXY_BASE_URL}/drive/${driveFileId}?filename=${encodeURIComponent(filename)}`;
+  const params = new URLSearchParams({ filename });
+  if (resourceKey) params.set('resourcekey', resourceKey);
+  const url = `${MEDIA_PROXY_BASE_URL}/drive/${driveFileId}?${params.toString()}`;
   return downloadTo(url, filename, onProgress);
 }

@@ -61,7 +61,7 @@ This is deliberately the *first* step, not the whole plan:
 ## Usage
 
 ```
-GET /drive/:fileId?filename=optional-name.pdf
+GET /drive/:fileId?filename=optional-name.pdf&resourcekey=optional-key
 GET /jem-audio/:filename          # e.g. /jem-audio/JEMSK0001.mp3
 ```
 
@@ -71,6 +71,14 @@ mafteiach-index dataset's `links` table) — extract it client-side or
 server-side from the stored URL; this Worker takes the bare id, never a
 full Drive URL, so it can validate the input shape before proxying
 anything.
+
+`resourcekey` is optional but required for roughly 4% of real links in
+the dataset (verified: 253 of ~14k Drive PDF links) — Google added
+"resource keys" as an extra access requirement for links shared before a
+2021 security change, and a file that needs one 404s/redirects to a
+Google sign-in page without it, even though it's genuinely public.
+Present as a `resourcekey=` param on the original share URL when
+required; extract and forward it the same way as `fileId`.
 
 `filename` for `/jem-audio/` is the CloudFront object name resolved by
 `packages/mafteiach-index`'s JEM audio resolver and stored in its

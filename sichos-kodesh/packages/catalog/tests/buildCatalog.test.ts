@@ -60,6 +60,27 @@ describe('buildCatalog', () => {
     expect(entry!.pdfs).toEqual([{ section: 'mugah', label: 'מוגה', driveFileId: '1abcDEF23456' }]);
   });
 
+  it('attaches a resourceKey when the Drive link has one', () => {
+    const record = makeRecord({
+      detail: {
+        ...makeRecord().detail,
+        mugah: {
+          hasContent: true,
+          links: [{ label: 'מוגה', url: 'https://drive.google.com/file/d/1abcDEF23456/view?usp=sharing&resourcekey=0-abc123' }],
+        },
+      },
+    });
+    upsertRecord(db, record, null, '2026-01-01T00:00:00.000Z');
+    const [entry] = buildCatalog(db)[5711]!;
+    expect(entry!.pdfs).toEqual([{ section: 'mugah', label: 'מוגה', driveFileId: '1abcDEF23456', resourceKey: '0-abc123' }]);
+  });
+
+  it('omits resourceKey entirely (not resourceKey: undefined) when the link has none - the common case', () => {
+    upsertRecord(db, makeRecord(), null, '2026-01-01T00:00:00.000Z');
+    const [entry] = buildCatalog(db)[5711]!;
+    expect(entry!.pdfs[0]).not.toHaveProperty('resourceKey');
+  });
+
   it('excludes a reshima-labeled PDF (private notes / the Reshimos series), even from an otherwise real mugah link', () => {
     const record = makeRecord({
       detail: {

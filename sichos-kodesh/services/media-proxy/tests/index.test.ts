@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   cleanResponseHeaders,
   DRIVE_ID_PATTERN,
+  DRIVE_RESOURCE_KEY_PATTERN,
   driveDownloadUrl,
   extractConfirmToken,
   fetchFromDrive,
@@ -17,6 +18,30 @@ describe('driveDownloadUrl', () => {
 
   it('includes the confirm token when provided', () => {
     expect(driveDownloadUrl('abc123', 'tok')).toBe('https://drive.google.com/uc?export=download&id=abc123&confirm=tok');
+  });
+
+  it('includes the resource key when provided - required for links shared before Google\'s 2021 resource-key change', () => {
+    expect(driveDownloadUrl('abc123', undefined, '0-gm0KFPq6Fi6FXwvfD45KzA')).toBe(
+      'https://drive.google.com/uc?export=download&id=abc123&resourcekey=0-gm0KFPq6Fi6FXwvfD45KzA',
+    );
+  });
+
+  it('includes both confirm token and resource key together', () => {
+    expect(driveDownloadUrl('abc123', 'tok', 'rk1')).toBe(
+      'https://drive.google.com/uc?export=download&id=abc123&confirm=tok&resourcekey=rk1',
+    );
+  });
+});
+
+describe('DRIVE_RESOURCE_KEY_PATTERN', () => {
+  it('accepts a realistic resource key', () => {
+    expect(DRIVE_RESOURCE_KEY_PATTERN.test('0-gm0KFPq6Fi6FXwvfD45KzA')).toBe(true);
+  });
+
+  it('rejects path traversal or unrelated input', () => {
+    for (const bad of ['../etc/passwd', 'http://evil.com', 'a b', '']) {
+      expect(DRIVE_RESOURCE_KEY_PATTERN.test(bad)).toBe(false);
+    }
   });
 });
 
@@ -152,6 +177,20 @@ describe('fetchFromDrive', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     const secondCallUrl = vi.mocked(globalThis.fetch).mock.calls[1]![0] as string;
     expect(secondCallUrl).toContain('confirm=tok123');
+  });
+
+  it('forwards the resource key on both the initial request and the confirm-token retry - real files shared before Google\'s 2021 resource-key change 404 without it', async () => {
+    const interstitial = new Response('<a href="/uc?confirm=tok123&id=abc123">confirm</a>', {
+      headers: { 'content-type': 'text/html' },
+    });
+    const realFile = new Response('actual bytes', { headers: { 'content-type': 'application/pdf' } });
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(interstitial).mockResolvedValueOnce(realFile);
+
+    await fetchFromDrive('abc123', 'rk1');
+    const firstCallUrl = vi.mocked(globalThis.fetch).mock.calls[0]![0] as string;
+    const secondCallUrl = vi.mocked(globalThis.fetch).mock.calls[1]![0] as string;
+    expect(firstCallUrl).toContain('resourcekey=rk1');
+    expect(secondCallUrl).toContain('resourcekey=rk1');
   });
 
   it('returns a 502 rather than mis-serving HTML as a file when no confirm token is found', async () => {

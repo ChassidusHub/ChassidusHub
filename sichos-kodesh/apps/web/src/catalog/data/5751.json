@@ -7,6 +7,36 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (השלמות)",
+        "driveFileId": "1jLH9lO_yayiJaaCdnl6mvugCqQ5DwcVn"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1KQr8Dd3qCESOjaQzxzYiV4DMxz5MbCYM"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1q2a1QGGG9i-MAawm0u8KJtn5exipH26h"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1ROTgeaIAxDJvPTUPzPjkbhhTOhNGzUvS"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1ur3ok_vqmGMuJnFwI1Bo6sdUBaPiIvE5"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "1_4rVdBftlBmpI1fy8hAf4eOO1j9TU7Vv"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים (התועדות א וב)]",
         "driveFileId": "1yNq2TyOXfb33rNWb9s4112oHSZ0whwDd"
@@ -20,6 +50,31 @@
     "occasionLabel": "האזינו (התוועדות ב' - המשך ליום ב' דר\"ה)",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (השלמות)",
+        "driveFileId": "1fgnAC2kkrQ9p79wA9fhTv0yITHIy8uVS"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "118Gx7qiALTmIgL_KEt1vZJu7O6e06hHL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "14Y5MarpiVDzTsqXo7sWTMYb47eUMqxui"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1ur3ok_vqmGMuJnFwI1Bo6sdUBaPiIvE5"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "1_4rVdBftlBmpI1fy8hAf4eOO1j9TU7Vv"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים (התועדות א וב)]",
@@ -40,9 +95,24 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1mvrnO4ORSa9JKwCu_KzZhLoffxTQVhK4"
+      },
+      {
         "section": "mugah",
         "label": "(1) סה\"ש/ תו\"מ התוועדויות",
         "driveFileId": "1vTmMgD7V2AZEClZDHP3C9O_40-F8CIZ6"
+      },
+      {
+        "section": "mugah",
+        "label": "(2) בהוס' לסה\"ש (תוכן קצר)",
+        "driveFileId": "1hfwJoVXDU9OSPA2DT_bGsUkDOFo02xit"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום ההגהות - תוכן קצר (עם פענוחים)",
+        "driveFileId": "10xhJSGSDRNt7L2PEMgMx5JQXri3R7EnB"
       }
     ]
   },
@@ -58,6 +128,16 @@
       }
     ],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1xjsi_fDU3CScjXFzulQJ3UiGklk2T0kU"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "10fCJS4LaCREtD5xbLyoVk6GgyVsI5Jzi"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1",
@@ -81,7 +161,18 @@
         "durationMs": 2144156
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1DcCE1Ize1D1lz6TPNb17H477Nui0jmyt"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ חל\"ט ע' 375",
+        "driveFileId": "1s4sH4imr-bfzZ4EVC4fkM50aM2h4jAQ-"
+      }
+    ]
   },
   {
     "occasionId": 11115886,
@@ -89,7 +180,18 @@
     "hebrewDate": "5751-01-09b",
     "occasionLabel": "ערב יו\"כ, ברכת הבנים",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "19wdfVZyAr0bJaX-gIcf-u0hjCHZ45JZm"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ חל\"ט ע' 393",
+        "driveFileId": "1qiBgkq_qW02rn2CrPQ0h2H1-FrtNch4I"
+      }
+    ]
   },
   {
     "occasionId": 11115887,
@@ -97,7 +199,13 @@
     "hebrewDate": "5751-01-10",
     "occasionLabel": "מוצאי יו\"כ, אחרי מעריב והבדלה",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ חל\"ט ע' 400",
+        "driveFileId": "1YyIKjA-f574CLx2AmR5HZ6TvUMXZpiqW"
+      }
+    ]
   },
   {
     "occasionId": 11115888,
@@ -110,7 +218,18 @@
         "durationMs": 470569
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1K3c9AiChMt7sQ2pC2YGGP3NDJz7lkmmm"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ חל\"ט ע' 402",
+        "driveFileId": "1NGNsUmIYpKvOxVp5ngH80l9quUA_Zvb3"
+      }
+    ]
   },
   {
     "occasionId": 11115889,
@@ -118,7 +237,28 @@
     "hebrewDate": "5751-01-14b",
     "occasionLabel": "ליל א' דחה\"ס, אחרי מעריב - שמב\"ה",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "16vxHd-palOo1nO5zu73sA1rtyXfpjy1Z"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1OgVV9B21chtLktHwYvCIQw-BjxSRtJ1e"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1DgLQ3lF_ORxB8kLc7FloYWKkXF56GI0J"
+      }
+    ]
   },
   {
     "occasionId": 11115890,
@@ -126,7 +266,28 @@
     "hebrewDate": "5751-01-14c",
     "occasionLabel": "ליל א' דחה\"ס, ברכה להאורחים",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Pl-cxitu7_W-Bve805EVNVevY9zfD7Y2"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1XdFwMPc9hRI9HROdRgppnsDulH0qEi0W"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1DgLQ3lF_ORxB8kLc7FloYWKkXF56GI0J"
+      }
+    ]
   },
   {
     "occasionId": 11115891,
@@ -134,7 +295,28 @@
     "hebrewDate": "5751-01-15",
     "occasionLabel": "ליל ב' דחה\"ס, אחרי מעריב - שמב\"ה",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1CVS0mH5oDt1_CpE39Q0wNJjS23pZcFhB"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1q4e4UlZBEM0LJxjVUYij8VtNc_R-_3eb"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1DgLQ3lF_ORxB8kLc7FloYWKkXF56GI0J"
+      }
+    ]
   },
   {
     "occasionId": 11115892,
@@ -143,6 +325,26 @@
     "occasionLabel": "ליל ג' דחה\"ס, ליל שבת חוה\"מ, אחרי מעריב - שמב\"ה",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Dirc_VL5mfdNlo5ixobhBVMq1e2wJtLb"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1mLVpRI7S301kPVn2X7dM5GgsHLxLQWFL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1DgLQ3lF_ORxB8kLc7FloYWKkXF56GI0J"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1",
@@ -161,7 +363,23 @@
         "durationMs": 2463552
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1PeQRl_UBKNr9a9Kow33HqEmnfPCJYf3r"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1X5F3haKpN2O8LUwX9H-hPyItLvj-CnLx"
+      }
+    ]
   },
   {
     "occasionId": 11115894,
@@ -174,7 +392,23 @@
         "durationMs": 2712032
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1d4au65nsasoO0k5wcTPU-IgyDOxOEkQi"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1hEmYA4oLe-3u0CcL3oYf6xP7y5R-jVDk"
+      }
+    ]
   },
   {
     "occasionId": 11115895,
@@ -187,7 +421,18 @@
         "durationMs": 742478
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "12jyeE40xF1pGuBr5Wjfrbz-jfcpt-5Qu"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1ewjAvNaL5l_HufyKroucLxsDJjPZKMqn"
+      }
+    ]
   },
   {
     "occasionId": 11115896,
@@ -200,7 +445,23 @@
         "durationMs": 1677714
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1MwJu7D_g1gl9rpVEZ_NJkatQF2ezUyAj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1ArxYJuFS3n9K_tZF5bZD-cN8_QjEqnrI"
+      }
+    ]
   },
   {
     "occasionId": 11115897,
@@ -213,7 +474,23 @@
         "durationMs": 2600000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב - קו' מעייני הישועה)",
+        "driveFileId": "1c27K7EKogCZ8mRHBv4ydgRuOyJdYYS9i"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "12jyCrD9pD_0WABzcQTA7ROBADXMzSYoi"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1FeSEeGYu23xz6YKJ1_095kM_DNP8o_22"
+      }
+    ]
   },
   {
     "occasionId": 11115898,
@@ -221,7 +498,28 @@
     "hebrewDate": "5751-01-22",
     "occasionLabel": "ליל שמח\"ת, לפני הקפות",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1aon6Fpgkak9nx3QOazt7Z77-Pk1_QzGy"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1pdyILrT6kZyk_QDLYNbH_tr2kUBLeTZp"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "13_GBPygfVcoqg9FF7TomhOx2tWsz5QRN"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1l9WLA9VdWvCxzLg_YoYoWKAxIJWRntMw"
+      }
+    ]
   },
   {
     "occasionId": 11115899,
@@ -230,6 +528,31 @@
     "occasionLabel": "בראשית, מבה\"ח מ\"ח (התוועדות א)",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1w0FJmjSwxCsXjvs5VfSsEbuVAcgT2Y1r"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1YkdCPSFOYgTTRH_-scm9b0YhKz0gHlk9"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1UnCXqP37hrqsX3jqs8r7pnI1xOLh4eO7"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1l9WLA9VdWvCxzLg_YoYoWKAxIJWRntMw"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1EHJqwGwzqjv79VDYsyUSB5eWqoLd2s8W"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים (התועדות א וב)]",
@@ -244,6 +567,51 @@
     "occasionLabel": "בראשית (התוועדות ב - המשך לשמח\"ת)",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1z0tOLEUPaxJe7WdGFCP4m698dqcfFGEb"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1FCCiajl-AEWjbYIYZ7cL68Tuqpy4ZHHb"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1DpS3X2b3zrQbH7OLGGWaI44j425BF35K"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "10_BOSg7b6Z8CIeHXTT3yZ17ihy1AsaZQ"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ו ע' 90 (יתרו ב)",
+        "driveFileId": "1RKjEdJcqDdk41T0Du9PLylw5lW9tRC_p"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1EHJqwGwzqjv79VDYsyUSB5eWqoLd2s8W"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ה",
+        "driveFileId": "1e_ndTg_c5eaP-3yQKiwNGwIlzj8Voa7i"
+      },
+      {
+        "section": "maamorim",
+        "label": "ר\"ד",
+        "driveFileId": "1NO5-Ebtzh4bjlNK7NWVNUzB-KsYPP7FD"
+      },
+      {
+        "section": "maamorim",
+        "label": "תוכן קצר",
+        "driveFileId": "1DpS3X2b3zrQbH7OLGGWaI44j425BF35K"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים (התועדות א וב)]",
@@ -262,7 +630,23 @@
         "durationMs": 2504463
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "13QyNa9397JlKl44FV084Wp_VLVlzdpSs"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "19YpN_jjWB1LP1O1Ac6OJf8-J4pRwcmj7"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1qTDOaLspO2CVfAo2tS6N8DIo-sewRBkA"
+      }
+    ]
   },
   {
     "occasionId": 11115902,
@@ -271,6 +655,41 @@
     "occasionLabel": "נח, בדר\"ח מ\"ח",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1Uqg-ddMxob3JxD1Fwp19iMHwl2xpj4MV"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1kZxljtkK13uR0JEGjWMF4DjelZ_LjwrT"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "18Q4_5zxXL2daMWr8gmm74bIvxlDspVf6"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1NidPbFUf9kZQoAnN3cMSUCTVLGqPR7VU"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "10UMNM2NqP7Av1-5JukX7tMcUMzL7nyVX"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1RzS_R0iOigqIpsAQfkHnnOA2pehN3c1w"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1fRzBuMOTN9ovEVKKREjk3WxaeTmBuSnB"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -286,9 +705,44 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1szmMLjYZkRbvO0W1upweOggfp2D9ClPz"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1U0K567wAJ184GpQCbQzOvgtmh-p7wuKV"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1T2NBrdEk7JSutbBrbh7LJmuhRU1gKahJ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1vMquibAaGrEUkIOED6KMvOMNqEAiJxct"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1gr3w2kin7gQi1djUfWNrx9quAtj9qvS9"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (הדרן על הרמב\"ם)",
+        "driveFileId": "1tWx78cyETd0Uly1KB9D54o98lTaovTpM"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1LVXftfVzg5YY2z2uZIMND5vzw-mKM1G8"
+      },
+      {
+        "section": "hosofos",
+        "label": "פתח דבר",
+        "driveFileId": "1wMRpAZ9UODO_2USJsHV6sOiyK4w_QQtT"
       }
     ]
   },
@@ -299,6 +753,51 @@
     "occasionLabel": "וירא, ט\"ו מ\"ח",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "14-MxUxq4iwW0Qu9vFgFGISQfAjHQ8gU4"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1CQw5J0xqUl173GkS4PsUQpQD_0M1FI18"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1brsXVO2HNbJxcrpe8vqhWw0Hpt17nRiZ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "17sNSNPqeTte7_YhLS8Pc_-vMW5zMrtri"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1j6IBLA5Uq1EuS47tDChmruR22PVt2ano"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1U2mKdJAiR-RoJj_Mp_ypmq_rXZTDdKOd"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1FaxPR1Rnz0y7oi-cmGdx15nij6i0Sqqt"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1OqD7r2NpJx4uv49hDUYHZabAeB-28Xm1"
+      },
+      {
+        "section": "mugah",
+        "label": "תקציר",
+        "driveFileId": "1rwJ6tCSEZzoVNSEXMaykD0UdikVfqUqa"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים: (א) משיחות; (ב) תקציר]",
@@ -314,6 +813,51 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1KORWwtnrfEgUBu7ksJBdy0YNB6InXLWE"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1wHRbduyxlnEutyhq20Wr_DDfc3GN-fyW"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1hFz6-4hi-uqrbIf0nYOFJxUBoEP3Y4zD"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1dvO3_7-C-138ZyZc7nIUNKyKuFNRpFBY"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1nIzMx7s05p5lP-hD_uVeGHl8L-rCF4aq"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1U-Z_qcMKwur-zFPKHwxEgpVq8kcXTAVk"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ה",
+        "driveFileId": "1uzIjEjnGRIG68bHMDw5iexvQYXM8z3HZ"
+      },
+      {
+        "section": "maamorim",
+        "label": "ר\"ד",
+        "driveFileId": "180h5xEbrcQvzX2k7k_D-S7jkEmhCtLmO"
+      },
+      {
+        "section": "maamorim",
+        "label": "תוכן קצר",
+        "driveFileId": "16zTeVx9I-tPpg0qUm-A3DlHX0Q1TcQvp"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1YuiIQvdfv2_uhIYmwoDOBcJHVWS8MX6M"
@@ -327,6 +871,46 @@
     "occasionLabel": "תולדות, מבה\"ח וער\"ח כסלו",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1kBCByuF3b5Jb4rVgjA_VXCpWsXJC6TJm"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1wUxSUP9Sycgn6UmMQ-avZTXNkc60lRTp"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1NTJtQwh02I1JlSCCRR_-A8BRGrVDNUnZ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1h7AdX1plqxBV0gLy5e4ZT1KTKeDA_9yH"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1eF1HQm8yPLi-bOoM9Ab83F2VYfx6yIUK"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "15ejl5L6VYwFBu0UaszyetMWK6XSQVZgr"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1BK6ZFdC7JgcKw40N0wz0P3fMPRysfBF_"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "10R24kdxa-kX8ITgK0zEgRSiin95FOts3"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -355,6 +939,41 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1yS_jl-oOR6jloBkSZ-v2dc3AKNJfprWx"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1HOwX-1iztFsjG_1DlCENKBN7zgyCGQ3L"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1NGkmvfJnVAsc0CZjW8Xg128cet-NU5Vr"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1Pl1qarHp4RUZk8nr-0GX8GBpIxX808nz"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1o6jsERBgDIcGR6zDBsEyLRABx6uRORx8"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1kceNaNFHcIHJm05d4sEbpKiwUFJ6I94k"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1jmZT9T6d2PJ4YMqa1lkiIGJ0XmLsSXiq"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "11XF9NLxTLDdKlcHZuZXttqEEANNPvrDc"
@@ -369,6 +988,36 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1A81zhy7XFL_suWb9Nozw-fNDsBds1hwL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1yWO3EMzhK2rr1BhSEnc2BOOMswLLZyIS"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "13cuTtfau_g2zk5i0gTDxhjHUCvnBwDb6"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "12lLpvzZVS8N6JZuBigqJvEpUa9hJtANy"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1S0LKyWppyg4-u_uwZx0wGzL3T2v7G6JZ"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "16WRYOw1GXiP74xxR7uH0tmjfXwD4Vdmj"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1cAq188uHaZ05No9Yzww5UjzUMEKs5rY6"
@@ -382,6 +1031,41 @@
     "occasionLabel": "וישב, כ\"א כסלו",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1sz8b3kopS4d22QNcQcCSdmQrUrEDtaBN"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1mqprxFdnX2dbO68MTIaK4Vxa6pH4Md7p"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1D0aXaN6saphTk8chRmM57Nhm3xRPRTsi"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1sHB10SEFqoUPCrIJK_WohtdOEG7TTeps"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1jmg7M2r--TSdfujocO2801bGskn-g4cJ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1u4FgCBbG_mcHnZD73Pbgpw_ZRPM2E6ck"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "10Y7C-gOIKHifgmQcSZe1EmtMRphYFDHK"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -400,7 +1084,18 @@
         "durationMs": 4059506
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1paVKWzpruXfbP0bPN7JksHU0WM_0zgrt"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1kiSu7aCTiGCgJXRg6cikUOv_6oooqoRV"
+      }
+    ]
   },
   {
     "occasionId": 11115912,
@@ -408,7 +1103,18 @@
     "hebrewDate": "5751-03-26",
     "occasionLabel": "ליל ז\"ך כסלו, יחידות כללית (לקבוצת אורחים; קבוצת חתני בר מצוה והוריהם; קבוצת חתנים וכלות)",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1EiJG2CB4sUXNjNgmePqI2JkZ8PGRGX9-"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1xKrtmNnwW5tF6XKmfeH5ZpqzG1nC-1gl"
+      }
+    ]
   },
   {
     "occasionId": 11115913,
@@ -417,6 +1123,41 @@
     "occasionLabel": "מקץ, חנוכה, מבה\"ח טבת",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1-x6b_uHge6_XoDmePYp5-tzq2_GMzHw0"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1L0xJcXeUmo2RYr5YaDTQbRah-edWEEJx"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1FitHxoUdhsNiIVyqOBTa3MWmijHbviSa"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1eVt6kPHKBFkyOQMHYPz64KBwN6L73Q7J"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "11gP-ZMz8N2jMX8qQY84cmTdGAtQQ7UQL"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1jHsbDNoM2ksNjy0aQMFflSuX6GhKmBMM"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1SInOKKCRhgBrcqK5JvMyah6iffgg5S3M"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -437,6 +1178,16 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1VDVvHcerDAHgE-k33XTHjV3EmWANOT1V"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1B5h-qmakNOMk8dWKBZTupaD-gXIcI42u"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "1fxZh8h_5gh5A3ATaqaX78BzvwszDLPDS"
@@ -450,6 +1201,46 @@
     "occasionLabel": "ויגש, ה' טבת",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1IbvatCyBJF-qlsFfQwbQVkG8Be5qkQFI"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק (השלמות)",
+        "driveFileId": "1L-V7BCvJTnq3AhnZybqrorUJUMv7YLEY"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1tyV4OgJpYUdA8dafhLMYDnAtQg_K1BfD"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1iWk0YhgBNIgz592SLUEkE9SqFeWWe5O-"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1TwgeL5oUmyUmO_PAQEu6gUeEJnnHiPg9"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1W4OxE4-HAHuuFsVuqaavRXZzbVkZhk0Y"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית - הריי\"ב",
+        "driveFileId": "1GC_bKHejEKEJBJdmxgegVJRRl7HhIUdO"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "17eYgx_f5Ta17urBv3wRpKLeSKtiOZA1d"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -470,6 +1261,21 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1EUX0hsJZRiv6EvjltvKNPFwUmu5ZRGWd"
+      },
+      {
+        "section": "mugah",
+        "label": "(1) סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1Hyokd2HaUlCWqd2UkET2a-prwMsR5Qal"
+      },
+      {
+        "section": "mugah",
+        "label": "(2) סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1dTFFvgUi0BJziwL8JF-6zYCBPOFNUawY"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים (משיחת עשרה בטבת)]",
         "driveFileId": "1cYJ6ZT-E3gg6QI0tSRkoZTwe-VBnNEh2"
@@ -489,6 +1295,41 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1ZEiySSfj8gB1vZMLrMbre8JHFvskPoo_"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1-YWM69HUzvlM1cL7t3L81g4cahrW8pv-"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1awM_pwjPtv5BO05fC9DyFtNzyfIt2DVU"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1UlTl5qix2YkooPfNRdr2vSAbDCtRwIBV"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1BQu8fSpqlvvEFVOwmyPD2-pDpaCLhO8o"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית - הריי\"ב",
+        "driveFileId": "1ey8KdO_kXH4RfzCmkqYhAhIsfXELJiVj"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1dTFFvgUi0BJziwL8JF-6zYCBPOFNUawY"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1DhSpJnHCw6yC0eYW0N1bVU_ZM7DDt6Hc"
@@ -503,6 +1344,46 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1DXcm0w2lZXFpbIsCMBe3Mxs9poCOok6T"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק (השלמות)",
+        "driveFileId": "1I46DbtyNBbcRD3F6N_dBisdcg8oTfLQs"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1F792ghskskfRLI-IjK5AsfpDtA0Kr5bu"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1eUKMrj4ouLlAKiCUxLJE0I2D0e2SuHjn"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "10STBTW4ul12GCKXMEoCd3otcw2xOZ-Gr"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "178xV5rUdBsTiKt6OtT723D-vBAGZS3Fk"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית - הריי\"ב (נדפס בשיחו\"ק, ברוקלין תשע\"ו)",
+        "driveFileId": "1hTOmzgYVaWvyIfq7S0ncBSsEeMPOio3Y"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "12enHN-wxtNJerkOO6LLyoLgZRNtWE4Yp"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1brGq0FDbhX2tMLYBze3SZV0wQ5AA9GBJ"
@@ -516,6 +1397,46 @@
     "occasionLabel": "וארא, מבה\"ח שבט, כ\"ו טבת",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק (השלמות)",
+        "driveFileId": "17iuEsfY3ULPNSX1yWAr3c1hmtpONgnri"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1o8BmA1qEPT4iffYbMUMQA9XA1ITGXGsY"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "17kLUHKa8I9DmdK9mMOwxVqR-2XK_vhgR"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1BxrnIwiSjhASU46EAsuU1Kzw5fIA9rLj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "14ZOt5BZP_vYjqXJ9b25mZgoE7TpmaPKx"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית - הריי\"ב (נדפס בשיחו\"ק, ברוקלין תשע\"ו)",
+        "driveFileId": "1xmLzMOXi2FOKKf9GDfGh2aDdzEOsCnwX"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1z_2SisVHMMGUhsx8vzsle_DoKMwTByAh"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1Va-AtRsAiDdWw3rDQCPzRqdv8F1Wr11g"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1",
@@ -532,8 +1453,48 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1kRfdsTAiV-eU8bEIBu9bHK_VBxHZ_XWy"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק (השלמות)",
+        "driveFileId": "1-wSW2MGybZBhC-ULdlSQF0yf97IndcWB"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1rnI3V0OC4A_IDPHkmNi3L1nQhk6cbGkk"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1Sm-RZLw4x6rA03_ORITi3Akl3LWZw_Vv"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1zjJPhUzNH_gabxzYWkvJx1pUTTwtBK5_"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1ZdNE_bexkQdTTcB0O3KDHBlP-UCwLRcF"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית - הרי\"י ברוין (חלק בכת\"י)",
+        "driveFileId": "1djX-fjveLyi16U-sWoe8TGE-Rk1zS68Z"
+      },
+      {
+        "section": "biltiMugah",
         "label": "הנחה פרטית - הרמ\"א זעליגסאן",
         "driveFileId": "1IRmjH7Hbp23etkvpiZfrpwfIJKy_rld_"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1n7exPxTgf8pzqnjc0PAz2kcq1L7OJhuk"
       },
       {
         "section": "hagahos",
@@ -544,6 +1505,11 @@
         "section": "hagahos",
         "label": "צילום 2 [מודעה בהמשך להתועדות]",
         "driveFileId": "1gsGQbg-ZwHjj5CRvrmLwbduPJhsGVXkB"
+      },
+      {
+        "section": "hosofos",
+        "label": "לשלימות המכתב",
+        "driveFileId": "1dc70SbzXHzUtbQuBOCPDZD05nHxXln2L"
       }
     ]
   },
@@ -553,7 +1519,48 @@
     "hebrewDate": "5751-05-11",
     "occasionLabel": "בשלח, י\"א שבט",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1jfsbWusa39UFCo1_e9sgMhXYr0x59Kve"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1iA6VRZM3N48SYq4FNKjndBeu91ju-MvL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1DbBu4fWLUjgKr1K2mRP9tw2RtRpqQjLv"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1_sehQxtq6_4Ilw3CaerIQ2zGw8fUvxJo"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1CK3kWNpI2DQsnZjjkDLN_oalXQO4HS8R"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית (נדפס בשיחו\"ק, ברוקלין תשע\"ו)",
+        "driveFileId": "19M2RDwLMtCDPJ0xarOhY6OrqU3nPM4jJ"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1eoyk75M1gdHxwwRCJvkIMNoEKgFt1bvv"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1UpyceTcZLRVQBxzD3vL50x00g7TDCVRL"
+      }
+    ]
   },
   {
     "occasionId": 11115922,
@@ -566,7 +1573,18 @@
         "durationMs": 2016000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1D2I7RW-3-MBkP1EyJQPwjbBZQWkAWroK"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1zYESuXl7KzTynoeps4Ae87VG3Hr2My32"
+      }
+    ]
   },
   {
     "occasionId": 11115923,
@@ -574,7 +1592,43 @@
     "hebrewDate": "5751-05-18",
     "occasionLabel": "יתרו, י\"ח שבט",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1GcxUSeBsKeUaVCuL7zmEBC5xaVs3SgUd"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק (השלמות)",
+        "driveFileId": "1gfiWBHR5l_QXcDa8AbJmTdeK5bdkl4Ky"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1HvnbRIP9-IGHrnv3FbBRUViKstVQJzV3"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1DX4MrDx24ISnZ86Sdq7TXuw-bgzmmYZX"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1jxZzU4KKs1vWzK20N6BVs4Ytx0ArIo9G"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1kUe4wdWY-315klaepgg_wkgoGATqKZYR"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1AQlL9fvGY-1nQTk6n-K-tpD8vPjTEvNF"
+      }
+    ]
   },
   {
     "occasionId": 11115924,
@@ -583,6 +1637,46 @@
     "occasionLabel": "משפטים, פ' שקלים, מבה\"ח אדר",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1wxcJ34bcm-cjFfEtFMKBAZFGKot4TjCr"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1ZFDsnOogFa5RCHIO06Bb63QLnlwwAbIX"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1Tf18C509uA6zRd5VBuWslIEo2Ww6tH6v"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1x_OYfF6tGPJ46SY6YjdvzvOMIdVzQq92"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1Da6_g9CLurzzDB-o57R8sJjgIm6Hww2P"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית (נדפס בשיחו\"ק, ברוקלין תשע\"ו)",
+        "driveFileId": "17JYJMn6q7CRZQzOmiPPusIdscdfss-RG"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1sTKVpEOD9v-gSmxorHRXk4wujciUaghq"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1MukyTnlASv-8NYB-2KA0n3Y96_2gfN4X"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -603,6 +1697,16 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1sBCg8m_YhOBhFVCm4CJxNw_gxvke6i-f"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1N6uLV2ubxNuHmFzXmQooT4ibf9OvqsJa"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1aPTdc8ypp1jpqtPwll2SpAWhn02VaZSm"
@@ -617,6 +1721,46 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "155NKb7Xsx7Ek3oGOLJKf4PxHRdobJQw-"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק (השלמות)",
+        "driveFileId": "1KMYP6RqEVxlWCd2G_7lv-KbfPFVtOmn5"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "11YveG3L6Oz1GzVPpjNiXHPwOX9q0wUAL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1DHC_bOFqklvOFHMYiKkUZHSY0AwBMF5N"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1B9o42dhNbWdd0vqKsVMoVnYDB2Zw-3F6"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1FOtta3CVWdI5WUXxdeGjCBmxysKgmzlj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית (נדפס בשיחו\"ק, ברוקלין תשע\"ו)",
+        "driveFileId": "1ug_oDIBB2p9UXNRhFBWUzfVbic9yLYJI"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1wvQucFOn8gaVX9RYyGYj9IurUp0XLItZ"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1TAfomJi-XyUsEhHx2tCKRKT9YUJo8_Pd"
@@ -630,6 +1774,46 @@
     "occasionLabel": "תצוה, פ' זכור, ט' אדר",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1tfcysRhwJaak6dKCp9PkLmEhKGdKFC9h"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1LBC6kiRujJmhSWYyWJrHf_6QEYO4WjoZ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1GKvJ6upYqMWK5S0HorsRfsT5gBVBoqr8"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1TWlttBGUJM77KGSScg5QVlhoaxrqqUiy"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1dMBlG3-FYwwi53B5miTMojcsxaw1QZUx"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "192k9IbL-IlGjjrzMLOR_uEWPmK1OlF5n"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1snGF8rSOzFATcYiOxf_7RomC1PydnaBQ"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "15W6Zl2VIbZnNGHYoZlCalc_sSZOahf1g"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -648,7 +1832,18 @@
         "durationMs": 1492000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1caMT_p79w2C1xkKE-32_7UsMxl-xuynL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1MXHHhz0JIaeoi6j-lgtwyR7MCU32t5h-"
+      }
+    ]
   },
   {
     "occasionId": 11115929,
@@ -657,6 +1852,36 @@
     "occasionLabel": "תשא, ט\"ז אדר",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1NTftRQFWZ-yqZjqE2Qk4cZLo4RfiGorJ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "15xSez8rOxVfS_niyHY6WSsJmKF79Udfq"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "19dg6bLONvXRgkk8z78powVL8E-n4SNOS"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1tXsVu2gtDSY7FVHu18UP0SxBiKLz-Fge"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1gZrZVckTwsiF8SQzfBIMYY6IrnEo-bIF"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1X0Ygmv92GCrXgiZBmL-FzWwuPot8fSZY"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -675,7 +1900,18 @@
         "durationMs": 1178000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1QkF9kLaVMyyxqMZRviTrjZtshH--Qgw9"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1JA8QYMn28HBNM30TrTjtLwHiiUFFRyKF"
+      }
+    ]
   },
   {
     "occasionId": 11115931,
@@ -686,8 +1922,33 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1BQ4J-5vZztDbaVcN_mObu2qjr1-xcJFj"
+      },
+      {
+        "section": "biltiMugah",
         "label": "ועד הנחות התמימים",
         "driveFileId": "18AtJQnLREZ0KWhvRT81TK6qFaS-_Wq-a"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1b7GYwXWOgPFxDZC8HnSslBN672GX9J66"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1iSOHr8ebvISw92tH4pECyQ4XKCCP1u0h"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1xSuOxpfruo9bTKqVPcWlgtctAT1ZvuQI"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1MHkO7XgEuoUIu1yEV30TY3omefK8c_0b"
       },
       {
         "section": "hosofos",
@@ -709,6 +1970,16 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1HEe0HD1hfj4M2AixBaY30x2QxjnoqxRU"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1YkOLeGfpHJRwEe6wPlTEwr-RCuC-2MjI"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 - הגהה ראשונה",
         "driveFileId": "1lcm3IV2At940SwHXZYf4G92u8-4GHIgn"
@@ -728,6 +1999,36 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1qFhoB-nPiHUL_MqWCA9Jb2r0bpBk_FPF"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1ZmRzdbX4pUGvags9CZ0kOeBZi8FiUzYj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1EKS3y_3jrnrO9Y658vLEvZwxzMuLXApB"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1LDwjFLWwBhLX46dhstXzC14Jp_b4JWPx"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1sAX6G9vlSO6ySOz7OjRo-bQDfsly9zZZ"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1qeduIi-9TJj-6l70miob8vrF2ZzOkmQY"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1YqjUUKOS_XOIBmiWCN4u85NgbZNWs07-"
@@ -740,7 +2041,38 @@
     "hebrewDate": "5751-07-08",
     "occasionLabel": "צו, שבת הגדול, ח' ניסן",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1tJh9V_UGKK73xd2YrvDN86jh_eYo9Ave"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1QYBn4Zqe2u-nwepjmx3jETdty00SzZWk"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1ziwUUieh6_p7YMTF1xPnSr0Sen-_MJUk"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1l0WlhIID-NhXJ8P8NT4TYzimQpWALiCv"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1EM_OoLNIr99seiJVZXCk7Nvcd9oD8mFq"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1qpGY2-nSK8tYwblWt5Y-BcXrTXkjqE0P"
+      }
+    ]
   },
   {
     "occasionId": 11115935,
@@ -753,7 +2085,18 @@
         "durationMs": 1403533
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1PSxxlfAO6KRibk9SFWqkh6Xs5CJc_uGz"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ חל\"ז ע' 93",
+        "driveFileId": "1G4T2s5HT_1ZblZkp_pGOel2hzTxgC-tr"
+      }
+    ]
   },
   {
     "occasionId": 11115936,
@@ -766,7 +2109,18 @@
         "durationMs": 3120039
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1kTa7h6zWLXRVrD8MjRo5hgdW3ASkhkH6"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1PtvlqcUqF8EDa4xs178945yncjHBwMCX"
+      }
+    ]
   },
   {
     "occasionId": 11115937,
@@ -774,7 +2128,13 @@
     "hebrewDate": "5751-07-13",
     "occasionLabel": "ליל י\"ד ניסן, ערב חה\"פ, אחרי מכירת חמץ",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות/ חל\"ז ע' 107",
+        "driveFileId": "1U1uc-tYgLQuR8GqKCkZi3qNix1kY_H2r"
+      }
+    ]
   },
   {
     "occasionId": 11115938,
@@ -782,7 +2142,18 @@
     "hebrewDate": "5751-07-14",
     "occasionLabel": "ערב חה\"פ, אחרי מנחה",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1YXQpVBhlicTIpIAGy91MgsjXRD7CmbC4"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות/ חל\"ז ע' 109",
+        "driveFileId": "1rrphRRgqgdq_Hd6ycHCAiXdmVJWp74W_"
+      }
+    ]
   },
   {
     "occasionId": 11115939,
@@ -790,7 +2161,13 @@
     "hebrewDate": "5751-07-14b",
     "occasionLabel": "ערב חה\"פ, אחרי חלוקת הדולרים (שלאחרי מנחה)",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1hoxdbcrK9pxGt3z-KEYG-48xXNBGwvfy"
+      }
+    ]
   },
   {
     "occasionId": 11115940,
@@ -803,7 +2180,18 @@
         "durationMs": 591020
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1xJj93b6jOJ6YilkrtCDNE9MVwJZ2BWfh"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1aDng0kxm9RdXRR25v7B9vPozTwfh4rky"
+      }
+    ]
   },
   {
     "occasionId": 11115941,
@@ -811,7 +2199,23 @@
     "hebrewDate": "5751-07-21",
     "occasionLabel": "ליל אחש\"פ, שיחה להחוזרים מהתהלוכה",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1wkVbR0HzY-QIIE6w8WxHxHt11OTFVzke"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1hF11k0x_poMrez64SClT_k2y2BLLt2ev"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1wUCdpYhYWQoNAUNRk4arhQfgpcqYsZsk"
+      }
+    ]
   },
   {
     "occasionId": 11115942,
@@ -819,7 +2223,43 @@
     "hebrewDate": "5751-07-22",
     "occasionLabel": "אחש\"פ",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Sfe4fLLsF4-v3nSk25m_IKUh_JVakrhj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1TYAE0zC5S-9hq-8kziJ6xmc8ja3b6xoU"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "15VENQIlW162Pi4hv5QY3HZMBnX5oOflF"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1XufpkTiBQt0pOxIJaeNyfaf8Q8ZglDXJ"
+      },
+      {
+        "section": "mugah",
+        "label": "חל\"ח ע' 7 (חה\"ש)",
+        "driveFileId": "1cSj517DfpE1q_KW69LamxjrEjtJwqXZq"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1wUCdpYhYWQoNAUNRk4arhQfgpcqYsZsk"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (בענין אימתי הן תמימות)",
+        "driveFileId": "1dKWNRAwvn2ChIiVWxlXCKslHMkBnZ5on"
+      }
+    ]
   },
   {
     "occasionId": 11115943,
@@ -832,7 +2272,28 @@
         "durationMs": 2236000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1KQWVJfcIIxlexDSoWkZEohidBYEE01Uq"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1U7iNzdKOzyIp-lk1sWhqLv7Dik9JWjUN"
+      },
+      {
+        "section": "mugah",
+        "label": "(לקבוצת אורחים-) סה\"ש",
+        "driveFileId": "11sPYGa6I3DZO-X1C0FBmKMk_KVOuIRWD"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1ZPTrqrXFqBCoWqszydwHtFddkDdn5Goh"
+      }
+    ]
   },
   {
     "occasionId": 11115944,
@@ -845,7 +2306,18 @@
         "durationMs": 725237
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "הנחה מילולית",
+        "driveFileId": "1HOykTvWWv-fc7Z_eJ3gbhIB3s-U4rbd6"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1Gy9FXzQX3CnrIJytrEoYGcHUTgOs9r8p"
+      }
+    ]
   },
   {
     "occasionId": 11115945,
@@ -856,8 +2328,33 @@
     "pdfs": [
       {
         "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1PgtIvDqSqpKLzHZ2p7gbU8_TFkWmlF2o"
+      },
+      {
+        "section": "biltiMugah",
         "label": "תקציר",
         "driveFileId": "1S-j8wKs3Uf7Fv-DRIPqgHMn3vCLlrA1S"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1sOanpazGe7M6QTUg8OlFpzjnKlUcPzvl"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1bpQeaB7WUihKLaZcMXIpvSSRmb_e195z"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1gLgneOlOaGmVmqy_5YG9KPeNohaAK6zJ"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "11_L6QOpS4HBTWhEv_hl4qPfsANxieXWw"
       },
       {
         "section": "hagahos",
@@ -877,7 +2374,18 @@
         "durationMs": 1144868
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1q8ExxT7b24_9wrFItNDpt-OeyaM4mh08"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1KMnrb6V2CIERTzlJf96Fcx0v7XoOTnDr"
+      }
+    ]
   },
   {
     "occasionId": 11115947,
@@ -887,6 +2395,31 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Dj7qRXtMF4VCtjreH4ZIgdKdSGVLkImp"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1iVZHBJ7fezH3ndXyAn8ag7nxRotIP3zb"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1vPWbKsEJRO54dMIv1OkG0IF3EwNxtuZ5"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "18d7s6dTThKgpFnzdTlwhPrLLXEbzCAPt"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1p9U9zNWRhu5O9WVnCYe_eDye6ZL5RjKH"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1A_-o6yZT8uquwL4u7wgY4MzJw9u65jUG"
@@ -895,6 +2428,11 @@
         "section": "hagahos",
         "label": "צילום 2 [הגהת חלק מהשיחה בפתח-דבר לס' מגולה לגאולה]",
         "driveFileId": "1hDzlL1KHdNu4lbuOnwYZq3IrrgjKeeyB"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 3 [העתקת מענה בקשר לשיחה]",
+        "driveFileId": "0B_UwzYOTIwDTajJQdldwZEE0bDQ"
       }
     ]
   },
@@ -905,6 +2443,41 @@
     "occasionLabel": "אחו\"ק, י\"ג אייר",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1g5ewYJXP1xUCuu3OpGuDU6VL4FamW2ar"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1-kPb-ZVtSEfG9jrZTa1JX1BKve_gg1zM"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1XgXsBHibLFbVvPPxen4N-COE6v90lCC6"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "12BlaBgJdu1-VVhIzZEucHCbMuh4ybwxP"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1eqowe96dOjUavxXFY4a1foHUoioUkKCh"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1XPCVBoPdCC3eY5AQ4oCSiMoASXTopFro"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1fWp3oA1vd2VrFzdpG1Q2PwzmI_4c_GzM"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -923,7 +2496,18 @@
         "durationMs": 2029000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1GIhoitM8LvDQRcMRElteMPfWIMHME6jS"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1aBJrc0x5uFb55dHU5n1anHyMVj3E3UH6"
+      }
+    ]
   },
   {
     "occasionId": 11115950,
@@ -936,7 +2520,18 @@
         "durationMs": 986000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1wC6llFqG4sAkKaP82OwST9LMMHN9RB4O"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1f8GD9lVZGwFiqjzbDc27IHxGg4rAfjRA"
+      }
+    ]
   },
   {
     "occasionId": 11115951,
@@ -945,6 +2540,36 @@
     "occasionLabel": "אמור, כ' אייר",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1SkNUAQ-dOc580aOjyNsgcBU1aNvt2D6j"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1rgHDot8CzOBx5mCk5utAgLz1kmwaypnh"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1FmV913U6RbVAuJyrRr4oc3O8-jMAN2CU"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1PiYXKGVGbQVtqcnY0aCjFQTT1EyJ3C4a"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1-x-nVkLS9i_kdFpXxFf3YJRSDRsCtDYG"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1KjfOwDDfRcuxhRzD40GSv7Ln0hEA3Smk"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -959,6 +2584,36 @@
     "occasionLabel": "בה\"ב, מבה\"ח סיון",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1OqkvkBJRFkvJbP250_zkx743GEffXi4T"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1o9ZZ-gBoM4_99R57QXVmLlY5hlOPgNgN"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1sYojfx9f0QRyQHBNIw-dxH-OLJ_dwYLe"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "16WJPnLpRw-slB1-U2yyCKHJuv0CpJm4u"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1dhsOcroS1BuANHvQZN7OEHxo-54GGZja"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1 [ר\"פ בכתי\"ק]",
+        "driveFileId": "1y1d3FOJPebqr7q-ks3MlosfNTt-JDOZz"
+      },
       {
         "section": "hagahos",
         "label": "צילום 2 [עלי ההגהה]",
@@ -979,6 +2634,16 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1xk8UyWGuwZ-LSJviwtSDHwJLRT73B_iD"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1uY8Q68jtyv07QkXIBaqqX-bTCeXNAaur"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "1f7gbZEKENoyG4MYcv97c7E96fI1wSz7O"
@@ -993,6 +2658,36 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1qhPmUHxVk11XdhV3R9b_V7EbM2fO_OqC"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1QAoxYd150GH3Gg0oHCHj0mj5KLgyQPbv"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1APqkGf87eZjREWx_gMoUhwBzNbsDJ-Yd"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1HnqSbRisUVTrw-un75P7xt4KkKIj_iwx"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1kAe43zCWbgOTwRePSZ9KZ2fT833C4Het"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "15ktzWVW98Mywpfgvu6dwKPFztRKzszqq"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים (משיחות ש\"פ במדבר וב' דחה\"ש)]",
         "driveFileId": "1pISAyG3OzElw_Gw4j7iGUdEyTY9QrX7S"
@@ -1005,7 +2700,33 @@
     "hebrewDate": "5751-09-06",
     "occasionLabel": "ליל ב' דחה\"ש, שיחה להחוזרים מהתהלוכה",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1QsmcvnEXVaf6WyT91bzU-bLv_RI0rYBB"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1o9A2scrfq4OTSKcg5s7ZGXUvt4s3O4gj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1HnqSbRisUVTrw-un75P7xt4KkKIj_iwx"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1KBuj2pPL4AgZxOSiDDsX4_7ITx2sAI1b"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1tXbgNGGBM8C9hGYq2rz0zJOT341VnWDc"
+      }
+    ]
   },
   {
     "occasionId": 11115956,
@@ -1014,6 +2735,41 @@
     "occasionLabel": "יום ב' דחה\"ש",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "17fBRJeWMAriYVl0ldCEMx_vycPWJURAz"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "13S7GtDySmfbjiJ0Nd80RUDPTMeDPaOP4"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1pnTZsdDxdKLXusMtMutDNTxhbUVnlrTA"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "17Wqpah6Lh6cT4em63QPrH0e3mrTyAQI4"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1kAe43zCWbgOTwRePSZ9KZ2fT833C4Het"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "15ktzWVW98Mywpfgvu6dwKPFztRKzszqq"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (בענין תורה חדשה מאתי תצא)",
+        "driveFileId": "1k04Rc-T8jiSZHZDNV16HSkvdcoSkkX4a"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים (משיחות ש\"פ במדבר וב' דחה\"ש)]",
@@ -1032,7 +2788,18 @@
         "durationMs": 3558000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1JHuZjlwbJVhPkiPYTtK037wRZmlLGXZn"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1ytfNZmWbgcL40wieGeJqKcJdqeXXaw9j"
+      }
+    ]
   },
   {
     "occasionId": 11115958,
@@ -1041,6 +2808,31 @@
     "occasionLabel": "נשא, י\"ב סיון (התוועדות א)",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1ZpsRNjhwrm3nrJsyh4ysbONiQ4HjWSFc"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1rFAF9gB7n1-2MGImN68cDBsqwSvhDXKn"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1XE8KxiaZ2RGpOgrmHTwU7RE-77C-Hwvj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1ZqOOhRxOLckBeFV3PMrxeSe4C8-O0RXR"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1d8I20PwTPtZvKB56JhHG6qyYolT6kdvB"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה]",
@@ -1055,6 +2847,26 @@
     "occasionLabel": "נשא, י\"ב סיון (התוועדות ב)",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "16mx_VdGheeK3fgvuFwTYWceCThVdmN0x"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1qiDC7xQLGqA_e-WOs07KZFGrzTbnGh64"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1Ig1dy7IXNCFll5bHQUjQuwQ6E2zwspvB"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1d8I20PwTPtZvKB56JhHG6qyYolT6kdvB"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה]",
@@ -1073,7 +2885,18 @@
         "durationMs": 89000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1u9VXPVx1BLZ_riIFqKbbuOdUjYdMGM9d"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1mu5v2kRKaQbA82C3U5eIEtWbZHWujxjl"
+      }
+    ]
   },
   {
     "occasionId": 11115961,
@@ -1083,9 +2906,49 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1tg5ZJeclw2ZIBED8nTkuZuZUDDs_LzVe"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1VgTBnhFqqNwP1esXqsa7MQCWEr70kHN-"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1HGoLNXJTWxMzD1WVx3RLoOfBvRHHSu1E"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "17WAYiPyFBJD8y6FRB1xLLwR3wUltSN-X"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1Oh-0gYoxITzLmyNANP6ycACNngioqs59"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (ע\"ד כולל חב\"ד)",
+        "driveFileId": "10kCth0STCUtJim6c_tKJWc2dcAKXtVr6"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1Pkv_oWy2-jMmKLJqMNRXoUDDybCH5fTV"
+      },
+      {
         "section": "mugah",
         "label": "תוכן - בקשר עם כולל חב\"ד",
         "driveFileId": "1s0e015UB_d8yN16MyiZvxqoCyGLHT7Go"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1uahKGwzpSNGEAV9WpQKDH6xvvYX3zovm"
       }
     ]
   },
@@ -1096,6 +2959,26 @@
     "occasionLabel": "שלח, מבה\"ח תמוז",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1OpKTdmZaCh3A_uD3SlWMWFUwn7gl5BwW"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1vO-DmRCrE0QUD1V2zlu526zyo1MbBkjr"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1WsXdd70taLhYWhVr17bwKKYEvog5_wVG"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1beVRazeHSmVy4eqf-3v-TuxXS0VTHu1l"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1115,6 +2998,26 @@
       }
     ],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1cv94lxqGfG05R8YGUAkFvk8zILt1hKpT"
+      },
+      {
+        "section": "mugah",
+        "label": "בהוס' לסה\"ש תשנ\"ב ח\"ב/ בהוס' לתו\"מ התוועדויות תשנ\"ב ח\"א (קו' בענין מקדש מעט זה בית רבינו שבבבל)",
+        "driveFileId": "1gMbBI0qhjCgTe-Jow7tmac7NbkH5jSMq"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1NXhJ4H2FoYdjrDBg_HFMgsvOui56EH43"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "14VKxwQ1IbVyXT5ymxbO-mFgedWLByOB9"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1140,6 +3043,26 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1qCx_fRXxiZ0N0MbiD-0TOod2zzk8yvnE"
+      },
+      {
+        "section": "mugah",
+        "label": "בהוס' לסה\"ש תשנ\"ב ח\"ב/ בהוס' לתו\"מ התוועדויות תשנ\"ב ח\"א (קו' בענין מקדש מעט זה בית רבינו שבבבל)",
+        "driveFileId": "1gMbBI0qhjCgTe-Jow7tmac7NbkH5jSMq"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1NXhJ4H2FoYdjrDBg_HFMgsvOui56EH43"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "14VKxwQ1IbVyXT5ymxbO-mFgedWLByOB9"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1M_6KpGY3SVVRg8lcWlJ9etlxSFD6uOGj"
@@ -1159,6 +3082,26 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "14piX_bPZuv52Azrd9RFBtyfmvzkq8fr9"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1InOCAVGRTDe1FJ69Px0FWKrqQDuE_Bs-"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1z3z5V5lsQym35gljTf8oHppJs8NoUo5O"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "1nBYeCURIrVEZRy5BP1Eq70iDo8UOfnah"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "1NC6eZPWEH6D1SoJuDl-v4r6nTTA2_Wlx"
@@ -1173,6 +3116,41 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1eoi2MURN0vD0sHnL09C0S9BN3JQdNmI0"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1b96oeU8-dDJTkCERsEr5BSljHM4gXz61"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1fMJUoj6Zdd52mxhlN0ne-o6TJus_3AyZ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1PfxmVt6J4DGEpVElba9rt0CGoR3u51MA"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1z3z5V5lsQym35gljTf8oHppJs8NoUo5O"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "1nBYeCURIrVEZRy5BP1Eq70iDo8UOfnah"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (בקשר לחנוכת הבית דתו\"ת)",
+        "driveFileId": "1DwY4B2kqHUvIjo1tbHI3qj11maSC90GA"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "1NC6eZPWEH6D1SoJuDl-v4r6nTTA2_Wlx"
@@ -1186,6 +3164,36 @@
     "occasionLabel": "חוקת, יו\"ד תמוז",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1_9YGt70OELUup7RIqVvyyE5m-dZsMLuo"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "16kq-KTLza1Pwxur_LiaUl8A2vTrIntlS"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1knI5vI6LCqPZSyL7tbxtlWt8qDYKGEwm"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1fC4kLUR4K28gozkOiGsVJnzWY7-S6nN3"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1qcnysvBTtXkMSeqwXGVeb9wBf6Siamb3"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1UfA1sBKVgyL0W-1l8Ew4_qF8wb6JXwnO"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1204,7 +3212,18 @@
         "durationMs": 2160222
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1UFmiC3QWCEVQB3VykbW9rLG_6mYC83Tn"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1OTlYLB_MS759O7xnphzUlfIGSZAi1G-2"
+      }
+    ]
   },
   {
     "occasionId": 11115969,
@@ -1213,6 +3232,31 @@
     "occasionLabel": "בלק, י\"ז תמוז - נדחה",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1_yGJHWMA0Ef5F18GOamgD4K9VkHvL7HG"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1EpZ86f5EfB6EtnGRwuJdN7yn-MHGxIVE"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1BP_KiXq2xq2plXvGa6TOwZGywWqydk5m"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1wc913U44IP8RVBPc1G8PANCzaTrdRKDN"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1NkimKCC3oaAj72fTlEZTt0npTqSt7PSJ"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1231,7 +3275,23 @@
         "durationMs": 1223915
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1a82qjvtXVVJenrLXR14SnzbqXVSGSOz4"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Xt5mL5oVchj3ZIVTFvo7RqxLA-cpQN4O"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "167Tf3XIAaWK7YZDXvjvgzzsHtQH-NKTs"
+      }
+    ]
   },
   {
     "occasionId": 11115971,
@@ -1240,6 +3300,41 @@
     "occasionLabel": "פנחס, מבה\"ח מנ\"א",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1bAC22AZfU0Xjgg67oIrSQR6CA85z_zRJ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1agtvXU2DZ8_pvxKwKxBV4XHJWmHCcgCD"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1X2v0ehvbUzrF-yEy5XGzzSdPW9YAOnae"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1vbep9VGyAdF7NjXvWpokInEeiNtzsDXm"
+      },
+      {
+        "section": "mugah",
+        "label": "בהוס' לסה\"ש תשנ\"ב ח\"ב/ בהוס' לתו\"מ התוועדויות תשנ\"ב ח\"א (קו' בענין מקדש מעט זה בית רבינו שבבבל)",
+        "driveFileId": "1gMbBI0qhjCgTe-Jow7tmac7NbkH5jSMq"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1pzAPzS5nRr8UuWQ4Fy2GMnEkrH4Kcuc_"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1m9siWqtRbisNDT9ndgup3w92-ISCVJuX"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1258,7 +3353,18 @@
         "durationMs": 139232
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1gT2sjcIktGayzcvA95EPWV0VFToMC4wu"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1ygEK3XyXqmvCXvuZ078X8BRFQk6MYlT_"
+      }
+    ]
   },
   {
     "occasionId": 11115973,
@@ -1267,6 +3373,31 @@
     "occasionLabel": "מטו\"מ, ב' מנ\"א",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1tZmH8BVLh1jKuGAJKTZCXLt3AEMKBi0-"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1vYOHX97wLKN6ZF3NRHlV-PHsFp34rY-K"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "169EPKQ7rx5tQFCZCgsrubMYD9GAum8_F"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1QThOJugDp2TzZCe9qQFaDHNWukB7UyOA"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1WxOGjvUttWPXHf3TZpCzST_nB2hx1Wu2"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1285,7 +3416,18 @@
         "durationMs": 159634
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "11vYfU-vBH6S2YOzYifNr7K_foswa5Sya"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Ium3M-8LdylrQpKO2wU5vVmAjiQr2B5x"
+      }
+    ]
   },
   {
     "occasionId": 11115975,
@@ -1293,7 +3435,38 @@
     "hebrewDate": "5751-11-09",
     "occasionLabel": "דברים, חזון, ט' באב - נדחה",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1mLlMbqsWBYhT3_YSAYemmhQ0fsvIwL4S"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1uI1Gk8_GcgcrsE_r2-a4nZHfEm_LAVFp"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1FU2cJo2u1_hBie8nM0YT9qRdtk3RYLN6"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1GNoh_oBfXV_SVrmMv09XX9izQueVvAO1"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "155zwdBS60VA5ALRbhq3KkqOwlbT4tFlJ"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום [עלי ההגהה המלאים]",
+        "driveFileId": "1ObFv3sLwSUa6S6fP-897r3KjRjmfMXqj"
+      }
+    ]
   },
   {
     "occasionId": 11115976,
@@ -1307,6 +3480,26 @@
       }
     ],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1xfFqzKhg1ULcg_jifQ4hR5jNXdjCKiP7"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Sy3WjpXZkBcYj9w4ZqyIpUUv1_9DwIZl"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1GNoh_oBfXV_SVrmMv09XX9izQueVvAO1"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "155zwdBS60VA5ALRbhq3KkqOwlbT4tFlJ"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1",
@@ -1335,6 +3528,26 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1eTUe0NyskSWl1acQNSErw29_wvVhRejC"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1W-5R_aGMWCAIItLTcLgcSftGQPg2RcZo"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש (משולב)",
+        "driveFileId": "1GNoh_oBfXV_SVrmMv09XX9izQueVvAO1"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום (משולב)]",
+        "driveFileId": "155zwdBS60VA5ALRbhq3KkqOwlbT4tFlJ"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "1ObFv3sLwSUa6S6fP-897r3KjRjmfMXqj"
@@ -1352,7 +3565,18 @@
         "durationMs": 696868
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1gYc0MgxTtrqBRbgqVqr6mocsQ0_qTfXP"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1VHQgaKHFMF812-iM34Ut50-Li5LKQlnc"
+      }
+    ]
   },
   {
     "occasionId": 11115979,
@@ -1361,6 +3585,31 @@
     "occasionLabel": "ואתחנן, נחמו, ט\"ז מנ\"א",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1HwOsXWYdFbGSHyoxFB88p67LZPITL35H"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "14aKSAWzv4p8EhtvypqYEOt0c0D3VSFnX"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1Cbg2uqB-IiKcfvONtYMeqhPopj7ZOEyR"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1K_11dEQBW-KJVZeEbtnHPcXjrZin5KZz"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1GSVA4wogB31npHFCAcIbTqUzvitFFl0O"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1379,7 +3628,18 @@
         "durationMs": 1798373
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1Q_fpklSC7aDdAhdvnFUlwTJOpytIKrDF"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "13nB_YztJWIhlLiiL_Cr3PZ2iME9RPamK"
+      }
+    ]
   },
   {
     "occasionId": 11115981,
@@ -1388,6 +3648,36 @@
     "occasionLabel": "עקב, מבה\"ח אלול",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1hqpjw_UXb1wYuQGj-AR0tNGeCltEveU8"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1CHaskmdcAtJUkMOqaloDhD9AJUEVmCwr"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1G40sPjirUfC0XqEnX_DyMEDBmCZBEtfF"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1QnjgqVesDDz_hDBQHooGwMIq0xZNDisr"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1rHvvY5kxVbM5kiuh2NFbuWIe5RE81tn-"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1p2jkOo-KNIYcIfdeBJHgko2Hgdpa6MtL"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1403,6 +3693,31 @@
     "audio": [],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1tsIwQ9OnaGpbZlqnmcXKjVMhe6eLRpAl"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "18ga1gT3lcHUu9JtH0i1IPerXcPm7f71V"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1azXCMKVMx9kUHneit_gbzGHFdVzHbWpk"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "11NKRbAg7jTNyw4omK053_ioflJs9m-fv"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות",
+        "driveFileId": "1QGqO0Eo-C9rswNHb0Sl2gj96bvlr2beP"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
         "driveFileId": "18CTK4f3BQDThVpwHWjbVwkzTUkw9ID9L"
@@ -1416,6 +3731,31 @@
     "occasionLabel": "שופטים, ז' אלול",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1g2C0nOqHpSutYfhmmOWjrBFGVNIkqjCk"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1MSGHLLzBjNPbgMggY3ebac8_uu5JPem8"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "141ocB9wXEkAux6KX7dOtNtsks8vTZ5Y7"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1JM93bWh3G9V69yTh4kQvAz7xk6wM-znP"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1WB8Xj_83iJlqp0bLiyUa--4KRTSg-rV-"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1436,6 +3776,21 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1s74RNMLRpECxCrMHSDUjfhOdWfmMKuKp"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1OsgoYB-XQ64uwNf4I2YdqOMhSy5ZvLbH"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1ni9pYqJn0AVV0RsrqirlcOmr5vEeWutU"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "1mkNVTvPzeWLMEm0JI425Sr2nWQxmOvNr"
@@ -1455,6 +3810,21 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1FeJSCEnPs37RK-IjDFBzIhWmCSLtm-q9"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1Kj4QJGbThXDaRhAYj_OHXAkrjQJAAEMS"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1ni9pYqJn0AVV0RsrqirlcOmr5vEeWutU"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "1mkNVTvPzeWLMEm0JI425Sr2nWQxmOvNr"
@@ -1468,6 +3838,31 @@
     "occasionLabel": "תצא, י\"ד אלול",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1RLDXi1NAwhgldGh9dqszyMnFLgP1l0nr"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1CHaskmdcAtJUkMOqaloDhD9AJUEVmCwr"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1jXgoWyIuUT5o-bgwBjzrstrcDBKSGwWQ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "17l0MWV4OjgzLq1F0YrUKCWKfAtIq844Z"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1ni9pYqJn0AVV0RsrqirlcOmr5vEeWutU"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [עלי ההגהה המלאים]",
@@ -1488,6 +3883,21 @@
     ],
     "pdfs": [
       {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1T0QA9YgtTO9tCa2xTBYd_4AlSYx8GbQo"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1lOcZ0bjqXkOTxHqBIFF4eB1BeTy6ZVd2"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש/ תו\"מ התוועדויות (משולב)",
+        "driveFileId": "1ni9pYqJn0AVV0RsrqirlcOmr5vEeWutU"
+      },
+      {
         "section": "hagahos",
         "label": "צילום 1",
         "driveFileId": "1mkNVTvPzeWLMEm0JI425Sr2nWQxmOvNr"
@@ -1505,7 +3915,18 @@
         "durationMs": 587520
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1LpIjPODfOCLchpBK4U35FTcWIuoXQ55n"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1hAkmHmUdwhDOgtaKH2iQvCLiIA3n4Ciq"
+      }
+    ]
   },
   {
     "occasionId": 11115989,
@@ -1518,7 +3939,18 @@
         "durationMs": 541466
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1_cTUn4NfEn5XKRMgKSw7ykE-0fFovps8"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "16rECqKxTS_f0HuxGHhAjTd99NBPT4VTS"
+      }
+    ]
   },
   {
     "occasionId": 11115990,
@@ -1526,7 +3958,38 @@
     "hebrewDate": "5751-12-21",
     "occasionLabel": "תבוא, כ\"א אלול",
     "audio": [],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1rKbAwqqzKfNakBpeE0eQ-yWSQflo8EmJ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "13fLUwXNJHSndAasH1bT-nVKUfMDqPBCp"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1sHGm7l7np2ezrfvKeKPzFBohluEaVicx"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1F1Y5ErPXTdD8cyM39ro7cMISECR2Oz3y"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש",
+        "driveFileId": "1q3bxQJ7iQvhPCvqpIp78OvvWtiehCjV_"
+      },
+      {
+        "section": "mugah",
+        "label": "[תו\"מ התוועדויות - תרגום]",
+        "driveFileId": "1yIHkXhEPuYI348IpoRpqUvDRFgm1zerv"
+      }
+    ]
   },
   {
     "occasionId": 11115991,
@@ -1539,7 +4002,18 @@
         "durationMs": 2165133
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1SP-Ti8VhtArEGQISH-KkHTyxU6Wn8tLI"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1BRHnuEJ8uZXFkeR6vpdFf-CcHnOkxVU7"
+      }
+    ]
   },
   {
     "occasionId": 11115992,
@@ -1553,6 +4027,16 @@
       }
     ],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1L_MiWiEaRtyuJ7spqsZG-ZBbicTsCy9f"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1d3BcH16av_5xU1CAxsbiK3_8cNDb4h3k"
+      },
       {
         "section": "hagahos",
         "label": "צילום 1 [העתקה]",
@@ -1571,7 +4055,18 @@
         "durationMs": 2955000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1IR2IS-GXpIzMahtEAGCChHCADZKdakH2"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1FaewVmCpSr7u3uSn0NGDyacpKvaqPVhN"
+      }
+    ]
   },
   {
     "occasionId": 11115994,
@@ -1584,7 +4079,18 @@
         "durationMs": 1855000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1_n5DkVqRdA8G8gxczIJiSNVgsHwIiHof"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "1MJ1MMBhPCN6b1oyLKMFjYb86-pizh_n9"
+      }
+    ]
   },
   {
     "occasionId": 11115995,
@@ -1593,6 +4099,31 @@
     "occasionLabel": "נצבים, כ\"ח אלול",
     "audio": [],
     "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד",
+        "driveFileId": "13-xdTH7Kv280lKded2iQ5obQoeSDjwoq"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תקציר",
+        "driveFileId": "1tgmEEHADsUqvA1AD77SNRAvgX782Fh-s"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תוכן קצר",
+        "driveFileId": "1Yg9OWEOssq2rBq-JZWSzMX0sl1dt9owi"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הוראות ונקודות",
+        "driveFileId": "1_1a5AcYrS5prky0ve5ZJvzmKB2jQso7M"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש תשנ\"ב/ תו\"מ התוועדויות תנש\"א, תשנ\"ב (משולב)",
+        "driveFileId": "1ECJF9uvSxz1AtRRGqRMWJYAfcRiYBvUN"
+      },
       {
         "section": "hagahos",
         "label": "משיחות ש\"פ נצבים, ב' דר\"ה וש\"פ וילך - עלי ההגהה המלאים",
@@ -1611,7 +4142,18 @@
         "durationMs": 179000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד תשנ\"ב",
+        "driveFileId": "1R_SEBTRoEsKKaNnHaCnDmzektHjxEwxL"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש תשנ\"ב/ חל\"ט ע' 340",
+        "driveFileId": "1AZ8vEmnAp5A25tdaIFlopeFs8pMwsLip"
+      }
+    ]
   },
   {
     "occasionId": 11115997,
@@ -1624,6 +4166,17 @@
         "durationMs": 1134000
       }
     ],
-    "pdfs": []
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "ר\"ד תשנ\"ב",
+        "driveFileId": "1tNtxStZWmb-J0Sx4MoY4s2KMsbxUvfuA"
+      },
+      {
+        "section": "mugah",
+        "label": "סה\"ש תשנ\"ב/ חל\"ט ע' 342",
+        "driveFileId": "1buYkvVYjhr859Kc_0ZFNpCvodlgYwczJ"
+      }
+    ]
   }
 ]
