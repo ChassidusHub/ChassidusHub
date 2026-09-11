@@ -52,10 +52,10 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
     };
   }, [pdf.driveFileId, pdf.resourceKey]);
 
-  const audio = entry.audio[0];
+  const hasAudio = entry.audio.length > 0;
 
   return (
-    <div className={audio ? 'pdf-viewer-screen has-player' : 'pdf-viewer-screen'}>
+    <div className={hasAudio ? 'pdf-viewer-screen has-player' : 'pdf-viewer-screen'}>
       <div className="pdf-viewer-header">
         <button className="back-link" onClick={onBack}>
           {'< back'}
@@ -69,7 +69,7 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
 
       <div ref={containerRef} className="pdf-pages" />
 
-      {audio && <BottomAudioPlayer workerFilename={audio.workerFilename} />}
+      {hasAudio && <BottomAudioPlayer audio={entry.audio} />}
     </div>
   );
 }

@@ -226,12 +226,15 @@ h1 {
   left: 0;
   right: 0;
   bottom: 0;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
+.bottom-player-controls {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-  background: var(--card-bg);
-  border-top: 1px solid var(--border);
 }
 
 .bottom-player-toggle {
@@ -246,9 +249,43 @@ h1 {
   cursor: pointer;
 }
 
+.bottom-player-skip {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.bottom-player-skip:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .bottom-player-scrub {
   flex: 1;
   min-width: 0;
+}
+
+.bottom-player-chapter-toggle {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 2px;
+  color: var(--fg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .bottom-player-range {
@@ -260,4 +297,41 @@ h1 {
   justify-content: space-between;
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+.bottom-player-chapters {
+  max-height: 40vh;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.bottom-player-chapter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  padding: 10px 16px;
+  color: var(--fg);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bottom-player-chapter:first-child {
+  border-top: none;
+}
+
+.bottom-player-chapter-active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.bottom-player-chapter-duration {
+  color: var(--muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  margin-left: 12px;
 }

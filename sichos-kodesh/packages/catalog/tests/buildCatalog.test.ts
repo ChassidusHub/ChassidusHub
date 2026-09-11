@@ -31,10 +31,17 @@ function makeRecord(overrides: Partial<FarbrengenRecord> = {}): FarbrengenRecord
   };
 }
 
-function insertJemAudio(db: DatabaseSync, occasionId: number, url: string, durationMs: number): void {
+function insertJemAudio(
+  db: DatabaseSync,
+  occasionId: number,
+  url: string,
+  durationMs: number,
+  chapterIndex = 0,
+  chapterName: string | null = null,
+): void {
   db.prepare(
-    'INSERT INTO jem_audio (occasion_id, ccdb_event_id, duration_ms, url, file_format, resolved_at) VALUES (?, ?, ?, ?, ?, ?)',
-  ).run(occasionId, 1, durationMs, url, 'mp3', '2026-01-01T00:00:00.000Z');
+    'INSERT INTO jem_audio (occasion_id, ccdb_event_id, chapter_index, chapter_name, duration_ms, url, file_format, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+  ).run(occasionId, 1, chapterIndex, chapterName, durationMs, url, 'mp3', '2026-01-01T00:00:00.000Z');
 }
 
 describe('buildCatalog', () => {
@@ -127,6 +134,28 @@ describe('buildCatalog', () => {
 
     const [entry] = buildCatalog(db)[5711]!;
     expect(entry!.audio).toEqual([{ workerFilename: 'JEMSK0001.mp3', durationMs: 1259000 }]);
+  });
+
+  it('includes every recording of a multi-chapter farbrengen, in real chapter order, each with its real name', () => {
+    upsertRecord(db, makeRecord(), null, '2026-01-01T00:00:00.000Z');
+    insertJemAudio(db, 1, 'https://dtgj2yu3gmlic.cloudfront.net/JEMSK0001.mp3', 1259000, 0, 'Sicha 1');
+    insertJemAudio(db, 1, 'https://dtgj2yu3gmlic.cloudfront.net/JEMSK0002.mp3', 130000, 1, 'Sicha 2');
+    insertJemAudio(db, 1, 'https://dtgj2yu3gmlic.cloudfront.net/JEMSK0003.mp3', 2407000, 2, 'Ma’amar');
+
+    const [entry] = buildCatalog(db)[5711]!;
+    expect(entry!.audio).toEqual([
+      { workerFilename: 'JEMSK0001.mp3', durationMs: 1259000, chapterName: 'Sicha 1' },
+      { workerFilename: 'JEMSK0002.mp3', durationMs: 130000, chapterName: 'Sicha 2' },
+      { workerFilename: 'JEMSK0003.mp3', durationMs: 2407000, chapterName: 'Ma’amar' },
+    ]);
+  });
+
+  it('omits chapterName entirely (not chapterName: undefined) for a recording ccdb left unnamed', () => {
+    upsertRecord(db, makeRecord(), null, '2026-01-01T00:00:00.000Z');
+    insertJemAudio(db, 1, 'https://dtgj2yu3gmlic.cloudfront.net/JEMSK0001.mp3', 1259000);
+
+    const [entry] = buildCatalog(db)[5711]!;
+    expect(entry!.audio[0]).not.toHaveProperty('chapterName');
   });
 
   it('an occasion with neither audio nor a PDF is still included, with empty arrays (a genuine gap, not omitted)', () => {

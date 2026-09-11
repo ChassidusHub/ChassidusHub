@@ -80,7 +80,8 @@
     "audio": [
       {
         "workerFilename": "AR0019392.mp3",
-        "durationMs": 1355976
+        "durationMs": 1355976,
+        "chapterName": "Sicha, Gimmel Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -114,7 +115,13 @@
     "audio": [
       {
         "workerFilename": "AR0019393.mp3",
-        "durationMs": 1201920
+        "durationMs": 1201920,
+        "chapterName": "Sicha"
+      },
+      {
+        "workerFilename": "AR0019394.mp3",
+        "durationMs": 225480,
+        "chapterName": "Brachah to Shluchim"
       }
     ],
     "pdfs": [
@@ -158,7 +165,8 @@
     "audio": [
       {
         "workerFilename": "AR0019396.mp3",
-        "durationMs": 1241364
+        "durationMs": 1241364,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -187,7 +195,8 @@
     "audio": [
       {
         "workerFilename": "AR0019400.mp3",
-        "durationMs": 1798373
+        "durationMs": 1798373,
+        "chapterName": "Sicha, Vov Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -255,7 +264,8 @@
     "audio": [
       {
         "workerFilename": "AR0019401.mp3",
-        "durationMs": 989544
+        "durationMs": 989544,
+        "chapterName": "Brachah Klolis, Erev Yom Kippur, 5750"
       }
     ],
     "pdfs": [
@@ -332,7 +342,8 @@
     "audio": [
       {
         "workerFilename": "AR0019402.mp3",
-        "durationMs": 990955
+        "durationMs": 990955,
+        "chapterName": "Sicha, Yud Aleph Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -361,7 +372,8 @@
     "audio": [
       {
         "workerFilename": "AR0019403.mp3",
-        "durationMs": 1585684
+        "durationMs": 1585684,
+        "chapterName": "Sicha, Yud Beis Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -390,7 +402,8 @@
     "audio": [
       {
         "workerFilename": "AR0019404.mp3",
-        "durationMs": 429113
+        "durationMs": 429113,
+        "chapterName": "Sicha, Yud Gimmel Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -418,8 +431,14 @@
     "occasionLabel": "ערב חה\"ס, בעת מסירת האתרוגים",
     "audio": [
       {
+        "workerFilename": "AR0019405.mp3",
+        "durationMs": 896664,
+        "chapterName": "Daled Minim Distribution"
+      },
+      {
         "workerFilename": "AR0019406.mp3",
-        "durationMs": 312528
+        "durationMs": 312528,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -448,7 +467,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK4303.mp3",
-        "durationMs": 2024000
+        "durationMs": 2024000,
+        "chapterName": "Chazarah"
       }
     ],
     "pdfs": [
@@ -520,7 +540,8 @@
     "audio": [
       {
         "workerFilename": "AR0019407.mp3",
-        "durationMs": 1688293
+        "durationMs": 1688293,
+        "chapterName": "Sicha, Tes Zayin Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -549,7 +570,8 @@
     "audio": [
       {
         "workerFilename": "AR0019408.mp3",
-        "durationMs": 2949668
+        "durationMs": 2949668,
+        "chapterName": "Sicha, Yud Zayin Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -573,7 +595,23 @@
     "audio": [
       {
         "workerFilename": "AR0019409.mp3",
-        "durationMs": 861309
+        "durationMs": 861309,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "AR0019410.mp3",
+        "durationMs": 691983,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "AR0019411.mp3",
+        "durationMs": 1745475,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "AR0019412.mp3",
+        "durationMs": 1417900,
+        "chapterName": "Sicha 3"
       }
     ],
     "pdfs": [
@@ -602,7 +640,8 @@
     "audio": [
       {
         "workerFilename": "AR0019413.mp3",
-        "durationMs": 1239144
+        "durationMs": 1239144,
+        "chapterName": "Sicha, Yud Ches Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -631,7 +670,8 @@
     "audio": [
       {
         "workerFilename": "AR0019414.mp3",
-        "durationMs": 1441044
+        "durationMs": 1441044,
+        "chapterName": "Sicha, Yud Tes Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -655,7 +695,8 @@
     "audio": [
       {
         "workerFilename": "AR0019415.mp3",
-        "durationMs": 1739572
+        "durationMs": 1739572,
+        "chapterName": "Sicha, Chof Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -742,7 +783,8 @@
     "audio": [
       {
         "workerFilename": "AR0019417.mp3",
-        "durationMs": 1547102
+        "durationMs": 1547102,
+        "chapterName": "Sicha, Chof DaledTishrei, 5750"
       }
     ],
     "pdfs": [
@@ -781,7 +823,23 @@
     "audio": [
       {
         "workerFilename": "AR0019420.mp3",
-        "durationMs": 10868610
+        "durationMs": 10868610,
+        "chapterName": "Guests"
+      },
+      {
+        "workerFilename": "AR0019421.mp3",
+        "durationMs": 1418945,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "AR0019422.mp3",
+        "durationMs": 638798,
+        "chapterName": "Choson-Kallah"
+      },
+      {
+        "workerFilename": "AR0019423.mp3",
+        "durationMs": 2645133,
+        "chapterName": "Temimim"
       }
     ],
     "pdfs": [
@@ -800,7 +858,8 @@
     "audio": [
       {
         "workerFilename": "AR0019424.mp3",
-        "durationMs": 642533
+        "durationMs": 642533,
+        "chapterName": "Sicha, Chof Vov Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -819,7 +878,8 @@
     "audio": [
       {
         "workerFilename": "AR0019425.mp3",
-        "durationMs": 790177
+        "durationMs": 790177,
+        "chapterName": "Sicha, Chof Zayin Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -843,7 +903,8 @@
     "audio": [
       {
         "workerFilename": "AR0019426.mp3",
-        "durationMs": 263235
+        "durationMs": 263235,
+        "chapterName": "Sicha, Chof Ches Tishrei, 5750"
       }
     ],
     "pdfs": [
@@ -1036,7 +1097,8 @@
     "audio": [
       {
         "workerFilename": "AR0019428.mp3",
-        "durationMs": 1789596
+        "durationMs": 1789596,
+        "chapterName": "Sicha, Chof Ches Cheshvan, 5750"
       }
     ],
     "pdfs": [
@@ -1070,7 +1132,8 @@
     "audio": [
       {
         "workerFilename": "AR0019429.mp3",
-        "durationMs": 1564682
+        "durationMs": 1564682,
+        "chapterName": "Sicha, Chof Tes Cheshvan, 5750"
       }
     ],
     "pdfs": [
@@ -1113,7 +1176,8 @@
     "audio": [
       {
         "workerFilename": "AR0019430.mp3",
-        "durationMs": 1154089
+        "durationMs": 1154089,
+        "chapterName": "Sicha, Vov Kislev, 5750"
       }
     ],
     "pdfs": [
@@ -1137,7 +1201,8 @@
     "audio": [
       {
         "workerFilename": "AR0019431.mp3",
-        "durationMs": 569678
+        "durationMs": 569678,
+        "chapterName": "Sicha, Ches Kislev, 5750"
       }
     ],
     "pdfs": [
@@ -1156,15 +1221,18 @@
     "audio": [
       {
         "workerFilename": "AR0019434.mp3",
-        "durationMs": 541022
+        "durationMs": 541022,
+        "chapterName": "Sicha"
       },
       {
         "workerFilename": "AR0019435.mp3",
-        "durationMs": 691252
+        "durationMs": 691252,
+        "chapterName": "Dollars"
       },
       {
         "workerFilename": "AR0019433.mp3",
-        "durationMs": 541022
+        "durationMs": 541022,
+        "chapterName": "Sicha, Tes Kislev, 5750"
       }
     ],
     "pdfs": [
@@ -1265,15 +1333,18 @@
     "audio": [
       {
         "workerFilename": "AR0019437.mp3",
-        "durationMs": 895294
+        "durationMs": 895294,
+        "chapterName": "Sicha"
       },
       {
         "workerFilename": "AR0019438.mp3",
-        "durationMs": 427676
+        "durationMs": 427676,
+        "chapterName": "Dollars"
       },
       {
         "workerFilename": "JEMSK4327.mp3",
-        "durationMs": 1017000
+        "durationMs": 1017000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -1302,7 +1373,18 @@
     "audio": [
       {
         "workerFilename": "AR0019439.mp3",
-        "durationMs": 3429825
+        "durationMs": 3429825,
+        "chapterName": "Guests"
+      },
+      {
+        "workerFilename": "AR0019440.mp3",
+        "durationMs": 1227154,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "AR0019441.mp3",
+        "durationMs": 760711,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": [
@@ -1326,7 +1408,8 @@
     "audio": [
       {
         "workerFilename": "AR0019442.mp3",
-        "durationMs": 1001456
+        "durationMs": 1001456,
+        "chapterName": "Sicha, Chof Gimmel Kislev, 5750"
       }
     ],
     "pdfs": [
@@ -1384,7 +1467,8 @@
     "audio": [
       {
         "workerFilename": "AR0019443.mp3",
-        "durationMs": 254876
+        "durationMs": 254876,
+        "chapterName": "Sicha, Chof Vov Kislev, 5750"
       }
     ],
     "pdfs": [
@@ -1408,7 +1492,18 @@
     "audio": [
       {
         "workerFilename": "JEMSK4333.mp3",
-        "durationMs": 2823000
+        "durationMs": 2823000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "AR0016683.mp3",
+        "durationMs": 1200117,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "AR0016684.mp3",
+        "durationMs": 2884075,
+        "chapterName": "Sicha 2"
       }
     ],
     "pdfs": [
@@ -1435,7 +1530,13 @@
     "hebrewYear": 5750,
     "hebrewDate": "5750-03-30",
     "occasionLabel": "אדר\"ח טבת, אור לנר ז' דחנוכה, אחרי מנחה, שיחה להכולל \"תפארת זקנים\" ו\"חכמת נשים\"",
-    "audio": [],
+    "audio": [
+      {
+        "workerFilename": "AR0019444.mp3",
+        "durationMs": 2013727,
+        "chapterName": "Gathering of The Elderly, Rosh Chodesh Teves, 5750"
+      }
+    ],
     "pdfs": [
       {
         "section": "biltiMugah",
@@ -1525,7 +1626,8 @@
     "audio": [
       {
         "workerFilename": "AR0019446.mp3",
-        "durationMs": 1473332
+        "durationMs": 1473332,
+        "chapterName": "Sicha, Asarah B'Teves, 5750"
       }
     ],
     "pdfs": [
@@ -1554,7 +1656,8 @@
     "audio": [
       {
         "workerFilename": "AR0019447.mp3",
-        "durationMs": 1227311
+        "durationMs": 1227311,
+        "chapterName": "Sicha, Yud Daled Teves, 5750"
       }
     ],
     "pdfs": [
@@ -1607,7 +1710,8 @@
     "audio": [
       {
         "workerFilename": "AR0019448.mp3",
-        "durationMs": 505547
+        "durationMs": 505547,
+        "chapterName": "Sicha, Yud Zayin Teves, 5750"
       }
     ],
     "pdfs": [
@@ -1631,15 +1735,18 @@
     "audio": [
       {
         "workerFilename": "AR0019449.mp3",
-        "durationMs": 772884
+        "durationMs": 772884,
+        "chapterName": "Sicha"
       },
       {
         "workerFilename": "AR0019450.mp3",
-        "durationMs": 761600
+        "durationMs": 761600,
+        "chapterName": "Dollars, Chof Teves, 5750"
       },
       {
         "workerFilename": "JEMSK4341.mp3",
-        "durationMs": 844000
+        "durationMs": 844000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -1697,7 +1804,8 @@
     "audio": [
       {
         "workerFilename": "AR0019451.mp3",
-        "durationMs": 761208
+        "durationMs": 761208,
+        "chapterName": "Sicha, Chof Ches Teves, 5750"
       }
     ],
     "pdfs": [
@@ -1765,15 +1873,18 @@
     "audio": [
       {
         "workerFilename": "AR0019452.mp3",
-        "durationMs": 148715
+        "durationMs": 148715,
+        "chapterName": "Sicha"
       },
       {
         "workerFilename": "AR0019453.mp3",
-        "durationMs": 559281
+        "durationMs": 559281,
+        "chapterName": "Dollars"
       },
       {
         "workerFilename": "JEMSK4344.mp3",
-        "durationMs": 194000
+        "durationMs": 194000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -1802,15 +1913,18 @@
     "audio": [
       {
         "workerFilename": "AR0019454.mp3",
-        "durationMs": 105038
+        "durationMs": 105038,
+        "chapterName": "Sicha"
       },
       {
         "workerFilename": "AR0019455.mp3",
-        "durationMs": 1528842
+        "durationMs": 1528842,
+        "chapterName": "Dollars, Other, Vov Shevat 5750"
       },
       {
         "workerFilename": "JEMSK4345.mp3",
-        "durationMs": 130000
+        "durationMs": 130000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -1868,7 +1982,8 @@
     "audio": [
       {
         "workerFilename": "AR0019456.mp3",
-        "durationMs": 161724
+        "durationMs": 161724,
+        "chapterName": "Chasidim’s Brachah, Tes Shevat, 5750"
       }
     ],
     "pdfs": [
@@ -1902,7 +2017,8 @@
     "audio": [
       {
         "workerFilename": "AR0019458.mp3",
-        "durationMs": 2618644
+        "durationMs": 2618644,
+        "chapterName": "Sicha, Tes Shevat, 5750"
       }
     ],
     "pdfs": [
@@ -1931,7 +2047,8 @@
     "audio": [
       {
         "workerFilename": "AR0019461.mp3",
-        "durationMs": 205191
+        "durationMs": 205191,
+        "chapterName": "Sicha, Yud Shevat, 5750"
       }
     ],
     "pdfs": [
@@ -1955,7 +2072,18 @@
     "audio": [
       {
         "workerFilename": "AR0019462.mp3",
-        "durationMs": 3602546
+        "durationMs": 3602546,
+        "chapterName": "Guests"
+      },
+      {
+        "workerFilename": "AR0019463.mp3",
+        "durationMs": 978886,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "AR0019464.mp3",
+        "durationMs": 557165,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": [
@@ -2057,7 +2185,8 @@
     "audio": [
       {
         "workerFilename": "AR0019465.mp3",
-        "durationMs": 106422
+        "durationMs": 106422,
+        "chapterName": "Sicha, Chof Gimmel Shevat, 5750"
       }
     ],
     "pdfs": [
@@ -2159,7 +2288,8 @@
     "audio": [
       {
         "workerFilename": "AR0019466.mp3",
-        "durationMs": 1271066
+        "durationMs": 1271066,
+        "chapterName": "Sicha, Ohr L'Tes Adar, 5750"
       }
     ],
     "pdfs": [
@@ -2188,7 +2318,8 @@
     "audio": [
       {
         "workerFilename": "AR0019468.mp3",
-        "durationMs": 1089488
+        "durationMs": 1089488,
+        "chapterName": "Sicha, Yud Aleph Adar, 5750"
       }
     ],
     "pdfs": [
@@ -2261,7 +2392,8 @@
     "audio": [
       {
         "workerFilename": "AR0019469.mp3",
-        "durationMs": 2311862
+        "durationMs": 2311862,
+        "chapterName": "Sicha, Purim, 5750"
       }
     ],
     "pdfs": [
@@ -2290,7 +2422,18 @@
     "audio": [
       {
         "workerFilename": "AR0019470.mp3",
-        "durationMs": 3193469
+        "durationMs": 3193469,
+        "chapterName": "Guests"
+      },
+      {
+        "workerFilename": "AR0019471.mp3",
+        "durationMs": 698200,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "AR0019472.mp3",
+        "durationMs": 583366,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": [
@@ -2358,7 +2501,13 @@
     "audio": [
       {
         "workerFilename": "AR0019473.mp3",
-        "durationMs": 1796466
+        "durationMs": 1796466,
+        "chapterName": "Sicha"
+      },
+      {
+        "workerFilename": "AR0019474.mp3",
+        "durationMs": 823849,
+        "chapterName": "Brachah to Shluchim"
       }
     ],
     "pdfs": [
@@ -2382,7 +2531,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK4365.mp3",
-        "durationMs": 495000
+        "durationMs": 495000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2499,7 +2649,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK4366.mp3",
-        "durationMs": 771000
+        "durationMs": 771000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2562,7 +2713,8 @@
     "audio": [
       {
         "workerFilename": "AR0021205.mp3",
-        "durationMs": 1211386
+        "durationMs": 1211386,
+        "chapterName": "Sicha, Yud Gimmel Nissan, 5750"
       }
     ],
     "pdfs": [
@@ -2596,7 +2748,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK4368.mp3",
-        "durationMs": 2359000
+        "durationMs": 2359000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2732,7 +2885,8 @@
     "audio": [
       {
         "workerFilename": "JEMSK4369.mp3",
-        "durationMs": 480000
+        "durationMs": 480000,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -2771,7 +2925,18 @@
     "audio": [
       {
         "workerFilename": "JEMSK4370.mp3",
-        "durationMs": 1957000
+        "durationMs": 1957000,
+        "chapterName": "Guests after Ma’ariv"
+      },
+      {
+        "workerFilename": "JEMSK4371.mp3",
+        "durationMs": 691000,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "JEMSK4372.mp3",
+        "durationMs": 504000,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": [
@@ -2922,7 +3087,23 @@
     "audio": [
       {
         "workerFilename": "AR0019475.mp3",
-        "durationMs": 838635
+        "durationMs": 838635,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "AR0019476.mp3",
+        "durationMs": 2928692,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "AR0019477.mp3",
+        "durationMs": 1054720,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "AR0019478.mp3",
+        "durationMs": 5703392,
+        "chapterName": "Parade"
       }
     ],
     "pdfs": [
@@ -2990,7 +3171,8 @@
     "audio": [
       {
         "workerFilename": "AR0019479.mp3",
-        "durationMs": 2641136
+        "durationMs": 2641136,
+        "chapterName": "Sicha"
       }
     ],
     "pdfs": [
@@ -3156,7 +3338,18 @@
     "audio": [
       {
         "workerFilename": "AR0019481.mp3",
-        "durationMs": 3604323
+        "durationMs": 3604323,
+        "chapterName": "Guests"
+      },
+      {
+        "workerFilename": "AR0019482.mp3",
+        "durationMs": 1146514,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "AR0019483.mp3",
+        "durationMs": 893178,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": [
@@ -3221,7 +3414,13 @@
     "hebrewYear": 5750,
     "hebrewDate": "5750-09-19",
     "occasionLabel": "י\"ט סיון, שיחה להמסיימות ד\"בית רבקה\", ולהמדריכות דמחנות קיץ",
-    "audio": [],
+    "audio": [
+      {
+        "workerFilename": "AR0020571.mp3",
+        "durationMs": 3309472,
+        "chapterName": "Sicha to Graduating Students, Yud Tes Sivan, 5750"
+      }
+    ],
     "pdfs": [
       {
         "section": "biltiMugah",
@@ -3409,7 +3608,18 @@
     "audio": [
       {
         "workerFilename": "AR0019485.mp3",
-        "durationMs": 2877596
+        "durationMs": 2877596,
+        "chapterName": "Guests"
+      },
+      {
+        "workerFilename": "AR0019486.mp3",
+        "durationMs": 1065926,
+        "chapterName": "Bar/Bas Mitzvah"
+      },
+      {
+        "workerFilename": "AR0019487.mp3",
+        "durationMs": 754651,
+        "chapterName": "Choson-Kallah"
       }
     ],
     "pdfs": [
@@ -3433,7 +3643,8 @@
     "audio": [
       {
         "workerFilename": "AR0019489.mp3",
-        "durationMs": 1406275
+        "durationMs": 1406275,
+        "chapterName": "Sicha, Shivah Asar B'Tammuz, 5750"
       }
     ],
     "pdfs": [
@@ -3496,7 +3707,8 @@
     "audio": [
       {
         "workerFilename": "AR0019490.mp3",
-        "durationMs": 639529
+        "durationMs": 639529,
+        "chapterName": "Sicha, Chof Hei Tammuz, 5750"
       }
     ],
     "pdfs": [
@@ -3666,7 +3878,23 @@
     "audio": [
       {
         "workerFilename": "AR0019491.mp3",
-        "durationMs": 645093
+        "durationMs": 645093,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "AR0019492.mp3",
+        "durationMs": 1268845,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "AR0019493.mp3",
+        "durationMs": 1692630,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "AR0019494.mp3",
+        "durationMs": 764133,
+        "chapterName": "Sicha 3"
       }
     ],
     "pdfs": [
@@ -3768,7 +3996,28 @@
     "audio": [
       {
         "workerFilename": "JEMSK4394.mp3",
-        "durationMs": 456000
+        "durationMs": 456000,
+        "chapterName": "Twelve Pesukim"
+      },
+      {
+        "workerFilename": "JEMSK4395.mp3",
+        "durationMs": 2082000,
+        "chapterName": "Sicha 1"
+      },
+      {
+        "workerFilename": "JEMSK4396.mp3",
+        "durationMs": 1959000,
+        "chapterName": "Sicha 2"
+      },
+      {
+        "workerFilename": "JEMSK4397.mp3",
+        "durationMs": 421000,
+        "chapterName": "Sicha 3"
+      },
+      {
+        "workerFilename": "JEMSK4398.mp3",
+        "durationMs": 456000,
+        "chapterName": "Sicha 4"
       }
     ],
     "pdfs": [
@@ -3875,7 +4124,13 @@
     "audio": [
       {
         "workerFilename": "JEMSK4399.mp3",
-        "durationMs": 4152000
+        "durationMs": 4152000,
+        "chapterName": "Sicha"
+      },
+      {
+        "workerFilename": "JEMSK4400.mp3",
+        "durationMs": 62000,
+        "chapterName": "Brachah"
       }
     ],
     "pdfs": [
@@ -3930,7 +4185,13 @@
     "hebrewYear": 5750,
     "hebrewDate": "5750-12-29",
     "occasionLabel": "ערב ר\"ה, ברכה",
-    "audio": [],
+    "audio": [
+      {
+        "workerFilename": "AR0020642.mp3",
+        "durationMs": 248870,
+        "chapterName": "Communal Pan, Erev Rosh Hashana, 5751"
+      }
+    ],
     "pdfs": [
       {
         "section": "biltiMugah",

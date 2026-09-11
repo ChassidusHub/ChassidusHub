@@ -81,10 +81,12 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
       {entry.audio.length > 0 && (
         <View style={styles.category}>
           <Text style={styles.categoryHeader}>Audio</Text>
-          {entry.audio.map((audio) => {
+          {entry.audio.map((audio, index) => {
             const state = audioStates[audio.workerFilename] ?? { status: 'idle' as const };
+            const chapterLabel = audio.chapterName ?? (entry.audio.length > 1 ? `Track ${index + 1}` : null);
             return (
               <View key={audio.workerFilename} style={styles.card}>
+                {chapterLabel && <Text style={styles.pdfLabel}>{chapterLabel}</Text>}
                 {state.status === 'idle' && (
                   <Pressable style={styles.button} onPress={() => handleDownloadAudio(audio)}>
                     <Text style={styles.buttonText}>Download audio</Text>

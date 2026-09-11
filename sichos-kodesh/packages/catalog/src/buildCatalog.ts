@@ -12,6 +12,8 @@ interface OccasionRow {
 
 interface JemAudioRow {
   occasion_id: number;
+  chapter_index: number;
+  chapter_name: string | null;
   duration_ms: number;
   url: string;
 }
@@ -46,7 +48,9 @@ function workerFilenameFromUrl(url: string): string | null {
  */
 export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
   const occasions = db.prepare('SELECT id, hebrew_year, hebrew_date, occasion_label FROM occasions').all() as unknown as OccasionRow[];
-  const audioRows = db.prepare('SELECT occasion_id, duration_ms, url FROM jem_audio').all() as unknown as JemAudioRow[];
+  const audioRows = db
+    .prepare('SELECT occasion_id, chapter_index, chapter_name, duration_ms, url FROM jem_audio ORDER BY occasion_id, chapter_index')
+    .all() as unknown as JemAudioRow[];
   const placeholders = PDF_SECTION_ORDER.map(() => '?').join(',');
   const linkRows = db
     .prepare(`SELECT occasion_id, section, label, url FROM links WHERE section IN (${placeholders})`)
@@ -57,7 +61,7 @@ export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
     const workerFilename = workerFilenameFromUrl(row.url);
     if (!workerFilename) continue;
     const list = audioByOccasion.get(row.occasion_id) ?? [];
-    list.push({ workerFilename, durationMs: row.duration_ms });
+    list.push({ workerFilename, durationMs: row.duration_ms, ...(row.chapter_name && { chapterName: row.chapter_name }) });
     audioByOccasion.set(row.occasion_id, list);
   }
 

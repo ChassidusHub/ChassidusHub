@@ -2,7 +2,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase, replaceJemAudio } from '../src/db.js';
-import { extractAshreinuEventId, resolveJemAudio } from '../src/jemAudio.js';
+import { extractAshreinuEventId, extractAshreinuParentEventId, resolveJemAudio } from '../src/jemAudio.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,7 +35,15 @@ const now = new Date().toISOString();
 
 for (let i = 0; i < targets.length; i++) {
   const { occasion_id: occasionId, url } = targets[i]!;
-  const eventId = extractAshreinuEventId(url);
+  // Resolve from the *parent* (farbrengen) event, not the specific leaf/sicha
+  // id the crawled link happens to point to - a real, high-impact bug fix:
+  // the leaf alone only ever returns that one sicha's own recording, missing
+  // every sibling sicha/maamar under the same farbrengen (see jemAudio.ts's
+  // module doc comment - 65% of real audio links belong to a multi-recording
+  // farbrengen). Falls back to the leaf id only if a URL has no parent
+  // segment at all (shouldn't happen for a real ashreinu.app link, but keeps
+  // a malformed one from being skipped entirely).
+  const eventId = extractAshreinuParentEventId(url) ?? extractAshreinuEventId(url);
   if (eventId === null) {
     noEventId++;
     continue;
@@ -48,8 +56,8 @@ for (let i = 0; i < targets.length; i++) {
       noRecordingsFound++;
       continue;
     }
-    const flatAssets = recordings.flatMap((r) =>
-      r.assets.map((a) => ({ ccdbEventId: r.eventId, durationMs: r.durationMs, url: a.url, fileFormat: a.fileFormat })),
+    const flatAssets = recordings.flatMap((r, chapterIndex) =>
+      r.assets.map((a) => ({ ccdbEventId: r.eventId, chapterIndex, chapterName: r.chapterName, durationMs: r.durationMs, url: a.url, fileFormat: a.fileFormat })),
     );
     replaceJemAudio(db, occasionId, flatAssets, now);
     resolved++;

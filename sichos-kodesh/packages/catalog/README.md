@@ -90,6 +90,15 @@ section, since several real labels are short and generic on their own
 text, not a bug) and only make sense next to a header saying what they're
 scans *of*.
 
+`browsableYears(catalog)` lists every year with real content for the
+"Browse any year" screen, floored at `MIN_HISTORICAL_YEAR` (5710, the same
+floor `kvius-engine` already uses for candidate-year matching): this app is
+scoped to the current Rebbe's own sichos, not the Previous Rebbe's
+pre-Nesius farbrengens, so a bundled year file before 5710 is never
+reachable and isn't built at all (see `bin/build.ts`). Reshimos exclusion
+is unrelated and unconditional - a link-level filter (`isReshimosLabel`),
+not a date one.
+
 ## Preferred printed edition (`pdfEdition.ts`)
 
 Many mugah/biltiMugah/maamorim occasions have PDFs citing two parallel
@@ -107,24 +116,30 @@ first.
 Reads `packages/mafteiach-index`'s `occasions` / `links` / `jem_audio`
 tables directly (schema in that package's `src/db.ts`) and emits one
 `CatalogEntry` per occasion:
-- `audio`: already-resolved JEM recordings from `jem_audio`, filename
-  extracted from the CloudFront URL for `services/media-proxy`'s
-  `/jem-audio/:filename` route.
+- `audio`: already-resolved JEM recordings from `jem_audio`, one entry per
+  chapter (a farbrengen is usually several separate recordings, not one -
+  a few sichos, a maamar, niggunim between them), in real chapter/playback
+  order with an optional `chapterName` (ccdb's own names, e.g. "Sicha 1",
+  "Ma'amar", "Nigun 1") - see `packages/mafteiach-index`'s `jemAudio.ts` for
+  how the recordings themselves are resolved. Filename extracted from the
+  CloudFront URL for `services/media-proxy`'s `/jem-audio/:filename` route.
 - `pdfs`: Drive file ids extracted (`driveLinks.ts`) from the
   `mugah`/`biltiMugah`/`maamorim`/`hagahos`/`hosofos` link sections, for
   `/drive/:fileId`.
 
 An occasion with neither is still included with empty arrays — a real gap,
-not a silently dropped row.
+not a silently dropped row. `bin/build.ts` only writes year files at or
+above `MIN_HISTORICAL_YEAR` (5710) - see `browsableYears` above.
 
 ```
 npm run build
 npm run build-catalog -- --db ../mafteiach-index/mafteiach.db --out ./data
 ```
 
-Verified against the real crawl: 3,424 occasions across 59 year files;
-e.g. Yud Shevat 5711 correctly comes out with its real resolved audio
-(`JEMSK0001.mp3`) and 6 real Drive PDF links.
+Verified against the real crawl: 3,424 occasions total, 43 bundled year
+files (5710-5752); e.g. Yud Shevat 5711 correctly comes out with its 4 real
+resolved audio chapters, in order (Sicha 1, Sicha 2, Ma'amar, Sicha 3) and
+8 real Drive PDF links.
 
 ## What's bundled into the app vs. fetched live
 

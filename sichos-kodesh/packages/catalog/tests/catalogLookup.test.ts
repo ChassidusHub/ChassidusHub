@@ -90,4 +90,12 @@ describe('browsableYears', () => {
   it('returns an empty list for an empty catalog', () => {
     expect(browsableYears({})).toEqual([]);
   });
+
+  it('excludes a year before MIN_HISTORICAL_YEAR (5710) even with real content - this app is scoped to the current Rebbe\'s own Sichos Kodesh, not the Previous Rebbe\'s pre-Nesius farbrengens', () => {
+    const catalog: CatalogByYear = {
+      5709: [entry({ hebrewYear: 5709, audio: [{ workerFilename: 'a.mp3', durationMs: 1 }] })],
+      5710: [entry({ hebrewYear: 5710, audio: [{ workerFilename: 'b.mp3', durationMs: 1 }] })],
+    };
+    expect(browsableYears(catalog)).toEqual([5710]);
+  });
 });

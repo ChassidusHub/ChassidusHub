@@ -1,4 +1,4 @@
-import { buildFixedDateSchedule, buildWeeklySchedule } from '@sichos-kodesh/kvius-engine';
+import { buildFixedDateSchedule, buildWeeklySchedule, MIN_HISTORICAL_YEAR } from '@sichos-kodesh/kvius-engine';
 import type { FixedOccasionDef } from '@sichos-kodesh/kvius-engine';
 import { toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 import type { CatalogEntry } from './types.js';
@@ -62,17 +62,29 @@ export function entryHasContent(entry: CatalogEntry): boolean {
 }
 
 /**
- * Every Hebrew year in the catalog with at least one real, downloadable
- * entry (audio or a PDF) - sorted ascending. For "browse any year" mode:
- * unlike `findMatchingYears`, this isn't constrained to years that are
- * kvius-matched to the current year, so week/date alignment against
- * "this week" doesn't apply - it's a plain listing of what a given year
- * actually has, for a user who wants to explore rather than follow along.
+ * Every Hebrew year from `MIN_HISTORICAL_YEAR` (5710) onward in the
+ * catalog with at least one real, downloadable entry (audio or a PDF) -
+ * sorted ascending. For "browse any year" mode: unlike `findMatchingYears`,
+ * this isn't constrained to years that are kvius-matched to the current
+ * year, so week/date alignment against "this week" doesn't apply - it's a
+ * plain listing of what a given year actually has, for a user who wants
+ * to explore rather than follow along.
+ *
+ * The same floor `findMatchingYears` already applies for kvius candidates
+ * (real-data-verified: pre-5710 years have only 1-14 occasions each,
+ * predating the current Rebbe's own Sichos Kodesh) - this app is scoped
+ * to that, not the Previous Rebbe's own farbrengens, even though
+ * mafteiach-index's crawl (pre-Nesius records, `isPreNesius: true`)
+ * genuinely has real sicha/farbrengen content back to 5690. Reshimos
+ * (private notes / the separate published series) is excluded from the
+ * catalog entirely already, at the individual-link level (see
+ * `driveLinks.ts`'s `isReshimosLabel`) - unconditionally, not tied to
+ * this or any other year cutoff.
  */
 export function browsableYears(catalog: CatalogByYear): number[] {
   return Object.keys(catalog)
     .map(Number)
-    .filter((year) => (catalog[year] ?? []).some(entryHasContent))
+    .filter((year) => year >= MIN_HISTORICAL_YEAR && (catalog[year] ?? []).some(entryHasContent))
     .sort((a, b) => a - b);
 }
 
