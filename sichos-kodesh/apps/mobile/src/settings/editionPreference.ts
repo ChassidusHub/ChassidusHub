@@ -5,15 +5,16 @@ import type { PdfEdition } from '@sichos-kodesh/catalog';
 const STORAGE_KEY = 'sichos-kodesh:pdf-edition-preference';
 
 function isValid(value: string | null): value is PdfEdition {
-  return value === 'sefer' || value === 'torasMenachem';
+  return value === 'sichosKodesh' || value === 'sefer' || value === 'torasMenachem';
 }
 
 /**
- * The user's preferred printed edition (Sefer HaSichos/HaMaamarim vs.
- * Toras Menachem) for occasions that have PDFs citing both - see
- * `packages/catalog`'s `classifyPdfEdition`. Persisted via AsyncStorage;
- * loads asynchronously (starts `null` until the stored value resolves),
- * matching AsyncStorage's own async API.
+ * The user's preferred printed/transcribed edition (Sichos Kodesh, Sefer
+ * HaSichos/HaMaamarim, or Toras Menachem - three real, distinct hanachos,
+ * not variants of each other) for occasions that have PDFs citing more
+ * than one - see `packages/catalog`'s `classifyPdfEdition`. Persisted via
+ * AsyncStorage; loads asynchronously (starts `null` until the stored
+ * value resolves), matching AsyncStorage's own async API.
  */
 export function useEditionPreference(): [PdfEdition | null, (next: PdfEdition | null) => void] {
   const [preference, setPreferenceState] = useState<PdfEdition | null>(null);

@@ -9,6 +9,7 @@ interface Props {
 
 const OPTIONS: Array<{ value: PdfEdition | null; label: string }> = [
   { value: null, label: 'No preference' },
+  { value: 'sichosKodesh', label: 'Sichos Kodesh (שיחו"ק)' },
   { value: 'sefer', label: 'Sefer (Sefer HaSichos / Sefer HaMaamarim)' },
   { value: 'torasMenachem', label: 'Toras Menachem' },
 ];
