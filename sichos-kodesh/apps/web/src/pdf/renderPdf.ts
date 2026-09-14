@@ -214,9 +214,25 @@ export async function renderPdfPages(
       pendingRenderTimers[index] = null;
     }
     renderGeneration[index]!++;
-    pages[index]?.wrapper.replaceChildren();
     const entry = pages[index];
-    if (entry) zoom.resizeOffscreenPage(entry);
+    if (entry) {
+      // Zeroing the canvas's own dimensions before detaching it, not just
+      // `replaceChildren()` alone - removing a <canvas> from the DOM
+      // doesn't force the browser to free its (potentially large,
+      // DPR-squared-sized) backing-store bitmap immediately, only once GC
+      // gets around to it. Under fast repeated scrolling, many pages get
+      // released in quick succession; if GC lags even briefly behind that,
+      // several full-size canvases' worth of memory piles up at once - a
+      // real, reproduced contributor to the tab crashing outright, on top
+      // of (not fixed by) the generation-based render cancellation above.
+      const canvas = entry.wrapper.querySelector('canvas');
+      if (canvas) {
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+      entry.wrapper.replaceChildren();
+      zoom.resizeOffscreenPage(entry);
+    }
   }
 
   const observer = new IntersectionObserver(

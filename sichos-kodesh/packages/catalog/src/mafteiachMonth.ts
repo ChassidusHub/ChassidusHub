@@ -1,3 +1,5 @@
+import { mafteiachMonthTokenToHDateMonth } from './hebrewDateKey.js';
+
 /**
  * Display name for mafteiach-index's Tishrei-based month token (see
  * `toMafteiachHebrewDateKey`'s doc comment for the full numbering
@@ -54,6 +56,30 @@ export function mafteiachMonthNameHebrew(hebrewDate: string): string {
   const token = mafteiachMonthToken(hebrewDate);
   return MAFTEIACH_MONTH_NAMES_HE[token] ?? token;
 }
+
+export interface MafteiachMonthOption {
+  /** HDate-native month number (1=Nisan...13=Adar II) - what a search filter should actually compare against, not the raw token, since a plain year's "06" and a leap year's "06A" are the same month and should both match a single "Adar" choice. */
+  hdateMonth: number;
+  name: string;
+  nameHebrew: string;
+}
+
+/**
+ * One canonical entry per real month, Tishrei-first (matching how the rest
+ * of the app already lists a year's months - see YearBrowserScreen) - not
+ * one entry per raw *token*, which would offer a redundant, confusing
+ * "Adar" and "Adar I" as if they were different months to search by, when
+ * they're the same HDate month (12) under two different years' token
+ * spellings. Adar II only exists as its own real month in a leap year, so
+ * it's still its own option (token "06B", HDate month 13).
+ */
+export const MAFTEIACH_MONTH_OPTIONS: MafteiachMonthOption[] = ['01', '02', '03', '04', '05', '06', '06B', '07', '08', '09', '10', '11', '12'].map(
+  (token) => ({
+    hdateMonth: mafteiachMonthTokenToHDateMonth(token),
+    name: MAFTEIACH_MONTH_NAMES[token]!,
+    nameHebrew: MAFTEIACH_MONTH_NAMES_HE[token]!,
+  }),
+);
 
 /**
  * Extracts the day-of-month from a raw mafteiach-index date key, e.g.

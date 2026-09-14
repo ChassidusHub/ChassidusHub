@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { Search, Settings } from 'lucide-react';
 import { currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
@@ -28,9 +28,14 @@ export function YearPickerScreen({ targetYear }: Props) {
     <div className="screen">
       <div className="header-row">
         <h1>{t.appTitle}</h1>
-        <Link className="settings-link" to="/settings" aria-label={t.settingsLabel}>
-          <Settings size={22} strokeWidth={2} />
-        </Link>
+        <div className="header-row-actions">
+          <Link className="settings-link" to="/search" aria-label={t.searchLink}>
+            <Search size={22} strokeWidth={2} />
+          </Link>
+          <Link className="settings-link" to="/settings" aria-label={t.settingsLabel}>
+            <Settings size={22} strokeWidth={2} />
+          </Link>
+        </div>
       </div>
       <p className="subtitle">
         {hebrewDate}

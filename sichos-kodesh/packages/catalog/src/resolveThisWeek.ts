@@ -1,7 +1,8 @@
 import { HDate } from '@hebcal/core';
 import { entryHasContent } from './catalogLookup.js';
 import type { CatalogByYear } from './catalogLookup.js';
-import { toMafteiachHebrewDateKey } from './hebrewDateKey.js';
+import { mafteiachDay, mafteiachMonthToken } from './mafteiachMonth.js';
+import { mafteiachMonthTokenToHDateMonth, toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 import type { CatalogEntry } from './types.js';
 
 export interface WeekOccasion {
@@ -12,7 +13,7 @@ export interface WeekOccasion {
   entry: CatalogEntry;
 }
 
-interface WeekDay {
+export interface WeekDay {
   month: number;
   day: number;
   gregorianDate: string;
@@ -33,7 +34,7 @@ interface WeekDay {
  * misattributing a translated date onto `sourceYear`'s own, unrelated
  * same-month-day date a full year earlier) strictly applies to it.
  */
-function thisWeekDays(today: Date): WeekDay[] {
+export function thisWeekDays(today: Date): WeekDay[] {
   const todayH = new HDate(today);
   const targetYear = todayH.getFullYear();
   const weekEndH = todayH.onOrAfter(6); // Shabbos on or after today.
@@ -93,25 +94,18 @@ export interface YearWeekOccasions {
 }
 
 /**
- * Every occasion, across *every* indexed Hebrew year - not just years
- * kvius-matched to the current one - that falls on the same Hebrew
- * calendar (month, day) as some day in the current week. Unlike
- * `resolveThisWeek`, this doesn't need or use weekday alignment: it
- * answers "what happened on these Hebrew dates across all our history,"
- * not "what happened this same week, in a year whose calendar lines up
- * with this one." A kvius-matched year's own occasion is naturally
- * included too - it's still an occasion on one of these dates - so
- * there's no need to cross-reference `findMatchingYears` here at all.
- *
- * Grouped by year (years with nothing this week omitted), earliest year
- * first - a real Gregorian date isn't included per entry the way
- * `resolveThisWeek`'s is, since a historical year's actual occurrence
- * almost never falls on today's real Gregorian date and showing it would
- * misleadingly suggest otherwise; `entry.occasionLabel`/`hebrewDate`
- * already carry the real Hebrew date.
+ * Shared core: every occasion, across every indexed Hebrew year, that
+ * falls on one of the given (month, day) pairs - grouped by year (years
+ * with nothing omitted), earliest year first. `resolveThisWeekAllYears`
+ * calls this with a whole week's worth of days; `resolveOccasionAllYears`
+ * calls it with a single day (one specific occasion's own date). Neither
+ * needs or uses weekday alignment - both answer "what happened on these
+ * Hebrew dates across all our history," not "what happened in a year
+ * whose calendar lines up with this one" - so a kvius-matched year's own
+ * occasion is naturally included too, with no need to cross-reference
+ * `findMatchingYears` here at all.
  */
-export function resolveThisWeekAllYears(catalog: CatalogByYear, today: Date = new Date()): YearWeekOccasions[] {
-  const days = thisWeekDays(today);
+function matchDaysAcrossYears(catalog: CatalogByYear, days: { month: number; day: number }[]): YearWeekOccasions[] {
   const years = Object.keys(catalog)
     .map(Number)
     .sort((a, b) => a - b);
@@ -131,4 +125,34 @@ export function resolveThisWeekAllYears(catalog: CatalogByYear, today: Date = ne
     if (entries.length > 0) results.push({ hebrewYear: year, entries });
   }
   return results;
+}
+
+/**
+ * Every occasion, across *every* indexed Hebrew year - not just years
+ * kvius-matched to the current one - that falls on the same Hebrew
+ * calendar (month, day) as some day in the current week. A real Gregorian
+ * date isn't included per entry the way `resolveThisWeek`'s is, since a
+ * historical year's actual occurrence almost never falls on today's real
+ * Gregorian date and showing it would misleadingly suggest otherwise;
+ * `entry.occasionLabel`/`hebrewDate` already carry the real Hebrew date.
+ */
+export function resolveThisWeekAllYears(catalog: CatalogByYear, today: Date = new Date()): YearWeekOccasions[] {
+  return matchDaysAcrossYears(catalog, thisWeekDays(today));
+}
+
+/**
+ * Every occasion, across every indexed year, that falls on the same
+ * Hebrew (month, day) as `sourceHebrewDate` - one specific occasion's own
+ * date, not "this real week." This is what a farbrengen's own page's
+ * "this occasion, every year" link uses (see FarbrengenScreen) - showing
+ * `resolveThisWeekAllYears`'s *actual current week* there instead would
+ * be nonsensical unless the occasion on screen genuinely happens to be
+ * this week: nearly always, it isn't (it's reached via a kvius-matched
+ * year's "All of {year}" list, or a past this-week-all-years pick), and
+ * the link should still be about *this* occasion, every year.
+ */
+export function resolveOccasionAllYears(catalog: CatalogByYear, sourceHebrewDate: string): YearWeekOccasions[] {
+  const month = mafteiachMonthTokenToHDateMonth(mafteiachMonthToken(sourceHebrewDate));
+  const day = mafteiachDay(sourceHebrewDate);
+  return matchDaysAcrossYears(catalog, [{ month, day }]);
 }

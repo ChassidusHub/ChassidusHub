@@ -124,8 +124,8 @@ export function FarbrengenScreen({ resolved }: Props) {
         </details>
       )}
 
-      <Link className="category-row" to="/this-week-all-years">
-        <span className="category-row-name">{t.allFarbrengensThisWeek}</span>
+      <Link className="category-row" to={`/occasion-all-years/${entry.hebrewYear}/${entry.occasionId}`}>
+        <span className="category-row-name">{t.thisOccasionAllYears}</span>
       </Link>
     </div>
   );
