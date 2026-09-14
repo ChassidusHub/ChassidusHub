@@ -234,6 +234,17 @@ describe('cleanResponseHeaders', () => {
     const headers = cleanResponseHeaders(new Response('bytes'), null);
     expect(headers.has('Content-Disposition')).toBe(false);
   });
+
+  it('omits Accept-Ranges by default, regardless of what upstream itself sent - a route must not claim range support unless it actually forwards the client Range header (the /drive/:fileId route never does)', () => {
+    const upstream = new Response('bytes', { headers: { 'accept-ranges': 'bytes' } });
+    const headers = cleanResponseHeaders(upstream, null, 'application/pdf');
+    expect(headers.has('Accept-Ranges')).toBe(false);
+  });
+
+  it('sets Accept-Ranges only when the caller opts in with supportsRange (the /jem-audio/:filename route, which genuinely forwards Range)', () => {
+    const headers = cleanResponseHeaders(new Response('bytes'), null, undefined, true);
+    expect(headers.get('Accept-Ranges')).toBe('bytes');
+  });
 });
 
 describe('withCors', () => {

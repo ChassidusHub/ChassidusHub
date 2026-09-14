@@ -35,28 +35,50 @@ containing `:occasionId`; `useBrowseEntry` looks it up directly in
 state - correct even for a URL typed/pasted/reloaded directly, not just one
 reached by clicking through the app.
 
-- `src/screens/YearPickerScreen.tsx` — two tabs: **Follow along**
-  (`findMatchingYears` via `@sichos-kodesh/kvius-engine`, kvius-matched
-  candidates only) and **Browse any year** (`browsableYears` via
-  `@sichos-kodesh/catalog`, every indexed year from 5710 onward, no kvius
-  match required - this app is scoped to the current Rebbe's own sichos,
-  not the Previous Rebbe's pre-Nesius farbrengens; unrelated to reshimos
-  exclusion, which is a separate link-level filter).
+- `src/screens/YearPickerScreen.tsx` — the home screen: today's date and
+  parsha up front (`@sichos-kodesh/catalog`'s `currentParsha`, built on
+  `@hebcal/core`'s `Sedra` so it correctly rolls a weekday forward to its
+  Shabbos, handles doubled/displaced parshios, and returns `null` on a
+  chag), then one prominent action - **This week's farbrengens** - straight
+  into the nearest kvius-matched year's current week
+  (`findMatchingYears(targetYear)[0]`, "sorted nearest-first" per its own
+  doc comment) rather than a list of candidate years to pick from first.
+  Below that, two secondary tabs: **Other kvius years** (every other
+  kvius-matched candidate, for picking a different one on purpose) and
+  **Browse any year** (`browsableYears` via `@sichos-kodesh/catalog`, every
+  indexed year from 5710 onward, no kvius match required - this app is
+  scoped to the current Rebbe's own sichos, not the Previous Rebbe's
+  pre-Nesius farbrengens; unrelated to reshimos exclusion, which is a
+  separate link-level filter).
 - `src/screens/ThisWeekScreen.tsx` / `YearBrowserScreen.tsx` — list-only
   screens (no embedded detail/PDF state anymore): `ThisWeekScreen` calls
   `resolveThisWeek` (from `@sichos-kodesh/catalog`, shared with
   `apps/mobile`) for every occasion with real content anywhere in the
-  current Hebrew week against a kvius-matched source year; `YearBrowserScreen`
+  current Hebrew week against a kvius-matched source year, showing a music
+  icon on any row that actually has a recording; `YearBrowserScreen`
   lists every occasion a browsed year actually has, grouped by Hebrew month
   (`mafteiachMonthName`) - no kvius engine involved (a browsed year has no
   guaranteed week/date alignment with the current Hebrew year). Each row
   links to `/follow/.../:occasionId` or `/browse/.../:occasionId`.
 - `src/screens/OccasionScreen.tsx` + `src/components/OccasionDetail.tsx` —
-  an occasion's own landing page shows one **button per category** it
-  actually has (Recordings, then each PDF section present with a count) -
-  not every recording and every PDF listed inline on one page, which used
-  to mean a very long page mixing hanachos with mugah/hagahos/etc. all
-  together. Each button navigates to its own page.
+  the **/browse** flow's occasion page: one **button per category** it
+  actually has (Recordings, then each PDF section present with a count),
+  every section treated as an equal-weight category - appropriate for
+  browsing history freely, not scoped to any one farbrengen's own primary
+  content.
+- `src/screens/FarbrengenScreen.tsx` — the **/follow** flow's own occasion
+  page, deliberately *not* the generic `OccasionScreen`: a farbrengen's own
+  Toras Menachem or Sichos Kodesh **biltiMugah** hanacha (the as-heard,
+  unedited transcript - see `@sichos-kodesh/catalog`'s
+  `isHighlightedFarbrengenHanacha`) *is* the farbrengen, so it - and
+  Recordings, when there are any - render inline and first, as the
+  highlighted content. Mugah (the later Rebbe-edited text), the maamar,
+  hagahos, hosofos, and any biltiMugah PDF citing something else entirely
+  (a real but minority case - letters, memorial booklets) are real and
+  worth keeping reachable, but they're a different kind of thing, not
+  "more of the same" - they're demoted into a collapsed
+  `<details>`/`<summary>` **"More from this occasion"** section at the
+  bottom instead of being listed as equal buttons alongside the sichos.
 - `src/screens/RecordingsScreen.tsx` — the dedicated playlist page for one
   occasion's recordings (a farbrengen is usually several separate
   recordings, not one - real examples run to 8-10: a few sichos, a maamar,
@@ -79,18 +101,33 @@ reached by clicking through the app.
   title/chapter, artwork, and working prev/next/play/pause/seek on
   Android's lock-screen and notification-shade media controls (and the
   macOS/Windows/iOS equivalents), not just a bare "playing audio from
-  <site>" entry with no controls.
+  <site>" entry with no controls. `App.tsx`'s `AppContent` wrapper adds a
+  `.has-player` class to the routed content whenever `GlobalPlayerBar` can
+  show (i.e. once anything has played this session) - the bar is
+  `position: fixed` and can appear over *any* screen now, so without this,
+  its bottom edge would cover, and block clicks on, the last bit of
+  content on every screen (a real reported bug); the padding is centralized
+  here rather than duplicated per-screen.
 - `src/screens/PdfViewerScreen.tsx` + `src/pdf/renderPdf.ts` — renders a
   PDF's pages directly in the app via `pdfjs-dist` instead of handing off
-  to the browser's own viewer or a new tab. Pages render **lazily**, one
-  canvas per page as it scrolls near the viewport (via
-  `IntersectionObserver`), not all of them upfront - and a page's canvas
-  is released back to a same-sized placeholder once it's scrolled far
-  off-screen, re-rendering on demand if scrolled back. Canvas resolution
-  is capped at `MAX_DPR = 2` even on higher-`devicePixelRatio` screens.
-  Together, these are what stop a real multi-page document from crashing
-  the tab outright ("Aw, Snap!") on a phone - a canvas's memory scales
-  with the *square* of its DPR, so rendering every page of a long
+  to the browser's own viewer or a new tab. `renderPdf.ts`'s
+  `loadPdfDocument` takes the media-proxy PDF URL directly
+  (`pdfjs-dist`'s own `getDocument({ url, disableRange: true, onProgress })`)
+  rather than pre-fetching the whole file into an `ArrayBuffer` first, so
+  pdf.js starts parsing as bytes stream in instead of waiting on a full
+  download - `disableRange: true` because `services/media-proxy`'s
+  `/drive/:fileId` route doesn't actually forward Range requests (Drive's
+  confirm-token/cookie flow for larger files makes real byte-range
+  streaming there meaningfully harder), so claiming range support to
+  pdf.js would just make it probe with requests the Worker can't honor.
+  Pages then render **lazily**, one canvas per page as it scrolls near the
+  viewport (via `IntersectionObserver`), not all of them upfront - and a
+  page's canvas is released back to a same-sized placeholder once it's
+  scrolled far off-screen, re-rendering on demand if scrolled back. Canvas
+  resolution is capped at `MAX_DPR = 2` even on higher-`devicePixelRatio`
+  screens. Together, these are what stop a real multi-page document from
+  crashing the tab outright ("Aw, Snap!") on a phone - a canvas's memory
+  scales with the *square* of its DPR, so rendering every page of a long
   document unconditionally at an uncapped (sometimes 3+) DPR could add
   hundreds of MB to a mobile tab; this was reproduced and fixed, not
   assumed. `apps/web`'s `pdfjs-dist` version is pinned deliberately (see
@@ -117,8 +154,11 @@ reached by clicking through the app.
   consistent icon set, not ad hoc emoji characters standing in for icons.
 - `src/catalog/data/` — the same per-year static JSON bundled into
   `apps/mobile`, generated by `packages/catalog`'s `bin/build.ts`.
-- `src/download/download.ts` — fetches audio/PDFs from the deployed
-  `services/media-proxy` Worker (see `src/config.ts` for the base URL).
+- `src/download/download.ts` — builds `services/media-proxy` URLs
+  (`audioUrl`, `pdfUrl`; see `src/config.ts` for the base URL) for the
+  `<audio>` element and `loadPdfDocument` to fetch directly, rather than
+  this app pre-fetching the bytes itself - both audio and PDF now stream
+  through their consumer instead of blocking on a full download first.
 - `vite.config.ts` — `vite-plugin-pwa` in `generateSW` mode: precaches the
   app shell, and runtime-caches media-proxy responses (`CacheFirst`,
   `rangeRequests: true`, `cacheableResponse: { statuses: [0, 200, 206] }`)

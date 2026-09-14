@@ -188,12 +188,23 @@ export async function fetchFromJemAudioCdn(filename: string, range?: string | nu
  * its own explicit `application/pdf` Android intent - neither header from
  * this response is consulted there.
  */
-export function cleanResponseHeaders(upstream: Response, filename: string | null, contentType?: string): Headers {
+/**
+ * `supportsRange` must reflect whether *this route* actually reads and
+ * forwards a client's Range header - not whether the upstream response
+ * happens to carry its own `accept-ranges` header. `/drive/:fileId` never
+ * forwards Range (Drive's confirm-token interstitial flow for larger
+ * files makes that meaningfully more complex to get right, unlike
+ * `/jem-audio/:filename`, which genuinely does), so claiming range
+ * support there regardless of what Drive itself advertises would be
+ * actively misleading to a client like pdf.js that probes for it and
+ * changes its request pattern accordingly.
+ */
+export function cleanResponseHeaders(upstream: Response, filename: string | null, contentType?: string, supportsRange = false): Headers {
   const headers = new Headers({
     'Content-Type': contentType ?? upstream.headers.get('content-type') ?? 'application/octet-stream',
     'Cache-Control': `public, max-age=${CACHE_TTL_SECONDS}`,
-    'Accept-Ranges': upstream.headers.get('accept-ranges') ?? 'bytes',
   });
+  if (supportsRange) headers.set('Accept-Ranges', upstream.headers.get('accept-ranges') ?? 'bytes');
   const contentLength = upstream.headers.get('content-length');
   if (contentLength) headers.set('Content-Length', contentLength);
   const contentRange = upstream.headers.get('content-range');
@@ -232,7 +243,7 @@ async function handleJemAudio(filename: string, range: string | null): Promise<R
   if (!upstream.ok && upstream.status !== 206) {
     return new Response(`Upstream fetch failed with status ${upstream.status}`, { status: 502 });
   }
-  return new Response(upstream.body, { status: upstream.status, headers: cleanResponseHeaders(upstream, null) });
+  return new Response(upstream.body, { status: upstream.status, headers: cleanResponseHeaders(upstream, null, undefined, true) });
 }
 
 export default {

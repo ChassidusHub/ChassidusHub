@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Music } from 'lucide-react';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
@@ -26,7 +27,10 @@ export function ThisWeekScreen({ sourceYear }: Props) {
         {occasions.map((occasion) => (
           <li key={occasion.entry.occasionId}>
             <Link className="year-row" to={`/follow/${sourceYear}/${occasion.entry.occasionId}`}>
-              <span className="year-row-year">{occasion.entry.occasionLabel}</span>
+              <span className="year-row-main">
+                {occasion.entry.audio.length > 0 && <Music size={14} className="year-row-audio-icon" aria-label="Has a recording" />}
+                <span className="year-row-year">{occasion.entry.occasionLabel}</span>
+              </span>
               <span className="year-row-distance">{occasion.gregorianDate}</span>
             </Link>
           </li>
