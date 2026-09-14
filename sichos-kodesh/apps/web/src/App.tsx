@@ -22,6 +22,7 @@ import { CategoryScreen } from './screens/CategoryScreen';
 import { PdfViewerScreen } from './screens/PdfViewerScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AboutScreen } from './screens/AboutScreen';
+import { SearchScreen } from './screens/SearchScreen';
 import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry, useOccasionAllYearsEntry } from './routes/useResolvedEntry';
 
 function ThisWeekRoute() {
@@ -154,6 +155,7 @@ function AppContent() {
         <Route path="/" element={<Home />} />
         <Route path="/kvius" element={<KviusYearsRoute />} />
         <Route path="/years" element={<BrowseYearsScreen />} />
+        <Route path="/search" element={<SearchScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="/about" element={<AboutScreen />} />
 
