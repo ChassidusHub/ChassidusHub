@@ -32,7 +32,8 @@ function countBySecondarySection(pdfs: CatalogPdf[]): Partial<Record<(typeof SEC
  * same sicha, not two different ones, so showing both as equal-weight
  * cards was really just "the same reading, twice." Picks one, preferring
  * Sichos Kodesh (this app's own namesake series) when both exist; the
- * other stays reachable, just not as the primary card - see its caller.
+ * other is dropped entirely rather than kept as a redundant "more" row -
+ * see its caller.
  */
 const PRIMARY_HANACHA_EDITION_PRIORITY: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
 
@@ -54,10 +55,11 @@ function pickPrimaryHanacha(pdfs: CatalogPdf[]): CatalogPdf | null {
  * Toras Menachem and a Sichos Kodesh edition of the same hanacha are
  * catalogued, only one shows here (see pickPrimaryHanacha) - the same
  * sicha isn't two separate cards. Mugah (the later Rebbe-edited text), the
- * maamar, hagahos, hosofos, and any other-edition hanacha are real and
- * worth keeping reachable, but they're a different kind of thing - demoted
- * into a collapsed "More from this occasion" section rather than listed as
- * equal buttons alongside the sichos itself. Used to be split from a
+ * maamar, hagahos, hosofos, and any biltiMugah PDF citing some other,
+ * unrelated source are real and worth keeping reachable, but they're a
+ * different kind of thing - demoted into a collapsed "More from this
+ * occasion" section rather than listed as equal buttons alongside the
+ * sichos itself. Used to be split from a
  * separate, flatter OccasionScreen for /browse specifically; unified here
  * since browsing a plain year deserves the same treatment as following one.
  */
@@ -79,11 +81,15 @@ export function FarbrengenScreen({ resolved }: Props) {
   const { entry, subtitle, basePath, backPath } = resolved;
 
   const primaryHanacha = pickPrimaryHanacha(entry.pdfs);
-  // Any OTHER biltiMugah PDF - the non-chosen hanacha edition (see
-  // pickPrimaryHanacha) included - lands in "more" rather than disappearing
-  // outright, so it's still reachable when someone specifically wants the
-  // other edition.
-  const leftoverBiltiMugah = entry.pdfs.filter((pdf) => pdf.section === 'biltiMugah' && pdf.driveFileId !== primaryHanacha?.driveFileId);
+  // A biltiMugah PDF citing the OTHER highlighted edition (see
+  // pickPrimaryHanacha) is the same sicha as primaryHanacha, just published
+  // under a different series name - not a different piece of content, so it
+  // stays hidden rather than showing as a redundant "more" row. A biltiMugah
+  // PDF citing neither edition (isHighlightedFarbrengenHanacha false) is a
+  // genuinely different citation - some other, unrelated source (a real but
+  // minority case - letters, memorial booklets, etc.) - and still belongs
+  // in "more".
+  const leftoverBiltiMugah = entry.pdfs.filter((pdf) => pdf.section === 'biltiMugah' && !isHighlightedFarbrengenHanacha(pdf));
   const secondaryCounts = countBySecondarySection(entry.pdfs);
   const secondarySectionsPresent = SECONDARY_SECTIONS.filter((section) => secondaryCounts[section]);
   const hasMore = leftoverBiltiMugah.length > 0 || secondarySectionsPresent.length > 0;

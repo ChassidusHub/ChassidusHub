@@ -3,6 +3,18 @@ import type { PdfSection } from '@sichos-kodesh/catalog';
 
 export type Language = 'en' | 'he';
 
+/** Spelled-out Hebrew words for kvius-engine's curated SPECIAL_ANNIVERSARY_YEARS list - "שבעים וחמש שנה," not the gematriya letters "ע״ה שנים" a plain number-to-Hebrew conversion would produce. */
+const SPECIAL_ANNIVERSARY_WORDS_HE: Record<number, string> = {
+  40: 'ארבעים',
+  50: 'חמישים',
+  60: 'שישים',
+  70: 'שבעים',
+  75: 'שבעים וחמש',
+  80: 'שמונים',
+  90: 'תשעים',
+  100: 'מאה',
+};
+
 const en = {
   appTitle: 'Sichos Kodesh',
   settingsLabel: 'Settings',
@@ -125,7 +137,7 @@ const he: typeof en = {
   partialKviusMatchesHelp: 'לא קביעות מלאה, אך תאריכי השבוע הזה יוצאים באותה צורה.',
   specialAnniversariesHeader: 'אירועים עגולים',
   specialAnniversariesHelp: 'שנים עם ציון עגול שיש בהן תוכן מתועד לשבוע זה.',
-  specialAnniversaryLabel: (n: number) => `${gematriya(n)} שנים`,
+  specialAnniversaryLabel: (n: number) => `${SPECIAL_ANNIVERSARY_WORDS_HE[n]} שנה`,
   browseHelp: 'כל שנה עם תוכן מתועד - עיינו בחופשיות, ללא צורך בהתאמת קביעות.',
   changeYear: 'החלפת שנה',
   thisWeek: 'השבוע',
