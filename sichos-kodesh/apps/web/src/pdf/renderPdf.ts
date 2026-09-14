@@ -1,6 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { attachPdfPageZoom } from './pdfPageZoom';
+import { attachPdfZoom } from './pdfPageZoom';
 import type { ZoomablePage } from './pdfPageZoom';
 // Vite's `?url` import gives the worker script a real, fetchable URL in the
 // built bundle - pdf.js needs its own worker thread even when we only ever
@@ -71,12 +71,12 @@ export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; 
 const MAX_DPR = 2;
 
 /**
- * A single boosted (currently pinch-zoomed) page's total resolution
- * multiplier over its fit-width scale - generous, since only one page is
- * ever boosted at a time (see pdfPageZoom.ts); the rest of the document
- * stays at the MAX_DPR-capped fit-width render that already keeps a long
- * document from crashing a mobile tab, so one extra higher-resolution
- * canvas for the page actually being read doesn't reintroduce that risk.
+ * A pinch-zoomed page's total resolution multiplier over its fit-width
+ * scale, once the gesture settles - reasonable even though every
+ * currently-rendered page gets boosted together (see pdfPageZoom.ts's
+ * whole-document zoom), since only a handful of pages are ever resident
+ * at once (the lazy-render/release cycle below keeps it that way
+ * regardless of zoom level).
  */
 const MAX_BOOST_MULTIPLIER = 4;
 
@@ -107,13 +107,14 @@ interface PageEntry extends ZoomablePage {
  * mobile tab - rendering every page unconditionally (even before this
  * had capped DPR) kept every canvas alive for the life of the screen.
  *
- * Also wires up `pdfPageZoom.ts`'s per-page pinch-zoom: a page pinched
- * open re-renders at up to `MAX_BOOST_MULTIPLIER` its fit-width
- * resolution once the gesture settles (real sharpness, not a stretched
- * fit-width bitmap), and drops back to the standard fit-width render once
- * it's no longer the zoomed page (a different page took over, it was
- * pinched back down, or it scrolled far enough off-screen to be released
- * by the `IntersectionObserver` below anyway).
+ * Also wires up `pdfPageZoom.ts`'s whole-document pinch-zoom: every
+ * currently-rendered page re-renders at up to `MAX_BOOST_MULTIPLIER` its
+ * fit-width resolution once a pinch settles (real sharpness, not a
+ * stretched fit-width bitmap), together, so scrolling through a zoomed
+ * document doesn't snap back to an unzoomed page the moment it scrolls
+ * into view - a real reported bug with an earlier per-page-only version.
+ * Pinching back down to 1x drops every rendered page back to the standard
+ * fit-width render the same way.
  *
  * Resolves once the first page has rendered (so the screen has real
  * content to show), not once every page has - the rest render as the
@@ -130,11 +131,18 @@ interface PageEntry extends ZoomablePage {
  * repeatedly during fast up-and-down scrolling piled up canvases faster
  * than the browser could reclaim their memory. A render only ever commits
  * its canvas if its generation is still the current one for that page.
+ *
+ * `onZoomChange`, when given, fires `true` once a pinch settles and
+ * `false` once the document is back to 1x - PdfViewerScreen uses it to
+ * drop the screen's own side padding and width cap while zoomed, so
+ * panning around a zoomed page actually has the full screen to work with
+ * instead of the normal reading-width column.
  */
 export async function renderPdfPages(
   doc: PDFDocumentProxy,
   container: HTMLElement,
   isCancelled: () => boolean,
+  onZoomChange?: (zoomed: boolean) => void,
 ): Promise<void> {
   const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
   const containerWidth = container.clientWidth || 400;
@@ -162,6 +170,12 @@ export async function renderPdfPages(
 
   const renderGeneration: number[] = pages.map(() => 0);
   const pendingRenderTimers: Array<ReturnType<typeof setTimeout> | null> = pages.map(() => null);
+  // The current effective resolution multiplier over each page's fit-width
+  // `cssScale` - `dpr` at rest, boosted (up to `MAX_BOOST_MULTIPLIER`)
+  // while the document is pinch-zoomed, so a page that scrolls into view
+  // *while* still zoomed renders sharp immediately instead of fit-width
+  // and then needing a second re-render.
+  let currentRenderScale = dpr;
 
   async function renderCanvasAtScale(index: number, scale: number, generation: number): Promise<void> {
     const entry = pages[index];
@@ -190,7 +204,7 @@ export async function renderPdfPages(
     const entry = pages[index];
     if (!entry || isCancelled() || entry.wrapper.firstChild) return Promise.resolve();
     const generation = ++renderGeneration[index]!;
-    return renderCanvasAtScale(index, entry.cssScale * dpr, generation);
+    return renderCanvasAtScale(index, entry.cssScale * currentRenderScale, generation);
   }
 
   function release(index: number): void {
@@ -201,7 +215,8 @@ export async function renderPdfPages(
     }
     renderGeneration[index]!++;
     pages[index]?.wrapper.replaceChildren();
-    zoom.resetIfZoomedOffscreen(index);
+    const entry = pages[index];
+    if (entry) zoom.resizeOffscreenPage(entry);
   }
 
   const observer = new IntersectionObserver(
@@ -229,19 +244,32 @@ export async function renderPdfPages(
     { rootMargin: '100% 0px' },
   );
 
-  const zoom = attachPdfPageZoom(pages, {
-    onSettle: (index, pinchScale) => {
-      const entry = pages[index];
-      if (!entry) return;
-      const boosted = Math.min((window.devicePixelRatio || 1) * pinchScale, MAX_BOOST_MULTIPLIER);
-      const generation = ++renderGeneration[index]!;
-      void renderCanvasAtScale(index, entry.cssScale * boosted, generation);
+  /** Every page whose wrapper currently has a canvas resident - the only ones worth re-rendering when the zoom level changes; an off-screen page with no canvas will simply render at `currentRenderScale` whenever it's next scrolled into view. */
+  function renderedIndexes(): number[] {
+    return pages.reduce<number[]>((acc, entry, index) => {
+      if (entry.wrapper.firstChild) acc.push(index);
+      return acc;
+    }, []);
+  }
+
+  const zoom = attachPdfZoom(container, pages, {
+    onSettle: (pinchScale) => {
+      currentRenderScale = Math.min(dpr * pinchScale, MAX_BOOST_MULTIPLIER);
+      for (const index of renderedIndexes()) {
+        const entry = pages[index]!;
+        const generation = ++renderGeneration[index]!;
+        void renderCanvasAtScale(index, entry.cssScale * currentRenderScale, generation);
+      }
+      onZoomChange?.(true);
     },
-    onRelease: (index) => {
-      const entry = pages[index];
-      if (!entry) return;
-      const generation = ++renderGeneration[index]!;
-      void renderCanvasAtScale(index, entry.cssScale * dpr, generation);
+    onReset: () => {
+      currentRenderScale = dpr;
+      for (const index of renderedIndexes()) {
+        const entry = pages[index]!;
+        const generation = ++renderGeneration[index]!;
+        void renderCanvasAtScale(index, entry.cssScale * currentRenderScale, generation);
+      }
+      onZoomChange?.(false);
     },
   });
 

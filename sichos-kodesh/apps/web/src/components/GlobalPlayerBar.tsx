@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { usePlayer } from '../player/usePlayer';
+import { useTranslation } from '../i18n/useLanguage';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return '0:00';
@@ -17,6 +18,7 @@ function formatTime(seconds: number): string {
  * something has actually been played this session.
  */
 export function GlobalPlayerBar() {
+  const { t } = useTranslation();
   const player = usePlayer();
   const [showChapters, setShowChapters] = useState(false);
 
@@ -27,7 +29,7 @@ export function GlobalPlayerBar() {
   const hasPrev = player.currentIndex > 0;
   const hasNext = player.currentIndex < audio.length - 1;
   const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
-  const chapterLabel = current.chapterName ?? (audio.length > 1 ? `Track ${player.currentIndex + 1}` : null);
+  const chapterLabel = current.chapterName ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
 
   function seek(e: React.ChangeEvent<HTMLInputElement>) {
     player.seekToFraction(Number(e.target.value) / 100);
@@ -49,7 +51,7 @@ export function GlobalPlayerBar() {
               className={index === player.currentIndex ? 'global-player-chapter global-player-chapter-active' : 'global-player-chapter'}
               onClick={() => selectChapter(index)}
             >
-              <span>{chapter.chapterName ?? `Track ${index + 1}`}</span>
+              <span>{chapter.chapterName ?? t.track(index + 1)}</span>
               <span className="global-player-chapter-duration">{formatTime(chapter.durationMs / 1000)}</span>
             </button>
           ))}
@@ -57,15 +59,15 @@ export function GlobalPlayerBar() {
       )}
       <div className="global-player-controls">
         {audio.length > 1 && (
-          <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label="Previous chapter">
+          <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label={t.previousChapter}>
             <SkipBack size={18} fill="currentColor" />
           </button>
         )}
-        <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? 'Pause' : 'Play'}>
+        <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? t.pause : t.play}>
           {player.playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
         </button>
         {audio.length > 1 && (
-          <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label="Next chapter">
+          <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label={t.nextChapter}>
             <SkipForward size={18} fill="currentColor" />
           </button>
         )}
@@ -78,7 +80,7 @@ export function GlobalPlayerBar() {
               </span>
             )}
           </button>
-          <input type="range" min={0} max={100} value={progressPercent} onChange={seek} className="global-player-range" aria-label="Seek" />
+          <input type="range" min={0} max={100} value={progressPercent} onChange={seek} className="global-player-range" aria-label={t.seek} />
           <div className="global-player-times">
             <span>{formatTime(player.currentTime)}</span>
             <span>{formatTime(player.duration)}</span>

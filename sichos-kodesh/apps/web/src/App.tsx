@@ -2,17 +2,23 @@ import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
 import { usePlayer } from './player/usePlayer';
+import { LanguageProvider } from './i18n/LanguageProvider';
+import { useTranslation } from './i18n/useLanguage';
 import { GlobalPlayerBar } from './components/GlobalPlayerBar';
 import { YearPickerScreen } from './screens/YearPickerScreen';
+import { KviusYearsScreen } from './screens/KviusYearsScreen';
+import { BrowseYearsScreen } from './screens/BrowseYearsScreen';
 import { ThisWeekScreen } from './screens/ThisWeekScreen';
 import { YearBrowserScreen } from './screens/YearBrowserScreen';
 import { OccasionScreen } from './screens/OccasionScreen';
 import { FarbrengenScreen } from './screens/FarbrengenScreen';
+import { AllYearsThisWeekScreen } from './screens/AllYearsThisWeekScreen';
 import { RecordingsScreen } from './screens/RecordingsScreen';
 import { CategoryScreen } from './screens/CategoryScreen';
 import { PdfViewerScreen } from './screens/PdfViewerScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
-import { useFollowEntry, useBrowseEntry } from './routes/useResolvedEntry';
+import { AboutScreen } from './screens/AboutScreen';
+import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry } from './routes/useResolvedEntry';
 
 function ThisWeekRoute() {
   const { sourceYear } = useParams<{ sourceYear: string }>();
@@ -32,9 +38,14 @@ function BrowseOccasionRoute() {
   return <OccasionScreen resolved={useBrowseEntry()} />;
 }
 
+function ThisWeekAllYearsOccasionRoute() {
+  return <FarbrengenScreen resolved={useThisWeekAllYearsEntry()} />;
+}
+
 /** `resolved` can be null (a stale/bad URL) - RecordingsScreen/CategoryScreen/PdfViewerScreen all need a real entry, so fall back to "not found" rather than passing null through. */
 function NotFound() {
-  return <p className="gap-message">This page couldn't be found - the link may be out of date.</p>;
+  const { t } = useTranslation();
+  return <p className="gap-message">{t.pageNotFound}</p>;
 }
 
 function FollowRecordingsRoute() {
@@ -45,12 +56,20 @@ function BrowseRecordingsRoute() {
   const resolved = useBrowseEntry();
   return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
 }
+function ThisWeekAllYearsRecordingsRoute() {
+  const resolved = useThisWeekAllYearsEntry();
+  return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
+}
 function FollowCategoryRoute() {
   const resolved = useFollowEntry();
   return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
 }
 function BrowseCategoryRoute() {
   const resolved = useBrowseEntry();
+  return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
+}
+function ThisWeekAllYearsCategoryRoute() {
+  const resolved = useThisWeekAllYearsEntry();
   return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
 }
 function FollowPdfRoute() {
@@ -63,9 +82,18 @@ function BrowsePdfRoute() {
   const { driveFileId } = useParams<{ driveFileId: string }>();
   return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
 }
+function ThisWeekAllYearsPdfRoute() {
+  const resolved = useThisWeekAllYearsEntry();
+  const { driveFileId } = useParams<{ driveFileId: string }>();
+  return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
+}
 
 function Home() {
   return <YearPickerScreen targetYear={currentHebrewYear()} />;
+}
+
+function KviusYearsRoute() {
+  return <KviusYearsScreen targetYear={currentHebrewYear()} />;
 }
 
 /**
@@ -83,7 +111,10 @@ function AppContent() {
     <div className={player.playlist ? 'app-content has-player' : 'app-content'}>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/kvius" element={<KviusYearsRoute />} />
+        <Route path="/years" element={<BrowseYearsScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
+        <Route path="/about" element={<AboutScreen />} />
 
         <Route path="/follow/:sourceYear" element={<ThisWeekRoute />} />
         <Route path="/follow/:sourceYear/:occasionId" element={<FollowOccasionRoute />} />
@@ -97,6 +128,12 @@ function AppContent() {
         <Route path="/browse/:hebrewYear/:occasionId/category/:section" element={<BrowseCategoryRoute />} />
         <Route path="/browse/:hebrewYear/:occasionId/pdf/:driveFileId" element={<BrowsePdfRoute />} />
 
+        <Route path="/this-week-all-years" element={<AllYearsThisWeekScreen />} />
+        <Route path="/this-week-all-years/:hebrewYear/:occasionId" element={<ThisWeekAllYearsOccasionRoute />} />
+        <Route path="/this-week-all-years/:hebrewYear/:occasionId/recordings" element={<ThisWeekAllYearsRecordingsRoute />} />
+        <Route path="/this-week-all-years/:hebrewYear/:occasionId/category/:section" element={<ThisWeekAllYearsCategoryRoute />} />
+        <Route path="/this-week-all-years/:hebrewYear/:occasionId/pdf/:driveFileId" element={<ThisWeekAllYearsPdfRoute />} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
@@ -106,10 +143,12 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <PlayerProvider>
-        <AppContent />
-        <GlobalPlayerBar />
-      </PlayerProvider>
+      <LanguageProvider>
+        <PlayerProvider>
+          <AppContent />
+          <GlobalPlayerBar />
+        </PlayerProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

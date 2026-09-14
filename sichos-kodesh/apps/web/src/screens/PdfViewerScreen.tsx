@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
 import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
+import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
 
 interface Props {
@@ -23,12 +24,20 @@ type LoadState = { status: 'loading'; percent: number | null } | { status: 'read
  * `key={driveFileId}` so switching to a different PDF remounts fresh
  * (a clean `useState` initial value) rather than needing this effect to
  * reset state back to "loading" itself.
+ *
+ * At rest, the page sits in a comfortable reading-width column with side
+ * padding, same as every other screen; once the user pinch-zooms (see
+ * renderPdf.ts's `onZoomChange`), the `.zoomed` class drops the width cap
+ * and side padding so panning around a zoomed page has the full screen to
+ * work with instead of being clipped to that column.
  */
 export function PdfViewerScreen({ resolved }: Props) {
+  const { t } = useTranslation();
   const { driveFileId } = useParams<{ driveFileId: string }>();
   const pdf = resolved.entry.pdfs.find((p) => p.driveFileId === driveFileId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null });
+  const [zoomed, setZoomed] = useState(false);
 
   // The browser's own pinch-zoom always zooms the whole visual viewport -
   // header, back link, everything - not just the PDF, which is exactly
@@ -49,6 +58,7 @@ export function PdfViewerScreen({ resolved }: Props) {
   useEffect(() => {
     if (!pdf) return;
     let cancelled = false;
+    setZoomed(false);
 
     (async () => {
       try {
@@ -57,7 +67,9 @@ export function PdfViewerScreen({ resolved }: Props) {
         });
         if (cancelled || !containerRef.current) return;
         containerRef.current.innerHTML = '';
-        await renderPdfPages(doc, containerRef.current, () => cancelled);
+        await renderPdfPages(doc, containerRef.current, () => cancelled, (nowZoomed) => {
+          if (!cancelled) setZoomed(nowZoomed);
+        });
         if (!cancelled) setState({ status: 'ready' });
       } catch (error) {
         if (!cancelled) setState({ status: 'error', message: String(error) });
@@ -73,21 +85,21 @@ export function PdfViewerScreen({ resolved }: Props) {
   if (!pdf) {
     return (
       <div className="pdf-viewer-screen">
-        <BackLink to={resolved.basePath}>back</BackLink>
-        <p className="gap-message">This PDF couldn't be found - the link may be out of date.</p>
+        <BackLink to={resolved.basePath}>{t.back}</BackLink>
+        <p className="gap-message">{t.pdfNotFound}</p>
       </div>
     );
   }
 
   return (
-    <div className="pdf-viewer-screen">
+    <div className={zoomed ? 'pdf-viewer-screen zoomed' : 'pdf-viewer-screen'}>
       <div className="pdf-viewer-header">
-        <BackLink to={resolved.basePath}>back</BackLink>
+        <BackLink to={resolved.basePath}>{t.back}</BackLink>
         <p className="pdf-viewer-title">{pdf.label}</p>
       </div>
 
-      {state.status === 'loading' && <p className="subtitle">Opening PDF{state.percent != null ? `... ${state.percent}%` : '...'}</p>}
-      {state.status === 'error' && <p className="gap-message">Couldn't load this PDF: {state.message}</p>}
+      {state.status === 'loading' && <p className="subtitle">{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</p>}
+      {state.status === 'error' && <p className="gap-message">{t.pdfLoadError(state.message)}</p>}
 
       <div ref={containerRef} className="pdf-pages" />
     </div>

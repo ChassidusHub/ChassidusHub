@@ -1,6 +1,7 @@
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { OccasionDetail } from '../components/OccasionDetail';
 import { BackLink } from '../components/BackLink';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
   resolved: ResolvedEntry | null;
@@ -8,11 +9,13 @@ interface Props {
 
 /** Shared by the "follow" and "browse" routes - only the entry-resolution differs (see routes/useResolvedEntry.ts), the page itself doesn't care which. */
 export function OccasionScreen({ resolved }: Props) {
+  const { t } = useTranslation();
+
   if (!resolved) {
     return (
       <div className="screen">
-        <BackLink to="/">home</BackLink>
-        <p className="gap-message">This occasion couldn't be found - the link may be out of date.</p>
+        <BackLink to="/">{t.home}</BackLink>
+        <p className="gap-message">{t.occasionNotFound}</p>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import { Pause, Play } from 'lucide-react';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { usePlayer } from '../player/usePlayer';
+import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
 
 interface Props {
@@ -24,6 +25,7 @@ function formatTime(seconds: number): string {
  * occasion page itself.
  */
 export function RecordingsScreen({ resolved }: Props) {
+  const { t } = useTranslation();
   const player = usePlayer();
   const { entry, basePath } = resolved;
 
@@ -31,9 +33,9 @@ export function RecordingsScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={basePath}>back</BackLink>
+      <BackLink to={basePath}>{t.back}</BackLink>
       <h1>{entry.occasionLabel}</h1>
-      <p className="subtitle">Recordings</p>
+      <p className="subtitle">{t.recordings}</p>
 
       <ul className="playlist">
         {entry.audio.map((chapter, index) => {
@@ -47,7 +49,7 @@ export function RecordingsScreen({ resolved }: Props) {
                 <span className="playlist-row-icon">
                   {isActive && player.playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
                 </span>
-                <span className="playlist-row-name">{chapter.chapterName ?? `Track ${index + 1}`}</span>
+                <span className="playlist-row-name">{chapter.chapterName ?? t.track(index + 1)}</span>
                 <span className="playlist-row-duration">{formatTime(chapter.durationMs / 1000)}</span>
               </button>
             </li>

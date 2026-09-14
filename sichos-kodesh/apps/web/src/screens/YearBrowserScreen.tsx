@@ -1,28 +1,12 @@
 import { Link } from 'react-router-dom';
-import { mafteiachMonthName } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
+import { groupByMonth } from '../utils/groupByMonth';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
   hebrewYear: number;
-}
-
-interface MonthGroup {
-  month: string;
-  entries: CatalogEntry[];
-}
-
-/** Entries are already sorted chronologically (see buildCatalog) - grouping consecutive same-month runs is enough. */
-function groupByMonth(entries: CatalogEntry[]): MonthGroup[] {
-  const groups: MonthGroup[] = [];
-  for (const entry of entries) {
-    const month = mafteiachMonthName(entry.hebrewDate);
-    const last = groups[groups.length - 1];
-    if (last && last.month === month) last.entries.push(entry);
-    else groups.push({ month, entries: [entry] });
-  }
-  return groups;
 }
 
 /**
@@ -34,6 +18,7 @@ function groupByMonth(entries: CatalogEntry[]): MonthGroup[] {
  * Tapping a row navigates to /browse/:hebrewYear/:occasionId.
  */
 export function YearBrowserScreen({ hebrewYear }: Props) {
+  const { t } = useTranslation();
   // Only occasions with something real to download - an empty entry (mafteiach
   // indexed the occasion but nothing was resolved for it) is not worth a dead-end row.
   const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
@@ -41,11 +26,9 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to="/">change year</BackLink>
-      <h1>Hebrew year {hebrewYear}</h1>
-      <p className="subtitle">
-        {entries.length} occasion{entries.length === 1 ? '' : 's'} indexed
-      </p>
+      <BackLink to="/">{t.changeYear}</BackLink>
+      <h1>{t.hebrewYearTitle(hebrewYear)}</h1>
+      <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       {monthGroups.map((group) => (
         <div key={group.month}>
           <p className="category-header">{group.month}</p>
@@ -55,9 +38,9 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
                 <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
                   <span className="year-row-year">{entry.occasionLabel}</span>
                   <span className="year-row-distance">
-                    {entry.audio.length > 0 ? 'audio' : ''}
+                    {entry.audio.length > 0 ? t.audioLabel : ''}
                     {entry.audio.length > 0 && entry.pdfs.length > 0 ? ' + ' : ''}
-                    {entry.pdfs.length > 0 ? `${entry.pdfs.length} pdf${entry.pdfs.length === 1 ? '' : 's'}` : ''}
+                    {entry.pdfs.length > 0 ? t.pdfsLabel(entry.pdfs.length) : ''}
                   </span>
                 </Link>
               </li>
