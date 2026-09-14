@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Music } from 'lucide-react';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
+import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { groupByMonth } from '../utils/groupByMonth';
 import { hebrewDayMonthLabel } from '../utils/formatHebrewDate';
+import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -27,6 +28,7 @@ interface Props {
  */
 export function ThisWeekScreen({ sourceYear }: Props) {
   const { t, language } = useTranslation();
+  const progressMap = useProgressMap();
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
   const yearEntries: CatalogEntry[] = useMemo(
     () => (catalog[sourceYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0),
@@ -47,7 +49,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
           <li key={occasion.entry.occasionId}>
             <Link className="year-row" to={`/follow/${sourceYear}/${occasion.entry.occasionId}`}>
               <span className="year-row-main">
-                {occasion.entry.audio.length > 0 && <Music size={14} className="year-row-audio-icon" aria-label={t.hasRecordingLabel} />}
+                <OccasionRowIcon entry={occasion.entry} progressMap={progressMap} />
                 <span className="year-row-year">{occasion.entry.occasionLabel}</span>
               </span>
               <span className="year-row-distance">{hebrewDayMonthLabel(occasion.hebrewDate, language)}</span>
@@ -67,7 +69,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
                   <li key={entry.occasionId}>
                     <Link className="year-row" to={`/follow/${sourceYear}/${entry.occasionId}`}>
                       <span className="year-row-main">
-                        {entry.audio.length > 0 && <Music size={14} className="year-row-audio-icon" aria-label={t.hasRecordingLabel} />}
+                        <OccasionRowIcon entry={entry} progressMap={progressMap} />
                         <span className="year-row-year">{entry.occasionLabel}</span>
                       </span>
                     </Link>

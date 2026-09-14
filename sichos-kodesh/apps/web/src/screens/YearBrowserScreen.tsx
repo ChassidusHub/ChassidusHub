@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Music } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
+import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { groupByMonth } from '../utils/groupByMonth';
+import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
  */
 export function YearBrowserScreen({ hebrewYear }: Props) {
   const { t, language } = useTranslation();
+  const progressMap = useProgressMap();
   // Only occasions with something real to download - an empty entry (mafteiach
   // indexed the occasion but nothing was resolved for it) is not worth a dead-end row.
   const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
@@ -38,7 +40,7 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
               <li key={entry.occasionId}>
                 <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
                   <span className="year-row-main">
-                    {entry.audio.length > 0 && <Music size={14} className="year-row-audio-icon" aria-label={t.hasRecordingLabel} />}
+                    <OccasionRowIcon entry={entry} progressMap={progressMap} />
                     <span className="year-row-year">{entry.occasionLabel}</span>
                   </span>
                 </Link>

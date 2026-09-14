@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { audioUrl } from '../download/download';
 import { forMediaSession } from '../utils/hebrewPunctuation';
+import { recordChapterProgress } from './progressStore';
 import { PlayerContext } from './playerContext';
 import type { Playlist, PlayerContextValue, PlayerState } from './playerContext';
 
@@ -138,6 +139,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [state.playlist, state.currentIndex, state.currentTime]);
 
+  // Per-chapter listening progress for the home page's Continue section
+  // (see player/progressStore.ts) - same throttling rationale as the
+  // position persistence above, just a separate localStorage key/schema.
+  const lastProgressRecordRef = useRef(0);
+  useEffect(() => {
+    if (!state.playlist || state.duration <= 0) return;
+    const now = Date.now();
+    if (now - lastProgressRecordRef.current < 3000) return;
+    lastProgressRecordRef.current = now;
+    recordChapterProgress(state.playlist.hebrewYear, state.playlist.occasionId, state.playlist.title, state.currentIndex, state.currentTime, state.duration);
+  }, [state.playlist, state.currentIndex, state.currentTime, state.duration]);
+
   // Toggling the `autoPlay` prop on an already-mounted <audio> element does
   // not reliably (re)start playback across browsers once its `src` has
   // changed - only an explicit `.play()` call does, so chapter/playlist
@@ -206,7 +219,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           src={audioUrl(current.workerFilename)}
           onPlay={() => setState((s) => ({ ...s, playing: true }))}
           onPause={() => setState((s) => ({ ...s, playing: false }))}
-          onEnded={next}
+          onEnded={() => {
+            // Record this chapter as fully played explicitly - the last
+            // throttled onTimeUpdate tick before "ended" fires can still
+            // be a few seconds short of the real duration, which would
+            // otherwise leave a just-finished chapter just under the
+            // finished threshold.
+            if (state.playlist && state.duration > 0) {
+              recordChapterProgress(state.playlist.hebrewYear, state.playlist.occasionId, state.playlist.title, state.currentIndex, state.duration, state.duration);
+            }
+            next();
+          }}
           // Read from `e.currentTarget` before calling setState, not inside the
           // updater function - React (StrictMode especially) can invoke a state
           // updater more than once, by which point the synthetic event's

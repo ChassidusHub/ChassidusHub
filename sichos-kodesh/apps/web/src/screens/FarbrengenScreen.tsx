@@ -4,6 +4,7 @@ import type { CatalogPdf } from '@sichos-kodesh/catalog';
 import { isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { usePlayer } from '../player/usePlayer';
+import { useRecordVisit } from '../player/useRecordVisit';
 import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
@@ -39,6 +40,7 @@ export function FarbrengenScreen({ resolved }: Props) {
   const { t } = useTranslation();
   const player = usePlayer();
   const [autoplayOnHanacha] = useAutoplayOnHanacha();
+  useRecordVisit(resolved?.entry);
 
   if (!resolved) {
     return (
@@ -70,7 +72,7 @@ export function FarbrengenScreen({ resolved }: Props) {
     if (entry.audio.length === 0) return;
     const differentRecordingPlaying = player.playing && player.playlist !== null && player.playlist.title !== entry.occasionLabel;
     if (differentRecordingPlaying && !autoplayOnHanacha) return;
-    player.play({ title: entry.occasionLabel, audio: entry.audio }, 0);
+    player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, 0);
   }
 
   return (

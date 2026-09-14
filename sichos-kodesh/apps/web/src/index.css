@@ -206,6 +206,39 @@ h1 {
   color: var(--accent);
 }
 
+.finished-icon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+/* Continue section (home page) - a Spotify-style "pick up where you left
+   off" row: the label row stays exactly like every other occasion row,
+   with a thin progress track added below it rather than beside it, so
+   `.year-row`'s own `flex-direction: row`/`justify-content: space-between`
+   are overridden here rather than reused. */
+.continue-row {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.continue-progress-track {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.continue-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
 /* A long occasion label (some run to a full descriptive sentence) stays on
    one line with an ellipsis rather than wrapping - keeps every row the
    same height and, combined with `text-align: start` above, is what

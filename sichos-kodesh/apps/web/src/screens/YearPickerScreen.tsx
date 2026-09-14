@@ -3,6 +3,7 @@ import { Settings } from 'lucide-react';
 import { currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
+import { ContinueSection } from '../components/ContinueSection';
 import { parshaLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -49,6 +50,8 @@ export function YearPickerScreen({ targetYear }: Props) {
       <Link className="category-row" to="/years">
         <span className="category-row-name">{t.browseAnyYear}</span>
       </Link>
+
+      <ContinueSection />
     </div>
   );
 }
