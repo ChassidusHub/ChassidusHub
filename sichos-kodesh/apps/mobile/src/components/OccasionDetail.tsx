@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from '@sichos-kodesh/catalog';
 import { PDF_SECTION_LABELS, PDF_SECTION_ORDER, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
-import { downloadAudio } from '../download/download';
-import { loadLocalSound } from '../audio/playLocalFile';
+import { loadStreamingOrCachedSound } from '../audio/loadStreamingOrCachedSound';
 import type { LoadedSound } from '../audio/playLocalFile';
 import { useEditionPreference } from '../settings/editionPreference';
 
-type AudioState = { status: 'idle' } | { status: 'downloading'; percent: number } | { status: 'ready'; sound: LoadedSound; playing: boolean };
+type AudioState = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; sound: LoadedSound; playing: boolean };
 
 interface Props {
   entry: CatalogEntry;
@@ -40,25 +39,25 @@ function groupPdfsBySection(pdfs: CatalogPdf[]): Array<[PdfSection, CatalogPdf[]
  * Tapping "Read" doesn't render the viewer here - it calls `onOpenPdf` so
  * the *parent screen* switches to it full-screen instead of stacking it
  * underneath the parent's own header/back-button.
+ *
+ * Tapping "Play" streams from the Worker directly (see
+ * loadStreamingOrCachedSound) rather than downloading the whole file
+ * first - a real 20-40+ minute recording made "wait for the full download
+ * before hearing anything" a genuinely bad wait.
  */
 export function OccasionDetail({ entry, onOpenPdf }: Props) {
   const [audioStates, setAudioStates] = useState<Record<string, AudioState>>({});
   const [editionPreference] = useEditionPreference();
 
-  async function handleDownloadAudio(audio: CatalogAudio) {
-    setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'downloading', percent: 0 } }));
+  async function handlePlayAudio(audio: CatalogAudio) {
+    setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'loading' } }));
     try {
-      const path = await downloadAudio(audio.workerFilename, ({ received, total }) =>
-        setAudioStates((prev) => ({
-          ...prev,
-          [audio.workerFilename]: { status: 'downloading', percent: total > 0 ? Math.round((received / total) * 100) : 0 },
-        })),
-      );
-      const sound = await loadLocalSound(path);
-      setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'ready', sound, playing: false } }));
+      const sound = await loadStreamingOrCachedSound(audio.workerFilename);
+      sound.play();
+      setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'ready', sound, playing: true } }));
     } catch (error) {
       setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'idle' } }));
-      Alert.alert('Download failed', String(error));
+      Alert.alert("Couldn't play audio", String(error));
     }
   }
 
@@ -88,11 +87,11 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
               <View key={audio.workerFilename} style={styles.card}>
                 {chapterLabel && <Text style={styles.pdfLabel}>{chapterLabel}</Text>}
                 {state.status === 'idle' && (
-                  <Pressable style={styles.button} onPress={() => handleDownloadAudio(audio)}>
-                    <Text style={styles.buttonText}>Download audio</Text>
+                  <Pressable style={styles.button} onPress={() => handlePlayAudio(audio)}>
+                    <Text style={styles.buttonText}>Play</Text>
                   </Pressable>
                 )}
-                {state.status === 'downloading' && <Text>Downloading... {state.percent}%</Text>}
+                {state.status === 'loading' && <Text>Loading...</Text>}
                 {state.status === 'ready' && (
                   <Pressable style={styles.button} onPress={() => togglePlayback(audio)}>
                     <Text style={styles.buttonText}>{state.playing ? 'Pause' : 'Play'}</Text>

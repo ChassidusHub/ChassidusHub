@@ -1,5 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist';
 // Vite's `?url` import gives the worker script a real, fetchable URL in the
 // built bundle - pdf.js needs its own worker thread even when we only ever
 // call it from one place, it isn't optional.
@@ -38,43 +38,101 @@ export function loadPdfDocument(data: ArrayBuffer): Promise<PDFDocumentProxy> {
   }).promise;
 }
 
+// Real device pixel ratios run past 3 on plenty of Android phones. Each
+// canvas's backing-store memory scales with the *square* of this factor
+// (width x height x 4 bytes/pixel), so left uncapped, a multi-page
+// document's canvases can add up to hundreds of MB to a mobile browser
+// tab - a real, reproduced cause of the tab crashing outright ("Aw,
+// Snap!"), not just a slowdown. 2x already reads sharp; capping here is
+// the same tradeoff every native app makes rather than rendering at full
+// panel resolution for offscreen content.
+const MAX_DPR = 2;
+
 /**
- * Renders every page of an already-loaded PDF into freshly-created
- * `<canvas>` elements appended to `container`, one page at a time (so the
- * first page appears as soon as it's ready rather than only once the
- * whole document is rendered) - scaled to the container's width so pages
- * read naturally when scrolled through on a phone-width screen.
+ * Renders a PDF's pages lazily, one canvas per page, as they scroll near
+ * the viewport - not all of them upfront. A page far off-screen has its
+ * canvas released back to a same-sized placeholder (freeing its backing
+ * -store memory) rather than staying resident forever; scrolling back to
+ * it re-renders on demand. This, together with the `MAX_DPR` cap above,
+ * is what actually keeps a real multi-page document from crashing a
+ * mobile tab - rendering every page unconditionally (even before this
+ * had capped DPR) kept every canvas alive for the life of the screen.
  *
- * Rendered at `devicePixelRatio` (canvas backing-store resolution) but
- * *displayed* at the CSS/layout size via `canvas.style.width/height` -
- * without this a canvas sized for CSS pixels reads visibly blurry on any
- * high-DPI (e.g. Retina) screen, which is real, reported behavior
- * ("sometimes it does load but in low quality"), not a hypothetical.
+ * Resolves once the first page has rendered (so the screen has real
+ * content to show), not once every page has - the rest render as the
+ * user scrolls. `isCancelled` doubles as the teardown signal: once it
+ * returns true the IntersectionObserver disconnects itself on its next
+ * callback, so callers don't need to hold a separate handle to it.
  */
 export async function renderPdfPages(
   doc: PDFDocumentProxy,
   container: HTMLElement,
   isCancelled: () => boolean,
 ): Promise<void> {
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+  const containerWidth = container.clientWidth || 400;
+
+  const wrappers: HTMLDivElement[] = [];
+  const viewports: PageViewport[] = [];
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
     if (isCancelled()) return;
     const page = await doc.getPage(pageNum);
     const unscaledViewport = page.getViewport({ scale: 1 });
-    const containerWidth = container.clientWidth || 400;
     const cssScale = containerWidth / unscaledViewport.width;
     const viewport = page.getViewport({ scale: cssScale * dpr });
+    viewports.push(viewport);
+
+    // Sized up front (before any canvas exists) so the container's total
+    // scroll height is correct immediately - pages rendering in later
+    // doesn't shift the ones already on screen.
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pdf-page';
+    wrapper.style.width = `${containerWidth}px`;
+    wrapper.style.height = `${viewport.height / dpr}px`;
+    container.appendChild(wrapper);
+    wrappers.push(wrapper);
+  }
+
+  async function renderInto(index: number): Promise<void> {
+    const wrapper = wrappers[index];
+    const viewport = viewports[index];
+    if (!wrapper || !viewport || isCancelled() || wrapper.firstChild) return;
+    const page = await doc.getPage(index + 1);
+    if (isCancelled()) return;
 
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-    canvas.style.width = `${containerWidth}px`;
-    canvas.style.height = `${viewport.height / dpr}px`;
-    canvas.className = 'pdf-page';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
     const ctx = canvas.getContext('2d');
-    if (!ctx) continue;
-    if (isCancelled()) return;
-    container.appendChild(canvas);
+    if (!ctx) return;
+    wrapper.appendChild(canvas);
     await page.render({ canvas, viewport }).promise;
   }
+
+  function release(index: number): void {
+    wrappers[index]?.replaceChildren();
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (isCancelled()) {
+        observer.disconnect();
+        return;
+      }
+      for (const entry of entries) {
+        const index = wrappers.indexOf(entry.target as HTMLDivElement);
+        if (index === -1) continue;
+        if (entry.isIntersecting) void renderInto(index);
+        else release(index);
+      }
+    },
+    // Keeps roughly a screen's worth of pages rendered ahead/behind the
+    // visible area, so scrolling doesn't visibly outrun rendering.
+    { rootMargin: '100% 0px' },
+  );
+  wrappers.forEach((wrapper) => observer.observe(wrapper));
+
+  await renderInto(0);
 }

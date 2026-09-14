@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Pause, Play } from 'lucide-react';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { usePlayer } from '../player/usePlayer';
+import { BackLink } from '../components/BackLink';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -30,9 +31,7 @@ export function RecordingsScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <Link className="back-link" to={basePath}>
-        {'< back'}
-      </Link>
+      <BackLink to={basePath}>back</BackLink>
       <h1>{entry.occasionLabel}</h1>
       <p className="subtitle">Recordings</p>
 
@@ -45,7 +44,9 @@ export function RecordingsScreen({ resolved }: Props) {
                 className={isActive ? 'playlist-row playlist-row-active' : 'playlist-row'}
                 onClick={() => player.play({ title: entry.occasionLabel, audio: entry.audio }, index)}
               >
-                <span className="playlist-row-icon">{isActive && player.playing ? '⏸' : '▶'}</span>
+                <span className="playlist-row-icon">
+                  {isActive && player.playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+                </span>
                 <span className="playlist-row-name">{chapter.chapterName ?? `Track ${index + 1}`}</span>
                 <span className="playlist-row-duration">{formatTime(chapter.durationMs / 1000)}</span>
               </button>

@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { OccasionDetail } from '../components/OccasionDetail';
+import { BackLink } from '../components/BackLink';
 
 interface Props {
   resolved: ResolvedEntry | null;
@@ -11,9 +11,7 @@ export function OccasionScreen({ resolved }: Props) {
   if (!resolved) {
     return (
       <div className="screen">
-        <Link className="back-link" to="/">
-          {'< home'}
-        </Link>
+        <BackLink to="/">home</BackLink>
         <p className="gap-message">This occasion couldn't be found - the link may be out of date.</p>
       </div>
     );
@@ -23,9 +21,7 @@ export function OccasionScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <Link className="back-link" to={backPath}>
-        {backLabel}
-      </Link>
+      <BackLink to={backPath}>{backLabel}</BackLink>
       <h1>{entry.occasionLabel}</h1>
       <p className="subtitle">{subtitle}</p>
       <OccasionDetail entry={entry} basePath={resolved.basePath} />

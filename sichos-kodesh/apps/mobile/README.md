@@ -41,17 +41,28 @@ Built and working:
   a PDF matching the user's edition preference comes first) rather than
   one flat pile of buttons.
 - Real downloads through `services/media-proxy`'s `/jem-audio/:filename`
-  and `/drive/:fileId` routes (`src/download/download.ts`), play/pause via
-  `react-native-sound`, PDFs rendered directly in-app via `react-native-pdf`
-  (`src/screens/PdfViewerScreen.tsx`) rather than handed off to the OS's own
-  viewer - so an occasion's own recording can keep playing in a persistent
-  bottom bar (`BottomAudioPlayer`) while its pages are scrolled through. A
-  farbrengen is usually several separate recordings, not one (real
-  examples run to 8-10: a few sichos, a maamar, niggunim between them),
-  so `BottomAudioPlayer` plays through them as real chapters,
+  and `/drive/:fileId` routes (`src/download/download.ts`), PDFs rendered
+  directly in-app via `react-native-pdf` (`src/screens/PdfViewerScreen.tsx`)
+  rather than handed off to the OS's own viewer - so an occasion's own
+  recording can keep playing in a persistent bottom bar
+  (`BottomAudioPlayer`) while its pages are scrolled through. A farbrengen
+  is usually several separate recordings, not one (real examples run to
+  8-10: a few sichos, a maamar, niggunim between them), so
+  `BottomAudioPlayer` plays through them as real chapters,
   Spotify/YouTube-style: prev/next skip, an expandable chapter list with
   each recording's real name (e.g. "Sicha 1", "Ma'amar") and duration, and
   auto-advance into the next chapter when one ends.
+- Audio playback (`src/audio/loadStreamingOrCachedSound.ts`) streams from
+  the Worker directly via `react-native-sound` (it, like the underlying
+  native `AVPlayer`/`MediaPlayer`, can load straight from a remote URL,
+  buffering progressively) rather than downloading a chapter's whole file
+  before playback can start - a real, reported problem for 20-40+ minute
+  recordings, not a hypothetical one. A background download to
+  `RNBlobUtil.fs.dirs.DocumentDir` (the app's persistent storage, not a
+  cache directory the OS can evict) still runs alongside the stream, so
+  the *next* play of that same chapter is instant and works fully
+  offline; if that cached copy already exists, it's used directly instead
+  of streaming at all.
 - A settings screen (`src/screens/SettingsScreen.tsx`) lets the user
   prefer one hanacha (Sichos Kodesh, Sefer HaSichos/HaMaamarim, or Toras
   Menachem - three real, distinct transcript series, persisted via

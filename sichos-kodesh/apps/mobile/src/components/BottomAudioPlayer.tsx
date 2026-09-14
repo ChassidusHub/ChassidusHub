@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CatalogAudio } from '@sichos-kodesh/catalog';
-import { downloadAudio } from '../download/download';
-import { loadLocalSound } from '../audio/playLocalFile';
+import { loadStreamingOrCachedSound } from '../audio/loadStreamingOrCachedSound';
 import type { LoadedSound } from '../audio/playLocalFile';
 
 interface Props {
   audio: CatalogAudio[];
 }
 
-type State = { status: 'downloading'; percent: number } | { status: 'ready'; sound: LoadedSound } | { status: 'error' };
+type State = { status: 'loading' } | { status: 'ready'; sound: LoadedSound } | { status: 'error' };
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -32,10 +31,15 @@ function formatTime(seconds: number): string {
  * (would need a native slider dependency to add real linking) - a live
  * elapsed/duration progress bar covers the actual ask ("scroll and listen
  * at once, and skip between chapters").
+ *
+ * Each chapter change streams from the Worker directly rather than
+ * downloading the whole file first (see loadStreamingOrCachedSound) - a
+ * real 20-40+ minute recording made "wait for the full download before
+ * hearing anything" a genuinely bad wait, not just a theoretical one.
  */
 export function BottomAudioPlayer({ audio }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [state, setState] = useState<State>({ status: 'downloading', percent: 0 });
+  const [state, setState] = useState<State>({ status: 'loading' });
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [showChapters, setShowChapters] = useState(false);
@@ -47,14 +51,11 @@ export function BottomAudioPlayer({ audio }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setState({ status: 'downloading', percent: 0 });
+    setState({ status: 'loading' });
     setCurrentTime(0);
     (async () => {
       try {
-        const path = await downloadAudio(current.workerFilename, ({ received, total }) => {
-          if (!cancelled) setState({ status: 'downloading', percent: total > 0 ? Math.round((received / total) * 100) : 0 });
-        });
-        const sound = await loadLocalSound(path);
+        const sound = await loadStreamingOrCachedSound(current.workerFilename);
         if (cancelled) {
           sound.release();
           return;
@@ -119,7 +120,7 @@ export function BottomAudioPlayer({ audio }: Props) {
         />
       )}
       <View style={styles.container}>
-        {state.status === 'downloading' && <Text style={styles.status}>Downloading... {state.percent}%</Text>}
+        {state.status === 'loading' && <Text style={styles.status}>Loading...</Text>}
         {state.status === 'error' && <Text style={styles.status}>Couldn't load audio</Text>}
         {state.status === 'ready' && (
           <>

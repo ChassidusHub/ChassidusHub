@@ -3,6 +3,7 @@ import type { PdfSection } from '@sichos-kodesh/catalog';
 import { PDF_SECTION_LABELS, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { useEditionPreference } from '../settings/editionPreference';
+import { BackLink } from '../components/BackLink';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -27,9 +28,7 @@ export function CategoryScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <Link className="back-link" to={basePath}>
-        {'< back'}
-      </Link>
+      <BackLink to={basePath}>back</BackLink>
       <h1>{section ? PDF_SECTION_LABELS[section] : ''}</h1>
       <p className="subtitle">{entry.occasionLabel}</p>
 
