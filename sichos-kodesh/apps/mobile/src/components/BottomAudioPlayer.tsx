@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CatalogAudio } from '@sichos-kodesh/catalog';
-import { loadStreamingOrCachedSound } from '../audio/loadStreamingOrCachedSound';
+import { loadCachedSound } from '../audio/loadCachedSound';
 import type { LoadedSound } from '../audio/playLocalFile';
 
 interface Props {
@@ -32,10 +32,11 @@ function formatTime(seconds: number): string {
  * elapsed/duration progress bar covers the actual ask ("scroll and listen
  * at once, and skip between chapters").
  *
- * Each chapter change streams from the Worker directly rather than
- * downloading the whole file first (see loadStreamingOrCachedSound) - a
- * real 20-40+ minute recording made "wait for the full download before
- * hearing anything" a genuinely bad wait, not just a theoretical one.
+ * Each chapter change downloads in full before playback starts (see
+ * loadCachedSound - a prior streaming-while-caching attempt raced its own
+ * background download for bandwidth and could get stuck after a skip), but
+ * silently - just "Loading...", no progress bar - and only once per
+ * chapter, since the downloaded copy is kept for next time.
  */
 export function BottomAudioPlayer({ audio }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -55,7 +56,7 @@ export function BottomAudioPlayer({ audio }: Props) {
     setCurrentTime(0);
     (async () => {
       try {
-        const sound = await loadStreamingOrCachedSound(current.workerFilename);
+        const sound = await loadCachedSound(current.workerFilename);
         if (cancelled) {
           sound.release();
           return;

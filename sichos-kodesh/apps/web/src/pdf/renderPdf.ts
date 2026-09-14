@@ -1,5 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { attachPdfPageZoom } from './pdfPageZoom';
+import type { ZoomablePage } from './pdfPageZoom';
 // Vite's `?url` import gives the worker script a real, fetchable URL in the
 // built bundle - pdf.js needs its own worker thread even when we only ever
 // call it from one place, it isn't optional.
@@ -69,6 +71,20 @@ export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; 
 const MAX_DPR = 2;
 
 /**
+ * A single boosted (currently pinch-zoomed) page's total resolution
+ * multiplier over its fit-width scale - generous, since only one page is
+ * ever boosted at a time (see pdfPageZoom.ts); the rest of the document
+ * stays at the MAX_DPR-capped fit-width render that already keeps a long
+ * document from crashing a mobile tab, so one extra higher-resolution
+ * canvas for the page actually being read doesn't reintroduce that risk.
+ */
+const MAX_BOOST_MULTIPLIER = 4;
+
+interface PageEntry extends ZoomablePage {
+  cssScale: number;
+}
+
+/**
  * Renders a PDF's pages lazily, one canvas per page, as they scroll near
  * the viewport - not all of them upfront. A page far off-screen has its
  * canvas released back to a same-sized placeholder (freeing its backing
@@ -77,6 +93,14 @@ const MAX_DPR = 2;
  * is what actually keeps a real multi-page document from crashing a
  * mobile tab - rendering every page unconditionally (even before this
  * had capped DPR) kept every canvas alive for the life of the screen.
+ *
+ * Also wires up `pdfPageZoom.ts`'s per-page pinch-zoom: a page pinched
+ * open re-renders at up to `MAX_BOOST_MULTIPLIER` its fit-width
+ * resolution once the gesture settles (real sharpness, not a stretched
+ * fit-width bitmap), and drops back to the standard fit-width render once
+ * it's no longer the zoomed page (a different page took over, it was
+ * pinched back down, or it scrolled far enough off-screen to be released
+ * by the `IntersectionObserver` below anyway).
  *
  * Resolves once the first page has rendered (so the screen has real
  * content to show), not once every page has - the rest render as the
@@ -92,34 +116,34 @@ export async function renderPdfPages(
   const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
   const containerWidth = container.clientWidth || 400;
 
-  const wrappers: HTMLDivElement[] = [];
-  const viewports: PageViewport[] = [];
+  const pages: PageEntry[] = [];
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
     if (isCancelled()) return;
     const page = await doc.getPage(pageNum);
     const unscaledViewport = page.getViewport({ scale: 1 });
     const cssScale = containerWidth / unscaledViewport.width;
-    const viewport = page.getViewport({ scale: cssScale * dpr });
-    viewports.push(viewport);
+    const fitViewport = page.getViewport({ scale: cssScale * dpr });
 
     // Sized up front (before any canvas exists) so the container's total
     // scroll height is correct immediately - pages rendering in later
     // doesn't shift the ones already on screen.
     const wrapper = document.createElement('div');
     wrapper.className = 'pdf-page';
-    wrapper.style.width = `${containerWidth}px`;
-    wrapper.style.height = `${viewport.height / dpr}px`;
+    const baseWidth = containerWidth;
+    const baseHeight = fitViewport.height / dpr;
+    wrapper.style.width = `${baseWidth}px`;
+    wrapper.style.height = `${baseHeight}px`;
     container.appendChild(wrapper);
-    wrappers.push(wrapper);
+    pages.push({ wrapper, baseWidth, baseHeight, cssScale });
   }
 
-  async function renderInto(index: number): Promise<void> {
-    const wrapper = wrappers[index];
-    const viewport = viewports[index];
-    if (!wrapper || !viewport || isCancelled() || wrapper.firstChild) return;
+  async function renderCanvasAtScale(index: number, scale: number): Promise<void> {
+    const entry = pages[index];
+    if (!entry || isCancelled()) return;
     const page = await doc.getPage(index + 1);
     if (isCancelled()) return;
 
+    const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
@@ -127,12 +151,19 @@ export async function renderPdfPages(
     canvas.style.height = '100%';
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    wrapper.appendChild(canvas);
+    entry.wrapper.replaceChildren(canvas);
     await page.render({ canvas, viewport }).promise;
   }
 
+  async function renderInto(index: number): Promise<void> {
+    const entry = pages[index];
+    if (!entry || isCancelled() || entry.wrapper.firstChild) return;
+    await renderCanvasAtScale(index, entry.cssScale * dpr);
+  }
+
   function release(index: number): void {
-    wrappers[index]?.replaceChildren();
+    pages[index]?.wrapper.replaceChildren();
+    zoom.resetIfZoomedOffscreen(index);
   }
 
   const observer = new IntersectionObserver(
@@ -142,7 +173,7 @@ export async function renderPdfPages(
         return;
       }
       for (const entry of entries) {
-        const index = wrappers.indexOf(entry.target as HTMLDivElement);
+        const index = pages.findIndex((p) => p.wrapper === entry.target);
         if (index === -1) continue;
         if (entry.isIntersecting) void renderInto(index);
         else release(index);
@@ -152,7 +183,21 @@ export async function renderPdfPages(
     // visible area, so scrolling doesn't visibly outrun rendering.
     { rootMargin: '100% 0px' },
   );
-  wrappers.forEach((wrapper) => observer.observe(wrapper));
+
+  const zoom = attachPdfPageZoom(pages, {
+    onSettle: (index, pinchScale) => {
+      const entry = pages[index];
+      if (!entry) return;
+      const boosted = Math.min((window.devicePixelRatio || 1) * pinchScale, MAX_BOOST_MULTIPLIER);
+      void renderCanvasAtScale(index, entry.cssScale * boosted);
+    },
+    onRelease: (index) => {
+      const entry = pages[index];
+      if (entry) void renderCanvasAtScale(index, entry.cssScale * dpr);
+    },
+  });
+
+  pages.forEach(({ wrapper }) => observer.observe(wrapper));
 
   await renderInto(0);
 }

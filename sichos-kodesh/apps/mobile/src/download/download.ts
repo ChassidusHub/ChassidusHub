@@ -6,12 +6,23 @@ export interface DownloadProgress {
   total: number;
 }
 
+/**
+ * Downloads to a `.part` path first, then moves it to the real destination
+ * only once the download has actually finished - a caller elsewhere
+ * treating "a file exists at the destination path" as "this is a complete,
+ * valid cached copy" (see loadCachedSound.ts) would otherwise be able to
+ * observe a partial file left behind by a download that was interrupted
+ * (app backgrounded, network dropped, the request errored) and try to play
+ * or open a truncated one, silently, on a later visit.
+ */
 async function downloadTo(url: string, localFilename: string, onProgress?: (p: DownloadProgress) => void): Promise<string> {
   const path = `${RNBlobUtil.fs.dirs.DocumentDir}/${localFilename}`;
-  const res = await RNBlobUtil.config({ path, overwrite: true })
+  const tempPath = `${path}.part`;
+  const res = await RNBlobUtil.config({ path: tempPath, overwrite: true })
     .fetch('GET', url)
     .progress({ interval: 250 }, (received, total) => onProgress?.({ received, total }));
-  return res.path();
+  await RNBlobUtil.fs.mv(res.path(), path);
+  return path;
 }
 
 /** Downloads one occasion's audio via services/media-proxy's /jem-audio/:filename route - never a direct CloudFront URL. */
