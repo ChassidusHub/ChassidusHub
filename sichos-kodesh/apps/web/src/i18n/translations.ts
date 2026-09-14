@@ -2,10 +2,6 @@ import type { PdfSection } from '@sichos-kodesh/catalog';
 
 export type Language = 'en' | 'he';
 
-function pluralHe(n: number, singular: string, plural: string): string {
-  return n === 1 ? singular : `${n} ${plural}`;
-}
-
 const en = {
   appTitle: 'Sichos Kodesh',
   settingsLabel: 'Settings',
@@ -22,8 +18,6 @@ const en = {
   hasRecordingLabel: 'Has a recording',
   allOfYear: (year: number) => `All of ${year}`,
   occasionsIndexed: (n: number) => `${n} occasion${n === 1 ? '' : 's'} indexed`,
-  audioLabel: 'audio',
-  pdfsLabel: (n: number) => `${n} pdf${n === 1 ? '' : 's'}`,
   hebrewYearTitle: (year: number) => `Hebrew year ${year}`,
   backToThisWeek: 'back to this week',
   backToYear: (year: number) => `back to ${year}`,
@@ -91,8 +85,6 @@ const he: typeof en = {
   hasRecordingLabel: 'יש הקלטה',
   allOfYear: (year: number) => `כל שנת ${year}`,
   occasionsIndexed: (n: number) => (n === 1 ? 'אירוע אחד מתועד' : `${n} אירועים מתועדים`),
-  audioLabel: 'שמע',
-  pdfsLabel: (n: number) => pluralHe(n, 'קובץ PDF אחד', 'קבצי PDF'),
   hebrewYearTitle: (year: number) => `שנה עברית ${year}`,
   backToThisWeek: 'חזרה לשבוע זה',
   backToYear: (year: number) => `חזרה לשנת ${year}`,

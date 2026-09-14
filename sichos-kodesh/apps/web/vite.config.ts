@@ -94,7 +94,19 @@ export default defineConfig({
             urlPattern: ({ url }) => url.hostname.endsWith('.workers.dev'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'media-proxy-cache',
+              // Renamed (was 'media-proxy-cache') to force every existing
+              // client to abandon its old cache and start fresh - a real,
+              // reported consequence of fixing the 206-poisoning bug below
+              // without this rename: a browser that had already cached a
+              // poisoned 206 entry *before* the fix shipped kept serving
+              // that exact stale entry forever afterward, since CacheFirst
+              // checks the cache before ever making a new request - the
+              // fix only stopped *new* entries from being poisoned, it did
+              // nothing for ones already sitting in Cache Storage under the
+              // same name. Bump this name again if the cache is ever
+              // poisoned by some other bug in the future, for the same
+              // reason.
+              cacheName: 'media-proxy-cache-v2',
               // 206 (Partial Content) must NOT be in this list, even though
               // workbox-range-requests' own `rangeRequests: true` needs a
               // *complete* cached response to slice from - a real,
