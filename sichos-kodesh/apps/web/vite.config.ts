@@ -95,7 +95,30 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'media-proxy-cache',
-              cacheableResponse: { statuses: [0, 200, 206] },
+              // 206 (Partial Content) must NOT be in this list, even though
+              // workbox-range-requests' own `rangeRequests: true` needs a
+              // *complete* cached response to slice from - a real,
+              // reproduced bug, not a theoretical one. An <audio> element's
+              // very first request for a fresh URL commonly carries its own
+              // `Range:` header (it doesn't wait for a full download before
+              // starting playback); with 206 allowed here, whatever small
+              // slice the Worker returned for *that* request got cached as
+              // if it were the entire file. Every later request - for a
+              // completely different byte range - then hit
+              // workbox-range-requests' `createPartialResponse`, which
+              // special-cases an already-206 cached response by returning
+              // it verbatim (see its own comment: "If we already have a
+              // 206, then just pass it through as-is"), regardless of what
+              // range was actually asked for - so the same first sliver of
+              // the file kept coming back forever. That matched exactly
+              // what got reported: a track's duration (readable from that
+              // first sliver alone) would show, but the audio itself never
+              // actually loaded. Dropping 206 here means a Range request
+              // against nothing cached yet is served live from the Worker
+              // every time (correct, if not offline-cacheable) instead of
+              // ever poisoning the cache with a partial file mistaken for
+              // a complete one.
+              cacheableResponse: { statuses: [0, 200] },
               rangeRequests: true,
               expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },

@@ -9,11 +9,13 @@ APK.
 
 This isn't a token "installable" gesture: the app shell (JS/CSS/catalog
 data) is precached by its service worker so it loads and runs with no
-network at all after the first visit, and once a recording/PDF has been
-fetched through `services/media-proxy` it's runtime-cached with a
-`CacheFirst` strategy plus Workbox's range-request support — so seeking
-within an already-downloaded audio file works offline too, matching what
-`apps/mobile` gets from a real local file.
+network at all after the first visit, and once a PDF has been fetched
+through `services/media-proxy` it's runtime-cached with a `CacheFirst`
+strategy plus Workbox's range-request support for fast re-opens. Audio
+isn't meaningfully cached this way in practice (see `vite.config.ts`'s
+comment for the real bug that forced that tradeoff) - real offline audio,
+matching what `apps/mobile` gets from a downloaded local file, is still an
+open item here.
 
 ## Structure
 
@@ -194,8 +196,27 @@ reached by clicking through the app.
   through their consumer instead of blocking on a full download first.
 - `vite.config.ts` — `vite-plugin-pwa` in `generateSW` mode: precaches the
   app shell, and runtime-caches media-proxy responses (`CacheFirst`,
-  `rangeRequests: true`, `cacheableResponse: { statuses: [0, 200, 206] }`)
-  so downloaded media survives offline and supports seeking.
+  `rangeRequests: true`) so a downloaded PDF survives offline and supports
+  fast re-opens. `cacheableResponse.statuses` deliberately excludes `206`
+  (Partial Content) - a real, reproduced bug, not a theoretical one: an
+  `<audio>` element's very first request for a fresh URL commonly carries
+  its own `Range:` header (it doesn't wait for a full download before
+  starting playback), so with `206` allowed, whatever small slice the
+  Worker returned for *that* request got cached as if it were the entire
+  file. Every later request for a different byte range then hit
+  `workbox-range-requests`' own documented behavior of returning an
+  already-206 cached response verbatim regardless of what range was
+  actually asked for - so the same first sliver of the file kept coming
+  back forever: a track's duration (readable from that sliver alone)
+  would show, but the audio itself never actually loaded. The tradeoff:
+  since real audio playback keeps making Range requests throughout, an
+  audio file effectively no longer gets cached by the service worker at
+  all in practice (every request now correctly falls through live to the
+  Worker instead of ever risking a poisoned cache) - real offline
+  audio needs its own proper download step, not this cache, and is
+  tracked separately as a still-open feature. PDF requests are unaffected
+  (`loadPdfDocument` sets `disableRange: true`, so they're never a Range
+  request that could hit this path either way).
 
 ## Development
 
