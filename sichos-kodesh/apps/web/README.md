@@ -130,7 +130,40 @@ reached by clicking through the app.
   scales with the *square* of its DPR, so rendering every page of a long
   document unconditionally at an uncapped (sometimes 3+) DPR could add
   hundreds of MB to a mobile tab; this was reproduced and fixed, not
-  assumed. `apps/web`'s `pdfjs-dist` version is pinned deliberately (see
+  assumed.
+- `src/pdf/pdfPageZoom.ts` — lets a user pinch-zoom a single page in place,
+  instead of the browser's native pinch gesture zooming the whole visual
+  viewport (header, back link, everything) - a real reported problem.
+  `PdfViewerScreen` disables native pinch-zoom (setting the page's
+  `<meta name="viewport">` to `user-scalable=no`) only while it's mounted,
+  restoring the original content on unmount, so every other screen keeps
+  normal pinch-to-zoom for accessibility. Zoom is per-page and exclusive -
+  only one page is ever enlarged at a time, matching how a document is
+  actually read (zoom in on one page's fine print, not the whole scroll).
+  Ending a pinch re-renders that page's canvas at up to `MAX_BOOST_MULTIPLIER`
+  its fit-width resolution (real sharpness instead of a stretched-out fit-
+  width bitmap - the "focused page loads a higher quality" ask); losing
+  focus - a different page gets pinched instead, this one's pinched back
+  down to 1x, or it scrolls far enough off-screen to be released by
+  `renderPdf.ts`'s own `IntersectionObserver` anyway - drops it straight
+  back to the standard fit-width render rather than keeping the boosted
+  canvas resident ("and delete if continued"). A one-finger drag on an
+  already-zoomed page only pans sideways once it's clearly more horizontal
+  than vertical; a vertical or diagonal drag is left completely alone (no
+  `preventDefault`, no style change) so scrolling down through the
+  document keeps working exactly as it does before anything is zoomed -
+  the "smart scroll" ask. `.pdf-page`'s `touch-action: pan-y` (index.css)
+  is what makes that reliable instead of racy: the browser is told upfront
+  to only ever natively handle *vertical* touch movement on the element,
+  so it never claims a horizontal drag as its own scroll gesture before
+  the JS here gets a chance to decide what it is. Verified against the
+  gesture logic in isolation (synthetic multi-pointer `PointerEvent`
+  sequences dispatched at a standalone harness, not a real touchscreen):
+  a pinch grows a page's own box (not the page/app around it), a vertical
+  drag never touches its transform, a horizontal drag does, starting a
+  pinch on a second page releases the first, and an off-screen reset never
+  fires a redundant re-render.
+- `apps/web`'s `pdfjs-dist` version is pinned deliberately (see
   `renderPdf.ts`'s comment) - below it is a real high-severity
   vulnerability, and every current version (patched or not) depends on
   `Map.prototype.getOrInsertComputed`, a very recently standardized JS

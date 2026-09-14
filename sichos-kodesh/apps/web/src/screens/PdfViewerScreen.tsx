@@ -30,6 +30,22 @@ export function PdfViewerScreen({ resolved }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null });
 
+  // The browser's own pinch-zoom always zooms the whole visual viewport -
+  // header, back link, everything - not just the PDF, which is exactly
+  // what pdfPageZoom.ts's per-page pinch-zoom is for instead. Disabling
+  // native pinch-zoom only while this screen is mounted (restored on
+  // unmount) is what makes a two-finger gesture here reach that code
+  // instead of the browser's own zoom; every other screen keeps normal
+  // pinch-to-zoom for accessibility.
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    const original = meta?.getAttribute('content') ?? null;
+    meta?.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+    return () => {
+      if (original != null) meta?.setAttribute('content', original);
+    };
+  }, []);
+
   useEffect(() => {
     if (!pdf) return;
     let cancelled = false;

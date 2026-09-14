@@ -393,13 +393,27 @@ h1 {
   gap: 16px;
 }
 
+.pdf-pages {
+  overflow-x: hidden;
+}
+
 .pdf-page {
-  max-width: 100%;
+  /* Width/height are set inline (renderPdf.ts) rather than capped here at
+     100% - a zoomed page is deliberately wider than its container, and
+     the parent's `overflow-x: hidden` (above) is what keeps that
+     contained instead of a `max-width` that would just cancel the zoom
+     out again. */
+  flex-shrink: 0;
   border-radius: 4px;
   border: 1px solid var(--border);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
   overflow: hidden;
   background: var(--card-bg);
+  /* Native touch handling on this element only ever pans vertically - a
+     pinch or a deliberate sideways drag (see pdfPageZoom.ts) is always
+     left for our own JS to interpret, never raced against the browser's
+     own gesture recognizer. */
+  touch-action: pan-y;
 }
 
 .pdf-page canvas {
