@@ -14,6 +14,11 @@ dev-dist
 .vercel
 *.local
 
+# Copied from node_modules/pdfjs-dist at dev/build time - see vite.config.ts's copyPdfAssets.
+public/pdf-wasm/
+public/pdf-cmaps/
+public/pdf-standard-fonts/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

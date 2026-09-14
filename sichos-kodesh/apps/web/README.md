@@ -40,14 +40,24 @@ within an already-downloaded audio file works offline too, matching what
   PDF matching the user's edition preference - see SettingsScreen below -
   comes first) rather than one flat pile of buttons.
 - `src/screens/PdfViewerScreen.tsx` — renders a PDF's pages directly in the
-  app via `pdfjs-dist` (canvas-per-page, scaled to fit) instead of handing
-  off to the browser's own viewer or a new tab, so `BottomAudioPlayer` can
-  keep an occasion's own recording playing in a persistent bar underneath
-  while its pages are scrolled through. `apps/web`'s `pdfjs-dist` version
-  is pinned deliberately (see `src/pdf/renderPdf.ts`'s comment) - below it
-  is a real high-severity vulnerability, above a certain point it depends
-  on a very recently standardized JS method not every current browser has
-  yet.
+  app via `pdfjs-dist` (canvas-per-page, scaled to fit, at `devicePixelRatio`
+  resolution so pages read sharp on high-DPI screens - a real, previously
+  reported "loads but in low quality" bug) instead of handing off to the
+  browser's own viewer or a new tab, so `BottomAudioPlayer` can keep an
+  occasion's own recording playing in a persistent bar underneath while its
+  pages are scrolled through. `apps/web`'s `pdfjs-dist` version is pinned
+  deliberately (see `src/pdf/renderPdf.ts`'s comment) - below it is a real
+  high-severity vulnerability, and every current version (patched or not)
+  depends on `Map.prototype.getOrInsertComputed`, a very recently
+  standardized JS method plenty of real browsers still don't have -
+  `src/polyfills.ts` supplies it when missing (confirmed as a real,
+  reproducible cause of "download but just show blank pages", not just a
+  test-tooling gap). Its wasm-backed image codecs (JBig2/JPEG2000 - used by
+  this dataset's scanned hagahos images), `cmaps/`, and `standard_fonts/`
+  are copied from `node_modules/pdfjs-dist` into `public/` at dev/build time
+  (`vite.config.ts`'s `copyPdfAssets`) since pdf.js fetches them by a
+  hardcoded filename rather than a normal JS import - without this, PDFs
+  with those embedded images silently render with the image missing.
 - `src/components/BottomAudioPlayer.tsx` — a farbrengen is usually several
   separate recordings, not one (real examples run to 8-10: a few sichos, a
   maamar, niggunim between them - see `packages/mafteiach-index`'s
