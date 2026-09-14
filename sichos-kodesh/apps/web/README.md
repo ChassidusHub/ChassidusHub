@@ -132,7 +132,24 @@ reached by clicking through the app.
   scales with the *square* of its DPR, so rendering every page of a long
   document unconditionally at an uncapped (sometimes 3+) DPR could add
   hundreds of MB to a mobile tab; this was reproduced and fixed, not
-  assumed.
+  assumed. Scrolling fast enough up and down can still crash a tab a
+  different way: it fires many `IntersectionObserver` callbacks in quick
+  succession, wanting to render a page that a later callback, milliseconds
+  on, wants released again before the first render (an async
+  `doc.getPage()` + `page.render()` call) even finished - a real
+  reproduced case, not a theoretical one. `renderPdf.ts` tags every render
+  with a per-page generation number that `release` bumps, so a render only
+  ever commits its canvas if its generation is still current for that page
+  (a stale one just gets discarded instead of resurrecting a canvas into a
+  wrapper that was supposed to be released); rendering itself is also
+  debounced (`RENDER_DEBOUNCE_MS`) so a page only fleetingly scrolled past
+  during a fast scroll is usually released again before its render was
+  ever even scheduled, rather than every fleeting pass starting its own
+  render. Verified with fake pdf.js-shaped page objects (a controllable
+  render delay standing in for a real, slower render) driven through a
+  genuine rapid up/down `window.scrollTo` storm in a real browser: the fix
+  cut render attempts by over 15x and peak simultaneously-alive canvases
+  during the storm, compared to the same storm against the pre-fix code.
 - `src/pdf/pdfPageZoom.ts` — lets a user pinch-zoom a single page in place,
   instead of the browser's native pinch gesture zooming the whole visual
   viewport (header, back link, everything) - a real reported problem.

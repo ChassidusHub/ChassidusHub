@@ -80,6 +80,19 @@ const MAX_DPR = 2;
  */
 const MAX_BOOST_MULTIPLIER = 4;
 
+/**
+ * Scrolling fast up and down repeatedly fires many IntersectionObserver
+ * callbacks in quick succession, each wanting to render a page that
+ * another callback, milliseconds later, wants released again before the
+ * first render even finished - a real reproduced crash, not a theoretical
+ * one. Delaying a *render* by this long (releases stay immediate, so
+ * memory is freed right away either way) means a page that's only
+ * fleetingly scrolled past during a fast scroll is usually released again
+ * before its render was ever scheduled, instead of every fleeting pass
+ * kicking off its own doc.getPage()/page.render() call.
+ */
+const RENDER_DEBOUNCE_MS = 120;
+
 interface PageEntry extends ZoomablePage {
   cssScale: number;
 }
@@ -107,6 +120,16 @@ interface PageEntry extends ZoomablePage {
  * user scrolls. `isCancelled` doubles as the teardown signal: once it
  * returns true the IntersectionObserver disconnects itself on its next
  * callback, so callers don't need to hold a separate handle to it.
+ *
+ * Every render is tagged with a per-page generation number that `release`
+ * bumps - a real, reproduced crash came from scrolling fast enough that a
+ * page's render was still in flight (an async `doc.getPage()` +
+ * `page.render()` call) when the same page scrolled back off-screen and
+ * got released; the stale render would then finish and re-attach its
+ * canvas to a wrapper that was supposed to be empty, and doing this
+ * repeatedly during fast up-and-down scrolling piled up canvases faster
+ * than the browser could reclaim their memory. A render only ever commits
+ * its canvas if its generation is still the current one for that page.
  */
 export async function renderPdfPages(
   doc: PDFDocumentProxy,
@@ -137,11 +160,14 @@ export async function renderPdfPages(
     pages.push({ wrapper, baseWidth, baseHeight, cssScale });
   }
 
-  async function renderCanvasAtScale(index: number, scale: number): Promise<void> {
+  const renderGeneration: number[] = pages.map(() => 0);
+  const pendingRenderTimers: Array<ReturnType<typeof setTimeout> | null> = pages.map(() => null);
+
+  async function renderCanvasAtScale(index: number, scale: number, generation: number): Promise<void> {
     const entry = pages[index];
-    if (!entry || isCancelled()) return;
+    if (!entry || isCancelled() || renderGeneration[index] !== generation) return;
     const page = await doc.getPage(index + 1);
-    if (isCancelled()) return;
+    if (isCancelled() || renderGeneration[index] !== generation) return;
 
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
@@ -151,17 +177,29 @@ export async function renderPdfPages(
     canvas.style.height = '100%';
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    try {
+      await page.render({ canvas, viewport }).promise;
+    } catch {
+      return; // Cancelled (e.g. pdf.js itself superseding this render) or failed - nothing to commit.
+    }
+    if (isCancelled() || renderGeneration[index] !== generation) return;
     entry.wrapper.replaceChildren(canvas);
-    await page.render({ canvas, viewport }).promise;
   }
 
-  async function renderInto(index: number): Promise<void> {
+  function renderInto(index: number): Promise<void> {
     const entry = pages[index];
-    if (!entry || isCancelled() || entry.wrapper.firstChild) return;
-    await renderCanvasAtScale(index, entry.cssScale * dpr);
+    if (!entry || isCancelled() || entry.wrapper.firstChild) return Promise.resolve();
+    const generation = ++renderGeneration[index]!;
+    return renderCanvasAtScale(index, entry.cssScale * dpr, generation);
   }
 
   function release(index: number): void {
+    const timer = pendingRenderTimers[index];
+    if (timer != null) {
+      clearTimeout(timer);
+      pendingRenderTimers[index] = null;
+    }
+    renderGeneration[index]!++;
     pages[index]?.wrapper.replaceChildren();
     zoom.resetIfZoomedOffscreen(index);
   }
@@ -175,8 +213,15 @@ export async function renderPdfPages(
       for (const entry of entries) {
         const index = pages.findIndex((p) => p.wrapper === entry.target);
         if (index === -1) continue;
-        if (entry.isIntersecting) void renderInto(index);
-        else release(index);
+        if (entry.isIntersecting) {
+          if (pendingRenderTimers[index] != null) continue;
+          pendingRenderTimers[index] = setTimeout(() => {
+            pendingRenderTimers[index] = null;
+            void renderInto(index);
+          }, RENDER_DEBOUNCE_MS);
+        } else {
+          release(index);
+        }
       }
     },
     // Keeps roughly a screen's worth of pages rendered ahead/behind the
@@ -189,11 +234,14 @@ export async function renderPdfPages(
       const entry = pages[index];
       if (!entry) return;
       const boosted = Math.min((window.devicePixelRatio || 1) * pinchScale, MAX_BOOST_MULTIPLIER);
-      void renderCanvasAtScale(index, entry.cssScale * boosted);
+      const generation = ++renderGeneration[index]!;
+      void renderCanvasAtScale(index, entry.cssScale * boosted, generation);
     },
     onRelease: (index) => {
       const entry = pages[index];
-      if (entry) void renderCanvasAtScale(index, entry.cssScale * dpr);
+      if (!entry) return;
+      const generation = ++renderGeneration[index]!;
+      void renderCanvasAtScale(index, entry.cssScale * dpr, generation);
     },
   });
 
