@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { thisWeekDays } from '@sichos-kodesh/catalog';
+import { resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
 import { findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
+import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
+import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
@@ -10,10 +12,18 @@ interface Props {
   targetYear: number;
 }
 
+/** Drops a candidate year that has nothing indexed for the current week at all - a kvius (or partial-week) match is only useful to offer as a pick if there's actually something to follow there; MIN_HISTORICAL_YEAR (5710) isn't otherwise special-cased, it's just usually the one this ends up excluding. Then sorted chronologically (oldest first) for display - `findMatchingYears`/`findPartialWeekMatches` return nearest-first, the right order for *finding* the best match, but the wrong order for reading a years list top to bottom. */
+function filterAndSortForDisplay(results: MatchingYearResult[], today: Date): MatchingYearResult[] {
+  return results
+    .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
+    .slice()
+    .sort((a, b) => a.hebrewYear - b.hebrewYear);
+}
+
 /**
  * Reached from the home screen's hero button - every kvius-matched year
- * (see kvius-engine's `findMatchingYears`, "sorted nearest-first"),
- * nearest first, shown as the primary list. Below it, a clearly-labeled
+ * (see kvius-engine's `findMatchingYears`) that actually has something
+ * indexed for the current week, oldest first. Below it, a clearly-labeled
  * secondary section lists years that are NOT a full kvius match but whose
  * *this-week* dates still happen to translate onto a real, matching week
  * there too (`findPartialWeekMatches`) - a weaker claim than a full kvius
@@ -26,8 +36,12 @@ interface Props {
  */
 export function KviusYearsScreen({ targetYear }: Props) {
   const { t, language } = useTranslation();
-  const matches = findMatchingYears(targetYear);
-  const partialMatches = useMemo(() => findPartialWeekMatches(targetYear, thisWeekDays(new Date())), [targetYear]);
+  const today = useMemo(() => new Date(), []);
+  const matches = useMemo(() => filterAndSortForDisplay(findMatchingYears(targetYear), today), [targetYear, today]);
+  const partialMatches = useMemo(
+    () => filterAndSortForDisplay(findPartialWeekMatches(targetYear, thisWeekDays(today)), today),
+    [targetYear, today],
+  );
 
   return (
     <div className="screen">

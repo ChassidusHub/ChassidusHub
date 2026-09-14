@@ -329,6 +329,42 @@ h1 {
   color: var(--accent);
 }
 
+/* ThisWeekScreen's previous/next-week stepper. */
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.week-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg);
+  border: none;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.week-nav-button:hover {
+  background: var(--card-hover);
+}
+
+.week-nav-reset {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
 /* Category buttons (an occasion's own page) and the recordings playlist */
 
 .category-list {
@@ -440,6 +476,27 @@ h1 {
 .playlist-row-active .playlist-row-name,
 .playlist-row-active .playlist-row-icon {
   color: var(--accent);
+}
+
+/* A chapter's own in-progress fill (RecordingsScreen) - a fixed-width
+   sliver rather than `.continue-progress-track`'s full-width bar, since it
+   sits inline between the chapter name and its duration in a horizontal
+   row instead of underneath a label in its own row. */
+.playlist-row-progress-track {
+  display: block;
+  flex-shrink: 0;
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.playlist-row-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
 }
 
 /* PDF viewer */

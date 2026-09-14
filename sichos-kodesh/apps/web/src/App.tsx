@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
 import { usePlayer } from './player/usePlayer';
@@ -13,7 +14,6 @@ import { YearBrowserScreen } from './screens/YearBrowserScreen';
 import { MonthOccasionsScreen } from './screens/MonthOccasionsScreen';
 import { FollowMonthListScreen } from './screens/FollowMonthListScreen';
 import { FollowMonthOccasionsScreen } from './screens/FollowMonthOccasionsScreen';
-import { OccasionScreen } from './screens/OccasionScreen';
 import { FarbrengenScreen } from './screens/FarbrengenScreen';
 import { AllYearsThisWeekScreen } from './screens/AllYearsThisWeekScreen';
 import { OccasionAllYearsScreen } from './screens/OccasionAllYearsScreen';
@@ -55,7 +55,7 @@ function FollowOccasionRoute() {
 }
 
 function BrowseOccasionRoute() {
-  return <OccasionScreen resolved={useBrowseEntry()} />;
+  return <FarbrengenScreen resolved={useBrowseEntry()} />;
 }
 
 function ThisWeekAllYearsOccasionRoute() {
@@ -147,8 +147,25 @@ function KviusYearsRoute() {
  * content and can't click it"). Scrolling to the actual end of a page's
  * content should land just above the bar, not have the bar sit over it.
  */
+/**
+ * React Router doesn't reset scroll on navigation itself (unlike a real
+ * multi-page site) - without this, a screen reached with the previous
+ * screen scrolled down opens already scrolled down too, a real reported
+ * bug. Runs on every pathname change, including into a PDF - PdfViewerScreen
+ * then restores its own saved reading position afterward (once its content
+ * has actually loaded), so a PDF that was already being read still lands
+ * back where it left off rather than at the top.
+ */
+function useScrollToTopOnNavigate(): void {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+}
+
 function AppContent() {
   const player = usePlayer();
+  useScrollToTopOnNavigate();
   return (
     <div className={player.playlist ? 'app-content has-player' : 'app-content'}>
       <Routes>
