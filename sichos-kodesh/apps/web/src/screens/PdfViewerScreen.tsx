@@ -148,7 +148,19 @@ export function PdfViewerScreen({ resolved }: Props) {
       </div>
 
       {state.status === 'loading' && <p className="subtitle">{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</p>}
-      {state.status === 'error' && <p className="gap-message">{t.pdfLoadError(state.message)}</p>}
+      {state.status === 'error' && (
+        <>
+          <p className="gap-message">{t.pdfLoadError(state.message)}</p>
+          {/* pdf.js couldn't render it in-app (a malformed/unusual PDF, a transient
+              network hiccup mid-parse) - the raw file itself is still real and
+              fetchable through the same Worker URL, so a plain link out to it (the
+              browser's own PDF viewer, or a download) is a real fallback, not a
+              dead end. */}
+          <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
+            {t.openPdfExternally}
+          </a>
+        </>
+      )}
 
       <div ref={containerRef} className="pdf-pages" />
     </div>

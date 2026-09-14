@@ -1,23 +1,23 @@
 import {
-  isChagOccasion,
+  CHAG_CATEGORIES,
   isHighlightedFarbrengenHanacha,
   mafteiachDay,
   mafteiachMonthToken,
   mafteiachMonthTokenToHDateMonth,
+  occasionChagCategory,
   occasionParsha,
 } from '@sichos-kodesh/catalog';
-import type { CatalogByYear, CatalogEntry, PdfSection } from '@sichos-kodesh/catalog';
+import type { CatalogByYear, CatalogEntry, ChagCategory, PdfSection } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
 
-/**
- * "hanacha" is the highlighted Sichos Kodesh/Toras Menachem transcript
- * specifically (see isHighlightedFarbrengenHanacha) - a meaningful search
- * target in its own right, distinct from bilti mugah generally. "chag" is
- * not a PdfSection at all - it's a property of the occasion's own Hebrew
- * date (a real Yom Tov - see isChagOccasion), not of any one PDF, so it's
- * checked differently in entryHasType below.
- */
-export type ContentType = 'audio' | 'hanacha' | 'chag' | PdfSection;
+/** "hanacha" is the highlighted Sichos Kodesh/Toras Menachem transcript specifically (see isHighlightedFarbrengenHanacha) - a meaningful search target in its own right, distinct from bilti mugah generally. */
+export type ContentType = 'audio' | 'hanacha' | PdfSection;
+
+const CHAG_CATEGORY_SET: ReadonlySet<string> = new Set(CHAG_CATEGORIES);
+
+function isChagCategory(value: string): value is ChagCategory {
+  return CHAG_CATEGORY_SET.has(value);
+}
 
 export interface SearchFilters {
   query: string;
@@ -26,7 +26,7 @@ export interface SearchFilters {
   hdateMonth: number | null;
   /** Hebrew day-of-month (1-30), independent of `hdateMonth` - either can be set alone or together to pin an exact date. */
   day: number | null;
-  /** A `@hebcal/core` `parshiot` entry, e.g. "Beshalach". */
+  /** Either a `@hebcal/core` `parshiot` entry (e.g. "Beshalach") or a `ChagCategory` (e.g. "Sukkot") - one dropdown, since picking a specific week's reading and picking a specific chag are the same kind of question ("which occasion in the calendar"), just resolved differently (see occasionParsha vs occasionChagCategory in searchOccasions below). */
   parsha: string | null;
   /** OR'd together - an entry matches if it has *any* of the selected types; empty means no type filter. */
   types: ContentType[];
@@ -47,7 +47,6 @@ function normalize(text: string): string {
 function entryHasType(entry: CatalogEntry, type: ContentType): boolean {
   if (type === 'audio') return entry.audio.length > 0;
   if (type === 'hanacha') return entry.pdfs.some(isHighlightedFarbrengenHanacha);
-  if (type === 'chag') return isChagOccasion(entry.hebrewDate, IL);
   return entry.pdfs.some((pdf) => pdf.section === type);
 }
 
@@ -85,8 +84,12 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters):
       if (filters.hdateMonth != null && mafteiachMonthTokenToHDateMonth(mafteiachMonthToken(entry.hebrewDate)) !== filters.hdateMonth) return false;
       if (filters.day != null && mafteiachDay(entry.hebrewDate) !== filters.day) return false;
       if (filters.parsha) {
-        const parsha = occasionParsha(entry.hebrewDate, IL);
-        if (!parsha || !parsha.includes(filters.parsha)) return false;
+        if (isChagCategory(filters.parsha)) {
+          if (occasionChagCategory(entry.hebrewDate, IL) !== filters.parsha) return false;
+        } else {
+          const parsha = occasionParsha(entry.hebrewDate, IL);
+          if (!parsha || !parsha.includes(filters.parsha)) return false;
+        }
       }
       if (filters.types.length > 0 && !filters.types.some((type) => entryHasType(entry, type))) return false;
       return true;
