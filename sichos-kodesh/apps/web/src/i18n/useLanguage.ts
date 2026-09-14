@@ -10,7 +10,7 @@ export function useLanguage(): LanguageContextValue {
   return ctx;
 }
 
-/** `t` is the current language's whole strings object (see translations.ts) - call it like `t.recordings` or `t.yearsAgo(3)`. */
+/** `t` is the current language's whole strings object (see translations.ts) - call it like `t.recordings` or `t.recordingsCount(3)`. */
 export function useTranslation(): { t: (typeof STRINGS)['en']; language: Language } {
   const { language } = useLanguage();
   return { t: STRINGS[language], language };

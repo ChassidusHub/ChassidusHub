@@ -53,7 +53,6 @@ export function KviusYearsScreen({ targetYear }: Props) {
           <li key={item.hebrewYear}>
             <Link className="year-row" to={`/follow/${item.hebrewYear}`}>
               <span className="year-row-year">{hebrewYearLabel(item.hebrewYear, language)}</span>
-              <span className="year-row-distance">{t.yearsAgo(item.distance)}</span>
             </Link>
           </li>
         ))}
@@ -68,7 +67,6 @@ export function KviusYearsScreen({ targetYear }: Props) {
               <li key={item.hebrewYear}>
                 <Link className="year-row" to={`/follow/${item.hebrewYear}`}>
                   <span className="year-row-year">{hebrewYearLabel(item.hebrewYear, language)}</span>
-                  <span className="year-row-distance">{t.yearsAgo(item.distance)}</span>
                 </Link>
               </li>
             ))}
