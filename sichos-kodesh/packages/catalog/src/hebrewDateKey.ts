@@ -36,3 +36,34 @@ export function toMafteiachHebrewDateKey(parts: HebrewDateParts): string {
   const day = String(parts.day).padStart(2, '0');
   return `${parts.year}-${monthToken}-${day}`;
 }
+
+/**
+ * The reverse of the month switch above: a raw mafteiach-index month token
+ * (see `mafteiachMonthToken`) back to HDate-native numbering - year-
+ * independent, since a leap year's "06A"/plain "06" both originate from
+ * the same HDate month 12 (Adar/Adar I) going forward, and
+ * `toMafteiachHebrewDateKey` re-derives which one to emit per candidate
+ * year from `HDate.isLeapYear` on its own. Used to look a specific
+ * occasion's own date up across every other indexed year (see
+ * `resolveOccasionAllYears`), not just the ones sharing its exact leap
+ * status.
+ */
+export function mafteiachMonthTokenToHDateMonth(token: string): number {
+  switch (token) {
+    case '01': return 7; // Tishrei
+    case '02': return 8; // Cheshvan
+    case '03': return 9; // Kislev
+    case '04': return 10; // Tevet
+    case '05': return 11; // Shevat
+    case '06': case '06A': return 12; // Adar / Adar I
+    case '06B': return 13; // Adar II (leap only)
+    case '07': return 1; // Nisan
+    case '08': return 2; // Iyar
+    case '09': return 3; // Sivan
+    case '10': return 4; // Tamuz
+    case '11': return 5; // Av
+    case '12': return 6; // Elul
+    default:
+      throw new RangeError(`Unexpected mafteiach-index month token "${token}"`);
+  }
+}

@@ -11,7 +11,7 @@ export { isHighlightedFarbrengenHanacha } from './farbrengenContent.js';
 export { currentHebrewYear } from './currentHebrewYear.js';
 export { currentParsha, todayHebrewDateLabel } from './currentParsha.js';
 export type { CurrentParsha } from './currentParsha.js';
-export { resolveThisWeek, resolveThisWeekAllYears } from './resolveThisWeek.js';
+export { resolveOccasionAllYears, resolveThisWeek, resolveThisWeekAllYears } from './resolveThisWeek.js';
 export type { CatalogByYear } from './catalogLookup.js';
 export type { CatalogAudio, CatalogEntry, CatalogPdf, CatalogYear, PdfSection } from './types.js';
 export type { WeekOccasion, YearWeekOccasions } from './resolveThisWeek.js';

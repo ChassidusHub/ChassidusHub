@@ -1,21 +1,24 @@
-import { mafteiachMonthName, mafteiachMonthNameHebrew } from '@sichos-kodesh/catalog';
+import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import type { Language } from '../i18n/translations';
 
 export interface MonthGroup {
-  month: string;
+  /** Raw mafteiach-index month token (e.g. "01", "06A") - URL-safe as-is, used to route a specific month (see MonthBrowserScreen/MonthOccasionsScreen). */
+  monthToken: string;
+  /** Display name in the current language, e.g. "Shevat" / "שבט". */
+  monthName: string;
   entries: CatalogEntry[];
 }
 
-/** Entries are already sorted chronologically (see buildCatalog) - grouping consecutive same-month runs is enough. Shared by YearBrowserScreen and ThisWeekScreen's "All of {year}" section - both list a whole year's occasions the same way. */
+/** Entries are already sorted chronologically (see buildCatalog) - grouping consecutive same-token runs is enough. Grouped by the raw token, not the display name, so a leap year's split Adar I/II (same display root, different token) never accidentally merges. Shared by every screen that lists a whole year's occasions month-by-month. */
 export function groupByMonth(entries: CatalogEntry[], language: Language): MonthGroup[] {
-  const monthName = language === 'he' ? mafteiachMonthNameHebrew : mafteiachMonthName;
+  const monthNameFor = language === 'he' ? mafteiachMonthNameHebrew : mafteiachMonthName;
   const groups: MonthGroup[] = [];
   for (const entry of entries) {
-    const month = monthName(entry.hebrewDate);
+    const monthToken = mafteiachMonthToken(entry.hebrewDate);
     const last = groups[groups.length - 1];
-    if (last && last.month === month) last.entries.push(entry);
-    else groups.push({ month, entries: [entry] });
+    if (last && last.monthToken === monthToken) last.entries.push(entry);
+    else groups.push({ monthToken, monthName: monthNameFor(entry.hebrewDate), entries: [entry] });
   }
   return groups;
 }

@@ -3,7 +3,7 @@ import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { describe, expect, it } from 'vitest';
 import { toMafteiachHebrewDateKey } from '../src/hebrewDateKey.js';
 import type { CatalogByYear } from '../src/catalogLookup.js';
-import { resolveThisWeek, resolveThisWeekAllYears } from '../src/resolveThisWeek.js';
+import { resolveOccasionAllYears, resolveThisWeek, resolveThisWeekAllYears } from '../src/resolveThisWeek.js';
 import type { CatalogEntry } from '../src/types.js';
 
 function makeEntry(hebrewYear: number, hebrewDate: string, label: string, hasAudio: boolean): CatalogEntry {
@@ -190,5 +190,51 @@ describe('resolveThisWeekAllYears', () => {
     const result = resolveThisWeekAllYears(catalog, today);
 
     expect(result.map((r) => r.hebrewYear)).toContain(sourceYear);
+  });
+});
+
+describe('resolveOccasionAllYears', () => {
+  it('finds the same (month, day) across unrelated years, independent of any real "today"', () => {
+    const sourceKey = toMafteiachHebrewDateKey({ year: 5711, month: 11, day: 10 }); // Yud Shevat 5711
+    const matchKey = toMafteiachHebrewDateKey({ year: 5730, month: 11, day: 10 }); // Same (month, day), unrelated year
+    const catalog: CatalogByYear = {
+      5711: [makeEntry(5711, sourceKey, 'Yud Shevat 5711', true)],
+      5730: [makeEntry(5730, matchKey, 'Yud Shevat 5730', true)],
+    };
+
+    const result = resolveOccasionAllYears(catalog, sourceKey);
+
+    expect(result.map((r) => r.hebrewYear)).toEqual([5711, 5730]);
+  });
+
+  it('correctly crosses a leap/non-leap boundary via HDate-native month, not the raw token', () => {
+    // 5712 is not a leap year (plain Adar, token "06"); 5711 is (Adar I, token "06A") - same HDate-native month 12 either way.
+    const nonLeapKey = toMafteiachHebrewDateKey({ year: 5712, month: 12, day: 14 }); // Purim, plain Adar -> "5712-06-14"
+    expect(nonLeapKey).toBe('5712-06-14');
+    const leapKey = toMafteiachHebrewDateKey({ year: 5711, month: 12, day: 14 }); // Same HDate month/day, a leap year -> Adar I
+    expect(leapKey).toBe('5711-06A-14');
+
+    const catalog: CatalogByYear = {
+      5711: [makeEntry(5711, leapKey, 'Purim Koton 5711', true)],
+      5712: [makeEntry(5712, nonLeapKey, 'Purim Koton 5712', true)],
+    };
+
+    const result = resolveOccasionAllYears(catalog, nonLeapKey);
+
+    expect(result.map((r) => r.hebrewYear)).toEqual([5711, 5712]);
+  });
+
+  it('omits years with nothing on that date and years with only a contentless entry', () => {
+    const sourceKey = toMafteiachHebrewDateKey({ year: 5711, month: 11, day: 10 });
+    const gapKey = toMafteiachHebrewDateKey({ year: 5712, month: 11, day: 10 });
+    const catalog: CatalogByYear = {
+      5711: [makeEntry(5711, sourceKey, 'Yud Shevat 5711', true)],
+      5712: [makeEntry(5712, gapKey, 'gap', false)],
+      5713: [makeEntry(5713, 'unrelated-date', 'unrelated', true)],
+    };
+
+    const result = resolveOccasionAllYears(catalog, sourceKey);
+
+    expect(result.map((r) => r.hebrewYear)).toEqual([5711]);
   });
 });

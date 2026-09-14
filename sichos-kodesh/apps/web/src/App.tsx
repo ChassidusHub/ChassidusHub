@@ -10,15 +10,19 @@ import { KviusYearsScreen } from './screens/KviusYearsScreen';
 import { BrowseYearsScreen } from './screens/BrowseYearsScreen';
 import { ThisWeekScreen } from './screens/ThisWeekScreen';
 import { YearBrowserScreen } from './screens/YearBrowserScreen';
+import { MonthOccasionsScreen } from './screens/MonthOccasionsScreen';
+import { FollowMonthListScreen } from './screens/FollowMonthListScreen';
+import { FollowMonthOccasionsScreen } from './screens/FollowMonthOccasionsScreen';
 import { OccasionScreen } from './screens/OccasionScreen';
 import { FarbrengenScreen } from './screens/FarbrengenScreen';
 import { AllYearsThisWeekScreen } from './screens/AllYearsThisWeekScreen';
+import { OccasionAllYearsScreen } from './screens/OccasionAllYearsScreen';
 import { RecordingsScreen } from './screens/RecordingsScreen';
 import { CategoryScreen } from './screens/CategoryScreen';
 import { PdfViewerScreen } from './screens/PdfViewerScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AboutScreen } from './screens/AboutScreen';
-import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry } from './routes/useResolvedEntry';
+import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry, useOccasionAllYearsEntry } from './routes/useResolvedEntry';
 
 function ThisWeekRoute() {
   const { sourceYear } = useParams<{ sourceYear: string }>();
@@ -28,6 +32,21 @@ function ThisWeekRoute() {
 function YearBrowserRoute() {
   const { hebrewYear } = useParams<{ hebrewYear: string }>();
   return <YearBrowserScreen hebrewYear={Number(hebrewYear)} />;
+}
+
+function MonthOccasionsRoute() {
+  const { hebrewYear, monthToken } = useParams<{ hebrewYear: string; monthToken: string }>();
+  return <MonthOccasionsScreen hebrewYear={Number(hebrewYear)} monthToken={monthToken ?? ''} />;
+}
+
+function FollowMonthListRoute() {
+  const { sourceYear } = useParams<{ sourceYear: string }>();
+  return <FollowMonthListScreen sourceYear={Number(sourceYear)} />;
+}
+
+function FollowMonthOccasionsRoute() {
+  const { sourceYear, monthToken } = useParams<{ sourceYear: string; monthToken: string }>();
+  return <FollowMonthOccasionsScreen sourceYear={Number(sourceYear)} monthToken={monthToken ?? ''} />;
 }
 
 function FollowOccasionRoute() {
@@ -40,6 +59,15 @@ function BrowseOccasionRoute() {
 
 function ThisWeekAllYearsOccasionRoute() {
   return <FarbrengenScreen resolved={useThisWeekAllYearsEntry()} />;
+}
+
+function OccasionAllYearsRoute() {
+  const { sourceHebrewYear, sourceOccasionId } = useParams<{ sourceHebrewYear: string; sourceOccasionId: string }>();
+  return <OccasionAllYearsScreen sourceHebrewYear={Number(sourceHebrewYear)} sourceOccasionId={Number(sourceOccasionId)} />;
+}
+
+function OccasionAllYearsOccasionRoute() {
+  return <FarbrengenScreen resolved={useOccasionAllYearsEntry()} />;
 }
 
 /** `resolved` can be null (a stale/bad URL) - RecordingsScreen/CategoryScreen/PdfViewerScreen all need a real entry, so fall back to "not found" rather than passing null through. */
@@ -60,6 +88,10 @@ function ThisWeekAllYearsRecordingsRoute() {
   const resolved = useThisWeekAllYearsEntry();
   return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
 }
+function OccasionAllYearsRecordingsRoute() {
+  const resolved = useOccasionAllYearsEntry();
+  return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
+}
 function FollowCategoryRoute() {
   const resolved = useFollowEntry();
   return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
@@ -70,6 +102,10 @@ function BrowseCategoryRoute() {
 }
 function ThisWeekAllYearsCategoryRoute() {
   const resolved = useThisWeekAllYearsEntry();
+  return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
+}
+function OccasionAllYearsCategoryRoute() {
+  const resolved = useOccasionAllYearsEntry();
   return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
 }
 function FollowPdfRoute() {
@@ -84,6 +120,11 @@ function BrowsePdfRoute() {
 }
 function ThisWeekAllYearsPdfRoute() {
   const resolved = useThisWeekAllYearsEntry();
+  const { driveFileId } = useParams<{ driveFileId: string }>();
+  return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
+}
+function OccasionAllYearsPdfRoute() {
+  const resolved = useOccasionAllYearsEntry();
   const { driveFileId } = useParams<{ driveFileId: string }>();
   return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
 }
@@ -117,12 +158,15 @@ function AppContent() {
         <Route path="/about" element={<AboutScreen />} />
 
         <Route path="/follow/:sourceYear" element={<ThisWeekRoute />} />
+        <Route path="/follow/:sourceYear/month" element={<FollowMonthListRoute />} />
+        <Route path="/follow/:sourceYear/month/:monthToken" element={<FollowMonthOccasionsRoute />} />
         <Route path="/follow/:sourceYear/:occasionId" element={<FollowOccasionRoute />} />
         <Route path="/follow/:sourceYear/:occasionId/recordings" element={<FollowRecordingsRoute />} />
         <Route path="/follow/:sourceYear/:occasionId/category/:section" element={<FollowCategoryRoute />} />
         <Route path="/follow/:sourceYear/:occasionId/pdf/:driveFileId" element={<FollowPdfRoute />} />
 
         <Route path="/browse/:hebrewYear" element={<YearBrowserRoute />} />
+        <Route path="/browse/:hebrewYear/month/:monthToken" element={<MonthOccasionsRoute />} />
         <Route path="/browse/:hebrewYear/:occasionId" element={<BrowseOccasionRoute />} />
         <Route path="/browse/:hebrewYear/:occasionId/recordings" element={<BrowseRecordingsRoute />} />
         <Route path="/browse/:hebrewYear/:occasionId/category/:section" element={<BrowseCategoryRoute />} />
@@ -133,6 +177,21 @@ function AppContent() {
         <Route path="/this-week-all-years/:hebrewYear/:occasionId/recordings" element={<ThisWeekAllYearsRecordingsRoute />} />
         <Route path="/this-week-all-years/:hebrewYear/:occasionId/category/:section" element={<ThisWeekAllYearsCategoryRoute />} />
         <Route path="/this-week-all-years/:hebrewYear/:occasionId/pdf/:driveFileId" element={<ThisWeekAllYearsPdfRoute />} />
+
+        <Route path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId" element={<OccasionAllYearsRoute />} />
+        <Route path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId" element={<OccasionAllYearsOccasionRoute />} />
+        <Route
+          path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId/recordings"
+          element={<OccasionAllYearsRecordingsRoute />}
+        />
+        <Route
+          path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId/category/:section"
+          element={<OccasionAllYearsCategoryRoute />}
+        />
+        <Route
+          path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId/pdf/:driveFileId"
+          element={<OccasionAllYearsPdfRoute />}
+        />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
