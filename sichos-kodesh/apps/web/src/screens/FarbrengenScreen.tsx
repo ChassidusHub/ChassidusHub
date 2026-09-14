@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Music } from 'lucide-react';
-import type { CatalogPdf, PdfEdition } from '@sichos-kodesh/catalog';
-import { classifyPdfEdition, isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
+import type { CatalogPdf } from '@sichos-kodesh/catalog';
+import { isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { usePlayer } from '../player/usePlayer';
 import { useRecordVisit } from '../player/useRecordVisit';
@@ -26,42 +26,20 @@ function countBySecondarySection(pdfs: CatalogPdf[]): Partial<Record<(typeof SEC
 }
 
 /**
- * A farbrengen's own biltiMugah hanacha is real, separately-catalogued
- * more than once when it survives under both the Toras Menachem and Sichos
- * Kodesh series (`isHighlightedFarbrengenHanacha` matches either) - the
- * same sicha, not two different ones, so showing both as equal-weight
- * cards was really just "the same reading, twice." Picks one, preferring
- * Sichos Kodesh (this app's own namesake series) when both exist; the
- * other is dropped entirely rather than kept as a redundant "more" row -
- * see its caller.
- */
-const PRIMARY_HANACHA_EDITION_PRIORITY: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
-
-function pickPrimaryHanacha(pdfs: CatalogPdf[]): CatalogPdf | null {
-  const highlighted = pdfs.filter(isHighlightedFarbrengenHanacha);
-  if (highlighted.length === 0) return null;
-  for (const edition of PRIMARY_HANACHA_EDITION_PRIORITY) {
-    const match = highlighted.find((pdf) => classifyPdfEdition(pdf.label).includes(edition));
-    if (match) return match;
-  }
-  return highlighted[0]!;
-}
-
-/**
  * Every occasion's own page, everywhere it's reached from (follow, browse,
  * this-week-all-years, occasion-all-years) - reflects what a farbrengen
  * actually is: its own hanacha (and its recordings, when there are any)
- * *are* the farbrengen, so they're shown inline and first. When both a
- * Toras Menachem and a Sichos Kodesh edition of the same hanacha are
- * catalogued, only one shows here (see pickPrimaryHanacha) - the same
- * sicha isn't two separate cards. Mugah (the later Rebbe-edited text), the
- * maamar, hagahos, hosofos, and any biltiMugah PDF citing some other,
- * unrelated source are real and worth keeping reachable, but they're a
- * different kind of thing - demoted into a collapsed "More from this
- * occasion" section rather than listed as equal buttons alongside the
- * sichos itself. Used to be split from a
- * separate, flatter OccasionScreen for /browse specifically; unified here
- * since browsing a plain year deserves the same treatment as following one.
+ * *are* the farbrengen, so they're shown inline and first. Toras Menachem
+ * and Sichos Kodesh are two distinct, separately-transcribed editions, not
+ * duplicates of each other - when an occasion has both (or more than one
+ * citation of the same edition, e.g. a later "hashlamos" supplement), every
+ * one of them shows here as its own card (see `isHighlightedFarbrengenHanacha`).
+ * Mugah (the later Rebbe-edited text), the maamar, hagahos, hosofos, and any
+ * biltiMugah PDF citing some other, unrelated source are a different kind of
+ * thing - demoted into a collapsed "More from this occasion" section rather
+ * than listed alongside the sichos itself. Used to be split from a separate,
+ * flatter OccasionScreen for /browse specifically; unified here since
+ * browsing a plain year deserves the same treatment as following one.
  */
 export function FarbrengenScreen({ resolved }: Props) {
   const { t } = useTranslation();
@@ -80,20 +58,18 @@ export function FarbrengenScreen({ resolved }: Props) {
 
   const { entry, subtitle, basePath, backPath } = resolved;
 
-  const primaryHanacha = pickPrimaryHanacha(entry.pdfs);
-  // A biltiMugah PDF citing the OTHER highlighted edition (see
-  // pickPrimaryHanacha) is the same sicha as primaryHanacha, just published
-  // under a different series name - not a different piece of content, so it
-  // stays hidden rather than showing as a redundant "more" row. A biltiMugah
-  // PDF citing neither edition (isHighlightedFarbrengenHanacha false) is a
-  // genuinely different citation - some other, unrelated source (a real but
-  // minority case - letters, memorial booklets, etc.) - and still belongs
-  // in "more".
-  const leftoverBiltiMugah = entry.pdfs.filter((pdf) => pdf.section === 'biltiMugah' && !isHighlightedFarbrengenHanacha(pdf));
+  // Toras Menachem and Sichos Kodesh are two distinct, separately-transcribed
+  // editions of the same sicha - both real content, so both get their own
+  // card rather than picking one as "primary" and burying the other. A
+  // biltiMugah PDF citing neither edition is a genuinely different
+  // citation - some other, unrelated source (a real but minority case -
+  // letters, memorial booklets, etc.) - and stays demoted into "more".
+  const hanachaPdfs = entry.pdfs.filter(isHighlightedFarbrengenHanacha);
+  const otherBiltiMugah = entry.pdfs.filter((pdf) => pdf.section === 'biltiMugah' && !isHighlightedFarbrengenHanacha(pdf));
   const secondaryCounts = countBySecondarySection(entry.pdfs);
   const secondarySectionsPresent = SECONDARY_SECTIONS.filter((section) => secondaryCounts[section]);
-  const hasMore = leftoverBiltiMugah.length > 0 || secondarySectionsPresent.length > 0;
-  const isEmpty = entry.audio.length === 0 && !primaryHanacha && !hasMore;
+  const hasMore = otherBiltiMugah.length > 0 || secondarySectionsPresent.length > 0;
+  const isEmpty = entry.audio.length === 0 && hanachaPdfs.length === 0 && !hasMore;
 
   /**
    * Opening the hanacha always starts its recording too - the one
@@ -127,14 +103,14 @@ export function FarbrengenScreen({ resolved }: Props) {
         </Link>
       )}
 
-      {primaryHanacha && (
-        <div className="card">
-          <p className="pdf-label">{primaryHanacha.label}</p>
-          <Link className="button" to={`${basePath}/pdf/${encodeURIComponent(primaryHanacha.driveFileId)}`} onClick={handleReadHanacha}>
+      {hanachaPdfs.map((pdf) => (
+        <div className="card" key={pdf.driveFileId}>
+          <p className="pdf-label">{pdf.label}</p>
+          <Link className="button" to={`${basePath}/pdf/${encodeURIComponent(pdf.driveFileId)}`} onClick={handleReadHanacha}>
             {t.read}
           </Link>
         </div>
-      )}
+      ))}
 
       {hasMore && (
         <details className="more-section">
@@ -148,7 +124,7 @@ export function FarbrengenScreen({ resolved }: Props) {
                 </Link>
               </li>
             ))}
-            {leftoverBiltiMugah.map((pdf) => (
+            {otherBiltiMugah.map((pdf) => (
               <li key={pdf.driveFileId}>
                 <Link className="category-row" to={`${basePath}/pdf/${encodeURIComponent(pdf.driveFileId)}`}>
                   <span className="category-row-name">{pdf.label}</span>
