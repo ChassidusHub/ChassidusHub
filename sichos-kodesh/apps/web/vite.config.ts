@@ -94,43 +94,62 @@ export default defineConfig({
             urlPattern: ({ url }) => url.hostname.endsWith('.workers.dev'),
             handler: 'CacheFirst',
             options: {
-              // Renamed (was 'media-proxy-cache') to force every existing
-              // client to abandon its old cache and start fresh - a real,
-              // reported consequence of fixing the 206-poisoning bug below
-              // without this rename: a browser that had already cached a
-              // poisoned 206 entry *before* the fix shipped kept serving
-              // that exact stale entry forever afterward, since CacheFirst
-              // checks the cache before ever making a new request - the
-              // fix only stopped *new* entries from being poisoned, it did
-              // nothing for ones already sitting in Cache Storage under the
-              // same name. Bump this name again if the cache is ever
-              // poisoned by some other bug in the future, for the same
-              // reason.
-              cacheName: 'media-proxy-cache-v2',
-              // 206 (Partial Content) must NOT be in this list, even though
-              // workbox-range-requests' own `rangeRequests: true` needs a
-              // *complete* cached response to slice from - a real,
-              // reproduced bug, not a theoretical one. An <audio> element's
-              // very first request for a fresh URL commonly carries its own
-              // `Range:` header (it doesn't wait for a full download before
-              // starting playback); with 206 allowed here, whatever small
-              // slice the Worker returned for *that* request got cached as
-              // if it were the entire file. Every later request - for a
-              // completely different byte range - then hit
-              // workbox-range-requests' `createPartialResponse`, which
-              // special-cases an already-206 cached response by returning
-              // it verbatim (see its own comment: "If we already have a
-              // 206, then just pass it through as-is"), regardless of what
-              // range was actually asked for - so the same first sliver of
-              // the file kept coming back forever. That matched exactly
-              // what got reported: a track's duration (readable from that
-              // first sliver alone) would show, but the audio itself never
-              // actually loaded. Dropping 206 here means a Range request
-              // against nothing cached yet is served live from the Worker
-              // every time (correct, if not offline-cacheable) instead of
-              // ever poisoning the cache with a partial file mistaken for
-              // a complete one.
-              cacheableResponse: { statuses: [0, 200] },
+              // Renamed on every fix to a poisoning bug in this route (was
+              // 'media-proxy-cache', then 'media-proxy-cache-v2') to force
+              // every existing client to abandon its old cache and start
+              // fresh - CacheFirst checks the cache before ever making a
+              // new request, so a browser that had already cached a
+              // poisoned entry *before* a fix shipped would otherwise keep
+              // serving that exact stale entry forever afterward; the fix
+              // alone only stops *new* entries from being poisoned. Bump
+              // this name again if the cache is ever poisoned by some other
+              // bug in the future, for the same reason.
+              cacheName: 'media-proxy-cache-v3',
+              // Neither 206 (Partial Content) nor 0 (opaque) may be in this
+              // list, even though workbox-range-requests' own
+              // `rangeRequests: true` needs a *complete, readable* cached
+              // response to slice from - both are real, reproduced bugs,
+              // not theoretical ones:
+              //
+              // - 206: an <audio> element's very first request for a fresh
+              //   URL commonly carries its own `Range:` header (it doesn't
+              //   wait for a full download before starting playback); with
+              //   206 allowed here, whatever small slice the Worker
+              //   returned for *that* request got cached as if it were the
+              //   entire file. Every later request - for a completely
+              //   different byte range - then hit workbox-range-requests'
+              //   `createPartialResponse`, which special-cases an
+              //   already-206 cached response by returning it verbatim (see
+              //   its own comment: "If we already have a 206, then just
+              //   pass it through as-is"), regardless of what range was
+              //   actually asked for - so the same first sliver of the file
+              //   kept coming back forever. That matched exactly what got
+              //   reported: a track's duration (readable from that first
+              //   sliver alone) would show, but the audio itself never
+              //   actually loaded.
+              //
+              // - 0 (opaque): a cross-origin request made in "no-cors" mode
+              //   (the browser default for an <audio>/<img> element with no
+              //   `crossorigin` attribute - see PlayerProvider.tsx, which
+              //   now sets one) gets back an opaque response: unreadable
+              //   body, unreadable headers, `status` reported as 0. Allowing
+              //   0 here let that opaque response get cached as "the"
+              //   response for its URL; every later request - including
+              //   this element's own real range-sliced reads - then got
+              //   that same permanently-empty, unreadable entry back,
+              //   confirmed directly by inspecting Cache Storage after a
+              //   no-cors request (bodyByteLength: 0, response.type:
+              //   'opaque'), reproducing exactly what got reported: a
+              //   recording that worked on a fresh, uncontrolled first
+              //   visit but silently failed to load once the service worker
+              //   started controlling the page (i.e. "after reload").
+              //
+              // Dropping both here means a request against nothing valid
+              // cached yet is served live from the Worker every time
+              // (correct, if not offline-cacheable) instead of ever
+              // poisoning the cache with a partial or unreadable response
+              // mistaken for a complete, usable one.
+              cacheableResponse: { statuses: [200] },
               rangeRequests: true,
               expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
