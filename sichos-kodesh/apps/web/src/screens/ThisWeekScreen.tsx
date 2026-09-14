@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { resolveThisWeek } from '@sichos-kodesh/catalog';
+import { currentParsha, resolveThisWeek } from '@sichos-kodesh/catalog';
+import { IL } from '../config';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
-import { hebrewDayMonthLabel } from '../utils/formatHebrewDate';
+import { hebrewDayMonthLabel, parshaLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -52,7 +53,21 @@ export function ThisWeekScreen({ sourceYear }: Props) {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const [weekOffset, setWeekOffset] = useState(0);
-  const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedToday(weekOffset)), [sourceYear, weekOffset]);
+  const shiftedDate = useMemo(() => shiftedToday(weekOffset), [weekOffset]);
+  const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [sourceYear, shiftedDate]);
+  // The real week being viewed's own parsha - kvius-matched years share the
+  // same Sedra schedule by construction (see hebrewCalendar.ts's
+  // `sameKvius`), so this is `sourceYear`'s parsha for this week too, not
+  // just the real current year's. Shown so prev/next actually tells you
+  // which week you've landed on, not just an unlabeled occasion list.
+  const weekParsha = useMemo(() => currentParsha(IL, shiftedDate).parsha, [shiftedDate]);
+  // Chevron *glyphs* swap for Hebrew, same as BackLink - "previous" (earlier)
+  // points toward the reading-start side, which flips with direction; which
+  // button actually decrements/increments doesn't change, and normal RTL
+  // flexbox row-reversal already swaps their on-screen left/right positions
+  // for free, so only the glyphs need to follow.
+  const PrevIcon = language === 'he' ? ChevronRight : ChevronLeft;
+  const NextIcon = language === 'he' ? ChevronLeft : ChevronRight;
 
   return (
     <div className="screen">
@@ -62,15 +77,18 @@ export function ThisWeekScreen({ sourceYear }: Props) {
 
       <div className="week-nav">
         <button type="button" className="week-nav-button" onClick={() => setWeekOffset((n) => n - 1)} aria-label={t.previousWeek}>
-          <ChevronLeft size={18} strokeWidth={2.5} />
+          <PrevIcon size={18} strokeWidth={2.5} />
         </button>
-        {weekOffset !== 0 && (
-          <button type="button" className="week-nav-reset" onClick={() => setWeekOffset(0)}>
-            {t.backToThisWeek}
-          </button>
-        )}
+        <div className="week-nav-center">
+          {weekParsha && <span className="week-nav-parsha">{parshaLabel(weekParsha, language)}</span>}
+          {weekOffset !== 0 && (
+            <button type="button" className="week-nav-reset" onClick={() => setWeekOffset(0)}>
+              {t.backToThisWeek}
+            </button>
+          )}
+        </div>
         <button type="button" className="week-nav-button" onClick={() => setWeekOffset((n) => n + 1)} aria-label={t.nextWeek}>
-          <ChevronRight size={18} strokeWidth={2.5} />
+          <NextIcon size={18} strokeWidth={2.5} />
         </button>
       </div>
 
