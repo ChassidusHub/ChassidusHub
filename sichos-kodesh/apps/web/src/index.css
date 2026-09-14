@@ -1,23 +1,29 @@
 :root {
   color-scheme: light dark;
-  --bg: #ffffff;
-  --fg: #1a1a1a;
-  --muted: #666666;
-  --border: #e0e0e0;
-  --card-bg: #f2f2f2;
-  --accent: #3366cc;
-  --danger: #a33333;
+  --bg: #fafafa;
+  --bg-elevated: #ffffff;
+  --fg: #121212;
+  --muted: #6a6a6a;
+  --border: #e2e2e2;
+  --card-bg: #f0f0f0;
+  --card-hover: #e6e6e6;
+  --accent: #1a8a4a;
+  --accent-fg: #ffffff;
+  --danger: #b3261e;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121212;
-    --fg: #ededed;
-    --muted: #a0a0a0;
-    --border: #2a2a2a;
-    --card-bg: #1e1e1e;
-    --accent: #6699ff;
-    --danger: #e08080;
+    --bg: #0a0a0a;
+    --bg-elevated: #121212;
+    --fg: #f5f5f5;
+    --muted: #a7a7a7;
+    --border: #282828;
+    --card-bg: #181818;
+    --card-hover: #282828;
+    --accent: #1ed760;
+    --accent-fg: #0a0a0a;
+    --danger: #f28b82;
   }
 }
 
@@ -29,33 +35,36 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .screen {
   max-width: 640px;
   margin: 0 auto;
-  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
 }
 
 h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   margin: 0 0 4px;
 }
 
 .subtitle {
   color: var(--muted);
+  font-size: 0.9375rem;
   margin: 0 0 20px;
 }
 
 .category-header {
   color: var(--muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  margin: 16px 0 8px;
+  letter-spacing: 0.06em;
+  margin: 20px 0 8px;
 }
 
 .category:first-of-type .category-header {
@@ -68,19 +77,26 @@ h1 {
 }
 
 .back-link {
+  display: inline-block;
   background: none;
   border: none;
-  color: var(--accent);
+  color: var(--muted);
   padding: 0;
-  margin-bottom: 12px;
-  font-size: 1rem;
+  margin-bottom: 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--fg);
 }
 
 .tabs {
   display: flex;
   gap: 4px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -89,15 +105,15 @@ h1 {
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--muted);
-  padding: 8px 4px 10px;
-  margin-right: 16px;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 8px 4px 12px;
+  margin-right: 20px;
+  font-size: 0.9375rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .tab-active {
-  color: var(--accent);
+  color: var(--fg);
   border-bottom-color: var(--accent);
 }
 
@@ -120,29 +136,39 @@ h1 {
   align-items: center;
   background: none;
   border: none;
-  border-bottom: 1px solid var(--border);
-  padding: 14px 0;
-  font-size: 1.125rem;
+  border-radius: 8px;
+  padding: 14px 10px;
+  margin: 0 -10px;
+  font-size: 1.0625rem;
+  font-weight: 600;
   color: var(--fg);
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.year-row:hover {
+  background: var(--card-hover);
 }
 
 .year-row-distance {
   color: var(--muted);
   font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .card {
   margin-bottom: 12px;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 10px;
   background: var(--card-bg);
 }
 
 .pdf-label {
-  font-size: 0.875rem;
-  margin: 0 0 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin: 0 0 10px;
 }
 
 .button {
@@ -150,15 +176,24 @@ h1 {
   width: 100%;
   text-align: center;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-fg);
   border: none;
-  border-radius: 6px;
-  padding: 10px;
-  font-weight: 600;
-  font-size: 1rem;
+  border-radius: 999px;
+  padding: 11px;
+  font-weight: 700;
+  font-size: 0.9375rem;
   cursor: pointer;
   text-decoration: none;
   box-sizing: border-box;
+  transition: transform 0.08s ease, filter 0.1s ease;
+}
+
+.button:hover {
+  filter: brightness(1.08);
+}
+
+.button:active {
+  transform: scale(0.98);
 }
 
 .header-row {
@@ -171,15 +206,107 @@ h1 {
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 1.25rem;
+  font-size: 1.375rem;
   line-height: 1;
   padding: 4px;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.settings-link:hover {
+  color: var(--fg);
 }
 
 .year-row-selected {
   color: var(--accent);
+}
+
+/* Category buttons (an occasion's own page) and the recordings playlist */
+
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--fg);
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.category-row:hover {
+  background: var(--card-hover);
+}
+
+.category-row-count {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.playlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.playlist-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 0 -10px;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.playlist-row:hover {
+  background: var(--card-hover);
+}
+
+.playlist-row-icon {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.playlist-row-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9375rem;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-row-duration {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.playlist-row-active .playlist-row-name,
+.playlist-row-active .playlist-row-icon {
+  color: var(--accent);
 }
 
 /* PDF viewer */
@@ -187,20 +314,20 @@ h1 {
 .pdf-viewer-screen {
   max-width: 640px;
   margin: 0 auto;
-  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
 }
 
 .pdf-viewer-screen.has-player {
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
 }
 
 .pdf-viewer-header {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .pdf-viewer-title {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.1875rem;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -208,51 +335,63 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .pdf-page {
   max-width: 100%;
   height: auto;
+  border-radius: 4px;
   border: 1px solid var(--border);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
 }
 
-/* Bottom audio player - stays put while the PDF above it scrolls, so an
-   occasion's recording can keep playing while its pages are read. */
+/* Global player bar - a single instance mounted at the app root (see
+   App.tsx/PlayerProvider), always visible once anything has played this
+   session, regardless of which screen is showing above it - the behavior
+   that makes it "Spotify-like" rather than a per-screen widget. */
 
-.bottom-player {
+.global-player {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--card-bg);
+  z-index: 10;
+  background: var(--bg-elevated);
   border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
 }
 
-.bottom-player-controls {
+.global-player-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  max-width: 640px;
+  margin: 0 auto;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
 }
 
-.bottom-player-toggle {
+.global-player-toggle {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
   background: var(--accent);
-  color: #fff;
-  font-size: 1.125rem;
+  color: var(--accent-fg);
+  font-size: 1rem;
   cursor: pointer;
+  transition: transform 0.08s ease;
 }
 
-.bottom-player-skip {
+.global-player-toggle:hover {
+  transform: scale(1.05);
+}
+
+.global-player-skip {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: none;
@@ -261,75 +400,105 @@ h1 {
   cursor: pointer;
 }
 
-.bottom-player-skip:disabled {
+.global-player-skip:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.global-player-skip:disabled {
   opacity: 0.3;
   cursor: default;
 }
 
-.bottom-player-scrub {
+.global-player-scrub {
   flex: 1;
   min-width: 0;
 }
 
-.bottom-player-chapter-toggle {
+.global-player-title {
   display: block;
+  width: 100%;
   background: none;
   border: none;
   padding: 0;
-  margin-bottom: 2px;
-  color: var(--fg);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  margin-bottom: 4px;
   text-align: left;
   cursor: pointer;
+}
+
+.global-player-title-main {
+  display: block;
+  color: var(--fg);
+  font-size: 0.8125rem;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
 }
 
-.bottom-player-range {
+.global-player-title-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.global-player-range {
   width: 100%;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
-.bottom-player-times {
+.global-player-times {
   display: flex;
   justify-content: space-between;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
+  margin-top: 2px;
 }
 
-.bottom-player-chapters {
+.global-player-chapters {
   max-height: 40vh;
   overflow-y: auto;
   border-bottom: 1px solid var(--border);
 }
 
-.bottom-player-chapter {
+.global-player-chapters-title {
+  padding: 12px 16px 4px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.global-player-chapter {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
   background: none;
   border: none;
-  border-top: 1px solid var(--border);
   padding: 10px 16px;
   color: var(--fg);
   font-size: 0.875rem;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
 }
 
-.bottom-player-chapter:first-child {
-  border-top: none;
+.global-player-chapter:hover {
+  background: var(--card-hover);
 }
 
-.bottom-player-chapter-active {
+.global-player-chapter-active {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.bottom-player-chapter-duration {
+.global-player-chapter-duration {
   color: var(--muted);
   font-size: 0.75rem;
   flex-shrink: 0;

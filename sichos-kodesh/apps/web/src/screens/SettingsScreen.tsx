@@ -1,9 +1,6 @@
+import { Link } from 'react-router-dom';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { useEditionPreference } from '../settings/editionPreference';
-
-interface Props {
-  onBack: () => void;
-}
 
 const OPTIONS: Array<{ value: PdfEdition | null; label: string }> = [
   { value: null, label: 'No preference' },
@@ -12,14 +9,14 @@ const OPTIONS: Array<{ value: PdfEdition | null; label: string }> = [
   { value: 'torasMenachem', label: 'Toras Menachem' },
 ];
 
-export function SettingsScreen({ onBack }: Props) {
+export function SettingsScreen() {
   const [preference, setPreference] = useEditionPreference();
 
   return (
     <div className="screen">
-      <button className="back-link" onClick={onBack}>
+      <Link className="back-link" to="/">
         {'< back'}
-      </button>
+      </Link>
       <h1>Settings</h1>
       <p className="subtitle">
         When an occasion has PDFs from more than one printed edition, show this one first.

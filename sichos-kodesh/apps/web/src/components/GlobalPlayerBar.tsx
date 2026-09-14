@@ -1,0 +1,89 @@
+import { useState } from 'react';
+import { usePlayer } from '../player/usePlayer';
+
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds)) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+/**
+ * The single, always-mounted (at App root, above the router) player bar -
+ * Spotify/YouTube-style: survives navigating between screens because it
+ * reads from PlayerContext rather than owning a `<audio>` element itself
+ * (that lives in PlayerContext, mounted once). Renders nothing until
+ * something has actually been played this session.
+ */
+export function GlobalPlayerBar() {
+  const player = usePlayer();
+  const [showChapters, setShowChapters] = useState(false);
+
+  if (!player.playlist) return null;
+
+  const { audio } = player.playlist;
+  const current = audio[player.currentIndex]!;
+  const hasPrev = player.currentIndex > 0;
+  const hasNext = player.currentIndex < audio.length - 1;
+  const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
+  const chapterLabel = current.chapterName ?? (audio.length > 1 ? `Track ${player.currentIndex + 1}` : null);
+
+  function seek(e: React.ChangeEvent<HTMLInputElement>) {
+    player.seekToFraction(Number(e.target.value) / 100);
+  }
+
+  function selectChapter(index: number) {
+    player.playChapter(index);
+    setShowChapters(false);
+  }
+
+  return (
+    <div className="global-player">
+      {showChapters && (
+        <div className="global-player-chapters">
+          <div className="global-player-chapters-title">{player.playlist.title}</div>
+          {audio.map((chapter, index) => (
+            <button
+              key={chapter.workerFilename}
+              className={index === player.currentIndex ? 'global-player-chapter global-player-chapter-active' : 'global-player-chapter'}
+              onClick={() => selectChapter(index)}
+            >
+              <span>{chapter.chapterName ?? `Track ${index + 1}`}</span>
+              <span className="global-player-chapter-duration">{formatTime(chapter.durationMs / 1000)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="global-player-controls">
+        {audio.length > 1 && (
+          <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label="Previous chapter">
+            ⏮
+          </button>
+        )}
+        <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? 'Pause' : 'Play'}>
+          {player.playing ? '⏸' : '▶'}
+        </button>
+        {audio.length > 1 && (
+          <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label="Next chapter">
+            ⏭
+          </button>
+        )}
+        <div className="global-player-scrub">
+          <button className="global-player-title" onClick={() => setShowChapters((v) => !v)}>
+            <span className="global-player-title-main">{player.playlist.title}</span>
+            {chapterLabel && (
+              <span className="global-player-title-sub">
+                {audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}
+              </span>
+            )}
+          </button>
+          <input type="range" min={0} max={100} value={progressPercent} onChange={seek} className="global-player-range" aria-label="Seek" />
+          <div className="global-player-times">
+            <span>{formatTime(player.currentTime)}</span>
+            <span>{formatTime(player.duration)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,31 +1,36 @@
 import { useEffect, useRef, useState } from 'react';
-import type { CatalogEntry, CatalogPdf } from '@sichos-kodesh/catalog';
+import { Link, useParams } from 'react-router-dom';
+import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { downloadPdf } from '../download/download';
 import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
-import { BottomAudioPlayer } from '../components/BottomAudioPlayer';
+import { usePlayer } from '../player/usePlayer';
 
 interface Props {
-  entry: CatalogEntry;
-  pdf: CatalogPdf;
-  onBack: () => void;
+  resolved: ResolvedEntry;
 }
 
 type LoadState = { status: 'downloading'; percent: number } | { status: 'rendering' } | { status: 'ready' } | { status: 'error'; message: string };
 
 /**
  * Renders a PDF's pages directly in the app (via pdf.js) instead of
- * handing off to the browser's own PDF viewer or a new tab - so an
- * occasion's own recording (via BottomAudioPlayer) can keep playing in a
- * persistent bar underneath while its pages are scrolled through. Callers
- * should mount this with `key={pdf.driveFileId}` so switching to a
- * different PDF remounts fresh (a clean `useState` initial value) rather
- * than needing an effect to reset state back to "downloading" itself.
+ * handing off to the browser's own PDF viewer or a new tab. Playback
+ * (GlobalPlayerBar, mounted once at App root) is independent of this
+ * screen now - it shows whenever anything is playing anywhere in the app,
+ * not just here, so this only needs to know whether to leave room for it.
+ * Callers (see App.tsx's Follow/BrowsePdfRoute) should mount this with
+ * `key={driveFileId}` so switching to a different PDF remounts fresh
+ * (a clean `useState` initial value) rather than needing this effect to
+ * reset state back to "downloading" itself.
  */
-export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
+export function PdfViewerScreen({ resolved }: Props) {
+  const { driveFileId } = useParams<{ driveFileId: string }>();
+  const pdf = resolved.entry.pdfs.find((p) => p.driveFileId === driveFileId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>({ status: 'downloading', percent: 0 });
+  const player = usePlayer();
 
   useEffect(() => {
+    if (!pdf) return;
     let cancelled = false;
 
     (async () => {
@@ -50,16 +55,28 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [pdf.driveFileId, pdf.resourceKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the stable id, not the `pdf` object (a fresh reference every render via .find())
+  }, [pdf?.driveFileId, pdf?.resourceKey]);
 
-  const hasAudio = entry.audio.length > 0;
+  if (!pdf) {
+    return (
+      <div className="pdf-viewer-screen">
+        <Link className="back-link" to={resolved.basePath}>
+          {'< back'}
+        </Link>
+        <p className="gap-message">This PDF couldn't be found - the link may be out of date.</p>
+      </div>
+    );
+  }
+
+  const hasPlayerBar = player.playlist !== null;
 
   return (
-    <div className={hasAudio ? 'pdf-viewer-screen has-player' : 'pdf-viewer-screen'}>
+    <div className={hasPlayerBar ? 'pdf-viewer-screen has-player' : 'pdf-viewer-screen'}>
       <div className="pdf-viewer-header">
-        <button className="back-link" onClick={onBack}>
+        <Link className="back-link" to={resolved.basePath}>
           {'< back'}
-        </button>
+        </Link>
         <p className="pdf-viewer-title">{pdf.label}</p>
       </div>
 
@@ -68,8 +85,6 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
       {state.status === 'error' && <p className="gap-message">Couldn't load this PDF: {state.message}</p>}
 
       <div ref={containerRef} className="pdf-pages" />
-
-      {hasAudio && <BottomAudioPlayer audio={entry.audio} />}
     </div>
   );
 }
