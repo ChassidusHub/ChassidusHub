@@ -105,6 +105,19 @@ variable needs to be set up before `deploy` will work. The free Workers
 plan (100k requests/day) is enough to start; upgrade to the $5/mo plan
 (10M requests/month) only once real usage approaches that.
 
+**Merging to `main` does not deploy this Worker** - there's no CI/CD for
+it (no `.github/workflows` in this repo at all), unlike `apps/web`'s
+Vercel auto-deploy. `npm run deploy` has to be run by hand after every
+change here, or the live Worker silently keeps running old code. This is
+a real, previously-hit trap, not a theoretical one: a fix for audio
+502s (falling back to `.m4a`/`.opus` when the stored extension 404s) sat
+merged on `main` for a real, extended stretch without ever being
+deployed, so the live Worker kept 502ing on exactly the files that fix
+was for - invisible until a later change elsewhere in the app started
+actually reaching those specific files. After any change here, deploy it
+and spot-check a real request against the live URL below, don't just
+trust that merging was enough.
+
 **Deployed and live**: `https://sichos-kodesh-media-proxy.shmuky.workers.dev`
 (free tier) - verified with a real ranged request against a known audio
 file (`206 Partial Content`, correct `Content-Range`, no leaked origin

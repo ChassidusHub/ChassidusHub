@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 import { browsableYears } from '@sichos-kodesh/catalog';
 import { findMatchingYears, kviusCode } from '@sichos-kodesh/kvius-engine';
 import catalog from '../catalog/data';
@@ -23,7 +24,7 @@ export function YearPickerScreen({ targetYear }: Props) {
       <div className="header-row">
         <h1>Sichos Kodesh</h1>
         <Link className="settings-link" to="/settings" aria-label="Settings">
-          ⚙
+          <Settings size={22} strokeWidth={2} />
         </Link>
       </div>
       <p className="subtitle">

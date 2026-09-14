@@ -64,6 +64,51 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on the chapter, not `state.playing` (togglePlay drives that directly on the element)
   }, [current?.workerFilename]);
 
+  // The Media Session API is what puts a real title/chapter and working
+  // prev/next/play/pause on Android's lock-screen and notification-shade
+  // media controls (and macOS/Windows/iOS equivalents) instead of a bare
+  // "playing audio from <site>" entry with no controls - a real, visible
+  // difference on the platform this is a PWA for, not a cosmetic extra.
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    if (!state.playlist || !current) {
+      navigator.mediaSession.metadata = null;
+      return;
+    }
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: current.chapterName ?? state.playlist.title,
+      artist: state.playlist.title,
+      album: 'Sichos Kodesh',
+      artwork: [
+        { src: `${import.meta.env.BASE_URL}icon-192.png`, sizes: '192x192', type: 'image/png' },
+        { src: `${import.meta.env.BASE_URL}icon-512.png`, sizes: '512x512', type: 'image/png' },
+      ],
+    });
+  }, [state.playlist, current]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.playbackState = state.playing ? 'playing' : 'paused';
+  }, [state.playing]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.setActionHandler('play', () => audioRef.current?.play());
+    navigator.mediaSession.setActionHandler('pause', () => audioRef.current?.pause());
+    navigator.mediaSession.setActionHandler('previoustrack', prev);
+    navigator.mediaSession.setActionHandler('nexttrack', next);
+    navigator.mediaSession.setActionHandler('seekto', (details) => {
+      if (audioRef.current && details.seekTime != null) audioRef.current.currentTime = details.seekTime;
+    });
+    return () => {
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
+      navigator.mediaSession.setActionHandler('seekto', null);
+    };
+  }, [prev, next]);
+
   const value = useMemo<PlayerContextValue>(
     () => ({ ...state, play, togglePlay, playChapter, next, prev, seekToFraction, audioRef }),
     [state, play, togglePlay, playChapter, next, prev, seekToFraction],

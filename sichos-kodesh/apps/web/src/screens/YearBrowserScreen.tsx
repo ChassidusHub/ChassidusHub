@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { mafteiachMonthName } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
+import { BackLink } from '../components/BackLink';
 
 interface Props {
   hebrewYear: number;
@@ -40,9 +41,7 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
 
   return (
     <div className="screen">
-      <Link className="back-link" to="/">
-        {'< change year'}
-      </Link>
+      <BackLink to="/">change year</BackLink>
       <h1>Hebrew year {hebrewYear}</h1>
       <p className="subtitle">
         {entries.length} occasion{entries.length === 1 ? '' : 's'} indexed

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
+import { BackLink } from '../components/BackLink';
 
 interface Props {
   sourceYear: number;
@@ -13,9 +14,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
 
   return (
     <div className="screen">
-      <Link className="back-link" to="/">
-        {'< change year'}
-      </Link>
+      <BackLink to="/">change year</BackLink>
       <h1>This week</h1>
       <p className="subtitle">From Hebrew year {sourceYear}</p>
 

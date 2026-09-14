@@ -35,7 +35,7 @@ export function useFollowEntry(): ResolvedEntry | null {
       subtitle: occasion.gregorianDate,
       basePath: `/follow/${year}/${id}`,
       backPath: `/follow/${year}`,
-      backLabel: '< back to this week',
+      backLabel: 'back to this week',
     };
   }, [sourceYear, occasionId]);
 }
@@ -52,7 +52,7 @@ export function useBrowseEntry(): ResolvedEntry | null {
       subtitle: entry.hebrewDate,
       basePath: `/browse/${year}/${id}`,
       backPath: `/browse/${year}`,
-      backLabel: `< back to ${year}`,
+      backLabel: `back to ${year}`,
     };
   }, [hebrewYear, occasionId]);
 }

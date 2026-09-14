@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { downloadPdf } from '../download/download';
 import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
 import { usePlayer } from '../player/usePlayer';
+import { BackLink } from '../components/BackLink';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -61,9 +62,7 @@ export function PdfViewerScreen({ resolved }: Props) {
   if (!pdf) {
     return (
       <div className="pdf-viewer-screen">
-        <Link className="back-link" to={resolved.basePath}>
-          {'< back'}
-        </Link>
+        <BackLink to={resolved.basePath}>back</BackLink>
         <p className="gap-message">This PDF couldn't be found - the link may be out of date.</p>
       </div>
     );
@@ -74,9 +73,7 @@ export function PdfViewerScreen({ resolved }: Props) {
   return (
     <div className={hasPlayerBar ? 'pdf-viewer-screen has-player' : 'pdf-viewer-screen'}>
       <div className="pdf-viewer-header">
-        <Link className="back-link" to={resolved.basePath}>
-          {'< back'}
-        </Link>
+        <BackLink to={resolved.basePath}>back</BackLink>
         <p className="pdf-viewer-title">{pdf.label}</p>
       </div>
 

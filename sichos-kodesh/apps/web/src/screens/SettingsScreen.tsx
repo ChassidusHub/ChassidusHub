@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Check } from 'lucide-react';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { useEditionPreference } from '../settings/editionPreference';
+import { BackLink } from '../components/BackLink';
 
 const OPTIONS: Array<{ value: PdfEdition | null; label: string }> = [
   { value: null, label: 'No preference' },
@@ -14,9 +15,7 @@ export function SettingsScreen() {
 
   return (
     <div className="screen">
-      <Link className="back-link" to="/">
-        {'< back'}
-      </Link>
+      <BackLink to="/">back</BackLink>
       <h1>Settings</h1>
       <p className="subtitle">
         When an occasion has PDFs from more than one printed edition, show this one first.
@@ -29,7 +28,7 @@ export function SettingsScreen() {
               onClick={() => setPreference(option.value)}
             >
               <span className="year-row-year">{option.label}</span>
-              {preference === option.value && <span className="year-row-distance">✓</span>}
+              {preference === option.value && <Check size={18} className="year-row-distance" />}
             </button>
           </li>
         ))}
