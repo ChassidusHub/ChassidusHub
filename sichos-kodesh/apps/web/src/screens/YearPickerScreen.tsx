@@ -3,6 +3,8 @@ import { Settings } from 'lucide-react';
 import { currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
+import { ContinueSection } from '../components/ContinueSection';
+import { parshaLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -17,7 +19,7 @@ interface Props {
  * tab competing for attention on first load.
  */
 export function YearPickerScreen({ targetYear }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const bestMatch = findMatchingYears(targetYear)[0];
   const { parsha } = currentParsha(IL);
   const hebrewDate = todayHebrewDateLabel();
@@ -32,7 +34,7 @@ export function YearPickerScreen({ targetYear }: Props) {
       </div>
       <p className="subtitle">
         {hebrewDate}
-        {parsha ? ` · ${parsha.join('-')}` : ''}
+        {parsha ? ` · ${parshaLabel(parsha, language)}` : ''}
       </p>
 
       {bestMatch && (
@@ -48,6 +50,8 @@ export function YearPickerScreen({ targetYear }: Props) {
       <Link className="category-row" to="/years">
         <span className="category-row-name">{t.browseAnyYear}</span>
       </Link>
+
+      <ContinueSection />
     </div>
   );
 }

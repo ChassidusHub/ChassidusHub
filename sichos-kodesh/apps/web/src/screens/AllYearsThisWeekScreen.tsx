@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Music } from 'lucide-react';
 import { resolveThisWeekAllYears } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
+import { OccasionRowIcon } from '../components/OccasionRowIcon';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
+import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 
 /**
@@ -15,7 +17,8 @@ import { useTranslation } from '../i18n/useLanguage';
  * FarbrengenScreen as everywhere else in the follow flow.
  */
 export function AllYearsThisWeekScreen() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const progressMap = useProgressMap();
   const yearGroups = useMemo(() => resolveThisWeekAllYears(catalog), []);
 
   return (
@@ -28,13 +31,13 @@ export function AllYearsThisWeekScreen() {
 
       {yearGroups.map(({ hebrewYear, entries }) => (
         <div key={hebrewYear}>
-          <p className="category-header">{hebrewYear}</p>
+          <p className="category-header">{hebrewYearLabel(hebrewYear, language)}</p>
           <ul className="year-list">
             {entries.map((entry) => (
               <li key={entry.occasionId}>
                 <Link className="year-row" to={`/this-week-all-years/${hebrewYear}/${entry.occasionId}`}>
                   <span className="year-row-main">
-                    {entry.audio.length > 0 && <Music size={14} className="year-row-audio-icon" aria-label={t.hasRecordingLabel} />}
+                    <OccasionRowIcon entry={entry} progressMap={progressMap} />
                     <span className="year-row-year">{entry.occasionLabel}</span>
                   </span>
                 </Link>

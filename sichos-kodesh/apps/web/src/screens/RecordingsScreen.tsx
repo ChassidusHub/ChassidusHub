@@ -44,7 +44,7 @@ export function RecordingsScreen({ resolved }: Props) {
             <li key={chapter.workerFilename}>
               <button
                 className={isActive ? 'playlist-row playlist-row-active' : 'playlist-row'}
-                onClick={() => player.play({ title: entry.occasionLabel, audio: entry.audio }, index)}
+                onClick={() => player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, index)}
               >
                 <span className="playlist-row-icon">
                   {isActive && player.playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}

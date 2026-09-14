@@ -2,6 +2,7 @@ import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { OccasionDetail } from '../components/OccasionDetail';
 import { BackLink } from '../components/BackLink';
 import { useTranslation } from '../i18n/useLanguage';
+import { useRecordVisit } from '../player/useRecordVisit';
 
 interface Props {
   resolved: ResolvedEntry | null;
@@ -10,6 +11,7 @@ interface Props {
 /** Shared by the "follow" and "browse" routes - only the entry-resolution differs (see routes/useResolvedEntry.ts), the page itself doesn't care which. */
 export function OccasionScreen({ resolved }: Props) {
   const { t } = useTranslation();
+  useRecordVisit(resolved?.entry);
 
   if (!resolved) {
     return (

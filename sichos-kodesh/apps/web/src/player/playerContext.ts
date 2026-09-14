@@ -5,6 +5,9 @@ export interface Playlist {
   /** What the player bar shows as context for what's playing - an occasion's label. */
   title: string;
   audio: CatalogAudio[];
+  /** The occasion this playlist belongs to - lets PlayerProvider record per-chapter listening progress against it (see player/progressStore.ts) for the home page's Continue section. */
+  hebrewYear: number;
+  occasionId: number;
 }
 
 export interface PlayerState {

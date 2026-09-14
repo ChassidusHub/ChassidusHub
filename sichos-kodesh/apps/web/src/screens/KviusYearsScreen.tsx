@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { BackLink } from '../components/BackLink';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
  * content, not just this week's slice.
  */
 export function KviusYearsScreen({ targetYear }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const matches = findMatchingYears(targetYear);
 
   return (
@@ -27,7 +28,7 @@ export function KviusYearsScreen({ targetYear }: Props) {
         {matches.map((item) => (
           <li key={item.hebrewYear}>
             <Link className="year-row" to={`/follow/${item.hebrewYear}`}>
-              <span className="year-row-year">{item.hebrewYear}</span>
+              <span className="year-row-year">{hebrewYearLabel(item.hebrewYear, language)}</span>
               <span className="year-row-distance">{t.yearsAgo(item.distance)}</span>
             </Link>
           </li>

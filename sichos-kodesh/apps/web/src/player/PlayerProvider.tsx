@@ -2,8 +2,38 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { audioUrl } from '../download/download';
 import { forMediaSession } from '../utils/hebrewPunctuation';
+import { recordChapterProgress } from './progressStore';
 import { PlayerContext } from './playerContext';
 import type { Playlist, PlayerContextValue, PlayerState } from './playerContext';
+
+const PERSIST_KEY = 'sichos-kodesh:player-state';
+
+interface PersistedPlayerState {
+  playlist: Playlist;
+  currentIndex: number;
+  currentTime: number;
+}
+
+/** What survives a reload/re-enter (see PlayerProvider's doc comment) - never `playing`, since actual audio can't be resumed without a user gesture anyway, and never `duration`, which the restored `<audio>` element re-derives on its own first load. */
+function readPersisted(): PersistedPlayerState | null {
+  try {
+    const raw = localStorage.getItem(PERSIST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedPlayerState;
+    if (!parsed.playlist || !Array.isArray(parsed.playlist.audio)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writePersisted(next: PersistedPlayerState): void {
+  try {
+    localStorage.setItem(PERSIST_KEY, JSON.stringify(next));
+  } catch {
+    // Best-effort persistence only.
+  }
+}
 
 /**
  * Holds the single `<audio>` element for the whole app, mounted once here
@@ -12,10 +42,26 @@ import type { Playlist, PlayerContextValue, PlayerState } from './playerContext'
  * player structurally can't: unmounting the element on navigation was
  * exactly why playback used to stop when leaving the PDF viewer. Provider
  * must be mounted above the router's `<Routes>`, never inside one.
+ *
+ * The playlist, chapter, and position also survive a full reload or
+ * re-entering the site later (localStorage, not cookies - this is all
+ * client-side state a server never needs to see), restored paused rather
+ * than actually resumed: browsers block audio autoplay without a user
+ * gesture, so the honest restore is "picking up where you left off, tap
+ * play to continue" rather than pretending to autoplay and silently
+ * failing.
  */
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [state, setState] = useState<PlayerState>({ playlist: null, currentIndex: 0, playing: false, currentTime: 0, duration: 0 });
+  const [initialPersisted] = useState(readPersisted);
+  const [state, setState] = useState<PlayerState>(() =>
+    initialPersisted
+      ? { playlist: initialPersisted.playlist, currentIndex: initialPersisted.currentIndex, playing: false, currentTime: initialPersisted.currentTime, duration: 0 }
+      : { playlist: null, currentIndex: 0, playing: false, currentTime: 0, duration: 0 },
+  );
+  // Consumed once, by the first chapter's `onLoadedMetadata` below - not a
+  // dependency of any effect, so it deliberately doesn't trigger re-renders.
+  const pendingSeekRef = useRef<number | null>(initialPersisted && initialPersisted.currentTime > 0 ? initialPersisted.currentTime : null);
 
   const play = useCallback((playlist: Playlist, startIndex = 0) => {
     setState({ playlist, currentIndex: startIndex, playing: true, currentTime: 0, duration: 0 });
@@ -55,6 +101,55 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const current = state.playlist?.audio[state.currentIndex] ?? null;
+
+  // Persisted immediately on a playlist/chapter change (rare, worth never
+  // losing) and throttled on plain playback-position ticks (frequent -
+  // `onTimeUpdate` fires several times a second) so a reload resumes
+  // within a few seconds of the real position without hammering
+  // localStorage on every tick.
+  const lastPersistRef = useRef(0);
+  useEffect(() => {
+    if (!state.playlist) return;
+    lastPersistRef.current = Date.now();
+    writePersisted({ playlist: state.playlist, currentIndex: state.currentIndex, currentTime: state.currentTime });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately excludes currentTime, handled by the throttled effect below
+  }, [state.playlist, state.currentIndex]);
+
+  useEffect(() => {
+    if (!state.playlist) return;
+    const now = Date.now();
+    if (now - lastPersistRef.current < 3000) return;
+    lastPersistRef.current = now;
+    writePersisted({ playlist: state.playlist, currentIndex: state.currentIndex, currentTime: state.currentTime });
+  }, [state.playlist, state.currentIndex, state.currentTime]);
+
+  // A throttled tick can lose the last couple of seconds of position if the
+  // tab is closed/backgrounded between writes - flush immediately whenever
+  // the page might be going away, so "re-enter the site" resumes accurately
+  // even right after a fresh seek.
+  useEffect(() => {
+    function flush() {
+      if (state.playlist) writePersisted({ playlist: state.playlist, currentIndex: state.currentIndex, currentTime: state.currentTime });
+    }
+    document.addEventListener('visibilitychange', flush);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', flush);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [state.playlist, state.currentIndex, state.currentTime]);
+
+  // Per-chapter listening progress for the home page's Continue section
+  // (see player/progressStore.ts) - same throttling rationale as the
+  // position persistence above, just a separate localStorage key/schema.
+  const lastProgressRecordRef = useRef(0);
+  useEffect(() => {
+    if (!state.playlist || state.duration <= 0) return;
+    const now = Date.now();
+    if (now - lastProgressRecordRef.current < 3000) return;
+    lastProgressRecordRef.current = now;
+    recordChapterProgress(state.playlist.hebrewYear, state.playlist.occasionId, state.playlist.title, state.currentIndex, state.currentTime, state.duration);
+  }, [state.playlist, state.currentIndex, state.currentTime, state.duration]);
 
   // Toggling the `autoPlay` prop on an already-mounted <audio> element does
   // not reliably (re)start playback across browsers once its `src` has
@@ -124,13 +219,30 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           src={audioUrl(current.workerFilename)}
           onPlay={() => setState((s) => ({ ...s, playing: true }))}
           onPause={() => setState((s) => ({ ...s, playing: false }))}
-          onEnded={next}
+          onEnded={() => {
+            // Record this chapter as fully played explicitly - the last
+            // throttled onTimeUpdate tick before "ended" fires can still
+            // be a few seconds short of the real duration, which would
+            // otherwise leave a just-finished chapter just under the
+            // finished threshold.
+            if (state.playlist && state.duration > 0) {
+              recordChapterProgress(state.playlist.hebrewYear, state.playlist.occasionId, state.playlist.title, state.currentIndex, state.duration, state.duration);
+            }
+            next();
+          }}
           // Read from `e.currentTarget` before calling setState, not inside the
           // updater function - React (StrictMode especially) can invoke a state
           // updater more than once, by which point the synthetic event's
           // `currentTarget` has already been nulled out.
           onLoadedMetadata={(e) => {
             const duration = e.currentTarget.duration;
+            // One-shot: only the very first chapter loaded after a restore
+            // has a pending position to resume from - every ordinary
+            // chapter change already starts its `currentTime` at 0.
+            if (pendingSeekRef.current != null) {
+              e.currentTarget.currentTime = pendingSeekRef.current;
+              pendingSeekRef.current = null;
+            }
             setState((s) => ({ ...s, duration }));
           }}
           onTimeUpdate={(e) => {
