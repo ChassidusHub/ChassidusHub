@@ -3,8 +3,16 @@ import { useParams } from 'react-router-dom';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
 import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
+import { getOccasionProgress, getPdfScrollFraction, recordPdfProgress } from '../player/progressStore';
+import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
+
+/** Document scroll position as a fraction (0-1) of how far it's possible to scroll - 0 when the page is too short to scroll at all. */
+function currentScrollFraction(): number {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  return max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+}
 
 interface Props {
   resolved: ResolvedEntry;
@@ -38,6 +46,8 @@ export function PdfViewerScreen({ resolved }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null });
   const [zoomed, setZoomed] = useState(false);
+  const progressMap = useProgressMap();
+  const savedFraction = pdf ? getPdfScrollFraction(getOccasionProgress(progressMap, resolved.entry.hebrewYear, resolved.entry.occasionId), pdf.driveFileId) : undefined;
 
   // The browser's own pinch-zoom always zooms the whole visual viewport -
   // header, back link, everything - not just the PDF, which is exactly
@@ -70,7 +80,17 @@ export function PdfViewerScreen({ resolved }: Props) {
         await renderPdfPages(doc, containerRef.current, () => cancelled, (nowZoomed) => {
           if (!cancelled) setZoomed(nowZoomed);
         });
-        if (!cancelled) setState({ status: 'ready' });
+        if (cancelled) return;
+        // Every page's wrapper is already appended with its real, final
+        // height by the time renderPdfPages resolves (only the canvases
+        // inside them still render lazily as the user scrolls - see
+        // renderPdf.ts) - so the document's total scroll height is already
+        // correct here, safe to restore against.
+        if (savedFraction != null) {
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          if (max > 0) window.scrollTo(0, savedFraction * max);
+        }
+        setState({ status: 'ready' });
       } catch (error) {
         if (!cancelled) setState({ status: 'error', message: String(error) });
       }
@@ -79,8 +99,37 @@ export function PdfViewerScreen({ resolved }: Props) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the stable id, not the `pdf` object (a fresh reference every render via .find())
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the stable id, not the `pdf` object (a fresh reference every render via .find()); savedFraction comes from progressMap, read once on mount, so it can't change across this effect's lifetime
   }, [pdf?.driveFileId, pdf?.resourceKey]);
+
+  // Records the reading position (see progressStore.ts's recordPdfProgress)
+  // once pages have real layout to scroll against - same throttle/flush
+  // rationale as the audio player's position tracking (PlayerProvider.tsx):
+  // a periodic write while scrolling, plus an immediate flush right before
+  // the page might go away, so a reload or re-visit resumes close to the
+  // real position without hammering localStorage on every scroll event.
+  useEffect(() => {
+    if (!pdf || state.status !== 'ready') return;
+    let lastRecordAt = 0;
+    function record() {
+      recordPdfProgress(resolved.entry.hebrewYear, resolved.entry.occasionId, resolved.entry.occasionLabel, pdf!.driveFileId, currentScrollFraction());
+    }
+    function onScroll() {
+      const now = Date.now();
+      if (now - lastRecordAt < 2000) return;
+      lastRecordAt = now;
+      record();
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('visibilitychange', record);
+    window.addEventListener('pagehide', record);
+    return () => {
+      record();
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('visibilitychange', record);
+      window.removeEventListener('pagehide', record);
+    };
+  }, [pdf, state.status, resolved.entry.hebrewYear, resolved.entry.occasionId, resolved.entry.occasionLabel]);
 
   if (!pdf) {
     return (

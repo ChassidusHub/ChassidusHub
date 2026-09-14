@@ -10,8 +10,9 @@ interface Props {
 
 /**
  * One PDF section's (mugah/biltiMugah/maamorim/hagahos/hosofos) own page,
- * reached via its button on OccasionDetail - kept off the main occasion
- * page instead of listed inline there, since an occasion can have PDFs
+ * reached via FarbrengenScreen's collapsed "More from this occasion"
+ * section - kept off the main occasion page instead of listed inline
+ * there, since an occasion can have PDFs
  * across every section at once and a Sefer-vs-Toras-Menachem-vs-Sichos-
  * Kodesh label makes little sense without its category header for
  * context (hagahos's "צילום 1"/"צילום 2" - literally "scan 1"/"scan 2" -

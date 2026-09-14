@@ -64,6 +64,7 @@ export function SearchScreen() {
   const typeOptions: Array<{ value: ContentType; label: string }> = [
     { value: 'audio', label: t.audioTypeLabel },
     { value: 'hanacha', label: t.hanachaTypeLabel },
+    { value: 'chag', label: t.chagTypeLabel },
     ...PDF_SECTION_ORDER.map((section) => ({ value: section, label: t.sectionLabels[section] })),
   ];
 

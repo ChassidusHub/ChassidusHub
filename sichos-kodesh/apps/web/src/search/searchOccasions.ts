@@ -1,9 +1,23 @@
-import { isHighlightedFarbrengenHanacha, mafteiachDay, mafteiachMonthToken, mafteiachMonthTokenToHDateMonth, occasionParsha } from '@sichos-kodesh/catalog';
+import {
+  isChagOccasion,
+  isHighlightedFarbrengenHanacha,
+  mafteiachDay,
+  mafteiachMonthToken,
+  mafteiachMonthTokenToHDateMonth,
+  occasionParsha,
+} from '@sichos-kodesh/catalog';
 import type { CatalogByYear, CatalogEntry, PdfSection } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
 
-/** "hanacha" is the highlighted Sichos Kodesh/Toras Menachem transcript specifically (see isHighlightedFarbrengenHanacha) - a meaningful search target in its own right, distinct from bilti mugah generally. */
-export type ContentType = 'audio' | 'hanacha' | PdfSection;
+/**
+ * "hanacha" is the highlighted Sichos Kodesh/Toras Menachem transcript
+ * specifically (see isHighlightedFarbrengenHanacha) - a meaningful search
+ * target in its own right, distinct from bilti mugah generally. "chag" is
+ * not a PdfSection at all - it's a property of the occasion's own Hebrew
+ * date (a real Yom Tov - see isChagOccasion), not of any one PDF, so it's
+ * checked differently in entryHasType below.
+ */
+export type ContentType = 'audio' | 'hanacha' | 'chag' | PdfSection;
 
 export interface SearchFilters {
   query: string;
@@ -33,6 +47,7 @@ function normalize(text: string): string {
 function entryHasType(entry: CatalogEntry, type: ContentType): boolean {
   if (type === 'audio') return entry.audio.length > 0;
   if (type === 'hanacha') return entry.pdfs.some(isHighlightedFarbrengenHanacha);
+  if (type === 'chag') return isChagOccasion(entry.hebrewDate, IL);
   return entry.pdfs.some((pdf) => pdf.section === type);
 }
 

@@ -31,8 +31,18 @@ const purimKoton = makeEntry({
   occasionLabel: 'פורים קטן',
   audio: [{ workerFilename: 'b.mp3', durationMs: 500 }],
 });
+// 15 Tishrei 5711 - Sukkos I, a real Yom Tov (verified against hebcal's CHAG
+// flag directly - see packages/catalog/tests/occasionChag.test.ts). Given a
+// PDF, not audio, so it doesn't also perturb the 'audio' type filter test.
+const sukkos = makeEntry({
+  occasionId: 5,
+  hebrewYear: 5711,
+  hebrewDate: '5711-01-15',
+  occasionLabel: 'א\' דחג הסוכות',
+  pdfs: [{ section: 'hagahos', label: 'הגהות', driveFileId: 'z' }],
+});
 
-const catalog: CatalogByYear = { 5711: [yudShevat, gap, purimKoton], 5712: [purim] };
+const catalog: CatalogByYear = { 5711: [yudShevat, gap, purimKoton, sukkos], 5712: [purim] };
 
 describe('hasActiveFilters', () => {
   it('is false for the empty filter set', () => {
@@ -97,6 +107,11 @@ describe('searchOccasions', () => {
 
     const maamorimResult = searchOccasions(catalog, { ...EMPTY_FILTERS, types: ['maamorim'] });
     expect(maamorimResult).toEqual([{ hebrewYear: 5712, entries: [purim] }]);
+  });
+
+  it('filters by "chag" - a property of the occasion\'s own date, not of any one PDF/recording', () => {
+    const result = searchOccasions(catalog, { ...EMPTY_FILTERS, types: ['chag'] });
+    expect(result).toEqual([{ hebrewYear: 5711, entries: [sukkos] }]);
   });
 
   it('combines multiple filters with AND', () => {

@@ -442,6 +442,27 @@ h1 {
   color: var(--accent);
 }
 
+/* A chapter's own in-progress fill (RecordingsScreen) - a fixed-width
+   sliver rather than `.continue-progress-track`'s full-width bar, since it
+   sits inline between the chapter name and its duration in a horizontal
+   row instead of underneath a label in its own row. */
+.playlist-row-progress-track {
+  display: block;
+  flex-shrink: 0;
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.playlist-row-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
 /* PDF viewer */
 
 .pdf-viewer-screen {

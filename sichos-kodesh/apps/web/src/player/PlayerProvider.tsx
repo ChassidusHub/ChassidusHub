@@ -63,11 +63,29 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // dependency of any effect, so it deliberately doesn't trigger re-renders.
   const pendingSeekRef = useRef<number | null>(initialPersisted && initialPersisted.currentTime > 0 ? initialPersisted.currentTime : null);
 
-  const play = useCallback((playlist: Playlist, startIndex = 0) => {
-    setState({ playlist, currentIndex: startIndex, playing: true, currentTime: 0, duration: 0 });
-    // The actual .play() call happens in the effect below, once the <audio>
-    // element's `src` has updated to match this new chapter.
-  }, []);
+  const current = state.playlist?.audio[state.currentIndex] ?? null;
+
+  const play = useCallback(
+    (playlist: Playlist, startIndex = 0, startTime = 0) => {
+      const targetChapter = playlist.audio[startIndex];
+      // Only relevant when resuming a specific position (Continue section):
+      // if the requested chapter is already the one loaded, the `<audio>`
+      // element's `src` won't change, so the effect below (keyed on the
+      // chapter's filename) won't refire to consume a pending seek - seek
+      // directly instead.
+      const alreadyLoaded = targetChapter && current?.workerFilename === targetChapter.workerFilename;
+      if (alreadyLoaded && audioRef.current) {
+        audioRef.current.currentTime = startTime;
+        void audioRef.current.play();
+      } else {
+        pendingSeekRef.current = startTime > 0 ? startTime : null;
+      }
+      setState({ playlist, currentIndex: startIndex, playing: true, currentTime: startTime, duration: 0 });
+      // Otherwise the actual .play() call happens in the effect below, once
+      // the <audio> element's `src` has updated to match this new chapter.
+    },
+    [current],
+  );
 
   const playChapter = useCallback((index: number) => {
     setState((prev) => (prev.playlist ? { ...prev, currentIndex: index, playing: true, currentTime: 0, duration: 0 } : prev));
@@ -99,8 +117,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!el || !Number.isFinite(el.duration) || el.duration === 0) return;
     el.currentTime = fraction * el.duration;
   }, []);
-
-  const current = state.playlist?.audio[state.currentIndex] ?? null;
 
   // Persisted immediately on a playlist/chapter change (rare, worth never
   // losing) and throttled on plain playback-position ticks (frequent -
