@@ -1,16 +1,14 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { browsableYears } from '@sichos-kodesh/catalog';
 import { findMatchingYears, kviusCode } from '@sichos-kodesh/kvius-engine';
 import catalog from '../catalog/data';
 
 interface Props {
   targetYear: number;
-  onSelectKviusYear: (hebrewYear: number) => void;
-  onSelectBrowseYear: (hebrewYear: number) => void;
-  onOpenSettings: () => void;
 }
 
-export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowseYear, onOpenSettings }: Props) {
+export function YearPickerScreen({ targetYear }: Props) {
   const [tab, setTab] = useState<'kvius' | 'browse'>('kvius');
 
   // No range options: defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR],
@@ -24,9 +22,9 @@ export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowse
     <div className="screen">
       <div className="header-row">
         <h1>Sichos Kodesh</h1>
-        <button className="settings-link" onClick={onOpenSettings} aria-label="Settings">
+        <Link className="settings-link" to="/settings" aria-label="Settings">
           ⚙
-        </button>
+        </Link>
       </div>
       <p className="subtitle">
         Hebrew year {targetYear} (kvius {kviusCode(targetYear)})
@@ -47,10 +45,10 @@ export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowse
           <ul className="year-list">
             {matches.map((item) => (
               <li key={item.hebrewYear}>
-                <button className="year-row" onClick={() => onSelectKviusYear(item.hebrewYear)}>
+                <Link className="year-row" to={`/follow/${item.hebrewYear}`}>
                   <span className="year-row-year">{item.hebrewYear}</span>
                   <span className="year-row-distance">{item.distance} years ago</span>
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
@@ -61,9 +59,9 @@ export function YearPickerScreen({ targetYear, onSelectKviusYear, onSelectBrowse
           <ul className="year-list">
             {allYears.map((year) => (
               <li key={year}>
-                <button className="year-row" onClick={() => onSelectBrowseYear(year)}>
+                <Link className="year-row" to={`/browse/${year}`}>
                   <span className="year-row-year">{year}</span>
-                </button>
+                </Link>
               </li>
             ))}
           </ul>

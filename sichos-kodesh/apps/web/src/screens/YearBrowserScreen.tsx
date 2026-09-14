@@ -1,13 +1,10 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { mafteiachMonthName } from '@sichos-kodesh/catalog';
-import type { CatalogEntry, CatalogPdf } from '@sichos-kodesh/catalog';
+import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
-import { OccasionDetail } from '../components/OccasionDetail';
-import { PdfViewerScreen } from './PdfViewerScreen';
 
 interface Props {
   hebrewYear: number;
-  onBack: () => void;
 }
 
 interface MonthGroup {
@@ -28,59 +25,42 @@ function groupByMonth(entries: CatalogEntry[]): MonthGroup[] {
 }
 
 /**
- * Browse mode: every entry the catalog has for one Hebrew year, not just
- * the single occasion "this week" auto-resolves to. Doesn't use the
- * kvius engine at all - a browsed year has no guaranteed week/date
- * alignment with the current Hebrew year, so there's no "this week" to
- * compute here, only "what does this year actually have."
+ * Browse mode's list-only screen: every entry the catalog has for one
+ * Hebrew year, not just the single occasion "this week" auto-resolves to.
+ * Doesn't use the kvius engine at all - a browsed year has no guaranteed
+ * week/date alignment with the current Hebrew year, so there's no "this
+ * week" to compute here, only "what does this year actually have."
+ * Tapping a row navigates to /browse/:hebrewYear/:occasionId.
  */
-export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
+export function YearBrowserScreen({ hebrewYear }: Props) {
   // Only occasions with something real to download - an empty entry (mafteiach
   // indexed the occasion but nothing was resolved for it) is not worth a dead-end row.
   const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
-  const [selected, setSelected] = useState<CatalogEntry | null>(null);
-  const [viewingPdf, setViewingPdf] = useState<CatalogPdf | null>(null);
-
-  if (selected && viewingPdf) {
-    return <PdfViewerScreen key={viewingPdf.driveFileId} entry={selected} pdf={viewingPdf} onBack={() => setViewingPdf(null)} />;
-  }
-
-  if (selected) {
-    return (
-      <div className="screen">
-        <button className="back-link" onClick={() => setSelected(null)}>
-          {'< back to ' + hebrewYear}
-        </button>
-        <h1>{selected.occasionLabel}</h1>
-        <p className="subtitle">{selected.hebrewDate}</p>
-        <OccasionDetail key={selected.occasionId} entry={selected} onOpenPdf={setViewingPdf} />
-      </div>
-    );
-  }
-
   const monthGroups = groupByMonth(entries);
 
   return (
     <div className="screen">
-      <button className="back-link" onClick={onBack}>
+      <Link className="back-link" to="/">
         {'< change year'}
-      </button>
+      </Link>
       <h1>Hebrew year {hebrewYear}</h1>
-      <p className="subtitle">{entries.length} occasion{entries.length === 1 ? '' : 's'} indexed</p>
+      <p className="subtitle">
+        {entries.length} occasion{entries.length === 1 ? '' : 's'} indexed
+      </p>
       {monthGroups.map((group) => (
         <div key={group.month}>
           <p className="category-header">{group.month}</p>
           <ul className="year-list">
             {group.entries.map((entry) => (
               <li key={entry.occasionId}>
-                <button className="year-row" onClick={() => setSelected(entry)}>
+                <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
                   <span className="year-row-year">{entry.occasionLabel}</span>
                   <span className="year-row-distance">
                     {entry.audio.length > 0 ? 'audio' : ''}
                     {entry.audio.length > 0 && entry.pdfs.length > 0 ? ' + ' : ''}
                     {entry.pdfs.length > 0 ? `${entry.pdfs.length} pdf${entry.pdfs.length === 1 ? '' : 's'}` : ''}
                   </span>
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
