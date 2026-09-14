@@ -12,6 +12,43 @@ export interface WeekOccasion {
   entry: CatalogEntry;
 }
 
+interface WeekDay {
+  month: number;
+  day: number;
+  gregorianDate: string;
+}
+
+/**
+ * The current Hebrew week's (Sunday through Shabbos) days, as bare
+ * (month, day) pairs plus the real Gregorian date each one falls on - not
+ * translated into any particular year yet, since `resolveThisWeek` and
+ * `resolveThisWeekAllYears` each translate them differently (one source
+ * year vs. every indexed year).
+ *
+ * A day that's already rolled into the *next* Hebrew year (the one week a
+ * year this can happen: the week straddling Rosh Hashana) is skipped
+ * rather than included under the new year's month/day values - shared by
+ * both callers for one consistent definition of "this week," even though
+ * only `resolveThisWeek`'s original reason for the skip (avoiding
+ * misattributing a translated date onto `sourceYear`'s own, unrelated
+ * same-month-day date a full year earlier) strictly applies to it.
+ */
+function thisWeekDays(today: Date): WeekDay[] {
+  const todayH = new HDate(today);
+  const targetYear = todayH.getFullYear();
+  const weekEndH = todayH.onOrAfter(6); // Shabbos on or after today.
+  const weekEndAbs = weekEndH.abs();
+  const weekStartAbs = weekEndAbs - 6; // The preceding Sunday.
+
+  const days: WeekDay[] = [];
+  for (let abs = weekStartAbs; abs <= weekEndAbs; abs++) {
+    const dayH = new HDate(abs);
+    if (dayH.getFullYear() !== targetYear) continue; // Crosses into an adjacent Hebrew year - see above.
+    days.push({ month: dayH.getMonth(), day: dayH.getDate(), gregorianDate: dayH.greg().toISOString().slice(0, 10) });
+  }
+  return days;
+}
+
 /**
  * Every occasion with real content (audio or a PDF) that falls anywhere in
  * the current Hebrew week (Sunday through Shabbos) - not Shabbos alone.
@@ -31,35 +68,15 @@ export interface WeekOccasion {
  * farbrengens and Shabbos identically, since the catalog only ever
  * contains days with a real recorded occasion.
  *
- * The one week a year that straddles Rosh Hashana is a real exception to
- * that direct-translation trick: `sourceYear` is only kvius-matched to
- * *this* Hebrew year, not necessarily to the next one, so a day that has
- * already rolled into the new Hebrew year has no well-defined day in
- * `sourceYear` to borrow - translating it naively would silently pull in
- * an unrelated date a full year off in `sourceYear` (e.g. mapping the new
- * Rosh Hashana onto `sourceYear`'s *own*, entirely different, Rosh
- * Hashana). Those days are skipped rather than mismatched; the caller can
- * always look up the new year's own matched source year for what comes
- * after.
- *
  * Shared by apps/mobile and apps/web - both need the identical
  * kvius-to-catalog resolution, not two independently-maintained copies.
  */
 export function resolveThisWeek(sourceYear: number, catalog: CatalogByYear, today: Date = new Date()): WeekOccasion[] {
-  const todayH = new HDate(today);
-  const targetYear = todayH.getFullYear();
-  const weekEndH = todayH.onOrAfter(6); // Shabbos on or after today.
-  const weekEndAbs = weekEndH.abs();
-  const weekStartAbs = weekEndAbs - 6; // The preceding Sunday.
-
   const sourceEntries = catalog[sourceYear] ?? [];
   const results: WeekOccasion[] = [];
 
-  for (let abs = weekStartAbs; abs <= weekEndAbs; abs++) {
-    const dayH = new HDate(abs);
-    if (dayH.getFullYear() !== targetYear) continue; // Crosses into an adjacent Hebrew year - see above.
-    const hebrewDate = toMafteiachHebrewDateKey({ year: sourceYear, month: dayH.getMonth(), day: dayH.getDate() });
-    const gregorianDate = dayH.greg().toISOString().slice(0, 10);
+  for (const { month, day, gregorianDate } of thisWeekDays(today)) {
+    const hebrewDate = toMafteiachHebrewDateKey({ year: sourceYear, month, day });
     for (const entry of sourceEntries) {
       if (entry.hebrewDate === hebrewDate && entryHasContent(entry)) {
         results.push({ hebrewDate, gregorianDate, entry });
@@ -67,5 +84,51 @@ export function resolveThisWeek(sourceYear: number, catalog: CatalogByYear, toda
     }
   }
 
+  return results;
+}
+
+export interface YearWeekOccasions {
+  hebrewYear: number;
+  entries: CatalogEntry[];
+}
+
+/**
+ * Every occasion, across *every* indexed Hebrew year - not just years
+ * kvius-matched to the current one - that falls on the same Hebrew
+ * calendar (month, day) as some day in the current week. Unlike
+ * `resolveThisWeek`, this doesn't need or use weekday alignment: it
+ * answers "what happened on these Hebrew dates across all our history,"
+ * not "what happened this same week, in a year whose calendar lines up
+ * with this one." A kvius-matched year's own occasion is naturally
+ * included too - it's still an occasion on one of these dates - so
+ * there's no need to cross-reference `findMatchingYears` here at all.
+ *
+ * Grouped by year (years with nothing this week omitted), most recent
+ * year first - a real Gregorian date isn't included per entry the way
+ * `resolveThisWeek`'s is, since a historical year's actual occurrence
+ * almost never falls on today's real Gregorian date and showing it would
+ * misleadingly suggest otherwise; `entry.occasionLabel`/`hebrewDate`
+ * already carry the real Hebrew date.
+ */
+export function resolveThisWeekAllYears(catalog: CatalogByYear, today: Date = new Date()): YearWeekOccasions[] {
+  const days = thisWeekDays(today);
+  const years = Object.keys(catalog)
+    .map(Number)
+    .sort((a, b) => b - a);
+
+  const results: YearWeekOccasions[] = [];
+  for (const year of years) {
+    const yearEntries = catalog[year] ?? [];
+    const entries: CatalogEntry[] = [];
+    for (const { month, day } of days) {
+      const hebrewDate = toMafteiachHebrewDateKey({ year, month, day });
+      for (const entry of yearEntries) {
+        if (entry.hebrewDate === hebrewDate && entryHasContent(entry)) {
+          entries.push(entry);
+        }
+      }
+    }
+    if (entries.length > 0) results.push({ hebrewYear: year, entries });
+  }
   return results;
 }

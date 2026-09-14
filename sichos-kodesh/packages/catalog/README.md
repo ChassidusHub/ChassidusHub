@@ -75,6 +75,32 @@ catalog. The one exception: a day that rolls into the *next* Hebrew year
 `sourceYear`, since kvius matching is per-year — those days are skipped
 rather than mismatched.
 
+`resolveThisWeekAllYears(catalog, today?)` answers a different question:
+not "what happened this same week in a year whose calendar lines up with
+this one," but "what happened on these Hebrew *dates*, across every year
+this catalog has at all" — kvius-matched or not. It shares the same
+week-day computation as `resolveThisWeek` (both skip a day that's rolled
+into the next Hebrew year, for consistency, even though only
+`resolveThisWeek`'s own reason for that — avoiding a translated date
+landing on `sourceYear`'s own unrelated same-month-day date a full year
+off — strictly applies to it), but looks each day up directly against
+every indexed year's own dates rather than translating into one specific
+source year, so no kvius relationship between years is required. Returns
+results grouped by year (years with nothing that week omitted), most
+recent year first.
+
+## Today's Hebrew date (`currentParsha.ts`)
+
+`todayHebrewDateLabel(today?)` renders today's real Hebrew date in
+gematriya (`@hebcal/core`'s `HDate.renderGematriya`, nikud suppressed —
+e.g. "ו' תשרי תשפ״ז") — this app is Hebrew-calendar-first, so its home
+screen leads with the actual current Hebrew date, not a Gregorian one
+translated into Hebrew words. `currentParsha(il, today?)`, in the same
+file, is the separate helper for the upcoming (or, on a Shabbos, today's)
+Shabbos's parsha, built on `@hebcal/core`'s `Sedra` so it correctly rolls
+a weekday forward to its Shabbos, handles doubled/displaced parshios, and
+returns `null` on a chag.
+
 ## Display helpers for a browsed year and a PDF section (`mafteiachMonth.ts`, `pdfSections.ts`)
 
 `mafteiachMonthName(hebrewDate)` names a raw mafteiach-index date key's

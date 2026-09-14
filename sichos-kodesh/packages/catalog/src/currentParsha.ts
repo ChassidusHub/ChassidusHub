@@ -22,3 +22,15 @@ export function currentParsha(il: boolean, today: Date = new Date()): CurrentPar
     gregorianDate: result.hdate.greg().toISOString().slice(0, 10),
   };
 }
+
+/**
+ * Today's real Hebrew date in Hebrew gematriya (e.g. "ו' תשרי תשפ״ז"), not
+ * a translated/kvius-matched one - this app is Hebrew-calendar-first, so
+ * the home screen shows the actual current Hebrew date rather than only a
+ * Gregorian one. Nikud (vowel points) suppressed - `renderGematriya`'s
+ * default includes them, but plain letters read more naturally as a date
+ * label than as vocalized text.
+ */
+export function todayHebrewDateLabel(today: Date = new Date()): string {
+  return new HDate(today).renderGematriya(true);
+}
