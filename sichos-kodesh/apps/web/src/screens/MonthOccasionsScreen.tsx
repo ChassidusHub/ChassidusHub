@@ -29,7 +29,7 @@ export function MonthOccasionsScreen({ hebrewYear, monthToken }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={`/browse/${hebrewYear}`}>{t.hebrewYearTitle(hebrewYear)}</BackLink>
+      <BackLink to={`/browse/${hebrewYear}`} />
       <h1>{monthName}</h1>
       <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       <ul className="year-list">

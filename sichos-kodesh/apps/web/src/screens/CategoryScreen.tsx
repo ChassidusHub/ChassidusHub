@@ -27,7 +27,7 @@ export function CategoryScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={basePath}>{t.back}</BackLink>
+      <BackLink to={basePath} />
       <h1>{section ? t.sectionLabels[section] : ''}</h1>
       <p className="subtitle">{entry.occasionLabel}</p>
 

@@ -12,7 +12,7 @@ export function BrowseYearsScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/">{t.home}</BackLink>
+      <BackLink to="/" />
       <h1>{t.browseAnyYear}</h1>
       <p className="tab-help">{t.browseHelp}</p>
       <ul className="year-list">

@@ -1,15 +1,10 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken, resolveThisWeek } from '@sichos-kodesh/catalog';
+import { mafteiachMonthToken, resolveThisWeek } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { hebrewDayMonthLabel } from '../utils/formatHebrewDate';
-import { useLanguage, useTranslation } from '../i18n/useLanguage';
-import type { Language } from '../i18n/translations';
-
-function monthLabel(hebrewDate: string, language: Language): string {
-  return (language === 'he' ? mafteiachMonthNameHebrew : mafteiachMonthName)(hebrewDate);
-}
+import { useLanguage } from '../i18n/useLanguage';
 
 export interface ResolvedEntry {
   entry: CatalogEntry;
@@ -18,7 +13,6 @@ export interface ResolvedEntry {
   /** This occasion's own URL, e.g. `/browse/5711/11112833` - RecordingsScreen/PdfViewerScreen routes are nested under it. */
   basePath: string;
   backPath: string;
-  backLabel: string;
 }
 
 /**
@@ -43,7 +37,7 @@ export interface ResolvedEntry {
  */
 export function useFollowEntry(): ResolvedEntry | null {
   const { sourceYear, occasionId } = useParams<{ sourceYear: string; occasionId: string }>();
-  const { t, language } = useTranslation();
+  const { language } = useLanguage();
   return useMemo(() => {
     const year = Number(sourceYear);
     const id = Number(occasionId);
@@ -51,10 +45,9 @@ export function useFollowEntry(): ResolvedEntry | null {
     const entry = thisWeek?.entry ?? (catalog[year] ?? []).find((e) => e.occasionId === id);
     if (!entry) return null;
     const base = { entry, subtitle: hebrewDayMonthLabel(entry.hebrewDate, language), basePath: `/follow/${year}/${id}` };
-    if (thisWeek) return { ...base, backPath: `/follow/${year}`, backLabel: t.backToThisWeek };
+    if (thisWeek) return { ...base, backPath: `/follow/${year}` };
     const monthToken = mafteiachMonthToken(entry.hebrewDate);
-    return { ...base, backPath: `/follow/${year}/month/${monthToken}`, backLabel: monthLabel(entry.hebrewDate, language) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` changes identity with `language`, already covered by the language dependency it's derived from being global; re-including it here would just be noise.
+    return { ...base, backPath: `/follow/${year}/month/${monthToken}` };
   }, [sourceYear, occasionId, language]);
 }
 
@@ -80,9 +73,7 @@ export function useBrowseEntry(): ResolvedEntry | null {
       subtitle: hebrewDayMonthLabel(entry.hebrewDate, language),
       basePath: `/browse/${year}/${id}`,
       backPath: `/browse/${year}/month/${monthToken}`,
-      backLabel: monthLabel(entry.hebrewDate, language),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- see useFollowEntry
   }, [hebrewYear, occasionId, language]);
 }
 
@@ -96,7 +87,7 @@ export function useBrowseEntry(): ResolvedEntry | null {
  */
 export function useThisWeekAllYearsEntry(): ResolvedEntry | null {
   const { hebrewYear, occasionId } = useParams<{ hebrewYear: string; occasionId: string }>();
-  const { t, language } = useTranslation();
+  const { language } = useLanguage();
   return useMemo(() => {
     const year = Number(hebrewYear);
     const id = Number(occasionId);
@@ -107,9 +98,7 @@ export function useThisWeekAllYearsEntry(): ResolvedEntry | null {
       subtitle: hebrewDayMonthLabel(entry.hebrewDate, language),
       basePath: `/this-week-all-years/${year}/${id}`,
       backPath: '/this-week-all-years',
-      backLabel: t.allFarbrengensThisWeekTitle,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- see useFollowEntry
   }, [hebrewYear, occasionId, language]);
 }
 
@@ -130,7 +119,7 @@ export function useOccasionAllYearsEntry(): ResolvedEntry | null {
     hebrewYear: string;
     occasionId: string;
   }>();
-  const { t, language } = useTranslation();
+  const { language } = useLanguage();
   return useMemo(() => {
     const year = Number(hebrewYear);
     const id = Number(occasionId);
@@ -141,8 +130,6 @@ export function useOccasionAllYearsEntry(): ResolvedEntry | null {
       subtitle: hebrewDayMonthLabel(entry.hebrewDate, language),
       basePath: `/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${year}/${id}`,
       backPath: `/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}`,
-      backLabel: t.thisOccasionAllYearsTitle,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- see useFollowEntry
   }, [sourceHebrewYear, sourceOccasionId, hebrewYear, occasionId, language]);
 }

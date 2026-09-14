@@ -70,13 +70,13 @@ export function FarbrengenScreen({ resolved }: Props) {
   if (!resolved) {
     return (
       <div className="screen">
-        <BackLink to="/">{t.home}</BackLink>
+        <BackLink to="/" />
         <p className="gap-message">{t.occasionNotFound}</p>
       </div>
     );
   }
 
-  const { entry, subtitle, basePath, backPath, backLabel } = resolved;
+  const { entry, subtitle, basePath, backPath } = resolved;
 
   const primaryHanacha = pickPrimaryHanacha(entry.pdfs);
   // Any OTHER biltiMugah PDF - the non-chosen hanacha edition (see
@@ -106,7 +106,7 @@ export function FarbrengenScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={backPath}>{backLabel}</BackLink>
+      <BackLink to={backPath} />
       <h1>{entry.occasionLabel}</h1>
       <p className="subtitle">{subtitle}</p>
 

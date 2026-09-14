@@ -134,7 +134,7 @@ export function PdfViewerScreen({ resolved }: Props) {
   if (!pdf) {
     return (
       <div className="pdf-viewer-screen">
-        <BackLink to={resolved.basePath}>{t.back}</BackLink>
+        <BackLink to={resolved.basePath} />
         <p className="gap-message">{t.pdfNotFound}</p>
       </div>
     );
@@ -143,7 +143,7 @@ export function PdfViewerScreen({ resolved }: Props) {
   return (
     <div className={zoomed ? 'pdf-viewer-screen zoomed' : 'pdf-viewer-screen'}>
       <div className="pdf-viewer-header">
-        <BackLink to={resolved.basePath}>{t.back}</BackLink>
+        <BackLink to={resolved.basePath} />
         <p className="pdf-viewer-title">{pdf.label}</p>
       </div>
 

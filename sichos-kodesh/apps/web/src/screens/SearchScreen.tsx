@@ -71,7 +71,7 @@ export function SearchScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/">{t.home}</BackLink>
+      <BackLink to="/" />
       <h1>{t.searchTitle}</h1>
       <p className="tab-help">{t.searchHelp}</p>
 

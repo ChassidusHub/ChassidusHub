@@ -37,7 +37,7 @@ export function RecordingsScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={basePath}>{t.back}</BackLink>
+      <BackLink to={basePath} />
       <h1>{entry.occasionLabel}</h1>
       <p className="subtitle">{t.recordings}</p>
 

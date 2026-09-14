@@ -42,7 +42,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
   if (!sourceEntry) {
     return (
       <div className="screen">
-        <BackLink to="/">{t.home}</BackLink>
+        <BackLink to="/" />
         <p className="gap-message">{t.occasionNotFound}</p>
       </div>
     );
@@ -50,7 +50,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
 
   return (
     <div className="screen">
-      <BackLink to={`/browse/${sourceHebrewYear}/${sourceOccasionId}`}>{t.back}</BackLink>
+      <BackLink to={`/browse/${sourceHebrewYear}/${sourceOccasionId}`} />
       <h1>{t.thisOccasionAllYearsTitle}</h1>
       <p className="tab-help">{t.thisOccasionAllYearsHelp}</p>
 

@@ -15,7 +15,7 @@ export function AboutScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/settings">{t.back}</BackLink>
+      <BackLink to="/settings" />
       <h1>{t.aboutTitle}</h1>
       <p className="subtitle">
         {t.aboutIndexedBy}

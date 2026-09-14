@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
-import { findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
+import { SPECIAL_ANNIVERSARY_YEARS, findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
@@ -17,6 +17,26 @@ function filterAndSortForDisplay(results: MatchingYearResult[], today: Date): Ma
   return results
     .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
     .slice()
+    .sort((a, b) => a.hebrewYear - b.hebrewYear);
+}
+
+interface SpecialAnniversaryMatch {
+  hebrewYear: number;
+  anniversaryNumber: number;
+}
+
+/**
+ * Years hitting a round-number anniversary (see kvius-engine's
+ * `SPECIAL_ANNIVERSARY_YEARS`) this real calendar year - entirely
+ * independent of kvius matching (a full/partial match is about the
+ * *calendar* lining up; this is just "N years since," and the two only
+ * coincide by coincidence), so it's its own section rather than folded
+ * into either list above. Same "must have something for this week, oldest
+ * first" filtering as the other two.
+ */
+function findSpecialAnniversaries(targetYear: number, today: Date): SpecialAnniversaryMatch[] {
+  return SPECIAL_ANNIVERSARY_YEARS.map((anniversaryNumber) => ({ hebrewYear: targetYear - anniversaryNumber, anniversaryNumber }))
+    .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
     .sort((a, b) => a.hebrewYear - b.hebrewYear);
 }
 
@@ -42,10 +62,11 @@ export function KviusYearsScreen({ targetYear }: Props) {
     () => filterAndSortForDisplay(findPartialWeekMatches(targetYear, thisWeekDays(today)), today),
     [targetYear, today],
   );
+  const specialAnniversaries = useMemo(() => findSpecialAnniversaries(targetYear, today), [targetYear, today]);
 
   return (
     <div className="screen">
-      <BackLink to="/">{t.home}</BackLink>
+      <BackLink to="/" />
       <h1>{t.weekKviusFarbrengens}</h1>
       <p className="tab-help">{t.kviusHelp(targetYear)}</p>
       <ul className="year-list">
@@ -67,6 +88,23 @@ export function KviusYearsScreen({ targetYear }: Props) {
               <li key={item.hebrewYear}>
                 <Link className="year-row" to={`/follow/${item.hebrewYear}`}>
                   <span className="year-row-year">{hebrewYearLabel(item.hebrewYear, language)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {specialAnniversaries.length > 0 && (
+        <>
+          <p className="category-header">{t.specialAnniversariesHeader}</p>
+          <p className="tab-help">{t.specialAnniversariesHelp}</p>
+          <ul className="year-list">
+            {specialAnniversaries.map((item) => (
+              <li key={item.hebrewYear}>
+                <Link className="year-row" to={`/follow/${item.hebrewYear}`}>
+                  <span className="year-row-year">{hebrewYearLabel(item.hebrewYear, language)}</span>
+                  <span className="year-row-distance">{t.specialAnniversaryLabel(item.anniversaryNumber)}</span>
                 </Link>
               </li>
             ))}

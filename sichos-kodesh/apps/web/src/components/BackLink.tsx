@@ -1,11 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { MouseEvent, ReactNode } from 'react';
-import { useLanguage } from '../i18n/useLanguage';
+import type { MouseEvent } from 'react';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
   to: string;
-  children: ReactNode;
 }
 
 /**
@@ -29,9 +28,14 @@ interface Props {
  * where popping history would leave the app entirely). `history.state.idx`
  * is react-router's own per-entry position counter (stamped on every push
  * - see its `createBrowserHistory`), 0 on the very first entry.
+ *
+ * The label is always the generic "back," never a per-screen destination
+ * name - now that a click usually pops real history rather than landing on
+ * the fixed `to` URL, a specific label (e.g. "home") would often describe
+ * somewhere the click doesn't actually go.
  */
-export function BackLink({ to, children }: Props) {
-  const { language } = useLanguage();
+export function BackLink({ to }: Props) {
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const Chevron = language === 'he' ? ChevronRight : ChevronLeft;
 
@@ -49,7 +53,7 @@ export function BackLink({ to, children }: Props) {
   return (
     <Link className="back-link" to={to} onClick={handleClick}>
       <Chevron size={18} strokeWidth={2.5} />
-      {children}
+      {t.back}
     </Link>
   );
 }
