@@ -37,31 +37,50 @@ containing `:occasionId`; `useBrowseEntry` looks it up directly in
 state - correct even for a URL typed/pasted/reloaded directly, not just one
 reached by clicking through the app.
 
-- `src/screens/YearPickerScreen.tsx` — the home screen: today's date and
-  parsha up front (`@sichos-kodesh/catalog`'s `currentParsha`, built on
-  `@hebcal/core`'s `Sedra` so it correctly rolls a weekday forward to its
-  Shabbos, handles doubled/displaced parshios, and returns `null` on a
-  chag), then one prominent action - **This week's farbrengens** - straight
-  into the nearest kvius-matched year's current week
-  (`findMatchingYears(targetYear)[0]`, "sorted nearest-first" per its own
-  doc comment) rather than a list of candidate years to pick from first.
-  Below that, two secondary tabs: **Other kvius years** (every other
-  kvius-matched candidate, for picking a different one on purpose) and
-  **Browse any year** (`browsableYears` via `@sichos-kodesh/catalog`, every
-  indexed year from 5710 onward, no kvius match required - this app is
+- `src/screens/YearPickerScreen.tsx` — the home screen, kept deliberately
+  light: today's real Hebrew date (`@sichos-kodesh/catalog`'s
+  `todayHebrewDateLabel`, `@hebcal/core`'s `HDate.renderGematriya` - e.g.
+  "ו' תשרי תשפ״ז", not a translated Gregorian one, since this app is
+  Hebrew-calendar-first) and parsha (`currentParsha`, built on `Sedra` so
+  it correctly rolls a weekday forward to its Shabbos, handles
+  doubled/displaced parshios, and returns `null` on a chag), one prominent
+  action - **Week's Kvius Farbrengens** - into `/kvius`, and a secondary
+  "Browse any year" link into `/years`. No tabs or inline year lists on
+  this screen itself anymore - each destination is its own screen now.
+- `src/screens/KviusYearsScreen.tsx` (`/kvius`) — every kvius-matched year
+  (`findMatchingYears(targetYear)`, "sorted nearest-first" per its own doc
+  comment), nearest first; picking one goes to that year's current week.
+  `src/screens/BrowseYearsScreen.tsx` (`/years`) — every indexed year from
+  5710 onward (`browsableYears`), no kvius match required - this app is
   scoped to the current Rebbe's own sichos, not the Previous Rebbe's
-  pre-Nesius farbrengens; unrelated to reshimos exclusion, which is a
-  separate link-level filter).
+  pre-Nesius farbrengens; unrelated to reshimos exclusion, a separate
+  link-level filter.
 - `src/screens/ThisWeekScreen.tsx` / `YearBrowserScreen.tsx` — list-only
   screens (no embedded detail/PDF state anymore): `ThisWeekScreen` calls
   `resolveThisWeek` (from `@sichos-kodesh/catalog`, shared with
   `apps/mobile`) for every occasion with real content anywhere in the
   current Hebrew week against a kvius-matched source year, showing a music
-  icon on any row that actually has a recording; `YearBrowserScreen`
-  lists every occasion a browsed year actually has, grouped by Hebrew month
-  (`mafteiachMonthName`) - no kvius engine involved (a browsed year has no
-  guaranteed week/date alignment with the current Hebrew year). Each row
-  links to `/follow/.../:occasionId` or `/browse/.../:occasionId`.
+  icon on any row that actually has a recording, then - since the year is
+  kvius-matched, its other weeks are worth reaching too, not just this
+  one - a collapsed **"All of {year}"** section below it, grouped by
+  Hebrew month (`src/utils/groupByMonth.ts`, shared with
+  `YearBrowserScreen`) the same way a browsed year is; `YearBrowserScreen`
+  lists every occasion a browsed year actually has the same way - no kvius
+  engine involved there (a browsed year has no guaranteed week/date
+  alignment with the current Hebrew year). Each row links to
+  `/follow/.../:occasionId` or `/browse/.../:occasionId`.
+- `src/screens/AllYearsThisWeekScreen.tsx` (`/this-week-all-years`,
+  reached from a farbrengen's own page) — every occasion indexed on one of
+  this Hebrew week's *dates*, across **every** year in the catalog, kvius-
+  matched or not (`@sichos-kodesh/catalog`'s `resolveThisWeekAllYears`,
+  grouped by year, most recent first) - "what happened on these dates
+  across all our history," not "what happened this same week in a
+  weekday-aligned year." Picking one goes to its own farbrengen page
+  (`useThisWeekAllYearsEntry` in `routes/useResolvedEntry.ts` - a plain
+  year/occasionId lookup, like `useBrowseEntry`, just with its own
+  back-path), rendered through the same highlighted-hanacha
+  `FarbrengenScreen` as everywhere else in the follow flow, not a generic
+  one.
 - `src/screens/OccasionScreen.tsx` + `src/components/OccasionDetail.tsx` —
   the **/browse** flow's occasion page: one **button per category** it
   actually has (Recordings, then each PDF section present with a count),
@@ -81,14 +100,21 @@ reached by clicking through the app.
   "more of the same" - they're demoted into a collapsed
   `<details>`/`<summary>` **"More from this occasion"** section at the
   bottom instead of being listed as equal buttons alongside the sichos.
+  When `settings/useAutoplayOnHanacha.ts`'s setting is on, tapping "Read"
+  on a highlighted hanacha also starts that occasion's recording (from
+  chapter 1), overriding whatever was already playing - a deliberate
+  override, not a conditional one, since reading and hearing the hanacha
+  are meant to happen together when this is on; off by default. A link at
+  the bottom into `/this-week-all-years` (see `AllYearsThisWeekScreen`
+  above) surfaces every other year with something on these same Hebrew
+  dates, not just this kvius-matched one.
 - `src/screens/RecordingsScreen.tsx` — the dedicated playlist page for one
   occasion's recordings (a farbrengen is usually several separate
   recordings, not one - real examples run to 8-10: a few sichos, a maamar,
   niggunim between them, see `packages/mafteiach-index`'s `jemAudio.ts`),
   Spotify-album-style: each chapter's real name and duration, tap to play.
 - `src/screens/CategoryScreen.tsx` — one PDF section's own page (reached
-  from its OccasionDetail button), sorted so a PDF matching the user's
-  edition preference - see SettingsScreen below - comes first.
+  from its OccasionDetail button), listing that section's PDFs.
 - `src/player/` — `PlayerProvider` (mounted once, above `<Routes>`, in
   `App.tsx`) holds the single `<audio>` element and playback state for the
   *whole app*, not per-screen - the previous version's player lived inside
@@ -150,38 +176,46 @@ reached by clicking through the app.
   genuine rapid up/down `window.scrollTo` storm in a real browser: the fix
   cut render attempts by over 15x and peak simultaneously-alive canvases
   during the storm, compared to the same storm against the pre-fix code.
-- `src/pdf/pdfPageZoom.ts` — lets a user pinch-zoom a single page in place,
-  instead of the browser's native pinch gesture zooming the whole visual
-  viewport (header, back link, everything) - a real reported problem.
-  `PdfViewerScreen` disables native pinch-zoom (setting the page's
-  `<meta name="viewport">` to `user-scalable=no`) only while it's mounted,
-  restoring the original content on unmount, so every other screen keeps
-  normal pinch-to-zoom for accessibility. Zoom is per-page and exclusive -
-  only one page is ever enlarged at a time, matching how a document is
-  actually read (zoom in on one page's fine print, not the whole scroll).
-  Ending a pinch re-renders that page's canvas at up to `MAX_BOOST_MULTIPLIER`
-  its fit-width resolution (real sharpness instead of a stretched-out fit-
-  width bitmap - the "focused page loads a higher quality" ask); losing
-  focus - a different page gets pinched instead, this one's pinched back
-  down to 1x, or it scrolls far enough off-screen to be released by
-  `renderPdf.ts`'s own `IntersectionObserver` anyway - drops it straight
-  back to the standard fit-width render rather than keeping the boosted
-  canvas resident ("and delete if continued"). A one-finger drag on an
-  already-zoomed page only pans sideways once it's clearly more horizontal
-  than vertical; a vertical or diagonal drag is left completely alone (no
-  `preventDefault`, no style change) so scrolling down through the
-  document keeps working exactly as it does before anything is zoomed -
-  the "smart scroll" ask. `.pdf-page`'s `touch-action: pan-y` (index.css)
-  is what makes that reliable instead of racy: the browser is told upfront
-  to only ever natively handle *vertical* touch movement on the element,
-  so it never claims a horizontal drag as its own scroll gesture before
-  the JS here gets a chance to decide what it is. Verified against the
-  gesture logic in isolation (synthetic multi-pointer `PointerEvent`
-  sequences dispatched at a standalone harness, not a real touchscreen):
-  a pinch grows a page's own box (not the page/app around it), a vertical
-  drag never touches its transform, a horizontal drag does, starting a
-  pinch on a second page releases the first, and an off-screen reset never
-  fires a redundant re-render.
+- `src/pdf/pdfPageZoom.ts` — lets a user pinch-zoom the whole document in
+  place, instead of the browser's native pinch gesture zooming the whole
+  visual viewport (header, back link, everything) - a real reported
+  problem. `PdfViewerScreen` disables native pinch-zoom (setting the
+  page's `<meta name="viewport">` to `user-scalable=no`) only while it's
+  mounted, restoring the original content on unmount, so every other
+  screen keeps normal pinch-to-zoom for accessibility. One shared
+  scale/pan state applies to every page's wrapper together, on every
+  frame of the gesture (`attachPdfZoom`'s pointer listeners live on the
+  whole `.pdf-pages` container, not per page) - an earlier per-page-only
+  version zoomed just the page under your fingers, so scrolling while
+  zoomed in would snap back to a different, unzoomed page the moment it
+  scrolled into view; zooming the whole document together is what an
+  actual PDF reader does. Ending a pinch re-renders every
+  currently-rendered page's canvas at up to `MAX_BOOST_MULTIPLIER` its
+  fit-width resolution, together (real sharpness instead of a
+  stretched-out fit-width bitmap); pinching back down to 1x drops them
+  all back to the standard fit-width render the same way, rather than
+  keeping the boosted canvases resident. A one-finger drag while zoomed
+  only pans sideways once it's clearly more horizontal than vertical; a
+  vertical or diagonal drag is left completely alone (no `preventDefault`,
+  no style change) so scrolling down through the document keeps working
+  exactly as it does before anything is zoomed - the "smart scroll" ask.
+  `.pdf-page`'s `touch-action: pan-y` (index.css) is what makes that
+  reliable instead of racy: the browser is told upfront to only ever
+  natively handle *vertical* touch movement on the element, so it never
+  claims a horizontal drag as its own scroll gesture before the JS here
+  gets a chance to decide what it is. Verified against the gesture logic
+  in isolation (synthetic multi-pointer `PointerEvent` sequences
+  dispatched at a standalone harness, not a real touchscreen): a pinch
+  grows *every* page's box together (not just the touched one, and not
+  the page/app around them), a vertical drag never touches the shared
+  transform, a horizontal drag does, and pinching back to 1x resets every
+  page.
+  `PdfViewerScreen`'s `.zoomed` class (toggled via `renderPdfPages`'s
+  `onZoomChange` callback) drops the screen's width cap and side padding
+  while zoomed, so panning around a zoomed page has the full screen to
+  work with instead of being clipped to the normal reading-width column;
+  at rest, the page sits back in that same comfortable column with a bit
+  of space on each side, same as every other screen.
 - `apps/web`'s `pdfjs-dist` version is pinned deliberately (see
   `renderPdf.ts`'s comment) - below it is a real high-severity
   vulnerability, and every current version (patched or not) depends on
@@ -195,11 +229,38 @@ reached by clicking through the app.
   (`vite.config.ts`'s `copyPdfAssets`) since pdf.js fetches them by a
   hardcoded filename rather than a normal JS import - without this, PDFs
   with those embedded images silently render with the image missing.
-- `src/screens/SettingsScreen.tsx` — lets the user prefer one hanacha
-  (Sichos Kodesh, Sefer HaSichos/HaMaamarim, or Toras Menachem - three
-  real, distinct transcript series, persisted via `localStorage`) for
-  occasions whose PDFs cite more than one (see `packages/catalog`'s
-  `classifyPdfEdition`/`sortPdfsByEditionPreference`).
+- `src/screens/SettingsScreen.tsx` — three independent sections, each its
+  own `localStorage`-backed setting: **Appearance** (`settings/useTheme.ts`
+  - Dark/Light/System; `System`, the default, just follows
+  `prefers-color-scheme`), **Language** (`i18n/` - English/Hebrew, see
+  below), and **Playback** (`settings/useAutoplayOnHanacha.ts` - see
+  FarbrengenScreen above). A link into `/about` (`AboutScreen.tsx`)
+  credits the two real, independent sources this whole app runs on:
+  mafteiach.app for every occasion/date/PDF citation, JEM for every
+  recording (see `packages/mafteiach-index`/`packages/jem-index`'s own
+  READMEs). The previous PDF-edition-preference setting (prefer Sichos
+  Kodesh/Sefer/Toras Menachem when a section had PDFs citing more than
+  one) is gone - it only ever affected sort order within a category page,
+  and `FarbrengenScreen` (the flow people actually use) already surfaces
+  the right hanacha directly via `isHighlightedFarbrengenHanacha`
+  regardless of any preference, so the setting had nothing left to do.
+  `classifyPdfEdition`/`sortPdfsByEditionPreference` themselves stay in
+  `packages/catalog` - `apps/mobile` still has its own equivalent setting.
+- `src/i18n/` — the whole app's UI text in English and Hebrew
+  (`translations.ts`'s `STRINGS`, a flat object per language - parametrized
+  strings like `t.yearsAgo(3)` are plain functions, not a template-string
+  mini-language). `LanguageProvider` (mounted once at the app root, next to
+  `PlayerProvider`) holds the current language in React Context - not just
+  `localStorage` read fresh per component like `settings/`'s other
+  hooks - specifically so every already-mounted screen re-renders
+  immediately on a change, including `GlobalPlayerBar`, which never
+  unmounts across navigation; it also flips `<html dir>`/`lang` so Hebrew
+  actually lays out right-to-left instead of just displaying Hebrew
+  characters left-to-right in an LTR page. `useTranslation()` is the hook
+  every screen calls (`const { t } = useTranslation()`, then `t.recordings`
+  etc.) - `packages/catalog`'s own bundled data (occasion labels, Hebrew
+  dates, PDF labels) is unaffected either way, since that's real content,
+  not UI chrome, and was already in Hebrew.
 - Icons are `lucide-react` throughout (`BackLink.tsx`'s shared back-chevron
   link, `GlobalPlayerBar`/`RecordingsScreen`'s play/pause/skip,
   `YearPickerScreen`'s settings gear, `SettingsScreen`'s checkmark) - one

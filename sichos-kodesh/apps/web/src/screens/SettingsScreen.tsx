@@ -1,38 +1,82 @@
 import { Check } from 'lucide-react';
-import type { PdfEdition } from '@sichos-kodesh/catalog';
-import { useEditionPreference } from '../settings/editionPreference';
+import { Link } from 'react-router-dom';
+import { useTheme } from '../settings/useTheme';
+import type { Theme } from '../settings/useTheme';
+import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
+import { useLanguage, useTranslation } from '../i18n/useLanguage';
+import type { Language } from '../i18n/translations';
 import { BackLink } from '../components/BackLink';
 
-const OPTIONS: Array<{ value: PdfEdition | null; label: string }> = [
-  { value: null, label: 'No preference' },
-  { value: 'sichosKodesh', label: 'Sichos Kodesh (שיחו"ק)' },
-  { value: 'sefer', label: 'Sefer (Sefer HaSichos / Sefer HaMaamarim)' },
-  { value: 'torasMenachem', label: 'Toras Menachem' },
-];
-
+/**
+ * Three independent settings, each its own section: Appearance (manual
+ * Dark/Light override of the OS theme, or System to just follow it - see
+ * settings/useTheme.ts), Language (see i18n/LanguageProvider.tsx - flips
+ * the whole app's text and RTL/LTR layout, not just this screen), and
+ * Playback (whether opening a farbrengen's hanacha also starts its
+ * recording). The previous PDF-edition-preference setting is gone - it
+ * sorted PDFs within a section by preferred edition, but FarbrengenScreen
+ * (the actual "follow" flow people use) already surfaces the right
+ * hanacha directly via `isHighlightedFarbrengenHanacha` regardless of any
+ * preference, so the setting had nothing left to do.
+ */
 export function SettingsScreen() {
-  const [preference, setPreference] = useEditionPreference();
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguage();
+  const [theme, setTheme] = useTheme();
+  const [autoplay, setAutoplay] = useAutoplayOnHanacha();
+
+  const themeOptions: Array<{ value: Theme; label: string }> = [
+    { value: 'dark', label: t.themeDark },
+    { value: 'light', label: t.themeLight },
+    { value: 'system', label: t.themeSystem },
+  ];
+  const languageOptions: Array<{ value: Language; label: string }> = [
+    { value: 'en', label: t.languageEnglish },
+    { value: 'he', label: t.languageHebrew },
+  ];
 
   return (
     <div className="screen">
-      <BackLink to="/">back</BackLink>
-      <h1>Settings</h1>
-      <p className="subtitle">
-        When an occasion has PDFs from more than one printed edition, show this one first.
-      </p>
+      <BackLink to="/">{t.back}</BackLink>
+      <h1>{t.settingsTitle}</h1>
+
+      <p className="category-header">{t.appearanceSection}</p>
       <ul className="year-list">
-        {OPTIONS.map((option) => (
-          <li key={option.label}>
-            <button
-              className={preference === option.value ? 'year-row year-row-selected' : 'year-row'}
-              onClick={() => setPreference(option.value)}
-            >
+        {themeOptions.map((option) => (
+          <li key={option.value}>
+            <button className={theme === option.value ? 'year-row year-row-selected' : 'year-row'} onClick={() => setTheme(option.value)}>
               <span className="year-row-year">{option.label}</span>
-              {preference === option.value && <Check size={18} className="year-row-distance" />}
+              {theme === option.value && <Check size={18} className="year-row-distance" />}
             </button>
           </li>
         ))}
       </ul>
+
+      <p className="category-header">{t.languageSection}</p>
+      <ul className="year-list">
+        {languageOptions.map((option) => (
+          <li key={option.value}>
+            <button className={language === option.value ? 'year-row year-row-selected' : 'year-row'} onClick={() => setLanguage(option.value)}>
+              <span className="year-row-year">{option.label}</span>
+              {language === option.value && <Check size={18} className="year-row-distance" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <p className="category-header">{t.playbackSection}</p>
+      <ul className="year-list">
+        <li>
+          <button className={autoplay ? 'year-row year-row-selected' : 'year-row'} onClick={() => setAutoplay(!autoplay)}>
+            <span className="year-row-year">{t.autoplayHanachaLabel}</span>
+            {autoplay && <Check size={18} className="year-row-distance" />}
+          </button>
+        </li>
+      </ul>
+
+      <Link className="category-row" to="/about">
+        <span className="category-row-name">{t.aboutLink}</span>
+      </Link>
     </div>
   );
 }

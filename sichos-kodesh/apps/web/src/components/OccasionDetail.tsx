@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { CatalogEntry, PdfSection } from '@sichos-kodesh/catalog';
-import { PDF_SECTION_LABELS, PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
+import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
+import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
   entry: CatalogEntry;
@@ -23,11 +24,12 @@ function countBySection(entry: CatalogEntry): Partial<Record<PdfSection, number>
  * category navigates to its own page (RecordingsScreen, CategoryScreen).
  */
 export function OccasionDetail({ entry, basePath }: Props) {
+  const { t } = useTranslation();
   const sectionCounts = countBySection(entry);
   const sectionsPresent = PDF_SECTION_ORDER.filter((section) => sectionCounts[section]);
 
   if (entry.audio.length === 0 && sectionsPresent.length === 0) {
-    return <p className="gap-message">Nothing downloadable is indexed for this occasion yet.</p>;
+    return <p className="gap-message">{t.nothingDownloadable}</p>;
   }
 
   return (
@@ -35,17 +37,15 @@ export function OccasionDetail({ entry, basePath }: Props) {
       {entry.audio.length > 0 && (
         <li>
           <Link className="category-row" to={`${basePath}/recordings`}>
-            <span className="category-row-name">Recordings</span>
-            <span className="category-row-count">
-              {entry.audio.length} recording{entry.audio.length === 1 ? '' : 's'}
-            </span>
+            <span className="category-row-name">{t.recordings}</span>
+            <span className="category-row-count">{t.recordingsCount(entry.audio.length)}</span>
           </Link>
         </li>
       )}
       {sectionsPresent.map((section) => (
         <li key={section}>
           <Link className="category-row" to={`${basePath}/category/${section}`}>
-            <span className="category-row-name">{PDF_SECTION_LABELS[section]}</span>
+            <span className="category-row-name">{t.sectionLabels[section]}</span>
             <span className="category-row-count">{sectionCounts[section]}</span>
           </Link>
         </li>

@@ -1,8 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import type { PdfSection } from '@sichos-kodesh/catalog';
-import { PDF_SECTION_LABELS, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
-import { useEditionPreference } from '../settings/editionPreference';
+import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
 
 interface Props {
@@ -20,23 +19,22 @@ interface Props {
  */
 export function CategoryScreen({ resolved }: Props) {
   const { section } = useParams<{ section: PdfSection }>();
-  const [editionPreference] = useEditionPreference();
+  const { t } = useTranslation();
   const { entry, basePath } = resolved;
 
   const pdfs = entry.pdfs.filter((pdf) => pdf.section === section);
-  const sorted = sortPdfsByEditionPreference(pdfs, editionPreference);
 
   return (
     <div className="screen">
-      <BackLink to={basePath}>back</BackLink>
-      <h1>{section ? PDF_SECTION_LABELS[section] : ''}</h1>
+      <BackLink to={basePath}>{t.back}</BackLink>
+      <h1>{section ? t.sectionLabels[section] : ''}</h1>
       <p className="subtitle">{entry.occasionLabel}</p>
 
-      {sorted.map((pdf) => (
+      {pdfs.map((pdf) => (
         <div key={pdf.driveFileId} className="card">
           <p className="pdf-label">{pdf.label}</p>
           <Link className="button" to={`${basePath}/pdf/${encodeURIComponent(pdf.driveFileId)}`}>
-            Read
+            {t.read}
           </Link>
         </div>
       ))}

@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Music } from 'lucide-react';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
-import { PDF_SECTION_LABELS, isHighlightedFarbrengenHanacha, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
+import { isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
-import { useEditionPreference } from '../settings/editionPreference';
+import { usePlayer } from '../player/usePlayer';
+import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
+import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
 
 interface Props {
@@ -34,25 +36,33 @@ function countBySecondarySection(pdfs: CatalogPdf[]): Partial<Record<(typeof SEC
  * listed as equal buttons alongside the sichos themselves.
  */
 export function FarbrengenScreen({ resolved }: Props) {
-  const [editionPreference] = useEditionPreference();
+  const { t } = useTranslation();
+  const player = usePlayer();
+  const [autoplayOnHanacha] = useAutoplayOnHanacha();
 
   if (!resolved) {
     return (
       <div className="screen">
-        <BackLink to="/">home</BackLink>
-        <p className="gap-message">This occasion couldn't be found - the link may be out of date.</p>
+        <BackLink to="/">{t.home}</BackLink>
+        <p className="gap-message">{t.occasionNotFound}</p>
       </div>
     );
   }
 
   const { entry, subtitle, basePath, backPath, backLabel } = resolved;
 
-  const highlighted = sortPdfsByEditionPreference(entry.pdfs.filter(isHighlightedFarbrengenHanacha), editionPreference);
+  const highlighted = entry.pdfs.filter(isHighlightedFarbrengenHanacha);
   const leftoverBiltiMugah = entry.pdfs.filter((pdf) => pdf.section === 'biltiMugah' && !isHighlightedFarbrengenHanacha(pdf));
   const secondaryCounts = countBySecondarySection(entry.pdfs);
   const secondarySectionsPresent = SECONDARY_SECTIONS.filter((section) => secondaryCounts[section]);
   const hasMore = leftoverBiltiMugah.length > 0 || secondarySectionsPresent.length > 0;
   const isEmpty = entry.audio.length === 0 && highlighted.length === 0 && !hasMore;
+
+  function handleReadHanacha(): void {
+    if (autoplayOnHanacha && entry.audio.length > 0) {
+      player.play({ title: entry.occasionLabel, audio: entry.audio }, 0);
+    }
+  }
 
   return (
     <div className="screen">
@@ -60,36 +70,34 @@ export function FarbrengenScreen({ resolved }: Props) {
       <h1>{entry.occasionLabel}</h1>
       <p className="subtitle">{subtitle}</p>
 
-      {isEmpty && <p className="gap-message">Nothing downloadable is indexed for this occasion yet.</p>}
+      {isEmpty && <p className="gap-message">{t.nothingDownloadable}</p>}
 
       {entry.audio.length > 0 && (
         <Link className="category-row" to={`${basePath}/recordings`}>
           <span className="category-row-name">
-            <Music size={16} className="year-row-audio-icon" aria-hidden /> Recordings
+            <Music size={16} className="year-row-audio-icon" aria-hidden /> {t.recordings}
           </span>
-          <span className="category-row-count">
-            {entry.audio.length} recording{entry.audio.length === 1 ? '' : 's'}
-          </span>
+          <span className="category-row-count">{t.recordingsCount(entry.audio.length)}</span>
         </Link>
       )}
 
       {highlighted.map((pdf) => (
         <div key={pdf.driveFileId} className="card">
           <p className="pdf-label">{pdf.label}</p>
-          <Link className="button" to={`${basePath}/pdf/${encodeURIComponent(pdf.driveFileId)}`}>
-            Read
+          <Link className="button" to={`${basePath}/pdf/${encodeURIComponent(pdf.driveFileId)}`} onClick={handleReadHanacha}>
+            {t.read}
           </Link>
         </div>
       ))}
 
       {hasMore && (
         <details className="more-section">
-          <summary className="more-section-summary">More from this occasion</summary>
+          <summary className="more-section-summary">{t.moreFromThisOccasion}</summary>
           <ul className="category-list">
             {secondarySectionsPresent.map((section) => (
               <li key={section}>
                 <Link className="category-row" to={`${basePath}/category/${section}`}>
-                  <span className="category-row-name">{PDF_SECTION_LABELS[section]}</span>
+                  <span className="category-row-name">{t.sectionLabels[section]}</span>
                   <span className="category-row-count">{secondaryCounts[section]}</span>
                 </Link>
               </li>
@@ -104,6 +112,10 @@ export function FarbrengenScreen({ resolved }: Props) {
           </ul>
         </details>
       )}
+
+      <Link className="category-row" to="/this-week-all-years">
+        <span className="category-row-name">{t.allFarbrengensThisWeek}</span>
+      </Link>
     </div>
   );
 }
