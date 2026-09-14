@@ -9,11 +9,13 @@ APK.
 
 This isn't a token "installable" gesture: the app shell (JS/CSS/catalog
 data) is precached by its service worker so it loads and runs with no
-network at all after the first visit, and once a recording/PDF has been
-fetched through `services/media-proxy` it's runtime-cached with a
-`CacheFirst` strategy plus Workbox's range-request support — so seeking
-within an already-downloaded audio file works offline too, matching what
-`apps/mobile` gets from a real local file.
+network at all after the first visit, and once a PDF has been fetched
+through `services/media-proxy` it's runtime-cached with a `CacheFirst`
+strategy plus Workbox's range-request support for fast re-opens. Audio
+isn't meaningfully cached this way in practice (see `vite.config.ts`'s
+comment for the real bug that forced that tradeoff) - real offline audio,
+matching what `apps/mobile` gets from a downloaded local file, is still an
+open item here.
 
 ## Structure
 
@@ -130,7 +132,24 @@ reached by clicking through the app.
   scales with the *square* of its DPR, so rendering every page of a long
   document unconditionally at an uncapped (sometimes 3+) DPR could add
   hundreds of MB to a mobile tab; this was reproduced and fixed, not
-  assumed.
+  assumed. Scrolling fast enough up and down can still crash a tab a
+  different way: it fires many `IntersectionObserver` callbacks in quick
+  succession, wanting to render a page that a later callback, milliseconds
+  on, wants released again before the first render (an async
+  `doc.getPage()` + `page.render()` call) even finished - a real
+  reproduced case, not a theoretical one. `renderPdf.ts` tags every render
+  with a per-page generation number that `release` bumps, so a render only
+  ever commits its canvas if its generation is still current for that page
+  (a stale one just gets discarded instead of resurrecting a canvas into a
+  wrapper that was supposed to be released); rendering itself is also
+  debounced (`RENDER_DEBOUNCE_MS`) so a page only fleetingly scrolled past
+  during a fast scroll is usually released again before its render was
+  ever even scheduled, rather than every fleeting pass starting its own
+  render. Verified with fake pdf.js-shaped page objects (a controllable
+  render delay standing in for a real, slower render) driven through a
+  genuine rapid up/down `window.scrollTo` storm in a real browser: the fix
+  cut render attempts by over 15x and peak simultaneously-alive canvases
+  during the storm, compared to the same storm against the pre-fix code.
 - `src/pdf/pdfPageZoom.ts` — lets a user pinch-zoom a single page in place,
   instead of the browser's native pinch gesture zooming the whole visual
   viewport (header, back link, everything) - a real reported problem.
@@ -194,8 +213,27 @@ reached by clicking through the app.
   through their consumer instead of blocking on a full download first.
 - `vite.config.ts` — `vite-plugin-pwa` in `generateSW` mode: precaches the
   app shell, and runtime-caches media-proxy responses (`CacheFirst`,
-  `rangeRequests: true`, `cacheableResponse: { statuses: [0, 200, 206] }`)
-  so downloaded media survives offline and supports seeking.
+  `rangeRequests: true`) so a downloaded PDF survives offline and supports
+  fast re-opens. `cacheableResponse.statuses` deliberately excludes `206`
+  (Partial Content) - a real, reproduced bug, not a theoretical one: an
+  `<audio>` element's very first request for a fresh URL commonly carries
+  its own `Range:` header (it doesn't wait for a full download before
+  starting playback), so with `206` allowed, whatever small slice the
+  Worker returned for *that* request got cached as if it were the entire
+  file. Every later request for a different byte range then hit
+  `workbox-range-requests`' own documented behavior of returning an
+  already-206 cached response verbatim regardless of what range was
+  actually asked for - so the same first sliver of the file kept coming
+  back forever: a track's duration (readable from that sliver alone)
+  would show, but the audio itself never actually loaded. The tradeoff:
+  since real audio playback keeps making Range requests throughout, an
+  audio file effectively no longer gets cached by the service worker at
+  all in practice (every request now correctly falls through live to the
+  Worker instead of ever risking a poisoned cache) - real offline
+  audio needs its own proper download step, not this cache, and is
+  tracked separately as a still-open feature. PDF requests are unaffected
+  (`loadPdfDocument` sets `disableRange: true`, so they're never a Range
+  request that could hit this path either way).
 
 ## Development
 
