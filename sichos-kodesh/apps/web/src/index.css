@@ -39,6 +39,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Wraps every route's content (see App.tsx's AppContent) - `.has-player`
+   reserves room below whatever the actual screen renders so GlobalPlayerBar
+   (position: fixed, can show on any screen) never covers the bottom of the
+   page's real content or blocks clicks on it. */
+.app-content.has-player {
+  padding-bottom: 96px;
+}
+
 .screen {
   max-width: 640px;
   margin: 0 auto;
@@ -159,6 +167,20 @@ h1 {
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 500;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.year-row-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.year-row-audio-icon {
+  flex-shrink: 0;
+  color: var(--accent);
 }
 
 .card {
@@ -197,6 +219,14 @@ h1 {
 
 .button:active {
   transform: scale(0.98);
+}
+
+.hero-button {
+  display: block;
+  padding: 18px;
+  margin: 20px 0 24px;
+  font-size: 1.125rem;
+  border-radius: 14px;
 }
 
 .header-row {
@@ -256,6 +286,31 @@ h1 {
   color: var(--muted);
   font-size: 0.8125rem;
   font-weight: 500;
+}
+
+.category-row-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* "More from this occasion" - a de-emphasized, collapsed section for
+   mugah/maamorim/hagahos/hosofos and any non-highlighted biltiMugah PDFs
+   on a farbrengen's own page (see FarbrengenScreen.tsx) - closed by
+   default so the highlighted hanacha stays the visually primary content. */
+
+.more-section {
+  margin-top: 24px;
+}
+
+.more-section-summary {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  margin-bottom: 12px;
 }
 
 .playlist {
@@ -319,10 +374,6 @@ h1 {
   max-width: 640px;
   margin: 0 auto;
   padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
-}
-
-.pdf-viewer-screen.has-player {
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
 }
 
 .pdf-viewer-header {

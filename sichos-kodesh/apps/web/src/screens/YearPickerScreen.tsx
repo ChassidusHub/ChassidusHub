@@ -1,14 +1,28 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Settings } from 'lucide-react';
-import { browsableYears } from '@sichos-kodesh/catalog';
-import { findMatchingYears, kviusCode } from '@sichos-kodesh/kvius-engine';
+import { browsableYears, currentParsha } from '@sichos-kodesh/catalog';
+import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import catalog from '../catalog/data';
+import { IL } from '../config';
 
 interface Props {
   targetYear: number;
 }
 
+function formatToday(today: Date): string {
+  return today.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+/**
+ * The home screen: today's date and parsha up front, then one prominent
+ * action - "This week's farbrengens" - straight into the nearest
+ * kvius-matched year's current week (see kvius-engine's findMatchingYears,
+ * "sorted nearest-first"), not a list of candidate years to choose from
+ * first. Picking a *different* matched year (or browsing history freely)
+ * is still there, just secondary - most visits are "what happened this
+ * week," not "let me pick a year."
+ */
 export function YearPickerScreen({ targetYear }: Props) {
   const [tab, setTab] = useState<'kvius' | 'browse'>('kvius');
 
@@ -18,6 +32,8 @@ export function YearPickerScreen({ targetYear }: Props) {
   // not just a kvius-matched one with nothing behind it.
   const matches = findMatchingYears(targetYear);
   const allYears = browsableYears(catalog);
+  const { parsha } = currentParsha(IL);
+  const bestMatch = matches[0];
 
   return (
     <div className="screen">
@@ -28,12 +44,19 @@ export function YearPickerScreen({ targetYear }: Props) {
         </Link>
       </div>
       <p className="subtitle">
-        Hebrew year {targetYear} (kvius {kviusCode(targetYear)})
+        {formatToday(new Date())}
+        {parsha ? ` · Parshas ${parsha.join('-')}` : ''}
       </p>
+
+      {bestMatch && (
+        <Link className="button hero-button" to={`/follow/${bestMatch.hebrewYear}`}>
+          This week's farbrengens
+        </Link>
+      )}
 
       <div className="tabs">
         <button className={tab === 'kvius' ? 'tab tab-active' : 'tab'} onClick={() => setTab('kvius')}>
-          Follow along
+          Other kvius years
         </button>
         <button className={tab === 'browse' ? 'tab tab-active' : 'tab'} onClick={() => setTab('browse')}>
           Browse any year
@@ -42,7 +65,10 @@ export function YearPickerScreen({ targetYear }: Props) {
 
       {tab === 'kvius' ? (
         <>
-          <p className="tab-help">Kvius-matched years - the week/date structure lines up with {targetYear}, so "this week" resolves automatically.</p>
+          <p className="tab-help">
+            Kvius-matched years - the week/date structure lines up with {targetYear}, so "this week" resolves automatically. The nearest one is
+            the shortcut above; pick a different one here if you want it instead.
+          </p>
           <ul className="year-list">
             {matches.map((item) => (
               <li key={item.hebrewYear}>

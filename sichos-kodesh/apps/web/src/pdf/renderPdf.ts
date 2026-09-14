@@ -28,14 +28,34 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 // hardcoded filename appended to the base URL, not via a normal JS import.
 const BASE_URL = import.meta.env.BASE_URL;
 
-export function loadPdfDocument(data: ArrayBuffer): Promise<PDFDocumentProxy> {
-  return pdfjsLib.getDocument({
-    data,
+/**
+ * Loads by URL (pdf.js does its own fetch) rather than this app awaiting
+ * a full `response.arrayBuffer()` and handing pdf.js the complete bytes -
+ * pdf.js can start parsing the document as bytes stream in instead of
+ * only once 100% has downloaded, the same "don't wait for the whole file"
+ * principle as the audio player's streaming fix.
+ *
+ * `disableRange: true` is deliberate, not a missed optimization: pdf.js
+ * would otherwise probe for byte-range support and, seeing this Worker's
+ * `/drive/:fileId` route always claim `Accept-Ranges: bytes` (a separate,
+ * pre-existing inaccuracy in `services/media-proxy` - that route never
+ * actually reads or forwards a client's Range header, unlike
+ * `/jem-audio/:filename`, which genuinely does), could end up trusting a
+ * capability that isn't really there. Streaming without ranges still
+ * gets the real, available benefit (progressive parse-while-downloading)
+ * without risking pdf.js misinterpreting a mismatched response.
+ */
+export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; total: number }) => void): Promise<PDFDocumentProxy> {
+  const task = pdfjsLib.getDocument({
+    url,
+    disableRange: true,
     wasmUrl: `${BASE_URL}pdf-wasm/`,
     cMapUrl: `${BASE_URL}pdf-cmaps/`,
     cMapPacked: true,
     standardFontDataUrl: `${BASE_URL}pdf-standard-fonts/`,
-  }).promise;
+  });
+  if (onProgress) task.onProgress = onProgress;
+  return task.promise;
 }
 
 // Real device pixel ratios run past 3 on plenty of Android phones. Each
