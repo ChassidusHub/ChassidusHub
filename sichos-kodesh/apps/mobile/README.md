@@ -52,17 +52,24 @@ Built and working:
   Spotify/YouTube-style: prev/next skip, an expandable chapter list with
   each recording's real name (e.g. "Sicha 1", "Ma'amar") and duration, and
   auto-advance into the next chapter when one ends.
-- Audio playback (`src/audio/loadStreamingOrCachedSound.ts`) streams from
-  the Worker directly via `react-native-sound` (it, like the underlying
-  native `AVPlayer`/`MediaPlayer`, can load straight from a remote URL,
-  buffering progressively) rather than downloading a chapter's whole file
-  before playback can start - a real, reported problem for 20-40+ minute
-  recordings, not a hypothetical one. A background download to
+- Audio playback (`src/audio/loadCachedSound.ts`) downloads a chapter to
   `RNBlobUtil.fs.dirs.DocumentDir` (the app's persistent storage, not a
-  cache directory the OS can evict) still runs alongside the stream, so
-  the *next* play of that same chapter is instant and works fully
-  offline; if that cached copy already exists, it's used directly instead
-  of streaming at all.
+  cache directory the OS can evict) in full before playback starts, or
+  plays the cached copy directly if a previous play already downloaded it
+  - silently (just "Loading...", no progress bar), one download at a time.
+  A prior version instead handed react-native-sound the Worker's own URL
+  directly to start playback immediately (it, like the underlying native
+  `AVPlayer`/`MediaPlayer`, can stream progressively from a remote URL)
+  while caching a separate copy in the background - in practice, those two
+  requests for the same file competed for the same device's bandwidth
+  (confirmed as the real cause of playback still being slow to start, not
+  actually behaving as a stream), and skipping chapters while that
+  background download was still running left it going unawaited with
+  nothing to cancel it - the concrete cause of a stuck player after a
+  skip. `download.ts`'s `downloadTo` writes to a `.part` path and only
+  moves it to the real destination once a download actually finishes, so
+  a caller here checking "does a file already exist at this path" can't
+  be fooled by one an app restart or network drop left half-written.
 - A settings screen (`src/screens/SettingsScreen.tsx`) lets the user
   prefer one hanacha (Sichos Kodesh, Sefer HaSichos/HaMaamarim, or Toras
   Menachem - three real, distinct transcript series, persisted via

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from '@sichos-kodesh/catalog';
 import { PDF_SECTION_LABELS, PDF_SECTION_ORDER, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
-import { loadStreamingOrCachedSound } from '../audio/loadStreamingOrCachedSound';
+import { loadCachedSound } from '../audio/loadCachedSound';
 import type { LoadedSound } from '../audio/playLocalFile';
 import { useEditionPreference } from '../settings/editionPreference';
 
@@ -40,10 +40,10 @@ function groupPdfsBySection(pdfs: CatalogPdf[]): Array<[PdfSection, CatalogPdf[]
  * the *parent screen* switches to it full-screen instead of stacking it
  * underneath the parent's own header/back-button.
  *
- * Tapping "Play" streams from the Worker directly (see
- * loadStreamingOrCachedSound) rather than downloading the whole file
- * first - a real 20-40+ minute recording made "wait for the full download
- * before hearing anything" a genuinely bad wait.
+ * Tapping "Play" downloads the file in full before playback starts (see
+ * loadCachedSound), silently - just "Loading...", no progress bar - and
+ * only the first time; the cached copy plays instantly (and offline)
+ * after that.
  */
 export function OccasionDetail({ entry, onOpenPdf }: Props) {
   const [audioStates, setAudioStates] = useState<Record<string, AudioState>>({});
@@ -52,7 +52,7 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
   async function handlePlayAudio(audio: CatalogAudio) {
     setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'loading' } }));
     try {
-      const sound = await loadStreamingOrCachedSound(audio.workerFilename);
+      const sound = await loadCachedSound(audio.workerFilename);
       sound.play();
       setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'ready', sound, playing: true } }));
     } catch (error) {
