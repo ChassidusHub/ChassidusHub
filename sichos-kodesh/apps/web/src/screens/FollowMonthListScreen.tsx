@@ -24,7 +24,7 @@ export function FollowMonthListScreen({ sourceYear }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={`/follow/${sourceYear}`}>{t.thisWeek}</BackLink>
+      <BackLink to={`/follow/${sourceYear}`} />
       <h1>{t.allOfYear(sourceYear)}</h1>
       <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       <ul className="year-list">

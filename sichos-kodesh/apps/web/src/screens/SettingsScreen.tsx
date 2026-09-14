@@ -37,7 +37,7 @@ export function SettingsScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/">{t.back}</BackLink>
+      <BackLink to="/" />
       <h1>{t.settingsTitle}</h1>
 
       <p className="category-header">{t.appearanceSection}</p>

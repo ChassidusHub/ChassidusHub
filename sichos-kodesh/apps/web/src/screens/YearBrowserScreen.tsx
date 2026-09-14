@@ -28,7 +28,7 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to="/">{t.changeYear}</BackLink>
+      <BackLink to="/" />
       <h1>{t.hebrewYearTitle(hebrewYear)}</h1>
       <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       <ul className="year-list">

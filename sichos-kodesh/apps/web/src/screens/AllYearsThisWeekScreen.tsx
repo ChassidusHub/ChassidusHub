@@ -23,7 +23,7 @@ export function AllYearsThisWeekScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/">{t.home}</BackLink>
+      <BackLink to="/" />
       <h1>{t.allFarbrengensThisWeekTitle}</h1>
       <p className="tab-help">{t.allFarbrengensThisWeekHelp}</p>
 
