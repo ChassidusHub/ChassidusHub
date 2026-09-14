@@ -2,11 +2,12 @@ import { Link } from 'react-router-dom';
 import { browsableYears } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 /** Reached from the home screen's secondary "browse any year" link - every indexed year, no kvius match required. */
 export function BrowseYearsScreen() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const allYears = browsableYears(catalog);
 
   return (
@@ -18,7 +19,7 @@ export function BrowseYearsScreen() {
         {allYears.map((year) => (
           <li key={year}>
             <Link className="year-row" to={`/browse/${year}`}>
-              <span className="year-row-year">{year}</span>
+              <span className="year-row-year">{hebrewYearLabel(year, language)}</span>
             </Link>
           </li>
         ))}

@@ -4,6 +4,7 @@ import { Music } from 'lucide-react';
 import { resolveThisWeekAllYears } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 /**
@@ -15,7 +16,7 @@ import { useTranslation } from '../i18n/useLanguage';
  * FarbrengenScreen as everywhere else in the follow flow.
  */
 export function AllYearsThisWeekScreen() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const yearGroups = useMemo(() => resolveThisWeekAllYears(catalog), []);
 
   return (
@@ -28,7 +29,7 @@ export function AllYearsThisWeekScreen() {
 
       {yearGroups.map(({ hebrewYear, entries }) => (
         <div key={hebrewYear}>
-          <p className="category-header">{hebrewYear}</p>
+          <p className="category-header">{hebrewYearLabel(hebrewYear, language)}</p>
           <ul className="year-list">
             {entries.map((entry) => (
               <li key={entry.occasionId}>

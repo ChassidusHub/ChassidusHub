@@ -58,19 +58,21 @@ export function GlobalPlayerBar() {
         </div>
       )}
       <div className="global-player-controls">
-        {audio.length > 1 && (
-          <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label={t.previousChapter}>
-            <SkipBack size={18} fill="currentColor" />
+        <div className="global-player-transport">
+          {audio.length > 1 && (
+            <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label={t.previousChapter}>
+              <SkipBack size={18} fill="currentColor" />
+            </button>
+          )}
+          <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? t.pause : t.play}>
+            {player.playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
           </button>
-        )}
-        <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? t.pause : t.play}>
-          {player.playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
-        </button>
-        {audio.length > 1 && (
-          <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label={t.nextChapter}>
-            <SkipForward size={18} fill="currentColor" />
-          </button>
-        )}
+          {audio.length > 1 && (
+            <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label={t.nextChapter}>
+              <SkipForward size={18} fill="currentColor" />
+            </button>
+          )}
+        </div>
         <div className="global-player-scrub">
           <button className="global-player-title" onClick={() => setShowChapters((v) => !v)}>
             <span className="global-player-title-main">{player.playlist.title}</span>

@@ -1,3 +1,4 @@
+import { gematriya } from '@hebcal/core';
 import type { PdfSection } from '@sichos-kodesh/catalog';
 
 export type Language = 'en' | 'he';
@@ -75,19 +76,19 @@ const he: typeof en = {
   weekKviusFarbrengens: 'התוועדויות השבוע לפי קביעות',
   browseAnyYear: 'עיון בכל שנה',
   kviusYearsTitle: 'שנות קביעות',
-  kviusHelp: (year: number) => `שנים בעלות קביעות זהה לשנת ${year} - בחרו שנה כדי לראות את ההתוועדויות שלה השבוע.`,
+  kviusHelp: (year: number) => `שנים בעלות קביעות זהה לשנת ${gematriya(year)} - בחרו שנה כדי לראות את ההתוועדויות שלה השבוע.`,
   browseHelp: 'כל שנה עם תוכן מתועד - עיינו בחופשיות, ללא צורך בהתאמת קביעות.',
   yearsAgo: (n: number) => (n === 1 ? 'לפני שנה' : `לפני ${n} שנים`),
   changeYear: 'החלפת שנה',
   thisWeek: 'השבוע',
-  fromHebrewYear: (year: number) => `משנה עברית ${year}`,
-  nothingThisWeek: (year: number) => `לא נמצא תוכן לשבוע זה בשנת ${year} או בשנים קרובות בעלות קביעות דומה.`,
+  fromHebrewYear: (year: number) => `משנה עברית ${gematriya(year)}`,
+  nothingThisWeek: (year: number) => `לא נמצא תוכן לשבוע זה בשנת ${gematriya(year)} או בשנים קרובות בעלות קביעות דומה.`,
   hasRecordingLabel: 'יש הקלטה',
-  allOfYear: (year: number) => `כל שנת ${year}`,
+  allOfYear: (year: number) => `כל שנת ${gematriya(year)}`,
   occasionsIndexed: (n: number) => (n === 1 ? 'אירוע אחד מתועד' : `${n} אירועים מתועדים`),
-  hebrewYearTitle: (year: number) => `שנה עברית ${year}`,
+  hebrewYearTitle: (year: number) => `שנה עברית ${gematriya(year)}`,
   backToThisWeek: 'חזרה לשבוע זה',
-  backToYear: (year: number) => `חזרה לשנת ${year}`,
+  backToYear: (year: number) => `חזרה לשנת ${gematriya(year)}`,
   home: 'בית',
   back: 'חזרה',
   nothingDownloadable: 'אין עדיין תוכן להורדה עבור אירוע זה.',

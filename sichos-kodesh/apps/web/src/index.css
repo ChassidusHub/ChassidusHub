@@ -177,7 +177,7 @@ h1 {
   font-weight: 600;
   color: var(--fg);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   text-decoration: none;
   transition: background-color 0.1s ease;
 }
@@ -191,7 +191,7 @@ h1 {
   font-size: 0.875rem;
   font-weight: 500;
   flex-shrink: 0;
-  margin-left: 12px;
+  margin-inline-start: 12px;
 }
 
 .year-row-main {
@@ -204,6 +204,18 @@ h1 {
 .year-row-audio-icon {
   flex-shrink: 0;
   color: var(--accent);
+}
+
+/* A long occasion label (some run to a full descriptive sentence) stays on
+   one line with an ellipsis rather than wrapping - keeps every row the
+   same height and, combined with `text-align: start` above, is what
+   actually keeps a Hebrew name flush against the row's real reading edge
+   instead of wrapping unpredictably. */
+.year-row-year {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .card {
@@ -353,7 +365,7 @@ h1 {
   padding: 10px;
   margin: 0 -10px;
   color: var(--fg);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background-color 0.1s ease;
 }
@@ -522,6 +534,23 @@ h1 {
   min-width: 0;
 }
 
+.global-player-transport {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  /* Deliberately pinned to LTR regardless of the page's own direction -
+     prev/play-pause/next are a fixed physical control cluster (their
+     glyphs point a fixed way and never mirror for RTL locales, matching
+     every real media player), not text that should follow reading
+     direction. Left to `direction: rtl`'s normal flex-order reversal,
+     this row's icons stayed pointing their original way but swapped
+     sides, so the left-pointing "back" icon ended up on the right and
+     vice versa - looking backwards regardless of which chapter it
+     actually skips to. */
+  direction: ltr;
+}
+
 .global-player-title {
   display: block;
   width: 100%;
@@ -529,7 +558,7 @@ h1 {
   border: none;
   padding: 0;
   margin-bottom: 4px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -593,7 +622,7 @@ h1 {
   color: var(--fg);
   font-size: 0.875rem;
   font-weight: 500;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -610,5 +639,5 @@ h1 {
   color: var(--muted);
   font-size: 0.75rem;
   flex-shrink: 0;
-  margin-left: 12px;
+  margin-inline-start: 12px;
 }
