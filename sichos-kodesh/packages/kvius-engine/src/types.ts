@@ -85,6 +85,12 @@ export interface MatchingYearResult {
   distance: number;
 }
 
+/** One Hebrew (month, day) pair - HDate-native month numbering, same as `HebrewDateParts` (see `weekMatchesInYear`/`findPartialWeekMatches`). */
+export interface WeekDay {
+  month: number;
+  day: number;
+}
+
 export type GapStrategy = 'skip' | 'nearestKviusYear';
 
 export type OccasionResolutionStatus = 'primary' | 'fallback' | 'manual' | 'gap';

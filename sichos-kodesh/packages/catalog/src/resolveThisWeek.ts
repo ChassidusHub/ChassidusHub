@@ -13,7 +13,7 @@ export interface WeekOccasion {
   entry: CatalogEntry;
 }
 
-interface WeekDay {
+export interface WeekDay {
   month: number;
   day: number;
   gregorianDate: string;
@@ -34,7 +34,7 @@ interface WeekDay {
  * misattributing a translated date onto `sourceYear`'s own, unrelated
  * same-month-day date a full year earlier) strictly applies to it.
  */
-function thisWeekDays(today: Date): WeekDay[] {
+export function thisWeekDays(today: Date): WeekDay[] {
   const todayH = new HDate(today);
   const targetYear = todayH.getFullYear();
   const weekEndH = todayH.onOrAfter(6); // Shabbos on or after today.
