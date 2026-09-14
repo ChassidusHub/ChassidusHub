@@ -11,12 +11,15 @@ function readStored(): boolean {
 }
 
 /**
- * When enabled, opening a farbrengen's own highlighted hanacha PDF (see
- * FarbrengenScreen) also starts playing that occasion's recording, even if
- * something else is already playing - a deliberate override, not a
- * conditional one: reading the hanacha and hearing it are meant to happen
- * together when this is on. Off by default since interrupting whatever's
- * already playing is a real behavior change, not a safe default.
+ * Opening a farbrengen's own highlighted hanacha PDF (see FarbrengenScreen)
+ * always starts playing that occasion's recording - reading the hanacha and
+ * hearing it are meant to happen together. This setting only matters for
+ * the one case where that's a real interruption: a *different* recording
+ * is already actively playing. On, the hanacha's own recording takes over
+ * as usual; off, whatever's already playing is left alone and the hanacha
+ * doesn't start a new one. Off by default since silently cutting off
+ * something the user is actively listening to is a real behavior change,
+ * not a safe default.
  */
 export function useAutoplayOnHanacha(): [boolean, (next: boolean) => void] {
   const [enabled, setEnabledState] = useState<boolean>(readStored);

@@ -58,10 +58,19 @@ export function FarbrengenScreen({ resolved }: Props) {
   const hasMore = leftoverBiltiMugah.length > 0 || secondarySectionsPresent.length > 0;
   const isEmpty = entry.audio.length === 0 && highlighted.length === 0 && !hasMore;
 
+  /**
+   * Opening the hanacha always starts its recording too - the one
+   * exception is a *different* recording already actively playing, where
+   * starting this one would silently cut it off; there, the
+   * autoplayOnHanacha setting decides whether to override it (its only
+   * remaining job - see useAutoplayOnHanacha's doc comment) or leave it
+   * running and not start this one.
+   */
   function handleReadHanacha(): void {
-    if (autoplayOnHanacha && entry.audio.length > 0) {
-      player.play({ title: entry.occasionLabel, audio: entry.audio }, 0);
-    }
+    if (entry.audio.length === 0) return;
+    const differentRecordingPlaying = player.playing && player.playlist !== null && player.playlist.title !== entry.occasionLabel;
+    if (differentRecordingPlaying && !autoplayOnHanacha) return;
+    player.play({ title: entry.occasionLabel, audio: entry.audio }, 0);
   }
 
   return (
