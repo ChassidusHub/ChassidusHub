@@ -1,11 +1,12 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
-import { parshaOptions } from '../search/parshaOptions';
+import { chagOptions, parshaOptions } from '../search/parshaOptions';
 import { hasActiveFilters, searchOccasions } from '../search/searchOccasions';
 import type { ContentType, SearchFilters } from '../search/searchOccasions';
 import { useProgressMap } from '../player/useProgressMap';
@@ -47,6 +48,7 @@ export function SearchScreen() {
   );
   const years = useMemo(() => browsableYears(catalog), []);
   const parshas = useMemo(() => parshaOptions(language), [language]);
+  const chagim = useMemo(() => chagOptions(language), [language]);
 
   function toggleType(type: ContentType): void {
     setTypes((prev) => (prev.includes(type) ? prev.filter((t2) => t2 !== type) : [...prev, type]));
@@ -64,7 +66,6 @@ export function SearchScreen() {
   const typeOptions: Array<{ value: ContentType; label: string }> = [
     { value: 'audio', label: t.audioTypeLabel },
     { value: 'hanacha', label: t.hanachaTypeLabel },
-    { value: 'chag', label: t.chagTypeLabel },
     ...PDF_SECTION_ORDER.map((section) => ({ value: section, label: t.sectionLabels[section] })),
   ];
 
@@ -114,7 +115,7 @@ export function SearchScreen() {
             <option value="">{t.anyFilterOption}</option>
             {DAYS.map((d) => (
               <option key={d} value={d}>
-                {d}
+                {language === 'he' ? gematriya(d) : d}
               </option>
             ))}
           </select>
@@ -124,11 +125,20 @@ export function SearchScreen() {
           <span className="search-filter-label">{t.parshaFilterLabel}</span>
           <select value={parsha ?? ''} onChange={(e) => setParsha(e.target.value || null)}>
             <option value="">{t.anyFilterOption}</option>
-            {parshas.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
+            <optgroup label={t.parshaFilterLabel}>
+              {parshas.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label={t.chagOptgroupLabel}>
+              {chagim.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
       </div>

@@ -109,9 +109,13 @@ describe('searchOccasions', () => {
     expect(maamorimResult).toEqual([{ hebrewYear: 5712, entries: [purim] }]);
   });
 
-  it('filters by "chag" - a property of the occasion\'s own date, not of any one PDF/recording', () => {
-    const result = searchOccasions(catalog, { ...EMPTY_FILTERS, types: ['chag'] });
+  it('filters by a chag category through the same "parsha" field, resolved by date rather than by any one PDF/recording', () => {
+    const result = searchOccasions(catalog, { ...EMPTY_FILTERS, parsha: 'Sukkot' });
     expect(result).toEqual([{ hebrewYear: 5711, entries: [sukkos] }]);
+
+    // A real parsha name still resolves the normal way, not as a chag.
+    const noMatch = searchOccasions(catalog, { ...EMPTY_FILTERS, parsha: 'Yom Kippur' });
+    expect(noMatch).toEqual([]);
   });
 
   it('combines multiple filters with AND', () => {
