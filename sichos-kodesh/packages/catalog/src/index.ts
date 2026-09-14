@@ -4,7 +4,7 @@ export { toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 export { browsableYears, entryHasContent, findCatalogEntryForOccasion, hasContent } from './catalogLookup.js';
 export { STARTER_FIXED_OCCASIONS } from './fixedOccasions.js';
 export { PDF_SECTION_LABELS, PDF_SECTION_ORDER } from './pdfSections.js';
-export { mafteiachMonthName, mafteiachMonthToken } from './mafteiachMonth.js';
+export { mafteiachDay, mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from './mafteiachMonth.js';
 export { classifyPdfEdition, sortPdfsByEditionPreference } from './pdfEdition.js';
 export type { PdfEdition } from './pdfEdition.js';
 export { isHighlightedFarbrengenHanacha } from './farbrengenContent.js';

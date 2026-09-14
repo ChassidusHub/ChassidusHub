@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mafteiachMonthName, mafteiachMonthToken } from '../src/mafteiachMonth.js';
+import { mafteiachDay, mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '../src/mafteiachMonth.js';
 
 describe('mafteiachMonthToken', () => {
   it('extracts a plain two-digit month token', () => {
@@ -31,5 +31,29 @@ describe('mafteiachMonthName', () => {
 
   it('names a non-leap year\'s plain Adar', () => {
     expect(mafteiachMonthName('5712-06-01')).toBe('Adar');
+  });
+});
+
+describe('mafteiachMonthNameHebrew', () => {
+  it('names Tishrei through Elul in Hebrew', () => {
+    expect(mafteiachMonthNameHebrew('5711-01-01')).toBe('תשרי');
+    expect(mafteiachMonthNameHebrew('5711-05-10')).toBe('שבט');
+    expect(mafteiachMonthNameHebrew('5711-12-18')).toBe('אלול');
+  });
+
+  it('names a leap year\'s split Adar in Hebrew', () => {
+    expect(mafteiachMonthNameHebrew('5711-06A-01')).toBe('אדר א׳');
+    expect(mafteiachMonthNameHebrew('5711-06B-14')).toBe('אדר ב׳');
+  });
+});
+
+describe('mafteiachDay', () => {
+  it('extracts a plain day number', () => {
+    expect(mafteiachDay('5711-05-10')).toBe(10);
+  });
+
+  it('strips a trailing same-date-disambiguator letter', () => {
+    expect(mafteiachDay('5738-01-09b')).toBe(9);
+    expect(mafteiachDay('5712-12-30c')).toBe(30);
   });
 });

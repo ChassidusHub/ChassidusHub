@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Music } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
@@ -18,11 +19,11 @@ interface Props {
  * Tapping a row navigates to /browse/:hebrewYear/:occasionId.
  */
 export function YearBrowserScreen({ hebrewYear }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   // Only occasions with something real to download - an empty entry (mafteiach
   // indexed the occasion but nothing was resolved for it) is not worth a dead-end row.
   const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
-  const monthGroups = groupByMonth(entries);
+  const monthGroups = groupByMonth(entries, language);
 
   return (
     <div className="screen">
@@ -36,11 +37,9 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
             {group.entries.map((entry) => (
               <li key={entry.occasionId}>
                 <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
-                  <span className="year-row-year">{entry.occasionLabel}</span>
-                  <span className="year-row-distance">
-                    {entry.audio.length > 0 ? t.audioLabel : ''}
-                    {entry.audio.length > 0 && entry.pdfs.length > 0 ? ' + ' : ''}
-                    {entry.pdfs.length > 0 ? t.pdfsLabel(entry.pdfs.length) : ''}
+                  <span className="year-row-main">
+                    {entry.audio.length > 0 && <Music size={14} className="year-row-audio-icon" aria-label={t.hasRecordingLabel} />}
+                    <span className="year-row-year">{entry.occasionLabel}</span>
                   </span>
                 </Link>
               </li>

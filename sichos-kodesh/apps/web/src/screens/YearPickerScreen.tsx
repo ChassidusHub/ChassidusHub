@@ -41,6 +41,10 @@ export function YearPickerScreen({ targetYear }: Props) {
         </Link>
       )}
 
+      <Link className="category-row" to="/this-week-all-years">
+        <span className="category-row-name">{t.allFarbrengensThisWeek}</span>
+      </Link>
+
       <Link className="category-row" to="/years">
         <span className="category-row-name">{t.browseAnyYear}</span>
       </Link>

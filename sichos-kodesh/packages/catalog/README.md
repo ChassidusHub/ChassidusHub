@@ -86,8 +86,8 @@ landing on `sourceYear`'s own unrelated same-month-day date a full year
 off — strictly applies to it), but looks each day up directly against
 every indexed year's own dates rather than translating into one specific
 source year, so no kvius relationship between years is required. Returns
-results grouped by year (years with nothing that week omitted), most
-recent year first.
+results grouped by year (years with nothing that week omitted), earliest
+year first.
 
 ## Today's Hebrew date (`currentParsha.ts`)
 

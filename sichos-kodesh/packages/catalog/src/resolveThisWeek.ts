@@ -103,8 +103,8 @@ export interface YearWeekOccasions {
  * included too - it's still an occasion on one of these dates - so
  * there's no need to cross-reference `findMatchingYears` here at all.
  *
- * Grouped by year (years with nothing this week omitted), most recent
- * year first - a real Gregorian date isn't included per entry the way
+ * Grouped by year (years with nothing this week omitted), earliest year
+ * first - a real Gregorian date isn't included per entry the way
  * `resolveThisWeek`'s is, since a historical year's actual occurrence
  * almost never falls on today's real Gregorian date and showing it would
  * misleadingly suggest otherwise; `entry.occasionLabel`/`hebrewDate`
@@ -114,7 +114,7 @@ export function resolveThisWeekAllYears(catalog: CatalogByYear, today: Date = ne
   const days = thisWeekDays(today);
   const years = Object.keys(catalog)
     .map(Number)
-    .sort((a, b) => b - a);
+    .sort((a, b) => a - b);
 
   const results: YearWeekOccasions[] = [];
   for (const year of years) {

@@ -151,7 +151,7 @@ describe('resolveThisWeekAllYears', () => {
     expect(result[0]).toEqual({ hebrewYear: unrelatedYear, entries: [catalog[unrelatedYear]![0]] });
   });
 
-  it('groups by year, sorted most recent first, omitting years with nothing this week', () => {
+  it('groups by year, sorted earliest first, omitting years with nothing this week', () => {
     const targetYear = 5786;
     const targetShabbos = new HDate(15, 7, targetYear).onOrAfter(6);
     const today = new Date(`${targetShabbos.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
@@ -166,7 +166,7 @@ describe('resolveThisWeekAllYears', () => {
 
     const result = resolveThisWeekAllYears(catalog, today);
 
-    expect(result.map((r) => r.hebrewYear)).toEqual([5730, 5711]);
+    expect(result.map((r) => r.hebrewYear)).toEqual([5711, 5730]);
   });
 
   it('omits an occasion with neither audio nor a PDF, same as resolveThisWeek', () => {

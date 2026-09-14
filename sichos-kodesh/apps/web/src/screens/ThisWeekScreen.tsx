@@ -6,6 +6,7 @@ import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
 import { groupByMonth } from '../utils/groupByMonth';
+import { hebrewDayMonthLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -25,13 +26,13 @@ interface Props {
  * treatment, not a generic one.
  */
 export function ThisWeekScreen({ sourceYear }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
   const yearEntries: CatalogEntry[] = useMemo(
     () => (catalog[sourceYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0),
     [sourceYear],
   );
-  const monthGroups = useMemo(() => groupByMonth(yearEntries), [yearEntries]);
+  const monthGroups = useMemo(() => groupByMonth(yearEntries, language), [yearEntries, language]);
 
   return (
     <div className="screen">
@@ -49,7 +50,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
                 {occasion.entry.audio.length > 0 && <Music size={14} className="year-row-audio-icon" aria-label={t.hasRecordingLabel} />}
                 <span className="year-row-year">{occasion.entry.occasionLabel}</span>
               </span>
-              <span className="year-row-distance">{occasion.gregorianDate}</span>
+              <span className="year-row-distance">{hebrewDayMonthLabel(occasion.hebrewDate, language)}</span>
             </Link>
           </li>
         ))}

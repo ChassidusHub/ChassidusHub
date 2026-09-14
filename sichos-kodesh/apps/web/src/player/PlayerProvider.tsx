@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { audioUrl } from '../download/download';
+import { forMediaSession } from '../utils/hebrewPunctuation';
 import { PlayerContext } from './playerContext';
 import type { Playlist, PlayerContextValue, PlayerState } from './playerContext';
 
@@ -76,8 +77,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: current.chapterName ?? state.playlist.title,
-      artist: state.playlist.title,
+      title: forMediaSession(current.chapterName ?? state.playlist.title),
+      artist: forMediaSession(state.playlist.title),
       album: 'Sichos Kodesh',
       artwork: [
         { src: `${import.meta.env.BASE_URL}icon-192.png`, sizes: '192x192', type: 'image/png' },
