@@ -19,6 +19,8 @@ export interface DownloadTarget {
   occasionId: number;
   label: string;
   kind: 'audio' | 'pdf';
+  /** Set only for `kind: 'audio'` targets - lets DownloadProvider mirror this target's own real progress into RecordingsScreen's per-chapter state too, whether the job that queued it was `downloadChapter` itself or a whole-occasion/bulk download that happens to include this chapter. */
+  chapterIndex?: number;
 }
 
 /**
@@ -42,6 +44,7 @@ export function listDownloadTargets(entries: CatalogEntry[], contentTypes: Downl
           occasionId: entry.occasionId,
           label: chapter.chapterName ?? `Track ${index + 1}`,
           kind: 'audio',
+          chapterIndex: index,
         });
       });
     }
@@ -206,7 +209,17 @@ async function fetchWithProgress(url: string, onProgress: (progress: number | un
  */
 export async function runDownload(targets: DownloadTarget[], options: RunDownloadOptions = {}): Promise<void> {
   const { concurrency = 3, wifiOnly = false, onEach, signal } = options;
-  if (wifiOnly && shouldSkipForMeteredConnection()) return;
+  if (wifiOnly && shouldSkipForMeteredConnection()) {
+    // Every caller here already moved this job to a "queued"/"downloading"
+    // state before calling runDownload (see DownloadProvider) - returning
+    // silently, with no event at all, left it stuck there forever with a
+    // spinner that never resolves and no way to tell why. Reporting
+    // 'error' for each target is what actually settles that state back to
+    // a plain, re-tappable "download" - the real fix for a genuine
+    // "download doesn't work" report on a non-Wi-Fi connection.
+    for (const target of targets) onEach?.(target, 'error');
+    return;
+  }
 
   const cache = await caches.open(MEDIA_CACHE_NAME);
   const pending: DownloadTarget[] = [];

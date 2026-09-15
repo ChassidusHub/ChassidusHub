@@ -62,14 +62,41 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         onEach: (target, event, fraction) => {
           const k = key(target.hebrewYear, target.occasionId);
           const total = totalForKey.get(k) ?? 1;
+          // Audio targets also get their own chapter-keyed state, distinct
+          // from the occasion-wide aggregate above - this is what makes
+          // RecordingsScreen's per-row ring/spinner light up for a chapter
+          // whether it's downloading because of its own row's button
+          // (downloadChapter) or because the whole occasion/a bulk week
+          // download happens to include it - a real reported gap (only the
+          // former ever showed anything there before).
+          const chapterK = target.kind === 'audio' && target.chapterIndex !== undefined ? chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex) : null;
+
           if (event === 'downloading') {
-            setLiveState((prev) => (prev[k] === 'downloading' ? prev : { ...prev, [k]: 'downloading' }));
+            setLiveState((prev) => {
+              if (prev[k] === 'downloading' && (!chapterK || prev[chapterK] === 'downloading')) return prev;
+              const next = { ...prev, [k]: 'downloading' as const };
+              if (chapterK) next[chapterK] = 'downloading';
+              return next;
+            });
             if (fraction !== undefined) {
               const completed = completedForKey.get(k) ?? 0;
-              setProgress((prev) => ({ ...prev, [k]: Math.min((completed + fraction) / total, 1) }));
+              setProgress((prev) => {
+                const next = { ...prev, [k]: Math.min((completed + fraction) / total, 1) };
+                if (chapterK) next[chapterK] = fraction;
+                return next;
+              });
             }
             return;
           }
+
+          // This one target has settled - its own chapter state (if any)
+          // reflects that immediately, independent of the rest of the
+          // occasion's own files still being in flight.
+          if (chapterK) {
+            setLiveState((prev) => ({ ...prev, [chapterK]: event === 'error' ? 'none' : 'downloaded' }));
+            setProgress((prev) => clearProgress(prev, chapterK));
+          }
+
           const completed = (completedForKey.get(k) ?? 0) + 1;
           completedForKey.set(k, completed);
           setProgress((prev) => ({ ...prev, [k]: Math.min(completed / total, 1) }));
