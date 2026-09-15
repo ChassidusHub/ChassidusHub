@@ -56,8 +56,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [initialPersisted] = useState(readPersisted);
   const [state, setState] = useState<PlayerState>(() =>
     initialPersisted
-      ? { playlist: initialPersisted.playlist, currentIndex: initialPersisted.currentIndex, playing: false, currentTime: initialPersisted.currentTime, duration: 0 }
-      : { playlist: null, currentIndex: 0, playing: false, currentTime: 0, duration: 0 },
+      ? { playlist: initialPersisted.playlist, currentIndex: initialPersisted.currentIndex, playing: false, currentTime: initialPersisted.currentTime, duration: 0, error: null }
+      : { playlist: null, currentIndex: 0, playing: false, currentTime: 0, duration: 0, error: null },
   );
   // Consumed once, by the first chapter's `onLoadedMetadata` below - not a
   // dependency of any effect, so it deliberately doesn't trigger re-renders.
@@ -75,12 +75,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       // directly instead.
       const alreadyLoaded = targetChapter && current?.workerFilename === targetChapter.workerFilename;
       if (alreadyLoaded && audioRef.current) {
-        audioRef.current.currentTime = startTime;
+        if (audioRef.current.error) {
+          // Retrying the exact chapter that just failed to load (e.g.
+          // tapping the same row again after coming back online) - a bare
+          // `.play()` on an element already in its errored network state
+          // won't retry the fetch at all (the `src` hasn't changed, so
+          // there's no new resource-selection attempt to hook onError back
+          // onto), silently doing nothing. `.load()` forces a real retry.
+          pendingSeekRef.current = startTime > 0 ? startTime : null;
+          audioRef.current.load();
+        } else {
+          audioRef.current.currentTime = startTime;
+        }
         void audioRef.current.play();
       } else {
         pendingSeekRef.current = startTime > 0 ? startTime : null;
       }
-      setState({ playlist, currentIndex: startIndex, playing: true, currentTime: startTime, duration: 0 });
+      setState({ playlist, currentIndex: startIndex, playing: true, currentTime: startTime, duration: 0, error: null });
       // Otherwise the actual .play() call happens in the effect below, once
       // the <audio> element's `src` has updated to match this new chapter.
     },
@@ -95,7 +106,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const el = audioRef.current;
     if (!el) return;
     if (state.playing) el.pause();
-    else void el.play();
+    else {
+      if (el.error) el.load(); // see the matching comment in `play` above
+      void el.play();
+    }
   }, [state.playing]);
 
   const next = useCallback(() => {
@@ -249,8 +263,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           // `use-credentials`) matches the Worker's own `Access-Control-
           // Allow-Origin: *` - no cookies/auth involved.
           crossOrigin="anonymous"
-          onPlay={() => setState((s) => ({ ...s, playing: true }))}
+          onPlay={() => setState((s) => ({ ...s, playing: true, error: null }))}
           onPause={() => setState((s) => ({ ...s, playing: false }))}
+          // No `onError` handler existed here at all before - a chapter
+          // failing to load (the common case: offline and not downloaded)
+          // silently did nothing visible, unlike PdfViewerScreen's own
+          // offline handling (a real reported gap: "never get the offline
+          // message" when testing with a recording, not a PDF).
+          // `navigator.onLine` false is a reliable "definitely offline"
+          // signal (see PdfViewerScreen's own comment on the same check).
+          onError={() => setState((s) => ({ ...s, playing: false, error: { offline: !navigator.onLine } }))}
           onEnded={() => {
             // Record this chapter as fully played explicitly - the last
             // throttled onTimeUpdate tick before "ended" fires can still

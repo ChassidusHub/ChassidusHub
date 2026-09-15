@@ -82,11 +82,17 @@ export function GlobalPlayerBar() {
               </span>
             )}
           </button>
-          <input type="range" min={0} max={100} value={progressPercent} onChange={seek} className="global-player-range" aria-label={t.seek} />
-          <div className="global-player-times">
-            <span>{formatTime(player.currentTime)}</span>
-            <span>{formatTime(player.duration)}</span>
-          </div>
+          {player.error ? (
+            <p className="global-player-error">{player.error.offline ? t.audioOfflineNotDownloaded : t.audioLoadError}</p>
+          ) : (
+            <>
+              <input type="range" min={0} max={100} value={progressPercent} onChange={seek} className="global-player-range" aria-label={t.seek} />
+              <div className="global-player-times">
+                <span>{formatTime(player.currentTime)}</span>
+                <span>{formatTime(player.duration)}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
