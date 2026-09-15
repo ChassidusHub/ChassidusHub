@@ -9,6 +9,9 @@ import { usePlayer } from './player/usePlayer';
 import { LanguageProvider } from './i18n/LanguageProvider';
 import { useTranslation } from './i18n/useLanguage';
 import { GlobalPlayerBar } from './components/GlobalPlayerBar';
+import { ConnectivityBanner } from './components/ConnectivityBanner';
+import { DownloadProgressBar } from './components/DownloadProgressBar';
+import { useActiveDownloads } from './download/useActiveDownloads';
 import { YearPickerScreen } from './screens/YearPickerScreen';
 import { KviusYearsScreen } from './screens/KviusYearsScreen';
 import { BrowseYearsScreen } from './screens/BrowseYearsScreen';
@@ -145,12 +148,13 @@ function KviusYearsRoute() {
 
 /**
  * Wraps every route's content so it always leaves room for GlobalPlayerBar
- * when something's playing - the bar is `position: fixed` and can show on
- * *any* screen now (it's global, not scoped to PdfViewerScreen anymore),
- * so without this, its bottom edge covers - and blocks clicks on - the
+ * and/or DownloadProgressBar when either is showing - both live in one
+ * fixed-position container at the bottom of the viewport (see App.tsx), so
+ * without this their combined height covers - and blocks clicks on - the
  * last bit of content on every other screen (a real reported bug: "hides
- * content and can't click it"). Scrolling to the actual end of a page's
- * content should land just above the bar, not have the bar sit over it.
+ * content and can't click it", the original report about GlobalPlayerBar
+ * alone). Scrolling to the actual end of a page's content should land just
+ * above whatever's showing down there, not have it sit over the content.
  */
 /**
  * React Router doesn't reset scroll on navigation itself (unlike a real
@@ -196,11 +200,13 @@ function useTrackNavigationDepth(): void {
 
 function AppContent() {
   const player = usePlayer();
+  const { count: activeDownloadCount } = useActiveDownloads();
   useScrollToTopOnNavigate();
   useTrackNavigationDepth();
   useAutoDownloadSync();
+  const bottomBarClass = [player.playlist ? 'has-player' : '', activeDownloadCount > 0 ? 'has-download-bar' : ''].filter(Boolean).join(' ');
   return (
-    <div className={player.playlist ? 'app-content has-player' : 'app-content'}>
+    <div className={['app-content', bottomBarClass].filter(Boolean).join(' ')}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/kvius" element={<KviusYearsRoute />} />
@@ -259,8 +265,18 @@ function App() {
       <LanguageProvider>
         <DownloadProvider>
           <PlayerProvider>
+            <ConnectivityBanner />
             <AppContent />
-            <GlobalPlayerBar />
+            {/* One fixed-position container, not two - DownloadProgressBar and
+                GlobalPlayerBar each hide themselves independently (nothing
+                downloading / nothing playing), so this stacks whichever of
+                them is actually showing via normal flex flow instead of each
+                one separately fixing itself to the viewport edge and having
+                to know the other's height to avoid overlapping it. */}
+            <div className="bottom-bars">
+              <DownloadProgressBar />
+              <GlobalPlayerBar />
+            </div>
           </PlayerProvider>
         </DownloadProvider>
       </LanguageProvider>
