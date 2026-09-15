@@ -45,12 +45,34 @@ export function RecordingsScreen({ resolved }: Props) {
         {entry.audio.map((chapter, index) => {
           const isActive = isThisPlaylistActive && player.currentIndex === index;
           const finished = !isActive && isChapterFinished(progress, index, chapter);
-          const fraction = !isActive && !finished ? chapterProgressFraction(progress, index, chapter) : 0;
+          // The active row's own fraction comes straight from the player's
+          // live currentTime/duration, not the localStorage snapshot (which
+          // only advances on PlayerProvider's own throttled ~3s writes) -
+          // this is what makes the row actually playing update its bar
+          // smoothly in real time instead of sitting frozen (or, before,
+          // not rendering a bar for the active row at all).
+          const fraction = isActive
+            ? player.duration > 0
+              ? Math.min(player.currentTime / player.duration, 1)
+              : 0
+            : finished
+              ? 0
+              : chapterProgressFraction(progress, index, chapter);
           return (
             <li key={chapter.workerFilename}>
               <button
                 className={isActive ? 'playlist-row playlist-row-active' : 'playlist-row'}
-                onClick={() => player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, index)}
+                onClick={() => {
+                  // Resumes from wherever this chapter was left off, not
+                  // always from 0 - a real reported gap (tapping a
+                  // part-listened chapter restarted it from the beginning
+                  // every time). Auto-advance (PlayerProvider's own `next()`
+                  // on `onEnded`) is untouched by this and still correctly
+                  // starts its chapter at 0 - that's a fresh chapter someone
+                  // hasn't manually chosen to resume, not this code path.
+                  const savedPosition = progress?.chapters[index]?.position ?? 0;
+                  player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, index, savedPosition);
+                }}
               >
                 <span className="playlist-row-icon">
                   {isActive && player.playing ? (
@@ -62,11 +84,12 @@ export function RecordingsScreen({ resolved }: Props) {
                   )}
                 </span>
                 <span className="playlist-row-name">{chapter.chapterName ?? t.track(index + 1)}</span>
-                {fraction > 0 && (
-                  <span className="playlist-row-progress-track" aria-hidden>
-                    <span className="playlist-row-progress-fill" style={{ width: `${Math.round(fraction * 100)}%` }} />
-                  </span>
-                )}
+                {/* Always rendered, even at 0% (an invisible-fill track still reserves its own space) - conditionally
+                    rendering this element made every other row's layout shift depending on whether *this* row
+                    happened to have progress or not, a real reported alignment bug. */}
+                <span className="playlist-row-progress-track" aria-hidden>
+                  <span className="playlist-row-progress-fill" style={{ width: `${Math.round(fraction * 100)}%` }} />
+                </span>
                 <span className="playlist-row-duration">{formatTime(chapter.durationMs / 1000)}</span>
               </button>
             </li>
