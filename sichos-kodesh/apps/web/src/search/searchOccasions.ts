@@ -11,6 +11,7 @@ import {
 } from '@sichos-kodesh/catalog';
 import type { CatalogByYear, CatalogEntry, ChagCategory, PdfSection } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
+import { parseSmartQuery } from './parseSmartQuery';
 
 /** "hanacha" is the highlighted Sichos Kodesh/Toras Menachem transcript specifically (see isHighlightedFarbrengenHanacha) - a meaningful search target in its own right, distinct from bilti mugah generally. */
 export type ContentType = 'audio' | 'hanacha' | PdfSection;
@@ -56,7 +57,7 @@ export interface SearchResultGroup {
  * itself - and collapses whitespace so an extra/missing space doesn't
  * matter either.
  */
-function normalize(text: string): string {
+export function normalize(text: string): string {
   return text
     .replace(/[֑-ׇ]/g, '')
     .replace(/["'‘’“”״׳`´]/g, '')
@@ -156,29 +157,40 @@ export function hasActiveFilters(filters: SearchFilters): boolean {
  */
 export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters): SearchResultGroup[] {
   if (!hasActiveFilters(filters)) return [];
-  const query = normalize(filters.query);
-  // Computed once per call, not per entry - `fuse.search()` itself does the
-  // whole-index scan, so running it inside the per-entry filter below would
-  // repeat that scan once per entry instead of once total.
-  const matchedEntries = query ? new Set(getFuseIndex(catalog).search(query).map((result) => result.item.entry)) : null;
-  const results: SearchResultGroup[] = [];
   const years = Object.keys(catalog)
     .map(Number)
     .sort((a, b) => a - b);
 
+  // The free-text box doubles as a "smart" search: a typed year, month,
+  // parsha or chag name is pulled out of it here and treated exactly like
+  // its own dropdown filter would be (see parseSmartQuery's own doc
+  // comment) - an explicit dropdown selection still wins over whatever the
+  // text also happens to mention, rather than fighting it. Only the text
+  // left over after that goes to Fuse for fuzzy label matching.
+  const { detected, remainingText } = parseSmartQuery(filters.query, { min: years[0] ?? 0, max: years[years.length - 1] ?? 0 });
+  const effectiveYear = filters.hebrewYear ?? detected.hebrewYear;
+  const effectiveMonth = filters.hdateMonth ?? detected.hdateMonth;
+  const effectiveParsha = filters.parsha ?? detected.parsha;
+
+  // Computed once per call, not per entry - `fuse.search()` itself does the
+  // whole-index scan, so running it inside the per-entry filter below would
+  // repeat that scan once per entry instead of once total.
+  const matchedEntries = remainingText ? new Set(getFuseIndex(catalog).search(remainingText).map((result) => result.item.entry)) : null;
+  const results: SearchResultGroup[] = [];
+
   for (const year of years) {
-    if (filters.hebrewYear != null && year !== filters.hebrewYear) continue;
+    if (effectiveYear != null && year !== effectiveYear) continue;
     const entries = (catalog[year] ?? []).filter((entry) => {
       if (entry.audio.length === 0 && entry.pdfs.length === 0) return false;
       if (matchedEntries && !matchedEntries.has(entry)) return false;
-      if (filters.hdateMonth != null && mafteiachMonthTokenToHDateMonth(mafteiachMonthToken(entry.hebrewDate)) !== filters.hdateMonth) return false;
+      if (effectiveMonth != null && mafteiachMonthTokenToHDateMonth(mafteiachMonthToken(entry.hebrewDate)) !== effectiveMonth) return false;
       if (filters.day != null && mafteiachDay(entry.hebrewDate) !== filters.day) return false;
-      if (filters.parsha) {
-        if (isChagCategory(filters.parsha)) {
-          if (occasionChagCategory(entry.hebrewDate, IL) !== filters.parsha) return false;
+      if (effectiveParsha) {
+        if (isChagCategory(effectiveParsha)) {
+          if (occasionChagCategory(entry.hebrewDate, IL) !== effectiveParsha) return false;
         } else {
           const parsha = occasionParsha(entry.hebrewDate, IL);
-          if (!parsha || !parsha.includes(filters.parsha)) return false;
+          if (!parsha || !parsha.includes(effectiveParsha)) return false;
         }
       }
       if (filters.specialDay && occasionSpecialDay(entry.hebrewDate, entry.occasionLabel) !== filters.specialDay) return false;

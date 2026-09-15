@@ -11,7 +11,7 @@ export interface SpecialDayOption {
 const MONTH_BY_HDATE_MONTH = new Map(MAFTEIACH_MONTH_OPTIONS.map((m) => [m.hdateMonth, m]));
 
 /**
- * Auto-generated from each special day's own (month, day) - "י' בשבט"/"10
+ * Auto-generated from each special day's own (month, day) - "י' שבט"/"10
  * Shevat" - rather than a hand-curated proper name per entry (e.g. "Yud
  * Shevat"). Deliberate: about a third of SPECIAL_DAYS have no such
  * household name at all (a recurring date the Rebbe held a sicha on for a
@@ -24,7 +24,7 @@ const MONTH_BY_HDATE_MONTH = new Map(MAFTEIACH_MONTH_OPTIONS.map((m) => [m.hdate
 export function specialDayOptions(language: Language): SpecialDayOption[] {
   return SPECIAL_DAYS.map(({ hdateMonth, day }) => {
     const month = MONTH_BY_HDATE_MONTH.get(hdateMonth);
-    const label = language === 'he' ? `${gematriya(day)} ב${month?.nameHebrew ?? hdateMonth}` : `${day} ${month?.name ?? hdateMonth}`;
+    const label = language === 'he' ? `${gematriya(day)} ${month?.nameHebrew ?? hdateMonth}` : `${day} ${month?.name ?? hdateMonth}`;
     return { value: `${hdateMonth}-${day}`, label };
   });
 }
