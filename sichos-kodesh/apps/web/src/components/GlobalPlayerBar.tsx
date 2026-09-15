@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pause, Play, SkipBack, SkipForward } from 'lucide-react';
+import { Loader2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -100,7 +100,7 @@ export function GlobalPlayerBar() {
               <SkipBack size={20} fill="currentColor" strokeWidth={0} />
             </button>
           )}
-          <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? t.pause : t.play}>
+          <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.loading ? t.loading : player.playing ? t.pause : t.play}>
             {/* A play triangle's own visual weight sits left of its true
                 geometric center (an inherent asymmetric-shape effect, not a
                 CSS bug) - nudging it right by a couple of px is what actually
@@ -111,8 +111,14 @@ export function GlobalPlayerBar() {
                 double-thickens an already-solid shape - most visible on
                 Pause's two bars, each barely a fifth of the icon's own
                 width to begin with. Dropping the stroke leaves a clean
-                solid glyph at the actual requested weight. */}
-            {player.playing ? (
+                solid glyph at the actual requested weight. `loading` (a
+                fresh chapter, a skip, still buffering) wins over both -
+                neither the OS media session nor a bare play/pause icon can
+                show "still loading," and tapping this while it spins still
+                works: it's a real togglePlay call, not a disabled button. */}
+            {player.loading ? (
+              <Loader2 size={20} className="player-loading-spinner" />
+            ) : player.playing ? (
               <Pause size={20} fill="currentColor" strokeWidth={0} />
             ) : (
               <Play size={20} fill="currentColor" strokeWidth={0} style={{ marginInlineStart: 2 }} />

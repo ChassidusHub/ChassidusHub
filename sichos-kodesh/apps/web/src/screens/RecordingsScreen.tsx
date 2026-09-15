@@ -87,7 +87,9 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
         }}
       >
         <span className="playlist-row-icon">
-          {isActive && player.playing ? (
+          {isActive && player.loading ? (
+            <Loader2 size={16} className="player-loading-spinner" aria-label={t.loading} />
+          ) : isActive && player.playing ? (
             // strokeWidth={0}: lucide draws a 2px stroke outline even on a
             // filled icon by default, which noticeably over-thickens Pause's
             // two already-solid bars at this row's small size.

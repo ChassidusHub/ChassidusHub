@@ -14,6 +14,8 @@ export interface PlayerState {
   playlist: Playlist | null;
   currentIndex: number;
   playing: boolean;
+  /** True from the moment play is requested (a fresh chapter, a skip, or resuming) until audio is actually audible - the real, user-visible "buffering" state neither the browser nor the OS media session otherwise exposes. See PlayerProvider's `onWaiting`/`onPlaying` handlers. */
+  loading: boolean;
   currentTime: number;
   duration: number;
   /** Set when the current chapter's `<audio>` element failed to load (e.g. offline and not downloaded) - cleared as soon as playback actually starts. */
