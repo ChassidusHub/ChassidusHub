@@ -22,7 +22,19 @@ describe('parseSmartQuery', () => {
     expect(remainingText).toBe('');
   });
 
-  it('does not misread an ordinary Hebrew word (no geresh) as a year', () => {
+  it('detects a gematriya year written with no geresh/gershayim mark at all - a confirmed real gap ("חי אלול תשלה" found nothing)', () => {
+    const { detected, remainingText } = parseSmartQuery('תשלה', RANGE);
+    expect(detected.hebrewYear).toBe(5735);
+    expect(remainingText).toBe('');
+  });
+
+  it('detects year + month together with no punctuation, exactly the reported failing query', () => {
+    const { detected } = parseSmartQuery('חי אלול תשלה', RANGE);
+    expect(detected.hebrewYear).toBe(5735);
+    expect(detected.hdateMonth).toBe(6); // Elul
+  });
+
+  it('does not misread an ordinary Hebrew word as a year just because its letters happen to be short', () => {
     const { detected, remainingText } = parseSmartQuery('בשלח', RANGE);
     expect(detected.hebrewYear).toBeNull();
     // Beshalach is also a real parsha name, so it's consumed as that - not left as free text.
