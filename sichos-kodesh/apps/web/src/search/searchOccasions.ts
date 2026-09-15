@@ -7,6 +7,7 @@ import {
   mafteiachMonthTokenToHDateMonth,
   occasionChagCategory,
   occasionParsha,
+  occasionSpecialDay,
 } from '@sichos-kodesh/catalog';
 import type { CatalogByYear, CatalogEntry, ChagCategory, PdfSection } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
@@ -30,11 +31,13 @@ export interface SearchFilters {
   day: number | null;
   /** Either a `@hebcal/core` `parshiot` entry (e.g. "Beshalach") or a `ChagCategory` (e.g. "Sukkot") - one dropdown, since picking a specific week's reading and picking a specific chag are the same kind of question ("which occasion in the calendar"), just resolved differently (see occasionParsha vs occasionChagCategory in searchOccasions below). */
   parsha: string | null;
+  /** A `SpecialDay` id (see occasionSpecialDay) - its own field, not folded into `parsha`, since a special day and a parsha/chag aren't mutually exclusive the way parsha and chag are (a special day can fall on an otherwise-ordinary weekday with its own parsha). */
+  specialDay: string | null;
   /** OR'd together - an entry matches if it has *any* of the selected types; empty means no type filter. */
   types: ContentType[];
 }
 
-export const EMPTY_FILTERS: SearchFilters = { query: '', hebrewYear: null, hdateMonth: null, day: null, parsha: null, types: [] };
+export const EMPTY_FILTERS: SearchFilters = { query: '', hebrewYear: null, hdateMonth: null, day: null, parsha: null, specialDay: null, types: [] };
 
 export interface SearchResultGroup {
   hebrewYear: number;
@@ -135,6 +138,7 @@ export function hasActiveFilters(filters: SearchFilters): boolean {
     filters.hdateMonth != null ||
     filters.day != null ||
     filters.parsha != null ||
+    filters.specialDay != null ||
     filters.types.length > 0
   );
 }
@@ -177,6 +181,7 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters):
           if (!parsha || !parsha.includes(filters.parsha)) return false;
         }
       }
+      if (filters.specialDay && occasionSpecialDay(entry.hebrewDate, entry.occasionLabel) !== filters.specialDay) return false;
       if (filters.types.length > 0 && !filters.types.some((type) => entryHasType(entry, type))) return false;
       return true;
     });

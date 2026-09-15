@@ -142,4 +142,31 @@ describe('searchOccasions', () => {
     const noMatch = searchOccasions(catalog, { ...EMPTY_FILTERS, hebrewYear: 5712, hdateMonth: 11 });
     expect(noMatch).toEqual([]);
   });
+
+  describe('special day filter', () => {
+    // Erev Yud Shevat 5711 - the day *before* yudShevat above, labeled as its eve. Kept in its own small
+    // catalog (not the shared one above) since adding it there would perturb the free-text and month-filter
+    // tests, which rely on yudShevat being the *only* Shevat-10-ish entry in 5711.
+    const erevYudShevat = makeEntry({
+      occasionId: 6,
+      hebrewYear: 5711,
+      hebrewDate: '5711-05-09',
+      occasionLabel: 'ערב יו"ד שבט',
+      pdfs: [{ section: 'hosofos', label: 'שיחה', driveFileId: 'w' }],
+    });
+    const unrelated = makeEntry({
+      occasionId: 7,
+      hebrewYear: 5711,
+      hebrewDate: '5711-05-11',
+      occasionLabel: 'שיחה לקבוצת סטודנטים',
+      pdfs: [{ section: 'hosofos', label: 'שיחה', driveFileId: 'v' }],
+    });
+    const specialDayCatalog: CatalogByYear = { 5711: [yudShevat, erevYudShevat, unrelated] };
+
+    it('matches the exact occasion plus its adjacent "erev" (eve of) occasion, but not an unrelated occasion one day off', () => {
+      const result = searchOccasions(specialDayCatalog, { ...EMPTY_FILTERS, specialDay: '11-10' });
+      expect(result).toEqual([{ hebrewYear: 5711, entries: [yudShevat, erevYudShevat] }]);
+      expect(result[0]?.entries).not.toContainEqual(unrelated);
+    });
+  });
 });
