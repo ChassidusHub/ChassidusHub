@@ -119,10 +119,61 @@ describe('parseSmartQuery', () => {
       expect(detected.day).toBe(24);
     });
 
-    it('does not detect a bare, unmarked one-letter token as a day - too ambiguous with an ordinary short word', () => {
+    it('detects a bare, unmarked one-letter token as a day when it sits next to a real month name', () => {
       const { detected, remainingText } = parseSmartQuery('י שבט', RANGE);
+      expect(detected.day).toBe(10);
+      expect(detected.hdateMonth).toBe(11);
+      expect(remainingText).toBe('');
+    });
+
+    it('does not detect a bare, unmarked short token as a day when it is not next to a recognized month/parsha/chag - too ambiguous with an ordinary short word on its own', () => {
+      const { detected, remainingText } = parseSmartQuery('י', RANGE);
       expect(detected.day).toBeNull();
       expect(remainingText).toBe('י');
+    });
+
+    it('detects "חי" (Chai, 18) as a day only next to a month, since on its own it is an ordinary word', () => {
+      const withMonth = parseSmartQuery('חי אלול', RANGE);
+      expect(withMonth.detected.day).toBe(18);
+      expect(withMonth.detected.hdateMonth).toBe(6);
+
+      const alone = parseSmartQuery('חי', RANGE);
+      expect(alone.detected.day).toBeNull();
+      expect(alone.remainingText).toBe('חי');
+    });
+
+    it('detects Chai Elul regardless of which quote-like mark is used for the gershayim, or none at all', () => {
+      for (const q of ['חי אלול', 'ח"י אלול', "ח''י אלול", "ח'י אלול", 'ח״י אלול']) {
+        const { detected } = parseSmartQuery(q, RANGE);
+        expect(detected.day, q).toBe(18);
+        expect(detected.hdateMonth, q).toBe(6);
+      }
+    });
+
+    it('detects the spelled-out "גימל" (Gimmel, 3) form for Gimmel Tammuz, in Hebrew and English', () => {
+      expect(parseSmartQuery('גימל תמוז', RANGE).detected.day).toBe(3);
+      expect(parseSmartQuery('Gimmel Tammuz', RANGE).detected.day).toBe(3);
+    });
+
+    it('detects a further-abbreviated year (dropping the century too) only next to a recognized month, not as a standalone guess', () => {
+      const withMonth = parseSmartQuery('י שבט לו', RANGE); // "לו" = 36 -> 5736, alongside day 10 + Shevat
+      expect(withMonth.detected.day).toBe(10);
+      expect(withMonth.detected.hdateMonth).toBe(11);
+      expect(withMonth.detected.hebrewYear).toBe(5736);
+      expect(withMonth.remainingText).toBe('');
+
+      const alone = parseSmartQuery('לו', RANGE);
+      expect(alone.detected.hebrewYear).toBeNull();
+      expect(alone.remainingText).toBe('לו');
+    });
+
+    it('does not misread an ordinary word as an abbreviated year just because it sits near another ordinary word', () => {
+      // "חב"ד" sums to 14 -> 5714, a real catalog year - but neither it nor
+      // its neighbor "כפר" is a recognized month/parsha/chag, so it must
+      // stay free text rather than being guessed as a year.
+      const { detected, remainingText } = parseSmartQuery('כפר חב"ד', RANGE);
+      expect(detected.hebrewYear).toBeNull();
+      expect(remainingText).toBe('כפר חבד');
     });
 
     it('detects the spelled-out "יוד" (Yud) form for the 10th, in Hebrew and English, even with no geresh at all', () => {

@@ -1,0 +1,31 @@
+/** Bumped by hand alongside a real user-facing entry below - this app isn't
+ * published anywhere version numbers matter on their own, so the only thing
+ * that makes a version real is having something worth telling the user. */
+export const APP_VERSION = '1.0.0';
+
+interface ChangelogEntry {
+  version: string;
+  en: string[];
+  he: string[];
+}
+
+/** Most recent first. Kept short and user-facing - not a commit log. */
+export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.0.0',
+    en: [
+      'Search now tolerates typos and keyboard slips, in any word order',
+      'Fixed pinch-to-zoom on PDFs snapping away from where you pinched',
+      'Fixed the player losing its place on the lock screen while loading or skipping',
+      "Fixed the scrubber jumping backward while you're dragging it",
+      'Fixed a blank white screen on some older Android devices',
+    ],
+    he: [
+      'החיפוש סובל כעת טעויות הקלדה וסדר מילים שונה',
+      'תוקן זום בקבצי PDF שקפץ הרחק מנקודת הנגיעה',
+      'תוקן הנגן שאיבד את מיקומו במסך הנעילה בזמן טעינה או דילוג',
+      'תוקן פס ההתקדמות שקפץ אחורה תוך כדי גרירה',
+      'תוקן מסך לבן וריק במכשירי אנדרואיד ישנים מסוימים',
+    ],
+  },
+];

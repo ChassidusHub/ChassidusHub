@@ -160,11 +160,55 @@ function gematriyaYear(rawToken: string): number | null {
   return raw < 1000 ? raw + 5000 : raw;
 }
 
-/** Compact Hebrew day-of-month numerals (1-30) never run past 2 letters - the largest, 29, is כ"ט (כ+ט). Unlike a year token, this is only accepted with an explicit geresh/gershayim mark: an unmarked 1-2 letter token is far too likely to just be an ordinary short Hebrew word (e.g. "של", "אל", "עם") for a bare gematria sum to be a safe signal on its own. */
+/**
+ * A year abbreviated further still, dropping the recurring "תש" (700)
+ * prefix along with the millennium digit - e.g. `ל"ו`/`לו` for `תשל"ו`
+ * (5736) - a common further shorthand once a year's hundreds digit hasn't
+ * changed in living memory (every real catalog year is in the 5700s).
+ * Unlike `gematriyaYear` above, this is *only* tried adjacent to a
+ * recognized month/parsha/chag (see `isAdjacentToMonthOrParsha`): its
+ * numeric range overlaps almost entirely with ordinary day-of-month values
+ * and plenty of ordinary short words (e.g. "חב"ד" sums to 14, landing on
+ * the very real catalog year 5714) - safe only in a full date's own
+ * context, never as a standalone guess the way a longer, less
+ * word-like spelled-out year already safely is.
+ */
+function abbreviatedYear(rawToken: string): number | null {
+  if (!GERESH_MARKS.test(rawToken) && !HEBREW_LETTERS_ONLY.test(rawToken)) return null;
+  const raw = gematriyaStrToNum(rawToken);
+  return raw > 0 && raw < 1000 ? raw + 5700 : null;
+}
+
+/** Compact Hebrew day-of-month numerals (1-30) never run past 2 letters - the largest, 29, is כ"ט (כ+ט). Unmarked (no geresh/gershayim), this is only ever trusted as a day when it sits directly next to a recognized month/parsha/chag name - see `isAdjacentToMonthOrParsha`'s own comment - since on its own a bare 1-2 letter token is far too likely to just be an ordinary short Hebrew word (e.g. "של", "אל", "עם") for a bare gematria sum to be a safe signal by itself. */
 const HEBREW_DAY_LETTERS = /^[א-ת]{1,2}$/;
 
-/** Written-out day names that don't sum to their own value via plain gematria - e.g. `gematriyaStrToNum('יוד')` sums to 20 (י+ו+ד), not 10, because this is the spelled-out *name* of the letter yud, not a compact numeral. Chabad's own significant dates are conventionally named this way (Yud Shevat, Yud-Beis Tammuz) rather than with the compact form, in both Hebrew and its common English transliteration. */
-const SPELLED_DAY_ALIASES: Record<string, number> = { יוד: 10, yud: 10 };
+/** Written-out day names that don't sum to their own value via plain gematria - e.g. `gematriyaStrToNum('יוד')` sums to 20 (י+ו+ד), not 10, because this is the spelled-out *name* of the letter yud, not a compact numeral. Chabad's own significant dates are conventionally named this way (Yud Shevat, Yud-Beis Tammuz, Gimmel Tammuz) rather than with the compact form, in both Hebrew and its common English transliteration - "Chai Elul" isn't in this table because "חי" (chai) already sums correctly to 18 on its own (see `isAdjacentToMonthOrParsha` for how a bare, unmarked word like this one is still told apart from an ordinary short word). */
+const SPELLED_DAY_ALIASES: Record<string, number> = { יוד: 10, yud: 10, גימל: 3, gimmel: 3 };
+
+/**
+ * Whether the raw token immediately before or after `index` (in `rawTokens`)
+ * is an exact match (once normalized) for a single-word month, parsha, or
+ * chag name - the signal that makes an otherwise-too-risky bare, unmarked
+ * short numeral (see `HEBREW_DAY_LETTERS`) safe to read as that month's day
+ * instead. "<day> <month> <year>" (in either script) is the standard way
+ * Hebrew dates get written and searched, so a short word sitting right next
+ * to a real month name is overwhelmingly more likely to be that day than a
+ * coincidental short word that happens to also be a month's neighbor -
+ * unlike a same-shaped word appearing anywhere else in a free-text query,
+ * which stays too ambiguous to guess at (hence the mark requirement
+ * everywhere else). Deliberately exact-match only, not fuzzy - stacking a
+ * fuzzy month guess on top of an already-unmarked day guess would compound
+ * uncertainty rather than resolve it.
+ */
+function isAdjacentToMonthOrParsha(rawTokens: string[], index: number): boolean {
+  const phrases = getPhraseFilters();
+  const isMonthOrParsha = (token: string | undefined): boolean => {
+    if (!token) return false;
+    const norm = normalize(token);
+    return norm.length > 0 && phrases.some((p) => p.normalized === norm);
+  };
+  return isMonthOrParsha(rawTokens[index - 1]) || isMonthOrParsha(rawTokens[index + 1]);
+}
 
 /**
  * A raw token written as a Hebrew day-of-month - either a compact numeral
@@ -205,44 +249,79 @@ function gematriyaDay(rawToken: string): number | null {
  * altogether.
  *
  * Year and day detection both run on the *raw* query first, one
- * whitespace-split token at a time - it has to happen before `normalize()`
- * runs (which strips every quote-like character, geresh/gershayim
- * included, for the phrase matching below) or a gematriya year/day could
- * never be told apart from an ordinary word missing its geresh entirely.
+ * whitespace-split token at a time, with lookahead/lookbehind to each
+ * token's immediate neighbor (see `isAdjacentToMonthOrParsha`) - it has to
+ * happen before `normalize()` runs (which strips every quote-like
+ * character, geresh/gershayim included, for the phrase matching below) or
+ * a gematriya year/day could never be told apart from an ordinary word
+ * missing its geresh entirely.
  */
 export function parseSmartQuery(query: string, yearRange: { min: number; max: number }): SmartQueryResult {
+  const rawTokens = query.split(/\s+/).filter(Boolean);
   const remainingRawTokens: string[] = [];
   const detected: DetectedFilters = { hebrewYear: null, hdateMonth: null, day: null, parsha: null };
 
-  for (const rawToken of query.split(/\s+/)) {
-    if (!rawToken) continue;
-    let year: number | null = null;
-    if (/^\d{4}$/.test(rawToken)) {
-      const asNumber = Number(rawToken);
-      if (asNumber >= yearRange.min && asNumber <= yearRange.max) year = asNumber;
-    } else {
-      const fromGematriya = gematriyaYear(rawToken);
-      if (fromGematriya !== null && fromGematriya >= yearRange.min && fromGematriya <= yearRange.max) year = fromGematriya;
-    }
-    if (year !== null) {
-      detected.hebrewYear = year;
-      continue;
-    }
-    // A bare 1-2 digit number is unambiguous as a day (there's no other
-    // structured field it could mean), unlike the same-shaped Hebrew
-    // gematria case above, which is genuinely ambiguous with an ordinary
-    // short word - see gematriyaDay's own comment.
+  for (let i = 0; i < rawTokens.length; i++) {
+    const rawToken = rawTokens[i]!;
+
+    // A bare 1-2 digit ASCII number is unambiguous as a day (there's no
+    // other structured field it could mean).
     if (detected.day == null && /^([1-9]|[12]\d|30)$/.test(rawToken)) {
       detected.day = Number(rawToken);
       continue;
     }
+    // A geresh-marked compact numeral or spelled alias (יוד, גימל, ...) is
+    // also unambiguous as a day in its own right, regardless of context -
+    // checked before the year guess below because the exact same gematria
+    // sum can otherwise also pass as a plausible dropped-prefix year (e.g.
+    // ח"י = 18, which is both Chai Elul's day *and*, read as a year
+    // fragment, the real catalog year 5718) - a query author who actually
+    // marked a token as a day gets that reading, full stop.
     if (detected.day == null) {
-      const day = gematriyaDay(rawToken);
-      if (day !== null) {
-        detected.day = day;
+      const markedDay = gematriyaDay(rawToken);
+      if (markedDay !== null) {
+        detected.day = markedDay;
         continue;
       }
     }
+    // An unmarked (bare) short numeral is only trusted as a day when it
+    // sits directly next to a recognized month/parsha/chag name - see
+    // isAdjacentToMonthOrParsha's own comment. "<day> <month> <year>" is
+    // the standard word order for a Hebrew date, so e.g. in "י שבט לו",
+    // "י" (10) is the day even though, read in isolation, it would also
+    // pass the bare-word year check below.
+    if (detected.day == null && HEBREW_DAY_LETTERS.test(rawToken) && isAdjacentToMonthOrParsha(rawTokens, i)) {
+      const bareDay = gematriyaStrToNum(rawToken);
+      if (bareDay >= 1 && bareDay <= 30) {
+        detected.day = bareDay;
+        continue;
+      }
+    }
+
+    if (/^\d{4}$/.test(rawToken)) {
+      const asNumber = Number(rawToken);
+      if (asNumber >= yearRange.min && asNumber <= yearRange.max) {
+        detected.hebrewYear = asNumber;
+        continue;
+      }
+    } else {
+      const year = gematriyaYear(rawToken);
+      if (year !== null && year >= yearRange.min && year <= yearRange.max) {
+        detected.hebrewYear = year;
+        continue;
+      }
+      // Only tried once the fuller form above doesn't already resolve,
+      // and only adjacent to a recognized month/parsha - see
+      // abbreviatedYear's own comment on why that context is required.
+      if (isAdjacentToMonthOrParsha(rawTokens, i)) {
+        const shortYear = abbreviatedYear(rawToken);
+        if (shortYear !== null && shortYear >= yearRange.min && shortYear <= yearRange.max) {
+          detected.hebrewYear = shortYear;
+          continue;
+        }
+      }
+    }
+
     remainingRawTokens.push(rawToken);
   }
 
