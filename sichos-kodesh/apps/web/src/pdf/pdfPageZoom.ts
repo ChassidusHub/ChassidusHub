@@ -1,10 +1,8 @@
 /** Pinch-zoom cap for the whole document - matches how far real PDF viewers let you zoom in on the fine print. */
 const MAX_PINCH_SCALE = 3;
 
-/** A one-finger drag needs to move at least this many px before its direction counts for anything - otherwise the inevitable few px of jitter at the start of every touch would get classified as a real gesture. */
-const AXIS_LOCK_THRESHOLD_PX = 8;
-/** How much more one axis has to dominate the other before a drag commits to being a sideways pan instead of the default vertical scroll. */
-const AXIS_LOCK_RATIO = 1.4;
+/** A one-finger drag needs to move at least this many px before it counts as a deliberate pan - otherwise the inevitable few px of jitter at the start of every touch would shift the page. */
+const DRAG_THRESHOLD_PX = 8;
 
 export interface ZoomablePage {
   wrapper: HTMLDivElement;
@@ -32,6 +30,13 @@ interface ZoomCallbacks {
   onReset: () => void;
 }
 
+interface Anchor {
+  pageIndex: number;
+  /** Where within that page's box the anchor sits, as a 0-1 fraction of its current width/height - recomputed against each page's live size, so it stays correct as the page grows during the gesture. */
+  fx: number;
+  fy: number;
+}
+
 /**
  * Lets a user pinch-zoom the whole document in place, instead of the
  * browser's native pinch gesture zooming the entire visual viewport
@@ -47,6 +52,18 @@ interface ZoomCallbacks {
  * scrolling while zoomed in would snap back to a different, unzoomed page
  * the moment it scrolled into view.
  *
+ * Growing a page's box in place (its own layout width/height, not a CSS
+ * `transform: scale()`) shifts everything below it in the document and has
+ * no anchor of its own, so left alone it reads as the page jumping around
+ * under your fingers rather than zooming into the spot you pinched. To
+ * counter that, a pinch records which page (and where within it) sits at
+ * the two touches' midpoint when the gesture starts, then after every
+ * resize, scrolls and pans by whatever it takes to put that same point
+ * back under the touches' current midpoint - the same anchoring a native
+ * pinch-zoom gesture gives you for free via `transform-origin`, done by
+ * hand here since the live zoom works by resizing boxes, not transforming
+ * them.
+ *
  * Ending a pinch hands the new scale to `onSettle` so the caller can
  * re-render every currently-visible page's canvas at real resolution
  * instead of a stretched fit-width bitmap; pinching back down to 1x calls
@@ -57,16 +74,14 @@ interface ZoomCallbacks {
  * and the caller's own lazy-render path renders them at whatever the
  * current zoom happens to be once they're actually scrolled into view.
  *
- * A one-finger drag while zoomed only pans sideways once it's clearly more
- * horizontal than vertical (`AXIS_LOCK_RATIO`) - a vertical or diagonal
- * drag is left completely alone (no `preventDefault`, no style change), so
- * scrolling down through the document keeps working exactly as it does
- * before anything is zoomed. `.pdf-page`'s `touch-action: pan-y`
- * (index.css) tells the browser to only ever natively handle *vertical*
- * touch movement on these elements, so it never claims a horizontal drag
- * as its own gesture before this code gets a chance to decide what it is:
- * scrolling stays the default, and a deliberate sideways swipe is the one
- * exception that has to earn its own gesture.
+ * A one-finger drag pans freely once zoomed (any direction, not locked to
+ * one axis) - horizontal movement adjusts `panX` (a CSS transform, since
+ * the document's own horizontal scroll is disabled so a zoomed page can't
+ * drag the header/back-link off-screen with it), vertical movement drives
+ * `window.scrollBy` directly (the document really is taller once zoomed,
+ * so real scroll is what actually reveals the rest of it). While unzoomed,
+ * this code never touches a one-finger touch at all, so normal vertical
+ * scrolling (`touch-action: pan-y`, index.css) is untouched.
  */
 export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], callbacks: ZoomCallbacks): PdfZoomHandle {
   let scale = 1;
@@ -74,8 +89,9 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
   const pointers = new Map<number, { x: number; y: number }>();
   let pinchStartDist = 0;
   let pinchStartScale = 1;
-  let panStart: { x: number; y: number; panX: number } | null = null;
-  let axis: 'horizontal' | 'vertical' | null = null;
+  let pinchAnchor: Anchor | null = null;
+  let dragLast: { x: number; y: number } | null = null;
+  let dragEngaged = false;
 
   function containerWidth(): number {
     return pages[0]?.baseWidth ?? (container.clientWidth || 400);
@@ -96,10 +112,30 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
     pages.forEach(styleFor);
   }
 
+  /** Which page (and where within it) currently sits at viewport point `(x, y)`, if any - the basis for anchoring a pinch to the spot the user actually touched. */
+  function findAnchor(x: number, y: number): Anchor | null {
+    for (let i = 0; i < pages.length; i++) {
+      const rect = pages[i]!.wrapper.getBoundingClientRect();
+      if (y >= rect.top && y <= rect.bottom) {
+        return { pageIndex: i, fx: rect.width > 0 ? (x - rect.left) / rect.width : 0.5, fy: rect.height > 0 ? (y - rect.top) / rect.height : 0.5 };
+      }
+    }
+    return null;
+  }
+
+  /** Where `anchor`'s recorded spot is on screen right now - compared against the touches' current midpoint to know how far the page needs to scroll/pan to put it back there. */
+  function anchorClientPos(anchor: Anchor): { x: number; y: number } | null {
+    const page = pages[anchor.pageIndex];
+    if (!page) return null;
+    const rect = page.wrapper.getBoundingClientRect();
+    return { x: rect.left + anchor.fx * rect.width, y: rect.top + anchor.fy * rect.height };
+  }
+
   function endGesture(): void {
     if (pointers.size > 0) return;
-    panStart = null;
-    axis = null;
+    dragLast = null;
+    dragEngaged = false;
+    pinchAnchor = null;
     if (scale <= 1.02) {
       scale = 1;
       panX = 0;
@@ -125,10 +161,12 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
       const [a, b] = [...pointers.values()];
       pinchStartDist = Math.hypot(a!.x - b!.x, a!.y - b!.y);
       pinchStartScale = scale;
+      pinchAnchor = findAnchor((a!.x + b!.x) / 2, (a!.y + b!.y) / 2);
+      dragLast = null;
     } else if (pointers.size === 1 && scale > 1) {
       const [p] = [...pointers.values()];
-      panStart = { x: p!.x, y: p!.y, panX };
-      axis = null;
+      dragLast = { x: p!.x, y: p!.y };
+      dragEngaged = false;
     }
   });
 
@@ -138,34 +176,57 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
 
     if (pointers.size === 2 && pinchStartDist > 0) {
       const [a, b] = [...pointers.values()];
+      const midX = (a!.x + b!.x) / 2;
+      const midY = (a!.y + b!.y) / 2;
       const dist = Math.hypot(a!.x - b!.x, a!.y - b!.y);
       scale = Math.min(MAX_PINCH_SCALE, Math.max(1, pinchStartScale * (dist / pinchStartDist)));
-      panX = clampPanX(scale, panX);
       applyLiveStyle();
+
+      if (pinchAnchor) {
+        const now = anchorClientPos(pinchAnchor);
+        if (now) {
+          window.scrollBy(0, now.y - midY);
+          panX = clampPanX(scale, panX + (midX - now.x));
+          applyLiveStyle();
+        }
+      }
       e.preventDefault();
       return;
     }
 
-    if (pointers.size === 1 && panStart && scale > 1) {
+    if (pointers.size === 1 && dragLast && scale > 1) {
       const p = pointers.get(e.pointerId)!;
-      const dx = p.x - panStart.x;
-      const dy = p.y - panStart.y;
+      const dx = p.x - dragLast.x;
+      const dy = p.y - dragLast.y;
 
-      if (axis === null) {
-        if (Math.abs(dx) + Math.abs(dy) < AXIS_LOCK_THRESHOLD_PX) return;
-        axis = Math.abs(dx) > Math.abs(dy) * AXIS_LOCK_RATIO ? 'horizontal' : 'vertical';
+      if (!dragEngaged) {
+        if (Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD_PX) return;
+        dragEngaged = true;
       }
-      if (axis === 'vertical') return; // Not our gesture - let the page scroll normally.
 
-      panX = clampPanX(scale, panStart.panX + dx);
+      panX = clampPanX(scale, panX + dx);
       applyLiveStyle();
+      window.scrollBy(0, -dy);
+      dragLast = { x: p.x, y: p.y };
       e.preventDefault();
     }
   });
 
   function onPointerEnd(e: PointerEvent): void {
     pointers.delete(e.pointerId);
-    if (pointers.size <= 1) pinchStartDist = 0;
+    if (pointers.size === 1) {
+      // Dropped from a pinch to a single finger still down mid-gesture -
+      // resync to that finger's current position so the next move computes
+      // a delta from here, not from wherever it happened to be when the
+      // pinch itself started.
+      const [remaining] = [...pointers.values()];
+      dragLast = remaining ? { x: remaining.x, y: remaining.y } : null;
+      dragEngaged = true;
+      pinchStartDist = 0;
+      pinchAnchor = null;
+    } else if (pointers.size === 0) {
+      pinchStartDist = 0;
+    }
     endGesture();
   }
   container.addEventListener('pointerup', onPointerEnd);
