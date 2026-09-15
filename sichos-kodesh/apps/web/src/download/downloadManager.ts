@@ -2,6 +2,7 @@ import type { CatalogEntry, PdfEdition } from '@sichos-kodesh/catalog';
 import { classifyPdfEdition, isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import { MEDIA_CACHE_NAME } from './cacheName';
 import { audioUrl, pdfUrl } from './download';
+import { reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
 
 /** Which content types a download pass should include - the same taxonomy `SearchScreen`'s type filter already uses (audio, the highlighted hanacha edition(s), and the remaining PdfSections), not a new one invented for this feature. An empty `hanachaEditions` means "don't download the highlighted hanacha at all," not "download every edition." */
 export interface DownloadContentTypes {
@@ -244,8 +245,21 @@ export async function runDownload(targets: DownloadTarget[], options: RunDownloa
       try {
         const response = await fetchWithProgress(target.url, (progress) => onEach?.(target, 'downloading', progress));
         await cache.put(target.url, response);
+        // A real fetch against services/media-proxy - not a cache hit
+        // (those are filtered out above, before `pending` is built) - just
+        // succeeded, real evidence of connectivity (see connectivity.ts).
+        reportFetchSuccess();
         onEach?.(target, 'done');
-      } catch {
+      } catch (error) {
+        // Only a genuine network-level failure (the fetch() call itself
+        // rejecting - browsers consistently throw a TypeError for this,
+        // e.g. "Failed to fetch") is real evidence of connectivity being
+        // down (see connectivity.ts) - fetchWithProgress's own explicit
+        // `throw new Error(...)` for a bad HTTP status (a real 404, say)
+        // means the network is fine but this one file has an issue, which
+        // shouldn't mark the whole app offline and hide every other
+        // download button over one bad catalog entry.
+        if (error instanceof TypeError) reportFetchFailure();
         onEach?.(target, 'error');
       }
     }

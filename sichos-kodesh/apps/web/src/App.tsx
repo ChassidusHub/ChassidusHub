@@ -4,6 +4,7 @@ import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
 import { DownloadProvider } from './download/DownloadProvider';
 import { useAutoDownloadSync } from './download/useAutoDownloadSync';
+import { useConnectivityRecheckTriggers } from './network/useConnectivityRecheckTriggers';
 import { adjustNavigationDepth } from './routes/navigationDepth';
 import { usePlayer } from './player/usePlayer';
 import { LanguageProvider } from './i18n/LanguageProvider';
@@ -204,6 +205,7 @@ function AppContent() {
   useScrollToTopOnNavigate();
   useTrackNavigationDepth();
   useAutoDownloadSync();
+  useConnectivityRecheckTriggers();
   const bottomBarClass = [player.playlist ? 'has-player' : '', activeDownloadCount > 0 ? 'has-download-bar' : ''].filter(Boolean).join(' ');
   return (
     <div className={['app-content', bottomBarClass].filter(Boolean).join(' ')}>
