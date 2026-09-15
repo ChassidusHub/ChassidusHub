@@ -69,18 +69,28 @@ function removePhrase(text: string, phrase: string): string | null {
 const GERESH_MARKS = /["'‘’“”״׳`´]/;
 
 /**
- * A raw (pre-normalize) token written as a Hebrew year - e.g. `תשל"ו`
- * (5736) - parsed via `gematriyaStrToNum`, which only sums the Hebrew
- * letters and ignores everything else (the quote mark included), so it
- * doesn't matter which exact quote character was typed. Requiring at least
- * one such mark (the standard way a Hebrew year gets written) is
- * deliberate: without it, plenty of ordinary short Hebrew words would
- * coincidentally sum to a number that happens to land in-range too - the
- * caller's own range check (against this catalog's *real* span) is the
- * second, independent guard against exactly that.
+ * Every real year in this catalog, written without its thousands digit
+ * (`5735` -> `תשלה`), lands on 2-4 Hebrew letters - real users very often
+ * type it exactly that way, with no geresh/gershayim at all (a confirmed
+ * report: `חי אלול תשלה` found nothing, because `תשלה` alone was never
+ * even tried against gematria without a quote mark present). A bare
+ * all-Hebrew-letters token up to 6 letters is accepted too, not just a
+ * geresh-marked one - the caller's own range check (against this
+ * catalog's *real*, fairly narrow year span) is what actually guards
+ * against an ordinary word coincidentally summing to an in-range value,
+ * not the presence of a quote mark.
+ */
+const HEBREW_LETTERS_ONLY = /^[א-ת]{1,6}$/;
+
+/**
+ * A raw (pre-normalize) token written as a Hebrew year - e.g. `תשל"ו` or
+ * plain `תשלו` (5736) - parsed via `gematriyaStrToNum`, which only sums
+ * the Hebrew letters and ignores everything else (a quote mark included),
+ * so it doesn't matter which exact quote character was typed, or whether
+ * one was typed at all.
  */
 function gematriyaYear(rawToken: string): number | null {
-  if (!GERESH_MARKS.test(rawToken)) return null;
+  if (!GERESH_MARKS.test(rawToken) && !HEBREW_LETTERS_ONLY.test(rawToken)) return null;
   const raw = gematriyaStrToNum(rawToken);
   if (raw <= 0) return null;
   return raw < 1000 ? raw + 5000 : raw;
