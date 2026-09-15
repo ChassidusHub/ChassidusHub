@@ -13,6 +13,8 @@ export interface DownloadContextValue {
   enqueueBulk: (entries: CatalogEntry[]) => void;
   /** Downloads exactly one chapter's audio, independent of the occasion-level `contentTypes` settings - RecordingsScreen's own per-row download affordance, for grabbing a single sicha without pulling in the whole farbrengen. */
   downloadChapter: (entry: CatalogEntry, chapterIndex: number) => void;
+  /** Downloads every chapter's audio for one occasion - RecordingsScreen's own "download all" affordance, same independence from `contentTypes` as `downloadChapter` (this page is audio, unconditionally). */
+  downloadAllChapters: (entry: CatalogEntry) => void;
   /**
    * Live in-memory state, keyed `"{hebrewYear}:{occasionId}"` for an
    * occasion-level job or `"chapter:{hebrewYear}:{occasionId}:{chapterIndex}"`
