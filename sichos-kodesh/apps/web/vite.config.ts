@@ -2,6 +2,7 @@ import { cpSync, existsSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
+import legacy from '@vitejs/plugin-legacy';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { MEDIA_CACHE_NAME, PDF_RUNTIME_CACHE_NAME } from './src/download/cacheName.js';
@@ -63,6 +64,21 @@ export default defineConfig({
   plugins: [
     react(),
     copyPdfAssets(),
+    // A device whose WebView predates broad support for syntax this app
+    // uses everywhere (optional chaining, nullish coalescing - both
+    // several years old now, but still missing on some never-updated
+    // budget Android boxes) fails to even parse the main JS bundle, so
+    // nothing renders at all - a blank page with no visible error, since
+    // the browser can't run any code to report one. `@vitejs/plugin-legacy`
+    // builds a second, Babel-downleveled bundle with core-js polyfills and
+    // emits it as a `<script nomodule>` fallback, which only a browser that
+    // can't run the modern bundle ever loads. The generous `targets` list
+    // covers the class of device this actually matters for; Service Worker
+    // support (and therefore offline caching) still needs a modern-enough
+    // browser regardless - the fallback bundle is about getting the app to
+    // render and work online, not about extending offline support that far
+    // back too.
+    legacy({ targets: ['defaults', 'not IE 11', 'Android >= 4.4', 'Chrome >= 49', 'Safari >= 10'] }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
