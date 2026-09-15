@@ -1,5 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
+import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import { attachPdfZoom } from './pdfPageZoom';
 import type { ZoomablePage } from './pdfPageZoom';
 // Vite's `?url` import gives the worker script a real, fetchable URL in the
@@ -153,6 +153,20 @@ interface PageEntry extends ZoomablePage {
  * too, since a page released between its two renders simply never gets
  * the (now-stale) upgrade committed.
  *
+ * The generation counter alone stops a stale render from ever being
+ * *committed*, but not from *running* - pdf.js keeps decoding content
+ * streams and filling the canvas bitmap for as long as its own
+ * `RenderTask` is left alive, generation check or not, and that work
+ * itself costs real CPU and memory the whole time. A real, reproduced
+ * crash still happened under fast reversing scroll (down-up-down)
+ * specifically, even with the generation guard already in place - exactly
+ * the pattern that starts many renders in quick succession while barely
+ * any of them get the chance to actually finish, so several stayed
+ * genuinely in flight, still consuming memory, all at once. `release`
+ * below also calls `RenderTask.cancel()` on whatever's still running for
+ * that page - the same API pdf.js's own examples use for this exact
+ * purpose - so an abandoned render actually stops, not just gets ignored.
+ *
  * `onZoomChange`, when given, fires `true` once a pinch settles and
  * `false` once the document is back to 1x - PdfViewerScreen uses it to
  * drop the screen's own side padding and width cap while zoomed, so
@@ -192,6 +206,8 @@ export async function renderPdfPages(
   const renderGeneration: number[] = pages.map(() => 0);
   const pendingRenderTimers: Array<ReturnType<typeof setTimeout> | null> = pages.map(() => null);
   const pendingUpgradeTimers: Array<ReturnType<typeof setTimeout> | null> = pages.map(() => null);
+  /** Whatever pdf.js `RenderTask` is actually running for a page right now, if any - see `release`'s own comment above for why this needs to exist alongside the generation counter, not instead of it. */
+  const activeRenderTasks: Array<RenderTask | null> = pages.map(() => null);
   // The current effective resolution multiplier over each page's fit-width
   // `cssScale` - `dpr` at rest, boosted (up to `MAX_BOOST_MULTIPLIER`)
   // while the document is pinch-zoomed, so a page that scrolls into view
@@ -213,10 +229,19 @@ export async function renderPdfPages(
     canvas.style.height = '100%';
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const renderTask = page.render({ canvas, viewport });
+    activeRenderTasks[index] = renderTask;
     try {
-      await page.render({ canvas, viewport }).promise;
+      await renderTask.promise;
     } catch {
-      return; // Cancelled (e.g. pdf.js itself superseding this render) or failed - nothing to commit.
+      return; // Cancelled (by `release`, below, or pdf.js itself superseding this render) or failed - nothing to commit.
+    } finally {
+      // Only clear this page's slot if it's still *this* task's - a newer
+      // render for the same page (e.g. the quality upgrade, or a fresh
+      // renderInto after a re-render/re-release cycle) may already have
+      // installed its own task there by the time this one's promise
+      // settles, and that one is still genuinely running.
+      if (activeRenderTasks[index] === renderTask) activeRenderTasks[index] = null;
     }
     if (isCancelled() || renderGeneration[index] !== generation) return;
     entry.wrapper.replaceChildren(canvas);
@@ -251,6 +276,15 @@ export async function renderPdfPages(
     if (upgradeTimer != null) {
       clearTimeout(upgradeTimer);
       pendingUpgradeTimers[index] = null;
+    }
+    // Stops the actual in-progress decode/paint work, not just its
+    // eventual result from being committed (see this function's own doc
+    // comment above) - `cancel()` rejects the task's own `.promise`, which
+    // `renderCanvasAtScale`'s catch block already handles as a no-op.
+    const activeTask = activeRenderTasks[index];
+    if (activeTask) {
+      activeTask.cancel();
+      activeRenderTasks[index] = null;
     }
     renderGeneration[index]!++;
     const entry = pages[index];
