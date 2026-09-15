@@ -1,4 +1,5 @@
 import { HDate } from '@hebcal/core';
+import { findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import { entryHasContent } from './catalogLookup.js';
 import type { CatalogByYear } from './catalogLookup.js';
 import { mafteiachDay, mafteiachMonthToken } from './mafteiachMonth.js';
@@ -86,6 +87,48 @@ export function resolveThisWeek(sourceYear: number, catalog: CatalogByYear, toda
   }
 
   return results;
+}
+
+export interface WeekResolution {
+  hebrewYear: number;
+  occasions: WeekOccasion[];
+}
+
+/**
+ * `resolveThisWeek(preferredYear, ...)`, falling back to a nearby
+ * kvius-matched year when `preferredYear` has nothing for this real week -
+ * a real kvius match (the whole year's calendar lines up, not just this one
+ * week) is preferred over a merely partial-week match, since it's the
+ * stronger claim; partial is only tried when no full match has anything
+ * either. `targetYear` is the real current Hebrew year kvius-matching is
+ * always relative to (see `findMatchingYears`), not `preferredYear` itself.
+ * `null` when nothing has content anywhere in the fallback chain.
+ *
+ * Shared by `ThisWeekScreen`'s "try this year instead" suggestion and the
+ * download feature's own occasion resolution - both need the identical
+ * "which year actually has this week's farbrengen" answer, not two
+ * independently-maintained copies of the same fallback order.
+ */
+export function resolveWeekWithFallback(
+  preferredYear: number,
+  targetYear: number,
+  catalog: CatalogByYear,
+  today: Date = new Date(),
+): WeekResolution | null {
+  const preferred = resolveThisWeek(preferredYear, catalog, today);
+  if (preferred.length > 0) return { hebrewYear: preferredYear, occasions: preferred };
+
+  for (const match of findMatchingYears(targetYear)) {
+    const occasions = resolveThisWeek(match.hebrewYear, catalog, today);
+    if (occasions.length > 0) return { hebrewYear: match.hebrewYear, occasions };
+  }
+
+  for (const match of findPartialWeekMatches(targetYear, thisWeekDays(today))) {
+    const occasions = resolveThisWeek(match.hebrewYear, catalog, today);
+    if (occasions.length > 0) return { hebrewYear: match.hebrewYear, occasions };
+  }
+
+  return null;
 }
 
 export interface YearWeekOccasions {

@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { currentHebrewYear, currentParsha, resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
-import { findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
+import { currentHebrewYear, currentParsha, resolveThisWeek, resolveWeekWithFallback } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel, hebrewDayMonthLabel, parshaLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
+import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -28,26 +28,6 @@ const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
  */
 function shiftedToday(weekOffset: number): Date {
   return new Date(Date.now() + weekOffset * MS_PER_WEEK);
-}
-
-/**
- * When `sourceYear` has nothing for the week being viewed, finds a nearby
- * year that does - preferring a real kvius match (the whole year's
- * calendar lines up, not just this one week) over a merely partial-week
- * match, since it's the stronger claim; only falls back to partial when no
- * full match has anything either. `targetYear` is the real current Hebrew
- * year (what kvius-matching is always relative to), not `sourceYear`
- * itself - the same target KviusYearsScreen uses to build both lists in
- * the first place.
- */
-function suggestAlternateYear(targetYear: number, sourceYear: number, shiftedDate: Date): number | null {
-  const hasContent = (year: number) => year !== sourceYear && resolveThisWeek(year, catalog, shiftedDate).length > 0;
-
-  const fullMatch = findMatchingYears(targetYear).find((m) => hasContent(m.hebrewYear));
-  if (fullMatch) return fullMatch.hebrewYear;
-
-  const partialMatch = findPartialWeekMatches(targetYear, thisWeekDays(shiftedDate)).find((m) => hasContent(m.hebrewYear));
-  return partialMatch?.hebrewYear ?? null;
 }
 
 /**
@@ -73,11 +53,12 @@ function suggestAlternateYear(targetYear: number, sourceYear: number, shiftedDat
 export function ThisWeekScreen({ sourceYear }: Props) {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
+  const { enqueueBulk } = useDownload();
   const [weekOffset, setWeekOffset] = useState(0);
   const shiftedDate = useMemo(() => shiftedToday(weekOffset), [weekOffset]);
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [sourceYear, shiftedDate]);
   const suggestedYear = useMemo(
-    () => (occasions.length > 0 ? null : suggestAlternateYear(currentHebrewYear(), sourceYear, shiftedDate)),
+    () => (occasions.length > 0 ? null : (resolveWeekWithFallback(sourceYear, currentHebrewYear(), catalog, shiftedDate)?.hebrewYear ?? null)),
     [occasions, sourceYear, shiftedDate],
   );
   // The real week being viewed's own parsha - kvius-matched years share the
@@ -141,6 +122,12 @@ export function ThisWeekScreen({ sourceYear }: Props) {
           </li>
         ))}
       </ul>
+
+      {occasions.length > 0 && (
+        <button type="button" className="button" onClick={() => enqueueBulk(occasions.map((occasion) => occasion.entry))}>
+          {t.downloadThisWeekLabel}
+        </button>
+      )}
 
       <Link className="category-row" to={`/follow/${sourceYear}/month`}>
         <span className="category-row-name">{t.allOfYear(sourceYear)}</span>
