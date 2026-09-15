@@ -152,7 +152,7 @@ const he: typeof en = {
   audioTypeLabel: 'הקלטה',
   hanachaTypeLabel: 'הנחה',
   chagOptgroupLabel: 'חג',
-  specialDayFilterLabel: 'יום מיוחד',
+  specialDayFilterLabel: 'יום בהיר',
   clearFiltersLabel: 'ניקוי מסננים',
   noSearchResults: 'לא נמצאו אירועים תואמים.',
   searchResultsCount: (n: number) => (n === 1 ? 'תוצאה אחת' : `${n} תוצאות`),
