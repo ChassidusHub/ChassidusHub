@@ -107,6 +107,23 @@ export async function isEntryFullyDownloaded(entry: CatalogEntry, contentTypes: 
 }
 
 /**
+ * Same definition as `isEntryFullyDownloaded`, but for the whole catalog at
+ * once (the offline home screen's "downloaded content" list) - one
+ * `cache.keys()` read up front instead of `isEntryFullyDownloaded`'s own
+ * `cache.match()` per target, which would mean thousands of individual
+ * Cache Storage round-trips scanning every occasion the app has ever
+ * indexed.
+ */
+export async function listDownloadedEntries(entries: CatalogEntry[], contentTypes: DownloadContentTypes): Promise<CatalogEntry[]> {
+  const cache = await caches.open(MEDIA_CACHE_NAME);
+  const cachedUrls = new Set((await cache.keys()).map((request) => request.url));
+  return entries.filter((entry) => {
+    const targets = listDownloadTargets([entry], contentTypes);
+    return targets.length > 0 && targets.every((target) => cachedUrls.has(target.url));
+  });
+}
+
+/**
  * `true` when downloads should be skipped because the connection looks
  * metered - checked via the Network Information API's `saveData` (the user
  * has explicitly asked sites to use less data) and `type` (`'wifi'`/

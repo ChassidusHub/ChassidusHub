@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Search, Settings } from 'lucide-react';
+import { Search, Settings, WifiOff } from 'lucide-react';
 import { currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
 import { ContinueSection } from '../components/ContinueSection';
 import { parshaLabel } from '../utils/formatHebrewDate';
+import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
  */
 export function YearPickerScreen({ targetYear }: Props) {
   const { t, language } = useTranslation();
+  const online = useOnlineStatus();
   const bestMatch = findMatchingYears(targetYear)[0];
   const { parsha } = currentParsha(IL);
   const hebrewDate = todayHebrewDateLabel();
@@ -41,6 +43,24 @@ export function YearPickerScreen({ targetYear }: Props) {
         {hebrewDate}
         {parsha ? ` · ${parshaLabel(parsha, language)}` : ''}
       </p>
+
+      {/* Browsing/search both read straight from the bundled catalog data
+          (no network needed at all) and content already in the media
+          cache still opens fine offline - only content that was never
+          downloaded actually needs a connection. This note (and its
+          shortcut to what's actually available right now) only makes
+          sense to show once there's no connection to begin with. */}
+      {!online && (
+        <p className="offline-note">
+          <WifiOff size={16} aria-hidden />
+          <span>{t.offlineNote}</span>
+        </p>
+      )}
+      {!online && (
+        <Link className="category-row" to="/downloaded">
+          <span className="category-row-name">{t.viewDownloadedLabel}</span>
+        </Link>
+      )}
 
       {bestMatch && (
         <Link className="button hero-button" to="/kvius">
