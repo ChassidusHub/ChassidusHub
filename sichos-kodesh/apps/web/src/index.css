@@ -1214,20 +1214,20 @@ h1 {
   gap: 10px;
   padding: 8px 14px;
   border-radius: 10px;
-  background: #0a0a0a;
-  color: #ffffff;
+  background: var(--accent);
+  color: var(--accent-fg);
   text-decoration: none;
-  border: 1px solid #2a2a2a;
-  transition: background-color 0.15s ease;
+  border: none;
+  transition: filter 0.15s ease;
 }
 
 .about-badge:hover {
-  background: #1c1c1e;
+  filter: brightness(1.08);
 }
 
 .about-badge-icon {
   display: flex;
-  color: #ffffff;
+  color: var(--accent-fg);
 }
 
 .about-badge-text {
@@ -1241,7 +1241,8 @@ h1 {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #a7a7a7;
+  color: var(--accent-fg);
+  opacity: 0.75;
 }
 
 .about-badge-name {
