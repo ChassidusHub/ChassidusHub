@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { audioUrl } from '../download/download';
+import { probeRealConnectivity } from '../network/useOnlineStatus';
 import { forMediaSession } from '../utils/hebrewPunctuation';
 import { recordChapterProgress } from './progressStore';
 import { PlayerContext } from './playerContext';
@@ -269,10 +270,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           // failing to load (the common case: offline and not downloaded)
           // silently did nothing visible, unlike PdfViewerScreen's own
           // offline handling (a real reported gap: "never get the offline
-          // message" when testing with a recording, not a PDF).
-          // `navigator.onLine` false is a reliable "definitely offline"
-          // signal (see PdfViewerScreen's own comment on the same check).
-          onError={() => setState((s) => ({ ...s, playing: false, error: { offline: !navigator.onLine } }))}
+          // message" when testing with a recording, not a PDF). A raw
+          // `navigator.onLine` read is known to be unreliable (see
+          // PdfViewerScreen's matching comment) - a real network probe,
+          // right now, is what actually decides which message to show.
+          onError={async () => {
+            const online = await probeRealConnectivity();
+            setState((s) => ({ ...s, playing: false, error: { offline: !online } }));
+          }}
           onEnded={() => {
             // Record this chapter as fully played explicitly - the last
             // throttled onTimeUpdate tick before "ended" fires can still

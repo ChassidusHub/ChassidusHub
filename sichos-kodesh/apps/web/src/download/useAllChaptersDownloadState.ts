@@ -4,8 +4,10 @@ import { useDownload } from './useDownload';
 import { chapterKey } from './downloadContext';
 import { isDownloaded } from './downloadManager';
 import { audioUrl } from './download';
+import { useOnlineStatus } from '../network/useOnlineStatus';
 
-export type AllChaptersDownloadState = 'none' | 'downloading' | 'downloaded';
+/** `'unavailable'` - offline right now, so there's nothing tappable to offer - is distinct from `'none'` the same way `RowDownloadState`'s own `'unavailable'` is (see downloadContext.ts): a row with nothing to offer shows no icon at all instead of a dead tap target. */
+export type AllChaptersDownloadState = 'unavailable' | 'none' | 'downloading' | 'downloaded';
 
 /**
  * The aggregate download state across every chapter of one occasion -
@@ -18,6 +20,7 @@ export type AllChaptersDownloadState = 'none' | 'downloading' | 'downloaded';
  */
 export function useAllChaptersDownloadState(entry: CatalogEntry): AllChaptersDownloadState {
   const { liveState } = useDownload();
+  const online = useOnlineStatus();
   const [cachedAllDownloaded, setCachedAllDownloaded] = useState<boolean | null>(null);
 
   const keys = entry.audio.map((_, index) => chapterKey(entry.hebrewYear, entry.occasionId, index));
@@ -38,5 +41,7 @@ export function useAllChaptersDownloadState(entry: CatalogEntry): AllChaptersDow
 
   if (anyInFlight) return 'downloading';
   if (allLiveDownloaded || cachedAllDownloaded) return 'downloaded';
-  return 'none';
+  // See useDownloadState's matching comment - a tappable "download all"
+  // affordance is pointless (and was a real reported gap) while offline.
+  return online ? 'none' : 'unavailable';
 }

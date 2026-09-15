@@ -144,23 +144,25 @@ export function RecordingsScreen({ resolved }: Props) {
       <h1>{entry.occasionLabel}</h1>
       <p className="subtitle">{t.recordings}</p>
 
-      <p className="occasion-download-state">
-        {allChaptersState === 'downloaded' && (
-          <>
-            <CheckCircle2 size={16} className="download-state-done" aria-hidden /> {t.downloadedLabel}
-          </>
-        )}
-        {allChaptersState === 'downloading' && (
-          <>
-            <Loader2 size={16} className="download-state-spinner" aria-hidden /> {t.downloadingLabel}
-          </>
-        )}
-        {allChaptersState === 'none' && (
-          <button type="button" className="occasion-download-button" onClick={() => downloadAllChapters(entry)}>
-            <Download size={16} aria-hidden /> {t.downloadAllRecordingsLabel}
-          </button>
-        )}
-      </p>
+      {allChaptersState !== 'unavailable' && (
+        <p className="occasion-download-state">
+          {allChaptersState === 'downloaded' && (
+            <>
+              <CheckCircle2 size={16} className="download-state-done" aria-hidden /> {t.downloadedLabel}
+            </>
+          )}
+          {allChaptersState === 'downloading' && (
+            <>
+              <Loader2 size={16} className="download-state-spinner" aria-hidden /> {t.downloadingLabel}
+            </>
+          )}
+          {allChaptersState === 'none' && (
+            <button type="button" className="occasion-download-button" onClick={() => downloadAllChapters(entry)}>
+              <Download size={16} aria-hidden /> {t.downloadAllRecordingsLabel}
+            </button>
+          )}
+        </p>
+      )}
 
       <ul className="playlist">
         {entry.audio.map((chapter, index) => (

@@ -3,6 +3,7 @@ import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from './useDownload';
 import { isEntryFullyDownloaded, listDownloadTargets } from './downloadManager';
 import type { RowDownloadState } from './downloadContext';
+import { useOnlineStatus } from '../network/useOnlineStatus';
 
 function key(hebrewYear: number, occasionId: number): string {
   return `${hebrewYear}:${occasionId}`;
@@ -21,6 +22,7 @@ function key(hebrewYear: number, occasionId: number): string {
  */
 export function useDownloadState(entry: CatalogEntry | null | undefined): RowDownloadState {
   const { liveState, settings } = useDownload();
+  const online = useOnlineStatus();
   const k = entry ? key(entry.hebrewYear, entry.occasionId) : null;
   const live = k ? liveState[k] : undefined;
   const [cachedState, setCachedState] = useState<RowDownloadState | null>(null);
@@ -42,5 +44,12 @@ export function useDownloadState(entry: CatalogEntry | null | undefined): RowDow
   }, [k, live]);
 
   if (!entry) return 'unavailable';
-  return live ?? cachedState ?? 'unavailable';
+  const resolved = live ?? cachedState ?? 'unavailable';
+  // A tappable "start a download" affordance is pointless while offline -
+  // it would just fail (or get stuck) the moment it's tapped, a real
+  // reported gap. An in-flight or already-finished job (`'queued'`,
+  // `'downloading'`, `'downloaded'`) is left exactly as-is: those already
+  // reflect real state, not an action still waiting to be taken.
+  if (resolved === 'none' && !online) return 'unavailable';
+  return resolved;
 }

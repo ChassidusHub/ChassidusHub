@@ -18,7 +18,15 @@ const PROBE_PATH = '/favicon.svg';
 const PROBE_INTERVAL_MS = 10000;
 const PROBE_TIMEOUT_MS = 5000;
 
-async function probeRealConnectivity(): Promise<boolean> {
+/**
+ * Exported for the few call sites that need a fresh, real answer at one
+ * specific instant - a PDF or recording failing to load, say - rather than
+ * this hook's own live, continuously-updated value: `useOnlineStatus`'s
+ * state can be up to `PROBE_INTERVAL_MS` stale, which is fine for a banner
+ * but not for deciding, right now, whether *this* failure was caused by
+ * being offline.
+ */
+export async function probeRealConnectivity(): Promise<boolean> {
   try {
     await fetch(`${PROBE_PATH}?probe=${Date.now()}`, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) });
     return true;
