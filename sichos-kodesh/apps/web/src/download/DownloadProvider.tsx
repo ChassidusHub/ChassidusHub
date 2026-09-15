@@ -1,12 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { isEntryFullyDownloaded, listDownloadTargets, runDownload } from './downloadManager';
+import { isDownloaded, isEntryFullyDownloaded, listDownloadTargets, runDownload } from './downloadManager';
 import type { DownloadTarget } from './downloadManager';
 import { audioUrl } from './download';
 import { DownloadContext, chapterKey } from './downloadContext';
 import type { RowDownloadState } from './downloadContext';
+import { addPendingChapterDownload, listPendingChapterDownloads, removePendingChapterDownload } from './pendingDownloads';
 import { useDownloadSettings } from '../settings/useDownloadSettings';
+import catalog from '../catalog/data';
 
 function key(hebrewYear: number, occasionId: number): string {
   return `${hebrewYear}:${occasionId}`;
@@ -120,23 +122,49 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const downloadOccasion = useCallback((entry: CatalogEntry) => runQueue([entry]), [runQueue]);
   const enqueueBulk = useCallback((entries: CatalogEntry[]) => runQueue(entries), [runQueue]);
 
-  const downloadChapter = useCallback(
-    (entry: CatalogEntry, chapterIndex: number) => {
-      const chapter = entry.audio[chapterIndex];
-      if (!chapter) return;
-      const target: DownloadTarget = {
-        url: audioUrl(chapter.workerFilename),
-        hebrewYear: entry.hebrewYear,
-        occasionId: entry.occasionId,
-        label: chapter.chapterName ?? `Track ${chapterIndex + 1}`,
-        kind: 'audio',
-      };
-      const k = chapterKey(entry.hebrewYear, entry.occasionId, chapterIndex);
-      setLiveState((prev) => ({ ...prev, [k]: 'queued' }));
+  /**
+   * Shared by `downloadChapter` (one chapter) and `downloadAllChapters`
+   * (every chapter) - queues each given chapter as its own independent
+   * download job, all sharing one `runDownload` call (a real shared
+   * concurrency pool, not one uncapped fetch per chapter). Each chapter's
+   * own pending-download record (see pendingDownloads.ts) is written
+   * before its fetch starts and cleared once it settles - a page reload
+   * mid-download kills that in-progress `fetch()` outright (there's no way
+   * for a plain page-driven download to survive a navigation), which
+   * previously left no trace it had ever been requested; the resume-on-open
+   * effect below is what turns a leftover record from an interrupted
+   * session back into a fresh retry instead.
+   */
+  const runChapterDownloads = useCallback(
+    (entry: CatalogEntry, chapterIndices: number[]) => {
+      const targets: DownloadTarget[] = [];
+      for (const chapterIndex of chapterIndices) {
+        const chapter = entry.audio[chapterIndex];
+        if (!chapter) continue;
+        targets.push({
+          url: audioUrl(chapter.workerFilename),
+          hebrewYear: entry.hebrewYear,
+          occasionId: entry.occasionId,
+          label: chapter.chapterName ?? `Track ${chapterIndex + 1}`,
+          kind: 'audio',
+          chapterIndex,
+        });
+      }
+      if (targets.length === 0) return;
 
-      void runDownload([target], {
+      setLiveState((prev) => {
+        const next = { ...prev };
+        for (const target of targets) next[chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex!)] = 'queued';
+        return next;
+      });
+      for (const target of targets) {
+        addPendingChapterDownload({ hebrewYear: target.hebrewYear, occasionId: target.occasionId, chapterIndex: target.chapterIndex! });
+      }
+
+      void runDownload(targets, {
         wifiOnly: settings.wifiOnly,
-        onEach: (_target, event, fraction) => {
+        onEach: (target, event, fraction) => {
+          const k = chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex!);
           if (event === 'downloading') {
             setLiveState((prev) => (prev[k] === 'downloading' ? prev : { ...prev, [k]: 'downloading' }));
             if (fraction !== undefined) setProgress((prev) => ({ ...prev, [k]: fraction }));
@@ -144,15 +172,63 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           }
           setLiveState((prev) => ({ ...prev, [k]: event === 'error' ? 'none' : 'downloaded' }));
           setProgress((prev) => clearProgress(prev, k));
+          // Only cleared on confirmed success - an 'error' here is
+          // indistinguishable from a page navigation aborting this same
+          // fetch mid-flight (confirmed: enough of the old page's JS still
+          // runs after `location.reload()` for this very handler to fire),
+          // so clearing the pending record on 'error' would erase the one
+          // thing the resume-on-open effect below needs to retry it. The
+          // tradeoff - a genuine failure also stays pending and gets
+          // retried next open - is acceptable since these URLs come from
+          // the bundled catalog and essentially never really 404.
+          if (event !== 'error') {
+            removePendingChapterDownload({ hebrewYear: target.hebrewYear, occasionId: target.occasionId, chapterIndex: target.chapterIndex! });
+          }
         },
       });
     },
     [settings.wifiOnly],
   );
 
+  const downloadChapter = useCallback((entry: CatalogEntry, chapterIndex: number) => runChapterDownloads(entry, [chapterIndex]), [runChapterDownloads]);
+  const downloadAllChapters = useCallback(
+    (entry: CatalogEntry) => runChapterDownloads(entry, entry.audio.map((_, index) => index)),
+    [runChapterDownloads],
+  );
+
+  // Resume-on-open: anything left pending from an interrupted session (the
+  // page reloaded or was closed mid-download) gets re-verified against the
+  // real cache and, if genuinely still missing, re-queued automatically -
+  // this is what makes a manual chapter download survive a reload (showing
+  // the gray pending ring again) instead of silently reverting to a plain,
+  // never-been-touched-looking download button. Runs once at mount, not on
+  // every settings change - re-scanning on a later wifiOnly toggle, say,
+  // would re-trigger an already-resumed download a second time.
+  useEffect(() => {
+    const pending = listPendingChapterDownloads();
+    if (pending.length === 0) return;
+    void (async () => {
+      for (const p of pending) {
+        const entry = (catalog[p.hebrewYear] ?? []).find((e) => e.occasionId === p.occasionId);
+        const chapter = entry?.audio[p.chapterIndex];
+        if (!entry || !chapter) {
+          removePendingChapterDownload(p);
+          continue;
+        }
+        const alreadyDownloaded = await isDownloaded({ url: audioUrl(chapter.workerFilename) });
+        if (alreadyDownloaded) {
+          removePendingChapterDownload(p);
+          continue;
+        }
+        runChapterDownloads(entry, [p.chapterIndex]);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately once on mount; re-running this scan on a later settings change would re-trigger an already-resumed download.
+  }, []);
+
   const value = useMemo(
-    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, liveState, progress }),
-    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, liveState, progress],
+    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress }),
+    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress],
   );
 
   return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;

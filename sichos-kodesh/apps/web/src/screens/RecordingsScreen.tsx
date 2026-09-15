@@ -7,6 +7,8 @@ import { chapterProgressFraction, getOccasionProgress, isChapterFinished } from 
 import type { OccasionProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
 import { useChapterDownload } from '../download/useChapterDownload';
+import { useDownload } from '../download/useDownload';
+import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
@@ -129,6 +131,8 @@ export function RecordingsScreen({ resolved }: Props) {
   const { t } = useTranslation();
   const player = usePlayer();
   const progressMap = useProgressMap();
+  const { downloadAllChapters } = useDownload();
+  const allChaptersState = useAllChaptersDownloadState(resolved.entry);
   const { entry, basePath } = resolved;
 
   const isThisPlaylistActive = player.playlist?.title === entry.occasionLabel;
@@ -139,6 +143,24 @@ export function RecordingsScreen({ resolved }: Props) {
       <BackLink to={basePath} />
       <h1>{entry.occasionLabel}</h1>
       <p className="subtitle">{t.recordings}</p>
+
+      <p className="occasion-download-state">
+        {allChaptersState === 'downloaded' && (
+          <>
+            <CheckCircle2 size={16} className="download-state-done" aria-hidden /> {t.downloadedLabel}
+          </>
+        )}
+        {allChaptersState === 'downloading' && (
+          <>
+            <Loader2 size={16} className="download-state-spinner" aria-hidden /> {t.downloadingLabel}
+          </>
+        )}
+        {allChaptersState === 'none' && (
+          <button type="button" className="occasion-download-button" onClick={() => downloadAllChapters(entry)}>
+            <Download size={16} aria-hidden /> {t.downloadAllRecordingsLabel}
+          </button>
+        )}
+      </p>
 
       <ul className="playlist">
         {entry.audio.map((chapter, index) => (
