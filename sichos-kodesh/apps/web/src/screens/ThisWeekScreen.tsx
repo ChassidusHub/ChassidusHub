@@ -9,6 +9,7 @@ import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel, hebrewDayMonthLabel, parshaLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
 import { useDownload } from '../download/useDownload';
+import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -54,6 +55,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const { enqueueBulk } = useDownload();
+  const online = useOnlineStatus();
   const [weekOffset, setWeekOffset] = useState(0);
   const shiftedDate = useMemo(() => shiftedToday(weekOffset), [weekOffset]);
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [sourceYear, shiftedDate]);
@@ -123,7 +125,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
         ))}
       </ul>
 
-      {occasions.length > 0 && (
+      {occasions.length > 0 && online && (
         <button type="button" className="button" onClick={() => enqueueBulk(occasions.map((occasion) => occasion.entry))}>
           {t.downloadThisWeekLabel}
         </button>

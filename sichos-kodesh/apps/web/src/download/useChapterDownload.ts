@@ -5,6 +5,7 @@ import { chapterKey } from './downloadContext';
 import type { RowDownloadState } from './downloadContext';
 import { audioUrl } from './download';
 import { isDownloaded } from './downloadManager';
+import { useOnlineStatus } from '../network/useOnlineStatus';
 
 export interface ChapterDownloadState {
   state: RowDownloadState;
@@ -25,6 +26,7 @@ export interface ChapterDownloadState {
  */
 export function useChapterDownload(entry: CatalogEntry, chapterIndex: number): ChapterDownloadState {
   const { liveState, progress, downloadChapter } = useDownload();
+  const online = useOnlineStatus();
   const k = chapterKey(entry.hebrewYear, entry.occasionId, chapterIndex);
   const live = liveState[k];
   const [cachedState, setCachedState] = useState<RowDownloadState | null>(null);
@@ -43,8 +45,13 @@ export function useChapterDownload(entry: CatalogEntry, chapterIndex: number): C
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by chapter identity; re-checking on every render isn't needed until this row is revisited (a fresh mount re-checks anyway).
   }, [k, live]);
 
+  const resolved = live ?? cachedState ?? 'none';
+  // See useDownloadState's matching comment - a tappable "start a download"
+  // affordance is pointless (and was a real reported gap) while offline.
+  const state = resolved === 'none' && !online ? 'unavailable' : resolved;
+
   return {
-    state: live ?? cachedState ?? 'none',
+    state,
     progress: progress[k],
     download: () => downloadChapter(entry, chapterIndex),
   };

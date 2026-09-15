@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
+import { probeRealConnectivity } from '../network/useOnlineStatus';
 import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
 import { getOccasionProgress, getPdfScrollFraction, recordPdfProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
@@ -92,15 +93,16 @@ export function PdfViewerScreen({ resolved }: Props) {
         }
         setState({ status: 'ready' });
       } catch (error) {
-        // `navigator.onLine` false is a reliable "definitely offline" signal
-        // (though not the reverse - it can read true on a connection that's
-        // actually unusable), so a failure while it's false is confidently
-        // "this file just isn't downloaded," not a real error worth the raw
-        // pdf.js/fetch message (a confirmed real report: someone offline
-        // seeing "Setting up fake worker failed: ..." or a raw
-        // "UnknownErrorException: Failed to fetch" for a plain not-yet-
-        // downloaded file, neither of which means anything to them).
-        if (!cancelled) setState({ status: 'error', message: String(error), offline: !navigator.onLine });
+        // A raw `navigator.onLine` read is known to be unreliable (a
+        // confirmed real report: the exact raw pdf.js/fetch message -
+        // "Setting up fake worker failed: ..." - showing instead of the
+        // friendly offline one, with `navigator.onLine` stuck reporting
+        // `true` the whole time despite being genuinely offline) - a real
+        // network probe, right now, at the moment this actually failed, is
+        // what `useOnlineStatus`'s own live-but-periodic state can't give
+        // (it can be a few seconds stale either direction).
+        const online = await probeRealConnectivity();
+        if (!cancelled) setState({ status: 'error', message: String(error), offline: !online });
       }
     })();
 
