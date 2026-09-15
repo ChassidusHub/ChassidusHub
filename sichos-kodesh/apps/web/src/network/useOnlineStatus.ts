@@ -6,13 +6,21 @@ import { useEffect, useRef, useState } from 'react';
  * the other to pdf.js's own worker/wasm/cmaps paths) and never precached
  * under a random-query URL, so a request to it genuinely reaches the
  * network - or genuinely fails - instead of resolving from Cache Storage
- * regardless of real connectivity.
+ * regardless of real connectivity. Kept same-origin rather than pinging a
+ * third-party host (the common pattern - e.g. Android/ChromeOS's own
+ * captive-portal check against a Google endpoint): this audience commonly
+ * runs content-filtering software (a real report: Rimon) that can block a
+ * generic third-party target specifically while the app's own domain and
+ * the media-proxy Worker it depends on both stay perfectly reachable - a
+ * same-origin probe can't produce that false negative.
  */
 const PROBE_PATH = '/favicon.svg';
+const PROBE_INTERVAL_MS = 10000;
+const PROBE_TIMEOUT_MS = 5000;
 
 async function probeRealConnectivity(): Promise<boolean> {
   try {
-    await fetch(`${PROBE_PATH}?probe=${Date.now()}`, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(5000) });
+    await fetch(`${PROBE_PATH}?probe=${Date.now()}`, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) });
     return true;
   } catch {
     return false;
@@ -24,37 +32,32 @@ async function probeRealConnectivity(): Promise<boolean> {
  * top-of-page connectivity banner, and DownloadedScreen's own reach point
  * from that note.
  *
- * `navigator.onLine`/the `online`/`offline` window events alone are a
- * known weak spot on mobile browsers: they only fire on a state *change*
- * the browser happens to observe, not on demand, so a brief network blip -
- * or the tab simply being backgrounded at the moment connectivity actually
- * returns - can leave `offline` stuck reporting true indefinitely with no
- * further `online` event ever following to correct it (a confirmed real
- * report: the banner stayed stuck "offline" with a fully working
- * connection). Rather than trust that stale state forever, this actively
- * re-verifies with a real network request whenever it currently believes
- * it's offline - immediately, again whenever the tab regains focus/
- * visibility (exactly when a change while backgrounded would otherwise go
- * unnoticed), and periodically in between - and self-corrects the moment
- * one succeeds.
+ * Driven by an actual, continuous network probe rather than trusting
+ * `navigator.onLine`/the `online`/`offline` window events as the source of
+ * truth: those only fire on a state *change* the browser happens to
+ * observe, not on demand, and mobile browsers are known to miss the
+ * transition in either direction - a confirmed real report of the banner
+ * staying stuck "offline" on a working connection (no `online` event ever
+ * arrived to correct it), and, chasing that fix, an equally real second
+ * bug it exposed: gating the probe to only run while already-believed-
+ * offline meant a genuine drop that never fired a matching `offline`
+ * event in the first place (also a known mobile-browser gap - a weak-
+ * signal fade doesn't always cleanly flip the interface state) left the
+ * banner never showing at all.
+ *
+ * The probe itself is what decides `online` here, on a fixed interval
+ * (matching how, say, Android/ChromeOS determine real connectivity - a
+ * periodic live check against a server, not just the OS's own reported
+ * link state) - the browser events are only used to trigger an immediate
+ * extra check on top of that interval, for a faster-feeling update right
+ * when the browser itself notices something change, never trusted for
+ * their claimed direction on their own.
  */
 export function useOnlineStatus(): boolean {
   const [online, setOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   const probeInFlightRef = useRef(false);
 
   useEffect(() => {
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
-    return () => {
-      window.removeEventListener('online', goOnline);
-      window.removeEventListener('offline', goOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (online) return;
     let cancelled = false;
 
     const check = () => {
@@ -62,21 +65,26 @@ export function useOnlineStatus(): boolean {
       probeInFlightRef.current = true;
       void probeRealConnectivity().then((reallyOnline) => {
         probeInFlightRef.current = false;
-        if (!cancelled && reallyOnline) setOnline(true);
+        if (!cancelled) setOnline(reallyOnline);
       });
     };
 
     check();
-    const interval = setInterval(check, 15000);
+    const interval = setInterval(check, PROBE_INTERVAL_MS);
+    window.addEventListener('online', check);
+    window.addEventListener('offline', check);
     document.addEventListener('visibilitychange', check);
     window.addEventListener('focus', check);
+
     return () => {
       cancelled = true;
       clearInterval(interval);
+      window.removeEventListener('online', check);
+      window.removeEventListener('offline', check);
       document.removeEventListener('visibilitychange', check);
       window.removeEventListener('focus', check);
     };
-  }, [online]);
+  }, []);
 
   return online;
 }
