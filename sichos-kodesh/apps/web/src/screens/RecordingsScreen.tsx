@@ -83,7 +83,11 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
           // `onEnded`) is untouched by this and still starts its chapter
           // at 0 - that's a fresh chapter, not one someone chose to resume.
           const savedPosition = progress?.chapters[index]?.position ?? 0;
-          player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, index, savedPosition);
+          player.play(
+            { title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate },
+            index,
+            savedPosition,
+          );
         }}
       >
         <span className="playlist-row-icon">

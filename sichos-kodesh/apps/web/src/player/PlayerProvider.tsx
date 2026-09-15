@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { audioUrl } from '../download/download';
 import { reportFetchFailure } from '../network/connectivity';
 import { forMediaSession } from '../utils/hebrewPunctuation';
+import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
+import { useLanguage } from '../i18n/useLanguage';
 import { recordChapterProgress } from './progressStore';
 import { PlayerContext } from './playerContext';
 import type { Playlist, PlayerContextValue, PlayerState } from './playerContext';
@@ -24,7 +26,14 @@ function readPersisted(): PersistedPlayerState | null {
     const raw = localStorage.getItem(PERSIST_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedPlayerState;
-    if (!parsed.playlist || !Array.isArray(parsed.playlist.audio)) return null;
+    // `hebrewDate` is a newer field than this persistence schema itself -
+    // a value saved before it existed would otherwise come back with it
+    // `undefined`, breaking the date shown alongside the restored
+    // playlist's title rather than just showing an absent one. Discarding
+    // and falling back to "nothing playing" (same as no saved state at
+    // all) is a one-time cost for whoever has an old save, not a
+    // persistent bug.
+    if (!parsed.playlist || !Array.isArray(parsed.playlist.audio) || typeof parsed.playlist.hebrewDate !== 'string') return null;
     return parsed;
   } catch {
     return null;
@@ -56,6 +65,7 @@ function writePersisted(next: PersistedPlayerState): void {
  * failing.
  */
 export function PlayerProvider({ children }: { children: ReactNode }) {
+  const { language } = useLanguage();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [initialPersisted] = useState(readPersisted);
   const [state, setState] = useState<PlayerState>(() =>
@@ -263,16 +273,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       navigator.mediaSession.metadata = null;
       return;
     }
+    // The occasion's own date, alongside its label - unlike an occasion's
+    // own page (scoped to one source year already, so its own date
+    // display leaves the year out), this description is the only context
+    // the lock-screen/notification gets for *which* year's occurrence of
+    // a recurring occasion is actually playing.
+    const dateLabel = hebrewFullDateLabel(state.playlist.hebrewDate, state.playlist.hebrewYear, language);
     navigator.mediaSession.metadata = new MediaMetadata({
       title: forMediaSession(current.chapterName ?? state.playlist.title),
-      artist: forMediaSession(state.playlist.title),
+      artist: forMediaSession(`${state.playlist.title} · ${dateLabel}`),
       album: 'Sichos Kodesh',
       artwork: [
         { src: `${import.meta.env.BASE_URL}icon-192.png`, sizes: '192x192', type: 'image/png' },
         { src: `${import.meta.env.BASE_URL}icon-512.png`, sizes: '512x512', type: 'image/png' },
       ],
     });
-  }, [state.playlist, current]);
+  }, [state.playlist, current, language]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;

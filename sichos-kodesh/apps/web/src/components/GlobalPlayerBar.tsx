@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
+import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds)) return '0:00';
@@ -18,7 +19,7 @@ function formatTime(seconds: number): string {
  * something has actually been played this session.
  */
 export function GlobalPlayerBar() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const player = usePlayer();
   const [showChapters, setShowChapters] = useState(false);
   // Non-null exactly while the user has a finger/pointer down on the
@@ -60,6 +61,12 @@ export function GlobalPlayerBar() {
   const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
   const displayedPercent = dragPercent ?? progressPercent;
   const chapterLabel = current.chapterName ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
+  // The playlist's own occasion label recurs every year - without its
+  // date alongside it, this bar (and the OS lock-screen description it
+  // feeds, see PlayerProvider) can't say *which* year's occurrence is
+  // actually playing, unlike an occasion's own page, which is already
+  // scoped to one source year.
+  const dateLabel = hebrewFullDateLabel(player.playlist.hebrewDate, player.playlist.hebrewYear, language);
 
   function seek(e: React.ChangeEvent<HTMLInputElement>) {
     const percent = Number(e.target.value);
@@ -133,11 +140,10 @@ export function GlobalPlayerBar() {
         <div className="global-player-scrub">
           <button className="global-player-title" onClick={() => setShowChapters((v) => !v)}>
             <span className="global-player-title-main">{player.playlist.title}</span>
-            {chapterLabel && (
-              <span className="global-player-title-sub">
-                {audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}
-              </span>
-            )}
+            <span className="global-player-title-sub">
+              {dateLabel}
+              {chapterLabel && ` · ${audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}`}
+            </span>
           </button>
           {player.error ? (
             <p className="global-player-error">{player.error.offline ? t.audioOfflineNotDownloaded : t.audioLoadError}</p>

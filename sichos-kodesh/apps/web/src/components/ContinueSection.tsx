@@ -12,6 +12,7 @@ import type { OccasionProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
+import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
 
 const MAX_ITEMS = 5;
 
@@ -49,7 +50,7 @@ function continueDestination(entry: CatalogEntry, progress: OccasionProgress): {
  * user find their place again.
  */
 export function ContinueSection() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const player = usePlayer();
 
@@ -78,13 +79,22 @@ export function ContinueSection() {
                 onClick={() => {
                   if (resumeChapterIndex === null) return;
                   const position = progress.chapters[resumeChapterIndex]?.position ?? 0;
-                  player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, resumeChapterIndex, position);
+                  player.play(
+                    { title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate },
+                    resumeChapterIndex,
+                    position,
+                  );
                 }}
               >
                 <span className="year-row-main">
                   <OccasionRowIcon entry={entry} progressMap={progressMap} />
                   <span className="year-row-year">{entry.occasionLabel}</span>
                 </span>
+                {/* This list spans every year, not one source year the way
+                    an occasion's own page does, so the date (with its
+                    year) is what actually tells apart two rows that
+                    happen to share the same recurring occasion label. */}
+                <span className="continue-row-date">{hebrewFullDateLabel(entry.hebrewDate, entry.hebrewYear, language)}</span>
                 {fraction > 0 && !finished && (
                   <span className="continue-progress-track" aria-hidden>
                     <span className="continue-progress-fill" style={{ width: `${Math.round(fraction * 100)}%` }} />
