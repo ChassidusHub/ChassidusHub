@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { WifiOff } from 'lucide-react';
+import { Loader2, WifiOff } from 'lucide-react';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
@@ -69,7 +69,10 @@ export function PdfViewerScreen({ resolved }: Props) {
     (async () => {
       try {
         const doc = await loadPdfDocument(pdfUrl(pdf.driveFileId, pdf.resourceKey), ({ loaded, total }) => {
-          if (!cancelled) setState({ status: 'loading', percent: total > 0 ? Math.round((loaded / total) * 100) : null });
+          // Clamped defensively: a CDN that reports Content-Length for the
+          // compressed size while `loaded` accumulates decoded bytes (seen
+          // on some edge caches) would otherwise push this past 100%.
+          if (!cancelled) setState({ status: 'loading', percent: total > 0 ? Math.min(100, Math.max(0, Math.round((loaded / total) * 100))) : null });
         });
         if (cancelled || !containerRef.current) return;
         containerRef.current.innerHTML = '';
@@ -134,8 +137,10 @@ export function PdfViewerScreen({ resolved }: Props) {
   if (!pdf) {
     return (
       <div className="pdf-viewer-screen">
-        <BackLink to={resolved.basePath} />
-        <p className="gap-message">{t.pdfNotFound}</p>
+        <div className="pdf-viewer-status">
+          <BackLink to={resolved.basePath} />
+          <p className="gap-message">{t.pdfNotFound}</p>
+        </div>
       </div>
     );
   }
@@ -147,29 +152,36 @@ export function PdfViewerScreen({ resolved }: Props) {
         <p className="pdf-viewer-title">{pdf.label}</p>
       </div>
 
-      {state.status === 'loading' && <p className="subtitle">{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</p>}
-      {state.status === 'error' && state.offline && (
-        <>
-          <div className="offline-note">
-            <WifiOff size={16} aria-hidden />
-            <span>{t.pdfOfflineNotDownloaded}</span>
-          </div>
-          <Link className="button" to="/downloaded">
-            {t.viewDownloadedLabel}
-          </Link>
-        </>
-      )}
-      {state.status === 'error' && !state.offline && (
-        <>
-          <p className="gap-message">{t.pdfLoadError(state.message)}</p>
-          {/* The file is still fetchable directly even when pdf.js can't
-              render it in-app, so link out to it as a fallback - except
-              while offline, where the direct fetch would fail too. */}
-          <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
-            {t.openPdfExternally}
-          </a>
-        </>
-      )}
+      <div className="pdf-viewer-status">
+        {state.status === 'loading' && (
+          <p className="subtitle pdf-loading">
+            <Loader2 className="pdf-loading-spinner" size={16} aria-hidden />
+            <span>{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</span>
+          </p>
+        )}
+        {state.status === 'error' && state.offline && (
+          <>
+            <div className="offline-note">
+              <WifiOff size={16} aria-hidden />
+              <span>{t.pdfOfflineNotDownloaded}</span>
+            </div>
+            <Link className="button" to="/downloaded">
+              {t.viewDownloadedLabel}
+            </Link>
+          </>
+        )}
+        {state.status === 'error' && !state.offline && (
+          <>
+            <p className="gap-message">{t.pdfLoadError(state.message)}</p>
+            {/* The file is still fetchable directly even when pdf.js can't
+                render it in-app, so link out to it as a fallback - except
+                while offline, where the direct fetch would fail too. */}
+            <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
+              {t.openPdfExternally}
+            </a>
+          </>
+        )}
+      </div>
 
       <div ref={containerRef} className="pdf-pages" />
     </div>

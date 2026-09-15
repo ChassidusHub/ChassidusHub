@@ -411,6 +411,22 @@ h1 {
   animation: download-spin 1s linear infinite;
 }
 
+/* PdfViewerScreen's loading line: an icon instead of bare text, matching
+   the player's own loading treatment, and tabular-nums so the percent
+   climbing from a single digit to "100%" doesn't reflow the surrounding
+   text on every tick. */
+.pdf-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-loading-spinner {
+  animation: download-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
 /* The green, non-spinning ring shown once a download's real byte progress is
    known (see DownloadProgressRing.tsx) - same footprint as .download-state-spinner
    above so swapping between the two mid-download doesn't shift the row. */
@@ -821,6 +837,15 @@ h1 {
 
 .pdf-viewer-header {
   margin-bottom: 16px;
+  padding: 0 20px;
+}
+
+/* Same inline padding as the header above - `.pdf-viewer-screen` itself is
+   deliberately unpadded (see its own comment) so `.pdf-pages` can go
+   edge-to-edge when zoomed, which left the loading/error/not-found text
+   sitting flush against the screen edge with no inset - clipped by the
+   spinner in RTL, since it had nothing between it and the edge at all. */
+.pdf-viewer-status {
   padding: 0 20px;
 }
 
