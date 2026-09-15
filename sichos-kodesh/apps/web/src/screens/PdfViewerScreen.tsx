@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { WifiOff } from 'lucide-react';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
@@ -159,7 +160,21 @@ export function PdfViewerScreen({ resolved }: Props) {
       </div>
 
       {state.status === 'loading' && <p className="subtitle">{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</p>}
-      {state.status === 'error' && state.offline && <p className="gap-message">{t.pdfOfflineNotDownloaded}</p>}
+      {state.status === 'error' && state.offline && (
+        <>
+          {/* Same icon+card treatment as the home screen's own offline note
+              (see index.css's .offline-note) - a plain heads-up, not an
+              error, plus a real next step instead of a dead-end message:
+              jump straight to what's actually available offline right now. */}
+          <div className="offline-note">
+            <WifiOff size={16} aria-hidden />
+            <span>{t.pdfOfflineNotDownloaded}</span>
+          </div>
+          <Link className="button" to="/downloaded">
+            {t.viewDownloadedLabel}
+          </Link>
+        </>
+      )}
       {state.status === 'error' && !state.offline && (
         <>
           <p className="gap-message">{t.pdfLoadError(state.message)}</p>

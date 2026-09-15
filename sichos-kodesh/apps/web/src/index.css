@@ -172,6 +172,14 @@ h1 {
   color: var(--accent-fg);
 }
 
+.connectivity-banner-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;

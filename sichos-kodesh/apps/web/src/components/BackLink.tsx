@@ -50,10 +50,21 @@ export function BackLink({ to }: Props) {
     // A modified click (open in new tab, etc.) should behave like a plain
     // link, not hijack the browser's own handling of it.
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
     if (getNavigationDepth() > 0) {
-      e.preventDefault();
       navigate(-1);
+      return;
     }
+    // No real history to pop (a fresh load/deep link - the real reported
+    // case: Chrome relaunched straight onto a sub-page, a brand-new tab
+    // session with no history at all). A plain PUSH to the fixed `to` URL
+    // here used to leave a fresh forward entry behind it - which then had
+    // real depth of its own, so the *next* tap on that landed screen's own
+    // BackLink would navigate(-1) straight back to here instead of
+    // continuing upward, bouncing between the two forever without ever
+    // reaching home. `replace` never leaves that entry behind, so every
+    // fallback tap keeps climbing the logical parent chain instead.
+    navigate(to, { replace: true });
   }
 
   return (
