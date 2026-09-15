@@ -2,12 +2,22 @@ import { useCallback, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { isEntryFullyDownloaded, listDownloadTargets, runDownload } from './downloadManager';
-import { DownloadContext } from './downloadContext';
+import type { DownloadTarget } from './downloadManager';
+import { audioUrl } from './download';
+import { DownloadContext, chapterKey } from './downloadContext';
 import type { RowDownloadState } from './downloadContext';
 import { useDownloadSettings } from '../settings/useDownloadSettings';
 
 function key(hebrewYear: number, occasionId: number): string {
   return `${hebrewYear}:${occasionId}`;
+}
+
+/** Clears one key from a progress map once its job has settled (done/error) - a stale leftover fraction would otherwise show briefly the next time that same key starts a fresh download. */
+function clearProgress(prev: Record<string, number>, k: string): Record<string, number> {
+  if (!(k in prev)) return prev;
+  const next = { ...prev };
+  delete next[k];
+  return next;
 }
 
 /**
@@ -23,6 +33,7 @@ function key(hebrewYear: number, occasionId: number): string {
 export function DownloadProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useDownloadSettings();
   const [liveState, setLiveState] = useState<Record<string, RowDownloadState>>({});
+  const [progress, setProgress] = useState<Record<string, number>>({});
 
   const runQueue = useCallback(
     (entries: CatalogEntry[]) => {
@@ -30,28 +41,39 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       if (targets.length === 0) return;
 
       const entryByKey = new Map(entries.map((entry) => [key(entry.hebrewYear, entry.occasionId), entry]));
-      const remaining = new Map<string, number>();
+      // Tracked per occasion key, not per target - an occasion can need
+      // several files (a few chapters, a couple of pdfs), and its own
+      // progress fraction is how far through *all* of them this job is,
+      // not any single file's own fraction.
+      const totalForKey = new Map<string, number>();
+      const completedForKey = new Map<string, number>();
       for (const target of targets) {
         const k = key(target.hebrewYear, target.occasionId);
-        remaining.set(k, (remaining.get(k) ?? 0) + 1);
+        totalForKey.set(k, (totalForKey.get(k) ?? 0) + 1);
       }
       setLiveState((prev) => {
         const next = { ...prev };
-        for (const k of remaining.keys()) next[k] = 'queued';
+        for (const k of totalForKey.keys()) next[k] = 'queued';
         return next;
       });
 
       void runDownload(targets, {
         wifiOnly: settings.wifiOnly,
-        onEach: (target, event) => {
+        onEach: (target, event, fraction) => {
           const k = key(target.hebrewYear, target.occasionId);
+          const total = totalForKey.get(k) ?? 1;
           if (event === 'downloading') {
             setLiveState((prev) => (prev[k] === 'downloading' ? prev : { ...prev, [k]: 'downloading' }));
+            if (fraction !== undefined) {
+              const completed = completedForKey.get(k) ?? 0;
+              setProgress((prev) => ({ ...prev, [k]: Math.min((completed + fraction) / total, 1) }));
+            }
             return;
           }
-          const left = (remaining.get(k) ?? 1) - 1;
-          remaining.set(k, left);
-          if (left > 0) return; // Other files for this same occasion are still pending.
+          const completed = (completedForKey.get(k) ?? 0) + 1;
+          completedForKey.set(k, completed);
+          setProgress((prev) => ({ ...prev, [k]: Math.min(completed / total, 1) }));
+          if (completed < total) return; // Other files for this same occasion are still pending.
           const entry = entryByKey.get(k);
           if (!entry) return;
           // Re-checked against the real cache rather than trusting the
@@ -60,6 +82,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           // "downloaded" the lazy per-row check (useDownloadState) uses.
           void isEntryFullyDownloaded(entry, settings.contentTypes).then((downloaded) => {
             setLiveState((prev) => ({ ...prev, [k]: downloaded ? 'downloaded' : 'none' }));
+            setProgress((prev) => clearProgress(prev, k));
           });
         },
       });
@@ -70,9 +93,39 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const downloadOccasion = useCallback((entry: CatalogEntry) => runQueue([entry]), [runQueue]);
   const enqueueBulk = useCallback((entries: CatalogEntry[]) => runQueue(entries), [runQueue]);
 
+  const downloadChapter = useCallback(
+    (entry: CatalogEntry, chapterIndex: number) => {
+      const chapter = entry.audio[chapterIndex];
+      if (!chapter) return;
+      const target: DownloadTarget = {
+        url: audioUrl(chapter.workerFilename),
+        hebrewYear: entry.hebrewYear,
+        occasionId: entry.occasionId,
+        label: chapter.chapterName ?? `Track ${chapterIndex + 1}`,
+        kind: 'audio',
+      };
+      const k = chapterKey(entry.hebrewYear, entry.occasionId, chapterIndex);
+      setLiveState((prev) => ({ ...prev, [k]: 'queued' }));
+
+      void runDownload([target], {
+        wifiOnly: settings.wifiOnly,
+        onEach: (_target, event, fraction) => {
+          if (event === 'downloading') {
+            setLiveState((prev) => (prev[k] === 'downloading' ? prev : { ...prev, [k]: 'downloading' }));
+            if (fraction !== undefined) setProgress((prev) => ({ ...prev, [k]: fraction }));
+            return;
+          }
+          setLiveState((prev) => ({ ...prev, [k]: event === 'error' ? 'none' : 'downloaded' }));
+          setProgress((prev) => clearProgress(prev, k));
+        },
+      });
+    },
+    [settings.wifiOnly],
+  );
+
   const value = useMemo(
-    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, liveState }),
-    [settings, setSettings, downloadOccasion, enqueueBulk, liveState],
+    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, liveState, progress }),
+    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, liveState, progress],
   );
 
   return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;

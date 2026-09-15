@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { getDownloadedBytes, listDownloadTargets } from './downloadManager';
-import type { DownloadContentTypes } from './downloadManager';
+import { getDownloadedBytes, listDownloadTargets, runDownload } from './downloadManager';
+import type { DownloadContentTypes, DownloadTarget } from './downloadManager';
 import { MEDIA_CACHE_NAME } from './cacheName';
 
 /** Minimal fake of the Cache Storage API this test needs - just enough of `caches.open`/`Cache#keys`/`Cache#match` to exercise `getDownloadedBytes` without a real browser. */
@@ -127,5 +127,101 @@ describe('getDownloadedBytes', () => {
     } as unknown as typeof caches;
     await getDownloadedBytes();
     expect(openedName).toBe(MEDIA_CACHE_NAME);
+  });
+});
+
+describe('runDownload', () => {
+  const originalCaches = globalThis.caches;
+  const originalFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.caches = originalCaches;
+    globalThis.fetch = originalFetch;
+  });
+
+  /** A writable fake cache (unlike `fakeCaches` above, which is read-only) - `runDownload` both checks and populates the cache. */
+  function fakeWritableCache(): Map<string, Response> {
+    const stored = new Map<string, Response>();
+    const cache = {
+      match: async (request: RequestInfo) => stored.get(typeof request === 'string' ? request : request.url),
+      put: async (request: RequestInfo, response: Response) => {
+        stored.set(typeof request === 'string' ? request : request.url, response);
+      },
+    };
+    globalThis.caches = { open: async () => cache } as unknown as typeof caches;
+    return stored;
+  }
+
+  function makeTarget(url: string): DownloadTarget {
+    return { url, hebrewYear: 5711, occasionId: 1, label: 'test', kind: 'audio' };
+  }
+
+  it('reports increasing byte progress while streaming a response with a known Content-Length, then done', async () => {
+    fakeWritableCache();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(4));
+        controller.enqueue(new Uint8Array(6));
+        controller.close();
+      },
+    });
+    globalThis.fetch = vi.fn(async () => new Response(body, { headers: { 'content-length': '10' } })) as unknown as typeof fetch;
+
+    const events: Array<[string, number | undefined]> = [];
+    await runDownload([makeTarget('https://example.com/a.mp3')], {
+      onEach: (_target, event, progress) => events.push([event, progress]),
+    });
+
+    expect(events).toEqual([
+      ['downloading', undefined],
+      ['downloading', 0.4],
+      ['downloading', 1],
+      ['done', undefined],
+    ]);
+  });
+
+  it('reports undefined progress (but still completes) when Content-Length is missing', async () => {
+    fakeWritableCache();
+    // A plain string/Blob body gets an automatic Content-Length from
+    // undici's Response - a raw stream body (like a real chunked-transfer
+    // response with no known length) is what actually exercises this path.
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(5));
+        controller.close();
+      },
+    });
+    globalThis.fetch = vi.fn(async () => new Response(body)) as unknown as typeof fetch;
+
+    const events: Array<[string, number | undefined]> = [];
+    await runDownload([makeTarget('https://example.com/b.mp3')], {
+      onEach: (_target, event, progress) => events.push([event, progress]),
+    });
+
+    expect(events).toEqual([
+      ['downloading', undefined],
+      ['done', undefined],
+    ]);
+  });
+
+  it('skips fetching (and reports done directly) for a target already in the cache', async () => {
+    const stored = fakeWritableCache();
+    stored.set('https://example.com/c.mp3', new Response(''));
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    const events: string[] = [];
+    await runDownload([makeTarget('https://example.com/c.mp3')], { onEach: (_target, event) => events.push(event) });
+
+    expect(events).toEqual(['done']);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('reports an error event (and never a done) when the fetch fails', async () => {
+    fakeWritableCache();
+    globalThis.fetch = vi.fn(async () => new Response('not found', { status: 404 })) as unknown as typeof fetch;
+
+    const events: string[] = [];
+    await runDownload([makeTarget('https://example.com/missing.mp3')], { onEach: (_target, event) => events.push(event) });
+
+    expect(events).toEqual(['downloading', 'error']);
   });
 });

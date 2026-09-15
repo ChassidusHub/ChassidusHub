@@ -8,8 +8,10 @@ import { useRecordVisit } from '../player/useRecordVisit';
 import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
 import { useDownload } from '../download/useDownload';
 import { useDownloadState } from '../download/useDownloadState';
+import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
+import { DownloadProgressRing } from '../components/DownloadProgressRing';
 
 interface Props {
   resolved: ResolvedEntry | null;
@@ -49,6 +51,7 @@ export function FarbrengenScreen({ resolved }: Props) {
   const [autoplayOnHanacha] = useAutoplayOnHanacha();
   const { downloadOccasion } = useDownload();
   const downloadState = useDownloadState(resolved?.entry);
+  const downloadProgress = useDownloadProgress(resolved?.entry);
   useRecordVisit(resolved?.entry);
 
   if (!resolved) {
@@ -103,7 +106,12 @@ export function FarbrengenScreen({ resolved }: Props) {
               <CheckCircle2 size={16} className="download-state-done" aria-hidden /> {t.downloadedLabel}
             </>
           )}
-          {(downloadState === 'queued' || downloadState === 'downloading') && (
+          {downloadState === 'downloading' && downloadProgress !== undefined && (
+            <>
+              <DownloadProgressRing size={16} progress={downloadProgress} /> {t.downloadingLabel}
+            </>
+          )}
+          {(downloadState === 'queued' || (downloadState === 'downloading' && downloadProgress === undefined)) && (
             <>
               <Loader2 size={16} className="download-state-spinner" aria-hidden /> {t.downloadingLabel}
             </>

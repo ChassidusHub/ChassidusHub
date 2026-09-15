@@ -130,18 +130,62 @@ export interface RunDownloadOptions {
   /** How many files to fetch at once - a small, fixed pool rather than one file at a time, without opening dozens of simultaneous requests against the Worker for a whole month/year download. */
   concurrency?: number;
   wifiOnly?: boolean;
-  onEach?: (target: DownloadTarget, event: DownloadEvent) => void;
+  /**
+   * `progress` (0-1) accompanies a `'downloading'` event once real byte
+   * counts are known - it's `undefined` on the first `'downloading'` call
+   * for a target (nothing read yet) and stays `undefined` for the rest of
+   * that target's download if the response has no `Content-Length` (a
+   * fraction can't be computed without a known total).
+   */
+  onEach?: (target: DownloadTarget, event: DownloadEvent, progress?: number) => void;
   signal?: AbortSignal;
 }
 
 /**
- * Fetches every not-yet-cached target into the shared media cache -
- * `cache.add()` does a real `fetch` (cors mode, since this is a direct
- * script call rather than an `<audio>`/`<img>` element's implicit no-cors
- * default) and `cache.put()`, landing in the exact bucket the service
- * worker's own CacheFirst route already reads from (see cacheName.ts) - so
- * nothing else needs to change for a downloaded file to actually get used
- * during real playback/reading afterward.
+ * Fetches one target with live byte-progress, mirroring `cache.add()`'s own
+ * validation (throws on a non-ok response, same as `cache.add` does
+ * internally) but reading the body through a stream reader instead of
+ * awaiting it in one shot - the only way to observe progress mid-download,
+ * since neither `fetch()` nor `Response` expose one otherwise. Falls back
+ * to a plain, progressless read when the body can't be streamed (no
+ * `Content-Length` to compute a fraction against, or a runtime without
+ * `ReadableStream` body support) rather than failing the download over it.
+ */
+async function fetchWithProgress(url: string, onProgress: (progress: number | undefined) => void): Promise<Response> {
+  const response = await fetch(url, { mode: 'cors' });
+  if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+  const total = Number(response.headers.get('content-length') ?? 0);
+  if (!total || !response.body) {
+    // No further progress to report - the worker loop's own initial
+    // `'downloading'` event (before this function was even called) already
+    // told the caller "started, fraction unknown."
+    return response;
+  }
+
+  const reader = response.body.getReader();
+  // BlobPart's DOM types want an ArrayBuffer-backed view specifically, not
+  // the more general ArrayBufferLike a stream reader's chunks are typed
+  // with (it also covers SharedArrayBuffer, which a fetch response body
+  // never actually produces) - copying each chunk gives a real ArrayBuffer.
+  const chunks: BlobPart[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value.slice().buffer);
+    received += value.length;
+    onProgress(Math.min(received / total, 1));
+  }
+  return new Response(new Blob(chunks), { headers: response.headers });
+}
+
+/**
+ * Fetches every not-yet-cached target into the shared media cache, landing
+ * in the exact bucket the service worker's own CacheFirst route already
+ * reads from (see cacheName.ts) - so nothing else needs to change for a
+ * downloaded file to actually get used during real playback/reading
+ * afterward.
  */
 export async function runDownload(targets: DownloadTarget[], options: RunDownloadOptions = {}): Promise<void> {
   const { concurrency = 3, wifiOnly = false, onEach, signal } = options;
@@ -166,9 +210,10 @@ export async function runDownload(targets: DownloadTarget[], options: RunDownloa
     while (nextIndex < pending.length) {
       if (signal?.aborted) return;
       const target = pending[nextIndex++]!;
-      onEach?.(target, 'downloading');
+      onEach?.(target, 'downloading', undefined);
       try {
-        await cache.add(target.url);
+        const response = await fetchWithProgress(target.url, (progress) => onEach?.(target, 'downloading', progress));
+        await cache.put(target.url, response);
         onEach?.(target, 'done');
       } catch {
         onEach?.(target, 'error');
