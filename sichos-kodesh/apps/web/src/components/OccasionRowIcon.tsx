@@ -66,8 +66,9 @@ export function OccasionRowIcon({ entry, progressMap }: Props) {
 
   return (
     <span className="row-icons">
-      {statusIcon}
+      {/* Download before the finished/audio icon - every occasion can be downloaded, but only some have a recording at all, so the always-relevant one leads. */}
       {downloadIcon}
+      {statusIcon}
     </span>
   );
 }

@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigationType, useParams } from 'react-router-dom';
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
 import { DownloadProvider } from './download/DownloadProvider';
 import { useAutoDownloadSync } from './download/useAutoDownloadSync';
+import { adjustNavigationDepth } from './routes/navigationDepth';
 import { usePlayer } from './player/usePlayer';
 import { LanguageProvider } from './i18n/LanguageProvider';
 import { useTranslation } from './i18n/useLanguage';
@@ -166,9 +167,36 @@ function useScrollToTopOnNavigate(): void {
   }, [pathname]);
 }
 
+/**
+ * Keeps `navigationDepth.ts`'s sessionStorage counter in sync with every
+ * real navigation - `useNavigationType()` reports how *this* transition
+ * happened: 'PUSH' (a Link/navigate() call) increments it, 'POP' (the
+ * browser's own back/forward, including BackLink's own `navigate(-1)`)
+ * decrements it, 'REPLACE' leaves it alone. The very first render (the
+ * initial load, including right after a reload) is skipped rather than
+ * treated as a navigation - whatever depth was already persisted from
+ * before is exactly what should carry over.
+ */
+function useTrackNavigationDepth(): void {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (navigationType === 'PUSH') adjustNavigationDepth(1);
+    else if (navigationType === 'POP') adjustNavigationDepth(-1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on location.key (a fresh value per real navigation entry, pop or push alike), not navigationType, which is stable enough across renders of the same entry to not need separate tracking here.
+  }, [location.key]);
+}
+
 function AppContent() {
   const player = usePlayer();
   useScrollToTopOnNavigate();
+  useTrackNavigationDepth();
   useAutoDownloadSync();
   return (
     <div className={player.playlist ? 'app-content has-player' : 'app-content'}>
