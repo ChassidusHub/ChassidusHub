@@ -32,8 +32,9 @@ describe('occasionChagCategory', () => {
     expect(occasionChagCategory('5711-03-25', false)).toBeNull();
   });
 
-  it('is null for Chol HaMoed (18 Tishrei 5711 - within Sukkot but not itself CHAG-flagged)', () => {
-    expect(occasionChagCategory('5711-01-18', false)).toBeNull();
+  it('resolves Chol HaMoed Sukkot and Chol HaMoed Pesach as their own categories, distinct from the plain Yom Tov', () => {
+    expect(occasionChagCategory('5711-01-18', false)).toBe('Chol HaMoed Sukkot'); // 18 Tishrei 5711 - within Sukkot, not itself CHAG-flagged.
+    expect(occasionChagCategory('5711-07-17', false)).toBe('Chol HaMoed Pesach'); // 17 Nisan 5711 - within Pesach, not itself CHAG-flagged.
   });
 
   it('is null for an ordinary weekday with no holiday at all (10 Shevat 5711)', () => {

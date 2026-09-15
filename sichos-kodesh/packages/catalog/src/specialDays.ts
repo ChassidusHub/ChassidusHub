@@ -18,9 +18,10 @@ export interface SpecialDay {
  * yahrzeits, birthdays, and historic geula/redemption days for the
  * Rebbeim - and each of *those* was separately confirmed to actually have
  * real content in this specific catalog too, not assumed from the general
- * list alone (e.g. Gimmel Tamuz has real sichos here precisely because
- * this catalog's years, 5710-5752, predate the Rebbe's own passing in
- * 5754 - for those decades it was still just an ordinary date).
+ * list alone (e.g. Gimmel Tamuz already had real, longstanding
+ * significance well before the Rebbe's own passing in 5754 - see its own
+ * comment below - so it genuinely has sichos throughout this catalog's
+ * 5710-5752 span, not by some quirk of timing).
  *
  * Deliberately excludes the "erev [a real Yom Tov]" dates (Erev Rosh
  * Hashana, Erev Yom Kippur, Erev Pesach, Erev Shavuot, Erev Sukkot) even
@@ -56,7 +57,7 @@ export const SPECIAL_DAYS: SpecialDay[] = [
   { hdateMonth: 2, day: 14 }, // Pesach Sheni
   { hdateMonth: 2, day: 18 }, // Lag BaOmer
   { hdateMonth: 3, day: 28 }, // Arrival in the USA
-  { hdateMonth: 4, day: 3 }, // Gimmel Tamuz
+  { hdateMonth: 4, day: 3 }, // Gimmel Tamuz - the Previous Rebbe's Atchalta d'Geula, part of the same Yud-Beis Tamuz redemption story below, not (in this catalog's own 5710-5752 span) yet the Rebbe's own later yahrzeit
   { hdateMonth: 4, day: 12 }, // Yud-Beis Tamuz
   { hdateMonth: 4, day: 13 }, // Motzoei Yud-Gimmel Tamuz
   { hdateMonth: 5, day: 14 },
