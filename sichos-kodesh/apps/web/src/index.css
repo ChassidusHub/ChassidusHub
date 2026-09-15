@@ -65,6 +65,28 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Self-hosted (not linked from Google Fonts) so every screen title still
+   renders offline from first load, same as the rest of the app shell -
+   already covered by the service worker's existing `ttf` precache glob
+   (vite.config.ts), no extra caching config needed. Frank Ruhl Libre is
+   an editorial Hebrew/Latin serif (SIL Open Font License), used only for
+   `h1` below - body text stays the plain system sans for readability. */
+@font-face {
+  font-family: 'Frank Ruhl Libre';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/frank-ruhl-libre-500.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Frank Ruhl Libre';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/frank-ruhl-libre-800.ttf') format('truetype');
+}
+
 /* Wraps every route's content (see App.tsx's AppContent) - reserves room
    below whatever the actual screen renders so `.bottom-bars` (position:
    fixed, can show on any screen) never covers the bottom of the page's
@@ -90,6 +112,7 @@ body {
 }
 
 h1 {
+  font-family: 'Frank Ruhl Libre', 'Times New Roman', serif;
   font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: -0.01em;
