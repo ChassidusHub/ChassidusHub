@@ -66,6 +66,23 @@ describe('searchOccasions', () => {
     // Same query, but with a real Hebrew gershayim instead of the ASCII quote - still matches.
     const result2 = searchOccasions(catalog, { ...EMPTY_FILTERS, query: 'יו״ד' });
     expect(result2).toEqual([{ hebrewYear: 5711, entries: [yudShevat] }]);
+    // A "smart"/curly quote (as opposed to a straight ASCII one or the proper Hebrew gershayim) - still matches.
+    const result3 = searchOccasions(catalog, { ...EMPTY_FILTERS, query: 'יו”ד' });
+    expect(result3).toEqual([{ hebrewYear: 5711, entries: [yudShevat] }]);
+  });
+
+  it('matches free text with no gershayim at all, or with a missing/wrong letter (typo tolerance)', () => {
+    const noMark = searchOccasions(catalog, { ...EMPTY_FILTERS, query: 'יוד שבט' });
+    expect(noMark).toEqual([{ hebrewYear: 5711, entries: [yudShevat] }]);
+
+    // 'סוכות' with one letter swapped for a visually similar one.
+    const typo = searchOccasions(catalog, { ...EMPTY_FILTERS, query: 'דחג הסוכת' });
+    expect(typo).toEqual([{ hebrewYear: 5711, entries: [sukkos] }]);
+  });
+
+  it('matches free text regardless of word order', () => {
+    const result = searchOccasions(catalog, { ...EMPTY_FILTERS, query: 'הסוכות דחג' });
+    expect(result).toEqual([{ hebrewYear: 5711, entries: [sukkos] }]);
   });
 
   it('omits a contentless entry even when its label matches', () => {

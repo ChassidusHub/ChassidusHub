@@ -1,7 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { listDownloadTargets } from './downloadManager';
+import { getDownloadedBytes, listDownloadTargets } from './downloadManager';
 import type { DownloadContentTypes } from './downloadManager';
+import { MEDIA_CACHE_NAME } from './cacheName';
+
+/** Minimal fake of the Cache Storage API this test needs - just enough of `caches.open`/`Cache#keys`/`Cache#match` to exercise `getDownloadedBytes` without a real browser. */
+function fakeCaches(entries: Record<string, Response>): typeof caches {
+  const cache = {
+    keys: async () => Object.keys(entries).map((url) => new Request(url)),
+    match: async (request: RequestInfo) => entries[typeof request === 'string' ? request : request.url],
+  };
+  return { open: async () => cache } as unknown as typeof caches;
+}
 
 function makeEntry(overrides: Partial<CatalogEntry> & Pick<CatalogEntry, 'occasionId' | 'hebrewYear'>): CatalogEntry {
   return { hebrewDate: '5711-05-10', occasionLabel: 'test', audio: [], pdfs: [], ...overrides };
@@ -85,5 +95,37 @@ describe('listDownloadTargets', () => {
 
     const [target] = listDownloadTargets([entry], { ...NONE, audio: true });
     expect(target).toMatchObject({ hebrewYear: 5711, occasionId: 42 });
+  });
+});
+
+describe('getDownloadedBytes', () => {
+  const originalCaches = globalThis.caches;
+  afterEach(() => {
+    globalThis.caches = originalCaches;
+  });
+
+  it('sums real cached response sizes, not navigator.storage.estimate() - see its own doc comment for why', async () => {
+    globalThis.caches = fakeCaches({
+      'https://example.com/a.pdf': new Response('', { headers: { 'content-length': '1000' } }),
+      'https://example.com/b.mp3': new Response('', { headers: { 'content-length': '2500' } }),
+    });
+    expect(await getDownloadedBytes()).toBe(3500);
+  });
+
+  it('is 0 for an empty cache', async () => {
+    globalThis.caches = fakeCaches({});
+    expect(await getDownloadedBytes()).toBe(0);
+  });
+
+  it('opens the same shared cache name playback and downloads both use', async () => {
+    let openedName: string | undefined;
+    globalThis.caches = {
+      open: async (name: string) => {
+        openedName = name;
+        return { keys: async () => [], match: async () => undefined };
+      },
+    } as unknown as typeof caches;
+    await getDownloadedBytes();
+    expect(openedName).toBe(MEDIA_CACHE_NAME);
   });
 });

@@ -18,7 +18,7 @@ interface Props {
   resolved: ResolvedEntry;
 }
 
-type LoadState = { status: 'loading'; percent: number | null } | { status: 'ready' } | { status: 'error'; message: string };
+type LoadState = { status: 'loading'; percent: number | null } | { status: 'ready' } | { status: 'error'; message: string; offline: boolean };
 
 /**
  * Renders a PDF's pages directly in the app (via pdf.js) instead of
@@ -92,7 +92,15 @@ export function PdfViewerScreen({ resolved }: Props) {
         }
         setState({ status: 'ready' });
       } catch (error) {
-        if (!cancelled) setState({ status: 'error', message: String(error) });
+        // `navigator.onLine` false is a reliable "definitely offline" signal
+        // (though not the reverse - it can read true on a connection that's
+        // actually unusable), so a failure while it's false is confidently
+        // "this file just isn't downloaded," not a real error worth the raw
+        // pdf.js/fetch message (a confirmed real report: someone offline
+        // seeing "Setting up fake worker failed: ..." or a raw
+        // "UnknownErrorException: Failed to fetch" for a plain not-yet-
+        // downloaded file, neither of which means anything to them).
+        if (!cancelled) setState({ status: 'error', message: String(error), offline: !navigator.onLine });
       }
     })();
 
@@ -148,14 +156,16 @@ export function PdfViewerScreen({ resolved }: Props) {
       </div>
 
       {state.status === 'loading' && <p className="subtitle">{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</p>}
-      {state.status === 'error' && (
+      {state.status === 'error' && state.offline && <p className="gap-message">{t.pdfOfflineNotDownloaded}</p>}
+      {state.status === 'error' && !state.offline && (
         <>
           <p className="gap-message">{t.pdfLoadError(state.message)}</p>
           {/* pdf.js couldn't render it in-app (a malformed/unusual PDF, a transient
               network hiccup mid-parse) - the raw file itself is still real and
               fetchable through the same Worker URL, so a plain link out to it (the
               browser's own PDF viewer, or a download) is a real fallback, not a
-              dead end. */}
+              dead end. Skipped while offline (see above) - it can't work either,
+              and offering it would just be a second dead end right under the first. */}
           <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
             {t.openPdfExternally}
           </a>

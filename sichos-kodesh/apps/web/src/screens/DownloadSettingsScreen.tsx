@@ -7,6 +7,7 @@ import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
 import { BackLink } from '../components/BackLink';
 import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
+import { getDownloadedBytes } from '../download/downloadManager';
 import type { DownloadScope, SourceYearMode } from '../settings/useDownloadSettings';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
@@ -35,9 +36,8 @@ export function DownloadSettingsScreen() {
   const [usage, setUsage] = useState<number | null>(null);
 
   useEffect(() => {
-    void navigator.storage
-      ?.estimate()
-      .then((estimate) => setUsage(estimate.usage ?? 0))
+    void getDownloadedBytes()
+      .then(setUsage)
       .catch(() => setUsage(null));
   }, [settings]); // Re-read after every settings change too, since "Clear downloads" itself is a settings-adjacent action below.
 
@@ -59,8 +59,7 @@ export function DownloadSettingsScreen() {
 
   async function clearDownloads(): Promise<void> {
     await caches.delete(MEDIA_CACHE_NAME);
-    const estimate = await navigator.storage?.estimate().catch(() => null);
-    setUsage(estimate?.usage ?? 0);
+    setUsage(await getDownloadedBytes().catch(() => 0));
   }
 
   return (
