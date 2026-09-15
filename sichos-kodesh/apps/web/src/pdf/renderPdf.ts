@@ -93,6 +93,22 @@ const MAX_BOOST_MULTIPLIER = 4;
  */
 const RENDER_DEBOUNCE_MS = 120;
 
+/**
+ * A page's very first render, relative to its normal fit-width `cssScale`
+ * (1x, no device-pixel-ratio multiplier at all) - deliberately small and
+ * cheap rather than the real `dpr`/zoom-scaled render, since a fast,
+ * continuous scroll can still settle on several pages long enough to clear
+ * `RENDER_DEBOUNCE_MS` above one after another; a full-resolution canvas
+ * for each of those (most of which get scrolled past again a moment later
+ * anyway) is exactly the memory pressure that crashes the tab. A page
+ * still on screen after `QUALITY_UPGRADE_DELAY_MS` gets re-rendered at the
+ * real resolution - see `scheduleQualityUpgrade`.
+ */
+const LOW_QUALITY_SCALE_FACTOR = 0.4;
+
+/** How long a page has to stay actually on screen (not just past the initial render debounce) before it's worth spending its full-resolution render - see `LOW_QUALITY_SCALE_FACTOR`. */
+const QUALITY_UPGRADE_DELAY_MS = 500;
+
 interface PageEntry extends ZoomablePage {
   cssScale: number;
 }
@@ -116,11 +132,13 @@ interface PageEntry extends ZoomablePage {
  * Pinching back down to 1x drops every rendered page back to the standard
  * fit-width render the same way.
  *
- * Resolves once the first page has rendered (so the screen has real
- * content to show), not once every page has - the rest render as the
- * user scrolls. `isCancelled` doubles as the teardown signal: once it
- * returns true the IntersectionObserver disconnects itself on its next
- * callback, so callers don't need to hold a separate handle to it.
+ * Resolves once the first page's low-quality render has committed (see
+ * `LOW_QUALITY_SCALE_FACTOR` - so the screen has real content to show as
+ * fast as possible), not once every page has, and not even once the first
+ * page's full-quality upgrade has - the rest render as the user scrolls or
+ * stays put. `isCancelled` doubles as the teardown signal: once it returns
+ * true the IntersectionObserver disconnects itself on its next callback,
+ * so callers don't need to hold a separate handle to it.
  *
  * Every render is tagged with a per-page generation number that `release`
  * bumps - a real, reproduced crash came from scrolling fast enough that a
@@ -130,7 +148,10 @@ interface PageEntry extends ZoomablePage {
  * canvas to a wrapper that was supposed to be empty, and doing this
  * repeatedly during fast up-and-down scrolling piled up canvases faster
  * than the browser could reclaim their memory. A render only ever commits
- * its canvas if its generation is still the current one for that page.
+ * its canvas if its generation is still the current one for that page -
+ * the same guard is what makes the low-quality-then-upgrade sequence safe
+ * too, since a page released between its two renders simply never gets
+ * the (now-stale) upgrade committed.
  *
  * `onZoomChange`, when given, fires `true` once a pinch settles and
  * `false` once the document is back to 1x - PdfViewerScreen uses it to
@@ -170,6 +191,7 @@ export async function renderPdfPages(
 
   const renderGeneration: number[] = pages.map(() => 0);
   const pendingRenderTimers: Array<ReturnType<typeof setTimeout> | null> = pages.map(() => null);
+  const pendingUpgradeTimers: Array<ReturnType<typeof setTimeout> | null> = pages.map(() => null);
   // The current effective resolution multiplier over each page's fit-width
   // `cssScale` - `dpr` at rest, boosted (up to `MAX_BOOST_MULTIPLIER`)
   // while the document is pinch-zoomed, so a page that scrolls into view
@@ -200,11 +222,23 @@ export async function renderPdfPages(
     entry.wrapper.replaceChildren(canvas);
   }
 
+  /** Schedules the upgrade to `currentRenderScale` once a page's cheap low-quality render has committed - a no-op if the page gets released (scrolled away) again before the delay elapses, since `release` bumps `renderGeneration` and this checks it before ever calling `renderCanvasAtScale`. */
+  function scheduleQualityUpgrade(index: number, generation: number): void {
+    if (isCancelled() || renderGeneration[index] !== generation) return;
+    pendingUpgradeTimers[index] = setTimeout(() => {
+      pendingUpgradeTimers[index] = null;
+      if (isCancelled() || renderGeneration[index] !== generation) return;
+      const entry = pages[index];
+      if (!entry) return;
+      void renderCanvasAtScale(index, entry.cssScale * currentRenderScale, generation);
+    }, QUALITY_UPGRADE_DELAY_MS);
+  }
+
   function renderInto(index: number): Promise<void> {
     const entry = pages[index];
     if (!entry || isCancelled() || entry.wrapper.firstChild) return Promise.resolve();
     const generation = ++renderGeneration[index]!;
-    return renderCanvasAtScale(index, entry.cssScale * currentRenderScale, generation);
+    return renderCanvasAtScale(index, entry.cssScale * LOW_QUALITY_SCALE_FACTOR, generation).then(() => scheduleQualityUpgrade(index, generation));
   }
 
   function release(index: number): void {
@@ -212,6 +246,11 @@ export async function renderPdfPages(
     if (timer != null) {
       clearTimeout(timer);
       pendingRenderTimers[index] = null;
+    }
+    const upgradeTimer = pendingUpgradeTimers[index];
+    if (upgradeTimer != null) {
+      clearTimeout(upgradeTimer);
+      pendingUpgradeTimers[index] = null;
     }
     renderGeneration[index]!++;
     const entry = pages[index];

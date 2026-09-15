@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { useTranslation } from '../i18n/useLanguage';
+import { getNavigationDepth } from '../routes/navigationDepth';
 
 interface Props {
   to: string;
@@ -25,9 +26,15 @@ interface Props {
  * prefers that instead - true "go back," landing wherever the user
  * actually came from - and only falls back to the fixed `to` URL when
  * there isn't one (the screen was reached by a fresh load or deep link,
- * where popping history would leave the app entirely). `history.state.idx`
- * is react-router's own per-entry position counter (stamped on every push
- * - see its `createBrowserHistory`), 0 on the very first entry.
+ * where popping history would leave the app entirely).
+ *
+ * `getNavigationDepth()` (see routes/navigationDepth.ts) is this app's own
+ * sessionStorage-backed count of real steps back available this session -
+ * used instead of `window.history.state`'s own `idx` after that turned out
+ * not to reliably survive a page reload, a real reported bug: reloading
+ * deep in the app and then tapping back could loop instead of ever making
+ * it to home, since the fixed-URL fallback kicked in every time instead of
+ * only once real history was actually exhausted.
  *
  * The label is always the generic "back," never a per-screen destination
  * name - now that a click usually pops real history rather than landing on
@@ -43,8 +50,7 @@ export function BackLink({ to }: Props) {
     // A modified click (open in new tab, etc.) should behave like a plain
     // link, not hijack the browser's own handling of it.
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const idx = (window.history.state as { idx?: number } | null)?.idx;
-    if (typeof idx === 'number' && idx > 0) {
+    if (getNavigationDepth() > 0) {
       e.preventDefault();
       navigate(-1);
     }

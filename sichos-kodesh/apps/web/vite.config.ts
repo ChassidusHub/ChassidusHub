@@ -82,7 +82,12 @@ export default defineConfig({
       },
       workbox: {
         // The catalog data + JS/CSS app shell - precached so the app itself works offline immediately.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,wasm,bcmap,pfb,ttf}'],
+        // `mjs` specifically covers pdf.worker.min-*.mjs (see src/pdf/renderPdf.ts) -
+        // without it, pdf.js's own worker script was never precached, so opening any
+        // PDF while offline (or just on a flaky connection) failed outright with
+        // "Setting up fake worker failed: Failed to fetch dynamically imported module"
+        // even though the PDF's own bytes were already cached and available.
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,wasm,bcmap,pfb,ttf}'],
         // Bundled catalog data (all years, inlined into the JS chunk) has grown
         // past workbox's 2 MiB default as more PDF links/resourceKeys were
         // recovered from the real dataset - raise the cap rather than drop
