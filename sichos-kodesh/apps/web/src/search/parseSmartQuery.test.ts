@@ -97,7 +97,74 @@ describe('parseSmartQuery', () => {
 
   it('returns everything empty for an empty query', () => {
     const { detected, remainingText } = parseSmartQuery('', RANGE);
-    expect(detected).toEqual({ hebrewYear: null, hdateMonth: null, parsha: null });
+    expect(detected).toEqual({ hebrewYear: null, hdateMonth: null, day: null, parsha: null });
     expect(remainingText).toBe('');
+  });
+
+  describe('day-of-month detection', () => {
+    it('detects a plain 1-2 digit number as a day', () => {
+      const { detected, remainingText } = parseSmartQuery('10 Shevat', RANGE);
+      expect(detected.day).toBe(10);
+      expect(detected.hdateMonth).toBe(11);
+      expect(remainingText).toBe('');
+    });
+
+    it('detects a compact Hebrew numeral with a geresh mark', () => {
+      const { detected } = parseSmartQuery("י' שבט", RANGE);
+      expect(detected.day).toBe(10);
+    });
+
+    it('detects a compact two-letter Hebrew numeral with gershayim', () => {
+      const { detected } = parseSmartQuery('כ"ד שבט', RANGE);
+      expect(detected.day).toBe(24);
+    });
+
+    it('does not detect a bare, unmarked one-letter token as a day - too ambiguous with an ordinary short word', () => {
+      const { detected, remainingText } = parseSmartQuery('י שבט', RANGE);
+      expect(detected.day).toBeNull();
+      expect(remainingText).toBe('י');
+    });
+
+    it('detects the spelled-out "יוד" (Yud) form for the 10th, in Hebrew and English, even with no geresh at all', () => {
+      expect(parseSmartQuery('יוד שבט', RANGE).detected.day).toBe(10);
+      expect(parseSmartQuery('Yud Shevat', RANGE).detected.day).toBe(10);
+    });
+
+    it('detects day + month + year together in the exact reported failing query', () => {
+      const { detected, remainingText } = parseSmartQuery('יוד שבט תשלו', RANGE);
+      expect(detected.day).toBe(10);
+      expect(detected.hdateMonth).toBe(11);
+      expect(detected.hebrewYear).toBe(5736);
+      expect(remainingText).toBe('');
+    });
+  });
+
+  describe('typo-tolerant phrase matching', () => {
+    it('tolerates a one-letter substitution in a month name', () => {
+      const { detected, remainingText } = parseSmartQuery('כסלה', RANGE); // Kislev (כסלו) with its last letter wrong
+      expect(detected.hdateMonth).toBe(9);
+      expect(remainingText).toBe('');
+    });
+
+    it('corrects a mistyped parsha name missing one letter', () => {
+      const { detected } = parseSmartQuery('בשלך', RANGE); // Beshalach with a ך instead of ח
+      expect(detected.parsha).toBe('Beshalach');
+    });
+
+    it('does not guess between two different real months equally close to the same typo, leaving it as free text instead', () => {
+      // "שבת" (Shabbos) is one substitution away from both שבט (Shevat)
+      // and טבת (Tevet) - guessing either would silently show the wrong
+      // month's occasions, so neither should be applied.
+      const { detected, remainingText } = parseSmartQuery('שבת', RANGE);
+      expect(detected.hdateMonth).toBeNull();
+      expect(remainingText).toBe('שבת');
+    });
+
+    it('still resolves correctly when a genuinely ambiguous month typo is combined with other structured signals', () => {
+      const { detected } = parseSmartQuery('יוד שבת תשלו', RANGE);
+      expect(detected.day).toBe(10);
+      expect(detected.hebrewYear).toBe(5736);
+      expect(detected.hdateMonth).toBeNull();
+    });
   });
 });
