@@ -28,13 +28,13 @@ export function useConnectivityRecheckTriggers(): void {
   }, []);
 
   useEffect(() => {
-    // A real report: leaving the app and coming back could leave it stuck
-    // showing offline until a manual refresh - a mobile browser can throttle
-    // or suspend in-flight requests while backgrounded, so a fetch that
-    // happened to fail right around that moment (see useAutoDownloadSync,
-    // which fires once on mount and could race a not-yet-reconnected radio)
-    // set the offline flag with no further trigger due until the next tap
-    // or navigation, which the user may not think to make when the screen
+    // Leaving the app and coming back could leave it stuck showing offline
+    // until a manual refresh: a mobile browser can throttle or suspend
+    // in-flight requests while backgrounded, so a fetch that happened to
+    // fail right around that moment (see useAutoDownloadSync, which fires
+    // once on mount and could race a not-yet-reconnected radio) sets the
+    // offline flag with no further trigger due until the next tap or
+    // navigation, which the user may not think to make when the screen
     // already looks fully offline. Reappearing in the foreground is itself
     // a real, discrete event worth re-verifying against, same as a tap.
     const handler = () => {

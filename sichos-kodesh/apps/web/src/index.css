@@ -716,15 +716,14 @@ h1 {
 
 .playlist-row-duration {
   flex-shrink: 0;
-  /* Fixed width, not shrink-to-content - a real reported bug: this sits at
-     the row's own outer edge with the progress bar right next to it, so a
-     shorter duration string (e.g. "4:47" vs "48:55") made the *whole row*
-     narrower on that side, visibly shifting the progress bar's position
-     between rows. 6ch fits the longest real duration in this catalog
-     (some farbrengens run past 3 hours - "181:06" is 6 characters).
-     tabular-nums keeps each digit the same width too, so the fill amount
-     inside a *single* row's own bar doesn't jitter as the seconds tick
-     over either. */
+  /* Fixed width, not shrink-to-content: this sits at the row's own outer
+     edge with the progress bar right next to it, so a shorter duration
+     string (e.g. "4:47" vs "48:55") would make the whole row narrower on
+     that side, shifting the progress bar's position between rows. 6ch fits
+     the longest real duration in this catalog (some farbrengens run past
+     3 hours - "181:06" is 6 characters). tabular-nums keeps each digit the
+     same width too, so the fill amount inside a single row's own bar
+     doesn't jitter as the seconds tick over either. */
   width: 6ch;
   font-variant-numeric: tabular-nums;
   text-align: end;
@@ -941,15 +940,13 @@ h1 {
   align-items: center;
   gap: 14px;
   flex-shrink: 0;
-  /* Deliberately pinned to LTR regardless of the page's own direction -
-     prev/play-pause/next are a fixed physical control cluster (their
-     glyphs point a fixed way and never mirror for RTL locales, matching
-     every real media player), not text that should follow reading
-     direction. Left to `direction: rtl`'s normal flex-order reversal,
-     this row's icons stayed pointing their original way but swapped
-     sides, so the left-pointing "back" icon ended up on the right and
-     vice versa - looking backwards regardless of which chapter it
-     actually skips to. */
+  /* Pinned to LTR regardless of the page's own direction - prev/play-pause/next
+     are a fixed physical control cluster (their glyphs point a fixed way and
+     never mirror for RTL locales, matching every real media player), not text
+     that should follow reading direction. `direction: rtl`'s flex-order
+     reversal would otherwise swap which side each icon sits on while leaving
+     its glyph pointing the same way, so the left-pointing "back" icon would
+     end up on the right. */
   direction: ltr;
 }
 

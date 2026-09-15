@@ -15,9 +15,6 @@ describe('extractDriveFileId', () => {
   });
 
   it('extracts the file id from the open?id= shape - the majority shape in the real dataset (52%), previously dropped entirely', () => {
-    // Real, verified-accessible link from packages/mafteiach-index's database
-    // (occasion 11114925, a "ליקוט" mugah link) - confirmed against the real
-    // Drive backend to be a genuine, publicly-accessible PDF, not dead content.
     expect(extractDriveFileId('https://drive.google.com/open?id=1NkOtSSm6fTmFXTfE48ORLrygLfwBC5Wu')).toBe(
       '1NkOtSSm6fTmFXTfE48ORLrygLfwBC5Wu',
     );
@@ -43,9 +40,6 @@ describe('extractDriveFileId', () => {
 
 describe('extractDriveResourceKey', () => {
   it('extracts the resource key from a real link that requires one', () => {
-    // Real link from occasion 11114925 (packages/mafteiach-index database) -
-    // confirmed directly against Google Drive: 404s/redirects to sign-in
-    // without this key, returns the real file with it.
     expect(
       extractDriveResourceKey(
         'https://drive.google.com/file/d/0B_UwzYOTIwDTRkRBaVVvWm9XbFE/view?usp=sharing&resourcekey=0-gm0KFPq6Fi6FXwvfD45KzA',
@@ -68,8 +62,6 @@ describe('extractDriveResourceKey', () => {
 
 describe('isReshimosLabel', () => {
   it('matches real reshima-labeled PDF links from the crawled dataset', () => {
-    // Verified against the real database: these exact labels exist on
-    // PDF links in packages/mafteiach-index/mafteiach.db.
     for (const label of [
       'רשימת כ"ק אד"ש',
       'רשימות חוברת יג',
@@ -82,7 +74,6 @@ describe('isReshimosLabel', () => {
   });
 
   it('does not match a real sicha/maamar link label', () => {
-    // Real mugah link label from a genuine farbrengen occasion (5740, ליל י"ג שבט).
     expect(isReshimosLabel(`שיחו"ק/ ח"כ ע' 574`)).toBe(false);
     expect(isReshimosLabel('תו"מ התוועדויות')).toBe(false);
   });

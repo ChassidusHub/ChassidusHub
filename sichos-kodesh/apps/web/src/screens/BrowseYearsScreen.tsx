@@ -5,7 +5,6 @@ import { BackLink } from '../components/BackLink';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
-/** Reached from the home screen's secondary "browse any year" link - every indexed year, no kvius match required. */
 export function BrowseYearsScreen() {
   const { t, language } = useTranslation();
   const allYears = browsableYears(catalog);

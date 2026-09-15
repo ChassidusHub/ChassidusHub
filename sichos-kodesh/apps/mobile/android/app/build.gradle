@@ -90,10 +90,10 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    // Release signing reads from env vars (CI - see .github/workflows/android-aab.yml,
-    // populated from repository secrets) or, for local release builds, from a
+    // Release signing reads from env vars (ANDROID_KEYSTORE_PATH etc., for a CI
+    // environment that sets them) or, for local release builds, from a
     // gitignored android/keystore.properties (never committed - see .gitignore and
-    // apps/mobile/README.md for the real keystore.properties.example this mirrors).
+    // apps/mobile/README.md for the keystore.properties.example this mirrors).
     def keystorePropertiesFile = rootProject.file("keystore.properties")
     def keystoreProperties = new Properties()
     if (keystorePropertiesFile.exists()) {

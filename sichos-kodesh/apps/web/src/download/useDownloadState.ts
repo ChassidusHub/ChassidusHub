@@ -46,10 +46,10 @@ export function useDownloadState(entry: CatalogEntry | null | undefined): RowDow
   if (!entry) return 'unavailable';
   const resolved = live ?? cachedState ?? 'unavailable';
   // A tappable "start a download" affordance is pointless while offline -
-  // it would just fail (or get stuck) the moment it's tapped, a real
-  // reported gap. An in-flight or already-finished job (`'queued'`,
-  // `'downloading'`, `'downloaded'`) is left exactly as-is: those already
-  // reflect real state, not an action still waiting to be taken.
+  // it would just fail (or get stuck) the moment it's tapped. An in-flight
+  // or already-finished job (`'queued'`, `'downloading'`, `'downloaded'`)
+  // is left exactly as-is: those already reflect real state, not an
+  // action still waiting to be taken.
   if (resolved === 'none' && !online) return 'unavailable';
   return resolved;
 }

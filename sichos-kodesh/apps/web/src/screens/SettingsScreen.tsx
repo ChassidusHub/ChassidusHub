@@ -7,18 +7,6 @@ import { useLanguage, useTranslation } from '../i18n/useLanguage';
 import type { Language } from '../i18n/translations';
 import { BackLink } from '../components/BackLink';
 
-/**
- * Three independent settings, each its own section: Appearance (manual
- * Dark/Light override of the OS theme, or System to just follow it - see
- * settings/useTheme.ts), Language (see i18n/LanguageProvider.tsx - flips
- * the whole app's text and RTL/LTR layout, not just this screen), and
- * Playback (whether opening a farbrengen's hanacha also starts its
- * recording). The previous PDF-edition-preference setting is gone - it
- * sorted PDFs within a section by preferred edition, but FarbrengenScreen
- * (the actual "follow" flow people use) already surfaces the right
- * hanacha directly via `isHighlightedFarbrengenHanacha` regardless of any
- * preference, so the setting had nothing left to do.
- */
 export function SettingsScreen() {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();

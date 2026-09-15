@@ -22,7 +22,7 @@ describe('parseSmartQuery', () => {
     expect(remainingText).toBe('');
   });
 
-  it('detects a gematriya year written with no geresh/gershayim mark at all - a confirmed real gap ("חי אלול תשלה" found nothing)', () => {
+  it('detects a gematriya year written with no geresh/gershayim mark at all', () => {
     const { detected, remainingText } = parseSmartQuery('תשלה', RANGE);
     expect(detected.hebrewYear).toBe(5735);
     expect(remainingText).toBe('');

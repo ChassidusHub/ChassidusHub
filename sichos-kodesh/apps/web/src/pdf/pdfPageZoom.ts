@@ -35,18 +35,17 @@ interface ZoomCallbacks {
 /**
  * Lets a user pinch-zoom the whole document in place, instead of the
  * browser's native pinch gesture zooming the entire visual viewport
- * (header, back button, everything) - a real reported problem.
- * PdfViewerScreen disables native pinch-zoom (via the viewport meta tag)
- * while it's mounted for exactly this reason, so a two-finger gesture here
- * only ever reaches this code, never the browser's own zoom.
+ * (header, back button, everything). PdfViewerScreen disables native
+ * pinch-zoom (via the viewport meta tag) while it's mounted, so a
+ * two-finger gesture here only ever reaches this code, never the
+ * browser's own zoom.
  *
  * Zoom applies to every page together, not just the one under your
- * fingers - a real reported bug with an earlier per-page-only version:
- * scrolling while zoomed in used to snap back to a different, unzoomed
- * page the moment it scrolled into view, which reads as broken, not as a
- * feature. One shared scale/pan state, applied to every page's wrapper on
+ * fingers: one shared scale/pan state, applied to every page's wrapper on
  * every frame of the gesture, keeps the whole document zoomed together as
- * you scroll through it, the way an actual PDF reader behaves.
+ * you scroll through it, the way an actual PDF reader behaves - otherwise
+ * scrolling while zoomed in would snap back to a different, unzoomed page
+ * the moment it scrolled into view.
  *
  * Ending a pinch hands the new scale to `onSettle` so the caller can
  * re-render every currently-visible page's canvas at real resolution
@@ -63,12 +62,11 @@ interface ZoomCallbacks {
  * drag is left completely alone (no `preventDefault`, no style change), so
  * scrolling down through the document keeps working exactly as it does
  * before anything is zoomed. `.pdf-page`'s `touch-action: pan-y`
- * (index.css) is what makes this reliable rather than racy: the browser is
- * told upfront to only ever natively handle *vertical* touch movement on
- * these elements, so it never tries to claim a horizontal drag as its own
- * gesture before our JS gets a chance to decide what it is - "smart
- * scroll": scrolling stays the default, and a deliberate sideways swipe is
- * the one exception that has to earn its own gesture.
+ * (index.css) tells the browser to only ever natively handle *vertical*
+ * touch movement on these elements, so it never claims a horizontal drag
+ * as its own gesture before this code gets a chance to decide what it is:
+ * scrolling stays the default, and a deliberate sideways swipe is the one
+ * exception that has to earn its own gesture.
  */
 export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], callbacks: ZoomCallbacks): PdfZoomHandle {
   let scale = 1;
@@ -113,11 +111,9 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
   }
 
   container.addEventListener('pointerdown', (e) => {
-    // Throws if the browser doesn't consider this pointerId an active one
-    // (a real gesture's pointerId always is; this guards against that
-    // assumption ever being wrong) - letting it throw here would abort
-    // the rest of this handler, silently dropping the pointer this
-    // gesture depends on tracking at all.
+    // setPointerCapture can throw if the pointerId isn't currently active;
+    // catching it keeps the rest of this handler running instead of
+    // aborting pointer tracking entirely.
     try {
       container.setPointerCapture(e.pointerId);
     } catch {

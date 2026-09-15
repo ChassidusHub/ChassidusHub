@@ -15,20 +15,14 @@ interface Props {
 }
 
 /**
- * Reached from a farbrengen's own page ("This occasion, every year") -
- * every occasion indexed on the *same Hebrew (month, day) as this specific
- * occasion*, across every year in the catalog (see
+ * Every occasion indexed on the same Hebrew (month, day) as this
+ * specific occasion, across every catalog year (see
  * `resolveOccasionAllYears`). Deliberately not "this real week" the way
- * AllYearsThisWeekScreen is: the occasion actually on screen is almost
- * never this week (it's usually reached via a kvius-matched year's "All of
- * {year}" list, or a past this-week-all-years pick), so a "this week"
- * link there was showing an unrelated real-world week instead of anything
- * to do with the occasion the user was actually looking at - a real,
- * reported bug. Picking a result goes to its own farbrengen page
- * (`useOccasionAllYearsEntry`), rendered with the same highlighted-hanacha
- * FarbrengenScreen as everywhere else in the follow flow, with its own
- * back-link returning here (not to the unrelated this-week-all-years
- * list).
+ * AllYearsThisWeekScreen is: the occasion on screen is rarely actually
+ * this week (usually reached via a kvius-matched year's "All of {year}"
+ * list, or a past this-week-all-years pick), so a "this week" link here
+ * would point at an unrelated real-world week instead of anything to do
+ * with the occasion being viewed.
  */
 export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: Props) {
   const { t, language } = useTranslation();

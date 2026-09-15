@@ -27,10 +27,10 @@ function sedraFor(hebrewYear: number, il: boolean): Sedra {
  * before - a weekday occasion rolls forward to its own week's Shabbos,
  * the same way `currentParsha` does for "today." Two entries (a doubled
  * reading), or `null` on a chag, when there's no weekly reading that week.
- * Real occasions on/around a chag or a doubled parsha are exactly why this
- * has to actually resolve each occasion's date through `Sedra`, not guess
- * from a fixed (month, day) -> parsha table - which Shabbos falls where
- * shifts from year to year.
+ * Occasions on or around a chag, or a doubled parsha, are why this has to
+ * resolve each occasion's date through `Sedra` rather than guess from a
+ * fixed (month, day) -> parsha table - which Shabbos falls where shifts
+ * from year to year.
  */
 export function occasionParsha(hebrewDate: string, il: boolean): string[] | null {
   const parts = hebrewDate.split('-');

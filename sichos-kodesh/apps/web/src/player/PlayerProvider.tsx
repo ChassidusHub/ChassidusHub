@@ -40,9 +40,9 @@ function writePersisted(next: PersistedPlayerState): void {
  * Holds the single `<audio>` element for the whole app, mounted once here
  * (not per-screen) so playback survives navigating between screens - the
  * behavior every real player (Spotify, YouTube) has and a screen-scoped
- * player structurally can't: unmounting the element on navigation was
- * exactly why playback used to stop when leaving the PDF viewer. Provider
- * must be mounted above the router's `<Routes>`, never inside one.
+ * player structurally can't, since unmounting the element on navigation
+ * would stop playback outright. Provider must be mounted above the
+ * router's `<Routes>`, never inside one.
  *
  * The playlist, chapter, and position also survive a full reload or
  * re-entering the site later (localStorage, not cookies - this is all
@@ -253,29 +253,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           // service worker's CacheFirst route (vite.config.ts) still
           // intercepts and caches it, but the cached response comes back
           // "opaque": an unreadable, 0-byte body, permanently, for that URL
-          // (confirmed directly - see vite.config.ts's cacheableResponse
-          // comment). That first cached opaque entry then serves as "the"
-          // cached response for every future request to the same URL,
-          // including this element's own real range-sliced reads, breaking
-          // playback outright - a real reported bug that shows up
-          // specifically once the service worker starts controlling the
-          // page (a reload, not the very first uncontrolled visit), matching
-          // "recordings don't load... after reload." `anonymous` (not
+          // (see vite.config.ts's cacheableResponse comment). That first
+          // cached opaque entry then serves as "the" cached response for
+          // every future request to the same URL, including this element's
+          // own real range-sliced reads, breaking playback outright once
+          // the service worker starts controlling the page (a reload, not
+          // the very first uncontrolled visit). `anonymous` (not
           // `use-credentials`) matches the Worker's own `Access-Control-
           // Allow-Origin: *` - no cookies/auth involved.
           crossOrigin="anonymous"
           onPlay={() => setState((s) => ({ ...s, playing: true, error: null }))}
           onPause={() => setState((s) => ({ ...s, playing: false }))}
-          // No `onError` handler existed here at all before - a chapter
-          // failing to load (the common case: offline and not downloaded)
-          // silently did nothing visible, unlike PdfViewerScreen's own
-          // offline handling (a real reported gap: "never get the offline
-          // message" when testing with a recording, not a PDF). This
-          // failure is itself the live signal the whole app's connectivity
-          // state is driven by (see connectivity.ts) - a decode/format
-          // error is unrealistic for this catalog's real files, so every
-          // load failure here is treated as a real fetch failure, same as
-          // PdfViewerScreen's own (heuristic-checked) one.
+          // A chapter failing to load (the common case: offline and not
+          // downloaded) needs a visible response here, matching
+          // PdfViewerScreen's own offline handling. This failure is itself
+          // the live signal the whole app's connectivity state is driven
+          // by (see connectivity.ts) - a decode/format error is unrealistic
+          // for this catalog's real files, so every load failure here is
+          // treated as a real fetch failure, same as PdfViewerScreen's own
+          // (heuristic-checked) one.
           onError={() => {
             reportFetchFailure();
             setState((s) => ({ ...s, playing: false, error: { offline: true } }));

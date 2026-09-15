@@ -8,14 +8,13 @@ import type { FarbrengenListingEntry, FarbrengenRecord } from './types.js';
 const BASE_URL = 'https://www.mafteiach.app';
 
 /**
- * The site's real per-year coverage, confirmed against its own sidebar nav
- * (not by brute-forcing year numbers: individual `/all/by_year/{year}`
- * requests for years outside real coverage silently fall back to
- * rendering 5711's content instead of 404ing, which will otherwise produce
- * confidently-wrong "data"). Pre-Nesius content (5690-5710) lives only in
+ * The site's real per-year coverage. Individual `/all/by_year/{year}`
+ * requests for years outside this range don't 404 - they silently render
+ * 5711's content instead, so years must be enumerated from known coverage
+ * rather than brute-forced. Pre-Nesius content (5690-5710) lives only in
  * one combined bucket page rather than per-year pages; 5710 also has its
- * own standalone page whose entries overlap the bucket's tail, so a global
- * id-based dedup (not a per-year one) is required across the whole crawl.
+ * own standalone page whose entries overlap the bucket's tail, so dedup
+ * must be global (by id), not per-year.
  */
 export const REAL_STANDALONE_YEARS = { from: 5710, to: 5752 } as const;
 export const PRE_NESIUS_BUCKET_PATH = '/all/by_year/5690_5710';

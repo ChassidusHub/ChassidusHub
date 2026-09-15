@@ -10,8 +10,7 @@ import type { ProgressStore } from './progressStore';
  * only on an actual write (via `subscribeToProgressChanges`), not on a
  * timer, is what makes a screen that stays open during playback (the
  * recordings/playlist page, most visibly) actually reflect progress as it
- * happens instead of freezing at whatever existed the moment it mounted -
- * a real reported bug, not just a missed optimization.
+ * happens instead of freezing at whatever existed the moment it mounted.
  */
 export function useProgressMap(): ProgressStore {
   const [map, setMap] = useState(readProgressMap);

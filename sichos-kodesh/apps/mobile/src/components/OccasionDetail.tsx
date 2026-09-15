@@ -28,22 +28,20 @@ function groupPdfsBySection(pdfs: CatalogPdf[]): Array<[PdfSection, CatalogPdf[]
  * The download/read card for one catalog entry - shared by ThisWeekScreen
  * (a "this week" occasion) and YearBrowserScreen (any entry the user
  * picks while browsing a whole year). Groups content by category (Audio,
- * then each PDF section present) with a header per group: several real
- * PDF labels are short and generic on their own (e.g. hagahos's "צילום
- * 1"/"צילום 2" - literally "scan 1"/"scan 2", a real label from the site,
- * not a bug) and only make sense next to a category header saying what
- * they're scans *of*. Pass a `key` keyed to the entry (e.g.
- * `entry.occasionId`) when switching between entries so this component's
- * own state resets per entry.
+ * then each PDF section present) with a header per group, since some PDF
+ * labels are short and generic on their own (e.g. hagahos's "צילום
+ * 1"/"צילום 2", literally "scan 1"/"scan 2") and only make sense next to a
+ * category header saying what they're scans *of*. Pass a `key` keyed to
+ * the entry (e.g. `entry.occasionId`) when switching between entries so
+ * this component's own state resets per entry.
  *
  * Tapping "Read" doesn't render the viewer here - it calls `onOpenPdf` so
  * the *parent screen* switches to it full-screen instead of stacking it
  * underneath the parent's own header/back-button.
  *
  * Tapping "Play" downloads the file in full before playback starts (see
- * loadCachedSound), silently - just "Loading...", no progress bar - and
- * only the first time; the cached copy plays instantly (and offline)
- * after that.
+ * loadCachedSound), shown only as "Loading...", and only the first time;
+ * the cached copy plays instantly (and offline) after that.
  */
 export function OccasionDetail({ entry, onOpenPdf }: Props) {
   const [audioStates, setAudioStates] = useState<Record<string, AudioState>>({});

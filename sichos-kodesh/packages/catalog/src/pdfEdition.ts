@@ -2,25 +2,22 @@ import type { CatalogPdf } from './types.js';
 
 /**
  * mafteiach-index's mugah/biltiMugah/maamorim/hosofos labels are citations
- * to one of three distinct printed/transcribed series - real, separate
- * hanachos (transcripts), not variants of each other: "Sichos Kodesh"
- * (שיחו"ק - the original, less-edited yearly transcripts this app is
- * named for; the single largest series, e.g. 2,446 of biltiMugah's real
- * citations), the "Sefer" family (סה"ש - Sefer HaSichos, סה"מ - Sefer
- * HaMaamarim - a separately-edited canonical series), and Toras Menachem
- * (תו"מ). A user can prefer one series so the app surfaces it first when
- * an occasion has more than one, without hiding the rest (real citation
- * variety is part of what this dataset is for).
+ * to one of three distinct printed/transcribed series, not variants of
+ * each other: "Sichos Kodesh" (שיחו"ק - the original, less-edited yearly
+ * transcripts this app is named for), the "Sefer" family (סה"ש - Sefer
+ * HaSichos, סה"מ - Sefer HaMaamarim - a separately edited canonical
+ * series), and Toras Menachem (תו"מ). A user can prefer one series so the
+ * app surfaces it first when an occasion has more than one, without
+ * hiding the rest.
  */
 export type PdfEdition = 'sichosKodesh' | 'sefer' | 'torasMenachem';
 
 /**
  * Classifies a PDF label by the printed edition(s) it cites, when
- * detectable - many real labels cite more than one together (e.g. "סה"ש/
- * תו"מ התוועדויות", "תו"מ התוועדויות/ תו"מ סה"מ", "שיחו"ק/ בהוס' לסה"מ
- * באתי לגני ח"א"), so this returns every match, not just one. Returns []
- * for edition-agnostic labels (hagahos scans, etc.) - verified against the
- * real crawled dataset.
+ * detectable - many labels cite more than one together (e.g. "סה"ש/ תו"מ
+ * התוועדויות", "תו"מ התוועדויות/ תו"מ סה"מ", "שיחו"ק/ בהוס' לסה"מ באתי
+ * לגני ח"א"), so this returns every match, not just one. Returns [] for
+ * edition-agnostic labels (hagahos scans, etc.).
  */
 export function classifyPdfEdition(label: string): PdfEdition[] {
   const editions: PdfEdition[] = [];

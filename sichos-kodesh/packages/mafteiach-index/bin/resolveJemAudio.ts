@@ -35,14 +35,12 @@ const now = new Date().toISOString();
 
 for (let i = 0; i < targets.length; i++) {
   const { occasion_id: occasionId, url } = targets[i]!;
-  // Resolve from the *parent* (farbrengen) event, not the specific leaf/sicha
-  // id the crawled link happens to point to - a real, high-impact bug fix:
-  // the leaf alone only ever returns that one sicha's own recording, missing
-  // every sibling sicha/maamar under the same farbrengen (see jemAudio.ts's
-  // module doc comment - 65% of real audio links belong to a multi-recording
-  // farbrengen). Falls back to the leaf id only if a URL has no parent
-  // segment at all (shouldn't happen for a real ashreinu.app link, but keeps
-  // a malformed one from being skipped entirely).
+  // Resolves from the *parent* (farbrengen) event, not the specific leaf/sicha
+  // id the crawled link points to: the leaf alone only returns that one
+  // sicha's own recording, missing every sibling sicha/maamar under the same
+  // farbrengen (see jemAudio.ts). Falls back to the leaf id only if a URL has
+  // no parent segment at all (shouldn't happen for a real ashreinu.app link,
+  // but keeps a malformed one from being skipped entirely).
   const eventId = extractAshreinuParentEventId(url) ?? extractAshreinuEventId(url);
   if (eventId === null) {
     noEventId++;

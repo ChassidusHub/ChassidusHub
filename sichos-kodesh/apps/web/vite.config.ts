@@ -83,10 +83,9 @@ export default defineConfig({
       workbox: {
         // The catalog data + JS/CSS app shell - precached so the app itself works offline immediately.
         // `mjs` specifically covers pdf.worker.min-*.mjs (see src/pdf/renderPdf.ts) -
-        // without it, pdf.js's own worker script was never precached, so opening any
-        // PDF while offline (or just on a flaky connection) failed outright with
-        // "Setting up fake worker failed: Failed to fetch dynamically imported module"
-        // even though the PDF's own bytes were already cached and available.
+        // without it, pdf.js's worker script isn't precached, so opening a PDF
+        // while offline (or on a flaky connection) fails even though the PDF's
+        // own bytes are already cached.
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,wasm,bcmap,pfb,ttf}'],
         // Bundled catalog data (all years, inlined into the JS chunk) has grown
         // past workbox's 2 MiB default as more PDF links/resourceKeys were
@@ -100,14 +99,13 @@ export default defineConfig({
             urlPattern: ({ url }) => url.hostname.endsWith('.workers.dev'),
             handler: 'CacheFirst',
             options: {
-              // Renamed on every fix to a poisoning bug in this route (was
-              // 'media-proxy-cache', then 'media-proxy-cache-v2') to force
+              // Renamed whenever this route's cache gets poisoned, to force
               // every existing client to abandon its old cache and start
               // fresh - CacheFirst checks the cache before ever making a
               // new request, so a browser that had already cached a
-              // poisoned entry *before* a fix shipped would otherwise keep
+              // poisoned entry before a fix shipped would otherwise keep
               // serving that exact stale entry forever afterward; the fix
-              // alone only stops *new* entries from being poisoned. Bump
+              // alone only stops new entries from being poisoned. Bump
               // this name again if the cache is ever poisoned by some other
               // bug in the future, for the same reason. Shared with the
               // download feature (src/download/cacheName.ts) - a
@@ -118,41 +116,30 @@ export default defineConfig({
               // Neither 206 (Partial Content) nor 0 (opaque) may be in this
               // list, even though workbox-range-requests' own
               // `rangeRequests: true` needs a *complete, readable* cached
-              // response to slice from - both are real, reproduced bugs,
-              // not theoretical ones:
+              // response to slice from:
               //
-              // - 206: an <audio> element's very first request for a fresh
-              //   URL commonly carries its own `Range:` header (it doesn't
-              //   wait for a full download before starting playback); with
-              //   206 allowed here, whatever small slice the Worker
-              //   returned for *that* request got cached as if it were the
-              //   entire file. Every later request - for a completely
-              //   different byte range - then hit workbox-range-requests'
-              //   `createPartialResponse`, which special-cases an
-              //   already-206 cached response by returning it verbatim (see
-              //   its own comment: "If we already have a 206, then just
-              //   pass it through as-is"), regardless of what range was
-              //   actually asked for - so the same first sliver of the file
-              //   kept coming back forever. That matched exactly what got
-              //   reported: a track's duration (readable from that first
-              //   sliver alone) would show, but the audio itself never
-              //   actually loaded.
+              // - 206: an <audio> element's first request for a fresh URL
+              //   typically carries its own `Range:` header, so caching a
+              //   206 response would cache just that byte slice as if it
+              //   were the whole file. Every later request - for a
+              //   completely different byte range - would then hit
+              //   workbox-range-requests' `createPartialResponse`, which
+              //   special-cases an already-206 cached response by returning
+              //   it verbatim regardless of what range was actually asked
+              //   for, so the same first sliver of the file would keep
+              //   coming back forever.
               //
               // - 0 (opaque): a cross-origin request made in "no-cors" mode
               //   (the browser default for an <audio>/<img> element with no
               //   `crossorigin` attribute - see PlayerProvider.tsx, which
-              //   now sets one) gets back an opaque response: unreadable
-              //   body, unreadable headers, `status` reported as 0. Allowing
-              //   0 here let that opaque response get cached as "the"
-              //   response for its URL; every later request - including
-              //   this element's own real range-sliced reads - then got
-              //   that same permanently-empty, unreadable entry back,
-              //   confirmed directly by inspecting Cache Storage after a
-              //   no-cors request (bodyByteLength: 0, response.type:
-              //   'opaque'), reproducing exactly what got reported: a
-              //   recording that worked on a fresh, uncontrolled first
-              //   visit but silently failed to load once the service worker
-              //   started controlling the page (i.e. "after reload").
+              //   sets one) gets back an opaque response: unreadable body,
+              //   unreadable headers, `status` reported as 0. Caching that
+              //   opaque response as "the" response for its URL would mean
+              //   every later request - including this element's own real
+              //   range-sliced reads - gets that same permanently-empty,
+              //   unreadable entry back, breaking playback once the service
+              //   worker starts controlling the page (a reload, not the
+              //   very first uncontrolled visit).
               //
               // Dropping both here means a request against nothing valid
               // cached yet is served live from the Worker every time
@@ -161,17 +148,17 @@ export default defineConfig({
               // mistaken for a complete, usable one.
               cacheableResponse: { statuses: [200] },
               rangeRequests: true,
-              // Raised from 500 now that a deliberate download (see
-              // apps/web/src/download/) can legitimately want a whole
-              // month or year's worth of audio/PDFs in here at once -
-              // this plugin prunes the *whole* named cache by LRU on its
-              // next normal write regardless of who added an entry, so a
-              // low cap would silently evict content the user explicitly
-              // asked to keep offline. 5000 is far above any realistic
-              // real download (a full kvius year's own occasions), so
-              // this is a safety ceiling, not the real storage
-              // management surface - that's the Downloads settings
-              // screen's own usage readout and "clear downloads" action.
+              // A deliberate download (see apps/web/src/download/) can
+              // legitimately want a whole month or year's worth of
+              // audio/PDFs in here at once - this plugin prunes the
+              // *whole* named cache by LRU on its next normal write
+              // regardless of who added an entry, so a low cap would
+              // silently evict content the user explicitly asked to keep
+              // offline. 5000 is far above any realistic real download (a
+              // full kvius year's own occasions), so this is a safety
+              // ceiling, not the real storage management surface - that's
+              // the Downloads settings screen's own usage readout and
+              // "clear downloads" action.
               expiration: { maxEntries: 5000, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },

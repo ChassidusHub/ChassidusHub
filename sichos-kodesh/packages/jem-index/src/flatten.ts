@@ -2,15 +2,14 @@ import type { CcdbEvent, JemAudioRecordingRow, JemEventNode } from './types.js';
 
 /**
  * Flattens one event tree into every node (the top-level event and all
- * descendants) plus every genuinely distinct audio recording.
+ * descendants) plus every distinct audio recording.
  *
- * A parent node's own `audio_recordings` field is a rolled-up aggregate
- * of everything nested under it - confirmed against real data (see
- * packages/mafteiach-index/src/jemAudio.ts): the same recording ids
- * appear again at the parent level as at each leaf. Recordings are
- * deduplicated by ccdb id regardless of which node they're attached to;
- * `eventId` on the result is the most specific (deepest) node a given
- * recording was found on, found via depth-first traversal.
+ * A parent node's own `audio_recordings` field is a rolled-up aggregate of
+ * everything nested under it: the same recording ids appear again at the
+ * parent level as at each leaf. Recordings are deduplicated by ccdb id
+ * regardless of which node they're attached to; `eventId` on the result is
+ * the deepest node a given recording was found on, via depth-first
+ * traversal.
  */
 export function flattenEventTree(root: CcdbEvent): { nodes: JemEventNode[]; recordings: JemAudioRecordingRow[] } {
   const nodes: JemEventNode[] = [];

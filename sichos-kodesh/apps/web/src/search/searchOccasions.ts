@@ -76,12 +76,12 @@ interface IndexedEntry {
  * Fuse.js gives free-text search real typo tolerance (a transposed or
  * missing letter, e.g. "בשלך" for "בשלח", still finds the right occasion)
  * and match-anywhere/any-order behavior (a multi-word query doesn't need to
- * appear as one contiguous substring) - a plain `.includes()` check, what
- * this used before, can't do either. Built lazily and cached by catalog
- * object identity - the bundled catalog never changes at runtime, so this
- * pays the index-building cost once no matter how many searches follow,
- * the same "index only what a filter actually needs" spirit as
- * `occasionParsha`'s own per-year caching below.
+ * appear as one contiguous substring) - a plain `.includes()` check can't
+ * do either. Built lazily and cached by catalog object identity - the
+ * bundled catalog never changes at runtime, so this pays the
+ * index-building cost once no matter how many searches follow, the same
+ * "index only what a filter actually needs" spirit as `occasionParsha`'s
+ * own per-year caching below.
  */
 let cachedCatalog: CatalogByYear | null = null;
 let cachedFuse: Fuse<IndexedEntry> | null = null;
@@ -96,30 +96,28 @@ function getFuseIndex(catalog: CatalogByYear): Fuse<IndexedEntry> {
   }
   cachedFuse = new Fuse(items, {
     keys: ['label'],
-    // 0.35 (tried first) produced real false positives against the actual
-    // catalog once thousands of short, similarly-worded Hebrew labels were
-    // in play - e.g. "יחידות" (a totally unrelated occasion type) fuzzy-
-    // matched "יו"ד שבט" closely enough to pass. 0.3 was verified (against
-    // the real bundled catalog, not just a small hand-picked sample) to
-    // drop that false positive while still tolerating a genuine missing
-    // letter in a longer word (e.g. "פורם קטן" still finds "פורים קטן").
-    // Short (2-3 letter) Hebrew words don't get much real typo tolerance
-    // at this threshold - a single wrong letter is already a large fraction
-    // of the word - but that's an inherent tradeoff of Hebrew's short
-    // roots, not something a looser threshold fixes without reintroducing
-    // false positives like the one above.
+    // 0.3 balances typo tolerance against false positives: much looser and
+    // short, similarly-worded Hebrew labels start cross-matching (e.g.
+    // "יחידות", an unrelated occasion type, fuzzy-matches "יו"ד שבט"),
+    // while this threshold still tolerates a genuine missing letter in a
+    // longer word (e.g. "פורם קטן" still finds "פורים קטן"). Short (2-3
+    // letter) Hebrew words don't get much typo tolerance at this
+    // threshold - a single wrong letter is already a large fraction of the
+    // word - but that's an inherent tradeoff of Hebrew's short roots, not
+    // something a looser threshold fixes without reintroducing false
+    // positives.
     threshold: 0.3,
     ignoreLocation: true,
     minMatchCharLength: 2,
     // Without this, Fuse treats the whole query as one pattern fuzzy-matched
-    // against the whole label - a real gap, not just missing polish: a
-    // label like "יום ג' פרשת בשלח" wouldn't match a query typed as "בשלח
-    // פרשת" (right words, different order) at all, since that's a very
-    // different string overall even though every word is present. With it
-    // on, whitespace-separated words in the (already-normalized, so no
-    // stray Fuse operator characters survive to be misread) query become
-    // independent fuzzy sub-patterns ANDed together - each word can appear
-    // anywhere, in any order, and still typo-tolerant on its own.
+    // against the whole label: a label like "יום ג' פרשת בשלח" wouldn't
+    // match a query typed as "בשלח פרשת" (right words, different order) at
+    // all, since that's a very different string overall even though every
+    // word is present. With it on, whitespace-separated words in the
+    // (already-normalized, so no stray Fuse operator characters survive to
+    // be misread) query become independent fuzzy sub-patterns ANDed
+    // together - each word can appear anywhere, in any order, and still be
+    // typo-tolerant on its own.
     useExtendedSearch: true,
   });
   cachedCatalog = catalog;

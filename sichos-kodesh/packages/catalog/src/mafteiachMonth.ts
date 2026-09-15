@@ -84,10 +84,9 @@ export const MAFTEIACH_MONTH_OPTIONS: MafteiachMonthOption[] = ['01', '02', '03'
 /**
  * Extracts the day-of-month from a raw mafteiach-index date key, e.g.
  * "5711-05-10" -> 10. Two occasions landing on the same calendar date get
- * a trailing disambiguator letter in the real crawled data (e.g.
- * "5711-01-09b" for a second occasion on the 9th) - stripped here, since
- * it's not part of the day number itself (see `mafteiachMonthToken`'s
- * sibling test for the same convention on the month side).
+ * a trailing disambiguator letter in the crawled data (e.g. "5711-01-09b"
+ * for a second occasion on the 9th) - stripped here, since it's not part
+ * of the day number itself.
  */
 export function mafteiachDay(hebrewDate: string): number {
   return Number.parseInt(hebrewDate.split('-')[2] ?? '0', 10);

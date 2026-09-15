@@ -16,16 +16,15 @@ import { useTranslation } from '../i18n/useLanguage';
 const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 /**
- * Free-text search plus "smart" filters (year, month, day, parsha, content
- * type) over the whole bundled catalog - not scoped to one year or flow
- * the way every other list screen in the app is. Results link via
- * /browse/:hebrewYear/:occasionId, the one route that resolves any
- * occasion directly with no kvius-matching or this-week requirement.
+ * Free-text search plus filters (year, month, day, parsha, content type)
+ * over the whole bundled catalog, not scoped to one year or flow.
+ * Results link via /browse/:hebrewYear/:occasionId, the one route that
+ * resolves any occasion directly with no kvius-matching or this-week
+ * requirement.
  *
- * The query text is deferred (React's `useDeferredValue`, not a manual
- * debounce timer) so fast typing on a slower device doesn't force a
- * catalog-wide re-scan on every keystroke while still feeling instant on
- * a fast one.
+ * The query text is deferred (`useDeferredValue`, not a manual debounce
+ * timer) so fast typing on a slower device doesn't force a catalog-wide
+ * re-scan on every keystroke, while still feeling instant on a fast one.
  */
 export function SearchScreen() {
   const { t, language } = useTranslation();
@@ -40,10 +39,9 @@ export function SearchScreen() {
   const [types, setTypes] = useState<ContentType[]>([]);
 
   const filters: SearchFilters = { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types };
-  // Keyed on the individual primitive fields, not `filters` itself - a
-  // fresh object literal every render would otherwise make this recompute
-  // (rescanning the whole catalog) on every render, not just when a value
-  // actually changes.
+  // Keyed on individual fields, not `filters` itself - a fresh object
+  // literal every render would otherwise force a full catalog re-scan on
+  // every render.
   const results = useMemo(
     () => searchOccasions(catalog, { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types }),
     [deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types],

@@ -16,24 +16,22 @@ export interface ResolvedEntry {
 }
 
 /**
- * Re-derives which occasion a URL points to, the same way the previous
- * (pre-routing) screens derived it from in-memory state - `resolveThisWeek`
- * is cheap (a plain week of catalog lookups), so recomputing it from a URL
- * param on every navigation (including a hard refresh landing directly on
- * a deep link) is simpler and just as correct as caching it. Returns
- * `null` for a URL naming an occasion that doesn't actually resolve
- * (bad/stale param) - callers should render a "not found" state.
+ * Re-derives which occasion a URL points to. `resolveThisWeek` is cheap
+ * (a plain week of catalog lookups), so recomputing it from the URL on
+ * every navigation, including a hard refresh landing directly on a deep
+ * link, is simpler than caching it. Returns `null` for a URL naming an
+ * occasion that doesn't resolve (bad/stale param) - callers should
+ * render a "not found" state.
  *
  * Tries `resolveThisWeek` first (a real this-week occasion, back-linking
  * to ThisWeekScreen), then falls back to a plain lookup anywhere in that
  * source year (back-linking to that month's own occasion list instead -
- * see `useBrowseEntry`) - FollowMonthListScreen/FollowMonthOccasionsScreen
- * link to occasions outside the current week too, and they still deserve
- * FarbrengenScreen's highlighted-hanacha treatment, not just the generic
- * browse one. `subtitle` is always this occasion's own Hebrew day+month
- * either way - the real-week Gregorian date a kvius match translates onto
- * isn't this occasion's own date and showing it read as "this year's
- * date," which it isn't.
+ * see `useBrowseEntry`), since FollowMonthListScreen/
+ * FollowMonthOccasionsScreen link to occasions outside the current week
+ * too and those should still get FarbrengenScreen's highlighted-hanacha
+ * treatment. `subtitle` is always this occasion's own Hebrew day+month
+ * either way - the real-week Gregorian date a kvius match translates
+ * onto isn't this occasion's own date.
  */
 export function useFollowEntry(): ResolvedEntry | null {
   const { sourceYear, occasionId } = useParams<{ sourceYear: string; occasionId: string }>();
@@ -53,11 +51,10 @@ export function useFollowEntry(): ResolvedEntry | null {
 
 /**
  * A plain year/occasionId lookup, back-linking to that specific month's
- * own occasion list (MonthOccasionsScreen) rather than the year's month
- * list - the month is re-derived from the entry's own `hebrewDate`, not
- * carried in the URL, so a deep link straight to an occasion still gets a
- * correct, specific "back" rather than skipping past the month list
- * entirely.
+ * own occasion list (MonthOccasionsScreen). The month is re-derived from
+ * the entry's own `hebrewDate`, not carried in the URL, so a deep link
+ * straight to an occasion still gets a correct "back" instead of
+ * skipping past the month list.
  */
 export function useBrowseEntry(): ResolvedEntry | null {
   const { hebrewYear, occasionId } = useParams<{ hebrewYear: string; occasionId: string }>();
@@ -78,12 +75,9 @@ export function useBrowseEntry(): ResolvedEntry | null {
 }
 
 /**
- * Resolves an occasion reached via AllYearsThisWeekScreen - any year with
- * something indexed on one of this Hebrew week's dates, kvius-matched or
- * not (see `resolveThisWeekAllYears`). A plain year/occasionId lookup like
- * `useBrowseEntry`, just with its own back-path back to that cross-year
- * list instead of a year browse screen, so FarbrengenScreen's "back" link
- * returns to wherever the user actually came from.
+ * Resolves an occasion reached via AllYearsThisWeekScreen - a plain
+ * year/occasionId lookup like `useBrowseEntry`, with its own back-path
+ * to that cross-year list instead of a year browse screen.
  */
 export function useThisWeekAllYearsEntry(): ResolvedEntry | null {
   const { hebrewYear, occasionId } = useParams<{ hebrewYear: string; occasionId: string }>();
@@ -103,14 +97,10 @@ export function useThisWeekAllYearsEntry(): ResolvedEntry | null {
 }
 
 /**
- * Resolves an occasion reached via OccasionAllYearsScreen - any year with
- * something indexed on the same Hebrew (month, day) as some *specific*
- * source occasion, not "this real week" (see `resolveOccasionAllYears`).
+ * Resolves an occasion reached via OccasionAllYearsScreen.
  * `sourceHebrewYear`/`sourceOccasionId` identify which occasion the list
- * itself was generated from, so both the list and this page's own
- * back-link can be regenerated from the URL alone - a plain year/occasionId
- * lookup like `useBrowseEntry` otherwise, just with its own back-path back
- * to that specific cross-year list instead of a generic year browse screen.
+ * was generated from, so both the list and this page's back-link can be
+ * regenerated from the URL alone.
  */
 export function useOccasionAllYearsEntry(): ResolvedEntry | null {
   const { sourceHebrewYear, sourceOccasionId, hebrewYear, occasionId } = useParams<{

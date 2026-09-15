@@ -47,7 +47,7 @@ export function useChapterDownload(entry: CatalogEntry, chapterIndex: number): C
 
   const resolved = live ?? cachedState ?? 'none';
   // See useDownloadState's matching comment - a tappable "start a download"
-  // affordance is pointless (and was a real reported gap) while offline.
+  // affordance is pointless while offline.
   const state = resolved === 'none' && !online ? 'unavailable' : resolved;
 
   return {

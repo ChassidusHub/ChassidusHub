@@ -23,23 +23,18 @@ interface Props {
 type LoadState = { status: 'loading'; percent: number | null } | { status: 'ready' } | { status: 'error'; message: string; offline: boolean };
 
 /**
- * Renders a PDF's pages directly in the app (via pdf.js) instead of
- * handing off to the browser's own PDF viewer or a new tab. Loads by URL
- * (see renderPdf.ts's loadPdfDocument) rather than awaiting a full
- * `arrayBuffer()` first, so pdf.js can start parsing as bytes stream in
- * instead of only once the whole file has downloaded. Leaving room for
- * GlobalPlayerBar (mounted once at App root, shown on any screen now) is
- * handled by App.tsx's shared AppContent wrapper, not per-screen here.
- * Callers (see App.tsx's Follow/BrowsePdfRoute) should mount this with
- * `key={driveFileId}` so switching to a different PDF remounts fresh
- * (a clean `useState` initial value) rather than needing this effect to
- * reset state back to "loading" itself.
+ * Renders a PDF's pages in-app via pdf.js rather than handing off to the
+ * browser's own viewer. Loads by URL (see renderPdf.ts's
+ * `loadPdfDocument`) rather than awaiting a full `arrayBuffer()` first,
+ * so pdf.js can start parsing as bytes stream in. Callers (see App.tsx's
+ * Follow/BrowsePdfRoute) must mount this with `key={driveFileId}` so
+ * switching to a different PDF remounts fresh instead of relying on this
+ * effect to reset state back to "loading" itself.
  *
- * At rest, the page sits in a comfortable reading-width column with side
- * padding, same as every other screen; once the user pinch-zooms (see
- * renderPdf.ts's `onZoomChange`), the `.zoomed` class drops the width cap
- * and side padding so panning around a zoomed page has the full screen to
- * work with instead of being clipped to that column.
+ * Once the user pinch-zooms (see renderPdf.ts's `onZoomChange`), the
+ * `.zoomed` class drops the reading-width cap and side padding so
+ * panning a zoomed page has the full screen instead of being clipped to
+ * that column.
  */
 export function PdfViewerScreen({ resolved }: Props) {
   const { t } = useTranslation();
@@ -51,13 +46,12 @@ export function PdfViewerScreen({ resolved }: Props) {
   const progressMap = useProgressMap();
   const savedFraction = pdf ? getPdfScrollFraction(getOccasionProgress(progressMap, resolved.entry.hebrewYear, resolved.entry.occasionId), pdf.driveFileId) : undefined;
 
-  // The browser's own pinch-zoom always zooms the whole visual viewport -
-  // header, back link, everything - not just the PDF, which is exactly
-  // what pdfPageZoom.ts's per-page pinch-zoom is for instead. Disabling
-  // native pinch-zoom only while this screen is mounted (restored on
-  // unmount) is what makes a two-finger gesture here reach that code
-  // instead of the browser's own zoom; every other screen keeps normal
-  // pinch-to-zoom for accessibility.
+  // The browser's native pinch-zoom would zoom the whole viewport
+  // (header, back link, everything), not just the PDF - pdfPageZoom.ts
+  // implements its own per-page zoom instead. Disabling native
+  // pinch-zoom only while this screen is mounted (restored on unmount)
+  // routes a two-finger gesture here to that code; every other screen
+  // keeps normal pinch-to-zoom.
   useEffect(() => {
     const meta = document.querySelector('meta[name="viewport"]');
     const original = meta?.getAttribute('content') ?? null;
@@ -83,26 +77,21 @@ export function PdfViewerScreen({ resolved }: Props) {
           if (!cancelled) setZoomed(nowZoomed);
         });
         if (cancelled) return;
-        // Every page's wrapper is already appended with its real, final
-        // height by the time renderPdfPages resolves (only the canvases
-        // inside them still render lazily as the user scrolls - see
-        // renderPdf.ts) - so the document's total scroll height is already
-        // correct here, safe to restore against.
+        // Page wrappers already have their final height once
+        // renderPdfPages resolves (only their canvases still render
+        // lazily while scrolling - see renderPdf.ts), so the document's
+        // scroll height is already correct here.
         if (savedFraction != null) {
           const max = document.documentElement.scrollHeight - window.innerHeight;
           if (max > 0) window.scrollTo(0, savedFraction * max);
         }
         setState({ status: 'ready' });
       } catch (error) {
-        // A real failure to load this PDF - if it looks like a genuine
-        // network error (see looksLikeNetworkError; a confirmed real
-        // report: the exact raw pdf.js/fetch message, "Setting up fake
-        // worker failed: ...Failed to fetch..." - showing instead of the
-        // friendly offline one, because a background ping to an unrelated
-        // endpoint kept reporting "online" regardless of whether the app
-        // could actually reach anything) - this failure itself is the
-        // real, live signal the whole app's connectivity state is driven
-        // by, not a separately-pinged guess.
+        // If this looks like a genuine network error (see
+        // looksLikeNetworkError), treat it as a live connectivity signal
+        // (reportFetchFailure) rather than relying on a separately-pinged
+        // guess - a raw `navigator.onLine` read alone isn't reliable
+        // enough here.
         if (looksLikeNetworkError(error)) reportFetchFailure();
         if (!cancelled) setState({ status: 'error', message: String(error), offline: !getOnlineSnapshot() });
       }
@@ -114,12 +103,11 @@ export function PdfViewerScreen({ resolved }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the stable id, not the `pdf` object (a fresh reference every render via .find()); savedFraction comes from progressMap, read once on mount, so it can't change across this effect's lifetime
   }, [pdf?.driveFileId, pdf?.resourceKey]);
 
-  // Records the reading position (see progressStore.ts's recordPdfProgress)
-  // once pages have real layout to scroll against - same throttle/flush
-  // rationale as the audio player's position tracking (PlayerProvider.tsx):
-  // a periodic write while scrolling, plus an immediate flush right before
-  // the page might go away, so a reload or re-visit resumes close to the
-  // real position without hammering localStorage on every scroll event.
+  // Same throttle/flush pattern as the audio player's position tracking
+  // (PlayerProvider.tsx): periodic writes while scrolling plus an
+  // immediate flush before the page may go away, so a reload or revisit
+  // resumes close to the real position without writing on every scroll
+  // event.
   useEffect(() => {
     if (!pdf || state.status !== 'ready') return;
     let lastRecordAt = 0;
@@ -162,10 +150,6 @@ export function PdfViewerScreen({ resolved }: Props) {
       {state.status === 'loading' && <p className="subtitle">{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</p>}
       {state.status === 'error' && state.offline && (
         <>
-          {/* Same icon+card treatment as the home screen's own offline note
-              (see index.css's .offline-note) - a plain heads-up, not an
-              error, plus a real next step instead of a dead-end message:
-              jump straight to what's actually available offline right now. */}
           <div className="offline-note">
             <WifiOff size={16} aria-hidden />
             <span>{t.pdfOfflineNotDownloaded}</span>
@@ -178,12 +162,9 @@ export function PdfViewerScreen({ resolved }: Props) {
       {state.status === 'error' && !state.offline && (
         <>
           <p className="gap-message">{t.pdfLoadError(state.message)}</p>
-          {/* pdf.js couldn't render it in-app (a malformed/unusual PDF, a transient
-              network hiccup mid-parse) - the raw file itself is still real and
-              fetchable through the same Worker URL, so a plain link out to it (the
-              browser's own PDF viewer, or a download) is a real fallback, not a
-              dead end. Skipped while offline (see above) - it can't work either,
-              and offering it would just be a second dead end right under the first. */}
+          {/* The file is still fetchable directly even when pdf.js can't
+              render it in-app, so link out to it as a fallback - except
+              while offline, where the direct fetch would fail too. */}
           <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
             {t.openPdfExternally}
           </a>

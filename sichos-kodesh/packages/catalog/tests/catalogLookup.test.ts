@@ -11,8 +11,8 @@ function entry(overrides: Partial<CatalogEntry> = {}): CatalogEntry {
 
 describe('findCatalogEntryForOccasion', () => {
   it('resolves a "week:N" key to a real kvius-matched year\'s actual date for that week, then finds the catalog entry there', () => {
-    // Real invariant this depends on (proven in kvius-engine's own tests): kvius-matched years
-    // share week structure, so week N's *parsha* is the same even though its Hebrew date differs.
+    // Kvius-matched years share week structure, so week N's parsha is the
+    // same even though its Hebrew date differs.
     const { hebrewYear: matchedYear } = findMatchingYears(5786, { fromYear: 5700, toYear: 5786 })[0]!;
     const weekIndex = 10;
     const dateInMatchedYear = buildWeeklySchedule(matchedYear, false)[weekIndex]!;
@@ -36,7 +36,7 @@ describe('findCatalogEntryForOccasion', () => {
   });
 
   it('resolves Purim to Adar II in a leap year via the resolver function', () => {
-    // 5711 is a leap year (confirmed earlier this session); Purim (14 Adar) falls in Adar II -> "06B".
+    // 5711 is a leap year; Purim (14 Adar) falls in Adar II -> "06B".
     const catalog: CatalogByYear = { 5711: [entry({ hebrewDate: '5711-06B-14' })] };
     const found = findCatalogEntryForOccasion(catalog, 5711, 'purim', false, STARTER_FIXED_OCCASIONS);
     expect(found?.hebrewDate).toBe('5711-06B-14');

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { occasionChagCategory } from '../src/occasionChag.js';
 
 describe('occasionChagCategory', () => {
-  // All dates verified directly against a real HebrewCalendar.calendar(5711) scan.
   it('resolves Rosh Hashana (both days, including the year-suffixed first-day description)', () => {
     expect(occasionChagCategory('5711-01-01', false)).toBe('Rosh Hashana');
     expect(occasionChagCategory('5711-01-02', false)).toBe('Rosh Hashana');

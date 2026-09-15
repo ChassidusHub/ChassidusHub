@@ -34,7 +34,7 @@ interface RevalidationCacheEntry {
 export interface RevalidationResult {
   body: string;
   etag: string | null;
-  /** false only when a 304 confirmed the cached body is still current; true for a first fetch or a genuine change. */
+  /** false only when a 304 means the cached body is still current; true for a first fetch or a genuine change. */
   changed: boolean;
 }
 

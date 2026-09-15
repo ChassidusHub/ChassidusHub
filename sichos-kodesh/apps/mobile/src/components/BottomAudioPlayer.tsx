@@ -22,21 +22,17 @@ function formatTime(seconds: number): string {
  * while its PDF is scrolled/read - rendered by PdfViewerScreen alongside
  * the embedded PDF view, not as a separate screen.
  *
- * A farbrengen is usually several separate recordings, not one (real
- * examples run to 8-10: a few sichos, a maamar, niggunim between them) -
- * `audio`'s array order is already the real chapter/playback order (see
- * packages/mafteiach-index's jemAudio.ts), so this plays through it like a
- * real chapters list: prev/next, an expandable chapter picker, and
- * auto-advance into the next chapter when one ends. No draggable seek bar
- * (would need a native slider dependency to add real linking) - a live
- * elapsed/duration progress bar covers the actual ask ("scroll and listen
- * at once, and skip between chapters").
+ * A farbrengen is usually several separate recordings, not one (a few
+ * sichos, a maamar, niggunim between them) - `audio`'s array order is
+ * already the real chapter/playback order (see packages/mafteiach-index's
+ * jemAudio.ts), so this plays through it like a real chapters list:
+ * prev/next, an expandable chapter picker, and auto-advance into the next
+ * chapter when one ends. No draggable seek bar - a live elapsed/duration
+ * progress bar covers scrubbing without a native slider dependency.
  *
  * Each chapter change downloads in full before playback starts (see
- * loadCachedSound - a prior streaming-while-caching attempt raced its own
- * background download for bandwidth and could get stuck after a skip), but
- * silently - just "Loading...", no progress bar - and only once per
- * chapter, since the downloaded copy is kept for next time.
+ * loadCachedSound), shown only as a silent "Loading..." state, and only
+ * once per chapter, since the downloaded copy is kept for next time.
  */
 export function BottomAudioPlayer({ audio }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);

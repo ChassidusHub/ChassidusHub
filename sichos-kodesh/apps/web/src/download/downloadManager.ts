@@ -72,15 +72,15 @@ export function listDownloadTargets(entries: CatalogEntry[], contentTypes: Downl
  * now, read directly from each cached response - not
  * `navigator.storage.estimate()`, which is *origin-wide* (so it also counts
  * the ~7MB app-shell precache having nothing to do with "downloads," always
- * inflating the number) and, worse, a real reported bug: its `usage` figure
- * lags the cache's actual contents badly enough that it can read *higher*
- * immediately after `caches.delete()` empties this exact cache, making
- * "Clear downloads" look like it did nothing even though the cache is
- * genuinely empty (confirmed directly: `cache.keys()` shows 0 entries right
- * after, while `estimate()` still reports several MB). Prefers each
- * response's own `Content-Length` header (present for every real
- * media-proxy response); falls back to materializing the blob only for the
- * rare response that lacks one, since that needs reading the actual bytes.
+ * inflating the number) and, worse, can lag the cache's actual contents
+ * badly enough that it reads *higher* immediately after `caches.delete()`
+ * empties this exact cache (`cache.keys()` shows 0 entries right after,
+ * while `estimate()` still reports several MB), making "Clear downloads"
+ * look like it did nothing even though the cache is genuinely empty.
+ * Prefers each response's own `Content-Length` header (present for every
+ * real media-proxy response); falls back to materializing the blob only
+ * for the rare response that lacks one, since that needs reading the
+ * actual bytes.
  */
 export async function getDownloadedBytes(): Promise<number> {
   const cache = await caches.open(MEDIA_CACHE_NAME);
@@ -213,11 +213,10 @@ export async function runDownload(targets: DownloadTarget[], options: RunDownloa
   if (wifiOnly && shouldSkipForMeteredConnection()) {
     // Every caller here already moved this job to a "queued"/"downloading"
     // state before calling runDownload (see DownloadProvider) - returning
-    // silently, with no event at all, left it stuck there forever with a
-    // spinner that never resolves and no way to tell why. Reporting
-    // 'error' for each target is what actually settles that state back to
-    // a plain, re-tappable "download" - the real fix for a genuine
-    // "download doesn't work" report on a non-Wi-Fi connection.
+    // silently, with no event at all, would leave it stuck there forever
+    // with a spinner that never resolves and no way to tell why. Reporting
+    // 'error' for each target settles that state back to a plain,
+    // re-tappable "download".
     for (const target of targets) onEach?.(target, 'error');
     return;
   }

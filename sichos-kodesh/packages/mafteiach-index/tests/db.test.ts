@@ -54,8 +54,8 @@ describe('db', () => {
       last_crawled_at: string;
     };
     expect(row.first_seen_at).toBe('2026-01-01T00:00:00.000Z');
-    expect(row.last_changed_at).toBe('2026-01-01T00:00:00.000Z'); // unchanged content -> not bumped
-    expect(row.last_crawled_at).toBe('2026-02-01T00:00:00.000Z'); // crawl bookkeeping still updates
+    expect(row.last_changed_at).toBe('2026-01-01T00:00:00.000Z');
+    expect(row.last_crawled_at).toBe('2026-02-01T00:00:00.000Z');
   });
 
   it('a genuine content change reports "updated" and bumps last_changed_at', () => {

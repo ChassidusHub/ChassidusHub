@@ -7,11 +7,10 @@ import type { HebrewDateParts } from '@sichos-kodesh/kvius-engine';
  * only). mafteiach-index's `hebrew_date` string keys use a different,
  * Tishrei-based convention instead (01=Tishrei ... 05=Shevat ... 07=Nisan
  * ... 12=Elul, with a leap year's Adar split into "06A"/"06B" rather than
- * shifting every later month's number) - confirmed against the real
- * crawled dataset (e.g. "5711-05-10" for Yud Shevat 5711, "5711-06A-14"/
- * "5711-06B-14" for Purim Koton / Purim in a leap year). This converts
- * kvius-engine's date parts into that exact string key so the catalog can
- * look up a mafteiach-index occasion by (hebrewYear, occasionKey).
+ * shifting every later month's number, e.g. "5711-06A-14"/"5711-06B-14"
+ * for Purim Koton / Purim in a leap year). This converts kvius-engine's
+ * date parts into that exact string key so the catalog can look up a
+ * mafteiach-index occasion by (hebrewYear, occasionKey).
  */
 export function toMafteiachHebrewDateKey(parts: HebrewDateParts): string {
   const isLeap = HDate.isLeapYear(parts.year);

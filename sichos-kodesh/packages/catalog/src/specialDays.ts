@@ -9,26 +9,20 @@ export interface SpecialDay {
 }
 
 /**
- * Recurring Hebrew-calendar dates - none of them Shabbos, none a real Yom
- * Tov (see occasionChagCategory) - worth their own search filter, the same
- * kind of "which occasion" question a parsha or chag answers. Not guessed:
- * found by auditing the real bundled catalog for every non-Shabbos,
- * non-Yom-Tov date recurring across many years with genuine recorded
- * content, then reviewed by hand against Chabad's own canonical list of
- * yahrzeits, birthdays, and historic geula/redemption days for the
- * Rebbeim - and each of *those* was separately confirmed to actually have
- * real content in this specific catalog too, not assumed from the general
- * list alone (e.g. Gimmel Tamuz already had real, longstanding
- * significance well before the Rebbe's own passing in 5754 - see its own
- * comment below - so it genuinely has sichos throughout this catalog's
- * 5710-5752 span, not by some quirk of timing).
+ * Recurring Hebrew-calendar dates - none of them Shabbos, none a Yom Tov
+ * (see occasionChagCategory) - worth their own search filter, the same
+ * kind of "which occasion" question a parsha or chag answers. This is a
+ * curated list: every non-Shabbos, non-Yom-Tov date recurring across many
+ * years with genuine recorded content in the bundled catalog, cross-
+ * checked against Chabad's own canonical list of yahrzeits, birthdays, and
+ * historic geula/redemption days for the Rebbeim.
  *
- * Deliberately excludes the "erev [a real Yom Tov]" dates (Erev Rosh
- * Hashana, Erev Yom Kippur, Erev Pesach, Erev Shavuot, Erev Sukkot) even
- * though several of those recur even more often than every date below - a
- * considered choice, not an oversight: those are already naturally
- * discoverable via the Yom Tov itself, unlike the dates below, none of
- * which are the eve of anything already searchable another way.
+ * Deliberately excludes the "erev [Yom Tov]" dates (Erev Rosh Hashana,
+ * Erev Yom Kippur, Erev Pesach, Erev Shavuot, Erev Sukkot) even though
+ * several of those recur even more often than every date below: those are
+ * already naturally discoverable via the Yom Tov itself, unlike the dates
+ * below, none of which are the eve of anything already searchable another
+ * way.
  */
 export const SPECIAL_DAYS: SpecialDay[] = [
   { hdateMonth: 7, day: 3 }, // Tzom Gedaliah
@@ -57,7 +51,7 @@ export const SPECIAL_DAYS: SpecialDay[] = [
   { hdateMonth: 2, day: 14 }, // Pesach Sheni
   { hdateMonth: 2, day: 18 }, // Lag BaOmer
   { hdateMonth: 3, day: 28 }, // Arrival in the USA
-  { hdateMonth: 4, day: 3 }, // Gimmel Tamuz - the Previous Rebbe's Atchalta d'Geula, part of the same Yud-Beis Tamuz redemption story below, not (in this catalog's own 5710-5752 span) yet the Rebbe's own later yahrzeit
+  { hdateMonth: 4, day: 3 }, // Gimmel Tamuz - the Previous Rebbe's Atchalta d'Geula, part of the same Yud-Beis Tamuz redemption story below; the Rebbe's own later yahrzeit falls outside this catalog's 5710-5752 span
   { hdateMonth: 4, day: 12 }, // Yud-Beis Tamuz
   { hdateMonth: 4, day: 13 }, // Motzoei Yud-Gimmel Tamuz
   { hdateMonth: 5, day: 14 },
@@ -77,13 +71,12 @@ const SPECIAL_DAY_SET: ReadonlySet<string> = new Set(SPECIAL_DAYS.map((d) => spe
  * Which SPECIAL_DAYS entry (by its `${hdateMonth}-${day}` id) an occasion
  * belongs to, or null. Matches by exact date, or by one calendar day
  * either side when the label itself marks it as an "ערב" (eve of) or
- * "מוצאי" (the night concluding) entry - a real reported case, not a
- * hypothetical one: a farbrengen genuinely held the evening before or
- * after a special day is the same occasion, filed under an adjacent date
- * only because Hebrew calendar days run sunset-to-sunset. Trusts the
- * label over blindly matching *any* occasion that happens to land on the
- * adjacent date by pure coincidence - an unrelated occasion one day off
- * shouldn't count just because of proximity.
+ * "מוצאי" (the night concluding) entry: a farbrengen held the evening
+ * before or after a special day is the same occasion, filed under an
+ * adjacent date only because Hebrew calendar days run sunset-to-sunset.
+ * Trusts the label over blindly matching any occasion that happens to
+ * land on the adjacent date by coincidence - an unrelated occasion one
+ * day off shouldn't count just because of proximity.
  */
 export function occasionSpecialDay(hebrewDate: string, occasionLabel: string): string | null {
   const hebrewYear = Number(hebrewDate.split('-')[0]);

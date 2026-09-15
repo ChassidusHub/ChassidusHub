@@ -15,10 +15,9 @@ type Cheerio$ = ReturnType<typeof cheerio.load>;
  * detecting via the specific class (rather than checking for "disabled")
  * is the robust direction.
  *
- * `hagahos` belongs here (a plain link list, confirmed against a real
- * example) — `hosofos` does not, despite looking like a sibling tab: it's
- * free-text like `tochenInyanim`, confirmed against a real example too
- * (see `parseNoteSection` and tests/fixtures).
+ * `hagahos` belongs here (a plain link list) — `hosofos` does not, despite
+ * looking like a sibling tab: it's free-text like `tochenInyanim` (see
+ * `parseNoteSection`).
  */
 const LINK_SECTIONS: Array<{ key: keyof Pick<FarbrengenDetail, 'biltiMugah' | 'mugah' | 'maamorim' | 'english' | 'hagahos'>; contentClass: string }> = [
   { key: 'biltiMugah', contentClass: 'bilti-muga-sichos-content' },
@@ -69,14 +68,13 @@ function parseAudioSection($: Cheerio$): FarbrengenDetail['audio'] {
 }
 
 /**
- * Video has two distinct real shapes, confirmed against the full crawled
- * corpus (not just a couple of examples): a `sicha_video-button` that
- * embeds a YouTube player via `addYouTubeEmbed(id, ...)`, or - about a
- * quarter of all video occasions - a plain outbound `<a class="...
- * video-button button">` (chabad.org's Living Torah player, JEM's
- * videos.jem.tv, Vimeo, Drive, and a legacy 770live.com all appear as real
- * hosts). A fragment's video slot is always one or the other, never both,
- * but both are checked unconditionally rather than assuming that.
+ * Video has two distinct shapes: a `sicha_video-button` that embeds a
+ * YouTube player via `addYouTubeEmbed(id, ...)`, or - about a quarter of
+ * all video occasions - a plain outbound `<a class="... video-button
+ * button">` (chabad.org's Living Torah player, JEM's videos.jem.tv,
+ * Vimeo, Drive, or a legacy 770live.com). A fragment's video slot is
+ * always one or the other, never both, but both are checked
+ * unconditionally rather than assuming which.
  */
 function parseVideoSection($: Cheerio$, rawHtml: string): FarbrengenDetail['video'] {
   const youtubeIds = [...rawHtml.matchAll(/addYouTubeEmbed\('([^']+)'/g)].map((m) => m[1]!);
@@ -105,11 +103,11 @@ function parseNoteSection($: Cheerio$, contentClass: string): FarbrengenDetail['
  * Parses a `/all/{id}/fragment.js` response into the full per-farbrengen
  * breakdown: mugah / bilti-mugah / maamorim texts (each with their source
  * links, e.g. Google Drive-hosted scans and their printed-volume
- * citations), audio (links out to ashreinu.app — JEM's audio app, see
- * docs/PLANNING.md), video (embedded YouTube ids), English translation
- * links, mafteiach.app's own editorial content-outline, hagahos
- * (annotations/corrections, a link list), and hosofos (addenda, free-text
- * like the content-outline — not a link list despite the similar-looking tab).
+ * citations), audio (links out to ashreinu.app, JEM's audio app), video
+ * (embedded YouTube ids), English translation links, mafteiach.app's own
+ * editorial content-outline, hagahos (annotations/corrections, a link
+ * list), and hosofos (addenda, free-text like the content-outline — not a
+ * link list despite the similar-looking tab).
  */
 export function parseFragmentPage(rawResponse: string, id: number): FarbrengenDetail {
   const html = extractHtmlLiteral(rawResponse);

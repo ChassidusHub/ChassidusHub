@@ -241,8 +241,7 @@ describe('runDownload', () => {
       // Both targets settle to 'error' - a caller that moved its state to
       // 'queued'/'downloading' before calling runDownload (see
       // DownloadProvider) needs *some* event to un-stick it, or the UI is
-      // left showing a spinner that never resolves - a real reported
-      // "download doesn't work" symptom.
+      // left showing a spinner that never resolves.
       expect(events).toEqual(['error', 'error']);
       expect(globalThis.fetch).not.toHaveBeenCalled();
     } finally {

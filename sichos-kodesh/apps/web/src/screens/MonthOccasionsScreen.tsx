@@ -12,13 +12,6 @@ interface Props {
   monthToken: string;
 }
 
-/**
- * Browse mode's second screen for a year: every occasion in one specific
- * month (reached from YearBrowserScreen's month list), the same row style
- * every occasion list in the app uses. Occasion links go to
- * /browse/:hebrewYear/:occasionId, same as the old flat single-list
- * screen did - only how you get there changed, not where a row leads.
- */
 export function MonthOccasionsScreen({ hebrewYear, monthToken }: Props) {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
