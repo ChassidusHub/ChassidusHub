@@ -160,9 +160,11 @@ h1 {
   font-weight: 600;
 }
 
+/* Gray, not danger-colored, matching .offline-note's own reasoning below -
+   this is a plain heads-up describing a normal state, not an error. */
 .connectivity-banner-offline {
-  background: var(--danger);
-  color: var(--danger-fg);
+  background: var(--card-hover);
+  color: var(--muted);
 }
 
 .connectivity-banner-online {
