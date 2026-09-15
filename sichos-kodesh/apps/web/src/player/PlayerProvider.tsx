@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { audioUrl } from '../download/download';
-import { probeRealConnectivity } from '../network/useOnlineStatus';
+import { reportFetchFailure } from '../network/connectivity';
 import { forMediaSession } from '../utils/hebrewPunctuation';
 import { recordChapterProgress } from './progressStore';
 import { PlayerContext } from './playerContext';
@@ -270,13 +270,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           // failing to load (the common case: offline and not downloaded)
           // silently did nothing visible, unlike PdfViewerScreen's own
           // offline handling (a real reported gap: "never get the offline
-          // message" when testing with a recording, not a PDF). A raw
-          // `navigator.onLine` read is known to be unreliable (see
-          // PdfViewerScreen's matching comment) - a real network probe,
-          // right now, is what actually decides which message to show.
-          onError={async () => {
-            const online = await probeRealConnectivity();
-            setState((s) => ({ ...s, playing: false, error: { offline: !online } }));
+          // message" when testing with a recording, not a PDF). This
+          // failure is itself the live signal the whole app's connectivity
+          // state is driven by (see connectivity.ts) - a decode/format
+          // error is unrealistic for this catalog's real files, so every
+          // load failure here is treated as a real fetch failure, same as
+          // PdfViewerScreen's own (heuristic-checked) one.
+          onError={() => {
+            reportFetchFailure();
+            setState((s) => ({ ...s, playing: false, error: { offline: true } }));
           }}
           onEnded={() => {
             // Record this chapter as fully played explicitly - the last

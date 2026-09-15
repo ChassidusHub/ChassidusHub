@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
-import { probeRealConnectivity } from '../network/useOnlineStatus';
+import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
 import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
 import { getOccasionProgress, getPdfScrollFraction, recordPdfProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
@@ -93,16 +93,17 @@ export function PdfViewerScreen({ resolved }: Props) {
         }
         setState({ status: 'ready' });
       } catch (error) {
-        // A raw `navigator.onLine` read is known to be unreliable (a
-        // confirmed real report: the exact raw pdf.js/fetch message -
-        // "Setting up fake worker failed: ..." - showing instead of the
-        // friendly offline one, with `navigator.onLine` stuck reporting
-        // `true` the whole time despite being genuinely offline) - a real
-        // network probe, right now, at the moment this actually failed, is
-        // what `useOnlineStatus`'s own live-but-periodic state can't give
-        // (it can be a few seconds stale either direction).
-        const online = await probeRealConnectivity();
-        if (!cancelled) setState({ status: 'error', message: String(error), offline: !online });
+        // A real failure to load this PDF - if it looks like a genuine
+        // network error (see looksLikeNetworkError; a confirmed real
+        // report: the exact raw pdf.js/fetch message, "Setting up fake
+        // worker failed: ...Failed to fetch..." - showing instead of the
+        // friendly offline one, because a background ping to an unrelated
+        // endpoint kept reporting "online" regardless of whether the app
+        // could actually reach anything) - this failure itself is the
+        // real, live signal the whole app's connectivity state is driven
+        // by, not a separately-pinged guess.
+        if (looksLikeNetworkError(error)) reportFetchFailure();
+        if (!cancelled) setState({ status: 'error', message: String(error), offline: !getOnlineSnapshot() });
       }
     })();
 
