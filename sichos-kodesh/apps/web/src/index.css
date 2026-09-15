@@ -886,6 +886,9 @@ h1 {
 }
 
 .global-player-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 40px;
   height: 40px;
@@ -903,6 +906,9 @@ h1 {
 }
 
 .global-player-skip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 32px;
   height: 32px;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
@@ -21,6 +21,35 @@ export function GlobalPlayerBar() {
   const { t } = useTranslation();
   const player = usePlayer();
   const [showChapters, setShowChapters] = useState(false);
+  // Non-null exactly while the user has a finger/pointer down on the
+  // scrubber - the range input's displayed value comes from here instead
+  // of the live ticking `currentTime` for that whole stretch, so a
+  // playback-position update landing mid-drag doesn't snap the thumb back
+  // to wherever the audio actually is right now and fight the drag - a
+  // real, confirmed device-dependent bug: seeking on a still-buffering
+  // network stream can lag the position tick noticeably behind where the
+  // user already dragged to, so a controlled value bound straight to that
+  // tick visibly yanks the thumb backwards while a drag is still in
+  // progress.
+  const [dragPercent, setDragPercent] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (dragPercent == null) return;
+    function commit() {
+      setDragPercent(null);
+    }
+    // The pointer can be released after moving off the input itself (a
+    // drag that ends below/above the slider, say) - a window-level
+    // listener, not just one on the input, is what makes the drag reliably
+    // end everywhere, on every device, rather than only when the release
+    // happens to land back on the element.
+    window.addEventListener('pointerup', commit);
+    window.addEventListener('pointercancel', commit);
+    return () => {
+      window.removeEventListener('pointerup', commit);
+      window.removeEventListener('pointercancel', commit);
+    };
+  }, [dragPercent]);
 
   if (!player.playlist) return null;
 
@@ -29,10 +58,17 @@ export function GlobalPlayerBar() {
   const hasPrev = player.currentIndex > 0;
   const hasNext = player.currentIndex < audio.length - 1;
   const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
+  const displayedPercent = dragPercent ?? progressPercent;
   const chapterLabel = current.chapterName ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
 
   function seek(e: React.ChangeEvent<HTMLInputElement>) {
-    player.seekToFraction(Number(e.target.value) / 100);
+    const percent = Number(e.target.value);
+    if (dragPercent != null) setDragPercent(percent);
+    player.seekToFraction(percent / 100);
+  }
+
+  function beginDrag() {
+    setDragPercent(progressPercent);
   }
 
   function selectChapter(index: number) {
@@ -61,15 +97,21 @@ export function GlobalPlayerBar() {
         <div className="global-player-transport">
           {audio.length > 1 && (
             <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label={t.previousChapter}>
-              <SkipBack size={18} fill="currentColor" />
+              <SkipBack size={20} fill="currentColor" />
             </button>
           )}
           <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? t.pause : t.play}>
-            {player.playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+            {/* A play triangle's own visual weight sits left of its true
+                geometric center (an inherent asymmetric-shape effect, not a
+                CSS bug) - nudging it right by a couple of px is what actually
+                reads as centered, matching every real player's own play
+                button; pause's two bars are already symmetric and need no
+                such nudge. */}
+            {player.playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{ marginInlineStart: 2 }} />}
           </button>
           {audio.length > 1 && (
             <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label={t.nextChapter}>
-              <SkipForward size={18} fill="currentColor" />
+              <SkipForward size={20} fill="currentColor" />
             </button>
           )}
         </div>
@@ -86,7 +128,16 @@ export function GlobalPlayerBar() {
             <p className="global-player-error">{player.error.offline ? t.audioOfflineNotDownloaded : t.audioLoadError}</p>
           ) : (
             <>
-              <input type="range" min={0} max={100} value={progressPercent} onChange={seek} className="global-player-range" aria-label={t.seek} />
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={displayedPercent}
+                onChange={seek}
+                onPointerDown={beginDrag}
+                className="global-player-range"
+                aria-label={t.seek}
+              />
               <div className="global-player-times">
                 <span>{formatTime(player.currentTime)}</span>
                 <span>{formatTime(player.duration)}</span>

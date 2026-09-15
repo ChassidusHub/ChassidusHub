@@ -218,6 +218,33 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     navigator.mediaSession.playbackState = state.playing ? 'playing' : 'paused';
   }, [state.playing]);
 
+  // The Media Session position API is what actually drives the OS's own
+  // lock-screen/notification seek bar and elapsed-time display - without
+  // it, that control has no real position data at all, which is the
+  // "bugged out" state a skip/fresh load can otherwise show: metadata (the
+  // title) already updated to the new chapter, but with no matching
+  // position reported yet. `duration <= 0` (right after a skip or on first
+  // load, before `onLoadedMetadata` fires) explicitly clears the previously
+  // reported state instead of reporting one - a stale one would leave the
+  // *previous* chapter's duration/position shown against the new title, an
+  // actually-mismatched, "bugged" state, not just an absent one. Called on
+  // every position tick with no throttling, same as the API is meant to be
+  // used (MDN's own example does the same, in exactly this handler).
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) return;
+    if (!current || state.duration <= 0) {
+      navigator.mediaSession.setPositionState();
+      return;
+    }
+    try {
+      navigator.mediaSession.setPositionState({ duration: state.duration, playbackRate: 1, position: Math.min(state.currentTime, state.duration) });
+    } catch {
+      // A rare floating-point case right at a chapter's end (position
+      // marginally over duration) throws rather than clamping - safe to
+      // skip that one update and pick it back up on the next tick.
+    }
+  }, [current, state.duration, state.currentTime]);
+
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
     navigator.mediaSession.setActionHandler('play', () => audioRef.current?.play());
