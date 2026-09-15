@@ -3,7 +3,7 @@ import { kviusSignature, sameKvius } from '../src/hebrewCalendar.js';
 import { MAX_HISTORICAL_YEAR, MIN_HISTORICAL_YEAR, findMatchingYears, findPartialWeekMatches, weekMatchesInYear } from '../src/matching.js';
 import type { WeekDay } from '../src/types.js';
 
-/** 10-16 Shevat 5786 (a real week, verified against a direct HDate scan - see the PR this landed in) - deliberately away from the Rosh Hashana/Cheshvan-Kislev boundary so it's a clean, ordinary 7-day week with no year-rollover edge case. */
+/** 10-16 Shevat 5786 - deliberately away from the Rosh Hashana/Cheshvan-Kislev boundary so it's a clean, ordinary 7-day week with no year-rollover edge case. */
 const SHEVAT_5786_WEEK: WeekDay[] = [
   { month: 11, day: 7 },
   { month: 11, day: 8 },
@@ -61,8 +61,7 @@ describe('findMatchingYears', () => {
       expect(hebrewYear).toBeGreaterThanOrEqual(MIN_HISTORICAL_YEAR);
       expect(hebrewYear).toBeLessThanOrEqual(MAX_HISTORICAL_YEAR);
     }
-    // Verified directly against packages/mafteiach-index's real database:
-    // coverage before 5710 is sparse (1-14 occasions/year) - it predates
+    // Coverage before 5710 is sparse (1-14 occasions/year) - it predates
     // the Rebbe's own Sichos Kodesh, so MIN_HISTORICAL_YEAR is 5710, not
     // the dataset's earliest crawled year (5690).
     expect(results.map((r) => r.hebrewYear)).toEqual([5742, 5735, 5715]);

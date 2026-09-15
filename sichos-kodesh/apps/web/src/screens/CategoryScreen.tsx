@@ -9,14 +9,10 @@ interface Props {
 }
 
 /**
- * One PDF section's (mugah/biltiMugah/maamorim/hagahos/hosofos) own page,
- * reached via FarbrengenScreen's collapsed "More from this occasion"
- * section - kept off the main occasion page instead of listed inline
- * there, since an occasion can have PDFs
- * across every section at once and a Sefer-vs-Toras-Menachem-vs-Sichos-
- * Kodesh label makes little sense without its category header for
- * context (hagahos's "צילום 1"/"צילום 2" - literally "scan 1"/"scan 2" -
- * being the clearest real example).
+ * A PDF section's own page rather than listed inline on the occasion
+ * screen: a label like hagahos's "צילום 1"/"צילום 2" ("scan 1"/"scan 2")
+ * doesn't make sense without its section header for context, and an
+ * occasion can have PDFs across every section at once.
  */
 export function CategoryScreen({ resolved }: Props) {
   const { section } = useParams<{ section: PdfSection }>();

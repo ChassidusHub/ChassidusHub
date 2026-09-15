@@ -24,9 +24,9 @@ export function openDatabase(path: string): DatabaseSync {
       has_transcript INTEGER NOT NULL,
       has_own_audio INTEGER NOT NULL,
 
-      -- Denormalized from the first entry in the ccdb dates array (every
-      -- real example seen has exactly one) - kept as real columns, not a
-      -- JSON blob, so "every event on Hebrew date X" is a plain indexed query.
+      -- Denormalized from the first entry in the ccdb dates array (there is
+      -- normally exactly one) into real columns, not a JSON blob, so "every
+      -- event on Hebrew date X" is a plain indexed query.
       hebrew_year INTEGER,
       hebrew_month INTEGER,
       hebrew_day INTEGER,

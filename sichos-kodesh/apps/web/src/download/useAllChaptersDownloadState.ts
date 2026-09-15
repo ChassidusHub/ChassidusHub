@@ -42,6 +42,6 @@ export function useAllChaptersDownloadState(entry: CatalogEntry): AllChaptersDow
   if (anyInFlight) return 'downloading';
   if (allLiveDownloaded || cachedAllDownloaded) return 'downloaded';
   // See useDownloadState's matching comment - a tappable "download all"
-  // affordance is pointless (and was a real reported gap) while offline.
+  // affordance is pointless while offline.
   return online ? 'none' : 'unavailable';
 }

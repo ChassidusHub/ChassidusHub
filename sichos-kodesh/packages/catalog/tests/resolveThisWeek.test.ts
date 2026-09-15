@@ -70,7 +70,7 @@ describe('resolveThisWeek', () => {
     expect(labels).toEqual(['Shabbos', 'Yud Shevat'].sort());
   });
 
-  it('omits an occasion with neither audio nor a PDF (a real gap, not shown as content)', () => {
+  it('omits an occasion with neither audio nor a PDF', () => {
     const targetYear = 5786;
     const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
     const targetShabbos = new HDate(15, 7, targetYear).onOrAfter(6);

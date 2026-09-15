@@ -9,14 +9,7 @@ interface Props {
   sourceYear: number;
 }
 
-/**
- * "All of {year}"'s first screen, for the follow flow - only the months
- * with something real to show, each linking to that month's own occasion
- * list (FollowMonthOccasionsScreen). The follow-flavored twin of
- * YearBrowserScreen: same month-first browsing, just linking occasions
- * into /follow/:sourceYear/:occasionId (FarbrengenScreen's
- * highlighted-hanacha treatment) instead of /browse/:hebrewYear/:occasionId.
- */
+/** Follow-flow twin of YearBrowserScreen: same month-first browsing, but links to /follow/:sourceYear/:occasionId instead of /browse/:hebrewYear/:occasionId. */
 export function FollowMonthListScreen({ sourceYear }: Props) {
   const { t, language } = useTranslation();
   const entries: CatalogEntry[] = (catalog[sourceYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);

@@ -57,7 +57,7 @@ describe('resolveJemAudio', () => {
 
     const recordings = await resolveJemAudio(1, fetchImpl as unknown as typeof fetch);
 
-    // Real fixture: event 1 (the farbrengen) has 4 sub-events, each with its own audio recording.
+    // event 1 (the farbrengen) has 4 sub-events, each with its own audio recording
     expect(recordings).toHaveLength(4);
     expect(recordings.map((r) => r.eventId)).toEqual([2, 3, 4, 5]);
     expect(recordings.map((r) => r.chapterName)).toEqual(['Sicha 1', 'Sicha 2', 'Ma’amar', 'Sicha 3']);

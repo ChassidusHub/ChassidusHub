@@ -4,59 +4,40 @@ A Cloudflare Worker that proxies Google Drive-hosted hanacha/maamar PDFs
 and JEM's CloudFront-hosted audio so the app never shows a user a
 `drive.google.com` or `cloudfront.net` URL, a Drive viewer, or any other
 source-site UI. Every download/stream goes through this Worker's own
-domain; from the client's perspective a file "just downloads" and audio
-"just plays," the way a track does in Spotify — then it's saved locally
-and opened/played in the app's own PDF viewer and audio player.
+domain; the Worker fetches from the real source server-side and streams
+bytes back under its own API, then the file is saved locally and
+opened/played in the app's own PDF viewer and audio player.
 
-## Why this exists (Phase 1 of the storage plan in `docs/PLANNING.md`)
+## Why a proxy
 
-Google Drive is a genuinely bad target for direct, automated, at-scale
-downloading: files over ~100MB get served behind a "can't scan for
-viruses" interstitial instead of the file itself, requiring a
-`confirm=<token>` retry dance that a mobile client shouldn't have to
-replicate. A server-side proxy handles that once, reliably, and gives the
-client one simple, stable API regardless of what Drive does on any given
-file.
+Google Drive is a poor target for direct, automated, at-scale downloading:
+files over ~100MB are served behind a "can't scan for viruses"
+interstitial instead of the file itself, requiring a `confirm=<token>`
+retry dance. A server-side proxy handles that once, and gives clients one
+simple, stable API regardless of what Drive does for any given file.
 
-This is deliberately the *first* step, not the whole plan:
+The Worker is a stateless proxy today: no storage of its own beyond a
+short-lived edge cache (Cloudflare's Cache API — same file requested twice
+within 7 days is served from cache instead of re-fetched from the source).
+The route shapes are designed so a persistent store (e.g. an R2 bucket)
+could sit behind them later without changing the client-facing API.
 
-- **Phase 1 (this Worker, as built)**: stateless proxy, no storage of our
-  own. Every request still round-trips to Drive; the Worker only hides the
-  source and handles the confirm-token dance. Uses Cloudflare's free edge
-  Cache API as a light optimization (same file requested twice within 7
-  days is served from cache, not re-fetched from Drive).
-- **Phase 2 (not built yet)**: add an R2 bucket behind the same route
-  shapes — first request fetches from the real source and writes to R2,
-  every request after that serves straight from R2. The client-facing API
-  doesn't change; only what's behind it does. R2's pricing (as of this
-  writing: 10GB storage / 1M writes / 10M reads free, then $0.015/GB-month
-  storage with **egress always free** — unlike S3) is why R2 specifically,
-  not another object store: for a media-serving app, free egress is the
-  whole ballgame.
+## Scope: Drive PDFs + JEM audio; video is not proxied
 
-## Scope: Drive (text) + JEM audio; video still deliberately excluded
-
-- **Video via YouTube** genuinely can't be proxied this way regardless of
-  the underlying content's rights status — downloading video from YouTube
+- **Video (YouTube)** is not proxied — downloading video from YouTube
   outside their own official download feature is a YouTube Terms of
-  Service issue, separate from whatever rights JEM has released. Treat
-  YouTube-sourced video as stream-via-embedded-player-when-online, not an
-  offline download target, unless that changes.
-- **Audio via ashreinu.app / JEM** *is* wired up (`/jem-audio/:filename`).
-  The links mafteiach.app has aren't direct file URLs, they're
-  `ashreinu.app/#/player/...` SPA routes — resolving those to real files
-  needed a separate step (see `packages/mafteiach-index`'s `jemAudio.ts`
-  and `jem_audio` table): investigating ashreinu.app's own client bundle
-  found JEM runs real infrastructure for this — a CloudFront CDN serving
-  `.opus`/`.m4a`/`.mp3` files directly, and a structured "ccdb" API
-  (years → dates → events → audio recordings) behind AWS API Gateway,
-  confirmed live and **unauthenticated**. This is JEM's private,
-  undocumented backend, not a published third-party API — it's being used
-  now for private, pre-launch development (this project has no live users
-  yet), with a real conversation with JEM about formalizing this planned
-  before it ships to anyone else. If that conversation doesn't land, the
-  fallback is the released Google Drive audio folder instead — same
-  `/drive/:fileId` route this Worker already has, no new code needed.
+  Service issue, separate from whatever rights apply to the underlying
+  content. Video is streamed via an embedded player when online, not
+  offered as an offline download.
+- **Audio via JEM** is wired up at `/jem-audio/:filename`. The source
+  links (`ashreinu.app/#/player/...` SPA routes) aren't direct file URLs;
+  `packages/mafteiach-index`'s `jemAudio.ts` resolves them against JEM's
+  private, undocumented "ccdb" API (years → dates → events → audio
+  recordings, unauthenticated, served through AWS API Gateway) to a real
+  CloudFront filename, stored in its `jem_audio` table. This route is used
+  for private, pre-launch development ahead of a formal agreement with
+  JEM about serving their audio; if that doesn't land, the fallback is the
+  Drive-hosted audio folder via the existing `/drive/:fileId` route.
 
 ## Usage
 
@@ -65,61 +46,46 @@ GET /drive/:fileId?filename=optional-name.pdf&resourcekey=optional-key
 GET /jem-audio/:filename          # e.g. /jem-audio/JEMSK0001.mp3
 ```
 
-`fileId` is Google Drive's file id (the same id embedded in the
-`drive.google.com/file/d/{id}/view` or `?id={id}` URLs already in the
-mafteiach-index dataset's `links` table) — extract it client-side or
-server-side from the stored URL; this Worker takes the bare id, never a
-full Drive URL, so it can validate the input shape before proxying
-anything.
+`fileId` is Google Drive's file id (the id embedded in
+`drive.google.com/file/d/{id}/view` or `?id={id}` URLs in the
+mafteiach-index dataset's `links` table). This Worker takes the bare id,
+never a full Drive URL, so it can validate the input shape before
+proxying anything.
 
-`resourcekey` is optional but required for roughly 4% of real links in
-the dataset (verified: 253 of ~14k Drive PDF links) — Google added
-"resource keys" as an extra access requirement for links shared before a
-2021 security change, and a file that needs one 404s/redirects to a
-Google sign-in page without it, even though it's genuinely public.
-Present as a `resourcekey=` param on the original share URL when
-required; extract and forward it the same way as `fileId`.
+`resourcekey` is required for links shared before Google's 2021
+resource-key change — roughly 4% of the dataset's Drive PDF links — since
+a file that needs one 404s/redirects to a sign-in page without it, even
+though it's genuinely public. It's present as a `resourcekey=` param on
+the original share URL when required.
 
 `filename` for `/jem-audio/` is the CloudFront object name resolved by
 `packages/mafteiach-index`'s JEM audio resolver and stored in its
-`jem_audio` table (e.g. `JEMSK0001.mp3`, `AR0017467.mp3`) — again, never a
-full CloudFront URL.
+`jem_audio` table (e.g. `JEMSK0001.mp3`, `AR0017467.mp3`), never a full
+CloudFront URL.
 
 Both routes forward an incoming `Range` header to the upstream source and
-relay a real `206 Partial Content` with `Content-Range` back — needed for
-an audio player to seek within a track without re-downloading the whole
-file. Ranged requests always round-trip live and skip the Phase-1 cache,
-so a player never risks being served a stale or mismatched cached slice.
+relay a real `206 Partial Content` with `Content-Range` back, so a player
+can seek within a track without re-downloading the whole file. Ranged
+requests always round-trip live and skip the edge cache, so a player
+never risks a stale or mismatched cached slice.
 
 ## Development & deployment
 
-```
+```sh
 npm install
-npm test         # vitest - confirm-token extraction, URL/filename validation, mocked-fetch flow (Drive + JEM audio, incl. Range forwarding)
-npm run dev       # wrangler dev - local test server
-npm run deploy    # wrangler deploy - requires `wrangler login` or a CLOUDFLARE_API_TOKEN first
+npm test          # vitest — confirm-token extraction, URL/filename validation, mocked-fetch flow (Drive + JEM audio, incl. Range forwarding)
+npm run dev        # wrangler dev - local test server
+npm run deploy     # wrangler deploy - requires `wrangler login` or a CLOUDFLARE_API_TOKEN first
 ```
 
 `wrangler login` (interactive) or a `CLOUDFLARE_API_TOKEN` environment
 variable needs to be set up before `deploy` will work. The free Workers
 plan (100k requests/day) is enough to start; upgrade to the $5/mo plan
-(10M requests/month) only once real usage approaches that.
+(10M requests/month) once real usage approaches that.
 
-**Merging to `main` does not deploy this Worker** - there's no CI/CD for
-it (no `.github/workflows` in this repo at all), unlike `apps/web`'s
-Vercel auto-deploy. `npm run deploy` has to be run by hand after every
-change here, or the live Worker silently keeps running old code. This is
-a real, previously-hit trap, not a theoretical one: a fix for audio
-502s (falling back to `.m4a`/`.opus` when the stored extension 404s) sat
-merged on `main` for a real, extended stretch without ever being
-deployed, so the live Worker kept 502ing on exactly the files that fix
-was for - invisible until a later change elsewhere in the app started
-actually reaching those specific files. After any change here, deploy it
-and spot-check a real request against the live URL below, don't just
-trust that merging was enough.
+There is no CI/CD for this Worker — `npm run deploy` has to be run by hand
+after every change, or the live Worker keeps running old code.
 
-**Deployed and live**: `https://sichos-kodesh-media-proxy.shmuky.workers.dev`
-(free tier) - verified with a real ranged request against a known audio
-file (`206 Partial Content`, correct `Content-Range`, no leaked origin
-headers). `apps/mobile/src/config.ts`'s `MEDIA_PROXY_BASE_URL` points here.
-Redeploying (`npm run deploy`) updates this same URL in place.
+**Deployed**: `https://sichos-kodesh-media-proxy.shmuky.workers.dev`
+(free tier). `apps/mobile/src/config.ts`'s `MEDIA_PROXY_BASE_URL` points
+here. Redeploying (`npm run deploy`) updates this same URL in place.

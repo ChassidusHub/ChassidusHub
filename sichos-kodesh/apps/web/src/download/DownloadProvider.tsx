@@ -69,8 +69,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           // RecordingsScreen's per-row ring/spinner light up for a chapter
           // whether it's downloading because of its own row's button
           // (downloadChapter) or because the whole occasion/a bulk week
-          // download happens to include it - a real reported gap (only the
-          // former ever showed anything there before).
+          // download happens to include it.
           const chapterK = target.kind === 'audio' && target.chapterIndex !== undefined ? chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex) : null;
 
           if (event === 'downloading') {
@@ -130,10 +129,10 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
    * own pending-download record (see pendingDownloads.ts) is written
    * before its fetch starts and cleared once it settles - a page reload
    * mid-download kills that in-progress `fetch()` outright (there's no way
-   * for a plain page-driven download to survive a navigation), which
-   * previously left no trace it had ever been requested; the resume-on-open
-   * effect below is what turns a leftover record from an interrupted
-   * session back into a fresh retry instead.
+   * for a plain page-driven download to survive a navigation), so without
+   * a persisted record there would be no trace it had ever been requested;
+   * the resume-on-open effect below is what turns a leftover record from an
+   * interrupted session back into a fresh retry.
    */
   const runChapterDownloads = useCallback(
     (entry: CatalogEntry, chapterIndices: number[]) => {
@@ -174,13 +173,13 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           setProgress((prev) => clearProgress(prev, k));
           // Only cleared on confirmed success - an 'error' here is
           // indistinguishable from a page navigation aborting this same
-          // fetch mid-flight (confirmed: enough of the old page's JS still
-          // runs after `location.reload()` for this very handler to fire),
-          // so clearing the pending record on 'error' would erase the one
-          // thing the resume-on-open effect below needs to retry it. The
-          // tradeoff - a genuine failure also stays pending and gets
-          // retried next open - is acceptable since these URLs come from
-          // the bundled catalog and essentially never really 404.
+          // fetch mid-flight: enough of the old page's JS still runs after
+          // `location.reload()` for this very handler to fire, so clearing
+          // the pending record on 'error' would erase the one thing the
+          // resume-on-open effect below needs to retry it. The tradeoff -
+          // a genuine failure also stays pending and gets retried next
+          // open - is acceptable since these URLs come from the bundled
+          // catalog and essentially never really 404.
           if (event !== 'error') {
             removePendingChapterDownload({ hebrewYear: target.hebrewYear, occasionId: target.occasionId, chapterIndex: target.chapterIndex! });
           }

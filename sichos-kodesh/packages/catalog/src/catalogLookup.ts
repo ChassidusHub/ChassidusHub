@@ -7,17 +7,17 @@ export type CatalogByYear = Record<number, CatalogEntry[]>;
 
 /**
  * Resolves an engine `occasionKey` (see kvius-engine's `weeklyOccasionKey`/
- * `FixedOccasionDef.key`) to that occasion's actual Hebrew date *in a given
- * year*, then looks up the matching mafteiach-index occasion, if any.
+ * `FixedOccasionDef.key`) to that occasion's actual Hebrew date in a given
+ * year, then looks up the matching mafteiach-index occasion, if any.
  *
  * The engine's `hasRecording(hebrewYear, occasionKey)` callback (see
  * `GapResolutionContext`) is called with arbitrary candidate years and no
- * date of its own - resolving "which date is this in *this* year" is
- * exactly what this function does, for both occasion kinds: `weekIndex` is
- * only a stable key *across* kvius-matched years (they share week
- * structure, not the underlying dates), and a fixed-date key needs the
- * same `FixedOccasionDef` the caller used to build the schedule in the
- * first place, so it must be passed in here too rather than assumed.
+ * date of its own, so resolving "which date is this in this year" is what
+ * this function does, for both occasion kinds: `weekIndex` is only a
+ * stable key across kvius-matched years (they share week structure, not
+ * the underlying dates), and a fixed-date key needs the same
+ * `FixedOccasionDef` the caller used to build the schedule, so it's passed
+ * in here too rather than assumed.
  */
 export function findCatalogEntryForOccasion(
   catalog: CatalogByYear,
@@ -52,10 +52,10 @@ function resolveOccasionKeyToHebrewDateKey(
 /**
  * True when an entry has real, downloadable content (audio or a PDF), not
  * just a bibliographic record. Named for content, not audio: an entry with
- * PDFs but no audio is real, showable content, not a gap - a real, verified
- * case (e.g. Nitzavim/Vayeilech, the last Shabbos before Rosh Hashana,
- * regularly has mugah/bilti-mugah PDF transcripts but zero JEM audio across
- * every kvius-matched year checked).
+ * PDFs but no audio is still showable content, not a gap - e.g.
+ * Nitzavim/Vayeilech (the last Shabbos before Rosh Hashana) regularly has
+ * mugah/bilti-mugah PDF transcripts but no JEM audio in any kvius-matched
+ * year.
  */
 export function entryHasContent(entry: CatalogEntry): boolean {
   return entry.audio.length > 0 || entry.pdfs.length > 0;
@@ -63,23 +63,20 @@ export function entryHasContent(entry: CatalogEntry): boolean {
 
 /**
  * Every Hebrew year from `MIN_HISTORICAL_YEAR` (5710) onward in the
- * catalog with at least one real, downloadable entry (audio or a PDF) -
+ * catalog with at least one real, downloadable entry (audio or a PDF),
  * sorted ascending. For "browse any year" mode: unlike `findMatchingYears`,
- * this isn't constrained to years that are kvius-matched to the current
- * year, so week/date alignment against "this week" doesn't apply - it's a
- * plain listing of what a given year actually has, for a user who wants
- * to explore rather than follow along.
+ * this isn't constrained to years kvius-matched to the current year, so
+ * week/date alignment against "this week" doesn't apply - it's a plain
+ * listing of what a given year actually has.
  *
- * The same floor `findMatchingYears` already applies for kvius candidates
- * (real-data-verified: pre-5710 years have only 1-14 occasions each,
- * predating the current Rebbe's own Sichos Kodesh) - this app is scoped
- * to that, not the Previous Rebbe's own farbrengens, even though
- * mafteiach-index's crawl (pre-Nesius records, `isPreNesius: true`)
- * genuinely has real sicha/farbrengen content back to 5690. Reshimos
- * (private notes / the separate published series) is excluded from the
- * catalog entirely already, at the individual-link level (see
- * `driveLinks.ts`'s `isReshimosLabel`) - unconditionally, not tied to
- * this or any other year cutoff.
+ * Uses the same floor as `findMatchingYears`: this app is scoped to the
+ * current Rebbe's own Sichos Kodesh (5710 onward), not the Previous
+ * Rebbe's pre-Nesius farbrengens, even though mafteiach-index's crawl
+ * (pre-Nesius records, `isPreNesius: true`) has content back to 5690.
+ * Reshimos (private notes / the separately published series) is excluded
+ * from the catalog entirely already, at the individual-link level (see
+ * `driveLinks.ts`'s `isReshimosLabel`), unconditionally, not tied to this
+ * or any other year cutoff.
  */
 export function browsableYears(catalog: CatalogByYear): number[] {
   return Object.keys(catalog)
@@ -89,13 +86,10 @@ export function browsableYears(catalog: CatalogByYear): number[] {
 }
 
 /**
- * A `hasRecording` predicate (see kvius-engine's `GapResolutionContext`) backed
- * by the built catalog. Named `hasContent`, not `hasAudio`: it counts an entry
- * with PDFs but no audio as real, showable content, not a gap - a real,
- * verified case (e.g. Nitzavim/Vayeilech, the last Shabbos before Rosh
- * Hashana, regularly has mugah/bilti-mugah PDF transcripts but zero JEM
- * audio across every kvius-matched year checked). Gating on audio alone
- * would hide real downloadable PDFs behind a "no recording" gap message.
+ * A `hasRecording` predicate (see kvius-engine's `GapResolutionContext`)
+ * backed by the built catalog. Named `hasContent`, not `hasAudio`: see
+ * `entryHasContent` - gating on audio alone would hide real downloadable
+ * PDFs behind a "no recording" gap message.
  */
 export function hasContent(
   catalog: CatalogByYear,

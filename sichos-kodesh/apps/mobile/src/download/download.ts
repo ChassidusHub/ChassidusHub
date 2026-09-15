@@ -8,12 +8,10 @@ export interface DownloadProgress {
 
 /**
  * Downloads to a `.part` path first, then moves it to the real destination
- * only once the download has actually finished - a caller elsewhere
- * treating "a file exists at the destination path" as "this is a complete,
- * valid cached copy" (see loadCachedSound.ts) would otherwise be able to
- * observe a partial file left behind by a download that was interrupted
- * (app backgrounded, network dropped, the request errored) and try to play
- * or open a truncated one, silently, on a later visit.
+ * only once the download has finished - callers that treat "a file exists
+ * at this path" as "this is a complete, valid cached copy" (see
+ * loadCachedSound.ts) would otherwise be able to observe a partial file
+ * left by an interrupted download and silently treat it as already cached.
  */
 async function downloadTo(url: string, localFilename: string, onProgress?: (p: DownloadProgress) => void): Promise<string> {
   const path = `${RNBlobUtil.fs.dirs.DocumentDir}/${localFilename}`;

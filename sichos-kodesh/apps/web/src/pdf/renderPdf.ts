@@ -2,25 +2,20 @@ import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import { attachPdfZoom } from './pdfPageZoom';
 import type { ZoomablePage } from './pdfPageZoom';
-// Vite's `?url` import gives the worker script a real, fetchable URL in the
-// built bundle - pdf.js needs its own worker thread even when we only ever
-// call it from one place, it isn't optional.
+// Vite's `?url` import gives the worker script a fetchable URL in the
+// built bundle; pdf.js requires its own worker thread even though it's
+// only used from this one place.
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 // pdfjs-dist must stay >=6.2.108: versions >=5.6.83 and <6.2.108 have a
-// real high-severity advisory ("Arbitrary JavaScript execution upon
-// opening a malicious PDF", GHSA-hq66-cqwq-w95j) - relevant here since
-// this app renders whatever PDF a Drive link points to. Every current
-// version of pdfjs-dist (patched or not - checked 6.0.227 through 6.3.289,
-// all of them) calls `Map.prototype.getOrInsertComputed` internally with
-// no fallback - a real gap on plenty of browsers actually in use today
-// (not just old ones), so downgrading within the patched range doesn't
-// avoid it. `../polyfills.ts` (imported once, in main.tsx, before
-// anything touches pdf.js) supplies it when missing - confirmed by
-// reproducing the exact failure (page.render() throwing mid-render,
-// leaving a blank canvas in place of the page) against a real PDF with
-// the polyfill removed, then confirming it renders correctly with the
-// polyfill in place.
+// high-severity advisory ("Arbitrary JavaScript execution upon opening a
+// malicious PDF", GHSA-hq66-cqwq-w95j), which matters here since this app
+// renders whatever PDF a Drive link points to. Even patched versions call
+// `Map.prototype.getOrInsertComputed` internally with no fallback, and
+// that method is missing on plenty of browsers still in use today, so
+// downgrading within the patched range doesn't avoid the gap.
+// `../polyfills.ts` (imported once, in main.tsx, before anything touches
+// pdf.js) supplies it when missing.
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
@@ -31,21 +26,19 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 const BASE_URL = import.meta.env.BASE_URL;
 
 /**
- * Loads by URL (pdf.js does its own fetch) rather than this app awaiting
- * a full `response.arrayBuffer()` and handing pdf.js the complete bytes -
- * pdf.js can start parsing the document as bytes stream in instead of
- * only once 100% has downloaded, the same "don't wait for the whole file"
- * principle as the audio player's streaming fix.
+ * Loads by URL (pdf.js does its own fetch) rather than this app awaiting a
+ * full `response.arrayBuffer()` and handing pdf.js the complete bytes, so
+ * pdf.js can start parsing as bytes stream in instead of waiting for the
+ * whole file to download.
  *
  * `disableRange: true` is deliberate, not a missed optimization: pdf.js
- * would otherwise probe for byte-range support and, seeing this Worker's
- * `/drive/:fileId` route always claim `Accept-Ranges: bytes` (a separate,
- * pre-existing inaccuracy in `services/media-proxy` - that route never
- * actually reads or forwards a client's Range header, unlike
- * `/jem-audio/:filename`, which genuinely does), could end up trusting a
- * capability that isn't really there. Streaming without ranges still
- * gets the real, available benefit (progressive parse-while-downloading)
- * without risking pdf.js misinterpreting a mismatched response.
+ * would otherwise probe for byte-range support, and this Worker's
+ * `/drive/:fileId` route always claims `Accept-Ranges: bytes` without
+ * actually reading or forwarding a client's Range header (unlike
+ * `/jem-audio/:filename`, which does), so pdf.js could end up trusting a
+ * capability that isn't really there. Streaming without ranges still gets
+ * the real benefit (progressive parse-while-downloading) without risking
+ * pdf.js misinterpreting a mismatched response.
  */
 export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; total: number }) => void): Promise<PDFDocumentProxy> {
   const task = pdfjsLib.getDocument({
@@ -60,14 +53,12 @@ export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; 
   return task.promise;
 }
 
-// Real device pixel ratios run past 3 on plenty of Android phones. Each
+// Device pixel ratios run past 3 on plenty of Android phones. Each
 // canvas's backing-store memory scales with the *square* of this factor
 // (width x height x 4 bytes/pixel), so left uncapped, a multi-page
-// document's canvases can add up to hundreds of MB to a mobile browser
-// tab - a real, reproduced cause of the tab crashing outright ("Aw,
-// Snap!"), not just a slowdown. 2x already reads sharp; capping here is
-// the same tradeoff every native app makes rather than rendering at full
-// panel resolution for offscreen content.
+// document's canvases can add up to hundreds of MB and crash a mobile
+// browser tab, not just slow it down. 2x already reads sharp, so capping
+// here trades a marginal sharpness gain for staying within memory budget.
 const MAX_DPR = 2;
 
 /**
@@ -81,15 +72,14 @@ const MAX_DPR = 2;
 const MAX_BOOST_MULTIPLIER = 4;
 
 /**
- * Scrolling fast up and down repeatedly fires many IntersectionObserver
- * callbacks in quick succession, each wanting to render a page that
- * another callback, milliseconds later, wants released again before the
- * first render even finished - a real reproduced crash, not a theoretical
- * one. Delaying a *render* by this long (releases stay immediate, so
+ * A fast scroll fires many IntersectionObserver callbacks in quick
+ * succession, each wanting to render a page that another callback,
+ * milliseconds later, wants released again before the first render even
+ * finishes. Delaying a *render* by this long (releases stay immediate, so
  * memory is freed right away either way) means a page that's only
- * fleetingly scrolled past during a fast scroll is usually released again
- * before its render was ever scheduled, instead of every fleeting pass
- * kicking off its own doc.getPage()/page.render() call.
+ * fleetingly scrolled past is usually released again before its render
+ * was ever scheduled, instead of every fleeting pass kicking off its own
+ * doc.getPage()/page.render() call.
  */
 const RENDER_DEBOUNCE_MS = 120;
 
@@ -119,59 +109,54 @@ interface PageEntry extends ZoomablePage {
  * canvas released back to a same-sized placeholder (freeing its backing
  * -store memory) rather than staying resident forever; scrolling back to
  * it re-renders on demand. This, together with the `MAX_DPR` cap above,
- * is what actually keeps a real multi-page document from crashing a
- * mobile tab - rendering every page unconditionally (even before this
- * had capped DPR) kept every canvas alive for the life of the screen.
+ * is what keeps a multi-page document from exhausting memory on a mobile
+ * tab: rendering every page unconditionally keeps every canvas alive for
+ * the life of the screen.
  *
  * Also wires up `pdfPageZoom.ts`'s whole-document pinch-zoom: every
  * currently-rendered page re-renders at up to `MAX_BOOST_MULTIPLIER` its
  * fit-width resolution once a pinch settles (real sharpness, not a
  * stretched fit-width bitmap), together, so scrolling through a zoomed
  * document doesn't snap back to an unzoomed page the moment it scrolls
- * into view - a real reported bug with an earlier per-page-only version.
- * Pinching back down to 1x drops every rendered page back to the standard
- * fit-width render the same way.
+ * into view. Pinching back down to 1x drops every rendered page back to
+ * the standard fit-width render the same way.
  *
  * Resolves once the first page's low-quality render has committed (see
- * `LOW_QUALITY_SCALE_FACTOR` - so the screen has real content to show as
- * fast as possible), not once every page has, and not even once the first
- * page's full-quality upgrade has - the rest render as the user scrolls or
- * stays put. `isCancelled` doubles as the teardown signal: once it returns
- * true the IntersectionObserver disconnects itself on its next callback,
- * so callers don't need to hold a separate handle to it.
+ * `LOW_QUALITY_SCALE_FACTOR`, so the screen has content to show as fast as
+ * possible), not once every page has, and not even once the first page's
+ * full-quality upgrade has - the rest render as the user scrolls or stays
+ * put. `isCancelled` doubles as the teardown signal: once it returns true
+ * the IntersectionObserver disconnects itself on its next callback, so
+ * callers don't need to hold a separate handle to it.
  *
  * Every render is tagged with a per-page generation number that `release`
- * bumps - a real, reproduced crash came from scrolling fast enough that a
- * page's render was still in flight (an async `doc.getPage()` +
- * `page.render()` call) when the same page scrolled back off-screen and
- * got released; the stale render would then finish and re-attach its
- * canvas to a wrapper that was supposed to be empty, and doing this
- * repeatedly during fast up-and-down scrolling piled up canvases faster
- * than the browser could reclaim their memory. A render only ever commits
- * its canvas if its generation is still the current one for that page -
- * the same guard is what makes the low-quality-then-upgrade sequence safe
- * too, since a page released between its two renders simply never gets
- * the (now-stale) upgrade committed.
+ * bumps. A page's render is asynchronous (`doc.getPage()` +
+ * `page.render()`), so the same page can scroll back off-screen and get
+ * released while its render is still in flight; without the generation
+ * guard, that stale render would finish and re-attach its canvas to a
+ * wrapper meant to stay empty, and repeated fast scrolling could pile up
+ * canvases faster than the browser reclaims their memory. A render only
+ * ever commits its canvas if its generation is still the current one for
+ * that page - the same guard is what makes the low-quality-then-upgrade
+ * sequence safe too, since a page released between its two renders simply
+ * never gets the (now-stale) upgrade committed.
  *
  * The generation counter alone stops a stale render from ever being
  * *committed*, but not from *running* - pdf.js keeps decoding content
  * streams and filling the canvas bitmap for as long as its own
- * `RenderTask` is left alive, generation check or not, and that work
- * itself costs real CPU and memory the whole time. A real, reproduced
- * crash still happened under fast reversing scroll (down-up-down)
- * specifically, even with the generation guard already in place - exactly
- * the pattern that starts many renders in quick succession while barely
- * any of them get the chance to actually finish, so several stayed
- * genuinely in flight, still consuming memory, all at once. `release`
- * below also calls `RenderTask.cancel()` on whatever's still running for
- * that page - the same API pdf.js's own examples use for this exact
- * purpose - so an abandoned render actually stops, not just gets ignored.
+ * `RenderTask` is left alive, generation check or not, and that work costs
+ * real CPU and memory the whole time. Fast reversing scroll (down-up-down)
+ * can start many renders in quick succession while few of them get the
+ * chance to finish, leaving several genuinely in flight and consuming
+ * memory at once. `release` below also calls `RenderTask.cancel()` on
+ * whatever's still running for that page, so an abandoned render actually
+ * stops instead of just being ignored.
  *
  * `onZoomChange`, when given, fires `true` once a pinch settles and
  * `false` once the document is back to 1x - PdfViewerScreen uses it to
  * drop the screen's own side padding and width cap while zoomed, so
- * panning around a zoomed page actually has the full screen to work with
- * instead of the normal reading-width column.
+ * panning around a zoomed page has the full screen to work with instead of
+ * the normal reading-width column.
  */
 export async function renderPdfPages(
   doc: PDFDocumentProxy,
@@ -294,10 +279,10 @@ export async function renderPdfPages(
       // doesn't force the browser to free its (potentially large,
       // DPR-squared-sized) backing-store bitmap immediately, only once GC
       // gets around to it. Under fast repeated scrolling, many pages get
-      // released in quick succession; if GC lags even briefly behind that,
-      // several full-size canvases' worth of memory piles up at once - a
-      // real, reproduced contributor to the tab crashing outright, on top
-      // of (not fixed by) the generation-based render cancellation above.
+      // released in quick succession, so if GC lags even briefly behind
+      // that, several full-size canvases' worth of memory can pile up at
+      // once, on top of what the generation-based render cancellation
+      // above already prevents.
       const canvas = entry.wrapper.querySelector('canvas');
       if (canvas) {
         canvas.width = 0;

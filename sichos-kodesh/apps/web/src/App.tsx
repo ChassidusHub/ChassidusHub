@@ -148,23 +148,12 @@ function KviusYearsRoute() {
 }
 
 /**
- * Wraps every route's content so it always leaves room for GlobalPlayerBar
- * and/or DownloadProgressBar when either is showing - both live in one
- * fixed-position container at the bottom of the viewport (see App.tsx), so
- * without this their combined height covers - and blocks clicks on - the
- * last bit of content on every other screen (a real reported bug: "hides
- * content and can't click it", the original report about GlobalPlayerBar
- * alone). Scrolling to the actual end of a page's content should land just
- * above whatever's showing down there, not have it sit over the content.
- */
-/**
- * React Router doesn't reset scroll on navigation itself (unlike a real
- * multi-page site) - without this, a screen reached with the previous
- * screen scrolled down opens already scrolled down too, a real reported
- * bug. Runs on every pathname change, including into a PDF - PdfViewerScreen
- * then restores its own saved reading position afterward (once its content
- * has actually loaded), so a PDF that was already being read still lands
- * back where it left off rather than at the top.
+ * React Router doesn't reset scroll on navigation - without this, a
+ * screen reached with the previous screen scrolled down opens already
+ * scrolled down too. Runs on every pathname change, including into a
+ * PDF - PdfViewerScreen then restores its own saved reading position
+ * afterward, once its content has loaded, so a PDF already being read
+ * still lands back where it left off rather than at the top.
  */
 function useScrollToTopOnNavigate(): void {
   const { pathname } = useLocation();
@@ -206,6 +195,10 @@ function AppContent() {
   useTrackNavigationDepth();
   useAutoDownloadSync();
   useConnectivityRecheckTriggers();
+  // `has-player`/`has-download-bar` add bottom padding to routed content -
+  // GlobalPlayerBar and DownloadProgressBar are both `position: fixed` and
+  // can appear over any screen, so without this their combined height
+  // would cover, and block clicks on, the last bit of content.
   const bottomBarClass = [player.playlist ? 'has-player' : '', activeDownloadCount > 0 ? 'has-download-bar' : ''].filter(Boolean).join(' ');
   return (
     <div className={['app-content', bottomBarClass].filter(Boolean).join(' ')}>
@@ -269,12 +262,11 @@ function App() {
           <PlayerProvider>
             <ConnectivityBanner />
             <AppContent />
-            {/* One fixed-position container, not two - DownloadProgressBar and
-                GlobalPlayerBar each hide themselves independently (nothing
-                downloading / nothing playing), so this stacks whichever of
-                them is actually showing via normal flex flow instead of each
-                one separately fixing itself to the viewport edge and having
-                to know the other's height to avoid overlapping it. */}
+            {/* One fixed-position container, not two - DownloadProgressBar
+                and GlobalPlayerBar each hide themselves independently, so
+                this stacks whichever is showing via normal flex flow
+                instead of each fixing itself to the viewport edge and
+                needing to know the other's height. */}
             <div className="bottom-bars">
               <DownloadProgressBar />
               <GlobalPlayerBar />

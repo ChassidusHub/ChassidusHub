@@ -6,7 +6,7 @@ function makeEntry(overrides: Partial<CatalogEntry> & Pick<CatalogEntry, 'occasi
   return { audio: [], pdfs: [], ...overrides };
 }
 
-// Yud Shevat 5711 (real, verified: Parshas Beshalach - see packages/catalog/tests/occasionParsha.test.ts).
+// Yud Shevat 5711 - Parshas Beshalach (see packages/catalog/tests/occasionParsha.test.ts).
 const yudShevat = makeEntry({
   occasionId: 1,
   hebrewYear: 5711,
@@ -31,9 +31,9 @@ const purimKoton = makeEntry({
   occasionLabel: 'פורים קטן',
   audio: [{ workerFilename: 'b.mp3', durationMs: 500 }],
 });
-// 15 Tishrei 5711 - Sukkos I, a real Yom Tov (verified against hebcal's CHAG
-// flag directly - see packages/catalog/tests/occasionChag.test.ts). Given a
-// PDF, not audio, so it doesn't also perturb the 'audio' type filter test.
+// 15 Tishrei 5711 - Sukkos I, a Yom Tov per hebcal's CHAG flag (see
+// packages/catalog/tests/occasionChag.test.ts). Given a PDF, not audio, so
+// it doesn't also perturb the 'audio' type filter test.
 const sukkos = makeEntry({
   occasionId: 5,
   hebrewYear: 5711,

@@ -12,13 +12,6 @@ interface Props {
   targetYear: number;
 }
 
-/**
- * The home screen: today's real Hebrew date and parsha up front, then one
- * prominent action into the kvius-matched years list (KviusYearsScreen) -
- * picking one there goes straight into that year's current week, same as
- * before. "Browse any year" is a plain secondary link now, not a second
- * tab competing for attention on first load.
- */
 export function YearPickerScreen({ targetYear }: Props) {
   const { t, language } = useTranslation();
   const online = useOnlineStatus();
@@ -44,12 +37,9 @@ export function YearPickerScreen({ targetYear }: Props) {
         {parsha ? ` · ${parshaLabel(parsha, language)}` : ''}
       </p>
 
-      {/* Browsing/search both read straight from the bundled catalog data
-          (no network needed at all) and content already in the media
-          cache still opens fine offline - only content that was never
-          downloaded actually needs a connection. This note (and its
-          shortcut to what's actually available right now) only makes
-          sense to show once there's no connection to begin with. */}
+      {/* Browsing/search read from the bundled catalog with no network
+          needed, and already-cached content still opens offline - only
+          content that was never downloaded needs a connection. */}
       {!online && (
         <p className="offline-note">
           <WifiOff size={16} aria-hidden />

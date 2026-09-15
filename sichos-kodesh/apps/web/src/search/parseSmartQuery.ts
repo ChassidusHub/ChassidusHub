@@ -70,15 +70,13 @@ const GERESH_MARKS = /["'‘’“”״׳`´]/;
 
 /**
  * Every real year in this catalog, written without its thousands digit
- * (`5735` -> `תשלה`), lands on 2-4 Hebrew letters - real users very often
- * type it exactly that way, with no geresh/gershayim at all (a confirmed
- * report: `חי אלול תשלה` found nothing, because `תשלה` alone was never
- * even tried against gematria without a quote mark present). A bare
- * all-Hebrew-letters token up to 6 letters is accepted too, not just a
- * geresh-marked one - the caller's own range check (against this
- * catalog's *real*, fairly narrow year span) is what actually guards
- * against an ordinary word coincidentally summing to an in-range value,
- * not the presence of a quote mark.
+ * (`5735` -> `תשלה`), lands on 2-4 Hebrew letters, and users often type it
+ * that way with no geresh/gershayim at all. A bare all-Hebrew-letters
+ * token up to 6 letters is accepted too, not just a geresh-marked one -
+ * the caller's own range check (against this catalog's real, fairly
+ * narrow year span) is what actually guards against an ordinary word
+ * coincidentally summing to an in-range value, not the presence of a
+ * quote mark.
  */
 const HEBREW_LETTERS_ONLY = /^[א-ת]{1,6}$/;
 
@@ -99,14 +97,13 @@ function gematriyaYear(rawToken: string): number | null {
 /**
  * Pulls year/month/parsha/chag signals out of a free-text search query, so
  * typing e.g. `בשלח תשל"ו` or "Kislev Sukkot" finds the right occasions
- * without ever touching the dropdown filters - a real, requested gap
- * (those filters previously only ever came from picking a `<select>`
- * option, word order and all). Detected phrases are removed from the
- * returned `remainingText`; whatever's left over is still free text for
- * Fuse.js's own fuzzy label search. Only a whole-catalog-valid year (the
- * caller's `yearRange`, from the real bundled catalog) is ever reported - a
- * coincidentally in-range-looking number that isn't a real catalog year
- * doesn't help anyone and would just quietly return zero results.
+ * without ever touching the dropdown filters. Detected phrases are
+ * removed from the returned `remainingText`; whatever's left over is
+ * still free text for Fuse.js's own fuzzy label search. Only a
+ * whole-catalog-valid year (the caller's `yearRange`, from the bundled
+ * catalog) is ever reported - a coincidentally in-range-looking number
+ * that isn't a real catalog year doesn't help anyone and would just
+ * quietly return zero results.
  *
  * Year detection runs on the *raw* query first, one whitespace-split token
  * at a time - it has to happen before `normalize()` runs (which strips

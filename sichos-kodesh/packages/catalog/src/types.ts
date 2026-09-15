@@ -1,12 +1,10 @@
 /**
  * The app-facing dataset this package builds, joined from
- * packages/mafteiach-index's crawled data. Deliberately a small subset of
- * the full `CatalogEntry` sketched in docs/PLANNING.md (no quality
- * variants, captions, or rights-status field yet) — this is the thin-MVP
- * slice: enough to know what's downloadable for a given occasion, nothing
- * more. Only bibliographic metadata (dates, labels, file identifiers) is
- * ever bundled here, never the actual copyrighted text/audio bytes — those
- * stay server-fetched on demand through services/media-proxy.
+ * packages/mafteiach-index's crawled data: enough to know what's
+ * downloadable for a given occasion, nothing more. Only bibliographic
+ * metadata (dates, labels, file identifiers) is ever bundled here, never
+ * the actual copyrighted text/audio bytes — those stay server-fetched on
+ * demand through services/media-proxy.
  */
 
 export type PdfSection = 'mugah' | 'biltiMugah' | 'maamorim' | 'hagahos' | 'hosofos';
@@ -32,10 +30,10 @@ export interface CatalogPdf {
   /** The Drive file id services/media-proxy's /drive/:fileId route expects. */
   driveFileId: string;
   /**
-   * Present for links shared before Google's 2021 resource-key change
-   * (verified: 253 of ~14k Drive PDF links in the real dataset) - required
-   * as the `resourcekey` query param on /drive/:fileId or the file 404s/
-   * redirects to a Google sign-in page, even though it's genuinely public.
+   * Present for links shared before Google's 2021 resource-key change -
+   * required as the `resourcekey` query param on /drive/:fileId or the
+   * file 404s/redirects to a Google sign-in page, even though it's
+   * genuinely public.
    */
   resourceKey?: string;
 }

@@ -3,16 +3,14 @@ import { kviusSignature, sameKvius } from './hebrewCalendar.js';
 import type { MatchingYearResult, MatchingYearsOptions, WeekDay } from './types.js';
 
 /**
- * Hebrew year bounds of the real Sichos Kodesh catalog this app is built
- * from: `packages/mafteiach-index`'s crawled dataset (3,424 occasions),
- * verified directly against the database rather than assumed. MAX is the
- * dataset's actual last year. MIN is 5710, not the dataset's earliest year
- * (5690) - coverage before 5710 is sparse (1-14 occasions/year vs. 36+
- * starting exactly at 5710, verified against the database), predating the
- * Rebbe's own Sichos Kodesh that this app is about. A kvius match outside
- * this range can never resolve to a real recording, so `findMatchingYears`
- * clamps to it by default - otherwise the year picker would routinely
- * offer years guaranteed to be a gap.
+ * Hebrew year bounds of the Sichos Kodesh catalog this app is built from:
+ * `packages/mafteiach-index`'s crawled dataset. MAX is the dataset's last
+ * year. MIN is 5710, not the dataset's earliest year (5690): coverage
+ * before 5710 is sparse (1-14 occasions/year vs. 36+ starting at 5710),
+ * predating the Rebbe's own Sichos Kodesh that this app is about. A kvius
+ * match outside this range can never resolve to a real recording, so
+ * `findMatchingYears` clamps to it by default - otherwise the year picker
+ * would routinely offer years guaranteed to be a gap.
  */
 export const MIN_HISTORICAL_YEAR = 5710;
 export const MAX_HISTORICAL_YEAR = 5752;
@@ -68,11 +66,10 @@ export function findMatchingYears(targetYear: number, options: MatchingYearsOpti
  * `new HDate(day, month, candidateYear)` doesn't throw for a (month, day)
  * that doesn't really exist in `candidateYear` (e.g. day 30 of a month
  * that's only 29 days long there, or Adar II in a non-leap year) - it
- * silently rolls over into a *different* real date instead (verified
- * directly: Cheshvan 30 in a 29-day Cheshvan year rolls into Kislev 1;
- * Adar II in a non-leap year rolls into plain Adar) - so every date is
- * re-checked against the (month, day) it was actually asked for, not
- * just trusted to exist.
+ * silently rolls over into a different real date instead (e.g. Cheshvan
+ * 30 in a 29-day Cheshvan year rolls into Kislev 1; Adar II in a non-leap
+ * year rolls into plain Adar), so every date is re-checked against the
+ * (month, day) it was actually asked for, not just trusted to exist.
  */
 export function weekMatchesInYear(candidateYear: number, days: WeekDay[]): boolean {
   if (days.length === 0) return false;

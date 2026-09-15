@@ -13,7 +13,7 @@ export interface LinkSection {
 
 export interface AudioSection {
   hasContent: boolean;
-  /** Typically a single ashreinu.app player link (JEM's audio app - see docs/PLANNING.md). */
+  /** Typically a single ashreinu.app player link (JEM's audio app). */
   links: LinkRef[];
 }
 
@@ -23,12 +23,12 @@ export interface VideoSection {
   youtubeIds: string[];
   /**
    * Direct video links mafteiach.app renders as a plain outbound link
-   * (like `audio`) rather than an embedded YouTube player - confirmed
-   * real hosts: chabad.org's Living Torah player, JEM's videos.jem.tv /
-   * jem.tv / jemtv.page.link, player.vimeo.com, drive.google.com, and a
-   * legacy 770live.com. `hasContent` is true if either this or
-   * `youtubeIds` is non-empty - a farbrengen's video slot is always one
-   * or the other, never both.
+   * (like `audio`) rather than an embedded YouTube player - hosts include
+   * chabad.org's Living Torah player, JEM's videos.jem.tv / jem.tv /
+   * jemtv.page.link, player.vimeo.com, drive.google.com, and a legacy
+   * 770live.com. `hasContent` is true if either this or `youtubeIds` is
+   * non-empty - a farbrengen's video slot is always one or the other,
+   * never both.
    */
   links: LinkRef[];
 }
@@ -53,18 +53,16 @@ export interface NoteSection {
  * distinction this dataset exists to capture.
  *
  * `hagahos` (annotations/corrections) is a plain link list like `mugah`;
- * `hosofos` ("more" / addenda) is free-text like `tochenInyanim` — verified
- * against real examples of both (see tests/fixtures), not assumed
- * symmetric just because they're presented as similar-looking tabs.
+ * `hosofos` ("more" / addenda) is free-text like `tochenInyanim`, despite
+ * the two looking like similar tabs (see tests/fixtures).
  *
  * Pre-Nesius entries (`isPreNesius: true`) use a reduced 3-button template
- * instead of the usual 9, confirmed against real examples: `biltiMugah`'s
- * slot is always disabled (labeled "הנחות" but never populated anywhere in
- * the real dataset), and the slot labeled "רשימות" (Reshimos - diary-style
- * notes, not an edited sicha) reuses the *same* CSS class as `mugah`, so
- * it lands in `mugah.links` here. No data is lost, but for a pre-Nesius
- * record `mugah` means "Reshimos," not "an edited sicha" - a caller
- * distinguishing the two should branch on `isPreNesius`.
+ * instead of the usual 9: `biltiMugah`'s slot is always disabled (labeled
+ * "הנחות" but never populated), and the slot labeled "רשימות" (Reshimos -
+ * diary-style notes, not an edited sicha) reuses the *same* CSS class as
+ * `mugah`, so it lands in `mugah.links` here. No data is lost, but for a
+ * pre-Nesius record `mugah` means "Reshimos," not "an edited sicha" - a
+ * caller distinguishing the two should branch on `isPreNesius`.
  */
 export interface FarbrengenDetail {
   id: number;
@@ -89,13 +87,12 @@ export interface FarbrengenListingEntry {
    *
    * Month is Tishrei-based (01=Tishrei ... 07=Nisan ... 12=Elul, matching
    * this repo's kvius-engine convention) — NOT HDate's native Nisan-based
-   * numbering. Confirmed against real 5711 (a leap year) data: rather than
-   * shifting every month after Adar by one the way HDate's native
-   * numbering does, mafteiach.app keeps Nisan fixed at "07" year-round and
-   * instead splits month "06" into "06A" (Adar Rishon) / "06B" (Adar
-   * Sheini) — so `month` is `string`, not `number`, and callers converting
-   * to this repo's HDate-based types must special-case the "06A"/"06B"
-   * suffix rather than assume a two-digit numeric month.
+   * numbering. Rather than shifting every month after Adar by one the way
+   * HDate's native numbering does, mafteiach.app keeps Nisan fixed at "07"
+   * year-round and instead splits month "06" into "06A" (Adar Rishon) /
+   * "06B" (Adar Sheini) — so `month` is `string`, not `number`, and callers
+   * converting to this repo's HDate-based types must special-case the
+   * "06A"/"06B" suffix rather than assume a two-digit numeric month.
    */
   hebrewDate: string;
   /** True for content predating the Rebbe's Nesius in 5711. */

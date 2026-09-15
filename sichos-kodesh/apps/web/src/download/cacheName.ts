@@ -7,11 +7,11 @@
  * keep its own separate cache the SW wouldn't already read from.
  *
  * Shared between vite.config.ts (a Node/build-time import) and the
- * download code so the name can never drift out of sync between them -
- * this exact cache has already been renamed twice this session to
- * invalidate a poisoned cache (see vite.config.ts's own comment on it),
- * and a name mismatch would silently mean "downloaded" content never
- * actually gets served from cache during real playback.
+ * download code so the name can never drift out of sync between them - a
+ * mismatch would silently mean "downloaded" content never actually gets
+ * served from cache during real playback. The version suffix exists so
+ * the cache can be renamed to force every client to abandon a poisoned
+ * cache (see vite.config.ts's matching runtimeCaching comment).
  */
 export const MEDIA_CACHE_NAME = 'media-proxy-cache-v3';
 
@@ -25,9 +25,7 @@ export const MEDIA_CACHE_NAME = 'media-proxy-cache-v3';
  * risk for the worker script specifically, at 1.2+MB, on a flaky mobile
  * connection), the *entire* new service worker fails to install and every
  * one of its fixes - this cache included - never takes effect for that
- * visitor, who keeps silently running the old version. A confirmed real
- * report: "Setting up fake worker failed" persisted for a user even after
- * the precache fix had already shipped and been merged. This separate,
+ * visitor, who keeps silently running the old version. This separate,
  * explicitly-populated cache (see vite.config.ts's matching runtimeCaching
  * rule, and main.tsx's eager warm-up of the worker script specifically) is
  * a second, independent path to the exact same files - populated by any

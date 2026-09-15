@@ -53,10 +53,9 @@ export function thisWeekDays(today: Date): WeekDay[] {
 
 /**
  * Every occasion with real content (audio or a PDF) that falls anywhere in
- * the current Hebrew week (Sunday through Shabbos) - not Shabbos alone.
- * Farbrengens happened on weekdays as often as on Shabbos (Yud-Tes Kislev,
- * Yud Shevat, Yud-Beis Tammuz...), and a Shabbos-only view was hiding all
- * of them.
+ * the current Hebrew week (Sunday through Shabbos), not Shabbos alone -
+ * farbrengens happened on weekdays as often as on Shabbos (Yud-Tes Kislev,
+ * Yud Shevat, Yud-Beis Tammuz...).
  *
  * Two kvius-matched years share identical leap status and month-length
  * pattern (that's the definition of a kvius match - see `sameKvius` in
@@ -66,9 +65,9 @@ export function thisWeekDays(today: Date): WeekDay[] {
  * same weekday too. That means this week's dates translate directly into
  * `sourceYear` by reusing the same month/day values as-is: no per-occasion
  * engine matching (`buildMatchedSchedule`/`FixedOccasionDef`) is needed,
- * just a day-by-day catalog lookup - and it naturally covers weekday
- * farbrengens and Shabbos identically, since the catalog only ever
- * contains days with a real recorded occasion.
+ * just a day-by-day catalog lookup - and it covers weekday farbrengens
+ * and Shabbos identically, since the catalog only ever contains days with
+ * a real recorded occasion.
  *
  * Shared by apps/mobile and apps/web - both need the identical
  * kvius-to-catalog resolution, not two independently-maintained copies.
@@ -96,11 +95,11 @@ export interface WeekResolution {
 
 /**
  * `resolveThisWeek(preferredYear, ...)`, falling back to a nearby
- * kvius-matched year when `preferredYear` has nothing for this real week -
- * a real kvius match (the whole year's calendar lines up, not just this one
+ * kvius-matched year when `preferredYear` has nothing for this week - a
+ * full kvius match (the whole year's calendar lines up, not just this one
  * week) is preferred over a merely partial-week match, since it's the
  * stronger claim; partial is only tried when no full match has anything
- * either. `targetYear` is the real current Hebrew year kvius-matching is
+ * either. `targetYear` is the current Hebrew year kvius-matching is
  * always relative to (see `findMatchingYears`), not `preferredYear` itself.
  * `null` when nothing has content anywhere in the fallback chain.
  *

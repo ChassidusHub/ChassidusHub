@@ -12,7 +12,7 @@ describe('occasionParsha', () => {
   });
 
   it('returns null when the occasion falls in a chag week with no weekly reading', () => {
-    // 15 Tishrei 5711 - Sukkos, verified against the real Sedra lookup.
+    // 15 Tishrei 5711 - Sukkos.
     expect(occasionParsha('5711-01-15', false)).toBeNull();
   });
 });

@@ -2,21 +2,17 @@ import { PoliteFetcher } from './httpClient.js';
 import type { CcdbEvent, CcdbEventListEntry } from './types.js';
 
 /**
- * JEM's own private "ccdb" API, behind ashreinu.app - confirmed live and
- * unauthenticated (see packages/mafteiach-index/src/jemAudio.ts for how
- * this was first found, and docs/PLANNING.md for why it's being used for
- * private, pre-launch development). This client covers the three
- * endpoints needed to build a full independent index:
+ * JEM's private "ccdb" API behind ashreinu.app, unauthenticated. Covers
+ * the three endpoints needed to build a full independent index:
  *
  * - `years?has=audio` - every Hebrew year with at least one audio recording
  * - `events?year=Y&has=audio` - every top-level event in that year with audio
  * - `event/{id}` (singular!) - one event's full tree, including
  *   `sub_events` and `audio_recordings` at every level
  *
- * The plural `events/{id}` (by contrast with the singular `event/{id}`)
- * returns API Gateway's generic "Missing Authentication Token" - which
- * despite the name is just "no route matches this path," not an auth
- * requirement. Confirmed nothing here needs authentication.
+ * The plural `events/{id}` returns API Gateway's generic "Missing
+ * Authentication Token" error, which despite the name just means no route
+ * matches that path, not that authentication is required.
  */
 const CCDB_BASE = 'https://5qlaecnhel.execute-api.us-east-1.amazonaws.com/prod/ashreinu/api/v1';
 

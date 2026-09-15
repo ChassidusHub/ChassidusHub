@@ -36,15 +36,14 @@ function workerFilenameFromUrl(url: string): string | null {
 /**
  * Joins packages/mafteiach-index's crawled dataset (`occasions`, `links`,
  * `jem_audio` tables - schema in that package's src/db.ts) into one
- * `CatalogEntry` per occasion, grouped by Hebrew year. Only the already
- * fully-resolved JEM audio (jem_audio, populated by that package's
- * bin/resolveJemAudio.ts) and Drive-hosted PDF links are included - a
- * catalog entry with neither is a genuine gap, kept in the output (not
- * filtered out) so the app can show "nothing available" rather than
- * silently omitting the occasion. Reshima-labeled PDF links (see
- * `isReshimosLabel`) are dropped - this app is scoped to farbrengen
- * sichos/maamarim, not the Rebbe's private notes or the separate
- * "Reshimos" series (a real future feature, not in scope now).
+ * `CatalogEntry` per occasion, grouped by Hebrew year. Only fully-resolved
+ * JEM audio (jem_audio, populated by that package's bin/resolveJemAudio.ts)
+ * and Drive-hosted PDF links are included. An entry with neither is a
+ * genuine gap and is still kept in the output, so the app can show
+ * "nothing available" rather than silently omitting the occasion.
+ * Reshima-labeled PDF links (see `isReshimosLabel`) are dropped, since this
+ * app is scoped to farbrengen sichos/maamarim, not the Rebbe's private
+ * notes or the separately published "Reshimos" series.
  */
 export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
   const occasions = db.prepare('SELECT id, hebrew_year, hebrew_date, occasion_label FROM occasions').all() as unknown as OccasionRow[];

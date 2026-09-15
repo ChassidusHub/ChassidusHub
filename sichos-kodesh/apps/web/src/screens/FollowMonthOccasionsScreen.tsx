@@ -14,12 +14,7 @@ interface Props {
   monthToken: string;
 }
 
-/**
- * The follow-flavored twin of MonthOccasionsScreen: every occasion in one
- * specific month of a kvius-matched year (reached from
- * FollowMonthListScreen), linking rows to /follow/:sourceYear/:occasionId
- * so they still get FarbrengenScreen's highlighted-hanacha treatment.
- */
+/** Follow-flow twin of MonthOccasionsScreen: links rows to /follow/:sourceYear/:occasionId instead of /browse/:hebrewYear/:occasionId, so they still get FarbrengenScreen's highlighted-hanacha treatment. */
 export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();

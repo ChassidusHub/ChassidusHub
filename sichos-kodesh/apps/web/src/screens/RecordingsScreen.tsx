@@ -33,22 +33,19 @@ interface PlaylistRowProps {
 }
 
 /**
- * Its own component (not inlined in the `.map()` below) because it calls
- * `useChapterDownload`, a hook - one instance per row keeps that call at a
- * stable position per row's own component identity, rather than inside a
- * loop body where React's hook-order rule doesn't apply cleanly.
+ * Its own component, not inlined in the `.map()` below, because it calls
+ * `useChapterDownload` - one hook instance per row needs a stable
+ * component identity per row, not a loop body.
  */
 function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowProps) {
   const { t } = useTranslation();
   const chapter = entry.audio[index]!;
   const download = useChapterDownload(entry, index);
   const finished = !isActive && isChapterFinished(progress, index, chapter);
-  // The active row's own fraction comes straight from the player's live
+  // The active row's fraction comes from the player's live
   // currentTime/duration, not the localStorage snapshot (which only
-  // advances on PlayerProvider's own throttled ~3s writes) - this is what
-  // makes the row actually playing update its bar smoothly in real time
-  // instead of sitting frozen (or, before, not rendering a bar for the
-  // active row at all).
+  // advances on PlayerProvider's throttled ~3s writes) - this is what
+  // keeps the playing row's bar updating smoothly in real time.
   const fraction = isActive
     ? player.duration > 0
       ? Math.min(player.currentTime / player.duration, 1)
@@ -82,12 +79,9 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
         className={isActive ? 'playlist-row playlist-row-active' : 'playlist-row'}
         onClick={() => {
           // Resumes from wherever this chapter was left off, not always
-          // from 0 - a real reported gap (tapping a part-listened chapter
-          // restarted it from the beginning every time). Auto-advance
-          // (PlayerProvider's own `next()` on `onEnded`) is untouched by
-          // this and still correctly starts its chapter at 0 - that's a
-          // fresh chapter someone hasn't manually chosen to resume, not
-          // this code path.
+          // from 0. Auto-advance (PlayerProvider's own `next()` on
+          // `onEnded`) is untouched by this and still starts its chapter
+          // at 0 - that's a fresh chapter, not one someone chose to resume.
           const savedPosition = progress?.chapters[index]?.position ?? 0;
           player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, index, savedPosition);
         }}
@@ -102,31 +96,22 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
           )}
         </span>
         <span className="playlist-row-name">{chapter.chapterName ?? t.track(index + 1)}</span>
-        {/* Always rendered, even at 0% (an invisible-fill track still reserves its own space) - conditionally
-            rendering this element made every other row's layout shift depending on whether *this* row
-            happened to have progress or not, a real reported alignment bug. */}
+        {/* Always rendered, even at 0%, so every row reserves the same
+            space - conditionally rendering it would shift other rows'
+            layout depending on whether this row happens to have progress. */}
         <span className="playlist-row-progress-track" aria-hidden>
           <span className="playlist-row-progress-fill" style={{ width: `${Math.round(fraction * 100)}%` }} />
         </span>
         <span className="playlist-row-duration">{formatTime(chapter.durationMs / 1000)}</span>
       </button>
-      {/* One recording's own download affordance - independent of the whole
-          occasion's download button/state (FarbrengenScreen), since someone
-          on this page is choosing a specific sicha, not "everything here." */}
+      {/* Independent of the whole occasion's download state
+          (FarbrengenScreen) - this is a single recording's own download
+          affordance. */}
       <span className="row-icons">{downloadIcon}</span>
     </li>
   );
 }
 
-/**
- * A farbrengen is usually several separate recordings, not one (real
- * examples run to 8-10: a few sichos, a maamar, niggunim between them) -
- * this is the dedicated playlist page for one occasion's recordings
- * (reached from FarbrengenScreen's "Recordings" button), listing every
- * chapter with its real name and duration, Spotify-album-style, rather
- * than the old one-download-button-per-chapter layout crammed into the
- * occasion page itself.
- */
 export function RecordingsScreen({ resolved }: Props) {
   const { t } = useTranslation();
   const player = usePlayer();

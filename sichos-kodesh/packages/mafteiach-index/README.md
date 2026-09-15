@@ -4,24 +4,21 @@ An indexer for [mafteiach.app](https://www.mafteiach.app/) — a community-run
 reference site that catalogs the Rebbe's sichos/farbrengens with exactly the
 breakdown this app needs: whether a sicha exists as **mugah** (Rebbe-edited)
 text, **bilti mugah** (unedited hanacha), and/or a **recording** (audio via
-[ashreinu.app](https://ashreinu.app), JEM's audio app — see
-`docs/PLANNING.md` — or video via embedded YouTube), plus maamarim, English
-translations, and mafteiach.app's own editorial content-outline
-("תוכן ענינים") per occasion.
+[ashreinu.app](https://ashreinu.app), JEM's audio app, or video via embedded
+YouTube), plus maamarim, English translations, and mafteiach.app's own
+editorial content-outline ("תוכן ענינים") per occasion.
 
 ## Why scrape this instead of berel.me or lahak.org
 
-Researched directly (see `docs/PLANNING.md`), not assumed:
-
 - **berel.me/shabbosfarbrengens** is a real, maintained chart — but it's
   only ever exported as a print-sized PDF/PNG, with no underlying
-  spreadsheet, CSV, JSON, or API. There's nothing to scrape; the actual
-  data behind the chart is not published anywhere on the site.
+  spreadsheet, CSV, JSON, or API. There's nothing to scrape; the data
+  behind the chart isn't published anywhere on the site.
 - **lahak.org** returns HTTP 403 to a plain fetch and runs on Chabad.org's
   platform, whose `robots.txt` disallows most content sections and caps
   crawl rate. It's also the commercial rights-holder for the hanachos it
   publishes (has a shop selling exactly this content). Scraping it would be
-  both technically blocked and a real rights problem, not just rude.
+  both technically blocked and a rights problem, not just rude.
 - **mafteiach.app**'s `robots.txt` has no restrictions at all, and its
   content is mostly *links out* (to Google Drive-hosted scans, to
   ashreinu.app, to YouTube) plus bibliographic citations (volume + page
@@ -31,7 +28,7 @@ Researched directly (see `docs/PLANNING.md`), not assumed:
 That distinction matters for what this tool commits to the repo — see
 "What's committed vs. generated locally" below.
 
-## How the site actually works (reverse-engineered, not documented anywhere)
+## How the site works (reverse-engineered, not documented anywhere)
 
 mafteiach.app serves both its year-listing and per-farbrengen-detail pages
 as a JS snippet (`let html = "..."` followed by a DOM swap) rather than
@@ -40,15 +37,13 @@ page load and an in-page AJAX swap. `src/htmlLiteral.ts` extracts and
 unescapes that string literal back into real HTML, which `src/parseListing.ts`
 and `src/parseFragment.ts` then parse with `cheerio`.
 
-Two non-obvious, verified-against-real-data behaviors this tool works around:
+Two behaviors this tool works around:
 
 1. **Fake year pages.** Requesting `/all/by_year/{year}` for a year outside
    the site's real coverage doesn't 404 — it silently renders **5711**'s
-   content instead. Brute-forcing every year from 5690 would produce
-   confidently-wrong data. The real coverage (confirmed from the site's own
-   sidebar nav) is: one combined bucket page for pre-Nesius years
-   (`/all/by_year/5690_5710`, all flagged `isPreNesius`), plus standalone
-   pages for 5710 through 5752. `REAL_STANDALONE_YEARS` and
+   content instead. The real coverage is: one combined bucket page for
+   pre-Nesius years (`/all/by_year/5690_5710`, all flagged `isPreNesius`),
+   plus standalone pages for 5710 through 5752. `REAL_STANDALONE_YEARS` and
    `PRE_NESIUS_BUCKET_PATH` in `src/crawl.ts` encode this. The bucket's tail
    overlaps standalone 5710's entries by id, so `crawlAll` dedupes globally
    by farbrengen id rather than trusting per-page year boundaries.
@@ -85,7 +80,7 @@ npm run crawl -- --out ./data --cache ./.cache
 
 The fetcher (`src/httpClient.ts`) is rate-limited (default 750ms between
 requests) and caches every raw response to disk by URL — re-running after
-an interruption, or after a parser bugfix, replays from cache instead of
+an interruption, or after a parser change, replays from cache instead of
 re-hitting the site. It also sends an honest, identifying User-Agent
 (the crawler's purpose and a contact point), not a browser impersonation.
 
@@ -97,39 +92,36 @@ or for tracking what changed over time. `openDatabase()` builds a SQLite
 store (via Node's built-in `node:sqlite` — experimental, but no
 native-compile dependency) with one `occasions` row per farbrengen
 (boolean columns for `has_mugah` / `has_bilti_mugah` / `has_audio` /
-`has_video` / etc. for fast filtering, matching the app's `CatalogEntry`
-model in `docs/PLANNING.md`), a normalized `links` child table for the
-actual citation URLs, and `first_seen_at` / `last_changed_at` / `etag`
-columns that back incremental sync:
+`has_video` / etc. for fast filtering), a normalized `links` child table
+for the actual citation URLs, and `first_seen_at` / `last_changed_at` /
+`etag` columns that back incremental sync:
 
 ```
 npm run load-db                    # one-time: migrate an existing crawl's data/*.json into mafteiach.db
 npm run sync                       # incremental refresh against the live site
 ```
 
-`syncAll()` (`src/sync.ts`) is what "keep the index up to date" actually
-means here: it re-checks every listing page (cheap, ~44 requests) to find
-occasions the site added or delisted, then revalidates every currently
-listed occasion's detail fragment via conditional GET (`If-None-Match` —
-mafteiach.app does send real ETags, confirmed live). A full sync is still
-~3,400 requests, but nearly all of them come back as a cheap `304` when
-nothing changed — only genuinely new or edited occasions get re-parsed and
-written to the DB, and `last_changed_at` is only bumped when the content
-actually differs (`contentHash()` fingerprints everything but crawl
-bookkeeping). `upsertRecord()` is the single write path both `load-db` and
-`sync` go through, so the two never drift out of sync with each other.
-Delisted occasions (in the DB but no longer on the live site — hasn't
-happened yet, but the sync reports it if it does) are surfaced in
+`syncAll()` (`src/sync.ts`) re-checks every listing page (cheap, ~44
+requests) to find occasions the site added or delisted, then revalidates
+every currently listed occasion's detail fragment via conditional GET
+(`If-None-Match`). A full sync is still ~3,400 requests, but nearly all of
+them come back as a cheap `304` when nothing changed — only genuinely new
+or edited occasions get re-parsed and written to the DB, and
+`last_changed_at` is only bumped when the content actually differs
+(`contentHash()` fingerprints everything but crawl bookkeeping).
+`upsertRecord()` is the single write path both `load-db` and `sync` go
+through, so the two never drift out of sync with each other. Delisted
+occasions (in the DB but no longer on the live site) are surfaced in
 `SyncResult.missingIds`, never auto-deleted; a human should look at why
 before removing anything.
 
 `syncAll` takes a `fetcher: RevalidatingFetcher` (the one method it needs
-from `PoliteFetcher`) rather than constructing one itself, specifically so
-its new-id/changed/missing-id logic has real unit tests
-(`tests/sync.test.ts`) against a fake in-memory site instead of needing a
-live network call for every test run — the actual ETag/304 mechanism is
-covered separately by one real request pair against mafteiach.app, not by
-re-running the full crawl in tests.
+from `PoliteFetcher`) rather than constructing one itself, so its
+new-id/changed/missing-id logic has unit tests (`tests/sync.test.ts`)
+against a fake in-memory site instead of needing a live network call for
+every test run — the actual ETag/304 mechanism is covered separately by
+one real request pair against mafteiach.app, not by re-running the full
+crawl in tests.
 
 There's no cron/scheduler wired up here — `sync` is a command to run
 periodically (weekly or monthly is plenty for an archive this static),
@@ -145,46 +137,36 @@ itself), or (b) mafteiach.app's own written editorial summary
 (`tochenInyanim`), which **is** their copyrightable expression, not a bare
 fact. Committing thousands of those summaries verbatim into this public
 repo without asking isn't something to do by default just because it's
-technically fetchable. The crawler code, tests, and a handful of real
-fixtures are committed so the dataset is fully reproducible; the dataset
-itself is a local build artifact until there's an actual conversation with
-mafteiach.app's maintainers about terms (the same outreach already planned
-for Berel Marozov and JEM in `docs/PLANNING.md` — this is one more
-conversation to have, not a blocker to indexing metadata for internal use).
+technically fetchable. The crawler code, tests, and a handful of fixtures
+are committed so the dataset is fully reproducible; the dataset itself is
+a local build artifact until there's an actual conversation with
+mafteiach.app's maintainers about terms.
 
-## Completeness audit (every button/class, verified against the full 3,424-record corpus)
+## What the parser captures
 
-After the first full crawl, every `farbrengen-detail-button` class actually
-appearing across all 3,424 cached raw responses was inventoried directly
-(not sampled) to check for anything the parser might be silently dropping.
-Two real findings, both fixed:
+Every `farbrengen-detail-button` class across the full crawled corpus maps
+to one of 11 fields on `FarbrengenDetail`, with two shapes worth calling
+out specifically:
 
-1. **Video has two distinct real shapes, only one of which was originally
-   handled.** A `sicha_video-button` embeds a YouTube player
-   (`addYouTubeEmbed(id, ...)`) — but 153 of the 671 video-bearing
-   occasions (23%) instead use a plain outbound `<a class="...
-   video-button button">`, exactly like `audio`. Real hosts, confirmed by
-   inspecting every one: `videos.jem.tv` (70), `drive.google.com` (69),
-   `www.chabad.org` (7, its "Living Torah" player), `jemtv.page.link` (3),
-   `jem.tv` (1), `player.vimeo.com` (1), and a legacy `www.770live.com`
-   (1). `VideoSection` now has a `links: LinkRef[]` field alongside
-   `youtubeIds` — `hasContent` is true if either is non-empty. This was a
-   real gap (153 occasions incorrectly reported as having no video), not
-   just an unmodeled edge case, so it's called out here rather than only
-   in a commit message.
+1. **Video has two distinct shapes.** A `sicha_video-button` embeds a
+   YouTube player (`addYouTubeEmbed(id, ...)`) — but roughly a quarter of
+   video-bearing occasions instead use a plain outbound `<a class="...
+   video-button button">`, exactly like `audio`. Real hosts:
+   `videos.jem.tv`, `drive.google.com`, `www.chabad.org` (its "Living
+   Torah" player), `jemtv.page.link`, `jem.tv`, `player.vimeo.com`, and a
+   legacy `www.770live.com`. `VideoSection` has a `links: LinkRef[]` field
+   alongside `youtubeIds` — `hasContent` is true if either is non-empty.
 2. **Pre-Nesius entries (`isPreNesius: true`) use a reduced 3-button
    template**, not the usual 9: only `biltiMugah` (labeled "הנחות," always
-   disabled in the real data), `mugah` (labeled "רשימות" / Reshimos —
-   diary-style notes, not an edited sicha, but rendered with the *same*
-   CSS class as a post-Nesius מוגה, so it lands in the same field), and
-   `hosofos`. No data was lost by this (the class-based detection already
-   handled it correctly), but the semantic meaning of `mugah` for a
-   pre-Nesius record differs from a post-Nesius one — documented on
-   `FarbrengenDetail` in `types.ts`, and a caller that cares about the
-   distinction should branch on `isPreNesius`.
+   disabled), `mugah` (labeled "רשימות" / Reshimos — diary-style notes, not
+   an edited sicha, but rendered with the *same* CSS class as a
+   post-Nesius מוגה, so it lands in the same field), and `hosofos`. The
+   semantic meaning of `mugah` for a pre-Nesius record therefore differs
+   from a post-Nesius one — documented on `FarbrengenDetail` in `types.ts`,
+   and a caller that cares about the distinction should branch on
+   `isPreNesius`.
 
-Corrected full-corpus stats after both fixes (3,424 total occasions,
-5690-5752):
+Full-corpus stats (3,424 total occasions, 5690-5752):
 
 | Has... | Count | % |
 |---|---|---|
@@ -204,14 +186,11 @@ Corrected full-corpus stats after both fixes (3,424 total occasions,
 
 (The "any recording" total, 1,314, is barely above the audio-only total of
 1,303 despite video adding 671 — almost every video-bearing occasion also
-has audio, so the union grows by only 3 net for the 153 newly-found video
-links, and by 13 net overall.)
+has audio, so the union grows by only 3 net for the direct-outbound-link
+video occasions, and by 13 net overall.)
 
-No other button classes exist anywhere in the corpus beyond the 11
-accounted for above (verified by inventorying the literal class strings
-across every cached response, not just the samples used to build the
-parser) — this audit is what "capture every content type completely," not
-just "handle the examples I happened to check," actually looks like.
+No button classes exist anywhere in the corpus beyond the 11 accounted for
+above.
 
 ## Known gaps / not yet modeled precisely
 
@@ -226,11 +205,10 @@ just "handle the examples I happened to check," actually looks like.
 ## What this doesn't cover (mafteiach.app has more than farbrengens)
 
 This package only crawls `/all/by_year/...` (and the two alternate views
-`/all/moadim/...` / `/all/parshiyos/...`, which are confirmed to be the
-*same* farbrengen ids re-grouped by holiday/parsha, not new content — not
-worth crawling separately). The site has real additional sections this
-package does not touch at all, confirmed by direct inspection but not yet
-indexed:
+`/all/moadim/...` / `/all/parshiyos/...`, which are the *same* farbrengen
+ids re-grouped by holiday/parsha, not new content — not worth crawling
+separately). The site has real additional sections this package does not
+touch at all:
 
 | Section | URL pattern | id space | Page shape |
 |---|---|---|---|
@@ -240,15 +218,15 @@ indexed:
 | General letters | `/michtavim_klolim_new/by_moed` (also `by_year`) | not yet mapped | full server-rendered HTML; per-letter tabs look like farbrengens (מוגה/English/תוכן ענינים) |
 | Diaries (yomanim) | `/yomanim/by_year` | not yet mapped | full server-rendered HTML |
 
-Extending to these is a real option (same politeness/caching approach
+Extending to these is a real option (the same politeness/caching approach
 would apply directly), but **Likkutei Sichos specifically needs a more
 careful line than farbrengens did**: it's Rabbi Schneerson's actively
 published, currently-sold book series, not archival hanachos. Indexing
 bibliographic facts (volume/sicha number, parsha, page range, kitzur/
 English/mugah *availability flags*, links) is the same category of thing
 already done for farbrengens — but before storing any "teaser" text
-alongside it, it needs to be confirmed which of that text is mafteiach.app's
-own editorial writing (safe, like `tochenInyanim`) versus a direct
-excerpt of the copyrighted sicha itself (not safe to bulk-store). That
+alongside it, it needs to be determined which of that text is mafteiach.app's
+own editorial writing (safe, like `tochenInyanim`) versus a direct excerpt
+of the copyrighted sicha itself (not safe to bulk-store). That
 determination hasn't been made yet, so no Likkutei Sichos crawler has been
 built pending it.

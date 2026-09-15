@@ -104,7 +104,7 @@ describe('parseFragmentPage', () => {
     // Same CSS class as a post-Nesius mugah sicha, so it lands in the same field - see the FarbrengenDetail doc comment.
     expect(detail.mugah.hasContent).toBe(true);
     expect(detail.mugah.links.length).toBeGreaterThan(0);
-    expect(detail.biltiMugah.hasContent).toBe(false); // the "הנחות" slot is always disabled pre-Nesius in the real corpus
+    expect(detail.biltiMugah.hasContent).toBe(false); // the "הנחות" slot is always disabled for pre-Nesius entries
     expect(detail.hosofos.hasContent).toBe(true);
   });
 });

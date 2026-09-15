@@ -27,11 +27,11 @@ export function subscribeOnline(listener: Listener): () => void {
  * a PDF, a recording, a download - actually failed to reach
  * services/media-proxy. There is no background timer pinging anything to
  * guess at this ahead of time. A synthetic ping against an unrelated
- * endpoint (this app's own static hosting on Vercel, say) is a confirmed
- * unreliable signal in production: it stayed reachable regardless of
- * whether the one thing this app actually needs - the Worker - could be
- * reached at all, which is exactly backwards for a signal whose only job
- * is "can this app do anything useful right now."
+ * endpoint (this app's own static hosting on Vercel, say) is an
+ * unreliable signal: it stays reachable regardless of whether the one
+ * thing this app actually needs - the Worker - can be reached at all,
+ * which is exactly backwards for a signal whose only job is "can this
+ * app do anything useful right now."
  */
 export function reportFetchFailure(): void {
   setOnline(false);
@@ -74,7 +74,7 @@ async function pingMediaProxy(): Promise<boolean> {
  * online, so this is cheap to call liberally. Meant to be called only
  * from a real moment worth checking (see useConnectivityRecheckTriggers:
  * a page navigation or a tap anywhere in the app while offline), never on
- * a timer - the previous background-polling design was the same
+ * a timer - a background-polling design would have the same
  * unreliable-signal problem described above, just on a schedule instead
  * of a fixed endpoint.
  */
@@ -92,7 +92,7 @@ export async function recheckIfOffline(): Promise<void> {
  * Firefox: "NetworkError when attempting to fetch resource"; Safari:
  * "Load failed"), plus pdf.js's own wrapped messages, which embed the
  * same "Failed to fetch" phrasing for a worker/asset load that couldn't
- * reach the network (the exact confirmed real report).
+ * reach the network.
  */
 export function looksLikeNetworkError(error: unknown): boolean {
   return /Failed to fetch|NetworkError|Load failed|ERR_INTERNET_DISCONNECTED|ERR_NETWORK/i.test(String(error));

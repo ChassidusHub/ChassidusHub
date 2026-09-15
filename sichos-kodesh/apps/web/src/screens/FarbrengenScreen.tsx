@@ -30,20 +30,16 @@ function countBySecondarySection(pdfs: CatalogPdf[]): Partial<Record<(typeof SEC
 }
 
 /**
- * Every occasion's own page, everywhere it's reached from (follow, browse,
- * this-week-all-years, occasion-all-years) - reflects what a farbrengen
- * actually is: its own hanacha (and its recordings, when there are any)
- * *are* the farbrengen, so they're shown inline and first. Toras Menachem
- * and Sichos Kodesh are two distinct, separately-transcribed editions, not
- * duplicates of each other - when an occasion has both (or more than one
- * citation of the same edition, e.g. a later "hashlamos" supplement), every
- * one of them shows here as its own card (see `isHighlightedFarbrengenHanacha`).
- * Mugah (the later Rebbe-edited text), the maamar, hagahos, hosofos, and any
- * biltiMugah PDF citing some other, unrelated source are a different kind of
- * thing - demoted into a collapsed "More from this occasion" section rather
- * than listed alongside the sichos itself. Used to be split from a separate,
- * flatter OccasionScreen for /browse specifically; unified here since
- * browsing a plain year deserves the same treatment as following one.
+ * An occasion's own page: its hanacha (and any recordings) are shown
+ * inline and first, since together they *are* the farbrengen. Toras
+ * Menachem and Sichos Kodesh are distinct, separately-transcribed
+ * editions, not duplicates - when an occasion has both (or more than one
+ * citation of an edition, e.g. a later "hashlamos" supplement), each
+ * shows as its own card (see `isHighlightedFarbrengenHanacha`). Mugah
+ * (the later Rebbe-edited text), the maamar, hagahos, hosofos, and any
+ * biltiMugah PDF citing some other, unrelated source are a different
+ * kind of content, demoted into a collapsed "More from this occasion"
+ * section rather than listed alongside the sichos itself.
  */
 export function FarbrengenScreen({ resolved }: Props) {
   const { t } = useTranslation();
@@ -65,12 +61,9 @@ export function FarbrengenScreen({ resolved }: Props) {
 
   const { entry, subtitle, basePath, backPath } = resolved;
 
-  // Toras Menachem and Sichos Kodesh are two distinct, separately-transcribed
-  // editions of the same sicha - both real content, so both get their own
-  // card rather than picking one as "primary" and burying the other. A
-  // biltiMugah PDF citing neither edition is a genuinely different
-  // citation - some other, unrelated source (a real but minority case -
-  // letters, memorial booklets, etc.) - and stays demoted into "more".
+  // A biltiMugah PDF citing neither edition is a different citation
+  // entirely - e.g. a letter or memorial booklet - and stays demoted
+  // into "more".
   const hanachaPdfs = entry.pdfs.filter(isHighlightedFarbrengenHanacha);
   const otherBiltiMugah = entry.pdfs.filter((pdf) => pdf.section === 'biltiMugah' && !isHighlightedFarbrengenHanacha(pdf));
   const secondaryCounts = countBySecondarySection(entry.pdfs);
@@ -79,12 +72,10 @@ export function FarbrengenScreen({ resolved }: Props) {
   const isEmpty = entry.audio.length === 0 && hanachaPdfs.length === 0 && !hasMore;
 
   /**
-   * Opening the hanacha always starts its recording too - the one
-   * exception is a *different* recording already actively playing, where
-   * starting this one would silently cut it off; there, the
-   * autoplayOnHanacha setting decides whether to override it (its only
-   * remaining job - see useAutoplayOnHanacha's doc comment) or leave it
-   * running and not start this one.
+   * Opening the hanacha also starts its recording, unless a different
+   * recording is already playing - then `autoplayOnHanacha` decides
+   * whether to override it or leave it running (see
+   * useAutoplayOnHanacha).
    */
   function handleReadHanacha(): void {
     if (entry.audio.length === 0) return;

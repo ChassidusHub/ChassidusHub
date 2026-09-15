@@ -8,14 +8,7 @@ import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 
-/**
- * Reached from a farbrengen's own page ("All farbrengens this week, every
- * year") - every occasion indexed on one of this Hebrew week's dates,
- * across *every* year in the catalog, not just kvius-matched ones (see
- * `resolveThisWeekAllYears`). Picking one goes to its own farbrengen page
- * (`useThisWeekAllYearsEntry`), rendered with the same highlighted-hanacha
- * FarbrengenScreen as everywhere else in the follow flow.
- */
+/** Every occasion indexed on one of this Hebrew week's dates across every catalog year, not just kvius-matched ones (see `resolveThisWeekAllYears`). */
 export function AllYearsThisWeekScreen() {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();

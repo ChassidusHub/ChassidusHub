@@ -68,7 +68,7 @@ export interface JemEventNode {
   hasLongDescription: boolean;
   hasTranscript: boolean;
   dates: CcdbDate[];
-  /** True only for nodes with their own (non-rolled-up) audio_recordings - see the dedup note in jemAudio.ts/crawl.ts. */
+  /** True only for nodes with their own (non-rolled-up) audio_recordings - see the dedup note in flatten.ts. */
   hasOwnAudio: boolean;
 }
 

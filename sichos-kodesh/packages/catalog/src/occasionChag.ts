@@ -14,12 +14,11 @@ import { mafteiachMonthTokenToHDateMonth } from './hebrewDateKey.js';
  * this pass (see config.ts's `IL`).
  *
  * "Chol HaMoed Sukkot"/"Chol HaMoed Pesach" are their own categories, not
- * folded into "Sukkot"/"Pesach" - a real, reported gap, not an oversight:
- * hebcal's own `CHOL_HAMOED` flag is distinct from `CHAG` (an intermediate
- * day of either week-long Yom Tov isn't itself `CHAG`-flagged), so before
- * this they resolved to `null` here and were simply unsearchable by chag,
- * even though they're real, meaningful days in their own right (and,
- * unlike the first/last days, common days for the Rebbe to farbreng on).
+ * folded into "Sukkot"/"Pesach": hebcal's `CHOL_HAMOED` flag is distinct
+ * from `CHAG` (an intermediate day of either week-long Yom Tov isn't
+ * itself `CHAG`-flagged), so they need their own handling below rather
+ * than resolving to `null` and going unsearchable by chag - and, unlike
+ * the first/last days, they're common days for the Rebbe to farbreng on.
  */
 export const CHAG_CATEGORIES = [
   'Rosh Hashana',

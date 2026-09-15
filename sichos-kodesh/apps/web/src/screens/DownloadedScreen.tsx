@@ -23,13 +23,11 @@ function groupByYear(entries: CatalogEntry[]): YearGroup[] {
 }
 
 /**
- * Reached from the home screen's offline note - every occasion actually
- * available offline right now, across every year, using the exact same
- * "downloaded" definition (this occasion's targets under the *current*
- * content-type settings, all present in the shared media cache) the
- * download-state icon uses everywhere else. Not scoped to being offline
- * itself - useful any time someone wants to see what's actually on the
- * device, not just when there's no connection to fall back from.
+ * Every occasion currently downloaded, using the same "downloaded"
+ * definition (targets under the current content-type settings, all
+ * present in the shared media cache) as the download-state icon uses
+ * elsewhere. Not gated on being offline - useful any time, not only when
+ * there's no connection.
  */
 export function DownloadedScreen() {
   const { t, language } = useTranslation();
@@ -41,11 +39,8 @@ export function DownloadedScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    // Content-type settings changing while this screen is already open is
-    // rare (that toggle lives on its own separate settings screen) - the
-    // previous result staying on screen for the moment it takes to
-    // re-check the cache is preferable to a synchronous reset-to-loading
-    // on every effect run.
+    // Keeps the previous result on screen during the re-check rather than
+    // resetting to a loading state on every effect run.
     void listDownloadedEntries(allEntries, settings.contentTypes).then((entries) => {
       if (!cancelled) setDownloaded(entries);
     });

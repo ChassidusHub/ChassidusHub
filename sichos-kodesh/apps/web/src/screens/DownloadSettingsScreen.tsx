@@ -13,7 +13,7 @@ import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 const HANACHA_EDITIONS: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
-/** The rest of PDF_SECTION_ORDER once mugah/biltiMugah are set aside - biltiMugah is the highlighted hanacha (handled separately, above), and mugah gets its own toggle in this same content-types list, ordered right after the hanacha editions rather than lumped with hagahos/hosofos. */
+/** PDF_SECTION_ORDER minus biltiMugah (the highlighted hanacha, handled separately above) and mugah (its own toggle, ordered right after the hanacha editions rather than grouped with hagahos/hosofos). */
 const OTHER_SECTIONS = PDF_SECTION_ORDER.filter((s): s is 'maamorim' | 'hagahos' | 'hosofos' => s !== 'biltiMugah' && s !== 'mugah');
 
 function formatBytes(bytes: number): string {
@@ -21,15 +21,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * Every setting the download feature has: whether it runs automatically
- * (and how far ahead), which year it pulls from (and whether to fall back
- * to a nearby kvius match when that year has a gap - week scope only, the
- * same preference `resolveWeekWithFallback` already uses), which content
- * types count, and how much is actually on disk right now. Its own screen
- * rather than crammed into the flat SettingsScreen - this is the one
- * section with enough real options to need one.
- */
+/** The week-scope kvius fallback here uses the same source-year preference as `resolveWeekWithFallback`. */
 export function DownloadSettingsScreen() {
   const { t, language } = useTranslation();
   const { settings, setSettings } = useDownload();
@@ -39,7 +31,7 @@ export function DownloadSettingsScreen() {
     void getDownloadedBytes()
       .then(setUsage)
       .catch(() => setUsage(null));
-  }, [settings]); // Re-read after every settings change too, since "Clear downloads" itself is a settings-adjacent action below.
+  }, [settings]); // Depends on `settings` too, so usage refreshes after actions like clearing downloads.
 
   const matchedYears = findMatchingYears(currentHebrewYear())
     .map((m) => m.hebrewYear)
