@@ -564,6 +564,18 @@ h1 {
 
 .playlist-row-duration {
   flex-shrink: 0;
+  /* Fixed width, not shrink-to-content - a real reported bug: this sits at
+     the row's own outer edge with the progress bar right next to it, so a
+     shorter duration string (e.g. "4:47" vs "48:55") made the *whole row*
+     narrower on that side, visibly shifting the progress bar's position
+     between rows. 6ch fits the longest real duration in this catalog
+     (some farbrengens run past 3 hours - "181:06" is 6 characters).
+     tabular-nums keeps each digit the same width too, so the fill amount
+     inside a *single* row's own bar doesn't jitter as the seconds tick
+     over either. */
+  width: 6ch;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
   color: var(--muted);
   font-size: 0.8125rem;
 }

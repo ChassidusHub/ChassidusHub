@@ -61,6 +61,29 @@ function writeStore(store: ProgressStore): void {
   } catch {
     // Best-effort persistence only.
   }
+  notifyProgressChanged();
+}
+
+/**
+ * Lets `useProgressMap` (and anything else holding a snapshot of the
+ * store) know a write happened, so it can re-read and re-render - without
+ * this, a screen that stays mounted while playback continues (the
+ * recordings/playlist page, most visibly) would keep showing whatever
+ * progress existed the moment it first mounted, never advancing, even
+ * though PlayerProvider's own throttled writes are landing in localStorage
+ * the whole time. A plain in-memory listener set, not a storage event
+ * (which only fires for *other* tabs/documents, never the one that made
+ * the write).
+ */
+const progressChangeListeners = new Set<() => void>();
+
+export function subscribeToProgressChanges(listener: () => void): () => void {
+  progressChangeListeners.add(listener);
+  return () => progressChangeListeners.delete(listener);
+}
+
+function notifyProgressChanged(): void {
+  for (const listener of progressChangeListeners) listener();
 }
 
 /** Records that the user opened this occasion's own page - drives the home page's "Continue" section's recency ordering, independent of whether anything was actually played. */
