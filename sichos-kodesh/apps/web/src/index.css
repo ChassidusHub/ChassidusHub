@@ -107,6 +107,27 @@ h1 {
   margin-top: 16px;
 }
 
+/* A plain heads-up, not an error - deliberately not .gap-message's danger
+   color, which would read as something having gone wrong rather than just
+   describing the current (perfectly normal) offline state. */
+.offline-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--card-hover);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.offline-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;

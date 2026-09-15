@@ -25,6 +25,7 @@ import { CategoryScreen } from './screens/CategoryScreen';
 import { PdfViewerScreen } from './screens/PdfViewerScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { DownloadSettingsScreen } from './screens/DownloadSettingsScreen';
+import { DownloadedScreen } from './screens/DownloadedScreen';
 import { AboutScreen } from './screens/AboutScreen';
 import { SearchScreen } from './screens/SearchScreen';
 import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry, useOccasionAllYearsEntry } from './routes/useResolvedEntry';
@@ -207,6 +208,7 @@ function AppContent() {
         <Route path="/search" element={<SearchScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="/settings/downloads" element={<DownloadSettingsScreen />} />
+        <Route path="/downloaded" element={<DownloadedScreen />} />
         <Route path="/about" element={<AboutScreen />} />
 
         <Route path="/follow/:sourceYear" element={<ThisWeekRoute />} />
