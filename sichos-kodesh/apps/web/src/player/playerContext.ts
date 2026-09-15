@@ -16,6 +16,8 @@ export interface PlayerState {
   playing: boolean;
   currentTime: number;
   duration: number;
+  /** Set when the current chapter's `<audio>` element failed to load (e.g. offline and not downloaded) - cleared as soon as playback actually starts. */
+  error: { offline: boolean } | null;
 }
 
 export interface PlayerContextValue extends PlayerState {

@@ -7,6 +7,7 @@ import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { listDownloadedEntries } from '../download/downloadManager';
 import { useDownload } from '../download/useDownload';
+import { useActiveDownloadRows } from '../download/useActiveDownloads';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -34,6 +35,7 @@ export function DownloadedScreen() {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const { settings } = useDownload();
+  const activeRows = useActiveDownloadRows();
   const allEntries = useMemo(() => Object.values(catalog).flat(), []);
   const [downloaded, setDownloaded] = useState<CatalogEntry[] | null>(null);
 
@@ -60,7 +62,24 @@ export function DownloadedScreen() {
       <h1>{t.downloadedContentTitle}</h1>
       <p className="tab-help">{t.downloadedContentHelp}</p>
 
-      {downloaded && downloaded.length === 0 && <p className="gap-message">{t.noDownloadedContent}</p>}
+      {activeRows.length > 0 && (
+        <div className="active-downloads-section">
+          <p className="category-header">{t.downloadsInProgressTitle}</p>
+          <ul className="active-downloads-list">
+            {activeRows.map((row) => (
+              <li key={row.key} className="active-download-row">
+                <span className="active-download-row-label">{row.label}</span>
+                <span className="active-download-row-track" aria-hidden>
+                  <span className="active-download-row-fill" style={{ width: `${row.percent}%` }} />
+                </span>
+                <span className="active-download-row-percent">{row.percent}%</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {downloaded && downloaded.length === 0 && activeRows.length === 0 && <p className="gap-message">{t.noDownloadedContent}</p>}
 
       {yearGroups.map(({ hebrewYear, entries }) => (
         <div key={hebrewYear}>

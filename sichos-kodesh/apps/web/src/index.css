@@ -20,6 +20,7 @@
   --accent: #1a8a4a;
   --accent-fg: #ffffff;
   --danger: #b3261e;
+  --danger-fg: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -34,6 +35,7 @@
     --accent: #1ed760;
     --accent-fg: #0a0a0a;
     --danger: #f28b82;
+    --danger-fg: #1a1a1a;
   }
 }
 
@@ -48,6 +50,7 @@
   --accent: #1ed760;
   --accent-fg: #0a0a0a;
   --danger: #f28b82;
+  --danger-fg: #1a1a1a;
 }
 
 * {
@@ -62,12 +65,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Wraps every route's content (see App.tsx's AppContent) - `.has-player`
-   reserves room below whatever the actual screen renders so GlobalPlayerBar
-   (position: fixed, can show on any screen) never covers the bottom of the
-   page's real content or blocks clicks on it. */
+/* Wraps every route's content (see App.tsx's AppContent) - reserves room
+   below whatever the actual screen renders so `.bottom-bars` (position:
+   fixed, can show on any screen) never covers the bottom of the page's
+   real content or blocks clicks on it. Each bar contributes its own
+   estimated height; the combined-class rule covers both showing at once
+   so the two don't just overlap each other's reserved space. */
 .app-content.has-player {
   padding-bottom: 96px;
+}
+
+.app-content.has-download-bar {
+  padding-bottom: 56px;
+}
+
+.app-content.has-player.has-download-bar {
+  padding-bottom: 140px;
 }
 
 .screen {
@@ -128,6 +141,35 @@ h1 {
   margin-top: 1px;
 }
 
+/* App-wide connectivity strip (see ConnectivityBanner.tsx) - `position:
+   sticky`, not `fixed`: it takes up real space in the document flow when
+   present, so unlike the bottom-bars container, no matching content
+   padding needs to be managed elsewhere - it just occupies its own row at
+   the top and sticks there once scrolled past. */
+.connectivity-banner {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.connectivity-banner-offline {
+  background: var(--danger);
+  color: var(--danger-fg);
+}
+
+.connectivity-banner-online {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -182,6 +224,56 @@ h1 {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.active-downloads-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.active-download-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.active-download-row-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.active-download-row-track {
+  display: block;
+  flex-shrink: 0;
+  width: 64px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.active-download-row-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.active-download-row-percent {
+  flex-shrink: 0;
+  width: 34px;
+  text-align: end;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .year-row {
@@ -719,20 +811,60 @@ h1 {
   display: block;
 }
 
+/* The single fixed-position container at the bottom of the viewport - both
+   DownloadProgressBar and GlobalPlayerBar live here (see App.tsx) and hide
+   themselves independently, stacking via normal flex flow instead of each
+   fixing itself to the screen edge and needing to know the other's height.
+   The safe-area inset lives here once, not duplicated on each bar. */
+.bottom-bars {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Global player bar - a single instance mounted at the app root (see
    App.tsx/PlayerProvider), always visible once anything has played this
    session, regardless of which screen is showing above it - the behavior
    that makes it "Spotify-like" rather than a per-screen widget. */
 
 .global-player {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
   background: var(--bg-elevated);
   border-top: 1px solid var(--border);
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+}
+
+.download-progress-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.download-progress-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+  opacity: 0.18;
+  transition: width 0.2s ease;
+}
+
+.download-progress-bar-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .global-player-controls {
@@ -741,7 +873,7 @@ h1 {
   gap: 14px;
   max-width: 640px;
   margin: 0 auto;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  padding: 12px 16px;
 }
 
 .global-player-toggle {
@@ -785,6 +917,13 @@ h1 {
 .global-player-scrub {
   flex: 1;
   min-width: 0;
+}
+
+.global-player-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.8125rem;
+  line-height: 1.3;
 }
 
 .global-player-transport {
