@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Wifi, WifiOff } from 'lucide-react';
 import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useTranslation } from '../i18n/useLanguage';
 
 /** How long the green "back online" confirmation stays up before clearing itself - it's a one-time confirmation, not an ongoing status (unlike the offline banner, which has no timer and stays up for as long as the fact it's reporting stays true). */
-const BACK_ONLINE_VISIBLE_MS = 15000;
+const BACK_ONLINE_VISIBLE_MS = 5000;
 
 /**
  * A slim strip at the very top of the page reflecting overall connectivity -
@@ -34,8 +35,13 @@ export function ConnectivityBanner() {
   if (!online) {
     return (
       <div className="connectivity-banner connectivity-banner-offline" role="status">
-        <WifiOff size={16} aria-hidden />
-        <span>{t.connectivityOffline}</span>
+        {/* Links to the same downloaded-content view the home screen's own
+            offline note already points to - the one place actually useful
+            to jump to right now, rather than just naming the problem. */}
+        <Link to="/downloaded" className="connectivity-banner-link">
+          <WifiOff size={16} aria-hidden />
+          <span>{t.connectivityOffline}</span>
+        </Link>
       </div>
     );
   }
