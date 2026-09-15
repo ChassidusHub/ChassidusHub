@@ -10,6 +10,7 @@ import { useDownload } from '../download/useDownload';
 import { useDownloadState } from '../download/useDownloadState';
 import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useTranslation } from '../i18n/useLanguage';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { BackLink } from '../components/BackLink';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 
@@ -42,7 +43,7 @@ function countBySecondarySection(pdfs: CatalogPdf[]): Partial<Record<(typeof SEC
  * section rather than listed alongside the sichos itself.
  */
 export function FarbrengenScreen({ resolved }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const player = usePlayer();
   const [autoplayOnHanacha] = useAutoplayOnHanacha();
   const { downloadOccasion } = useDownload();
@@ -81,14 +82,21 @@ export function FarbrengenScreen({ resolved }: Props) {
     if (entry.audio.length === 0) return;
     const differentRecordingPlaying = player.playing && player.playlist !== null && player.playlist.title !== entry.occasionLabel;
     if (differentRecordingPlaying && !autoplayOnHanacha) return;
-    player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId }, 0);
+    player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, 0);
   }
 
   return (
     <div className="screen">
       <BackLink to={backPath} />
       <h1>{entry.occasionLabel}</h1>
-      <p className="subtitle">{subtitle}</p>
+      {/* `subtitle` is this occasion's own day+month only (see
+          useResolvedEntry) - the year is appended here, not folded into
+          that shared field, so this page shows its occasion's full date
+          without changing what every other consumer of `subtitle`
+          expects it to mean. */}
+      <p className="subtitle">
+        {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}
+      </p>
 
       {downloadState !== 'unavailable' && (
         <p className="occasion-download-state">

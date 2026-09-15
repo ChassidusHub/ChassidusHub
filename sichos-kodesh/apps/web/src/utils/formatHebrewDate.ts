@@ -23,6 +23,21 @@ export function hebrewYearLabel(year: number, language: Language): string {
 }
 
 /**
+ * An occasion's full Hebrew date - day, month, and year together (e.g.
+ * "6 Adar I 5736" / "ו׳ אדר א׳ תשל״ו") - unlike `hebrewDayMonthLabel`
+ * above, which deliberately drops the year on a page already scoped to
+ * one source year. Used wherever an occasion is shown *out of* that
+ * context instead - the media player, the home page's cross-year
+ * "Continue" list - where the year isn't otherwise implied by the page
+ * itself and leaving it out would make an occasion that recurs every
+ * year (which is most of them) ambiguous about which year's occurrence
+ * this actually is.
+ */
+export function hebrewFullDateLabel(hebrewDate: string, hebrewYear: number, language: Language): string {
+  return `${hebrewDayMonthLabel(hebrewDate, language)} ${hebrewYearLabel(hebrewYear, language)}`;
+}
+
+/**
  * A parsha name (or a doubled reading's two names), in Hebrew for the
  * Hebrew UI - `currentParsha`'s own `parsha` field is always the plain
  * transliterated name (e.g. "Ha'azinu") regardless of UI language, since

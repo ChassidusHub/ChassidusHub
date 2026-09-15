@@ -8,6 +8,8 @@ export interface Playlist {
   /** The occasion this playlist belongs to - lets PlayerProvider record per-chapter listening progress against it (see player/progressStore.ts) for the home page's Continue section. */
   hebrewYear: number;
   occasionId: number;
+  /** The occasion's own raw mafteiach-index date key (e.g. "5736-06A-06") - shown alongside the title (see `hebrewFullDateLabel`) since the player bar and OS media session are never scoped to one source year the way an occasion's own page is, so the occasion label alone doesn't say which year's occurrence is actually playing. */
+  hebrewDate: string;
 }
 
 export interface PlayerState {

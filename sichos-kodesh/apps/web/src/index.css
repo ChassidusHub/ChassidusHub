@@ -465,6 +465,12 @@ h1 {
   gap: 6px;
 }
 
+.continue-row-date {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
 .continue-progress-track {
   display: block;
   width: 100%;
@@ -697,9 +703,29 @@ h1 {
   padding: 0;
 }
 
+/* The card/hover box now lives here, not on `.playlist-row` - `.row-icons`
+   (this row's own download button) is a sibling of that inner button, not
+   a descendant of it (a `<button>` can't nest another `<button>`, which a
+   single per-chapter download action needs to be, independent of the
+   row's own play action), so putting the shared background/padding on the
+   outer `<li>` is what actually pulls the download icon inside the same
+   visual container as the rest of the row instead of looking like a
+   separate element stuck on the side of it. */
 .playlist-row-item {
   display: flex;
   align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 10px;
+  /* Bleeds past the list's own edge symmetrically - a nicer, bigger hover
+     rectangle, safe on both sides now that the download button sits
+     inside this same box rather than immediately after it. */
+  margin-inline: -10px;
+  transition: background-color 0.1s ease;
+}
+
+.playlist-row-item:hover {
+  background: var(--card-hover);
 }
 
 .playlist-row {
@@ -710,22 +736,10 @@ h1 {
   gap: 14px;
   background: none;
   border: none;
-  border-radius: 8px;
-  padding: 10px;
-  /* Bleeds past the list's own edge only on the leading side (a nicer,
-     bigger hover rectangle) - not the trailing side, which now has a
-     sibling (.row-icons, this row's own download button) right after it;
-     a symmetric bleed there would push this button's own hit area to
-     overlap that sibling's. */
-  margin-inline: -10px 0;
+  padding: 0;
   color: var(--fg);
   text-align: start;
   cursor: pointer;
-  transition: background-color 0.1s ease;
-}
-
-.playlist-row:hover {
-  background: var(--card-hover);
 }
 
 .playlist-row-icon {
