@@ -142,6 +142,7 @@ const en = {
   nextChapter: 'Next chapter',
   play: 'Play',
   pause: 'Pause',
+  loading: 'Loading',
   seek: 'Seek',
   track: (n: number) => `Track ${n}`,
   sectionLabels: {
@@ -280,6 +281,7 @@ const he: typeof en = {
   nextChapter: 'הקטע הבא',
   play: 'נגן',
   pause: 'השהה',
+  loading: 'טוען',
   seek: 'חיפוש',
   track: (n: number) => `קטע ${n}`,
   sectionLabels: {

@@ -9,6 +9,9 @@ import type { Playlist, PlayerContextValue, PlayerState } from './playerContext'
 
 const PERSIST_KEY = 'sichos-kodesh:player-state';
 
+/** `HTMLMediaElement.readyState`'s lowest value: nothing has loaded for the current resource yet - see the `isSwitchingRef`/`onPause` comments in PlayerProvider for why this matters. */
+const HAVE_NOTHING = 0;
+
 interface PersistedPlayerState {
   playlist: Playlist;
   currentIndex: number;
@@ -57,12 +60,29 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [initialPersisted] = useState(readPersisted);
   const [state, setState] = useState<PlayerState>(() =>
     initialPersisted
-      ? { playlist: initialPersisted.playlist, currentIndex: initialPersisted.currentIndex, playing: false, currentTime: initialPersisted.currentTime, duration: 0, error: null }
-      : { playlist: null, currentIndex: 0, playing: false, currentTime: 0, duration: 0, error: null },
+      ? { playlist: initialPersisted.playlist, currentIndex: initialPersisted.currentIndex, playing: false, loading: false, currentTime: initialPersisted.currentTime, duration: 0, error: null }
+      : { playlist: null, currentIndex: 0, playing: false, loading: false, currentTime: 0, duration: 0, error: null },
   );
   // Consumed once, by the first chapter's `onLoadedMetadata` below - not a
   // dependency of any effect, so it deliberately doesn't trigger re-renders.
   const pendingSeekRef = useRef<number | null>(initialPersisted && initialPersisted.currentTime > 0 ? initialPersisted.currentTime : null);
+  // True for the brief window between changing the `<audio>` element's
+  // `src` (a skip, a fresh chapter) and the effect below actually calling
+  // `.play()` on it - see the matching comment on `onPause` for why this
+  // exists: changing `src` on a *playing* element makes the browser itself
+  // fire a real native 'pause' event as part of resetting the element for
+  // the new resource (readyState back to HAVE_NOTHING, `paused` set to
+  // true) - completely separate from anything the user or this app asked
+  // for, but indistinguishable from a real pause to a plain `onPause`
+  // handler. Without ignoring it, every skip/auto-advance visibly flickers
+  // the whole player (and the OS lock-screen control, which mirrors
+  // `state.playing`) to "stopped" and back the moment the new chapter's
+  // first real `play` event arrives - the exact "stops, then reopens"
+  // behavior reported.
+  const isSwitchingRef = useRef(false);
+  // Exactly one silent retry per chapter load before a real failure is
+  // reported - see the matching comment on `onError` below.
+  const retriedRef = useRef(false);
 
   const current = state.playlist?.audio[state.currentIndex] ?? null;
 
@@ -90,9 +110,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
         void audioRef.current.play();
       } else {
+        isSwitchingRef.current = true;
         pendingSeekRef.current = startTime > 0 ? startTime : null;
       }
-      setState({ playlist, currentIndex: startIndex, playing: true, currentTime: startTime, duration: 0, error: null });
+      retriedRef.current = false;
+      setState({ playlist, currentIndex: startIndex, playing: true, loading: true, currentTime: startTime, duration: 0, error: null });
       // Otherwise the actual .play() call happens in the effect below, once
       // the <audio> element's `src` has updated to match this new chapter.
     },
@@ -100,7 +122,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   );
 
   const playChapter = useCallback((index: number) => {
-    setState((prev) => (prev.playlist ? { ...prev, currentIndex: index, playing: true, currentTime: 0, duration: 0 } : prev));
+    isSwitchingRef.current = true;
+    retriedRef.current = false;
+    setState((prev) => (prev.playlist ? { ...prev, currentIndex: index, playing: true, loading: true, currentTime: 0, duration: 0 } : prev));
   }, []);
 
   const togglePlay = useCallback(() => {
@@ -108,7 +132,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!el) return;
     if (state.playing) el.pause();
     else {
-      if (el.error) el.load(); // see the matching comment in `play` above
+      if (el.error) {
+        retriedRef.current = false;
+        el.load(); // see the matching comment in `play` above
+      }
+      setState((s) => ({ ...s, loading: true }));
       void el.play();
     }
   }, [state.playing]);
@@ -116,14 +144,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const next = useCallback(() => {
     setState((prev) => {
       if (!prev.playlist || prev.currentIndex >= prev.playlist.audio.length - 1) return prev;
-      return { ...prev, currentIndex: prev.currentIndex + 1, playing: true, currentTime: 0, duration: 0 };
+      isSwitchingRef.current = true;
+      retriedRef.current = false;
+      return { ...prev, currentIndex: prev.currentIndex + 1, playing: true, loading: true, currentTime: 0, duration: 0 };
     });
   }, []);
 
   const prev = useCallback(() => {
     setState((prevState) => {
       if (!prevState.playlist || prevState.currentIndex <= 0) return prevState;
-      return { ...prevState, currentIndex: prevState.currentIndex - 1, playing: true, currentTime: 0, duration: 0 };
+      isSwitchingRef.current = true;
+      retriedRef.current = false;
+      return { ...prevState, currentIndex: prevState.currentIndex - 1, playing: true, loading: true, currentTime: 0, duration: 0 };
     });
   }, []);
 
@@ -188,8 +220,37 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // changes are driven from here rather than from the `autoPlay` attribute.
   useEffect(() => {
     if (state.playing) void audioRef.current?.play();
+    // The `<audio src>` DOM update that triggered this effect (React
+    // commits it before running effects) is what fires the browser's own
+    // implicit 'pause' - by now that's either already happened or is
+    // about to via a queued task; either way `onPause`'s readyState check
+    // is the real backstop, this is just the earliest reasonable point to
+    // stop treating a *later* pause as expected.
+    isSwitchingRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on the chapter, not `state.playing` (togglePlay drives that directly on the element)
   }, [current?.workerFilename]);
+
+  // Coming back to the app after it was backgrounded is exactly when the
+  // `onError` handler's one silent retry (see its own comment) is most
+  // likely to already have run and failed - a background-induced network
+  // abort and a user actually looking back at the app tend to happen
+  // together. Retrying again right on return, before the user has to tap
+  // anything, turns "I looked back and it's showing a scary error" into
+  // "it just quietly picked back up," matching what a real native player
+  // does.
+  useEffect(() => {
+    function retryOnForeground() {
+      if (document.visibilityState !== 'visible' || !state.error) return;
+      const el = audioRef.current;
+      if (!el) return;
+      retriedRef.current = false;
+      setState((s) => ({ ...s, loading: true, error: null }));
+      el.load();
+      void el.play();
+    }
+    document.addEventListener('visibilitychange', retryOnForeground);
+    return () => document.removeEventListener('visibilitychange', retryOnForeground);
+  }, [state.error]);
 
   // The Media Session API is what puts a real title/chapter and working
   // prev/next/play/pause on Android's lock-screen and notification-shade
@@ -247,7 +308,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
-    navigator.mediaSession.setActionHandler('play', () => audioRef.current?.play());
+    navigator.mediaSession.setActionHandler('play', () => {
+      setState((s) => ({ ...s, loading: true }));
+      void audioRef.current?.play();
+    });
     navigator.mediaSession.setActionHandler('pause', () => audioRef.current?.pause());
     navigator.mediaSession.setActionHandler('previoustrack', prev);
     navigator.mediaSession.setActionHandler('nexttrack', next);
@@ -290,18 +354,55 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           // Allow-Origin: *` - no cookies/auth involved.
           crossOrigin="anonymous"
           onPlay={() => setState((s) => ({ ...s, playing: true, error: null }))}
-          onPause={() => setState((s) => ({ ...s, playing: false }))}
+          // Ignores the browser's own implicit pause fired as a side effect
+          // of this element's `src` changing mid-playback (see
+          // `isSwitchingRef`'s own comment) - `readyState === HAVE_NOTHING`
+          // is the timing-independent tell: that combination can only ever
+          // be this implicit reset, never a real pause of media that was
+          // actually playing (which requires having loaded *something*
+          // first).
+          onPause={(e) => {
+            if (isSwitchingRef.current || e.currentTarget.readyState === HAVE_NOTHING) return;
+            setState((s) => ({ ...s, playing: false, loading: false }));
+          }}
+          // The real "audio is actually audible now" signal - distinct
+          // from `onPlay` above, which fires as soon as a `.play()` call is
+          // merely *accepted*, before any data has necessarily loaded.
+          // This is what actually clears the loading spinner.
+          onPlaying={() => setState((s) => ({ ...s, loading: false }))}
+          // Fires when playback has to stop because there isn't enough
+          // buffered data yet - both for the initial load before a chapter
+          // has ever played, and for a genuine mid-stream stall on a slow
+          // connection. The one real, standard signal this app's own UI
+          // and (indirectly, by keeping `playing` from ever having to
+          // flip) the OS lock-screen control need to show "still loading"
+          // instead of looking broken or unresponsive.
+          onWaiting={() => setState((s) => ({ ...s, loading: true }))}
           // A chapter failing to load (the common case: offline and not
           // downloaded) needs a visible response here, matching
-          // PdfViewerScreen's own offline handling. This failure is itself
-          // the live signal the whole app's connectivity state is driven
-          // by (see connectivity.ts) - a decode/format error is unrealistic
-          // for this catalog's real files, so every load failure here is
-          // treated as a real fetch failure, same as PdfViewerScreen's own
-          // (heuristic-checked) one.
-          onError={() => {
-            reportFetchFailure();
-            setState((s) => ({ ...s, playing: false, error: { offline: true } }));
+          // PdfViewerScreen's own offline handling. Retries exactly once
+          // before concluding that, though: backgrounding the whole
+          // browser (not just this tab) while a chapter is still loading
+          // can make the OS reclaim the in-flight network connection out
+          // from under it - a real, confirmed behavior on both Android and
+          // iOS that has nothing to do with actual connectivity, but looks
+          // identical to a real failure from this element's own
+          // perspective. `navigator.onLine` is checked only once the retry
+          // has also failed, to decide which message is actually true -
+          // claiming "offline" while genuinely connected (a real 404, an
+          // unsupported format) is its own confusing bug, distinct from
+          // the flicker this retry is really for.
+          onError={(e) => {
+            if (!retriedRef.current) {
+              retriedRef.current = true;
+              setState((s) => ({ ...s, loading: true }));
+              e.currentTarget.load();
+              void e.currentTarget.play();
+              return;
+            }
+            const offline = !navigator.onLine;
+            if (offline) reportFetchFailure();
+            setState((s) => ({ ...s, playing: false, loading: false, error: { offline } }));
           }}
           onEnded={() => {
             // Record this chapter as fully played explicitly - the last

@@ -402,6 +402,15 @@ h1 {
   }
 }
 
+/* The player's own buffering indicator (GlobalPlayerBar, RecordingsScreen)
+   - reuses download-spin's rotation but not its color, so it inherits
+   whichever color its own context already sets (accent-fg inside the
+   green toggle circle, accent inside an active playlist row) instead of
+   always reading as muted/grey. */
+.player-loading-spinner {
+  animation: download-spin 1s linear infinite;
+}
+
 /* The green, non-spinning ring shown once a download's real byte progress is
    known (see DownloadProgressRing.tsx) - same footprint as .download-state-spinner
    above so swapping between the two mid-download doesn't shift the row. */
