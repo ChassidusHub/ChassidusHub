@@ -15,6 +15,8 @@ export type { CurrentParsha } from './currentParsha.js';
 export { occasionParsha } from './occasionParsha.js';
 export { CHAG_CATEGORIES, occasionChagCategory } from './occasionChag.js';
 export type { ChagCategory } from './occasionChag.js';
+export { SPECIAL_DAYS, occasionSpecialDay } from './specialDays.js';
+export type { SpecialDay } from './specialDays.js';
 export { resolveOccasionAllYears, resolveThisWeek, resolveThisWeekAllYears, resolveWeekWithFallback, thisWeekDays } from './resolveThisWeek.js';
 export type { CatalogByYear } from './catalogLookup.js';
 export type { CatalogAudio, CatalogEntry, CatalogPdf, CatalogYear, PdfSection } from './types.js';

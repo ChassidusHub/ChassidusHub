@@ -7,6 +7,7 @@ import { BackLink } from '../components/BackLink';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { chagOptions, parshaOptions } from '../search/parshaOptions';
+import { specialDayOptions } from '../search/specialDayOptions';
 import { hasActiveFilters, isChagCategory, searchOccasions } from '../search/searchOccasions';
 import type { ContentType, SearchFilters } from '../search/searchOccasions';
 import { useProgressMap } from '../player/useProgressMap';
@@ -35,20 +36,22 @@ export function SearchScreen() {
   const [hdateMonth, setHdateMonth] = useState<number | null>(null);
   const [day, setDay] = useState<number | null>(null);
   const [parsha, setParsha] = useState<string | null>(null);
+  const [specialDay, setSpecialDay] = useState<string | null>(null);
   const [types, setTypes] = useState<ContentType[]>([]);
 
-  const filters: SearchFilters = { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, types };
+  const filters: SearchFilters = { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types };
   // Keyed on the individual primitive fields, not `filters` itself - a
   // fresh object literal every render would otherwise make this recompute
   // (rescanning the whole catalog) on every render, not just when a value
   // actually changes.
   const results = useMemo(
-    () => searchOccasions(catalog, { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, types }),
-    [deferredQuery, hebrewYear, hdateMonth, day, parsha, types],
+    () => searchOccasions(catalog, { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types }),
+    [deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types],
   );
   const years = useMemo(() => browsableYears(catalog), []);
   const parshas = useMemo(() => parshaOptions(language), [language]);
   const chagim = useMemo(() => chagOptions(language), [language]);
+  const specialDays = useMemo(() => specialDayOptions(language), [language]);
 
   function toggleType(type: ContentType): void {
     setTypes((prev) => (prev.includes(type) ? prev.filter((t2) => t2 !== type) : [...prev, type]));
@@ -60,6 +63,7 @@ export function SearchScreen() {
     setHdateMonth(null);
     setDay(null);
     setParsha(null);
+    setSpecialDay(null);
     setTypes([]);
   }
 
@@ -140,6 +144,18 @@ export function SearchScreen() {
             {chagim.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="search-filter">
+          <span className="search-filter-label">{t.specialDayFilterLabel}</span>
+          <select value={specialDay ?? ''} onChange={(e) => setSpecialDay(e.target.value || null)}>
+            <option value="">{t.anyFilterOption}</option>
+            {specialDays.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
               </option>
             ))}
           </select>
