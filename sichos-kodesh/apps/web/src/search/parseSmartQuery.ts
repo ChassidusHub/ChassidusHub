@@ -5,6 +5,8 @@ import { normalize } from './searchOccasions';
 export interface DetectedFilters {
   hebrewYear: number | null;
   hdateMonth: number | null;
+  /** Hebrew day-of-month (1-30) - see `gematriyaDay`'s own comment for what forms are recognized. */
+  day: number | null;
   /** A `parshiot` entry or a `ChagCategory` - same "one field" convention `SearchFilters.parsha` already uses. */
   parsha: string | null;
 }
@@ -57,16 +59,80 @@ function isWordChar(ch: string | undefined): boolean {
   return ch !== undefined && /[\p{L}\p{N}]/u.test(ch);
 }
 
-/** Removes the first whole-word occurrence of `phrase` from `text`, or returns `null` if it isn't present as a whole word. */
-function removePhrase(text: string, phrase: string): string | null {
+/** Standard edit distance (insertions, deletions, substitutions) - only ever run here on a single short word against a single short phrase, so the plain O(n·m) table is more than fast enough. */
+function levenshtein(a: string, b: string): number {
+  const rows: number[][] = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) rows[i]![0] = i;
+  for (let j = 0; j <= b.length; j++) rows[0]![j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      rows[i]![j] = a[i - 1] === b[j - 1] ? rows[i - 1]![j - 1]! : 1 + Math.min(rows[i - 1]![j]!, rows[i]![j - 1]!, rows[i - 1]![j - 1]!);
+    }
+  }
+  return rows[a.length]![b.length]!;
+}
+
+/** How many wrong letters a single-word phrase match tolerates, scaled to the phrase's own length - one wrong letter in a 3-5 letter month/parsha name (e.g. "שבת" typed for "שבט", a real, common ת/ט mix-up), but none at all for a 1-2 letter phrase, where a single edit is too large a fraction of the word to trust without risking an unrelated short word matching by coincidence. */
+function fuzzyBudget(phraseLength: number): number {
+  return Math.floor(phraseLength * 0.34);
+}
+
+/** Removes the first whole-word occurrence of `phrase` from `text` if present exactly, or returns `null`. */
+function removeExactPhrase(text: string, phrase: string): string | null {
   const idx = text.indexOf(phrase);
   if (idx === -1) return null;
   if (isWordChar(text[idx - 1]) || isWordChar(text[idx + phrase.length])) return null;
   return `${text.slice(0, idx)} ${text.slice(idx + phrase.length)}`.replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * The single closest single-word phrase to `word` among `phrases`, if
+ * exactly one is within its own `fuzzyBudget` - not just the first one
+ * that happens to clear the threshold. Two real month names can be one
+ * edit apart from each other too (e.g. "טבת"/Tevet and "שבט"/Shevat are
+ * both one substitution away from the typo "שבת"), so picking whichever
+ * phrase is checked first, rather than whichever is actually closest,
+ * would let list order silently decide between two different, equally-
+ * plausible corrections. A genuine tie for closest is treated the same as
+ * no match at all: confidently guessing wrong between two real months
+ * would show the wrong occasion's content outright, which is worse than
+ * leaving the word for Fuse's own (much less confident, but not silently
+ * wrong) free-text fallback.
+ */
+/** Whether two phrase filters would set the exact same detected value - the English and Hebrew names of one month aren't a real ambiguity even if both happen to fuzzy-match at the same distance, only two phrases that disagree are. */
+function sameEffect(a: PhraseFilter, b: PhraseFilter): boolean {
+  const empty = (): DetectedFilters => ({ hebrewYear: null, hdateMonth: null, day: null, parsha: null });
+  const da = empty();
+  const db = empty();
+  a.apply(da);
+  b.apply(db);
+  return da.hdateMonth === db.hdateMonth && da.parsha === db.parsha;
+}
+
+function bestFuzzyPhrase(word: string, phrases: PhraseFilter[]): PhraseFilter | null {
+  let best: PhraseFilter | null = null;
+  let bestDistance = Infinity;
+  let tied = false;
+  for (const phrase of phrases) {
+    if (phrase.normalized.includes(' ')) continue; // Multi-word phrases stay exact-only.
+    const budget = fuzzyBudget(phrase.normalized.length);
+    if (budget === 0 || Math.abs(word.length - phrase.normalized.length) > budget) continue;
+    const distance = levenshtein(word, phrase.normalized);
+    if (distance > budget) continue;
+    if (distance < bestDistance) {
+      best = phrase;
+      bestDistance = distance;
+      tied = false;
+    } else if (distance === bestDistance && best && !sameEffect(phrase, best)) {
+      tied = true;
+    }
+  }
+  return tied ? null : best;
+}
+
 /** Every quote/apostrophe-like character a Hebrew year's geresh/gershayim might actually be typed as - the same set `normalize()` strips, which is exactly why this check has to run on the *raw* query, before that stripping happens (see parseSmartQuery). */
 const GERESH_MARKS = /["'‘’“”״׳`´]/;
+const GERESH_MARKS_GLOBAL = /["'‘’“”״׳`´]/g;
 
 /**
  * Every real year in this catalog, written without its thousands digit
@@ -94,26 +160,59 @@ function gematriyaYear(rawToken: string): number | null {
   return raw < 1000 ? raw + 5000 : raw;
 }
 
+/** Compact Hebrew day-of-month numerals (1-30) never run past 2 letters - the largest, 29, is כ"ט (כ+ט). Unlike a year token, this is only accepted with an explicit geresh/gershayim mark: an unmarked 1-2 letter token is far too likely to just be an ordinary short Hebrew word (e.g. "של", "אל", "עם") for a bare gematria sum to be a safe signal on its own. */
+const HEBREW_DAY_LETTERS = /^[א-ת]{1,2}$/;
+
+/** Written-out day names that don't sum to their own value via plain gematria - e.g. `gematriyaStrToNum('יוד')` sums to 20 (י+ו+ד), not 10, because this is the spelled-out *name* of the letter yud, not a compact numeral. Chabad's own significant dates are conventionally named this way (Yud Shevat, Yud-Beis Tammuz) rather than with the compact form, in both Hebrew and its common English transliteration. */
+const SPELLED_DAY_ALIASES: Record<string, number> = { יוד: 10, yud: 10 };
+
 /**
- * Pulls year/month/parsha/chag signals out of a free-text search query, so
- * typing e.g. `בשלח תשל"ו` or "Kislev Sukkot" finds the right occasions
- * without ever touching the dropdown filters. Detected phrases are
- * removed from the returned `remainingText`; whatever's left over is
+ * A raw token written as a Hebrew day-of-month - either a compact numeral
+ * with an explicit geresh/gershayim (`י'` for 10, `כ"ד` for 24) or one of
+ * `SPELLED_DAY_ALIASES`' written-out names, which need no mark since
+ * they're unambiguous words in their own right. Returns `null` for
+ * anything else, including a bare unmarked compact numeral - see
+ * `HEBREW_DAY_LETTERS`'s own comment for why that's deliberately excluded.
+ */
+function gematriyaDay(rawToken: string): number | null {
+  const lower = rawToken.toLowerCase();
+  if (SPELLED_DAY_ALIASES[lower] != null) return SPELLED_DAY_ALIASES[lower];
+  if (!GERESH_MARKS.test(rawToken)) return null;
+  const stripped = rawToken.replace(GERESH_MARKS_GLOBAL, '');
+  if (!HEBREW_DAY_LETTERS.test(stripped)) return null;
+  const day = gematriyaStrToNum(rawToken);
+  return day >= 1 && day <= 30 ? day : null;
+}
+
+/**
+ * Pulls year/month/day/parsha/chag signals out of a free-text search
+ * query, so typing e.g. `בשלח תשל"ו` or "10 Kislev" finds the right
+ * occasions without ever touching the dropdown filters. Detected phrases
+ * are removed from the returned `remainingText`; whatever's left over is
  * still free text for Fuse.js's own fuzzy label search. Only a
  * whole-catalog-valid year (the caller's `yearRange`, from the bundled
  * catalog) is ever reported - a coincidentally in-range-looking number
  * that isn't a real catalog year doesn't help anyone and would just
  * quietly return zero results.
  *
- * Year detection runs on the *raw* query first, one whitespace-split token
- * at a time - it has to happen before `normalize()` runs (which strips
- * every quote-like character, geresh/gershayim included, for the phrase
- * matching below) or a gematriya year could never be told apart from an
- * ordinary word missing its geresh entirely.
+ * A day, once detected, is reported as a real structured filter rather
+ * than left in `remainingText` for Fuse - relying on fuzzy label matching
+ * for something this exact would only work when a given occasion's own
+ * label happens to spell the day the same way the query did, which varies
+ * year to year (one year's "יו"ד שבט" fuzzy-matches a query typed "יוד"
+ * fine; a differently-worded year's label might not), and Fuse's own
+ * minimum match length silently drops a single-letter query like "י'"
+ * altogether.
+ *
+ * Year and day detection both run on the *raw* query first, one
+ * whitespace-split token at a time - it has to happen before `normalize()`
+ * runs (which strips every quote-like character, geresh/gershayim
+ * included, for the phrase matching below) or a gematriya year/day could
+ * never be told apart from an ordinary word missing its geresh entirely.
  */
 export function parseSmartQuery(query: string, yearRange: { min: number; max: number }): SmartQueryResult {
-  const nonYearRawTokens: string[] = [];
-  const detected: DetectedFilters = { hebrewYear: null, hdateMonth: null, parsha: null };
+  const remainingRawTokens: string[] = [];
+  const detected: DetectedFilters = { hebrewYear: null, hdateMonth: null, day: null, parsha: null };
 
   for (const rawToken of query.split(/\s+/)) {
     if (!rawToken) continue;
@@ -127,18 +226,47 @@ export function parseSmartQuery(query: string, yearRange: { min: number; max: nu
     }
     if (year !== null) {
       detected.hebrewYear = year;
-    } else {
-      nonYearRawTokens.push(rawToken);
+      continue;
     }
+    // A bare 1-2 digit number is unambiguous as a day (there's no other
+    // structured field it could mean), unlike the same-shaped Hebrew
+    // gematria case above, which is genuinely ambiguous with an ordinary
+    // short word - see gematriyaDay's own comment.
+    if (detected.day == null && /^([1-9]|[12]\d|30)$/.test(rawToken)) {
+      detected.day = Number(rawToken);
+      continue;
+    }
+    if (detected.day == null) {
+      const day = gematriyaDay(rawToken);
+      if (day !== null) {
+        detected.day = day;
+        continue;
+      }
+    }
+    remainingRawTokens.push(rawToken);
   }
 
-  let text = normalize(nonYearRawTokens.join(' '));
+  let text = normalize(remainingRawTokens.join(' '));
   for (const phrase of getPhraseFilters()) {
-    const next = removePhrase(text, phrase.normalized);
+    const next = removeExactPhrase(text, phrase.normalized);
     if (next === null) continue;
     phrase.apply(detected);
     text = next;
   }
+
+  // One pass, after every exact match is already applied, picking each
+  // remaining word's single best fuzzy phrase match (if any) rather than
+  // trying phrases one at a time against the whole text - see
+  // bestFuzzyPhrase's own comment on why that matters.
+  const phrases = getPhraseFilters();
+  const keptWords: string[] = [];
+  for (const word of text.split(' ')) {
+    if (!word) continue;
+    const match = bestFuzzyPhrase(word, phrases);
+    if (match) match.apply(detected);
+    else keptWords.push(word);
+  }
+  text = keptWords.join(' ');
 
   return { detected, remainingText: text };
 }

@@ -160,14 +160,15 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters):
     .sort((a, b) => a - b);
 
   // The free-text box doubles as a "smart" search: a typed year, month,
-  // parsha or chag name is pulled out of it here and treated exactly like
-  // its own dropdown filter would be (see parseSmartQuery's own doc
+  // day, parsha or chag name is pulled out of it here and treated exactly
+  // like its own dropdown filter would be (see parseSmartQuery's own doc
   // comment) - an explicit dropdown selection still wins over whatever the
   // text also happens to mention, rather than fighting it. Only the text
   // left over after that goes to Fuse for fuzzy label matching.
   const { detected, remainingText } = parseSmartQuery(filters.query, { min: years[0] ?? 0, max: years[years.length - 1] ?? 0 });
   const effectiveYear = filters.hebrewYear ?? detected.hebrewYear;
   const effectiveMonth = filters.hdateMonth ?? detected.hdateMonth;
+  const effectiveDay = filters.day ?? detected.day;
   const effectiveParsha = filters.parsha ?? detected.parsha;
 
   // Computed once per call, not per entry - `fuse.search()` itself does the
@@ -182,7 +183,7 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters):
       if (entry.audio.length === 0 && entry.pdfs.length === 0) return false;
       if (matchedEntries && !matchedEntries.has(entry)) return false;
       if (effectiveMonth != null && mafteiachMonthTokenToHDateMonth(mafteiachMonthToken(entry.hebrewDate)) !== effectiveMonth) return false;
-      if (filters.day != null && mafteiachDay(entry.hebrewDate) !== filters.day) return false;
+      if (effectiveDay != null && mafteiachDay(entry.hebrewDate) !== effectiveDay) return false;
       if (effectiveParsha) {
         if (isChagCategory(effectiveParsha)) {
           if (occasionChagCategory(entry.hebrewDate, IL) !== effectiveParsha) return false;
