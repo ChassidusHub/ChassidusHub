@@ -134,6 +134,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const playChapter = useCallback((index: number) => {
     isSwitchingRef.current = true;
     retriedRef.current = false;
+    // A resume seek requested for whichever chapter was loading before this
+    // one is now meaningless (this chapter starts at 0) - left set, it would
+    // wrongly apply to *this* chapter's `onLoadedMetadata` instead once that
+    // fires, snapping playback back to the old chapter's position the
+    // moment loading finishes. See the matching comment on `pendingSeekRef`.
+    pendingSeekRef.current = null;
     setState((prev) => (prev.playlist ? { ...prev, currentIndex: index, playing: true, loading: true, currentTime: 0, duration: 0 } : prev));
   }, []);
 
@@ -156,6 +162,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (!prev.playlist || prev.currentIndex >= prev.playlist.audio.length - 1) return prev;
       isSwitchingRef.current = true;
       retriedRef.current = false;
+      // See the matching comment in `playChapter` - a skip away from a
+      // chapter that hasn't finished loading yet (so hasn't consumed its
+      // own pending seek) must not let that stale position apply to
+      // whatever loads next.
+      pendingSeekRef.current = null;
       return { ...prev, currentIndex: prev.currentIndex + 1, playing: true, loading: true, currentTime: 0, duration: 0 };
     });
   }, []);
@@ -165,6 +176,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (!prevState.playlist || prevState.currentIndex <= 0) return prevState;
       isSwitchingRef.current = true;
       retriedRef.current = false;
+      pendingSeekRef.current = null;
       return { ...prevState, currentIndex: prevState.currentIndex - 1, playing: true, loading: true, currentTime: 0, duration: 0 };
     });
   }, []);
