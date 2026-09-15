@@ -97,7 +97,7 @@ export function GlobalPlayerBar() {
         <div className="global-player-transport">
           {audio.length > 1 && (
             <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label={t.previousChapter}>
-              <SkipBack size={20} fill="currentColor" />
+              <SkipBack size={20} fill="currentColor" strokeWidth={0} />
             </button>
           )}
           <button className="global-player-toggle" onClick={player.togglePlay} aria-label={player.playing ? t.pause : t.play}>
@@ -106,12 +106,21 @@ export function GlobalPlayerBar() {
                 CSS bug) - nudging it right by a couple of px is what actually
                 reads as centered, matching every real player's own play
                 button; pause's two bars are already symmetric and need no
-                such nudge. */}
-            {player.playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{ marginInlineStart: 2 }} />}
+                such nudge. `strokeWidth={0}` on both: lucide draws a 2px
+                stroke outline even on a filled icon by default, which
+                double-thickens an already-solid shape - most visible on
+                Pause's two bars, each barely a fifth of the icon's own
+                width to begin with. Dropping the stroke leaves a clean
+                solid glyph at the actual requested weight. */}
+            {player.playing ? (
+              <Pause size={20} fill="currentColor" strokeWidth={0} />
+            ) : (
+              <Play size={20} fill="currentColor" strokeWidth={0} style={{ marginInlineStart: 2 }} />
+            )}
           </button>
           {audio.length > 1 && (
             <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label={t.nextChapter}>
-              <SkipForward size={20} fill="currentColor" />
+              <SkipForward size={20} fill="currentColor" strokeWidth={0} />
             </button>
           )}
         </div>

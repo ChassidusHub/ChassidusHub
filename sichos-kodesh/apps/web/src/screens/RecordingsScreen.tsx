@@ -88,11 +88,14 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
       >
         <span className="playlist-row-icon">
           {isActive && player.playing ? (
-            <Pause size={16} fill="currentColor" />
+            // strokeWidth={0}: lucide draws a 2px stroke outline even on a
+            // filled icon by default, which noticeably over-thickens Pause's
+            // two already-solid bars at this row's small size.
+            <Pause size={16} fill="currentColor" strokeWidth={0} />
           ) : finished ? (
             <CheckCircle2 size={16} className="finished-icon" aria-label={t.finishedLabel} />
           ) : (
-            <Play size={16} fill="currentColor" />
+            <Play size={16} fill="currentColor" strokeWidth={0} />
           )}
         </span>
         <span className="playlist-row-name">{chapter.chapterName ?? t.track(index + 1)}</span>
