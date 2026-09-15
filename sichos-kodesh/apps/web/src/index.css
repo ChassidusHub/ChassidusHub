@@ -256,6 +256,24 @@ h1 {
   }
 }
 
+/* The green, non-spinning ring shown once a download's real byte progress is
+   known (see DownloadProgressRing.tsx) - same footprint as .download-state-spinner
+   above so swapping between the two mid-download doesn't shift the row. */
+.download-progress-ring {
+  flex-shrink: 0;
+}
+
+.download-progress-ring-track {
+  stroke: var(--muted);
+  opacity: 0.3;
+}
+
+.download-progress-ring-fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 150ms linear;
+}
+
 /* FarbrengenScreen's own, bigger occasion-level echo of the same row state above. */
 .occasion-download-state {
   display: flex;
@@ -524,8 +542,14 @@ h1 {
   padding: 0;
 }
 
+.playlist-row-item {
+  display: flex;
+  align-items: center;
+}
+
 .playlist-row {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -533,7 +557,12 @@ h1 {
   border: none;
   border-radius: 8px;
   padding: 10px;
-  margin: 0 -10px;
+  /* Bleeds past the list's own edge only on the leading side (a nicer,
+     bigger hover rectangle) - not the trailing side, which now has a
+     sibling (.row-icons, this row's own download button) right after it;
+     a symmetric bleed there would push this button's own hit area to
+     overlap that sibling's. */
+  margin-inline: -10px 0;
   color: var(--fg);
   text-align: start;
   cursor: pointer;

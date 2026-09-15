@@ -4,7 +4,9 @@ import { getOccasionProgress, isOccasionFinished } from '../player/progressStore
 import type { ProgressStore } from '../player/progressStore';
 import { useDownload } from '../download/useDownload';
 import { useDownloadState } from '../download/useDownloadState';
+import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useTranslation } from '../i18n/useLanguage';
+import { DownloadProgressRing } from './DownloadProgressRing';
 
 interface Props {
   entry: CatalogEntry;
@@ -27,6 +29,7 @@ export function OccasionRowIcon({ entry, progressMap }: Props) {
   const { t } = useTranslation();
   const { downloadOccasion } = useDownload();
   const downloadState = useDownloadState(entry);
+  const downloadProgress = useDownloadProgress(entry);
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
 
   let statusIcon = null;
@@ -40,6 +43,12 @@ export function OccasionRowIcon({ entry, progressMap }: Props) {
   let downloadIcon = null;
   if (downloadState === 'downloaded') {
     downloadIcon = <CheckCircle2 size={14} className="download-state-done" aria-label={t.downloadedLabel} />;
+  } else if (downloadState === 'downloading' && downloadProgress !== undefined) {
+    downloadIcon = (
+      <span aria-label={t.downloadingLabel}>
+        <DownloadProgressRing progress={downloadProgress} />
+      </span>
+    );
   } else if (downloadState === 'queued' || downloadState === 'downloading') {
     downloadIcon = <Loader2 size={14} className="download-state-spinner" aria-label={t.downloadingLabel} />;
   } else if (downloadState === 'none') {
