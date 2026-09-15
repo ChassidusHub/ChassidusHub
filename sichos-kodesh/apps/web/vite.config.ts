@@ -4,7 +4,7 @@ import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { MEDIA_CACHE_NAME } from './src/download/cacheName.js';
+import { MEDIA_CACHE_NAME, PDF_RUNTIME_CACHE_NAME } from './src/download/cacheName.js';
 
 // Resolved via Node's own module resolution, not a hardcoded relative path -
 // this is an npm workspace, so pdfjs-dist is hoisted to the monorepo root's
@@ -173,6 +173,24 @@ export default defineConfig({
               // management surface - that's the Downloads settings
               // screen's own usage readout and "clear downloads" action.
               expiration: { maxEntries: 5000, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+          {
+            // pdf.js's own runtime dependencies - the worker script and its
+            // wasm/cmaps/standard-fonts asset directories (see
+            // copyPdfAssets above) - are already precached (the globPatterns
+            // list above), but precaching is all-or-nothing at SW install:
+            // one failed fetch out of ~200 files fails the *entire* install,
+            // silently leaving a visitor on the old SW with none of that
+            // version's fixes. See PDF_RUNTIME_CACHE_NAME's own comment -
+            // this is a second, independent path to the same files that
+            // doesn't depend on the whole manifest installing atomically.
+            urlPattern: ({ url, sameOrigin }) =>
+              sameOrigin && (url.pathname.includes('pdf.worker') || /\/pdf-(wasm|cmaps|standard-fonts)\//.test(url.pathname)),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: PDF_RUNTIME_CACHE_NAME,
+              cacheableResponse: { statuses: [200] },
             },
           },
         ],

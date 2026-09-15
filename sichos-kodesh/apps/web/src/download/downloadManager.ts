@@ -63,6 +63,34 @@ export function listDownloadTargets(entries: CatalogEntry[], contentTypes: Downl
   return targets;
 }
 
+/**
+ * Real total size of everything actually sitting in the media cache right
+ * now, read directly from each cached response - not
+ * `navigator.storage.estimate()`, which is *origin-wide* (so it also counts
+ * the ~7MB app-shell precache having nothing to do with "downloads," always
+ * inflating the number) and, worse, a real reported bug: its `usage` figure
+ * lags the cache's actual contents badly enough that it can read *higher*
+ * immediately after `caches.delete()` empties this exact cache, making
+ * "Clear downloads" look like it did nothing even though the cache is
+ * genuinely empty (confirmed directly: `cache.keys()` shows 0 entries right
+ * after, while `estimate()` still reports several MB). Prefers each
+ * response's own `Content-Length` header (present for every real
+ * media-proxy response); falls back to materializing the blob only for the
+ * rare response that lacks one, since that needs reading the actual bytes.
+ */
+export async function getDownloadedBytes(): Promise<number> {
+  const cache = await caches.open(MEDIA_CACHE_NAME);
+  const requests = await cache.keys();
+  let total = 0;
+  for (const request of requests) {
+    const response = await cache.match(request);
+    if (!response) continue;
+    const contentLength = response.headers.get('content-length');
+    total += contentLength ? Number(contentLength) : (await response.blob()).size;
+  }
+  return total;
+}
+
 /** Whether `target` is already fully cached - the durable, on-disk source of truth, independent of any in-memory queue state (see DownloadProvider.tsx). */
 export async function isDownloaded(target: Pick<DownloadTarget, 'url'>): Promise<boolean> {
   const cache = await caches.open(MEDIA_CACHE_NAME);
