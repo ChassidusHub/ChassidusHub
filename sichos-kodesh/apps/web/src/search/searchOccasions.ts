@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js';
 import {
   CHAG_CATEGORIES,
   isHighlightedFarbrengenHanacha,
@@ -15,7 +16,8 @@ export type ContentType = 'audio' | 'hanacha' | PdfSection;
 
 const CHAG_CATEGORY_SET: ReadonlySet<string> = new Set(CHAG_CATEGORIES);
 
-function isChagCategory(value: string): value is ChagCategory {
+/** Exported so SearchScreen can tell which of the two split dropdowns (parsha vs. chag) a stored `filters.parsha` value belongs to - both write into that one field (see its own doc comment). */
+export function isChagCategory(value: string): value is ChagCategory {
   return CHAG_CATEGORY_SET.has(value);
 }
 
@@ -39,9 +41,85 @@ export interface SearchResultGroup {
   entries: CatalogEntry[];
 }
 
-/** Strips ASCII and Hebrew quote-like punctuation before comparing - the same character (a Hebrew abbreviation mark) can appear as a straight ASCII quote or the proper Hebrew gershayim/geresh depending on where it came from (see utils/hebrewPunctuation.ts), and a search shouldn't fail just because the query and the label happen to use different forms of it. */
+/**
+ * Strips every quote/apostrophe-like character before comparing - the same
+ * Hebrew abbreviation mark (e.g. the ' in ר"ד or the ' in יו"ד) can show up
+ * as a straight ASCII quote, a "smart"/curly quote picked up from a
+ * copy-pasted source, or the proper Hebrew gershayim/geresh, depending on
+ * where the text came from - a search shouldn't fail just because the query
+ * and the label happen to use different forms of it. Also strips niqud
+ * (Hebrew vowel/cantillation points, U+0591-05C7) for the same reason - a
+ * transcribed label may or may not carry them, independent of the word
+ * itself - and collapses whitespace so an extra/missing space doesn't
+ * matter either.
+ */
 function normalize(text: string): string {
-  return text.replace(/["'״׳]/g, '').trim().toLowerCase();
+  return text
+    .replace(/[֑-ׇ]/g, '')
+    .replace(/["'‘’“”״׳`´]/g, '')
+    .replace(/[!^$|=]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+interface IndexedEntry {
+  entry: CatalogEntry;
+  label: string;
+}
+
+/**
+ * Fuse.js gives free-text search real typo tolerance (a transposed or
+ * missing letter, e.g. "בשלך" for "בשלח", still finds the right occasion)
+ * and match-anywhere/any-order behavior (a multi-word query doesn't need to
+ * appear as one contiguous substring) - a plain `.includes()` check, what
+ * this used before, can't do either. Built lazily and cached by catalog
+ * object identity - the bundled catalog never changes at runtime, so this
+ * pays the index-building cost once no matter how many searches follow,
+ * the same "index only what a filter actually needs" spirit as
+ * `occasionParsha`'s own per-year caching below.
+ */
+let cachedCatalog: CatalogByYear | null = null;
+let cachedFuse: Fuse<IndexedEntry> | null = null;
+
+function getFuseIndex(catalog: CatalogByYear): Fuse<IndexedEntry> {
+  if (cachedFuse && cachedCatalog === catalog) return cachedFuse;
+  const items: IndexedEntry[] = [];
+  for (const year of Object.keys(catalog).map(Number)) {
+    for (const entry of catalog[year] ?? []) {
+      items.push({ entry, label: normalize(entry.occasionLabel) });
+    }
+  }
+  cachedFuse = new Fuse(items, {
+    keys: ['label'],
+    // 0.35 (tried first) produced real false positives against the actual
+    // catalog once thousands of short, similarly-worded Hebrew labels were
+    // in play - e.g. "יחידות" (a totally unrelated occasion type) fuzzy-
+    // matched "יו"ד שבט" closely enough to pass. 0.3 was verified (against
+    // the real bundled catalog, not just a small hand-picked sample) to
+    // drop that false positive while still tolerating a genuine missing
+    // letter in a longer word (e.g. "פורם קטן" still finds "פורים קטן").
+    // Short (2-3 letter) Hebrew words don't get much real typo tolerance
+    // at this threshold - a single wrong letter is already a large fraction
+    // of the word - but that's an inherent tradeoff of Hebrew's short
+    // roots, not something a looser threshold fixes without reintroducing
+    // false positives like the one above.
+    threshold: 0.3,
+    ignoreLocation: true,
+    minMatchCharLength: 2,
+    // Without this, Fuse treats the whole query as one pattern fuzzy-matched
+    // against the whole label - a real gap, not just missing polish: a
+    // label like "יום ג' פרשת בשלח" wouldn't match a query typed as "בשלח
+    // פרשת" (right words, different order) at all, since that's a very
+    // different string overall even though every word is present. With it
+    // on, whitespace-separated words in the (already-normalized, so no
+    // stray Fuse operator characters survive to be misread) query become
+    // independent fuzzy sub-patterns ANDed together - each word can appear
+    // anywhere, in any order, and still typo-tolerant on its own.
+    useExtendedSearch: true,
+  });
+  cachedCatalog = catalog;
+  return cachedFuse;
 }
 
 function entryHasType(entry: CatalogEntry, type: ContentType): boolean {
@@ -63,14 +141,22 @@ export function hasActiveFilters(filters: SearchFilters): boolean {
 
 /**
  * Scans the whole bundled catalog - a few thousand occasions, cheap enough
- * to filter synchronously on every keystroke/filter change without an
- * index; `occasionParsha` only runs (and only then pays for building a
- * year's `Sedra`) when the parsha filter is actually set, and caches that
- * per year internally, so leaving it off costs nothing.
+ * to filter synchronously on every keystroke/filter change; the structured
+ * filters below (year/month/day/parsha/type) run directly against each
+ * entry with no index needed, and the free-text query defers to
+ * `getFuseIndex` above (built once, then reused) rather than paying for a
+ * fresh index on every keystroke. `occasionParsha` only runs (and only then
+ * pays for building a year's `Sedra`) when the parsha filter is actually
+ * set, and caches that per year internally, so leaving it off costs
+ * nothing.
  */
 export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters): SearchResultGroup[] {
   if (!hasActiveFilters(filters)) return [];
   const query = normalize(filters.query);
+  // Computed once per call, not per entry - `fuse.search()` itself does the
+  // whole-index scan, so running it inside the per-entry filter below would
+  // repeat that scan once per entry instead of once total.
+  const matchedEntries = query ? new Set(getFuseIndex(catalog).search(query).map((result) => result.item.entry)) : null;
   const results: SearchResultGroup[] = [];
   const years = Object.keys(catalog)
     .map(Number)
@@ -80,7 +166,7 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters):
     if (filters.hebrewYear != null && year !== filters.hebrewYear) continue;
     const entries = (catalog[year] ?? []).filter((entry) => {
       if (entry.audio.length === 0 && entry.pdfs.length === 0) return false;
-      if (query && !normalize(entry.occasionLabel).includes(query)) return false;
+      if (matchedEntries && !matchedEntries.has(entry)) return false;
       if (filters.hdateMonth != null && mafteiachMonthTokenToHDateMonth(mafteiachMonthToken(entry.hebrewDate)) !== filters.hdateMonth) return false;
       if (filters.day != null && mafteiachDay(entry.hebrewDate) !== filters.day) return false;
       if (filters.parsha) {

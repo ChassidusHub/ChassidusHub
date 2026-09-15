@@ -7,7 +7,7 @@ import { BackLink } from '../components/BackLink';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { chagOptions, parshaOptions } from '../search/parshaOptions';
-import { hasActiveFilters, searchOccasions } from '../search/searchOccasions';
+import { hasActiveFilters, isChagCategory, searchOccasions } from '../search/searchOccasions';
 import type { ContentType, SearchFilters } from '../search/searchOccasions';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
@@ -123,22 +123,25 @@ export function SearchScreen() {
 
         <label className="search-filter">
           <span className="search-filter-label">{t.parshaFilterLabel}</span>
-          <select value={parsha ?? ''} onChange={(e) => setParsha(e.target.value || null)}>
+          <select value={parsha && !isChagCategory(parsha) ? parsha : ''} onChange={(e) => setParsha(e.target.value || null)}>
             <option value="">{t.anyFilterOption}</option>
-            <optgroup label={t.parshaFilterLabel}>
-              {parshas.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label={t.chagOptgroupLabel}>
-              {chagim.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </optgroup>
+            {parshas.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="search-filter">
+          <span className="search-filter-label">{t.chagOptgroupLabel}</span>
+          <select value={parsha && isChagCategory(parsha) ? parsha : ''} onChange={(e) => setParsha(e.target.value || null)}>
+            <option value="">{t.anyFilterOption}</option>
+            {chagim.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
           </select>
         </label>
       </div>
