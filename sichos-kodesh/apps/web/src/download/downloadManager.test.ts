@@ -224,4 +224,29 @@ describe('runDownload', () => {
 
     expect(events).toEqual(['downloading', 'error']);
   });
+
+  it('reports an error for every target (never a silent no-op) when wifiOnly skips a metered connection', async () => {
+    fakeWritableCache();
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+    const originalConnection = (navigator as { connection?: unknown }).connection;
+    Object.defineProperty(navigator, 'connection', { value: { type: 'cellular' }, configurable: true });
+
+    try {
+      const events: string[] = [];
+      await runDownload([makeTarget('https://example.com/a.mp3'), makeTarget('https://example.com/b.mp3')], {
+        wifiOnly: true,
+        onEach: (_target, event) => events.push(event),
+      });
+
+      // Both targets settle to 'error' - a caller that moved its state to
+      // 'queued'/'downloading' before calling runDownload (see
+      // DownloadProvider) needs *some* event to un-stick it, or the UI is
+      // left showing a spinner that never resolves - a real reported
+      // "download doesn't work" symptom.
+      expect(events).toEqual(['error', 'error']);
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(navigator, 'connection', { value: originalConnection, configurable: true });
+    }
+  });
 });
