@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
+import { DownloadProvider } from './download/DownloadProvider';
+import { useAutoDownloadSync } from './download/useAutoDownloadSync';
 import { usePlayer } from './player/usePlayer';
 import { LanguageProvider } from './i18n/LanguageProvider';
 import { useTranslation } from './i18n/useLanguage';
@@ -21,6 +23,7 @@ import { RecordingsScreen } from './screens/RecordingsScreen';
 import { CategoryScreen } from './screens/CategoryScreen';
 import { PdfViewerScreen } from './screens/PdfViewerScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { DownloadSettingsScreen } from './screens/DownloadSettingsScreen';
 import { AboutScreen } from './screens/AboutScreen';
 import { SearchScreen } from './screens/SearchScreen';
 import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry, useOccasionAllYearsEntry } from './routes/useResolvedEntry';
@@ -166,6 +169,7 @@ function useScrollToTopOnNavigate(): void {
 function AppContent() {
   const player = usePlayer();
   useScrollToTopOnNavigate();
+  useAutoDownloadSync();
   return (
     <div className={player.playlist ? 'app-content has-player' : 'app-content'}>
       <Routes>
@@ -174,6 +178,7 @@ function AppContent() {
         <Route path="/years" element={<BrowseYearsScreen />} />
         <Route path="/search" element={<SearchScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
+        <Route path="/settings/downloads" element={<DownloadSettingsScreen />} />
         <Route path="/about" element={<AboutScreen />} />
 
         <Route path="/follow/:sourceYear" element={<ThisWeekRoute />} />
@@ -222,10 +227,12 @@ function App() {
   return (
     <BrowserRouter>
       <LanguageProvider>
-        <PlayerProvider>
-          <AppContent />
-          <GlobalPlayerBar />
-        </PlayerProvider>
+        <DownloadProvider>
+          <PlayerProvider>
+            <AppContent />
+            <GlobalPlayerBar />
+          </PlayerProvider>
+        </DownloadProvider>
       </LanguageProvider>
     </BrowserRouter>
   );

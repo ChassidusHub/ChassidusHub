@@ -1,9 +1,9 @@
 import { HDate } from '@hebcal/core';
-import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
+import { findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import { describe, expect, it } from 'vitest';
 import { toMafteiachHebrewDateKey } from '../src/hebrewDateKey.js';
 import type { CatalogByYear } from '../src/catalogLookup.js';
-import { resolveOccasionAllYears, resolveThisWeek, resolveThisWeekAllYears } from '../src/resolveThisWeek.js';
+import { resolveOccasionAllYears, resolveThisWeek, resolveThisWeekAllYears, resolveWeekWithFallback, thisWeekDays } from '../src/resolveThisWeek.js';
 import type { CatalogEntry } from '../src/types.js';
 
 function makeEntry(hebrewYear: number, hebrewDate: string, label: string, hasAudio: boolean): CatalogEntry {
@@ -131,6 +131,64 @@ describe('resolveThisWeek', () => {
     const result = resolveThisWeek(sourceYear, catalog, today);
 
     expect(result.map((r) => r.entry.occasionLabel)).toEqual(['Erev Rosh Hashana']);
+  });
+});
+
+describe('resolveWeekWithFallback', () => {
+  const targetYear = 5786;
+  const targetShabbos = new HDate(15, 7, targetYear).onOrAfter(6);
+  const today = new Date(`${targetShabbos.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
+  const days = thisWeekDays(today);
+
+  function entryFor(hebrewYear: number, label: string): CatalogEntry {
+    const key = toMafteiachHebrewDateKey({ year: hebrewYear, month: targetShabbos.getMonth(), day: targetShabbos.getDate() });
+    return makeEntry(hebrewYear, key, label, true);
+  }
+
+  it("returns the preferred year's own occasions when it has content, without consulting kvius matches at all", () => {
+    const { hebrewYear: preferredYear } = findMatchingYears(targetYear)[0]!;
+    const catalog: CatalogByYear = { [preferredYear]: [entryFor(preferredYear, 'preferred')] };
+
+    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, today);
+
+    expect(result?.hebrewYear).toBe(preferredYear);
+    expect(result?.occasions.map((o) => o.entry.occasionLabel)).toEqual(['preferred']);
+  });
+
+  it('falls back to a full kvius match over a partial one when the preferred year is empty', () => {
+    const fullMatches = findMatchingYears(targetYear);
+    const preferredYear = fullMatches[0]!.hebrewYear;
+    const fullFallbackYear = fullMatches[1]!.hebrewYear;
+    const partialOnlyYear = findPartialWeekMatches(targetYear, days).find((m) => !fullMatches.some((f) => f.hebrewYear === m.hebrewYear))!
+      .hebrewYear;
+
+    const catalog: CatalogByYear = {
+      [fullFallbackYear]: [entryFor(fullFallbackYear, 'full fallback')],
+      [partialOnlyYear]: [entryFor(partialOnlyYear, 'partial fallback')],
+    };
+
+    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, today);
+
+    expect(result?.hebrewYear).toBe(fullFallbackYear);
+  });
+
+  it('falls back to a partial-week match when the preferred year and every full match are empty', () => {
+    const fullMatches = findMatchingYears(targetYear);
+    const preferredYear = fullMatches[0]!.hebrewYear;
+    const partialOnlyYear = findPartialWeekMatches(targetYear, days).find((m) => !fullMatches.some((f) => f.hebrewYear === m.hebrewYear))!
+      .hebrewYear;
+
+    const catalog: CatalogByYear = { [partialOnlyYear]: [entryFor(partialOnlyYear, 'partial fallback')] };
+
+    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, today);
+
+    expect(result?.hebrewYear).toBe(partialOnlyYear);
+  });
+
+  it('returns null when nothing in the fallback chain has any content', () => {
+    const { hebrewYear: preferredYear } = findMatchingYears(targetYear)[0]!;
+
+    expect(resolveWeekWithFallback(preferredYear, targetYear, {}, today)).toBeNull();
   });
 });
 

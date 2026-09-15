@@ -5,6 +5,7 @@ import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useProgressMap } from '../player/useProgressMap';
+import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
+  const { enqueueBulk } = useDownload();
   const entries: CatalogEntry[] = (catalog[sourceYear] ?? []).filter(
     (e) => (e.audio.length > 0 || e.pdfs.length > 0) && mafteiachMonthToken(e.hebrewDate) === monthToken,
   );
@@ -43,6 +45,12 @@ export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
           </li>
         ))}
       </ul>
+
+      {entries.length > 0 && (
+        <button type="button" className="button" onClick={() => enqueueBulk(entries)}>
+          {t.downloadThisMonthLabel}
+        </button>
+      )}
     </div>
   );
 }

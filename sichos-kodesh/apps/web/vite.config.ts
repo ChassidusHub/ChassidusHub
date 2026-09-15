@@ -4,6 +4,7 @@ import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { MEDIA_CACHE_NAME } from './src/download/cacheName.js';
 
 // Resolved via Node's own module resolution, not a hardcoded relative path -
 // this is an npm workspace, so pdfjs-dist is hoisted to the monorepo root's
@@ -103,8 +104,12 @@ export default defineConfig({
               // serving that exact stale entry forever afterward; the fix
               // alone only stops *new* entries from being poisoned. Bump
               // this name again if the cache is ever poisoned by some other
-              // bug in the future, for the same reason.
-              cacheName: 'media-proxy-cache-v3',
+              // bug in the future, for the same reason. Shared with the
+              // download feature (src/download/cacheName.ts) - a
+              // deliberate download and an opportunistic play/read both
+              // land in this one bucket, so playback always checks the
+              // same place a download filled.
+              cacheName: MEDIA_CACHE_NAME,
               // Neither 206 (Partial Content) nor 0 (opaque) may be in this
               // list, even though workbox-range-requests' own
               // `rangeRequests: true` needs a *complete, readable* cached
@@ -151,7 +156,18 @@ export default defineConfig({
               // mistaken for a complete, usable one.
               cacheableResponse: { statuses: [200] },
               rangeRequests: true,
-              expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              // Raised from 500 now that a deliberate download (see
+              // apps/web/src/download/) can legitimately want a whole
+              // month or year's worth of audio/PDFs in here at once -
+              // this plugin prunes the *whole* named cache by LRU on its
+              // next normal write regardless of who added an entry, so a
+              // low cap would silently evict content the user explicitly
+              // asked to keep offline. 5000 is far above any realistic
+              // real download (a full kvius year's own occasions), so
+              // this is a safety ceiling, not the real storage
+              // management surface - that's the Downloads settings
+              // screen's own usage readout and "clear downloads" action.
+              expiration: { maxEntries: 5000, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },
         ],
