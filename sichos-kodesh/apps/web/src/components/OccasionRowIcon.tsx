@@ -81,9 +81,11 @@ export function OccasionRowIcon({ entry, progressMap }: Props) {
 
   return (
     <span className="row-icons">
-      {/* Download before the finished/audio icon - every occasion can be downloaded, but only some have a recording at all, so the always-relevant one leads. */}
-      {downloadIcon}
+      {/* Download after the finished/audio icon, so it sits flush at the
+          row's true trailing edge (see .year-row-trailing's own comment) -
+          the audio/finished icon is inner, next to it. */}
       {statusIcon}
+      {downloadIcon}
     </span>
   );
 }

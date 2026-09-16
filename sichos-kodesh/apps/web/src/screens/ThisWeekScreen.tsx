@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { currentHebrewYear, currentParsha, resolveThisWeek, resolveWeekWithFallback } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
 import catalog from '../catalog/data';
@@ -101,8 +101,8 @@ export function ThisWeekScreen({ sourceYear }: Props) {
             <Link className="year-row" to={`/follow/${sourceYear}/${occasion.entry.occasionId}`}>
               <span className="year-row-year">{occasion.entry.occasionLabel}</span>
               <span className="year-row-trailing">
-                <OccasionRowIcon entry={occasion.entry} progressMap={progressMap} />
                 <span className="year-row-distance">{hebrewDayMonthLabel(occasion.hebrewDate, language)}</span>
+                <OccasionRowIcon entry={occasion.entry} progressMap={progressMap} />
               </span>
             </Link>
           </li>
@@ -111,7 +111,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
 
       {occasions.length > 0 && online && (
         <button type="button" className="button" onClick={() => enqueueBulk(occasions.map((occasion) => occasion.entry))}>
-          {t.downloadThisWeekLabel}
+          <Download size={16} aria-hidden /> {t.downloadThisWeekLabel}
         </button>
       )}
 

@@ -283,7 +283,6 @@ h1 {
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   min-width: 0;
   background: var(--bg);
@@ -307,12 +306,24 @@ h1 {
 }
 
 .screen-header-title {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  text-align: center;
   font-size: 1.125rem;
   font-weight: 700;
+}
+
+/* An invisible, non-interactive mirror of the real BackLink (see
+   ScreenHeader.tsx) - its only job is to occupy exactly the same width as
+   the real one so `.screen-header-title`'s flex box sits centered between
+   two equal edges instead of only being pushed away from the back button
+   on one side. */
+.screen-header-spacer {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .tabs {
@@ -432,10 +443,14 @@ h1 {
   margin-inline-start: 12px;
 }
 
-/* Groups a row's download/audio/finished icon(s) with its trailing date -
+/* Groups a row's trailing date with its download/audio/finished icon(s) -
    the "other side" of the row from the title, not clustered with it, so a
-   row reads as [title  ......  icons + date] the same way ScreenHeader's
-   own title sits opposite its back button. `.year-row-distance` nested in
+   row reads as [title  ......  date  icons] the same way ScreenHeader's own
+   title sits opposite its back button. The date comes before the icon(s),
+   not after, so the icon(s) - not the date, whose presence varies row to
+   row - are what sits flush against the row's true trailing edge, keeping
+   every row's icon(s) starting at the same on-screen position regardless of
+   whether that row happens to show a date. `.year-row-distance` nested in
    here drops its own margin (below) since this wrapper's own margin
    already provides the gap from the title. */
 .year-row-trailing {
@@ -1283,6 +1298,31 @@ h1 {
 }
 
 .search-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* DownloadSettingsScreen's custom-weeks retention row - a plain `.year-row`
+   isn't clickable here (the number input is what's interactive), so its
+   own pointer cursor is turned back off. */
+.custom-retention-row {
+  cursor: default;
+}
+
+.custom-retention-input {
+  width: 64px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--fg);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  text-align: center;
+}
+
+.custom-retention-input:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
