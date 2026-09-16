@@ -50,8 +50,24 @@ export function useAutoDownloadSync(): void {
 
   useEffect(() => {
     if (!settings.autoDownloadEnabled) return;
-    const entries = resolveAutoDownloadEntries(settings, new Date());
-    if (entries.length > 0) enqueueBulk(entries);
+    // Firing this sync's fetches the instant the app mounts can race a cold
+    // PWA launch's network stack still coming back up (Wi-Fi radio waking
+    // from sleep, DNS not yet resolvable) - a real, observed failure mode
+    // that has nothing to do with actual connectivity, but downloadManager
+    // can't tell it apart from a genuine offline fetch (see
+    // useConnectivityRecheckTriggers's matching comment) and would
+    // false-flip the whole app's connectivity banner red for the first
+    // moment of every cold start, "reconnecting" a second later once the
+    // radio's actually up. A short grace delay before this background
+    // sync's own first fetch gives that race time to resolve on its own -
+    // same spirit as the retry-once pattern PlayerProvider/PdfViewerScreen
+    // use for the same underlying problem, just ahead of time instead of
+    // after the fact, since this sync has no user waiting on it either way.
+    const timer = setTimeout(() => {
+      const entries = resolveAutoDownloadEntries(settings, new Date());
+      if (entries.length > 0) enqueueBulk(entries);
+    }, 2500);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately once per app load: a settings change mid-session should take effect on the *next* open, not retroactively re-run this.
   }, []);
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { audioUrl } from '../download/download';
-import { reportFetchFailure } from '../network/connectivity';
+import { getOnlineSnapshot, reportFetchFailure } from '../network/connectivity';
 import { forMediaSession } from '../utils/hebrewPunctuation';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
 import { useLanguage } from '../i18n/useLanguage';
@@ -415,11 +415,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           // from under it - a real, confirmed behavior on both Android and
           // iOS that has nothing to do with actual connectivity, but looks
           // identical to a real failure from this element's own
-          // perspective. `navigator.onLine` is checked only once the retry
-          // has also failed, to decide which message is actually true -
-          // claiming "offline" while genuinely connected (a real 404, an
-          // unsupported format) is its own confusing bug, distinct from
-          // the flicker this retry is really for.
+          // perspective. The element's own `MediaError.code` is checked
+          // only once the retry has also failed, to decide which message
+          // is actually true - claiming "offline" while genuinely
+          // connected (a real 404, an unsupported format) is its own
+          // confusing bug, distinct from the flicker this retry is really
+          // for. This mirrors PdfViewerScreen's own `looksLikeNetworkError`
+          // check: a raw `navigator.onLine` read is unreliable (see
+          // connectivity.ts's doc comment) and, gating `reportFetchFailure`
+          // on it directly, used to mean a chapter failing to load while
+          // genuinely offline (Worker unreachable, OS still reporting a
+          // live network interface) never told the rest of the app it was
+          // offline at all - only PdfViewerScreen's own errors did.
           onError={(e) => {
             if (!retriedRef.current) {
               retriedRef.current = true;
@@ -428,9 +435,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
               void e.currentTarget.play();
               return;
             }
-            const offline = !navigator.onLine;
-            if (offline) reportFetchFailure();
-            setState((s) => ({ ...s, playing: false, loading: false, error: { offline } }));
+            if (e.currentTarget.error?.code === MediaError.MEDIA_ERR_NETWORK) reportFetchFailure();
+            setState((s) => ({ ...s, playing: false, loading: false, error: { offline: !getOnlineSnapshot() } }));
           }}
           onEnded={() => {
             // Record this chapter as fully played explicitly - the last
