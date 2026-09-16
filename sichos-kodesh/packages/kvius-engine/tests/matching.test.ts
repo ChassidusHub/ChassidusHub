@@ -118,7 +118,7 @@ describe('weekMatchesInYear', () => {
 
 describe('findPartialWeekMatches', () => {
   it('excludes full kvius matches (those are findMatchingYears territory) but includes weaker week-only matches', () => {
-    const results = findPartialWeekMatches(5786, SHEVAT_5786_WEEK, { fromYear: 5710, toYear: 5752 });
+    const results = findPartialWeekMatches(5786, SHEVAT_5786_WEEK, false, { fromYear: 5710, toYear: 5752 });
     expect(results.map((r) => r.hebrewYear).sort((a, b) => a - b)).toEqual([5711, 5712, 5725, 5729, 5732, 5738, 5739, 5752]);
     for (const fullMatchYear of [5715, 5735, 5742]) {
       expect(results.some((r) => r.hebrewYear === fullMatchYear)).toBe(false);
@@ -126,14 +126,14 @@ describe('findPartialWeekMatches', () => {
   });
 
   it('sorts by distance from the target year, nearest first', () => {
-    const results = findPartialWeekMatches(5786, SHEVAT_5786_WEEK, { fromYear: 5710, toYear: 5752 });
+    const results = findPartialWeekMatches(5786, SHEVAT_5786_WEEK, false, { fromYear: 5710, toYear: 5752 });
     for (let i = 1; i < results.length; i++) {
       expect(results[i]!.distance).toBeGreaterThanOrEqual(results[i - 1]!.distance);
     }
   });
 
   it('defaults to [MIN_HISTORICAL_YEAR, MAX_HISTORICAL_YEAR] when no range is given', () => {
-    const results = findPartialWeekMatches(5786, SHEVAT_5786_WEEK);
+    const results = findPartialWeekMatches(5786, SHEVAT_5786_WEEK, false);
     for (const { hebrewYear } of results) {
       expect(hebrewYear).toBeGreaterThanOrEqual(MIN_HISTORICAL_YEAR);
       expect(hebrewYear).toBeLessThanOrEqual(MAX_HISTORICAL_YEAR);
@@ -141,10 +141,34 @@ describe('findPartialWeekMatches', () => {
   });
 
   it('rejects an inverted range', () => {
-    expect(() => findPartialWeekMatches(5786, SHEVAT_5786_WEEK, { fromYear: 5800, toYear: 5700 })).toThrow(RangeError);
+    expect(() => findPartialWeekMatches(5786, SHEVAT_5786_WEEK, false, { fromYear: 5800, toYear: 5700 })).toThrow(RangeError);
   });
 
   it('returns an empty list, not an error, for an empty days array', () => {
-    expect(findPartialWeekMatches(5786, [])).toEqual([]);
+    expect(findPartialWeekMatches(5786, [], false)).toEqual([]);
+  });
+
+  /**
+   * 5-11 Cheshvan 5710 (Vayigash week): weekMatchesInYear's own
+   * date-alignment check alone reports 5717 as a match (the raw dates
+   * translate onto a real Sunday-Shabbos week there too), but 5717's own
+   * annual reading cycle is offset by one parsha at that point in the
+   * year, so its Shabbos that week is actually Vayechi, not Vayigash - a
+   * real historical mismatch this exact fixture caught before the parsha
+   * check was added.
+   */
+  it('excludes a year whose raw dates align but whose actual parsha that Shabbos differs', () => {
+    const VAYIGASH_5710_WEEK: WeekDay[] = [
+      { month: 10, day: 5 },
+      { month: 10, day: 6 },
+      { month: 10, day: 7 },
+      { month: 10, day: 8 },
+      { month: 10, day: 9 },
+      { month: 10, day: 10 },
+      { month: 10, day: 11 },
+    ];
+    expect(weekMatchesInYear(5717, VAYIGASH_5710_WEEK)).toBe(true); // raw dates do align
+    const results = findPartialWeekMatches(5710, VAYIGASH_5710_WEEK, false, { fromYear: 5710, toYear: 5752 });
+    expect(results.some((r) => r.hebrewYear === 5717)).toBe(false); // but the parsha doesn't, so it's excluded
   });
 });

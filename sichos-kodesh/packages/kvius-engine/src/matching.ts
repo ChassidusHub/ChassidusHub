@@ -1,5 +1,5 @@
 import { HDate } from '@hebcal/core';
-import { kviusSignature, sameKvius } from './hebrewCalendar.js';
+import { getYearSedra, kviusSignature, sameKvius } from './hebrewCalendar.js';
 import type { MatchingYearResult, MatchingYearsOptions, WeekDay } from './types.js';
 
 /**
@@ -87,6 +87,24 @@ export function weekMatchesInYear(candidateYear: number, days: WeekDay[]): boole
 }
 
 /**
+ * The parsha (or `null` for a holiday week) `candidateYear`'s own Sedra
+ * schedule assigns to `shabbos` - `il` matters here even though it plays
+ * no part in `weekMatchesInYear`'s own date-alignment check, since which
+ * parsha falls on a given Shabbos genuinely differs between the Diaspora
+ * and Israel reading schedules.
+ */
+function shabbosParsha(candidateYear: number, shabbos: WeekDay, il: boolean): string[] | null {
+  const hdate = new HDate(shabbos.day, shabbos.month, candidateYear);
+  const result = getYearSedra(candidateYear, il).lookup(hdate);
+  return result.chag ? null : result.parsha;
+}
+
+function sameParshaList(a: string[] | null, b: string[] | null): boolean {
+  if (a === null || b === null) return a === b;
+  return a.length === b.length && a.every((parsha, i) => parsha === b[i]);
+}
+
+/**
  * Years that stay in sync for `days` (typically "this week," from
  * `resolveThisWeek`'s week-day helper) without being a full kvius match
  * overall (see `weekMatchesInYear`) - years already reported by
@@ -94,20 +112,33 @@ export function weekMatchesInYear(candidateYear: number, days: WeekDay[]): boole
  * this trivially for every week and are meant to be shown separately, as
  * the primary match. Same scanning/range/sorting behavior as
  * `findMatchingYears` otherwise.
+ *
+ * `weekMatchesInYear`'s own date-alignment check is necessary but not
+ * sufficient: it only confirms `days`' (month, day) pairs land on a real,
+ * consecutive Sunday-Shabbos week in the candidate year, not that the
+ * candidate's *parsha* for that Shabbos actually matches the target
+ * year's - two years can stay in sync for one specific week's raw dates
+ * while their annual reading cycles are offset by a parsha or more (e.g.
+ * from an earlier doubled/undoubled reading elsewhere in the year), so
+ * this only accepts a candidate whose own Sedra schedule assigns the
+ * *same* parsha to that Shabbos - the actual point of a "which year can I
+ * follow this week's farbrengen in" match.
  */
-export function findPartialWeekMatches(targetYear: number, days: WeekDay[], options: MatchingYearsOptions = {}): MatchingYearResult[] {
+export function findPartialWeekMatches(targetYear: number, days: WeekDay[], il: boolean, options: MatchingYearsOptions = {}): MatchingYearResult[] {
   const range = resolveYearRange(options);
   if (!range) return [];
   const { includeTarget = false } = options;
+  const shabbos = days[days.length - 1];
+  const targetParsha = shabbos ? shabbosParsha(targetYear, shabbos, il) : null;
 
   const targetSig = kviusSignature(targetYear);
   const results: MatchingYearResult[] = [];
   for (let year = range.fromYear; year <= range.toYear; year++) {
     if (year === targetYear && !includeTarget) continue;
     if (sameKvius(kviusSignature(year), targetSig)) continue; // a full match - findMatchingYears already reports it
-    if (weekMatchesInYear(year, days)) {
-      results.push({ hebrewYear: year, distance: Math.abs(year - targetYear) });
-    }
+    if (!weekMatchesInYear(year, days)) continue;
+    if (shabbos && !sameParshaList(shabbosParsha(year, shabbos, il), targetParsha)) continue;
+    results.push({ hebrewYear: year, distance: Math.abs(year - targetYear) });
   }
   results.sort((a, b) => a.distance - b.distance || a.hebrewYear - b.hebrewYear);
   return results;

@@ -107,11 +107,17 @@ export interface WeekResolution {
  * download feature's own occasion resolution - both need the identical
  * "which year actually has this week's farbrengen" answer, not two
  * independently-maintained copies of the same fallback order.
+ *
+ * `il` is required, not defaulted, the same as every other kvius-engine
+ * function that touches a Sedra schedule (see `findPartialWeekMatches`) -
+ * which parsha a given Shabbos gets is genuinely a Diaspora-vs-Israel
+ * question, not a detail safe to silently assume one way.
  */
 export function resolveWeekWithFallback(
   preferredYear: number,
   targetYear: number,
   catalog: CatalogByYear,
+  il: boolean,
   today: Date = new Date(),
 ): WeekResolution | null {
   const preferred = resolveThisWeek(preferredYear, catalog, today);
@@ -122,7 +128,7 @@ export function resolveWeekWithFallback(
     if (occasions.length > 0) return { hebrewYear: match.hebrewYear, occasions };
   }
 
-  for (const match of findPartialWeekMatches(targetYear, thisWeekDays(today))) {
+  for (const match of findPartialWeekMatches(targetYear, thisWeekDays(today), il)) {
     const occasions = resolveThisWeek(match.hebrewYear, catalog, today);
     if (occasions.length > 0) return { hebrewYear: match.hebrewYear, occasions };
   }

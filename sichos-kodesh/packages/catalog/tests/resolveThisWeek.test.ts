@@ -149,7 +149,7 @@ describe('resolveWeekWithFallback', () => {
     const { hebrewYear: preferredYear } = findMatchingYears(targetYear)[0]!;
     const catalog: CatalogByYear = { [preferredYear]: [entryFor(preferredYear, 'preferred')] };
 
-    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, today);
+    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, false, today);
 
     expect(result?.hebrewYear).toBe(preferredYear);
     expect(result?.occasions.map((o) => o.entry.occasionLabel)).toEqual(['preferred']);
@@ -159,15 +159,16 @@ describe('resolveWeekWithFallback', () => {
     const fullMatches = findMatchingYears(targetYear);
     const preferredYear = fullMatches[0]!.hebrewYear;
     const fullFallbackYear = fullMatches[1]!.hebrewYear;
-    const partialOnlyYear = findPartialWeekMatches(targetYear, days).find((m) => !fullMatches.some((f) => f.hebrewYear === m.hebrewYear))!
-      .hebrewYear;
+    const partialOnlyYear = findPartialWeekMatches(targetYear, days, false).find(
+      (m) => !fullMatches.some((f) => f.hebrewYear === m.hebrewYear),
+    )!.hebrewYear;
 
     const catalog: CatalogByYear = {
       [fullFallbackYear]: [entryFor(fullFallbackYear, 'full fallback')],
       [partialOnlyYear]: [entryFor(partialOnlyYear, 'partial fallback')],
     };
 
-    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, today);
+    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, false, today);
 
     expect(result?.hebrewYear).toBe(fullFallbackYear);
   });
@@ -175,12 +176,13 @@ describe('resolveWeekWithFallback', () => {
   it('falls back to a partial-week match when the preferred year and every full match are empty', () => {
     const fullMatches = findMatchingYears(targetYear);
     const preferredYear = fullMatches[0]!.hebrewYear;
-    const partialOnlyYear = findPartialWeekMatches(targetYear, days).find((m) => !fullMatches.some((f) => f.hebrewYear === m.hebrewYear))!
-      .hebrewYear;
+    const partialOnlyYear = findPartialWeekMatches(targetYear, days, false).find(
+      (m) => !fullMatches.some((f) => f.hebrewYear === m.hebrewYear),
+    )!.hebrewYear;
 
     const catalog: CatalogByYear = { [partialOnlyYear]: [entryFor(partialOnlyYear, 'partial fallback')] };
 
-    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, today);
+    const result = resolveWeekWithFallback(preferredYear, targetYear, catalog, false, today);
 
     expect(result?.hebrewYear).toBe(partialOnlyYear);
   });
@@ -188,7 +190,7 @@ describe('resolveWeekWithFallback', () => {
   it('returns null when nothing in the fallback chain has any content', () => {
     const { hebrewYear: preferredYear } = findMatchingYears(targetYear)[0]!;
 
-    expect(resolveWeekWithFallback(preferredYear, targetYear, {}, today)).toBeNull();
+    expect(resolveWeekWithFallback(preferredYear, targetYear, {}, false, today)).toBeNull();
   });
 });
 
