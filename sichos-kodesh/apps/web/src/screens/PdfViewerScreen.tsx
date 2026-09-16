@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Loader2, WifiOff } from 'lucide-react';
+import type { PDFDocumentLoadingTask } from 'pdfjs-dist';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
@@ -64,16 +65,19 @@ export function PdfViewerScreen({ resolved }: Props) {
   useEffect(() => {
     if (!pdf) return;
     let cancelled = false;
+    let taskRef: PDFDocumentLoadingTask | null = null;
     setZoomed(false);
 
     (async () => {
       try {
-        const doc = await loadPdfDocument(pdfUrl(pdf.driveFileId, pdf.resourceKey), ({ loaded, total }) => {
+        const task = loadPdfDocument(pdfUrl(pdf.driveFileId, pdf.resourceKey), ({ loaded, total }) => {
           // Clamped defensively: a CDN that reports Content-Length for the
           // compressed size while `loaded` accumulates decoded bytes (seen
           // on some edge caches) would otherwise push this past 100%.
           if (!cancelled) setState({ status: 'loading', percent: total > 0 ? Math.min(100, Math.max(0, Math.round((loaded / total) * 100))) : null });
         });
+        taskRef = task;
+        const doc = await task.promise;
         if (cancelled || !containerRef.current) return;
         containerRef.current.innerHTML = '';
         await renderPdfPages(doc, containerRef.current, () => cancelled, (nowZoomed) => {
@@ -102,6 +106,19 @@ export function PdfViewerScreen({ resolved }: Props) {
 
     return () => {
       cancelled = true;
+      // Releases the whole document's own cached resources (fonts, images,
+      // and every page object pdf.js ever created for it - see
+      // renderPdf.ts's own per-page `page.cleanup()`, which only ever
+      // covers pages that were actually released during a scroll session,
+      // not ones still resident when this screen goes away, and not the
+      // document-level structures cleanup() doesn't touch at all).
+      // Switching to a different PDF (this effect re-keys on
+      // driveFileId/resourceKey) or navigating off this screen entirely
+      // would otherwise leave the previous document's full pdf.js-internal
+      // state alive until garbage collection gets around to it. Safe to
+      // call whether the document finished loading or is still in flight -
+      // `PDFDocumentLoadingTask.destroy()` handles both.
+      void taskRef?.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the stable id, not the `pdf` object (a fresh reference every render via .find()); savedFraction comes from progressMap, read once on mount, so it can't change across this effect's lifetime
   }, [pdf?.driveFileId, pdf?.resourceKey]);

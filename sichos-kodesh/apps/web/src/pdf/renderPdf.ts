@@ -1,5 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
+import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import { attachPdfZoom } from './pdfPageZoom';
 import type { ZoomablePage } from './pdfPageZoom';
 // Vite's `?url` import gives the worker script a fetchable URL in the
@@ -51,8 +51,15 @@ const BASE_URL = import.meta.env.BASE_URL;
  * understood, ideally testing against the real deployed Worker rather than
  * local `wrangler dev`, which uses a different (Miniflare) runtime than
  * Cloudflare's actual edge.
+ *
+ * Returns the loading task itself, not just its resolved document -
+ * `PDFDocumentProxy` (what `task.promise` resolves to) has no `destroy()`
+ * of its own, only the lighter-weight `cleanup()`; only the loading task
+ * can actually tear down the document's worker transport once the caller's
+ * done with it (see PdfViewerScreen's unmount cleanup), so callers need to
+ * hold onto it rather than just awaiting `.promise` and discarding it.
  */
-export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; total: number }) => void): Promise<PDFDocumentProxy> {
+export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; total: number }) => void): PDFDocumentLoadingTask {
   const task = pdfjsLib.getDocument({
     url,
     disableRange: true,
@@ -62,7 +69,7 @@ export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; 
     standardFontDataUrl: `${BASE_URL}pdf-standard-fonts/`,
   });
   if (onProgress) task.onProgress = onProgress;
-  return task.promise;
+  return task;
 }
 
 // Device pixel ratios run past 3 on plenty of Android phones. Each
@@ -303,6 +310,28 @@ export async function renderPdfPages(
       entry.wrapper.replaceChildren();
       zoom.resizeOffscreenPage(entry);
     }
+    // Zeroing this app's own canvas above only frees *its* backing-store
+    // bitmap - pdf.js keeps its own page-level cache of decoded resources
+    // (fonts, images, operator lists) bound to whatever was actually
+    // rendered for this page, alive independently until told to clean it
+    // up, which nothing here ever did. Over a long fast-scrolling session
+    // through a huge/image-heavy document, that cache accumulates across
+    // every page ever rendered - never shrinking even though every one of
+    // those pages' own canvases are already empty - and can eventually
+    // exhaust the tab's memory on its own (a real, distinct cause from the
+    // canvas-backing-store growth the comment above already guards
+    // against). `doc.getPage` is a cheap cache lookup once a page's
+    // already been fetched once (not a re-parse - every page was fetched
+    // up front, above), and `cleanup()` is pdf.js's own safe, standard way
+    // to evict a page's resources without destroying the page object
+    // itself (the same thing pdf.js's own reference viewer does for pages
+    // scrolled out of its render buffer) - a no-op if nothing was actually
+    // rendered for this page, or if pdf.js judges it unsafe to clean up
+    // right now (e.g. a cancellation still settling).
+    void doc
+      .getPage(index + 1)
+      .then((page) => page.cleanup())
+      .catch(() => {});
   }
 
   const observer = new IntersectionObserver(
