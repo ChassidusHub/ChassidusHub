@@ -31,14 +31,26 @@ const BASE_URL = import.meta.env.BASE_URL;
  * pdf.js can start parsing as bytes stream in instead of waiting for the
  * whole file to download.
  *
- * `disableRange: true` is deliberate, not a missed optimization: pdf.js
- * would otherwise probe for byte-range support, and this Worker's
- * `/drive/:fileId` route always claims `Accept-Ranges: bytes` without
- * actually reading or forwarding a client's Range header (unlike
- * `/jem-audio/:filename`, which does), so pdf.js could end up trusting a
- * capability that isn't really there. Streaming without ranges still gets
- * the real benefit (progressive parse-while-downloading) without risking
- * pdf.js misinterpreting a mismatched response.
+ * `disableRange: true` is deliberate, and has a different reason now than
+ * it used to. services/media-proxy's `/drive/:fileId` route genuinely
+ * supports Range today (it forwards a client's Range header to Drive's own
+ * file-serving endpoint, which really honors it - confirmed directly: a
+ * ranged request comes back 206 with the correct slice and Content-Range,
+ * and a plain request correctly declares `Accept-Ranges: bytes`, matching
+ * every requirement pdf.js's own range-capability check looks for). But
+ * turning range mode on here (`disableRange` unset) reproducibly hangs
+ * pdf.js's document-loading promise forever once it decides range is
+ * available - confirmed with direct browser-context fetches replaying the
+ * exact same plain-then-ranged request sequence pdf.js would make, which
+ * complete correctly outside of pdf.js, so the network/CORS/Worker side is
+ * not at fault. The hang is inside pdf.js's own chunked-stream/worker
+ * message-passing pipeline in this app's bundling setup and wasn't
+ * root-caused before deciding to ship the (real, verified) Worker fix
+ * without flipping this flag - a load that always finishes beats one that
+ * might load faster but can also hang indefinitely. Revisit once that's
+ * understood, ideally testing against the real deployed Worker rather than
+ * local `wrangler dev`, which uses a different (Miniflare) runtime than
+ * Cloudflare's actual edge.
  */
 export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; total: number }) => void): Promise<PDFDocumentProxy> {
   const task = pdfjsLib.getDocument({

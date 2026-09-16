@@ -89,9 +89,22 @@ export function extractConfirmToken(html: string): string | null {
  * that needs one 404s/redirects to a sign-in page without it, even
  * though it's genuinely public. Roughly 4% of this app's crawled Drive
  * links require one to be reachable at all.
+ *
+ * `range`, when given, is forwarded on every fetch here, including the
+ * very first one - confirmed safe against the confirm-token interstitial
+ * below: pdf.js's own first request for a document is always a plain,
+ * unranged GET (it only inspects that response's headers to decide
+ * whether to open separate ranged requests for later chunks), so by the
+ * time a *ranged* request ever reaches here, this app is no longer
+ * checking for an interstitial on that same request - it's a fresh
+ * top-level request that goes through this same interstitial check again,
+ * and Drive's virus-scan interstitial page is a few KB, well under pdf.js's
+ * smallest real range chunk (64 KB default), so a range request is never
+ * narrow enough to truncate it and hide the confirm token.
  */
-export async function fetchFromDrive(fileId: string, resourceKey?: string | null): Promise<Response> {
-  const first = await fetch(driveDownloadUrl(fileId, undefined, resourceKey), { redirect: 'follow' });
+export async function fetchFromDrive(fileId: string, resourceKey?: string | null, range?: string | null): Promise<Response> {
+  const rangeHeaders = range ? { Range: range } : undefined;
+  const first = await fetch(driveDownloadUrl(fileId, undefined, resourceKey), { redirect: 'follow', headers: rangeHeaders });
   const contentType = first.headers.get('content-type') ?? '';
 
   if (!contentType.includes('text/html')) {
@@ -108,9 +121,11 @@ export async function fetchFromDrive(fileId: string, resourceKey?: string | null
   }
 
   const cookie = first.headers.get('set-cookie') ?? undefined;
+  const headers = new Headers(rangeHeaders);
+  if (cookie) headers.set('cookie', cookie);
   return fetch(driveDownloadUrl(fileId, token, resourceKey), {
     redirect: 'follow',
-    headers: cookie ? { cookie } : undefined,
+    headers,
   });
 }
 
@@ -203,23 +218,29 @@ export function cleanResponseHeaders(upstream: Response, filename: string | null
   return headers;
 }
 
-async function handleDrive(fileId: string, filename: string | null, resourceKey: string | null): Promise<Response> {
+async function handleDrive(fileId: string, filename: string | null, resourceKey: string | null, range: string | null): Promise<Response> {
   if (!DRIVE_ID_PATTERN.test(fileId)) {
     return new Response('Invalid file id', { status: 400 });
   }
   if (resourceKey && !DRIVE_RESOURCE_KEY_PATTERN.test(resourceKey)) {
     return new Response('Invalid resource key', { status: 400 });
   }
-  const upstream = await fetchFromDrive(fileId, resourceKey);
+  const upstream = await fetchFromDrive(fileId, resourceKey, range);
   if (!upstream.ok) {
     return new Response(`Upstream fetch failed with status ${upstream.status}`, { status: 502 });
   }
   // /drive/:fileId only ever serves the mugah/biltiMugah/maamorim/hagahos/hosofos
   // PDF links packages/catalog extracts - always a PDF, so force the type
-  // rather than trust Drive's generic upstream content-type.
+  // rather than trust Drive's generic upstream content-type. `supportsRange:
+  // true` (unlike the false this route used to pass) is now accurate: the
+  // Range forwarding above is real, and Drive's own file-serving endpoint
+  // genuinely honors it (confirmed directly against a real file) - pdf.js
+  // reads this to decide whether to fetch a large PDF in chunks instead of
+  // sequentially, which is what actually lets it render page 1 before the
+  // rest of the document has finished downloading.
   return new Response(upstream.body, {
     status: upstream.status,
-    headers: cleanResponseHeaders(upstream, filename, 'application/pdf'),
+    headers: cleanResponseHeaders(upstream, filename, 'application/pdf', true),
   });
 }
 
@@ -259,7 +280,7 @@ export default {
     const driveMatch = /^\/drive\/([^/]+)$/.exec(url.pathname);
     const jemAudioMatch = /^\/jem-audio\/([^/]+)$/.exec(url.pathname);
     if (driveMatch) {
-      response = await handleDrive(driveMatch[1]!, url.searchParams.get('filename'), url.searchParams.get('resourcekey'));
+      response = await handleDrive(driveMatch[1]!, url.searchParams.get('filename'), url.searchParams.get('resourcekey'), range);
     } else if (jemAudioMatch) {
       response = await handleJemAudio(jemAudioMatch[1]!, range);
     } else {
