@@ -73,6 +73,17 @@ html[lang='he'] body {
   font-family: 'Noto Sans Hebrew', 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* Browsers don't let form controls inherit font-family from body by
+   default - left alone, every button/select/input renders in the OS's
+   own UI font (San Francisco, Roboto, Segoe UI...) instead of Noto Sans,
+   even though everything else on the page correctly does. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 /* Self-hosted (not linked from Google Fonts) so every screen title still
    renders offline from first load, same as the rest of the app shell -
    already covered by the service worker's precache glob (vite.config.ts). */
