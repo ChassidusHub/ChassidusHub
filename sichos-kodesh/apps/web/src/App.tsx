@@ -5,6 +5,7 @@ import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
 import { DownloadProvider } from './download/DownloadProvider';
 import { useAutoDownloadSync } from './download/useAutoDownloadSync';
+import { useDownloadRetention } from './download/useDownloadRetention';
 import { useConnectivityRecheckTriggers } from './network/useConnectivityRecheckTriggers';
 import { adjustNavigationDepth } from './routes/navigationDepth';
 import { usePlayer } from './player/usePlayer';
@@ -195,6 +196,7 @@ function AppContent() {
   useScrollToTopOnNavigate();
   useTrackNavigationDepth();
   useAutoDownloadSync();
+  useDownloadRetention();
   useConnectivityRecheckTriggers();
   // `has-player`/`has-download-bar` add bottom padding to routed content -
   // GlobalPlayerBar and DownloadProgressBar are both `position: fixed` and

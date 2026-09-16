@@ -81,7 +81,7 @@ export function useAutoDownloadSync(): void {
     // after the fact, since this sync has no user waiting on it either way.
     const timer = setTimeout(() => {
       const entries = resolveAutoDownloadEntries(settings, new Date());
-      if (entries.length > 0) enqueueBulk(entries);
+      if (entries.length > 0) enqueueBulk(entries, 'auto');
     }, 2500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately once per app load: a settings change mid-session should take effect on the *next* open, not retroactively re-run this.

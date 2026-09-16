@@ -3,6 +3,8 @@ import type { DownloadContentTypes } from '../download/downloadManager';
 
 export type DownloadScope = 'week' | 'month';
 export type SourceYearMode = 'auto' | 'manual';
+/** How long an auto-downloaded file survives after it's no longer relevant to a sync run before pruneAutoDownloads.ts deletes it - 'never' keeps the current, purely opportunistic-growth behavior. */
+export type RetentionPeriod = 'never' | '2w' | '4w' | '8w' | '12w';
 
 export interface DownloadSettings {
   autoDownloadEnabled: boolean;
@@ -23,6 +25,18 @@ export interface DownloadSettings {
   useKviusFallback: boolean;
   wifiOnly: boolean;
   contentTypes: DownloadContentTypes;
+  /**
+   * Auto-cleanup for auto-downloaded content only - a manual download (a
+   * row's own download tap, "download this week/month," a chapter's own
+   * download icon) is never eligible no matter how old, and neither is
+   * anything the user has actually opened since it was auto-fetched (see
+   * pruneAutoDownloads.ts) - this only ever reclaims space from content
+   * the sync fetched on the user's behalf that nothing since has actually
+   * touched.
+   */
+  retentionPeriod: RetentionPeriod;
+  /** On top of the always-on "never delete something you've opened" rule above - also protects a *finished* occasion's auto-downloaded files past the retention window even if it was never re-opened after finishing (the natural end state of actually having used it). */
+  keepFinishedContent: boolean;
 }
 
 const STORAGE_KEY = 'sichos-kodesh:download-settings';
@@ -42,6 +56,8 @@ export const DEFAULT_DOWNLOAD_SETTINGS: DownloadSettings = {
   manualSourceYears: [],
   useKviusFallback: true,
   wifiOnly: true,
+  retentionPeriod: 'never',
+  keepFinishedContent: true,
   contentTypes: {
     audio: true,
     hanachaEditions: ['sichosKodesh', 'torasMenachem'],
