@@ -626,6 +626,23 @@ h1 {
   cursor: pointer;
 }
 
+/* FarbrengenScreen/RecordingsScreen's own share action - same shape as
+   `.occasion-download-button` but muted, since sharing isn't the primary
+   call to action on either page the way downloading is. */
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* Continue section (home page) - a Spotify-style "pick up where you left
    off" row: the label row stays exactly like every other occasion row,
    with a thin progress track added below it rather than beside it, so

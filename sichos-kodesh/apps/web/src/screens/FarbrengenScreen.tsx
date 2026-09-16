@@ -14,6 +14,7 @@ import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
+import { ShareButton } from '../components/ShareButton';
 
 interface Props {
   resolved: ResolvedEntry | null;
@@ -103,6 +104,8 @@ export function FarbrengenScreen({ resolved }: Props) {
       <p className="subtitle">
         {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}
       </p>
+
+      <ShareButton title={entry.occasionLabel} />
 
       {downloadState !== 'unavailable' && downloadState !== 'loading' && (
         <p className="occasion-download-state">

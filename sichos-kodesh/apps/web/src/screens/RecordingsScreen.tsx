@@ -12,6 +12,7 @@ import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadS
 import { useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
+import { ShareButton } from '../components/ShareButton';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -138,6 +139,8 @@ export function RecordingsScreen({ resolved }: Props) {
     <div className="screen">
       <ScreenHeader to={basePath} title={entry.occasionLabel} />
       <p className="subtitle">{t.recordings}</p>
+
+      <ShareButton title={entry.occasionLabel} />
 
       {allChaptersState !== 'unavailable' && (
         <p className="occasion-download-state">
