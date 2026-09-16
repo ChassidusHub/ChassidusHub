@@ -50,6 +50,21 @@ try {
   // Best-effort only - falls back to the OS theme via prefers-color-scheme.
 }
 
+// Same reasoning, for language/direction - index.html already hardcodes
+// the English/LTR default, so only the Hebrew case needs handling here.
+// LanguageProvider's own effect only runs once React has mounted and
+// committed a first render, which is one whole paint too late: without
+// this, a Hebrew-preferring user would see a flash of English/LTR layout
+// on every cold load before it flipped.
+try {
+  if (localStorage.getItem('sichos-kodesh:language') === 'he') {
+    document.documentElement.dir = 'rtl';
+    document.documentElement.lang = 'he';
+  }
+} catch {
+  // Best-effort only - falls back to English/LTR until LanguageProvider mounts.
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
