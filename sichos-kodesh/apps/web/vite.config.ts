@@ -86,14 +86,18 @@ export default defineConfig({
         name: 'Sichos Kodesh',
         short_name: 'Sichos Kodesh',
         description: 'Kvius-matched Sichos Kodesh and Farbrengens, downloaded and played fully offline.',
-        theme_color: '#3366cc',
+        theme_color: '#1a8a4a',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // A real maskable variant, not the 'any' icon reused - the mark is
+          // scaled down to sit inside the safe zone Android's adaptive-icon
+          // mask actually crops to, so a circular or squircle mask doesn't
+          // clip the "K".
+          { src: 'icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
@@ -102,7 +106,7 @@ export default defineConfig({
         // without it, pdf.js's worker script isn't precached, so opening a PDF
         // while offline (or on a flaky connection) fails even though the PDF's
         // own bytes are already cached.
-        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,wasm,bcmap,pfb,ttf}'],
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,wasm,bcmap,pfb,ttf,woff2}'],
         // Bundled catalog data (all years, inlined into the JS chunk) has grown
         // past workbox's 2 MiB default as more PDF links/resourceKeys were
         // recovered from the real dataset - raise the cap rather than drop

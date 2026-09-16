@@ -202,6 +202,26 @@ describe('fetchFromDrive', () => {
     const result = await fetchFromDrive('abc123');
     expect(result.status).toBe(502);
   });
+
+  it('forwards a Range header on the initial request, so a small/direct file can be served as a real partial response - Drive\'s own file-serving endpoint genuinely honors Range', async () => {
+    const partial = new Response('partial bytes', { status: 206 });
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(partial);
+
+    await fetchFromDrive('abc123', undefined, 'bytes=0-1023');
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.any(String), { redirect: 'follow', headers: { Range: 'bytes=0-1023' } });
+  });
+
+  it('forwards a Range header on the confirm-token retry too, not just the initial interstitial-detection request', async () => {
+    const interstitial = new Response('<a href="/uc?confirm=tok123&id=abc123">confirm</a>', {
+      headers: { 'content-type': 'text/html' },
+    });
+    const partial = new Response('partial bytes', { status: 206 });
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(interstitial).mockResolvedValueOnce(partial);
+
+    await fetchFromDrive('abc123', undefined, 'bytes=0-1023');
+    const secondCallHeaders = vi.mocked(globalThis.fetch).mock.calls[1]![1]?.headers as Headers;
+    expect(secondCallHeaders.get('Range')).toBe('bytes=0-1023');
+  });
 });
 
 describe('cleanResponseHeaders', () => {
@@ -235,13 +255,13 @@ describe('cleanResponseHeaders', () => {
     expect(headers.has('Content-Disposition')).toBe(false);
   });
 
-  it('omits Accept-Ranges by default, regardless of what upstream itself sent - a route must not claim range support unless it actually forwards the client Range header (the /drive/:fileId route never does)', () => {
+  it('omits Accept-Ranges by default, regardless of what upstream itself sent - a route must not claim range support unless it actually forwards the client Range header', () => {
     const upstream = new Response('bytes', { headers: { 'accept-ranges': 'bytes' } });
     const headers = cleanResponseHeaders(upstream, null, 'application/pdf');
     expect(headers.has('Accept-Ranges')).toBe(false);
   });
 
-  it('sets Accept-Ranges only when the caller opts in with supportsRange (the /jem-audio/:filename route, which genuinely forwards Range)', () => {
+  it('sets Accept-Ranges when the caller opts in with supportsRange - both /jem-audio/:filename and /drive/:fileId genuinely forward Range now', () => {
     const headers = cleanResponseHeaders(new Response('bytes'), null, undefined, true);
     expect(headers.get('Accept-Ranges')).toBe('bytes');
   });
