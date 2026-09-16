@@ -1,16 +1,34 @@
-import { Headphones, KeyRound } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Headphones, KeyRound, Loader2, RefreshCw } from 'lucide-react';
 import { useTranslation } from '../i18n/useLanguage';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { APP_VERSION, CHANGELOG } from '../changelog';
+import { applyUpdate, checkForUpdate } from '../pwa/appUpdate';
+import { useAppUpdate } from '../pwa/useAppUpdate';
+
+/** How long "you're up to date" stays visible after a manual check finds nothing new - a one-time confirmation, not an ongoing status (same pattern as ConnectivityBanner's "back online" message). */
+const UP_TO_DATE_VISIBLE_MS = 4000;
 
 export function AboutScreen() {
   const { t, language } = useTranslation();
   const latest = CHANGELOG[0];
+  const { needsRefresh, checking } = useAppUpdate();
+  const [justConfirmedUpToDate, setJustConfirmedUpToDate] = useState(false);
+  const wasCheckingRef = useRef(checking);
+
+  useEffect(() => {
+    const wasChecking = wasCheckingRef.current;
+    wasCheckingRef.current = checking;
+    if (wasChecking && !checking && !needsRefresh) {
+      setJustConfirmedUpToDate(true);
+      const timer = setTimeout(() => setJustConfirmedUpToDate(false), UP_TO_DATE_VISIBLE_MS);
+      return () => clearTimeout(timer);
+    }
+  }, [checking, needsRefresh]);
 
   return (
     <div className="screen">
-      <BackLink to="/settings" />
-      <h1>{t.aboutTitle}</h1>
+      <ScreenHeader to="/settings" title={t.aboutTitle} />
       <p className="subtitle">
         {t.aboutIndexedBy}
         <strong>mafteiach.app</strong>
@@ -50,6 +68,25 @@ export function AboutScreen() {
         {(language === 'he' ? latest!.he : latest!.en).map((line) => (
           <li key={line}>{line}</li>
         ))}
+      </ul>
+
+      <p className="category-header">{t.aboutUpdateSection}</p>
+      <ul className="year-list">
+        {needsRefresh ? (
+          <li>
+            <button className="year-row" onClick={applyUpdate}>
+              <span className="year-row-year">{t.aboutUpdateAvailable}</span>
+              <span className="year-row-distance">{t.aboutRestartToUpdate}</span>
+            </button>
+          </li>
+        ) : (
+          <li>
+            <button className="year-row" onClick={() => void checkForUpdate()} disabled={checking}>
+              <span className="year-row-year">{checking ? t.aboutChecking : justConfirmedUpToDate ? t.aboutUpToDate : t.aboutCheckForUpdate}</span>
+              {checking ? <Loader2 className="year-row-distance about-update-spinner" size={18} aria-hidden /> : <RefreshCw className="year-row-distance" size={18} aria-hidden />}
+            </button>
+          </li>
+        )}
       </ul>
     </div>
   );

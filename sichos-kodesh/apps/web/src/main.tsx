@@ -1,6 +1,5 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 // Vite's `?url` import gives just the resolved, hashed URL string (same
 // as renderPdf.ts's own import of this file) - it does not pull in
 // pdf.js itself, so this stays a cheap import even on a load that never
@@ -8,11 +7,13 @@ import { registerSW } from 'virtual:pwa-register';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import './polyfills';
 import './index.css';
+// Registers the service worker (see the module itself) - imported here for
+// that side effect alone, same as polyfills.ts above; AboutScreen imports
+// it again for its actual exports (checkForUpdate/applyUpdate/the hook).
+import './pwa/appUpdate';
 import App from './App';
 import { applyTheme } from './settings/useTheme';
 import { PDF_RUNTIME_CACHE_NAME } from './download/cacheName';
-
-registerSW({ immediate: true });
 
 // Best-effort, fire-and-forget: makes sure the PDF worker script is
 // cached on every online app load, not only once someone opens a PDF -
