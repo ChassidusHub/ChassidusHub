@@ -28,9 +28,9 @@ export function AllYearsThisWeekScreen() {
             {entries.map((entry) => (
               <li key={entry.occasionId}>
                 <Link className="year-row" to={`/this-week-all-years/${hebrewYear}/${entry.occasionId}`}>
-                  <span className="year-row-main">
+                  <span className="year-row-year">{entry.occasionLabel}</span>
+                  <span className="year-row-trailing">
                     <OccasionRowIcon entry={entry} progressMap={progressMap} />
-                    <span className="year-row-year">{entry.occasionLabel}</span>
                   </span>
                 </Link>
               </li>

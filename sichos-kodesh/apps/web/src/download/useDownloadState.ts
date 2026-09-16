@@ -25,14 +25,16 @@ export function useDownloadState(entry: CatalogEntry | null | undefined): RowDow
   const online = useOnlineStatus();
   const k = entry ? key(entry.hebrewYear, entry.occasionId) : null;
   const live = k ? liveState[k] : undefined;
+  // A synchronous, pure computation (no Cache Storage involved) - resolved
+  // on every render rather than inside the effect below, so a genuinely
+  // unavailable row (nothing this occasion has matches the current content
+  // types) knows that immediately, without waiting on the same async cache
+  // check a row that actually might be downloadable needs.
+  const hasTargets = entry ? listDownloadTargets([entry], settings.contentTypes).length > 0 : false;
   const [cachedState, setCachedState] = useState<RowDownloadState | null>(null);
 
   useEffect(() => {
-    if (!entry || live) return; // An active/completed job already knows the real answer.
-    if (listDownloadTargets([entry], settings.contentTypes).length === 0) {
-      setCachedState('unavailable');
-      return;
-    }
+    if (!entry || live || !hasTargets) return; // An active/completed job already knows the real answer; nothing to check for an unavailable row.
     let cancelled = false;
     void isEntryFullyDownloaded(entry, settings.contentTypes).then((downloaded) => {
       if (!cancelled) setCachedState(downloaded ? 'downloaded' : 'none');
@@ -41,10 +43,14 @@ export function useDownloadState(entry: CatalogEntry | null | undefined): RowDow
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by occasion identity; re-checking every visible row whenever any content-type toggle changes isn't needed until that row is actually revisited (a fresh mount re-checks anyway).
-  }, [k, live]);
+  }, [k, live, hasTargets]);
 
-  if (!entry) return 'unavailable';
-  const resolved = live ?? cachedState ?? 'unavailable';
+  if (!entry || !hasTargets) return 'unavailable';
+  // Genuinely still resolving (see `hasTargets` above and its own comment)
+  // rather than "nothing to show" - OccasionRowIcon renders a quiet
+  // placeholder for this, not a real icon that then has to visibly pop in
+  // as soon as the cache check settles a moment later.
+  const resolved = live ?? cachedState ?? 'loading';
   // A tappable "start a download" affordance is pointless while offline -
   // it would just fail (or get stuck) the moment it's tapped. An in-flight
   // or already-finished job (`'queued'`, `'downloading'`, `'downloaded'`)

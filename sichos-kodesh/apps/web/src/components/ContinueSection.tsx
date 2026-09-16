@@ -86,9 +86,9 @@ export function ContinueSection() {
                   );
                 }}
               >
-                <span className="year-row-main">
-                  <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                <span className="year-row-title-line">
                   <span className="year-row-year">{entry.occasionLabel}</span>
+                  <OccasionRowIcon entry={entry} progressMap={progressMap} />
                 </span>
                 {/* This list spans every year, not one source year the way
                     an occasion's own page does, so the date (with its

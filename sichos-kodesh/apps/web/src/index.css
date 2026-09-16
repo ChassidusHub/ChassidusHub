@@ -64,14 +64,23 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  /* 'Noto Sans Hebrew' is included here too, not only in the `html[lang='he']`
+     override below - plenty of Hebrew-script text renders while the app's
+     own UI language is English (today's real Hebrew date on the home page,
+     a catalog PDF's own Hebrew label, special-anniversary numbers spelled
+     as Hebrew words), and 'Noto Sans' alone carries zero Hebrew glyphs. Left
+     out, every one of those would fall through per-character past this
+     entire self-hosted stack to whatever Hebrew-capable system font the OS
+     happens to ship, reading as a jarring font switch mid-string against
+     the surrounding Latin text set in Noto Sans. */
+  font-family: 'Noto Sans', 'Noto Sans Hebrew', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hebrew mode's own UI face - Noto Sans's Latin cut (above) carries no
-   Hebrew glyphs at all, so Hebrew text needs Noto Sans Hebrew ahead of it
-   in the stack; Noto Sans itself stays next for any embedded Latin/digits
-   inside a Hebrew string (a date, a percent). */
+/* Hebrew mode's own UI face - just the same two fonts in the other priority
+   order, so Latin/digits embedded inside Hebrew text (a date, a percent)
+   still come from the same pair rather than falling through to a system
+   font in this direction either. */
 html[lang='he'] body {
   font-family: 'Noto Sans Hebrew', 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
 }
@@ -274,6 +283,7 @@ h1 {
   z-index: 20;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   min-width: 0;
   background: var(--bg);
@@ -422,11 +432,22 @@ h1 {
   margin-inline-start: 12px;
 }
 
-.year-row-main {
+/* Groups a row's download/audio/finished icon(s) with its trailing date -
+   the "other side" of the row from the title, not clustered with it, so a
+   row reads as [title  ......  icons + date] the same way ScreenHeader's
+   own title sits opposite its back button. `.year-row-distance` nested in
+   here drops its own margin (below) since this wrapper's own margin
+   already provides the gap from the title. */
+.year-row-trailing {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
+  flex-shrink: 0;
+  margin-inline-start: 12px;
+}
+
+.year-row-trailing .year-row-distance {
+  margin-inline-start: 0;
 }
 
 .year-row-audio-icon {
@@ -462,6 +483,20 @@ h1 {
 
 .download-state-button:hover {
   color: var(--fg);
+}
+
+/* A quiet placeholder for the brief window before the real Cache Storage
+   check resolves (see useDownloadState/OccasionRowIcon) - reserves the
+   same footprint a real icon would take so one doesn't visibly pop in a
+   moment later, without implying an active process the way a spinner
+   would for what's really just a lookup. */
+.download-state-loading {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
 }
 
 .download-state-spinner {
@@ -567,6 +602,18 @@ h1 {
   gap: 6px;
 }
 
+/* This row's own title + icon(s) line - unlike the other occasion-row
+   screens, there's no separate trailing date on the same line here (see
+   .continue-row-date below), so the icon(s) sit at the end of the title
+   line itself rather than grouped with a sibling. */
+.year-row-title-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
 .continue-row-date {
   color: var(--muted);
   font-size: 0.8125rem;
@@ -639,6 +686,14 @@ h1 {
 
 .button:active {
   transform: scale(0.98);
+}
+
+/* A PDF card's own "Read" button (CategoryScreen, FarbrengenScreen) is the
+   card's last element - its own margin-bottom is then pure excess on top
+   of the card's own padding, leaving a visibly oversized gap between the
+   button and the rounded card's bottom edge. */
+.card .button:last-child {
+  margin-bottom: 0;
 }
 
 .hero-button {
@@ -787,6 +842,23 @@ h1 {
 
 .more-section {
   margin-top: 24px;
+}
+
+/* Only while actually expanded - closed, the next (unrelated) row already
+   reads as its own group right after the collapsed summary line; open, its
+   list of rows would otherwise butt straight up against that next row with
+   no separation between two things that have nothing to do with each
+   other. */
+.more-section[open] {
+  margin-bottom: 24px;
+}
+
+/* Same "always expanded" case as .more-section[open] above, for an
+   occasion with no hanacha at all - this content is shown directly
+   instead of behind a collapsed toggle (see FarbrengenScreen.tsx), so it
+   needs the same separation from the unrelated row that follows it. */
+.more-section-standalone {
+  margin-bottom: 24px;
 }
 
 .more-section-summary {

@@ -98,7 +98,7 @@ export function FarbrengenScreen({ resolved }: Props) {
         {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}
       </p>
 
-      {downloadState !== 'unavailable' && (
+      {downloadState !== 'unavailable' && downloadState !== 'loading' && (
         <p className="occasion-download-state">
           {downloadState === 'downloaded' && (
             <>
@@ -143,28 +143,40 @@ export function FarbrengenScreen({ resolved }: Props) {
         </div>
       ))}
 
-      {hasMore && (
-        <details className="more-section">
-          <summary className="more-section-summary">{t.moreFromThisOccasion}</summary>
-          <ul className="category-list">
-            {secondarySectionsPresent.map((section) => (
-              <li key={section}>
-                <Link className="category-row" to={`${basePath}/category/${section}`}>
-                  <span className="category-row-name">{t.sectionLabels[section]}</span>
-                  <span className="category-row-count">{secondaryCounts[section]}</span>
-                </Link>
-              </li>
-            ))}
-            {otherBiltiMugah.map((pdf) => (
-              <li key={pdf.driveFileId}>
-                <Link className="category-row" to={`${basePath}/pdf/${encodeURIComponent(pdf.driveFileId)}`}>
-                  <span className="category-row-name">{pdf.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
+      {hasMore &&
+        (() => {
+          const rows = (
+            <ul className="category-list">
+              {secondarySectionsPresent.map((section) => (
+                <li key={section}>
+                  <Link className="category-row" to={`${basePath}/category/${section}`}>
+                    <span className="category-row-name">{t.sectionLabels[section]}</span>
+                    <span className="category-row-count">{secondaryCounts[section]}</span>
+                  </Link>
+                </li>
+              ))}
+              {otherBiltiMugah.map((pdf) => (
+                <li key={pdf.driveFileId}>
+                  <Link className="category-row" to={`${basePath}/pdf/${encodeURIComponent(pdf.driveFileId)}`}>
+                    <span className="category-row-name">{pdf.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          );
+          // With no hanacha at all, this isn't secondary/"more" content
+          // relative to anything - it's the only content this occasion
+          // has, so it's shown directly rather than demoted behind a
+          // collapsed toggle meant for when the hanacha is the lead content.
+          return hanachaPdfs.length > 0 ? (
+            <details className="more-section">
+              <summary className="more-section-summary">{t.moreFromThisOccasion}</summary>
+              {rows}
+            </details>
+          ) : (
+            <div className="more-section-standalone">{rows}</div>
+          );
+        })()}
 
       <Link className="category-row" to={`/occasion-all-years/${entry.hebrewYear}/${entry.occasionId}`}>
         <span className="category-row-name">{t.thisOccasionAllYears}</span>

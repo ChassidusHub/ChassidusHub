@@ -99,11 +99,11 @@ export function ThisWeekScreen({ sourceYear }: Props) {
         {occasions.map((occasion) => (
           <li key={occasion.entry.occasionId}>
             <Link className="year-row" to={`/follow/${sourceYear}/${occasion.entry.occasionId}`}>
-              <span className="year-row-main">
+              <span className="year-row-year">{occasion.entry.occasionLabel}</span>
+              <span className="year-row-trailing">
                 <OccasionRowIcon entry={occasion.entry} progressMap={progressMap} />
-                <span className="year-row-year">{occasion.entry.occasionLabel}</span>
+                <span className="year-row-distance">{hebrewDayMonthLabel(occasion.hebrewDate, language)}</span>
               </span>
-              <span className="year-row-distance">{hebrewDayMonthLabel(occasion.hebrewDate, language)}</span>
             </Link>
           </li>
         ))}
