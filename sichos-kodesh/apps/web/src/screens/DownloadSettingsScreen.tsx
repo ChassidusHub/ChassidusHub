@@ -4,7 +4,7 @@ import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
 import { getDownloadedBytes } from '../download/downloadManager';
@@ -56,8 +56,7 @@ export function DownloadSettingsScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/settings" />
-      <h1>{t.downloadSettingsTitle}</h1>
+      <ScreenHeader to="/settings" title={t.downloadSettingsTitle} />
 
       <p className="category-header">{t.autoDownloadSection}</p>
       <ul className="year-list">

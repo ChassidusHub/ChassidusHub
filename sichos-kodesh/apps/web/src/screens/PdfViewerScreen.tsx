@@ -10,6 +10,7 @@ import { getOccasionProgress, getPdfScrollFraction, recordPdfProgress } from '..
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 /** Document scroll position as a fraction (0-1) of how far it's possible to scroll - 0 when the page is too short to scroll at all. */
 function currentScrollFraction(): number {
@@ -164,10 +165,7 @@ export function PdfViewerScreen({ resolved }: Props) {
 
   return (
     <div className={zoomed ? 'pdf-viewer-screen zoomed' : 'pdf-viewer-screen'}>
-      <div className="pdf-viewer-header">
-        <BackLink to={resolved.basePath} />
-        <p className="pdf-viewer-title">{pdf.label}</p>
-      </div>
+      <ScreenHeader to={resolved.basePath} title={pdf.label} className="screen-header-inset" />
 
       <div className="pdf-viewer-status">
         {state.status === 'loading' && (

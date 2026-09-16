@@ -5,7 +5,7 @@ import type { Theme } from '../settings/useTheme';
 import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
 import { useLanguage, useTranslation } from '../i18n/useLanguage';
 import type { Language } from '../i18n/translations';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
@@ -25,8 +25,7 @@ export function SettingsScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/" />
-      <h1>{t.settingsTitle}</h1>
+      <ScreenHeader to="/" title={t.settingsTitle} />
 
       <p className="category-header">{t.appearanceSection}</p>
       <ul className="year-list">

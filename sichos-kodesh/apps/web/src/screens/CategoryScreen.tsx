@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import type { PdfSection } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { useTranslation } from '../i18n/useLanguage';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -23,8 +23,7 @@ export function CategoryScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={basePath} />
-      <h1>{section ? t.sectionLabels[section] : ''}</h1>
+      <ScreenHeader to={basePath} title={section ? t.sectionLabels[section] : ''} />
       <p className="subtitle">{entry.occasionLabel}</p>
 
       {pdfs.map((pdf) => (

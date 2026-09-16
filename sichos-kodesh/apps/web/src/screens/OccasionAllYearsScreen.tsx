@@ -4,6 +4,7 @@ import { resolveOccasionAllYears } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewDayMonthLabel, hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
@@ -44,8 +45,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
 
   return (
     <div className="screen">
-      <BackLink to={`/browse/${sourceHebrewYear}/${sourceOccasionId}`} />
-      <h1>{t.thisOccasionAllYearsTitle}</h1>
+      <ScreenHeader to={`/browse/${sourceHebrewYear}/${sourceOccasionId}`} title={t.thisOccasionAllYearsTitle} />
       <p className="tab-help">{t.thisOccasionAllYearsHelp(hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</p>
 
       {yearGroups.length === 0 && <p className="gap-message">{t.noFarbrengensAnyYear}</p>}

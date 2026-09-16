@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { chagOptions, parshaOptions } from '../search/parshaOptions';
@@ -73,8 +73,7 @@ export function SearchScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/" />
-      <h1>{t.searchTitle}</h1>
+      <ScreenHeader to="/" title={t.searchTitle} />
       <p className="tab-help">{t.searchHelp}</p>
 
       <input

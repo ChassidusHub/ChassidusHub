@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
@@ -22,8 +22,7 @@ export function MonthOccasionsScreen({ hebrewYear, monthToken }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={`/browse/${hebrewYear}`} />
-      <h1>{monthName}</h1>
+      <ScreenHeader to={`/browse/${hebrewYear}`} title={monthName} />
       <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       <ul className="year-list">
         {entries.map((entry) => (
