@@ -80,7 +80,14 @@ export default defineConfig({
     // back too.
     legacy({ targets: ['defaults', 'not IE 11', 'Android >= 4.4', 'Chrome >= 49', 'Safari >= 10'] }),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt', not 'autoUpdate' - a newly-found service worker installs
+      // and waits instead of silently taking over and reloading the page
+      // on its own, so AboutScreen's own "Update app" section (checking
+      // for one, and choosing when to actually restart into it - see
+      // src/pwa/appUpdate.ts) has something real to control. `autoUpdate`
+      // would reload the tab out from under whatever the user's doing the
+      // moment a new version is found, with no visible signal beforehand.
+      registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Sichos Kodesh',

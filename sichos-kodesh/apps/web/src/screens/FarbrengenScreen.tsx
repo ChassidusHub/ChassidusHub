@@ -12,6 +12,7 @@ import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useTranslation } from '../i18n/useLanguage';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 
 interface Props {
@@ -87,8 +88,7 @@ export function FarbrengenScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={backPath} />
-      <h1>{entry.occasionLabel}</h1>
+      <ScreenHeader to={backPath} title={entry.occasionLabel} />
       {/* `subtitle` is this occasion's own day+month only (see
           useResolvedEntry) - the year is appended here, not folded into
           that shared field, so this page shows its occasion's full date

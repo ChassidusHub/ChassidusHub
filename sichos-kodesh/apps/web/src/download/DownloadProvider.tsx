@@ -7,6 +7,7 @@ import { audioUrl } from './download';
 import { DownloadContext, chapterKey } from './downloadContext';
 import type { RowDownloadState } from './downloadContext';
 import { addPendingChapterDownload, listPendingChapterDownloads, removePendingChapterDownload } from './pendingDownloads';
+import { forgetAutoDownload, recordAutoDownload } from './downloadLedger';
 import { useDownloadSettings } from '../settings/useDownloadSettings';
 import catalog from '../catalog/data';
 
@@ -38,7 +39,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<Record<string, number>>({});
 
   const runQueue = useCallback(
-    (entries: CatalogEntry[]) => {
+    (entries: CatalogEntry[], source: 'auto' | 'manual') => {
       const targets = listDownloadTargets(entries, settings.contentTypes);
       if (targets.length === 0) return;
 
@@ -90,6 +91,19 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
             return;
           }
 
+          // This one target has settled - record/release its auto-download
+          // ledger entry accordingly (see downloadLedger.ts and
+          // pruneAutoDownloads.ts): a 'manual' job (a row's own tap, or the
+          // "download this week/month" buttons) permanently exempts this
+          // URL from ever being auto-pruned, even if it happened to be
+          // auto-tracked before; an 'auto' job (the sync-on-open) records
+          // or refreshes it. Only on success - an errored fetch never
+          // actually landed anything in the cache worth tracking either way.
+          if (event === 'done') {
+            if (source === 'auto') recordAutoDownload(target.url, target.hebrewYear, target.occasionId);
+            else forgetAutoDownload(target.url);
+          }
+
           // This one target has settled - its own chapter state (if any)
           // reflects that immediately, independent of the rest of the
           // occasion's own files still being in flight.
@@ -118,8 +132,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     [settings.contentTypes, settings.wifiOnly],
   );
 
-  const downloadOccasion = useCallback((entry: CatalogEntry) => runQueue([entry]), [runQueue]);
-  const enqueueBulk = useCallback((entries: CatalogEntry[]) => runQueue(entries), [runQueue]);
+  const downloadOccasion = useCallback((entry: CatalogEntry) => runQueue([entry], 'manual'), [runQueue]);
+  const enqueueBulk = useCallback((entries: CatalogEntry[], source: 'auto' | 'manual' = 'manual') => runQueue(entries, source), [runQueue]);
 
   /**
    * Shared by `downloadChapter` (one chapter) and `downloadAllChapters`
@@ -171,6 +185,11 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           }
           setLiveState((prev) => ({ ...prev, [k]: event === 'error' ? 'none' : 'downloaded' }));
           setProgress((prev) => clearProgress(prev, k));
+          // A chapter's own download icon is always a manual action -
+          // releases any stale auto-download ledger entry the same way
+          // runQueue's 'manual' path does, in case this exact file was
+          // previously auto-fetched (see downloadLedger.ts).
+          if (event === 'done') forgetAutoDownload(target.url);
           // Only cleared on confirmed success - an 'error' here is
           // indistinguishable from a page navigation aborting this same
           // fetch mid-flight: enough of the old page's JS still runs after

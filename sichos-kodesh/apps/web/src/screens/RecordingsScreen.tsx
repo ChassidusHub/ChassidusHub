@@ -10,7 +10,7 @@ import { useChapterDownload } from '../download/useChapterDownload';
 import { useDownload } from '../download/useDownload';
 import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
 import { useTranslation } from '../i18n/useLanguage';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 
 interface Props {
@@ -134,8 +134,7 @@ export function RecordingsScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={basePath} />
-      <h1>{entry.occasionLabel}</h1>
+      <ScreenHeader to={basePath} title={entry.occasionLabel} />
       <p className="subtitle">{t.recordings}</p>
 
       {allChaptersState !== 'unavailable' && (

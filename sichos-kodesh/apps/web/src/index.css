@@ -10,6 +10,9 @@
  */
 :root {
   color-scheme: light dark;
+  /* Kept in sync at runtime by ConnectivityBanner.tsx - this default only
+     covers the instant before its own layout effect first runs. */
+  --connectivity-banner-height: 0px;
   --bg: #fafafa;
   --bg-elevated: #ffffff;
   --fg: #121212;
@@ -258,6 +261,50 @@ h1 {
   color: var(--fg);
 }
 
+/* Replaces a screen's own inline BackLink+<h1> (see ScreenHeader.tsx) -
+   pinned below ConnectivityBanner (see its own `--connectivity-banner-
+   height` variable) instead of scrolling away, so a long list or document
+   never loses its way back or its own name while scrolling. An opaque
+   background (matching the page's own, since nothing else on this page
+   sets a different one) is what actually hides scrolled-past content
+   sliding underneath, not just the sticky positioning alone. */
+.screen-header {
+  position: sticky;
+  top: var(--connectivity-banner-height);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  background: var(--bg);
+  padding-block: 12px;
+  padding-inline: 0;
+  margin: 0 0 4px;
+}
+
+/* PdfViewerScreen's own container has zero horizontal padding by design
+   (see .pdf-viewer-screen's own comment) so .pdf-pages can go edge-to-edge
+   while zoomed - its header needs its own inset instead of inheriting one
+   from an ambient .screen wrapper the way every other screen's does. */
+.screen-header-inset {
+  padding-inline: 20px;
+  margin-bottom: 16px;
+}
+
+.screen-header .back-link {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.screen-header-title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -460,6 +507,10 @@ h1 {
 .pdf-loading-spinner {
   animation: download-spin 1s linear infinite;
   flex-shrink: 0;
+}
+
+.about-update-spinner {
+  animation: download-spin 1s linear infinite;
 }
 
 /* The green, non-spinning ring shown once a download's real byte progress is
@@ -870,24 +921,14 @@ h1 {
   max-width: none;
 }
 
-.pdf-viewer-header {
-  margin-bottom: 16px;
-  padding: 0 20px;
-}
-
-/* Same inline padding as the header above - `.pdf-viewer-screen` itself is
-   deliberately unpadded (see its own comment) so `.pdf-pages` can go
-   edge-to-edge when zoomed, which left the loading/error/not-found text
-   sitting flush against the screen edge with no inset - clipped by the
-   spinner in RTL, since it had nothing between it and the edge at all. */
+/* Same inline padding as .screen-header-inset (see ScreenHeader.tsx) -
+   `.pdf-viewer-screen` itself is deliberately unpadded (see its own
+   comment) so `.pdf-pages` can go edge-to-edge when zoomed, which left the
+   loading/error/not-found text sitting flush against the screen edge with
+   no inset - clipped by the spinner in RTL, since it had nothing between
+   it and the edge at all. */
 .pdf-viewer-status {
   padding: 0 20px;
-}
-
-.pdf-viewer-title {
-  font-size: 1.1875rem;
-  font-weight: 700;
-  margin: 0;
 }
 
 .pdf-pages {

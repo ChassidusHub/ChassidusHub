@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { currentHebrewYear, currentParsha, resolveThisWeek, resolveWeekWithFallback } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
 import catalog from '../catalog/data';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel, hebrewDayMonthLabel, parshaLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
@@ -64,8 +64,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to="/kvius" />
-      <h1>{t.thisWeek}</h1>
+      <ScreenHeader to="/kvius" title={t.thisWeek} />
       <p className="subtitle">{t.fromHebrewYear(sourceYear)}</p>
 
       <div className="week-nav">

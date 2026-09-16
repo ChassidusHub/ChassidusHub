@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useProgressMap } from '../player/useProgressMap';
 import { useDownload } from '../download/useDownload';
@@ -27,8 +27,7 @@ export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to={`/follow/${sourceYear}/month`} />
-      <h1>{monthName}</h1>
+      <ScreenHeader to={`/follow/${sourceYear}/month`} title={monthName} />
       <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       <ul className="year-list">
         {entries.map((entry) => (

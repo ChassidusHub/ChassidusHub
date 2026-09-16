@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { groupByMonth } from '../utils/groupByMonth';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -25,8 +25,7 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to="/" />
-      <h1>{t.hebrewYearTitle(hebrewYear)}</h1>
+      <ScreenHeader to="/" title={t.hebrewYearTitle(hebrewYear)} />
       <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       <ul className="year-list">
         {monthGroups.map((group) => (

@@ -4,7 +4,7 @@ import { resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
 import { SPECIAL_ANNIVERSARY_YEARS, findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
 import catalog from '../catalog/data';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
@@ -68,8 +68,7 @@ export function KviusYearsScreen({ targetYear }: Props) {
 
   return (
     <div className="screen">
-      <BackLink to="/" />
-      <h1>{t.weekKviusFarbrengens}</h1>
+      <ScreenHeader to="/" title={t.weekKviusFarbrengens} />
       <p className="tab-help">{t.kviusHelp(targetYear)}</p>
       <ul className="year-list">
         {matches.map((item) => (

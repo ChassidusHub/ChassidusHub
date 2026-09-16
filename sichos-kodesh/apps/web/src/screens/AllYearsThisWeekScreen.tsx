@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveThisWeekAllYears } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
-import { BackLink } from '../components/BackLink';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
@@ -16,8 +16,7 @@ export function AllYearsThisWeekScreen() {
 
   return (
     <div className="screen">
-      <BackLink to="/" />
-      <h1>{t.allFarbrengensThisWeekTitle}</h1>
+      <ScreenHeader to="/" title={t.allFarbrengensThisWeekTitle} />
       <p className="tab-help">{t.allFarbrengensThisWeekHelp}</p>
 
       {yearGroups.length === 0 && <p className="gap-message">{t.noFarbrengensAnyYear}</p>}

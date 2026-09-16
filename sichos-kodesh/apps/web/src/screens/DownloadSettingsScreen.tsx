@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
-import { currentHebrewYear } from '@sichos-kodesh/catalog';
+import { browsableYears, currentHebrewYear } from '@sichos-kodesh/catalog';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
-import { BackLink } from '../components/BackLink';
+import catalog from '../catalog/data';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
 import { getDownloadedBytes } from '../download/downloadManager';
-import type { DownloadScope, SourceYearMode } from '../settings/useDownloadSettings';
+import { clearAutoDownloadLedger } from '../download/downloadLedger';
+import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../settings/useDownloadSettings';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 const HANACHA_EDITIONS: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
 /** PDF_SECTION_ORDER minus biltiMugah (the highlighted hanacha, handled separately above) and mugah (its own toggle, ordered right after the hanacha editions rather than grouped with hagahos/hosofos). */
 const OTHER_SECTIONS = PDF_SECTION_ORDER.filter((s): s is 'maamorim' | 'hagahos' | 'hosofos' => s !== 'biltiMugah' && s !== 'mugah');
+const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w'];
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -36,6 +39,13 @@ export function DownloadSettingsScreen() {
   const matchedYears = findMatchingYears(currentHebrewYear())
     .map((m) => m.hebrewYear)
     .sort((a, b) => a - b);
+  const allYears = browsableYears(catalog);
+
+  function toggleManualYear(year: number): void {
+    const enabled = settings.manualSourceYears.includes(year);
+    const manualSourceYears = enabled ? settings.manualSourceYears.filter((y) => y !== year) : [...settings.manualSourceYears, year].sort((a, b) => a - b);
+    setSettings({ ...settings, manualSourceYears });
+  }
 
   function toggleEdition(edition: PdfEdition): void {
     const enabled = settings.contentTypes.hanachaEditions.includes(edition);
@@ -51,13 +61,13 @@ export function DownloadSettingsScreen() {
 
   async function clearDownloads(): Promise<void> {
     await caches.delete(MEDIA_CACHE_NAME);
+    clearAutoDownloadLedger();
     setUsage(await getDownloadedBytes().catch(() => 0));
   }
 
   return (
     <div className="screen">
-      <BackLink to="/settings" />
-      <h1>{t.downloadSettingsTitle}</h1>
+      <ScreenHeader to="/settings" title={t.downloadSettingsTitle} />
 
       <p className="category-header">{t.autoDownloadSection}</p>
       <ul className="year-list">
@@ -106,7 +116,13 @@ export function DownloadSettingsScreen() {
               <li key={mode}>
                 <button
                   className={settings.sourceYearMode === mode ? 'year-row year-row-selected' : 'year-row'}
-                  onClick={() => setSettings({ ...settings, sourceYearMode: mode, manualSourceYear: mode === 'manual' ? (settings.manualSourceYear ?? matchedYears[0] ?? null) : null })}
+                  onClick={() =>
+                    setSettings({
+                      ...settings,
+                      sourceYearMode: mode,
+                      manualSourceYears: mode === 'manual' && settings.manualSourceYears.length === 0 && matchedYears[0] != null ? [matchedYears[0]] : settings.manualSourceYears,
+                    })
+                  }
                 >
                   <span className="year-row-year">{mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel}</span>
                   {settings.sourceYearMode === mode && <Check size={18} className="year-row-distance" />}
@@ -117,14 +133,14 @@ export function DownloadSettingsScreen() {
 
           {settings.sourceYearMode === 'manual' && (
             <ul className="year-list">
-              {matchedYears.map((year) => (
+              {allYears.map((year) => (
                 <li key={year}>
                   <button
-                    className={settings.manualSourceYear === year ? 'year-row year-row-selected' : 'year-row'}
-                    onClick={() => setSettings({ ...settings, manualSourceYear: year })}
+                    className={settings.manualSourceYears.includes(year) ? 'year-row year-row-selected' : 'year-row'}
+                    onClick={() => toggleManualYear(year)}
                   >
                     <span className="year-row-year">{hebrewYearLabel(year, language)}</span>
-                    {settings.manualSourceYear === year && <Check size={18} className="year-row-distance" />}
+                    {settings.manualSourceYears.includes(year) && <Check size={18} className="year-row-distance" />}
                   </button>
                 </li>
               ))}
@@ -187,6 +203,36 @@ export function DownloadSettingsScreen() {
           </li>
         ))}
       </ul>
+
+      <p className="category-header">{t.retentionSection}</p>
+      <p className="tab-help">{t.retentionHelp}</p>
+      <ul className="year-list">
+        {RETENTION_PERIODS.map((period) => (
+          <li key={period}>
+            <button
+              className={settings.retentionPeriod === period ? 'year-row year-row-selected' : 'year-row'}
+              onClick={() => setSettings({ ...settings, retentionPeriod: period })}
+            >
+              <span className="year-row-year">{period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))}</span>
+              {settings.retentionPeriod === period && <Check size={18} className="year-row-distance" />}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {settings.retentionPeriod !== 'never' && (
+        <ul className="year-list">
+          <li>
+            <button
+              className={settings.keepFinishedContent ? 'year-row year-row-selected' : 'year-row'}
+              onClick={() => setSettings({ ...settings, keepFinishedContent: !settings.keepFinishedContent })}
+            >
+              <span className="year-row-year">{t.keepFinishedContentLabel}</span>
+              {settings.keepFinishedContent && <Check size={18} className="year-row-distance" />}
+            </button>
+          </li>
+        </ul>
+      )}
 
       <p className="category-header">{t.storageSection}</p>
       <p className="tab-help">{usage != null ? t.storageUsageLabel(formatBytes(usage)) : ''}</p>

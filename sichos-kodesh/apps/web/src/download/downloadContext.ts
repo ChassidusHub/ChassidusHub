@@ -8,9 +8,10 @@ export type RowDownloadState = 'unavailable' | 'none' | 'queued' | 'downloading'
 export interface DownloadContextValue {
   settings: DownloadSettings;
   setSettings: (next: DownloadSettings) => void;
-  /** Queues one occasion's applicable content (per the current settings' content types) - the primitive every download affordance in the app calls, manual or automatic. */
+  /** Queues one occasion's applicable content (per the current settings' content types) - the primitive every manual download affordance in the app calls. */
   downloadOccasion: (entry: CatalogEntry) => void;
-  enqueueBulk: (entries: CatalogEntry[]) => void;
+  /** `source` (default `'manual'`) decides how this job is tracked in downloadLedger.ts - `'auto'` is only ever passed by useAutoDownloadSync; every UI-triggered bulk button leaves it as `'manual'`, exempting whatever it fetches from pruneAutoDownloads.ts for good. */
+  enqueueBulk: (entries: CatalogEntry[], source?: 'auto' | 'manual') => void;
   /** Downloads exactly one chapter's audio, independent of the occasion-level `contentTypes` settings - RecordingsScreen's own per-row download affordance, for grabbing a single sicha without pulling in the whole farbrengen. */
   downloadChapter: (entry: CatalogEntry, chapterIndex: number) => void;
   /** Downloads every chapter's audio for one occasion - RecordingsScreen's own "download all" affordance, same independence from `contentTypes` as `downloadChapter` (this page is audio, unconditionally). */
