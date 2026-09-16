@@ -74,14 +74,20 @@ export function FarbrengenScreen({ resolved }: Props) {
   const isEmpty = entry.audio.length === 0 && hanachaPdfs.length === 0 && !hasMore;
 
   /**
-   * Opening the hanacha also starts its recording, unless a different
-   * recording is already playing - then `autoplayOnHanacha` decides
-   * whether to override it or leave it running (see
-   * useAutoplayOnHanacha).
+   * Opening the hanacha also starts its recording, unless it's already this
+   * occasion's own recording that's active (playing or paused) - then it's
+   * left exactly as it is, never restarted from chapter 0, regardless of
+   * `autoplayOnHanacha` (that setting only decides whether to override a
+   * *different* occasion's recording, not whether to rewind this one's).
+   * Otherwise, if a different recording is already playing,
+   * `autoplayOnHanacha` decides whether to override it or leave it running
+   * (see useAutoplayOnHanacha).
    */
   function handleReadHanacha(): void {
     if (entry.audio.length === 0) return;
-    const differentRecordingPlaying = player.playing && player.playlist !== null && player.playlist.title !== entry.occasionLabel;
+    const isThisPlaylistActive = player.playlist?.title === entry.occasionLabel;
+    if (isThisPlaylistActive) return;
+    const differentRecordingPlaying = player.playing && player.playlist !== null;
     if (differentRecordingPlaying && !autoplayOnHanacha) return;
     player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, 0);
   }

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Download } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
@@ -44,7 +45,7 @@ export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
 
       {entries.length > 0 && online && (
         <button type="button" className="button" onClick={() => enqueueBulk(entries)}>
-          {t.downloadThisMonthLabel}
+          <Download size={16} aria-hidden /> {t.downloadThisMonthLabel}
         </button>
       )}
     </div>
