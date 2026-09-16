@@ -13,6 +13,7 @@ import { useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 import { ShareButton } from '../components/ShareButton';
+import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -141,6 +142,8 @@ export function RecordingsScreen({ resolved }: Props) {
       <p className="subtitle">{t.recordings}</p>
 
       <ShareButton title={entry.occasionLabel} />
+
+      <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
 
       {allChaptersState !== 'unavailable' && (
         <p className="occasion-download-state">
