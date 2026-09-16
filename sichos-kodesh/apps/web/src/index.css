@@ -75,28 +75,7 @@ html[lang='he'] body {
 
 /* Self-hosted (not linked from Google Fonts) so every screen title still
    renders offline from first load, same as the rest of the app shell -
-   already covered by the service worker's precache glob (vite.config.ts;
-   `woff2` added there alongside the existing `ttf` for these). Frank Ruhl
-   Libre is an editorial Hebrew/Latin serif (SIL Open Font License), kept
-   for `h1` in English only - Hebrew `h1`s switch to Noto Sans Hebrew too
-   (below), rather than carrying an unrelated display face into Hebrew
-   mode just for headings. */
-@font-face {
-  font-family: 'Frank Ruhl Libre';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/frank-ruhl-libre-500.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'Frank Ruhl Libre';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url('/fonts/frank-ruhl-libre-800.ttf') format('truetype');
-}
-
+   already covered by the service worker's precache glob (vite.config.ts). */
 @font-face {
   font-family: 'Noto Sans';
   font-style: normal;
@@ -153,21 +132,15 @@ html[lang='he'] body {
   padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
 }
 
+/* font-family isn't set here - it inherits Noto Sans (or, in Hebrew mode,
+   Noto Sans Hebrew) straight from `body`, same as every other element.
+   No 800 cut of either is bundled (only 400/700), so headings use 700 -
+   the browser's own synthetic bold from 700 is indistinguishable from a
+   real 800 at this size, not worth a third font file per family. */
 h1 {
-  font-family: 'Frank Ruhl Libre', 'Times New Roman', serif;
   font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  margin: 0 0 4px;
-}
-
-/* No 800 cut of Noto Sans Hebrew is bundled (only 400/700) - the browser's
-   own synthetic bold from 700 is indistinguishable from a real 800 at
-   this size, so it isn't worth a third font file for one weight step. */
-html[lang='he'] h1 {
-  font-family: 'Noto Sans Hebrew', 'Noto Sans', 'Times New Roman', serif;
   font-weight: 700;
-  letter-spacing: normal;
+  margin: 0 0 4px;
 }
 
 .subtitle {
