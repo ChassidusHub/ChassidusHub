@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { CheckCircle2, Download, Loader2, Music } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { getOccasionProgress, isOccasionFinished } from '../player/progressStore';
@@ -11,6 +12,15 @@ import { DownloadProgressRing } from './DownloadProgressRing';
 interface Props {
   entry: CatalogEntry;
   progressMap: ProgressStore;
+  /**
+   * A row's own trailing date (e.g. ThisWeekScreen's day+month), rendered
+   * between the status icon and the download icon. Only when this is given
+   * does the status icon get a fixed-width slot - blank when this occasion
+   * has no recording - instead of collapsing to nothing: that's what keeps
+   * every row's date starting at the same position regardless of whether
+   * that particular occasion happens to have one.
+   */
+  dateSlot?: ReactNode;
 }
 
 /**
@@ -25,7 +35,7 @@ interface Props {
  * per-screen wiring needed beyond this file and DownloadProvider both
  * already being mounted.
  */
-export function OccasionRowIcon({ entry, progressMap }: Props) {
+export function OccasionRowIcon({ entry, progressMap, dateSlot }: Props) {
   const { t } = useTranslation();
   const { downloadOccasion } = useDownload();
   const downloadState = useDownloadState(entry);
@@ -74,6 +84,16 @@ export function OccasionRowIcon({ entry, progressMap }: Props) {
       >
         <Download size={14} />
       </button>
+    );
+  }
+
+  if (dateSlot !== undefined) {
+    return (
+      <span className="row-icons">
+        <span className="row-status-icon-slot">{statusIcon}</span>
+        {dateSlot}
+        {downloadIcon}
+      </span>
     );
   }
 

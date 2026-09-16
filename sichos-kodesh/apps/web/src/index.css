@@ -412,8 +412,16 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
+/* No explicit `width` - a flex container's default `width: auto` already
+   stretches it to fill its `<li>` while subtracting the margins below on
+   both sides symmetrically (the same reasoning `.playlist-row-item`'s own
+   comment explains). An explicit `width: 100%` here used to fill the `<li>`
+   *before* those negative margins were subtracted, so the row only bled
+   past its list on the start side and fell 10px short of the true trailing
+   edge on the other - the row's own trailing content (icons) never quite
+   reached the edge of the screen's content area the way every other
+   element on the page does. */
 .year-row {
-  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -482,6 +490,19 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Reserved status-icon width for a row that also shows a `dateSlot` (see
+   OccasionRowIcon) - blank when this occasion has no recording, rather than
+   collapsing to nothing, so the date after it always starts at the same
+   position whether or not this particular row happens to have one. */
+.row-status-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
@@ -1298,31 +1319,6 @@ h1 {
 }
 
 .search-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-}
-
-/* DownloadSettingsScreen's custom-weeks retention row - a plain `.year-row`
-   isn't clickable here (the number input is what's interactive), so its
-   own pointer cursor is turned back off. */
-.custom-retention-row {
-  cursor: default;
-}
-
-.custom-retention-input {
-  width: 64px;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--fg);
-  font-size: 0.9375rem;
-  font-family: inherit;
-  text-align: center;
-}
-
-.custom-retention-input:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }

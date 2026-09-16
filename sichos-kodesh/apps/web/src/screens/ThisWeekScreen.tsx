@@ -47,7 +47,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
   const shiftedDate = useMemo(() => shiftedToday(weekOffset), [weekOffset]);
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [sourceYear, shiftedDate]);
   const suggestedYear = useMemo(
-    () => (occasions.length > 0 ? null : (resolveWeekWithFallback(sourceYear, currentHebrewYear(), catalog, shiftedDate)?.hebrewYear ?? null)),
+    () => (occasions.length > 0 ? null : (resolveWeekWithFallback(sourceYear, currentHebrewYear(), catalog, IL, shiftedDate)?.hebrewYear ?? null)),
     [occasions, sourceYear, shiftedDate],
   );
   // Kvius-matched years share the same Sedra schedule by construction
@@ -101,8 +101,11 @@ export function ThisWeekScreen({ sourceYear }: Props) {
             <Link className="year-row" to={`/follow/${sourceYear}/${occasion.entry.occasionId}`}>
               <span className="year-row-year">{occasion.entry.occasionLabel}</span>
               <span className="year-row-trailing">
-                <span className="year-row-distance">{hebrewDayMonthLabel(occasion.hebrewDate, language)}</span>
-                <OccasionRowIcon entry={occasion.entry} progressMap={progressMap} />
+                <OccasionRowIcon
+                  entry={occasion.entry}
+                  progressMap={progressMap}
+                  dateSlot={<span className="year-row-distance">{hebrewDayMonthLabel(occasion.hebrewDate, language)}</span>}
+                />
               </span>
             </Link>
           </li>
