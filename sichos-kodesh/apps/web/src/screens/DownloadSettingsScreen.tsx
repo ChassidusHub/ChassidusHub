@@ -10,6 +10,8 @@ import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
 import { getDownloadedBytes } from '../download/downloadManager';
 import { clearAutoDownloadLedger } from '../download/downloadLedger';
+import { clearPendingChapterDownloads } from '../download/pendingDownloads';
+import { clearPendingEntryDownloads } from '../download/pendingEntryDownloads';
 import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../settings/useDownloadSettings';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
@@ -17,7 +19,7 @@ import { useTranslation } from '../i18n/useLanguage';
 const HANACHA_EDITIONS: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
 /** PDF_SECTION_ORDER minus biltiMugah (the highlighted hanacha, handled separately above) and mugah (its own toggle, ordered right after the hanacha editions rather than grouped with hagahos/hosofos). */
 const OTHER_SECTIONS = PDF_SECTION_ORDER.filter((s): s is 'maamorim' | 'hagahos' | 'hosofos' => s !== 'biltiMugah' && s !== 'mugah');
-const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w', 'custom'];
+const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w'];
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -62,6 +64,11 @@ export function DownloadSettingsScreen() {
   async function clearDownloads(): Promise<void> {
     await caches.delete(MEDIA_CACHE_NAME);
     clearAutoDownloadLedger();
+    // Without these, a download that happened to still be pending at the
+    // exact moment of clearing would silently come back on the next app
+    // open (see pendingDownloads.ts/pendingEntryDownloads.ts).
+    clearPendingChapterDownloads();
+    clearPendingEntryDownloads();
     setUsage(await getDownloadedBytes().catch(() => 0));
   }
 
@@ -213,35 +220,12 @@ export function DownloadSettingsScreen() {
               className={settings.retentionPeriod === period ? 'year-row year-row-selected' : 'year-row'}
               onClick={() => setSettings({ ...settings, retentionPeriod: period })}
             >
-              <span className="year-row-year">
-                {period === 'never' ? t.retentionNeverLabel : period === 'custom' ? t.retentionCustomLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))}
-              </span>
+              <span className="year-row-year">{period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))}</span>
               {settings.retentionPeriod === period && <Check size={18} className="year-row-distance" />}
             </button>
           </li>
         ))}
       </ul>
-
-      {settings.retentionPeriod === 'custom' && (
-        <ul className="year-list">
-          <li>
-            <div className="year-row custom-retention-row">
-              <label htmlFor="custom-retention-weeks" className="year-row-year">
-                {t.retentionCustomWeeksLabel}
-              </label>
-              <input
-                id="custom-retention-weeks"
-                className="custom-retention-input"
-                type="number"
-                min={1}
-                inputMode="numeric"
-                value={settings.customRetentionWeeks}
-                onChange={(e) => setSettings({ ...settings, customRetentionWeeks: Math.max(1, Math.round(Number(e.target.value) || 1)) })}
-              />
-            </div>
-          </li>
-        </ul>
-      )}
 
       {settings.retentionPeriod !== 'never' && (
         <ul className="year-list">

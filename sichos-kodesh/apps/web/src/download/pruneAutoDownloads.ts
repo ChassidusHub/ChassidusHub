@@ -6,7 +6,7 @@ import { MEDIA_CACHE_NAME } from './cacheName';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-const RETENTION_MS: Record<Exclude<RetentionPeriod, 'never' | 'custom'>, number> = {
+const RETENTION_MS: Record<Exclude<RetentionPeriod, 'never'>, number> = {
   '2w': 2 * WEEK_MS,
   '4w': 4 * WEEK_MS,
   '8w': 8 * WEEK_MS,
@@ -33,8 +33,7 @@ const RETENTION_MS: Record<Exclude<RetentionPeriod, 'never' | 'custom'>, number>
  */
 export async function pruneAutoDownloads(settings: DownloadSettings): Promise<void> {
   if (settings.retentionPeriod === 'never') return;
-  const retentionMs = settings.retentionPeriod === 'custom' ? settings.customRetentionWeeks * WEEK_MS : RETENTION_MS[settings.retentionPeriod];
-  const cutoff = Date.now() - retentionMs;
+  const cutoff = Date.now() - RETENTION_MS[settings.retentionPeriod];
   const stale = listAutoDownloads().filter((entry) => entry.cachedAt < cutoff);
   if (stale.length === 0) return;
 

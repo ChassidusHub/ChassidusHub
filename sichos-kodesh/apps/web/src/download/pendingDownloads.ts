@@ -51,3 +51,8 @@ export function removePendingChapterDownload(p: PendingChapterDownload): void {
 export function listPendingChapterDownloads(): PendingChapterDownload[] {
   return readAll();
 }
+
+/** Used by DownloadSettingsScreen's "Clear downloads" - without this, a chapter download that happened to still be pending at the moment of clearing would silently come back on the next app open (see `addPendingChapterDownload`'s own comment). */
+export function clearPendingChapterDownloads(): void {
+  writeAll([]);
+}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
 import { SPECIAL_ANNIVERSARY_YEARS, findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
+import { IL } from '../config';
 import catalog from '../catalog/data';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
@@ -61,7 +62,7 @@ export function KviusYearsScreen({ targetYear }: Props) {
   const today = useMemo(() => new Date(), []);
   const matches = useMemo(() => filterAndSortForDisplay(findMatchingYears(targetYear), today), [targetYear, today]);
   const partialMatches = useMemo(
-    () => filterAndSortForDisplay(findPartialWeekMatches(targetYear, thisWeekDays(today)), today),
+    () => filterAndSortForDisplay(findPartialWeekMatches(targetYear, thisWeekDays(today), IL), today),
     [targetYear, today],
   );
   const specialAnniversaries = useMemo(() => findSpecialAnniversaries(targetYear, today), [targetYear, today]);

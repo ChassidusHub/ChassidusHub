@@ -412,8 +412,16 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
+/* No explicit `width` - a flex container's default `width: auto` already
+   stretches it to fill its `<li>` while subtracting the margins below on
+   both sides symmetrically (the same reasoning `.playlist-row-item`'s own
+   comment explains). An explicit `width: 100%` here used to fill the `<li>`
+   *before* those negative margins were subtracted, so the row only bled
+   past its list on the start side and fell 10px short of the true trailing
+   edge on the other - the row's own trailing content (icons) never quite
+   reached the edge of the screen's content area the way every other
+   element on the page does. */
 .year-row {
-  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -485,6 +493,19 @@ h1 {
   flex-shrink: 0;
 }
 
+/* Reserved status-icon width for a row that also shows a `dateSlot` (see
+   OccasionRowIcon) - blank when this occasion has no recording, rather than
+   collapsing to nothing, so the date after it always starts at the same
+   position whether or not this particular row happens to have one. */
+.row-status-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 .download-state-button {
   display: inline-flex;
   align-items: center;
@@ -540,6 +561,35 @@ h1 {
    green toggle circle, accent inside an active playlist row) instead of
    always reading as muted/grey. */
 .player-loading-spinner {
+  animation: download-spin 1s linear infinite;
+}
+
+/* Spotify-style playlist play/pause button (see PlaylistPlayButton.tsx) -
+   `.playlist-play-button-large` (RecordingsScreen's own header) overrides
+   size/shadow, both variants otherwise share this same filled green
+   circle. */
+.playlist-play-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.playlist-play-button-large {
+  width: 56px;
+  height: 56px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  margin-bottom: 16px;
+}
+
+.playlist-play-button-spinner {
   animation: download-spin 1s linear infinite;
 }
 
@@ -600,6 +650,23 @@ h1 {
   border: none;
   background: none;
   color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* FarbrengenScreen/RecordingsScreen's own share action - same shape as
+   `.occasion-download-button` but muted, since sharing isn't the primary
+   call to action on either page the way downloading is. */
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -850,6 +917,15 @@ h1 {
   gap: 8px;
 }
 
+/* Groups the recordings count with its play button (see FarbrengenScreen) -
+   same trailing-group shape as `.year-row-trailing`. */
+.category-row-trailing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 /* "More from this occasion" - a de-emphasized, collapsed section for
    mugah/maamorim/hagahos/hosofos and any non-highlighted biltiMugah PDFs
    on a farbrengen's own page (see FarbrengenScreen.tsx) - closed by
@@ -1052,6 +1128,24 @@ h1 {
 
 .pdf-page canvas {
   display: block;
+}
+
+/* Night-reading mode for PDFs (see useInvertPdfInDarkMode.ts) - only takes
+   effect while dark mode is *actually* active, same dual condition
+   (`[data-theme='dark']` vs. the OS theme via `prefers-color-scheme`)
+   `:root`'s own dark tokens above use, so the setting can stay on across a
+   theme switch without doing anything in light mode. `hue-rotate(180deg)`
+   alongside `invert(1)` un-inverts hue while keeping the inverted
+   lightness - a plain `invert(1)` alone would also flip every color (red
+   text would render blue), not just light-vs-dark. */
+:root.invert-pdf-dark[data-theme='dark'] .pdf-page canvas {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.invert-pdf-dark:not([data-theme='light']) .pdf-page canvas {
+    filter: invert(1) hue-rotate(180deg);
+  }
 }
 
 /* The single fixed-position container at the bottom of the viewport - both
@@ -1298,31 +1392,6 @@ h1 {
 }
 
 .search-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-}
-
-/* DownloadSettingsScreen's custom-weeks retention row - a plain `.year-row`
-   isn't clickable here (the number input is what's interactive), so its
-   own pointer cursor is turned back off. */
-.custom-retention-row {
-  cursor: default;
-}
-
-.custom-retention-input {
-  width: 64px;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--fg);
-  font-size: 0.9375rem;
-  font-family: inherit;
-  text-align: center;
-}
-
-.custom-retention-input:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }

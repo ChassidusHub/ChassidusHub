@@ -7,6 +7,7 @@ import { audioUrl } from './download';
 import { DownloadContext, chapterKey } from './downloadContext';
 import type { RowDownloadState } from './downloadContext';
 import { addPendingChapterDownload, listPendingChapterDownloads, removePendingChapterDownload } from './pendingDownloads';
+import { addPendingEntryDownload, listPendingEntryDownloads, removePendingEntryDownload } from './pendingEntryDownloads';
 import { forgetAutoDownload, recordAutoDownload } from './downloadLedger';
 import { useDownloadSettings } from '../settings/useDownloadSettings';
 import catalog from '../catalog/data';
@@ -59,6 +60,14 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         for (const k of totalForKey.keys()) next[k] = 'queued';
         return next;
       });
+      // Written before the fetches start (see pendingEntryDownloads.ts) -
+      // this is what makes a whole-occasion or bulk download (this
+      // function's only two callers) survive a reload mid-download, not
+      // just a single chapter's own tap (see runChapterDownloads below).
+      for (const k of totalForKey.keys()) {
+        const entry = entryByKey.get(k);
+        if (entry) addPendingEntryDownload({ hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, source });
+      }
 
       void runDownload(targets, {
         wifiOnly: settings.wifiOnly,
@@ -123,6 +132,12 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           // by the rest succeeding, and this is the same definition of
           // "downloaded" the lazy per-row check (useDownloadState) uses.
           void isEntryFullyDownloaded(entry, settings.contentTypes).then((downloaded) => {
+            // Only cleared on confirmed completion - same reasoning as
+            // runChapterDownloads' own pending record: if something's
+            // still missing (a real error, or this handler running mid-
+            // reload as the old page's JS tears down), the record stays
+            // so the resume-on-open effect retries the remainder.
+            if (downloaded) removePendingEntryDownload({ hebrewYear: entry.hebrewYear, occasionId: entry.occasionId });
             setLiveState((prev) => ({ ...prev, [k]: downloaded ? 'downloaded' : 'none' }));
             setProgress((prev) => clearProgress(prev, k));
           });
@@ -242,6 +257,26 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately once on mount; re-running this scan on a later settings change would re-trigger an already-resumed download.
+  }, []);
+
+  // Same resume-on-open reasoning, for a whole-occasion or bulk download
+  // (downloadOccasion/enqueueBulk, via runQueue) instead of one chapter -
+  // without this, only a single chapter's own tap survived a reload;
+  // "Download" on FarbrengenScreen or "Download this week/month" would
+  // silently abandon whatever files hadn't been reached yet. Re-running
+  // runQueue itself (rather than duplicating its target-resolution logic
+  // here) is what lets `runDownload`'s own cache check skip whatever
+  // already made it through before the reload and fetch only the rest.
+  useEffect(() => {
+    for (const p of listPendingEntryDownloads()) {
+      const entry = (catalog[p.hebrewYear] ?? []).find((e) => e.occasionId === p.occasionId);
+      if (!entry) {
+        removePendingEntryDownload(p);
+        continue;
+      }
+      runQueue([entry], p.source);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately once on mount, same reasoning as the chapter-level resume effect above.
   }, []);
 
   const value = useMemo(

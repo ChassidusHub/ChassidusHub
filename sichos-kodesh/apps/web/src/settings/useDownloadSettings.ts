@@ -3,8 +3,8 @@ import type { DownloadContentTypes } from '../download/downloadManager';
 
 export type DownloadScope = 'week' | 'month';
 export type SourceYearMode = 'auto' | 'manual';
-/** How long an auto-downloaded file survives after it's no longer relevant to a sync run before pruneAutoDownloads.ts deletes it - 'never' keeps the current, purely opportunistic-growth behavior. 'custom' uses `customRetentionWeeks` instead of a fixed preset. */
-export type RetentionPeriod = 'never' | '2w' | '4w' | '8w' | '12w' | 'custom';
+/** How long an auto-downloaded file survives after it's no longer relevant to a sync run before pruneAutoDownloads.ts deletes it - 'never' keeps the current, purely opportunistic-growth behavior. */
+export type RetentionPeriod = 'never' | '2w' | '4w' | '8w' | '12w';
 
 export interface DownloadSettings {
   autoDownloadEnabled: boolean;
@@ -35,8 +35,6 @@ export interface DownloadSettings {
    * touched.
    */
   retentionPeriod: RetentionPeriod;
-  /** Only meaningful when `retentionPeriod === 'custom'` - any whole number of weeks, not just a preset. */
-  customRetentionWeeks: number;
   /** On top of the always-on "never delete something you've opened" rule above - also protects a *finished* occasion's auto-downloaded files past the retention window even if it was never re-opened after finishing (the natural end state of actually having used it). */
   keepFinishedContent: boolean;
 }
@@ -59,7 +57,6 @@ export const DEFAULT_DOWNLOAD_SETTINGS: DownloadSettings = {
   useKviusFallback: true,
   wifiOnly: true,
   retentionPeriod: 'never',
-  customRetentionWeeks: 6,
   keepFinishedContent: true,
   contentTypes: {
     audio: true,

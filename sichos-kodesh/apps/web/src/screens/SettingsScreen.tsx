@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../settings/useTheme';
 import type { Theme } from '../settings/useTheme';
 import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
+import { useInvertPdfInDarkMode } from '../settings/useInvertPdfInDarkMode';
 import { useLanguage, useTranslation } from '../i18n/useLanguage';
 import type { Language } from '../i18n/translations';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -12,6 +13,7 @@ export function SettingsScreen() {
   const { language, setLanguage } = useLanguage();
   const [theme, setTheme] = useTheme();
   const [autoplay, setAutoplay] = useAutoplayOnHanacha();
+  const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
 
   const themeOptions: Array<{ value: Theme; label: string }> = [
     { value: 'dark', label: t.themeDark },
@@ -37,6 +39,15 @@ export function SettingsScreen() {
             </button>
           </li>
         ))}
+      </ul>
+
+      <ul className="year-list">
+        <li>
+          <button className={invertPdf ? 'year-row year-row-selected' : 'year-row'} onClick={() => setInvertPdf(!invertPdf)}>
+            <span className="year-row-year">{t.invertPdfDarkModeLabel}</span>
+            {invertPdf && <Check size={18} className="year-row-distance" />}
+          </button>
+        </li>
       </ul>
 
       <p className="category-header">{t.languageSection}</p>

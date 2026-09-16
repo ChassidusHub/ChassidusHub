@@ -3,6 +3,7 @@ import { HDate } from '@hebcal/core';
 import { currentHebrewYear, mafteiachMonthToken, resolveThisWeek, resolveWeekWithFallback, toMafteiachHebrewDateKey } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
+import { IL } from '../config';
 import catalog from '../catalog/data';
 import type { DownloadSettings } from '../settings/useDownloadSettings';
 import { useDownload } from './useDownload';
@@ -11,7 +12,7 @@ import { useDownload } from './useDownload';
 function resolveEntriesForYear(sourceYear: number, targetYear: number, settings: DownloadSettings, today: Date): CatalogEntry[] {
   if (settings.scope === 'week') {
     if (settings.useKviusFallback) {
-      return (resolveWeekWithFallback(sourceYear, targetYear, catalog, today)?.occasions ?? []).map((occasion) => occasion.entry);
+      return (resolveWeekWithFallback(sourceYear, targetYear, catalog, IL, today)?.occasions ?? []).map((occasion) => occasion.entry);
     }
     return resolveThisWeek(sourceYear, catalog, today).map((occasion) => occasion.entry);
   }

@@ -202,3 +202,27 @@ export function chapterProgressFraction(progress: OccasionProgress | undefined, 
   const chapterDuration = chapter.durationMs / 1000;
   return chapterDuration > 0 ? Math.min(recorded.position / chapterDuration, 1) : 0;
 }
+
+/**
+ * Which chapter (and saved position within it) a "play this occasion's
+ * recording" action - the Spotify-style play button on FarbrengenScreen
+ * and RecordingsScreen - should start from: the last-played chapter if
+ * it isn't finished yet (same chapter `lastActivity` already tracks for
+ * the home page's Continue section), otherwise the first unfinished
+ * chapter, otherwise chapter 0 from the very start (every chapter already
+ * finished - the same "start over" a finished playlist gets elsewhere).
+ */
+export function resumeAudioChapter(progress: OccasionProgress | undefined, entry: CatalogEntry): { chapterIndex: number; position: number } {
+  if (progress?.lastActivity?.kind === 'audio') {
+    const { chapterIndex } = progress.lastActivity;
+    const chapter = entry.audio[chapterIndex];
+    if (chapter && !isChapterFinished(progress, chapterIndex, chapter)) {
+      return { chapterIndex, position: progress.chapters[chapterIndex]?.position ?? 0 };
+    }
+  }
+  const firstUnfinished = entry.audio.findIndex((chapter, index) => !isChapterFinished(progress, index, chapter));
+  if (firstUnfinished !== -1) {
+    return { chapterIndex: firstUnfinished, position: progress?.chapters[firstUnfinished]?.position ?? 0 };
+  }
+  return { chapterIndex: 0, position: 0 };
+}

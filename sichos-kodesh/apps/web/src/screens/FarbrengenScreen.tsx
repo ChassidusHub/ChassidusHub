@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Download, Loader2, Music } from 'lucide-react';
+import { CheckCircle2, Download, Loader2 } from 'lucide-react';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
 import { isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { usePlayer } from '../player/usePlayer';
 import { useRecordVisit } from '../player/useRecordVisit';
+import { useProgressMap } from '../player/useProgressMap';
 import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
 import { useDownload } from '../download/useDownload';
 import { useDownloadState } from '../download/useDownloadState';
@@ -14,6 +15,8 @@ import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
+import { ShareButton } from '../components/ShareButton';
+import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
 
 interface Props {
   resolved: ResolvedEntry | null;
@@ -46,6 +49,7 @@ function countBySecondarySection(pdfs: CatalogPdf[]): Partial<Record<(typeof SEC
 export function FarbrengenScreen({ resolved }: Props) {
   const { t, language } = useTranslation();
   const player = usePlayer();
+  const progressMap = useProgressMap();
   const [autoplayOnHanacha] = useAutoplayOnHanacha();
   const { downloadOccasion } = useDownload();
   const downloadState = useDownloadState(resolved?.entry);
@@ -104,6 +108,8 @@ export function FarbrengenScreen({ resolved }: Props) {
         {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}
       </p>
 
+      <ShareButton title={entry.occasionLabel} />
+
       {downloadState !== 'unavailable' && downloadState !== 'loading' && (
         <p className="occasion-download-state">
           {downloadState === 'downloaded' && (
@@ -133,10 +139,11 @@ export function FarbrengenScreen({ resolved }: Props) {
 
       {entry.audio.length > 0 && (
         <Link className="category-row" to={`${basePath}/recordings`}>
-          <span className="category-row-name">
-            <Music size={16} className="year-row-audio-icon" aria-hidden /> {t.recordings}
+          <span className="category-row-name">{t.recordings}</span>
+          <span className="category-row-trailing">
+            <span className="category-row-count">{t.recordingsCount(entry.audio.length)}</span>
+            <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="compact" />
           </span>
-          <span className="category-row-count">{t.recordingsCount(entry.audio.length)}</span>
         </Link>
       )}
 
