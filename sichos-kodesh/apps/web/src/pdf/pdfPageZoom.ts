@@ -92,6 +92,16 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
   let pinchAnchor: Anchor | null = null;
   let dragLast: { x: number; y: number } | null = null;
   let dragEngaged = false;
+  // A touchscreen can deliver pointermove events faster than the display
+  // repaints, and each one used to do a full pass over every page's DOM
+  // node (`applyLiveStyle`) plus a native `window.scrollBy` (which itself
+  // fires the caller's IntersectionObserver, cascading into pdf.js
+  // render/cancel calls) - real, uncapped work per raw input event, not
+  // per frame. Coalescing to one pass per animation frame keeps the same
+  // visual result (still updates every frame the display can actually
+  // show) while capping how often that cascade can fire during a fast
+  // real-world gesture.
+  let pendingFrame = false;
 
   function containerWidth(): number {
     return pages[0]?.baseWidth ?? (container.clientWidth || 400);
@@ -170,9 +180,9 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
     }
   });
 
-  container.addEventListener('pointermove', (e) => {
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  /** Runs at most once per animation frame - reads whatever the *latest* pointer positions are at that point, not the ones from whichever raw event happened to schedule it, so several pointermove events arriving in the same frame collapse into one update instead of one each. */
+  function applyPendingFrame(): void {
+    pendingFrame = false;
 
     if (pointers.size === 2 && pinchStartDist > 0) {
       const [a, b] = [...pointers.values()];
@@ -190,14 +200,13 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
           applyLiveStyle();
         }
       }
-      e.preventDefault();
       return;
     }
 
     if (pointers.size === 1 && dragLast && scale > 1) {
-      const p = pointers.get(e.pointerId)!;
-      const dx = p.x - dragLast.x;
-      const dy = p.y - dragLast.y;
+      const [p] = [...pointers.values()];
+      const dx = p!.x - dragLast.x;
+      const dy = p!.y - dragLast.y;
 
       if (!dragEngaged) {
         if (Math.abs(dx) + Math.abs(dy) < DRAG_THRESHOLD_PX) return;
@@ -207,8 +216,26 @@ export function attachPdfZoom(container: HTMLElement, pages: ZoomablePage[], cal
       panX = clampPanX(scale, panX + dx);
       applyLiveStyle();
       window.scrollBy(0, -dy);
-      dragLast = { x: p.x, y: p.y };
-      e.preventDefault();
+      dragLast = { x: p!.x, y: p!.y };
+    }
+  }
+
+  container.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Only a pinch or a drag-while-zoomed is this code's gesture to claim -
+    // an ordinary one-finger scroll while unzoomed must keep working as a
+    // native scroll, so preventDefault (and scheduling any work at all)
+    // stays conditional on the same checks applyPendingFrame itself uses.
+    const isPinch = pointers.size === 2 && pinchStartDist > 0;
+    const isZoomedDrag = pointers.size === 1 && dragLast && scale > 1;
+    if (!isPinch && !isZoomedDrag) return;
+
+    e.preventDefault();
+    if (!pendingFrame) {
+      pendingFrame = true;
+      requestAnimationFrame(applyPendingFrame);
     }
   });
 
