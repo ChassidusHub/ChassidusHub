@@ -57,9 +57,9 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
             {entries.map((entry) => (
               <li key={entry.occasionId}>
                 <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
-                  <span className="year-row-main">
+                  <span className="year-row-year">{entry.occasionLabel}</span>
+                  <span className="year-row-trailing">
                     <OccasionRowIcon entry={entry} progressMap={progressMap} />
-                    <span className="year-row-year">{entry.occasionLabel}</span>
                   </span>
                 </Link>
               </li>

@@ -2,8 +2,18 @@ import { createContext } from 'react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import type { DownloadSettings } from '../settings/useDownloadSettings';
 
-/** `'unavailable'` - the current content-type settings select nothing at all for this occasion (e.g. only "Mugah" is enabled and this one has none) - is distinct from `'none'` ("downloadable, just not downloaded yet") so a row with nothing to offer shows no icon at all instead of a dead tap target. */
-export type RowDownloadState = 'unavailable' | 'none' | 'queued' | 'downloading' | 'downloaded';
+/**
+ * `'unavailable'` - the current content-type settings select nothing at all
+ * for this occasion (e.g. only "Mugah" is enabled and this one has none) -
+ * is distinct from `'none'` ("downloadable, just not downloaded yet") so a
+ * row with nothing to offer shows no icon at all instead of a dead tap
+ * target. `'loading'` is its own distinct state too, not folded into
+ * `'unavailable'` - the real Cache Storage check (useDownloadState) that
+ * decides between `'none'`/`'downloaded'` is genuinely asynchronous, and a
+ * row briefly showing no icon at all before one pops in reads as broken,
+ * not as "this occasion has nothing to download."
+ */
+export type RowDownloadState = 'unavailable' | 'loading' | 'none' | 'queued' | 'downloading' | 'downloaded';
 
 export interface DownloadContextValue {
   settings: DownloadSettings;

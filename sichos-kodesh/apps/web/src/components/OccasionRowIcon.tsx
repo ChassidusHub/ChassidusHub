@@ -41,7 +41,13 @@ export function OccasionRowIcon({ entry, progressMap }: Props) {
   }
 
   let downloadIcon = null;
-  if (downloadState === 'downloaded') {
+  if (downloadState === 'loading') {
+    // The real Cache Storage check (useDownloadState) hasn't resolved yet -
+    // a quiet placeholder here, not the eventual real icon popping in a
+    // moment later out of nowhere, and not the same spinner 'downloading'
+    // uses (this isn't an active download, just a lookup still in flight).
+    downloadIcon = <span className="download-state-loading" aria-hidden />;
+  } else if (downloadState === 'downloaded') {
     downloadIcon = <CheckCircle2 size={14} className="download-state-done" aria-label={t.downloadedLabel} />;
   } else if (downloadState === 'downloading' && downloadProgress !== undefined) {
     downloadIcon = (

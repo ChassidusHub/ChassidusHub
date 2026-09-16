@@ -55,7 +55,9 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
       : chapterProgressFraction(progress, index, chapter);
 
   let downloadIcon = null;
-  if (download.state === 'downloaded') {
+  if (download.state === 'loading') {
+    downloadIcon = <span className="download-state-loading" aria-hidden />;
+  } else if (download.state === 'downloaded') {
     downloadIcon = <CheckCircle2 size={14} className="download-state-done" aria-label={t.downloadedLabel} />;
   } else if (download.state === 'downloading' && download.progress !== undefined) {
     downloadIcon = (

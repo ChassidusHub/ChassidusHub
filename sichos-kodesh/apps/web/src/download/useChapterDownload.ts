@@ -45,7 +45,12 @@ export function useChapterDownload(entry: CatalogEntry, chapterIndex: number): C
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by chapter identity; re-checking on every render isn't needed until this row is revisited (a fresh mount re-checks anyway).
   }, [k, live]);
 
-  const resolved = live ?? cachedState ?? 'none';
+  // 'loading' (not 'none') while the real cache check above is still in
+  // flight - see useDownloadState's matching comment: 'none' would show a
+  // real "start a download" affordance that could immediately have to flip
+  // to 'downloaded' a moment later if the chapter turns out to already be
+  // cached, which reads as more broken than a brief, honest placeholder.
+  const resolved = live ?? cachedState ?? 'loading';
   // See useDownloadState's matching comment - a tappable "start a download"
   // affordance is pointless while offline.
   const state = resolved === 'none' && !online ? 'unavailable' : resolved;
