@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigationType, useParams } from 'react-router-dom';
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
@@ -260,6 +261,7 @@ function App() {
       <LanguageProvider>
         <DownloadProvider>
           <PlayerProvider>
+            <Analytics />
             <ConnectivityBanner />
             <AppContent />
             {/* One fixed-position container, not two - DownloadProgressBar
