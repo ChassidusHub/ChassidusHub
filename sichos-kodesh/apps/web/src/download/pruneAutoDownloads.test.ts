@@ -129,6 +129,16 @@ describe('pruneAutoDownloads', () => {
     expect(fakeCache.deleted).toEqual(['https://example.com/a.mp3']);
   });
 
+  it('uses customRetentionWeeks instead of a preset when retentionPeriod is "custom"', async () => {
+    recordAutoDownload('https://example.com/a.mp3', 5711, 1);
+    vi.setSystemTime(new Date(Date.now() + 4 * WEEK_MS));
+    await pruneAutoDownloads(settingsWith({ retentionPeriod: 'custom', customRetentionWeeks: 6, keepFinishedContent: false }));
+    expect(fakeCache.deleted).toEqual([]); // Not yet past a 6-week custom window.
+    vi.setSystemTime(new Date(Date.now() + 3 * WEEK_MS));
+    await pruneAutoDownloads(settingsWith({ retentionPeriod: 'custom', customRetentionWeeks: 6, keepFinishedContent: false }));
+    expect(fakeCache.deleted).toEqual(['https://example.com/a.mp3']);
+  });
+
   it('only prunes the stale entry, leaving a still-fresh one from a different occasion untouched', async () => {
     recordAutoDownload('https://example.com/a.mp3', 5711, 1);
     vi.setSystemTime(new Date(Date.now() + 3 * WEEK_MS));
