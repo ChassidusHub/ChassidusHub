@@ -1075,6 +1075,24 @@ h1 {
   display: block;
 }
 
+/* Night-reading mode for PDFs (see useInvertPdfInDarkMode.ts) - only takes
+   effect while dark mode is *actually* active, same dual condition
+   (`[data-theme='dark']` vs. the OS theme via `prefers-color-scheme`)
+   `:root`'s own dark tokens above use, so the setting can stay on across a
+   theme switch without doing anything in light mode. `hue-rotate(180deg)`
+   alongside `invert(1)` un-inverts hue while keeping the inverted
+   lightness - a plain `invert(1)` alone would also flip every color (red
+   text would render blue), not just light-vs-dark. */
+:root.invert-pdf-dark[data-theme='dark'] .pdf-page canvas {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.invert-pdf-dark:not([data-theme='light']) .pdf-page canvas {
+    filter: invert(1) hue-rotate(180deg);
+  }
+}
+
 /* The single fixed-position container at the bottom of the viewport - both
    DownloadProgressBar and GlobalPlayerBar live here (see App.tsx) and hide
    themselves independently, stacking via normal flex flow instead of each

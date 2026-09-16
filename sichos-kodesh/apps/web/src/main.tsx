@@ -13,6 +13,7 @@ import './index.css';
 import './pwa/appUpdate';
 import App from './App';
 import { applyTheme } from './settings/useTheme';
+import { applyInvertPdfInDarkMode } from './settings/useInvertPdfInDarkMode';
 import { PDF_RUNTIME_CACHE_NAME } from './download/cacheName';
 
 // Best-effort, fire-and-forget: makes sure the PDF worker script is
@@ -63,6 +64,15 @@ try {
   }
 } catch {
   // Best-effort only - falls back to English/LTR until LanguageProvider mounts.
+}
+
+// Same reasoning again, for the PDF dark-mode color-invert setting - the
+// class it reads (see useInvertPdfInDarkMode.ts) needs to already be in
+// place before the first PDF page ever paints.
+try {
+  if (localStorage.getItem('sichos-kodesh:invert-pdf-dark-mode') === 'true') applyInvertPdfInDarkMode(true);
+} catch {
+  // Best-effort only - falls back to off until a PDF-viewing screen mounts.
 }
 
 createRoot(document.getElementById('root')!).render(
