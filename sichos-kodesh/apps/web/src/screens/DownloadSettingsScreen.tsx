@@ -10,6 +10,8 @@ import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
 import { getDownloadedBytes } from '../download/downloadManager';
 import { clearAutoDownloadLedger } from '../download/downloadLedger';
+import { clearPendingChapterDownloads } from '../download/pendingDownloads';
+import { clearPendingEntryDownloads } from '../download/pendingEntryDownloads';
 import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../settings/useDownloadSettings';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
@@ -62,6 +64,11 @@ export function DownloadSettingsScreen() {
   async function clearDownloads(): Promise<void> {
     await caches.delete(MEDIA_CACHE_NAME);
     clearAutoDownloadLedger();
+    // Without these, a download that happened to still be pending at the
+    // exact moment of clearing would silently come back on the next app
+    // open (see pendingDownloads.ts/pendingEntryDownloads.ts).
+    clearPendingChapterDownloads();
+    clearPendingEntryDownloads();
     setUsage(await getDownloadedBytes().catch(() => 0));
   }
 
