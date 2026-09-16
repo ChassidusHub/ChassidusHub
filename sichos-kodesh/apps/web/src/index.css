@@ -61,16 +61,26 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Hebrew mode's own UI face - Noto Sans's Latin cut (above) carries no
+   Hebrew glyphs at all, so Hebrew text needs Noto Sans Hebrew ahead of it
+   in the stack; Noto Sans itself stays next for any embedded Latin/digits
+   inside a Hebrew string (a date, a percent). */
+html[lang='he'] body {
+  font-family: 'Noto Sans Hebrew', 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Self-hosted (not linked from Google Fonts) so every screen title still
    renders offline from first load, same as the rest of the app shell -
-   already covered by the service worker's existing `ttf` precache glob
-   (vite.config.ts), no extra caching config needed. Frank Ruhl Libre is
-   an editorial Hebrew/Latin serif (SIL Open Font License), used only for
-   `h1` below - body text stays the plain system sans for readability. */
+   already covered by the service worker's precache glob (vite.config.ts;
+   `woff2` added there alongside the existing `ttf` for these). Frank Ruhl
+   Libre is an editorial Hebrew/Latin serif (SIL Open Font License), kept
+   for `h1` in English only - Hebrew `h1`s switch to Noto Sans Hebrew too
+   (below), rather than carrying an unrelated display face into Hebrew
+   mode just for headings. */
 @font-face {
   font-family: 'Frank Ruhl Libre';
   font-style: normal;
@@ -85,6 +95,38 @@ body {
   font-weight: 800;
   font-display: swap;
   src: url('/fonts/frank-ruhl-libre-800.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-700.woff2') format('woff2');
 }
 
 /* Wraps every route's content (see App.tsx's AppContent) - reserves room
@@ -117,6 +159,15 @@ h1 {
   font-weight: 800;
   letter-spacing: -0.01em;
   margin: 0 0 4px;
+}
+
+/* No 800 cut of Noto Sans Hebrew is bundled (only 400/700) - the browser's
+   own synthetic bold from 700 is indistinguishable from a real 800 at
+   this size, so it isn't worth a third font file for one weight step. */
+html[lang='he'] h1 {
+  font-family: 'Noto Sans Hebrew', 'Noto Sans', 'Times New Roman', serif;
+  font-weight: 700;
+  letter-spacing: normal;
 }
 
 .subtitle {
