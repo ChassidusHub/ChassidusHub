@@ -7,23 +7,8 @@ import catalog from '../catalog/data';
 import type { DownloadSettings } from '../settings/useDownloadSettings';
 import { useDownload } from './useDownload';
 
-/**
- * Which occasions `settings` currently points at - a manually-pinned year
- * if set, otherwise the best current kvius match (the same default
- * KviusYearsScreen itself uses). Week scope reuses `resolveWeekWithFallback`
- * (the exact preference ThisWeekScreen's own suggestion already uses) when
- * fallback is on; month scope just lists whatever's indexed for that
- * Hebrew month in the source year, same as FollowMonthOccasionsScreen -
- * see DownloadSettingsScreen's own reasoning for not applying per-week
- * substitution inside a month browse.
- */
-function resolveAutoDownloadEntries(settings: DownloadSettings, today: Date): CatalogEntry[] {
-  const targetYear = currentHebrewYear();
-  const sourceYear =
-    settings.sourceYearMode === 'manual' && settings.manualSourceYear != null
-      ? settings.manualSourceYear
-      : (findMatchingYears(targetYear)[0]?.hebrewYear ?? targetYear);
-
+/** One source year's own occasions for the current week/month - the single-year resolution `resolveAutoDownloadEntries` runs once per selected year and unions together. */
+function resolveEntriesForYear(sourceYear: number, targetYear: number, settings: DownloadSettings, today: Date): CatalogEntry[] {
   if (settings.scope === 'week') {
     if (settings.useKviusFallback) {
       return (resolveWeekWithFallback(sourceYear, targetYear, catalog, today)?.occasions ?? []).map((occasion) => occasion.entry);
@@ -34,6 +19,37 @@ function resolveAutoDownloadEntries(settings: DownloadSettings, today: Date): Ca
   const hdate = new HDate(today);
   const monthToken = mafteiachMonthToken(toMafteiachHebrewDateKey({ year: sourceYear, month: hdate.getMonth(), day: hdate.getDate() }));
   return (catalog[sourceYear] ?? []).filter((entry) => mafteiachMonthToken(entry.hebrewDate) === monthToken);
+}
+
+/**
+ * Which occasions `settings` currently points at - one or more
+ * manually-pinned years if set, otherwise the best current kvius match
+ * (the same default KviusYearsScreen itself uses). Week scope reuses
+ * `resolveWeekWithFallback` (the exact preference ThisWeekScreen's own
+ * suggestion already uses) when fallback is on; month scope just lists
+ * whatever's indexed for that Hebrew month in the source year, same as
+ * FollowMonthOccasionsScreen - see DownloadSettingsScreen's own reasoning
+ * for not applying per-week substitution inside a month browse. Each
+ * selected year is resolved independently and the results unioned (see
+ * DownloadSettings.manualSourceYears's own doc comment) - deduped by
+ * occasion identity in case two selected years' own fallback resolution
+ * happens to land on the same one.
+ */
+function resolveAutoDownloadEntries(settings: DownloadSettings, today: Date): CatalogEntry[] {
+  const targetYear = currentHebrewYear();
+  const sourceYears = settings.sourceYearMode === 'manual' && settings.manualSourceYears.length > 0 ? settings.manualSourceYears : [findMatchingYears(targetYear)[0]?.hebrewYear ?? targetYear];
+
+  const seen = new Set<string>();
+  const entries: CatalogEntry[] = [];
+  for (const sourceYear of sourceYears) {
+    for (const entry of resolveEntriesForYear(sourceYear, targetYear, settings, today)) {
+      const key = `${entry.hebrewYear}:${entry.occasionId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      entries.push(entry);
+    }
+  }
+  return entries;
 }
 
 /**

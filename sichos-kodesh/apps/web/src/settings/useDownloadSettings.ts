@@ -9,9 +9,17 @@ export interface DownloadSettings {
   /** How far ahead sync-on-open pre-fetches. */
   scope: DownloadScope;
   sourceYearMode: SourceYearMode;
-  /** Only meaningful when `sourceYearMode === 'manual'`. */
-  manualSourceYear: number | null;
-  /** Week scope only - see `resolveWeekWithFallback` in packages/catalog. A month download always just shows whatever's indexed for that month, no substitution. */
+  /**
+   * Only meaningful when `sourceYearMode === 'manual'` - any catalog year,
+   * not just a kvius match, and more than one at once: each selected year
+   * is resolved independently (week or month, same as 'auto' mode would
+   * for a single year) and the results unioned, so picking several years
+   * downloads that many years' worth of content for the same week/month
+   * rather than picking one "winner" among them. Empty is treated the same
+   * as 'auto' mode until at least one year is actually picked.
+   */
+  manualSourceYears: number[];
+  /** Week scope only - see `resolveWeekWithFallback` in packages/catalog. A month download always just shows whatever's indexed for that month, no substitution. Applies per selected year, same as it would for a single auto-picked year. */
   useKviusFallback: boolean;
   wifiOnly: boolean;
   contentTypes: DownloadContentTypes;
@@ -31,7 +39,7 @@ export const DEFAULT_DOWNLOAD_SETTINGS: DownloadSettings = {
   autoDownloadEnabled: false,
   scope: 'week',
   sourceYearMode: 'auto',
-  manualSourceYear: null,
+  manualSourceYears: [],
   useKviusFallback: true,
   wifiOnly: true,
   contentTypes: {
@@ -51,8 +59,12 @@ function readStored(): DownloadSettings {
     // Merged over the default rather than trusted as-is, so a settings
     // shape saved by an older version of this app (a field added since)
     // still comes back complete instead of missing keys later code assumes exist.
-    const parsed = JSON.parse(raw) as Partial<DownloadSettings>;
-    return { ...DEFAULT_DOWNLOAD_SETTINGS, ...parsed, contentTypes: { ...DEFAULT_DOWNLOAD_SETTINGS.contentTypes, ...parsed.contentTypes } };
+    // `manualSourceYear` (singular) is this setting's pre-multi-year shape -
+    // migrated into the new array field so an existing saved pick survives
+    // the upgrade instead of silently reverting to "auto."
+    const parsed = JSON.parse(raw) as Partial<DownloadSettings> & { manualSourceYear?: number | null };
+    const manualSourceYears = parsed.manualSourceYears ?? (parsed.manualSourceYear != null ? [parsed.manualSourceYear] : DEFAULT_DOWNLOAD_SETTINGS.manualSourceYears);
+    return { ...DEFAULT_DOWNLOAD_SETTINGS, ...parsed, manualSourceYears, contentTypes: { ...DEFAULT_DOWNLOAD_SETTINGS.contentTypes, ...parsed.contentTypes } };
   } catch {
     return DEFAULT_DOWNLOAD_SETTINGS;
   }

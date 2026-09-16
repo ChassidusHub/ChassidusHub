@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
-import { currentHebrewYear } from '@sichos-kodesh/catalog';
+import { browsableYears, currentHebrewYear } from '@sichos-kodesh/catalog';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
+import catalog from '../catalog/data';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
@@ -36,6 +37,13 @@ export function DownloadSettingsScreen() {
   const matchedYears = findMatchingYears(currentHebrewYear())
     .map((m) => m.hebrewYear)
     .sort((a, b) => a - b);
+  const allYears = browsableYears(catalog);
+
+  function toggleManualYear(year: number): void {
+    const enabled = settings.manualSourceYears.includes(year);
+    const manualSourceYears = enabled ? settings.manualSourceYears.filter((y) => y !== year) : [...settings.manualSourceYears, year].sort((a, b) => a - b);
+    setSettings({ ...settings, manualSourceYears });
+  }
 
   function toggleEdition(edition: PdfEdition): void {
     const enabled = settings.contentTypes.hanachaEditions.includes(edition);
@@ -105,7 +113,13 @@ export function DownloadSettingsScreen() {
               <li key={mode}>
                 <button
                   className={settings.sourceYearMode === mode ? 'year-row year-row-selected' : 'year-row'}
-                  onClick={() => setSettings({ ...settings, sourceYearMode: mode, manualSourceYear: mode === 'manual' ? (settings.manualSourceYear ?? matchedYears[0] ?? null) : null })}
+                  onClick={() =>
+                    setSettings({
+                      ...settings,
+                      sourceYearMode: mode,
+                      manualSourceYears: mode === 'manual' && settings.manualSourceYears.length === 0 && matchedYears[0] != null ? [matchedYears[0]] : settings.manualSourceYears,
+                    })
+                  }
                 >
                   <span className="year-row-year">{mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel}</span>
                   {settings.sourceYearMode === mode && <Check size={18} className="year-row-distance" />}
@@ -116,14 +130,14 @@ export function DownloadSettingsScreen() {
 
           {settings.sourceYearMode === 'manual' && (
             <ul className="year-list">
-              {matchedYears.map((year) => (
+              {allYears.map((year) => (
                 <li key={year}>
                   <button
-                    className={settings.manualSourceYear === year ? 'year-row year-row-selected' : 'year-row'}
-                    onClick={() => setSettings({ ...settings, manualSourceYear: year })}
+                    className={settings.manualSourceYears.includes(year) ? 'year-row year-row-selected' : 'year-row'}
+                    onClick={() => toggleManualYear(year)}
                   >
                     <span className="year-row-year">{hebrewYearLabel(year, language)}</span>
-                    {settings.manualSourceYear === year && <Check size={18} className="year-row-distance" />}
+                    {settings.manualSourceYears.includes(year) && <Check size={18} className="year-row-distance" />}
                   </button>
                 </li>
               ))}
