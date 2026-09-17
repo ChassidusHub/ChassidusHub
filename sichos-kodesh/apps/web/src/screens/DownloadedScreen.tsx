@@ -38,7 +38,7 @@ function groupByYear(entries: CatalogEntry[]): YearGroup[] {
 export function DownloadedScreen() {
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
-  const { settings } = useDownload();
+  const { settings, cancelOccasion } = useDownload();
   const activeRows = useActiveDownloadRows();
   const allEntries = useMemo(() => Object.values(catalog).flat(), []);
   const [downloaded, setDownloaded] = useState<CatalogEntry[] | null>(null);
@@ -83,17 +83,24 @@ export function DownloadedScreen() {
         <div className="active-downloads-section">
           <p className="category-header">{t.downloadsInProgressTitle}</p>
           <ul className="active-downloads-list">
-            {activeRows.map((row) => (
-              <li key={row.key} className="active-download-row">
-                <Link className="active-download-row-label active-download-row-link" to={`/browse/${row.hebrewYear}/${row.occasionId}`}>
-                  {row.label}
-                </Link>
-                <span className="active-download-row-track" aria-hidden>
-                  <span className="active-download-row-fill" style={{ width: `${row.percent}%` }} />
-                </span>
-                <span className="active-download-row-percent">{row.percent}%</span>
-              </li>
-            ))}
+            {activeRows.map((row) => {
+              const rowEntry = (catalog[row.hebrewYear] ?? []).find((e) => e.occasionId === row.occasionId);
+              return (
+                <li key={row.key}>
+                  <SwipeToDelete onDelete={() => rowEntry && cancelOccasion(rowEntry)}>
+                    <div className="active-download-row">
+                      <Link className="active-download-row-label active-download-row-link" to={`/browse/${row.hebrewYear}/${row.occasionId}`}>
+                        {row.label}
+                      </Link>
+                      <span className="active-download-row-track" aria-hidden>
+                        <span className="active-download-row-fill" style={{ width: `${row.percent}%` }} />
+                      </span>
+                      <span className="active-download-row-percent">{row.percent}%</span>
+                    </div>
+                  </SwipeToDelete>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

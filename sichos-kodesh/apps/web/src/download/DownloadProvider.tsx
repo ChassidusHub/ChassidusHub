@@ -274,6 +274,23 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     [runChapterDownloads],
   );
 
+  const cancelOccasion = useCallback((entry: CatalogEntry) => {
+    const k = key(entry.hebrewYear, entry.occasionId);
+    // Remove from pending queues so it won't be re-queued on reload.
+    removePendingEntryDownload({ hebrewYear: entry.hebrewYear, occasionId: entry.occasionId });
+    // Clear its live state and progress so it immediately disappears from
+    // the active-downloads list. Chapter-level keys are left intact - if a
+    // chapter was independently queued via its own row it should keep its
+    // own state; and chapter-only downloads don't go through this path.
+    setLiveState((prev) => {
+      if (!(k in prev)) return prev;
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
+    setProgress((prev) => clearProgress(prev, k));
+  }, []);
+
   // Resume-on-open: anything left pending from an interrupted session (the
   // page reloaded or was closed mid-download) gets re-verified against the
   // real cache and, if genuinely still missing, re-queued automatically -
@@ -325,8 +342,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress, sessionBatch }),
-    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress, sessionBatch],
+    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, cancelOccasion, liveState, progress, sessionBatch }),
+    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, cancelOccasion, liveState, progress, sessionBatch],
   );
 
   return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;

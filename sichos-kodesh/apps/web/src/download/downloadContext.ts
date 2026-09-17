@@ -27,6 +27,15 @@ export interface DownloadContextValue {
   /** Downloads every chapter's audio for one occasion - RecordingsScreen's own "download all" affordance, same independence from `contentTypes` as `downloadChapter` (this page is audio, unconditionally). */
   downloadAllChapters: (entry: CatalogEntry) => void;
   /**
+   * Clears an occasion's in-progress download from live state and removes
+   * any pending-download records, preventing it from being resumed on the
+   * next page load. In-flight fetch() calls can't be aborted (no
+   * AbortController was threaded through) so they may still complete in
+   * the background - but the UI will immediately show the row as gone and
+   * the occasion won't be re-queued on reload.
+   */
+  cancelOccasion: (entry: CatalogEntry) => void;
+  /**
    * Live in-memory state, keyed `"{hebrewYear}:{occasionId}"` for an
    * occasion-level job or `"chapter:{hebrewYear}:{occasionId}:{chapterIndex}"`
    * for a `downloadChapter` job (same shape as player/progressStore.ts's own
