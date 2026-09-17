@@ -83,6 +83,13 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
       <button
         className={isActive ? 'playlist-row playlist-row-active' : 'playlist-row'}
         onClick={() => {
+          // If this chapter is already the active one, toggle play/pause
+          // rather than restarting from the saved position - tapping the
+          // Pause icon should pause, not restart the track from scratch.
+          if (isActive) {
+            player.togglePlay();
+            return;
+          }
           // Resumes from wherever this chapter was left off, not always
           // from 0. Auto-advance (PlayerProvider's own `next()` on
           // `onEnded`) is untouched by this and still starts its chapter

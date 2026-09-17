@@ -43,12 +43,31 @@ function countedActiveKeys(liveState: Record<string, RowDownloadState>): string[
 
 /** One entry per real in-flight file transfer, aggregated for the global download-progress bar. */
 export function useActiveDownloads(): ActiveDownloadsSummary {
-  const { liveState, progress } = useDownload();
+  const { liveState, progress, sessionBatch } = useDownload();
   const countedKeys = countedActiveKeys(liveState);
 
   if (countedKeys.length === 0) return { count: 0, percent: 0 };
-  const totalFraction = countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0);
-  return { count: countedKeys.length, percent: Math.round((totalFraction / countedKeys.length) * 100) };
+
+  // sessionBatch.total is the cumulative number of files queued in the current
+  // batch (set by DownloadProvider as files are enqueued, never decreasing
+  // mid-batch). sessionBatch.done is how many have settled. Together they give
+  // a global fraction that never goes backward: each file completion advances
+  // the numerator, and newly-queued files expand the denominator up front.
+  const { total, done } = sessionBatch;
+  if (total === 0) {
+    // Batch hasn't been initialized yet (e.g. a resume-on-open that hasn't
+    // reached the onEach callback yet); fall back to counting active keys.
+    const inProgressFraction = countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0);
+    return { count: countedKeys.length, percent: Math.round((inProgressFraction / countedKeys.length) * 100) };
+  }
+
+  // Cap at 99 while there are still active keys in liveState - the bar
+  // hides at count=0, so we'll never actually show 100% while it's visible.
+  // This avoids a brief 100% flash that can occur when done reaches total
+  // slightly before the last liveState update is committed.
+  const rawPercent = Math.round((done / total) * 100);
+  const percent = Math.min(rawPercent, 99);
+  return { count: countedKeys.length, percent };
 }
 
 /** `key` -> a human label for it via the catalog, or `null` for a key whose occasion/chapter can no longer be resolved (a stale key from a removed catalog entry - skipped rather than shown as a dead row). */

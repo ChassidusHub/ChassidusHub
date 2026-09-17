@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { isDownloaded, isEntryFullyDownloaded, listDownloadTargets, runDownload } from './downloadManager';
+import { isDownloaded, isEntryFullyDownloaded, listDownloadTargets, runDownload, ALL_CONTENT_TYPES } from './downloadManager';
 import type { DownloadTarget } from './downloadManager';
 import { audioUrl } from './download';
 import { DownloadContext, chapterKey } from './downloadContext';
@@ -38,10 +38,12 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useDownloadSettings();
   const [liveState, setLiveState] = useState<Record<string, RowDownloadState>>({});
   const [progress, setProgress] = useState<Record<string, number>>({});
+  const [sessionBatch, setSessionBatch] = useState<{ total: number; done: number }>({ total: 0, done: 0 });
 
   const runQueue = useCallback(
     (entries: CatalogEntry[], source: 'auto' | 'manual') => {
-      const targets = listDownloadTargets(entries, settings.contentTypes);
+      const contentTypes = source === 'manual' && settings.manualDownloadAllContent ? ALL_CONTENT_TYPES : settings.contentTypes;
+      const targets = listDownloadTargets(entries, contentTypes);
       if (targets.length === 0) return;
 
       const entryByKey = new Map(entries.map((entry) => [key(entry.hebrewYear, entry.occasionId), entry]));
@@ -51,6 +53,13 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       // not any single file's own fraction.
       const totalForKey = new Map<string, number>();
       const completedForKey = new Map<string, number>();
+      // Per-target byte fractions, keyed by occasion then by target URL, so
+      // two concurrent files for the same occasion each have their own slot
+      // and the occasion progress is computed as the sum of all active
+      // fractions plus completed files - this prevents concurrent progress
+      // callbacks from overwriting each other's value and causing visible
+      // backward jumps.
+      const activeFractionsForKey = new Map<string, Map<string, number>>();
       for (const target of targets) {
         const k = key(target.hebrewYear, target.occasionId);
         totalForKey.set(k, (totalForKey.get(k) ?? 0) + 1);
@@ -58,7 +67,24 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       setLiveState((prev) => {
         const next = { ...prev };
         for (const k of totalForKey.keys()) next[k] = 'queued';
+        // Also set audio chapter keys to 'queued' up front so
+        // RecordingsScreen shows the pending spinner for every chapter
+        // included in this job, not only the one(s) that have already
+        // started fetching - fixes the "download icon instead of spinner"
+        // for queued chapters during an auto-download or bulk download.
+        for (const target of targets) {
+          if (target.kind === 'audio' && target.chapterIndex !== undefined) {
+            next[chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex)] = 'queued';
+          }
+        }
         return next;
+      });
+      // Reset the session counter when starting a brand-new batch (previous
+      // batch is finished); otherwise accumulate into the running total so
+      // two overlapping batches share one continuous progress bar.
+      setSessionBatch((prev) => {
+        const finished = prev.total > 0 && prev.done >= prev.total;
+        return { total: (finished ? 0 : prev.total) + targets.length, done: finished ? 0 : prev.done };
       });
       // Written before the fetches start (see pendingEntryDownloads.ts) -
       // this is what makes a whole-occasion or bulk download (this
@@ -90,9 +116,16 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
               return next;
             });
             if (fraction !== undefined) {
+              // Update this target's own slot and recompute the occasion
+              // progress from the sum of all active fractions plus
+              // already-completed files, preventing concurrent callbacks for
+              // the same occasion from overwriting each other's value.
+              if (!activeFractionsForKey.has(k)) activeFractionsForKey.set(k, new Map());
+              activeFractionsForKey.get(k)!.set(target.url, fraction);
               const completed = completedForKey.get(k) ?? 0;
+              const activeSum = [...(activeFractionsForKey.get(k)!.values())].reduce((s, f) => s + f, 0);
               setProgress((prev) => {
-                const next = { ...prev, [k]: Math.min((completed + fraction) / total, 1) };
+                const next = { ...prev, [k]: Math.min((completed + activeSum) / total, 1) };
                 if (chapterK) next[chapterK] = fraction;
                 return next;
               });
@@ -121,8 +154,15 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
             setProgress((prev) => clearProgress(prev, chapterK));
           }
 
+          // Advance the session-level "done" counter regardless of which
+          // occasion this target belongs to - this is what keeps the global
+          // progress bar strictly advancing as files complete. Clamped to
+          // `total` so a stale callback can't push `done` above `total`.
+          setSessionBatch((prev) => ({ total: prev.total, done: Math.min(prev.done + 1, prev.total) }));
+
           const completed = (completedForKey.get(k) ?? 0) + 1;
           completedForKey.set(k, completed);
+          activeFractionsForKey.get(k)?.delete(target.url);
           setProgress((prev) => ({ ...prev, [k]: Math.min(completed / total, 1) }));
           if (completed < total) return; // Other files for this same occasion are still pending.
           const entry = entryByKey.get(k);
@@ -144,7 +184,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         },
       });
     },
-    [settings.contentTypes, settings.wifiOnly],
+    [settings.contentTypes, settings.wifiOnly, settings.manualDownloadAllContent],
   );
 
   const downloadOccasion = useCallback((entry: CatalogEntry) => runQueue([entry], 'manual'), [runQueue]);
@@ -185,6 +225,10 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         for (const target of targets) next[chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex!)] = 'queued';
         return next;
       });
+      setSessionBatch((prev) => {
+        const finished = prev.total > 0 && prev.done >= prev.total;
+        return { total: (finished ? 0 : prev.total) + targets.length, done: finished ? 0 : prev.done };
+      });
       for (const target of targets) {
         addPendingChapterDownload({ hebrewYear: target.hebrewYear, occasionId: target.occasionId, chapterIndex: target.chapterIndex! });
       }
@@ -205,6 +249,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           // runQueue's 'manual' path does, in case this exact file was
           // previously auto-fetched (see downloadLedger.ts).
           if (event === 'done') forgetAutoDownload(target.url);
+          setSessionBatch((prev) => ({ total: prev.total, done: Math.min(prev.done + 1, prev.total) }));
           // Only cleared on confirmed success - an 'error' here is
           // indistinguishable from a page navigation aborting this same
           // fetch mid-flight: enough of the old page's JS still runs after
@@ -280,8 +325,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress }),
-    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress],
+    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress, sessionBatch }),
+    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress, sessionBatch],
   );
 
   return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;

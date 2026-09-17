@@ -84,8 +84,13 @@ export function SettingsScreen() {
           </button>
         </li>
       </ul>
+      <p className="tab-help">{t.autoplayHanachaHelp}</p>
 
       <div className="settings-link-list">
+        <Link className="category-row settings-link-row" to="/downloaded">
+          <span className="category-row-name">{t.viewDownloadedLabel}</span>
+        </Link>
+
         <Link className="category-row settings-link-row" to="/settings/downloads">
           <span className="category-row-name">{t.downloadsLink}</span>
         </Link>

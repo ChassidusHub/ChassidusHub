@@ -25,6 +25,21 @@ export interface DownloadTarget {
 }
 
 /**
+ * A content-types config that enables every downloadable asset - used when
+ * the user triggers a manual download and has chosen to download everything
+ * regardless of the auto-download content-type filter (see
+ * DownloadSettings.manualDownloadAllContent).
+ */
+export const ALL_CONTENT_TYPES: DownloadContentTypes = {
+  audio: true,
+  hanachaEditions: ['sichosKodesh', 'sefer', 'torasMenachem'],
+  mugah: true,
+  maamorim: true,
+  hagahos: true,
+  hosofos: true,
+};
+
+/**
  * Every file one occasion needs fetched to satisfy `contentTypes`, as plain
  * media-proxy URLs - the same `audioUrl`/`pdfUrl` builders playback already
  * uses, so a downloaded file and a played/read one are indistinguishable to

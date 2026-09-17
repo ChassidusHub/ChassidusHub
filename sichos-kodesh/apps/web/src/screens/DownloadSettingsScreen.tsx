@@ -5,6 +5,7 @@ import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
+import { OverflowMarquee } from '../components/OverflowMarquee';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
@@ -83,7 +84,7 @@ export function DownloadSettingsScreen() {
             className={settings.autoDownloadEnabled ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
             onClick={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}
           >
-            <span className="year-row-year">{t.autoDownloadEnabledLabel}</span>
+            <OverflowMarquee className="year-row-year settings-option-label" text={t.autoDownloadEnabledLabel} />
             <span className="settings-option-end-slot">{settings.autoDownloadEnabled && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
@@ -98,7 +99,7 @@ export function DownloadSettingsScreen() {
                   className={settings.scope === scope ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                   onClick={() => setSettings({ ...settings, scope })}
                 >
-                  <span className="year-row-year">{scope === 'week' ? t.downloadScopeWeek : t.downloadScopeMonth}</span>
+                  <OverflowMarquee className="year-row-year settings-option-label" text={scope === 'week' ? t.downloadScopeWeek : t.downloadScopeMonth} />
                   <span className="settings-option-end-slot">{settings.scope === scope && <Check size={18} className="year-row-distance" />}</span>
                 </button>
               </li>
@@ -111,7 +112,7 @@ export function DownloadSettingsScreen() {
                 className={settings.wifiOnly ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                 onClick={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })}
               >
-                <span className="year-row-year">{t.wifiOnlyLabel}</span>
+                <OverflowMarquee className="year-row-year settings-option-label" text={t.wifiOnlyLabel} />
                 <span className="settings-option-end-slot">{settings.wifiOnly && <Check size={18} className="year-row-distance" />}</span>
               </button>
             </li>
@@ -131,7 +132,7 @@ export function DownloadSettingsScreen() {
                     })
                   }
                 >
-                  <span className="year-row-year">{mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel}</span>
+                  <OverflowMarquee className="year-row-year settings-option-label" text={mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel} />
                   <span className="settings-option-end-slot">{settings.sourceYearMode === mode && <Check size={18} className="year-row-distance" />}</span>
                 </button>
               </li>
@@ -146,7 +147,7 @@ export function DownloadSettingsScreen() {
                     className={settings.manualSourceYears.includes(year) ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                     onClick={() => toggleManualYear(year)}
                   >
-                    <span className="year-row-year">{hebrewYearLabel(year, language)}</span>
+                    <OverflowMarquee className="year-row-year settings-option-label" text={hebrewYearLabel(year, language)} />
                     <span className="settings-option-end-slot">
                       {settings.manualSourceYears.includes(year) && <Check size={18} className="year-row-distance" />}
                     </span>
@@ -163,7 +164,7 @@ export function DownloadSettingsScreen() {
                   className={settings.useKviusFallback ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                   onClick={() => setSettings({ ...settings, useKviusFallback: !settings.useKviusFallback })}
                 >
-                  <span className="year-row-year">{t.kviusFallbackLabel}</span>
+                  <OverflowMarquee className="year-row-year settings-option-label" text={t.kviusFallbackLabel} />
                   <span className="settings-option-end-slot">{settings.useKviusFallback && <Check size={18} className="year-row-distance" />}</span>
                 </button>
               </li>
@@ -176,10 +177,22 @@ export function DownloadSettingsScreen() {
       <ul className="year-list">
         <li className="settings-option-item">
           <button
+            className={settings.manualDownloadAllContent ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
+            onClick={() => setSettings({ ...settings, manualDownloadAllContent: !settings.manualDownloadAllContent })}
+          >
+            <OverflowMarquee className="year-row-year settings-option-label" text={t.manualDownloadAllContentLabel} />
+            <span className="settings-option-end-slot">{settings.manualDownloadAllContent && <Check size={18} className="year-row-distance" />}</span>
+          </button>
+        </li>
+      </ul>
+      <p className="tab-help">{t.manualDownloadAllContentHelp}</p>
+      <ul className="year-list">
+        <li className="settings-option-item">
+          <button
             className={settings.contentTypes.audio ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
             onClick={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, audio: !settings.contentTypes.audio } })}
           >
-            <span className="year-row-year">{t.audioTypeLabel}</span>
+            <OverflowMarquee className="year-row-year settings-option-label" text={t.audioTypeLabel} />
             <span className="settings-option-end-slot">{settings.contentTypes.audio && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
@@ -189,7 +202,10 @@ export function DownloadSettingsScreen() {
               className={settings.contentTypes.hanachaEditions.includes(edition) ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
               onClick={() => toggleEdition(edition)}
             >
-              <span className="year-row-year">{edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel}</span>
+              <OverflowMarquee
+                className="year-row-year settings-option-label"
+                text={edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel}
+              />
               <span className="settings-option-end-slot">
                 {settings.contentTypes.hanachaEditions.includes(edition) && <Check size={18} className="year-row-distance" />}
               </span>
@@ -201,7 +217,7 @@ export function DownloadSettingsScreen() {
             className={settings.contentTypes.mugah ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
             onClick={() => toggleSection('mugah')}
           >
-            <span className="year-row-year">{t.sectionLabels.mugah}</span>
+            <OverflowMarquee className="year-row-year settings-option-label" text={t.sectionLabels.mugah} />
             <span className="settings-option-end-slot">{settings.contentTypes.mugah && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
@@ -211,7 +227,7 @@ export function DownloadSettingsScreen() {
               className={settings.contentTypes[section] ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
               onClick={() => toggleSection(section)}
             >
-              <span className="year-row-year">{t.sectionLabels[section]}</span>
+              <OverflowMarquee className="year-row-year settings-option-label" text={t.sectionLabels[section]} />
               <span className="settings-option-end-slot">{settings.contentTypes[section] && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
@@ -227,7 +243,7 @@ export function DownloadSettingsScreen() {
               className={settings.retentionPeriod === period ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
               onClick={() => setSettings({ ...settings, retentionPeriod: period })}
             >
-              <span className="year-row-year">{period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))}</span>
+              <OverflowMarquee className="year-row-year settings-option-label" text={period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))} />
               <span className="settings-option-end-slot">{settings.retentionPeriod === period && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
@@ -241,7 +257,7 @@ export function DownloadSettingsScreen() {
               className={settings.keepFinishedContent ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
               onClick={() => setSettings({ ...settings, keepFinishedContent: !settings.keepFinishedContent })}
             >
-              <span className="year-row-year">{t.keepFinishedContentLabel}</span>
+              <OverflowMarquee className="year-row-year settings-option-label" text={t.keepFinishedContentLabel} />
               <span className="settings-option-end-slot">{settings.keepFinishedContent && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
@@ -253,7 +269,7 @@ export function DownloadSettingsScreen() {
       <ul className="year-list">
         <li className="settings-option-item">
           <button className="year-row settings-option-row" onClick={() => void clearDownloads()}>
-            <span className="year-row-year">{t.clearDownloadsLabel}</span>
+            <OverflowMarquee className="year-row-year settings-option-label" text={t.clearDownloadsLabel} />
           </button>
         </li>
       </ul>
