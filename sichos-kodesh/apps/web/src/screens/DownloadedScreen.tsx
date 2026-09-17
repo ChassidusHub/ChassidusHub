@@ -4,6 +4,7 @@ import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { listDownloadedEntries, deleteEntryFromCache } from '../download/downloadManager';
 import { useDownload } from '../download/useDownload';
@@ -112,21 +113,14 @@ export function DownloadedScreen() {
           <ul className="year-list">
             {entries.map((entry) => (
               <li key={entry.occasionId}>
-                <div className="year-row">
-                  <Link className="year-row-year year-row-link-fill" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
-                    {entry.occasionLabel}
+                <SwipeToDelete onDelete={() => void deleteOccasion(entry)} deleteLabel={t.deleteOccasionLabel}>
+                  <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
+                    <span className="year-row-year">{entry.occasionLabel}</span>
+                    <span className="year-row-trailing">
+                      <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                    </span>
                   </Link>
-                  <span className="year-row-trailing">
-                    <OccasionRowIcon entry={entry} progressMap={progressMap} />
-                    <button
-                      className="delete-occasion-btn"
-                      onClick={() => void deleteOccasion(entry)}
-                      aria-label={`${t.deleteOccasionLabel} ${entry.occasionLabel}`}
-                    >
-                      {t.deleteOccasionLabel}
-                    </button>
-                  </span>
-                </div>
+                </SwipeToDelete>
               </li>
             ))}
           </ul>
