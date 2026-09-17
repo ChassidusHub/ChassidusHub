@@ -176,6 +176,18 @@ export function DownloadSettingsScreen() {
       <ul className="year-list">
         <li className="settings-option-item">
           <button
+            className={settings.manualDownloadAllContent ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
+            onClick={() => setSettings({ ...settings, manualDownloadAllContent: !settings.manualDownloadAllContent })}
+          >
+            <span className="year-row-year">{t.manualDownloadAllContentLabel}</span>
+            <span className="settings-option-end-slot">{settings.manualDownloadAllContent && <Check size={18} className="year-row-distance" />}</span>
+          </button>
+        </li>
+      </ul>
+      <p className="tab-help">{t.manualDownloadAllContentHelp}</p>
+      <ul className="year-list">
+        <li className="settings-option-item">
+          <button
             className={settings.contentTypes.audio ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
             onClick={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, audio: !settings.contentTypes.audio } })}
           >

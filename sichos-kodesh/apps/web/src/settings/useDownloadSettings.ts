@@ -37,6 +37,15 @@ export interface DownloadSettings {
   retentionPeriod: RetentionPeriod;
   /** On top of the always-on "never delete something you've opened" rule above - also protects a *finished* occasion's auto-downloaded files past the retention window even if it was never re-opened after finishing (the natural end state of actually having used it). */
   keepFinishedContent: boolean;
+  /**
+   * When true (the default), manual downloads ("Download this week/month," the
+   * per-row download button, the chapter download icon) fetch every available
+   * content type - audio, all PDF sections, all hanacha editions - regardless
+   * of the `contentTypes` filter (which only governs the automatic sync).
+   * Set to false to make manual downloads obey the same content-type filter
+   * as auto-downloads.
+   */
+  manualDownloadAllContent: boolean;
 }
 
 const STORAGE_KEY = 'sichos-kodesh:download-settings';
@@ -58,6 +67,7 @@ export const DEFAULT_DOWNLOAD_SETTINGS: DownloadSettings = {
   wifiOnly: true,
   retentionPeriod: 'never',
   keepFinishedContent: true,
+  manualDownloadAllContent: true,
   contentTypes: {
     audio: true,
     hanachaEditions: ['sichosKodesh', 'torasMenachem'],

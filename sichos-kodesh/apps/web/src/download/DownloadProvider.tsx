@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { isDownloaded, isEntryFullyDownloaded, listDownloadTargets, runDownload } from './downloadManager';
+import { isDownloaded, isEntryFullyDownloaded, listDownloadTargets, runDownload, ALL_CONTENT_TYPES } from './downloadManager';
 import type { DownloadTarget } from './downloadManager';
 import { audioUrl } from './download';
 import { DownloadContext, chapterKey } from './downloadContext';
@@ -41,7 +41,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
 
   const runQueue = useCallback(
     (entries: CatalogEntry[], source: 'auto' | 'manual') => {
-      const targets = listDownloadTargets(entries, settings.contentTypes);
+      const contentTypes = source === 'manual' && settings.manualDownloadAllContent ? ALL_CONTENT_TYPES : settings.contentTypes;
+      const targets = listDownloadTargets(entries, contentTypes);
       if (targets.length === 0) return;
 
       const entryByKey = new Map(entries.map((entry) => [key(entry.hebrewYear, entry.occasionId), entry]));
@@ -144,7 +145,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         },
       });
     },
-    [settings.contentTypes, settings.wifiOnly],
+    [settings.contentTypes, settings.wifiOnly, settings.manualDownloadAllContent],
   );
 
   const downloadOccasion = useCallback((entry: CatalogEntry) => runQueue([entry], 'manual'), [runQueue]);
