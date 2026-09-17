@@ -86,7 +86,7 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
 
   // Cap at 99 while downloads are still active - the bar hides at count=0, so
   // 100% is never actually shown while it's visible.
-  const percent = Math.min(Math.max(realPercent, simulatedFloor, prevPercentRef.current), 99);
+  const percent = Math.min(Math.round(Math.max(realPercent, simulatedFloor, prevPercentRef.current)), 99);
   prevPercentRef.current = percent;
   return { count, percent };
 }
