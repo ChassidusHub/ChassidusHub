@@ -53,6 +53,13 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       // not any single file's own fraction.
       const totalForKey = new Map<string, number>();
       const completedForKey = new Map<string, number>();
+      // Per-target byte fractions, keyed by occasion then by target URL, so
+      // two concurrent files for the same occasion each have their own slot
+      // and the occasion progress is computed as the sum of all active
+      // fractions plus completed files - this prevents concurrent progress
+      // callbacks from overwriting each other's value and causing visible
+      // backward jumps.
+      const activeFractionsForKey = new Map<string, Map<string, number>>();
       for (const target of targets) {
         const k = key(target.hebrewYear, target.occasionId);
         totalForKey.set(k, (totalForKey.get(k) ?? 0) + 1);
@@ -60,6 +67,16 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       setLiveState((prev) => {
         const next = { ...prev };
         for (const k of totalForKey.keys()) next[k] = 'queued';
+        // Also set audio chapter keys to 'queued' up front so
+        // RecordingsScreen shows the pending spinner for every chapter
+        // included in this job, not only the one(s) that have already
+        // started fetching - fixes the "download icon instead of spinner"
+        // for queued chapters during an auto-download or bulk download.
+        for (const target of targets) {
+          if (target.kind === 'audio' && target.chapterIndex !== undefined) {
+            next[chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex)] = 'queued';
+          }
+        }
         return next;
       });
       // Reset the session counter when starting a brand-new batch (previous
@@ -99,9 +116,16 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
               return next;
             });
             if (fraction !== undefined) {
+              // Update this target's own slot and recompute the occasion
+              // progress from the sum of all active fractions plus
+              // already-completed files, preventing concurrent callbacks for
+              // the same occasion from overwriting each other's value.
+              if (!activeFractionsForKey.has(k)) activeFractionsForKey.set(k, new Map());
+              activeFractionsForKey.get(k)!.set(target.url, fraction);
               const completed = completedForKey.get(k) ?? 0;
+              const activeSum = [...(activeFractionsForKey.get(k)!.values())].reduce((s, f) => s + f, 0);
               setProgress((prev) => {
-                const next = { ...prev, [k]: Math.min((completed + fraction) / total, 1) };
+                const next = { ...prev, [k]: Math.min((completed + activeSum) / total, 1) };
                 if (chapterK) next[chapterK] = fraction;
                 return next;
               });
@@ -138,6 +162,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
 
           const completed = (completedForKey.get(k) ?? 0) + 1;
           completedForKey.set(k, completed);
+          activeFractionsForKey.get(k)?.delete(target.url);
           setProgress((prev) => ({ ...prev, [k]: Math.min(completed / total, 1) }));
           if (completed < total) return; // Other files for this same occasion are still pending.
           const entry = entryByKey.get(k);
