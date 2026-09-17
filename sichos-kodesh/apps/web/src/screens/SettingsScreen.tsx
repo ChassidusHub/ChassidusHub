@@ -26,6 +26,7 @@ export function SettingsScreen() {
     { value: 'he', label: t.languageHebrew },
   ];
 
+  return (
     <div className="screen">
       <ScreenHeader to="/" title={t.settingsTitle} />
 
