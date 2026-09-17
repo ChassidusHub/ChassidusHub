@@ -38,6 +38,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useDownloadSettings();
   const [liveState, setLiveState] = useState<Record<string, RowDownloadState>>({});
   const [progress, setProgress] = useState<Record<string, number>>({});
+  const [sessionBatch, setSessionBatch] = useState<{ total: number; done: number }>({ total: 0, done: 0 });
 
   const runQueue = useCallback(
     (entries: CatalogEntry[], source: 'auto' | 'manual') => {
@@ -61,6 +62,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         for (const k of totalForKey.keys()) next[k] = 'queued';
         return next;
       });
+      setSessionBatch((prev) => ({ total: prev.total + targets.length, done: prev.done }));
       // Written before the fetches start (see pendingEntryDownloads.ts) -
       // this is what makes a whole-occasion or bulk download (this
       // function's only two callers) survive a reload mid-download, not
@@ -121,6 +123,15 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
             setLiveState((prev) => ({ ...prev, [chapterK]: event === 'error' ? 'none' : 'downloaded' }));
             setProgress((prev) => clearProgress(prev, chapterK));
           }
+
+          // Advance the session-level "done" counter regardless of which
+          // occasion this target belongs to - this is what keeps the global
+          // progress bar strictly advancing as files complete.
+          setSessionBatch((prev) => {
+            const next = { total: prev.total, done: prev.done + 1 };
+            // Reset once the full batch is done so the next download starts fresh.
+            return next.done >= next.total ? { total: 0, done: 0 } : next;
+          });
 
           const completed = (completedForKey.get(k) ?? 0) + 1;
           completedForKey.set(k, completed);
@@ -186,6 +197,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         for (const target of targets) next[chapterKey(target.hebrewYear, target.occasionId, target.chapterIndex!)] = 'queued';
         return next;
       });
+      setSessionBatch((prev) => ({ total: prev.total + targets.length, done: prev.done }));
       for (const target of targets) {
         addPendingChapterDownload({ hebrewYear: target.hebrewYear, occasionId: target.occasionId, chapterIndex: target.chapterIndex! });
       }
@@ -206,6 +218,10 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           // runQueue's 'manual' path does, in case this exact file was
           // previously auto-fetched (see downloadLedger.ts).
           if (event === 'done') forgetAutoDownload(target.url);
+          setSessionBatch((prev) => {
+            const next = { total: prev.total, done: prev.done + 1 };
+            return next.done >= next.total ? { total: 0, done: 0 } : next;
+          });
           // Only cleared on confirmed success - an 'error' here is
           // indistinguishable from a page navigation aborting this same
           // fetch mid-flight: enough of the old page's JS still runs after
@@ -281,8 +297,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress }),
-    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress],
+    () => ({ settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress, sessionBatch }),
+    [settings, setSettings, downloadOccasion, enqueueBulk, downloadChapter, downloadAllChapters, liveState, progress, sessionBatch],
   );
 
   return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;

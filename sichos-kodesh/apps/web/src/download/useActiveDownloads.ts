@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { useDownload } from './useDownload';
 import type { RowDownloadState } from './downloadContext';
 import catalog from '../catalog/data';
@@ -44,40 +43,25 @@ function countedActiveKeys(liveState: Record<string, RowDownloadState>): string[
 
 /** One entry per real in-flight file transfer, aggregated for the global download-progress bar. */
 export function useActiveDownloads(): ActiveDownloadsSummary {
-  const { liveState, progress } = useDownload();
+  const { liveState, progress, sessionBatch } = useDownload();
   const countedKeys = countedActiveKeys(liveState);
 
-  // Session-level tracking so the bar never goes backwards and the percent is
-  // relative to the full set of queued items, not just the ones still active.
-  // Refs are used because these are auxiliary display values - we don't need an
-  // extra render for them; the re-render triggered by liveState/progress changes
-  // is already sufficient.
-  const sessionTotalRef = useRef(0);
-  const sessionFloorRef = useRef(0);
+  if (countedKeys.length === 0) return { count: 0, percent: 0 };
 
-  if (countedKeys.length === 0) {
-    sessionTotalRef.current = 0;
-    sessionFloorRef.current = 0;
-    return { count: 0, percent: 0 };
+  // sessionBatch.total is the cumulative number of files queued in the current
+  // batch (set by DownloadProvider as files are enqueued, never decreasing
+  // mid-batch). sessionBatch.done is how many have settled. Together they give
+  // a global fraction that never goes backward: each file completion advances
+  // the numerator, and newly-queued files expand the denominator up front.
+  const { total, done } = sessionBatch;
+  if (total === 0) {
+    // Batch hasn't been initialized yet (e.g. a resume-on-open that hasn't
+    // reached the onEach callback yet); fall back to counting active keys.
+    const inProgressFraction = countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0);
+    return { count: countedKeys.length, percent: Math.round((inProgressFraction / countedKeys.length) * 100) };
   }
 
-  // Expand the session total when new items are added; never shrink it as items
-  // complete - that would reset the denominator and make the bar jump backward.
-  if (countedKeys.length > sessionTotalRef.current) {
-    sessionTotalRef.current = countedKeys.length;
-  }
-
-  // Items that completed and dropped out of the active-key set count as 1.0
-  // each - "completed" = session total minus still-active remainder.
-  const completedCount = sessionTotalRef.current - countedKeys.length;
-  const inProgressFraction = countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0);
-
-  // Global progress = (completed + in-progress fractions) / session total.
-  // Never decreases thanks to sessionFloorRef.
-  const rawPercent = Math.round(((completedCount + inProgressFraction) / sessionTotalRef.current) * 100);
-  const percent = Math.max(rawPercent, sessionFloorRef.current);
-  sessionFloorRef.current = percent;
-
+  const percent = Math.round((done / total) * 100);
   return { count: countedKeys.length, percent };
 }
 

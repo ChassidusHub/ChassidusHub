@@ -38,6 +38,15 @@ export interface DownloadContextValue {
   liveState: Record<string, RowDownloadState>;
   /** Byte-progress (0-1) for a key currently `'downloading'` in `liveState` - absent once real byte counts aren't known yet (queued) or the job has settled (done/error), same key shapes as `liveState`. */
   progress: Record<string, number>;
+  /**
+   * Session-level file counts for the global progress bar, reset once all
+   * active jobs finish. `total` is the cumulative number of distinct file
+   * targets queued since the last idle state; `done` is how many have settled
+   * (succeeded or errored). Using these rather than averaging per-occasion
+   * fractions keeps the bar monotonically advancing even as individual
+   * occasions complete and drop out of the active-key set.
+   */
+  sessionBatch: { total: number; done: number };
 }
 
 export const DownloadContext = createContext<DownloadContextValue | null>(null);
