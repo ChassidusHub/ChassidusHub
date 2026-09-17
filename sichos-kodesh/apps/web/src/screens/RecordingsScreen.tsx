@@ -9,7 +9,7 @@ import { useProgressMap } from '../player/useProgressMap';
 import { useChapterDownload } from '../download/useChapterDownload';
 import { useDownload } from '../download/useDownload';
 import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
-import { useTranslation } from '../i18n/useLanguage';
+import { isRtlLanguage, useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 import { ShareButton } from '../components/ShareButton';
@@ -128,6 +128,7 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
 
 export function RecordingsScreen({ resolved }: Props) {
   const { t, language } = useTranslation();
+  const isRtl = isRtlLanguage(language);
   const player = usePlayer();
   const progressMap = useProgressMap();
   const { downloadAllChapters } = useDownload();
@@ -170,10 +171,10 @@ export function RecordingsScreen({ resolved }: Props) {
   return (
     <div className="screen">
       <ScreenHeader to={basePath} title={entry.occasionLabel} />
-      <div className={language === 'he' ? 'playlist-header playlist-header-rtl' : 'playlist-header'}>
-        <div className={language === 'he' ? 'playlist-header-main playlist-header-main-rtl' : 'playlist-header-main'}>
+      <div className={isRtl ? 'playlist-header playlist-header-rtl' : 'playlist-header'}>
+        <div className={isRtl ? 'playlist-header-main playlist-header-main-rtl' : 'playlist-header-main'}>
           <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
-          <div className="playlist-header-copy" dir={language === 'he' ? 'rtl' : 'ltr'}>
+          <div className="playlist-header-copy" dir={isRtl ? 'rtl' : 'ltr'}>
             <p className="playlist-header-title">{entry.occasionLabel}</p>
             <p className="playlist-header-subtitle">{totalDuration}</p>
           </div>
