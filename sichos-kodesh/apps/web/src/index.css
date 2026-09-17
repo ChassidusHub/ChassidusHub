@@ -190,6 +190,27 @@ h1 {
   margin-top: 16px;
 }
 
+/* Centered empty-state placeholder for pages with no content yet. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state-icon {
+  opacity: 0.4;
+}
+
+.empty-state-text {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
 /* A plain heads-up, not an error - deliberately not .gap-message's danger
    color, which would read as something having gone wrong rather than just
    describing the current (perfectly normal) offline state. */
@@ -419,6 +440,61 @@ h1 {
   color: var(--muted);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* Makes the in-progress download label a clickable link while keeping the
+   existing flex layout intact - inherits color/font so it reads the same
+   as the plain text label it replaces. */
+.active-download-row-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.active-download-row-link:hover {
+  text-decoration: underline;
+}
+
+/* Small "Delete" button sitting in the trailing slot of a downloaded-occasion
+   row - styled as muted text so it's present but not visually loud. */
+/* Swipe-to-delete container - clips the row so the slide never bleeds
+   outside its list item, and positions the red backing behind it. */
+.swipe-to-delete-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+/* Red "Delete" backing revealed as the row slides. Fills the full height
+   of the wrapper. The --left / --right variants pin the icon to the side
+   that was exposed by the swipe. */
+.swipe-to-delete-backing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 8px;
+  pointer-events: none;
+  user-select: none;
+}
+/* User swiped left → row slides left → icon appears on the right */
+.swipe-to-delete-backing--left {
+  justify-content: flex-end;
+  padding-inline-end: 20px;
+}
+/* User swiped right → row slides right → icon appears on the left */
+.swipe-to-delete-backing--right {
+  justify-content: flex-start;
+  padding-inline-start: 20px;
+}
+
+/* The sliding row itself - sits on top of the backing and slides on touch. */
+.swipe-to-delete-row {
+  position: relative;
+  background: var(--bg);
+  will-change: transform;
+  touch-action: pan-y;
 }
 
 /* No explicit `width` - a flex container's default `width: auto` already

@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from './useDownload';
 import type { RowDownloadState } from './downloadContext';
 import catalog from '../catalog/data';
@@ -11,6 +13,8 @@ export interface ActiveDownloadsSummary {
 export interface ActiveDownloadRow {
   key: string;
   label: string;
+  hebrewYear: number;
+  occasionId: number;
   /** 0-100 */
   percent: number;
 }
@@ -43,43 +47,67 @@ function countedActiveKeys(liveState: Record<string, RowDownloadState>): string[
 
 /** One entry per real in-flight file transfer, aggregated for the global download-progress bar. */
 export function useActiveDownloads(): ActiveDownloadsSummary {
-  const { liveState, progress, sessionBatch } = useDownload();
+  const { liveState, progress } = useDownload();
   const countedKeys = countedActiveKeys(liveState);
+  const count = countedKeys.length;
 
-  if (countedKeys.length === 0) return { count: 0, percent: 0 };
+  // Average the per-key progress fractions (0-1) already maintained by
+  // DownloadProvider. For chapter keys each fraction is the raw byte ratio;
+  // for occasion keys it is (completedFiles + activeByteSum) / totalFilesForOccasion,
+  // so it already accounts for multiple concurrent files without double-counting.
+  const rawFraction = count > 0 ? countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0) / count : 0;
+  const realPercent = Math.round(rawFraction * 100);
 
-  // sessionBatch.total is the cumulative number of files queued in the current
-  // batch (set by DownloadProvider as files are enqueued, never decreasing
-  // mid-batch). sessionBatch.done is how many have settled. Together they give
-  // a global fraction that never goes backward: each file completion advances
-  // the numerator, and newly-queued files expand the denominator up front.
-  const { total, done } = sessionBatch;
-  if (total === 0) {
-    // Batch hasn't been initialized yet (e.g. a resume-on-open that hasn't
-    // reached the onEach callback yet); fall back to counting active keys.
-    const inProgressFraction = countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0);
-    return { count: countedKeys.length, percent: Math.round((inProgressFraction / countedKeys.length) * 100) };
-  }
+  // hasRealProgress is true once actual byte-level fractions start arriving.
+  // When false (e.g. no Content-Length header, or still in the initial
+  // 'queued' state), we fall back to the simulated floor below.
+  const hasRealProgress = realPercent > 0;
 
-  // Cap at 99 while there are still active keys in liveState - the bar
-  // hides at count=0, so we'll never actually show 100% while it's visible.
-  // This avoids a brief 100% flash that can occur when done reaches total
-  // slightly before the last liveState update is committed.
-  const rawPercent = Math.round((done / total) * 100);
-  const percent = Math.min(rawPercent, 99);
-  return { count: countedKeys.length, percent };
+  // prevPercentRef enforces "never go backward" across renders. Reset to 0
+  // only when count reaches 0 (all downloads finished), handled in useEffect.
+  const prevPercentRef = useRef(0);
+
+  // Simulated floor: only active when there is no real byte progress (no
+  // Content-Length or still queued). Slowly advances toward ~85% so the bar
+  // feels lively while waiting for the first real progress event. Paused
+  // automatically once real progress arrives - the real fraction takes over.
+  // 500 ms ticks with an 8% step toward 85: after ~5 s ≈ 48%, after ~10 s ≈ 70%.
+  const [simulatedFloor, setSimulatedFloor] = useState(0);
+  useEffect(() => {
+    if (count === 0) {
+      setSimulatedFloor(0);
+      prevPercentRef.current = 0;
+      return;
+    }
+    if (hasRealProgress) return; // real data is coming in - no simulation needed
+    const id = setInterval(() => {
+      setSimulatedFloor((prev) => Math.min(prev + (85 - prev) * 0.08, 84));
+    }, 500);
+    return () => clearInterval(id);
+  }, [count, hasRealProgress]);
+
+  if (count === 0) return { count: 0, percent: 0 };
+
+  // If real progress is available, use it directly (plus the never-go-backward
+  // floor). Only mix in simulatedFloor when nothing real is moving yet.
+  const base = hasRealProgress ? Math.max(realPercent, prevPercentRef.current) : Math.max(simulatedFloor, prevPercentRef.current);
+  // Cap at 99 while downloads are still active - the bar hides at count=0, so
+  // 100% is never actually shown while it's visible.
+  const percent = Math.min(Math.round(base), 99);
+  prevPercentRef.current = percent;
+  return { count, percent };
 }
 
-/** `key` -> a human label for it via the catalog, or `null` for a key whose occasion/chapter can no longer be resolved (a stale key from a removed catalog entry - skipped rather than shown as a dead row). */
-function labelForKey(key: string): string | null {
+/** `key` -> the catalog entry + label for it, or `null` for a key whose occasion/chapter can no longer be resolved. */
+function entryInfoForKey(key: string): { entry: CatalogEntry; label: string } | null {
   const parts = key.split(':');
   const [hebrewYear, occasionId] = (isChapterKey(key) ? parts.slice(1) : parts).map(Number);
   const entry = (catalog[hebrewYear] ?? []).find((e) => e.occasionId === occasionId);
   if (!entry) return null;
-  if (!isChapterKey(key)) return entry.occasionLabel;
+  if (!isChapterKey(key)) return { entry, label: entry.occasionLabel };
   const chapterIndex = Number(parts[3]);
   const chapter = entry.audio[chapterIndex];
-  return chapter?.chapterName ? `${entry.occasionLabel} - ${chapter.chapterName}` : entry.occasionLabel;
+  return { entry, label: chapter?.chapterName ? `${entry.occasionLabel} - ${chapter.chapterName}` : entry.occasionLabel };
 }
 
 /** Per-item detail for DownloadedScreen's "in progress" section - the full list the global progress bar's own aggregate summarizes. */
@@ -89,8 +117,16 @@ export function useActiveDownloadRows(): ActiveDownloadRow[] {
 
   const rows: ActiveDownloadRow[] = [];
   for (const key of countedKeys) {
-    const label = labelForKey(key);
-    if (label) rows.push({ key, label, percent: Math.round((progress[key] ?? 0) * 100) });
+    const info = entryInfoForKey(key);
+    if (info) {
+      rows.push({
+        key,
+        label: info.label,
+        hebrewYear: info.entry.hebrewYear,
+        occasionId: info.entry.occasionId,
+        percent: Math.round((progress[key] ?? 0) * 100),
+      });
+    }
   }
   return rows;
 }

@@ -116,6 +116,18 @@ export async function isDownloaded(target: Pick<DownloadTarget, 'url'>): Promise
   return (await cache.match(target.url)) !== undefined;
 }
 
+/**
+ * Removes every cached file that belongs to `entry` - uses `ALL_CONTENT_TYPES`
+ * so all audio and PDF variants are covered regardless of the current
+ * auto-download content-type filter. Any URL not present in the cache is
+ * silently skipped (Cache Storage `delete` returns false but doesn't throw).
+ */
+export async function deleteEntryFromCache(entry: CatalogEntry): Promise<void> {
+  const targets = listDownloadTargets([entry], ALL_CONTENT_TYPES);
+  const cache = await caches.open(MEDIA_CACHE_NAME);
+  await Promise.all(targets.map((target) => cache.delete(target.url)));
+}
+
 /** Whether every target `contentTypes` calls for on this one occasion is already cached. `false` (not "downloaded") when there's nothing applicable to download at all, since there's nothing to show as offline-available either way. */
 export async function isEntryFullyDownloaded(entry: CatalogEntry, contentTypes: DownloadContentTypes): Promise<boolean> {
   const targets = listDownloadTargets([entry], contentTypes);

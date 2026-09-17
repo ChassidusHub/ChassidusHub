@@ -1,15 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Download } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
+import { OverflowMarquee } from '../components/OverflowMarquee';
+import { SwipeToDelete } from '../components/SwipeToDelete';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
-import { listDownloadedEntries } from '../download/downloadManager';
+import { listDownloadedEntries, deleteEntryFromCache } from '../download/downloadManager';
 import { useDownload } from '../download/useDownload';
 import { useActiveDownloadRows } from '../download/useActiveDownloads';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
+import { MEDIA_CACHE_NAME } from '../download/cacheName';
+import { clearAutoDownloadLedger } from '../download/downloadLedger';
+import { clearPendingChapterDownloads } from '../download/pendingDownloads';
+import { clearPendingEntryDownloads } from '../download/pendingEntryDownloads';
 
 interface YearGroup {
   hebrewYear: number;
@@ -37,6 +44,10 @@ export function DownloadedScreen() {
   const allEntries = useMemo(() => Object.values(catalog).flat(), []);
   const [downloaded, setDownloaded] = useState<CatalogEntry[] | null>(null);
 
+  function refreshDownloaded() {
+    void listDownloadedEntries(allEntries, settings.contentTypes).then(setDownloaded);
+  }
+
   useEffect(() => {
     let cancelled = false;
     // Keeps the previous result on screen during the re-check rather than
@@ -51,6 +62,19 @@ export function DownloadedScreen() {
 
   const yearGroups = useMemo(() => (downloaded ? groupByYear(downloaded) : []), [downloaded]);
 
+  async function deleteAllContent(): Promise<void> {
+    await caches.delete(MEDIA_CACHE_NAME);
+    clearAutoDownloadLedger();
+    clearPendingChapterDownloads();
+    clearPendingEntryDownloads();
+    setDownloaded([]);
+  }
+
+  async function deleteOccasion(entry: CatalogEntry): Promise<void> {
+    await deleteEntryFromCache(entry);
+    refreshDownloaded();
+  }
+
   return (
     <div className="screen">
       <ScreenHeader to="/" title={t.downloadedContentTitle} />
@@ -62,7 +86,9 @@ export function DownloadedScreen() {
           <ul className="active-downloads-list">
             {activeRows.map((row) => (
               <li key={row.key} className="active-download-row">
-                <span className="active-download-row-label">{row.label}</span>
+                <Link className="active-download-row-label active-download-row-link" to={`/browse/${row.hebrewYear}/${row.occasionId}`}>
+                  {row.label}
+                </Link>
                 <span className="active-download-row-track" aria-hidden>
                   <span className="active-download-row-fill" style={{ width: `${row.percent}%` }} />
                 </span>
@@ -73,7 +99,22 @@ export function DownloadedScreen() {
         </div>
       )}
 
-      {downloaded && downloaded.length === 0 && activeRows.length === 0 && <p className="gap-message">{t.noDownloadedContent}</p>}
+      {downloaded && downloaded.length === 0 && activeRows.length === 0 && (
+        <div className="empty-state">
+          <Download size={40} className="empty-state-icon" />
+          <p className="empty-state-text">{t.noDownloadedContent}</p>
+        </div>
+      )}
+
+      {(downloaded && downloaded.length > 0) && (
+        <ul className="year-list">
+          <li className="settings-option-item">
+            <button className="year-row settings-option-row" onClick={() => void deleteAllContent()}>
+              <OverflowMarquee className="year-row-year settings-option-label" text={t.deleteContentLabel} />
+            </button>
+          </li>
+        </ul>
+      )}
 
       {yearGroups.map(({ hebrewYear, entries }) => (
         <div key={hebrewYear}>
@@ -81,12 +122,14 @@ export function DownloadedScreen() {
           <ul className="year-list">
             {entries.map((entry) => (
               <li key={entry.occasionId}>
-                <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
-                  <span className="year-row-year">{entry.occasionLabel}</span>
-                  <span className="year-row-trailing">
-                    <OccasionRowIcon entry={entry} progressMap={progressMap} />
-                  </span>
-                </Link>
+                <SwipeToDelete onDelete={() => void deleteOccasion(entry)}>
+                  <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
+                    <span className="year-row-year">{entry.occasionLabel}</span>
+                    <span className="year-row-trailing">
+                      <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                    </span>
+                  </Link>
+                </SwipeToDelete>
               </li>
             ))}
           </ul>
