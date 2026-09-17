@@ -547,20 +547,12 @@ h1 {
   background: var(--card-bg);
 }
 
-.playlist-header-rtl {
-  flex-direction: row-reverse;
-}
-
 .playlist-header-main {
   display: flex;
   align-items: center;
   gap: 16px;
   min-width: 0;
   flex: 1 1 auto;
-}
-
-.playlist-header-main-rtl {
-  flex-direction: row-reverse;
 }
 
 .playlist-header-copy {
