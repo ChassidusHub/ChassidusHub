@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Loader2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
@@ -22,6 +22,7 @@ export function GlobalPlayerBar() {
   const { t, language } = useTranslation();
   const player = usePlayer();
   const [showChapters, setShowChapters] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   // Non-null exactly while the user has a finger/pointer down on the
   // scrubber - the range input's displayed value comes from here instead
   // of the live ticking `currentTime` for that whole stretch, so a
@@ -33,6 +34,8 @@ export function GlobalPlayerBar() {
   // tick visibly yanks the thumb backwards while a drag is still in
   // progress.
   const [dragPercent, setDragPercent] = useState<number | null>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     if (dragPercent == null) return;
@@ -51,6 +54,20 @@ export function GlobalPlayerBar() {
       window.removeEventListener('pointercancel', commit);
     };
   }, [dragPercent]);
+
+  useLayoutEffect(() => {
+    const el = playerRef.current;
+    if (!el) return;
+    document.documentElement.style.setProperty('--player-bar-height', `${el.offsetHeight}px`);
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--player-bar-height', `${el.offsetHeight}px`);
+    });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.setProperty('--player-bar-height', '96px');
+    };
+  }, [collapsed, showChapters, player.playlist, player.error]);
 
   if (!player.playlist) return null;
 
@@ -83,8 +100,35 @@ export function GlobalPlayerBar() {
     setShowChapters(false);
   }
 
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    touchStartY.current = e.changedTouches[0]?.clientY ?? null;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent<HTMLDivElement>) {
+    const startY = touchStartY.current;
+    const endY = e.changedTouches[0]?.clientY ?? null;
+    touchStartY.current = null;
+    if (startY == null || endY == null) return;
+    const deltaY = endY - startY;
+    if (deltaY > 40 && !collapsed) {
+      setCollapsed(true);
+      setShowChapters(false);
+    } else if (deltaY < -40 && collapsed) {
+      setCollapsed(false);
+    }
+  }
+
+  function expandPlayer() {
+    setCollapsed(false);
+  }
+
   return (
-    <div className="global-player">
+    <div
+      ref={playerRef}
+      className={collapsed ? 'global-player global-player-collapsed' : 'global-player'}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {showChapters && (
         <div className="global-player-chapters">
           <div className="global-player-chapters-title">{player.playlist.title}</div>
@@ -101,6 +145,23 @@ export function GlobalPlayerBar() {
         </div>
       )}
       <div className="global-player-controls">
+        {collapsed ? (
+          <button type="button" className="global-player-collapsed-summary" onClick={expandPlayer}>
+            <span className="global-player-title-main">{player.playlist.title}</span>
+            <span className="global-player-title-sub">
+              {dateLabel}
+              {chapterLabel && ` · ${audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}`}
+            </span>
+            {player.error ? (
+              <span className="global-player-error">{player.error.offline ? t.audioOfflineNotDownloaded : t.audioLoadError}</span>
+            ) : (
+              <span className="global-player-collapsed-progress" aria-hidden>
+                <span className="global-player-collapsed-progress-fill" style={{ width: `${displayedPercent}%` }} />
+              </span>
+            )}
+          </button>
+        ) : (
+          <>
         <div className="global-player-transport">
           {audio.length > 1 && (
             <button className="global-player-skip" onClick={player.prev} disabled={!hasPrev} aria-label={t.previousChapter}>
@@ -157,6 +218,7 @@ export function GlobalPlayerBar() {
                 onChange={seek}
                 onPointerDown={beginDrag}
                 className="global-player-range"
+                style={{ ['--global-player-progress' as string]: `${displayedPercent}%` }}
                 aria-label={t.seek}
               />
               <div className="global-player-times">
@@ -166,6 +228,8 @@ export function GlobalPlayerBar() {
             </>
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   );

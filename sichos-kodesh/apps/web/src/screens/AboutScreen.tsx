@@ -73,15 +73,15 @@ export function AboutScreen() {
       <p className="category-header">{t.aboutUpdateSection}</p>
       <ul className="year-list">
         {needsRefresh ? (
-          <li>
-            <button className="year-row" onClick={applyUpdate}>
+          <li className="settings-option-item">
+            <button className="year-row settings-option-row" onClick={applyUpdate}>
               <span className="year-row-year">{t.aboutUpdateAvailable}</span>
               <span className="year-row-distance">{t.aboutRestartToUpdate}</span>
             </button>
           </li>
         ) : (
-          <li>
-            <button className="year-row" onClick={() => void checkForUpdate()} disabled={checking}>
+          <li className="settings-option-item">
+            <button className="year-row settings-option-row" onClick={() => void checkForUpdate()} disabled={checking}>
               <span className="year-row-year">{checking ? t.aboutChecking : justConfirmedUpToDate ? t.aboutUpToDate : t.aboutCheckForUpdate}</span>
               {checking ? <Loader2 className="year-row-distance about-update-spinner" size={18} aria-hidden /> : <RefreshCw className="year-row-distance" size={18} aria-hidden />}
             </button>

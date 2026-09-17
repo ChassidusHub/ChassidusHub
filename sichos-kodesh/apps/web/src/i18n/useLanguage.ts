@@ -4,6 +4,10 @@ import type { LanguageContextValue } from './languageContext';
 import { STRINGS } from './translations';
 import type { Language } from './translations';
 
+export function isRtlLanguage(language: Language): boolean {
+  return language === 'he';
+}
+
 export function useLanguage(): LanguageContextValue {
   const ctx = useContext(LanguageContext);
   if (!ctx) throw new Error('useLanguage must be used within a LanguageProvider');

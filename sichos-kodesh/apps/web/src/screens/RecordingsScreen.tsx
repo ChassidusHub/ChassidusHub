@@ -9,11 +9,12 @@ import { useProgressMap } from '../player/useProgressMap';
 import { useChapterDownload } from '../download/useChapterDownload';
 import { useDownload } from '../download/useDownload';
 import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
-import { useTranslation } from '../i18n/useLanguage';
+import { isRtlLanguage, useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 import { ShareButton } from '../components/ShareButton';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
+import { formatDuration, totalDurationSeconds } from '../utils/formatDuration';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -126,7 +127,8 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
 }
 
 export function RecordingsScreen({ resolved }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const isRtl = isRtlLanguage(language);
   const player = usePlayer();
   const progressMap = useProgressMap();
   const { downloadAllChapters } = useDownload();
@@ -135,35 +137,52 @@ export function RecordingsScreen({ resolved }: Props) {
 
   const isThisPlaylistActive = player.playlist?.title === entry.occasionLabel;
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
+  const totalDuration = formatDuration(totalDurationSeconds(entry.audio));
+  let headerDownload = null;
+  if (allChaptersState === 'downloaded') {
+    headerDownload = (
+      <span className="playlist-header-status" role="status" aria-label={t.downloadedLabel}>
+        <CheckCircle2 size={18} className="download-state-done" aria-hidden />
+      </span>
+    );
+  } else if (allChaptersState === 'downloading') {
+    headerDownload = (
+      <span className="playlist-header-status" role="status" aria-label={t.downloadingLabel}>
+        <Loader2 size={18} className="download-state-spinner" aria-hidden />
+      </span>
+    );
+  } else if (allChaptersState === 'none') {
+    headerDownload = (
+      <button
+        type="button"
+        className="playlist-header-action"
+        onClick={() => downloadAllChapters(entry)}
+        aria-label={t.downloadAllRecordingsLabel}
+        title={t.downloadAllRecordingsLabel}
+      >
+        <Download size={18} aria-hidden />
+      </button>
+    );
+  }
+  // 'unavailable' deliberately renders no header action: while offline with
+  // nothing cached yet, this page has no real aggregate download action to
+  // offer.
 
   return (
     <div className="screen">
       <ScreenHeader to={basePath} title={entry.occasionLabel} />
-      <p className="subtitle">{t.recordings}</p>
+      <div className="playlist-header" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div className="playlist-header-main">
+          <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
+          <div className="playlist-header-copy">
+            <p className="playlist-header-title">{entry.occasionLabel}</p>
+            <p className="playlist-header-subtitle">{totalDuration}</p>
+          </div>
+        </div>
+        {headerDownload && <div className="playlist-header-side">{headerDownload}</div>}
+      </div>
 
       <ShareButton title={entry.occasionLabel} />
-
-      <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
-
-      {allChaptersState !== 'unavailable' && (
-        <p className="occasion-download-state">
-          {allChaptersState === 'downloaded' && (
-            <>
-              <CheckCircle2 size={16} className="download-state-done" aria-hidden /> {t.downloadedLabel}
-            </>
-          )}
-          {allChaptersState === 'downloading' && (
-            <>
-              <Loader2 size={16} className="download-state-spinner" aria-hidden /> {t.downloadingLabel}
-            </>
-          )}
-          {allChaptersState === 'none' && (
-            <button type="button" className="occasion-download-button" onClick={() => downloadAllChapters(entry)}>
-              <Download size={16} aria-hidden /> {t.downloadAllRecordingsLabel}
-            </button>
-          )}
-        </p>
-      )}
 
       <ul className="playlist">
         {entry.audio.map((chapter, index) => (
