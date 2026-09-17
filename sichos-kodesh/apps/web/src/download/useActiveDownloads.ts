@@ -48,18 +48,27 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
   const countedKeys = countedActiveKeys(liveState);
   const count = countedKeys.length;
 
-  // prevPercentRef enforces "never go backward" - once the bar has shown N%
-  // it won't drop back even if new queued keys (at 0%) momentarily lower the
-  // average. Reset to 0 only when count reaches 0 (all downloads finished).
+  // Average the per-key progress fractions (0-1) already maintained by
+  // DownloadProvider. For chapter keys each fraction is the raw byte ratio;
+  // for occasion keys it is (completedFiles + activeByteSum) / totalFilesForOccasion,
+  // so it already accounts for multiple concurrent files without double-counting.
+  const rawFraction = count > 0 ? countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0) / count : 0;
+  const realPercent = Math.round(rawFraction * 100);
+
+  // hasRealProgress is true once actual byte-level fractions start arriving.
+  // When false (e.g. no Content-Length header, or still in the initial
+  // 'queued' state), we fall back to the simulated floor below.
+  const hasRealProgress = realPercent > 0;
+
+  // prevPercentRef enforces "never go backward" across renders. Reset to 0
+  // only when count reaches 0 (all downloads finished), handled in useEffect.
   const prevPercentRef = useRef(0);
 
-  // Simulated floor: slowly advances toward ~85% even when real byte-level
-  // progress isn't available (e.g. a response with no Content-Length). This
-  // makes the bar feel lively instead of frozen at 0 the whole time.
-  // Resets whenever count flips back to 0 so a fresh batch always starts
-  // from 0. 500 ms ticks with an 8% step toward 85 means: after ~5 s ≈ 48%,
-  // after ~10 s ≈ 70%, after ~15 s ≈ 80% - a reasonable proxy for a
-  // slow-ish audio download without Content-Length.
+  // Simulated floor: only active when there is no real byte progress (no
+  // Content-Length or still queued). Slowly advances toward ~85% so the bar
+  // feels lively while waiting for the first real progress event. Paused
+  // automatically once real progress arrives - the real fraction takes over.
+  // 500 ms ticks with an 8% step toward 85: after ~5 s ≈ 48%, after ~10 s ≈ 70%.
   const [simulatedFloor, setSimulatedFloor] = useState(0);
   useEffect(() => {
     if (count === 0) {
@@ -67,26 +76,21 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
       prevPercentRef.current = 0;
       return;
     }
+    if (hasRealProgress) return; // real data is coming in - no simulation needed
     const id = setInterval(() => {
       setSimulatedFloor((prev) => Math.min(prev + (85 - prev) * 0.08, 84));
     }, 500);
     return () => clearInterval(id);
-  }, [count]);
+  }, [count, hasRealProgress]);
 
   if (count === 0) return { count: 0, percent: 0 };
 
-  // Average the per-key progress fractions (0-1) already maintained by
-  // DownloadProvider. For chapter keys each fraction is the raw byte ratio;
-  // for occasion keys it is (completedFiles + activeByteSum) / totalFilesForOccasion,
-  // so it already accounts for multiple concurrent files without double-counting.
-  // This means a single in-progress download advances the bar in real time
-  // rather than staying at 0% until the file finishes.
-  const rawFraction = countedKeys.reduce((sum, k) => sum + (progress[k] ?? 0), 0) / count;
-  const realPercent = Math.round(rawFraction * 100);
-
+  // If real progress is available, use it directly (plus the never-go-backward
+  // floor). Only mix in simulatedFloor when nothing real is moving yet.
+  const base = hasRealProgress ? Math.max(realPercent, prevPercentRef.current) : Math.max(simulatedFloor, prevPercentRef.current);
   // Cap at 99 while downloads are still active - the bar hides at count=0, so
   // 100% is never actually shown while it's visible.
-  const percent = Math.min(Math.round(Math.max(realPercent, simulatedFloor, prevPercentRef.current)), 99);
+  const percent = Math.min(Math.round(base), 99);
   prevPercentRef.current = percent;
   return { count, percent };
 }
