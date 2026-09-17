@@ -64,6 +64,7 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
   useEffect(() => {
     if (count === 0) {
       setSimulatedFloor(0);
+      prevPercentRef.current = 0;
       return;
     }
     const id = setInterval(() => {
@@ -72,10 +73,7 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
     return () => clearInterval(id);
   }, [count]);
 
-  if (count === 0) {
-    prevPercentRef.current = 0;
-    return { count: 0, percent: 0 };
-  }
+  if (count === 0) return { count: 0, percent: 0 };
 
   // Average the per-key progress fractions (0-1) already maintained by
   // DownloadProvider. For chapter keys each fraction is the raw byte ratio;
