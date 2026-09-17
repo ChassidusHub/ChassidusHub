@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from './useDownload';
 import type { RowDownloadState } from './downloadContext';
 import catalog from '../catalog/data';
