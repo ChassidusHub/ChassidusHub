@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Download } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -98,7 +99,12 @@ export function DownloadedScreen() {
         </div>
       )}
 
-      {downloaded && downloaded.length === 0 && activeRows.length === 0 && <p className="gap-message">{t.noDownloadedContent}</p>}
+      {downloaded && downloaded.length === 0 && activeRows.length === 0 && (
+        <div className="empty-state">
+          <Download size={40} className="empty-state-icon" />
+          <p className="empty-state-text">{t.noDownloadedContent}</p>
+        </div>
+      )}
 
       {(downloaded && downloaded.length > 0) && (
         <ul className="year-list">
