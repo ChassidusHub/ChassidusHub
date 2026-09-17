@@ -4,6 +4,7 @@ import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
+import { OverflowMarquee } from '../components/OverflowMarquee';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { listDownloadedEntries, deleteEntryFromCache } from '../download/downloadManager';
@@ -100,11 +101,13 @@ export function DownloadedScreen() {
       {downloaded && downloaded.length === 0 && activeRows.length === 0 && <p className="gap-message">{t.noDownloadedContent}</p>}
 
       {(downloaded && downloaded.length > 0) && (
-        <div className="settings-link-list">
-          <button className="category-row settings-link-row" onClick={() => void deleteAllContent()}>
-            <span className="category-row-name">{t.deleteContentLabel}</span>
-          </button>
-        </div>
+        <ul className="year-list">
+          <li className="settings-option-item">
+            <button className="year-row settings-option-row" onClick={() => void deleteAllContent()}>
+              <OverflowMarquee className="year-row-year settings-option-label" text={t.deleteContentLabel} />
+            </button>
+          </li>
+        </ul>
       )}
 
       {yearGroups.map(({ hebrewYear, entries }) => (
