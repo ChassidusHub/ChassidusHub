@@ -14,11 +14,9 @@ interface Props {
   progressMap: ProgressStore;
   /**
    * A row's own trailing date (e.g. ThisWeekScreen's day+month), rendered
-   * between the status icon and the download icon. Only when this is given
-   * does the status icon get a fixed-width slot - blank when this occasion
-   * has no recording - instead of collapsing to nothing: that's what keeps
-   * every row's date starting at the same position regardless of whether
-   * that particular occasion happens to have one.
+   * between the download icon and the audio/finished status icon. Only when
+   * this is given do those icons get fixed-width slots - blank when absent -
+   * so every row's date starts at the same screen position.
    */
   dateSlot?: ReactNode;
 }
@@ -90,9 +88,9 @@ export function OccasionRowIcon({ entry, progressMap, dateSlot }: Props) {
   if (dateSlot !== undefined) {
     return (
       <span className="row-icons">
-        <span className="row-status-icon-slot">{statusIcon}</span>
+        <span className="row-download-icon-slot">{downloadIcon}</span>
         {dateSlot}
-        {downloadIcon}
+        <span className="row-status-icon-slot">{statusIcon}</span>
       </span>
     );
   }

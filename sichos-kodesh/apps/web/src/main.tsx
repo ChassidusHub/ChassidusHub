@@ -70,9 +70,9 @@ try {
 // class it reads (see useInvertPdfInDarkMode.ts) needs to already be in
 // place before the first PDF page ever paints.
 try {
-  if (localStorage.getItem('sichos-kodesh:invert-pdf-dark-mode') === 'true') applyInvertPdfInDarkMode(true);
+  if (localStorage.getItem('sichos-kodesh:invert-pdf-dark-mode') !== 'false') applyInvertPdfInDarkMode(true);
 } catch {
-  // Best-effort only - falls back to off until a PDF-viewing screen mounts.
+  applyInvertPdfInDarkMode(true);
 }
 
 createRoot(document.getElementById('root')!).render(

@@ -85,13 +85,15 @@ export function SettingsScreen() {
         </li>
       </ul>
 
-      <Link className="category-row" to="/settings/downloads">
-        <span className="category-row-name">{t.downloadsLink}</span>
-      </Link>
+      <div className="settings-link-list">
+        <Link className="category-row settings-link-row" to="/settings/downloads">
+          <span className="category-row-name">{t.downloadsLink}</span>
+        </Link>
 
-      <Link className="category-row" to="/about">
-        <span className="category-row-name">{t.aboutLink}</span>
-      </Link>
+        <Link className="category-row settings-link-row" to="/about">
+          <span className="category-row-name">{t.aboutLink}</span>
+        </Link>
+      </div>
     </div>
   );
 }

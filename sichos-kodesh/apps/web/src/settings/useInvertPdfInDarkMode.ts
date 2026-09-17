@@ -5,9 +5,9 @@ const CLASS_NAME = 'invert-pdf-dark';
 
 function readStored(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'true';
+    return localStorage.getItem(STORAGE_KEY) !== 'false';
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -25,11 +25,8 @@ export function applyInvertPdfInDarkMode(enabled: boolean): void {
 }
 
 /**
- * Off by default - inverting a PDF's colors for night reading is a real
- * preference some people want and others don't, not a safe universal
- * default. Only ever visually active while dark mode itself is on (see
- * index.css) - this can stay on across a theme switch without doing
- * anything in light mode.
+ * On by default - only while dark mode itself is active (see index.css),
+ * so it improves the night-reading default without affecting light mode.
  */
 export function useInvertPdfInDarkMode(): [boolean, (next: boolean) => void] {
   const [enabled, setEnabledState] = useState<boolean>(readStored);
