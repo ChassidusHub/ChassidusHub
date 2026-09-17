@@ -477,6 +477,9 @@ h1 {
   border-radius: 8px;
   pointer-events: none;
   user-select: none;
+  /* Direction classes use physical left/right, so force LTR flex axis
+     regardless of the document's writing direction. */
+  direction: ltr;
 }
 /* User swiped left → row slides left → icon appears on the right */
 .swipe-to-delete-backing--left {
