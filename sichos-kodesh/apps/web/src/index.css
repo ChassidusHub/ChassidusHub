@@ -421,6 +421,52 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Makes the in-progress download label a clickable link while keeping the
+   existing flex layout intact - inherits color/font so it reads the same
+   as the plain text label it replaces. */
+.active-download-row-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.active-download-row-link:hover {
+  text-decoration: underline;
+}
+
+/* Fills the flex-1 text area of a .year-row when the label itself is a
+   <Link> rather than a plain <span> - same overflow rules as .year-row-year
+   but displayed as block so it stretches horizontally. */
+.year-row-link-fill {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Small "Delete" button sitting in the trailing slot of a downloaded-occasion
+   row - styled as muted text so it's present but not visually loud. */
+.delete-occasion-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  margin-inline-start: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.1s ease, background-color 0.1s ease;
+}
+
+.delete-occasion-btn:hover {
+  color: var(--fg);
+  background: var(--card-hover);
+}
+
 /* No explicit `width` - a flex container's default `width: auto` already
    stretches it to fill its `<li>` while subtracting the margins below on
    both sides symmetrically (the same reasoning `.playlist-row-item`'s own

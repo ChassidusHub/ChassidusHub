@@ -12,6 +12,8 @@ export interface ActiveDownloadsSummary {
 export interface ActiveDownloadRow {
   key: string;
   label: string;
+  hebrewYear: number;
+  occasionId: number;
   /** 0-100 */
   percent: number;
 }
@@ -95,16 +97,16 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
   return { count, percent };
 }
 
-/** `key` -> a human label for it via the catalog, or `null` for a key whose occasion/chapter can no longer be resolved (a stale key from a removed catalog entry - skipped rather than shown as a dead row). */
-function labelForKey(key: string): string | null {
+/** `key` -> the catalog entry + label for it, or `null` for a key whose occasion/chapter can no longer be resolved. */
+function entryInfoForKey(key: string): { entry: CatalogEntry; label: string } | null {
   const parts = key.split(':');
   const [hebrewYear, occasionId] = (isChapterKey(key) ? parts.slice(1) : parts).map(Number);
   const entry = (catalog[hebrewYear] ?? []).find((e) => e.occasionId === occasionId);
   if (!entry) return null;
-  if (!isChapterKey(key)) return entry.occasionLabel;
+  if (!isChapterKey(key)) return { entry, label: entry.occasionLabel };
   const chapterIndex = Number(parts[3]);
   const chapter = entry.audio[chapterIndex];
-  return chapter?.chapterName ? `${entry.occasionLabel} - ${chapter.chapterName}` : entry.occasionLabel;
+  return { entry, label: chapter?.chapterName ? `${entry.occasionLabel} - ${chapter.chapterName}` : entry.occasionLabel };
 }
 
 /** Per-item detail for DownloadedScreen's "in progress" section - the full list the global progress bar's own aggregate summarizes. */
@@ -114,8 +116,16 @@ export function useActiveDownloadRows(): ActiveDownloadRow[] {
 
   const rows: ActiveDownloadRow[] = [];
   for (const key of countedKeys) {
-    const label = labelForKey(key);
-    if (label) rows.push({ key, label, percent: Math.round((progress[key] ?? 0) * 100) });
+    const info = entryInfoForKey(key);
+    if (info) {
+      rows.push({
+        key,
+        label: info.label,
+        hebrewYear: info.entry.hebrewYear,
+        occasionId: info.entry.occasionId,
+        percent: Math.round((progress[key] ?? 0) * 100),
+      });
+    }
   }
   return rows;
 }
