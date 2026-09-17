@@ -439,6 +439,16 @@ h1 {
   transition: background-color 0.1s ease;
 }
 
+.settings-option-item {
+  display: flex;
+  min-width: 0;
+}
+
+.settings-option-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .year-row:hover {
   background: var(--card-hover);
 }
@@ -491,6 +501,38 @@ h1 {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.playlist-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  direction: ltr;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--card-bg);
+}
+
+.playlist-header-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: start;
+}
+
+.playlist-header-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.playlist-header-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Reserved status-icon width for a row that also shows a `dateSlot` (see
@@ -586,7 +628,6 @@ h1 {
   width: 56px;
   height: 56px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-  margin-bottom: 16px;
 }
 
 .playlist-play-button-spinner {
@@ -728,6 +769,21 @@ h1 {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.settings-option-label {
+  flex: 1 1 auto;
+  display: block;
+  text-overflow: clip;
+}
+
+.overflow-marquee-content {
+  display: inline-block;
+  min-width: 100%;
+  white-space: nowrap;
+  transition-property: transform;
+  transition-timing-function: linear;
+  will-change: transform;
 }
 
 .card {
@@ -1223,7 +1279,7 @@ h1 {
   border-radius: 50%;
   border: none;
   background: var(--accent);
-  color: var(--accent-fg);
+  color: var(--fg);
   font-size: 1rem;
   cursor: pointer;
   transition: transform 0.08s ease;
@@ -1317,8 +1373,54 @@ h1 {
 .global-player-range {
   width: 100%;
   height: 4px;
-  accent-color: var(--accent);
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
   cursor: pointer;
+}
+
+.global-player-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.global-player-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.global-player-range::-moz-range-track {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.global-player-range::-moz-range-progress {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.global-player-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .global-player-times {

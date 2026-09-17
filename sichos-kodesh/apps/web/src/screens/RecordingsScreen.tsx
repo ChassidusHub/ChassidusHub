@@ -14,6 +14,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 import { ShareButton } from '../components/ShareButton';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
+import { formatDuration, totalDurationSeconds } from '../utils/formatDuration';
 
 interface Props {
   resolved: ResolvedEntry;
@@ -126,7 +127,7 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
 }
 
 export function RecordingsScreen({ resolved }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const player = usePlayer();
   const progressMap = useProgressMap();
   const { downloadAllChapters } = useDownload();
@@ -135,15 +136,20 @@ export function RecordingsScreen({ resolved }: Props) {
 
   const isThisPlaylistActive = player.playlist?.title === entry.occasionLabel;
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
+  const totalDuration = formatDuration(totalDurationSeconds(entry.audio));
 
   return (
     <div className="screen">
       <ScreenHeader to={basePath} title={entry.occasionLabel} />
-      <p className="subtitle">{t.recordings}</p>
+      <div className="playlist-header">
+        <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
+        <div className="playlist-header-copy" dir={language === 'he' ? 'rtl' : 'ltr'}>
+          <p className="playlist-header-title">{entry.occasionLabel}</p>
+          <p className="playlist-header-subtitle">{totalDuration}</p>
+        </div>
+      </div>
 
       <ShareButton title={entry.occasionLabel} />
-
-      <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
 
       {allChaptersState !== 'unavailable' && (
         <p className="occasion-download-state">

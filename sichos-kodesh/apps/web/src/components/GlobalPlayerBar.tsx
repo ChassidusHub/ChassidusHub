@@ -157,6 +157,7 @@ export function GlobalPlayerBar() {
                 onChange={seek}
                 onPointerDown={beginDrag}
                 className="global-player-range"
+                style={{ ['--global-player-progress' as string]: `${displayedPercent}%` }}
                 aria-label={t.seek}
               />
               <div className="global-player-times">

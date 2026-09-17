@@ -6,6 +6,7 @@ import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
 import { useInvertPdfInDarkMode } from '../settings/useInvertPdfInDarkMode';
 import { useLanguage, useTranslation } from '../i18n/useLanguage';
 import type { Language } from '../i18n/translations';
+import { OverflowMarquee } from '../components/OverflowMarquee';
 import { ScreenHeader } from '../components/ScreenHeader';
 
 export function SettingsScreen() {
@@ -32,9 +33,12 @@ export function SettingsScreen() {
       <p className="category-header">{t.appearanceSection}</p>
       <ul className="year-list">
         {themeOptions.map((option) => (
-          <li key={option.value}>
-            <button className={theme === option.value ? 'year-row year-row-selected' : 'year-row'} onClick={() => setTheme(option.value)}>
-              <span className="year-row-year">{option.label}</span>
+          <li key={option.value} className="settings-option-item">
+            <button
+              className={theme === option.value ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
+              onClick={() => setTheme(option.value)}
+            >
+              <OverflowMarquee className="year-row-year settings-option-label" text={option.label} />
               {theme === option.value && <Check size={18} className="year-row-distance" />}
             </button>
           </li>
@@ -42,9 +46,12 @@ export function SettingsScreen() {
       </ul>
 
       <ul className="year-list">
-        <li>
-          <button className={invertPdf ? 'year-row year-row-selected' : 'year-row'} onClick={() => setInvertPdf(!invertPdf)}>
-            <span className="year-row-year">{t.invertPdfDarkModeLabel}</span>
+        <li className="settings-option-item">
+          <button
+            className={invertPdf ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
+            onClick={() => setInvertPdf(!invertPdf)}
+          >
+            <OverflowMarquee className="year-row-year settings-option-label" text={t.invertPdfDarkModeLabel} />
             {invertPdf && <Check size={18} className="year-row-distance" />}
           </button>
         </li>
@@ -53,9 +60,12 @@ export function SettingsScreen() {
       <p className="category-header">{t.languageSection}</p>
       <ul className="year-list">
         {languageOptions.map((option) => (
-          <li key={option.value}>
-            <button className={language === option.value ? 'year-row year-row-selected' : 'year-row'} onClick={() => setLanguage(option.value)}>
-              <span className="year-row-year">{option.label}</span>
+          <li key={option.value} className="settings-option-item">
+            <button
+              className={language === option.value ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
+              onClick={() => setLanguage(option.value)}
+            >
+              <OverflowMarquee className="year-row-year settings-option-label" text={option.label} />
               {language === option.value && <Check size={18} className="year-row-distance" />}
             </button>
           </li>
@@ -64,9 +74,12 @@ export function SettingsScreen() {
 
       <p className="category-header">{t.playbackSection}</p>
       <ul className="year-list">
-        <li>
-          <button className={autoplay ? 'year-row year-row-selected' : 'year-row'} onClick={() => setAutoplay(!autoplay)}>
-            <span className="year-row-year">{t.autoplayHanachaLabel}</span>
+        <li className="settings-option-item">
+          <button
+            className={autoplay ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
+            onClick={() => setAutoplay(!autoplay)}
+          >
+            <OverflowMarquee className="year-row-year settings-option-label" text={t.autoplayHanachaLabel} />
             {autoplay && <Check size={18} className="year-row-distance" />}
           </button>
         </li>
