@@ -541,11 +541,14 @@ h1 {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  direction: ltr;
   margin: 0 0 16px;
   padding: 16px;
   border-radius: 16px;
   background: var(--card-bg);
+}
+
+.playlist-header-rtl {
+  flex-direction: row-reverse;
 }
 
 .playlist-header-main {
@@ -554,6 +557,10 @@ h1 {
   gap: 16px;
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.playlist-header-main-rtl {
+  flex-direction: row-reverse;
 }
 
 .playlist-header-copy {

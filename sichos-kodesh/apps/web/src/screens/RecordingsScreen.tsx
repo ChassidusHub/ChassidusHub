@@ -170,8 +170,8 @@ export function RecordingsScreen({ resolved }: Props) {
   return (
     <div className="screen">
       <ScreenHeader to={basePath} title={entry.occasionLabel} />
-      <div className="playlist-header">
-        <div className="playlist-header-main">
+      <div className={language === 'he' ? 'playlist-header playlist-header-rtl' : 'playlist-header'}>
+        <div className={language === 'he' ? 'playlist-header-main playlist-header-main-rtl' : 'playlist-header-main'}>
           <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
           <div className="playlist-header-copy" dir={language === 'he' ? 'rtl' : 'ltr'}>
             <p className="playlist-header-title">{entry.occasionLabel}</p>
