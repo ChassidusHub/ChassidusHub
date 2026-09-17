@@ -61,7 +61,12 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
     return { count: countedKeys.length, percent: Math.round((inProgressFraction / countedKeys.length) * 100) };
   }
 
-  const percent = Math.round((done / total) * 100);
+  // Cap at 99 while there are still active keys in liveState - the bar
+  // hides at count=0, so we'll never actually show 100% while it's visible.
+  // This avoids a brief 100% flash that can occur when done reaches total
+  // slightly before the last liveState update is committed.
+  const rawPercent = Math.round((done / total) * 100);
+  const percent = Math.min(rawPercent, 99);
   return { count: countedKeys.length, percent };
 }
 
