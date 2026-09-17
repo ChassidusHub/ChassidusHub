@@ -174,7 +174,7 @@ export function RecordingsScreen({ resolved }: Props) {
       <div className="playlist-header" dir={isRtl ? 'rtl' : 'ltr'}>
         <div className="playlist-header-main">
           <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
-          <div className="playlist-header-copy" dir={isRtl ? 'rtl' : 'ltr'}>
+          <div className="playlist-header-copy">
             <p className="playlist-header-title">{entry.occasionLabel}</p>
             <p className="playlist-header-subtitle">{totalDuration}</p>
           </div>
