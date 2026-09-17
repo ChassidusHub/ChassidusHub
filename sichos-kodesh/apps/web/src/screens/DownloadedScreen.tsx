@@ -113,7 +113,7 @@ export function DownloadedScreen() {
           <ul className="year-list">
             {entries.map((entry) => (
               <li key={entry.occasionId}>
-                <SwipeToDelete onDelete={() => void deleteOccasion(entry)} deleteLabel={t.deleteOccasionLabel}>
+                <SwipeToDelete onDelete={() => void deleteOccasion(entry)}>
                   <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
                     <span className="year-row-year">{entry.occasionLabel}</span>
                     <span className="year-row-trailing">

@@ -8,10 +8,6 @@ import { useLanguage, useTranslation } from '../i18n/useLanguage';
 import type { Language } from '../i18n/translations';
 import { OverflowMarquee } from '../components/OverflowMarquee';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { MEDIA_CACHE_NAME } from '../download/cacheName';
-import { clearAutoDownloadLedger } from '../download/downloadLedger';
-import { clearPendingChapterDownloads } from '../download/pendingDownloads';
-import { clearPendingEntryDownloads } from '../download/pendingEntryDownloads';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
@@ -30,14 +26,6 @@ export function SettingsScreen() {
     { value: 'he', label: t.languageHebrew },
   ];
 
-  async function clearContent(): Promise<void> {
-    await caches.delete(MEDIA_CACHE_NAME);
-    clearAutoDownloadLedger();
-    clearPendingChapterDownloads();
-    clearPendingEntryDownloads();
-  }
-
-  return (
     <div className="screen">
       <ScreenHeader to="/" title={t.settingsTitle} />
 
@@ -105,10 +93,6 @@ export function SettingsScreen() {
         <Link className="category-row settings-link-row" to="/settings/downloads">
           <span className="category-row-name">{t.downloadsLink}</span>
         </Link>
-
-        <button className="category-row settings-link-row" onClick={() => void clearContent()}>
-          <span className="category-row-name">{t.deleteContentLabel}</span>
-        </button>
 
         <Link className="category-row settings-link-row" to="/about">
           <span className="category-row-name">{t.aboutLink}</span>

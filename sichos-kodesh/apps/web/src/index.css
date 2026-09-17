@@ -443,22 +443,29 @@ h1 {
   border-radius: 8px;
 }
 
-/* Red "Delete" label revealed as the row slides left. Fills the full height
-   of the wrapper and sits flush against its trailing (right) edge. */
+/* Red "Delete" backing revealed as the row slides. Fills the full height
+   of the wrapper. The --left / --right variants pin the icon to the side
+   that was exposed by the swipe. */
 .swipe-to-delete-backing {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding-inline-end: 20px;
   background: #e53e3e;
   color: #fff;
-  font-size: 0.875rem;
-  font-weight: 600;
   border-radius: 8px;
   pointer-events: none;
   user-select: none;
+}
+/* User swiped left → row slides left → icon appears on the right */
+.swipe-to-delete-backing--left {
+  justify-content: flex-end;
+  padding-inline-end: 20px;
+}
+/* User swiped right → row slides right → icon appears on the left */
+.swipe-to-delete-backing--right {
+  justify-content: flex-start;
+  padding-inline-start: 20px;
 }
 
 /* The sliding row itself - sits on top of the backing and slides on touch. */
