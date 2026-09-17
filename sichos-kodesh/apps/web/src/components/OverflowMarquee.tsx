@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { isRtlLanguage, useTranslation } from '../i18n/useLanguage';
 
 const START_PAUSE_MS = 1000;
 const SCROLL_PX_PER_SECOND = 28;
@@ -11,11 +12,16 @@ interface Props {
 }
 
 export function OverflowMarquee({ className, text }: Props) {
+  const { language } = useTranslation();
+  const isRtl = isRtlLanguage(language);
   const outerRef = useRef<HTMLSpanElement>(null);
   const innerRef = useRef<HTMLSpanElement>(null);
   const [overflow, setOverflow] = useState(0);
   const [offset, setOffset] = useState(0);
   const [transitionMs, setTransitionMs] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
 
   useLayoutEffect(() => {
     function measure() {
@@ -37,8 +43,14 @@ export function OverflowMarquee({ className, text }: Props) {
   }, [text]);
 
   useEffect(() => {
-    const outer = outerRef.current;
-    if (!outer || overflow <= 0) {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener('change', updatePreference);
+    return () => mediaQuery.removeEventListener('change', updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (overflow <= 0 || prefersReducedMotion) {
       setOffset(0);
       setTransitionMs(0);
       return;
@@ -47,7 +59,7 @@ export function OverflowMarquee({ className, text }: Props) {
     let cancelled = false;
     let pauseTimer = 0;
     let resetTimer = 0;
-    const direction = getComputedStyle(outer).direction === 'rtl' ? 1 : -1;
+    const direction = isRtl ? 1 : -1;
     const scrollMs = Math.max((overflow / SCROLL_PX_PER_SECOND) * 1000, MIN_SCROLL_MS);
 
     function queueCycle() {
@@ -71,7 +83,7 @@ export function OverflowMarquee({ className, text }: Props) {
       window.clearTimeout(pauseTimer);
       window.clearTimeout(resetTimer);
     };
-  }, [overflow]);
+  }, [overflow, isRtl, prefersReducedMotion]);
 
   return (
     <span ref={outerRef} className={className}>
