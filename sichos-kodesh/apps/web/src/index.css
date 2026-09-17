@@ -505,7 +505,8 @@ h1 {
 
 .playlist-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 16px;
   direction: ltr;
   margin: 0 0 16px;
@@ -514,12 +515,36 @@ h1 {
   background: var(--card-bg);
 }
 
+.playlist-header-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .playlist-header-copy {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
   text-align: start;
+}
+
+.playlist-header-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  flex-shrink: 0;
+}
+
+.playlist-header-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
 }
 
 .playlist-header-title {
@@ -588,6 +613,25 @@ h1 {
   color: var(--accent);
 }
 
+.playlist-header-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  cursor: pointer;
+  transition: filter 0.12s ease, background-color 0.12s ease;
+}
+
+.playlist-header-action:hover {
+  filter: brightness(0.92);
+}
+
 @keyframes download-spin {
   from {
     transform: rotate(0deg);
@@ -620,8 +664,13 @@ h1 {
   border-radius: 50%;
   border: none;
   background: var(--accent);
-  color: var(--accent-fg);
+  color: var(--bg);
   cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.playlist-play-button:hover {
+  filter: brightness(0.92);
 }
 
 .playlist-play-button-large {
@@ -1279,14 +1328,14 @@ h1 {
   border-radius: 50%;
   border: none;
   background: var(--accent);
-  color: var(--fg);
+  color: var(--bg);
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.08s ease;
+  transition: filter 0.12s ease;
 }
 
 .global-player-toggle:hover {
-  transform: scale(1.05);
+  filter: brightness(0.92);
 }
 
 .global-player-skip {
@@ -1299,13 +1348,14 @@ h1 {
   border-radius: 50%;
   border: none;
   background: none;
-  color: var(--fg);
+  color: var(--accent);
   font-size: 1rem;
   cursor: pointer;
+  transition: filter 0.12s ease;
 }
 
 .global-player-skip:hover:not(:disabled) {
-  color: var(--accent);
+  filter: brightness(0.92);
 }
 
 .global-player-skip:disabled {
@@ -1378,7 +1428,7 @@ h1 {
   border: none;
   outline: none;
   border-radius: 999px;
-  background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
+  background: var(--border);
   cursor: pointer;
 }
 
@@ -1386,14 +1436,14 @@ h1 {
   height: 4px;
   border: none;
   border-radius: 999px;
-  background: transparent;
+  background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
 }
 
 .global-player-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
-  margin-top: -4px;
+  margin-top: calc((4px - 12px) / 2);
   border: none;
   border-radius: 50%;
   background: var(--bg-elevated);

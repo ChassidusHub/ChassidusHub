@@ -20,4 +20,8 @@ describe('totalDurationSeconds', () => {
   it('sums all chapter durations', () => {
     expect(totalDurationSeconds([{ durationMs: 61000 }, { durationMs: 59000 }, { durationMs: 3600000 }])).toBe(3720);
   });
+
+  it('ignores missing or invalid durations', () => {
+    expect(totalDurationSeconds([{ durationMs: 61000 }, { durationMs: 0 }, { durationMs: Number.NaN }])).toBe(61);
+  });
 });

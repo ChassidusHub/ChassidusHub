@@ -137,39 +137,51 @@ export function RecordingsScreen({ resolved }: Props) {
   const isThisPlaylistActive = player.playlist?.title === entry.occasionLabel;
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
   const totalDuration = formatDuration(totalDurationSeconds(entry.audio));
+  let headerDownload = null;
+  if (allChaptersState === 'downloaded') {
+    headerDownload = (
+      <span className="playlist-header-status" role="status" aria-label={t.downloadedLabel}>
+        <CheckCircle2 size={18} className="download-state-done" aria-hidden />
+      </span>
+    );
+  } else if (allChaptersState === 'downloading') {
+    headerDownload = (
+      <span className="playlist-header-status" role="status" aria-label={t.downloadingLabel}>
+        <Loader2 size={18} className="download-state-spinner" aria-hidden />
+      </span>
+    );
+  } else if (allChaptersState === 'none') {
+    headerDownload = (
+      <button
+        type="button"
+        className="playlist-header-action"
+        onClick={() => downloadAllChapters(entry)}
+        aria-label={t.downloadAllRecordingsLabel}
+        title={t.downloadAllRecordingsLabel}
+      >
+        <Download size={18} aria-hidden />
+      </button>
+    );
+  }
+  // 'unavailable' deliberately renders no header action: while offline with
+  // nothing cached yet, this page has no real aggregate download action to
+  // offer.
 
   return (
     <div className="screen">
       <ScreenHeader to={basePath} title={entry.occasionLabel} />
       <div className="playlist-header">
-        <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
-        <div className="playlist-header-copy" dir={language === 'he' ? 'rtl' : 'ltr'}>
-          <p className="playlist-header-title">{entry.occasionLabel}</p>
-          <p className="playlist-header-subtitle">{totalDuration}</p>
+        <div className="playlist-header-main">
+          <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
+          <div className="playlist-header-copy" dir={language === 'he' ? 'rtl' : 'ltr'}>
+            <p className="playlist-header-title">{entry.occasionLabel}</p>
+            <p className="playlist-header-subtitle">{totalDuration}</p>
+          </div>
         </div>
+        {headerDownload && <div className="playlist-header-side">{headerDownload}</div>}
       </div>
 
       <ShareButton title={entry.occasionLabel} />
-
-      {allChaptersState !== 'unavailable' && (
-        <p className="occasion-download-state">
-          {allChaptersState === 'downloaded' && (
-            <>
-              <CheckCircle2 size={16} className="download-state-done" aria-hidden /> {t.downloadedLabel}
-            </>
-          )}
-          {allChaptersState === 'downloading' && (
-            <>
-              <Loader2 size={16} className="download-state-spinner" aria-hidden /> {t.downloadingLabel}
-            </>
-          )}
-          {allChaptersState === 'none' && (
-            <button type="button" className="occasion-download-button" onClick={() => downloadAllChapters(entry)}>
-              <Download size={16} aria-hidden /> {t.downloadAllRecordingsLabel}
-            </button>
-          )}
-        </p>
-      )}
 
       <ul className="playlist">
         {entry.audio.map((chapter, index) => (

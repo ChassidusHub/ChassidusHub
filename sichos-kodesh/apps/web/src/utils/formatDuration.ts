@@ -9,5 +9,7 @@ export function formatDuration(seconds: number): string {
 }
 
 export function totalDurationSeconds(items: Array<{ durationMs: number }>): number {
-  return items.reduce((sum, item) => sum + item.durationMs, 0) / 1000;
+  return (
+    items.reduce((sum, item) => (Number.isFinite(item.durationMs) && item.durationMs > 0 ? sum + item.durationMs : sum), 0) / 1000
+  );
 }
