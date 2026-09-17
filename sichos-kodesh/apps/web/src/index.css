@@ -473,8 +473,16 @@ h1 {
 }
 
 .settings-option-row .year-row-distance {
-  margin-inline-start: auto;
-  padding-inline-start: 12px;
+  margin-inline-start: 0;
+}
+
+.settings-option-end-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 18px;
+  min-width: 18px;
+  margin-inline-start: 12px;
 }
 
 /* Groups a row's trailing date with its download/audio/finished icon(s) -
@@ -1377,6 +1385,7 @@ h1 {
 
 .global-player-collapsed-progress {
   display: block;
+  position: relative;
   width: 100%;
   height: 4px;
   border-radius: 999px;
@@ -1386,6 +1395,9 @@ h1 {
 
 .global-player-collapsed-progress-fill {
   display: block;
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
   height: 100%;
   border-radius: 999px;
   background: var(--accent);
@@ -1501,8 +1513,12 @@ h1 {
   border: none;
   outline: none;
   border-radius: 999px;
-  background: var(--border);
+  background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
   cursor: pointer;
+}
+
+html[dir='rtl'] .global-player-range {
+  background: linear-gradient(to left, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
 }
 
 .global-player-range::-webkit-slider-runnable-track {
@@ -1510,6 +1526,15 @@ h1 {
   border: none;
   border-radius: 999px;
   background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
+}
+
+html[dir='rtl'] .global-player-range::-webkit-slider-runnable-track {
+  background: linear-gradient(to left, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
+}
+
+html[dir='rtl'] .global-player-collapsed-progress-fill {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
 }
 
 .global-player-range::-webkit-slider-thumb {
@@ -1526,14 +1551,14 @@ h1 {
   height: 4px;
   border: none;
   border-radius: 999px;
-  background: var(--border);
+  background: transparent;
 }
 
 .global-player-range::-moz-range-progress {
   height: 4px;
   border: none;
   border-radius: 999px;
-  background: var(--accent);
+  background: transparent;
 }
 
 .global-player-range::-moz-range-thumb {

@@ -89,8 +89,8 @@ export function OccasionRowIcon({ entry, progressMap, dateSlot }: Props) {
     return (
       <span className="row-icons">
         <span className="row-download-icon-slot">{downloadIcon}</span>
-        {dateSlot}
         <span className="row-status-icon-slot">{statusIcon}</span>
+        {dateSlot}
       </span>
     );
   }

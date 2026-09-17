@@ -57,8 +57,8 @@ export function GlobalPlayerBar() {
 
   useLayoutEffect(() => {
     const el = playerRef.current;
-    document.documentElement.style.setProperty('--player-bar-height', `${el?.offsetHeight ?? 96}px`);
     if (!el) return;
+    document.documentElement.style.setProperty('--player-bar-height', `${el.offsetHeight}px`);
     const observer = new ResizeObserver(() => {
       document.documentElement.style.setProperty('--player-bar-height', `${el.offsetHeight}px`);
     });

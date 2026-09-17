@@ -78,13 +78,13 @@ export function DownloadSettingsScreen() {
 
       <p className="category-header">{t.autoDownloadSection}</p>
       <ul className="year-list">
-        <li>
+        <li className="settings-option-item">
           <button
-            className={settings.autoDownloadEnabled ? 'year-row year-row-selected' : 'year-row'}
+            className={settings.autoDownloadEnabled ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
             onClick={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}
           >
             <span className="year-row-year">{t.autoDownloadEnabledLabel}</span>
-            {settings.autoDownloadEnabled && <Check size={18} className="year-row-distance" />}
+            <span className="settings-option-end-slot">{settings.autoDownloadEnabled && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
       </ul>
@@ -93,26 +93,26 @@ export function DownloadSettingsScreen() {
         <>
           <ul className="year-list">
             {(['week', 'month'] as DownloadScope[]).map((scope) => (
-              <li key={scope}>
+              <li key={scope} className="settings-option-item">
                 <button
-                  className={settings.scope === scope ? 'year-row year-row-selected' : 'year-row'}
+                  className={settings.scope === scope ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                   onClick={() => setSettings({ ...settings, scope })}
                 >
                   <span className="year-row-year">{scope === 'week' ? t.downloadScopeWeek : t.downloadScopeMonth}</span>
-                  {settings.scope === scope && <Check size={18} className="year-row-distance" />}
+                  <span className="settings-option-end-slot">{settings.scope === scope && <Check size={18} className="year-row-distance" />}</span>
                 </button>
               </li>
             ))}
           </ul>
 
           <ul className="year-list">
-            <li>
+            <li className="settings-option-item">
               <button
-                className={settings.wifiOnly ? 'year-row year-row-selected' : 'year-row'}
+                className={settings.wifiOnly ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                 onClick={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })}
               >
                 <span className="year-row-year">{t.wifiOnlyLabel}</span>
-                {settings.wifiOnly && <Check size={18} className="year-row-distance" />}
+                <span className="settings-option-end-slot">{settings.wifiOnly && <Check size={18} className="year-row-distance" />}</span>
               </button>
             </li>
           </ul>
@@ -120,9 +120,9 @@ export function DownloadSettingsScreen() {
           <p className="category-header">{t.sourceYearSection}</p>
           <ul className="year-list">
             {(['auto', 'manual'] as SourceYearMode[]).map((mode) => (
-              <li key={mode}>
+              <li key={mode} className="settings-option-item">
                 <button
-                  className={settings.sourceYearMode === mode ? 'year-row year-row-selected' : 'year-row'}
+                  className={settings.sourceYearMode === mode ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                   onClick={() =>
                     setSettings({
                       ...settings,
@@ -132,7 +132,7 @@ export function DownloadSettingsScreen() {
                   }
                 >
                   <span className="year-row-year">{mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel}</span>
-                  {settings.sourceYearMode === mode && <Check size={18} className="year-row-distance" />}
+                  <span className="settings-option-end-slot">{settings.sourceYearMode === mode && <Check size={18} className="year-row-distance" />}</span>
                 </button>
               </li>
             ))}
@@ -141,13 +141,15 @@ export function DownloadSettingsScreen() {
           {settings.sourceYearMode === 'manual' && (
             <ul className="year-list">
               {allYears.map((year) => (
-                <li key={year}>
+                <li key={year} className="settings-option-item">
                   <button
-                    className={settings.manualSourceYears.includes(year) ? 'year-row year-row-selected' : 'year-row'}
+                    className={settings.manualSourceYears.includes(year) ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                     onClick={() => toggleManualYear(year)}
                   >
                     <span className="year-row-year">{hebrewYearLabel(year, language)}</span>
-                    {settings.manualSourceYears.includes(year) && <Check size={18} className="year-row-distance" />}
+                    <span className="settings-option-end-slot">
+                      {settings.manualSourceYears.includes(year) && <Check size={18} className="year-row-distance" />}
+                    </span>
                   </button>
                 </li>
               ))}
@@ -156,13 +158,13 @@ export function DownloadSettingsScreen() {
 
           {settings.scope === 'week' && (
             <ul className="year-list">
-              <li>
+              <li className="settings-option-item">
                 <button
-                  className={settings.useKviusFallback ? 'year-row year-row-selected' : 'year-row'}
+                  className={settings.useKviusFallback ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
                   onClick={() => setSettings({ ...settings, useKviusFallback: !settings.useKviusFallback })}
                 >
                   <span className="year-row-year">{t.kviusFallbackLabel}</span>
-                  {settings.useKviusFallback && <Check size={18} className="year-row-distance" />}
+                  <span className="settings-option-end-slot">{settings.useKviusFallback && <Check size={18} className="year-row-distance" />}</span>
                 </button>
               </li>
             </ul>
@@ -172,40 +174,45 @@ export function DownloadSettingsScreen() {
 
       <p className="category-header">{t.contentTypesSection}</p>
       <ul className="year-list">
-        <li>
+        <li className="settings-option-item">
           <button
-            className={settings.contentTypes.audio ? 'year-row year-row-selected' : 'year-row'}
+            className={settings.contentTypes.audio ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
             onClick={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, audio: !settings.contentTypes.audio } })}
           >
             <span className="year-row-year">{t.audioTypeLabel}</span>
-            {settings.contentTypes.audio && <Check size={18} className="year-row-distance" />}
+            <span className="settings-option-end-slot">{settings.contentTypes.audio && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
         {HANACHA_EDITIONS.map((edition) => (
-          <li key={edition}>
+          <li key={edition} className="settings-option-item">
             <button
-              className={settings.contentTypes.hanachaEditions.includes(edition) ? 'year-row year-row-selected' : 'year-row'}
+              className={settings.contentTypes.hanachaEditions.includes(edition) ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
               onClick={() => toggleEdition(edition)}
             >
               <span className="year-row-year">{edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel}</span>
-              {settings.contentTypes.hanachaEditions.includes(edition) && <Check size={18} className="year-row-distance" />}
+              <span className="settings-option-end-slot">
+                {settings.contentTypes.hanachaEditions.includes(edition) && <Check size={18} className="year-row-distance" />}
+              </span>
             </button>
           </li>
         ))}
-        <li>
+        <li className="settings-option-item">
           <button
-            className={settings.contentTypes.mugah ? 'year-row year-row-selected' : 'year-row'}
+            className={settings.contentTypes.mugah ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
             onClick={() => toggleSection('mugah')}
           >
             <span className="year-row-year">{t.sectionLabels.mugah}</span>
-            {settings.contentTypes.mugah && <Check size={18} className="year-row-distance" />}
+            <span className="settings-option-end-slot">{settings.contentTypes.mugah && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
         {OTHER_SECTIONS.map((section) => (
-          <li key={section}>
-            <button className={settings.contentTypes[section] ? 'year-row year-row-selected' : 'year-row'} onClick={() => toggleSection(section)}>
+          <li key={section} className="settings-option-item">
+            <button
+              className={settings.contentTypes[section] ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
+              onClick={() => toggleSection(section)}
+            >
               <span className="year-row-year">{t.sectionLabels[section]}</span>
-              {settings.contentTypes[section] && <Check size={18} className="year-row-distance" />}
+              <span className="settings-option-end-slot">{settings.contentTypes[section] && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
         ))}
@@ -215,13 +222,13 @@ export function DownloadSettingsScreen() {
       <p className="tab-help">{t.retentionHelp}</p>
       <ul className="year-list">
         {RETENTION_PERIODS.map((period) => (
-          <li key={period}>
+          <li key={period} className="settings-option-item">
             <button
-              className={settings.retentionPeriod === period ? 'year-row year-row-selected' : 'year-row'}
+              className={settings.retentionPeriod === period ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
               onClick={() => setSettings({ ...settings, retentionPeriod: period })}
             >
               <span className="year-row-year">{period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))}</span>
-              {settings.retentionPeriod === period && <Check size={18} className="year-row-distance" />}
+              <span className="settings-option-end-slot">{settings.retentionPeriod === period && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
         ))}
@@ -229,13 +236,13 @@ export function DownloadSettingsScreen() {
 
       {settings.retentionPeriod !== 'never' && (
         <ul className="year-list">
-          <li>
+          <li className="settings-option-item">
             <button
-              className={settings.keepFinishedContent ? 'year-row year-row-selected' : 'year-row'}
+              className={settings.keepFinishedContent ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
               onClick={() => setSettings({ ...settings, keepFinishedContent: !settings.keepFinishedContent })}
             >
               <span className="year-row-year">{t.keepFinishedContentLabel}</span>
-              {settings.keepFinishedContent && <Check size={18} className="year-row-distance" />}
+              <span className="settings-option-end-slot">{settings.keepFinishedContent && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
         </ul>
@@ -244,8 +251,8 @@ export function DownloadSettingsScreen() {
       <p className="category-header">{t.storageSection}</p>
       <p className="tab-help">{usage != null ? t.storageUsageLabel(formatBytes(usage)) : ''}</p>
       <ul className="year-list">
-        <li>
-          <button className="year-row" onClick={() => void clearDownloads()}>
+        <li className="settings-option-item">
+          <button className="year-row settings-option-row" onClick={() => void clearDownloads()}>
             <span className="year-row-year">{t.clearDownloadsLabel}</span>
           </button>
         </li>

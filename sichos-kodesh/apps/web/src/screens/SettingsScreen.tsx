@@ -39,7 +39,7 @@ export function SettingsScreen() {
               onClick={() => setTheme(option.value)}
             >
               <OverflowMarquee className="year-row-year settings-option-label" text={option.label} />
-              {theme === option.value && <Check size={18} className="year-row-distance" />}
+              <span className="settings-option-end-slot">{theme === option.value && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
         ))}
@@ -52,7 +52,7 @@ export function SettingsScreen() {
             onClick={() => setInvertPdf(!invertPdf)}
           >
             <OverflowMarquee className="year-row-year settings-option-label" text={t.invertPdfDarkModeLabel} />
-            {invertPdf && <Check size={18} className="year-row-distance" />}
+            <span className="settings-option-end-slot">{invertPdf && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
       </ul>
@@ -66,7 +66,7 @@ export function SettingsScreen() {
               onClick={() => setLanguage(option.value)}
             >
               <OverflowMarquee className="year-row-year settings-option-label" text={option.label} />
-              {language === option.value && <Check size={18} className="year-row-distance" />}
+              <span className="settings-option-end-slot">{language === option.value && <Check size={18} className="year-row-distance" />}</span>
             </button>
           </li>
         ))}
@@ -80,7 +80,7 @@ export function SettingsScreen() {
             onClick={() => setAutoplay(!autoplay)}
           >
             <OverflowMarquee className="year-row-year settings-option-label" text={t.autoplayHanachaLabel} />
-            {autoplay && <Check size={18} className="year-row-distance" />}
+            <span className="settings-option-end-slot">{autoplay && <Check size={18} className="year-row-distance" />}</span>
           </button>
         </li>
       </ul>

@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 const START_PAUSE_MS = 1000;
 const SCROLL_PX_PER_SECOND = 28;
 const MIN_SCROLL_MS = 2500;
+const RESET_BUFFER_MS = 80;
 
 interface Props {
   className?: string;
@@ -59,7 +60,7 @@ export function OverflowMarquee({ className, text }: Props) {
         resetTimer = window.setTimeout(() => {
           if (cancelled) return;
           queueCycle();
-        }, scrollMs);
+        }, scrollMs + RESET_BUFFER_MS);
       }, START_PAUSE_MS);
     }
 
