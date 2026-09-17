@@ -14,7 +14,8 @@ interface Props {
   progressMap: ProgressStore;
   /**
    * A row's own trailing date (e.g. ThisWeekScreen's day+month), rendered
-   * between the download icon and the audio/finished status icon. Only when
+   * inward from the trailing icons: date first, then audio/finished status,
+   * then the download icon flush at the row's true outer edge. Only when
    * this is given do those icons get fixed-width slots - blank when absent -
    * so every row's date starts at the same screen position.
    */
