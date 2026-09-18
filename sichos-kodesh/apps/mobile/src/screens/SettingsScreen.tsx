@@ -7,7 +7,7 @@ import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { ListRow, RowSeparator } from '../ui/ListRow';
 import { SectionLabel } from '../ui/SectionLabel';
-import { colors } from '../ui/theme';
+import { colors, spacing } from '../ui/theme';
 
 const OPTIONS: Array<{ value: PdfEdition | null; label: string; sublabel: string }> = [
   { value: null, label: 'No preference', sublabel: 'Show PDFs in default order' },
@@ -44,6 +44,6 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  sectionHelp: { fontSize: 13, color: colors.textMuted, paddingHorizontal: 16, marginBottom: 4 },
+  sectionHelp: { fontSize: 13, color: colors.textMuted, paddingHorizontal: spacing.lg, marginBottom: 4 },
   check: { fontSize: 16, color: colors.accent, fontWeight: '600' },
 });

@@ -5,6 +5,7 @@ import { kviusCode } from '@sichos-kodesh/kvius-engine';
 import type { HomeScreenProps } from '../navigation/types';
 import { Screen } from '../ui/Screen';
 import { AppButton } from '../ui/AppButton';
+import { SectionLabel } from '../ui/SectionLabel';
 import { colors, spacing, typography } from '../ui/theme';
 
 export function YearPickerScreen({ navigation }: HomeScreenProps) {
@@ -40,7 +41,7 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
       </View>
 
       <View style={styles.placeholderSection}>
-        <Text style={styles.placeholderSectionLabel}>Coming soon</Text>
+        <SectionLabel label="Coming soon" />
         <Pressable
           style={styles.placeholderRow}
           onPress={() => navigation.navigate('Search')}
@@ -86,21 +87,13 @@ const styles = StyleSheet.create({
   secondaryAction: {},
   placeholderSection: {
     marginTop: spacing.xxl,
-    paddingHorizontal: spacing.lg,
-  },
-  placeholderSectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.sm,
   },
   placeholderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
     opacity: 0.5,
