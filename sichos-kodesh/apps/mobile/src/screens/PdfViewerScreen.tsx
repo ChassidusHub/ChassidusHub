@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
 import Pdf from 'react-native-pdf';
-import type { CatalogEntry, CatalogPdf } from '@sichos-kodesh/catalog';
+import catalog from '../catalog/data';
 import { downloadPdf } from '../download/download';
 import { BottomAudioPlayer } from '../components/BottomAudioPlayer';
-
-interface Props {
-  entry: CatalogEntry;
-  pdf: CatalogPdf;
-  onBack: () => void;
-}
+import type { PdfViewerScreenProps } from '../navigation/types';
 
 type LoadState = { status: 'downloading'; percent: number } | { status: 'ready'; path: string } | { status: 'error'; message: string };
 
@@ -21,16 +16,21 @@ type LoadState = { status: 'downloading'; percent: number } | { status: 'ready';
  * same `downloadPdf` (services/media-proxy, resourceKey-aware) every other
  * PDF flow uses, then hands the resulting local file to react-native-pdf -
  * one download pipeline, not a second one via the library's own fetcher.
- * Callers should mount this with `key={pdf.driveFileId}` so switching to a
- * different PDF remounts fresh instead of needing this effect to reset
- * state back to "downloading" itself.
  */
-export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
+export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
+  const { driveFileId, resourceKey, label, occasionId, hasAudio } = route.params;
   const [state, setState] = useState<LoadState>({ status: 'downloading', percent: 0 });
+
+  // Resolve audio tracks for the occasion from catalog (needed by BottomAudioPlayer).
+  const audioTracks = hasAudio
+    ? Object.values(catalog)
+        .flat()
+        .find((e) => e.occasionId === occasionId)?.audio ?? []
+    : [];
 
   useEffect(() => {
     let cancelled = false;
-    downloadPdf(pdf.driveFileId, pdf.resourceKey, ({ received, total }) => {
+    downloadPdf(driveFileId, resourceKey ?? undefined, ({ received, total }) => {
       if (!cancelled) setState({ status: 'downloading', percent: total > 0 ? Math.round((received / total) * 100) : 0 });
     })
       .then((path) => {
@@ -42,17 +42,15 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [pdf.driveFileId, pdf.resourceKey]);
-
-  const hasAudio = entry.audio.length > 0;
+  }, [driveFileId, resourceKey]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <Pressable onPress={onBack} style={styles.header}>
+      <Pressable onPress={() => navigation.goBack()} style={styles.header}>
         <Text style={styles.back}>{'< back'}</Text>
       </Pressable>
       <Text style={styles.title} numberOfLines={2}>
-        {pdf.label}
+        {label}
       </Text>
 
       {state.status === 'downloading' && <Text style={styles.status}>Downloading... {state.percent}%</Text>}
@@ -60,12 +58,12 @@ export function PdfViewerScreen({ entry, pdf, onBack }: Props) {
       {state.status === 'ready' && (
         <Pdf
           source={{ uri: `file://${state.path}` }}
-          style={hasAudio ? [styles.pdf, styles.pdfWithPlayer] : styles.pdf}
+          style={audioTracks.length > 0 ? [styles.pdf, styles.pdfWithPlayer] : styles.pdf}
           onError={(error) => setState({ status: 'error', message: String(error) })}
         />
       )}
 
-      {hasAudio && <BottomAudioPlayer audio={entry.audio} />}
+      {audioTracks.length > 0 && <BottomAudioPlayer audio={audioTracks} />}
     </SafeAreaView>
   );
 }

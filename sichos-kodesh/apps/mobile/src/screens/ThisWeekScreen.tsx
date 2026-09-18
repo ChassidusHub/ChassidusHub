@@ -1,28 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
-import type { CatalogPdf, WeekOccasion } from '@sichos-kodesh/catalog';
+import type { WeekOccasion } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
-import { PdfViewerScreen } from './PdfViewerScreen';
-
-interface Props {
-  sourceYear: number;
-  onBack: () => void;
-}
+import type { ThisWeekScreenProps } from '../navigation/types';
 
 function Separator() {
   return <View style={styles.separator} />;
 }
 
-export function ThisWeekScreen({ sourceYear, onBack }: Props) {
+export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
+  const { sourceYear } = route.params;
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
   const [selected, setSelected] = useState<WeekOccasion | null>(null);
-  const [viewingPdf, setViewingPdf] = useState<CatalogPdf | null>(null);
-
-  if (selected && viewingPdf) {
-    return <PdfViewerScreen key={viewingPdf.driveFileId} entry={selected.entry} pdf={viewingPdf} onBack={() => setViewingPdf(null)} />;
-  }
 
   if (selected) {
     return (
@@ -33,7 +24,19 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
           </Pressable>
           <Text style={styles.title}>{selected.entry.occasionLabel}</Text>
           <Text style={styles.subtitle}>{selected.gregorianDate}</Text>
-          <OccasionDetail key={selected.entry.occasionId} entry={selected.entry} onOpenPdf={setViewingPdf} />
+          <OccasionDetail
+            key={selected.entry.occasionId}
+            entry={selected.entry}
+            onOpenPdf={(pdf) =>
+              navigation.navigate('PdfViewer', {
+                occasionId: selected.entry.occasionId,
+                driveFileId: pdf.driveFileId,
+                resourceKey: pdf.resourceKey ?? null,
+                label: pdf.label,
+                hasAudio: selected.entry.audio.length > 0,
+              })
+            }
+          />
         </ScrollView>
       </SafeAreaView>
     );
@@ -42,7 +45,7 @@ export function ThisWeekScreen({ sourceYear, onBack }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Pressable onPress={onBack}>
+        <Pressable onPress={() => navigation.goBack()}>
           <Text style={styles.back}>{'< change year'}</Text>
         </Pressable>
         <Text style={styles.title}>This week</Text>

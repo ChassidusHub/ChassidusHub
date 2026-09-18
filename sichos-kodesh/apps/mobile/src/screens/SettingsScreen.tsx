@@ -2,10 +2,7 @@ import React from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text } from 'react-native';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { useEditionPreference } from '../settings/editionPreference';
-
-interface Props {
-  onBack: () => void;
-}
+import type { SettingsScreenProps } from '../navigation/types';
 
 const OPTIONS: Array<{ value: PdfEdition | null; label: string }> = [
   { value: null, label: 'No preference' },
@@ -14,13 +11,13 @@ const OPTIONS: Array<{ value: PdfEdition | null; label: string }> = [
   { value: 'torasMenachem', label: 'Toras Menachem' },
 ];
 
-export function SettingsScreen({ onBack }: Props) {
+export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [preference, setPreference] = useEditionPreference();
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable onPress={onBack}>
+        <Pressable onPress={() => navigation.goBack()}>
           <Text style={styles.back}>{'< back'}</Text>
         </Pressable>
         <Text style={styles.title}>Settings</Text>

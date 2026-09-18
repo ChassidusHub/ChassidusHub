@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 import { mafteiachMonthName } from '@sichos-kodesh/catalog';
-import type { CatalogEntry, CatalogPdf } from '@sichos-kodesh/catalog';
+import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
-import { PdfViewerScreen } from './PdfViewerScreen';
-
-interface Props {
-  hebrewYear: number;
-  onBack: () => void;
-}
+import type { YearBrowserScreenProps } from '../navigation/types';
 
 interface MonthSection {
   title: string;
@@ -39,16 +34,12 @@ function groupByMonth(entries: CatalogEntry[]): MonthSection[] {
  * alignment with the current Hebrew year, so there's no "this week" to
  * compute here, only "what does this year actually have."
  */
-export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
+export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps) {
+  const { hebrewYear } = route.params;
   // Only occasions with something real to download - an empty entry (mafteiach
   // indexed the occasion but nothing was resolved for it) is not worth a dead-end row.
   const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
   const [selected, setSelected] = useState<CatalogEntry | null>(null);
-  const [viewingPdf, setViewingPdf] = useState<CatalogPdf | null>(null);
-
-  if (selected && viewingPdf) {
-    return <PdfViewerScreen key={viewingPdf.driveFileId} entry={selected} pdf={viewingPdf} onBack={() => setViewingPdf(null)} />;
-  }
 
   if (selected) {
     return (
@@ -59,7 +50,19 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
           </Pressable>
           <Text style={styles.title}>{selected.occasionLabel}</Text>
           <Text style={styles.subtitle}>{selected.hebrewDate}</Text>
-          <OccasionDetail key={selected.occasionId} entry={selected} onOpenPdf={setViewingPdf} />
+          <OccasionDetail
+            key={selected.occasionId}
+            entry={selected}
+            onOpenPdf={(pdf) =>
+              navigation.navigate('PdfViewer', {
+                occasionId: selected.occasionId,
+                driveFileId: pdf.driveFileId,
+                resourceKey: pdf.resourceKey ?? null,
+                label: pdf.label,
+                hasAudio: selected.audio.length > 0,
+              })
+            }
+          />
         </ScrollView>
       </SafeAreaView>
     );
@@ -70,7 +73,7 @@ export function YearBrowserScreen({ hebrewYear, onBack }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Pressable onPress={onBack}>
+        <Pressable onPress={() => navigation.goBack()}>
           <Text style={styles.back}>{'< change year'}</Text>
         </Pressable>
         <Text style={styles.title}>Hebrew year {hebrewYear}</Text>
