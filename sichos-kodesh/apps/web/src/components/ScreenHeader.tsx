@@ -1,4 +1,3 @@
-import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { BackLink } from './BackLink';
@@ -33,27 +32,11 @@ interface Props {
 export function ScreenHeader({ to, title, className }: Props) {
   const { t, language } = useTranslation();
   const Chevron = language === 'he' ? ChevronRight : ChevronLeft;
-  const titleRef = useRef<HTMLSpanElement>(null);
-  const [overflowing, setOverflowing] = useState(false);
-
-  useLayoutEffect(() => {
-    function measure() {
-      const el = titleRef.current;
-      if (!el) return;
-      setOverflowing(el.scrollWidth > el.clientWidth);
-    }
-    const el = titleRef.current;
-    if (!el) return;
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [title]);
 
   return (
-    <div className={[className ? `screen-header ${className}` : 'screen-header', overflowing ? 'screen-header-overflowing' : ''].filter(Boolean).join(' ')}>
+    <div className={['screen-header', className].filter(Boolean).join(' ')}>
       <BackLink to={to} />
-      <span ref={titleRef} className="screen-header-title">
+      <span className="screen-header-title">
         {title}
       </span>
       <span className="back-link screen-header-spacer" aria-hidden="true">
