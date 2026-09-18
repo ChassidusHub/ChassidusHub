@@ -39,10 +39,15 @@ npm run lint -w @sichos-kodesh/mobile
 echo "▶ Building debug APK (x86_64 only to stay within runner disk limits)..."
 cd "$ANDROID_DIR"
 ./gradlew assembleDebug -Pandroid.injected.build.abi=x86_64 --stacktrace 2>&1 | tee "$ARTIFACTS_DIR/gradle-build.log"
-APK="$ANDROID_DIR/app/build/outputs/apk/debug/app-debug.apk"
 
-if [[ ! -f "$APK" ]]; then
-  echo "✗ APK not found at $APK after build." >&2
+# Locate the APK dynamically: with ABI injection the file may be at
+# .../apk/debug/app-debug.apk or .../apk/debug/<abi>/app-<abi>-debug.apk
+APK="$(find "$ANDROID_DIR/app/build/outputs/apk/debug" -name "*.apk" 2>/dev/null | head -1)"
+
+if [[ -z "$APK" ]]; then
+  echo "✗ No APK found under $ANDROID_DIR/app/build/outputs/apk/debug after build." >&2
+  echo "  Contents of outputs/apk:" >&2
+  find "$ANDROID_DIR/app/build/outputs/apk" 2>/dev/null || echo "  (directory missing)" >&2
   exit 1
 fi
 
