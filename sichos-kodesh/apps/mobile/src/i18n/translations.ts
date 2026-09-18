@@ -217,7 +217,7 @@ const he: typeof en = {
   partialKviusMatchesHelp: 'לא קביעות מלאה, אך תאריכי השבוע הזה יוצאים באותה צורה.',
   specialAnniversariesHeader: 'אירועים עגולים',
   specialAnniversariesHelp: 'שנים עם ציון עגול שיש בהן תוכן מתועד לשבוע זה.',
-  specialAnniversaryLabel: (n: number) => `${SPECIAL_ANNIVERSARY_WORDS_HE[n]} שנה`,
+  specialAnniversaryLabel: (n: number) => `${SPECIAL_ANNIVERSARY_WORDS_HE[n] ?? n} שנה`,
   browseHelp: 'כל שנה עם תוכן מתועד - עיינו בחופשיות, ללא צורך בהתאמת קביעות.',
   changeYear: 'החלפת שנה',
   thisWeek: 'השבוע',
