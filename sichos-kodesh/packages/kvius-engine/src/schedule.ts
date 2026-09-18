@@ -29,7 +29,7 @@ export function buildWeeklySchedule(hebrewYear: number, il: boolean): WeeklyOcca
   const sedra = getYearSedra(hebrewYear, il);
   const sedraArray = sedra.getSedraArray();
   const firstSaturday = sedra.getFirstSaturday();
-  return sedraArray.map((entry, weekIndex) => {
+  return sedraArray.map((entry: string | number, weekIndex: number) => {
     const hdate = new HDate(firstSaturday + weekIndex * 7);
     const isHoliday = typeof entry === 'string';
     // Index is guaranteed in-range by Sedra.getSedraArray()'s contract (a valid 0-based parsha index).

@@ -3,19 +3,17 @@ import { Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
 import Pdf from 'react-native-pdf';
 import catalog from '../catalog/data';
 import { downloadPdf } from '../download/download';
-import { BottomAudioPlayer } from '../components/BottomAudioPlayer';
 import type { PdfViewerScreenProps } from '../navigation/types';
 
 type LoadState = { status: 'downloading'; percent: number } | { status: 'ready'; path: string } | { status: 'error'; message: string };
 
 /**
- * Renders a PDF's pages directly in the app (via react-native-pdf) instead
- * of handing off to a separate PDF viewer app - so an occasion's own
- * recording (via BottomAudioPlayer) can keep playing in a persistent bar
- * underneath while its pages are scrolled through. Downloads through the
- * same `downloadPdf` (services/media-proxy, resourceKey-aware) every other
- * PDF flow uses, then hands the resulting local file to react-native-pdf -
- * one download pipeline, not a second one via the library's own fetcher.
+ * Renders a PDF's pages directly in the app (via react-native-pdf).
+ * Audio playback is handled by the global PlayerProvider/GlobalPlayerBar
+ * that persists at the app root - no need for a screen-local BottomAudioPlayer.
+ * The audio queue is loaded when the user presses Play in OccasionDetail before
+ * navigating here; if they navigate here directly, GlobalPlayerBar shows
+ * whatever is currently queued in the global player.
  */
 export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const { driveFileId, resourceKey, label, hebrewYear, occasionId } = route.params;
@@ -62,8 +60,6 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
           onError={(error) => setState({ status: 'error', message: String(error) })}
         />
       )}
-
-      {audioTracks.length > 0 && <BottomAudioPlayer audio={audioTracks} />}
     </SafeAreaView>
   );
 }

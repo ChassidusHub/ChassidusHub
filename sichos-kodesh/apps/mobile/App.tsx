@@ -11,6 +11,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DownloadProvider } from './src/download/DownloadProvider';
 import { LanguageProvider } from './src/i18n/LanguageProvider';
+import { PlayerProvider } from './src/player/PlayerProvider';
+import { GlobalPlayerBar } from './src/components/GlobalPlayerBar';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 function App() {
@@ -21,9 +23,12 @@ function App() {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <LanguageProvider>
         <DownloadProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
+          <PlayerProvider>
+            <NavigationContainer>
+              <RootNavigator />
+            </NavigationContainer>
+            <GlobalPlayerBar />
+          </PlayerProvider>
         </DownloadProvider>
       </LanguageProvider>
     </SafeAreaProvider>
