@@ -1,13 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { I18nManager, StyleSheet, View } from 'react-native';
+import { isRtlLanguage } from './useTranslation';
 import { LanguageContext } from './languageContext';
 import { readStoredLanguage, writeStoredLanguage } from './languageStorage';
 import type { Language } from './translations';
-
-function isRtlLanguage(language: Language): boolean {
-  return language === 'he';
-}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');

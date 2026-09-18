@@ -1,6 +1,6 @@
 import React, { useDeferredValue, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { searchOccasions } from '@sichos-kodesh/app-core';
+import { EMPTY_FILTERS, searchOccasions } from '@sichos-kodesh/app-core';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { useTranslation } from '../i18n/useTranslation';
@@ -26,7 +26,7 @@ export function SearchScreen({ navigation }: SearchScreenProps) {
   const { t, isRtl } = useTranslation();
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
-  const results = useMemo(() => searchOccasions(catalog, { query: deferredQuery, hebrewYear: null, hdateMonth: null, day: null, parsha: null, specialDay: null, types: [] }), [deferredQuery]);
+  const results = useMemo(() => searchOccasions(catalog, { ...EMPTY_FILTERS, query: deferredQuery }), [deferredQuery]);
   const totalResults = useMemo(() => results.reduce((count, group) => count + group.entries.length, 0), [results]);
   const trimmedQuery = query.trim();
 

@@ -1,3 +1,4 @@
+export * from './search/cholHamoedHebrew.js';
 export * from './search/language.js';
 export * from './search/parseSmartQuery.js';
 export * from './search/parshaOptions.js';

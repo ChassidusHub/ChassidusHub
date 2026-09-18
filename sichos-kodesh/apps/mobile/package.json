@@ -5,7 +5,7 @@
   "scripts": {
     "preandroid": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "android": "react-native run-android",
-    "preios": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "preios": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "prestart": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",

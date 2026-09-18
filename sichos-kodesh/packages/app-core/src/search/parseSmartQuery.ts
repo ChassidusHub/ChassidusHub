@@ -1,5 +1,6 @@
 import { Locale, gematriyaStrToNum, parshiot } from '@hebcal/core';
 import { CHAG_CATEGORIES, MAFTEIACH_MONTH_OPTIONS } from '@sichos-kodesh/catalog';
+import { CHOL_HAMOED_HEBREW } from './cholHamoedHebrew.js';
 import { normalize } from './searchOccasions.js';
 
 export interface DetectedFilters {
@@ -16,12 +17,6 @@ export interface SmartQueryResult {
   /** What's left of the query after every detected phrase/year is removed - what Fuse.js should still fuzzy-match against occasion labels. Empty once the whole query was consumed by detected filters. */
   remainingText: string;
 }
-
-/** hebcal's own locale data has no entry for these two - see parshaOptions.ts's own copy of this same table. */
-const CHOL_HAMOED_HEBREW: Partial<Record<string, string>> = {
-  'Chol HaMoed Sukkot': 'חול המועד סוכות',
-  'Chol HaMoed Pesach': 'חול המועד פסח',
-};
 
 interface PhraseFilter {
   normalized: string;
