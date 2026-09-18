@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "build": "tsc -b && vite build",
-    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "typecheck": "tsc -b --noEmit",
     "lint": "oxlint",
     "preview": "vite preview",
@@ -23,7 +23,8 @@
     "pdfjs-dist": "^6.3.289",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-router-dom": "^7.18.3"
+    "react-router-dom": "^7.18.3",
+    "@sichos-kodesh/app-core": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

@@ -9,6 +9,7 @@ import { YearBrowserScreen } from '../screens/YearBrowserScreen';
 import { PdfViewerScreen } from '../screens/PdfViewerScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
+import { SearchScreen } from '../screens/SearchScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -32,7 +33,7 @@ export function RootNavigator() {
       <Stack.Screen name="Farbrengen" component={PlaceholderScreen} />
       <Stack.Screen name="Recordings" component={PlaceholderScreen} />
       <Stack.Screen name="Category" component={PlaceholderScreen} />
-      <Stack.Screen name="Search" component={PlaceholderScreen} />
+      <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="Downloaded" component={PlaceholderScreen} />
       <Stack.Screen name="DownloadSettings" component={PlaceholderScreen} />
       <Stack.Screen name="About" component={PlaceholderScreen} />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 import { mafteiachMonthName } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
@@ -29,11 +29,16 @@ function groupByMonth(entries: CatalogEntry[]): MonthSection[] {
 }
 
 export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps) {
-  const { hebrewYear } = route.params;
-  const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter(
-    (e) => e.audio.length > 0 || e.pdfs.length > 0,
+  const { hebrewYear, initialOccasionId } = route.params;
+  const entries: CatalogEntry[] = useMemo(
+    () => (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0),
+    [hebrewYear],
   );
   const [selected, setSelected] = useState<CatalogEntry | null>(null);
+
+  useEffect(() => {
+    setSelected(initialOccasionId != null ? (entries.find((entry) => entry.occasionId === initialOccasionId) ?? null) : null);
+  }, [entries, initialOccasionId]);
 
   if (selected) {
     return (

@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from '../i18n/useTranslation';
 import type { RootStackParamList } from '../navigation/types';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
@@ -38,6 +39,7 @@ const ROUTE_LABELS: Record<keyof RootStackParamList, string> = {
 export function PlaceholderScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute();
+  const { t } = useTranslation();
   const label = ROUTE_LABELS[route.name as keyof RootStackParamList] ?? route.name;
 
   return (
@@ -45,12 +47,12 @@ export function PlaceholderScreen() {
       <ScreenHeader
         title={label}
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
-        backLabel="< Back"
+        backLabel={t.back}
       />
       <View style={styles.body}>
         <EmptyState
-          title="Not yet implemented"
-          body={`${label} is part of the mobile/web parity migration and has not been built yet. Coming in a future phase.`}
+          title={t.notYetImplementedTitle}
+          body={t.notYetImplementedBody(label)}
         />
       </View>
     </Screen>

@@ -9,6 +9,7 @@ import React from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LanguageProvider } from './src/i18n/LanguageProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 function App() {
@@ -17,9 +18,11 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <LanguageProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }
