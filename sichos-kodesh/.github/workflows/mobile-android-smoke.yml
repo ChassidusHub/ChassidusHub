@@ -21,6 +21,16 @@ jobs:
     timeout-minutes: 60
 
     steps:
+      - name: Free up disk space
+        # GitHub-hosted ubuntu runners ship with ~14 GB of free disk.
+        # The NDK C++ build + emulator image together can exceed that limit.
+        # Removing large pre-installed components that are not used here
+        # reclaims several GB before the build starts.
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/powershell /usr/share/swift
+          df -h
+
       - name: Checkout
         uses: actions/checkout@v4
 

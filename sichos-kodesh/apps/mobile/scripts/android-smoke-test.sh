@@ -36,9 +36,9 @@ npm run test -w @sichos-kodesh/mobile
 npm run typecheck -w @sichos-kodesh/mobile
 npm run lint -w @sichos-kodesh/mobile
 
-echo "▶ Building debug APK..."
+echo "▶ Building debug APK (x86_64 only to stay within runner disk limits)..."
 cd "$ANDROID_DIR"
-./gradlew assembleDebug --stacktrace 2>&1 | tee "$ARTIFACTS_DIR/gradle-build.log"
+./gradlew assembleDebug -Pandroid.injected.build.abi=x86_64 --stacktrace 2>&1 | tee "$ARTIFACTS_DIR/gradle-build.log"
 APK="$ANDROID_DIR/app/build/outputs/apk/debug/app-debug.apk"
 
 if [[ ! -f "$APK" ]]; then

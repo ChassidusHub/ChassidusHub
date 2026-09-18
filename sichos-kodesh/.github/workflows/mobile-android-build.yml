@@ -25,6 +25,12 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/powershell /usr/share/swift
+          df -h
+
       - name: Checkout
         uses: actions/checkout@v4
 
