@@ -1,20 +1,17 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
-import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from '@sichos-kodesh/catalog';
+import React, { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import type { CatalogEntry, CatalogPdf, PdfSection } from '@sichos-kodesh/catalog';
 import { PDF_SECTION_ORDER, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
-import { loadCachedSound } from '../audio/loadCachedSound';
-import type { LoadedSound } from '../audio/playLocalFile';
 import { useDownload } from '../download/useDownload';
 import { useEditionPreference } from '../settings/editionPreference';
 import { useTranslation } from '../i18n/useTranslation';
+import { usePlayer } from '../player/usePlayer';
 import { AppButton } from '../ui/AppButton';
 import { AppText } from '../ui/AppText';
 import { Card } from '../ui/Card';
 import { SectionLabel } from '../ui/SectionLabel';
 import { spacing } from '../ui/theme';
-
-type AudioState = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; sound: LoadedSound; playing: boolean };
 
 interface Props {
   entry: CatalogEntry;
@@ -32,37 +29,18 @@ function groupPdfsBySection(pdfs: CatalogPdf[]): Array<[PdfSection, CatalogPdf[]
 }
 
 export function OccasionDetail({ entry, onOpenPdf }: Props) {
-  const [audioStates, setAudioStates] = useState<Record<string, AudioState>>({});
   const [editionPreference] = useEditionPreference();
   const { t } = useTranslation();
   const { downloadAudio, downloadOccasion, downloadPdf, targetStates } = useDownload();
+  const { chapters, currentIndex, isPlaying, isLoading, playOccasion, skipTo, togglePlay } = usePlayer();
   const allTargets = useMemo(() => listDownloadTargets([entry], ALL_CONTENT_TYPES), [entry]);
   const pdfGroups = groupPdfsBySection(entry.pdfs);
   const anyTargets = allTargets.length > 0;
-
-  async function handlePlayAudio(audio: CatalogAudio) {
-    setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'loading' } }));
-    try {
-      const sound = await loadCachedSound(audio.workerFilename);
-      sound.play();
-      setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'ready', sound, playing: true } }));
-    } catch (error) {
-      setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'idle' } }));
-      Alert.alert(t.audioLoadError, String(error));
-    }
-  }
-
-  function togglePlayback(audio: CatalogAudio) {
-    const state = audioStates[audio.workerFilename];
-    if (!state || state.status !== 'ready') return;
-    if (state.playing) {
-      state.sound.pause();
-      setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { ...state, playing: false } }));
-    } else {
-      state.sound.play();
-      setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { ...state, playing: true } }));
-    }
-  }
+  const activeChapter = currentIndex != null ? chapters[currentIndex] : chapters[0];
+  const isThisOccasionLoaded =
+    chapters.length > 0 &&
+    chapters[0]?.occasionId === entry.occasionId &&
+    chapters[0]?.hebrewYear === entry.hebrewYear;
 
   function renderDownloadButton(stateKey: string, onPress: () => void) {
     const state = targetStates[stateKey];
@@ -85,19 +63,42 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
         <View style={styles.category}>
           <SectionLabel label={t.recordings} />
           {entry.audio.map((audio, index) => {
-            const state = audioStates[audio.workerFilename] ?? { status: 'idle' as const };
             const chapterLabel = audio.chapterName ?? (entry.audio.length > 1 ? t.track(index + 1) : null);
             const downloadTarget = allTargets.find(
               (target) => target.kind === 'audio' && target.workerFilename === audio.workerFilename && target.chapterIndex === index,
             );
+            const isThisChapter =
+              isThisOccasionLoaded &&
+              activeChapter?.workerFilename === audio.workerFilename;
             return (
               <Card key={audio.workerFilename} style={styles.card}>
                 {chapterLabel ? <AppText color="secondary" style={styles.itemLabel}>{chapterLabel}</AppText> : null}
                 <View style={styles.actionRow}>
-                  {state.status === 'idle' && <AppButton label={t.play} onPress={() => { handlePlayAudio(audio); }} style={styles.actionButton} />}
-                  {state.status === 'loading' && <AppButton label={t.loading} variant="ghost" style={styles.actionButton} />}
-                  {state.status === 'ready' && (
-                    <AppButton label={state.playing ? t.pause : t.play} onPress={() => togglePlayback(audio)} style={styles.actionButton} />
+                  {isLoading && isThisChapter ? (
+                    <AppButton label={t.loading} variant="ghost" style={styles.actionButton} />
+                  ) : isThisChapter ? (
+                    <AppButton
+                      label={isPlaying ? t.pause : t.play}
+                      onPress={() => { togglePlay().catch(() => undefined); }}
+                      style={styles.actionButton}
+                    />
+                  ) : (
+                    <AppButton
+                      label={t.play}
+                      onPress={() => {
+                        (async () => {
+                          if (isThisOccasionLoaded) {
+                            await skipTo(index);
+                            return;
+                          }
+                          await playOccasion(entry);
+                          if (index > 0) {
+                            await skipTo(index);
+                          }
+                        })().catch(() => undefined);
+                      }}
+                      style={styles.actionButton}
+                    />
                   )}
                   {downloadTarget ? (
                     <View style={styles.actionButton}>{renderDownloadButton(downloadTarget.key, () => { downloadAudio(entry, audio, index); })}</View>

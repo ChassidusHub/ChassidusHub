@@ -24,8 +24,13 @@ async function downloadTo(url: string, localFilename: string, onProgress?: (p: D
 }
 
 /** Downloads one occasion's audio via services/media-proxy's /jem-audio/:filename route - never a direct CloudFront URL. */
+export function audioUrl(workerFilename: string): string {
+  return `${MEDIA_PROXY_BASE_URL}/jem-audio/${workerFilename}`;
+}
+
+/** Downloads one occasion's audio to the local document directory and returns its absolute path. Uses the same proxy URL as audioUrl(). */
 export function downloadAudio(workerFilename: string, onProgress?: (p: DownloadProgress) => void): Promise<string> {
-  return downloadTo(`${MEDIA_PROXY_BASE_URL}/jem-audio/${workerFilename}`, workerFilename, onProgress);
+  return downloadTo(audioUrl(workerFilename), workerFilename, onProgress);
 }
 
 /** Downloads one PDF via services/media-proxy's /drive/:fileId route - never a direct drive.google.com URL. `resourceKey` is required for links shared before Google's 2021 resource-key change (see CatalogPdf.resourceKey) - omitted, the file 404s/redirects to a Google sign-in page even though it's genuinely public. */

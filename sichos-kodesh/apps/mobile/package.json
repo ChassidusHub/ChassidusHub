@@ -13,7 +13,10 @@
     "pretest": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "test": "jest",
     "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "android:assembleDebug": "cd android && ./gradlew assembleDebug --stacktrace",
+    "android:smoke": "bash scripts/android-smoke-test.sh",
+    "android:smoke:buildonly": "bash scripts/android-smoke-test.sh --build-only"
   },
   "dependencies": {
     "@hebcal/core": "^6.9.2",
@@ -21,6 +24,7 @@
     "@react-native/new-app-screen": "0.87.1",
     "@react-navigation/native": "^7.4.1",
     "@react-navigation/native-stack": "^7.19.2",
+    "@sichos-kodesh/app-core": "^0.1.0",
     "@sichos-kodesh/catalog": "^0.1.0",
     "@sichos-kodesh/kvius-engine": "^0.1.0",
     "react": "19.2.3",
@@ -31,7 +35,7 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.28.0",
     "react-native-sound": "^0.11.2",
-    "@sichos-kodesh/app-core": "^0.1.0"
+    "react-native-track-player": "^4.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
