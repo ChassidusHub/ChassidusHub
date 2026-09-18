@@ -12,7 +12,22 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(() => Promise.resolve()),
 }));
 
-// NavigationContainer needs an event-emitter shim in tests.
+jest.mock('react-native-blob-util', () => ({
+  fs: {
+    dirs: { DocumentDir: '/tmp' },
+    exists: jest.fn(() => Promise.resolve(false)),
+    ls: jest.fn(() => Promise.resolve([])),
+    stat: jest.fn(() => Promise.resolve({ size: '0' })),
+    unlink: jest.fn(() => Promise.resolve()),
+    mv: jest.fn(() => Promise.resolve()),
+  },
+  config: jest.fn(() => ({
+    fetch: jest.fn(() => ({
+      progress: jest.fn(() => Promise.resolve({ path: () => '/tmp/file' })),
+    })),
+  })),
+}));
+
 jest.mock('@react-navigation/native', () => {
   const actual = jest.requireActual('@react-navigation/native');
   return {

@@ -94,6 +94,18 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
             />
           </Card>
         </View>
+
+        <SectionLabel label={t.downloadsLink} />
+        <View style={styles.cardWrap}>
+          <Card style={styles.cardReset}>
+            <ListRow
+              label={t.downloadSettingsTitle}
+              sublabel={t.downloadForegroundOnlyHelp}
+              right={<AppText color="muted">›</AppText>}
+              onPress={() => navigation.navigate('DownloadSettings')}
+            />
+          </Card>
+        </View>
       </ScrollView>
     </Screen>
   );

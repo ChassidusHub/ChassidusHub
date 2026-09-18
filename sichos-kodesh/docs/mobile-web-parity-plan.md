@@ -85,6 +85,14 @@ Android emulator / device testing was not available in this sandbox.
 
 ---
 
+## Phase 2B — Download UI/state MVP groundwork (completed)
+
+- `apps/mobile` now has a real foreground download provider backed by AsyncStorage + `react-native-blob-util`, with shared target planning from `@sichos-kodesh/app-core`.
+- `Downloaded` and `DownloadSettings` are now real mobile screens, with persisted download preferences and app-owned file cleanup.
+- This is still intentionally limited to foreground / resume-on-open groundwork. True Android background or resumable native downloading remains a later phase and should reuse the provider, settings, and target-planning contracts introduced here.
+
+---
+
 ## Next recommended phases
 
 ### Phase 2A — i18n / settings / search parity (recommended next)
