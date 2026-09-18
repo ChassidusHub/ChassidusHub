@@ -1,0 +1,85 @@
+name: Mobile Android Emulator Smoke Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/mobile-android-smoke.yml"
+      - ".github/workflows/mobile-android-build.yml"
+
+jobs:
+  android-emulator-smoke:
+    name: Android emulator smoke
+    # ubuntu-24.04 GitHub-hosted runners support nested KVM (required by
+    # android-emulator-runner). The "Enable KVM" step below configures
+    # device permissions before the emulator starts.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Free up disk space
+        # GitHub-hosted ubuntu runners ship with ~14 GB of free disk.
+        # The NDK C++ build + emulator image together can exceed that limit.
+        # Removing large pre-installed components that are not used here
+        # reclaims several GB before the build starts.
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/powershell /usr/share/swift
+          df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Android emulator smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            chmod +x apps/mobile/scripts/android-smoke-test.sh
+            apps/mobile/scripts/android-smoke-test.sh
+        # In this workflow an emulator is always provided by the action above.
+        # If the script exits 2 (no device found), that means the emulator
+        # action failed silently — treat it as a job failure, not a skip.
+        # The script exits 2 only when adb sees no connected device; that
+        # must not be masked here.
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-smoke-artifacts
+          path: |
+            apps/mobile/smoke-artifacts/**
+            apps/mobile/android/app/build/reports/**
+            apps/mobile/android/build/reports/**

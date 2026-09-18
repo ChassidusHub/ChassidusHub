@@ -106,11 +106,59 @@ via their built `dist/` output, not source — `start`/`android`/`ios`/
 `test`/`typecheck` all build both first automatically (`pre<script>` npm
 hooks), so no separate manual build step is needed.
 
+### Android agent testing / playground
+
+There are three ways to build and verify the Android app:
+
+| Path | Command | Device required | Used in |
+|---|---|---|---|
+| Build-only | `npm run android:smoke:buildonly -w @sichos-kodesh/mobile` | No | Any VM / local |
+| Local smoke | `npm run android:smoke -w @sichos-kodesh/mobile` | Yes (exit 2 if none) | Local dev machine |
+| CI emulator smoke | `mobile-android-smoke.yml` GitHub Actions workflow | Provided by CI | GitHub Actions |
+
+**Important for coding agents:** Local coding-agent VMs typically lack
+nested KVM (nested virtualization), so `npm run android:smoke` will exit
+with code `2` ("no device connected — skipped"). That is a normal local
+skip, not a test pass. It does **not** count as runtime verification.
+
+The required runtime verification path is the GitHub Actions workflow
+`mobile-android-smoke.yml`. It starts a real Android emulator via
+`reactivecircus/android-emulator-runner`, installs the APK, launches the
+app, collects logcat, and uploads artifacts. Exit code `2` from the smoke
+script inside that workflow is treated as a **job failure** (not a skip)
+because the workflow's entire purpose is to provide an emulator.
+
+The workflow runs automatically on PRs that touch `apps/mobile/**`,
+`packages/**`, `package.json`, `package-lock.json`, or the workflow
+files themselves. It can also be triggered manually:
+
+```sh
+gh workflow run mobile-android-smoke.yml
+```
+
+> **Note:** GitHub only exposes `workflow_dispatch` for workflow files
+> that exist on the repository's default branch. If `mobile-android-smoke.yml`
+> was added in a feature branch and not yet merged, you may need to merge
+> it first before the manual trigger appears in the GitHub UI.
+
+**Artifacts** from each CI emulator run are uploaded to the
+`mobile-android-smoke-artifacts` artifact bundle and include:
+- `apps/mobile/smoke-artifacts/metro-smoke.log`
+- `apps/mobile/smoke-artifacts/android-smoke-logcat.log`
+- `apps/mobile/smoke-artifacts/android-smoke-screenshot.png`
+- `apps/mobile/smoke-artifacts/gradle-build.log`
+- Gradle build reports from `android/app/build/reports/`
+
 ### Getting an APK
 
-There's no CI for this app. To get a debug APK: `npm run android` with a
-local Android SDK/emulator/device attached. For a release APK without a
-device attached: `cd android && ./gradlew assembleRelease`, output at
+To get a debug APK without a device attached:
+
+```sh
+npm run android:smoke:buildonly -w @sichos-kodesh/mobile
+# APK written to: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+For a release APK: `cd android && ./gradlew assembleRelease`, output at
 `android/app/build/outputs/apk/release/app-release.apk` (this uses the
 same release signing config as the `.aab` build below).
 
