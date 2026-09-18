@@ -54,7 +54,7 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
     Alert.alert(t.clearDownloadsLabel, t.deleteContentLabel, [
       { text: t.back, style: 'cancel' },
       {
-        text: t.deleteOccasionLabel,
+        text: t.deleteContentLabel,
         style: 'destructive',
         onPress: () => {
           clearDownloads().then(() => setItems([]));

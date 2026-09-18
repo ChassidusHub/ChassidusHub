@@ -237,12 +237,12 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    refreshDownloads().then(() => {
-      if (!cancelled) setHydrated(true);
-    });
-    listPendingDownloads().then(async (targets) => {
-      if (cancelled) return;
-      if (targets.length > 0) await enqueueTargets(targets);
+    Promise.all([
+      refreshDownloads(),
+      listPendingDownloads().then(async (targets) => {
+        if (!cancelled && targets.length > 0) await enqueueTargets(targets);
+      }),
+    ]).then(() => {
       if (!cancelled) setHydrated(true);
     });
     return () => {

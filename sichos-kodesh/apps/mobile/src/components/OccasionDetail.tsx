@@ -36,8 +36,9 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
   const [editionPreference] = useEditionPreference();
   const { t } = useTranslation();
   const { downloadAudio, downloadOccasion, downloadPdf, targetStates } = useDownload();
+  const allTargets = useMemo(() => listDownloadTargets([entry], ALL_CONTENT_TYPES), [entry]);
   const pdfGroups = groupPdfsBySection(entry.pdfs);
-  const anyTargets = useMemo(() => listDownloadTargets([entry], ALL_CONTENT_TYPES).length > 0, [entry]);
+  const anyTargets = allTargets.length > 0;
 
   async function handlePlayAudio(audio: CatalogAudio) {
     setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'loading' } }));
@@ -86,7 +87,7 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
           {entry.audio.map((audio, index) => {
             const state = audioStates[audio.workerFilename] ?? { status: 'idle' as const };
             const chapterLabel = audio.chapterName ?? (entry.audio.length > 1 ? t.track(index + 1) : null);
-            const downloadTarget = listDownloadTargets([entry], ALL_CONTENT_TYPES).find(
+            const downloadTarget = allTargets.find(
               (target) => target.kind === 'audio' && target.workerFilename === audio.workerFilename && target.chapterIndex === index,
             );
             return (
@@ -112,7 +113,7 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
         <View style={styles.category} key={section}>
           <SectionLabel label={t.sectionLabels[section]} />
           {sortPdfsByEditionPreference(pdfs, editionPreference).map((pdf) => {
-            const downloadTarget = listDownloadTargets([entry], ALL_CONTENT_TYPES).find(
+            const downloadTarget = allTargets.find(
               (target) => target.kind === 'pdf' && target.driveFileId === pdf.driveFileId,
             );
             return (
