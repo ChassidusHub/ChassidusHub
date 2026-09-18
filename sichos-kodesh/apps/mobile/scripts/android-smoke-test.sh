@@ -38,16 +38,27 @@ npm run lint -w @sichos-kodesh/mobile
 
 echo "▶ Building debug APK (x86_64 only to stay within runner disk limits)..."
 cd "$ANDROID_DIR"
-./gradlew assembleDebug -Pandroid.injected.build.abi=x86_64 --stacktrace 2>&1 | tee "$ARTIFACTS_DIR/gradle-build.log"
+set +o pipefail
+./gradlew assembleDebug -PreactNativeArchitectures=x86_64 2>&1 | tee "$ARTIFACTS_DIR/gradle-build.log"
+GRADLE_RC=${PIPESTATUS[0]}
+set -o pipefail
+if [[ $GRADLE_RC -ne 0 ]]; then
+  echo "✗ Gradle build failed (exit $GRADLE_RC). See $ARTIFACTS_DIR/gradle-build.log" >&2
+  exit "$GRADLE_RC"
+fi
 
-# Locate the APK dynamically: with ABI injection the file may be at
-# .../apk/debug/app-debug.apk or .../apk/debug/<abi>/app-<abi>-debug.apk
-APK="$(find "$ANDROID_DIR/app/build/outputs/apk/debug" -name "*.apk" 2>/dev/null | head -1)"
+# Locate the APK: -PreactNativeArchitectures=x86_64 keeps the standard output path
+# but guard against missing directory so set -e never triggers silently.
+APK_DIR="$ANDROID_DIR/app/build/outputs/apk/debug"
+APK=""
+if [[ -d "$APK_DIR" ]]; then
+  APK="$(find "$APK_DIR" -name "*.apk" -print -quit 2>/dev/null)"
+fi
 
 if [[ -z "$APK" ]]; then
-  echo "✗ No APK found under $ANDROID_DIR/app/build/outputs/apk/debug after build." >&2
-  echo "  Contents of outputs/apk:" >&2
-  find "$ANDROID_DIR/app/build/outputs/apk" 2>/dev/null || echo "  (directory missing)" >&2
+  echo "✗ No APK found under $APK_DIR after build." >&2
+  echo "  Contents of $ANDROID_DIR/app/build/outputs:" >&2
+  find "$ANDROID_DIR/app/build/outputs" -maxdepth 4 -type f 2>/dev/null | head -20 || echo "  (directory missing)" >&2
   exit 1
 fi
 
