@@ -27,7 +27,7 @@ export function YearPickerScreen({ navigation, route }: HomeScreenProps) {
         </Pressable>
         <Pressable
           style={styles.tab}
-          onPress={() => navigation.navigate('BrowseYears', { targetYear })}
+          onPress={() => navigation.navigate('BrowseYears')}
         >
           <Text style={styles.tabText}>Browse any year</Text>
         </Pressable>

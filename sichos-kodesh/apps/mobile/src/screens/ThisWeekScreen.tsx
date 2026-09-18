@@ -29,6 +29,7 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
             entry={selected.entry}
             onOpenPdf={(pdf) =>
               navigation.navigate('PdfViewer', {
+                hebrewYear: selected.entry.hebrewYear,
                 occasionId: selected.entry.occasionId,
                 driveFileId: pdf.driveFileId,
                 resourceKey: pdf.resourceKey ?? null,

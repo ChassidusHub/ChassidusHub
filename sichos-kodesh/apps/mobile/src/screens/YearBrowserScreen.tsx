@@ -55,6 +55,7 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
             entry={selected}
             onOpenPdf={(pdf) =>
               navigation.navigate('PdfViewer', {
+                hebrewYear: selected.hebrewYear,
                 occasionId: selected.occasionId,
                 driveFileId: pdf.driveFileId,
                 resourceKey: pdf.resourceKey ?? null,

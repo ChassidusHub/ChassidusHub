@@ -13,7 +13,7 @@ export type RootStackParamList = {
   KviusYears: { targetYear: number };
 
   /** All indexed years for free browsing */
-  BrowseYears: { targetYear: number };
+  BrowseYears: undefined;
 
   /** "This week" resolved occasions for one kvius-matched source year */
   ThisWeek: { sourceYear: number };
@@ -41,6 +41,7 @@ export type RootStackParamList = {
 
   /** In-app PDF reader */
   PdfViewer: {
+    hebrewYear: number;
     occasionId: number;
     driveFileId: string;
     resourceKey: string | null;

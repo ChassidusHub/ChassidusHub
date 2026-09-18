@@ -18,18 +18,14 @@ type LoadState = { status: 'downloading'; percent: number } | { status: 'ready';
  * one download pipeline, not a second one via the library's own fetcher.
  */
 export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
-  const { driveFileId, resourceKey, label, occasionId, hasAudio } = route.params;
+  const { driveFileId, resourceKey, label, hebrewYear, occasionId, hasAudio } = route.params;
   const [state, setState] = useState<LoadState>({ status: 'downloading', percent: 0 });
 
-  // Resolve audio tracks for the occasion from catalog (needed by BottomAudioPlayer).
+  // Resolve audio tracks directly via the year key — avoids flattening the whole catalog.
   const audioTracks = useMemo(() => {
     if (!hasAudio) return [];
-    return (
-      Object.values(catalog)
-        .flat()
-        .find((e) => e.occasionId === occasionId)?.audio ?? []
-    );
-  }, [occasionId, hasAudio]);
+    return catalog[hebrewYear]?.find((e) => e.occasionId === occasionId)?.audio ?? [];
+  }, [hebrewYear, occasionId, hasAudio]);
 
   useEffect(() => {
     let cancelled = false;
