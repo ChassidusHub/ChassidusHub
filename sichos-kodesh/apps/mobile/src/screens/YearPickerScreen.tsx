@@ -1,55 +1,103 @@
 import React from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { kviusCode } from '@sichos-kodesh/kvius-engine';
 import type { HomeScreenProps } from '../navigation/types';
+import { Screen } from '../ui/Screen';
+import { AppButton } from '../ui/AppButton';
+import { SectionLabel } from '../ui/SectionLabel';
+import { colors, spacing, typography } from '../ui/theme';
 
 export function YearPickerScreen({ navigation }: HomeScreenProps) {
-  // Computed here so it's always fresh on each cold-start, never stale from initialParams.
   const targetYear = currentHebrewYear();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Sichos Kodesh</Text>
-        <Pressable onPress={() => navigation.navigate('Settings')}>
-          <Text style={styles.settingsLink}>⚙</Text>
-        </Pressable>
+    <Screen>
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <Text style={styles.appName}>Sichos Kodesh</Text>
+          <Pressable hitSlop={8} onPress={() => navigation.navigate('Settings')}>
+            <Text style={styles.settingsIcon}>⚙</Text>
+          </Pressable>
+        </View>
+        <Text style={styles.yearBadge}>
+          {targetYear} · kvius {kviusCode(targetYear)}
+        </Text>
       </View>
-      <Text style={styles.subtitle}>
-        Hebrew year {targetYear} (kvius {kviusCode(targetYear)})
-      </Text>
 
-      <View style={styles.tabs}>
-        <Pressable
-          style={styles.tab}
+      <View style={styles.actionsSection}>
+        <AppButton
+          label="Follow Along This Week"
+          variant="primary"
+          style={styles.primaryAction}
           onPress={() => navigation.navigate('KviusYears', { targetYear })}
-        >
-          <Text style={styles.tabText}>Follow along</Text>
-        </Pressable>
-        <Pressable
-          style={styles.tab}
+        />
+        <AppButton
+          label="Browse Any Year"
+          variant="secondary"
+          style={styles.secondaryAction}
           onPress={() => navigation.navigate('BrowseYears')}
-        >
-          <Text style={styles.tabText}>Browse any year</Text>
-        </Pressable>
+        />
       </View>
 
-      <Text style={styles.tabHelp}>
-        Select a tab to find kvius-matched years or browse all indexed years.
-      </Text>
-    </SafeAreaView>
+      <View style={styles.placeholderSection}>
+        <SectionLabel label="Coming soon" />
+        <Pressable
+          style={styles.placeholderRow}
+          onPress={() => navigation.navigate('Search')}
+        >
+          <Text style={styles.placeholderRowText}>🔍 Search</Text>
+          <Text style={styles.placeholderBadge}>Not yet implemented</Text>
+        </Pressable>
+        <Pressable
+          style={styles.placeholderRow}
+          onPress={() => navigation.navigate('Downloaded')}
+        >
+          <Text style={styles.placeholderRowText}>⬇ Downloaded</Text>
+          <Text style={styles.placeholderBadge}>Not yet implemented</Text>
+        </Pressable>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  settingsLink: { fontSize: 20, color: '#888' },
-  title: { fontSize: 22, fontWeight: '600' },
-  subtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
-  tabs: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#ccc', marginBottom: 4 },
-  tab: { marginRight: 20, paddingBottom: 10 },
-  tabText: { fontSize: 15, fontWeight: '600', color: '#3366cc' },
-  tabHelp: { fontSize: 12, color: '#888', marginVertical: 12 },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  appName: { ...typography.titleMedium, color: colors.textDefault },
+  settingsIcon: { fontSize: 20, color: colors.textSecondary },
+  yearBadge: { ...typography.bodySmall, color: colors.textSecondary },
+  actionsSection: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    gap: spacing.md,
+  },
+  primaryAction: { marginBottom: 0 },
+  secondaryAction: {},
+  placeholderSection: {
+    marginTop: spacing.xxl,
+  },
+  placeholderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+    opacity: 0.5,
+  },
+  placeholderRowText: { fontSize: 15, color: colors.textDefault },
+  placeholderBadge: { fontSize: 12, color: colors.textMuted },
 });

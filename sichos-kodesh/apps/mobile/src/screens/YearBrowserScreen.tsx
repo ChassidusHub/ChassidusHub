@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
 import { mafteiachMonthName } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
 import type { YearBrowserScreenProps } from '../navigation/types';
+import { Screen } from '../ui/Screen';
+import { ScreenHeader } from '../ui/ScreenHeader';
+import { ListRow, RowSeparator } from '../ui/ListRow';
+import { SectionLabel } from '../ui/SectionLabel';
+import { EmptyState } from '../ui/EmptyState';
+import { colors, spacing } from '../ui/theme';
 
 interface MonthSection {
   title: string;
   data: CatalogEntry[];
 }
 
-function Separator() {
-  return <View style={styles.separator} />;
-}
-
-/** Entries are already sorted chronologically (see buildCatalog) - grouping consecutive same-month runs is enough. */
 function groupByMonth(entries: CatalogEntry[]): MonthSection[] {
   const sections: MonthSection[] = [];
   for (const entry of entries) {
@@ -27,29 +28,23 @@ function groupByMonth(entries: CatalogEntry[]): MonthSection[] {
   return sections;
 }
 
-/**
- * Browse mode: every entry the catalog has for one Hebrew year, not just
- * the single occasion "this week" auto-resolves to. Doesn't use the
- * kvius engine at all - a browsed year has no guaranteed week/date
- * alignment with the current Hebrew year, so there's no "this week" to
- * compute here, only "what does this year actually have."
- */
 export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps) {
   const { hebrewYear } = route.params;
-  // Only occasions with something real to download - an empty entry (mafteiach
-  // indexed the occasion but nothing was resolved for it) is not worth a dead-end row.
-  const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
+  const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter(
+    (e) => e.audio.length > 0 || e.pdfs.length > 0,
+  );
   const [selected, setSelected] = useState<CatalogEntry | null>(null);
 
   if (selected) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <Pressable onPress={() => setSelected(null)}>
-            <Text style={styles.back}>{'< back to ' + hebrewYear}</Text>
-          </Pressable>
-          <Text style={styles.title}>{selected.occasionLabel}</Text>
-          <Text style={styles.subtitle}>{selected.hebrewDate}</Text>
+      <Screen>
+        <ScreenHeader
+          title={selected.occasionLabel}
+          onBack={() => setSelected(null)}
+          backLabel={`< ${hebrewYear}`}
+        />
+        <ScrollView contentContainerStyle={styles.detailContent}>
+          <Text style={styles.detailDate}>{selected.hebrewDate}</Text>
           <OccasionDetail
             key={selected.occasionId}
             entry={selected}
@@ -64,55 +59,56 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
             }
           />
         </ScrollView>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   const sections = groupByMonth(entries);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.back}>{'< change year'}</Text>
-        </Pressable>
-        <Text style={styles.title}>Hebrew year {hebrewYear}</Text>
-        <Text style={styles.subtitle}>
+    <Screen>
+      <ScreenHeader
+        title={`Hebrew year ${hebrewYear}`}
+        onBack={() => navigation.goBack()}
+        backLabel="< Years"
+      />
+      <View style={styles.meta}>
+        <Text style={styles.metaLine}>
           {entries.length} occasion{entries.length === 1 ? '' : 's'} indexed
         </Text>
       </View>
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => String(item.occasionId)}
-        renderSectionHeader={({ section }) => <Text style={styles.sectionHeader}>{section.title}</Text>}
-        renderItem={({ item }) => (
-          <Pressable style={styles.row} onPress={() => setSelected(item)}>
-            <Text style={styles.rowText}>{item.occasionLabel}</Text>
-            <Text style={styles.rowSubtext}>
-              {item.audio.length > 0 ? 'audio' : ''}
-              {item.audio.length > 0 && item.pdfs.length > 0 ? ' + ' : ''}
-              {item.pdfs.length > 0 ? `${item.pdfs.length} pdf${item.pdfs.length === 1 ? '' : 's'}` : ''}
-            </Text>
-          </Pressable>
-        )}
-        ItemSeparatorComponent={Separator}
-        contentContainerStyle={styles.list}
-        stickySectionHeadersEnabled={false}
-      />
-    </SafeAreaView>
+      {entries.length === 0 ? (
+        <EmptyState title="Nothing indexed" body="No audio or PDFs found for this year." />
+      ) : (
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => String(item.occasionId)}
+          renderSectionHeader={({ section }) => <SectionLabel label={section.title} />}
+          renderItem={({ item }) => (
+            <ListRow
+              label={item.occasionLabel}
+              sublabel={[
+                item.audio.length > 0 ? 'audio' : '',
+                item.pdfs.length > 0 ? `${item.pdfs.length} pdf${item.pdfs.length === 1 ? '' : 's'}` : '',
+              ]
+                .filter(Boolean)
+                .join(' + ')}
+              right={<Text style={styles.chevron}>›</Text>}
+              onPress={() => setSelected(item)}
+            />
+          )}
+          ItemSeparatorComponent={RowSeparator}
+          stickySectionHeadersEnabled={false}
+        />
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 16 },
-  list: { paddingHorizontal: 16 },
-  back: { color: '#3366cc', marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '600' },
-  subtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
-  sectionHeader: { fontSize: 13, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 16, marginBottom: 4 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14 },
-  rowText: { fontSize: 16, flexShrink: 1 },
-  rowSubtext: { fontSize: 13, color: '#888' },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#ccc' },
+  meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
+  metaLine: { fontSize: 14, color: colors.textSecondary },
+  detailContent: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  detailDate: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md },
+  chevron: { fontSize: 18, color: colors.textMuted },
 });

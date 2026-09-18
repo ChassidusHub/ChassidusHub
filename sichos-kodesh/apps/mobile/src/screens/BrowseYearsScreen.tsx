@@ -1,49 +1,39 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text } from 'react-native';
 import { browsableYears } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import type { BrowseYearsScreenProps } from '../navigation/types';
-import { colors, spacing, typography } from '../ui/theme';
+import { colors } from '../ui/theme';
 import { Screen } from '../ui/Screen';
-
-function Separator() {
-  return <View style={styles.separator} />;
-}
+import { ScreenHeader } from '../ui/ScreenHeader';
+import { ListRow, RowSeparator } from '../ui/ListRow';
+import { SectionLabel } from '../ui/SectionLabel';
+import { EmptyState } from '../ui/EmptyState';
 
 export function BrowseYearsScreen({ navigation }: BrowseYearsScreenProps) {
   const allYears = browsableYears(catalog);
 
   return (
     <Screen>
-      <View style={styles.content}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.back}>{'< back'}</Text>
-        </Pressable>
-        <Text style={styles.title}>Browse Any Year</Text>
-        <Text style={styles.help}>Every year with something indexed — explore freely, no kvius match required.</Text>
-      </View>
+      <ScreenHeader title="Browse Any Year" onBack={() => navigation.goBack()} backLabel="< Back" />
+      <SectionLabel label="All indexed years" />
       <FlatList
         data={allYears}
         keyExtractor={(item) => String(item)}
         renderItem={({ item }: { item: number }) => (
-          <Pressable style={styles.row} onPress={() => navigation.navigate('YearBrowser', { hebrewYear: item })}>
-            <Text style={styles.rowText}>{item}</Text>
-          </Pressable>
+          <ListRow
+            label={String(item)}
+            right={<Text style={styles.chevron}>›</Text>}
+            onPress={() => navigation.navigate('YearBrowser', { hebrewYear: item })}
+          />
         )}
-        ItemSeparatorComponent={Separator}
-        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={RowSeparator}
+        ListEmptyComponent={<EmptyState title="No years indexed" />}
       />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg },
-  list: { paddingHorizontal: spacing.lg },
-  back: { color: colors.textLink, marginBottom: spacing.md },
-  title: { ...typography.titleMedium, marginBottom: spacing.sm },
-  help: { ...typography.label, color: colors.textMuted, marginBottom: spacing.md },
-  row: { paddingVertical: 14 },
-  rowText: { fontSize: 18 },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginHorizontal: spacing.lg },
+  chevron: { fontSize: 18, color: colors.textMuted },
 });

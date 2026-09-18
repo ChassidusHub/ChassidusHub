@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { resolveThisWeek } from '@sichos-kodesh/catalog';
 import type { WeekOccasion } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
 import type { ThisWeekScreenProps } from '../navigation/types';
-
-function Separator() {
-  return <View style={styles.separator} />;
-}
+import { Screen } from '../ui/Screen';
+import { ScreenHeader } from '../ui/ScreenHeader';
+import { ListRow, RowSeparator } from '../ui/ListRow';
+import { EmptyState } from '../ui/EmptyState';
+import { colors, spacing } from '../ui/theme';
 
 export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
   const { sourceYear } = route.params;
@@ -17,13 +18,14 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
 
   if (selected) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <Pressable onPress={() => setSelected(null)}>
-            <Text style={styles.back}>{'< back to this week'}</Text>
-          </Pressable>
-          <Text style={styles.title}>{selected.entry.occasionLabel}</Text>
-          <Text style={styles.subtitle}>{selected.gregorianDate}</Text>
+      <Screen>
+        <ScreenHeader
+          title={selected.entry.occasionLabel}
+          onBack={() => setSelected(null)}
+          backLabel="< This week"
+        />
+        <ScrollView contentContainerStyle={styles.detailContent}>
+          <Text style={styles.detailDate}>{selected.gregorianDate}</Text>
           <OccasionDetail
             key={selected.entry.occasionId}
             entry={selected.entry}
@@ -38,49 +40,43 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
             }
           />
         </ScrollView>
-      </SafeAreaView>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.back}>{'< change year'}</Text>
-        </Pressable>
-        <Text style={styles.title}>This week</Text>
-        <Text style={styles.subtitle}>From Hebrew year {sourceYear}</Text>
-
-        {occasions.length === 0 && (
-          <Text style={styles.gap}>Nothing indexed for this week in {sourceYear} or nearby kvius-matched years.</Text>
-        )}
+    <Screen>
+      <ScreenHeader title="This Week" onBack={() => navigation.goBack()} backLabel="< Change year" />
+      <View style={styles.meta}>
+        <Text style={styles.metaLine}>From Hebrew year {sourceYear}</Text>
       </View>
       <FlatList
         data={occasions}
         keyExtractor={(item) => String(item.entry.occasionId)}
         renderItem={({ item }) => (
-          <Pressable style={styles.row} onPress={() => setSelected(item)}>
-            <Text style={styles.rowText}>{item.entry.occasionLabel}</Text>
-            <Text style={styles.rowSubtext}>{item.gregorianDate}</Text>
-          </Pressable>
+          <ListRow
+            label={item.entry.occasionLabel}
+            sublabel={item.gregorianDate}
+            right={<Text style={styles.chevron}>›</Text>}
+            onPress={() => setSelected(item)}
+          />
         )}
-        ItemSeparatorComponent={Separator}
-        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={RowSeparator}
+        ListEmptyComponent={
+          <EmptyState
+            title="Nothing this week"
+            body={`Nothing indexed for this week in ${sourceYear} or nearby kvius-matched years.`}
+          />
+        }
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 16 },
-  list: { paddingHorizontal: 16 },
-  back: { color: '#3366cc', marginBottom: 12 },
-  title: { fontSize: 24, fontWeight: '600' },
-  subtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14 },
-  rowText: { fontSize: 16, flexShrink: 1 },
-  rowSubtext: { fontSize: 13, color: '#888' },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: '#ccc' },
-  gap: { fontSize: 15, color: '#a33', marginTop: 16 },
+  meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
+  metaLine: { fontSize: 14, color: colors.textSecondary },
+  detailContent: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  detailDate: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md },
+  chevron: { fontSize: 18, color: colors.textMuted },
 });

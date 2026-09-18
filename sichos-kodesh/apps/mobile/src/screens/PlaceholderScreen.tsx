@@ -1,10 +1,12 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
-import { colors, spacing, typography } from '../ui/theme';
 import { Screen } from '../ui/Screen';
+import { ScreenHeader } from '../ui/ScreenHeader';
+import { EmptyState } from '../ui/EmptyState';
+import { spacing } from '../ui/theme';
 
 const ROUTE_LABELS: Record<keyof RootStackParamList, string> = {
   Home: 'Home',
@@ -30,8 +32,8 @@ const ROUTE_LABELS: Record<keyof RootStackParamList, string> = {
 
 /**
  * Placeholder screen for routes that are not yet fully implemented.
- * Used for all Phase 1B+ screens in the navigation graph. Displays
- * the route name and a note that it is part of the parity migration.
+ * Clearly communicates that the feature is part of the parity migration
+ * and has not been built yet. Does not imply any working functionality.
  */
 export function PlaceholderScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -40,29 +42,21 @@ export function PlaceholderScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        {navigation.canGoBack() && (
-          <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
-            <Text style={styles.back}>{'< Back'}</Text>
-          </Pressable>
-        )}
-      </View>
+      <ScreenHeader
+        title={label}
+        onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+        backLabel="< Back"
+      />
       <View style={styles.body}>
-        <Text style={styles.title}>{label}</Text>
-        <Text style={styles.note}>
-          This screen is part of the mobile/web parity migration and has not been fully implemented yet.
-        </Text>
-        <Text style={styles.phase}>Coming in a future parity phase.</Text>
+        <EmptyState
+          title="Not yet implemented"
+          body={`${label} is part of the mobile/web parity migration and has not been built yet. Coming in a future phase.`}
+        />
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
-  back: { color: colors.textLink, fontSize: 15 },
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl },
-  title: { ...typography.titleMedium, color: colors.textDefault, marginBottom: spacing.md, textAlign: 'center' },
-  note: { ...typography.bodyMedium, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.sm },
-  phase: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
+  body: { flex: 1, paddingBottom: spacing.xxl },
 });
