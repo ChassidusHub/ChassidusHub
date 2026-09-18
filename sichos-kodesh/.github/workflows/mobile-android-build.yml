@@ -1,0 +1,58 @@
+name: Mobile Android Build
+
+on:
+  push:
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/mobile-android-build.yml"
+      - ".github/workflows/mobile-android-smoke.yml"
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/mobile-android-build.yml"
+      - ".github/workflows/mobile-android-smoke.yml"
+
+jobs:
+  android-build:
+    name: Android debug build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Run build-only smoke (lint + typecheck + assembleDebug)
+        run: npm run android:smoke:buildonly -w @sichos-kodesh/mobile
+
+      - name: Upload debug APK and Gradle reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-build-artifacts
+          path: |
+            apps/mobile/smoke-artifacts/**
+            apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            apps/mobile/android/app/build/reports/**
+            apps/mobile/android/build/reports/**
