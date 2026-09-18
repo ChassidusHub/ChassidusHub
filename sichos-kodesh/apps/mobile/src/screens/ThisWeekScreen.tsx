@@ -34,7 +34,6 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
                 driveFileId: pdf.driveFileId,
                 resourceKey: pdf.resourceKey ?? null,
                 label: pdf.label,
-                hasAudio: selected.entry.audio.length > 0,
               })
             }
           />

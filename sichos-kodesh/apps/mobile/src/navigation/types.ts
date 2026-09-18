@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
  */
 export type RootStackParamList = {
   /** Home/year picker - entry point of the app */
-  Home: { targetYear: number };
+  Home: undefined;
 
   /** Kvius-matched years for "follow along" flow */
   KviusYears: { targetYear: number };
@@ -46,7 +46,6 @@ export type RootStackParamList = {
     driveFileId: string;
     resourceKey: string | null;
     label: string;
-    hasAudio: boolean;
   };
 
   /** Search screen (stub) */

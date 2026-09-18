@@ -1,6 +1,5 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import type { RootStackParamList } from './types';
 import { YearPickerScreen } from '../screens/YearPickerScreen';
 import { KviusYearsScreen } from '../screens/KviusYearsScreen';
@@ -14,14 +13,12 @@ import { PlaceholderScreen } from '../screens/PlaceholderScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
-  const targetYear = currentHebrewYear();
-
   return (
     <Stack.Navigator
       initialRouteName="Home"
       screenOptions={{ headerShown: false }}
     >
-      <Stack.Screen name="Home" component={YearPickerScreen} initialParams={{ targetYear }} />
+      <Stack.Screen name="Home" component={YearPickerScreen} />
       <Stack.Screen name="KviusYears" component={KviusYearsScreen} />
       <Stack.Screen name="BrowseYears" component={BrowseYearsScreen} />
       <Stack.Screen name="ThisWeek" component={ThisWeekScreen} />

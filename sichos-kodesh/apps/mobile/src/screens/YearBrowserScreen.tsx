@@ -60,7 +60,6 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
                 driveFileId: pdf.driveFileId,
                 resourceKey: pdf.resourceKey ?? null,
                 label: pdf.label,
-                hasAudio: selected.audio.length > 0,
               })
             }
           />

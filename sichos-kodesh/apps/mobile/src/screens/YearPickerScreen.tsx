@@ -1,10 +1,12 @@
 import React from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { kviusCode } from '@sichos-kodesh/kvius-engine';
 import type { HomeScreenProps } from '../navigation/types';
 
-export function YearPickerScreen({ navigation, route }: HomeScreenProps) {
-  const { targetYear } = route.params;
+export function YearPickerScreen({ navigation }: HomeScreenProps) {
+  // Computed here so it's always fresh on each cold-start, never stale from initialParams.
+  const targetYear = currentHebrewYear();
 
   return (
     <SafeAreaView style={styles.container}>
