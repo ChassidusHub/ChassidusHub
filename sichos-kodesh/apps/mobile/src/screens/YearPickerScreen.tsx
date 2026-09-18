@@ -24,14 +24,12 @@ export function YearPickerScreen({ navigation, route }: HomeScreenProps) {
           onPress={() => navigation.navigate('KviusYears', { targetYear })}
         >
           <Text style={styles.tabText}>Follow along</Text>
-          <View style={styles.tabUnderline} />
         </Pressable>
         <Pressable
           style={styles.tab}
           onPress={() => navigation.navigate('BrowseYears', { targetYear })}
         >
           <Text style={styles.tabText}>Browse any year</Text>
-          <View style={styles.tabUnderlineHidden} />
         </Pressable>
       </View>
 
@@ -51,7 +49,5 @@ const styles = StyleSheet.create({
   tabs: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#ccc', marginBottom: 4 },
   tab: { marginRight: 20, paddingBottom: 10 },
   tabText: { fontSize: 15, fontWeight: '600', color: '#3366cc' },
-  tabUnderline: { height: 2, backgroundColor: '#3366cc', marginTop: 8 },
-  tabUnderlineHidden: { height: 2, marginTop: 8 },
   tabHelp: { fontSize: 12, color: '#888', marginVertical: 12 },
 });

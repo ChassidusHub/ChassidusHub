@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text } from 'react-native';
 import Pdf from 'react-native-pdf';
 import catalog from '../catalog/data';
@@ -22,11 +22,14 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const [state, setState] = useState<LoadState>({ status: 'downloading', percent: 0 });
 
   // Resolve audio tracks for the occasion from catalog (needed by BottomAudioPlayer).
-  const audioTracks = hasAudio
-    ? Object.values(catalog)
+  const audioTracks = useMemo(() => {
+    if (!hasAudio) return [];
+    return (
+      Object.values(catalog)
         .flat()
         .find((e) => e.occasionId === occasionId)?.audio ?? []
-    : [];
+    );
+  }, [occasionId, hasAudio]);
 
   useEffect(() => {
     let cancelled = false;
