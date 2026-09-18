@@ -65,7 +65,7 @@ export function SearchScreen({ navigation }: SearchScreenProps) {
             ) : (
               results.map(({ hebrewYear, entries }) => (
                 <View key={hebrewYear} style={styles.group}>
-                    <SectionLabel label={t.hebrewYearTitle(hebrewYear)} />
+                  <SectionLabel label={t.hebrewYearTitle(hebrewYear)} />
                   <Card style={styles.groupCard}>
                     {entries.map((entry, index) => (
                       <React.Fragment key={`${entry.hebrewYear}-${entry.occasionId}`}>
