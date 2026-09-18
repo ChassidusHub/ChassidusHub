@@ -308,16 +308,19 @@ h1 {
   min-width: 0;
   background: var(--bg);
   padding-block: 12px;
-  padding-inline: 0;
-  margin: 0 0 4px;
+  padding-inline: 20px;
+  margin: 0 -20px 4px;
 }
 
 /* PdfViewerScreen's own container has zero horizontal padding by design
    (see .pdf-viewer-screen's own comment) so .pdf-pages can go edge-to-edge
    while zoomed - its header needs its own inset instead of inheriting one
-   from an ambient .screen wrapper the way every other screen's does. */
+   from an ambient .screen wrapper the way every other screen's does.
+   The base .screen-header uses negative inline margins to break out of
+   .screen's padding; here there is no such padding, so we reset those
+   margins to zero. */
 .screen-header-inset {
-  padding-inline: 20px;
+  margin-inline: 0;
   margin-bottom: 16px;
 }
 
@@ -337,21 +340,13 @@ h1 {
   font-weight: 700;
 }
 
-.screen-header-overflowing .screen-header-title {
-  text-align: start;
-}
-
-.screen-header-overflowing .screen-header-spacer {
-  width: 0;
-  overflow: hidden;
-}
-
 /* An invisible, non-interactive mirror of the real BackLink (see
    ScreenHeader.tsx) - its only job is to occupy exactly the same width as
    the real one so `.screen-header-title`'s flex box sits centered between
    two equal edges instead of only being pushed away from the back button
    on one side. */
 .screen-header-spacer {
+  flex-shrink: 0;
   visibility: hidden;
   pointer-events: none;
 }
