@@ -1,19 +1,55 @@
-/** Shared design tokens for the mobile app. */
+/**
+ * Shared design tokens for the mobile app.
+ * Light values mirror the web app's :root CSS variables; dark values mirror
+ * the web @media (prefers-color-scheme: dark) block. Keep in sync with
+ * apps/web/src/index.css.
+ */
 
-export const colors = {
-  primary: '#3366cc',
-  primaryLight: '#668de0',
-  textDefault: '#1a1a1a',
-  textSecondary: '#666',
+export const colorsLight = {
+  /** Web: --accent */
+  accent: '#1a8a4a',
+  /** Web: --accent-fg */
+  accentFg: '#ffffff',
+  /** Web: --fg */
+  textDefault: '#121212',
+  /** Web: --muted */
+  textSecondary: '#6a6a6a',
   textMuted: '#888',
-  textError: '#a33',
-  textLink: '#3366cc',
-  backgroundDefault: '#fff',
-  backgroundSubtle: '#f2f2f2',
-  border: '#ccc',
-  borderLight: '#eee',
-  white: '#fff',
+  textError: '#b3261e',
+  textLink: '#1a8a4a',
+  /** Web: --bg */
+  backgroundDefault: '#fafafa',
+  /** Web: --bg-elevated */
+  backgroundElevated: '#ffffff',
+  /** Web: --card-bg */
+  backgroundSubtle: '#f0f0f0',
+  /** Web: --border */
+  border: '#e2e2e2',
+  borderLight: '#eeeeee',
+  white: '#ffffff',
+  /** Web: --danger */
+  danger: '#b3261e',
 } as const;
+
+export const colorsDark = {
+  accent: '#1ed760',
+  accentFg: '#0a0a0a',
+  textDefault: '#f5f5f5',
+  textSecondary: '#a7a7a7',
+  textMuted: '#888',
+  textError: '#f28b82',
+  textLink: '#1ed760',
+  backgroundDefault: '#0a0a0a',
+  backgroundElevated: '#121212',
+  backgroundSubtle: '#181818',
+  border: '#282828',
+  borderLight: '#1e1e1e',
+  white: '#ffffff',
+  danger: '#f28b82',
+} as const;
+
+/** Default (light) colors for use in StyleSheet.create calls. */
+export const colors = colorsLight;
 
 export const typography = {
   titleLarge: { fontSize: 24, fontWeight: '600' as const },

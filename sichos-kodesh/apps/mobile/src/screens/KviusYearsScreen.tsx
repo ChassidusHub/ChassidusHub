@@ -1,14 +1,14 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { findMatchingYears, kviusCode } from '@sichos-kodesh/kvius-engine';
 import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
 import type { KviusYearsScreenProps } from '../navigation/types';
-import { colors, spacing, typography } from '../ui/theme';
+import { colors, spacing } from '../ui/theme';
 import { Screen } from '../ui/Screen';
-
-function Separator() {
-  return <View style={styles.separator} />;
-}
+import { ScreenHeader } from '../ui/ScreenHeader';
+import { ListRow, RowSeparator } from '../ui/ListRow';
+import { SectionLabel } from '../ui/SectionLabel';
+import { EmptyState } from '../ui/EmptyState';
 
 export function KviusYearsScreen({ navigation, route }: KviusYearsScreenProps) {
   const { targetYear } = route.params;
@@ -16,43 +16,41 @@ export function KviusYearsScreen({ navigation, route }: KviusYearsScreenProps) {
 
   return (
     <Screen>
-      <View style={styles.content}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.back}>{'< back'}</Text>
-        </Pressable>
-        <Text style={styles.title}>Follow Along</Text>
-        <Text style={styles.subtitle}>
-          Hebrew year {targetYear} (kvius {kviusCode(targetYear)})
+      <ScreenHeader
+        title="Follow Along"
+        onBack={() => navigation.goBack()}
+        backLabel="< Back"
+      />
+      <View style={styles.meta}>
+        <Text style={styles.metaLine}>
+          Year {targetYear} · kvius {kviusCode(targetYear)}
         </Text>
-        <Text style={styles.help}>
-          Kvius-matched years — the week/date structure lines up with {targetYear}, so "this week" resolves automatically.
+        <Text style={styles.metaHelp}>
+          Kvius-matched years — "this week" resolves automatically against {targetYear}.
         </Text>
       </View>
+      <SectionLabel label={`${matches.length} matched year${matches.length === 1 ? '' : 's'}`} />
       <FlatList
         data={matches}
         keyExtractor={(item) => String(item.hebrewYear)}
         renderItem={({ item }: { item: MatchingYearResult }) => (
-          <Pressable style={styles.row} onPress={() => navigation.navigate('ThisWeek', { sourceYear: item.hebrewYear })}>
-            <Text style={styles.rowText}>{item.hebrewYear}</Text>
-            <Text style={styles.rowSubtext}>{item.distance} years ago</Text>
-          </Pressable>
+          <ListRow
+            label={String(item.hebrewYear)}
+            sublabel={`${item.distance} year${item.distance === 1 ? '' : 's'} ago`}
+            right={<Text style={styles.chevron}>›</Text>}
+            onPress={() => navigation.navigate('ThisWeek', { sourceYear: item.hebrewYear })}
+          />
         )}
-        ItemSeparatorComponent={Separator}
-        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={RowSeparator}
+        ListEmptyComponent={<EmptyState title="No matched years found" />}
       />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg },
-  list: { paddingHorizontal: spacing.lg },
-  back: { color: colors.textLink, marginBottom: spacing.md },
-  title: { ...typography.titleMedium, marginBottom: spacing.xs },
-  subtitle: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.sm },
-  help: { ...typography.label, color: colors.textMuted, marginBottom: spacing.md },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 14 },
-  rowText: { fontSize: 18 },
-  rowSubtext: { fontSize: 14, color: colors.textMuted },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginHorizontal: spacing.lg },
+  meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  metaLine: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs },
+  metaHelp: { fontSize: 13, color: colors.textMuted, lineHeight: 18 },
+  chevron: { fontSize: 18, color: colors.textMuted },
 });

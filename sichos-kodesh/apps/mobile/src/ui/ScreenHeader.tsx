@@ -47,5 +47,5 @@ const styles = StyleSheet.create({
   title: { ...typography.bodyLarge, fontWeight: '600', color: colors.textDefault, flex: 2, textAlign: 'center' },
   right: { flex: 1, alignItems: 'flex-end' },
   backButton: { paddingVertical: 4 },
-  backText: { color: colors.textLink, fontSize: 15 },
+  backText: { color: colors.accent, fontSize: 15 },
 });

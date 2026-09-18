@@ -5,6 +5,9 @@ import { PDF_SECTION_LABELS, PDF_SECTION_ORDER, sortPdfsByEditionPreference } fr
 import { loadCachedSound } from '../audio/loadCachedSound';
 import type { LoadedSound } from '../audio/playLocalFile';
 import { useEditionPreference } from '../settings/editionPreference';
+import { Card } from '../ui/Card';
+import { SectionLabel } from '../ui/SectionLabel';
+import { colors, radius, spacing } from '../ui/theme';
 
 type AudioState = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; sound: LoadedSound; playing: boolean };
 
@@ -77,25 +80,25 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
     <>
       {entry.audio.length > 0 && (
         <View style={styles.category}>
-          <Text style={styles.categoryHeader}>Audio</Text>
+          <SectionLabel label="Audio" />
           {entry.audio.map((audio, index) => {
             const state = audioStates[audio.workerFilename] ?? { status: 'idle' as const };
             const chapterLabel = audio.chapterName ?? (entry.audio.length > 1 ? `Track ${index + 1}` : null);
             return (
-              <View key={audio.workerFilename} style={styles.card}>
-                {chapterLabel && <Text style={styles.pdfLabel}>{chapterLabel}</Text>}
+              <Card key={audio.workerFilename} style={styles.card}>
+                {chapterLabel && <Text style={styles.itemLabel}>{chapterLabel}</Text>}
                 {state.status === 'idle' && (
                   <Pressable style={styles.button} onPress={() => handlePlayAudio(audio)}>
                     <Text style={styles.buttonText}>Play</Text>
                   </Pressable>
                 )}
-                {state.status === 'loading' && <Text>Loading...</Text>}
+                {state.status === 'loading' && <Text style={styles.loadingText}>Loading…</Text>}
                 {state.status === 'ready' && (
                   <Pressable style={styles.button} onPress={() => togglePlayback(audio)}>
                     <Text style={styles.buttonText}>{state.playing ? 'Pause' : 'Play'}</Text>
                   </Pressable>
                 )}
-              </View>
+              </Card>
             );
           })}
         </View>
@@ -103,31 +106,36 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
 
       {pdfGroups.map(([section, pdfs]) => (
         <View style={styles.category} key={section}>
-          <Text style={styles.categoryHeader}>{PDF_SECTION_LABELS[section]}</Text>
+          <SectionLabel label={PDF_SECTION_LABELS[section]} />
           {sortPdfsByEditionPreference(pdfs, editionPreference).map((pdf) => (
-            <View key={pdf.driveFileId} style={styles.card}>
-              <Text style={styles.pdfLabel}>{pdf.label}</Text>
+            <Card key={pdf.driveFileId} style={styles.card}>
+              <Text style={styles.itemLabel}>{pdf.label}</Text>
               <Pressable style={styles.button} onPress={() => onOpenPdf(pdf)}>
                 <Text style={styles.buttonText}>Read</Text>
               </Pressable>
-            </View>
+            </Card>
           ))}
         </View>
       ))}
 
       {entry.audio.length === 0 && entry.pdfs.length === 0 && (
-        <Text style={styles.gap}>Nothing downloadable is indexed for this occasion yet.</Text>
+        <Text style={styles.empty}>Nothing downloadable is indexed for this occasion yet.</Text>
       )}
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  gap: { fontSize: 15, color: '#a33', marginTop: 16 },
-  category: { marginBottom: 8 },
-  categoryHeader: { fontSize: 13, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 8 },
-  card: { marginBottom: 12, padding: 12, borderRadius: 8, backgroundColor: '#f2f2f2' },
-  pdfLabel: { fontSize: 14, marginBottom: 8 },
-  button: { backgroundColor: '#3366cc', paddingVertical: 10, borderRadius: 6, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: '600' },
+  empty: { fontSize: 15, color: colors.textError, marginTop: spacing.md },
+  category: { marginBottom: spacing.sm },
+  card: { marginBottom: spacing.md },
+  itemLabel: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.sm },
+  loadingText: { fontSize: 14, color: colors.textMuted },
+  button: {
+    backgroundColor: colors.accent,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    alignItems: 'center' as const,
+  },
+  buttonText: { color: colors.accentFg, fontWeight: '600' as const, fontSize: 14 },
 });
