@@ -1,49 +1,109 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
-import { useEditionPreference } from '../settings/editionPreference';
+import { useTranslation, useLanguage } from '../i18n/useTranslation';
+import type { Language } from '../i18n/translations';
 import type { SettingsScreenProps } from '../navigation/types';
+import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
+import { useEditionPreference } from '../settings/editionPreference';
+import { AppText } from '../ui/AppText';
+import { Card } from '../ui/Card';
+import { ListRow, RowSeparator } from '../ui/ListRow';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { ListRow, RowSeparator } from '../ui/ListRow';
 import { SectionLabel } from '../ui/SectionLabel';
-import { colors, spacing } from '../ui/theme';
+import { spacing } from '../ui/theme';
 
-const OPTIONS: Array<{ value: PdfEdition | null; label: string; sublabel: string }> = [
-  { value: null, label: 'No preference', sublabel: 'Show PDFs in default order' },
-  { value: 'sichosKodesh', label: 'Sichos Kodesh', sublabel: 'שיחו"ק edition first' },
-  { value: 'sefer', label: 'Sefer', sublabel: 'Sefer HaSichos / Sefer HaMaamarim first' },
-  { value: 'torasMenachem', label: 'Toras Menachem', sublabel: 'Toras Menachem edition first' },
+const OPTIONS: Array<{ value: PdfEdition | null; labelKey: 'pdfEditionNoPreference' | 'sichosKodeshEditionLabel' | 'pdfEditionSefer' | 'torasMenachemEditionLabel'; sublabelKey: 'pdfEditionNoPreferenceHelp' | 'pdfEditionSichosKodeshHelp' | 'pdfEditionSeferHelp' | 'pdfEditionTorasMenachemHelp' }> = [
+  { value: null, labelKey: 'pdfEditionNoPreference', sublabelKey: 'pdfEditionNoPreferenceHelp' },
+  { value: 'sichosKodesh', labelKey: 'sichosKodeshEditionLabel', sublabelKey: 'pdfEditionSichosKodeshHelp' },
+  { value: 'sefer', labelKey: 'pdfEditionSefer', sublabelKey: 'pdfEditionSeferHelp' },
+  { value: 'torasMenachem', labelKey: 'torasMenachemEditionLabel', sublabelKey: 'pdfEditionTorasMenachemHelp' },
+];
+
+const LANGUAGE_OPTIONS: Array<{ value: Language; labelKey: 'languageEnglish' | 'languageHebrew' }> = [
+  { value: 'en', labelKey: 'languageEnglish' },
+  { value: 'he', labelKey: 'languageHebrew' },
 ];
 
 export function SettingsScreen({ navigation }: SettingsScreenProps) {
+  const { t, isRtl } = useTranslation();
+  const { language, setLanguage } = useLanguage();
   const [preference, setPreference] = useEditionPreference();
+  const [autoplay, setAutoplay] = useAutoplayOnHanacha();
+  const systemScheme = useColorScheme();
 
   return (
     <Screen>
-      <ScreenHeader title="Settings" onBack={() => navigation.goBack()} backLabel="< Back" />
-      <ScrollView>
-        <SectionLabel label="PDF edition preference" />
-        <Text style={styles.sectionHelp}>
-          When an occasion has PDFs from more than one printed edition, show this one first.
-        </Text>
-        {OPTIONS.map((option, i) => (
-          <React.Fragment key={option.label}>
-            {i > 0 && <RowSeparator />}
+      <ScreenHeader title={t.settingsTitle} onBack={() => navigation.goBack()} backLabel={t.back} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <SectionLabel label={t.languageSection} />
+        <View style={styles.cardWrap}>
+          <Card style={styles.cardReset}>
+            {LANGUAGE_OPTIONS.map((option, index) => (
+              <React.Fragment key={option.value}>
+                {index > 0 ? <RowSeparator /> : null}
+                <ListRow
+                  label={t[option.labelKey]}
+                  right={language === option.value ? <AppText color="accent">✓</AppText> : null}
+                  onPress={() => setLanguage(option.value)}
+                />
+              </React.Fragment>
+            ))}
+          </Card>
+        </View>
+
+        <SectionLabel label={t.pdfEditionPreferenceSection} />
+        <AppText variant="bodySmall" color="muted" style={[styles.sectionHelp, isRtl && styles.textRight]}>
+          {t.pdfEditionPreferenceHelp}
+        </AppText>
+        <View style={styles.cardWrap}>
+          <Card style={styles.cardReset}>
+            {OPTIONS.map((option, index) => (
+              <React.Fragment key={String(option.value)}>
+                {index > 0 ? <RowSeparator /> : null}
+                <ListRow
+                  label={t[option.labelKey]}
+                  sublabel={t[option.sublabelKey]}
+                  right={preference === option.value ? <AppText color="accent">✓</AppText> : null}
+                  onPress={() => setPreference(option.value)}
+                />
+              </React.Fragment>
+            ))}
+          </Card>
+        </View>
+
+        <SectionLabel label={t.appearanceSection} />
+        <View style={styles.cardWrap}>
+          <Card>
+            <AppText variant="bodyMedium">{t.themeSystem}</AppText>
+            <AppText variant="bodySmall" color="muted" style={[styles.cardHelp, isRtl && styles.textRight]}>
+              {t.appearanceFollowsSystem(systemScheme === 'dark' ? t.themeDark : t.themeLight)}
+            </AppText>
+          </Card>
+        </View>
+
+        <SectionLabel label={t.playbackSection} />
+        <View style={styles.cardWrap}>
+          <Card style={styles.cardReset}>
             <ListRow
-              label={option.label}
-              sublabel={option.sublabel}
-              right={preference === option.value ? <Text style={styles.check}>✓</Text> : null}
-              onPress={() => setPreference(option.value)}
+              label={t.autoplayHanachaLabel}
+              sublabel={t.autoplayHanachaHelp}
+              right={autoplay ? <AppText color="accent">✓</AppText> : null}
+              onPress={() => setAutoplay(!autoplay)}
             />
-          </React.Fragment>
-        ))}
+          </Card>
+        </View>
       </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionHelp: { fontSize: 13, color: colors.textMuted, paddingHorizontal: spacing.lg, marginBottom: 4 },
-  check: { fontSize: 16, color: colors.accent, fontWeight: '600' },
+  content: { paddingBottom: spacing.xxl },
+  sectionHelp: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
+  textRight: { textAlign: 'right' },
+  cardWrap: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
+  cardReset: { paddingVertical: 0, paddingHorizontal: 0 },
+  cardHelp: { marginTop: spacing.xs, lineHeight: 19 },
 });

@@ -1,39 +1,45 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { kviusCode } from '@sichos-kodesh/kvius-engine';
+import { useTranslation } from '../i18n/useTranslation';
 import type { HomeScreenProps } from '../navigation/types';
+import { AppText } from '../ui/AppText';
 import { Screen } from '../ui/Screen';
 import { AppButton } from '../ui/AppButton';
+import { ListRow } from '../ui/ListRow';
 import { SectionLabel } from '../ui/SectionLabel';
 import { colors, spacing, typography } from '../ui/theme';
 
 export function YearPickerScreen({ navigation }: HomeScreenProps) {
   const targetYear = currentHebrewYear();
+  const { t } = useTranslation();
 
   return (
     <Screen>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.appName}>Sichos Kodesh</Text>
+          <AppText variant="titleMedium" style={styles.appName}>
+            {t.appTitle}
+          </AppText>
           <Pressable hitSlop={8} onPress={() => navigation.navigate('Settings')}>
-            <Text style={styles.settingsIcon}>⚙</Text>
+            <AppText style={styles.settingsIcon}>⚙</AppText>
           </Pressable>
         </View>
-        <Text style={styles.yearBadge}>
+        <AppText variant="bodySmall" color="secondary" style={styles.yearBadge}>
           {targetYear} · kvius {kviusCode(targetYear)}
-        </Text>
+        </AppText>
       </View>
 
       <View style={styles.actionsSection}>
         <AppButton
-          label="Follow Along This Week"
+          label={t.weekKviusFarbrengens}
           variant="primary"
           style={styles.primaryAction}
           onPress={() => navigation.navigate('KviusYears', { targetYear })}
         />
         <AppButton
-          label="Browse Any Year"
+          label={t.browseAnyYear}
           variant="secondary"
           style={styles.secondaryAction}
           onPress={() => navigation.navigate('BrowseYears')}
@@ -41,20 +47,19 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
       </View>
 
       <View style={styles.placeholderSection}>
-        <SectionLabel label="Coming soon" />
-        <Pressable
-          style={styles.placeholderRow}
+        <SectionLabel label={t.comingSoonSection} />
+        <ListRow
+          label={`🔍 ${t.searchLink}`}
           onPress={() => navigation.navigate('Search')}
-        >
-          <Text style={styles.placeholderRowText}>🔍 Search</Text>
-          <Text style={styles.placeholderBadge}>Not yet implemented</Text>
-        </Pressable>
+        />
         <Pressable
           style={styles.placeholderRow}
           onPress={() => navigation.navigate('Downloaded')}
         >
-          <Text style={styles.placeholderRowText}>⬇ Downloaded</Text>
-          <Text style={styles.placeholderBadge}>Not yet implemented</Text>
+          <AppText style={styles.placeholderRowText}>⬇ {t.viewDownloadedLabel}</AppText>
+          <AppText variant="caption" color="muted" style={styles.placeholderBadge}>
+            {t.notYetImplementedShort}
+          </AppText>
         </Pressable>
       </View>
     </Screen>
@@ -77,7 +82,7 @@ const styles = StyleSheet.create({
   },
   appName: { ...typography.titleMedium, color: colors.textDefault },
   settingsIcon: { fontSize: 20, color: colors.textSecondary },
-  yearBadge: { ...typography.bodySmall, color: colors.textSecondary },
+  yearBadge: { color: colors.textSecondary },
   actionsSection: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,

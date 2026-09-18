@@ -19,7 +19,7 @@ export type RootStackParamList = {
   ThisWeek: { sourceYear: number };
 
   /** Every occasion indexed for a single Hebrew year */
-  YearBrowser: { hebrewYear: number };
+  YearBrowser: { hebrewYear: number; initialOccasionId?: number };
 
   /** All occasions for one month within a year */
   MonthOccasions: { hebrewYear: number; monthName: string };

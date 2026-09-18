@@ -3,16 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "preandroid": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "preandroid": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "android": "react-native run-android",
-    "preios": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "preios": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "ios": "react-native run-ios",
     "lint": "eslint .",
-    "prestart": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "prestart": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "start": "react-native start",
-    "pretest": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "pretest": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "test": "jest",
-    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,7 +30,8 @@
     "react-native-pdf": "^7.0.5",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.28.0",
-    "react-native-sound": "^0.11.2"
+    "react-native-sound": "^0.11.2",
+    "@sichos-kodesh/app-core": "^0.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
