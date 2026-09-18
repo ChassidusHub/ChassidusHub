@@ -51,13 +51,13 @@ export type RootStackParamList = {
   /** Search screen (stub) */
   Search: undefined;
 
-  /** Downloaded content manager (stub) */
+  /** Downloaded content manager */
   Downloaded: undefined;
 
   /** App settings */
   Settings: undefined;
 
-  /** Download/auto-download settings (stub) */
+  /** Download settings */
   DownloadSettings: undefined;
 
   /** About screen (stub) */

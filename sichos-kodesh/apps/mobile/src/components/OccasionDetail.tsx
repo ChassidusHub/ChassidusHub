@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from '@sichos-kodesh/catalog';
-import { PDF_SECTION_LABELS, PDF_SECTION_ORDER, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
+import { PDF_SECTION_ORDER, sortPdfsByEditionPreference } from '@sichos-kodesh/catalog';
+import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import { loadCachedSound } from '../audio/loadCachedSound';
 import type { LoadedSound } from '../audio/playLocalFile';
+import { useDownload } from '../download/useDownload';
 import { useEditionPreference } from '../settings/editionPreference';
+import { useTranslation } from '../i18n/useTranslation';
+import { AppButton } from '../ui/AppButton';
+import { AppText } from '../ui/AppText';
 import { Card } from '../ui/Card';
 import { SectionLabel } from '../ui/SectionLabel';
-import { colors, radius, spacing } from '../ui/theme';
+import { spacing } from '../ui/theme';
 
 type AudioState = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; sound: LoadedSound; playing: boolean };
 
 interface Props {
   entry: CatalogEntry;
-  /** Switches the parent screen into full-screen PDF-viewer mode - see PdfViewerScreen. */
   onOpenPdf: (pdf: CatalogPdf) => void;
 }
 
@@ -27,28 +31,14 @@ function groupPdfsBySection(pdfs: CatalogPdf[]): Array<[PdfSection, CatalogPdf[]
   return PDF_SECTION_ORDER.filter((section) => bySection.has(section)).map((section) => [section, bySection.get(section)!]);
 }
 
-/**
- * The download/read card for one catalog entry - shared by ThisWeekScreen
- * (a "this week" occasion) and YearBrowserScreen (any entry the user
- * picks while browsing a whole year). Groups content by category (Audio,
- * then each PDF section present) with a header per group, since some PDF
- * labels are short and generic on their own (e.g. hagahos's "צילום
- * 1"/"צילום 2", literally "scan 1"/"scan 2") and only make sense next to a
- * category header saying what they're scans *of*. Pass a `key` keyed to
- * the entry (e.g. `entry.occasionId`) when switching between entries so
- * this component's own state resets per entry.
- *
- * Tapping "Read" doesn't render the viewer here - it calls `onOpenPdf` so
- * the *parent screen* switches to it full-screen instead of stacking it
- * underneath the parent's own header/back-button.
- *
- * Tapping "Play" downloads the file in full before playback starts (see
- * loadCachedSound), shown only as "Loading...", and only the first time;
- * the cached copy plays instantly (and offline) after that.
- */
 export function OccasionDetail({ entry, onOpenPdf }: Props) {
   const [audioStates, setAudioStates] = useState<Record<string, AudioState>>({});
   const [editionPreference] = useEditionPreference();
+  const { t } = useTranslation();
+  const { downloadAudio, downloadOccasion, downloadPdf, targetStates } = useDownload();
+  const allTargets = useMemo(() => listDownloadTargets([entry], ALL_CONTENT_TYPES), [entry]);
+  const pdfGroups = groupPdfsBySection(entry.pdfs);
+  const anyTargets = allTargets.length > 0;
 
   async function handlePlayAudio(audio: CatalogAudio) {
     setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'loading' } }));
@@ -58,7 +48,7 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
       setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'ready', sound, playing: true } }));
     } catch (error) {
       setAudioStates((prev) => ({ ...prev, [audio.workerFilename]: { status: 'idle' } }));
-      Alert.alert("Couldn't play audio", String(error));
+      Alert.alert(t.audioLoadError, String(error));
     }
   }
 
@@ -74,30 +64,45 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
     }
   }
 
-  const pdfGroups = groupPdfsBySection(entry.pdfs);
+  function renderDownloadButton(stateKey: string, onPress: () => void) {
+    const state = targetStates[stateKey];
+    if (state?.status === 'downloaded') return <AppButton label={t.downloadedLabel} variant="ghost" />;
+    if (state?.status === 'queued') return <AppButton label={t.downloadQueuedLabel} variant="ghost" />;
+    if (state?.status === 'downloading') return <AppButton label={`${t.downloadingLabel} ${Math.round(state.progress * 100)}%`} variant="ghost" />;
+    if (state?.status === 'error') return <AppButton label={t.retryDownloadLabel} variant="ghost" onPress={onPress} />;
+    return <AppButton label={t.downloadLabel} variant="secondary" onPress={onPress} />;
+  }
 
   return (
     <>
+      {anyTargets ? (
+        <View style={styles.category}>
+          <AppButton label={t.downloadLabel} variant="secondary" onPress={() => { downloadOccasion(entry); }} />
+        </View>
+      ) : null}
+
       {entry.audio.length > 0 && (
         <View style={styles.category}>
-          <SectionLabel label="Audio" />
+          <SectionLabel label={t.recordings} />
           {entry.audio.map((audio, index) => {
             const state = audioStates[audio.workerFilename] ?? { status: 'idle' as const };
-            const chapterLabel = audio.chapterName ?? (entry.audio.length > 1 ? `Track ${index + 1}` : null);
+            const chapterLabel = audio.chapterName ?? (entry.audio.length > 1 ? t.track(index + 1) : null);
+            const downloadTarget = allTargets.find(
+              (target) => target.kind === 'audio' && target.workerFilename === audio.workerFilename && target.chapterIndex === index,
+            );
             return (
               <Card key={audio.workerFilename} style={styles.card}>
-                {chapterLabel && <Text style={styles.itemLabel}>{chapterLabel}</Text>}
-                {state.status === 'idle' && (
-                  <Pressable style={styles.button} onPress={() => handlePlayAudio(audio)}>
-                    <Text style={styles.buttonText}>Play</Text>
-                  </Pressable>
-                )}
-                {state.status === 'loading' && <Text style={styles.loadingText}>Loading…</Text>}
-                {state.status === 'ready' && (
-                  <Pressable style={styles.button} onPress={() => togglePlayback(audio)}>
-                    <Text style={styles.buttonText}>{state.playing ? 'Pause' : 'Play'}</Text>
-                  </Pressable>
-                )}
+                {chapterLabel ? <AppText color="secondary" style={styles.itemLabel}>{chapterLabel}</AppText> : null}
+                <View style={styles.actionRow}>
+                  {state.status === 'idle' && <AppButton label={t.play} onPress={() => { handlePlayAudio(audio); }} style={styles.actionButton} />}
+                  {state.status === 'loading' && <AppButton label={t.loading} variant="ghost" style={styles.actionButton} />}
+                  {state.status === 'ready' && (
+                    <AppButton label={state.playing ? t.pause : t.play} onPress={() => togglePlayback(audio)} style={styles.actionButton} />
+                  )}
+                  {downloadTarget ? (
+                    <View style={styles.actionButton}>{renderDownloadButton(downloadTarget.key, () => { downloadAudio(entry, audio, index); })}</View>
+                  ) : null}
+                </View>
               </Card>
             );
           })}
@@ -106,36 +111,38 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
 
       {pdfGroups.map(([section, pdfs]) => (
         <View style={styles.category} key={section}>
-          <SectionLabel label={PDF_SECTION_LABELS[section]} />
-          {sortPdfsByEditionPreference(pdfs, editionPreference).map((pdf) => (
-            <Card key={pdf.driveFileId} style={styles.card}>
-              <Text style={styles.itemLabel}>{pdf.label}</Text>
-              <Pressable style={styles.button} onPress={() => onOpenPdf(pdf)}>
-                <Text style={styles.buttonText}>Read</Text>
-              </Pressable>
-            </Card>
-          ))}
+          <SectionLabel label={t.sectionLabels[section]} />
+          {sortPdfsByEditionPreference(pdfs, editionPreference).map((pdf) => {
+            const downloadTarget = allTargets.find(
+              (target) => target.kind === 'pdf' && target.driveFileId === pdf.driveFileId,
+            );
+            return (
+              <Card key={pdf.driveFileId} style={styles.card}>
+                <AppText color="secondary" style={styles.itemLabel}>{pdf.label}</AppText>
+                <View style={styles.actionRow}>
+                  <AppButton label={t.read} onPress={() => onOpenPdf(pdf)} style={styles.actionButton} />
+                  {downloadTarget ? (
+                    <View style={styles.actionButton}>{renderDownloadButton(downloadTarget.key, () => { downloadPdf(entry, pdf); })}</View>
+                  ) : null}
+                </View>
+              </Card>
+            );
+          })}
         </View>
       ))}
 
       {entry.audio.length === 0 && entry.pdfs.length === 0 && (
-        <Text style={styles.empty}>Nothing downloadable is indexed for this occasion yet.</Text>
+        <AppText color="error" style={styles.empty}>{t.nothingDownloadable}</AppText>
       )}
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  empty: { fontSize: 15, color: colors.textError, marginTop: spacing.md },
+  empty: { marginTop: spacing.md },
   category: { marginBottom: spacing.sm },
   card: { marginBottom: spacing.md },
-  itemLabel: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.sm },
-  loadingText: { fontSize: 14, color: colors.textMuted },
-  button: {
-    backgroundColor: colors.accent,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    alignItems: 'center' as const,
-  },
-  buttonText: { color: colors.accentFg, fontWeight: '600' as const, fontSize: 14 },
+  itemLabel: { marginBottom: spacing.sm },
+  actionRow: { flexDirection: 'row', gap: spacing.sm },
+  actionButton: { flex: 1 },
 });

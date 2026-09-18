@@ -46,21 +46,18 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
         />
       </View>
 
-      <View style={styles.placeholderSection}>
+      <View style={styles.linksSection}>
         <SectionLabel label={t.comingSoonSection} />
         <ListRow
           label={`🔍 ${t.searchLink}`}
           onPress={() => navigation.navigate('Search')}
         />
-        <Pressable
-          style={styles.placeholderRow}
+        <ListRow
+          label={`⬇ ${t.viewDownloadedLabel}`}
+          sublabel={t.downloadForegroundOnlyHelp}
+          right={<AppText color="muted">›</AppText>}
           onPress={() => navigation.navigate('Downloaded')}
-        >
-          <AppText style={styles.placeholderRowText}>⬇ {t.viewDownloadedLabel}</AppText>
-          <AppText variant="caption" color="muted" style={styles.placeholderBadge}>
-            {t.notYetImplementedShort}
-          </AppText>
-        </Pressable>
+        />
       </View>
     </Screen>
   );
@@ -90,19 +87,7 @@ const styles = StyleSheet.create({
   },
   primaryAction: { marginBottom: 0 },
   secondaryAction: {},
-  placeholderSection: {
+  linksSection: {
     marginTop: spacing.xxl,
   },
-  placeholderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-    opacity: 0.5,
-  },
-  placeholderRowText: { fontSize: 15, color: colors.textDefault },
-  placeholderBadge: { fontSize: 12, color: colors.textMuted },
 });

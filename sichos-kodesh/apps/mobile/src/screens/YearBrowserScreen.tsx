@@ -1,16 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, SectionList, StyleSheet, View } from 'react-native';
 import { mafteiachMonthName } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
 import { OccasionDetail } from '../components/OccasionDetail';
+import { useTranslation } from '../i18n/useTranslation';
+import { useDownloadState } from '../download/useDownloadState';
 import type { YearBrowserScreenProps } from '../navigation/types';
+import { AppText } from '../ui/AppText';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { ListRow, RowSeparator } from '../ui/ListRow';
 import { SectionLabel } from '../ui/SectionLabel';
 import { EmptyState } from '../ui/EmptyState';
-import { colors, spacing } from '../ui/theme';
+import { spacing } from '../ui/theme';
 
 interface MonthSection {
   title: string;
@@ -28,6 +31,15 @@ function groupByMonth(entries: CatalogEntry[]): MonthSection[] {
   return sections;
 }
 
+function StatusAccessory({ entry }: { entry: CatalogEntry }) {
+  const state = useDownloadState(entry);
+  if (state === 'downloaded') return <AppText color="accent">✓</AppText>;
+  if (state === 'downloading') return <AppText color="accent">↓</AppText>;
+  if (state === 'queued') return <AppText color="muted">…</AppText>;
+  if (state === 'error') return <AppText color="error">!</AppText>;
+  return null;
+}
+
 export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps) {
   const { hebrewYear, initialOccasionId } = route.params;
   const entries: CatalogEntry[] = useMemo(
@@ -35,6 +47,7 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
     [hebrewYear],
   );
   const [selected, setSelected] = useState<CatalogEntry | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     setSelected(initialOccasionId != null ? (entries.find((entry) => entry.occasionId === initialOccasionId) ?? null) : null);
@@ -46,10 +59,10 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
         <ScreenHeader
           title={selected.occasionLabel}
           onBack={() => setSelected(null)}
-          backLabel={`< ${hebrewYear}`}
+          backLabel={t.back}
         />
         <ScrollView contentContainerStyle={styles.detailContent}>
-          <Text style={styles.detailDate}>{selected.hebrewDate}</Text>
+          <AppText color="secondary" style={styles.detailDate}>{selected.hebrewDate}</AppText>
           <OccasionDetail
             key={selected.occasionId}
             entry={selected}
@@ -73,17 +86,15 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
   return (
     <Screen>
       <ScreenHeader
-        title={`Hebrew year ${hebrewYear}`}
+        title={t.hebrewYearTitle(hebrewYear)}
         onBack={() => navigation.goBack()}
-        backLabel="< Years"
+        backLabel={t.back}
       />
       <View style={styles.meta}>
-        <Text style={styles.metaLine}>
-          {entries.length} occasion{entries.length === 1 ? '' : 's'} indexed
-        </Text>
+        <AppText variant="bodySmall" color="secondary">{t.occasionsIndexed(entries.length)}</AppText>
       </View>
       {entries.length === 0 ? (
-        <EmptyState title="Nothing indexed" body="No audio or PDFs found for this year." />
+        <EmptyState title={t.nothingDownloadable} />
       ) : (
         <SectionList
           sections={sections}
@@ -93,12 +104,17 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
             <ListRow
               label={item.occasionLabel}
               sublabel={[
-                item.audio.length > 0 ? 'audio' : '',
-                item.pdfs.length > 0 ? `${item.pdfs.length} pdf${item.pdfs.length === 1 ? '' : 's'}` : '',
+                item.audio.length > 0 ? t.recordingsCount(item.audio.length) : '',
+                item.pdfs.length > 0 ? t.pdfCount(item.pdfs.length) : '',
               ]
                 .filter(Boolean)
-                .join(' + ')}
-              right={<Text style={styles.chevron}>›</Text>}
+                .join(' • ')}
+              right={
+                <View style={styles.rowRight}>
+                  <StatusAccessory entry={item} />
+                  <AppText color="muted">›</AppText>
+                </View>
+              }
               onPress={() => setSelected(item)}
             />
           )}
@@ -112,8 +128,7 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
 
 const styles = StyleSheet.create({
   meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
-  metaLine: { fontSize: 14, color: colors.textSecondary },
   detailContent: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  detailDate: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.md },
-  chevron: { fontSize: 18, color: colors.textMuted },
+  detailDate: { marginBottom: spacing.md },
+  rowRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 });

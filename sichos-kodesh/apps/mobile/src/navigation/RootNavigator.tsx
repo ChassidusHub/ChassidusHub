@@ -10,6 +10,8 @@ import { PdfViewerScreen } from '../screens/PdfViewerScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { PlaceholderScreen } from '../screens/PlaceholderScreen';
 import { SearchScreen } from '../screens/SearchScreen';
+import { DownloadedScreen } from '../screens/DownloadedScreen';
+import { DownloadSettingsScreen } from '../screens/DownloadSettingsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -26,7 +28,6 @@ export function RootNavigator() {
       <Stack.Screen name="YearBrowser" component={YearBrowserScreen} />
       <Stack.Screen name="PdfViewer" component={PdfViewerScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
-      {/* Placeholder screens for routes not yet fully implemented (Phase 1B+) */}
       <Stack.Screen name="MonthOccasions" component={PlaceholderScreen} />
       <Stack.Screen name="FollowMonthList" component={PlaceholderScreen} />
       <Stack.Screen name="FollowMonthOccasions" component={PlaceholderScreen} />
@@ -34,8 +35,8 @@ export function RootNavigator() {
       <Stack.Screen name="Recordings" component={PlaceholderScreen} />
       <Stack.Screen name="Category" component={PlaceholderScreen} />
       <Stack.Screen name="Search" component={SearchScreen} />
-      <Stack.Screen name="Downloaded" component={PlaceholderScreen} />
-      <Stack.Screen name="DownloadSettings" component={PlaceholderScreen} />
+      <Stack.Screen name="Downloaded" component={DownloadedScreen} />
+      <Stack.Screen name="DownloadSettings" component={DownloadSettingsScreen} />
       <Stack.Screen name="About" component={PlaceholderScreen} />
       <Stack.Screen name="AllYearsThisWeek" component={PlaceholderScreen} />
       <Stack.Screen name="OccasionAllYears" component={PlaceholderScreen} />
