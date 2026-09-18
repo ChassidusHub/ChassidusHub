@@ -93,6 +93,27 @@ Android emulator / device testing was not available in this sandbox.
 
 ---
 
+## Phase 3B — Mobile native player hardening (completed)
+
+- Added persisted playback progress for mobile TrackPlayer playback using
+  AsyncStorage with corrupt/stale payload guards.
+- Progress keys are stable per occasion/chapter (`hebrewYear`,
+  `occasionId`, `workerFilename`) rather than list-index only.
+- Playing an occasion now resolves a resume chapter/position from persisted
+  progress and seeks there automatically.
+- Track mapping now checks app-owned audio files in
+  `RNBlobUtil.fs.dirs.DocumentDir` and uses `file://` URLs when present,
+  with proxy URL fallback when files are absent.
+- Loading/error handling was hardened to avoid stuck transient loading
+  state and to surface TrackPlayer setup/playback errors in UI.
+- Android interruption groundwork now uses TrackPlayer setup
+  `autoHandleInterruptions` plus `RemoteDuck` pause/resume handling in the
+  playback service.
+- Remaining gap for Phase 3C: explicit real-device validation of lock
+  screen/media-notification/background behavior.
+
+---
+
 ## Next recommended phases
 
 ### Phase 2A — i18n / settings / search parity (recommended next)

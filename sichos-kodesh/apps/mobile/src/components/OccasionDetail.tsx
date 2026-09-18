@@ -32,7 +32,7 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
   const [editionPreference] = useEditionPreference();
   const { t } = useTranslation();
   const { downloadAudio, downloadOccasion, downloadPdf, targetStates } = useDownload();
-  const { chapters, currentIndex, isPlaying, isLoading, playOccasion, skipTo, togglePlay } = usePlayer();
+  const { chapters, currentIndex, isPlaying, isLoading, hasError, errorMessage, playOccasion, skipTo, togglePlay } = usePlayer();
   const allTargets = useMemo(() => listDownloadTargets([entry], ALL_CONTENT_TYPES), [entry]);
   const pdfGroups = groupPdfsBySection(entry.pdfs);
   const anyTargets = allTargets.length > 0;
@@ -107,6 +107,9 @@ export function OccasionDetail({ entry, onOpenPdf }: Props) {
               </Card>
             );
           })}
+          {hasError && isThisOccasionLoaded ? (
+            <AppText color="error">{errorMessage ?? t.audioLoadError}</AppText>
+          ) : null}
         </View>
       )}
 

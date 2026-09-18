@@ -17,7 +17,7 @@ function formatTime(seconds: number): string {
  */
 export function GlobalPlayerBar() {
   const insets = useSafeAreaInsets();
-  const { chapters, currentIndex, isPlaying, isLoading, position, duration, togglePlay, next, prev } =
+  const { chapters, currentIndex, isPlaying, isLoading, hasError, errorMessage, position, duration, togglePlay, next, prev } =
     usePlayer();
 
   if (chapters.length === 0) return null;
@@ -27,7 +27,7 @@ export function GlobalPlayerBar() {
   const hasNext = currentIndex != null && currentIndex < chapters.length - 1;
   const progress = duration > 0 ? Math.max(0, Math.min(position / duration, 1)) : 0;
 
-  const title = current?.chapterName ?? current?.occasionLabel ?? '';
+  const title = current?.chapterName ?? current?.occasionLabel ?? 'Unknown recording';
   const chapterLabel =
     chapters.length > 1 && currentIndex != null
       ? `${currentIndex + 1}/${chapters.length} · ${title}`
@@ -62,6 +62,11 @@ export function GlobalPlayerBar() {
             <Text style={styles.timeText}>{formatTime(position)}</Text>
             <Text style={styles.timeText}>{formatTime(duration)}</Text>
           </View>
+          {hasError ? (
+            <Text style={styles.errorText} numberOfLines={1}>
+              {errorMessage ?? 'Playback error'}
+            </Text>
+          ) : null}
         </View>
       </View>
     </View>
@@ -108,4 +113,5 @@ const styles = StyleSheet.create({
   fill: { height: 4, backgroundColor: '#3366cc' },
   times: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   timeText: { fontSize: 11, color: '#888' },
+  errorText: { fontSize: 11, color: '#a30000', marginTop: 4 },
 });

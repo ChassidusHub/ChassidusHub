@@ -1,5 +1,19 @@
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { catalogAudioToChapter, catalogAudioToTracks } from './playlist';
+
+const mockLocalAudioFileUrlIfExists = jest.fn<
+  Promise<string | null>,
+  [string]
+>(() => Promise.resolve(null));
+
+jest.mock('../download/download', () => {
+  const actual = jest.requireActual('../download/download');
+  return {
+    ...actual,
+    localAudioFileUrlIfExists: mockLocalAudioFileUrlIfExists,
+  };
+});
+
+const playlist = require('./playlist') as typeof import('./playlist');
 
 function makeEntry(overrides: Partial<CatalogEntry> & Pick<CatalogEntry, 'occasionId' | 'hebrewYear'>): CatalogEntry {
   const { occasionId, hebrewYear, ...rest } = overrides;
@@ -15,7 +29,12 @@ function makeEntry(overrides: Partial<CatalogEntry> & Pick<CatalogEntry, 'occasi
 }
 
 describe('catalogAudioToTracks', () => {
-  it('maps audio array to RNTP Track objects', () => {
+  beforeEach(() => {
+    mockLocalAudioFileUrlIfExists.mockReset();
+    mockLocalAudioFileUrlIfExists.mockResolvedValue(null);
+  });
+
+  it('maps audio array to RNTP Track objects', async () => {
     const entry = makeEntry({
       occasionId: 1,
       hebrewYear: 5711,
@@ -26,7 +45,7 @@ describe('catalogAudioToTracks', () => {
       ],
     });
 
-    const tracks = catalogAudioToTracks(entry);
+    const tracks = await playlist.catalogAudioToTracks(entry);
 
     expect(tracks).toHaveLength(2);
     expect(tracks[0]).toMatchObject({
@@ -44,7 +63,7 @@ describe('catalogAudioToTracks', () => {
     expect(typeof tracks[0]?.url).toBe('string');
   });
 
-  it('uses occasionLabel as title when only one audio item', () => {
+  it('uses occasionLabel as title when only one audio item', async () => {
     const entry = makeEntry({
       occasionId: 2,
       hebrewYear: 5712,
@@ -52,8 +71,28 @@ describe('catalogAudioToTracks', () => {
       audio: [{ workerFilename: 'xyz.mp3', durationMs: 7200000, chapterName: undefined }],
     });
 
-    const tracks = catalogAudioToTracks(entry);
+    const tracks = await playlist.catalogAudioToTracks(entry);
     expect(tracks[0]?.title).toBe('Yud Tes Kislev Farbrengen');
+  });
+
+  it('uses file:// URL for downloaded chapters and network URL otherwise', async () => {
+    const entry = makeEntry({
+      occasionId: 2,
+      hebrewYear: 5712,
+      occasionLabel: 'Yud Tes Kislev Farbrengen',
+      audio: [
+        { workerFilename: 'cached.mp3', durationMs: 1000 },
+        { workerFilename: 'remote.mp3', durationMs: 1000 },
+      ],
+    });
+    mockLocalAudioFileUrlIfExists.mockImplementation(async (workerFilename) =>
+      workerFilename === 'cached.mp3' ? 'file:///documents/cached.mp3' : null,
+    );
+
+    const tracks = await playlist.catalogAudioToTracks(entry);
+
+    expect(tracks[0]?.url).toBe('file:///documents/cached.mp3');
+    expect(String(tracks[1]?.url)).toContain('/jem-audio/remote.mp3');
   });
 });
 
@@ -66,7 +105,7 @@ describe('catalogAudioToChapter', () => {
       audio: [{ workerFilename: 'q.mp3', durationMs: 500, chapterName: 'Part A' }],
     });
 
-    const chapter = catalogAudioToChapter(entry, entry.audio[0]!);
+    const chapter = playlist.catalogAudioToChapter(entry, entry.audio[0]!);
 
     expect(chapter).toMatchObject({
       workerFilename: 'q.mp3',

@@ -64,6 +64,23 @@ produces a real installable APK, no Expo/EAS account needed.
   `classifyPdfEdition`/`sortPdfsByEditionPreference`) without hiding the
   other editions.
 
+## Phase 3B player hardening status
+
+- The `react-native-track-player` queue now resolves each chapter URL to
+  `file://...` when the downloaded chapter exists in
+  `RNBlobUtil.fs.dirs.DocumentDir`, and falls back to media-proxy
+  streaming when the file is missing.
+- Playback progress is persisted in AsyncStorage and keyed by stable audio
+  IDs (`workerFilename`) per occasion; resume position is applied when
+  that occasion is played again. Corrupt/stale storage is ignored safely.
+- Restore is currently resume-on-play, not auto-rebuild/auto-start of the
+  last queue on app launch.
+- Android interruption/focus groundwork is enabled by
+  `setupPlayer({ autoHandleInterruptions: true })` plus RemoteDuck pause/
+  resume handling in `src/player/trackPlayerService.ts`.
+- Lockscreen/media-notification/background behavior still needs real-device
+  or CI-emulator runtime verification (Phase 3C validation gap).
+
 ## Not built yet
 
 - Batch month/year downloads, zip bundling.
@@ -148,6 +165,28 @@ gh workflow run mobile-android-smoke.yml
 - `apps/mobile/smoke-artifacts/android-smoke-screenshot.png`
 - `apps/mobile/smoke-artifacts/gradle-build.log`
 - Gradle build reports from `android/app/build/reports/`
+
+### Phase 3B required command set
+
+```sh
+npm ci
+npm run test -w @sichos-kodesh/mobile
+npm run typecheck -w @sichos-kodesh/mobile
+npm run lint -w @sichos-kodesh/mobile
+npm run test -w @sichos-kodesh/app-core
+npm run typecheck -w @sichos-kodesh/app-core
+npm run android:smoke:buildonly -w @sichos-kodesh/mobile
+cd apps/mobile/android && ./gradlew assembleDebug --stacktrace
+npm run android:smoke -w @sichos-kodesh/mobile
+```
+
+If the local VM has no emulator/device and runtime smoke exits `2`,
+runtime verification must come from the PR's
+`mobile-android-smoke.yml` run (auto-triggered by path filters), or via:
+
+```sh
+gh workflow run mobile-android-smoke.yml
+```
 
 ### Getting an APK
 
