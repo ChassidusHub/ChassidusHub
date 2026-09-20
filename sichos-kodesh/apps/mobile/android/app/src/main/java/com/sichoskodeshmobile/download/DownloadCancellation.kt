@@ -62,9 +62,11 @@ internal object DownloadCancellation {
     }
 
     private fun clearRequestCode(context: Context, targetKey: String) {
-        context.getSharedPreferences(REQUEST_CODE_PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .remove("$REQUEST_CODE_PREFIX$targetKey")
-            .apply()
+        synchronized(this) {
+            context.getSharedPreferences(REQUEST_CODE_PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .remove("$REQUEST_CODE_PREFIX$targetKey")
+                .apply()
+        }
     }
 }
