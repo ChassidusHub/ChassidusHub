@@ -40,6 +40,7 @@ class DownloadModule(
         const val EVENT_ERROR = "SichosKodeshDownloadError"
 
         private const val WORK_TAG = "SichosKodeshDownload"
+        private const val TARGET_KEY_TAG_PREFIX = "targetKey:"
     }
 
     /** Pairs of (LiveData, Observer) for every in-flight download, keyed by targetKey.
@@ -78,7 +79,7 @@ class DownloadModule(
                 .setInputData(inputData)
                 .setConstraints(constraints)
                 .addTag(WORK_TAG)
-                .addTag(targetKey)
+                .addTag("$TARGET_KEY_TAG_PREFIX$targetKey")
                 .build()
 
             workManager.enqueueUniqueWork(targetKey, ExistingWorkPolicy.KEEP, request)
@@ -110,22 +111,31 @@ class DownloadModule(
 
     @ReactMethod
     fun listActiveDownloads(promise: Promise) {
-        try {
-            val infos = WorkManager.getInstance(reactApplicationContext).getWorkInfosByTag(WORK_TAG).get()
-            val downloads = Arguments.createArray()
-            for (info in infos) {
-                if (info.state.isFinished) continue
-                val targetKey = info.tags.firstOrNull { it != WORK_TAG } ?: continue
-                val download = Arguments.createMap().apply {
-                    putString("targetKey", targetKey)
-                    putString("state", info.state.name.lowercase())
+        val future = WorkManager.getInstance(reactApplicationContext).getWorkInfosByTag(WORK_TAG)
+        future.addListener(
+            {
+                try {
+                    val infos = future.get()
+                    val downloads = Arguments.createArray()
+                    for (info in infos) {
+                        if (info.state.isFinished) continue
+                        val targetKey = info.tags
+                            .firstOrNull { it.startsWith(TARGET_KEY_TAG_PREFIX) }
+                            ?.removePrefix(TARGET_KEY_TAG_PREFIX)
+                            ?: continue
+                        val download = Arguments.createMap().apply {
+                            putString("targetKey", targetKey)
+                            putString("state", info.state.name.lowercase())
+                        }
+                        downloads.pushMap(download)
+                    }
+                    promise.resolve(downloads)
+                } catch (e: Exception) {
+                    promise.reject("LIST_ACTIVE_DOWNLOADS_FAILED", e.message ?: "list active downloads failed", e)
                 }
-                downloads.pushMap(download)
-            }
-            promise.resolve(downloads)
-        } catch (e: Exception) {
-            promise.reject("LIST_ACTIVE_DOWNLOADS_FAILED", e.message ?: "list active downloads failed", e)
-        }
+            },
+            Runnable::run,
+        )
     }
 
     /**

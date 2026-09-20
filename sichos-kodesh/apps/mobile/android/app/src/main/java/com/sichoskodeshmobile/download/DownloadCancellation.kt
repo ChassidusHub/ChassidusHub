@@ -3,6 +3,7 @@ package com.sichoskodeshmobile.download
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.work.WorkManager
 import java.io.File
 
@@ -14,12 +15,17 @@ internal object DownloadCancellation {
     fun createCancelPendingIntent(context: Context, targetKey: String, filename: String): PendingIntent {
         val intent = Intent(context, DownloadCancelReceiver::class.java).apply {
             action = ACTION_CANCEL_DOWNLOAD
+            data = Uri.Builder()
+                .scheme("sichos-kodesh")
+                .authority("download-cancel")
+                .appendPath(targetKey)
+                .build()
             putExtra(EXTRA_TARGET_KEY, targetKey)
             putExtra(EXTRA_FILENAME, filename)
         }
         return PendingIntent.getBroadcast(
             context,
-            targetKey.hashCode(),
+            0,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
