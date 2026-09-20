@@ -93,7 +93,13 @@ export async function writePdfReaderSettingsStore(
   try {
     await AsyncStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: VERSION, settings: store.settings }),
+      JSON.stringify({
+        version:
+          typeof store.version === 'number' && Number.isFinite(store.version)
+            ? Math.floor(store.version)
+            : VERSION,
+        settings: sanitizePdfReaderSettings(store.settings),
+      }),
     );
   } catch {
     // Best-effort persistence only.
