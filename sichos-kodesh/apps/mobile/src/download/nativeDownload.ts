@@ -17,6 +17,7 @@ import { NativeModules, Platform } from 'react-native';
 
 export const DOWNLOAD_PROGRESS_EVENT = 'SichosKodeshDownloadProgress';
 export const DOWNLOAD_COMPLETE_EVENT = 'SichosKodeshDownloadComplete';
+export const DOWNLOAD_CANCELED_EVENT = 'SichosKodeshDownloadCanceled';
 export const DOWNLOAD_ERROR_EVENT = 'SichosKodeshDownloadError';
 
 export interface NativeEnqueueResult {
@@ -32,6 +33,7 @@ export interface NativeDownloadModule {
     metadata: Record<string, string> | null,
   ): Promise<NativeEnqueueResult>;
   cancelDownload(targetKey: string): Promise<void>;
+  listActiveDownloads(): Promise<Array<{ targetKey: string; state: string }>>;
   getFilesDir(): Promise<string>;
 }
 
@@ -77,6 +79,12 @@ export async function nativeCancelDownload(targetKey: string): Promise<void> {
   const mod = getNativeDownloader();
   if (!mod) return;
   return mod.cancelDownload(targetKey);
+}
+
+export async function listActiveNativeDownloads(): Promise<Array<{ targetKey: string; state: string }>> {
+  const mod = getNativeDownloader();
+  if (!mod) return [];
+  return mod.listActiveDownloads();
 }
 
 /**

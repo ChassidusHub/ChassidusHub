@@ -138,6 +138,47 @@ Android downloader bridge:
 - **iOS** — native module returns `null` on iOS; foreground fallback only until a separate iOS download path is added.
 - **Reboot persistence** — WorkManager re-enqueues on reboot by default; verify with `RECEIVE_BOOT_COMPLETED` test if needed.
 
+## Phase 4C — Android downloader notification cancel + verification hardening (completed)
+
+### What changed
+
+- `DownloadWorker` notifications now expose a per-download **Cancel** action.
+- Native cancellation is centralized in `DownloadCancellation.kt` and reused by:
+  - JS `cancelDownload`
+  - notification `BroadcastReceiver`
+- Cancel now removes the target `.part` file before canceling WorkManager, so
+  explicitly canceled downloads do not look resumable/completed later.
+- `DownloadModule` now emits a dedicated `SichosKodeshDownloadCanceled` event
+  for WorkManager `CANCELLED` instead of collapsing cancel into generic error.
+- `DownloadProvider` now:
+  - maps native canceled events to the existing `'canceled'` state
+  - reconciles native pending work on launch and app foreground by asking the
+    native module which WorkManager downloads are still active
+  - avoids treating canceled/missing native work as completed unless the final
+    downloaded file is actually present in the shared ledger/filesystem view
+
+### Automated verification this phase
+
+| Command / workflow | Coverage |
+|---|---|
+| `npm run test -w @sichos-kodesh/mobile` | Jest coverage including native cancel event + provider reconciliation |
+| `npm run typecheck -w @sichos-kodesh/mobile` | TS integration for provider/native wrapper changes |
+| `npm run lint -w @sichos-kodesh/mobile` | lint for new provider/tests/docs-adjacent code |
+| `npm run test -w @sichos-kodesh/app-core` | shared package regression guard |
+| `npm run typecheck -w @sichos-kodesh/app-core` | shared package regression guard |
+| `npm run android:smoke:buildonly -w @sichos-kodesh/mobile` | APK build verification without device |
+| `mobile-android-smoke.yml` | emulator install/launch smoke on PRs touching mobile/packages/workflows |
+
+### Remaining real runtime gaps
+
+- Local agent VMs still cannot treat `npm run android:smoke` as runtime proof
+  when no device/emulator is attached (expected exit `2`).
+- Process-kill persistence, reboot continuation, and notification behavior from
+  the lock screen / OEM-specific notification UIs still require emulator or
+  physical-device validation.
+- WorkManager persistence is architecture-supported, but this phase does **not**
+  claim full reboot/process-kill verification without those runtime checks.
+
 ---
 
 ## Phase 3B — Mobile native player hardening (completed)

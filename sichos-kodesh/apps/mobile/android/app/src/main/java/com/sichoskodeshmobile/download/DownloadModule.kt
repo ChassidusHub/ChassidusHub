@@ -36,6 +36,7 @@ class DownloadModule(
 
         const val EVENT_PROGRESS = "SichosKodeshDownloadProgress"
         const val EVENT_COMPLETE = "SichosKodeshDownloadComplete"
+        const val EVENT_CANCELED = "SichosKodeshDownloadCanceled"
         const val EVENT_ERROR = "SichosKodeshDownloadError"
 
         private const val WORK_TAG = "SichosKodeshDownload"
@@ -100,10 +101,30 @@ class DownloadModule(
     @ReactMethod
     fun cancelDownload(targetKey: String, promise: Promise) {
         try {
-            WorkManager.getInstance(reactApplicationContext).cancelUniqueWork(targetKey)
+            DownloadCancellation.cancelDownload(reactApplicationContext, targetKey)
             promise.resolve(null)
         } catch (e: Exception) {
             promise.reject("CANCEL_FAILED", e.message ?: "cancel failed", e)
+        }
+    }
+
+    @ReactMethod
+    fun listActiveDownloads(promise: Promise) {
+        try {
+            val infos = WorkManager.getInstance(reactApplicationContext).getWorkInfosByTag(WORK_TAG).get()
+            val downloads = Arguments.createArray()
+            for (info in infos) {
+                if (info.state.isFinished) continue
+                val targetKey = info.inputData.getString(DownloadWorker.KEY_TARGET_KEY) ?: continue
+                val download = Arguments.createMap().apply {
+                    putString("targetKey", targetKey)
+                    putString("state", info.state.name.lowercase())
+                }
+                downloads.pushMap(download)
+            }
+            promise.resolve(downloads)
+        } catch (e: Exception) {
+            promise.reject("LIST_ACTIVE_DOWNLOADS_FAILED", e.message ?: "list active downloads failed", e)
         }
     }
 
@@ -152,7 +173,13 @@ class DownloadModule(
                             })
                             removeObserver(targetKey, liveData, this)
                         }
-                        WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> {
+                        WorkInfo.State.CANCELLED -> {
+                            emitEvent(EVENT_CANCELED, Arguments.createMap().apply {
+                                putString("targetKey", targetKey)
+                            })
+                            removeObserver(targetKey, liveData, this)
+                        }
+                        WorkInfo.State.FAILED -> {
                             val error = info.outputData.getString(DownloadWorker.OUT_ERROR) ?: "download failed"
                             emitEvent(EVENT_ERROR, Arguments.createMap().apply {
                                 putString("targetKey", targetKey)
