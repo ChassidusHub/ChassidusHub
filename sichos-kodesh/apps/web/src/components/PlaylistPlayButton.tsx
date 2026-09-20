@@ -50,7 +50,7 @@ export function PlaylistPlayButton({ entry, progressMap, variant }: Props) {
     );
   }
 
-  const size = variant === 'large' ? 24 : 16;
+  const size = variant === 'large' ? 20 : 16;
   let icon = <Play size={size} fill="currentColor" strokeWidth={0} />;
   if (isLoading) icon = <Loader2 size={size} className="playlist-play-button-spinner" aria-hidden />;
   // strokeWidth={0}: lucide draws a 2px stroke outline even on a filled icon by default, which over-thickens Pause's two already-solid bars.
