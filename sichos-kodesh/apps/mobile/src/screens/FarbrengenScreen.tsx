@@ -35,6 +35,7 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
     () => resolveOccasionRoute(catalog, route.params, language),
     [language, route.params],
   );
+  const downloadState = useDownloadState(resolved?.entry);
 
   if (!resolved) {
     return (
@@ -44,10 +45,8 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
       </Screen>
     );
   }
-
   const { entry, backRoute } = resolved;
   const { hanachaPdfs, otherPdfs, categoryLinks } = splitFarbrengenContent(entry);
-  const downloadState = useDownloadState(entry);
   const totalDuration = totalDurationLabel(entry.audio.reduce((sum, audio) => sum + audio.durationMs, 0));
   const isThisOccasionLoaded =
     chapters.length > 0 &&

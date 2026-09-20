@@ -48,6 +48,16 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
   const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog), [sourceYear]);
   const { t } = useTranslation();
   const { enqueueTargets, settings } = useDownload();
+  const footer = occasions.length > 0 ? (
+    <View style={styles.footer}>
+      <RowSeparator />
+      <ListRow
+        label={t.allOfYear(sourceYear)}
+        right={<AppText color="muted">›</AppText>}
+        onPress={() => navigation.navigate('FollowMonthList', { sourceYear })}
+      />
+    </View>
+  ) : undefined;
 
   return (
     <Screen>
@@ -87,20 +97,7 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
         )}
         ItemSeparatorComponent={RowSeparator}
         ListEmptyComponent={<EmptyState title={t.nothingThisWeek(sourceYear)} />}
-        ListFooterComponent={
-          occasions.length > 0
-            ? () => (
-                <View style={styles.footer}>
-                  <RowSeparator />
-                  <ListRow
-                    label={t.allOfYear(sourceYear)}
-                    right={<AppText color="muted">›</AppText>}
-                    onPress={() => navigation.navigate('FollowMonthList', { sourceYear })}
-                  />
-                </View>
-              )
-            : undefined
-        }
+        ListFooterComponent={footer}
       />
     </Screen>
   );

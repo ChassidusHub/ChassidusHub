@@ -24,7 +24,7 @@ describe('catalogRoutes', () => {
     5711: [
       entry({ hebrewYear: 5711, occasionId: 1, hebrewDate: '5711-05-10', audio: [{ workerFilename: 'a.mp3', durationMs: 1000 }] }),
       entry({ hebrewYear: 5711, occasionId: 2, hebrewDate: '5711-05-11', pdfs: [{ section: 'mugah', label: 'Mugah', driveFileId: 'm1' }] }),
-      entry({ hebrewYear: 5711, occasionId: 3, hebrewDate: '5711-06A-01', pdfs: [{ section: 'biltiMugah', label: 'שיחו"ק ח\"ב', driveFileId: 'h1' }] }),
+      entry({ hebrewYear: 5711, occasionId: 3, hebrewDate: '5711-06A-01', pdfs: [{ section: 'biltiMugah', label: 'שיחו"ק ח"ב', driveFileId: 'h1' }] }),
       entry({ hebrewYear: 5711, occasionId: 4, hebrewDate: '5711-06A-05', pdfs: [{ section: 'maamorim', label: 'Maamar', driveFileId: 'mm1' }] }),
     ],
     5712: [
