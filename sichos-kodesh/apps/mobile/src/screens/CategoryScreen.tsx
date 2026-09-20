@@ -59,6 +59,8 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
                     driveFileId: pdf.driveFileId,
                     resourceKey: pdf.resourceKey ?? null,
                     label: pdf.label,
+                    occasionLabel: resolved.entry.occasionLabel,
+                    sectionLabel: t.sectionLabels[pdf.section],
                   })
                 }
               />

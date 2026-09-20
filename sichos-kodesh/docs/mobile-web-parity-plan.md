@@ -237,6 +237,49 @@ Android downloader bridge:
 
 ---
 
+## Phase 5B — PDF viewer parity and reading progress (completed)
+
+- Mobile PDF reading progress is now persisted in AsyncStorage with a stable
+  per-PDF key derived from `hebrewYear`, `occasionId`, and `driveFileId`
+  (`apps/mobile/src/pdf/pdfIdentity.ts`, `apps/mobile/src/pdf/pdfProgress.ts`).
+- `PdfViewerScreen` now restores the last-read page on reopen, throttles page
+  writes, shows `Page X / Y`, and exposes explicit Previous/Next page controls
+  via `react-native-pdf`'s existing `setPage()` / `onPageChanged()` API.
+- Loading/error UX is clearer: the screen now shows an in-app loading card,
+  retains safe back navigation, and exposes a retry action for failed loads.
+- Route/context handling is more defensive: invalid params show a polished
+  empty state, while valid PDF routes preserve title/occasion/category context
+  where available without depending on downloader/player/native internals.
+- Dark/invert PDF rendering remains deferred: the web implementation relies on
+  DOM/CSS inversion, while the current mobile `react-native-pdf` stack does
+  not expose a clean equivalent without higher-risk rendering changes.
+
+### Validation / workflow notes
+
+- Required commands remain:
+  - `npm ci`
+  - `npm run test -w @sichos-kodesh/mobile`
+  - `npm run typecheck -w @sichos-kodesh/mobile`
+  - `npm run lint -w @sichos-kodesh/mobile`
+  - `npm run test -w @sichos-kodesh/app-core`
+  - `npm run typecheck -w @sichos-kodesh/app-core`
+  - `npm run android:smoke:buildonly -w @sichos-kodesh/mobile`
+  - `cd apps/mobile/android && ./gradlew assembleDebug --stacktrace`
+  - `npm run android:smoke -w @sichos-kodesh/mobile`
+- Local coding-agent VMs may still lack `adb` / an attached emulator, so
+  runtime proof should come from the PR's `mobile-android-smoke.yml` run when
+  local smoke cannot launch.
+
+### Remaining PDF parity gaps
+
+- No mobile dark/invert rendering toggle yet.
+- No web-style freeform zoom/pan parity beyond `react-native-pdf`'s built-in
+  gestures.
+- Runtime/device verification still depends on local Android tooling or CI
+  emulator availability.
+
+---
+
 ## Next recommended phases
 
 ### Phase 2A — i18n / settings / search parity (recommended next)

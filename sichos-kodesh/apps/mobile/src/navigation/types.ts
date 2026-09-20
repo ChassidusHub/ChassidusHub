@@ -61,6 +61,8 @@ export type RootStackParamList = {
     driveFileId: string;
     resourceKey: string | null;
     label: string;
+    occasionLabel?: string;
+    sectionLabel?: string | null;
   };
 
   /** Search screen */

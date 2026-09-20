@@ -1,3 +1,5 @@
+export {};
+
 const mockGetItem = jest.fn<Promise<string | null>, [string]>(() => Promise.resolve(null));
 const mockSetItem = jest.fn<Promise<void>, [string, string]>(() => Promise.resolve());
 
