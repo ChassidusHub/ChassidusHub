@@ -45,9 +45,11 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
       </Screen>
     );
   }
+
   const { entry, backRoute } = resolved;
   const { hanachaPdfs, otherPdfs, categoryLinks } = splitFarbrengenContent(entry);
-  const totalDuration = totalDurationLabel(entry.audio.reduce((sum, audio) => sum + audio.durationMs, 0));
+  const totalDurationMs = entry.audio.reduce((sum, audio) => sum + audio.durationMs, 0);
+  const totalDuration = totalDurationMs > 0 ? totalDurationLabel(totalDurationMs) : null;
   const isThisOccasionLoaded =
     chapters.length > 0 &&
     chapters[0]?.occasionId === entry.occasionId &&
