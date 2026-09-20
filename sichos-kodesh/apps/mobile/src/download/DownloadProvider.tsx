@@ -5,7 +5,6 @@ import type { CatalogAudio, CatalogEntry, CatalogPdf } from '@sichos-kodesh/cata
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import catalog from '../catalog/data';
-import { downloadAudio as downloadAudioFile, downloadPdf as downloadPdfFile } from './download';
 import { DownloadContext } from './downloadContext';
 import { DEFAULT_DOWNLOAD_SETTINGS, useDownloadSettings } from './downloadSettings';
 import {
@@ -22,6 +21,7 @@ import {
   upsertStoredDownload,
   writePendingDownloads,
 } from './downloadStorage';
+import { executeDownload, subscribeToNativeDownloadEvents } from './downloadExecutor';
 
 const ALL_ENTRIES = Object.values(catalog).flat();
 
@@ -34,17 +34,6 @@ function toState(target: DownloadTarget, status: DownloadStatus, extras: Partial
   };
 }
 
-async function runTargetDownload(target: DownloadTarget, onProgress: (progress: number) => void): Promise<string> {
-  if (target.kind === 'audio') {
-    return downloadAudioFile(target.workerFilename ?? '', ({ received, total }) => {
-      onProgress(total > 0 ? received / total : 0);
-    });
-  }
-  return downloadPdfFile(target.driveFileId ?? '', target.resourceKey ?? undefined, ({ received, total }) => {
-    onProgress(total > 0 ? received / total : 0);
-  });
-}
-
 export function DownloadProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings, settingsHydrated] = useDownloadSettings();
   const [hydrated, setHydrated] = useState(false);
@@ -54,6 +43,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const processingRef = useRef(false);
   const targetStatesRef = useRef<Record<string, TargetDownloadState>>({});
   const autoQueuedRef = useRef(false);
+  // Tracks targets handed off to WorkManager so native events can resolve them.
+  const nativePendingRef = useRef<Map<string, DownloadTarget>>(new Map());
   const [, bumpQueue] = useState(0);
 
   useEffect(() => {
@@ -114,12 +105,27 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     }));
 
     try {
-      const path = await runTargetDownload(next, (progress) => {
+      const result = await executeDownload(next, (progress) => {
         setTargetStates((prev) => ({
           ...prev,
           [next.key]: toState(next, 'downloading', { progress }),
         }));
       });
+
+      if (result.mode === 'native') {
+        // Download enqueued in WorkManager — remove from blocking queue and track
+        // in nativePendingRef so the event subscription can finalize it.
+        nativePendingRef.current.set(next.key, next);
+        queueRef.current = queueRef.current.filter((target) => target.key !== next.key);
+        await writePendingDownloads(queueRef.current);
+        processingRef.current = false;
+        bumpQueue((v) => v + 1);
+        if (queueRef.current.length > 0) processQueue().catch(() => undefined);
+        return;
+      }
+
+      // Foreground path — result.localPath is available
+      const path = result.localPath!;
       const records = await upsertStoredDownload(next, path);
       setDownloadedRecords(records);
       setTargetStates((prev) => ({
@@ -132,12 +138,53 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         [next.key]: toState(next, 'error', { error: String(error) }),
       }));
     } finally {
-      queueRef.current = queueRef.current.filter((target) => target.key !== next.key);
-      await writePendingDownloads(queueRef.current);
-      processingRef.current = false;
-      bumpQueue((value) => value + 1);
-      if (queueRef.current.length > 0) processQueue().catch(() => undefined);
+      // Only remove from queue here for foreground path (native already removed above).
+      if (!nativePendingRef.current.has(next.key)) {
+        queueRef.current = queueRef.current.filter((target) => target.key !== next.key);
+        await writePendingDownloads(queueRef.current);
+        processingRef.current = false;
+        bumpQueue((value) => value + 1);
+        if (queueRef.current.length > 0) processQueue().catch(() => undefined);
+      }
     }
+  }, []);
+
+  // Subscribe to WorkManager events for native-routed downloads.
+  useEffect(() => {
+    const unsubscribe = subscribeToNativeDownloadEvents({
+      onProgress: ({ targetKey, bytesReceived, bytesTotal }) => {
+        const pending = nativePendingRef.current.get(targetKey);
+        if (!pending) return;
+        setTargetStates((prev) => ({
+          ...prev,
+          [targetKey]: toState(pending, 'downloading', {
+            progress: bytesTotal > 0 ? bytesReceived / bytesTotal : 0,
+          }),
+        }));
+      },
+      onComplete: ({ targetKey, localPath }) => {
+        const pending = nativePendingRef.current.get(targetKey);
+        if (!pending) return;
+        nativePendingRef.current.delete(targetKey);
+        upsertStoredDownload(pending, localPath).then((records) => {
+          setDownloadedRecords(records);
+          setTargetStates((prev) => ({
+            ...prev,
+            [targetKey]: toState(pending, 'downloaded', { progress: 1, localPath }),
+          }));
+        }).catch(() => undefined);
+      },
+      onError: ({ targetKey, error }) => {
+        const pending = nativePendingRef.current.get(targetKey);
+        if (!pending) return;
+        nativePendingRef.current.delete(targetKey);
+        setTargetStates((prev) => ({
+          ...prev,
+          [targetKey]: toState(pending, 'error', { error }),
+        }));
+      },
+    });
+    return unsubscribe;
   }, []);
 
   const enqueueTargets = useCallback(
@@ -223,6 +270,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     await clearAllDownloadedFiles(ALL_ENTRIES);
     await clearPendingDownloads();
     queueRef.current = [];
+    nativePendingRef.current.clear();
     setDownloadedRecords([]);
     setTargetStates((prev) => {
       const next: Record<string, TargetDownloadState> = {};
