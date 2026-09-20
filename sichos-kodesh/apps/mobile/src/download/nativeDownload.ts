@@ -32,7 +32,7 @@ export interface NativeDownloadModule {
     filename: string,
     metadata: Record<string, string> | null,
   ): Promise<NativeEnqueueResult>;
-  cancelDownload(targetKey: string): Promise<void>;
+  cancelDownload(targetKey: string, filename: string | null): Promise<void>;
   listActiveDownloads(): Promise<Array<{ targetKey: string; state: string }>>;
   getFilesDir(): Promise<string>;
 }
@@ -75,10 +75,10 @@ export async function nativeEnqueueDownload(
  * Cancel a queued or running download by target key.
  * No-op if the native module is unavailable.
  */
-export async function nativeCancelDownload(targetKey: string): Promise<void> {
+export async function nativeCancelDownload(targetKey: string, filename?: string | null): Promise<void> {
   const mod = getNativeDownloader();
   if (!mod) return;
-  return mod.cancelDownload(targetKey);
+  return mod.cancelDownload(targetKey, filename ?? null);
 }
 
 export async function listActiveNativeDownloads(): Promise<Array<{ targetKey: string; state: string }>> {

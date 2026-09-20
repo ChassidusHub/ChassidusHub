@@ -52,7 +52,7 @@ class DownloadWorker(
         val url = inputData.getString(KEY_URL) ?: return Result.failure(workDataOf(OUT_ERROR to "missing url"))
         val filename = inputData.getString(KEY_FILENAME) ?: return Result.failure(workDataOf(OUT_ERROR to "missing filename"))
 
-        setForeground(createForegroundInfo(targetKey))
+        setForeground(createForegroundInfo(targetKey, filename))
 
         val filesDir = applicationContext.filesDir
         val destFile = File(filesDir, filename)
@@ -142,7 +142,7 @@ class DownloadWorker(
         }
     }
 
-    private fun createForegroundInfo(targetKey: String): ForegroundInfo {
+    private fun createForegroundInfo(targetKey: String, filename: String): ForegroundInfo {
         createNotificationChannel()
         val notification = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -153,7 +153,7 @@ class DownloadWorker(
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
                 "Cancel",
-                DownloadCancellation.createCancelPendingIntent(applicationContext, targetKey),
+                DownloadCancellation.createCancelPendingIntent(applicationContext, targetKey, filename),
             )
             .build()
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

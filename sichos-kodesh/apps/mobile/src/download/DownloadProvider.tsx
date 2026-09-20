@@ -12,6 +12,7 @@ import {
   clearAllDownloadedFiles,
   clearPendingDownloads,
   deleteEntryDownloads,
+  fileNameForTarget,
   isTargetDownloaded,
   listDownloadedOccasions,
   listPendingDownloads,
@@ -297,16 +298,17 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   );
 
   const cancelDownload = useCallback(async (targetKey: string) => {
+    const current = targetStatesRef.current[targetKey];
     // Cancel in WorkManager if native path was used.
-    await nativeCancelDownload(targetKey);
+    await nativeCancelDownload(targetKey, current ? fileNameForTarget(current.target) : undefined);
     // Remove from local queue if it hasn't been handed off yet.
     queueRef.current = queueRef.current.filter((t) => t.key !== targetKey);
     nativePendingRef.current.delete(targetKey);
     await writePendingDownloads(queueRef.current);
     setTargetStates((prev) => {
-      const current = prev[targetKey];
-      if (!current || (current.status !== 'queued' && current.status !== 'downloading')) return prev;
-      return { ...prev, [targetKey]: toState(current.target, 'canceled') };
+      const nextCurrent = prev[targetKey];
+      if (!nextCurrent || (nextCurrent.status !== 'queued' && nextCurrent.status !== 'downloading')) return prev;
+      return { ...prev, [targetKey]: toState(nextCurrent.target, 'canceled') };
     });
   }, []);
 

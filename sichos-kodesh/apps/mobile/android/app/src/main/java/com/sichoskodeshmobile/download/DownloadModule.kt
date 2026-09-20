@@ -99,9 +99,9 @@ class DownloadModule(
      * Cancel any enqueued or running download for the given targetKey.
      */
     @ReactMethod
-    fun cancelDownload(targetKey: String, promise: Promise) {
+    fun cancelDownload(targetKey: String, filename: String?, promise: Promise) {
         try {
-            DownloadCancellation.cancelDownload(reactApplicationContext, targetKey)
+            DownloadCancellation.cancelDownload(reactApplicationContext, targetKey, filename)
             promise.resolve(null)
         } catch (e: Exception) {
             promise.reject("CANCEL_FAILED", e.message ?: "cancel failed", e)
@@ -115,7 +115,7 @@ class DownloadModule(
             val downloads = Arguments.createArray()
             for (info in infos) {
                 if (info.state.isFinished) continue
-                val targetKey = info.inputData.getString(DownloadWorker.KEY_TARGET_KEY) ?: continue
+                val targetKey = info.tags.firstOrNull { it != WORK_TAG } ?: continue
                 val download = Arguments.createMap().apply {
                     putString("targetKey", targetKey)
                     putString("state", info.state.name.lowercase())
