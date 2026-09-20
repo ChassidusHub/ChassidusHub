@@ -1,6 +1,6 @@
 package com.sichoskodeshmobile.download
 
-import android.content.Context
+import androidx.lifecycle.Observer
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
@@ -111,11 +111,10 @@ class DownloadModule(
 
     private fun observeWork(targetKey: String, workId: String) {
         val workManager = WorkManager.getInstance(reactApplicationContext)
-        // Observe on main thread via LiveData — WorkManager guarantees callbacks on the main thread.
         reactApplicationContext.runOnUiQueueThread {
-            workManager.getWorkInfoByIdLiveData(java.util.UUID.fromString(workId))
-                .observeForever { info ->
-                    if (info == null) return@observeForever
+            val liveData = workManager.getWorkInfoByIdLiveData(java.util.UUID.fromString(workId))
+            val observer = object : Observer<WorkInfo> {
+                override fun onChanged(info: WorkInfo) {
                     when (info.state) {
                         WorkInfo.State.RUNNING -> {
                             val received = info.progress.getLong(DownloadWorker.PROGRESS_BYTES_RECEIVED, 0)
@@ -132,6 +131,7 @@ class DownloadModule(
                                 putString("targetKey", targetKey)
                                 putString("localPath", localPath)
                             })
+                            liveData.removeObserver(this)
                         }
                         WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> {
                             val error = info.outputData.getString(DownloadWorker.OUT_ERROR) ?: "download failed"
@@ -139,10 +139,13 @@ class DownloadModule(
                                 putString("targetKey", targetKey)
                                 putString("error", error)
                             })
+                            liveData.removeObserver(this)
                         }
                         else -> Unit
                     }
                 }
+            }
+            liveData.observeForever(observer)
         }
     }
 

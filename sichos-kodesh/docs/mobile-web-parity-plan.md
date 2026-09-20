@@ -93,6 +93,53 @@ Android emulator / device testing was not available in this sandbox.
 
 ---
 
+## Phase 4A — Android native background/resumable downloader groundwork (completed)
+
+### Architecture
+
+The foreground-only RNBlobUtil download path is now complemented by a native
+Android downloader bridge:
+
+| Layer | File | Notes |
+|-------|------|-------|
+| WorkManager worker | `android/.../download/DownloadWorker.kt` | CoroutineWorker; streams to `.part`, renames when complete; HTTP Range resume on existing `.part`; foreground notification |
+| Native module | `android/.../download/DownloadModule.kt` | `SichosKodeshDownloader` exposed to JS; enqueues unique WorkManager tasks; emits progress/complete/error via `DeviceEventEmitter` |
+| ReactPackage | `android/.../download/DownloadPackage.kt` | Registered in `MainApplication.kt` |
+| JS wrapper | `src/download/nativeDownload.ts` | Returns `null`/no-op in Jest/non-Android; safe fallback |
+| Executor | `src/download/downloadExecutor.ts` | Chooses native vs. foreground; exports event subscription helper |
+| Provider | `src/download/DownloadProvider.tsx` | Native-enqueued targets leave blocking queue immediately; events finalize ledger |
+
+### What is implemented
+
+- WorkManager-backed download survives process death (durable queue).
+- `.part`-file atomic rename eliminates partial-file corruption.
+- HTTP `Range` resume header sent when `.part` exists (proxy supports it).
+- Progress events bridged to JS; DownloadProvider updates `targetStates` in real time.
+- Completed native downloads upsert the same AsyncStorage ledger used by DownloadedScreen and cached-file playback.
+- Foreground fallback preserved for non-Android / Jest contexts.
+- `assembleDebug` BUILD SUCCESSFUL (314 tasks).
+
+### Validation results
+
+| Command | Result |
+|---------|--------|
+| `npm run test -w @sichos-kodesh/mobile` | ✅ PASS (22/22 tests, 11 new) |
+| `npm run typecheck -w @sichos-kodesh/mobile` | ✅ PASS |
+| `npm run lint -w @sichos-kodesh/mobile` | ✅ PASS |
+| `npm run android:smoke:buildonly -w @sichos-kodesh/mobile` | ✅ APK confirmed, exit 0 |
+| `npm run android:smoke` (runtime) | ⚠️ Skipped — no emulator in agent VM. Run via CI: `gh workflow run mobile-android-smoke.yml` |
+
+### Phase 4B remaining gaps
+
+- **Real-device/emulator verification** — lock-screen notification UX, background execution confirmed alive after app kill.
+- **Wi-Fi-only enforcement** — `NetworkType.UNMETERED` constraint, gated by user setting.
+- **Notification UX** — per-download progress notification with cancel action.
+- **Resumability confirmation** — HTTP Range path exists in `DownloadWorker`; needs end-to-end test against media-proxy with a real partial `.part` file.
+- **iOS** — native module returns `null` on iOS; foreground fallback only until a separate iOS download path is added.
+- **Reboot persistence** — WorkManager re-enqueues on reboot by default; verify with `RECEIVE_BOOT_COMPLETED` test if needed.
+
+---
+
 ## Phase 3B — Mobile native player hardening (completed)
 
 - Added persisted playback progress for mobile TrackPlayer playback using

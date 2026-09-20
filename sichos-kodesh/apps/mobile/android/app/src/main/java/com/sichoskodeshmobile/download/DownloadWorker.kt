@@ -62,7 +62,10 @@ class DownloadWorker(
             downloadFile(url, destFile, partFile)
             Result.success(workDataOf(OUT_LOCAL_PATH to destFile.absolutePath))
         } catch (e: Exception) {
-            partFile.delete()
+            // Do NOT delete partFile here — it may contain partially downloaded bytes
+            // that the next WorkManager retry can resume from via the HTTP Range header.
+            // Only non-recoverable cases (e.g. 4xx responses handled inside downloadFile)
+            // should clean up the part file explicitly.
             Result.failure(workDataOf(OUT_ERROR to (e.message ?: "unknown error"), KEY_TARGET_KEY to targetKey))
         }
     }
@@ -78,6 +81,7 @@ class DownloadWorker(
         }
         connection.connect()
 
+        try {
         val responseCode = connection.responseCode
         val append = responseCode == HttpURLConnection.HTTP_PARTIAL && existingBytes > 0
         val contentLength = connection.contentLengthLong
@@ -124,6 +128,9 @@ class DownloadWorker(
                 PROGRESS_BYTES_TOTAL to totalBytes,
             )
         )
+        } finally {
+            connection.disconnect()
+        }
     }
 
     private fun createForegroundInfo(): ForegroundInfo {

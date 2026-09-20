@@ -123,9 +123,32 @@ via their built `dist/` output, not source — `start`/`android`/`ios`/
 `test`/`typecheck` all build both first automatically (`pre<script>` npm
 hooks), so no separate manual build step is needed.
 
-### Android agent testing / playground
+## Android native background downloader (Phase 4A)
 
-There are three ways to build and verify the Android app:
+Downloads on Android are now routed through a WorkManager-backed native bridge
+(`SichosKodeshDownloader`) that survives process death.
+
+| Component | Location |
+|-----------|----------|
+| Worker | `android/app/src/main/java/com/sichoskodeshmobile/download/DownloadWorker.kt` |
+| Native module | `android/.../download/DownloadModule.kt` |
+| ReactPackage | `android/.../download/DownloadPackage.kt` |
+| JS wrapper | `src/download/nativeDownload.ts` |
+| Executor (routing) | `src/download/downloadExecutor.ts` |
+
+**Fallback:** When `SichosKodeshDownloader` is unavailable (Jest, iOS, missing
+link) `isNativeDownloaderAvailable()` returns `false` and
+`downloadExecutor.ts` falls back automatically to the existing
+`react-native-blob-util` foreground path. All tests run with the fallback path
+so no mocking of the native module is required in Jest.
+
+**Phase 4B remaining gaps:** Wi-Fi-only enforcement, per-download notification
+UX, real-device lock-screen/kill verification, iOS path. See
+`docs/mobile-web-parity-plan.md` for the full list.
+
+
+
+### Android agent testing / playground
 
 | Path | Command | Device required | Used in |
 |---|---|---|---|
