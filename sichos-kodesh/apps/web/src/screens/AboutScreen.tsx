@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Headphones, KeyRound, Loader2, RefreshCw } from 'lucide-react';
 import { useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -60,6 +61,12 @@ export function AboutScreen() {
             <span className="about-badge-name">{t.aboutAshreinuBadgeName}</span>
           </span>
         </a>
+      </div>
+
+      <div className="settings-link-list">
+        <Link className="category-row settings-link-row" to="/privacy">
+          <span className="category-row-name">{t.privacyLink}</span>
+        </Link>
       </div>
 
       <p className="category-header">{t.aboutVersion(APP_VERSION)}</p>

@@ -14,10 +14,12 @@ interface Props {
   progressMap: ProgressStore;
   /**
    * A row's own trailing date (e.g. ThisWeekScreen's day+month), rendered
-   * inward from the trailing icons: date first, then audio/finished status,
-   * then the download icon flush at the row's true outer edge. Only when
-   * this is given do those icons get fixed-width slots - blank when absent -
-   * so every row's date starts at the same screen position.
+   * after all icons - download icon flush at the row's true outer edge,
+   * then audio/finished status, then the date. Only when this is given do
+   * the icons get fixed-width slots - blank when absent - so the gap
+   * between the download button and the date stays constant whether or not
+   * this occasion actually has audio, and every row's date starts at the
+   * same screen position.
    */
   dateSlot?: ReactNode;
 }
@@ -89,9 +91,9 @@ export function OccasionRowIcon({ entry, progressMap, dateSlot }: Props) {
   if (dateSlot !== undefined) {
     return (
       <span className="row-icons">
-        {dateSlot}
-        <span className="row-status-icon-slot">{statusIcon}</span>
         <span className="row-download-icon-slot">{downloadIcon}</span>
+        <span className="row-status-icon-slot">{statusIcon}</span>
+        {dateSlot}
       </span>
     );
   }
