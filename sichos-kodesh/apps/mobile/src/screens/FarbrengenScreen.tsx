@@ -52,7 +52,7 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
     chapters.length > 0 &&
     chapters[0]?.occasionId === entry.occasionId &&
     chapters[0]?.hebrewYear === entry.hebrewYear;
-  const pdfsBySection = new Map(entry.pdfs.map((pdf) => [pdf.driveFileId, pdf]));
+  const pdfsByDriveFileId = new Map(entry.pdfs.map((pdf) => [pdf.driveFileId, pdf]));
 
   function navigateBack(): void {
     switch (backRoute.name) {
@@ -81,11 +81,8 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
   }
 
   function openPdf(driveFileId: string): void {
-    const pdf = pdfsBySection.get(driveFileId);
+    const pdf = pdfsByDriveFileId.get(driveFileId);
     if (!pdf) return;
-    if (entry.audio.length > 0 && !isThisOccasionLoaded) {
-      playOccasion(entry).catch(() => undefined);
-    }
     navigation.navigate('PdfViewer', {
       hebrewYear: entry.hebrewYear,
       occasionId: entry.occasionId,

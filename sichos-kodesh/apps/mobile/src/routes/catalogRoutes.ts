@@ -148,21 +148,25 @@ export function resolveOccasionRoute(
     };
   }
 
-  const entry = findCatalogEntry(catalog, route.hebrewYear, route.occasionId);
-  if (!entry) return null;
-  return {
-    entry,
-    subtitle: hebrewDayMonthLabel(entry.hebrewDate, language),
-    backRoute: {
-      name: 'OccasionAllYears',
-      params: {
-        sourceHebrewYear: route.sourceHebrewYear,
-        sourceOccasionId: route.sourceOccasionId,
-        sourceRoute: undefined,
+  if (route.kind === 'occasionAllYears') {
+    const entry = findCatalogEntry(catalog, route.hebrewYear, route.occasionId);
+    if (!entry) return null;
+    return {
+      entry,
+      subtitle: hebrewDayMonthLabel(entry.hebrewDate, language),
+      backRoute: {
+        name: 'OccasionAllYears',
+        params: {
+          sourceHebrewYear: route.sourceHebrewYear,
+          sourceOccasionId: route.sourceOccasionId,
+          sourceRoute: undefined,
+        },
+        backLabelKey: 'back',
       },
-      backLabelKey: 'back',
-    },
-  };
+    };
+  }
+
+  return null;
 }
 
 export function splitFarbrengenContent(entry: CatalogEntry): SplitFarbrengenContent {
