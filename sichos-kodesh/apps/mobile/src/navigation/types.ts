@@ -1,4 +1,19 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { PdfSection } from '@sichos-kodesh/catalog';
+
+export type OccasionRouteParams =
+  | { kind: 'browse'; hebrewYear: number; occasionId: number }
+  | { kind: 'follow'; sourceYear: number; occasionId: number }
+  | { kind: 'allYearsThisWeek'; hebrewYear: number; occasionId: number }
+  | { kind: 'search'; hebrewYear: number; occasionId: number }
+  | { kind: 'downloaded'; hebrewYear: number; occasionId: number }
+  | {
+      kind: 'occasionAllYears';
+      sourceHebrewYear: number;
+      sourceOccasionId: number;
+      hebrewYear: number;
+      occasionId: number;
+    };
 
 /**
  * Root stack param list - mirrors the web app's conceptual screen graph so
@@ -22,22 +37,22 @@ export type RootStackParamList = {
   YearBrowser: { hebrewYear: number; initialOccasionId?: number };
 
   /** All occasions for one month within a year */
-  MonthOccasions: { hebrewYear: number; monthName: string };
+  MonthOccasions: { hebrewYear: number; monthToken: string };
 
   /** List of follow-months (stub - parity Phase 1B) */
   FollowMonthList: { sourceYear: number };
 
-  /** Occasions for a specific follow-month (stub) */
-  FollowMonthOccasions: { sourceYear: number; monthIndex: number };
+  /** Occasions for a specific follow-month */
+  FollowMonthOccasions: { sourceYear: number; monthToken: string };
 
-  /** Farbrengen detail (stub) */
-  Farbrengen: { occasionId: number };
+  /** Farbrengen detail */
+  Farbrengen: OccasionRouteParams;
 
-  /** Audio recordings list for an occasion (stub) */
-  Recordings: { occasionId: number };
+  /** Audio recordings list for an occasion */
+  Recordings: OccasionRouteParams;
 
-  /** Category listing (stub) */
-  Category: { categoryId: string };
+  /** Category listing */
+  Category: OccasionRouteParams & { categoryId: PdfSection };
 
   /** In-app PDF reader */
   PdfViewer: {
@@ -48,7 +63,7 @@ export type RootStackParamList = {
     label: string;
   };
 
-  /** Search screen (stub) */
+  /** Search screen */
   Search: undefined;
 
   /** Downloaded content manager */
@@ -63,11 +78,15 @@ export type RootStackParamList = {
   /** About screen (stub) */
   About: undefined;
 
-  /** All kvius-matched years, this-week view (stub) */
+  /** Cross-year view of this week */
   AllYearsThisWeek: undefined;
 
-  /** An occasion across all available years (stub) */
-  OccasionAllYears: { occasionId: number; occasionLabel: string };
+  /** An occasion across all available years */
+  OccasionAllYears: {
+    sourceHebrewYear: number;
+    sourceOccasionId: number;
+    sourceRoute?: OccasionRouteParams;
+  };
 };
 
 /** Convenience type helpers for individual screens. */

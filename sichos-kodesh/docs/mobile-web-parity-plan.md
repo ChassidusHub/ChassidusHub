@@ -161,6 +161,41 @@ Android downloader bridge:
 
 ---
 
+## Phase 5A — Mobile screen parity slice (in progress)
+
+- Replaced placeholder mobile routes with real screens for:
+  - `Farbrengen`
+  - `Recordings`
+  - `Category`
+  - `MonthOccasions`
+  - `FollowMonthList`
+  - `FollowMonthOccasions`
+  - `AllYearsThisWeek`
+  - `OccasionAllYears`
+- Added pure mobile route/catalog helpers for:
+  - resolving occasion route params into catalog entries with safe back-paths
+  - grouping year entries by month token/name
+  - filtering month/category content
+  - deriving cross-year occasion groups
+- Updated mobile navigation flows so:
+  - Home can open cross-year "this week" results
+  - ThisWeek rows open Farbrengen and can drill into follow-month lists
+  - YearBrowser shows month lists and drills into MonthOccasions → Farbrengen
+  - Search/Downloaded rows open Farbrengen directly
+- Added focused Jest coverage for the pure mobile route/catalog helper logic.
+
+### Still remaining for fuller parity
+
+- `About` is still a placeholder screen on mobile.
+- Farbrengen/Recordings/Category are practical parity screens, not pixel-perfect
+  reproductions of every web affordance.
+- This Phase 5A work intentionally avoided:
+  - `apps/mobile/src/download/*` internals
+  - `apps/mobile/src/player/*` internals
+  - Android/native downloader changes from Phase 4A
+
+---
+
 ## Next recommended phases
 
 ### Phase 2A — i18n / settings / search parity (recommended next)

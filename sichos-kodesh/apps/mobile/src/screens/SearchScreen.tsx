@@ -74,7 +74,13 @@ export function SearchScreen({ navigation }: SearchScreenProps) {
                           label={entry.occasionLabel}
                           sublabel={resultSummary(entry, t)}
                           right={<AppText color="muted">›</AppText>}
-                          onPress={() => navigation.navigate('YearBrowser', { hebrewYear: entry.hebrewYear, initialOccasionId: entry.occasionId })}
+                          onPress={() =>
+                            navigation.navigate('Farbrengen', {
+                              kind: 'search',
+                              hebrewYear: entry.hebrewYear,
+                              occasionId: entry.occasionId,
+                            })
+                          }
                         />
                       </React.Fragment>
                     ))}
