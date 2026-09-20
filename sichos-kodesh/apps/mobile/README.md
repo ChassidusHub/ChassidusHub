@@ -98,6 +98,27 @@ produces a real installable APK, no Expo/EAS account needed.
   listed under **Phase 3B required command set** below, plus the PR-triggered
   `mobile-android-smoke.yml` workflow for honest runtime verification.
 
+## Phase 5C PDF reader polish status
+
+- Added `src/pdf/pdfReaderSettings.ts` for persisted PDF reader preferences
+  (dark-mode toggle + zoom range preset), with corrupt-storage-safe parsing.
+- `PdfViewerScreen` now shows reader-local controls for:
+  - dark PDF mode toggle,
+  - zoom range preset toggle,
+  - current zoom scale + pinch/pan guidance.
+- Dark PDF mode currently uses a safe dim overlay fallback while system dark
+  mode is active. True PDF pixel inversion is not exposed by the current
+  `react-native-pdf` integration.
+- Invalid/stale PDF route context now shows a clearer empty/error state
+  (`pdfRouteStaleHelp`) instead of trying to open ambiguous params.
+- Manual runtime checklist for emulator/device verification:
+  1. Open PDFs from Farbrengen, Category, and OccasionDetail flows.
+  2. Confirm last-read page restore on reopen.
+  3. Toggle dark PDF mode and verify overlay behavior.
+  4. Toggle zoom preset and verify pinch-zoom range changes.
+  5. Confirm pinch/pan works and rotate device if available.
+  6. Confirm global player bar does not obscure reader controls.
+
 ## Not built yet
 
 - Batch month/year downloads, zip bundling.
