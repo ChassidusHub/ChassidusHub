@@ -1,5 +1,6 @@
 package com.sichoskodeshmobile.download
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.work.Constraints
 import androidx.work.Data
@@ -39,6 +40,10 @@ class DownloadModule(
 
         private const val WORK_TAG = "SichosKodeshDownload"
     }
+
+    /** Pairs of (LiveData, Observer) for every in-flight download, keyed by targetKey.
+     *  Cleaned up on terminal state and also on bridge teardown to prevent leaks. */
+    private val activeObservers = mutableMapOf<String, Pair<LiveData<WorkInfo>, Observer<WorkInfo>>>()
 
     override fun getName(): String = MODULE_NAME
 
@@ -107,6 +112,17 @@ class DownloadModule(
         promise.resolve(reactApplicationContext.filesDir.absolutePath)
     }
 
+    /** Remove all registered observers on bridge teardown to prevent leaks during hot-reload or re-init. */
+    override fun invalidate() {
+        super.invalidate()
+        reactApplicationContext.runOnUiQueueThread {
+            for ((liveData, observer) in activeObservers.values) {
+                liveData.removeObserver(observer)
+            }
+            activeObservers.clear()
+        }
+    }
+
     // ── Internal ──────────────────────────────────────────────────────────────
 
     private fun observeWork(targetKey: String, workId: String) {
@@ -131,7 +147,7 @@ class DownloadModule(
                                 putString("targetKey", targetKey)
                                 putString("localPath", localPath)
                             })
-                            liveData.removeObserver(this)
+                            removeObserver(targetKey, liveData, this)
                         }
                         WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> {
                             val error = info.outputData.getString(DownloadWorker.OUT_ERROR) ?: "download failed"
@@ -139,14 +155,20 @@ class DownloadModule(
                                 putString("targetKey", targetKey)
                                 putString("error", error)
                             })
-                            liveData.removeObserver(this)
+                            removeObserver(targetKey, liveData, this)
                         }
                         else -> Unit
                     }
                 }
             }
+            activeObservers[targetKey] = Pair(liveData, observer)
             liveData.observeForever(observer)
         }
+    }
+
+    private fun removeObserver(targetKey: String, liveData: LiveData<WorkInfo>, observer: Observer<WorkInfo>) {
+        liveData.removeObserver(observer)
+        activeObservers.remove(targetKey)
     }
 
     private fun emitEvent(eventName: String, params: com.facebook.react.bridge.WritableMap) {

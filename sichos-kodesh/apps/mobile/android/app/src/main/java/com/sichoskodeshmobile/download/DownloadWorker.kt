@@ -82,52 +82,61 @@ class DownloadWorker(
         connection.connect()
 
         try {
-        val responseCode = connection.responseCode
-        val append = responseCode == HttpURLConnection.HTTP_PARTIAL && existingBytes > 0
-        val contentLength = connection.contentLengthLong
-        val totalBytes = if (append) existingBytes + contentLength else contentLength
+            val responseCode = connection.responseCode
+            // 4xx errors are unrecoverable — delete .part so future retries start fresh
+            // rather than sending a corrupt Range header.
+            if (responseCode in 400..499) {
+                partFile.delete()
+                throw RuntimeException("HTTP $responseCode for $url")
+            }
+            if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_PARTIAL) {
+                throw RuntimeException("Unexpected HTTP $responseCode for $url")
+            }
+            val append = responseCode == HttpURLConnection.HTTP_PARTIAL && existingBytes > 0
+            val contentLength = connection.contentLengthLong
+            val totalBytes = if (append) existingBytes + contentLength else contentLength
 
-        val input = connection.inputStream
-        val output = FileOutputStream(partFile, append)
-        val buffer = ByteArray(BUFFER_SIZE)
-        var receivedSinceLastReport = 0L
-        var totalReceived = if (append) existingBytes else 0L
+            val input = connection.inputStream
+            val output = FileOutputStream(partFile, append)
+            val buffer = ByteArray(BUFFER_SIZE)
+            var receivedSinceLastReport = 0L
+            var totalReceived = if (append) existingBytes else 0L
 
-        try {
-            var bytesRead: Int
-            while (input.read(buffer).also { bytesRead = it } != -1) {
-                output.write(buffer, 0, bytesRead)
-                totalReceived += bytesRead
-                receivedSinceLastReport += bytesRead
-                if (receivedSinceLastReport >= PROGRESS_INTERVAL_BYTES) {
-                    receivedSinceLastReport = 0
-                    setProgress(
-                        workDataOf(
-                            PROGRESS_BYTES_RECEIVED to totalReceived,
-                            PROGRESS_BYTES_TOTAL to totalBytes,
+            try {
+                var bytesRead: Int
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    output.write(buffer, 0, bytesRead)
+                    totalReceived += bytesRead
+                    receivedSinceLastReport += bytesRead
+                    if (receivedSinceLastReport >= PROGRESS_INTERVAL_BYTES) {
+                        receivedSinceLastReport = 0
+                        setProgress(
+                            workDataOf(
+                                PROGRESS_BYTES_RECEIVED to totalReceived,
+                                PROGRESS_BYTES_TOTAL to totalBytes,
+                            )
                         )
-                    )
+                    }
+                }
+            } finally {
+                output.flush()
+                output.close()
+                input.close()
+            }
+
+            if (!partFile.renameTo(destFile)) {
+                destFile.delete()
+                if (!partFile.renameTo(destFile)) {
+                    throw RuntimeException("Failed to move part file to destination: ${destFile.absolutePath}")
                 }
             }
-        } finally {
-            output.flush()
-            output.close()
-            input.close()
-        }
 
-        if (!partFile.renameTo(destFile)) {
-            destFile.delete()
-            if (!partFile.renameTo(destFile)) {
-                throw RuntimeException("Failed to move part file to destination: ${destFile.absolutePath}")
-            }
-        }
-
-        setProgress(
-            workDataOf(
-                PROGRESS_BYTES_RECEIVED to totalReceived,
-                PROGRESS_BYTES_TOTAL to totalBytes,
+            setProgress(
+                workDataOf(
+                    PROGRESS_BYTES_RECEIVED to totalReceived,
+                    PROGRESS_BYTES_TOTAL to totalBytes,
+                )
             )
-        )
         } finally {
             connection.disconnect()
         }
