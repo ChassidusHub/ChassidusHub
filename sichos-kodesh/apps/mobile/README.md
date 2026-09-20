@@ -123,7 +123,7 @@ via their built `dist/` output, not source — `start`/`android`/`ios`/
 `test`/`typecheck` all build both first automatically (`pre<script>` npm
 hooks), so no separate manual build step is needed.
 
-## Android native background downloader (Phase 4A)
+## Android native background downloader (Phase 4C)
 
 Downloads on Android are now routed through a WorkManager-backed native bridge
 (`SichosKodeshDownloader`) that survives process death.
@@ -133,6 +133,7 @@ Downloads on Android are now routed through a WorkManager-backed native bridge
 | Worker | `android/app/src/main/java/com/sichoskodeshmobile/download/DownloadWorker.kt` |
 | Native module | `android/.../download/DownloadModule.kt` |
 | ReactPackage | `android/.../download/DownloadPackage.kt` |
+| Cancel receiver/helper | `android/.../download/DownloadCancelReceiver.kt`, `DownloadCancellation.kt` |
 | JS wrapper | `src/download/nativeDownload.ts` |
 | Executor (routing) | `src/download/downloadExecutor.ts` |
 
@@ -142,9 +143,39 @@ link) `isNativeDownloaderAvailable()` returns `false` and
 `react-native-blob-util` foreground path. All tests run with the fallback path
 so no mocking of the native module is required in Jest.
 
-**Phase 4B remaining gaps:** Wi-Fi-only enforcement, per-download notification
-UX, real-device lock-screen/kill verification, iOS path. See
-`docs/mobile-web-parity-plan.md` for the full list.
+### Phase 4C status
+
+- Native download notifications now include a per-download **Cancel** action.
+  The action targets the specific `targetKey`, cancels only that WorkManager
+  job, and routes through the same native cancellation helper used by JS
+  `cancelDownload`.
+- Native cancellation now deletes the matching `.part` file before canceling
+  work, so an explicitly canceled download does not get treated like resumable
+  in-progress state on the next retry.
+- WorkManager `CANCELLED` is now emitted to JS as
+  `SichosKodeshDownloadCanceled` instead of a generic error. `DownloadProvider`
+  maps that to the existing `'canceled'` state, so `DownloadedScreen` and
+  follow-up download actions do not get stuck at `'downloading'`.
+- On app launch and when the app returns to the foreground, the provider asks
+  native code for the currently active WorkManager downloads and reconciles any
+  missing native work back to non-completed state. Completed files still win via
+  the shared AsyncStorage/file ledger; canceled native work is not marked as
+  downloaded.
+
+### Persistence / verification notes
+
+- **Implemented:** WorkManager-backed durable work, process-death-safe queueing,
+  `.part` file atomic rename, HTTP Range resume for non-canceled partials,
+  notification cancel action, and JS reconciliation for canceled native work.
+- **Not overclaimed:** local agent VMs still do **not** provide real runtime
+  proof for process-kill, reboot persistence, or OEM-specific notification
+  behavior.
+- **What WorkManager handles automatically:** persisted work database and
+  reboot/process restoration for pending work.
+- **What still needs real-device/emulator validation:** notification action
+  behavior from lock screen/shade, persistence after force-stop/process kill,
+  reboot continuation across API/OEM variants, and any interaction with player
+  lock-screen media notifications.
 
 
 
@@ -188,6 +219,20 @@ gh workflow run mobile-android-smoke.yml
 - `apps/mobile/smoke-artifacts/android-smoke-screenshot.png`
 - `apps/mobile/smoke-artifacts/gradle-build.log`
 - Gradle build reports from `android/app/build/reports/`
+
+### Manual notification-cancel verification checklist
+
+Use an emulator/device (local or `mobile-android-smoke.yml` artifacts/logs) and:
+
+1. Start a download from `Downloaded`/occasion UI.
+2. Confirm the Android foreground download notification appears with a
+   **Cancel** action.
+3. Tap **Cancel** in the notification shade/lock screen.
+4. Re-open the app and confirm the item is no longer stuck in
+   `queued`/`downloading`.
+5. Confirm no completed download record was created for the canceled item.
+6. Retry the same download and confirm it starts fresh (the canceled `.part`
+   file was cleaned up).
 
 ### Phase 3B required command set
 

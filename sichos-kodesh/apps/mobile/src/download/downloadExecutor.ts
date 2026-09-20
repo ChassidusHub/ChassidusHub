@@ -23,6 +23,7 @@ import type { DownloadProgress } from './download';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import { MEDIA_PROXY_BASE_URL } from '../config';
 import {
+  DOWNLOAD_CANCELED_EVENT,
   DOWNLOAD_COMPLETE_EVENT,
   DOWNLOAD_ERROR_EVENT,
   DOWNLOAD_PROGRESS_EVENT,
@@ -109,6 +110,10 @@ export interface NativeDownloadCompletePayload {
   localPath: string;
 }
 
+export interface NativeDownloadCanceledPayload {
+  targetKey: string;
+}
+
 export interface NativeDownloadErrorPayload {
   targetKey: string;
   error: string;
@@ -117,6 +122,7 @@ export interface NativeDownloadErrorPayload {
 export function subscribeToNativeDownloadEvents(handlers: {
   onProgress?: (payload: NativeDownloadProgressPayload) => void;
   onComplete?: (payload: NativeDownloadCompletePayload) => void;
+  onCanceled?: (payload: NativeDownloadCanceledPayload) => void;
   onError?: (payload: NativeDownloadErrorPayload) => void;
 }): () => void {
   const subs = [
@@ -125,6 +131,9 @@ export function subscribeToNativeDownloadEvents(handlers: {
       : null,
     handlers.onComplete
       ? DeviceEventEmitter.addListener(DOWNLOAD_COMPLETE_EVENT, handlers.onComplete)
+      : null,
+    handlers.onCanceled
+      ? DeviceEventEmitter.addListener(DOWNLOAD_CANCELED_EVENT, handlers.onCanceled)
       : null,
     handlers.onError
       ? DeviceEventEmitter.addListener(DOWNLOAD_ERROR_EVENT, handlers.onError)

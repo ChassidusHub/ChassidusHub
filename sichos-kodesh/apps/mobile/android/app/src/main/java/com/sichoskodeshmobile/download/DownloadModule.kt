@@ -36,9 +36,11 @@ class DownloadModule(
 
         const val EVENT_PROGRESS = "SichosKodeshDownloadProgress"
         const val EVENT_COMPLETE = "SichosKodeshDownloadComplete"
+        const val EVENT_CANCELED = "SichosKodeshDownloadCanceled"
         const val EVENT_ERROR = "SichosKodeshDownloadError"
 
         private const val WORK_TAG = "SichosKodeshDownload"
+        private const val TARGET_KEY_TAG_PREFIX = "targetKey:"
     }
 
     /** Pairs of (LiveData, Observer) for every in-flight download, keyed by targetKey.
@@ -77,7 +79,7 @@ class DownloadModule(
                 .setInputData(inputData)
                 .setConstraints(constraints)
                 .addTag(WORK_TAG)
-                .addTag(targetKey)
+                .addTag("$TARGET_KEY_TAG_PREFIX$targetKey")
                 .build()
 
             workManager.enqueueUniqueWork(targetKey, ExistingWorkPolicy.KEEP, request)
@@ -98,13 +100,42 @@ class DownloadModule(
      * Cancel any enqueued or running download for the given targetKey.
      */
     @ReactMethod
-    fun cancelDownload(targetKey: String, promise: Promise) {
+    fun cancelDownload(targetKey: String, filename: String?, promise: Promise) {
         try {
-            WorkManager.getInstance(reactApplicationContext).cancelUniqueWork(targetKey)
+            DownloadCancellation.cancelDownload(reactApplicationContext, targetKey, filename)
             promise.resolve(null)
         } catch (e: Exception) {
             promise.reject("CANCEL_FAILED", e.message ?: "cancel failed", e)
         }
+    }
+
+    @ReactMethod
+    fun listActiveDownloads(promise: Promise) {
+        val future = WorkManager.getInstance(reactApplicationContext).getWorkInfosByTag(WORK_TAG)
+        future.addListener(
+            {
+                try {
+                    val infos = future.get()
+                    val downloads = Arguments.createArray()
+                    for (info in infos) {
+                        if (info.state.isFinished) continue
+                        val targetKey = info.tags
+                            .firstOrNull { it.startsWith(TARGET_KEY_TAG_PREFIX) }
+                            ?.removePrefix(TARGET_KEY_TAG_PREFIX)
+                            ?: continue
+                        val download = Arguments.createMap().apply {
+                            putString("targetKey", targetKey)
+                            putString("state", info.state.name.lowercase())
+                        }
+                        downloads.pushMap(download)
+                    }
+                    promise.resolve(downloads)
+                } catch (e: Exception) {
+                    promise.reject("LIST_ACTIVE_DOWNLOADS_FAILED", e.message ?: "list active downloads failed", e)
+                }
+            },
+            Runnable::run,
+        )
     }
 
     /**
@@ -152,7 +183,13 @@ class DownloadModule(
                             })
                             removeObserver(targetKey, liveData, this)
                         }
-                        WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> {
+                        WorkInfo.State.CANCELLED -> {
+                            emitEvent(EVENT_CANCELED, Arguments.createMap().apply {
+                                putString("targetKey", targetKey)
+                            })
+                            removeObserver(targetKey, liveData, this)
+                        }
+                        WorkInfo.State.FAILED -> {
                             val error = info.outputData.getString(DownloadWorker.OUT_ERROR) ?: "download failed"
                             emitEvent(EVENT_ERROR, Arguments.createMap().apply {
                                 putString("targetKey", targetKey)

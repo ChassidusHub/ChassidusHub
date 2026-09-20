@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { AppState } from 'react-native';
 import { currentHebrewYear, resolveThisWeek } from '@sichos-kodesh/catalog';
 import type { CatalogAudio, CatalogEntry, CatalogPdf } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
@@ -11,18 +12,20 @@ import {
   clearAllDownloadedFiles,
   clearPendingDownloads,
   deleteEntryDownloads,
+  fileNameForTarget,
   isTargetDownloaded,
   listDownloadedOccasions,
   listPendingDownloads,
   localPathForTarget,
   reconcileStoredDownloads,
   type DownloadStatus,
+  type StoredDownloadRecord,
   type TargetDownloadState,
   upsertStoredDownload,
   writePendingDownloads,
 } from './downloadStorage';
 import { executeDownload, subscribeToNativeDownloadEvents } from './downloadExecutor';
-import { nativeCancelDownload } from './nativeDownload';
+import { listActiveNativeDownloads, nativeCancelDownload } from './nativeDownload';
 
 const ALL_ENTRIES = Object.values(catalog).flat();
 
@@ -33,6 +36,29 @@ function toState(target: DownloadTarget, status: DownloadStatus, extras: Partial
     progress: status === 'downloaded' ? 1 : 0,
     ...extras,
   };
+}
+
+function recordToTarget(record: StoredDownloadRecord): DownloadTarget {
+  return record.kind === 'audio'
+    ? {
+        key: record.key,
+        hebrewYear: record.hebrewYear,
+        occasionId: record.occasionId,
+        label: record.label,
+        kind: 'audio',
+        chapterIndex: record.chapterIndex,
+        workerFilename: record.workerFilename,
+      }
+    : {
+        key: record.key,
+        hebrewYear: record.hebrewYear,
+        occasionId: record.occasionId,
+        label: record.label,
+        kind: 'pdf',
+        driveFileId: record.driveFileId,
+        resourceKey: record.resourceKey ?? null,
+        section: record.section,
+      };
 }
 
 export function DownloadProvider({ children }: { children: ReactNode }) {
@@ -66,39 +92,45 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     [settings.contentTypes, settings.manualDownloadAllContent],
   );
 
-  const refreshDownloads = useCallback(async () => {
+  const refreshDownloadsInternal = useCallback(async (activeNativeKeys?: ReadonlySet<string>) => {
     const records = await reconcileStoredDownloads();
     setDownloadedRecords(records);
     setTargetStates((prev) => {
       const next = { ...prev };
       for (const record of records) {
-        if (next[record.key]?.status === 'queued' || next[record.key]?.status === 'downloading') continue;
-        const target =
-          record.kind === 'audio'
-            ? {
-                key: record.key,
-                hebrewYear: record.hebrewYear,
-                occasionId: record.occasionId,
-                label: record.label,
-                kind: 'audio' as const,
-                chapterIndex: record.chapterIndex,
-                workerFilename: record.workerFilename,
-              }
-            : {
-                key: record.key,
-                hebrewYear: record.hebrewYear,
-                occasionId: record.occasionId,
-                label: record.label,
-                kind: 'pdf' as const,
-                driveFileId: record.driveFileId,
-                resourceKey: record.resourceKey ?? null,
-                section: record.section,
-              };
+        const isActiveNative = activeNativeKeys?.has(record.key) ?? nativePendingRef.current.has(record.key);
+        if (isActiveNative && (next[record.key]?.status === 'queued' || next[record.key]?.status === 'downloading')) continue;
+        const target = recordToTarget(record);
         next[record.key] = toState(target, 'downloaded', { localPath: record.localPath, progress: 1 });
       }
       return next;
     });
+    return records;
   }, []);
+
+  const refreshDownloads = useCallback(async () => {
+    await refreshDownloadsInternal();
+  }, [refreshDownloadsInternal]);
+
+  const reconcileNativeState = useCallback(async () => {
+    const activeNativeKeys = new Set((await listActiveNativeDownloads()).map((download) => download.targetKey));
+    const records = await refreshDownloadsInternal(activeNativeKeys);
+    const downloadedKeys = new Set(records.map((record) => record.key));
+    const staleNativePending = Array.from(nativePendingRef.current.entries()).filter(([targetKey]) => !activeNativeKeys.has(targetKey));
+
+    for (const [targetKey] of staleNativePending) {
+      nativePendingRef.current.delete(targetKey);
+    }
+
+    setTargetStates((prev) => {
+      const next = { ...prev };
+      for (const [targetKey, target] of staleNativePending) {
+        if (downloadedKeys.has(targetKey)) continue;
+        next[targetKey] = toState(target, 'canceled');
+      }
+      return next;
+    });
+  }, [refreshDownloadsInternal]);
 
   const processQueue = useCallback(async () => {
     if (processingRef.current || queueRef.current.length === 0) return;
@@ -180,6 +212,15 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           }));
         }).catch(() => undefined);
       },
+      onCanceled: ({ targetKey }) => {
+        const pending = nativePendingRef.current.get(targetKey);
+        if (!pending) return;
+        nativePendingRef.current.delete(targetKey);
+        setTargetStates((prev) => ({
+          ...prev,
+          [targetKey]: toState(pending, 'canceled'),
+        }));
+      },
       onError: ({ targetKey, error }) => {
         const pending = nativePendingRef.current.get(targetKey);
         if (!pending) return;
@@ -260,16 +301,17 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   );
 
   const cancelDownload = useCallback(async (targetKey: string) => {
+    const current = targetStatesRef.current[targetKey];
     // Cancel in WorkManager if native path was used.
-    await nativeCancelDownload(targetKey);
+    await nativeCancelDownload(targetKey, current ? fileNameForTarget(current.target) : undefined);
     // Remove from local queue if it hasn't been handed off yet.
     queueRef.current = queueRef.current.filter((t) => t.key !== targetKey);
     nativePendingRef.current.delete(targetKey);
     await writePendingDownloads(queueRef.current);
     setTargetStates((prev) => {
-      const current = prev[targetKey];
-      if (!current || (current.status !== 'queued' && current.status !== 'downloading')) return prev;
-      return { ...prev, [targetKey]: toState(current.target, 'canceled') };
+      const nextCurrent = prev[targetKey];
+      if (!nextCurrent || (nextCurrent.status !== 'queued' && nextCurrent.status !== 'downloading')) return prev;
+      return { ...prev, [targetKey]: toState(nextCurrent.target, 'canceled') };
     });
   }, []);
 
@@ -306,7 +348,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      refreshDownloads(),
+      reconcileNativeState(),
       listPendingDownloads().then(async (targets) => {
         if (!cancelled && targets.length > 0) await enqueueTargets(targets);
       }),
@@ -316,7 +358,18 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [enqueueTargets, refreshDownloads]);
+  }, [enqueueTargets, reconcileNativeState]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        reconcileNativeState().catch(() => undefined);
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [reconcileNativeState]);
 
   useEffect(() => {
     if (!settingsHydrated || !settings.autoDownloadEnabled || autoQueuedRef.current) return;

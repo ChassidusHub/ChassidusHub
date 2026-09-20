@@ -10,6 +10,9 @@
 jest.mock('react-native', () => ({
   NativeModules: {},
   Platform: { OS: 'android' },
+  AppState: {
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  },
   DeviceEventEmitter: {
     addListener: jest.fn(() => ({ remove: jest.fn() })),
     emit: jest.fn(),
@@ -64,6 +67,7 @@ describe('nativeDownload', () => {
     rn.NativeModules.SichosKodeshDownloader = {
       enqueueDownload: jest.fn(),
       cancelDownload: jest.fn(),
+      listActiveDownloads: jest.fn(),
       getFilesDir: jest.fn(),
     };
     const { getNativeDownloader, isNativeDownloaderAvailable } = require('./nativeDownload') as typeof import('./nativeDownload');
@@ -86,6 +90,11 @@ describe('nativeDownload', () => {
   it('getNativeFilesDir returns null when module unavailable', async () => {
     const { getNativeFilesDir } = require('./nativeDownload') as typeof import('./nativeDownload');
     await expect(getNativeFilesDir()).resolves.toBeNull();
+  });
+
+  it('listActiveNativeDownloads returns [] when module unavailable', async () => {
+    const { listActiveNativeDownloads } = require('./nativeDownload') as typeof import('./nativeDownload');
+    await expect(listActiveNativeDownloads()).resolves.toEqual([]);
   });
 });
 
@@ -133,6 +142,7 @@ describe('downloadExecutor — foreground fallback', () => {
     rn.NativeModules.SichosKodeshDownloader = {
       enqueueDownload: mockEnqueue,
       cancelDownload: jest.fn(),
+      listActiveDownloads: jest.fn(),
       getFilesDir: jest.fn(),
     };
 
@@ -159,6 +169,7 @@ describe('downloadExecutor — foreground fallback', () => {
     rn.NativeModules.SichosKodeshDownloader = {
       enqueueDownload: mockEnqueue,
       cancelDownload: jest.fn(),
+      listActiveDownloads: jest.fn(),
       getFilesDir: jest.fn(),
     };
 
@@ -183,6 +194,7 @@ describe('downloadExecutor — foreground fallback', () => {
     rn.NativeModules.SichosKodeshDownloader = {
       enqueueDownload: mockEnqueue,
       cancelDownload: jest.fn(),
+      listActiveDownloads: jest.fn(),
       getFilesDir: jest.fn(),
     };
 
@@ -224,9 +236,10 @@ describe('subscribeToNativeDownloadEvents', () => {
     const unsubscribe = subscribeToNativeDownloadEvents({
       onProgress: jest.fn(),
       onComplete: jest.fn(),
+      onCanceled: jest.fn(),
       onError: jest.fn(),
     });
-    expect(rn.DeviceEventEmitter.addListener).toHaveBeenCalledTimes(3);
+    expect(rn.DeviceEventEmitter.addListener).toHaveBeenCalledTimes(4);
     expect(typeof unsubscribe).toBe('function');
     unsubscribe();
   });
