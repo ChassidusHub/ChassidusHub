@@ -31,7 +31,7 @@ function groupByYear(items: DownloadedOccasionSummary[]): YearGroup[] {
 export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
   const { t } = useTranslation();
   const activeDownloads = useActiveDownloads();
-  const { clearDownloads, deleteOccasionDownloads, listDownloadedSummaries, hydrated, downloadedRecords } = useDownload();
+  const { clearDownloads, cancelDownload, deleteOccasionDownloads, listDownloadedSummaries, hydrated, downloadedRecords } = useDownload();
   const [items, setItems] = useState<DownloadedOccasionSummary[] | null>(null);
 
   useEffect(() => {
@@ -99,7 +99,15 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
                           <View style={[styles.progressFill, { width: `${Math.max(item.percent, item.status === 'queued' ? 8 : 0)}%` }]} />
                         </View>
                       </View>
-                      <AppText variant="bodySmall" color="muted">{item.status === 'queued' ? t.downloadLabel : `${item.percent}%`}</AppText>
+                      <View style={styles.activeRowRight}>
+                        <AppText variant="bodySmall" color="muted">{item.status === 'queued' ? t.downloadLabel : `${item.percent}%`}</AppText>
+                        <AppButton
+                          label={t.cancelDownloadLabel}
+                          variant="ghost"
+                          onPress={() => cancelDownload(item.key)}
+                          style={styles.cancelButton}
+                        />
+                      </View>
                     </View>
                   </React.Fragment>
                 ))}
@@ -176,6 +184,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   activeCopy: { flex: 1 },
+  activeRowRight: { alignItems: 'flex-end', gap: spacing.sm },
+  cancelButton: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   progressTrack: {
     height: 6,
     borderRadius: 999,

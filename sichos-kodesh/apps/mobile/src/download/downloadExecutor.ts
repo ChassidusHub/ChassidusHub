@@ -68,9 +68,12 @@ function targetFilename(target: DownloadTarget): string {
 export async function executeDownload(
   target: DownloadTarget,
   onProgress: (progress: number) => void,
+  options?: { wifiOnly?: boolean },
 ): Promise<ExecuteDownloadResult> {
   if (isNativeDownloaderAvailable()) {
-    await nativeEnqueueDownload(target.key, targetUrl(target), targetFilename(target));
+    const metadata: Record<string, string> = {};
+    if (options?.wifiOnly) metadata.wifiOnly = 'true';
+    await nativeEnqueueDownload(target.key, targetUrl(target), targetFilename(target), metadata);
     return { mode: 'native' };
   }
 

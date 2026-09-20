@@ -67,7 +67,7 @@ export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenPro
             <RowSeparator />
             <ListRow
               label={t.wifiOnlyLabel}
-              sublabel={t.wifiOnlyPendingNativeHelp}
+              sublabel={t.wifiOnlyHelp}
               right={<AppText color="muted">{settings.wifiOnly ? '✓' : '—'}</AppText>}
             />
           </Card>

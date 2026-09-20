@@ -25,7 +25,7 @@ jest.mock('react-native-blob-util', () => ({
   config: jest.fn(() => ({
     fetch: jest.fn(() => ({
       progress: jest.fn().mockReturnThis(),
-      then: jest.fn((cb: (r: { path: () => string }) => unknown) => cb({ path: () => '/documents/test.part' })),
+      then: jest.fn((cb) => cb({ path: () => '/documents/test.part' })),
     })),
   })),
 }));
@@ -149,7 +149,57 @@ describe('downloadExecutor — foreground fallback', () => {
     const result = await executeDownload(audioTarget, jest.fn());
     expect(result.mode).toBe('native');
     expect(result.localPath).toBeUndefined();
-    expect(mockEnqueue).toHaveBeenCalledWith('audio-1', expect.stringContaining('a.mp3'), 'a.mp3', null);
+    expect(mockEnqueue).toHaveBeenCalledWith('audio-1', expect.stringContaining('a.mp3'), 'a.mp3', {});
+  });
+
+  it('passes wifiOnly=true metadata when option is set', async () => {
+    const mockEnqueue = jest.fn().mockResolvedValue({ targetKey: 'audio-1', workId: 'uuid-2' });
+    const rn = jest.requireMock('react-native') as { NativeModules: Record<string, unknown>; Platform: { OS: string } };
+    rn.Platform.OS = 'android';
+    rn.NativeModules.SichosKodeshDownloader = {
+      enqueueDownload: mockEnqueue,
+      cancelDownload: jest.fn(),
+      getFilesDir: jest.fn(),
+    };
+
+    const { executeDownload } = require('./downloadExecutor') as typeof import('./downloadExecutor');
+    const audioTarget = {
+      key: 'audio-1',
+      hebrewYear: 5784,
+      occasionId: 1,
+      label: 'Test',
+      kind: 'audio' as const,
+      chapterIndex: 0,
+      workerFilename: 'a.mp3',
+    };
+    await executeDownload(audioTarget, jest.fn(), { wifiOnly: true });
+    expect(mockEnqueue).toHaveBeenCalledWith('audio-1', expect.stringContaining('a.mp3'), 'a.mp3', { wifiOnly: 'true' });
+  });
+
+  it('omits wifiOnly from metadata when option is false', async () => {
+    const mockEnqueue = jest.fn().mockResolvedValue({ targetKey: 'audio-1', workId: 'uuid-3' });
+    const rn = jest.requireMock('react-native') as { NativeModules: Record<string, unknown>; Platform: { OS: string } };
+    rn.Platform.OS = 'android';
+    rn.NativeModules.SichosKodeshDownloader = {
+      enqueueDownload: mockEnqueue,
+      cancelDownload: jest.fn(),
+      getFilesDir: jest.fn(),
+    };
+
+    const { executeDownload } = require('./downloadExecutor') as typeof import('./downloadExecutor');
+    const audioTarget = {
+      key: 'audio-1',
+      hebrewYear: 5784,
+      occasionId: 1,
+      label: 'Test',
+      kind: 'audio' as const,
+      chapterIndex: 0,
+      workerFilename: 'a.mp3',
+    };
+    await executeDownload(audioTarget, jest.fn(), { wifiOnly: false });
+    const callArgs = mockEnqueue.mock.calls[0] as unknown[];
+    const meta = callArgs[3] as Record<string, string>;
+    expect(meta.wifiOnly).toBeUndefined();
   });
 });
 

@@ -14,6 +14,7 @@ export interface DownloadContextValue {
   downloadAudio: (entry: CatalogEntry, audio: CatalogAudio, chapterIndex: number) => Promise<void>;
   downloadPdf: (entry: CatalogEntry, pdf: CatalogPdf) => Promise<void>;
   enqueueTargets: (targets: DownloadTarget[]) => Promise<void>;
+  cancelDownload: (targetKey: string) => Promise<void>;
   refreshDownloads: () => Promise<void>;
   deleteOccasionDownloads: (entry: CatalogEntry) => Promise<void>;
   clearDownloads: () => Promise<void>;
