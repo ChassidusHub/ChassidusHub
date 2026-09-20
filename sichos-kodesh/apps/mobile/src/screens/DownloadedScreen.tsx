@@ -137,7 +137,13 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
                         <ListRow
                           label={summary.entry.occasionLabel}
                           sublabel={[summary.audioCount > 0 ? t.recordingsCount(summary.audioCount) : null, summary.pdfCount > 0 ? t.pdfCount(summary.pdfCount) : null].filter(Boolean).join(' • ')}
-                          onPress={() => navigation.navigate('YearBrowser', { hebrewYear: summary.entry.hebrewYear, initialOccasionId: summary.entry.occasionId })}
+                          onPress={() =>
+                            navigation.navigate('Farbrengen', {
+                              kind: 'downloaded',
+                              hebrewYear: summary.entry.hebrewYear,
+                              occasionId: summary.entry.occasionId,
+                            })
+                          }
                           right={<AppText color="muted">›</AppText>}
                         />
                       </View>

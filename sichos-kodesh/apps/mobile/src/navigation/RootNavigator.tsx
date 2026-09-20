@@ -12,6 +12,14 @@ import { PlaceholderScreen } from '../screens/PlaceholderScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { DownloadedScreen } from '../screens/DownloadedScreen';
 import { DownloadSettingsScreen } from '../screens/DownloadSettingsScreen';
+import { MonthOccasionsScreen } from '../screens/MonthOccasionsScreen';
+import { FollowMonthListScreen } from '../screens/FollowMonthListScreen';
+import { FollowMonthOccasionsScreen } from '../screens/FollowMonthOccasionsScreen';
+import { FarbrengenScreen } from '../screens/FarbrengenScreen';
+import { RecordingsScreen } from '../screens/RecordingsScreen';
+import { CategoryScreen } from '../screens/CategoryScreen';
+import { AllYearsThisWeekScreen } from '../screens/AllYearsThisWeekScreen';
+import { OccasionAllYearsScreen } from '../screens/OccasionAllYearsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -28,18 +36,18 @@ export function RootNavigator() {
       <Stack.Screen name="YearBrowser" component={YearBrowserScreen} />
       <Stack.Screen name="PdfViewer" component={PdfViewerScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
-      <Stack.Screen name="MonthOccasions" component={PlaceholderScreen} />
-      <Stack.Screen name="FollowMonthList" component={PlaceholderScreen} />
-      <Stack.Screen name="FollowMonthOccasions" component={PlaceholderScreen} />
-      <Stack.Screen name="Farbrengen" component={PlaceholderScreen} />
-      <Stack.Screen name="Recordings" component={PlaceholderScreen} />
-      <Stack.Screen name="Category" component={PlaceholderScreen} />
+      <Stack.Screen name="MonthOccasions" component={MonthOccasionsScreen} />
+      <Stack.Screen name="FollowMonthList" component={FollowMonthListScreen} />
+      <Stack.Screen name="FollowMonthOccasions" component={FollowMonthOccasionsScreen} />
+      <Stack.Screen name="Farbrengen" component={FarbrengenScreen} />
+      <Stack.Screen name="Recordings" component={RecordingsScreen} />
+      <Stack.Screen name="Category" component={CategoryScreen} />
       <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="Downloaded" component={DownloadedScreen} />
       <Stack.Screen name="DownloadSettings" component={DownloadSettingsScreen} />
       <Stack.Screen name="About" component={PlaceholderScreen} />
-      <Stack.Screen name="AllYearsThisWeek" component={PlaceholderScreen} />
-      <Stack.Screen name="OccasionAllYears" component={PlaceholderScreen} />
+      <Stack.Screen name="AllYearsThisWeek" component={AllYearsThisWeekScreen} />
+      <Stack.Screen name="OccasionAllYears" component={OccasionAllYearsScreen} />
     </Stack.Navigator>
   );
 }

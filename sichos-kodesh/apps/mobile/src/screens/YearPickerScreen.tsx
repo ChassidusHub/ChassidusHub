@@ -49,6 +49,11 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
       <View style={styles.linksSection}>
         <SectionLabel label={t.comingSoonSection} />
         <ListRow
+          label={t.allFarbrengensThisWeek}
+          right={<AppText color="muted">›</AppText>}
+          onPress={() => navigation.navigate('AllYearsThisWeek')}
+        />
+        <ListRow
           label={`🔍 ${t.searchLink}`}
           onPress={() => navigation.navigate('Search')}
         />
