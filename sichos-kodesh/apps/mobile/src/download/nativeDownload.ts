@@ -62,7 +62,7 @@ export async function nativeEnqueueDownload(
   targetKey: string,
   url: string,
   filename: string,
-  metadata?: Record<string, string>,
+  metadata?: Record<string, string> & { wifiOnly?: string },
 ): Promise<NativeEnqueueResult> {
   const mod = getNativeDownloader();
   if (!mod) throw new Error('Native downloader is not available in this environment');

@@ -53,11 +53,12 @@ class DownloadModule(
      * @param targetKey  Stable unique key identifying the download target (matches JS ledger key).
      * @param url        Remote URL to download from (should use media-proxy URL, not raw CDN).
      * @param filename   Destination filename (written inside app filesDir).
-     * @param _metadata  Reserved for future use (priority, content-type, etc).
+     * @param metadata   Optional map; if `wifiOnly` key is `"true"`, WorkManager will constrain
+     *                   the download to unmetered (Wi-Fi) networks only.
      * @param promise    Resolved with `{ targetKey, workId }` once the work is enqueued.
      */
     @ReactMethod
-    fun enqueueDownload(targetKey: String, url: String, filename: String, @Suppress("UNUSED_PARAMETER") _metadata: ReadableMap?, promise: Promise) {
+    fun enqueueDownload(targetKey: String, url: String, filename: String, metadata: ReadableMap?, promise: Promise) {
         try {
             val workManager = WorkManager.getInstance(reactApplicationContext)
             val inputData = Data.Builder()
@@ -66,8 +67,10 @@ class DownloadModule(
                 .putString(DownloadWorker.KEY_FILENAME, filename)
                 .build()
 
+            val wifiOnly = metadata?.getString("wifiOnly") == "true"
+            val networkType = if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
             val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiredNetworkType(networkType)
                 .build()
 
             val request = OneTimeWorkRequestBuilder<DownloadWorker>()

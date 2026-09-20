@@ -12,6 +12,14 @@ module.exports = {
   // temporal-polyfill, ...) - rather than chase an ever-deepening allowlist,
   // transform everything under node_modules for this project's tests.
   transformIgnorePatterns: [],
+  // When Jest runs from the workspace root (e.g. `npm run test -w @sichos-kodesh/mobile`),
+  // babel-jest's rootMode defaults to "root" which looks for babel.config.js in the
+  // workspace root rather than apps/mobile/.  Setting rootMode:"upward" causes
+  // babel-jest to walk up from the file under test and find apps/mobile/babel.config.js,
+  // enabling @react-native/babel-preset and its TypeScript transform.
+  transform: {
+    '^.+\\.[jt]sx?$': ['babel-jest', { rootMode: 'upward' }],
+  },
   moduleNameMapper: {
     '^@hebcal/core$': '<rootDir>/../../node_modules/@hebcal/core/dist/esm/index.js',
   },

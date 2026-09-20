@@ -22,6 +22,7 @@ import {
   writePendingDownloads,
 } from './downloadStorage';
 import { executeDownload, subscribeToNativeDownloadEvents } from './downloadExecutor';
+import { nativeCancelDownload } from './nativeDownload';
 
 const ALL_ENTRIES = Object.values(catalog).flat();
 
@@ -110,7 +111,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           ...prev,
           [next.key]: toState(next, 'downloading', { progress }),
         }));
-      });
+      }, { wifiOnly: settings.wifiOnly });
 
       if (result.mode === 'native') {
         // Download enqueued in WorkManager — remove from blocking queue and track
@@ -253,6 +254,20 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     [enqueueTargets],
   );
 
+  const cancelDownload = useCallback(async (targetKey: string) => {
+    // Cancel in WorkManager if native path was used.
+    await nativeCancelDownload(targetKey);
+    // Remove from local queue if it hasn't been handed off yet.
+    queueRef.current = queueRef.current.filter((t) => t.key !== targetKey);
+    nativePendingRef.current.delete(targetKey);
+    await writePendingDownloads(queueRef.current);
+    setTargetStates((prev) => {
+      const current = prev[targetKey];
+      if (!current || (current.status !== 'queued' && current.status !== 'downloading')) return prev;
+      return { ...prev, [targetKey]: toState(current.target, 'error', { error: 'canceled' }) };
+    });
+  }, []);
+
   const deleteOccasionDownloads = useCallback(async (entry: CatalogEntry) => {
     await deleteEntryDownloads(entry);
     await refreshDownloads();
@@ -316,13 +331,14 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       downloadAudio,
       downloadPdf,
       enqueueTargets,
+      cancelDownload,
       refreshDownloads,
       deleteOccasionDownloads,
       clearDownloads,
       getOccasionTargets,
       listDownloadedSummaries,
     }),
-    [clearDownloads, deleteOccasionDownloads, downloadedRecords, downloadAudio, downloadOccasion, downloadPdf, enqueueTargets, getOccasionTargets, hydrated, listDownloadedSummaries, refreshDownloads, setSettings, settings, settingsHydrated, targetStates],
+    [cancelDownload, clearDownloads, deleteOccasionDownloads, downloadedRecords, downloadAudio, downloadOccasion, downloadPdf, enqueueTargets, getOccasionTargets, hydrated, listDownloadedSummaries, refreshDownloads, setSettings, settings, settingsHydrated, targetStates],
   );
 
   return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;
