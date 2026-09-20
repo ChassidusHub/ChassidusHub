@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  useColorScheme,
+  View,
+} from 'react-native';
 import Pdf from 'react-native-pdf';
 import type { PdfRef } from 'react-native-pdf';
 import catalog from '../catalog/data';
@@ -8,6 +13,14 @@ import { useTranslation } from '../i18n/useTranslation';
 import type { PdfViewerScreenProps } from '../navigation/types';
 import { pdfIdentityFromRoute, resolveInitialPdfPage } from '../pdf/pdfIdentity';
 import { loadSavedPdfProgress, savePdfProgress } from '../pdf/pdfProgress';
+import {
+  DEFAULT_PDF_READER_SETTINGS,
+  getPdfZoomConfig,
+  readPdfReaderSettings,
+  savePdfReaderSettings,
+  togglePdfDarkMode,
+  togglePdfZoomPreset,
+} from '../pdf/pdfReaderSettings';
 import { findCatalogEntry } from '../routes/catalogRoutes';
 import { AppButton } from '../ui/AppButton';
 import { AppText } from '../ui/AppText';
@@ -32,6 +45,7 @@ type LoadState =
  */
 export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const { t } = useTranslation();
+  const colorScheme = useColorScheme();
   const { driveFileId, resourceKey, label, hebrewYear, occasionId } = route.params;
   const pdfRef = useRef<PdfRef>(null);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,6 +60,9 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState<number | null>(null);
   const [progressReady, setProgressReady] = useState(false);
+  const [readerSettings, setReaderSettings] = useState(DEFAULT_PDF_READER_SETTINGS);
+  const [readerSettingsReady, setReaderSettingsReady] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
   const [retryToken, setRetryToken] = useState(0);
   const identity = useMemo(() => pdfIdentityFromRoute(route.params), [route.params]);
   const entry = useMemo(
@@ -55,6 +72,12 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const routePdf = useMemo(
     () => entry?.pdfs.find((pdf) => pdf.driveFileId === driveFileId) ?? null,
     [driveFileId, entry],
+  );
+  const hasKnownPdfRoute = !!identity && !!entry && !!routePdf;
+  const darkModeEnabled = readerSettings.invertInDarkMode && colorScheme === 'dark';
+  const zoomConfig = useMemo(
+    () => getPdfZoomConfig(readerSettings.zoomPreset),
+    [readerSettings.zoomPreset],
   );
   const title = label.trim() || routePdf?.label || t.read;
   const occasionLabel = route.params.occasionLabel ?? entry?.occasionLabel ?? null;
@@ -93,6 +116,25 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
       cancelled = true;
     };
   }, [identity]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setReaderSettingsReady(false);
+    readPdfReaderSettings()
+      .then((saved) => {
+        if (cancelled) return;
+        setReaderSettings(saved);
+        setReaderSettingsReady(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setReaderSettings(DEFAULT_PDF_READER_SETTINGS);
+        setReaderSettingsReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,17 +191,17 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
     schedulePersist(safePage, totalPages);
   }
 
-  const hasValidRoute = !!identity;
   const showLoadingCard =
-    hasValidRoute && (!progressReady || state.status === 'loading');
+    hasKnownPdfRoute &&
+    (!progressReady || !readerSettingsReady || state.status === 'loading');
   const pdfPath = state.status === 'error' ? null : state.path;
   const loadingPercent = state.status === 'loading' ? state.percent : null;
 
-  if (!hasValidRoute) {
+  if (!hasKnownPdfRoute) {
     return (
       <Screen>
         <ScreenHeader title={title} onBack={() => navigation.goBack()} backLabel={t.back} />
-        <EmptyState title={t.pdfNotFound} />
+        <EmptyState title={t.pdfNotFound} body={t.pdfRouteStaleHelp} />
       </Screen>
     );
   }
@@ -214,44 +256,51 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
           </View>
         ) : null}
 
-        {progressReady && state.status !== 'error' && pdfPath ? (
+        {progressReady && readerSettingsReady && state.status !== 'error' && pdfPath ? (
           <>
-            <Pdf
-              key={`${driveFileId}:${retryToken}`}
-              ref={pdfRef}
-              source={{ uri: `file://${pdfPath}` }}
-              page={restoredPage}
-              style={styles.pdf}
-              renderActivityIndicator={() => (
-                <View style={styles.pdfLoading}>
-                  <ActivityIndicator color={colors.accent} />
-                </View>
-              )}
-              onLoadProgress={(percent) =>
-                setState((current) =>
-                  current.status === 'loading'
-                    ? { ...current, percent: Math.round(percent * 100) }
-                    : current,
-                )
-              }
-              onLoadComplete={(pages) => {
-                const nextPage = resolveInitialPdfPage(restoredPage, pages);
-                setTotalPages(pages);
-                totalPagesRef.current = pages;
-                setCurrentPage(nextPage);
-                currentPageRef.current = nextPage;
-                setState({ status: 'ready', path: pdfPath });
-              }}
-              onPageChanged={(page, pages) => {
-                const nextPage = resolveInitialPdfPage(page, pages);
-                setCurrentPage(nextPage);
-                currentPageRef.current = nextPage;
-                setTotalPages(pages);
-                totalPagesRef.current = pages;
-                schedulePersist(nextPage, pages);
-              }}
-              onError={(error) => setState({ status: 'error', message: String(error) })}
-            />
+            <View style={styles.pdfWrap}>
+              <Pdf
+                key={`${driveFileId}:${retryToken}`}
+                ref={pdfRef}
+                source={{ uri: `file://${pdfPath}` }}
+                page={restoredPage}
+                style={styles.pdf}
+                minScale={zoomConfig.minScale}
+                maxScale={zoomConfig.maxScale}
+                enableDoubleTapZoom
+                onScaleChanged={(scale) => setZoomScale(scale)}
+                renderActivityIndicator={() => (
+                  <View style={styles.pdfLoading}>
+                    <ActivityIndicator color={colors.accent} />
+                  </View>
+                )}
+                onLoadProgress={(percent) =>
+                  setState((current) =>
+                    current.status === 'loading'
+                      ? { ...current, percent: Math.round(percent * 100) }
+                      : current,
+                  )
+                }
+                onLoadComplete={(pages) => {
+                  const nextPage = resolveInitialPdfPage(restoredPage, pages);
+                  setTotalPages(pages);
+                  totalPagesRef.current = pages;
+                  setCurrentPage(nextPage);
+                  currentPageRef.current = nextPage;
+                  setState({ status: 'ready', path: pdfPath });
+                }}
+                onPageChanged={(page, pages) => {
+                  const nextPage = resolveInitialPdfPage(page, pages);
+                  setCurrentPage(nextPage);
+                  currentPageRef.current = nextPage;
+                  setTotalPages(pages);
+                  totalPagesRef.current = pages;
+                  schedulePersist(nextPage, pages);
+                }}
+                onError={(error) => setState({ status: 'error', message: String(error) })}
+              />
+              {darkModeEnabled ? <View pointerEvents="none" style={styles.pdfDarkOverlay} /> : null}
+            </View>
 
             <View
               style={[
@@ -259,9 +308,50 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
                 audioTracks.length > 0 && styles.footerWithPlayer,
               ]}
             >
+              <View style={styles.controlsRow}>
+                <AppButton
+                  label={
+                    darkModeEnabled
+                      ? t.pdfDarkModeEnabledLabel
+                      : t.pdfDarkModeDisabledLabel
+                  }
+                  variant="secondary"
+                  style={styles.controlButton}
+                  onPress={() => {
+                    const next = togglePdfDarkMode(readerSettings);
+                    setReaderSettings(next);
+                    savePdfReaderSettings(next).catch(() => undefined);
+                  }}
+                />
+                <AppButton
+                  label={
+                    readerSettings.zoomPreset === 'expanded'
+                      ? t.pdfZoomRangeExpandedLabel
+                      : t.pdfZoomRangeDefaultLabel
+                  }
+                  variant="secondary"
+                  style={styles.controlButton}
+                  onPress={() => {
+                    const next = togglePdfZoomPreset(readerSettings);
+                    setReaderSettings(next);
+                    savePdfReaderSettings(next).catch(() => undefined);
+                  }}
+                />
+              </View>
               <AppText variant="bodySmall" color="secondary">
                 {totalPages ? t.pdfPageStatus(currentPage, totalPages) : t.openingPdf}
               </AppText>
+              <AppText variant="caption" color="muted">
+                {t.pdfZoomScaleStatus(zoomScale)}
+              </AppText>
+              <AppText variant="caption" color="muted">
+                {t.pdfZoomPanHelp}
+              </AppText>
+              {darkModeEnabled ? (
+                <AppText variant="caption" color="muted">
+                  {t.pdfDarkModeWorkaroundHelp}
+                </AppText>
+              ) : null}
               <View style={styles.controlsRow}>
                 <AppButton
                   label={t.previousPage}
@@ -315,10 +405,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
   },
+  pdfWrap: { flex: 1, position: 'relative' },
   pdf: {
     flex: 1,
     width: '100%',
     backgroundColor: colors.backgroundDefault,
+  },
+  pdfDarkOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0, 0, 0, 0.24)',
   },
   pdfLoading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   footer: {

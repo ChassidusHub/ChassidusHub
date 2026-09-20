@@ -280,6 +280,56 @@ Android downloader bridge:
 
 ---
 
+## Phase 5C — PDF dark mode + zoom/pan polish + runtime checklist (completed)
+
+- Added persisted mobile PDF reader settings in `apps/mobile/src/pdf/pdfReaderSettings.ts`
+  with corrupt-storage-safe parsing and Jest coverage.
+- `PdfViewerScreen` now includes reader-local controls for:
+  - dark PDF mode toggle (applies in system dark mode),
+  - zoom range preset toggle (default `1x-3x` vs expanded `0.75x-5x`),
+  - live zoom scale and pinch/pan guidance text.
+- Current dark-mode behavior is an intentionally safe fallback: a dim overlay on
+  top of `react-native-pdf`. True pixel-level PDF color inversion is still not
+  exposed by the current mobile renderer.
+- Stale/invalid PDF route context is now handled with a more explicit empty
+  state (`pdfRouteStaleHelp`) instead of attempting a blind open.
+
+### Manual runtime verification checklist (emulator/device)
+
+1. Open a PDF from **Farbrengen**.
+2. Open a PDF from **Category**.
+3. Open a PDF from **OccasionDetail**.
+4. Confirm last-read page restores after leaving/reopening the same PDF.
+5. Toggle dark PDF mode on/off and confirm dim overlay behavior in dark theme.
+6. Toggle zoom range preset and verify pinch-zoom limits change accordingly.
+7. Confirm pinch-to-zoom and drag-to-pan both remain usable.
+8. Rotate device (portrait/landscape) and verify viewer remains usable.
+9. Confirm global player bar does not hide PDF controls/page actions.
+
+### Validation commands/workflows for future agents
+
+- Required local commands:
+  - `npm ci`
+  - `npm run test -w @sichos-kodesh/mobile`
+  - `npm run typecheck -w @sichos-kodesh/mobile`
+  - `npm run lint -w @sichos-kodesh/mobile`
+  - `npm run test -w @sichos-kodesh/app-core`
+  - `npm run typecheck -w @sichos-kodesh/app-core`
+  - `npm run android:smoke:buildonly -w @sichos-kodesh/mobile`
+  - `cd apps/mobile/android && ./gradlew assembleDebug --stacktrace`
+  - `npm run android:smoke -w @sichos-kodesh/mobile`
+- Runtime smoke should be confirmed via `.github/workflows/mobile-android-smoke.yml`
+  when local `adb`/emulator is unavailable.
+
+### Remaining PDF parity gaps
+
+- No true per-pixel PDF color inversion API from the current `react-native-pdf`
+  renderer (dim-overlay fallback only).
+- No dedicated on-screen +/- zoom stepper buttons (pinch/pan + range presets are
+  supported).
+
+---
+
 ## Next recommended phases
 
 ### Phase 2A — i18n / settings / search parity (recommended next)
