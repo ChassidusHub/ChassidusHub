@@ -91,6 +91,8 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
       driveFileId: pdf.driveFileId,
       resourceKey: pdf.resourceKey ?? null,
       label: pdf.label,
+      occasionLabel: entry.occasionLabel,
+      sectionLabel: t.sectionLabels[pdf.section],
     });
   }
 

@@ -81,6 +81,23 @@ produces a real installable APK, no Expo/EAS account needed.
 - Lockscreen/media-notification/background behavior still needs real-device
   or CI-emulator runtime verification (Phase 3C validation gap).
 
+## Phase 5B PDF viewer parity status
+
+- `src/screens/PdfViewerScreen.tsx` now restores the last-read page for each
+  PDF and persists page progress through AsyncStorage-backed helpers in
+  `src/pdf/pdfIdentity.ts` and `src/pdf/pdfProgress.ts`.
+- Progress keys are stable per PDF (`hebrewYear`, `occasionId`,
+  `driveFileId`) rather than route/list position only, and corrupt/stale
+  storage payloads are ignored safely.
+- The reader now shows clearer loading/error UI, `Page X / Y`, and explicit
+  Previous/Next page controls while keeping the global audio player bar usable.
+- Dark/invert PDF rendering is still deferred: the web version uses CSS/DOM
+  inversion, and the current mobile `react-native-pdf` integration does not
+  offer a similarly low-risk rendering toggle.
+- Validation for future PDF work should use the same command/workflow set
+  listed under **Phase 3B required command set** below, plus the PR-triggered
+  `mobile-android-smoke.yml` workflow for honest runtime verification.
+
 ## Not built yet
 
 - Batch month/year downloads, zip bundling.
