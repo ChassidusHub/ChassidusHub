@@ -7,7 +7,7 @@ import type { DownloadTarget } from '@sichos-kodesh/app-core';
 const COMPLETED_STORAGE_KEY = 'sichos-kodesh:mobile-download-ledger';
 const PENDING_STORAGE_KEY = 'sichos-kodesh:mobile-pending-downloads';
 
-export type DownloadStatus = 'idle' | 'queued' | 'downloading' | 'downloaded' | 'error';
+export type DownloadStatus = 'idle' | 'queued' | 'downloading' | 'downloaded' | 'canceled' | 'error';
 
 export interface TargetDownloadState {
   target: DownloadTarget;

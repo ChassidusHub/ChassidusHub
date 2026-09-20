@@ -269,7 +269,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     setTargetStates((prev) => {
       const current = prev[targetKey];
       if (!current || (current.status !== 'queued' && current.status !== 'downloading')) return prev;
-      return { ...prev, [targetKey]: toState(current.target, 'error', { error: 'canceled' }) };
+      return { ...prev, [targetKey]: toState(current.target, 'canceled') };
     });
   }, []);
 
