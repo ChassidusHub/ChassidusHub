@@ -60,7 +60,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
                     resourceKey: pdf.resourceKey ?? null,
                     label: pdf.label,
                     occasionLabel: resolved.entry.occasionLabel,
-                    sectionLabel: t.sectionLabels[route.params.categoryId],
+                    sectionLabel: t.sectionLabels[pdf.section],
                   })
                 }
               />
