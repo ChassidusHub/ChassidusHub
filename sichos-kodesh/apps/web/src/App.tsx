@@ -33,6 +33,7 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { DownloadSettingsScreen } from './screens/DownloadSettingsScreen';
 import { DownloadedScreen } from './screens/DownloadedScreen';
 import { AboutScreen } from './screens/AboutScreen';
+import { PrivacyScreen } from './screens/PrivacyScreen';
 import { SearchScreen } from './screens/SearchScreen';
 import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry, useOccasionAllYearsEntry } from './routes/useResolvedEntry';
 
@@ -214,6 +215,7 @@ function AppContent() {
         <Route path="/settings/downloads" element={<DownloadSettingsScreen />} />
         <Route path="/downloaded" element={<DownloadedScreen />} />
         <Route path="/about" element={<AboutScreen />} />
+        <Route path="/privacy" element={<PrivacyScreen />} />
 
         <Route path="/follow/:sourceYear" element={<ThisWeekRoute />} />
         <Route path="/follow/:sourceYear/month" element={<FollowMonthListRoute />} />

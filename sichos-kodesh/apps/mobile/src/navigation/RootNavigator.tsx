@@ -8,7 +8,7 @@ import { ThisWeekScreen } from '../screens/ThisWeekScreen';
 import { YearBrowserScreen } from '../screens/YearBrowserScreen';
 import { PdfViewerScreen } from '../screens/PdfViewerScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { PlaceholderScreen } from '../screens/PlaceholderScreen';
+import { AboutScreen } from '../screens/AboutScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { DownloadedScreen } from '../screens/DownloadedScreen';
 import { DownloadSettingsScreen } from '../screens/DownloadSettingsScreen';
@@ -45,7 +45,7 @@ export function RootNavigator() {
       <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="Downloaded" component={DownloadedScreen} />
       <Stack.Screen name="DownloadSettings" component={DownloadSettingsScreen} />
-      <Stack.Screen name="About" component={PlaceholderScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="AllYearsThisWeek" component={AllYearsThisWeekScreen} />
       <Stack.Screen name="OccasionAllYears" component={OccasionAllYearsScreen} />
     </Stack.Navigator>

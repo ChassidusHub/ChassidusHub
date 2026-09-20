@@ -6,6 +6,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import type { FarbrengenScreenProps } from '../navigation/types';
 import { usePlayer } from '../player/usePlayer';
 import { resolveOccasionRoute, splitFarbrengenContent } from '../routes/catalogRoutes';
+import { ShareButton } from '../components/ShareButton';
 import { AppButton } from '../ui/AppButton';
 import { AppText } from '../ui/AppText';
 import { Card } from '../ui/Card';
@@ -28,7 +29,7 @@ function totalDurationLabel(durationMs: number): string {
 }
 
 export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
-  const { t, language } = useTranslation();
+  const { t, language, isRtl } = useTranslation();
   const { playOccasion, togglePlay, chapters, isPlaying, isLoading, hasError, errorMessage } = usePlayer();
   const { downloadOccasion } = useDownload();
   const resolved = useMemo(
@@ -107,6 +108,13 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
         <AppText variant="bodySmall" color="secondary" style={styles.subtitle}>
           {hebrewFullDateLabel(entry.hebrewDate, entry.hebrewYear, language)}
         </AppText>
+
+        <ShareButton
+          title={entry.occasionLabel}
+          hebrewYear={entry.hebrewYear}
+          occasionId={entry.occasionId}
+          style={isRtl ? styles.shareButtonRtl : styles.shareButton}
+        />
 
         {downloadState === 'downloaded' ? (
           <AppText variant="bodySmall" color="accent" style={styles.downloadState}>
@@ -245,6 +253,8 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   subtitle: { marginBottom: spacing.xs },
+  shareButton: { alignSelf: 'flex-start', marginLeft: -spacing.lg },
+  shareButtonRtl: { alignSelf: 'flex-end', marginLeft: 0, marginRight: -spacing.lg },
   downloadState: { marginBottom: spacing.sm },
   downloadButton: { alignSelf: 'flex-start' },
   sectionCard: { gap: spacing.sm },

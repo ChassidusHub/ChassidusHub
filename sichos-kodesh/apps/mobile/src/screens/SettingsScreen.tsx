@@ -106,6 +106,16 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
             />
           </Card>
         </View>
+
+        <View style={styles.cardWrap}>
+          <Card style={styles.cardReset}>
+            <ListRow
+              label={t.aboutLink}
+              right={<AppText color="muted">›</AppText>}
+              onPress={() => navigation.navigate('About')}
+            />
+          </Card>
+        </View>
       </ScrollView>
     </Screen>
   );

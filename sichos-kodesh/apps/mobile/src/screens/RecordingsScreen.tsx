@@ -4,6 +4,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import type { RecordingsScreenProps } from '../navigation/types';
 import { usePlayer } from '../player/usePlayer';
 import { resolveOccasionRoute } from '../routes/catalogRoutes';
+import { ShareButton } from '../components/ShareButton';
 import { AppButton } from '../ui/AppButton';
 import { AppText } from '../ui/AppText';
 import { Card } from '../ui/Card';
@@ -22,7 +23,7 @@ function formatTime(seconds: number): string {
 }
 
 export function RecordingsScreen({ navigation, route }: RecordingsScreenProps) {
-  const { t, language } = useTranslation();
+  const { t, language, isRtl } = useTranslation();
   const { playOccasion, togglePlay, skipTo, chapters, currentIndex, isPlaying, isLoading, hasError, errorMessage } = usePlayer();
   const resolved = useMemo(
     () => resolveOccasionRoute(catalog, route.params, language),
@@ -68,6 +69,13 @@ export function RecordingsScreen({ navigation, route }: RecordingsScreenProps) {
         <AppText variant="bodySmall" color="secondary">
           {entry.occasionLabel}
         </AppText>
+
+        <ShareButton
+          title={entry.occasionLabel}
+          hebrewYear={entry.hebrewYear}
+          occasionId={entry.occasionId}
+          style={isRtl ? styles.shareButtonRtl : styles.shareButton}
+        />
 
         {entry.audio.length === 0 ? (
           <EmptyState title={t.nothingDownloadable} />
@@ -125,6 +133,8 @@ export function RecordingsScreen({ navigation, route }: RecordingsScreenProps) {
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  shareButton: { alignSelf: 'flex-start', marginLeft: -spacing.lg },
+  shareButtonRtl: { alignSelf: 'flex-end', marginLeft: 0, marginRight: -spacing.lg },
   headerCard: { gap: spacing.sm },
   headerRow: { gap: spacing.sm },
   chapterCard: { gap: spacing.sm },
