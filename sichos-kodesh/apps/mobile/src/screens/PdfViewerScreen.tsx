@@ -45,7 +45,6 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const [restoredPage, setRestoredPage] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState<number | null>(null);
-  const [initialPageApplied, setInitialPageApplied] = useState(false);
   const [progressReady, setProgressReady] = useState(false);
   const [retryToken, setRetryToken] = useState(0);
   const identity = useMemo(() => pdfIdentityFromRoute(route.params), [route.params]);
@@ -73,7 +72,6 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   useEffect(() => {
     let cancelled = false;
     setProgressReady(false);
-    setInitialPageApplied(false);
     setRestoredPage(1);
     setCurrentPage(1);
     currentPageRef.current = 1;
@@ -153,10 +151,9 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
 
   const hasValidRoute = !!identity;
   const showLoadingCard =
-    hasValidRoute &&
-    state.status === 'loading' &&
-    (!progressReady || state.path == null || !initialPageApplied);
+    hasValidRoute && (!progressReady || state.status === 'loading');
   const pdfPath = state.status === 'error' ? null : state.path;
+  const loadingPercent = state.status === 'loading' ? state.percent : null;
 
   if (!hasValidRoute) {
     return (
@@ -195,7 +192,9 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
             <View style={styles.loadingRow}>
               <ActivityIndicator color={colors.accent} />
               <AppText color="secondary">
-                {state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}
+                {loadingPercent != null
+                  ? t.openingPdfPercent(loadingPercent)
+                  : t.openingPdf}
               </AppText>
             </View>
           </Card>
@@ -208,7 +207,6 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
               <AppButton
                 label={t.retryDownloadLabel}
                 onPress={() => {
-                  setProgressReady(false);
                   setRetryToken((current) => current + 1);
                 }}
               />
@@ -216,13 +214,13 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
           </View>
         ) : null}
 
-        {state.status !== 'error' && pdfPath ? (
+        {progressReady && state.status !== 'error' && pdfPath ? (
           <>
             <Pdf
               key={`${driveFileId}:${retryToken}`}
               ref={pdfRef}
               source={{ uri: `file://${pdfPath}` }}
-              page={initialPageApplied ? undefined : restoredPage}
+              page={restoredPage}
               style={styles.pdf}
               renderActivityIndicator={() => (
                 <View style={styles.pdfLoading}>
@@ -242,7 +240,6 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
                 totalPagesRef.current = pages;
                 setCurrentPage(nextPage);
                 currentPageRef.current = nextPage;
-                setInitialPageApplied(true);
                 setState({ status: 'ready', path: pdfPath });
               }}
               onPageChanged={(page, pages) => {

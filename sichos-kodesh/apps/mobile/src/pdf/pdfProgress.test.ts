@@ -84,5 +84,9 @@ describe('pdfProgress', () => {
     expect(payload.version).toBe(1);
     expect(payload.pages['pdf:5711:8:drive-file'].page).toBe(20);
     expect(payload.pages['pdf:5711:8:drive-file'].totalPages).toBe(20);
+    expect(payload.pages['pdf:5711:8:drive-file'].updatedAt).toEqual(
+      expect.any(Number),
+    );
+    expect(payload.pages['pdf:5711:8:drive-file'].updatedAt).not.toBe(50);
   });
 });
