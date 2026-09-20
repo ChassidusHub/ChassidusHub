@@ -11,4 +11,13 @@ export async function PlaybackService() {
   TrackPlayer.addEventListener(Event.RemoteNext, () => TrackPlayer.skipToNext());
   TrackPlayer.addEventListener(Event.RemotePrevious, () => TrackPlayer.skipToPrevious());
   TrackPlayer.addEventListener(Event.RemoteSeek, (event) => TrackPlayer.seekTo(event.position));
+  TrackPlayer.addEventListener(Event.RemoteDuck, (event) => {
+    if (event.paused) {
+      TrackPlayer.pause();
+      return;
+    }
+    if (!event.permanent) {
+      TrackPlayer.play();
+    }
+  });
 }

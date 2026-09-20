@@ -5,3 +5,4 @@ export * from './search/parshaOptions.js';
 export * from './search/searchOccasions.js';
 export * from './search/specialDayOptions.js';
 export * from './download/downloadTargets.js';
+export * from './progress/audioProgress.js';

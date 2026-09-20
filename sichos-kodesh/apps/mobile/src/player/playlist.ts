@@ -1,7 +1,7 @@
 import type { Track } from 'react-native-track-player';
 import type { CatalogAudio, CatalogEntry } from '@sichos-kodesh/catalog';
 import type { PlayerChapter } from './playerContext';
-import { audioUrl } from '../download/download';
+import { audioUrl, localAudioFileUrlIfExists } from '../download/download';
 
 /**
  * Maps a catalog entry's audio list to react-native-track-player Track objects.
@@ -9,23 +9,33 @@ import { audioUrl } from '../download/download';
  * If a local cached copy exists, the caller should substitute `file://` URLs;
  * this function produces the network fallback URLs.
  */
-export function catalogAudioToTracks(entry: CatalogEntry): Track[] {
-  return entry.audio.map((audio, index) => catalogAudioToTrack(entry, audio, index));
+export async function catalogAudioToTracks(entry: CatalogEntry): Promise<Track[]> {
+  return Promise.all(
+    entry.audio.map(async (audio, index) =>
+      catalogAudioToTrack(entry, audio, index, await resolveTrackUrl(audio.workerFilename)),
+    ),
+  );
 }
 
 export function catalogAudioToTrack(
   entry: CatalogEntry,
   audio: CatalogAudio,
   index: number,
+  url: string = audioUrl(audio.workerFilename),
 ): Track {
   return {
     id: audio.workerFilename,
-    url: audioUrl(audio.workerFilename),
+    url,
     title: audio.chapterName ?? (entry.audio.length > 1 ? `Track ${index + 1}` : entry.occasionLabel),
     artist: 'Sichos Kodesh',
     album: entry.occasionLabel,
     duration: audio.durationMs / 1000,
   };
+}
+
+export async function resolveTrackUrl(workerFilename: string): Promise<string> {
+  const localUrl = await localAudioFileUrlIfExists(workerFilename);
+  return localUrl ?? audioUrl(workerFilename);
 }
 
 export function catalogAudioToChapter(

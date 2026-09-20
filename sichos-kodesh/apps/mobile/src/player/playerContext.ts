@@ -22,6 +22,8 @@ export interface PlayerContextValue {
   isLoading: boolean;
   /** True when there was a playback error */
   hasError: boolean;
+  /** Last playback/setup error message, if any */
+  errorMessage: string | null;
   /** Elapsed seconds in current chapter */
   position: number;
   /** Duration of current chapter in seconds */

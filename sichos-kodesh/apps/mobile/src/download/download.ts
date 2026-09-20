@@ -28,6 +28,21 @@ export function audioUrl(workerFilename: string): string {
   return `${MEDIA_PROXY_BASE_URL}/jem-audio/${workerFilename}`;
 }
 
+/** App-owned local destination path for a chapter's downloaded audio file. */
+export function localAudioPath(workerFilename: string): string {
+  return `${RNBlobUtil.fs.dirs.DocumentDir}/${workerFilename}`;
+}
+
+export async function localAudioFileUrlIfExists(workerFilename: string): Promise<string | null> {
+  const path = localAudioPath(workerFilename);
+  try {
+    const exists = await RNBlobUtil.fs.exists(path);
+    return exists ? `file://${path}` : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Downloads one occasion's audio to the local document directory and returns its absolute path. Uses the same proxy URL as audioUrl(). */
 export function downloadAudio(workerFilename: string, onProgress?: (p: DownloadProgress) => void): Promise<string> {
   return downloadTo(audioUrl(workerFilename), workerFilename, onProgress);
