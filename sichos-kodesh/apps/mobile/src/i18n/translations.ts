@@ -332,7 +332,6 @@ const he: typeof en = {
   downloadQueuedLabel: 'בתור',
   retryDownloadLabel: 'נסו שוב',
   cancelDownloadLabel: 'ביטול',
-  wifiOnlyLabel: 'Wi‑Fi בלבד',
   wifiOnlyHelp: 'הורדות רצות רק ברשתות ללא מדידה (Wi‑Fi).',
   downloadMvpAutoHelp: 'בהפעלת ההגדרה האפליקציה תתור להוריד את השבוע הנוכחי כל עוד היא פתוחה. הורדה אמיתית ברקע תגיע בשלב מקורי עתידי.',
   downloadForegroundOnlyHelp: 'בהוצאה זו ההורדות פועלות רק כשהאפליקציה פתוחה. הורדה אמיתית ברקע/חידוש הורדה לאנדרואיד עדיין נדחית לשלב מקורי עתידי.',

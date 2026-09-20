@@ -44,6 +44,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const processingRef = useRef(false);
   const targetStatesRef = useRef<Record<string, TargetDownloadState>>({});
   const autoQueuedRef = useRef(false);
+  const wifiOnlyRef = useRef(settings.wifiOnly);
   // Tracks targets handed off to WorkManager so native events can resolve them.
   const nativePendingRef = useRef<Map<string, DownloadTarget>>(new Map());
   const [, bumpQueue] = useState(0);
@@ -51,6 +52,10 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     targetStatesRef.current = targetStates;
   }, [targetStates]);
+
+  useEffect(() => {
+    wifiOnlyRef.current = settings.wifiOnly;
+  }, [settings.wifiOnly]);
 
   const getOccasionTargets = useCallback(
     (entry: CatalogEntry, mode: 'manual' | 'settings' | 'all' = 'manual') => {
@@ -111,7 +116,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           ...prev,
           [next.key]: toState(next, 'downloading', { progress }),
         }));
-      }, { wifiOnly: settings.wifiOnly });
+      }, { wifiOnly: wifiOnlyRef.current });
 
       if (result.mode === 'native') {
         // Download enqueued in WorkManager — remove from blocking queue and track

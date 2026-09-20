@@ -108,7 +108,7 @@ describe('downloadExecutor — foreground fallback', () => {
       fetch: jest.fn(() => ({
         progress: jest.fn().mockReturnThis(),
         // Return a promise-like that resolves with a path() method
-        then: (cb) => Promise.resolve(cb({ path: () => '/documents/a.mp3.part' })),
+        then: (cb: (r: { path: () => string }) => unknown) => Promise.resolve(cb({ path: () => '/documents/a.mp3.part' })),
       })),
     });
 
