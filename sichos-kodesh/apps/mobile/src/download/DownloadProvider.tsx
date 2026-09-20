@@ -116,12 +116,15 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     const activeNativeKeys = new Set((await listActiveNativeDownloads()).map((download) => download.targetKey));
     const records = await refreshDownloadsInternal(activeNativeKeys);
     const downloadedKeys = new Set(records.map((record) => record.key));
+    const staleNativePending = Array.from(nativePendingRef.current.entries()).filter(([targetKey]) => !activeNativeKeys.has(targetKey));
+
+    for (const [targetKey] of staleNativePending) {
+      nativePendingRef.current.delete(targetKey);
+    }
 
     setTargetStates((prev) => {
       const next = { ...prev };
-      for (const [targetKey, target] of Array.from(nativePendingRef.current.entries())) {
-        if (activeNativeKeys.has(targetKey)) continue;
-        nativePendingRef.current.delete(targetKey);
+      for (const [targetKey, target] of staleNativePending) {
         if (downloadedKeys.has(targetKey)) continue;
         next[targetKey] = toState(target, 'canceled');
       }

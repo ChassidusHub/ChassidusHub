@@ -46,17 +46,19 @@ internal object DownloadCancellation {
     }
 
     private fun requestCodeFor(context: Context, targetKey: String): Int {
-        val prefs = context.getSharedPreferences(REQUEST_CODE_PREFS, Context.MODE_PRIVATE)
-        val requestCodeKey = "$REQUEST_CODE_PREFIX$targetKey"
-        val existing = prefs.getInt(requestCodeKey, -1)
-        if (existing != -1) return existing
+        synchronized(this) {
+            val prefs = context.getSharedPreferences(REQUEST_CODE_PREFS, Context.MODE_PRIVATE)
+            val requestCodeKey = "$REQUEST_CODE_PREFIX$targetKey"
+            val existing = prefs.getInt(requestCodeKey, -1)
+            if (existing != -1) return existing
 
-        val next = prefs.getInt(NEXT_REQUEST_CODE_KEY, 1)
-        prefs.edit()
-            .putInt(requestCodeKey, next)
-            .putInt(NEXT_REQUEST_CODE_KEY, if (next == Int.MAX_VALUE) 1 else next + 1)
-            .apply()
-        return next
+            val next = prefs.getInt(NEXT_REQUEST_CODE_KEY, 1)
+            prefs.edit()
+                .putInt(requestCodeKey, next)
+                .putInt(NEXT_REQUEST_CODE_KEY, if (next == Int.MAX_VALUE) 1 else next + 1)
+                .apply()
+            return next
+        }
     }
 
     private fun clearRequestCode(context: Context, targetKey: String) {
