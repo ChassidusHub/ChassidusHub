@@ -91,9 +91,10 @@ produces a real installable APK, no Expo/EAS account needed.
   storage payloads are ignored safely.
 - The reader now shows clearer loading/error UI, `Page X / Y`, and explicit
   Previous/Next page controls while keeping the global audio player bar usable.
-- Dark/invert PDF rendering is still deferred: the web version uses CSS/DOM
-  inversion, and the current mobile `react-native-pdf` integration does not
-  offer a similarly low-risk rendering toggle.
+- Dark-mode PDF inversion matches the web's `invert(1) hue-rotate(180deg)`
+  CSS filter: the same two functions applied through React Native's own
+  `filter` style on the viewer's wrapper (`PdfViewerScreen`), which Android
+  renders over the native PDF view and its pages alike.
 - Validation for future PDF work should use the same command/workflow set
   listed under **Phase 3B required command set** below, plus the PR-triggered
   `mobile-android-smoke.yml` workflow for honest runtime verification.
@@ -106,9 +107,8 @@ produces a real installable APK, no Expo/EAS account needed.
   - dark PDF mode toggle,
   - zoom range preset toggle,
   - current zoom scale + pinch/pan guidance.
-- Dark PDF mode currently uses a safe dim overlay fallback while system dark
-  mode is active. True PDF pixel inversion is not exposed by the current
-  `react-native-pdf` integration.
+- Dark PDF mode inverts the page colours (React Native `filter` style, see
+  Phase 5B above), governed by the "Invert PDF colors in dark mode" setting.
 - Invalid/stale PDF route context now shows a clearer empty/error state
   (`pdfRouteStaleHelp`) instead of trying to open ambiguous params.
 - Manual runtime checklist for emulator/device verification:
@@ -119,11 +119,41 @@ produces a real installable APK, no Expo/EAS account needed.
   5. Confirm pinch/pan works and rotate device if available.
   6. Confirm global player bar does not obscure reader controls.
 
+## Phone-only: background sync and notifications
+
+Two things a phone can do that the web app cannot (`src/background/`,
+`android/.../background/`):
+
+- **Background auto-download.** With auto-download on, "Also when the app
+  is closed" (default on) registers a WorkManager periodic job
+  (`BackgroundSyncScheduler`, every 6 h, no network constraint of its own).
+  `BackgroundSyncWorker` starts the React runtime in-process when the app
+  isn't running and runs the headless JS task `SichosKodeshBackgroundSync`
+  (`backgroundSyncTask.ts`, registered in `index.js`): it resolves this
+  week's occasions from the download settings exactly as the in-app
+  sync-on-open does (`resolveAutoDownloadEntries`), records them in the
+  auto-download ledger, and hands every missing file to the existing
+  `DownloadWorker` (Wi-Fi-only honoured per file). "Download this week
+  now" in the download settings runs the same task once, immediately.
+- **Notifications** (`AppNotifications.kt`, two channels): once per Hebrew
+  week, "This week's farbrengens are in" - which year lines up and how many
+  farbrengens - opening This Week for that year; and "Ready to use
+  offline" when the last file of an automatic batch lands (posted by
+  `DownloadWorker` itself, so it fires whether the batch came from the
+  headless task or from the app), opening Downloaded content. Both are
+  toggles under Settings > Notifications; turning one on asks for the
+  Android 13+ permission, and the first launch asks once. Deep links use
+  the `sichoskodesh://` scheme (manifest intent filter + `linking` in
+  `App.tsx`). Texts come from JS in the user's language.
+
+To exercise it on a device: Settings > Downloads > "Download this week
+now", then pull down the notification shade. `adb shell cmd statusbar
+expand-notifications` does the same from a terminal, and the walkthrough
+script screenshots it.
+
 ## Not built yet
 
 - Batch month/year downloads, zip bundling.
-- Background/resumable downloads — a single foreground download is
-  enough for one file at a time.
 - A gap-handling UI with manual overrides (a gap just shows a plain
   message right now).
 

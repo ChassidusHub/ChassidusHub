@@ -5,7 +5,11 @@ import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import catalog from '../catalog/data';
+import { downloadedDeepLink } from '../background/backgroundNative';
+import { useTranslation } from '../i18n/useTranslation';
 import { looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
+import { useNotificationSettings } from '../settings/notificationSettings';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { DownloadContext } from './downloadContext';
 import type { EnqueueMode } from './downloadContext';
 import { clearAutoDownloadLedger, forgetAutoDownload, hydrateAutoDownloadLedger, recordAutoDownload } from './downloadLedger';
@@ -81,7 +85,19 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   const wifiOnlyRef = useRef(settings.wifiOnly);
   // Tracks targets handed off to WorkManager so native events can resolve them.
   const nativePendingRef = useRef<Map<string, DownloadTarget>>(new Map());
+  // Which queued keys the automatic sync asked for (vs. a manual tap), and
+  // how many files its latest batch queued - both feed the phone's
+  // download notifications (see downloadExecutor's NativeDownloadOptions).
+  const autoKeysRef = useRef<Set<string>>(new Set());
+  const autoBatchSizeRef = useRef(0);
   const [, bumpQueue] = useState(0);
+  const { t: translation, language } = useTranslation();
+  const [notifications] = useNotificationSettings();
+  const notificationTextRef = useRef({ translation, language, notifications });
+
+  useEffect(() => {
+    notificationTextRef.current = { translation, language, notifications };
+  }, [language, notifications, translation]);
 
   useEffect(() => {
     targetStatesRef.current = targetStates;
@@ -151,6 +167,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     }));
 
     try {
+      const isAuto = autoKeysRef.current.has(next.key);
+      const { translation: strings, language: lang, notifications: notify } = notificationTextRef.current;
       const result = await executeDownload(
         next,
         (progress) => {
@@ -159,7 +177,20 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
             [next.key]: toState(next, 'downloading', { progress }),
           }));
         },
-        { wifiOnly: wifiOnlyRef.current },
+        {
+          wifiOnly: wifiOnlyRef.current,
+          auto: isAuto,
+          label: next.label,
+          progressTitle: strings.downloadingTitle,
+          notifyWhenDone:
+            isAuto && notify.downloadsReady
+              ? {
+                  title: strings.downloadsReadyTitle,
+                  body: strings.downloadsReadyBody(autoBatchSizeRef.current, hebrewYearLabel(next.hebrewYear, lang)),
+                  deepLink: downloadedDeepLink(),
+                }
+              : undefined,
+        },
       );
 
       if (result.mode === 'native') {
@@ -261,8 +292,13 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         // The ledger decides what auto-cleanup may later reclaim: an auto sync
         // (re-)claims the file, while any manual download of the same file
         // takes it out of the auto-managed set for good.
-        if (mode === 'auto') recordAutoDownload(target.key, target.hebrewYear, target.occasionId);
-        else forgetAutoDownload(target.key);
+        if (mode === 'auto') {
+          recordAutoDownload(target.key, target.hebrewYear, target.occasionId);
+          autoKeysRef.current.add(target.key);
+        } else {
+          forgetAutoDownload(target.key);
+          autoKeysRef.current.delete(target.key);
+        }
 
         const currentStatus = targetStatesRef.current[target.key]?.status;
         if (queuedKeys.has(target.key) || currentStatus === 'queued' || currentStatus === 'downloading') continue;
@@ -281,6 +317,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       }
 
       if (nextTargets.length === 0) return;
+      if (mode === 'auto') autoBatchSizeRef.current = nextTargets.length;
 
       queueRef.current = [...queueRef.current, ...nextTargets];
       await writePendingDownloads(queueRef.current);

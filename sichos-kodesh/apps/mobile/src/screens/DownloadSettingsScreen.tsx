@@ -4,6 +4,7 @@ import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
+import { isBackgroundSyncAvailable, runBackgroundSyncNow } from '../background/backgroundNative';
 import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
 import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../download/downloadSettings';
@@ -32,6 +33,9 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
   const { t, language } = useTranslation();
   const { settings, setSettings, clearDownloads } = useDownload();
   const [usage, setUsage] = useState<number | null>(null);
+  const [syncStarted, setSyncStarted] = useState(false);
+  // Phone only (see src/background): the web has no background at all.
+  const backgroundAvailable = isBackgroundSyncAvailable();
 
   useEffect(() => {
     getDownloadStorageUsage(ALL_ENTRIES)
@@ -74,6 +78,19 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
         trailing={<OptionCheck checked={settings.autoDownloadEnabled} />}
         onPress={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}
       />
+
+      {settings.autoDownloadEnabled && backgroundAvailable && (
+        <>
+          <Row
+            label={t.backgroundSyncLabel}
+            marquee
+            selected={settings.backgroundSyncEnabled}
+            trailing={<OptionCheck checked={settings.backgroundSyncEnabled} />}
+            onPress={() => setSettings({ ...settings, backgroundSyncEnabled: !settings.backgroundSyncEnabled })}
+          />
+          <TabHelp>{t.backgroundSyncHelp}</TabHelp>
+        </>
+      )}
 
       {settings.autoDownloadEnabled && (
         <>
@@ -125,6 +142,20 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
               onPress={() => setSettings({ ...settings, useKviusFallback: !settings.useKviusFallback })}
             />
           )}
+        </>
+      )}
+
+      {backgroundAvailable && (
+        <>
+          <Row
+            label={t.syncNowLabel}
+            marquee
+            onPress={() => {
+              runBackgroundSyncNow();
+              setSyncStarted(true);
+            }}
+          />
+          <TabHelp>{syncStarted ? t.syncNowStarted : t.syncNowHelp}</TabHelp>
         </>
       )}
 

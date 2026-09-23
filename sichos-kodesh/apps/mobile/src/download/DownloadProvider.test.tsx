@@ -1,21 +1,24 @@
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
+import { LanguageProvider } from '../i18n/LanguageProvider';
 import { DownloadProvider } from './DownloadProvider';
 import { useDownload } from './useDownload';
 import type { DownloadContextValue } from './downloadContext';
-import type { NativeDownloadCanceledPayload, NativeDownloadErrorPayload, NativeDownloadProgressPayload } from './downloadExecutor';
+import type {
+  NativeDownloadCanceledPayload,
+  NativeDownloadErrorPayload,
+  NativeDownloadProgressPayload,
+} from './downloadExecutor';
 
 let latestContext: DownloadContextValue | null = null;
 let appStateListener: ((state: string) => void) | null = null;
-let nativeHandlers:
-  | {
-      onProgress?: (payload: NativeDownloadProgressPayload) => void;
-      onComplete?: (payload: { targetKey: string; localPath: string }) => void;
-      onCanceled?: (payload: NativeDownloadCanceledPayload) => void;
-      onError?: (payload: NativeDownloadErrorPayload) => void;
-    }
-  | null = null;
+let nativeHandlers: {
+  onProgress?: (payload: NativeDownloadProgressPayload) => void;
+  onComplete?: (payload: { targetKey: string; localPath: string }) => void;
+  onCanceled?: (payload: NativeDownloadCanceledPayload) => void;
+  onError?: (payload: NativeDownloadErrorPayload) => void;
+} | null = null;
 
 const mockDefaultDownloadSettings = {
   autoDownloadEnabled: false,
@@ -42,11 +45,23 @@ const mockIsTargetDownloaded = jest.fn();
 
 jest.mock('react-native', () => ({
   AppState: {
-    addEventListener: jest.fn((_type: string, handler: (state: string) => void) => {
-      appStateListener = handler;
-      return { remove: jest.fn(() => { appStateListener = null; }) };
-    }),
+    addEventListener: jest.fn(
+      (_type: string, handler: (state: string) => void) => {
+        appStateListener = handler;
+        return {
+          remove: jest.fn(() => {
+            appStateListener = null;
+          }),
+        };
+      },
+    ),
   },
+  // LanguageProvider (wrapping the provider under test) and the background
+  // module wrapper touch these; none of the tests care what they do.
+  I18nManager: { allowRTL: jest.fn() },
+  NativeModules: {},
+  PermissionsAndroid: { request: jest.fn(), PERMISSIONS: {}, RESULTS: {} },
+  Platform: { OS: 'android', Version: 34 },
 }));
 
 jest.mock('../catalog/data', () => ({
@@ -56,7 +71,11 @@ jest.mock('../catalog/data', () => ({
 
 jest.mock('./downloadSettings', () => ({
   DEFAULT_DOWNLOAD_SETTINGS: mockDefaultDownloadSettings,
-  useDownloadSettings: jest.fn(() => [mockDefaultDownloadSettings, jest.fn(), true]),
+  useDownloadSettings: jest.fn(() => [
+    mockDefaultDownloadSettings,
+    jest.fn(),
+    true,
+  ]),
 }));
 
 jest.mock('./downloadStorage', () => ({
@@ -65,16 +84,20 @@ jest.mock('./downloadStorage', () => ({
   deleteEntryDownloads: jest.fn(() => Promise.resolve()),
   isTargetDownloaded: (...args: unknown[]) => mockIsTargetDownloaded(...args),
   listDownloadedOccasions: jest.fn(() => Promise.resolve([])),
-  listPendingDownloads: (...args: unknown[]) => mockListPendingDownloads(...args),
+  listPendingDownloads: (...args: unknown[]) =>
+    mockListPendingDownloads(...args),
   localPathForTarget: (target: DownloadTarget) => `/documents/${target.key}`,
-  reconcileStoredDownloads: (...args: unknown[]) => mockReconcileStoredDownloads(...args),
-  upsertStoredDownload: (...args: unknown[]) => mockUpsertStoredDownload(...args),
-  writePendingDownloads: (...args: unknown[]) => mockWritePendingDownloads(...args),
+  reconcileStoredDownloads: (...args: unknown[]) =>
+    mockReconcileStoredDownloads(...args),
+  upsertStoredDownload: (...args: unknown[]) =>
+    mockUpsertStoredDownload(...args),
+  writePendingDownloads: (...args: unknown[]) =>
+    mockWritePendingDownloads(...args),
 }));
 
 jest.mock('./downloadExecutor', () => ({
   executeDownload: (...args: unknown[]) => mockExecuteDownload(...args),
-  subscribeToNativeDownloadEvents: jest.fn((handlers) => {
+  subscribeToNativeDownloadEvents: jest.fn(handlers => {
     nativeHandlers = handlers;
     return () => {
       nativeHandlers = null;
@@ -83,8 +106,10 @@ jest.mock('./downloadExecutor', () => ({
 }));
 
 jest.mock('./nativeDownload', () => ({
-  listActiveNativeDownloads: (...args: unknown[]) => mockListActiveNativeDownloads(...args),
-  nativeCancelDownload: (...args: unknown[]) => mockNativeCancelDownload(...args),
+  listActiveNativeDownloads: (...args: unknown[]) =>
+    mockListActiveNativeDownloads(...args),
+  nativeCancelDownload: (...args: unknown[]) =>
+    mockNativeCancelDownload(...args),
 }));
 
 function Probe() {
@@ -128,9 +153,11 @@ describe('DownloadProvider native cancellation reconciliation', () => {
     let renderer: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <DownloadProvider>
-          <Probe />
-        </DownloadProvider>,
+        <LanguageProvider>
+          <DownloadProvider>
+            <Probe />
+          </DownloadProvider>
+        </LanguageProvider>,
       );
     });
     await flush();
@@ -158,9 +185,11 @@ describe('DownloadProvider native cancellation reconciliation', () => {
     let renderer: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <DownloadProvider>
-          <Probe />
-        </DownloadProvider>,
+        <LanguageProvider>
+          <DownloadProvider>
+            <Probe />
+          </DownloadProvider>
+        </LanguageProvider>,
       );
     });
     await flush();
@@ -190,9 +219,11 @@ describe('DownloadProvider native cancellation reconciliation', () => {
     let renderer: TestRenderer.ReactTestRenderer;
     await act(async () => {
       renderer = TestRenderer.create(
-        <DownloadProvider>
-          <Probe />
-        </DownloadProvider>,
+        <LanguageProvider>
+          <DownloadProvider>
+            <Probe />
+          </DownloadProvider>
+        </LanguageProvider>,
       );
     });
     await flush();
@@ -203,11 +234,16 @@ describe('DownloadProvider native cancellation reconciliation', () => {
     await flush();
 
     await act(async () => {
-      nativeHandlers?.onError?.({ targetKey: target.key, error: 'network failed' });
+      nativeHandlers?.onError?.({
+        targetKey: target.key,
+        error: 'network failed',
+      });
     });
 
     expect(latestContext!.targetStates[target.key]?.status).toBe('error');
-    expect(latestContext!.targetStates[target.key]?.error).toBe('network failed');
+    expect(latestContext!.targetStates[target.key]?.error).toBe(
+      'network failed',
+    );
 
     await act(async () => {
       renderer!.unmount();

@@ -10,6 +10,12 @@ export type RetentionPeriod = 'never' | '2w' | '4w' | '8w' | '12w';
 /** Same fields, defaults and semantics as apps/web/src/settings/useDownloadSettings.ts - see that file's own comments for each one. */
 export interface DownloadSettings {
   autoDownloadEnabled: boolean;
+  /**
+   * Phone only: also run the automatic sync periodically while the app is
+   * closed (see src/background), not just on open. No web counterpart -
+   * a web app has no reliable way to work in the background.
+   */
+  backgroundSyncEnabled: boolean;
   /** How far ahead sync-on-open pre-fetches. */
   scope: DownloadScope;
   sourceYearMode: SourceYearMode;
@@ -31,6 +37,7 @@ const STORAGE_KEY = 'sichos-kodesh:mobile-download-settings';
 
 export const DEFAULT_DOWNLOAD_SETTINGS: DownloadSettings = {
   autoDownloadEnabled: false,
+  backgroundSyncEnabled: true,
   scope: 'week',
   sourceYearMode: 'auto',
   manualSourceYears: [],
@@ -58,6 +65,7 @@ function normalizeSettings(value: unknown): DownloadSettings {
   return {
     ...DEFAULT_DOWNLOAD_SETTINGS,
     ...parsed,
+    backgroundSyncEnabled: typeof parsed.backgroundSyncEnabled === 'boolean' ? parsed.backgroundSyncEnabled : DEFAULT_DOWNLOAD_SETTINGS.backgroundSyncEnabled,
     scope: parsed.scope === 'month' ? 'month' : 'week',
     sourceYearMode: parsed.sourceYearMode === 'manual' ? 'manual' : 'auto',
     manualSourceYears: Array.isArray(parsed.manualSourceYears) ? parsed.manualSourceYears.filter((year): year is number => typeof year === 'number' && Number.isFinite(year)) : [],

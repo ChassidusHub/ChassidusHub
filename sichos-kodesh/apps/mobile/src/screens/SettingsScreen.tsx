@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Check } from 'lucide-react-native';
+import { isBackgroundSyncAvailable, requestNotificationPermission } from '../background/backgroundNative';
 import { useLanguage, useTranslation } from '../i18n/useTranslation';
 import type { Language } from '../i18n/translations';
 import type { SettingsScreenProps } from '../navigation/types';
 import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
 import { useInvertPdfInDarkMode } from '../settings/invertPdfInDarkMode';
+import { useNotificationSettings } from '../settings/notificationSettings';
+import type { NotificationSettings } from '../settings/notificationSettings';
 import { CategoryRow } from '../ui/CategoryRow';
 import { Row } from '../ui/Row';
 import { Screen } from '../ui/Screen';
@@ -28,6 +31,25 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { mode: theme, setMode: setTheme } = useTheme();
   const [autoplay, setAutoplay] = useAutoplayOnHanacha();
   const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
+  const [notifications, setNotifications] = useNotificationSettings();
+  const [notificationsBlocked, setNotificationsBlocked] = useState(false);
+  // Phone only (see src/background) - a web app has no notifications of its own here.
+  const notificationsAvailable = isBackgroundSyncAvailable();
+
+  function toggleNotification(key: keyof NotificationSettings): void {
+    const next = !notifications[key];
+    if (!next) {
+      setNotifications({ ...notifications, [key]: false });
+      return;
+    }
+    // Turning one on is the moment Android 13+ asks; a refusal leaves it off and explains why.
+    requestNotificationPermission()
+      .then((granted) => {
+        setNotificationsBlocked(!granted);
+        if (granted) setNotifications({ ...notifications, [key]: true });
+      })
+      .catch(() => setNotificationsBlocked(true));
+  }
 
   const themeOptions: Array<{ value: ThemeMode; label: string }> = [
     { value: 'dark', label: t.themeDark },
@@ -56,6 +78,22 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
       <CategoryHeader>{t.playbackSection}</CategoryHeader>
       <Row label={t.autoplayHanachaLabel} marquee selected={autoplay} trailing={<OptionCheck checked={autoplay} />} onPress={() => setAutoplay(!autoplay)} />
       <TabHelp>{t.autoplayHanachaHelp}</TabHelp>
+
+      {notificationsAvailable && (
+        <>
+          <CategoryHeader>{t.notificationsSection}</CategoryHeader>
+          <Row label={t.notifyNewWeekLabel} marquee selected={notifications.newWeek} trailing={<OptionCheck checked={notifications.newWeek} />} onPress={() => toggleNotification('newWeek')} />
+          <TabHelp>{t.notifyNewWeekHelp}</TabHelp>
+          <Row
+            label={t.notifyDownloadsReadyLabel}
+            marquee
+            selected={notifications.downloadsReady}
+            trailing={<OptionCheck checked={notifications.downloadsReady} />}
+            onPress={() => toggleNotification('downloadsReady')}
+          />
+          {notificationsBlocked && <TabHelp>{t.notificationsBlockedHelp}</TabHelp>}
+        </>
+      )}
 
       <View style={styles.linkList}>
         <CategoryRow label={t.viewDownloadedLabel} onPress={() => navigation.navigate('Downloaded')} />

@@ -39,6 +39,34 @@ export interface ExecuteDownloadResult {
   localPath?: string;
 }
 
+export interface NativeDownloadOptions {
+  wifiOnly?: boolean;
+  /** Part of the automatic sync's batch (tagged so the batch's last file can post the notice below). */
+  auto?: boolean;
+  /** Shown under the progress notification's title - the occasion's name. */
+  label?: string;
+  /** The progress notification's title, in the user's language. */
+  progressTitle?: string;
+  /** Posted, with a deep link, by whichever auto download of the batch finishes last. */
+  notifyWhenDone?: { title: string; body: string; deepLink: string };
+}
+
+/** Hands one target to the native WorkManager downloader. Shared by the in-app queue and the headless background sync. */
+export async function enqueueNativeDownload(target: DownloadTarget, options: NativeDownloadOptions = {}): Promise<void> {
+  const metadata: Record<string, string> = {};
+  if (options.wifiOnly) metadata.wifiOnly = 'true';
+  if (options.auto) metadata.auto = 'true';
+  if (options.label) metadata.label = options.label;
+  if (options.progressTitle) metadata.progressTitle = options.progressTitle;
+  if (options.notifyWhenDone) {
+    metadata.notifyDone = 'true';
+    metadata.doneTitle = options.notifyWhenDone.title;
+    metadata.doneBody = options.notifyWhenDone.body;
+    metadata.doneDeepLink = options.notifyWhenDone.deepLink;
+  }
+  await nativeEnqueueDownload(target.key, targetUrl(target), targetFilename(target), metadata);
+}
+
 /** Build the proxy download URL for a given target. */
 function targetUrl(target: DownloadTarget): string {
   if (target.kind === 'audio') {
@@ -69,12 +97,10 @@ function targetFilename(target: DownloadTarget): string {
 export async function executeDownload(
   target: DownloadTarget,
   onProgress: (progress: number) => void,
-  options?: { wifiOnly?: boolean },
+  options?: NativeDownloadOptions,
 ): Promise<ExecuteDownloadResult> {
   if (isNativeDownloaderAvailable()) {
-    const metadata: Record<string, string> = {};
-    if (options?.wifiOnly) metadata.wifiOnly = 'true';
-    await nativeEnqueueDownload(target.key, targetUrl(target), targetFilename(target), metadata);
+    await enqueueNativeDownload(target, options);
     return { mode: 'native' };
   }
 

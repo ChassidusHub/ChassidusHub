@@ -9,7 +9,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import type { LinkingOptions } from '@react-navigation/native';
 import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBackgroundSyncScheduling } from './src/background/useBackgroundSyncScheduling';
+import { useNotificationPermissionOnLaunch } from './src/background/useNotificationPermission';
 import { DownloadProvider } from './src/download/DownloadProvider';
 import { useAutoDownloadSync } from './src/download/useAutoDownloadSync';
 import { useDownloadRetention } from './src/download/useDownloadRetention';
@@ -22,6 +25,26 @@ import { DownloadProgressBar } from './src/components/DownloadProgressBar';
 import { GlobalPlayerBar } from './src/components/GlobalPlayerBar';
 import { navigationRef } from './src/navigation/navigationRef';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import type { RootStackParamList } from './src/navigation/types';
+
+/**
+ * Where the app's own notifications land when tapped (see
+ * src/background/backgroundNative.ts for the links and the manifest for
+ * the `sichoskodesh` scheme). Home stays underneath, so Back still works.
+ */
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['sichoskodesh://'],
+  config: {
+    initialRouteName: 'Home',
+    screens: {
+      Home: '',
+      ThisWeek: { path: 'this-week/:sourceYear', parse: { sourceYear: Number } },
+      Downloaded: 'downloaded',
+      Settings: 'settings',
+      DownloadSettings: 'settings/downloads',
+    },
+  },
+};
 import { applyNavigationBarScheme } from './src/ui/systemBars';
 import { ThemeProvider, useTheme } from './src/ui/theme';
 
@@ -32,6 +55,8 @@ function AppShell() {
   useAutoDownloadSync();
   useDownloadRetention();
   useConnectivityRecheckTriggers();
+  useBackgroundSyncScheduling();
+  useNotificationPermissionOnLaunch();
 
   useEffect(() => {
     hydrateProgressStore().catch(() => undefined);
@@ -59,7 +84,7 @@ function AppShell() {
       <ConnectivityBanner visible={bannerVisible} topInset={insets.top} />
       <SafeAreaInsetsContext.Provider value={screenInsets}>
         <View style={styles.content}>
-          <NavigationContainer ref={navigationRef} theme={navigationTheme} onStateChange={onNavigationStateChange}>
+          <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking} onStateChange={onNavigationStateChange}>
             <RootNavigator />
           </NavigationContainer>
         </View>

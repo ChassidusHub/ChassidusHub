@@ -142,6 +142,8 @@ dependencies {
 
     // WorkManager for durable background downloads
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+    // Main-thread dispatcher for the background sync worker's React start-up hand-off.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
