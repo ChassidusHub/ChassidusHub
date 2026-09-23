@@ -393,6 +393,237 @@ h1 {
   font-weight: 400;
 }
 
+/* Settings pages (SettingsControls.tsx): eyebrow-titled groups, each one
+   card of rows; a row is label + help on the leading side and its control
+   on the trailing side. Switch rows are whole-row buttons. */
+.settings-group {
+  margin: 0 0 4px;
+}
+
+.settings-group-title {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 8px;
+}
+
+.settings-group:first-of-type .settings-group-title {
+  margin-top: 0;
+}
+
+.settings-group-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin: 8px 2px 0;
+}
+
+.settings-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 0 14px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.setting-row:first-child {
+  border-top: none;
+}
+
+.setting-row-clickable {
+  cursor: pointer;
+}
+
+.setting-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.setting-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.setting-row-label {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.setting-row-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.setting-row-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.setting-row-stack .setting-row-control {
+  width: 100%;
+}
+
+.setting-row-value {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: end;
+}
+
+.settings-danger .setting-row-label {
+  color: var(--danger);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 12px;
+}
+
+.settings-actions .button {
+  margin: 0;
+}
+
+.button-secondary {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+.button-danger {
+  background: var(--danger);
+  color: var(--danger-fg);
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.toggle[aria-checked='true'] {
+  background: var(--accent);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.toggle[aria-checked='true'] .toggle-knob {
+  transform: translateX(18px);
+}
+
+[dir='rtl'] .toggle[aria-checked='true'] .toggle-knob {
+  transform: translateX(-18px);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.segmented {
+  display: flex;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.segmented-option {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 7px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.segmented-option[aria-checked='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.segmented-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 0 12px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
 .year-list {
   list-style: none;
   margin: 0;

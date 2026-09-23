@@ -1,37 +1,44 @@
 import { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
 import { browsableYears, currentHebrewYear } from '@sichos-kodesh/catalog';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
+import { contentPreset, presetContentTypes } from '@sichos-kodesh/app-core';
+import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
-import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
 import catalog from '../catalog/data';
-import { OverflowMarquee } from '../components/OverflowMarquee';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { Chips, Segmented, SettingRow, SettingsGroup, Toggle } from '../components/settings/SettingsControls';
 import { useDownload } from '../download/useDownload';
 import { MEDIA_CACHE_NAME } from '../download/cacheName';
 import { getDownloadedBytes } from '../download/downloadManager';
 import { clearAutoDownloadLedger } from '../download/downloadLedger';
 import { clearPendingChapterDownloads } from '../download/pendingDownloads';
 import { clearPendingEntryDownloads } from '../download/pendingEntryDownloads';
+import { resolveAutoDownloadEntries } from '../download/useAutoDownloadSync';
 import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../settings/useDownloadSettings';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
+import { formatBytes } from '../utils/formatBytes';
 import { useTranslation } from '../i18n/useLanguage';
+import { presetLabel } from '../settings/presetLabel';
 
 const HANACHA_EDITIONS: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
-/** PDF_SECTION_ORDER minus biltiMugah (the highlighted hanacha, handled separately above) and mugah (its own toggle, ordered right after the hanacha editions rather than grouped with hagahos/hosofos). */
-const OTHER_SECTIONS = PDF_SECTION_ORDER.filter((s): s is 'maamorim' | 'hagahos' | 'hosofos' => s !== 'biltiMugah' && s !== 'mugah');
 const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w'];
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/** The week-scope kvius fallback here uses the same source-year preference as `resolveWeekWithFallback`. */
+/**
+ * Offline & downloads (`/settings/downloads`): three plain questions -
+ * keep this week ready? what to keep? which year? - each one control,
+ * with the rarely-touched knobs (month scope, gap filling, cleanup, what
+ * a manual download takes) behind an Advanced switch, and storage at the
+ * bottom. The week-scope kvius fallback uses the same source-year
+ * preference as `resolveWeekWithFallback`.
+ */
 export function DownloadSettingsScreen() {
   const { t, language } = useTranslation();
-  const { settings, setSettings } = useDownload();
+  const { settings, setSettings, enqueueBulk } = useDownload();
   const [usage, setUsage] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [customChosen, setCustomChosen] = useState(false);
+  const [downloadStarted, setDownloadStarted] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   useEffect(() => {
     void getDownloadedBytes()
@@ -43,6 +50,17 @@ export function DownloadSettingsScreen() {
     .map((m) => m.hebrewYear)
     .sort((a, b) => a - b);
   const allYears = browsableYears(catalog);
+  const preset = contentPreset(settings.contentTypes);
+  const showCustom = preset === 'custom' || customChosen;
+
+  function choosePreset(next: ContentPreset): void {
+    if (next === 'custom') {
+      setCustomChosen(true);
+      return;
+    }
+    setCustomChosen(false);
+    setSettings({ ...settings, contentTypes: presetContentTypes(next) });
+  }
 
   function toggleManualYear(year: number): void {
     const enabled = settings.manualSourceYears.includes(year);
@@ -50,16 +68,28 @@ export function DownloadSettingsScreen() {
     setSettings({ ...settings, manualSourceYears });
   }
 
+  function chooseSourceYearMode(mode: SourceYearMode): void {
+    setSettings({
+      ...settings,
+      sourceYearMode: mode,
+      manualSourceYears: mode === 'manual' && settings.manualSourceYears.length === 0 && matchedYears[0] != null ? [matchedYears[0]] : settings.manualSourceYears,
+    });
+  }
+
   function toggleEdition(edition: PdfEdition): void {
     const enabled = settings.contentTypes.hanachaEditions.includes(edition);
-    const hanachaEditions = enabled
-      ? settings.contentTypes.hanachaEditions.filter((e) => e !== edition)
-      : [...settings.contentTypes.hanachaEditions, edition];
+    const hanachaEditions = enabled ? settings.contentTypes.hanachaEditions.filter((e) => e !== edition) : [...settings.contentTypes.hanachaEditions, edition];
     setSettings({ ...settings, contentTypes: { ...settings.contentTypes, hanachaEditions } });
   }
 
-  function toggleSection(section: 'mugah' | 'maamorim' | 'hagahos' | 'hosofos'): void {
+  function toggleSection(section: 'audio' | 'mugah' | 'maamorim' | 'hagahos' | 'hosofos'): void {
     setSettings({ ...settings, contentTypes: { ...settings.contentTypes, [section]: !settings.contentTypes[section] } });
+  }
+
+  function downloadNow(): void {
+    const entries = resolveAutoDownloadEntries(settings, new Date());
+    if (entries.length > 0) enqueueBulk(entries, 'manual');
+    setDownloadStarted(true);
   }
 
   async function clearDownloads(): Promise<void> {
@@ -70,209 +100,129 @@ export function DownloadSettingsScreen() {
     // open (see pendingDownloads.ts/pendingEntryDownloads.ts).
     clearPendingChapterDownloads();
     clearPendingEntryDownloads();
+    setConfirmingClear(false);
     setUsage(await getDownloadedBytes().catch(() => 0));
   }
+
+  const presetOptions = (['essentials', 'everything', 'custom'] as ContentPreset[]).map((value) => ({ value, label: presetLabel(t, value) }));
+  const scopeOptions: Array<{ value: DownloadScope; label: string }> = [
+    { value: 'week', label: t.downloadScopeWeek },
+    { value: 'month', label: t.downloadScopeMonth },
+  ];
+  const yearModeOptions: Array<{ value: SourceYearMode; label: string }> = [
+    { value: 'auto', label: t.sourceYearAutoLabel },
+    { value: 'manual', label: t.sourceYearManualLabel },
+  ];
+  const retentionOptions = RETENTION_PERIODS.map((value) => ({ value, label: value === 'never' ? t.retentionNeverShort : t.retentionWeeksShort(Number(value.slice(0, -1))) }));
 
   return (
     <div className="screen">
       <ScreenHeader to="/settings" title={t.downloadSettingsTitle} />
 
-      <p className="category-header">{t.autoDownloadSection}</p>
-      <ul className="year-list">
-        <li className="settings-option-item">
-          <button
-            className={settings.autoDownloadEnabled ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-            onClick={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}
-          >
-            <OverflowMarquee className="year-row-year settings-option-label" text={t.autoDownloadEnabledLabel} />
-            <span className="settings-option-end-slot">{settings.autoDownloadEnabled && <Check size={18} className="year-row-distance" />}</span>
-          </button>
-        </li>
-      </ul>
+      <button type="button" className="button" onClick={downloadNow}>
+        {t.downloadNowLabel}
+      </button>
+      <p className="tab-help">{downloadStarted ? t.downloadNowStarted : t.downloadNowHelp}</p>
 
-      {settings.autoDownloadEnabled && (
-        <>
-          <ul className="year-list">
-            {(['week', 'month'] as DownloadScope[]).map((scope) => (
-              <li key={scope} className="settings-option-item">
-                <button
-                  className={settings.scope === scope ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-                  onClick={() => setSettings({ ...settings, scope })}
-                >
-                  <OverflowMarquee className="year-row-year settings-option-label" text={scope === 'week' ? t.downloadScopeWeek : t.downloadScopeMonth} />
-                  <span className="settings-option-end-slot">{settings.scope === scope && <Check size={18} className="year-row-distance" />}</span>
-                </button>
-              </li>
+      <SettingsGroup title={t.keepWeekGroup}>
+        <SettingRow label={t.autoDownloadEnabledLabel} help={t.autoDownloadEnabledHelp} onClick={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}>
+          <Toggle checked={settings.autoDownloadEnabled} label={t.autoDownloadEnabledLabel} decorative />
+        </SettingRow>
+        {settings.autoDownloadEnabled && (
+          <SettingRow label={t.wifiOnlyLabel} onClick={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })}>
+            <Toggle checked={settings.wifiOnly} label={t.wifiOnlyLabel} decorative />
+          </SettingRow>
+        )}
+      </SettingsGroup>
+
+      <SettingsGroup title={t.whatToKeepGroup} help={t.presetHelp}>
+        <SettingRow stack>
+          <Segmented options={presetOptions} value={showCustom ? 'custom' : preset} onChange={choosePreset} label={t.whatToKeepGroup} />
+        </SettingRow>
+        {showCustom && (
+          <>
+            <SettingRow label={t.audioTypeLabel} onClick={() => toggleSection('audio')}>
+              <Toggle checked={settings.contentTypes.audio} label={t.audioTypeLabel} decorative />
+            </SettingRow>
+            {HANACHA_EDITIONS.map((edition) => {
+              const label = edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel;
+              return (
+                <SettingRow key={edition} label={label} onClick={() => toggleEdition(edition)}>
+                  <Toggle checked={settings.contentTypes.hanachaEditions.includes(edition)} label={label} decorative />
+                </SettingRow>
+              );
+            })}
+            {(['mugah', 'maamorim', 'hagahos', 'hosofos'] as const).map((section) => (
+              <SettingRow key={section} label={t.sectionLabels[section]} onClick={() => toggleSection(section)}>
+                <Toggle checked={settings.contentTypes[section]} label={t.sectionLabels[section]} decorative />
+              </SettingRow>
             ))}
-          </ul>
+          </>
+        )}
+      </SettingsGroup>
 
-          <ul className="year-list">
-            <li className="settings-option-item">
-              <button
-                className={settings.wifiOnly ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-                onClick={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })}
-              >
-                <OverflowMarquee className="year-row-year settings-option-label" text={t.wifiOnlyLabel} />
-                <span className="settings-option-end-slot">{settings.wifiOnly && <Check size={18} className="year-row-distance" />}</span>
+      <SettingsGroup title={t.whichYearGroup} help={settings.sourceYearMode === 'auto' ? t.sourceYearAutoHelp : undefined}>
+        <SettingRow stack>
+          <Segmented options={yearModeOptions} value={settings.sourceYearMode} onChange={chooseSourceYearMode} label={t.whichYearGroup} />
+        </SettingRow>
+        {settings.sourceYearMode === 'manual' && (
+          <SettingRow label={t.sourceYearManualLabel} stack>
+            <Chips
+              options={allYears.map((year) => ({ value: year, label: hebrewYearLabel(year, language) }))}
+              selected={settings.manualSourceYears}
+              onToggle={toggleManualYear}
+              label={t.sourceYearManualLabel}
+            />
+          </SettingRow>
+        )}
+      </SettingsGroup>
+
+      <SettingsGroup title={t.advancedGroup}>
+        <SettingRow label={showAdvanced ? t.hideAdvancedLabel : t.showAdvancedLabel} onClick={() => setShowAdvanced((v) => !v)}>
+          <Toggle checked={showAdvanced} label={t.showAdvancedLabel} decorative />
+        </SettingRow>
+        {showAdvanced && (
+          <>
+            <SettingRow label={t.downloadScopeLabel} stack>
+              <Segmented options={scopeOptions} value={settings.scope} onChange={(scope) => setSettings({ ...settings, scope })} label={t.downloadScopeLabel} />
+            </SettingRow>
+            {settings.scope === 'week' && (
+              <SettingRow label={t.kviusFallbackLabel} help={t.kviusFallbackHelp} onClick={() => setSettings({ ...settings, useKviusFallback: !settings.useKviusFallback })}>
+                <Toggle checked={settings.useKviusFallback} label={t.kviusFallbackLabel} decorative />
+              </SettingRow>
+            )}
+            <SettingRow label={t.manualDownloadAllContentLabel} help={t.manualDownloadAllContentHelp} onClick={() => setSettings({ ...settings, manualDownloadAllContent: !settings.manualDownloadAllContent })}>
+              <Toggle checked={settings.manualDownloadAllContent} label={t.manualDownloadAllContentLabel} decorative />
+            </SettingRow>
+            <SettingRow label={t.retentionLabel} help={t.retentionHelp} stack>
+              <Segmented options={retentionOptions} value={settings.retentionPeriod} onChange={(retentionPeriod) => setSettings({ ...settings, retentionPeriod })} label={t.retentionLabel} />
+            </SettingRow>
+            {settings.retentionPeriod !== 'never' && (
+              <SettingRow label={t.keepFinishedContentLabel} onClick={() => setSettings({ ...settings, keepFinishedContent: !settings.keepFinishedContent })}>
+                <Toggle checked={settings.keepFinishedContent} label={t.keepFinishedContentLabel} decorative />
+              </SettingRow>
+            )}
+          </>
+        )}
+      </SettingsGroup>
+
+      <SettingsGroup title={t.storageSection}>
+        <SettingRow label={t.viewDownloadedLabel} value={usage != null ? t.storageUsageLabel(formatBytes(usage)) : undefined} to="/downloaded" />
+        {confirmingClear ? (
+          <SettingRow label={t.clearDownloadsLabel} help={t.clearDownloadsConfirm} stack danger>
+            <div className="settings-actions">
+              <button type="button" className="button button-danger" onClick={() => void clearDownloads()}>
+                {t.confirmDeleteLabel}
               </button>
-            </li>
-          </ul>
-
-          <p className="category-header">{t.sourceYearSection}</p>
-          <ul className="year-list">
-            {(['auto', 'manual'] as SourceYearMode[]).map((mode) => (
-              <li key={mode} className="settings-option-item">
-                <button
-                  className={settings.sourceYearMode === mode ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      sourceYearMode: mode,
-                      manualSourceYears: mode === 'manual' && settings.manualSourceYears.length === 0 && matchedYears[0] != null ? [matchedYears[0]] : settings.manualSourceYears,
-                    })
-                  }
-                >
-                  <OverflowMarquee className="year-row-year settings-option-label" text={mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel} />
-                  <span className="settings-option-end-slot">{settings.sourceYearMode === mode && <Check size={18} className="year-row-distance" />}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-
-          {settings.sourceYearMode === 'manual' && (
-            <ul className="year-list">
-              {allYears.map((year) => (
-                <li key={year} className="settings-option-item">
-                  <button
-                    className={settings.manualSourceYears.includes(year) ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-                    onClick={() => toggleManualYear(year)}
-                  >
-                    <OverflowMarquee className="year-row-year settings-option-label" text={hebrewYearLabel(year, language)} />
-                    <span className="settings-option-end-slot">
-                      {settings.manualSourceYears.includes(year) && <Check size={18} className="year-row-distance" />}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {settings.scope === 'week' && (
-            <ul className="year-list">
-              <li className="settings-option-item">
-                <button
-                  className={settings.useKviusFallback ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-                  onClick={() => setSettings({ ...settings, useKviusFallback: !settings.useKviusFallback })}
-                >
-                  <OverflowMarquee className="year-row-year settings-option-label" text={t.kviusFallbackLabel} />
-                  <span className="settings-option-end-slot">{settings.useKviusFallback && <Check size={18} className="year-row-distance" />}</span>
-                </button>
-              </li>
-            </ul>
-          )}
-        </>
-      )}
-
-      <p className="category-header">{t.contentTypesSection}</p>
-      <ul className="year-list">
-        <li className="settings-option-item">
-          <button
-            className={settings.manualDownloadAllContent ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-            onClick={() => setSettings({ ...settings, manualDownloadAllContent: !settings.manualDownloadAllContent })}
-          >
-            <OverflowMarquee className="year-row-year settings-option-label" text={t.manualDownloadAllContentLabel} />
-            <span className="settings-option-end-slot">{settings.manualDownloadAllContent && <Check size={18} className="year-row-distance" />}</span>
-          </button>
-        </li>
-      </ul>
-      <p className="tab-help">{t.manualDownloadAllContentHelp}</p>
-      <ul className="year-list">
-        <li className="settings-option-item">
-          <button
-            className={settings.contentTypes.audio ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-            onClick={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, audio: !settings.contentTypes.audio } })}
-          >
-            <OverflowMarquee className="year-row-year settings-option-label" text={t.audioTypeLabel} />
-            <span className="settings-option-end-slot">{settings.contentTypes.audio && <Check size={18} className="year-row-distance" />}</span>
-          </button>
-        </li>
-        {HANACHA_EDITIONS.map((edition) => (
-          <li key={edition} className="settings-option-item">
-            <button
-              className={settings.contentTypes.hanachaEditions.includes(edition) ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-              onClick={() => toggleEdition(edition)}
-            >
-              <OverflowMarquee
-                className="year-row-year settings-option-label"
-                text={edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel}
-              />
-              <span className="settings-option-end-slot">
-                {settings.contentTypes.hanachaEditions.includes(edition) && <Check size={18} className="year-row-distance" />}
-              </span>
-            </button>
-          </li>
-        ))}
-        <li className="settings-option-item">
-          <button
-            className={settings.contentTypes.mugah ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-            onClick={() => toggleSection('mugah')}
-          >
-            <OverflowMarquee className="year-row-year settings-option-label" text={t.sectionLabels.mugah} />
-            <span className="settings-option-end-slot">{settings.contentTypes.mugah && <Check size={18} className="year-row-distance" />}</span>
-          </button>
-        </li>
-        {OTHER_SECTIONS.map((section) => (
-          <li key={section} className="settings-option-item">
-            <button
-              className={settings.contentTypes[section] ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-              onClick={() => toggleSection(section)}
-            >
-              <OverflowMarquee className="year-row-year settings-option-label" text={t.sectionLabels[section]} />
-              <span className="settings-option-end-slot">{settings.contentTypes[section] && <Check size={18} className="year-row-distance" />}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <p className="category-header">{t.retentionSection}</p>
-      <p className="tab-help">{t.retentionHelp}</p>
-      <ul className="year-list">
-        {RETENTION_PERIODS.map((period) => (
-          <li key={period} className="settings-option-item">
-            <button
-              className={settings.retentionPeriod === period ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-              onClick={() => setSettings({ ...settings, retentionPeriod: period })}
-            >
-              <OverflowMarquee className="year-row-year settings-option-label" text={period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))} />
-              <span className="settings-option-end-slot">{settings.retentionPeriod === period && <Check size={18} className="year-row-distance" />}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      {settings.retentionPeriod !== 'never' && (
-        <ul className="year-list">
-          <li className="settings-option-item">
-            <button
-              className={settings.keepFinishedContent ? 'year-row settings-option-row year-row-selected' : 'year-row settings-option-row'}
-              onClick={() => setSettings({ ...settings, keepFinishedContent: !settings.keepFinishedContent })}
-            >
-              <OverflowMarquee className="year-row-year settings-option-label" text={t.keepFinishedContentLabel} />
-              <span className="settings-option-end-slot">{settings.keepFinishedContent && <Check size={18} className="year-row-distance" />}</span>
-            </button>
-          </li>
-        </ul>
-      )}
-
-      <p className="category-header">{t.storageSection}</p>
-      <p className="tab-help">{usage != null ? t.storageUsageLabel(formatBytes(usage)) : ''}</p>
-      <ul className="year-list">
-        <li className="settings-option-item">
-          <button className="year-row settings-option-row" onClick={() => void clearDownloads()}>
-            <OverflowMarquee className="year-row-year settings-option-label" text={t.clearDownloadsLabel} />
-          </button>
-        </li>
-      </ul>
+              <button type="button" className="button button-secondary" onClick={() => setConfirmingClear(false)}>
+                {t.cancelLabel}
+              </button>
+            </div>
+          </SettingRow>
+        ) : (
+          <SettingRow label={t.clearDownloadsLabel} onClick={() => setConfirmingClear(true)} danger />
+        )}
+      </SettingsGroup>
     </div>
   );
 }

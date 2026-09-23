@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Check } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { contentPreset } from '@sichos-kodesh/app-core';
+import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { isBackgroundSyncAvailable, requestNotificationPermission } from '../background/backgroundNative';
+import catalog from '../catalog/data';
+import { APP_VERSION } from '../changelog';
+import { useDownload } from '../download/useDownload';
+import { getDownloadStorageUsage } from '../download/downloadStorage';
 import { useLanguage, useTranslation } from '../i18n/useTranslation';
 import type { Language } from '../i18n/translations';
 import type { SettingsScreenProps } from '../navigation/types';
@@ -9,22 +13,31 @@ import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
 import { useInvertPdfInDarkMode } from '../settings/invertPdfInDarkMode';
 import { useNotificationSettings } from '../settings/notificationSettings';
 import type { NotificationSettings } from '../settings/notificationSettings';
-import { CategoryRow } from '../ui/CategoryRow';
-import { Row } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { CategoryHeader, TabHelp } from '../ui/Typography';
-import { useColors, useTheme } from '../ui/theme';
+import { Segmented, SettingRow, SettingsGroup, Toggle } from '../ui/settings/SettingsControls';
+import { useTheme } from '../ui/theme';
 import type { ThemeMode } from '../ui/theme';
-import { marginStart } from '../ui/rtl';
+import { formatBytes } from '../utils/formatBytes';
 
-/** Web: `.settings-option-end-slot` - a fixed 18px slot holding the check mark of a chosen option, so labels line up whether or not a row is selected. */
-export function OptionCheck({ checked }: { checked: boolean }) {
-  const colors = useColors();
-  const { isRtl } = useTranslation();
-  return <View style={[styles.endSlot, marginStart(isRtl, 12)]}>{checked && <Check size={18} color={colors.muted} />}</View>;
+const ALL_ENTRIES = Object.values(catalog).flat();
+/** A language switch names each language in itself, whichever one is active. */
+const LANGUAGE_NATIVE_NAMES: Record<Language, string> = { en: 'English', he: 'עברית' };
+
+type Translation = ReturnType<typeof useTranslation>['t'];
+
+/** The user-facing name of a "what to keep" preset (see contentPreset in app-core). Same as the web's settings/presetLabel.ts. */
+export function presetLabel(t: Translation, preset: ContentPreset): string {
+  return preset === 'essentials' ? t.presetEssentials : preset === 'everything' ? t.presetEverything : t.presetCustom;
 }
 
+/**
+ * Settings home (web: SettingsScreen): every quick preference as a real
+ * control on this screen (theme, PDF colours, language, playback, and on
+ * the phone the two notifications), and one row per screen that needs
+ * more room (offline & downloads, downloaded content, about) with its
+ * current state as the row's value.
+ */
 export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
@@ -33,8 +46,16 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
   const [notifications, setNotifications] = useNotificationSettings();
   const [notificationsBlocked, setNotificationsBlocked] = useState(false);
+  const { settings } = useDownload();
+  const [usage, setUsage] = useState<number | null>(null);
   // Phone only (see src/background) - a web app has no notifications of its own here.
   const notificationsAvailable = isBackgroundSyncAvailable();
+
+  useEffect(() => {
+    getDownloadStorageUsage(ALL_ENTRIES)
+      .then(setUsage)
+      .catch(() => setUsage(null));
+  }, []);
 
   function toggleNotification(key: keyof NotificationSettings): void {
     const next = !notifications[key];
@@ -52,60 +73,55 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   }
 
   const themeOptions: Array<{ value: ThemeMode; label: string }> = [
-    { value: 'dark', label: t.themeDark },
     { value: 'light', label: t.themeLight },
+    { value: 'dark', label: t.themeDark },
     { value: 'system', label: t.themeSystem },
   ];
-  const languageOptions: Array<{ value: Language; label: string }> = [
-    { value: 'en', label: t.languageEnglish },
-    { value: 'he', label: t.languageHebrew },
-  ];
+  const languageOptions = (['en', 'he'] as Language[]).map((value) => ({ value, label: LANGUAGE_NATIVE_NAMES[value] }));
+  const offlineSummary = settings.autoDownloadEnabled ? t.autoDownloadSummaryOn(presetLabel(t, contentPreset(settings.contentTypes)), settings.wifiOnly) : t.autoDownloadSummaryOff;
 
   return (
     <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title={t.settingsTitle} />}>
-      <CategoryHeader first>{t.appearanceSection}</CategoryHeader>
-      {themeOptions.map((option) => (
-        <Row key={option.value} label={option.label} marquee selected={theme === option.value} trailing={<OptionCheck checked={theme === option.value} />} onPress={() => setTheme(option.value)} />
-      ))}
+      <SettingsGroup title={t.appearanceSection} first>
+        <SettingRow label={t.themeLabel} stack first>
+          <Segmented options={themeOptions} value={theme} onChange={setTheme} label={t.themeLabel} />
+        </SettingRow>
+        <SettingRow label={t.invertPdfDarkModeLabel} onPress={() => setInvertPdf(!invertPdf)}>
+          <Toggle checked={invertPdf} label={t.invertPdfDarkModeLabel} decorative />
+        </SettingRow>
+      </SettingsGroup>
 
-      <Row label={t.invertPdfDarkModeLabel} marquee selected={invertPdf} trailing={<OptionCheck checked={invertPdf} />} onPress={() => setInvertPdf(!invertPdf)} />
+      <SettingsGroup title={t.languageSection}>
+        <SettingRow stack first>
+          <Segmented options={languageOptions} value={language} onChange={setLanguage} label={t.languageSection} />
+        </SettingRow>
+      </SettingsGroup>
 
-      <CategoryHeader>{t.languageSection}</CategoryHeader>
-      {languageOptions.map((option) => (
-        <Row key={option.value} label={option.label} marquee selected={language === option.value} trailing={<OptionCheck checked={language === option.value} />} onPress={() => setLanguage(option.value)} />
-      ))}
-
-      <CategoryHeader>{t.playbackSection}</CategoryHeader>
-      <Row label={t.autoplayHanachaLabel} marquee selected={autoplay} trailing={<OptionCheck checked={autoplay} />} onPress={() => setAutoplay(!autoplay)} />
-      <TabHelp>{t.autoplayHanachaHelp}</TabHelp>
+      <SettingsGroup title={t.playbackSection}>
+        <SettingRow label={t.autoplayHanachaLabel} help={t.autoplayHanachaHelp} onPress={() => setAutoplay(!autoplay)} first>
+          <Toggle checked={autoplay} label={t.autoplayHanachaLabel} decorative />
+        </SettingRow>
+      </SettingsGroup>
 
       {notificationsAvailable && (
-        <>
-          <CategoryHeader>{t.notificationsSection}</CategoryHeader>
-          <Row label={t.notifyNewWeekLabel} marquee selected={notifications.newWeek} trailing={<OptionCheck checked={notifications.newWeek} />} onPress={() => toggleNotification('newWeek')} />
-          <TabHelp>{t.notifyNewWeekHelp}</TabHelp>
-          <Row
-            label={t.notifyDownloadsReadyLabel}
-            marquee
-            selected={notifications.downloadsReady}
-            trailing={<OptionCheck checked={notifications.downloadsReady} />}
-            onPress={() => toggleNotification('downloadsReady')}
-          />
-          {notificationsBlocked && <TabHelp>{t.notificationsBlockedHelp}</TabHelp>}
-        </>
+        <SettingsGroup title={t.notificationsSection} help={notificationsBlocked ? t.notificationsBlockedHelp : undefined}>
+          <SettingRow label={t.notifyNewWeekLabel} help={t.notifyNewWeekHelp} onPress={() => toggleNotification('newWeek')} first>
+            <Toggle checked={notifications.newWeek} label={t.notifyNewWeekLabel} decorative />
+          </SettingRow>
+          <SettingRow label={t.notifyDownloadsReadyLabel} onPress={() => toggleNotification('downloadsReady')}>
+            <Toggle checked={notifications.downloadsReady} label={t.notifyDownloadsReadyLabel} decorative />
+          </SettingRow>
+        </SettingsGroup>
       )}
 
-      <View style={styles.linkList}>
-        <CategoryRow label={t.viewDownloadedLabel} onPress={() => navigation.navigate('Downloaded')} />
-        <CategoryRow label={t.downloadsLink} onPress={() => navigation.navigate('DownloadSettings')} />
-        <CategoryRow label={t.aboutLink} onPress={() => navigation.navigate('About')} />
-      </View>
+      <SettingsGroup title={t.offlineGroup}>
+        <SettingRow label={t.downloadSettingsTitle} value={offlineSummary} chevron onPress={() => navigation.navigate('DownloadSettings')} first />
+        <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} chevron onPress={() => navigation.navigate('Downloaded')} />
+      </SettingsGroup>
+
+      <SettingsGroup>
+        <SettingRow label={t.aboutLink} value={t.aboutVersion(APP_VERSION)} chevron onPress={() => navigation.navigate('About')} first />
+      </SettingsGroup>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  endSlot: { width: 18, minWidth: 18, alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 },
-  /** Web: `.settings-link-list` - margin-top 8. */
-  linkList: { marginTop: 8 },
-});

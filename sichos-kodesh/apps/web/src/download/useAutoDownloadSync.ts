@@ -36,7 +36,7 @@ function resolveEntriesForYear(sourceYear: number, targetYear: number, settings:
  * occasion identity in case two selected years' own fallback resolution
  * happens to land on the same one.
  */
-function resolveAutoDownloadEntries(settings: DownloadSettings, today: Date): CatalogEntry[] {
+export function resolveAutoDownloadEntries(settings: DownloadSettings, today: Date): CatalogEntry[] {
   const targetYear = currentHebrewYear();
   const sourceYears = settings.sourceYearMode === 'manual' && settings.manualSourceYears.length > 0 ? settings.manualSourceYears : [findMatchingYears(targetYear)[0]?.hebrewYear ?? targetYear];
 
