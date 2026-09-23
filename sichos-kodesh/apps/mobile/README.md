@@ -309,12 +309,15 @@ same release signing config as the `.aab` build below).
 
 ## Google Play (Internal testing track)
 
-Not currently set up. A signed release `.aab` (what Play wants — it
-splits per-device at install time, unlike a debug APK which bundles all
-CPU architectures unsplit) would need its own build step, since none of
-this repo's workflows build one today.
+A signed release `.aab` is what Play wants (it splits per-device at
+install time, unlike a debug APK which bundles all CPU architectures
+unsplit). `.github/workflows/android-aab.yml` builds one on demand
+(Actions → "Android Signed Release Bundle" → Run workflow) from the
+`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` repository secrets, and
+uploads it as a workflow artifact.
 
-To build one locally:
+To build one locally instead (first time: generate an upload key):
 
 ```sh
 keytool -genkeypair -v -storetype PKCS12 \

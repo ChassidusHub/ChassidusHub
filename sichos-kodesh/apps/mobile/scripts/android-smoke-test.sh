@@ -36,6 +36,21 @@ npm run test -w @sichos-kodesh/mobile
 npm run typecheck -w @sichos-kodesh/mobile
 npm run lint -w @sichos-kodesh/mobile
 
+# A debug APK never bundles JS (it loads it from Metro at runtime), so an
+# assembleDebug pass says nothing about whether the app's JS resolves at all.
+echo "▶ Bundling release JS (catches module-resolution failures without a device)..."
+cd "$MOBILE_DIR"
+BUNDLE_DIR="$(mktemp -d)"
+if ! npx react-native bundle --platform android --dev false --entry-file index.js \
+    --bundle-output "$BUNDLE_DIR/index.android.bundle" --assets-dest "$BUNDLE_DIR/res" \
+    > "$ARTIFACTS_DIR/js-bundle.log" 2>&1; then
+  tail -40 "$ARTIFACTS_DIR/js-bundle.log" >&2
+  echo "✗ JS bundle failed. See $ARTIFACTS_DIR/js-bundle.log" >&2
+  exit 1
+fi
+rm -rf "$BUNDLE_DIR"
+echo "✓ JS bundle built."
+
 echo "▶ Building debug APK (x86_64 only to stay within runner disk limits)..."
 cd "$ANDROID_DIR"
 set +o pipefail
@@ -103,6 +118,17 @@ if [[ "$METRO_UP" != "true" ]]; then
   exit 1
 fi
 echo "✓ Metro is up."
+
+# Metro being up doesn't mean it can build the app - a resolution error only
+# shows as a red box on the device, which the logcat checks below never see.
+echo "▶ Requesting the app bundle from Metro..."
+if ! curl -sf --max-time 300 -o /dev/null \
+    "http://localhost:8081/index.bundle?platform=android&dev=true&minify=false"; then
+  tail -40 "$ARTIFACTS_DIR/metro-smoke.log" >&2
+  echo "✗ Smoke test FAILED: Metro could not build the app bundle." >&2
+  exit 1
+fi
+echo "✓ Metro served the bundle."
 
 echo "▶ Launching app..."
 adb shell monkey -p "$PACKAGE_NAME" -c android.intent.category.LAUNCHER 1
