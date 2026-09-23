@@ -5,7 +5,7 @@
   "description": "api.sk.shmuky.dev - the catalog release the apps fetch (manifest + versioned catalog.json), as one Vercel function whose files are generated from this repository's own catalog at build time.",
   "type": "module",
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   },
   "scripts": {
     "prebuild": "npm run build -w @sichos-kodesh/catalog",

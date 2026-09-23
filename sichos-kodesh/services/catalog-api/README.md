@@ -54,13 +54,20 @@ The Vercel project `sichos-kodesh-catalog-api` (team `delta-capital`,
 `prj_nRJopssfuqjFZUqqSF9XL6mHdFQQ`) has root directory
 `services/catalog-api` and is connected to this repository: pushes to
 `main` deploy production, every other branch a preview. Nothing to run by
-hand. Everything the build needs is in `vercel.json` and `package.json`,
+hand.
+`api/index.js` is a committed bundle (built by `npm run build` from
+`src/handler.ts`, the router, and the generated release data). Vercel only
+discovers function entrypoints that exist in the source tree, so the bundle
+must be committed - a build-time-only `api/index.js` is never picked up
+(the API 404s without it). The `catalog-api-bundle` workflow rebuilds and
+commits the bundle on every push to `main` touching `services/catalog-api`
+or the catalog packages, so merging source changes is enough. Everything the build needs is in `vercel.json` and `package.json`,
 so the dashboard holds no build settings:
 
 - Framework none; build `npm run build` (`scripts/build.mjs`); output
   directory `public` (just `robots.txt` - the function answers every
   path); install runs at the repository root, as for `apps/web`.
-- Node.js 22 (`engines`).
+- Node.js 24 (`engines`).
 - Domain `api.sk.shmuky.dev` on the project, and at the DNS host of
   `shmuky.dev` the record `CNAME api.sk -> cname.vercel-dns.com` (the
   domain is verified on the Vercel team, but its nameservers are the
@@ -75,4 +82,6 @@ npm test -w @sichos-kodesh/catalog-api        # router tests: shapes, headers, s
 npm run dev -w @sichos-kodesh/catalog-api     # http://localhost:8788 through the same handler
 ```
 
-`generated/` and `api/index.js` are build output and git-ignored.
+`generated/` is build output and git-ignored. `api/index.js` is the
+committed esbuild bundle of the function (see below) - never edit it
+by hand.

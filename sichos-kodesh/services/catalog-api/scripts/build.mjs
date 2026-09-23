@@ -65,8 +65,11 @@ console.log(`catalog-api: generated release.ts for catalog ${manifest.version} (
 // src/router.ts, which Vercel's builder does not compile, so a bare build
 // used to deploy a function that crashed on boot (ERR_MODULE_NOT_FOUND
 // for ../src/router -> 500 on every request). Bundling here produces the
-// single self-contained api/index.js that Vercel deploys. The source
-// lives in src/handler.ts (not api/) so api/ never holds both index.ts
-// and index.js; api/index.js is gitignored build output.
-execFileSync('npx', ['esbuild', 'src/handler.ts', '--bundle', '--platform=node', '--target=node22', '--format=esm', '--outfile=api/index.js', '--log-level=warning'], { cwd: serviceRoot, stdio: 'inherit' });
+// single self-contained api/index.js that Vercel deploys. The bundle is
+// COMMITTED (not gitignored): Vercel only discovers function entrypoints
+// that exist in the source tree, so a build-time-only api/index.js is
+// never picked up. The source lives in src/handler.ts; the
+// catalog-api-bundle workflow rebuilds and commits the bundle on every
+// push to main touching this service.
+execFileSync('npx', ['esbuild', 'src/handler.ts', '--bundle', '--platform=node', '--target=node24', '--format=esm', '--outfile=api/index.js', '--log-level=warning'], { cwd: serviceRoot, stdio: 'inherit' });
 console.log('catalog-api: bundled src/handler.ts -> api/index.js');

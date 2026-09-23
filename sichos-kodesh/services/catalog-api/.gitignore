@@ -1,5 +1,3 @@
 # Written by scripts/build.mjs from the repository's own catalog - never committed.
 generated/
 .vercel/
-# Bundled Vercel function built by scripts/build.mjs - never committed.
-api/index.js
