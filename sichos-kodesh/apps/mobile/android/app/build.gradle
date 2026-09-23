@@ -138,9 +138,20 @@ android {
     // APK per phone ABI plus a universal one - app-arm64-v8a-release.apk,
     // app-armeabi-v7a-release.apk, app-universal-release.apk - so a phone
     // downloads a 25 MB file instead of a 55 MB one. Build with
-    // `-PreactNativeArchitectures=armeabi-v7a,arm64-v8a` alongside it, or the
-    // universal APK also carries the emulator ABIs. A plain build keeps the
-    // single app-release.apk.
+    // `-PreactNativeArchitectures=armeabi-v7a,arm64-v8a` alongside it so the
+    // app's own native code is not compiled for the emulator ABIs. A plain
+    // build keeps the single app-release.apk.
+    if (project.hasProperty("abiSplits")) {
+        // Phone ABIs only, in the universal APK too (library AARs ship x86
+        // libs, which would otherwise ride along), and compressed native libs:
+        // the files people download are about a third smaller.
+        defaultConfig.ndk.abiFilters "armeabi-v7a", "arm64-v8a"
+        packaging {
+            jniLibs {
+                useLegacyPackaging = true
+            }
+        }
+    }
     splits {
         abi {
             enable project.hasProperty("abiSplits")
