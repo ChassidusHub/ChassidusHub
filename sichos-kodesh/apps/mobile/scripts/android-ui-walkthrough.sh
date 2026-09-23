@@ -115,8 +115,17 @@ wait_text "Browse any year" && shot 01-home 3
 tap_text "Kvius Farbrengens" && wait_text "This week only" ; shot 02-kvius-years
 tap_text "5736" || tap_text "57"
 wait_text "All of" && shot 03-this-week
-# First occasion row sits right under the week navigator; tap the first row with a Hebrew label.
-xy="$(dump_ui | python3 -c '
+# Pick an occasion that has a recording, so the recordings/player steps below
+# have something to exercise: the row's own "Has a recording" icon gives the
+# row's vertical position; the label side of that same row is tapped.
+xy="$(find_node "Has a recording")"
+if [ -n "$xy" ]; then
+  y="${xy#* }"
+  log "tap first occasion with a recording @ 200 $y"
+  adb shell input tap 200 "$y"
+else
+  # No recordings this week - fall back to the first occasion row.
+  xy="$(dump_ui | python3 -c '
 import re, sys
 xml = sys.stdin.read()
 def attr(node, name):
@@ -131,16 +140,23 @@ for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
             if y1 > 400:
                 print((x1 + x2) // 2, (y1 + y2) // 2); break
 ')"
-if [ -n "$xy" ]; then log "tap first occasion @ $xy"; adb shell input tap $xy; else fail "no occasion row found"; fi
+  if [ -n "$xy" ]; then log "tap first occasion @ $xy"; adb shell input tap $xy; else fail "no occasion row found"; fi
+fi
 wait_text "This occasion, every year" && shot 04-occasion
 if tap_text "Recordings"; then
   wait_text "Share" && shot 05-recordings
-  tap_text "Play" && sleep 12 && shot 06-player-playing 3
+  # The big playlist play button; then wait for it to flip to Pause (playing) and screenshot the global player bar.
+  tap_text "Play" && wait_text "Pause" && shot 06-player-playing 5
   # Second chapter, if there is one, via the player's next button.
   tap_text "Next chapter" && sleep 8 && shot 07-player-next 3
   back
 fi
-tap_text "Read" && sleep 25 && shot 08-pdf 3
+# A hanacha card's own Read button; an occasion with no hanacha keeps its PDFs behind a section row instead.
+if ! tap_text "Read"; then
+  tap_text "Mugah" || tap_text "Maamorim" || tap_text "Hagahos" || tap_text "Hosofos"
+  tap_text "Read"
+fi
+sleep 25 && shot 08-pdf 3
 back; sleep 2
 tap_text "This occasion, every year" && wait_text "across every year" && shot 09-occasion-all-years
 back; back; back; back
