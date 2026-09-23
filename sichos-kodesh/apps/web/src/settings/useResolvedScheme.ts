@@ -2,26 +2,30 @@ import { useSyncExternalStore } from 'react';
 
 export type ResolvedScheme = 'light' | 'dark';
 
-/** Which colours are on screen right now: a theme chosen in Settings (`data-theme` on <html>, see useTheme.ts), else the OS's own preference. */
-export function readResolvedScheme(): ResolvedScheme {
-  const chosen = document.documentElement.getAttribute('data-theme');
-  if (chosen === 'dark' || chosen === 'light') return chosen;
+/**
+ * The colours the user's own choice resolves to: a theme chosen in
+ * Settings (localStorage, see useTheme.ts), else the OS preference. Read
+ * from the stored choice rather than from `data-theme` on <html>, so a
+ * screen's temporary override (applySchemeOverride) never feeds back into
+ * the decision that produced it.
+ */
+export function readBaseScheme(): ResolvedScheme {
+  try {
+    const chosen = localStorage.getItem('sichos-kodesh:theme');
+    if (chosen === 'dark' || chosen === 'light') return chosen;
+  } catch {
+    // Fall through to the OS preference.
+  }
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 function subscribe(onChange: () => void): () => void {
   const media = window.matchMedia?.('(prefers-color-scheme: dark)');
   media?.addEventListener('change', onChange);
-  // Settings writes the attribute directly (applyTheme), with no React state in between - watch the node itself.
-  const observer = new MutationObserver(onChange);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-  return () => {
-    media?.removeEventListener('change', onChange);
-    observer.disconnect();
-  };
+  return () => media?.removeEventListener('change', onChange);
 }
 
-/** Live view of `readResolvedScheme` - for the one place that needs to react to the theme in JS rather than CSS (the PDF reader's colour toggle). */
-export function useResolvedScheme(): ResolvedScheme {
-  return useSyncExternalStore(subscribe, readResolvedScheme, () => 'light');
+/** Live view of `readBaseScheme` - for the one place that needs to react to the theme in JS rather than CSS (the PDF reader's colour toggle). The stored choice cannot change while that screen is open (Settings is another screen), so only the OS preference is watched. */
+export function useBaseScheme(): ResolvedScheme {
+  return useSyncExternalStore(subscribe, readBaseScheme, () => 'light');
 }

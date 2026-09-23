@@ -9,7 +9,8 @@ import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
 import { getOccasionProgress, getPdfScrollFraction, recordPdfProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
 import { usePdfInversion } from '../settings/useInvertPdfInDarkMode';
-import { useResolvedScheme } from '../settings/useResolvedScheme';
+import { useBaseScheme } from '../settings/useResolvedScheme';
+import { applySchemeOverride } from '../settings/useTheme';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -48,12 +49,21 @@ export function PdfViewerScreen({ resolved }: Props) {
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null });
   const [zoomed, setZoomed] = useState(false);
   // The colours button flips the pages between black-on-white and
-  // white-on-black for the theme on screen right now, and remembers the
-  // choice per theme (see useInvertPdfInDarkMode.ts) - so night reading
-  // stays inverted while a daytime flip doesn't change the night default.
-  const scheme = useResolvedScheme();
+  // white-on-black for the user's own theme, and remembers the choice per
+  // theme (see useInvertPdfInDarkMode.ts) - so night reading stays
+  // inverted while a daytime flip doesn't change the night default.
+  const scheme = useBaseScheme();
   const [invertedFor, setInvertedFor] = usePdfInversion();
   const inverted = invertedFor(scheme);
+  // Flipped pages get the dark chrome, plain pages the light one - the
+  // header and background follow the page rather than sitting in the
+  // opposite palette next to it. Cleared on the way out, so the app
+  // returns to the user's own theme the moment the reader closes.
+  useEffect(() => {
+    const wanted = inverted ? 'dark' : 'light';
+    applySchemeOverride(wanted === scheme ? null : wanted);
+    return () => applySchemeOverride(null);
+  }, [inverted, scheme]);
   const progressMap = useProgressMap();
   const savedFraction = pdf ? getPdfScrollFraction(getOccasionProgress(progressMap, resolved.entry.hebrewYear, resolved.entry.occasionId), pdf.driveFileId) : undefined;
 

@@ -16,13 +16,13 @@ export const CHANGELOG: ChangelogEntry[] = [
     en: [
       'The list of farbrengens now updates on its own: the app checks api.sk.shmuky.dev once a day (and after every app update) for a newer catalog and applies it in place - a corrected date or a new recording no longer waits for an app release. Settings and About show which catalog you have',
       'Share and Download are now one matching pair of buttons on every occasion page and recordings page',
-      'A colours button in the PDF reader flips a document between black-on-white and white-on-black, remembered separately for light and dark mode',
+      'A colours button in the PDF reader flips a document between black-on-white and white-on-black - the whole screen follows the page while you read, and the app returns to your own theme when you leave. Remembered separately for light and dark mode',
       'Playback speed for shiurim and chazaros (0.75× to 2×) - never for the Rebbe\'s own recordings, which always play as they were said',
     ],
     he: [
       'רשימת ההתוועדויות מתעדכנת כעת מעצמה: האפליקציה בודקת ב-api.sk.shmuky.dev פעם ביום (ואחרי כל עדכון אפליקציה) אם יש קטלוג חדש ומחילה אותו במקום - תאריך מתוקן או הקלטה חדשה כבר לא מחכים למהדורת אפליקציה. ההגדרות ו"אודות" מציגים איזה קטלוג יש לכם',
       'שיתוף והורדה הם כעת זוג כפתורים תואם בכל דף אירוע ודף הקלטות',
-      'כפתור צבעים בקורא ה-PDF הופך מסמך בין שחור-על-לבן ללבן-על-שחור, ונזכר בנפרד למצב בהיר ולמצב כהה',
+      'כפתור צבעים בקורא ה-PDF הופך מסמך בין שחור-על-לבן ללבן-על-שחור - כל המסך עוקב אחרי העמוד בזמן הקריאה, והאפליקציה חוזרת לערכת הנושא שלכם ביציאה. נזכר בנפרד למצב בהיר ולמצב כהה',
       'מהירות ניגון לשיעורים ולחזרות (0.75× עד 2×) - לעולם לא להקלטות הרבי עצמו, שמתנגנות תמיד כפי שנאמרו',
     ],
   },

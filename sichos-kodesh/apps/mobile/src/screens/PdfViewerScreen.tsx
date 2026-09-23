@@ -16,7 +16,7 @@ import { ScreenHeader } from '../ui/ScreenHeader';
 import { Spinner } from '../ui/Spinner';
 import { AppText } from '../ui/Text';
 import { GapMessage } from '../ui/Typography';
-import { darkColors, lightColors, useTheme } from '../ui/theme';
+import { lightColors, useTheme } from '../ui/theme';
 import { row } from '../ui/rtl';
 
 type LoadState = { status: 'loading'; percent: number | null; path: string | null } | { status: 'ready'; path: string } | { status: 'error'; message: string; offline: boolean };
@@ -33,7 +33,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const catalog = useCatalog();
   const { driveFileId, resourceKey, label, hebrewYear, occasionId } = route.params;
   const { t, isRtl } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors, baseScheme, setSchemeOverride } = useTheme();
   const [invertInDarkMode, setInvertInDarkMode] = useInvertPdfInDarkMode();
   const [invertInLightMode, setInvertInLightMode] = useInvertPdfInLightMode();
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null, path: null });
@@ -45,12 +45,22 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const savedPage = useMemo(() => (entry ? getPdfPage(getOccasionProgress(readProgressMap(), entry.hebrewYear, entry.occasionId), driveFileId) : undefined), [driveFileId, entry]);
   // The web's `.pdf-inverted .pdf-page canvas { filter: invert(1) hue-rotate(180deg) }`,
   // applied to the native viewer through React Native's own `filter` style.
-  // The colours button in the header flips it for the theme on screen right
-  // now, remembered per theme (see settings/invertPdfInDarkMode.ts) - so
-  // night reading stays inverted while a daytime flip doesn't change the
-  // night default.
-  const inverted = scheme === 'dark' ? invertInDarkMode : invertInLightMode;
-  const setInverted = scheme === 'dark' ? setInvertInDarkMode : setInvertInLightMode;
+  // The colours button in the header flips it for the user's own theme,
+  // remembered per theme (see settings/invertPdfInDarkMode.ts) - so night
+  // reading stays inverted while a daytime flip doesn't change the night
+  // default. `baseScheme`, not `scheme`: while reading, the whole screen
+  // follows the page (below), so `scheme` is whatever the page currently is.
+  const inverted = baseScheme === 'dark' ? invertInDarkMode : invertInLightMode;
+  const setInverted = baseScheme === 'dark' ? setInvertInDarkMode : setInvertInLightMode;
+  // Flipped pages get the dark chrome, plain pages the light one - the
+  // header, background and system bars follow the page rather than sitting
+  // in the opposite palette next to it. Cleared on the way out, so the app
+  // returns to the user's own theme the moment the reader closes.
+  useEffect(() => {
+    const wanted = inverted ? 'dark' : 'light';
+    setSchemeOverride(wanted === baseScheme ? null : wanted);
+    return () => setSchemeOverride(null);
+  }, [baseScheme, inverted, setSchemeOverride]);
   const backTarget = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear, occasionId } } as const;
   const colourToggle = (
     <Pressable onPress={() => setInverted(!inverted)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.pdfInvertToggle} accessibilityState={{ selected: inverted }} style={({ pressed }) => [styles.headerAction, pressed && { backgroundColor: colors.cardBg }]}>
@@ -152,12 +162,12 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
 
       {path && (
         <View style={[styles.pdfWrap, inverted && styles.pdfInverted]}>
-          {/* Inverted along with the pages, so the gap between pages matches them: in dark mode the light theme's card colour flips to the dark theme's; in light mode the dark theme's flips to the light one's. */}
+          {/* Inverted along with the pages, so the gap between pages matches them: the light theme's card colour flips to the dark theme's (the chrome is dark whenever the pages are - see the override above). */}
           <Pdf
             key={driveFileId}
             source={{ uri: `file://${path}` }}
             page={savedPage ?? 1}
-            style={[styles.pdf, { backgroundColor: inverted ? (scheme === 'dark' ? lightColors.cardBg : darkColors.cardBg) : colors.cardBg }]}
+            style={[styles.pdf, { backgroundColor: inverted ? lightColors.cardBg : colors.cardBg }]}
             enableDoubleTapZoom
             spacing={4}
             renderActivityIndicator={() => (

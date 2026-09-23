@@ -28,6 +28,17 @@ export function applyTheme(theme: Theme): void {
   else document.documentElement.setAttribute('data-theme', theme);
 }
 
+/**
+ * A temporary scheme for one screen (the PDF reader, whose chrome follows
+ * the page colours while reading): applied to the same `data-theme`
+ * attribute, but never stored - `null` puts the user's own saved choice
+ * back. The screen that sets it clears it on the way out.
+ */
+export function applySchemeOverride(scheme: 'light' | 'dark' | null): void {
+  if (scheme === null) applyTheme(readStored());
+  else document.documentElement.setAttribute('data-theme', scheme);
+}
+
 export function useTheme(): [Theme, (next: Theme) => void] {
   const [theme, setThemeState] = useState<Theme>(readStored);
 

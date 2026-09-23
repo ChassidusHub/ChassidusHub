@@ -78,9 +78,18 @@ const STORAGE_KEY = 'sichos-kodesh:theme';
 interface ThemeContextValue {
   mode: ThemeMode;
   setMode: (next: ThemeMode) => void;
-  /** The palette actually in effect - `mode` resolved against the OS setting when it's 'system'. */
+  /** The palette actually in effect - `mode` resolved against the OS setting when it's 'system', unless a screen has overridden it (see `setSchemeOverride`). */
   scheme: 'light' | 'dark';
+  /** The user's own choice resolved against the OS - what `scheme` is when nothing overrides it. */
+  baseScheme: 'light' | 'dark';
   colors: Colors;
+  /**
+   * A temporary scheme for one screen (the PDF reader, whose chrome follows
+   * the page colours while reading) - nothing is persisted, `mode` is
+   * untouched, and `null` returns to the user's own choice. The screen
+   * that sets it clears it on the way out.
+   */
+  setSchemeOverride: (next: 'light' | 'dark' | null) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -92,6 +101,7 @@ function isThemeMode(value: unknown): value is ThemeMode {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemScheme = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>('system');
+  const [override, setSchemeOverride] = useState<'light' | 'dark' | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,10 +118,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<ThemeContextValue>(() => {
-    const scheme: 'light' | 'dark' = mode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : mode;
+    const baseScheme: 'light' | 'dark' = mode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : mode;
+    const scheme = override ?? baseScheme;
     return {
       mode,
       scheme,
+      baseScheme,
       colors: scheme === 'dark' ? darkColors : lightColors,
       setMode(next: ThemeMode) {
         setModeState(next);
@@ -119,8 +131,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           // Best-effort persistence only.
         });
       },
+      setSchemeOverride,
     };
-  }, [mode, systemScheme]);
+  }, [mode, override, systemScheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
