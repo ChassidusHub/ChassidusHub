@@ -1,4 +1,12 @@
+const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+
+const projectRoot = __dirname;
+// npm workspaces hoist dependencies (and symlink the @sichos-kodesh/*
+// packages) into the repo root's node_modules, which Metro can't see unless
+// the workspace root is a watch folder - without this, release bundling
+// fails on the very first import.
+const workspaceRoot = path.resolve(projectRoot, '../..');
 
 /**
  * Metro configuration
@@ -6,6 +14,11 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */
-const config = {};
+const config = {
+  watchFolders: [workspaceRoot],
+  resolver: {
+    nodeModulesPaths: [path.resolve(projectRoot, 'node_modules'), path.resolve(workspaceRoot, 'node_modules')],
+  },
+};
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = mergeConfig(getDefaultConfig(projectRoot), config);
