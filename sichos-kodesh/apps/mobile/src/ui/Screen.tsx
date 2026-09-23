@@ -1,5 +1,9 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+// React Native's own SafeAreaView is a no-op on Android, and with edge-to-edge
+// enabled (Android 15+ enforces it) screen content is drawn under the status
+// bar. react-native-safe-area-context reads the real insets on both platforms.
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from './theme';
 
 interface Props {

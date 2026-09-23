@@ -91,3 +91,22 @@ if (changed) {
 } else {
   console.log('react-native-track-player Kotlin patch already applied');
 }
+
+// MusicService.emit()/emitList() reach the JS event emitter through
+// `reactNativeHost.reactInstanceManager`, and React Native 0.87 (New
+// Architecture only) throws "You should not use ReactNativeHost directly in
+// the New Architecture" from that getter - a fatal crash the moment the
+// service sends its first event after app start. HeadlessJsTaskService
+// already exposes a `reactContext` property that resolves the context through
+// the bridgeless ReactHost, so use that instead.
+const servicePath = path.join(path.dirname(path.dirname(filePath)), 'service', 'MusicService.kt');
+if (fs.existsSync(servicePath)) {
+  const serviceOriginal = fs.readFileSync(servicePath, 'utf8');
+  const legacyContext = 'reactNativeHost.reactInstanceManager.currentReactContext';
+  if (serviceOriginal.includes(legacyContext)) {
+    fs.writeFileSync(servicePath, serviceOriginal.split(legacyContext).join('reactContext'));
+    console.log('Patched react-native-track-player MusicService (bridgeless React context lookup)');
+  } else {
+    console.log('react-native-track-player MusicService patch already applied');
+  }
+}
