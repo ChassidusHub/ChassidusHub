@@ -5,7 +5,12 @@ import type { ViewStyle, StyleProp } from 'react-native';
 // React Native's own SafeAreaView is a no-op on Android, and with edge-to-edge
 // enabled (Android 15+ enforces it) screen content is drawn under the status
 // bar. react-native-safe-area-context reads the real insets on both platforms.
-import { SafeAreaView } from 'react-native-safe-area-context';
+// The *hook* (not its native SafeAreaView) is used on purpose: App.tsx hands
+// the status-bar inset to the connectivity banner while that banner is up by
+// overriding the insets context, and the native view ignores that override -
+// it measures the window itself - which put a second status-bar gap under
+// the banner.
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from './theme';
 
 interface Props {
@@ -27,9 +32,10 @@ interface Props {
  */
 export function Screen({ children, header, scroll = true, contentStyle }: Props) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.bg }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
       {scroll ? (
         <ScrollView
           style={styles.scroll}
@@ -47,7 +53,7 @@ export function Screen({ children, header, scroll = true, contentStyle }: Props)
           {children}
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
