@@ -55,18 +55,29 @@ class DownloadModule(
      * @param targetKey  Stable unique key identifying the download target (matches JS ledger key).
      * @param url        Remote URL to download from (should use media-proxy URL, not raw CDN).
      * @param filename   Destination filename (written inside app filesDir).
-     * @param metadata   Optional map; if `wifiOnly` key is `"true"`, WorkManager will constrain
-     *                   the download to unmetered (Wi-Fi) networks only.
+     * @param metadata   Optional map. `wifiOnly` = "true" constrains the download to unmetered
+     *                   (Wi-Fi) networks. `auto` = "true" marks it as part of the automatic
+     *                   sync's batch; with `notifyDone` = "true" the batch's last file to finish
+     *                   posts a notification (`doneTitle` / `doneBody` / `doneDeepLink`).
+     *                   `progressTitle` and `label` feed the progress notification's text.
      * @param promise    Resolved with `{ targetKey, workId }` once the work is enqueued.
      */
     @ReactMethod
     fun enqueueDownload(targetKey: String, url: String, filename: String, metadata: ReadableMap?, promise: Promise) {
         try {
             val workManager = WorkManager.getInstance(reactApplicationContext)
+            val isAuto = metadata?.getString("auto") == "true"
             val inputData = Data.Builder()
                 .putString(DownloadWorker.KEY_TARGET_KEY, targetKey)
                 .putString(DownloadWorker.KEY_URL, url)
                 .putString(DownloadWorker.KEY_FILENAME, filename)
+                .putString(DownloadWorker.KEY_AUTO, if (isAuto) "true" else "false")
+                .putString(DownloadWorker.KEY_LABEL, metadata?.getString("label"))
+                .putString(DownloadWorker.KEY_PROGRESS_TITLE, metadata?.getString("progressTitle"))
+                .putString(DownloadWorker.KEY_NOTIFY_DONE, metadata?.getString("notifyDone"))
+                .putString(DownloadWorker.KEY_DONE_TITLE, metadata?.getString("doneTitle"))
+                .putString(DownloadWorker.KEY_DONE_BODY, metadata?.getString("doneBody"))
+                .putString(DownloadWorker.KEY_DONE_DEEP_LINK, metadata?.getString("doneDeepLink"))
                 .build()
 
             val wifiOnly = metadata?.getString("wifiOnly") == "true"
@@ -75,12 +86,13 @@ class DownloadModule(
                 .setRequiredNetworkType(networkType)
                 .build()
 
-            val request = OneTimeWorkRequestBuilder<DownloadWorker>()
+            val builder = OneTimeWorkRequestBuilder<DownloadWorker>()
                 .setInputData(inputData)
                 .setConstraints(constraints)
                 .addTag(WORK_TAG)
                 .addTag("$TARGET_KEY_TAG_PREFIX$targetKey")
-                .build()
+            if (isAuto) builder.addTag(DownloadWorker.AUTO_TAG)
+            val request = builder.build()
 
             workManager.enqueueUniqueWork(targetKey, ExistingWorkPolicy.KEEP, request)
 

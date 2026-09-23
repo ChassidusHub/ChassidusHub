@@ -96,24 +96,3 @@ describe('catalogAudioToTracks', () => {
   });
 });
 
-describe('catalogAudioToChapter', () => {
-  it('maps CatalogAudio to PlayerChapter', () => {
-    const entry = makeEntry({
-      occasionId: 3,
-      hebrewYear: 5713,
-      occasionLabel: 'My Occasion',
-      audio: [{ workerFilename: 'q.mp3', durationMs: 500, chapterName: 'Part A' }],
-    });
-
-    const chapter = playlist.catalogAudioToChapter(entry, entry.audio[0]!);
-
-    expect(chapter).toMatchObject({
-      workerFilename: 'q.mp3',
-      chapterName: 'Part A',
-      durationMs: 500,
-      occasionId: 3,
-      hebrewYear: 5713,
-      occasionLabel: 'My Occasion',
-    });
-  });
-});

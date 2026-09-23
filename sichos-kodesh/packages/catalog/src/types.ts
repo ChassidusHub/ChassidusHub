@@ -9,10 +9,21 @@
 
 export type PdfSection = 'mugah' | 'biltiMugah' | 'maamorim' | 'hagahos' | 'hosofos';
 
+/**
+ * Who is speaking on a recording, when it is not the Rebbe himself: a
+ * shiur (a class on the sicha) or a chazara (a chozer's review of the
+ * farbrengen). Absent means the Rebbe's own voice - the JEM farbrengen
+ * recordings that make up the whole catalog today. See playbackPolicy.ts
+ * for the one thing the apps decide from it.
+ */
+export type AudioKind = 'shiur' | 'chazara';
+
 export interface CatalogAudio {
   /** The filename services/media-proxy's /jem-audio/:filename route expects - extracted from the resolved JEM CloudFront URL. */
   workerFilename: string;
   durationMs: number;
+  /** Omitted for the Rebbe's own recordings (see `AudioKind`). */
+  kind?: AudioKind;
   /**
    * ccdb's own chapter label for this recording within its farbrengen
    * (e.g. "Sicha 1", "Sicha 2", "Ma'amar") - a farbrengen is usually

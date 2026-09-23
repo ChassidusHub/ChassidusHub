@@ -1,46 +1,48 @@
 import { createContext } from 'react';
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { CatalogAudio, PlaybackRate } from '@sichos-kodesh/catalog';
 
-export interface PlayerChapter {
-  workerFilename: string;
-  chapterName: string | null;
-  durationMs: number;
-  /** The catalog entry this chapter belongs to */
-  occasionId: number;
+/** What the player is currently loaded with - one occasion's recordings, in chapter order. Same shape the web's PlayerProvider takes. */
+export interface PlayerPlaylist {
+  title: string;
+  audio: CatalogAudio[];
   hebrewYear: number;
-  occasionLabel: string;
+  occasionId: number;
+  hebrewDate: string;
+}
+
+export interface PlayerError {
+  /** The failure looked like a network failure while offline - the bar shows the "not downloaded" wording instead of a generic error. */
+  offline: boolean;
+  message: string;
 }
 
 export interface PlayerContextValue {
-  /** Currently loaded chapters (queue) */
-  chapters: PlayerChapter[];
-  /** Index of the currently active chapter, or null */
-  currentIndex: number | null;
-  /** True while the player is actively playing */
-  isPlaying: boolean;
-  /** True while the player is loading/buffering */
-  isLoading: boolean;
-  /** True when there was a playback error */
-  hasError: boolean;
-  /** Last playback/setup error message, if any */
-  errorMessage: string | null;
-  /** Elapsed seconds in current chapter */
-  position: number;
-  /** Duration of current chapter in seconds */
+  /** Null until something has been played this session (or restored from the last one) - the bar renders nothing until then. */
+  playlist: PlayerPlaylist | null;
+  currentIndex: number;
+  playing: boolean;
+  /** A fresh chapter, a skip, still buffering - the toggle shows a spinner instead of play/pause. */
+  loading: boolean;
+  /** Seconds. */
+  currentTime: number;
   duration: number;
-
-  /** Load the given catalog entry's audio and start playing */
-  playOccasion: (entry: CatalogEntry) => Promise<void>;
-  /** Toggle play/pause */
-  togglePlay: () => Promise<void>;
-  /** Skip to next chapter */
-  next: () => Promise<void>;
-  /** Skip to previous chapter */
-  prev: () => Promise<void>;
-  /** Skip to a specific chapter index */
-  skipTo: (index: number) => Promise<void>;
-  /** Seek to a position in seconds */
-  seekTo: (seconds: number) => Promise<void>;
+  error: PlayerError | null;
+  /** Loads `playlist` and starts playing `chapterIndex` from `position` (seconds). */
+  play: (playlist: PlayerPlaylist, chapterIndex?: number, position?: number) => void;
+  togglePlay: () => void;
+  /** Pauses without changing the playlist - the player bar's "put it away" gesture; the bar can come back to exactly this state. */
+  pause: () => void;
+  next: () => void;
+  prev: () => void;
+  /** Jumps to one chapter of the current playlist, resuming wherever it was left off. */
+  playChapter: (index: number) => void;
+  seekToFraction: (fraction: number) => void;
+  /** The rate audio actually plays at right now - always 1 for the Rebbe's own recordings, whatever the listener chose (see packages/catalog's playbackPolicy). */
+  playbackRate: PlaybackRate;
+  /** Whether the current chapter is one a listener may speed up or slow down (a shiur or a chazara) - the bar shows its speed control only then. */
+  playbackRateAllowed: boolean;
+  /** The listener's preferred rate, remembered across launches and applied wherever it is allowed. */
+  setPlaybackRate: (rate: PlaybackRate) => void;
 }
 
 export const PlayerContext = createContext<PlayerContextValue | null>(null);

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveOccasionAllYears } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -16,9 +16,12 @@ interface Props {
 }
 
 /**
- * Every occasion indexed on the same Hebrew (month, day) as this
- * specific occasion, across every catalog year (see
- * `resolveOccasionAllYears`). Deliberately not "this real week" the way
+ * This specific occasion in every catalog year it happened, matched by
+ * what it *is* rather than by its date alone (see `resolveOccasionAllYears`
+ * in packages/catalog: several farbrengens share one date, and the same
+ * one moves between the eve and the day from year to year), with
+ * whatever else that year has on the same date listed beneath as "also
+ * on this date". Deliberately not "this real week" the way
  * AllYearsThisWeekScreen is: the occasion on screen is rarely actually
  * this week (usually reached via a kvius-matched year's "All of {year}"
  * list, or a past this-week-all-years pick), so a "this week" link here
@@ -26,13 +29,11 @@ interface Props {
  * with the occasion being viewed.
  */
 export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: Props) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const sourceEntry: CatalogEntry | undefined = (catalog[sourceHebrewYear] ?? []).find((e) => e.occasionId === sourceOccasionId);
-  const yearGroups = useMemo(
-    () => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry.hebrewDate) : []),
-    [sourceEntry],
-  );
+  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry) : []), [catalog, sourceEntry]);
 
   if (!sourceEntry) {
     return (
@@ -46,25 +47,44 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
   return (
     <div className="screen">
       <ScreenHeader to={`/browse/${sourceHebrewYear}/${sourceOccasionId}`} title={t.thisOccasionAllYearsTitle} />
-      <p className="tab-help">{t.thisOccasionAllYearsHelp(hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</p>
+      <p className="tab-help">{t.thisOccasionAllYearsHelp(sourceEntry.occasionLabel, hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</p>
 
       {yearGroups.length === 0 && <p className="gap-message">{t.noFarbrengensAnyYear}</p>}
 
-      {yearGroups.map(({ hebrewYear, entries }) => (
+      {yearGroups.map(({ hebrewYear, matches, others }) => (
         <div key={hebrewYear}>
           <p className="category-header">{hebrewYearLabel(hebrewYear, language)}</p>
-          <ul className="year-list">
-            {entries.map((entry) => (
-              <li key={entry.occasionId}>
-                <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
-                  <span className="year-row-year">{entry.occasionLabel}</span>
-                  <span className="year-row-trailing">
-                    <OccasionRowIcon entry={entry} progressMap={progressMap} />
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {matches.length > 0 && (
+            <ul className="year-list">
+              {matches.map((entry) => (
+                <li key={entry.occasionId}>
+                  <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
+                    <span className="year-row-year">{entry.occasionLabel}</span>
+                    <span className="year-row-trailing">
+                      <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {others.length > 0 && (
+            <>
+              <p className="tab-help occasion-others-label">{t.alsoOnThisDate}</p>
+              <ul className="year-list occasion-others-list">
+                {others.map((entry) => (
+                  <li key={entry.occasionId}>
+                    <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
+                      <span className="year-row-year">{entry.occasionLabel}</span>
+                      <span className="year-row-trailing">
+                        <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       ))}
     </div>

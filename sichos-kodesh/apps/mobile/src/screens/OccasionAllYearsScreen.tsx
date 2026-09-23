@@ -1,97 +1,92 @@
 import React, { useMemo } from 'react';
-import { SectionList, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
+import { resolveOccasionAllYears } from '@sichos-kodesh/catalog';
+import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { useCatalog } from '../catalog/catalogStore';
+import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useTranslation } from '../i18n/useTranslation';
 import type { OccasionAllYearsScreenProps } from '../navigation/types';
-import { resolveOccasionAllYearsGroups } from '../routes/catalogRoutes';
-import { AppText } from '../ui/AppText';
-import { EmptyState } from '../ui/EmptyState';
-import { ListRow, RowSeparator } from '../ui/ListRow';
+import { useProgressMap } from '../player/useProgressMap';
+import { hebrewDayMonthLabel, hebrewYearLabel } from '../utils/formatHebrewDate';
+import { Row, RowTrailing } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { SectionLabel } from '../ui/SectionLabel';
-import { spacing } from '../ui/theme';
-import catalog from '../catalog/data';
-import { hebrewDayMonthLabel, hebrewYearLabel } from '../utils/formatHebrewDate';
+import { CategoryHeader, GapMessage, TabHelp } from '../ui/Typography';
 
+/**
+ * This specific occasion in every catalog year it happened, matched by what
+ * it is rather than by its date alone (see `resolveOccasionAllYears` in
+ * packages/catalog), with whatever else that year has on the same date
+ * beneath it as "also on this date" (web: `/occasion-all-years/:sourceHebrewYear/:sourceOccasionId`).
+ */
 export function OccasionAllYearsScreen({ navigation, route }: OccasionAllYearsScreenProps) {
+  const catalog = useCatalog();
+  const { sourceHebrewYear, sourceOccasionId } = route.params;
   const { t, language } = useTranslation();
-  const { sourceEntry, yearGroups } = useMemo(
-    () => resolveOccasionAllYearsGroups(catalog, route.params.sourceHebrewYear, route.params.sourceOccasionId),
-    [route.params.sourceHebrewYear, route.params.sourceOccasionId],
-  );
-  const sections = useMemo(
-    () =>
-      yearGroups.map((group) => ({
-        title: hebrewYearLabel(group.hebrewYear, language),
-        hebrewYear: group.hebrewYear,
-        data: group.entries,
-      })),
-    [language, yearGroups],
-  );
+  const progressMap = useProgressMap();
+  const sourceEntry: CatalogEntry | undefined = (catalog[sourceHebrewYear] ?? []).find((e) => e.occasionId === sourceOccasionId);
+  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry) : []), [catalog, sourceEntry]);
+  const back = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear: sourceHebrewYear, occasionId: sourceOccasionId } } as const;
 
   if (!sourceEntry) {
     return (
-      <Screen>
-        <ScreenHeader title={t.occasionNotFound} onBack={() => navigation.goBack()} backLabel={t.back} />
-        <EmptyState title={t.occasionNotFound} />
+      <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title="" />}>
+        <GapMessage>{t.occasionNotFound}</GapMessage>
       </Screen>
     );
   }
 
   return (
-    <Screen>
-      <ScreenHeader
-        title={t.thisOccasionAllYearsTitle}
-        onBack={() =>
-          navigation.navigate(
-            'Farbrengen',
-            route.params.sourceRoute ?? {
-              kind: 'browse',
-              hebrewYear: sourceEntry.hebrewYear,
-              occasionId: sourceEntry.occasionId,
-            },
-          )
-        }
-        backLabel={t.back}
-      />
-      <View style={styles.meta}>
-        <AppText variant="bodySmall" color="muted">
-          {t.thisOccasionAllYearsHelp(hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}
-        </AppText>
-      </View>
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => `${item.hebrewYear}-${item.occasionId}`}
-        renderSectionHeader={({ section }) => <SectionLabel label={section.title} />}
-        renderItem={({ item, section }) => (
-          <ListRow
-            label={item.occasionLabel}
-            sublabel={[
-              item.audio.length > 0 ? t.recordingsCount(item.audio.length) : null,
-              item.pdfs.length > 0 ? t.pdfCount(item.pdfs.length) : null,
-            ]
-              .filter(Boolean)
-              .join(' • ')}
-            right={<AppText color="muted">›</AppText>}
-            onPress={() =>
-              navigation.navigate('Farbrengen', {
-                kind: 'occasionAllYears',
-                sourceHebrewYear: sourceEntry.hebrewYear,
-                sourceOccasionId: sourceEntry.occasionId,
-                hebrewYear: section.hebrewYear,
-                occasionId: item.occasionId,
-              })
-            }
-          />
-        )}
-        ItemSeparatorComponent={RowSeparator}
-        stickySectionHeadersEnabled={false}
-        ListEmptyComponent={<EmptyState title={t.noFarbrengensAnyYear} />}
-      />
+    <Screen header={<ScreenHeader back={back} title={t.thisOccasionAllYearsTitle} />}>
+      <TabHelp>{t.thisOccasionAllYearsHelp(sourceEntry.occasionLabel, hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</TabHelp>
+
+      {yearGroups.length === 0 && <GapMessage>{t.noFarbrengensAnyYear}</GapMessage>}
+
+      {yearGroups.map(({ hebrewYear, matches, others }, index) => {
+        const open = (entry: CatalogEntry) =>
+          navigation.navigate('Farbrengen', {
+            kind: 'occasionAllYears',
+            sourceHebrewYear,
+            sourceOccasionId,
+            hebrewYear,
+            occasionId: entry.occasionId,
+          });
+        return (
+          <View key={hebrewYear}>
+            <CategoryHeader first={index === 0}>{hebrewYearLabel(hebrewYear, language)}</CategoryHeader>
+            {matches.map((entry) => (
+              <Row
+                key={entry.occasionId}
+                label={entry.occasionLabel}
+                trailing={
+                  <RowTrailing>
+                    <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                  </RowTrailing>
+                }
+                onPress={() => open(entry)}
+              />
+            ))}
+            {others.length > 0 && (
+              <>
+                <TabHelp>{t.alsoOnThisDate}</TabHelp>
+                {others.map((entry) => (
+                  <Row
+                    key={entry.occasionId}
+                    label={entry.occasionLabel}
+                    muted
+                    trailing={
+                      <RowTrailing>
+                        <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                      </RowTrailing>
+                    }
+                    onPress={() => open(entry)}
+                  />
+                ))}
+              </>
+            )}
+          </View>
+        );
+      })}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
-});

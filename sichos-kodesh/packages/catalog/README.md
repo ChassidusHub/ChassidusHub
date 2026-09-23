@@ -61,6 +61,51 @@ npm run build
 npm run build-catalog -- --db ../mafteiach-index/mafteiach.db --out ./data
 ```
 
+## Catalog releases (`version.ts`, `changelog.ts`, `release.ts`, `bin/release.ts`)
+
+The catalog data has its own version, changelog and release tags,
+separate from the two apps' versions: the apps bundle one copy of the
+data (their `src/catalog/data`, built as above) but fetch a newer one
+from `api.sk.shmuky.dev` on their own, so a corrected date or a re-crawl
+reaches every phone without an app update.
+
+- `CATALOG_VERSION` (`version.ts`) is the version of the shipped data;
+  `CATALOG_SCHEMA_VERSION` is the shape of it, bumped only for a change
+  that would break an older app's parsing (an app never applies data of
+  another schema version - it keeps its bundled copy).
+- `CATALOG_CHANGELOG` (`changelog.ts`, en + he) is the machine-readable
+  changelog the apps show under "Catalog" on their About screens;
+  `CHANGELOG.md` is the human copy. Keep both in step.
+- `release.ts` is the contract with the API: `CatalogManifest`
+  (`/v1/catalog/manifest.json` - version, size, SHA-256, years, changelog,
+  and the URL of the data) and `CatalogRelease`
+  (`/v1/catalog/<version>/catalog.json` - the data itself, self-describing).
+  `parseCatalogManifest` / `parseCatalogRelease` validate a fetched file;
+  `isCatalogUpdateApplicable` decides whether an app should fetch it.
+- `bin/release.ts` (`npm run release-files -w @sichos-kodesh/catalog`)
+  writes the two files into `dist-release/` from the year files the apps
+  bundle. `--check` only verifies the version/changelog agree (CI).
+
+To ship a catalog release:
+
+1. Rebuild the data (`build-catalog` above) and copy the year files into
+   both apps' `src/catalog/data` (they are identical copies).
+2. Bump `CATALOG_VERSION`, add the entry to `changelog.ts` and
+   `CHANGELOG.md`.
+3. Commit, then tag that commit `catalog-v<version>` and push the tag. The
+   `catalog-release` workflow (`.github/workflows/catalog-release.yml`)
+   runs `release-files` and attaches `catalog.json` + `manifest.json` to a
+   GitHub release of that tag; the API serves them from there.
+
+## Playback policy (`playbackPolicy.ts`)
+
+`CatalogAudio.kind` marks a recording that is not the Rebbe's own voice
+(`'shiur'`, `'chazara'`); absent means the Rebbe's farbrengen recording.
+`isPlaybackRateAllowed(audio)` is the one rule both players follow: a
+speed control (`PLAYBACK_RATES`) exists only for a shiur or a chazara; the
+Rebbe's recordings always play at 1×, and neither app shows a speed
+control for them.
+
 ## Resolving occasion keys (`catalogLookup.ts`)
 
 `findCatalogEntryForOccasion(catalog, hebrewYear, occasionKey, il, fixedOccasions)`:

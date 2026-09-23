@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { DEFAULT_PLAYBACK_RATE, effectivePlaybackRate, isPlaybackRate, isPlaybackRateAllowed } from '@sichos-kodesh/catalog';
+import type { PlaybackRate } from '@sichos-kodesh/catalog';
 import { audioUrl } from '../download/download';
 import { getOnlineSnapshot, reportFetchFailure } from '../network/connectivity';
 import { forMediaSession } from '../utils/hebrewPunctuation';
@@ -10,9 +12,28 @@ import { PlayerContext } from './playerContext';
 import type { Playlist, PlayerContextValue, PlayerState } from './playerContext';
 
 const PERSIST_KEY = 'sichos-kodesh:player-state';
+const RATE_KEY = 'sichos-kodesh:playback-rate';
 
 /** `HTMLMediaElement.readyState`'s lowest value: nothing has loaded for the current resource yet - see the `isSwitchingRef`/`onPause` comments in PlayerProvider for why this matters. */
 const HAVE_NOTHING = 0;
+
+/** The listener's preferred speed for the recordings that allow one (see playbackPolicy in packages/catalog) - a preference, not a per-chapter fact, so one value for the whole app. */
+function readPreferredRate(): PlaybackRate {
+  try {
+    const raw = Number(localStorage.getItem(RATE_KEY));
+    return isPlaybackRate(raw) ? raw : DEFAULT_PLAYBACK_RATE;
+  } catch {
+    return DEFAULT_PLAYBACK_RATE;
+  }
+}
+
+function writePreferredRate(rate: PlaybackRate): void {
+  try {
+    localStorage.setItem(RATE_KEY, String(rate));
+  } catch {
+    // Best-effort persistence only.
+  }
+}
 
 interface PersistedPlayerState {
   playlist: Playlist;
@@ -96,6 +117,26 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const current = state.playlist?.audio[state.currentIndex] ?? null;
 
+  // The Rebbe's own recordings always play at 1x whatever the preference
+  // says - the preference only ever reaches a shiur or a chazara (see
+  // playbackPolicy in packages/catalog). `defaultPlaybackRate` is set
+  // too, so a chapter switch (a new `src`) starts at the right rate
+  // instead of the element's own default.
+  const [preferredRate, setPreferredRate] = useState<PlaybackRate>(readPreferredRate);
+  const playbackRateAllowed = isPlaybackRateAllowed(current);
+  const playbackRate = effectivePlaybackRate(current, preferredRate);
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.defaultPlaybackRate = playbackRate;
+    el.playbackRate = playbackRate;
+  }, [playbackRate, current?.workerFilename]);
+
+  const setPlaybackRate = useCallback((rate: PlaybackRate) => {
+    setPreferredRate(rate);
+    writePreferredRate(rate);
+  }, []);
+
   const play = useCallback(
     (playlist: Playlist, startIndex = 0, startTime = 0) => {
       const targetChapter = playlist.audio[startIndex];
@@ -141,6 +182,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     // moment loading finishes. See the matching comment on `pendingSeekRef`.
     pendingSeekRef.current = null;
     setState((prev) => (prev.playlist ? { ...prev, currentIndex: index, playing: true, loading: true, currentTime: 0, duration: 0 } : prev));
+  }, []);
+
+  const pause = useCallback(() => {
+    audioRef.current?.pause();
   }, []);
 
   const togglePlay = useCallback(() => {
@@ -326,13 +371,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      navigator.mediaSession.setPositionState({ duration: state.duration, playbackRate: 1, position: Math.min(state.currentTime, state.duration) });
+      navigator.mediaSession.setPositionState({ duration: state.duration, playbackRate, position: Math.min(state.currentTime, state.duration) });
     } catch {
       // A rare floating-point case right at a chapter's end (position
       // marginally over duration) throws rather than clamping - safe to
       // skip that one update and pick it back up on the next tick.
     }
-  }, [current, state.duration, state.currentTime]);
+  }, [current, state.duration, state.currentTime, playbackRate]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
@@ -356,8 +401,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [prev, next]);
 
   const value = useMemo<PlayerContextValue>(
-    () => ({ ...state, play, togglePlay, playChapter, next, prev, seekToFraction, audioRef }),
-    [state, play, togglePlay, playChapter, next, prev, seekToFraction],
+    () => ({ ...state, play, togglePlay, pause, playChapter, next, prev, seekToFraction, playbackRate, playbackRateAllowed, setPlaybackRate, audioRef }),
+    [state, play, togglePlay, pause, playChapter, next, prev, seekToFraction, playbackRate, playbackRateAllowed, setPlaybackRate],
   );
 
   return (

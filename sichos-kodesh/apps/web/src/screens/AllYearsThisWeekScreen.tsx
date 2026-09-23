@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveThisWeekAllYears } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
@@ -10,9 +10,10 @@ import { useTranslation } from '../i18n/useLanguage';
 
 /** Every occasion indexed on one of this Hebrew week's dates across every catalog year, not just kvius-matched ones (see `resolveThisWeekAllYears`). */
 export function AllYearsThisWeekScreen() {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
-  const yearGroups = useMemo(() => resolveThisWeekAllYears(catalog), []);
+  const yearGroups = useMemo(() => resolveThisWeekAllYears(catalog), [catalog]);
 
   return (
     <div className="screen">

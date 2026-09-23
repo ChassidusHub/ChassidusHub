@@ -1,79 +1,54 @@
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { useCatalog } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { CategoryScreenProps } from '../navigation/types';
 import { resolveOccasionRoute, selectCategoryPdfs } from '../routes/catalogRoutes';
-import { useEditionPreference } from '../settings/editionPreference';
-import { AppButton } from '../ui/AppButton';
-import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
-import { EmptyState } from '../ui/EmptyState';
+import { Button } from '../ui/Button';
+import { Card, PdfLabel } from '../ui/Card';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { spacing, typography } from '../ui/theme';
-import catalog from '../catalog/data';
+import { GapMessage, Subtitle } from '../ui/Typography';
 
+/** A PDF section's own page (web: `.../category/:section`) - a label like hagahos's "צילום 1" doesn't make sense without its section header for context. */
 export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
+  const catalog = useCatalog();
+  const { categoryId, ...occasionRoute } = route.params;
   const { t, language } = useTranslation();
-  const [editionPreference] = useEditionPreference();
-  const resolved = useMemo(
-    () => resolveOccasionRoute(catalog, route.params, language),
-    [language, route.params],
-  );
+  const resolved = useMemo(() => resolveOccasionRoute(catalog, occasionRoute, language), [catalog, language, occasionRoute]);
 
   if (!resolved) {
     return (
-      <Screen>
-        <ScreenHeader title={t.occasionNotFound} onBack={() => navigation.goBack()} backLabel={t.back} />
-        <EmptyState title={t.occasionNotFound} />
+      <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title="" />}>
+        <GapMessage>{t.pageNotFound}</GapMessage>
       </Screen>
     );
   }
 
-  const pdfs = selectCategoryPdfs(resolved.entry, route.params.categoryId, editionPreference);
+  const { entry } = resolved;
+  const pdfs = selectCategoryPdfs(entry, categoryId, null);
 
   return (
-    <Screen>
-      <ScreenHeader
-        title={t.sectionLabels[route.params.categoryId]}
-        onBack={() => navigation.navigate('Farbrengen', route.params)}
-        backLabel={t.back}
-      />
-      <ScrollView contentContainerStyle={styles.content}>
-        <AppText variant="bodySmall" color="secondary">
-          {resolved.entry.occasionLabel}
-        </AppText>
+    <Screen header={<ScreenHeader back={{ name: 'Farbrengen', params: occasionRoute }} title={t.sectionLabels[categoryId]} />}>
+      <Subtitle>{entry.occasionLabel}</Subtitle>
 
-        {pdfs.length === 0 ? (
-          <EmptyState title={t.pdfNotFound} />
-        ) : (
-          pdfs.map((pdf) => (
-            <Card key={pdf.driveFileId} style={styles.card}>
-              <AppText style={styles.title}>{pdf.label}</AppText>
-              <AppButton
-                label={t.read}
-                onPress={() =>
-                  navigation.navigate('PdfViewer', {
-                    hebrewYear: resolved.entry.hebrewYear,
-                    occasionId: resolved.entry.occasionId,
-                    driveFileId: pdf.driveFileId,
-                    resourceKey: pdf.resourceKey ?? null,
-                    label: pdf.label,
-                    occasionLabel: resolved.entry.occasionLabel,
-                    sectionLabel: t.sectionLabels[pdf.section],
-                  })
-                }
-              />
-            </Card>
-          ))
-        )}
-      </ScrollView>
+      {pdfs.map((pdf) => (
+        <Card key={pdf.driveFileId}>
+          <PdfLabel>{pdf.label}</PdfLabel>
+          <Button
+            label={t.read}
+            lastInCard
+            onPress={() =>
+              navigation.navigate('PdfViewer', {
+                hebrewYear: entry.hebrewYear,
+                occasionId: entry.occasionId,
+                driveFileId: pdf.driveFileId,
+                resourceKey: pdf.resourceKey ?? null,
+                label: pdf.label,
+              })
+            }
+          />
+        </Card>
+      ))}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  card: { gap: spacing.sm },
-  title: typography.bodyMedium,
-});

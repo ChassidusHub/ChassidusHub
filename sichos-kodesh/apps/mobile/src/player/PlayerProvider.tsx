@@ -1,58 +1,49 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import {
-  recordOccasionAudioProgress,
-  resolveResumeAudioChapter,
-} from '@sichos-kodesh/app-core';
-import TrackPlayer, {
-  AppKilledPlaybackBehavior,
-  Capability,
-  Event,
-  State,
-  useActiveTrack,
-  usePlaybackState,
-  useProgress,
-} from 'react-native-track-player';
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { catalogAudioToChapter, catalogAudioToTracks } from './playlist';
-import type { PlayerChapter, PlayerContextValue } from './playerContext';
+import { AppState } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import TrackPlayer, { AppKilledPlaybackBehavior, Capability, Event, State, useActiveTrack, usePlaybackState, useProgress } from 'react-native-track-player';
+import { DEFAULT_PLAYBACK_RATE, effectivePlaybackRate, isPlaybackRate, isPlaybackRateAllowed } from '@sichos-kodesh/catalog';
+import type { PlaybackRate } from '@sichos-kodesh/catalog';
+import { getCatalog } from '../catalog/catalogStore';
+import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
+import { catalogAudioToTracks } from './playlist';
+import type { PlayerContextValue, PlayerError, PlayerPlaylist } from './playerContext';
 import { PlayerContext } from './playerContext';
 import {
+  flushProgressStore,
+  getLastPlaylist,
   getOccasionProgress,
-  occasionProgressKey,
-  readPlayerProgressStore,
-  writePlayerProgressStore,
-} from './progressPersistence';
+  hydrateProgressStore,
+  readProgressMap,
+  recordChapterProgress,
+  recordLastPlaylist,
+} from './progressStore';
 
 interface Props {
   children: ReactNode;
 }
 
+/**
+ * How long after the active track changes a progress sample is distrusted
+ * (useProgress polls every 500 ms, so a stale sample can survive a poll or
+ * two), and the position below which a sample in that window is accepted
+ * anyway - it can only be the new track's own start.
+ */
+const STALE_PROGRESS_WINDOW_MS = 1500;
+const STALE_PROGRESS_START_SECONDS = 5;
+/** The listener's preferred speed for the recordings that allow one (see playbackPolicy in packages/catalog) - same key semantics as the web's localStorage entry. */
+const RATE_KEY = 'sichos-kodesh:playback-rate';
+
 // Promise sentinel: null = not started, in-flight promise = setting up, resolved = ready.
 let playerSetupPromise: Promise<void> | null = null;
 
 async function doSetup(): Promise<void> {
-  await TrackPlayer.setupPlayer({
-    autoHandleInterruptions: true,
-  });
+  await TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
   await TrackPlayer.updateOptions({
-    android: {
-      appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback,
-    },
-    capabilities: [
-      Capability.Play,
-      Capability.Pause,
-      Capability.Stop,
-      Capability.SkipToNext,
-      Capability.SkipToPrevious,
-      Capability.SeekTo,
-    ],
-    compactCapabilities: [
-      Capability.Play,
-      Capability.Pause,
-      Capability.SkipToNext,
-      Capability.SkipToPrevious,
-    ],
+    android: { appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback },
+    capabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SkipToNext, Capability.SkipToPrevious, Capability.SeekTo],
+    compactCapabilities: [Capability.Play, Capability.Pause, Capability.SkipToNext, Capability.SkipToPrevious],
     progressUpdateEventInterval: 1,
   });
 }
@@ -69,248 +60,280 @@ function ensurePlayer(): Promise<void> {
   return playerSetupPromise;
 }
 
+/**
+ * The single, app-wide player (react-native-track-player underneath, so
+ * playback continues in the background with lock-screen controls).
+ * Mirrors the web PlayerProvider's context shape one-to-one - see
+ * playerContext.ts - and records listening progress into progressStore the
+ * same way, so Continue rows, finished markers and resume positions behave
+ * identically on both apps. The last playlist is restored, paused, on the
+ * next launch, the way the web player survives a reload.
+ */
 export function PlayerProvider({ children }: Props) {
-  const [ready, setReady] = useState(false);
-  const [chapters, setChapters] = useState<PlayerChapter[]>([]);
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [playlist, setPlaylist] = useState<PlayerPlaylist | null>(null);
+  const [error, setError] = useState<PlayerError | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const setupDoneRef = useRef(false);
-  const progressStoreRef = useRef<Awaited<ReturnType<typeof readPlayerProgressStore>>>({
-    version: 1,
-    occasions: {},
-    lastQueue: null,
-  });
-  const progressHydrationPromiseRef = useRef<Promise<void> | null>(null);
-  const progressWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The chapter a play/skip just asked for - reported as `currentIndex` until
+  // the native player's own active track catches up, so the bar never flashes
+  // the previous chapter (or chapter 0) while a switch is in flight.
+  const [requestedIndex, setRequestedIndex] = useState<number | null>(null);
+  const playlistRef = useRef<PlayerPlaylist | null>(null);
   const lastProgressBucketRef = useRef<string | null>(null);
+  const restoredRef = useRef(false);
 
   useEffect(() => {
-    if (setupDoneRef.current) return;
-    setupDoneRef.current = true;
-    progressHydrationPromiseRef.current = readPlayerProgressStore()
-      .then((store) => {
-        progressStoreRef.current = store;
-      })
-      .catch(() => undefined);
-    ensurePlayer()
-      .then(() => setReady(true))
-      .catch(() => {
-        // Non-fatal: player unavailable (e.g., simulator/test env)
-        setReady(false);
-        setHasError(true);
-        setErrorMessage('Audio player setup failed');
-      });
-  }, []);
-
-  const scheduleProgressWrite = useCallback(() => {
-    if (progressWriteTimerRef.current) return;
-    progressWriteTimerRef.current = setTimeout(() => {
-      progressWriteTimerRef.current = null;
-      writePlayerProgressStore(progressStoreRef.current).catch(() => undefined);
-    }, 1500);
-  }, []);
-
-  useEffect(
-    () => () => {
-      if (progressWriteTimerRef.current) {
-        clearTimeout(progressWriteTimerRef.current);
-        progressWriteTimerRef.current = null;
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!ready) return;
-    const sub = TrackPlayer.addEventListener(Event.PlaybackError, (event) => {
-      setHasError(true);
-      setErrorMessage(event.message || `Playback error (${event.code})`);
-    });
-    return () => sub.remove();
-  }, [ready]);
+    playlistRef.current = playlist;
+  }, [playlist]);
 
   const playbackState = usePlaybackState();
   const progress = useProgress(500);
   const activeTrack = useActiveTrack();
 
-  const isPlaying = playbackState.state === State.Playing;
-  const isLoading =
-    actionLoading ||
-    playbackState.state === State.Loading ||
-    playbackState.state === State.Buffering;
+  const activeIndex = useMemo(() => {
+    if (!playlist || activeTrack == null) return -1;
+    return playlist.audio.findIndex((chapter) => chapter.workerFilename === String(activeTrack.id));
+  }, [activeTrack, playlist]);
 
-  const currentIndex =
-    activeTrack != null
-      ? chapters.findIndex((chapter) => chapter.workerFilename === String(activeTrack.id))
-      : null;
+  // Once the native player reports the requested chapter as active, stop
+  // overriding with the requested index.
+  useEffect(() => {
+    if (requestedIndex != null && activeIndex === requestedIndex) setRequestedIndex(null);
+  }, [activeIndex, requestedIndex]);
 
-  const runPlayerAction = useCallback(
-    async (action: () => Promise<void>) => {
-      setActionLoading(true);
-      setHasError(false);
-      setErrorMessage(null);
+  const currentIndex = requestedIndex ?? (activeIndex >= 0 ? activeIndex : 0);
+  const playing = playbackState.state === State.Playing;
+  const loading = actionLoading || playbackState.state === State.Loading || playbackState.state === State.Buffering;
+
+  // The Rebbe's own recordings always play at 1x whatever the preference
+  // says - the preference only ever reaches a shiur or a chazara (see
+  // playbackPolicy in packages/catalog). The native player keeps one rate
+  // across the queue, so it is re-applied whenever the chapter (and with
+  // it the allowed rate) or the preference changes.
+  const [preferredRate, setPreferredRate] = useState<PlaybackRate>(DEFAULT_PLAYBACK_RATE);
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(RATE_KEY)
+      .then((raw) => {
+        const rate = Number(raw);
+        if (!cancelled && raw != null && isPlaybackRate(rate)) setPreferredRate(rate);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const currentAudio = playlist?.audio[currentIndex] ?? null;
+  const playbackRateAllowed = isPlaybackRateAllowed(currentAudio);
+  const playbackRate = effectivePlaybackRate(currentAudio, preferredRate);
+  useEffect(() => {
+    if (!playlist) return;
+    ensurePlayer()
+      .then(() => TrackPlayer.setRate(playbackRate))
+      .catch(() => undefined);
+  }, [playbackRate, playlist]);
+
+  const setPlaybackRate = useCallback((rate: PlaybackRate) => {
+    setPreferredRate(rate);
+    AsyncStorage.setItem(RATE_KEY, String(rate)).catch(() => undefined);
+  }, []);
+
+  const runPlayerAction = useCallback(async (action: () => Promise<void>) => {
+    setActionLoading(true);
+    setError(null);
+    try {
+      await ensurePlayer();
+      await action();
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : String(caught);
+      const network = looksLikeNetworkError(message);
+      if (network) reportFetchFailure();
+      setError({ offline: network || !getOnlineSnapshot(), message });
+    } finally {
+      setActionLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sub = TrackPlayer.addEventListener(Event.PlaybackError, (event) => {
+      if (cancelled) return;
+      const message = event.message || `Playback error (${event.code})`;
+      const network = looksLikeNetworkError(message) || looksLikeNetworkError(event.code);
+      if (network) reportFetchFailure();
+      setError({ offline: network || !getOnlineSnapshot(), message });
+    });
+    return () => {
+      cancelled = true;
+      sub.remove();
+    };
+  }, []);
+
+  // Restore the last playlist, paused, into the bar on launch.
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    let cancelled = false;
+    (async () => {
+      await hydrateProgressStore();
+      const last = getLastPlaylist();
+      if (!last || cancelled) return;
+      const entry = getCatalog()[last.hebrewYear]?.find((item) => item.occasionId === last.occasionId);
+      if (!entry || entry.audio.length === 0) return;
+      const chapterIndex = Math.min(last.chapterIndex, entry.audio.length - 1);
       try {
-        await action();
-      } catch (error) {
-        setHasError(true);
-        setErrorMessage(
-          error instanceof Error ? error.message : 'Playback operation failed',
-        );
-        throw error;
-      } finally {
-        setActionLoading(false);
-      }
-    },
-    [],
-  );
-
-  const playOccasion = useCallback(
-    async (entry: CatalogEntry) => {
-      if (!entry.audio.length) return;
-      await runPlayerAction(async () => {
         await ensurePlayer();
-        setReady(true);
-        if (progressHydrationPromiseRef.current) {
-          await progressHydrationPromiseRef.current;
+        const queue = await TrackPlayer.getQueue();
+        if (cancelled) return;
+        // The playback service can outlive the JS side (background playback,
+        // a quick relaunch) - if it still holds a queue, adopt it instead of
+        // resetting whatever is currently playing.
+        if (queue.length === 0) {
+          await TrackPlayer.add(await catalogAudioToTracks(entry));
+          await TrackPlayer.skip(chapterIndex, last.position);
         }
-        const tracks = await catalogAudioToTracks(entry);
-        const newChapters = entry.audio.map((audio) =>
-          catalogAudioToChapter(entry, audio),
-        );
-        const stored = getOccasionProgress(progressStoreRef.current, entry);
-        const resume = resolveResumeAudioChapter(stored, entry);
+        if (cancelled) return;
+        setPlaylist({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate });
+      } catch {
+        // Player unavailable (a test environment, a broken audio stack) - the bar just stays hidden.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
+  const play = useCallback(
+    (next: PlayerPlaylist, chapterIndex = 0, position = 0) => {
+      if (next.audio.length === 0) return;
+      const safeIndex = Math.max(0, Math.min(chapterIndex, next.audio.length - 1));
+      setPlaylist(next);
+      setRequestedIndex(safeIndex);
+      lastProgressBucketRef.current = null;
+      recordLastPlaylist({ hebrewYear: next.hebrewYear, occasionId: next.occasionId, chapterIndex: safeIndex, position });
+      runPlayerAction(async () => {
+        const tracks = await catalogAudioToTracks({ audio: next.audio, occasionLabel: next.title });
         await TrackPlayer.reset();
         await TrackPlayer.add(tracks);
-        setChapters(newChapters);
-        if (resume.chapterIndex > 0) {
-          await TrackPlayer.skip(resume.chapterIndex);
-        }
-        if (resume.position > 0) {
-          await TrackPlayer.seekTo(resume.position);
-        }
+        await TrackPlayer.skip(safeIndex, position > 0 ? position : undefined);
         await TrackPlayer.play();
-      });
+      }).catch(() => undefined);
     },
     [runPlayerAction],
   );
 
-  const togglePlay = useCallback(async () => {
-    await runPlayerAction(async () => {
-      await ensurePlayer();
-      setReady(true);
-      if (playbackState.state === State.Playing) {
-        await TrackPlayer.pause();
-        return;
-      }
-      await TrackPlayer.play();
-    });
-  }, [playbackState.state, runPlayerAction]);
-
-  const next = useCallback(async () => {
-    await runPlayerAction(async () => {
-      await ensurePlayer();
-      setReady(true);
-      try {
-        await TrackPlayer.skipToNext();
-      } catch {
-        // At end of queue - ignore.
-      }
-    });
+  const togglePlay = useCallback(() => {
+    if (!playlistRef.current) return;
+    runPlayerAction(async () => {
+      const { state } = await TrackPlayer.getPlaybackState();
+      if (state === State.Playing) await TrackPlayer.pause();
+      else await TrackPlayer.play();
+    }).catch(() => undefined);
   }, [runPlayerAction]);
 
-  const prev = useCallback(async () => {
-    await runPlayerAction(async () => {
-      await ensurePlayer();
-      setReady(true);
-      try {
-        await TrackPlayer.skipToPrevious();
-      } catch {
-        // At start of queue - ignore.
-      }
-    });
+  const pause = useCallback(() => {
+    if (!playlistRef.current) return;
+    runPlayerAction(() => TrackPlayer.pause()).catch(() => undefined);
   }, [runPlayerAction]);
 
-  const skipTo = useCallback(async (index: number) => {
-    await runPlayerAction(async () => {
-      await ensurePlayer();
-      setReady(true);
-      await TrackPlayer.skip(index);
-      await TrackPlayer.play();
-    });
-  }, [runPlayerAction]);
+  const playChapter = useCallback(
+    (index: number) => {
+      const current = playlistRef.current;
+      if (!current || index < 0 || index >= current.audio.length) return;
+      const saved = getOccasionProgress(readProgressMap(), current.hebrewYear, current.occasionId)?.chapters[index]?.position ?? 0;
+      setRequestedIndex(index);
+      runPlayerAction(async () => {
+        await TrackPlayer.skip(index, saved > 0 ? saved : undefined);
+        await TrackPlayer.play();
+      }).catch(() => undefined);
+    },
+    [runPlayerAction],
+  );
 
-  const seekTo = useCallback(async (seconds: number) => {
-    await runPlayerAction(async () => {
-      await ensurePlayer();
-      setReady(true);
-      await TrackPlayer.seekTo(seconds);
-    });
-  }, [runPlayerAction]);
+  const next = useCallback(() => {
+    const current = playlistRef.current;
+    if (!current) return;
+    const target = Math.min(currentIndex + 1, current.audio.length - 1);
+    if (target === currentIndex) return;
+    playChapter(target);
+  }, [currentIndex, playChapter]);
 
+  const prev = useCallback(() => {
+    if (!playlistRef.current) return;
+    const target = Math.max(currentIndex - 1, 0);
+    if (target === currentIndex) return;
+    playChapter(target);
+  }, [currentIndex, playChapter]);
+
+  const seekToFraction = useCallback(
+    (fraction: number) => {
+      const duration = progress.duration;
+      if (!Number.isFinite(duration) || duration <= 0) return;
+      const target = Math.max(0, Math.min(fraction, 1)) * duration;
+      TrackPlayer.seekTo(target).catch(() => undefined);
+    },
+    [progress.duration],
+  );
+
+  // useProgress polls every 500 ms while useActiveTrack updates on the
+  // track-changed event, so for a poll or two after a skip the sample still
+  // describes the *previous* chapter - and would credit its position to the
+  // new one (a chapter never played showing a quarter listened). Samples in
+  // that window are ignored unless they already sit near the start.
+  const indexChangedAtRef = useRef(0);
   useEffect(() => {
-    if (currentIndex == null) return;
-    const chapter = chapters[currentIndex];
-    const audioId = chapter?.workerFilename;
-    if (!chapter || !audioId) return;
+    indexChangedAtRef.current = Date.now();
+  }, [activeIndex]);
+
+  // Throttled progress recording - once per 5-second bucket per chapter,
+  // not on every tick (the same "periodic writes, not every event"
+  // pattern the web PlayerProvider uses).
+  useEffect(() => {
+    if (!playlist || activeIndex < 0) return;
+    const chapter = playlist.audio[activeIndex];
+    if (!chapter) return;
+    if (Date.now() - indexChangedAtRef.current < STALE_PROGRESS_WINDOW_MS && progress.position > STALE_PROGRESS_START_SECONDS) return;
     const duration = progress.duration > 0 ? progress.duration : chapter.durationMs / 1000;
     if (!Number.isFinite(duration) || duration <= 0) return;
-    const boundedPosition = Math.max(0, Math.min(progress.position, duration));
-    const bucketKey = `${chapter.hebrewYear}:${chapter.occasionId}:${audioId}:${Math.floor(
-      boundedPosition / 5,
-    )}`;
-    if (bucketKey === lastProgressBucketRef.current) return;
-    lastProgressBucketRef.current = bucketKey;
+    const position = Math.max(0, Math.min(progress.position, duration));
+    const bucket = `${playlist.hebrewYear}:${playlist.occasionId}:${activeIndex}:${Math.floor(position / 5)}`;
+    if (bucket === lastProgressBucketRef.current) return;
+    lastProgressBucketRef.current = bucket;
+    recordChapterProgress(playlist.hebrewYear, playlist.occasionId, playlist.title, activeIndex, position, duration);
+    recordLastPlaylist({ hebrewYear: playlist.hebrewYear, occasionId: playlist.occasionId, chapterIndex: activeIndex, position });
+  }, [activeIndex, playlist, progress.duration, progress.position]);
 
-    const occasionKey = occasionProgressKey(chapter.hebrewYear, chapter.occasionId);
-    const existing = progressStoreRef.current.occasions[occasionKey];
-    const updated = recordOccasionAudioProgress(existing, {
-      hebrewYear: chapter.hebrewYear,
-      occasionId: chapter.occasionId,
-      occasionLabel: chapter.occasionLabel,
-      audioId,
-      position: boundedPosition,
-      duration,
-      markAsActive: true,
+  // A pending debounced write could otherwise be lost when Android suspends the app.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') flushProgressStore().catch(() => undefined);
     });
-    progressStoreRef.current = {
-      ...progressStoreRef.current,
-      occasions: {
-        ...progressStoreRef.current.occasions,
-        [occasionKey]: updated,
-      },
-      lastQueue: {
-        hebrewYear: chapter.hebrewYear,
-        occasionId: chapter.occasionId,
-        currentAudioId: audioId,
-        position: boundedPosition,
-        savedAt: Date.now(),
-      },
-    };
-    scheduleProgressWrite();
-  }, [chapters, currentIndex, progress.duration, progress.position, scheduleProgressWrite]);
+    return () => subscription.remove();
+  }, []);
 
-  const value: PlayerContextValue = {
-    chapters,
-    currentIndex: currentIndex === -1 ? null : currentIndex,
-    isPlaying,
-    isLoading,
-    hasError,
-    errorMessage,
-    position: progress.position,
-    duration: progress.duration,
-    playOccasion,
-    togglePlay,
-    next,
-    prev,
-    skipTo,
-    seekTo,
-  };
-
-  return (
-    <PlayerContext.Provider value={value}>
-      {children}
-    </PlayerContext.Provider>
+  const value = useMemo<PlayerContextValue>(
+    () => ({
+      playlist,
+      currentIndex,
+      playing,
+      loading,
+      // While a switch is in flight the native progress still belongs to the
+      // previous chapter; show the requested one from its own start instead.
+      currentTime: requestedIndex != null ? 0 : progress.position,
+      duration: requestedIndex != null ? (playlist?.audio[requestedIndex]?.durationMs ?? 0) / 1000 : progress.duration,
+      error,
+      play,
+      togglePlay,
+      pause,
+      next,
+      prev,
+      playChapter,
+      seekToFraction,
+      playbackRate,
+      playbackRateAllowed,
+      setPlaybackRate,
+    }),
+    [currentIndex, error, loading, next, pause, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekToFraction, togglePlay, playbackRate, playbackRateAllowed, setPlaybackRate],
   );
+
+  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }

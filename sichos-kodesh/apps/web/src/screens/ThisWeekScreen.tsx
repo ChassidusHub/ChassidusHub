@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { currentHebrewYear, currentParsha, resolveThisWeek, resolveWeekWithFallback } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel, hebrewDayMonthLabel, parshaLabel } from '../utils/formatHebrewDate';
@@ -39,16 +39,17 @@ function shiftedToday(weekOffset: number): Date {
  * non-today occasion reached via FollowMonthListScreen.
  */
 export function ThisWeekScreen({ sourceYear }: Props) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const { enqueueBulk } = useDownload();
   const online = useOnlineStatus();
   const [weekOffset, setWeekOffset] = useState(0);
   const shiftedDate = useMemo(() => shiftedToday(weekOffset), [weekOffset]);
-  const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [sourceYear, shiftedDate]);
+  const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [catalog, sourceYear, shiftedDate]);
   const suggestedYear = useMemo(
     () => (occasions.length > 0 ? null : (resolveWeekWithFallback(sourceYear, currentHebrewYear(), catalog, IL, shiftedDate)?.hebrewYear ?? null)),
-    [occasions, sourceYear, shiftedDate],
+    [catalog, occasions, sourceYear, shiftedDate],
   );
   // Kvius-matched years share the same Sedra schedule by construction
   // (see hebrewCalendar.ts's `sameKvius`), so this is `sourceYear`'s

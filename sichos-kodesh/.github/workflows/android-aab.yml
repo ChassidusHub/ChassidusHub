@@ -50,7 +50,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core
+          npm run prebuild:check -w @sichos-kodesh/mobile
           cd apps/mobile/android && ./gradlew bundleRelease --stacktrace
 
       - name: Upload signed AAB

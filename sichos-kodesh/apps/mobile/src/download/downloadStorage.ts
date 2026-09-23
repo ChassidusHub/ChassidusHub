@@ -159,6 +159,17 @@ export async function deleteEntryDownloads(entry: CatalogEntry): Promise<void> {
   await writeJsonArray(COMPLETED_STORAGE_KEY, next);
 }
 
+/** Deletes specific files (auto-cleanup's per-target pruning) and drops their completed records, leaving the rest of the occasion alone. */
+export async function deleteTargetDownloads(targets: DownloadTarget[]): Promise<void> {
+  await Promise.all([...new Set(targets.map(localPathForTarget))].map(unlinkIfExists));
+  const keys = new Set(targets.map((target) => target.key));
+  const records = await listStoredDownloads();
+  await writeJsonArray(
+    COMPLETED_STORAGE_KEY,
+    records.filter((record) => !keys.has(record.key)),
+  );
+}
+
 export async function clearAllDownloadedFiles(entries: CatalogEntry[]): Promise<void> {
   const targets = listDownloadTargets(entries, ALL_CONTENT_TYPES);
   await Promise.all([...new Set(targets.map(localPathForTarget))].map(unlinkIfExists));

@@ -3,7 +3,7 @@ import { findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-
 import { describe, expect, it } from 'vitest';
 import { toMafteiachHebrewDateKey } from '../src/hebrewDateKey.js';
 import type { CatalogByYear } from '../src/catalogLookup.js';
-import { resolveOccasionAllYears, resolveThisWeek, resolveThisWeekAllYears, resolveWeekWithFallback, thisWeekDays } from '../src/resolveThisWeek.js';
+import { resolveThisWeek, resolveThisWeekAllYears, resolveWeekWithFallback, thisWeekDays } from '../src/resolveThisWeek.js';
 import type { CatalogEntry } from '../src/types.js';
 
 function makeEntry(hebrewYear: number, hebrewDate: string, label: string, hasAudio: boolean): CatalogEntry {
@@ -105,6 +105,22 @@ describe('resolveThisWeek', () => {
 
     const result = resolveThisWeek(sourceYear, catalog, today);
     expect(result.map((r) => r.entry.occasionLabel)).toEqual(['start', 'mid', 'end']);
+  });
+
+  it('includes a second occasion on the same date (the suffixed key "…-09b"), not only the first', () => {
+    const targetYear = 5786;
+    const { hebrewYear: sourceYear } = findMatchingYears(targetYear, { fromYear: 5700, toYear: targetYear })[0]!;
+    const targetShabbos = new HDate(15, 7, targetYear).onOrAfter(6);
+    const sourceKey = toMafteiachHebrewDateKey({ year: sourceYear, month: targetShabbos.getMonth(), day: targetShabbos.getDate() });
+
+    const catalog: CatalogByYear = {
+      [sourceYear]: [makeEntry(sourceYear, sourceKey, 'first on the date', true), { ...makeEntry(sourceYear, `${sourceKey}b`, 'second on the date', true), occasionId: 99 }],
+    };
+    const today = new Date(`${targetShabbos.greg().toISOString().slice(0, 10)}T00:00:00.000Z`);
+
+    const labels = resolveThisWeek(sourceYear, catalog, today).map((r) => r.entry.occasionLabel);
+
+    expect(labels).toEqual(['first on the date', 'second on the date']);
   });
 
   it('excludes days that roll into the next Hebrew year, rather than misattributing sourceYear\'s own unrelated same-month-day date', () => {
@@ -253,48 +269,4 @@ describe('resolveThisWeekAllYears', () => {
   });
 });
 
-describe('resolveOccasionAllYears', () => {
-  it('finds the same (month, day) across unrelated years, independent of any real "today"', () => {
-    const sourceKey = toMafteiachHebrewDateKey({ year: 5711, month: 11, day: 10 }); // Yud Shevat 5711
-    const matchKey = toMafteiachHebrewDateKey({ year: 5730, month: 11, day: 10 }); // Same (month, day), unrelated year
-    const catalog: CatalogByYear = {
-      5711: [makeEntry(5711, sourceKey, 'Yud Shevat 5711', true)],
-      5730: [makeEntry(5730, matchKey, 'Yud Shevat 5730', true)],
-    };
-
-    const result = resolveOccasionAllYears(catalog, sourceKey);
-
-    expect(result.map((r) => r.hebrewYear)).toEqual([5711, 5730]);
-  });
-
-  it('correctly crosses a leap/non-leap boundary via HDate-native month, not the raw token', () => {
-    // 5712 is not a leap year (plain Adar, token "06"); 5711 is (Adar I, token "06A") - same HDate-native month 12 either way.
-    const nonLeapKey = toMafteiachHebrewDateKey({ year: 5712, month: 12, day: 14 }); // Purim, plain Adar -> "5712-06-14"
-    expect(nonLeapKey).toBe('5712-06-14');
-    const leapKey = toMafteiachHebrewDateKey({ year: 5711, month: 12, day: 14 }); // Same HDate month/day, a leap year -> Adar I
-    expect(leapKey).toBe('5711-06A-14');
-
-    const catalog: CatalogByYear = {
-      5711: [makeEntry(5711, leapKey, 'Purim Koton 5711', true)],
-      5712: [makeEntry(5712, nonLeapKey, 'Purim Koton 5712', true)],
-    };
-
-    const result = resolveOccasionAllYears(catalog, nonLeapKey);
-
-    expect(result.map((r) => r.hebrewYear)).toEqual([5711, 5712]);
-  });
-
-  it('omits years with nothing on that date and years with only a contentless entry', () => {
-    const sourceKey = toMafteiachHebrewDateKey({ year: 5711, month: 11, day: 10 });
-    const gapKey = toMafteiachHebrewDateKey({ year: 5712, month: 11, day: 10 });
-    const catalog: CatalogByYear = {
-      5711: [makeEntry(5711, sourceKey, 'Yud Shevat 5711', true)],
-      5712: [makeEntry(5712, gapKey, 'gap', false)],
-      5713: [makeEntry(5713, 'unrelated-date', 'unrelated', true)],
-    };
-
-    const result = resolveOccasionAllYears(catalog, sourceKey);
-
-    expect(result.map((r) => r.hebrewYear)).toEqual([5711]);
-  });
-});
+// `resolveOccasionAllYears` (the single-occasion "every year" view) is covered in occasionIdentity.test.ts.

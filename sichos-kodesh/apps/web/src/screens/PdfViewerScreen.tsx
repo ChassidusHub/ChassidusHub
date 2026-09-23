@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Loader2, WifiOff } from 'lucide-react';
+import { Contrast, Loader2, WifiOff } from 'lucide-react';
 import type { PDFDocumentLoadingTask } from 'pdfjs-dist';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
@@ -8,6 +8,9 @@ import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '..
 import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
 import { getOccasionProgress, getPdfScrollFraction, recordPdfProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
+import { usePdfInversion } from '../settings/useInvertPdfInDarkMode';
+import { useBaseScheme } from '../settings/useResolvedScheme';
+import { applySchemeOverride } from '../settings/useTheme';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -45,6 +48,22 @@ export function PdfViewerScreen({ resolved }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null });
   const [zoomed, setZoomed] = useState(false);
+  // The colours button flips the pages between black-on-white and
+  // white-on-black for the user's own theme, and remembers the choice per
+  // theme (see useInvertPdfInDarkMode.ts) - so night reading stays
+  // inverted while a daytime flip doesn't change the night default.
+  const scheme = useBaseScheme();
+  const [invertedFor, setInvertedFor] = usePdfInversion();
+  const inverted = invertedFor(scheme);
+  // Flipped pages get the dark chrome, plain pages the light one - the
+  // header and background follow the page rather than sitting in the
+  // opposite palette next to it. Cleared on the way out, so the app
+  // returns to the user's own theme the moment the reader closes.
+  useEffect(() => {
+    const wanted = inverted ? 'dark' : 'light';
+    applySchemeOverride(wanted === scheme ? null : wanted);
+    return () => applySchemeOverride(null);
+  }, [inverted, scheme]);
   const progressMap = useProgressMap();
   const savedFraction = pdf ? getPdfScrollFraction(getOccasionProgress(progressMap, resolved.entry.hebrewYear, resolved.entry.occasionId), pdf.driveFileId) : undefined;
 
@@ -164,8 +183,17 @@ export function PdfViewerScreen({ resolved }: Props) {
   }
 
   return (
-    <div className={zoomed ? 'pdf-viewer-screen zoomed' : 'pdf-viewer-screen'}>
-      <ScreenHeader to={resolved.basePath} title={pdf.label} className="screen-header-inset" />
+    <div className={['pdf-viewer-screen', zoomed && 'zoomed', inverted && 'pdf-inverted'].filter(Boolean).join(' ')}>
+      <ScreenHeader
+        to={resolved.basePath}
+        title={pdf.label}
+        className="screen-header-inset"
+        action={
+          <button type="button" className="icon-button" onClick={() => setInvertedFor(scheme, !inverted)} aria-label={t.pdfInvertToggle} aria-pressed={inverted} title={t.pdfInvertToggle}>
+            <Contrast size={20} aria-hidden />
+          </button>
+        }
+      />
 
       <div className="pdf-viewer-status">
         {state.status === 'loading' && (

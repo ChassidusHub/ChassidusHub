@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { groupByMonth } from '../utils/groupByMonth';
 import { useTranslation } from '../i18n/useLanguage';
@@ -17,6 +17,7 @@ interface Props {
  * there's no "this week" to compute here, only what the year has.
  */
 export function YearBrowserScreen({ hebrewYear }: Props) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   // Filters out entries mafteiach indexed but nothing was resolved for -
   // an empty entry isn't worth a dead-end row.

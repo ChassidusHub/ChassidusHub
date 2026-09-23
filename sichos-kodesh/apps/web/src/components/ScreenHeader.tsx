@@ -8,6 +8,8 @@ interface Props {
   title: ReactNode;
   /** Extra class for a screen whose own container doesn't already provide horizontal padding (see PdfViewerScreen's `screen-header-inset`). */
   className?: string;
+  /** One small control on the trailing side (the PDF reader's colours button) - drawn over the spacer, so the title stays centred exactly as without it. */
+  action?: ReactNode;
 }
 
 /**
@@ -27,9 +29,10 @@ interface Props {
  * sits in a box equally spaced from both edges (see the flex-1
  * `.screen-header-title` rule). A title too long to fit centered just
  * fills that box edge to edge with its own ellipsis, which reads the same
- * as ordinary start-aligned truncation.
+ * as ordinary start-aligned truncation. An `action` is positioned over
+ * that spacer rather than beside it, so it never widens the trailing side.
  */
-export function ScreenHeader({ to, title, className }: Props) {
+export function ScreenHeader({ to, title, className, action }: Props) {
   const { t, language } = useTranslation();
   const Chevron = language === 'he' ? ChevronRight : ChevronLeft;
 
@@ -39,9 +42,12 @@ export function ScreenHeader({ to, title, className }: Props) {
       <span className="screen-header-title">
         {title}
       </span>
-      <span className="back-link screen-header-spacer" aria-hidden="true">
-        <Chevron size={18} strokeWidth={2.5} />
-        {t.back}
+      <span className="screen-header-side">
+        <span className="back-link screen-header-spacer" aria-hidden="true">
+          <Chevron size={18} strokeWidth={2.5} />
+          {t.back}
+        </span>
+        {action && <span className="screen-header-action">{action}</span>}
       </span>
     </div>
   );

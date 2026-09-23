@@ -2,7 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
@@ -27,6 +27,7 @@ const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
  * re-scan on every keystroke, while still feeling instant on a fast one.
  */
 export function SearchScreen() {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const [query, setQuery] = useState('');
@@ -44,9 +45,9 @@ export function SearchScreen() {
   // every render.
   const results = useMemo(
     () => searchOccasions(catalog, { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types }),
-    [deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types],
+    [catalog, deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types],
   );
-  const years = useMemo(() => browsableYears(catalog), []);
+  const years = useMemo(() => browsableYears(catalog), [catalog]);
   const parshas = useMemo(() => parshaOptions(language), [language]);
   const chagim = useMemo(() => chagOptions(language), [language]);
   const specialDays = useMemo(() => specialDayOptions(language), [language]);

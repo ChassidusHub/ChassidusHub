@@ -6,6 +6,7 @@ on:
     paths:
       - "apps/mobile/**"
       - "packages/**"
+      - "scripts/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/mobile-android-smoke.yml"

@@ -12,7 +12,7 @@ import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadS
 import { isRtlLanguage, useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
-import { ShareButton } from '../components/ShareButton';
+import { OccasionActions } from '../components/OccasionActions';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
 import { formatDuration, totalDurationSeconds } from '../utils/formatDuration';
 
@@ -145,6 +145,9 @@ export function RecordingsScreen({ resolved }: Props) {
   const isThisPlaylistActive = player.playlist?.title === entry.occasionLabel;
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
   const totalDuration = formatDuration(totalDurationSeconds(entry.audio));
+  // The playlist's own "download all" stays an icon in the header card, next
+  // to the play button (the occasion page's bigger download pill would
+  // repeat what this card already says); only Share sits below as a pill.
   let headerDownload = null;
   if (allChaptersState === 'downloaded') {
     headerDownload = (
@@ -189,7 +192,7 @@ export function RecordingsScreen({ resolved }: Props) {
         {headerDownload && <div className="playlist-header-side">{headerDownload}</div>}
       </div>
 
-      <ShareButton title={entry.occasionLabel} />
+      <OccasionActions entry={entry} showDownload={false} />
 
       <ul className="playlist">
         {entry.audio.map((chapter, index) => (

@@ -1,32 +1,49 @@
 import React from 'react';
-import { Share } from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { Pressable, Share, StyleSheet } from 'react-native';
+import { Share2 } from 'lucide-react-native';
 import { WEB_APP_BASE_URL } from '../config';
 import { useTranslation } from '../i18n/useTranslation';
-import { AppButton } from '../ui/AppButton';
+import { AppText } from '../ui/Text';
+import { useColors } from '../ui/theme';
+import { row } from '../ui/rtl';
+import { actionPillStyles } from './OccasionActions';
 
 interface Props {
   title: string;
   hebrewYear: number;
   occasionId: number;
-  style?: StyleProp<ViewStyle>;
 }
 
 /**
- * Shares a link to this occasion's page on the web PWA
- * (WEB_APP_BASE_URL + /browse/:hebrewYear/:occasionId - the one canonical,
- * kind-independent URL every occasion has there, same one SearchScreen and
- * DownloadedScreen link through on web regardless of how you found it).
- * Mirrors apps/web's ShareButton.tsx, using RN's built-in Share API instead
- * of the Web Share API.
+ * Shares a link to this occasion's page on the web app - the one canonical,
+ * kind-independent URL every occasion has there (`/browse/:year/:id`).
+ * Mirrors the web's ShareButton, using the OS share sheet instead of the Web
+ * Share API. Rendered as one of the matching pills in OccasionActions -
+ * never on its own - so Share and Download always sit side by side in the
+ * same shape.
  */
-export function ShareButton({ title, hebrewYear, occasionId, style }: Props) {
-  const { t } = useTranslation();
+export function ShareButton({ title, hebrewYear, occasionId }: Props) {
+  const { t, isRtl } = useTranslation();
+  const colors = useColors();
   const url = `${WEB_APP_BASE_URL}/browse/${hebrewYear}/${occasionId}`;
 
   function handleShare(): void {
     Share.share({ message: `${title}\n${url}`, url, title }).catch(() => undefined);
   }
 
-  return <AppButton label={t.shareLabel} variant="ghost" style={style} onPress={handleShare} />;
+  return (
+    <Pressable
+      onPress={handleShare}
+      hitSlop={6}
+      accessibilityRole="button"
+      style={({ pressed }) => [actionPillStyles.pill, { flexDirection: row(isRtl), borderColor: colors.border, backgroundColor: pressed ? colors.cardBg : colors.bg }]}
+    >
+      <Share2 size={16} color={colors.fg} />
+      <AppText style={[styles.label, { color: colors.fg }]}>{t.shareLabel}</AppText>
+    </Pressable>
+  );
 }
+
+const styles = StyleSheet.create({
+  label: { fontSize: 14, fontWeight: '600' },
+});

@@ -89,8 +89,8 @@ android {
         applicationId "com.sichoskodeshmobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 3
+        versionName "1.2.0"
     }
     // Release signing reads from env vars (ANDROID_KEYSTORE_PATH etc., for a CI
     // environment that sets them) or, for local release builds, from a
@@ -142,6 +142,8 @@ dependencies {
 
     // WorkManager for durable background downloads
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+    // Main-thread dispatcher for the background sync worker's React start-up hand-off.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

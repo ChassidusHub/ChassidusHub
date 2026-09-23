@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { browsableYears } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
 
 export function BrowseYearsScreen() {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const allYears = browsableYears(catalog);
 

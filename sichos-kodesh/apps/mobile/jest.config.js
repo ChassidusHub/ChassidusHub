@@ -18,7 +18,8 @@ module.exports = {
   // babel-jest to walk up from the file under test and find apps/mobile/babel.config.js,
   // enabling @react-native/babel-preset and its TypeScript transform.
   transform: {
-    '^.+\\.[jt]sx?$': ['babel-jest', { rootMode: 'upward' }],
+    // `.mjs` too: lucide-react-native ships an ESM-only entry point.
+    '^.+\\.m?[jt]sx?$': ['babel-jest', { rootMode: 'upward' }],
   },
   moduleNameMapper: {
     '^@hebcal/core$': '<rootDir>/../../node_modules/@hebcal/core/dist/esm/index.js',

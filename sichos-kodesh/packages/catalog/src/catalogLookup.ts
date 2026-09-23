@@ -1,6 +1,7 @@
 import { buildFixedDateSchedule, buildWeeklySchedule, MIN_HISTORICAL_YEAR } from '@sichos-kodesh/kvius-engine';
 import type { FixedOccasionDef } from '@sichos-kodesh/kvius-engine';
 import { toMafteiachHebrewDateKey } from './hebrewDateKey.js';
+import { sameHebrewDate } from './mafteiachMonth.js';
 import type { CatalogEntry } from './types.js';
 
 export type CatalogByYear = Record<number, CatalogEntry[]>;
@@ -29,7 +30,10 @@ export function findCatalogEntryForOccasion(
   const yearEntries = catalog[hebrewYear] ?? [];
   const hebrewDateKey = resolveOccasionKeyToHebrewDateKey(hebrewYear, occasionKey, il, fixedOccasions);
   if (!hebrewDateKey) return undefined;
-  return yearEntries.find((entry) => entry.hebrewDate === hebrewDateKey);
+  // Several occasions can share the date (see `hebrewDateBase`); the one
+  // with real content answers "is there something to play/read" best.
+  const onDate = yearEntries.filter((entry) => sameHebrewDate(entry.hebrewDate, hebrewDateKey));
+  return onDate.find(entryHasContent) ?? onDate[0];
 }
 
 function resolveOccasionKeyToHebrewDateKey(

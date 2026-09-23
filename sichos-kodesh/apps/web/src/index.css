@@ -351,6 +351,48 @@ h1 {
   pointer-events: none;
 }
 
+/* The spacer's box, with an optional control drawn over it (the PDF
+   reader's colours button) - positioned absolutely so it never widens the
+   trailing side and shifts the centred title. */
+.screen-header-side {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.screen-header-action {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+}
+
+/* A bare icon in a 36px circle - the header's own small controls. */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.icon-button:hover {
+  background: var(--card-bg);
+  color: var(--fg);
+}
+
+.icon-button[aria-pressed='true'] {
+  color: var(--accent);
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -379,6 +421,249 @@ h1 {
   color: var(--muted);
   font-size: 0.8125rem;
   margin: 0 0 16px;
+}
+
+/* "This occasion, every year": the other farbrengens that merely share the
+   matched one's date sit under a small label, in the muted colour, so the
+   real match reads first. */
+.occasion-others-label {
+  margin: 4px 0 8px;
+}
+
+.occasion-others-list .year-row-year {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Settings pages (SettingsControls.tsx): eyebrow-titled groups, each one
+   card of rows; a row is label + help on the leading side and its control
+   on the trailing side. Switch rows are whole-row buttons. */
+.settings-group {
+  margin: 0 0 4px;
+}
+
+.settings-group-title {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 8px;
+}
+
+.settings-group:first-of-type .settings-group-title {
+  margin-top: 0;
+}
+
+.settings-group-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin: 8px 2px 0;
+}
+
+.settings-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 0 14px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.setting-row:first-child {
+  border-top: none;
+}
+
+.setting-row-clickable {
+  cursor: pointer;
+}
+
+.setting-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.setting-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.setting-row-label {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.setting-row-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.setting-row-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.setting-row-stack .setting-row-control {
+  width: 100%;
+}
+
+.setting-row-value {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: end;
+}
+
+.settings-danger .setting-row-label {
+  color: var(--danger);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 12px;
+}
+
+.settings-actions .button {
+  margin: 0;
+}
+
+.button-secondary {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+.button-danger {
+  background: var(--danger);
+  color: var(--danger-fg);
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.toggle[aria-checked='true'] {
+  background: var(--accent);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.toggle[aria-checked='true'] .toggle-knob {
+  transform: translateX(18px);
+}
+
+[dir='rtl'] .toggle[aria-checked='true'] .toggle-knob {
+  transform: translateX(-18px);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.segmented {
+  display: flex;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.segmented-option {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 7px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.segmented-option[aria-checked='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.segmented-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 0 12px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
 }
 
 .year-list {
@@ -637,6 +922,8 @@ h1 {
   text-align: start;
 }
 
+/* The playlist's own "download all" - an icon beside the play button in
+   the header card (see RecordingsScreen), not a pill in the action bar. */
 .playlist-header-side {
   display: flex;
   align-items: center;
@@ -838,45 +1125,68 @@ h1 {
   transition: stroke-dashoffset 150ms linear;
 }
 
-/* FarbrengenScreen's own, bigger occasion-level echo of the same row state above. */
-.occasion-download-state {
+/* Share + Download as one matching pair of pills on every occasion page
+   and recordings page (see OccasionActions.tsx) - the same shape whether
+   it is a button (start a download, share), a live status (downloading,
+   with the progress ring) or a done state, so the two never look like
+   they came from different screens. */
+.action-bar {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--muted);
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
 }
 
-.occasion-download-button {
+.action-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 0;
-  border: none;
-  background: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter 0.12s ease, background-color 0.12s ease;
+}
+
+.action-pill svg {
+  flex-shrink: 0;
+}
+
+.action-pill:hover {
+  background: var(--card-bg);
+}
+
+/* The download pill - the primary action of the pair, tinted like the
+   playlist play button's quieter cousin rather than filled solid, so it
+   reads as a real action without shouting over the content. */
+.action-pill-primary,
+.action-pill-primary:hover {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
 }
 
-/* FarbrengenScreen/RecordingsScreen's own share action - same shape as
-   `.occasion-download-button` but muted, since sharing isn't the primary
-   call to action on either page the way downloading is. */
-.share-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 12px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
+.action-pill-primary:not(.action-pill-static):hover {
+  filter: brightness(0.92);
+}
+
+/* A status, not a button: "Downloading" and "Downloaded" keep the pill's shape but nothing happens on hover. */
+.action-pill-static {
+  cursor: default;
+}
+
+/* The brief Cache Storage lookup before the real state is known - same footprint, dimmed and inert, so nothing pops in a moment later. */
+.action-pill-pending {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* Continue section (home page) - a Spotify-style "pick up where you left
@@ -1352,22 +1662,16 @@ h1 {
   display: block;
 }
 
-/* Night-reading mode for PDFs (see useInvertPdfInDarkMode.ts) - only takes
-   effect while dark mode is *actually* active, same dual condition
-   (`[data-theme='dark']` vs. the OS theme via `prefers-color-scheme`)
-   `:root`'s own dark tokens above use, so the setting can stay on across a
-   theme switch without doing anything in light mode. `hue-rotate(180deg)`
+/* Inverted page colours (white text on black) - a class the reader itself
+   sets from the per-theme flags in useInvertPdfInDarkMode.ts (on by
+   default in dark mode, off in light mode, and flipped for the current
+   theme by the colours button in the header), so a theme switch and the
+   button both take effect without touching <html>. `hue-rotate(180deg)`
    alongside `invert(1)` un-inverts hue while keeping the inverted
    lightness - a plain `invert(1)` alone would also flip every color (red
    text would render blue), not just light-vs-dark. */
-:root.invert-pdf-dark[data-theme='dark'] .pdf-page canvas {
+.pdf-viewer-screen.pdf-inverted .pdf-page canvas {
   filter: invert(1) hue-rotate(180deg);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root.invert-pdf-dark:not([data-theme='light']) .pdf-page canvas {
-    filter: invert(1) hue-rotate(180deg);
-  }
 }
 
 /* The single fixed-position container at the bottom of the viewport - both
@@ -1398,6 +1702,39 @@ h1 {
 
 .global-player-collapsed .global-player-chapters {
   display: none;
+}
+
+/* Put away: nothing but a pull-up handle at the bottom edge - swipe up on
+   it, or tap it, and the bar is back. */
+.global-player-hidden {
+  display: flex;
+  justify-content: center;
+}
+
+.global-player-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 640px;
+  min-height: 22px;
+  padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px));
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.global-player-handle-pill {
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.global-player-handle:hover .global-player-handle-pill {
+  opacity: 1;
 }
 
 .download-progress-bar {
@@ -1531,6 +1868,32 @@ h1 {
   color: var(--danger);
   font-size: 0.8125rem;
   line-height: 1.3;
+}
+
+/* The speed control - a small text pill ("1.5×") after the transport
+   buttons, shown only for a shiur or a chazara (see GlobalPlayerBar); the
+   Rebbe's own recordings never get one. One tap cycles to the next speed. */
+.global-player-rate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 40px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.global-player-rate:hover {
+  color: var(--fg);
+  background: var(--card-bg);
 }
 
 .global-player-transport {

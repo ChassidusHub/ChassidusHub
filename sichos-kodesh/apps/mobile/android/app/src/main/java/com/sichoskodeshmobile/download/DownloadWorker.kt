@@ -8,8 +8,12 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.sichoskodeshmobile.background.AppNotifications
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -33,6 +37,17 @@ class DownloadWorker(
         const val KEY_TARGET_KEY = "targetKey"
         const val KEY_URL = "url"
         const val KEY_FILENAME = "filename"
+        /** "true" when the automatic sync queued this file (see DownloadModule.enqueueDownload). */
+        const val KEY_AUTO = "auto"
+        const val KEY_LABEL = "label"
+        const val KEY_PROGRESS_TITLE = "progressTitle"
+        const val KEY_NOTIFY_DONE = "notifyDone"
+        const val KEY_DONE_TITLE = "doneTitle"
+        const val KEY_DONE_BODY = "doneBody"
+        const val KEY_DONE_DEEP_LINK = "doneDeepLink"
+
+        /** Tag on every auto-sync download, so the last one to finish can tell it is the last. */
+        const val AUTO_TAG = "SichosKodeshAutoDownload"
 
         const val OUT_LOCAL_PATH = "localPath"
         const val OUT_ERROR = "error"
@@ -60,6 +75,9 @@ class DownloadWorker(
 
         return try {
             downloadFile(url, destFile, partFile)
+            if (inputData.getString(KEY_AUTO) == "true" && inputData.getString(KEY_NOTIFY_DONE) == "true") {
+                notifyIfBatchDone()
+            }
             Result.success(workDataOf(OUT_LOCAL_PATH to destFile.absolutePath))
         } catch (e: Exception) {
             // Do NOT delete partFile here — it may contain partially downloaded bytes
@@ -142,11 +160,33 @@ class DownloadWorker(
         }
     }
 
+    /**
+     * The automatic sync's "ready offline" notice, posted by whichever of the
+     * batch's downloads finishes last (no other auto-tagged work still
+     * pending or running). The text was prepared by JS in the user's language.
+     */
+    private suspend fun notifyIfBatchDone() {
+        val stillGoing = withContext(Dispatchers.IO) {
+            WorkManager.getInstance(applicationContext).getWorkInfosByTag(AUTO_TAG).get()
+        }.count { !it.state.isFinished && it.id != id }
+        if (stillGoing > 0) return
+        AppNotifications.post(
+            applicationContext,
+            AppNotifications.ID_DOWNLOADS_DONE,
+            AppNotifications.CHANNEL_DOWNLOADS_DONE,
+            inputData.getString(KEY_DONE_TITLE) ?: "Ready to use offline",
+            inputData.getString(KEY_DONE_BODY) ?: "",
+            inputData.getString(KEY_DONE_DEEP_LINK),
+        )
+    }
+
     private fun createForegroundInfo(targetKey: String, filename: String): ForegroundInfo {
         createNotificationChannel()
+        val label = inputData.getString(KEY_LABEL)
         val notification = NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentTitle("Downloading…")
+            .setContentTitle(inputData.getString(KEY_PROGRESS_TITLE) ?: "Downloading…")
+            .apply { if (!label.isNullOrEmpty()) setContentText(label) }
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_PROGRESS)
             .setSilent(true)

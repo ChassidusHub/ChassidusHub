@@ -1,131 +1,166 @@
-import React from 'react';
-import { ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
-import type { PdfEdition } from '@sichos-kodesh/catalog';
-import { useTranslation, useLanguage } from '../i18n/useTranslation';
+import React, { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react-native';
+import { contentPreset } from '@sichos-kodesh/app-core';
+import type { ContentPreset } from '@sichos-kodesh/app-core';
+import { isBackgroundSyncAvailable, requestNotificationPermission } from '../background/backgroundNative';
+import { useCatalog, useCatalogInfo } from '../catalog/catalogStore';
+import { checkForCatalogUpdate, useCatalogUpdateStatus } from '../catalog/catalogUpdater';
+import type { CatalogUpdateStatus } from '../catalog/catalogUpdater';
+import { APP_VERSION } from '../changelog';
+import { useDownload } from '../download/useDownload';
+import { getDownloadStorageUsage } from '../download/downloadStorage';
+import { useLanguage, useTranslation } from '../i18n/useTranslation';
 import type { Language } from '../i18n/translations';
 import type { SettingsScreenProps } from '../navigation/types';
 import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
-import { useEditionPreference } from '../settings/editionPreference';
-import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
-import { ListRow, RowSeparator } from '../ui/ListRow';
+import { useInvertPdfInDarkMode } from '../settings/invertPdfInDarkMode';
+import { useNotificationSettings } from '../settings/notificationSettings';
+import type { NotificationSettings } from '../settings/notificationSettings';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { SectionLabel } from '../ui/SectionLabel';
-import { spacing } from '../ui/theme';
+import { Spinner } from '../ui/Spinner';
+import { Segmented, SettingRow, SettingsGroup, Toggle } from '../ui/settings/SettingsControls';
+import { useColors, useTheme } from '../ui/theme';
+import type { ThemeMode } from '../ui/theme';
+import { formatBytes } from '../utils/formatBytes';
 
-const OPTIONS: Array<{ value: PdfEdition | null; labelKey: 'pdfEditionNoPreference' | 'sichosKodeshEditionLabel' | 'pdfEditionSefer' | 'torasMenachemEditionLabel'; sublabelKey: 'pdfEditionNoPreferenceHelp' | 'pdfEditionSichosKodeshHelp' | 'pdfEditionSeferHelp' | 'pdfEditionTorasMenachemHelp' }> = [
-  { value: null, labelKey: 'pdfEditionNoPreference', sublabelKey: 'pdfEditionNoPreferenceHelp' },
-  { value: 'sichosKodesh', labelKey: 'sichosKodeshEditionLabel', sublabelKey: 'pdfEditionSichosKodeshHelp' },
-  { value: 'sefer', labelKey: 'pdfEditionSefer', sublabelKey: 'pdfEditionSeferHelp' },
-  { value: 'torasMenachem', labelKey: 'torasMenachemEditionLabel', sublabelKey: 'pdfEditionTorasMenachemHelp' },
-];
+/** A language switch names each language in itself, whichever one is active. */
+const LANGUAGE_NATIVE_NAMES: Record<Language, string> = { en: 'English', he: 'עברית' };
 
-const LANGUAGE_OPTIONS: Array<{ value: Language; labelKey: 'languageEnglish' | 'languageHebrew' }> = [
-  { value: 'en', labelKey: 'languageEnglish' },
-  { value: 'he', labelKey: 'languageHebrew' },
-];
+type Translation = ReturnType<typeof useTranslation>['t'];
 
+/** The user-facing name of a "what to keep" preset (see contentPreset in app-core). Same as the web's settings/presetLabel.ts. */
+export function presetLabel(t: Translation, preset: ContentPreset): string {
+  return preset === 'essentials' ? t.presetEssentials : preset === 'everything' ? t.presetEverything : t.presetCustom;
+}
+
+/** The one line under "Update catalog" that says what the last check found - same wording as the web's About screen. */
+export function catalogStatusLine(t: Translation, status: CatalogUpdateStatus): string {
+  switch (status.phase) {
+    case 'checking':
+      return t.catalogChecking;
+    case 'downloading':
+      return t.catalogDownloading(status.version);
+    case 'updated':
+      return t.catalogUpdated(status.version);
+    case 'up-to-date':
+      return t.catalogUpToDate;
+    case 'error':
+      return t.catalogUpdateFailed;
+    default:
+      return t.catalogUpdateHelp;
+  }
+}
+
+/**
+ * Settings home (web: SettingsScreen): every quick preference as a real
+ * control on this screen (theme, PDF colours, language, playback, and on
+ * the phone the two notifications), and one row per screen that needs
+ * more room (offline & downloads, downloaded content, about) with its
+ * current state as the row's value.
+ */
 export function SettingsScreen({ navigation }: SettingsScreenProps) {
-  const { t, isRtl } = useTranslation();
+  const catalog = useCatalog();
+  const catalogInfo = useCatalogInfo();
+  const catalogStatus = useCatalogUpdateStatus();
+  const colors = useColors();
+  const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
-  const [preference, setPreference] = useEditionPreference();
+  const { mode: theme, setMode: setTheme } = useTheme();
   const [autoplay, setAutoplay] = useAutoplayOnHanacha();
-  const systemScheme = useColorScheme();
+  const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
+  const [notifications, setNotifications] = useNotificationSettings();
+  const [notificationsBlocked, setNotificationsBlocked] = useState(false);
+  const { settings } = useDownload();
+  const [usage, setUsage] = useState<number | null>(null);
+  // Phone only (see src/background) - a web app has no notifications of its own here.
+  const notificationsAvailable = isBackgroundSyncAvailable();
+
+  useEffect(() => {
+    getDownloadStorageUsage(Object.values(catalog).flat())
+      .then(setUsage)
+      .catch(() => setUsage(null));
+  }, [catalog]);
+
+  function toggleNotification(key: keyof NotificationSettings): void {
+    const next = !notifications[key];
+    if (!next) {
+      setNotifications({ ...notifications, [key]: false });
+      return;
+    }
+    // Turning one on is the moment Android 13+ asks; a refusal leaves it off and explains why.
+    requestNotificationPermission()
+      .then((granted) => {
+        setNotificationsBlocked(!granted);
+        if (granted) setNotifications({ ...notifications, [key]: true });
+      })
+      .catch(() => setNotificationsBlocked(true));
+  }
+
+  const themeOptions: Array<{ value: ThemeMode; label: string }> = [
+    { value: 'light', label: t.themeLight },
+    { value: 'dark', label: t.themeDark },
+    { value: 'system', label: t.themeSystem },
+  ];
+  const languageOptions = (['en', 'he'] as Language[]).map((value) => ({ value, label: LANGUAGE_NATIVE_NAMES[value] }));
+  const offlineSummary = settings.autoDownloadEnabled ? t.autoDownloadSummaryOn(presetLabel(t, contentPreset(settings.contentTypes)), settings.wifiOnly) : t.autoDownloadSummaryOff;
 
   return (
-    <Screen>
-      <ScreenHeader title={t.settingsTitle} onBack={() => navigation.goBack()} backLabel={t.back} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <SectionLabel label={t.languageSection} />
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            {LANGUAGE_OPTIONS.map((option, index) => (
-              <React.Fragment key={option.value}>
-                {index > 0 ? <RowSeparator /> : null}
-                <ListRow
-                  label={t[option.labelKey]}
-                  right={language === option.value ? <AppText color="accent">✓</AppText> : null}
-                  onPress={() => setLanguage(option.value)}
-                />
-              </React.Fragment>
-            ))}
-          </Card>
-        </View>
+    <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title={t.settingsTitle} />}>
+      <SettingsGroup title={t.appearanceSection} first>
+        <SettingRow label={t.themeLabel} stack first>
+          <Segmented options={themeOptions} value={theme} onChange={setTheme} label={t.themeLabel} />
+        </SettingRow>
+        <SettingRow label={t.invertPdfDarkModeLabel} onPress={() => setInvertPdf(!invertPdf)}>
+          <Toggle checked={invertPdf} label={t.invertPdfDarkModeLabel} decorative />
+        </SettingRow>
+      </SettingsGroup>
 
-        <SectionLabel label={t.pdfEditionPreferenceSection} />
-        <AppText variant="bodySmall" color="muted" style={[styles.sectionHelp, isRtl && styles.textRight]}>
-          {t.pdfEditionPreferenceHelp}
-        </AppText>
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            {OPTIONS.map((option, index) => (
-              <React.Fragment key={String(option.value)}>
-                {index > 0 ? <RowSeparator /> : null}
-                <ListRow
-                  label={t[option.labelKey]}
-                  sublabel={t[option.sublabelKey]}
-                  right={preference === option.value ? <AppText color="accent">✓</AppText> : null}
-                  onPress={() => setPreference(option.value)}
-                />
-              </React.Fragment>
-            ))}
-          </Card>
-        </View>
+      <SettingsGroup title={t.languageSection}>
+        <SettingRow stack first>
+          <Segmented options={languageOptions} value={language} onChange={setLanguage} label={t.languageSection} />
+        </SettingRow>
+      </SettingsGroup>
 
-        <SectionLabel label={t.appearanceSection} />
-        <View style={styles.cardWrap}>
-          <Card>
-            <AppText variant="bodyMedium">{t.themeSystem}</AppText>
-            <AppText variant="bodySmall" color="muted" style={[styles.cardHelp, isRtl && styles.textRight]}>
-              {t.appearanceFollowsSystem(systemScheme === 'dark' ? t.themeDark : t.themeLight)}
-            </AppText>
-          </Card>
-        </View>
+      <SettingsGroup title={t.playbackSection}>
+        <SettingRow label={t.autoplayHanachaLabel} help={t.autoplayHanachaHelp} onPress={() => setAutoplay(!autoplay)} first>
+          <Toggle checked={autoplay} label={t.autoplayHanachaLabel} decorative />
+        </SettingRow>
+      </SettingsGroup>
 
-        <SectionLabel label={t.playbackSection} />
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            <ListRow
-              label={t.autoplayHanachaLabel}
-              sublabel={t.autoplayHanachaHelp}
-              right={autoplay ? <AppText color="accent">✓</AppText> : null}
-              onPress={() => setAutoplay(!autoplay)}
-            />
-          </Card>
-        </View>
+      {notificationsAvailable && (
+        <SettingsGroup title={t.notificationsSection} help={notificationsBlocked ? t.notificationsBlockedHelp : undefined}>
+          <SettingRow label={t.notifyNewWeekLabel} help={t.notifyNewWeekHelp} onPress={() => toggleNotification('newWeek')} first>
+            <Toggle checked={notifications.newWeek} label={t.notifyNewWeekLabel} decorative />
+          </SettingRow>
+          <SettingRow label={t.notifyDownloadsReadyLabel} onPress={() => toggleNotification('downloadsReady')}>
+            <Toggle checked={notifications.downloadsReady} label={t.notifyDownloadsReadyLabel} decorative />
+          </SettingRow>
+        </SettingsGroup>
+      )}
 
-        <SectionLabel label={t.downloadsLink} />
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            <ListRow
-              label={t.downloadSettingsTitle}
-              sublabel={t.downloadForegroundOnlyHelp}
-              right={<AppText color="muted">›</AppText>}
-              onPress={() => navigation.navigate('DownloadSettings')}
-            />
-          </Card>
-        </View>
+      <SettingsGroup title={t.offlineGroup}>
+        <SettingRow label={t.downloadSettingsTitle} value={offlineSummary} chevron onPress={() => navigation.navigate('DownloadSettings')} first />
+        <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} chevron onPress={() => navigation.navigate('Downloaded')} />
+      </SettingsGroup>
 
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            <ListRow
-              label={t.aboutLink}
-              right={<AppText color="muted">›</AppText>}
-              onPress={() => navigation.navigate('About')}
-            />
-          </Card>
-        </View>
-      </ScrollView>
+      {/* The list of farbrengens itself has its own releases (packages/catalog) - the phone fetches a newer one from api.sk.shmuky.dev on its own once a day, and on demand here. */}
+      <SettingsGroup title={t.catalogSection}>
+        <SettingRow label={t.catalogVersionLabel} value={`${catalogInfo.version} · ${catalogInfo.source === 'bundled' ? t.catalogSourceBundled : t.catalogSourceUpdated}`} first />
+        <SettingRow
+          label={t.catalogUpdateLabel}
+          help={catalogStatusLine(t, catalogStatus)}
+          onPress={() => {
+            checkForCatalogUpdate().catch(() => undefined);
+          }}
+        >
+          {catalogStatus.phase === 'checking' || catalogStatus.phase === 'downloading' ? <Spinner size={18} color={colors.muted} /> : <RefreshCw size={18} color={colors.muted} />}
+        </SettingRow>
+      </SettingsGroup>
+
+      <SettingsGroup>
+        <SettingRow label={t.aboutLink} value={t.aboutVersion(APP_VERSION)} chevron onPress={() => navigation.navigate('About')} first />
+      </SettingsGroup>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { paddingBottom: spacing.xxl },
-  sectionHelp: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  textRight: { textAlign: 'right' },
-  cardWrap: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
-  cardReset: { paddingVertical: 0, paddingHorizontal: 0 },
-  cardHelp: { marginTop: spacing.xs, lineHeight: 19 },
-});

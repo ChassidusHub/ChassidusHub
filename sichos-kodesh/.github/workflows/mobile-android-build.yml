@@ -5,6 +5,7 @@ on:
     paths:
       - "apps/mobile/**"
       - "packages/**"
+      - "scripts/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/mobile-android-build.yml"
@@ -13,6 +14,7 @@ on:
     paths:
       - "apps/mobile/**"
       - "packages/**"
+      - "scripts/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/mobile-android-build.yml"

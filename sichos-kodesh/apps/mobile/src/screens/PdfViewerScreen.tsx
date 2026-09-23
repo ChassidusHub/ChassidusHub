@@ -1,432 +1,204 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Contrast } from 'lucide-react-native';
 import Pdf from 'react-native-pdf';
-import type { PdfRef } from 'react-native-pdf';
-import catalog from '../catalog/data';
-import { downloadPdf } from '../download/download';
+import { useCatalog } from '../catalog/catalogStore';
+import { downloadPdf, localPdfPathIfExists, pdfUrl } from '../download/download';
 import { useTranslation } from '../i18n/useTranslation';
 import type { PdfViewerScreenProps } from '../navigation/types';
-import { pdfIdentityFromRoute, resolveInitialPdfPage } from '../pdf/pdfIdentity';
-import { loadSavedPdfProgress, savePdfProgress } from '../pdf/pdfProgress';
-import {
-  DEFAULT_PDF_READER_SETTINGS,
-  getPdfZoomConfig,
-  readPdfReaderSettings,
-  savePdfReaderSettings,
-  togglePdfDarkMode,
-  togglePdfZoomPreset,
-} from '../pdf/pdfReaderSettings';
-import { findCatalogEntry } from '../routes/catalogRoutes';
-import { AppButton } from '../ui/AppButton';
-import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
-import { EmptyState } from '../ui/EmptyState';
+import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
+import { getOccasionProgress, getPdfPage, readProgressMap, recordPdfProgress } from '../player/progressStore';
+import { useInvertPdfInDarkMode, useInvertPdfInLightMode } from '../settings/invertPdfInDarkMode';
+import { Button } from '../ui/Button';
+import { OfflineNote } from '../ui/OfflineNote';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { colors, spacing } from '../ui/theme';
+import { Spinner } from '../ui/Spinner';
+import { AppText } from '../ui/Text';
+import { GapMessage } from '../ui/Typography';
+import { lightColors, useTheme } from '../ui/theme';
+import { row } from '../ui/rtl';
 
-type LoadState =
-  | { status: 'loading'; percent: number | null; path: string | null }
-  | { status: 'ready'; path: string }
-  | { status: 'error'; message: string };
+type LoadState = { status: 'loading'; percent: number | null; path: string | null } | { status: 'ready'; path: string } | { status: 'error'; message: string; offline: boolean };
 
 /**
- * Renders a PDF's pages directly in the app (via react-native-pdf).
- * Audio playback is handled by the global PlayerProvider/GlobalPlayerBar
- * that persists at the app root - no need for a screen-local BottomAudioPlayer.
- * The audio queue is loaded when the user presses Play in OccasionDetail before
- * navigating here; if they navigate here directly, GlobalPlayerBar shows
- * whatever is currently queued in the global player.
+ * Renders a PDF in-app (react-native-pdf: native pinch-zoom and panning).
+ * The file is fetched to the app's own documents directory first - the
+ * same path the download system uses, so reading a PDF once also keeps it
+ * available offline, the way the web's cache-first service worker does.
+ * The page reached is recorded into the progress store (see
+ * recordPdfProgress) so the home page's Continue row reopens it there.
  */
 export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
-  const { t } = useTranslation();
-  const colorScheme = useColorScheme();
+  const catalog = useCatalog();
   const { driveFileId, resourceKey, label, hebrewYear, occasionId } = route.params;
-  const pdfRef = useRef<PdfRef>(null);
+  const { t, isRtl } = useTranslation();
+  const { colors, baseScheme, setSchemeOverride } = useTheme();
+  const [invertInDarkMode, setInvertInDarkMode] = useInvertPdfInDarkMode();
+  const [invertInLightMode, setInvertInLightMode] = useInvertPdfInLightMode();
+  const [state, setState] = useState<LoadState>({ status: 'loading', percent: null, path: null });
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const currentPageRef = useRef(1);
-  const totalPagesRef = useRef<number | null>(null);
-  const [state, setState] = useState<LoadState>({
-    status: 'loading',
-    percent: 0,
-    path: null,
-  });
-  const [restoredPage, setRestoredPage] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState<number | null>(null);
-  const [progressReady, setProgressReady] = useState(false);
-  const [readerSettings, setReaderSettings] = useState(DEFAULT_PDF_READER_SETTINGS);
-  const [readerSettingsReady, setReaderSettingsReady] = useState(false);
-  const [zoomScale, setZoomScale] = useState(1);
-  const [retryToken, setRetryToken] = useState(0);
-  const identity = useMemo(() => pdfIdentityFromRoute(route.params), [route.params]);
-  const entry = useMemo(
-    () => findCatalogEntry(catalog, hebrewYear, occasionId),
-    [hebrewYear, occasionId],
-  );
-  const routePdf = useMemo(
-    () => entry?.pdfs.find((pdf) => pdf.driveFileId === driveFileId) ?? null,
-    [driveFileId, entry],
-  );
-  const hasKnownPdfRoute = !!identity && !!entry && !!routePdf;
-  const darkModeEnabled = readerSettings.invertInDarkMode && colorScheme === 'dark';
-  const zoomConfig = useMemo(
-    () => getPdfZoomConfig(readerSettings.zoomPreset),
-    [readerSettings.zoomPreset],
-  );
-  const title = label.trim() || routePdf?.label || t.read;
-  const occasionLabel = route.params.occasionLabel ?? entry?.occasionLabel ?? null;
-  const sectionLabel =
-    route.params.sectionLabel ??
-    (routePdf ? t.sectionLabels[routePdf.section] : null);
+  const lastPageRef = useRef<{ page: number; total: number | null } | null>(null);
 
-  // Resolve audio tracks directly via the year key — avoids flattening the whole catalog.
-  // If the catalog lookup yields nothing the player is simply not shown (no silent mismatch).
-  const audioTracks = useMemo(
-    () => catalog[hebrewYear]?.find((e) => e.occasionId === occasionId)?.audio ?? [],
-    [hebrewYear, occasionId],
+  const entry = useMemo(() => catalog[hebrewYear]?.find((item) => item.occasionId === occasionId) ?? null, [catalog, hebrewYear, occasionId]);
+  const pdf = useMemo(() => entry?.pdfs.find((item) => item.driveFileId === driveFileId) ?? null, [driveFileId, entry]);
+  const savedPage = useMemo(() => (entry ? getPdfPage(getOccasionProgress(readProgressMap(), entry.hebrewYear, entry.occasionId), driveFileId) : undefined), [driveFileId, entry]);
+  // The web's `.pdf-inverted .pdf-page canvas { filter: invert(1) hue-rotate(180deg) }`,
+  // applied to the native viewer through React Native's own `filter` style.
+  // The colours button in the header flips it for the user's own theme,
+  // remembered per theme (see settings/invertPdfInDarkMode.ts) - so night
+  // reading stays inverted while a daytime flip doesn't change the night
+  // default. `baseScheme`, not `scheme`: while reading, the whole screen
+  // follows the page (below), so `scheme` is whatever the page currently is.
+  const inverted = baseScheme === 'dark' ? invertInDarkMode : invertInLightMode;
+  const setInverted = baseScheme === 'dark' ? setInvertInDarkMode : setInvertInLightMode;
+  // Flipped pages get the dark chrome, plain pages the light one - the
+  // header, background and system bars follow the page rather than sitting
+  // in the opposite palette next to it. Cleared on the way out, so the app
+  // returns to the user's own theme the moment the reader closes.
+  useEffect(() => {
+    const wanted = inverted ? 'dark' : 'light';
+    setSchemeOverride(wanted === baseScheme ? null : wanted);
+    return () => setSchemeOverride(null);
+  }, [baseScheme, inverted, setSchemeOverride]);
+  const backTarget = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear, occasionId } } as const;
+  const colourToggle = (
+    <Pressable onPress={() => setInverted(!inverted)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.pdfInvertToggle} accessibilityState={{ selected: inverted }} style={({ pressed }) => [styles.headerAction, pressed && { backgroundColor: colors.cardBg }]}>
+      <Contrast size={20} color={inverted ? colors.accent : colors.muted} />
+    </Pressable>
   );
 
   useEffect(() => {
+    if (!pdf) return;
     let cancelled = false;
-    setProgressReady(false);
-    setRestoredPage(1);
-    setCurrentPage(1);
-    currentPageRef.current = 1;
-    setTotalPages(null);
-    totalPagesRef.current = null;
-    loadSavedPdfProgress(identity)
-      .then((saved) => {
-        if (cancelled) return;
-        const nextPage = resolveInitialPdfPage(saved?.page, saved?.totalPages);
-        setRestoredPage(nextPage);
-        setCurrentPage(nextPage);
-        currentPageRef.current = nextPage;
-        setProgressReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setProgressReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [identity]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setReaderSettingsReady(false);
-    readPdfReaderSettings()
-      .then((saved) => {
-        if (cancelled) return;
-        setReaderSettings(saved);
-        setReaderSettingsReady(true);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setReaderSettings(DEFAULT_PDF_READER_SETTINGS);
-        setReaderSettingsReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setState({ status: 'loading', percent: 0, path: null });
-    downloadPdf(driveFileId, resourceKey ?? undefined, ({ received, total }) => {
-      if (!cancelled) {
-        setState({
-          status: 'loading',
-          percent: total > 0 ? Math.round((received / total) * 100) : null,
-          path: null,
+    setState({ status: 'loading', percent: null, path: null });
+    (async () => {
+      try {
+        const local = await localPdfPathIfExists(driveFileId);
+        if (local) {
+          if (!cancelled) setState({ status: 'loading', percent: null, path: local });
+          return;
+        }
+        const path = await downloadPdf(driveFileId, resourceKey ?? undefined, ({ received, total }) => {
+          if (!cancelled) setState({ status: 'loading', percent: total > 0 ? Math.min(100, Math.max(0, Math.round((received / total) * 100))) : null, path: null });
         });
-      }
-    })
-      .then((path) => {
+        reportFetchSuccess();
         if (!cancelled) setState({ status: 'loading', percent: null, path });
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) setState({ status: 'error', message: String(error) });
-      });
+      } catch (error) {
+        if (looksLikeNetworkError(error)) reportFetchFailure();
+        if (!cancelled) setState({ status: 'error', message: String(error), offline: !getOnlineSnapshot() });
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [driveFileId, resourceKey, retryToken]);
+  }, [driveFileId, pdf, resourceKey]);
 
-  useEffect(() => {
-    currentPageRef.current = currentPage;
-  }, [currentPage]);
+  function record(page: number, total: number | null): void {
+    if (!entry) return;
+    recordPdfProgress(entry.hebrewYear, entry.occasionId, entry.occasionLabel, driveFileId, page, total);
+  }
 
-  useEffect(() => {
-    totalPagesRef.current = totalPages;
-  }, [totalPages]);
-
-  useEffect(() => {
-    return () => {
-      if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
-      savePdfProgress(identity, currentPageRef.current, totalPagesRef.current).catch(
-        () => undefined,
-      );
-    };
-  }, [identity]);
-
-  function schedulePersist(page: number, pageCount: number | null): void {
+  function schedulePersist(page: number, total: number | null): void {
+    lastPageRef.current = { page, total };
     if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
     persistTimeoutRef.current = setTimeout(() => {
-      savePdfProgress(identity, page, pageCount).catch(() => undefined);
       persistTimeoutRef.current = null;
+      record(page, total);
     }, 750);
   }
 
-  function jumpToPage(nextPage: number): void {
-    const safePage = resolveInitialPdfPage(nextPage, totalPages);
-    pdfRef.current?.setPage(safePage);
-    setCurrentPage(safePage);
-    schedulePersist(safePage, totalPages);
-  }
+  // Flush the latest page on the way out, same as the web's `pagehide` flush.
+  useEffect(
+    () => () => {
+      if (persistTimeoutRef.current) clearTimeout(persistTimeoutRef.current);
+      const last = lastPageRef.current;
+      if (last) record(last.page, last.total);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only flush
+    [],
+  );
 
-  const showLoadingCard =
-    hasKnownPdfRoute &&
-    (!progressReady || !readerSettingsReady || state.status === 'loading');
-  const pdfPath = state.status === 'error' ? null : state.path;
-  const loadingPercent = state.status === 'loading' ? state.percent : null;
-
-  if (!hasKnownPdfRoute) {
+  if (!pdf || !entry) {
     return (
-      <Screen>
-        <ScreenHeader title={title} onBack={() => navigation.goBack()} backLabel={t.back} />
-        <EmptyState title={t.pdfNotFound} body={t.pdfRouteStaleHelp} />
+      <Screen scroll={false} header={<ScreenHeader back={backTarget} title={label} inset />}>
+        <View style={styles.status}>
+          <GapMessage>{t.pdfNotFound}</GapMessage>
+        </View>
       </Screen>
     );
   }
 
+  const path = state.status === 'error' ? null : state.path;
+
   return (
-    <Screen>
-      <ScreenHeader
-        title={title}
-        onBack={() => navigation.goBack()}
-        backLabel={t.back}
-      />
-      <View style={styles.container}>
-        {occasionLabel || sectionLabel ? (
-          <View style={styles.contextBlock}>
-            {occasionLabel ? (
-              <AppText variant="bodySmall" color="secondary">
-                {occasionLabel}
-              </AppText>
-            ) : null}
-            {sectionLabel ? (
-              <AppText variant="caption" color="muted">
-                {sectionLabel}
-              </AppText>
-            ) : null}
+    <Screen scroll={false} header={<ScreenHeader back={backTarget} title={pdf.label} inset action={colourToggle} />}>
+      <View style={styles.status}>
+        {state.status === 'loading' && !path && (
+          <View style={[styles.loading, { flexDirection: row(isRtl) }]}>
+            <Spinner size={16} color={colors.muted} />
+            <AppText style={[styles.loadingText, { color: colors.muted }]}>{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</AppText>
           </View>
-        ) : null}
-
-        {showLoadingCard ? (
-          <Card style={styles.statusCard}>
-            <View style={styles.loadingRow}>
-              <ActivityIndicator color={colors.accent} />
-              <AppText color="secondary">
-                {loadingPercent != null
-                  ? t.openingPdfPercent(loadingPercent)
-                  : t.openingPdf}
-              </AppText>
-            </View>
-          </Card>
-        ) : null}
-
-        {state.status === 'error' ? (
-          <View style={styles.stateWrap}>
-            <EmptyState title={t.pdfLoadError(state.message)} />
-            <View style={styles.retryRow}>
-              <AppButton
-                label={t.retryDownloadLabel}
-                onPress={() => {
-                  setRetryToken((current) => current + 1);
-                }}
-              />
-            </View>
-          </View>
-        ) : null}
-
-        {progressReady && readerSettingsReady && state.status !== 'error' && pdfPath ? (
+        )}
+        {state.status === 'error' && state.offline && (
           <>
-            <View style={styles.pdfWrap}>
-              <Pdf
-                key={`${driveFileId}:${retryToken}`}
-                ref={pdfRef}
-                source={{ uri: `file://${pdfPath}` }}
-                page={restoredPage}
-                style={styles.pdf}
-                minScale={zoomConfig.minScale}
-                maxScale={zoomConfig.maxScale}
-                enableDoubleTapZoom
-                onScaleChanged={(scale) => setZoomScale(scale)}
-                renderActivityIndicator={() => (
-                  <View style={styles.pdfLoading}>
-                    <ActivityIndicator color={colors.accent} />
-                  </View>
-                )}
-                onLoadProgress={(percent) =>
-                  setState((current) =>
-                    current.status === 'loading'
-                      ? { ...current, percent: Math.round(percent * 100) }
-                      : current,
-                  )
-                }
-                onLoadComplete={(pages) => {
-                  const nextPage = resolveInitialPdfPage(restoredPage, pages);
-                  setTotalPages(pages);
-                  totalPagesRef.current = pages;
-                  setCurrentPage(nextPage);
-                  currentPageRef.current = nextPage;
-                  setState({ status: 'ready', path: pdfPath });
-                }}
-                onPageChanged={(page, pages) => {
-                  const nextPage = resolveInitialPdfPage(page, pages);
-                  setCurrentPage(nextPage);
-                  currentPageRef.current = nextPage;
-                  setTotalPages(pages);
-                  totalPagesRef.current = pages;
-                  schedulePersist(nextPage, pages);
-                }}
-                onError={(error) => setState({ status: 'error', message: String(error) })}
-              />
-              {darkModeEnabled ? <View pointerEvents="none" style={styles.pdfDarkOverlay} /> : null}
-            </View>
-
-            <View
-              style={[
-                styles.footer,
-                audioTracks.length > 0 && styles.footerWithPlayer,
-              ]}
-            >
-              <View style={styles.controlsRow}>
-                <AppButton
-                  label={
-                    darkModeEnabled
-                      ? t.pdfDarkModeEnabledLabel
-                      : t.pdfDarkModeDisabledLabel
-                  }
-                  variant="secondary"
-                  style={styles.controlButton}
-                  onPress={() => {
-                    const next = togglePdfDarkMode(readerSettings);
-                    setReaderSettings(next);
-                    savePdfReaderSettings(next).catch(() => undefined);
-                  }}
-                />
-                <AppButton
-                  label={
-                    readerSettings.zoomPreset === 'expanded'
-                      ? t.pdfZoomRangeExpandedLabel
-                      : t.pdfZoomRangeDefaultLabel
-                  }
-                  variant="secondary"
-                  style={styles.controlButton}
-                  onPress={() => {
-                    const next = togglePdfZoomPreset(readerSettings);
-                    setReaderSettings(next);
-                    savePdfReaderSettings(next).catch(() => undefined);
-                  }}
-                />
-              </View>
-              <AppText variant="bodySmall" color="secondary">
-                {totalPages ? t.pdfPageStatus(currentPage, totalPages) : t.openingPdf}
-              </AppText>
-              <AppText variant="caption" color="muted">
-                {t.pdfZoomScaleStatus(zoomScale)}
-              </AppText>
-              <AppText variant="caption" color="muted">
-                {t.pdfZoomPanHelp}
-              </AppText>
-              {darkModeEnabled ? (
-                <AppText variant="caption" color="muted">
-                  {t.pdfDarkModeWorkaroundHelp}
-                </AppText>
-              ) : null}
-              <View style={styles.controlsRow}>
-                <AppButton
-                  label={t.previousPage}
-                  variant="secondary"
-                  disabled={currentPage <= 1 || !totalPages}
-                  style={[
-                    styles.controlButton,
-                    (currentPage <= 1 || !totalPages) && styles.controlButtonDisabled,
-                  ]}
-                  onPress={() => jumpToPage(currentPage - 1)}
-                />
-                <AppButton
-                  label={t.nextPage}
-                  variant="secondary"
-                  disabled={!totalPages || currentPage >= totalPages}
-                  style={[
-                    styles.controlButton,
-                    (!totalPages || currentPage >= totalPages) &&
-                      styles.controlButtonDisabled,
-                  ]}
-                  onPress={() => jumpToPage(currentPage + 1)}
-                />
-              </View>
-            </View>
+            <OfflineNote text={t.pdfOfflineNotDownloaded} />
+            <Button label={t.viewDownloadedLabel} onPress={() => navigation.navigate('Downloaded')} />
           </>
-        ) : null}
+        )}
+        {state.status === 'error' && !state.offline && (
+          <>
+            <GapMessage>{t.pdfLoadError(state.message)}</GapMessage>
+            {/* The file is still fetchable directly even when the in-app viewer can't render it, so link out to it as a fallback. */}
+            <Button
+              label={t.openPdfExternally}
+              onPress={() => {
+                Linking.openURL(pdfUrl(driveFileId, resourceKey ?? undefined)).catch(() => undefined);
+              }}
+            />
+          </>
+        )}
       </View>
+
+      {path && (
+        <View style={[styles.pdfWrap, inverted && styles.pdfInverted]}>
+          {/* Inverted along with the pages, so the gap between pages matches them: the light theme's card colour flips to the dark theme's (the chrome is dark whenever the pages are - see the override above). */}
+          <Pdf
+            key={driveFileId}
+            source={{ uri: `file://${path}` }}
+            page={savedPage ?? 1}
+            style={[styles.pdf, { backgroundColor: inverted ? lightColors.cardBg : colors.cardBg }]}
+            enableDoubleTapZoom
+            spacing={4}
+            renderActivityIndicator={() => (
+              <View style={styles.pdfLoading}>
+                <Spinner size={16} color={colors.muted} />
+              </View>
+            )}
+            onLoadComplete={(pages) => {
+              setState({ status: 'ready', path });
+              lastPageRef.current = { page: savedPage ?? 1, total: pages };
+            }}
+            onPageChanged={(page, pages) => schedulePersist(page, pages)}
+            onError={(error) => setState({ status: 'error', message: String(error), offline: false })}
+          />
+        </View>
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  contextBlock: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  statusCard: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  loadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  stateWrap: { flex: 1, justifyContent: 'center' },
-  retryRow: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  pdfWrap: { flex: 1, position: 'relative' },
-  pdf: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: colors.backgroundDefault,
-  },
-  pdfDarkOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 0, 0, 0.24)',
-  },
+  /** Web: `.pdf-viewer-status` - padding 0 20px. */
+  status: { paddingHorizontal: 20 },
+  /** Web: `.pdf-loading` - row, gap 8, subtitle styling. */
+  loading: { alignItems: 'center', gap: 8, marginBottom: 20 },
+  loadingText: { fontSize: 15, fontVariant: ['tabular-nums'] },
+  pdfWrap: { flex: 1 },
+  pdf: { flex: 1, width: '100%' },
   pdfLoading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  footer: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-    gap: spacing.sm,
-    backgroundColor: colors.backgroundDefault,
-  },
-  footerWithPlayer: { paddingBottom: 76 + spacing.md },
-  controlsRow: { flexDirection: 'row', gap: spacing.sm },
-  controlButton: { flex: 1 },
-  controlButtonDisabled: { opacity: 0.45 },
+  /** Web: `.pdf-inverted .pdf-page canvas` - invert(1) hue-rotate(180deg). */
+  pdfInverted: { filter: [{ invert: 1 }, { hueRotate: '180deg' }] },
+  /** Web: `.icon-button` - a bare icon in a 36px circle. */
+  headerAction: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

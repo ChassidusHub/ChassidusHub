@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { I18nManager, StyleSheet, View } from 'react-native';
+import { I18nManager } from 'react-native';
 import { isRtlLanguage } from './useTranslation';
 import { LanguageContext } from './languageContext';
 import { readStoredLanguage, writeStoredLanguage } from './languageStorage';
@@ -10,8 +10,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    I18nManager.allowRTL(true);
-    I18nManager.swapLeftAndRightInRTL(true);
+    // Hebrew layout is handled by hand per `isRtl` (see ui/rtl.ts) so a
+    // language switch applies immediately - React Native's own RTL
+    // mirroring would double-flip it, and only ever changes on relaunch.
+    I18nManager.allowRTL(false);
   }, []);
 
   useEffect(() => {
@@ -38,15 +40,5 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [isRtl, language],
   );
 
-  return (
-    <LanguageContext.Provider value={value}>
-      <View style={[styles.container, isRtl ? styles.rtl : styles.ltr]}>{children}</View>
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  ltr: { direction: 'ltr' },
-  rtl: { direction: 'rtl' },
-});

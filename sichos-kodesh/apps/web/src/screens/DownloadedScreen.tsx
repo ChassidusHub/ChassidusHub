@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Download } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { OverflowMarquee } from '../components/OverflowMarquee';
@@ -37,11 +37,12 @@ function groupByYear(entries: CatalogEntry[]): YearGroup[] {
  * there's no connection.
  */
 export function DownloadedScreen() {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const { settings } = useDownload();
   const activeRows = useActiveDownloadRows();
-  const allEntries = useMemo(() => Object.values(catalog).flat(), []);
+  const allEntries = useMemo(() => Object.values(catalog).flat(), [catalog]);
   const [downloaded, setDownloaded] = useState<CatalogEntry[] | null>(null);
 
   function refreshDownloaded() {

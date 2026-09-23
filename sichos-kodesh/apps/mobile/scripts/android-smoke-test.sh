@@ -27,14 +27,9 @@ PACKAGE_NAME="com.sichoskodeshmobile"
 
 mkdir -p "$ARTIFACTS_DIR"
 
-echo "▶ Building shared packages..."
+echo "▶ Pre-build checks (shared packages, track-player patch, fonts, no emoji, typecheck, lint, tests)..."
 cd "$ROOT_DIR"
-npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core
-
-echo "▶ Running mobile checks..."
-npm run test -w @sichos-kodesh/mobile
-npm run typecheck -w @sichos-kodesh/mobile
-npm run lint -w @sichos-kodesh/mobile
+npm run prebuild:check -w @sichos-kodesh/mobile
 
 # A debug APK never bundles JS (it loads it from Metro at runtime), so an
 # assembleDebug pass says nothing about whether the app's JS resolves at all.
@@ -155,4 +150,14 @@ if ! adb shell "ps -A | grep $PACKAGE_NAME" > /dev/null 2>&1; then
   exit 1
 fi
 
-echo "✓ Android smoke test PASSED: app installed and launched without fatal errors."
+echo "✓ App installed and launched without fatal errors."
+
+# A launch that stays alive says nothing about whether the screens actually
+# render and respond - tap through every one of them (see the walkthrough
+# script for the sequence) and keep the screenshots as artifacts. The app is
+# already installed and running against Metro, so the walkthrough skips its
+# own install step.
+echo "▶ Walking through every screen..."
+SKIP_INSTALL=1 bash "$MOBILE_DIR/scripts/android-ui-walkthrough.sh" "$APK" "$ARTIFACTS_DIR/ui"
+
+echo "✓ Android smoke test PASSED: app launched and every screen rendered."

@@ -1,65 +1,57 @@
 import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { Download } from 'lucide-react-native';
+import { useCatalog } from '../catalog/catalogStore';
+import { OccasionRowIcon } from '../components/OccasionRowIcon';
+import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useTranslation';
 import type { FollowMonthOccasionsScreenProps } from '../navigation/types';
+import { useOnlineStatus } from '../network/useOnlineStatus';
+import { useProgressMap } from '../player/useProgressMap';
 import { monthNameForToken, resolveMonthOccasions } from '../routes/catalogRoutes';
-import { AppText } from '../ui/AppText';
-import { EmptyState } from '../ui/EmptyState';
-import { ListRow, RowSeparator } from '../ui/ListRow';
+import { Button } from '../ui/Button';
+import { Row, RowTrailing } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { spacing } from '../ui/theme';
-import catalog from '../catalog/data';
+import { Subtitle } from '../ui/Typography';
+import { useColors } from '../ui/theme';
 
+/** Follow-flow twin of MonthOccasionsScreen (web: `/follow/:sourceYear/month/:monthToken`). */
 export function FollowMonthOccasionsScreen({ navigation, route }: FollowMonthOccasionsScreenProps) {
+  const catalog = useCatalog();
+  const { sourceYear, monthToken } = route.params;
   const { t, language } = useTranslation();
-  const entries = useMemo(
-    () => resolveMonthOccasions(catalog, route.params.sourceYear, route.params.monthToken),
-    [route.params.sourceYear, route.params.monthToken],
-  );
-  const title = monthNameForToken(route.params.sourceYear, route.params.monthToken, language);
+  const colors = useColors();
+  const progressMap = useProgressMap();
+  const { enqueueBulk } = useDownload();
+  const online = useOnlineStatus();
+  const entries = useMemo(() => resolveMonthOccasions(catalog, sourceYear, monthToken), [catalog, sourceYear, monthToken]);
+  const monthName = monthNameForToken(sourceYear, monthToken, language);
 
   return (
-    <Screen>
-      <ScreenHeader
-        title={title}
-        onBack={() => navigation.navigate('FollowMonthList', { sourceYear: route.params.sourceYear })}
-        backLabel={t.back}
-      />
-      <View style={styles.meta}>
-        <AppText variant="bodySmall" color="secondary">
-          {t.occasionsIndexed(entries.length)}
-        </AppText>
-      </View>
-      <FlatList
-        data={entries}
-        keyExtractor={(item) => String(item.occasionId)}
-        renderItem={({ item }) => (
-          <ListRow
-            label={item.occasionLabel}
-            sublabel={[
-              item.audio.length > 0 ? t.recordingsCount(item.audio.length) : null,
-              item.pdfs.length > 0 ? t.pdfCount(item.pdfs.length) : null,
-            ]
-              .filter(Boolean)
-              .join(' • ')}
-            right={<AppText color="muted">›</AppText>}
-            onPress={() =>
-              navigation.navigate('Farbrengen', {
-                kind: 'follow',
-                sourceYear: route.params.sourceYear,
-                occasionId: item.occasionId,
-              })
-            }
-          />
-        )}
-        ItemSeparatorComponent={RowSeparator}
-        ListEmptyComponent={<EmptyState title={t.nothingDownloadable} />}
-      />
+    <Screen header={<ScreenHeader back={{ name: 'FollowMonthList', params: { sourceYear } }} title={monthName} />}>
+      <Subtitle>{t.occasionsIndexed(entries.length)}</Subtitle>
+      {entries.map((entry) => (
+        <Row
+          key={entry.occasionId}
+          label={entry.occasionLabel}
+          trailing={
+            <RowTrailing>
+              <OccasionRowIcon entry={entry} progressMap={progressMap} />
+            </RowTrailing>
+          }
+          onPress={() => navigation.navigate('Farbrengen', { kind: 'follow', sourceYear, occasionId: entry.occasionId })}
+        />
+      ))}
+
+      {entries.length > 0 && online && (
+        <Button
+          label={t.downloadThisMonthLabel}
+          icon={<Download size={16} color={colors.accentFg} />}
+          onPress={() => {
+            enqueueBulk(entries, 'manual').catch(() => undefined);
+          }}
+        />
+      )}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
-});

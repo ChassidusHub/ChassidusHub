@@ -6,3 +6,6 @@ export * from './search/searchOccasions.js';
 export * from './search/specialDayOptions.js';
 export * from './download/downloadTargets.js';
 export * from './progress/audioProgress.js';
+export * from './download/contentPresets.js';
+export * from './catalog/catalogStore.js';
+export * from './catalog/catalogUpdate.js';

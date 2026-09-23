@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { PdfSection } from '@sichos-kodesh/catalog';
 
+/** Which list an occasion was reached from - decides the fallback "back" destination (see routes/catalogRoutes.ts), mirroring the web's distinct /follow, /browse, /this-week-all-years and /occasion-all-years URL families. */
 export type OccasionRouteParams =
   | { kind: 'browse'; hebrewYear: number; occasionId: number }
   | { kind: 'follow'; sourceYear: number; occasionId: number }
@@ -15,43 +16,39 @@ export type OccasionRouteParams =
       occasionId: number;
     };
 
-/**
- * Root stack param list - mirrors the web app's conceptual screen graph so
- * all routes exist and params are typed, even if some screens are still
- * placeholders pending full parity work.
- */
+/** Root stack param list - one screen per web route (see apps/web/src/App.tsx). */
 export type RootStackParamList = {
-  /** Home/year picker - entry point of the app */
+  /** Home/year picker - entry point of the app (web: `/`) */
   Home: undefined;
 
-  /** Kvius-matched years for "follow along" flow */
+  /** Kvius-matched years for the "follow along" flow (web: `/kvius`) */
   KviusYears: { targetYear: number };
 
-  /** All indexed years for free browsing */
+  /** All indexed years for free browsing (web: `/years`) */
   BrowseYears: undefined;
 
-  /** "This week" resolved occasions for one kvius-matched source year */
+  /** "This week" resolved occasions for one kvius-matched source year (web: `/follow/:sourceYear`) */
   ThisWeek: { sourceYear: number };
 
-  /** Every occasion indexed for a single Hebrew year */
-  YearBrowser: { hebrewYear: number; initialOccasionId?: number };
+  /** A browsed year's months (web: `/browse/:hebrewYear`) */
+  YearBrowser: { hebrewYear: number };
 
-  /** All occasions for one month within a year */
+  /** All occasions for one month within a browsed year (web: `/browse/:hebrewYear/month/:monthToken`) */
   MonthOccasions: { hebrewYear: number; monthToken: string };
 
-  /** List of follow-months (stub - parity Phase 1B) */
+  /** A followed year's months (web: `/follow/:sourceYear/month`) */
   FollowMonthList: { sourceYear: number };
 
-  /** Occasions for a specific follow-month */
+  /** Occasions for one month of a followed year (web: `/follow/:sourceYear/month/:monthToken`) */
   FollowMonthOccasions: { sourceYear: number; monthToken: string };
 
-  /** Farbrengen detail */
+  /** An occasion's own page */
   Farbrengen: OccasionRouteParams;
 
-  /** Audio recordings list for an occasion */
+  /** An occasion's recordings playlist */
   Recordings: OccasionRouteParams;
 
-  /** Category listing */
+  /** One PDF section of an occasion */
   Category: OccasionRouteParams & { categoryId: PdfSection };
 
   /** In-app PDF reader */
@@ -61,33 +58,29 @@ export type RootStackParamList = {
     driveFileId: string;
     resourceKey: string | null;
     label: string;
-    occasionLabel?: string;
-    sectionLabel?: string | null;
   };
 
-  /** Search screen */
   Search: undefined;
 
-  /** Downloaded content manager */
+  /** Downloaded content manager (web: `/downloaded`) */
   Downloaded: undefined;
 
-  /** App settings */
   Settings: undefined;
 
-  /** Download settings */
+  /** Download settings (web: `/settings/downloads`) */
   DownloadSettings: undefined;
 
-  /** About screen (stub) */
   About: undefined;
 
-  /** Cross-year view of this week */
+  Privacy: undefined;
+
+  /** Cross-year view of this week (web: `/this-week-all-years`) */
   AllYearsThisWeek: undefined;
 
-  /** An occasion across all available years */
+  /** An occasion across all available years (web: `/occasion-all-years/:sourceHebrewYear/:sourceOccasionId`) */
   OccasionAllYears: {
     sourceHebrewYear: number;
     sourceOccasionId: number;
-    sourceRoute?: OccasionRouteParams;
   };
 };
 
@@ -109,5 +102,6 @@ export type DownloadedScreenProps = NativeStackScreenProps<RootStackParamList, '
 export type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 export type DownloadSettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'DownloadSettings'>;
 export type AboutScreenProps = NativeStackScreenProps<RootStackParamList, 'About'>;
+export type PrivacyScreenProps = NativeStackScreenProps<RootStackParamList, 'Privacy'>;
 export type AllYearsThisWeekScreenProps = NativeStackScreenProps<RootStackParamList, 'AllYearsThisWeek'>;
 export type OccasionAllYearsScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionAllYears'>;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './types';
+import { useColors } from '../ui/theme';
 import { YearPickerScreen } from '../screens/YearPickerScreen';
 import { KviusYearsScreen } from '../screens/KviusYearsScreen';
 import { BrowseYearsScreen } from '../screens/BrowseYearsScreen';
@@ -9,6 +10,7 @@ import { YearBrowserScreen } from '../screens/YearBrowserScreen';
 import { PdfViewerScreen } from '../screens/PdfViewerScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { AboutScreen } from '../screens/AboutScreen';
+import { PrivacyScreen } from '../screens/PrivacyScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { DownloadedScreen } from '../screens/DownloadedScreen';
 import { DownloadSettingsScreen } from '../screens/DownloadSettingsScreen';
@@ -24,11 +26,9 @@ import { OccasionAllYearsScreen } from '../screens/OccasionAllYearsScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const colors = useColors();
   return (
-    <Stack.Navigator
-      initialRouteName="Home"
-      screenOptions={{ headerShown: false }}
-    >
+    <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="Home" component={YearPickerScreen} />
       <Stack.Screen name="KviusYears" component={KviusYearsScreen} />
       <Stack.Screen name="BrowseYears" component={BrowseYearsScreen} />
@@ -46,6 +46,7 @@ export function RootNavigator() {
       <Stack.Screen name="Downloaded" component={DownloadedScreen} />
       <Stack.Screen name="DownloadSettings" component={DownloadSettingsScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="AllYearsThisWeek" component={AllYearsThisWeekScreen} />
       <Stack.Screen name="OccasionAllYears" component={OccasionAllYearsScreen} />
     </Stack.Navigator>

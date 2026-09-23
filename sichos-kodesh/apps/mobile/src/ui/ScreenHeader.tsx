@@ -1,51 +1,64 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from './theme';
+import type { ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useTranslation } from '../i18n/useTranslation';
+import { BackLink } from './BackLink';
+import type { BackTarget } from './BackLink';
+import { AppText } from './Text';
+import { useColors } from './theme';
+import { row } from './rtl';
 
 interface Props {
+  back: BackTarget;
   title: string;
-  /** Label for the leading back/close action. */
-  backLabel?: string;
-  /** Called when the back button is pressed. */
-  onBack?: () => void;
-  /** Optional right-side accessory (e.g. a settings icon). */
-  right?: React.ReactNode;
+  /** For a screen whose own container has no horizontal padding (the PDF viewer) - see the web's `.screen-header-inset`. */
+  inset?: boolean;
+  /** One small control on the trailing side (the PDF reader's colours button) - drawn over the spacer, so the title stays centred exactly as without it (web: `.screen-header-action`). */
+  action?: ReactNode;
 }
 
 /**
- * Minimal in-screen header. Used by screens that opt out of the native
- * stack header (headerShown: false) so they can control their own layout.
+ * The back button + page title every screen shows, pinned below the
+ * status bar once scrolled past (Screen renders it as a sticky header).
+ * The title is centered in the full bar, not just in the space left over
+ * after the back button - the trailing spacer is an invisible copy of the
+ * real BackLink so the title's flex box sits between two equal edges. An
+ * `action` is positioned over that spacer rather than beside it.
  */
-export function ScreenHeader({ title, backLabel, onBack, right }: Props) {
+export function ScreenHeader({ back, title, inset = false, action }: Props) {
+  const colors = useColors();
+  const { isRtl } = useTranslation();
+
   return (
-    <View style={styles.container}>
-      <View style={styles.left}>
-        {onBack && (
-          <Pressable onPress={onBack} hitSlop={8} style={styles.backButton}>
-            <Text style={styles.backText}>{backLabel ?? '< Back'}</Text>
-          </Pressable>
-        )}
-      </View>
-      <Text style={styles.title} numberOfLines={1}>
+    <View style={[styles.header, { backgroundColor: colors.bg, flexDirection: row(isRtl) }, inset && styles.inset]}>
+      <BackLink fallback={back} />
+      <AppText numberOfLines={1} style={styles.title}>
         {title}
-      </Text>
-      <View style={styles.right}>{right ?? null}</View>
+      </AppText>
+      <View style={styles.side}>
+        <BackLink fallback={back} spacer />
+        {action && <View style={[styles.action, isRtl ? styles.actionRtl : styles.actionLtr]}>{action}</View>}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
+  /** Web: `.screen-header` - gap 12, padding-block 12, padding-inline 20, margin 0 -20px 4px. */
+  header: {
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginHorizontal: -20,
+    marginBottom: 4,
   },
-  left: { flex: 1, alignItems: 'flex-start' },
-  title: { ...typography.bodyLarge, fontWeight: '600', color: colors.textDefault, flex: 2, textAlign: 'center' },
-  right: { flex: 1, alignItems: 'flex-end' },
-  backButton: { paddingVertical: 4 },
-  backText: { color: colors.accent, fontSize: 15 },
+  inset: { marginHorizontal: 0, marginBottom: 16 },
+  /** Web: `.screen-header-title` - flex 1, centered, 18px/700, ellipsis. */
+  title: { flex: 1, minWidth: 0, textAlign: 'center', fontSize: 18, fontWeight: '700' },
+  /** Web: `.screen-header-side` - the spacer's box, with the action absolutely positioned at its outer edge. */
+  side: { position: 'relative', flexShrink: 0, justifyContent: 'center' },
+  action: { position: 'absolute', top: 0, bottom: 0, justifyContent: 'center' },
+  actionLtr: { right: 0 },
+  actionRtl: { left: 0 },
 });

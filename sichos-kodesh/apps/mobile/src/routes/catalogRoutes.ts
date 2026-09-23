@@ -14,6 +14,7 @@ import type {
   CatalogPdf,
   PdfEdition,
   PdfSection,
+  YearOccasionMatches,
   YearWeekOccasions,
 } from '@sichos-kodesh/catalog';
 import type { Language } from '../i18n/translations';
@@ -159,7 +160,6 @@ export function resolveOccasionRoute(
         params: {
           sourceHebrewYear: route.sourceHebrewYear,
           sourceOccasionId: route.sourceOccasionId,
-          sourceRoute: undefined,
         },
         backLabelKey: 'back',
       },
@@ -213,11 +213,11 @@ export function resolveOccasionAllYearsGroups(
   catalog: CatalogByYear,
   sourceHebrewYear: number,
   sourceOccasionId: number,
-): { sourceEntry: CatalogEntry | null; yearGroups: YearWeekOccasions[] } {
+): { sourceEntry: CatalogEntry | null; yearGroups: YearOccasionMatches[] } {
   const sourceEntry = findCatalogEntry(catalog, sourceHebrewYear, sourceOccasionId);
   if (!sourceEntry) return { sourceEntry: null, yearGroups: [] };
   return {
     sourceEntry,
-    yearGroups: resolveOccasionAllYears(catalog, sourceEntry.hebrewDate),
+    yearGroups: resolveOccasionAllYears(catalog, sourceEntry),
   };
 }

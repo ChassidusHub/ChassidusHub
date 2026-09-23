@@ -25,3 +25,6 @@ packages/jem-index/*.db-wal
 # bundled inside apps/mobile/src/catalog/data instead, generated from real
 # bibliographic metadata only - see that package's README).
 packages/catalog/data/
+# packages/catalog's release files (bin/release.ts) - built by the
+# catalog-release workflow on a tag, never committed.
+packages/catalog/dist-release/

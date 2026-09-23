@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
+import type { CatalogByYear } from '@sichos-kodesh/catalog';
 import { SPECIAL_ANNIVERSARY_YEARS, findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useTranslation } from '../i18n/useLanguage';
@@ -21,7 +22,7 @@ interface Props {
  * `findPartialWeekMatches` return nearest-first, which is right for
  * finding the best match but wrong for reading a list top to bottom.
  */
-function filterAndSortForDisplay(results: MatchingYearResult[], today: Date): MatchingYearResult[] {
+function filterAndSortForDisplay(results: MatchingYearResult[], catalog: CatalogByYear, today: Date): MatchingYearResult[] {
   return results
     .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
     .slice()
@@ -40,7 +41,7 @@ interface SpecialAnniversaryMatch {
  * separate section rather than folded into either list above. Same "must
  * have something for this week, oldest first" filtering as the other two.
  */
-function findSpecialAnniversaries(targetYear: number, today: Date): SpecialAnniversaryMatch[] {
+function findSpecialAnniversaries(targetYear: number, catalog: CatalogByYear, today: Date): SpecialAnniversaryMatch[] {
   return SPECIAL_ANNIVERSARY_YEARS.map((anniversaryNumber) => ({ hebrewYear: targetYear - anniversaryNumber, anniversaryNumber }))
     .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
     .sort((a, b) => a.hebrewYear - b.hebrewYear);
@@ -59,13 +60,14 @@ function findSpecialAnniversaries(targetYear: number, today: Date): SpecialAnniv
  */
 export function KviusYearsScreen({ targetYear }: Props) {
   const { t, language } = useTranslation();
+  const catalog = useCatalog();
   const today = useMemo(() => new Date(), []);
-  const matches = useMemo(() => filterAndSortForDisplay(findMatchingYears(targetYear), today), [targetYear, today]);
+  const matches = useMemo(() => filterAndSortForDisplay(findMatchingYears(targetYear), catalog, today), [catalog, targetYear, today]);
   const partialMatches = useMemo(
-    () => filterAndSortForDisplay(findPartialWeekMatches(targetYear, thisWeekDays(today), IL), today),
-    [targetYear, today],
+    () => filterAndSortForDisplay(findPartialWeekMatches(targetYear, thisWeekDays(today), IL), catalog, today),
+    [catalog, targetYear, today],
   );
-  const specialAnniversaries = useMemo(() => findSpecialAnniversaries(targetYear, today), [targetYear, today]);
+  const specialAnniversaries = useMemo(() => findSpecialAnniversaries(targetYear, catalog, today), [catalog, targetYear, today]);
 
   return (
     <div className="screen">

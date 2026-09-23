@@ -1,4 +1,4 @@
-import catalog from '../catalog/data';
+import { getCatalog } from '../catalog/catalogStore';
 import type { DownloadSettings, RetentionPeriod } from '../settings/useDownloadSettings';
 import { getOccasionProgress, isOccasionFinished, readProgressMap } from '../player/progressStore';
 import { listAutoDownloads, forgetAutoDownload } from './downloadLedger';
@@ -43,7 +43,7 @@ export async function pruneAutoDownloads(settings: DownloadSettings): Promise<vo
     const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
     if (progress && progress.lastVisitedAt > entry.cachedAt) continue; // Opened since - keep.
     if (settings.keepFinishedContent) {
-      const catalogEntry = (catalog[entry.hebrewYear] ?? []).find((e) => e.occasionId === entry.occasionId);
+      const catalogEntry = (getCatalog()[entry.hebrewYear] ?? []).find((e) => e.occasionId === entry.occasionId);
       if (catalogEntry && isOccasionFinished(progress, catalogEntry)) continue;
     }
     await cache.delete(entry.url);
