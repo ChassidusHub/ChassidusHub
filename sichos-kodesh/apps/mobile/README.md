@@ -359,6 +359,33 @@ For a release APK: `npm run android:release -w @sichos-kodesh/mobile`
 same release signing config as the `.aab` build below). Run the UI
 walkthrough against it before handing it to anyone.
 
+### Versioning and releases
+
+**1.0.0 is version 1**: the first release APK, `versionCode 1`, built from
+commit `17e14b4` (git tag `v1.0.0`, annotated; the tag was created in the
+session that built it, which could push the branch but not tags, so push
+it from a checkout with tag access: `git push origin v1.0.0`).
+
+Everything after that APK is a new release, never a rebuild under the same
+number:
+
+- Fixes to version 1 ship on the **1.x line** - `1.0.1`, `1.1.0`, `1.1.9`,
+  and so on - until version 2 comes out. Patch for fixes, minor for
+  anything a user would notice as new.
+- Every release bumps all three copies of the version together (there is
+  no build step deriving one from another): `src/version.ts`
+  (`APP_VERSION`, shown in About), `package.json` `"version"`, and
+  `android/app/build.gradle` `versionName` - plus `versionCode`, which
+  goes up by one on every build handed to anyone, since Android refuses
+  to install an APK whose `versionCode` isn't higher than the one
+  already on the phone.
+- Add the release's entry to `src/changelog.ts` (most recent first, user
+  facing) and tag the commit it was built from: `git tag -a vX.Y.Z -m
+  "Sichos Kodesh mobile X.Y.Z"`.
+- A release APK is named after its version and ABI when handed out, e.g.
+  `sichos-kodesh-1.0.0-universal.apk` (armeabi-v7a + arm64-v8a, the one
+  to give to phones) or `sichos-kodesh-1.0.0-phone-arm64.apk`.
+
 ## Google Play (Internal testing track)
 
 A signed release `.aab` is what Play wants (it splits per-device at
