@@ -12,10 +12,12 @@
  * changelog. Run through `npm run release-files -w @sichos-kodesh/catalog`
  * - see README.md's "Catalog releases" for the whole release routine.
  *
- *   --data <dir>       where the year files are (default: apps/web/src/catalog/data)
- *   --out <dir>        where to write (default: packages/catalog/dist-release)
- *   --base-url <url>   the API origin the manifest's `url` points into (default: https://api.sk.shmuky.dev)
- *   --check            fail unless CATALOG_CHANGELOG's first entry is for CATALOG_VERSION (what CI runs on a tag)
+ *   --data <dir>          where the year files are (default: apps/web/src/catalog/data)
+ *   --out <dir>           where to write (default: packages/catalog/dist-release)
+ *   --base-url <url>      the API origin the manifest's `url` points into (default: https://api.sk.shmuky.dev)
+ *   --released-at <iso>   the release timestamp to stamp (default: now) - services/catalog-api passes the
+ *                         deployed commit's date, so the same commit always yields the same manifest
+ *   --check               fail unless CATALOG_CHANGELOG's first entry is for CATALOG_VERSION (what CI runs on a tag)
  */
 import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
@@ -65,7 +67,8 @@ for (const name of yearFiles) {
   occasions += entries.length;
 }
 
-const releasedAt = new Date().toISOString();
+const releasedAtArg = arg('released-at', '');
+const releasedAt = releasedAtArg && !Number.isNaN(Date.parse(releasedAtArg)) ? new Date(releasedAtArg).toISOString() : new Date().toISOString();
 const release: CatalogRelease = { schemaVersion: CATALOG_SCHEMA_VERSION, version: CATALOG_VERSION, releasedAt, byYear };
 const catalogJson = JSON.stringify(release);
 const catalogBytes = Buffer.from(catalogJson, 'utf8');
