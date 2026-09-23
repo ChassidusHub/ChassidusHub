@@ -61,12 +61,30 @@ for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
 ' "$1"
 }
 
-# Taps the first node matching $1, retrying for up to ~20s while the screen renders.
+# Scrolls the current screen up by most of a screen height (a swipe, not a tap).
+scroll_down() {
+  adb shell input swipe "$((SCREEN_W / 2))" "$((SCREEN_H * 2 / 3))" "$((SCREEN_W / 2))" "$((SCREEN_H / 4))" 300
+  sleep 2
+}
+
+# Taps the first node matching $1, retrying for up to ~20s while the screen
+# renders. A match sitting in the bottom quarter of the screen - where the
+# player and download bars live - or not on screen at all (further down a
+# long list, which the accessibility dump reports with empty bounds) is
+# scrolled into view first.
 tap_text() {
-  local needle="$1" xy=""
-  for _ in $(seq 1 10); do
+  local needle="$1" xy="" attempt
+  for attempt in $(seq 1 10); do
     xy="$(find_node "$needle")"
-    [ -n "$xy" ] && break
+    if [ -n "$xy" ]; then
+      if [ "${xy#* }" -gt "$TAP_MAX_Y" ]; then
+        scroll_down
+        xy=""
+        continue
+      fi
+      break
+    fi
+    [ "$attempt" -ge 4 ] && scroll_down
     sleep 2
   done
   if [ -z "$xy" ]; then
@@ -100,6 +118,9 @@ if [ "${SKIP_INSTALL:-0}" != "1" ]; then
   adb uninstall $PKG >/dev/null 2>&1 || true
   adb install -r "$APK" | tail -1
 fi
+read -r SCREEN_W SCREEN_H < <(adb shell wm size | sed -E 's/.*: *([0-9]+)x([0-9]+).*/\1 \2/' | tail -1)
+SCREEN_W="${SCREEN_W:-1080}"; SCREEN_H="${SCREEN_H:-2400}"
+TAP_MAX_Y=$((SCREEN_H * 3 / 4))
 adb shell settings put global window_animation_scale 0 >/dev/null 2>&1
 adb shell settings put global transition_animation_scale 0 >/dev/null 2>&1
 adb shell settings put global animator_duration_scale 0 >/dev/null 2>&1
@@ -169,10 +190,12 @@ tap_text "Browse any year" && wait_text "Every year with something" && shot 11-b
 tap_text "5711" && wait_text "occasion" && shot 12-year-browser
 back; back
 
-# --- Search
+# --- Search (the box needs focus first; neither the web nor the app autofocuses it)
 tap_text "Search" && wait_text "Search occasions" && shot 13-search
-adb shell input text "Tishrei" && sleep 4 && shot 14-search-results
-back
+tap_text "Search occasions" && adb shell input text "Tishrei" && sleep 4 && shot 14-search-results
+# The screen's own Back link, not the hardware key - with the keyboard up that key only dismisses the keyboard.
+tap_text "Back"
+wait_text "Browse any year"
 
 # --- Settings, dark mode, Hebrew
 tap_text "Settings" && wait_text "Appearance" && shot 15-settings
