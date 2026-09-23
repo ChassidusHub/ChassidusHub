@@ -363,6 +363,17 @@ For a release APK: `npm run android:release -w @sichos-kodesh/mobile`
 same release signing config as the `.aab` build below). Run the UI
 walkthrough against it before handing it to anyone.
 
+The APKs people actually install come from GitHub instead: Actions →
+"Android Signed Release APK" → Run workflow (on `main`, once the version
+bump is merged). `.github/workflows/android-release-apk.yml` builds the
+signed APKs with the repository's keystore secrets, one per phone ABI plus
+a universal one (`./gradlew assembleRelease -PabiSplits=true
+-PreactNativeArchitectures=armeabi-v7a,arm64-v8a`), and publishes them as
+the GitHub Release of tag `v<versionName>` - which it creates at that
+commit - with `scripts/release-notes.ts`'s rendering of the version's
+`src/changelog.ts` entry as the notes. The Releases tab is where a phone
+downloads the APK from; the workflow artifact carries the same files.
+
 ### Versioning and releases
 
 **1.0.0 is version 1**: the first release APK, `versionCode 1`, built from
@@ -384,11 +395,13 @@ number:
   to install an APK whose `versionCode` isn't higher than the one
   already on the phone.
 - Add the release's entry to `src/changelog.ts` (most recent first, user
-  facing) and tag the commit it was built from: `git tag -a vX.Y.Z -m
-  "Sichos Kodesh mobile X.Y.Z"`.
-- A release APK is named after its version and ABI when handed out, e.g.
-  `sichos-kodesh-1.0.0-universal.apk` (armeabi-v7a + arm64-v8a, the one
-  to give to phones) or `sichos-kodesh-1.0.0-phone-arm64.apk`.
+  facing) - the release workflow refuses to run without it, since it is
+  the release notes.
+- Merge, then run "Android Signed Release APK" on `main` (above). It tags
+  the commit `vX.Y.Z` and publishes the APKs, named after the version and
+  ABI: `sichos-kodesh-1.2.0-arm64-v8a.apk` (the one for phones),
+  `sichos-kodesh-1.2.0-armeabi-v7a.apk` (old 32-bit phones) and
+  `sichos-kodesh-1.2.0-universal.apk` (both).
 
 ## Google Play (Internal testing track)
 

@@ -134,6 +134,21 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
+    // `-PabiSplits=true` (the "Android Signed Release APK" workflow) writes one
+    // APK per phone ABI plus a universal one - app-arm64-v8a-release.apk,
+    // app-armeabi-v7a-release.apk, app-universal-release.apk - so a phone
+    // downloads a 25 MB file instead of a 55 MB one. Build with
+    // `-PreactNativeArchitectures=armeabi-v7a,arm64-v8a` alongside it, or the
+    // universal APK also carries the emulator ABIs. A plain build keeps the
+    // single app-release.apk.
+    splits {
+        abi {
+            enable project.hasProperty("abiSplits")
+            reset()
+            include "armeabi-v7a", "arm64-v8a"
+            universalApk true
+        }
+    }
 }
 
 dependencies {

@@ -19,7 +19,8 @@
     "android:smoke:buildonly": "bash scripts/android-smoke-test.sh --build-only",
     "prebuild:check": "bash scripts/prebuild-check.sh",
     "android:release": "npm run prebuild:check && cd android && ./gradlew assembleRelease",
-    "android:ui-walkthrough": "bash scripts/android-ui-walkthrough.sh"
+    "android:ui-walkthrough": "bash scripts/android-ui-walkthrough.sh",
+    "release-notes": "tsx scripts/release-notes.ts"
   },
   "dependencies": {
     "@hebcal/core": "^6.9.2",
@@ -60,6 +61,7 @@
     "jest": "^29.6.3",
     "prettier": "2.8.8",
     "react-test-renderer": "19.2.3",
+    "tsx": "^4.19.2",
     "typescript": "^6.0.3"
   },
   "engines": {
