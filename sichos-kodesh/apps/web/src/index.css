@@ -922,6 +922,24 @@ h1 {
   text-align: start;
 }
 
+/* The playlist's own "download all" - an icon beside the play button in
+   the header card (see RecordingsScreen), not a pill in the action bar. */
+.playlist-header-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.playlist-header-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
 .playlist-header-title {
   margin: 0;
   font-size: 1.125rem;
@@ -986,6 +1004,25 @@ h1 {
 .download-state-done {
   flex-shrink: 0;
   color: var(--accent);
+}
+
+.playlist-header-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  cursor: pointer;
+  transition: filter 0.12s ease, background-color 0.12s ease;
+}
+
+.playlist-header-action:hover {
+  filter: brightness(0.92);
 }
 
 @keyframes download-spin {

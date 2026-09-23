@@ -2,7 +2,6 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CheckCircle2, Download } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
 import { useDownload } from '../download/useDownload';
 import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useDownloadState } from '../download/useDownloadState';
@@ -17,30 +16,31 @@ import { ShareButton } from './ShareButton';
 
 interface Props {
   entry: CatalogEntry;
-  /** 'occasion' downloads everything the occasion has (FarbrengenScreen); 'recordings' downloads its chapters (RecordingsScreen) - the same pair of pills either way. */
-  mode?: 'occasion' | 'recordings';
+  /** The recordings screen keeps its own "download all" icon in the playlist header and shows only the Share pill here. */
+  showDownload?: boolean;
 }
 
 /**
- * The one action bar every occasion page and recordings page shares: a
- * Download pill and a Share pill of the same shape, side by side (web:
- * `.action-bar` / `.action-pill`). The download pill is the whole state in
- * one place - a button to start, then the live progress, then
- * "Downloaded" - so neither page needs its own arrangement of icons.
+ * The action bar under an occasion's title: a Download pill and a Share
+ * pill of the same shape, side by side (web: `.action-bar` /
+ * `.action-pill`). The download pill is the whole state in one place - a
+ * button to start, then the live progress, then "Downloaded" - instead of
+ * a text link next to a status line. The recordings screen renders the
+ * same bar with Share alone (its download lives in the playlist header).
  */
-export function OccasionActions({ entry, mode = 'occasion' }: Props) {
+export function OccasionActions({ entry, showDownload = true }: Props) {
   const { t, isRtl } = useTranslation();
   const colors = useColors();
-  const { downloadOccasion, downloadAllChapters } = useDownload();
-  const occasionState = useDownloadState(entry);
-  const chaptersState = useAllChaptersDownloadState(entry);
+  const { downloadOccasion } = useDownload();
+  const state = useDownloadState(entry);
   const progress = useDownloadProgress(entry);
-  const state = mode === 'recordings' ? chaptersState : occasionState;
   const tint = hexWithAlpha(colors.accent, 0.14);
   const direction = { flexDirection: row(isRtl) } as const;
 
   let download = null;
-  if (state === 'downloaded') {
+  if (!showDownload) {
+    download = null;
+  } else if (state === 'downloaded') {
     download = (
       <View style={[actionPillStyles.pill, actionPillStyles.primary, direction, { backgroundColor: tint }]} accessibilityRole="text" accessibilityLabel={t.downloadedLabel}>
         <CheckCircle2 size={16} color={colors.accent} />
@@ -50,7 +50,7 @@ export function OccasionActions({ entry, mode = 'occasion' }: Props) {
   } else if (state === 'downloading' || state === 'queued') {
     download = (
       <View style={[actionPillStyles.pill, actionPillStyles.primary, direction, { backgroundColor: tint }]} accessibilityRole="text" accessibilityLabel={t.downloadingLabel}>
-        {mode === 'occasion' && progress !== undefined ? <DownloadProgressRing size={16} progress={progress} /> : <Spinner size={16} color={colors.accent} />}
+        {progress !== undefined ? <DownloadProgressRing size={16} progress={progress} /> : <Spinner size={16} color={colors.accent} />}
         <AppText style={[styles.label, { color: colors.accent }]}>{t.downloadingLabel}</AppText>
       </View>
     );
@@ -60,7 +60,7 @@ export function OccasionActions({ entry, mode = 'occasion' }: Props) {
     download = (
       <Pressable
         onPress={() => {
-          (mode === 'recordings' ? downloadAllChapters(entry) : downloadOccasion(entry)).catch(() => undefined);
+          downloadOccasion(entry).catch(() => undefined);
         }}
         disabled={pending}
         hitSlop={6}
@@ -68,7 +68,7 @@ export function OccasionActions({ entry, mode = 'occasion' }: Props) {
         style={({ pressed }) => [actionPillStyles.pill, actionPillStyles.primary, direction, { backgroundColor: tint }, pending && styles.pending, pressed && styles.pressed]}
       >
         <Download size={16} color={colors.accent} />
-        <AppText style={[styles.label, { color: colors.accent }]}>{mode === 'recordings' ? t.downloadAllRecordingsLabel : t.downloadLabel}</AppText>
+        <AppText style={[styles.label, { color: colors.accent }]}>{t.downloadLabel}</AppText>
       </Pressable>
     );
   }

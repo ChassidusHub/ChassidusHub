@@ -3,35 +3,34 @@ import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from '../download/useDownload';
 import { useDownloadState } from '../download/useDownloadState';
 import { useDownloadProgress } from '../download/useDownloadProgress';
-import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
 import { useTranslation } from '../i18n/useLanguage';
 import { DownloadProgressRing } from './DownloadProgressRing';
 import { ShareButton } from './ShareButton';
 
 interface Props {
   entry: CatalogEntry;
-  /** 'occasion' downloads everything the occasion has (FarbrengenScreen); 'recordings' downloads its chapters (RecordingsScreen) - the same pair of pills either way. */
-  mode?: 'occasion' | 'recordings';
+  /** The recordings page keeps its own "download all" icon in the playlist header and shows only the Share pill here. */
+  showDownload?: boolean;
 }
 
 /**
- * The one action bar every occasion page and recordings page shares: a
- * Download pill and a Share pill of the same shape, side by side. The
- * download pill is the whole state in one place - a button to start,
- * then the live progress, then "Downloaded" - so neither page needs its
- * own arrangement of icons and links (the two used to differ, and neither
- * sat well next to the other). The mobile app renders the same bar.
+ * The action bar under an occasion's title: a Download pill and a Share
+ * pill of the same shape, side by side. The download pill is the whole
+ * state in one place - a button to start, then the live progress, then
+ * "Downloaded" - instead of a text link next to a status line. The
+ * recordings page renders the same bar with Share alone (its download
+ * lives in the playlist header). The mobile app renders the same bar.
  */
-export function OccasionActions({ entry, mode = 'occasion' }: Props) {
+export function OccasionActions({ entry, showDownload = true }: Props) {
   const { t } = useTranslation();
-  const { downloadOccasion, downloadAllChapters } = useDownload();
-  const occasionState = useDownloadState(entry);
-  const chaptersState = useAllChaptersDownloadState(entry);
+  const { downloadOccasion } = useDownload();
+  const state = useDownloadState(entry);
   const progress = useDownloadProgress(entry);
-  const state = mode === 'recordings' ? chaptersState : occasionState;
 
   let download = null;
-  if (state === 'downloaded') {
+  if (!showDownload) {
+    download = null;
+  } else if (state === 'downloaded') {
     download = (
       <span className="action-pill action-pill-primary action-pill-static" role="status">
         <CheckCircle2 size={16} aria-hidden /> {t.downloadedLabel}
@@ -40,7 +39,7 @@ export function OccasionActions({ entry, mode = 'occasion' }: Props) {
   } else if (state === 'downloading' || state === 'queued') {
     download = (
       <span className="action-pill action-pill-primary action-pill-static" role="status">
-        {mode === 'occasion' && progress !== undefined ? <DownloadProgressRing size={16} progress={progress} /> : <Loader2 size={16} className="download-state-spinner" aria-hidden />} {t.downloadingLabel}
+        {progress !== undefined ? <DownloadProgressRing size={16} progress={progress} /> : <Loader2 size={16} className="download-state-spinner" aria-hidden />} {t.downloadingLabel}
       </span>
     );
   } else if (state === 'none' || state === 'loading') {
@@ -50,10 +49,10 @@ export function OccasionActions({ entry, mode = 'occasion' }: Props) {
       <button
         type="button"
         className={state === 'loading' ? 'action-pill action-pill-primary action-pill-pending' : 'action-pill action-pill-primary'}
-        onClick={() => (mode === 'recordings' ? downloadAllChapters(entry) : downloadOccasion(entry))}
+        onClick={() => downloadOccasion(entry)}
         disabled={state === 'loading'}
       >
-        <Download size={16} aria-hidden /> {mode === 'recordings' ? t.downloadAllRecordingsLabel : t.downloadLabel}
+        <Download size={16} aria-hidden /> {t.downloadLabel}
       </button>
     );
   }
