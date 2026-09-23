@@ -84,7 +84,16 @@ reaches every phone without an app update.
   `isCatalogUpdateApplicable` decides whether an app should fetch it.
 - `bin/release.ts` (`npm run release-files -w @sichos-kodesh/catalog`)
   writes the two files into `dist-release/` from the year files the apps
-  bundle. `--check` only verifies the version/changelog agree (CI).
+  bundle. `--check` only verifies the version/changelog agree (CI);
+  `--released-at` pins the timestamp (the API passes the commit's date).
+
+How the API gets the files: `api.sk.shmuky.dev` is
+`services/catalog-api`, a Vercel project whose build runs this same
+`release-files` script against the checked-out commit and bakes the two
+files into the function. There is no upload step and no bucket: the
+release it serves is the catalog of whatever commit is deployed to
+production, i.e. `main`. (`services/catalog-api/README.md` has the
+endpoints and the Vercel settings.)
 
 To ship a catalog release:
 
@@ -92,10 +101,13 @@ To ship a catalog release:
    both apps' `src/catalog/data` (they are identical copies).
 2. Bump `CATALOG_VERSION`, add the entry to `changelog.ts` and
    `CHANGELOG.md`.
-3. Commit, then tag that commit `catalog-v<version>` and push the tag. The
+3. Merge to `main`. Vercel deploys the API from that commit; the apps pick
+   the new version up on their next daily check (or "Update catalog" on
+   the phone).
+4. Tag the same commit `catalog-v<version>` and push the tag. The
    `catalog-release` workflow (`.github/workflows/catalog-release.yml`)
    runs `release-files` and attaches `catalog.json` + `manifest.json` to a
-   GitHub release of that tag; the API serves them from there.
+   GitHub release of that tag - the archive of what the API serves.
 
 ## Playback policy (`playbackPolicy.ts`)
 

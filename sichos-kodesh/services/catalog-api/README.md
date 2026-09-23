@@ -1,0 +1,78 @@
+# @sichos-kodesh/catalog-api
+
+`https://api.sk.shmuky.dev` - the catalog release both apps fetch on their
+own (see `packages/catalog/README.md`, "Catalog releases"). One Vercel
+function, no storage: the two files it serves are generated from this
+repository's own catalog when Vercel builds the deployment.
+
+## Endpoints
+
+All plain JSON, `GET`/`HEAD`/`OPTIONS`, `Access-Control-Allow-Origin: *`.
+The shapes are `CatalogManifest` / `CatalogRelease` in
+`packages/catalog/src/release.ts`; the client is
+`packages/app-core/src/catalog/catalogUpdate.ts`.
+
+| Path | What | Cache-Control |
+| --- | --- | --- |
+| `/v1/catalog/manifest.json` | the served release: `version`, `releasedAt`, `url`, `bytes`, `sha256`, `years`, `occasions`, `changelog` | `public, max-age=300` |
+| `/v1/catalog/<version>/catalog.json` | that release's data (`byYear`), ~2.6 MB, byte-exact (`sha256` in the manifest, also the `ETag`) | `public, max-age=31536000, immutable` |
+| `/v1/catalog/changelog.json` | the changelog array alone | `public, max-age=300` |
+| `/v1/catalog/latest/catalog.json` | `302` to the served version | `public, max-age=300` |
+| `/` | a small index | |
+
+Any other path, and any other version than the one served, is a JSON
+`404` (`{"error":"not_found", ...}`); other methods a JSON `405`. The
+manifest's `url` is rewritten to the origin the request arrived on, so a
+preview deployment's manifest points at that preview's own catalog.
+
+## How the API gets the files
+
+There is no upload step. `scripts/build.mjs` (the Vercel build command)
+runs `npm run release-files -w @sichos-kodesh/catalog`, which writes
+`catalog.json` + `manifest.json` from the year files the apps bundle,
+stamped with `CATALOG_VERSION` and the deployed commit's date (the build
+time when no git metadata is around), and bakes both into
+`generated/release.ts`; `api/index.ts` serves those strings' exact UTF-8
+bytes. So the release the API serves is **the catalog of the
+commit deployed to production** - `main`:
+
+1. Rebuild the data and bump `CATALOG_VERSION` + the changelog
+   (`packages/catalog/README.md` has the routine).
+2. Merge to `main`. Vercel builds and deploys this service; the apps see
+   the new version on their next daily check.
+3. Tag the same commit `catalog-v<version>` and push the tag - the
+   `catalog-release` workflow attaches the identical two files to a GitHub
+   release, the archive of what the API served.
+
+`main` must therefore never carry a half-bumped catalog: `release-files
+--check` (run by the build) fails when the changelog's first entry is not
+for `CATALOG_VERSION`.
+
+## Deploying
+
+The Vercel project `sichos-kodesh-catalog-api` (team `delta-capital`,
+`prj_nRJopssfuqjFZUqqSF9XL6mHdFQQ`) has root directory
+`services/catalog-api` and is connected to this repository: pushes to
+`main` deploy production, every other branch a preview. Nothing to run by
+hand. Everything the build needs is in `vercel.json` and `package.json`,
+so the dashboard holds no build settings:
+
+- Framework none; build `npm run build` (`scripts/build.mjs`); output
+  directory `public` (just `robots.txt` - the function answers every
+  path); install runs at the repository root, as for `apps/web`.
+- Node.js 22 (`engines`).
+- Domain `api.sk.shmuky.dev` on the project, and at the DNS host of
+  `shmuky.dev` the record `CNAME api.sk -> cname.vercel-dns.com` (the
+  domain is verified on the Vercel team, but its nameservers are the
+  registrar's, so the record is added there by hand; the dashboard shows
+  the exact value it wants when the domain is added).
+
+## Developing
+
+```
+npm run build -w @sichos-kodesh/catalog-api   # generates generated/release.ts from the repo's catalog
+npm test -w @sichos-kodesh/catalog-api        # router tests: shapes, headers, sha256 round-trip, 404/405/OPTIONS
+npm run dev -w @sichos-kodesh/catalog-api     # http://localhost:8788 through the same handler
+```
+
+`generated/` is build output and git-ignored.
