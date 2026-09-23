@@ -24,7 +24,8 @@ jobs:
   bundle:
     runs-on: ubuntu-latest
     # The bot's own commits carry [skip ci]; don't loop on them.
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    # (head_commit is absent on workflow_dispatch, so default it to ''.)
+    if: "!contains(github.event.head_commit.message || '', '[skip ci]')"
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +42,8 @@ jobs:
       - name: Commit the bundle if it changed
         run: |
           set -euo pipefail
-          if git diff --quiet -- services/catalog-api/api/index.js; then
+          # (porcelain, not diff: the bundle is untracked on the first run)
+          if [ -z "$(git status --porcelain -- services/catalog-api/api/index.js)" ]; then
             echo "bundle unchanged"
           else
             git config user.name "github-actions[bot]"
