@@ -1,15 +1,21 @@
 name: Android Signed Release APK
 
-# Manual only - produces a signed release APK (installable directly),
-# unlike android-aab.yml which builds a bundle for the Play Console.
+# Manual only. Builds the signed release APKs for phones and publishes them
+# as a GitHub Release - tag v<versionName> (from android/app/build.gradle),
+# created at the commit the workflow runs on - because the Releases tab is
+# where a phone downloads an APK from. android-aab.yml is the Play Console
+# bundle; this one is what gets handed to people directly.
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   android-apk:
     name: Signed release APK
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
       - name: Free up disk space
@@ -36,13 +42,26 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Read the app version
+        id: version
+        run: |
+          version=$(sed -n 's/^ *versionName "\(.*\)"/\1/p' apps/mobile/android/app/build.gradle | head -1)
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Releasing $version"
+
+      - name: Write the release notes from the changelog
+        run: |
+          npm run --silent release-notes -w @sichos-kodesh/mobile > "$RUNNER_TEMP/release-notes.md"
+          cat "$RUNNER_TEMP/release-notes.md"
+
       - name: Decode upload keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
 
-      - name: Build release APK
+      - name: Build release APKs (one per phone ABI, plus universal)
         env:
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload.keystore
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -50,11 +69,32 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           npm run prebuild:check -w @sichos-kodesh/mobile
-          cd apps/mobile/android && ./gradlew assembleRelease --stacktrace
+          cd apps/mobile/android && ./gradlew assembleRelease \
+            -PabiSplits=true -PreactNativeArchitectures=armeabi-v7a,arm64-v8a --stacktrace
 
-      - name: Upload signed APK
+      - name: Name the APKs after the version
+        run: |
+          version='${{ steps.version.outputs.version }}'
+          out=apps/mobile/android/app/build/outputs/apk/release
+          mkdir -p "$RUNNER_TEMP/apks"
+          for abi in arm64-v8a armeabi-v7a universal; do
+            cp "$out/app-$abi-release.apk" "$RUNNER_TEMP/apks/sichos-kodesh-$version-$abi.apk"
+          done
+          ls -la "$RUNNER_TEMP/apks"
+
+      - name: Upload signed APKs as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: sichos-kodesh-release-apk
-          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+          path: ${{ runner.temp }}/apks/*.apk
           if-no-files-found: error
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Sichos Kodesh ${{ steps.version.outputs.version }}
+          body_path: ${{ runner.temp }}/release-notes.md
+          files: ${{ runner.temp }}/apks/*.apk
+          make_latest: true
+          fail_on_unmatched_files: true
