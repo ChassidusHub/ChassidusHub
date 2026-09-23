@@ -143,6 +143,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setState((prev) => (prev.playlist ? { ...prev, currentIndex: index, playing: true, loading: true, currentTime: 0, duration: 0 } : prev));
   }, []);
 
+  const pause = useCallback(() => {
+    audioRef.current?.pause();
+  }, []);
+
   const togglePlay = useCallback(() => {
     const el = audioRef.current;
     if (!el) return;
@@ -356,8 +360,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [prev, next]);
 
   const value = useMemo<PlayerContextValue>(
-    () => ({ ...state, play, togglePlay, playChapter, next, prev, seekToFraction, audioRef }),
-    [state, play, togglePlay, playChapter, next, prev, seekToFraction],
+    () => ({ ...state, play, togglePlay, pause, playChapter, next, prev, seekToFraction, audioRef }),
+    [state, play, togglePlay, pause, playChapter, next, prev, seekToFraction],
   );
 
   return (

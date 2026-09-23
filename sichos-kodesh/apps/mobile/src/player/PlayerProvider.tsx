@@ -192,6 +192,11 @@ export function PlayerProvider({ children }: Props) {
     }).catch(() => undefined);
   }, [runPlayerAction]);
 
+  const pause = useCallback(() => {
+    if (!playlistRef.current) return;
+    runPlayerAction(() => TrackPlayer.pause()).catch(() => undefined);
+  }, [runPlayerAction]);
+
   const playChapter = useCallback(
     (index: number) => {
       const current = playlistRef.current;
@@ -280,12 +285,13 @@ export function PlayerProvider({ children }: Props) {
       error,
       play,
       togglePlay,
+      pause,
       next,
       prev,
       playChapter,
       seekToFraction,
     }),
-    [currentIndex, error, loading, next, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekToFraction, togglePlay],
+    [currentIndex, error, loading, next, pause, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekToFraction, togglePlay],
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;

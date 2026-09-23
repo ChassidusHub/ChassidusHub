@@ -30,6 +30,8 @@ export interface PlayerContextValue {
   /** Loads `playlist` and starts playing `chapterIndex` from `position` (seconds). */
   play: (playlist: PlayerPlaylist, chapterIndex?: number, position?: number) => void;
   togglePlay: () => void;
+  /** Pauses without changing the playlist - the player bar's "put it away" gesture; the bar can come back to exactly this state. */
+  pause: () => void;
   next: () => void;
   prev: () => void;
   /** Jumps to one chapter of the current playlist, resuming wherever it was left off. */

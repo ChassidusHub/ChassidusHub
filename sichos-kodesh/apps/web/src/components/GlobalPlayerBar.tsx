@@ -11,18 +11,39 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/** Full controls; a one-line summary; or put away entirely, with only a pull-up handle left at the bottom edge. */
+type BarMode = 'full' | 'collapsed' | 'hidden';
+
 /**
  * The single, always-mounted (at App root, above the router) player bar -
  * Spotify/YouTube-style: survives navigating between screens because it
  * reads from PlayerContext rather than owning a `<audio>` element itself
  * (that lives in PlayerContext, mounted once). Renders nothing until
  * something has actually been played this session.
+ *
+ * Swiping down on it collapses it to a one-line summary; a second swipe
+ * down puts it away and pauses playback, leaving a small handle at the
+ * bottom edge - swipe up on that (or tap it) and the bar is back, paused
+ * where it was. Starting something new to play brings it back on its own.
  */
 export function GlobalPlayerBar() {
   const { t, language } = useTranslation();
   const player = usePlayer();
   const [showChapters, setShowChapters] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [mode, setMode] = useState<BarMode>('full');
+  // True from the hide gesture until its pause has actually landed -
+  // `player.playing` still reads true for a frame after `pause()`.
+  const [awaitingPause, setAwaitingPause] = useState(false);
+  const collapsed = mode === 'collapsed';
+
+  // A hidden bar comes back when something starts playing again - the
+  // gesture put the *previous* playback away (paused it), not every
+  // future one. Derived during render rather than in an effect, so the
+  // bar never paints a frame in the stale state.
+  if (mode === 'hidden') {
+    if (awaitingPause && !player.playing) setAwaitingPause(false);
+    else if (!awaitingPause && player.playing) setMode('full');
+  }
   // Non-null exactly while the user has a finger/pointer down on the
   // scrubber - the range input's displayed value comes from here instead
   // of the live ticking `currentTime` for that whole stretch, so a
@@ -67,9 +88,19 @@ export function GlobalPlayerBar() {
       observer.disconnect();
       document.documentElement.style.setProperty('--player-bar-height', '96px');
     };
-  }, [collapsed, showChapters, player.playlist, player.error]);
+  }, [mode, showChapters, player.playlist, player.error]);
 
   if (!player.playlist) return null;
+
+  if (mode === 'hidden') {
+    return (
+      <div ref={playerRef} className="global-player global-player-hidden" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+        <button type="button" className="global-player-handle" onClick={() => setMode('full')} aria-label={t.showPlayer}>
+          <span className="global-player-handle-pill" aria-hidden />
+        </button>
+      </div>
+    );
+  }
 
   const { audio } = player.playlist;
   const current = audio[player.currentIndex]!;
@@ -110,16 +141,22 @@ export function GlobalPlayerBar() {
     touchStartY.current = null;
     if (startY == null || endY == null) return;
     const deltaY = endY - startY;
-    if (deltaY > 40 && !collapsed) {
-      setCollapsed(true);
-      setShowChapters(false);
-    } else if (deltaY < -40 && collapsed) {
-      setCollapsed(false);
+    if (deltaY > 40) {
+      if (mode === 'full') {
+        setMode('collapsed');
+        setShowChapters(false);
+      } else if (mode === 'collapsed') {
+        setMode('hidden');
+        setAwaitingPause(player.playing);
+        player.pause();
+      }
+    } else if (deltaY < -40 && mode !== 'full') {
+      setMode('full');
     }
   }
 
   function expandPlayer() {
-    setCollapsed(false);
+    setMode('full');
   }
 
   return (

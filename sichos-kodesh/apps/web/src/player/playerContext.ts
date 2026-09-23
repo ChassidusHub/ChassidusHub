@@ -28,6 +28,8 @@ export interface PlayerContextValue extends PlayerState {
   /** Loads a new playlist and starts playing from `startIndex`, optionally seeking to `startTime` seconds into that chapter (the home page's Continue section resuming a chapter that was stopped mid-way) - replaces whatever was playing before, matching a real player (not mixed/queued). */
   play: (playlist: Playlist, startIndex?: number, startTime?: number) => void;
   togglePlay: () => void;
+  /** Pauses without changing the playlist - the player bar's "put it away" gesture; the bar can come back to exactly this state. */
+  pause: () => void;
   playChapter: (index: number) => void;
   next: () => void;
   prev: () => void;

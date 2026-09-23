@@ -1643,6 +1643,39 @@ h1 {
   display: none;
 }
 
+/* Put away: nothing but a pull-up handle at the bottom edge - swipe up on
+   it, or tap it, and the bar is back. */
+.global-player-hidden {
+  display: flex;
+  justify-content: center;
+}
+
+.global-player-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 640px;
+  min-height: 22px;
+  padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px));
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.global-player-handle-pill {
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.global-player-handle:hover .global-player-handle-pill {
+  opacity: 1;
+}
+
 .download-progress-bar {
   position: relative;
   display: flex;

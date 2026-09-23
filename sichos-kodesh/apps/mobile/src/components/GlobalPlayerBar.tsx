@@ -11,13 +11,19 @@ import { useColors } from '../ui/theme';
 import { row } from '../ui/rtl';
 import { Scrubber } from './Scrubber';
 
+/** Full controls; a one-line summary; or put away entirely, with only a pull-up handle left at the bottom edge. Same states as the web's GlobalPlayerBar. */
+type BarMode = 'full' | 'collapsed' | 'hidden';
+
 /**
  * The single, always-mounted (at the app root, beside the navigator)
  * player bar - Spotify/YouTube-style: survives navigating between screens
  * because it reads from PlayerContext rather than owning playback itself.
  * Renders nothing until something has actually been played this session.
- * Swiping down on it collapses it to a one-line summary; swiping up (or
- * tapping the summary) expands it again.
+ *
+ * Swiping down on it collapses it to a one-line summary; a second swipe
+ * down puts it away and pauses playback, leaving a small handle at the
+ * bottom edge - swipe up on that (or tap it) and the bar is back, paused
+ * where it was. Starting something new to play brings it back on its own.
  */
 export function GlobalPlayerBar() {
   const { t, language, isRtl } = useTranslation();
@@ -25,26 +31,57 @@ export function GlobalPlayerBar() {
   const player = usePlayer();
   const { height: windowHeight } = useWindowDimensions();
   const [showChapters, setShowChapters] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [mode, setMode] = useState<BarMode>('full');
+  // True from the hide gesture until its pause has actually landed -
+  // `player.playing` still reads true for a moment after `pause()`.
+  const [awaitingPause, setAwaitingPause] = useState(false);
   const [dragPercent, setDragPercent] = useState<number | null>(null);
-  const collapsedRef = useRef(collapsed);
-  collapsedRef.current = collapsed;
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const playerRef = useRef(player);
+  playerRef.current = player;
+  const collapsed = mode === 'collapsed';
+
+  // A hidden bar comes back when something starts playing again - the
+  // gesture put the *previous* playback away (paused it), not every
+  // future one. Derived during render rather than in an effect, so the
+  // bar never paints a frame in the stale state.
+  if (mode === 'hidden') {
+    if (awaitingPause && !player.playing) setAwaitingPause(false);
+    else if (!awaitingPause && player.playing) setMode('full');
+  }
 
   const swipe = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 12 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.5,
       onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy > 40 && !collapsedRef.current) {
-          setCollapsed(true);
-          setShowChapters(false);
-        } else if (gesture.dy < -40 && collapsedRef.current) {
-          setCollapsed(false);
+        if (gesture.dy > 40) {
+          if (modeRef.current === 'full') {
+            setMode('collapsed');
+            setShowChapters(false);
+          } else if (modeRef.current === 'collapsed') {
+            setMode('hidden');
+            setAwaitingPause(playerRef.current.playing);
+            playerRef.current.pause();
+          }
+        } else if (gesture.dy < -40 && modeRef.current !== 'full') {
+          setMode('full');
         }
       },
     }),
   ).current;
 
   if (!player.playlist) return null;
+
+  if (mode === 'hidden') {
+    return (
+      <View {...swipe.panHandlers} style={[styles.player, styles.hidden, { backgroundColor: colors.bgElevated, borderTopColor: colors.border }]}>
+        <Pressable onPress={() => setMode('full')} accessibilityRole="button" accessibilityLabel={t.showPlayer} style={styles.handle}>
+          <View style={[styles.handlePill, { backgroundColor: colors.muted }]} />
+        </Pressable>
+      </View>
+    );
+  }
 
   const { audio } = player.playlist;
   const current = audio[player.currentIndex] ?? audio[0]!;
@@ -96,7 +133,7 @@ export function GlobalPlayerBar() {
 
       <View style={[styles.controls, collapsed && styles.controlsCollapsed, { flexDirection: row(isRtl) }]}>
         {collapsed ? (
-          <Pressable onPress={() => setCollapsed(false)} style={styles.summary}>
+          <Pressable onPress={() => setMode('full')} style={styles.summary}>
             {titleBlock}
             {errorText ? (
               <AppText style={[styles.error, { color: colors.danger }]}>{errorText}</AppText>
@@ -162,6 +199,10 @@ export function GlobalPlayerBar() {
 const styles = StyleSheet.create({
   /** Web: `.global-player` - elevated background, 1px top border. */
   player: { borderTopWidth: 1 },
+  /** Web: `.global-player-hidden` / `.global-player-handle` - a 22px strip with a centred pill. */
+  hidden: { alignItems: 'center' },
+  handle: { width: '100%', minHeight: 22, paddingVertical: 6, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
+  handlePill: { width: 36, height: 4, borderRadius: 999, opacity: 0.6 },
   /** Web: `.global-player-controls` - gap 14, padding 12px 16px. */
   controls: { alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
   controlsCollapsed: { paddingVertical: 8 },
