@@ -1,6 +1,7 @@
 name: Mobile Android Build
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "apps/mobile/**"
