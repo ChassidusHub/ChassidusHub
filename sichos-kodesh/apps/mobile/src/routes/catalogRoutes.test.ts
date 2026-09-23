@@ -112,11 +112,11 @@ describe('catalogRoutes', () => {
     expect(result.categoryLinks).toEqual([{ section: 'hagahos', count: 1 }]);
   });
 
-  it('derives same-date occasions across years from a source occasion', () => {
+  it('derives the same occasion across years from a source occasion', () => {
     const result = resolveOccasionAllYearsGroups(catalog, 5711, 1);
 
     expect(result.sourceEntry?.occasionId).toBe(1);
-    expect(result.yearGroups.map((group) => [group.hebrewYear, group.entries.map((item) => item.occasionId)])).toEqual([
+    expect(result.yearGroups.map((group) => [group.hebrewYear, group.matches.map((item) => item.occasionId)])).toEqual([
       [5711, [1]],
       [5712, [5]],
     ]);

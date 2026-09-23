@@ -16,6 +16,8 @@ interface RowProps {
   selected?: boolean;
   /** Web: `.settings-option-label` + OverflowMarquee - a label too long for the row scrolls instead of clipping to an ellipsis. */
   marquee?: boolean;
+  /** Web: `.occasion-others-list .year-row-year` - a secondary row (muted, regular weight), e.g. the other farbrengens that share a matched occasion's date. */
+  muted?: boolean;
   onPress?: () => void;
   /** Extra content below the label line - the home page's Continue rows put a date and progress track here. */
   children?: ReactNode;
@@ -28,11 +30,11 @@ interface RowProps {
  * list's own edge on both sides (negative horizontal margin), and an
  * optional trailing group on the opposite side.
  */
-export function Row({ label, trailing, selected = false, marquee = false, onPress, children, style }: RowProps) {
+export function Row({ label, trailing, selected = false, marquee = false, muted = false, onPress, children, style }: RowProps) {
   const colors = useColors();
   const { isRtl } = useTranslation();
 
-  const labelStyle = [styles.label, { color: selected ? colors.accent : colors.fg }];
+  const labelStyle = [styles.label, { color: selected ? colors.accent : muted ? colors.muted : colors.fg }, muted && styles.labelMuted];
   const labelLine = (
     <>
       {marquee ? (
@@ -84,6 +86,7 @@ const styles = StyleSheet.create({
   line: { justifyContent: 'space-between', alignItems: 'center', minWidth: 0 },
   column: { gap: 6 },
   label: { flexShrink: 1, minWidth: 0, fontSize: 17, fontWeight: '600' },
+  labelMuted: { fontWeight: '400' },
   trailing: { alignItems: 'center', gap: 6, flexShrink: 0 },
   distance: { fontSize: 14, fontWeight: '500', flexShrink: 0 },
 });

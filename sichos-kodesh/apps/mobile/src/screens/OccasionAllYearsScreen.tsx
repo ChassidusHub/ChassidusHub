@@ -13,13 +13,18 @@ import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { CategoryHeader, GapMessage, TabHelp } from '../ui/Typography';
 
-/** Every occasion indexed on the same Hebrew (month, day) as this specific occasion, across every catalog year (web: `/occasion-all-years/:sourceHebrewYear/:sourceOccasionId`). */
+/**
+ * This specific occasion in every catalog year it happened, matched by what
+ * it is rather than by its date alone (see `resolveOccasionAllYears` in
+ * packages/catalog), with whatever else that year has on the same date
+ * beneath it as "also on this date" (web: `/occasion-all-years/:sourceHebrewYear/:sourceOccasionId`).
+ */
 export function OccasionAllYearsScreen({ navigation, route }: OccasionAllYearsScreenProps) {
   const { sourceHebrewYear, sourceOccasionId } = route.params;
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const sourceEntry: CatalogEntry | undefined = (catalog[sourceHebrewYear] ?? []).find((e) => e.occasionId === sourceOccasionId);
-  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry.hebrewDate) : []), [sourceEntry]);
+  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry) : []), [sourceEntry]);
   const back = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear: sourceHebrewYear, occasionId: sourceOccasionId } } as const;
 
   if (!sourceEntry) {
@@ -32,35 +37,55 @@ export function OccasionAllYearsScreen({ navigation, route }: OccasionAllYearsSc
 
   return (
     <Screen header={<ScreenHeader back={back} title={t.thisOccasionAllYearsTitle} />}>
-      <TabHelp>{t.thisOccasionAllYearsHelp(hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</TabHelp>
+      <TabHelp>{t.thisOccasionAllYearsHelp(sourceEntry.occasionLabel, hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</TabHelp>
 
       {yearGroups.length === 0 && <GapMessage>{t.noFarbrengensAnyYear}</GapMessage>}
 
-      {yearGroups.map(({ hebrewYear, entries }, index) => (
-        <View key={hebrewYear}>
-          <CategoryHeader first={index === 0}>{hebrewYearLabel(hebrewYear, language)}</CategoryHeader>
-          {entries.map((entry) => (
-            <Row
-              key={entry.occasionId}
-              label={entry.occasionLabel}
-              trailing={
-                <RowTrailing>
-                  <OccasionRowIcon entry={entry} progressMap={progressMap} />
-                </RowTrailing>
-              }
-              onPress={() =>
-                navigation.navigate('Farbrengen', {
-                  kind: 'occasionAllYears',
-                  sourceHebrewYear,
-                  sourceOccasionId,
-                  hebrewYear,
-                  occasionId: entry.occasionId,
-                })
-              }
-            />
-          ))}
-        </View>
-      ))}
+      {yearGroups.map(({ hebrewYear, matches, others }, index) => {
+        const open = (entry: CatalogEntry) =>
+          navigation.navigate('Farbrengen', {
+            kind: 'occasionAllYears',
+            sourceHebrewYear,
+            sourceOccasionId,
+            hebrewYear,
+            occasionId: entry.occasionId,
+          });
+        return (
+          <View key={hebrewYear}>
+            <CategoryHeader first={index === 0}>{hebrewYearLabel(hebrewYear, language)}</CategoryHeader>
+            {matches.map((entry) => (
+              <Row
+                key={entry.occasionId}
+                label={entry.occasionLabel}
+                trailing={
+                  <RowTrailing>
+                    <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                  </RowTrailing>
+                }
+                onPress={() => open(entry)}
+              />
+            ))}
+            {others.length > 0 && (
+              <>
+                <TabHelp>{t.alsoOnThisDate}</TabHelp>
+                {others.map((entry) => (
+                  <Row
+                    key={entry.occasionId}
+                    label={entry.occasionLabel}
+                    muted
+                    trailing={
+                      <RowTrailing>
+                        <OccasionRowIcon entry={entry} progressMap={progressMap} />
+                      </RowTrailing>
+                    }
+                    onPress={() => open(entry)}
+                  />
+                ))}
+              </>
+            )}
+          </View>
+        );
+      })}
     </Screen>
   );
 }

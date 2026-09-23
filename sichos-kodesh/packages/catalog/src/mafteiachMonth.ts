@@ -91,3 +91,20 @@ export const MAFTEIACH_MONTH_OPTIONS: MafteiachMonthOption[] = ['01', '02', '03'
 export function mafteiachDay(hebrewDate: string): number {
   return Number.parseInt(hebrewDate.split('-')[2] ?? '0', 10);
 }
+
+/**
+ * A raw date key without its same-date disambiguator, e.g. "5711-01-09b"
+ * -> "5711-01-09". Every date lookup compares this, never the raw key: a
+ * tenth of the catalog is a second (or third) occasion on a date already
+ * taken, and those carry the suffix - compared raw, they match no
+ * computed date key at all and silently vanish from every date-based
+ * list (this week, all years, every year).
+ */
+export function hebrewDateBase(hebrewDate: string): string {
+  return hebrewDate.replace(/[a-z]$/, '');
+}
+
+/** True when an entry's raw date key is the given computed key, suffix or not. */
+export function sameHebrewDate(entryHebrewDate: string, hebrewDateKey: string): boolean {
+  return hebrewDateBase(entryHebrewDate) === hebrewDateKey;
+}
