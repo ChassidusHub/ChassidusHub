@@ -21,6 +21,15 @@ interface Props {
   children: ReactNode;
 }
 
+/**
+ * How long after the active track changes a progress sample is distrusted
+ * (useProgress polls every 500 ms, so a stale sample can survive a poll or
+ * two), and the position below which a sample in that window is accepted
+ * anyway - it can only be the new track's own start.
+ */
+const STALE_PROGRESS_WINDOW_MS = 1500;
+const STALE_PROGRESS_START_SECONDS = 5;
+
 // Promise sentinel: null = not started, in-flight promise = setting up, resolved = ready.
 let playerSetupPromise: Promise<void> | null = null;
 
@@ -222,6 +231,16 @@ export function PlayerProvider({ children }: Props) {
     [progress.duration],
   );
 
+  // useProgress polls every 500 ms while useActiveTrack updates on the
+  // track-changed event, so for a poll or two after a skip the sample still
+  // describes the *previous* chapter - and would credit its position to the
+  // new one (a chapter never played showing a quarter listened). Samples in
+  // that window are ignored unless they already sit near the start.
+  const indexChangedAtRef = useRef(0);
+  useEffect(() => {
+    indexChangedAtRef.current = Date.now();
+  }, [activeIndex]);
+
   // Throttled progress recording - once per 5-second bucket per chapter,
   // not on every tick (the same "periodic writes, not every event"
   // pattern the web PlayerProvider uses).
@@ -229,6 +248,7 @@ export function PlayerProvider({ children }: Props) {
     if (!playlist || activeIndex < 0) return;
     const chapter = playlist.audio[activeIndex];
     if (!chapter) return;
+    if (Date.now() - indexChangedAtRef.current < STALE_PROGRESS_WINDOW_MS && progress.position > STALE_PROGRESS_START_SECONDS) return;
     const duration = progress.duration > 0 ? progress.duration : chapter.durationMs / 1000;
     if (!Number.isFinite(duration) || duration <= 0) return;
     const position = Math.max(0, Math.min(progress.position, duration));
@@ -253,8 +273,10 @@ export function PlayerProvider({ children }: Props) {
       currentIndex,
       playing,
       loading,
-      currentTime: progress.position,
-      duration: progress.duration,
+      // While a switch is in flight the native progress still belongs to the
+      // previous chapter; show the requested one from its own start instead.
+      currentTime: requestedIndex != null ? 0 : progress.position,
+      duration: requestedIndex != null ? (playlist?.audio[requestedIndex]?.durationMs ?? 0) / 1000 : progress.duration,
       error,
       play,
       togglePlay,
@@ -263,7 +285,7 @@ export function PlayerProvider({ children }: Props) {
       playChapter,
       seekToFraction,
     }),
-    [currentIndex, error, loading, next, play, playChapter, playing, playlist, prev, progress.duration, progress.position, seekToFraction, togglePlay],
+    [currentIndex, error, loading, next, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekToFraction, togglePlay],
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
