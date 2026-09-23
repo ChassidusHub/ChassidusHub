@@ -36,12 +36,17 @@ dump_ui() {
   adb shell cat /sdcard/ui.xml 2>/dev/null
 }
 
-# Prints "x y" for the center of the first node whose text or content-desc
-# contains $1 (case-insensitive), or nothing. uiautomator single-quotes an
-# attribute whose value contains a double quote (common in Hebrew labels
-# like יו"כ), so both quote styles are read.
-find_node() {
-  dump_ui | python3 -c '
+# The most recent accessibility dump (see refresh_ui). One dump per step -
+# on a software-emulated device the dump itself is the slow part.
+UI_XML=""
+refresh_ui() { UI_XML="$(dump_ui)"; }
+
+# Prints "x y" for the center of the first node in the last dump whose text
+# or content-desc contains $1 (case-insensitive), or nothing. uiautomator
+# single-quotes an attribute whose value contains a double quote (common in
+# Hebrew labels like יו"כ), so both quote styles are read.
+node_center() {
+  printf '%s' "$UI_XML" | python3 -c '
 import re, sys
 needle = sys.argv[1].lower()
 xml = sys.stdin.read()
@@ -61,6 +66,33 @@ for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
 ' "$1"
 }
 
+# node_center from a fresh dump.
+find_node() {
+  refresh_ui
+  node_center "$1"
+}
+
+# Top edge of the global player bar in the last dump - its skip/seek
+# controls give it away; the bar's title sits a little above them, hence the
+# margin - or the screen height when no bar is showing.
+player_bar_top() {
+  printf '%s' "$UI_XML" | python3 -c '
+import re, sys
+xml = sys.stdin.read()
+top = int(sys.argv[1])
+def attr(node, name):
+    m = re.search(name + r"=(?:\"([^\"]*)\"|\x27([^\x27]*)\x27)", node)
+    return (m.group(1) or m.group(2) or "") if m else ""
+for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
+    node = m.group(0)
+    if attr(node, "content-desc") in ("Previous chapter", "Next chapter", "Seek"):
+        b = re.search(r"\[(\d+),(\d+)\]", attr(node, "bounds"))
+        if b:
+            top = min(top, int(b.group(2)) - int(sys.argv[2]))
+print(top)
+' "$SCREEN_H" "$((SCREEN_H * 3 / 40))"
+}
+
 # Scrolls the current screen up by most of a screen height (a swipe, not a tap).
 scroll_down() {
   adb shell input swipe "$((SCREEN_W / 2))" "$((SCREEN_H * 2 / 3))" "$((SCREEN_W / 2))" "$((SCREEN_H / 4))" 300
@@ -68,16 +100,21 @@ scroll_down() {
 }
 
 # Taps the first node matching $1, retrying for up to ~20s while the screen
-# renders. A match sitting in the bottom quarter of the screen - where the
-# player and download bars live - or not on screen at all (further down a
-# long list, which the accessibility dump reports with empty bounds) is
-# scrolled into view first.
+# renders. The global player bar floats over the bottom of every screen, so
+# a list item sitting behind it is scrolled clear of it first (the bar's own
+# controls are tapped where they are), and a label that is not on screen at
+# all - further down a long list; the dump reports it with empty bounds - is
+# scrolled towards.
 tap_text() {
   local needle="$1" xy="" attempt
   for attempt in $(seq 1 10); do
-    xy="$(find_node "$needle")"
+    refresh_ui
+    xy="$(node_center "$needle")"
     if [ -n "$xy" ]; then
-      if [ "${xy#* }" -gt "$TAP_MAX_Y" ]; then
+      case "$(printf '%s' "$needle" | tr '[:upper:]' '[:lower:]')" in
+        play|pause|"previous chapter"|"next chapter"|seek) break ;;
+      esac
+      if [ "${xy#* }" -ge "$(player_bar_top)" ]; then
         scroll_down
         xy=""
         continue
@@ -106,7 +143,28 @@ wait_text() {
   return 1
 }
 
+# Waits until no node matches $1 any more - a "loading" label going away -
+# for up to $2 rounds of a few seconds each (default 20).
+wait_gone() {
+  local rounds="${2:-20}"
+  for _ in $(seq 1 "$rounds"); do
+    [ -z "$(find_node "$1")" ] && return 0
+    sleep 3
+  done
+  fail "'$1' is still showing"
+  return 1
+}
+
 back() { adb shell input keyevent KEYCODE_BACK; sleep 1; }
+
+# Types $1 into the focused field one character at a time.
+type_text() {
+  local text="$1" i
+  for ((i = 0; i < ${#text}; i++)); do
+    adb shell input text "${text:i:1}"
+    sleep 0.5
+  done
+}
 
 if ! adb devices | grep -qE "device$"; then
   echo "✗ no Android device/emulator connected" >&2
@@ -120,7 +178,6 @@ if [ "${SKIP_INSTALL:-0}" != "1" ]; then
 fi
 read -r SCREEN_W SCREEN_H < <(adb shell wm size | sed -E 's/.*: *([0-9]+)x([0-9]+).*/\1 \2/' | tail -1)
 SCREEN_W="${SCREEN_W:-1080}"; SCREEN_H="${SCREEN_H:-2400}"
-TAP_MAX_Y=$((SCREEN_H * 3 / 4))
 adb shell settings put global window_animation_scale 0 >/dev/null 2>&1
 adb shell settings put global transition_animation_scale 0 >/dev/null 2>&1
 adb shell settings put global animator_duration_scale 0 >/dev/null 2>&1
@@ -177,7 +234,9 @@ if ! tap_text "Read"; then
   tap_text "Mugah" || tap_text "Maamorim" || tap_text "Hagahos" || tap_text "Hosofos"
   tap_text "Read"
 fi
-sleep 25 && shot 08-pdf 3
+# The file is fetched to local storage first, then rendered natively - on a
+# software-emulated device that fetch alone can take a minute or two.
+wait_gone "Opening file" 40 && shot 08-pdf 6
 back; sleep 2
 tap_text "This occasion, every year" && wait_text "across every year" && shot 09-occasion-all-years
 back; back; back; back
@@ -192,7 +251,9 @@ back; back
 
 # --- Search (the box needs focus first; neither the web nor the app autofocuses it)
 tap_text "Search" && wait_text "Search occasions" && shot 13-search
-tap_text "Search occasions" && adb shell input text "Tishrei" && sleep 4 && shot 14-search-results
+# One character at a time: a whole word injected at once loses letters on a
+# slow (software-emulated) device.
+tap_text "Search occasions" && type_text "Tishrei" && sleep 4 && shot 14-search-results
 # The screen's own Back link, not the hardware key - with the keyboard up that key only dismisses the keyboard.
 tap_text "Back"
 wait_text "Browse any year"
