@@ -3,6 +3,7 @@ import { HDate } from '@hebcal/core';
 import { currentParsha } from '@sichos-kodesh/catalog';
 import { listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
+import { checkForCatalogUpdateIfDue, loadStoredCatalog } from '../catalog/catalogUpdater';
 import { IL } from '../config';
 import { hydrateAutoDownloadLedger, recordAutoDownload } from '../download/downloadLedger';
 import { readStoredDownloadSettings } from '../download/downloadSettings';
@@ -45,6 +46,12 @@ export function currentWeekKey(today: Date): string {
  */
 export async function runBackgroundSync(data?: BackgroundSyncData): Promise<void> {
   const today = new Date();
+  // No UI has run in this process: the release a previous launch stored has
+  // to be swapped in here too, or the week would resolve against the
+  // bundled data. Then the same once-a-day catalog check the app runs on
+  // launch - a phone that is rarely opened still gets a newer catalog.
+  await loadStoredCatalog();
+  await checkForCatalogUpdateIfDue();
   const [settings, notifications, language] = await Promise.all([readStoredDownloadSettings(), readStoredNotificationSettings(), readStoredLanguage()]);
   const t = STRINGS[language];
   const canNotify = await areNotificationsEnabled();
@@ -66,7 +73,7 @@ export async function runBackgroundSync(data?: BackgroundSyncData): Promise<void
     }
   }
 
-  const shouldDownload = data?.reason === 'manual' || (settings.autoDownloadEnabled && settings.backgroundSyncEnabled);
+  const shouldDownload = data?.reason === 'manual' || settings.autoDownloadEnabled;
   if (!shouldDownload) return;
 
   await hydrateAutoDownloadLedger();

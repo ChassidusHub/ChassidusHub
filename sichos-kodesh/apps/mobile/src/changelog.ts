@@ -9,6 +9,23 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2.0',
+    en: [
+      'The list of farbrengens now updates on its own: the phone checks api.sk.shmuky.dev once a day (also in the background) for a newer catalog and applies it in place - a corrected date or a new recording no longer waits for a new APK. "Update catalog" in Settings checks right now',
+      'Automatic download is one switch again - the "Also when the app is closed" question is gone; the phone simply keeps the week ready, opened or not',
+      'Share and Download are now one matching pair of buttons on every occasion page and recordings page',
+      'A colours button in the PDF reader flips a document between black-on-white and white-on-black, remembered separately for light and dark mode',
+      'Playback speed for shiurim and chazaros (0.75× to 2×) - never for the Rebbe\'s own recordings, which always play as they were said',
+    ],
+    he: [
+      'רשימת ההתוועדויות מתעדכנת כעת מעצמה: הטלפון בודק ב-api.sk.shmuky.dev פעם ביום (גם ברקע) אם יש קטלוג חדש ומחיל אותו במקום - תאריך מתוקן או הקלטה חדשה כבר לא מחכים ל-APK חדש. "עדכון הקטלוג" בהגדרות בודק מיד',
+      'ההורדה האוטומטית היא שוב מתג אחד - השאלה "גם כשהאפליקציה סגורה" הוסרה; הטלפון פשוט שומר את השבוע מוכן, פתוח או לא',
+      'שיתוף והורדה הם כעת זוג כפתורים תואם בכל דף אירוע ודף הקלטות',
+      'כפתור צבעים בקורא ה-PDF הופך מסמך בין שחור-על-לבן ללבן-על-שחור, ונזכר בנפרד למצב בהיר ולמצב כהה',
+      'מהירות ניגון לשיעורים ולחזרות (0.75× עד 2×) - לעולם לא להקלטות הרבי עצמו, שמתנגנות תמיד כפי שנאמרו',
+    ],
+  },
+  {
     version: '1.1.0',
     en: [
       "This week's farbrengens download on their own from the first launch - on Wi-Fi, and every few hours while the app is closed - so the phone is ready offline without touching a setting",

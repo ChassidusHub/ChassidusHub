@@ -4,7 +4,7 @@ import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
 import { chagOptions, hasActiveFilters, isChagCategory, parshaOptions, searchOccasions, specialDayOptions } from '@sichos-kodesh/app-core';
 import type { ContentType, SearchFilters } from '@sichos-kodesh/app-core';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useTranslation } from '../i18n/useTranslation';
 import type { SearchScreenProps } from '../navigation/types';
@@ -23,6 +23,7 @@ const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 
 /** Free-text search plus filters (year, month, day, parsha, chag, special day, content type) over the whole bundled catalog (web: `/search`). */
 export function SearchScreen({ navigation }: SearchScreenProps) {
+  const catalog = useCatalog();
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const progressMap = useProgressMap();
@@ -38,9 +39,9 @@ export function SearchScreen({ navigation }: SearchScreenProps) {
   const filters: SearchFilters = { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types };
   const results = useMemo(
     () => searchOccasions(catalog, { query: deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types }),
-    [deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types],
+    [catalog, deferredQuery, hebrewYear, hdateMonth, day, parsha, specialDay, types],
   );
-  const years = useMemo(() => browsableYears(catalog), []);
+  const years = useMemo(() => browsableYears(catalog), [catalog]);
   const parshas = useMemo(() => parshaOptions(language), [language]);
   const chagim = useMemo(() => chagOptions(language), [language]);
   const specialDays = useMemo(() => specialDayOptions(language), [language]);

@@ -13,6 +13,7 @@ import type { LinkingOptions } from '@react-navigation/native';
 import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBackgroundSyncScheduling } from './src/background/useBackgroundSyncScheduling';
 import { useNotificationPermissionOnLaunch } from './src/background/useNotificationPermission';
+import { useAutoCatalogUpdate } from './src/catalog/catalogUpdater';
 import { DownloadProvider } from './src/download/DownloadProvider';
 import { useAutoDownloadSync } from './src/download/useAutoDownloadSync';
 import { useDownloadRetention } from './src/download/useDownloadRetention';
@@ -52,6 +53,7 @@ function AppShell() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const bannerVisible = useConnectivityBannerVisible();
+  useAutoCatalogUpdate();
   useAutoDownloadSync();
   useDownloadRetention();
   useConnectivityRecheckTriggers();

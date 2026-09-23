@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useTranslation } from '../i18n/useTranslation';
 import type { MonthOccasionsScreenProps } from '../navigation/types';
@@ -12,10 +12,11 @@ import { Subtitle } from '../ui/Typography';
 
 /** One month of a browsed year (web: `/browse/:hebrewYear/month/:monthToken`). */
 export function MonthOccasionsScreen({ navigation, route }: MonthOccasionsScreenProps) {
+  const catalog = useCatalog();
   const { hebrewYear, monthToken } = route.params;
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
-  const entries = useMemo(() => resolveMonthOccasions(catalog, hebrewYear, monthToken), [hebrewYear, monthToken]);
+  const entries = useMemo(() => resolveMonthOccasions(catalog, hebrewYear, monthToken), [catalog, hebrewYear, monthToken]);
   const monthName = monthNameForToken(hebrewYear, monthToken, language);
 
   return (

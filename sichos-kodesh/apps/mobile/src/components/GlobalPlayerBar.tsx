@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { PanResponder, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react-native';
+import { formatPlaybackRate, nextPlaybackRate } from '@sichos-kodesh/catalog';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useTranslation';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
@@ -171,6 +172,17 @@ export function GlobalPlayerBar() {
                   <SkipForward size={20} color={colors.accent} fill={colors.accent} strokeWidth={0} />
                 </Pressable>
               )}
+              {/* Only for a shiur or a chazara - the Rebbe's own recordings have no speed control at all (see playbackPolicy in packages/catalog). One tap moves to the next speed. */}
+              {player.playbackRateAllowed && (
+                <Pressable
+                  onPress={() => player.setPlaybackRate(nextPlaybackRate(player.playbackRate))}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.playbackSpeed}
+                  style={({ pressed }) => [styles.rate, { borderColor: colors.border }, pressed && styles.pressed]}
+                >
+                  <AppText style={[styles.rateText, { color: colors.muted }]}>{formatPlaybackRate(player.playbackRate)}</AppText>
+                </Pressable>
+              )}
             </View>
 
             <View style={styles.scrub}>
@@ -215,6 +227,9 @@ const styles = StyleSheet.create({
   transport: { flexDirection: 'row', alignItems: 'center', gap: 14, flexShrink: 0 },
   toggle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   skip: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  /** Web: `.global-player-rate` - a 26px outlined text pill after the transport buttons. */
+  rate: { minWidth: 40, height: 26, paddingHorizontal: 8, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  rateText: { fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] },
   disabled: { opacity: 0.3 },
   pressed: { opacity: 0.92 },
   playNudge: { marginLeft: 2 },

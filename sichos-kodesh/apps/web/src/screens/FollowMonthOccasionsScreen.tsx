@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Download } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useProgressMap } from '../player/useProgressMap';
@@ -17,6 +17,7 @@ interface Props {
 
 /** Follow-flow twin of MonthOccasionsScreen: links rows to /follow/:sourceYear/:occasionId instead of /browse/:hebrewYear/:occasionId, so they still get FarbrengenScreen's highlighted-hanacha treatment. */
 export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const { enqueueBulk } = useDownload();

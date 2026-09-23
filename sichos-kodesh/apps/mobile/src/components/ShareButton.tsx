@@ -6,6 +6,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import { AppText } from '../ui/Text';
 import { useColors } from '../ui/theme';
 import { row } from '../ui/rtl';
+import { actionPillStyles } from './OccasionActions';
 
 interface Props {
   title: string;
@@ -17,7 +18,9 @@ interface Props {
  * Shares a link to this occasion's page on the web app - the one canonical,
  * kind-independent URL every occasion has there (`/browse/:year/:id`).
  * Mirrors the web's ShareButton, using the OS share sheet instead of the Web
- * Share API.
+ * Share API. Rendered as one of the matching pills in OccasionActions -
+ * never on its own - so Share and Download always sit side by side in the
+ * same shape.
  */
 export function ShareButton({ title, hebrewYear, occasionId }: Props) {
   const { t, isRtl } = useTranslation();
@@ -29,16 +32,18 @@ export function ShareButton({ title, hebrewYear, occasionId }: Props) {
   }
 
   return (
-    <Pressable onPress={handleShare} hitSlop={6} accessibilityRole="button" style={({ pressed }) => [styles.button, { flexDirection: row(isRtl) }, pressed && styles.pressed]}>
-      <Share2 size={16} color={colors.muted} />
-      <AppText style={[styles.label, { color: colors.muted }]}>{t.shareLabel}</AppText>
+    <Pressable
+      onPress={handleShare}
+      hitSlop={6}
+      accessibilityRole="button"
+      style={({ pressed }) => [actionPillStyles.pill, { flexDirection: row(isRtl), borderColor: colors.border, backgroundColor: pressed ? colors.cardBg : colors.bg }]}
+    >
+      <Share2 size={16} color={colors.fg} />
+      <AppText style={[styles.label, { color: colors.fg }]}>{t.shareLabel}</AppText>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  /** Web: `.share-button` - inline-flex, gap 6, margin-bottom 12, muted 14px/600. */
-  button: { alignSelf: 'flex-start', alignItems: 'center', gap: 6, marginBottom: 12 },
   label: { fontSize: 14, fontWeight: '600' },
-  pressed: { opacity: 0.7 },
 });

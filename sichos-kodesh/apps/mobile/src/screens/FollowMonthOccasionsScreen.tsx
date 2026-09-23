@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Download } from 'lucide-react-native';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useTranslation';
@@ -17,13 +17,14 @@ import { useColors } from '../ui/theme';
 
 /** Follow-flow twin of MonthOccasionsScreen (web: `/follow/:sourceYear/month/:monthToken`). */
 export function FollowMonthOccasionsScreen({ navigation, route }: FollowMonthOccasionsScreenProps) {
+  const catalog = useCatalog();
   const { sourceYear, monthToken } = route.params;
   const { t, language } = useTranslation();
   const colors = useColors();
   const progressMap = useProgressMap();
   const { enqueueBulk } = useDownload();
   const online = useOnlineStatus();
-  const entries = useMemo(() => resolveMonthOccasions(catalog, sourceYear, monthToken), [sourceYear, monthToken]);
+  const entries = useMemo(() => resolveMonthOccasions(catalog, sourceYear, monthToken), [catalog, sourceYear, monthToken]);
   const monthName = monthNameForToken(sourceYear, monthToken, language);
 
   return (

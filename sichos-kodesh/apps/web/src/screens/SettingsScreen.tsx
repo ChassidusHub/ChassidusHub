@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { contentPreset } from '@sichos-kodesh/app-core';
+import { useCatalogInfo } from '../catalog/catalogStore';
 import { APP_VERSION } from '../changelog';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Segmented, SettingRow, SettingsGroup, Toggle } from '../components/settings/SettingsControls';
@@ -31,6 +32,7 @@ export function SettingsScreen() {
   const [autoplay, setAutoplay] = useAutoplayOnHanacha();
   const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
   const { settings } = useDownload();
+  const catalogInfo = useCatalogInfo();
   const [usage, setUsage] = useState<number | null>(null);
 
   useEffect(() => {
@@ -79,6 +81,8 @@ export function SettingsScreen() {
 
       <SettingsGroup>
         <SettingRow label={t.aboutLink} value={t.aboutVersion(APP_VERSION)} to="/about" />
+        {/* No "update catalog" button on the web - it checks on its own (see catalogUpdater.ts); About shows what the last check found. */}
+        <SettingRow label={t.catalogVersionLabel} value={`${catalogInfo.version} · ${catalogInfo.source === 'bundled' ? t.catalogSourceBundled : t.catalogSourceUpdated}`} to="/about" />
       </SettingsGroup>
     </div>
   );

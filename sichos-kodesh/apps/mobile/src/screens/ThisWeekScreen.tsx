@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react-native';
 import { currentHebrewYear, currentParsha, resolveThisWeek, resolveWeekWithFallback } from '@sichos-kodesh/catalog';
 import { IL } from '../config';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useTranslation';
@@ -30,6 +30,7 @@ function shiftedToday(weekOffset: number): Date {
 
 /** One kvius-matched source year's occasions for the current (or a stepped) week (web: `/follow/:sourceYear`). */
 export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
+  const catalog = useCatalog();
   const { sourceYear } = route.params;
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
@@ -38,10 +39,10 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
   const online = useOnlineStatus();
   const [weekOffset, setWeekOffset] = useState(0);
   const shiftedDate = useMemo(() => shiftedToday(weekOffset), [weekOffset]);
-  const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [sourceYear, shiftedDate]);
+  const occasions = useMemo(() => resolveThisWeek(sourceYear, catalog, shiftedDate), [catalog, sourceYear, shiftedDate]);
   const suggestedYear = useMemo(
     () => (occasions.length > 0 ? null : (resolveWeekWithFallback(sourceYear, currentHebrewYear(), catalog, IL, shiftedDate)?.hebrewYear ?? null)),
-    [occasions, sourceYear, shiftedDate],
+    [catalog, occasions, sourceYear, shiftedDate],
   );
   // Kvius-matched years share the same Sedra schedule by construction, so this is `sourceYear`'s parsha for this week too.
   const weekParsha = useMemo(() => currentParsha(IL, shiftedDate).parsha, [shiftedDate]);

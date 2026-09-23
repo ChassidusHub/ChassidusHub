@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { AppKilledPlaybackBehavior, Capability, Event, State, useActiveTrack, usePlaybackState, useProgress } from 'react-native-track-player';
-import catalog from '../catalog/data';
+import { DEFAULT_PLAYBACK_RATE, effectivePlaybackRate, isPlaybackRate, isPlaybackRateAllowed } from '@sichos-kodesh/catalog';
+import type { PlaybackRate } from '@sichos-kodesh/catalog';
+import { getCatalog } from '../catalog/catalogStore';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
 import { catalogAudioToTracks } from './playlist';
 import type { PlayerContextValue, PlayerError, PlayerPlaylist } from './playerContext';
@@ -29,6 +32,8 @@ interface Props {
  */
 const STALE_PROGRESS_WINDOW_MS = 1500;
 const STALE_PROGRESS_START_SECONDS = 5;
+/** The listener's preferred speed for the recordings that allow one (see playbackPolicy in packages/catalog) - same key semantics as the web's localStorage entry. */
+const RATE_KEY = 'sichos-kodesh:playback-rate';
 
 // Promise sentinel: null = not started, in-flight promise = setting up, resolved = ready.
 let playerSetupPromise: Promise<void> | null = null;
@@ -99,6 +104,39 @@ export function PlayerProvider({ children }: Props) {
   const playing = playbackState.state === State.Playing;
   const loading = actionLoading || playbackState.state === State.Loading || playbackState.state === State.Buffering;
 
+  // The Rebbe's own recordings always play at 1x whatever the preference
+  // says - the preference only ever reaches a shiur or a chazara (see
+  // playbackPolicy in packages/catalog). The native player keeps one rate
+  // across the queue, so it is re-applied whenever the chapter (and with
+  // it the allowed rate) or the preference changes.
+  const [preferredRate, setPreferredRate] = useState<PlaybackRate>(DEFAULT_PLAYBACK_RATE);
+  useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(RATE_KEY)
+      .then((raw) => {
+        const rate = Number(raw);
+        if (!cancelled && raw != null && isPlaybackRate(rate)) setPreferredRate(rate);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const currentAudio = playlist?.audio[currentIndex] ?? null;
+  const playbackRateAllowed = isPlaybackRateAllowed(currentAudio);
+  const playbackRate = effectivePlaybackRate(currentAudio, preferredRate);
+  useEffect(() => {
+    if (!playlist) return;
+    ensurePlayer()
+      .then(() => TrackPlayer.setRate(playbackRate))
+      .catch(() => undefined);
+  }, [playbackRate, playlist]);
+
+  const setPlaybackRate = useCallback((rate: PlaybackRate) => {
+    setPreferredRate(rate);
+    AsyncStorage.setItem(RATE_KEY, String(rate)).catch(() => undefined);
+  }, []);
+
   const runPlayerAction = useCallback(async (action: () => Promise<void>) => {
     setActionLoading(true);
     setError(null);
@@ -139,7 +177,7 @@ export function PlayerProvider({ children }: Props) {
       await hydrateProgressStore();
       const last = getLastPlaylist();
       if (!last || cancelled) return;
-      const entry = catalog[last.hebrewYear]?.find((item) => item.occasionId === last.occasionId);
+      const entry = getCatalog()[last.hebrewYear]?.find((item) => item.occasionId === last.occasionId);
       if (!entry || entry.audio.length === 0) return;
       const chapterIndex = Math.min(last.chapterIndex, entry.audio.length - 1);
       try {
@@ -290,8 +328,11 @@ export function PlayerProvider({ children }: Props) {
       prev,
       playChapter,
       seekToFraction,
+      playbackRate,
+      playbackRateAllowed,
+      setPlaybackRate,
     }),
-    [currentIndex, error, loading, next, pause, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekToFraction, togglePlay],
+    [currentIndex, error, loading, next, pause, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekToFraction, togglePlay, playbackRate, playbackRateAllowed, setPlaybackRate],
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;

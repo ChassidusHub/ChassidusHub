@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { mafteiachMonthToken, resolveThisWeek } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { hebrewDayMonthLabel } from '../utils/formatHebrewDate';
 import { useLanguage } from '../i18n/useLanguage';
 
@@ -36,6 +36,7 @@ export interface ResolvedEntry {
 export function useFollowEntry(): ResolvedEntry | null {
   const { sourceYear, occasionId } = useParams<{ sourceYear: string; occasionId: string }>();
   const { language } = useLanguage();
+  const catalog = useCatalog();
   return useMemo(() => {
     const year = Number(sourceYear);
     const id = Number(occasionId);
@@ -46,7 +47,7 @@ export function useFollowEntry(): ResolvedEntry | null {
     if (thisWeek) return { ...base, backPath: `/follow/${year}` };
     const monthToken = mafteiachMonthToken(entry.hebrewDate);
     return { ...base, backPath: `/follow/${year}/month/${monthToken}` };
-  }, [sourceYear, occasionId, language]);
+  }, [catalog, sourceYear, occasionId, language]);
 }
 
 /**
@@ -59,6 +60,7 @@ export function useFollowEntry(): ResolvedEntry | null {
 export function useBrowseEntry(): ResolvedEntry | null {
   const { hebrewYear, occasionId } = useParams<{ hebrewYear: string; occasionId: string }>();
   const { language } = useLanguage();
+  const catalog = useCatalog();
   return useMemo(() => {
     const year = Number(hebrewYear);
     const id = Number(occasionId);
@@ -71,7 +73,7 @@ export function useBrowseEntry(): ResolvedEntry | null {
       basePath: `/browse/${year}/${id}`,
       backPath: `/browse/${year}/month/${monthToken}`,
     };
-  }, [hebrewYear, occasionId, language]);
+  }, [catalog, hebrewYear, occasionId, language]);
 }
 
 /**
@@ -82,6 +84,7 @@ export function useBrowseEntry(): ResolvedEntry | null {
 export function useThisWeekAllYearsEntry(): ResolvedEntry | null {
   const { hebrewYear, occasionId } = useParams<{ hebrewYear: string; occasionId: string }>();
   const { language } = useLanguage();
+  const catalog = useCatalog();
   return useMemo(() => {
     const year = Number(hebrewYear);
     const id = Number(occasionId);
@@ -93,7 +96,7 @@ export function useThisWeekAllYearsEntry(): ResolvedEntry | null {
       basePath: `/this-week-all-years/${year}/${id}`,
       backPath: '/this-week-all-years',
     };
-  }, [hebrewYear, occasionId, language]);
+  }, [catalog, hebrewYear, occasionId, language]);
 }
 
 /**
@@ -110,6 +113,7 @@ export function useOccasionAllYearsEntry(): ResolvedEntry | null {
     occasionId: string;
   }>();
   const { language } = useLanguage();
+  const catalog = useCatalog();
   return useMemo(() => {
     const year = Number(hebrewYear);
     const id = Number(occasionId);
@@ -121,5 +125,5 @@ export function useOccasionAllYearsEntry(): ResolvedEntry | null {
       basePath: `/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${year}/${id}`,
       backPath: `/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}`,
     };
-  }, [sourceHebrewYear, sourceOccasionId, hebrewYear, occasionId, language]);
+  }, [catalog, sourceHebrewYear, sourceOccasionId, hebrewYear, occasionId, language]);
 }

@@ -4,7 +4,7 @@ import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { contentPreset, presetContentTypes } from '@sichos-kodesh/app-core';
 import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Chips, Segmented, SettingRow, SettingsGroup, Toggle } from '../components/settings/SettingsControls';
 import { useDownload } from '../download/useDownload';
@@ -32,6 +32,7 @@ const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w'];
  * preference as `resolveWeekWithFallback`.
  */
 export function DownloadSettingsScreen() {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const { settings, setSettings, enqueueBulk } = useDownload();
   const [usage, setUsage] = useState<number | null>(null);

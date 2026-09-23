@@ -5,7 +5,7 @@ import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { contentPreset, presetContentTypes } from '@sichos-kodesh/app-core';
 import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { isBackgroundSyncAvailable, runBackgroundSyncNow } from '../background/backgroundNative';
 import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
@@ -24,7 +24,6 @@ import { useColors } from '../ui/theme';
 import { row } from '../ui/rtl';
 import { presetLabel } from './SettingsScreen';
 
-const ALL_ENTRIES = Object.values(catalog).flat();
 const HANACHA_EDITIONS: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
 const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w'];
 
@@ -33,10 +32,11 @@ const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w'];
  * - keep this week ready? what to keep? which year? - each one control,
  * with the rarely-touched knobs (month scope, gap filling, cleanup, what a
  * manual download takes) behind an Advanced switch, and storage at the
- * bottom. The phone adds "also when the app is closed" (see
- * src/background) under the first switch.
+ * bottom. On the phone the first switch also covers running while the app
+ * is closed (see src/background) - one question, not two.
  */
 export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenProps) {
+  const catalog = useCatalog();
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const { settings, setSettings, enqueueBulk, clearDownloads } = useDownload();
@@ -49,10 +49,10 @@ export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenPro
   const backgroundAvailable = isBackgroundSyncAvailable();
 
   useEffect(() => {
-    getDownloadStorageUsage(ALL_ENTRIES)
+    getDownloadStorageUsage(Object.values(catalog).flat())
       .then(setUsage)
       .catch(() => setUsage(null));
-  }, [settings]); // Depends on `settings` too, so usage refreshes after actions like clearing downloads.
+  }, [catalog, settings]); // Depends on `settings` too, so usage refreshes after actions like clearing downloads.
 
   const matchedYears = findMatchingYears(currentHebrewYear())
     .map((m) => m.hebrewYear)
@@ -108,7 +108,7 @@ export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenPro
   async function handleClearDownloads(): Promise<void> {
     await clearDownloads();
     setConfirmingClear(false);
-    setUsage(await getDownloadStorageUsage(ALL_ENTRIES).catch(() => 0));
+    setUsage(await getDownloadStorageUsage(Object.values(catalog).flat()).catch(() => 0));
   }
 
   const presetOptions = (['essentials', 'everything', 'custom'] as ContentPreset[]).map((value) => ({ value, label: presetLabel(t, value) }));
@@ -131,11 +131,6 @@ export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenPro
         <SettingRow label={t.autoDownloadEnabledLabel} help={t.autoDownloadEnabledHelp} onPress={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })} first>
           <Toggle checked={settings.autoDownloadEnabled} label={t.autoDownloadEnabledLabel} decorative />
         </SettingRow>
-        {settings.autoDownloadEnabled && backgroundAvailable && (
-          <SettingRow label={t.backgroundSyncLabel} help={t.backgroundSyncHelp} onPress={() => setSettings({ ...settings, backgroundSyncEnabled: !settings.backgroundSyncEnabled })}>
-            <Toggle checked={settings.backgroundSyncEnabled} label={t.backgroundSyncLabel} decorative />
-          </SettingRow>
-        )}
         {settings.autoDownloadEnabled && (
           <SettingRow label={t.wifiOnlyLabel} onPress={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })}>
             <Toggle checked={settings.wifiOnly} label={t.wifiOnlyLabel} decorative />

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useProgressMap } from '../player/useProgressMap';
@@ -13,6 +13,7 @@ interface Props {
 }
 
 export function MonthOccasionsScreen({ hebrewYear, monthToken }: Props) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const entries: CatalogEntry[] = (catalog[hebrewYear] ?? []).filter(

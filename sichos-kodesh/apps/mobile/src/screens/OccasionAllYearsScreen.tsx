@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { resolveOccasionAllYears } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useTranslation } from '../i18n/useTranslation';
 import type { OccasionAllYearsScreenProps } from '../navigation/types';
@@ -20,11 +20,12 @@ import { CategoryHeader, GapMessage, TabHelp } from '../ui/Typography';
  * beneath it as "also on this date" (web: `/occasion-all-years/:sourceHebrewYear/:sourceOccasionId`).
  */
 export function OccasionAllYearsScreen({ navigation, route }: OccasionAllYearsScreenProps) {
+  const catalog = useCatalog();
   const { sourceHebrewYear, sourceOccasionId } = route.params;
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const sourceEntry: CatalogEntry | undefined = (catalog[sourceHebrewYear] ?? []).find((e) => e.occasionId === sourceOccasionId);
-  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry) : []), [sourceEntry]);
+  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry) : []), [catalog, sourceEntry]);
   const back = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear: sourceHebrewYear, occasionId: sourceOccasionId } } as const;
 
   if (!sourceEntry) {

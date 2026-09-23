@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import type { RootStackParamList } from '../navigation/types';
 import { isChapterFinished, isOccasionFinished, listRecentOccasions, occasionProgressFraction } from '../player/progressStore';
 import type { OccasionProgress } from '../player/progressStore';
@@ -44,6 +44,7 @@ function continueDestination(entry: CatalogEntry, progress: OccasionProgress): D
  * player) or a PDF still being read (opens straight into it, at the saved page).
  */
 export function ContinueSection() {
+  const catalog = useCatalog();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { t, language } = useTranslation();
   const colors = useColors();

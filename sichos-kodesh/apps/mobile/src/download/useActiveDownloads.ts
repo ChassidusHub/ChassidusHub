@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { useDownload } from './useDownload';
 
 export interface ActiveDownloadsSummary {
@@ -51,6 +51,7 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
 
 /** Per-occasion detail for DownloadedScreen's "in progress" section - the full list the global progress bar's own aggregate summarizes. */
 export function useActiveDownloadRows(): ActiveDownloadRow[] {
+  const catalog = useCatalog();
   const { targetStates } = useDownload();
 
   return useMemo(() => {
@@ -75,5 +76,5 @@ export function useActiveDownloadRows(): ActiveDownloadRow[] {
     return [...groups.values()]
       .map(({ row, sum, files }) => ({ ...row, percent: Math.round((sum / files) * 100) }))
       .sort((a, b) => a.hebrewYear - b.hebrewYear || a.occasionId - b.occasionId);
-  }, [targetStates]);
+  }, [catalog, targetStates]);
 }

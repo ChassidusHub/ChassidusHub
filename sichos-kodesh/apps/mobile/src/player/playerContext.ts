@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { CatalogAudio } from '@sichos-kodesh/catalog';
+import type { CatalogAudio, PlaybackRate } from '@sichos-kodesh/catalog';
 
 /** What the player is currently loaded with - one occasion's recordings, in chapter order. Same shape the web's PlayerProvider takes. */
 export interface PlayerPlaylist {
@@ -37,6 +37,12 @@ export interface PlayerContextValue {
   /** Jumps to one chapter of the current playlist, resuming wherever it was left off. */
   playChapter: (index: number) => void;
   seekToFraction: (fraction: number) => void;
+  /** The rate audio actually plays at right now - always 1 for the Rebbe's own recordings, whatever the listener chose (see packages/catalog's playbackPolicy). */
+  playbackRate: PlaybackRate;
+  /** Whether the current chapter is one a listener may speed up or slow down (a shiur or a chazara) - the bar shows its speed control only then. */
+  playbackRateAllowed: boolean;
+  /** The listener's preferred rate, remembered across launches and applied wherever it is allowed. */
+  setPlaybackRate: (rate: PlaybackRate) => void;
 }
 
 export const PlayerContext = createContext<PlayerContextValue | null>(null);

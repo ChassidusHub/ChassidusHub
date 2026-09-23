@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Contrast } from 'lucide-react-native';
 import Pdf from 'react-native-pdf';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { downloadPdf, localPdfPathIfExists, pdfUrl } from '../download/download';
 import { useTranslation } from '../i18n/useTranslation';
 import type { PdfViewerScreenProps } from '../navigation/types';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
 import { getOccasionProgress, getPdfPage, readProgressMap, recordPdfProgress } from '../player/progressStore';
-import { useInvertPdfInDarkMode } from '../settings/invertPdfInDarkMode';
+import { useInvertPdfInDarkMode, useInvertPdfInLightMode } from '../settings/invertPdfInDarkMode';
 import { Button } from '../ui/Button';
 import { OfflineNote } from '../ui/OfflineNote';
 import { Screen } from '../ui/Screen';
@@ -15,7 +16,7 @@ import { ScreenHeader } from '../ui/ScreenHeader';
 import { Spinner } from '../ui/Spinner';
 import { AppText } from '../ui/Text';
 import { GapMessage } from '../ui/Typography';
-import { lightColors, useTheme } from '../ui/theme';
+import { darkColors, lightColors, useTheme } from '../ui/theme';
 import { row } from '../ui/rtl';
 
 type LoadState = { status: 'loading'; percent: number | null; path: string | null } | { status: 'ready'; path: string } | { status: 'error'; message: string; offline: boolean };
@@ -29,21 +30,33 @@ type LoadState = { status: 'loading'; percent: number | null; path: string | nul
  * recordPdfProgress) so the home page's Continue row reopens it there.
  */
 export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
+  const catalog = useCatalog();
   const { driveFileId, resourceKey, label, hebrewYear, occasionId } = route.params;
   const { t, isRtl } = useTranslation();
   const { colors, scheme } = useTheme();
-  const [invertInDarkMode] = useInvertPdfInDarkMode();
+  const [invertInDarkMode, setInvertInDarkMode] = useInvertPdfInDarkMode();
+  const [invertInLightMode, setInvertInLightMode] = useInvertPdfInLightMode();
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null, path: null });
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPageRef = useRef<{ page: number; total: number | null } | null>(null);
 
-  const entry = useMemo(() => catalog[hebrewYear]?.find((item) => item.occasionId === occasionId) ?? null, [hebrewYear, occasionId]);
+  const entry = useMemo(() => catalog[hebrewYear]?.find((item) => item.occasionId === occasionId) ?? null, [catalog, hebrewYear, occasionId]);
   const pdf = useMemo(() => entry?.pdfs.find((item) => item.driveFileId === driveFileId) ?? null, [driveFileId, entry]);
   const savedPage = useMemo(() => (entry ? getPdfPage(getOccasionProgress(readProgressMap(), entry.hebrewYear, entry.occasionId), driveFileId) : undefined), [driveFileId, entry]);
-  // The web's `.pdf-page-canvas { filter: invert(1) hue-rotate(180deg) }`,
+  // The web's `.pdf-inverted .pdf-page canvas { filter: invert(1) hue-rotate(180deg) }`,
   // applied to the native viewer through React Native's own `filter` style.
-  const invertForDarkMode = invertInDarkMode && scheme === 'dark';
+  // The colours button in the header flips it for the theme on screen right
+  // now, remembered per theme (see settings/invertPdfInDarkMode.ts) - so
+  // night reading stays inverted while a daytime flip doesn't change the
+  // night default.
+  const inverted = scheme === 'dark' ? invertInDarkMode : invertInLightMode;
+  const setInverted = scheme === 'dark' ? setInvertInDarkMode : setInvertInLightMode;
   const backTarget = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear, occasionId } } as const;
+  const colourToggle = (
+    <Pressable onPress={() => setInverted(!inverted)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.pdfInvertToggle} accessibilityState={{ selected: inverted }} style={({ pressed }) => [styles.headerAction, pressed && { backgroundColor: colors.cardBg }]}>
+      <Contrast size={20} color={inverted ? colors.accent : colors.muted} />
+    </Pressable>
+  );
 
   useEffect(() => {
     if (!pdf) return;
@@ -109,7 +122,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const path = state.status === 'error' ? null : state.path;
 
   return (
-    <Screen scroll={false} header={<ScreenHeader back={backTarget} title={pdf.label} inset />}>
+    <Screen scroll={false} header={<ScreenHeader back={backTarget} title={pdf.label} inset action={colourToggle} />}>
       <View style={styles.status}>
         {state.status === 'loading' && !path && (
           <View style={[styles.loading, { flexDirection: row(isRtl) }]}>
@@ -138,13 +151,13 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
       </View>
 
       {path && (
-        <View style={[styles.pdfWrap, invertForDarkMode && styles.pdfInverted]}>
-          {/* Inverted along with the pages, so the gap between pages ends up dark: the light theme's card colour flips to the dark theme's. */}
+        <View style={[styles.pdfWrap, inverted && styles.pdfInverted]}>
+          {/* Inverted along with the pages, so the gap between pages matches them: in dark mode the light theme's card colour flips to the dark theme's; in light mode the dark theme's flips to the light one's. */}
           <Pdf
             key={driveFileId}
             source={{ uri: `file://${path}` }}
             page={savedPage ?? 1}
-            style={[styles.pdf, { backgroundColor: invertForDarkMode ? lightColors.cardBg : colors.cardBg }]}
+            style={[styles.pdf, { backgroundColor: inverted ? (scheme === 'dark' ? lightColors.cardBg : darkColors.cardBg) : colors.cardBg }]}
             enableDoubleTapZoom
             spacing={4}
             renderActivityIndicator={() => (
@@ -174,6 +187,8 @@ const styles = StyleSheet.create({
   pdfWrap: { flex: 1 },
   pdf: { flex: 1, width: '100%' },
   pdfLoading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  /** Web: `.pdf-page-canvas` in dark mode - invert(1) hue-rotate(180deg). */
+  /** Web: `.pdf-inverted .pdf-page canvas` - invert(1) hue-rotate(180deg). */
   pdfInverted: { filter: [{ invert: 1 }, { hueRotate: '180deg' }] },
+  /** Web: `.icon-button` - a bare icon in a 36px circle. */
+  headerAction: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

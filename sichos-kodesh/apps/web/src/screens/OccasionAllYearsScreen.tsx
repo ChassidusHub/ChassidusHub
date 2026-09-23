@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveOccasionAllYears } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -29,10 +29,11 @@ interface Props {
  * with the occasion being viewed.
  */
 export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: Props) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
   const sourceEntry: CatalogEntry | undefined = (catalog[sourceHebrewYear] ?? []).find((e) => e.occasionId === sourceOccasionId);
-  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry) : []), [sourceEntry]);
+  const yearGroups = useMemo(() => (sourceEntry ? resolveOccasionAllYears(catalog, sourceEntry) : []), [catalog, sourceEntry]);
 
   if (!sourceEntry) {
     return (

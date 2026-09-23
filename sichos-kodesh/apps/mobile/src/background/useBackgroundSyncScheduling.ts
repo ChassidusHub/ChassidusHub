@@ -5,9 +5,10 @@ import { scheduleBackgroundSync } from './backgroundNative';
 
 /**
  * Keeps the periodic background sync registered exactly when something
- * needs it: the automatic download's "also when the app is closed" option,
- * or the weekly notification (which is decided by the same task). Runs on
- * every launch, so a reinstall or a cleared WorkManager queue heals itself.
+ * needs it: the automatic download (which on the phone always includes
+ * running while the app is closed - it is one switch, not two), or the
+ * weekly notification (decided by the same task). Runs on every launch,
+ * so a reinstall or a cleared WorkManager queue heals itself.
  */
 export function useBackgroundSyncScheduling(): void {
   const { settings, hydrated } = useDownload();
@@ -15,6 +16,6 @@ export function useBackgroundSyncScheduling(): void {
 
   useEffect(() => {
     if (!hydrated || !notificationsHydrated) return;
-    scheduleBackgroundSync((settings.autoDownloadEnabled && settings.backgroundSyncEnabled) || notifications.newWeek);
-  }, [hydrated, notifications.newWeek, notificationsHydrated, settings.autoDownloadEnabled, settings.backgroundSyncEnabled]);
+    scheduleBackgroundSync(settings.autoDownloadEnabled || notifications.newWeek);
+  }, [hydrated, notifications.newWeek, notificationsHydrated, settings.autoDownloadEnabled]);
 }

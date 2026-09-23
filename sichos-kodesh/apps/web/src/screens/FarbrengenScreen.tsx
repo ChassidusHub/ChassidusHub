@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Download, Loader2 } from 'lucide-react';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
 import { isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
@@ -7,15 +6,11 @@ import { usePlayer } from '../player/usePlayer';
 import { useRecordVisit } from '../player/useRecordVisit';
 import { useProgressMap } from '../player/useProgressMap';
 import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
-import { useDownload } from '../download/useDownload';
-import { useDownloadState } from '../download/useDownloadState';
-import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useTranslation } from '../i18n/useLanguage';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { DownloadProgressRing } from '../components/DownloadProgressRing';
-import { ShareButton } from '../components/ShareButton';
+import { OccasionActions } from '../components/OccasionActions';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
 
 interface Props {
@@ -51,9 +46,6 @@ export function FarbrengenScreen({ resolved }: Props) {
   const player = usePlayer();
   const progressMap = useProgressMap();
   const [autoplayOnHanacha] = useAutoplayOnHanacha();
-  const { downloadOccasion } = useDownload();
-  const downloadState = useDownloadState(resolved?.entry);
-  const downloadProgress = useDownloadProgress(resolved?.entry);
   useRecordVisit(resolved?.entry);
 
   if (!resolved) {
@@ -108,32 +100,7 @@ export function FarbrengenScreen({ resolved }: Props) {
         {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}
       </p>
 
-      <ShareButton title={entry.occasionLabel} />
-
-      {downloadState !== 'unavailable' && downloadState !== 'loading' && (
-        <p className="occasion-download-state">
-          {downloadState === 'downloaded' && (
-            <>
-              <CheckCircle2 size={16} className="download-state-done" aria-hidden /> {t.downloadedLabel}
-            </>
-          )}
-          {downloadState === 'downloading' && downloadProgress !== undefined && (
-            <>
-              <DownloadProgressRing size={16} progress={downloadProgress} /> {t.downloadingLabel}
-            </>
-          )}
-          {(downloadState === 'queued' || (downloadState === 'downloading' && downloadProgress === undefined)) && (
-            <>
-              <Loader2 size={16} className="download-state-spinner" aria-hidden /> {t.downloadingLabel}
-            </>
-          )}
-          {downloadState === 'none' && (
-            <button type="button" className="occasion-download-button" onClick={() => downloadOccasion(entry)}>
-              <Download size={16} aria-hidden /> {t.downloadLabel}
-            </button>
-          )}
-        </p>
-      )}
+      <OccasionActions entry={entry} />
 
       {isEmpty && <p className="gap-message">{t.nothingDownloadable}</p>}
 

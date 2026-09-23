@@ -5,6 +5,7 @@ import { currentHebrewYear } from '@sichos-kodesh/catalog';
 import { PlayerProvider } from './player/PlayerProvider';
 import { DownloadProvider } from './download/DownloadProvider';
 import { useAutoDownloadSync } from './download/useAutoDownloadSync';
+import { useAutoCatalogUpdate } from './catalog/catalogUpdater';
 import { useDownloadRetention } from './download/useDownloadRetention';
 import { useConnectivityRecheckTriggers } from './network/useConnectivityRecheckTriggers';
 import { adjustNavigationDepth } from './routes/navigationDepth';
@@ -196,6 +197,7 @@ function AppContent() {
   const { count: activeDownloadCount } = useActiveDownloads();
   useScrollToTopOnNavigate();
   useTrackNavigationDepth();
+  useAutoCatalogUpdate();
   useAutoDownloadSync();
   useDownloadRetention();
   useConnectivityRecheckTriggers();

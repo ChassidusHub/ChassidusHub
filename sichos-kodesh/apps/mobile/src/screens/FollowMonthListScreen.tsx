@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { FollowMonthListScreenProps } from '../navigation/types';
 import { entriesWithContentForYear, groupEntriesByMonth } from '../routes/catalogRoutes';
@@ -10,9 +10,10 @@ import { Subtitle } from '../ui/Typography';
 
 /** Follow-flow twin of YearBrowserScreen: same month-first browsing, linking into the follow flow instead (web: `/follow/:sourceYear/month`). */
 export function FollowMonthListScreen({ navigation, route }: FollowMonthListScreenProps) {
+  const catalog = useCatalog();
   const { sourceYear } = route.params;
   const { t, language } = useTranslation();
-  const entries = useMemo(() => entriesWithContentForYear(catalog, sourceYear), [sourceYear]);
+  const entries = useMemo(() => entriesWithContentForYear(catalog, sourceYear), [catalog, sourceYear]);
   const monthGroups = useMemo(() => groupEntriesByMonth(entries, language), [entries, language]);
 
   return (

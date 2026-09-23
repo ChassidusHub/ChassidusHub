@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Loader2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
+import { formatPlaybackRate, nextPlaybackRate } from '@sichos-kodesh/catalog';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
@@ -232,6 +233,12 @@ export function GlobalPlayerBar() {
           {audio.length > 1 && (
             <button className="global-player-skip" onClick={player.next} disabled={!hasNext} aria-label={t.nextChapter}>
               <SkipForward size={20} fill="currentColor" strokeWidth={0} />
+            </button>
+          )}
+          {/* Only for a shiur or a chazara - the Rebbe's own recordings have no speed control at all (see playbackPolicy in packages/catalog). One tap moves to the next speed. */}
+          {player.playbackRateAllowed && (
+            <button type="button" className="global-player-rate" onClick={() => player.setPlaybackRate(nextPlaybackRate(player.playbackRate))} aria-label={t.playbackSpeed} title={t.playbackSpeed}>
+              {formatPlaybackRate(player.playbackRate)}
             </button>
           )}
         </div>

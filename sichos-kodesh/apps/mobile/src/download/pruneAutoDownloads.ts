@@ -1,5 +1,5 @@
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
-import catalog from '../catalog/data';
+import { getCatalog } from '../catalog/catalogStore';
 import { getOccasionProgress, isOccasionFinished, readProgressMap } from '../player/progressStore';
 import type { DownloadSettings, RetentionPeriod } from './downloadSettings';
 import { forgetAutoDownload, listAutoDownloads } from './downloadLedger';
@@ -32,7 +32,7 @@ export async function pruneAutoDownloads(settings: DownloadSettings): Promise<vo
   for (const entry of stale) {
     const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
     if (progress && progress.lastVisitedAt > entry.cachedAt) continue; // Opened since - keep.
-    const catalogEntry = (catalog[entry.hebrewYear] ?? []).find((e) => e.occasionId === entry.occasionId);
+    const catalogEntry = (getCatalog()[entry.hebrewYear] ?? []).find((e) => e.occasionId === entry.occasionId);
     if (settings.keepFinishedContent && catalogEntry && isOccasionFinished(progress, catalogEntry)) continue;
     const target = catalogEntry ? listDownloadTargets([catalogEntry], ALL_CONTENT_TYPES).find((item) => item.key === entry.targetKey) : undefined;
     if (target) await deleteTargetDownloads([target]);

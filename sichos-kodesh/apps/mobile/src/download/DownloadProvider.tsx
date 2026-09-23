@@ -4,7 +4,7 @@ import { AppState } from 'react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
-import catalog from '../catalog/data';
+import { getCatalog } from '../catalog/catalogStore';
 import { downloadedDeepLink } from '../background/backgroundNative';
 import { useTranslation } from '../i18n/useTranslation';
 import { looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
@@ -33,7 +33,6 @@ import {
 import { executeDownload, subscribeToNativeDownloadEvents } from './downloadExecutor';
 import { listActiveNativeDownloads, nativeCancelDownload } from './nativeDownload';
 
-const ALL_ENTRIES = Object.values(catalog).flat();
 
 function toState(target: DownloadTarget, status: DownloadStatus, extras: Partial<TargetDownloadState> = {}): TargetDownloadState {
   return {
@@ -400,7 +399,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   );
 
   const clearDownloads = useCallback(async () => {
-    await clearAllDownloadedFiles(ALL_ENTRIES);
+    await clearAllDownloadedFiles(Object.values(getCatalog()).flat());
     await clearPendingDownloads();
     clearAutoDownloadLedger();
     queueRef.current = [];
@@ -409,7 +408,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     setTargetStates({});
   }, []);
 
-  const listDownloadedSummaries = useCallback(async () => listDownloadedOccasions(ALL_ENTRIES), []);
+  const listDownloadedSummaries = useCallback(async () => listDownloadedOccasions(Object.values(getCatalog()).flat()), []);
 
   useEffect(() => {
     let cancelled = false;

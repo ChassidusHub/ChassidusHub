@@ -13,8 +13,8 @@ import './index.css';
 import './pwa/appUpdate';
 import App from './App';
 import { applyTheme } from './settings/useTheme';
-import { applyInvertPdfInDarkMode } from './settings/useInvertPdfInDarkMode';
 import { PDF_RUNTIME_CACHE_NAME } from './download/cacheName';
+import { loadStoredCatalog } from './catalog/catalogUpdater';
 
 // Best-effort, fire-and-forget: makes sure the PDF worker script is
 // cached on every online app load, not only once someone opens a PDF -
@@ -66,17 +66,17 @@ try {
   // Best-effort only - falls back to English/LTR until LanguageProvider mounts.
 }
 
-// Same reasoning again, for the PDF dark-mode color-invert setting - the
-// class it reads (see useInvertPdfInDarkMode.ts) needs to already be in
-// place before the first PDF page ever paints.
-try {
-  if (localStorage.getItem('sichos-kodesh:invert-pdf-dark-mode') !== 'false') applyInvertPdfInDarkMode(true);
-} catch {
-  applyInvertPdfInDarkMode(true);
-}
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// A catalog release fetched on an earlier visit (see catalogUpdater.ts) is
+// swapped in before the first render, so the first paint already shows
+// the newest data instead of the bundled copy re-rendering a moment
+// later. A missing or unreadable one just means the bundled catalog - the
+// read is best-effort and never blocks start-up on an error.
+loadStoredCatalog()
+  .catch(() => undefined)
+  .then(() => {
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+  });

@@ -1,11 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Headphones, KeyRound, Loader2, RefreshCw } from 'lucide-react';
+import { CATALOG_CHANGELOG } from '@sichos-kodesh/catalog';
 import { useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { APP_VERSION, CHANGELOG } from '../changelog';
+import { useCatalogInfo } from '../catalog/catalogStore';
+import { useCatalogUpdateStatus } from '../catalog/catalogUpdater';
+import type { CatalogUpdateStatus } from '../catalog/catalogUpdater';
 import { applyUpdate, checkForUpdate } from '../pwa/appUpdate';
 import { useAppUpdate } from '../pwa/useAppUpdate';
+
+type Translation = ReturnType<typeof useTranslation>['t'];
+
+/** What the automatic catalog check last found - the web has no button for it (see catalogUpdater.ts), only this line. */
+function catalogStatusLine(t: Translation, status: CatalogUpdateStatus): string {
+  switch (status.phase) {
+    case 'checking':
+      return t.catalogChecking;
+    case 'downloading':
+      return t.catalogDownloading(status.version);
+    case 'updated':
+      return t.catalogUpdated(status.version);
+    case 'up-to-date':
+      return t.catalogUpToDate;
+    case 'error':
+      return t.catalogUpdateFailed;
+    default:
+      return t.catalogAutoCheckNote;
+  }
+}
 
 /** How long "you're up to date" stays visible after a manual check finds nothing new - a one-time confirmation, not an ongoing status (same pattern as ConnectivityBanner's "back online" message). */
 const UP_TO_DATE_VISIBLE_MS = 4000;
@@ -14,6 +38,10 @@ export function AboutScreen() {
   const { t, language } = useTranslation();
   const latest = CHANGELOG[0];
   const { needsRefresh, checking } = useAppUpdate();
+  const catalogInfo = useCatalogInfo();
+  const catalogStatus = useCatalogUpdateStatus();
+  // The bundled changelog only knows releases up to the one this build shipped with - a newer release fetched later shows its version, with the notes the bundled list has for it if any.
+  const catalogNotes = CATALOG_CHANGELOG.find((entry) => entry.version === catalogInfo.version);
   const [justConfirmedUpToDate, setJustConfirmedUpToDate] = useState(false);
   const wasCheckingRef = useRef(checking);
 
@@ -76,6 +104,20 @@ export function AboutScreen() {
           <li key={line}>{line}</li>
         ))}
       </ul>
+
+      <p className="category-header">{t.catalogVersion(catalogInfo.version)}</p>
+      <p className="tab-help">{catalogInfo.source === 'bundled' ? t.catalogSourceBundled : t.catalogSourceUpdated}</p>
+      {catalogNotes && (
+        <>
+          <p className="about-whats-new-title">{t.catalogWhatsNew}</p>
+          <ul className="about-changelog">
+            {(language === 'he' ? catalogNotes.he : catalogNotes.en).map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <p className="tab-help">{catalogStatusLine(t, catalogStatus)}</p>
 
       <p className="category-header">{t.aboutUpdateSection}</p>
       <ul className="year-list">

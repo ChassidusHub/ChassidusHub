@@ -126,10 +126,11 @@ Two things a phone can do that the web app cannot (`src/background/`,
 
 - **Background auto-download.** Auto-download is on from the first launch
   on the phone (Wi-Fi only; the web keeps it opt-in - see
-  `downloadSettings.ts`), and its "Also when the app is closed" option
-  (default on) registers a WorkManager periodic job
-  (`BackgroundSyncScheduler`, every 6 h, battery-not-low, no network
-  constraint of its own).
+  `downloadSettings.ts`). That one switch also registers a WorkManager
+  periodic job (`BackgroundSyncScheduler`, every 6 h, battery-not-low, no
+  network constraint of its own) - there is no separate "also when the
+  app is closed" question; a phone that downloads the week does so on its
+  own, opened or not.
   `BackgroundSyncWorker` starts the React runtime in-process when the app
   isn't running and runs the headless JS task `SichosKodeshBackgroundSync`
   (`backgroundSyncTask.ts`, registered in `index.js`): it resolves this

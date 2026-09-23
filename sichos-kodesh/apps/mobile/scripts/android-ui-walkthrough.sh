@@ -291,10 +291,10 @@ if tap_text 'מוצאי י"ג תשרי'; then
 fi
 tap_text "Settings" && tap_text "Light" && sleep 1
 tap_text "Downloads" && wait_text "Auto-download" && shot 18-download-settings
-# Switch the automatic sync on (reveals the phone-only "also when closed"
-# option) and kick one run off: the sync task posts the new-week notice
-# within seconds and queues this week's files, whose progress shows in the
-# notification shade.
+# Toggle the automatic sync (on the phone that one switch also covers
+# running while the app is closed) and kick one run off: the sync task
+# posts the new-week notice within seconds and queues this week's files,
+# whose progress shows in the notification shade.
 tap_text "Auto-download automatically" && sleep 1 && shot 18-download-settings-auto
 tap_text "Download this week now" && sleep 20
 adb shell cmd statusbar expand-notifications && shot 19-notifications 3

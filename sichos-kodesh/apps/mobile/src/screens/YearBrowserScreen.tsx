@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { YearBrowserScreenProps } from '../navigation/types';
 import { entriesWithContentForYear, groupEntriesByMonth } from '../routes/catalogRoutes';
@@ -10,9 +10,10 @@ import { Subtitle } from '../ui/Typography';
 
 /** Browse mode's first screen for a year: only months with something to show, each linking to that month's own occasion list (web: `/browse/:hebrewYear`). */
 export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps) {
+  const catalog = useCatalog();
   const { hebrewYear } = route.params;
   const { t, language } = useTranslation();
-  const entries = useMemo(() => entriesWithContentForYear(catalog, hebrewYear), [hebrewYear]);
+  const entries = useMemo(() => entriesWithContentForYear(catalog, hebrewYear), [catalog, hebrewYear]);
   const monthGroups = useMemo(() => groupEntriesByMonth(entries, language), [entries, language]);
 
   return (

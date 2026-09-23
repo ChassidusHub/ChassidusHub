@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { groupByMonth } from '../utils/groupByMonth';
 import { useTranslation } from '../i18n/useLanguage';
@@ -11,6 +11,7 @@ interface Props {
 
 /** Follow-flow twin of YearBrowserScreen: same month-first browsing, but links to /follow/:sourceYear/:occasionId instead of /browse/:hebrewYear/:occasionId. */
 export function FollowMonthListScreen({ sourceYear }: Props) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const entries: CatalogEntry[] = (catalog[sourceYear] ?? []).filter((e) => e.audio.length > 0 || e.pdfs.length > 0);
   const monthGroups = groupByMonth(entries, language);

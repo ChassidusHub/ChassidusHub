@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { CategoryScreenProps } from '../navigation/types';
 import { resolveOccasionRoute, selectCategoryPdfs } from '../routes/catalogRoutes';
@@ -11,9 +11,10 @@ import { GapMessage, Subtitle } from '../ui/Typography';
 
 /** A PDF section's own page (web: `.../category/:section`) - a label like hagahos's "צילום 1" doesn't make sense without its section header for context. */
 export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
+  const catalog = useCatalog();
   const { categoryId, ...occasionRoute } = route.params;
   const { t, language } = useTranslation();
-  const resolved = useMemo(() => resolveOccasionRoute(catalog, occasionRoute, language), [language, occasionRoute]);
+  const resolved = useMemo(() => resolveOccasionRoute(catalog, occasionRoute, language), [catalog, language, occasionRoute]);
 
   if (!resolved) {
     return (

@@ -20,6 +20,22 @@ export type { SpecialDay } from './specialDays.js';
 export { resolveThisWeek, resolveThisWeekAllYears, resolveWeekWithFallback, thisWeekDays } from './resolveThisWeek.js';
 export { occasionIdentity, resolveOccasionAllYears, scoreOccasionMatch } from './occasionIdentity.js';
 export type { OccasionIdentity, TimeOfDay, YearOccasionMatches } from './occasionIdentity.js';
+export { DEFAULT_PLAYBACK_RATE, PLAYBACK_RATES, effectivePlaybackRate, formatPlaybackRate, isPlaybackRate, isPlaybackRateAllowed, nextPlaybackRate } from './playbackPolicy.js';
+export type { PlaybackRate } from './playbackPolicy.js';
+export { CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from './version.js';
+export { CATALOG_CHANGELOG } from './changelog.js';
+export type { CatalogChangelogEntry } from './changelog.js';
+export {
+  CATALOG_MANIFEST_PATH,
+  catalogReleasePath,
+  catalogReleaseTag,
+  compareCatalogVersions,
+  isCatalogUpdateApplicable,
+  isValidCatalogVersion,
+  parseCatalogManifest,
+  parseCatalogRelease,
+} from './release.js';
+export type { CatalogManifest, CatalogRelease } from './release.js';
 export type { CatalogByYear } from './catalogLookup.js';
-export type { CatalogAudio, CatalogEntry, CatalogPdf, CatalogYear, PdfSection } from './types.js';
+export type { AudioKind, CatalogAudio, CatalogEntry, CatalogPdf, CatalogYear, PdfSection } from './types.js';
 export type { WeekDay, WeekOccasion, WeekResolution, YearWeekOccasions } from './resolveThisWeek.js';

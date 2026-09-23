@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from '../i18n/useTranslation';
 import { BackLink } from './BackLink';
@@ -12,6 +13,8 @@ interface Props {
   title: string;
   /** For a screen whose own container has no horizontal padding (the PDF viewer) - see the web's `.screen-header-inset`. */
   inset?: boolean;
+  /** One small control on the trailing side (the PDF reader's colours button) - drawn over the spacer, so the title stays centred exactly as without it (web: `.screen-header-action`). */
+  action?: ReactNode;
 }
 
 /**
@@ -19,9 +22,10 @@ interface Props {
  * status bar once scrolled past (Screen renders it as a sticky header).
  * The title is centered in the full bar, not just in the space left over
  * after the back button - the trailing spacer is an invisible copy of the
- * real BackLink so the title's flex box sits between two equal edges.
+ * real BackLink so the title's flex box sits between two equal edges. An
+ * `action` is positioned over that spacer rather than beside it.
  */
-export function ScreenHeader({ back, title, inset = false }: Props) {
+export function ScreenHeader({ back, title, inset = false, action }: Props) {
   const colors = useColors();
   const { isRtl } = useTranslation();
 
@@ -31,7 +35,10 @@ export function ScreenHeader({ back, title, inset = false }: Props) {
       <AppText numberOfLines={1} style={styles.title}>
         {title}
       </AppText>
-      <BackLink fallback={back} spacer />
+      <View style={styles.side}>
+        <BackLink fallback={back} spacer />
+        {action && <View style={[styles.action, isRtl ? styles.actionRtl : styles.actionLtr]}>{action}</View>}
+      </View>
     </View>
   );
 }
@@ -49,4 +56,9 @@ const styles = StyleSheet.create({
   inset: { marginHorizontal: 0, marginBottom: 16 },
   /** Web: `.screen-header-title` - flex 1, centered, 18px/700, ellipsis. */
   title: { flex: 1, minWidth: 0, textAlign: 'center', fontSize: 18, fontWeight: '700' },
+  /** Web: `.screen-header-side` - the spacer's box, with the action absolutely positioned at its outer edge. */
+  side: { position: 'relative', flexShrink: 0, justifyContent: 'center' },
+  action: { position: 'absolute', top: 0, bottom: 0, justifyContent: 'center' },
+  actionLtr: { right: 0 },
+  actionRtl: { left: 0 },
 });

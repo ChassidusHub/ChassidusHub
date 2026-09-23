@@ -2,13 +2,11 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CheckCircle2, Download, Pause, Play } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
+import { OccasionActions } from '../components/OccasionActions';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
-import { ShareButton } from '../components/ShareButton';
-import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
 import { useChapterDownload } from '../download/useChapterDownload';
-import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useTranslation';
 import type { RecordingsScreenProps } from '../navigation/types';
 import { usePlayer } from '../player/usePlayer';
@@ -24,7 +22,6 @@ import { Spinner } from '../ui/Spinner';
 import { AppText } from '../ui/Text';
 import { GapMessage } from '../ui/Typography';
 import { useColors } from '../ui/theme';
-import { hexWithAlpha } from '../ui/color';
 import { row } from '../ui/rtl';
 
 interface PlaylistRowProps {
@@ -104,14 +101,13 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
 
 /** An occasion's recordings playlist (web: `.../recordings`). */
 export function RecordingsScreen({ route }: RecordingsScreenProps) {
+  const catalog = useCatalog();
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const player = usePlayer();
   const progressMap = useProgressMap();
-  const { downloadAllChapters } = useDownload();
-  const resolved = useMemo(() => resolveOccasionRoute(catalog, route.params, language), [language, route.params]);
+  const resolved = useMemo(() => resolveOccasionRoute(catalog, route.params, language), [catalog, language, route.params]);
   const entry = resolved?.entry ?? null;
-  const allChaptersState = useAllChaptersDownloadState(entry ?? { hebrewYear: 0, occasionId: 0, hebrewDate: '', occasionLabel: '', audio: [], pdfs: [] });
 
   if (!entry) {
     return (
@@ -125,34 +121,6 @@ export function RecordingsScreen({ route }: RecordingsScreenProps) {
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
   const totalDuration = formatDuration(totalDurationSeconds(entry.audio));
 
-  let headerDownload = null;
-  if (allChaptersState === 'downloaded') {
-    headerDownload = (
-      <View style={styles.headerStatus} accessibilityLabel={t.downloadedLabel}>
-        <CheckCircle2 size={18} color={colors.accent} />
-      </View>
-    );
-  } else if (allChaptersState === 'downloading') {
-    headerDownload = (
-      <View style={styles.headerStatus} accessibilityLabel={t.downloadingLabel}>
-        <Spinner size={18} color={colors.muted} />
-      </View>
-    );
-  } else if (allChaptersState === 'none') {
-    headerDownload = (
-      <Pressable
-        onPress={() => {
-          downloadAllChapters(entry).catch(() => undefined);
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={t.downloadAllRecordingsLabel}
-        style={({ pressed }) => [styles.headerAction, { backgroundColor: hexWithAlpha(colors.accent, 0.14) }, pressed && styles.pressed]}
-      >
-        <Download size={18} color={colors.accent} />
-      </Pressable>
-    );
-  }
-
   return (
     <Screen header={<ScreenHeader back={{ name: 'Farbrengen', params: route.params }} title={entry.occasionLabel} />}>
       <View style={[styles.playlistHeader, { backgroundColor: colors.cardBg, flexDirection: row(isRtl) }]}>
@@ -163,10 +131,10 @@ export function RecordingsScreen({ route }: RecordingsScreenProps) {
             <AppText style={[styles.playlistSubtitle, { color: colors.muted }]}>{totalDuration}</AppText>
           </View>
         </View>
-        {headerDownload && <View style={styles.playlistHeaderSide}>{headerDownload}</View>}
       </View>
 
-      <ShareButton title={entry.occasionLabel} hebrewYear={entry.hebrewYear} occasionId={entry.occasionId} />
+      {/* "Download all" + Share as the same pair of pills the occasion page shows - the aggregate download state lives here now, not as an icon in the header card. */}
+      <OccasionActions entry={entry} mode="recordings" />
 
       {entry.audio.map((chapter, index) => (
         <PlaylistRow key={chapter.workerFilename} entry={entry} index={index} isActive={isThisPlaylistActive && player.currentIndex === index} player={player} progress={progress} />
@@ -176,16 +144,12 @@ export function RecordingsScreen({ route }: RecordingsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  /** Web: `.playlist-header` - space-between, gap 16, margin-bottom 16, padding 16, radius 16. */
-  playlistHeader: { alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 16, padding: 16, borderRadius: 16 },
+  /** Web: `.playlist-header` - gap 16, margin-bottom 16, padding 16, radius 16. */
+  playlistHeader: { alignItems: 'flex-start', gap: 16, marginBottom: 16, padding: 16, borderRadius: 16 },
   playlistHeaderMain: { alignItems: 'center', gap: 16, minWidth: 0, flex: 1 },
   playlistHeaderCopy: { minWidth: 0, flexShrink: 1, gap: 4 },
   playlistTitle: { fontSize: 18, fontWeight: '700' },
   playlistSubtitle: { fontSize: 14 },
-  playlistHeaderSide: { alignItems: 'center', justifyContent: 'center', minHeight: 44, flexShrink: 0 },
-  headerStatus: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  /** Web: `.playlist-header-action` - 36px tinted circle. */
-  headerAction: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   /** Web: `.playlist-row-item` - gap 10, radius 8, padding 10, margin-inline -10. */
   rowItem: { alignItems: 'center', gap: 10, borderRadius: 8, padding: 10, marginHorizontal: -10 },
   rowButton: { flex: 1, minWidth: 0, alignItems: 'center', gap: 14, borderRadius: 8 },

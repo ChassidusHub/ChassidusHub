@@ -10,7 +10,7 @@ import { addPendingChapterDownload, listPendingChapterDownloads, removePendingCh
 import { addPendingEntryDownload, listPendingEntryDownloads, removePendingEntryDownload } from './pendingEntryDownloads';
 import { forgetAutoDownload, recordAutoDownload } from './downloadLedger';
 import { useDownloadSettings } from '../settings/useDownloadSettings';
-import catalog from '../catalog/data';
+import { getCatalog } from '../catalog/catalogStore';
 
 function key(hebrewYear: number, occasionId: number): string {
   return `${hebrewYear}:${occasionId}`;
@@ -287,7 +287,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     if (pending.length === 0) return;
     void (async () => {
       for (const p of pending) {
-        const entry = (catalog[p.hebrewYear] ?? []).find((e) => e.occasionId === p.occasionId);
+        const entry = (getCatalog()[p.hebrewYear] ?? []).find((e) => e.occasionId === p.occasionId);
         const chapter = entry?.audio[p.chapterIndex];
         if (!entry || !chapter) {
           removePendingChapterDownload(p);
@@ -314,7 +314,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   // already made it through before the reload and fetch only the rest.
   useEffect(() => {
     for (const p of listPendingEntryDownloads()) {
-      const entry = (catalog[p.hebrewYear] ?? []).find((e) => e.occasionId === p.occasionId);
+      const entry = (getCatalog()[p.hebrewYear] ?? []).find((e) => e.occasionId === p.occasionId);
       if (!entry) {
         removePendingEntryDownload(p);
         continue;

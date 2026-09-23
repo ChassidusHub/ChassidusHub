@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from './useDownload';
 import type { RowDownloadState } from './downloadContext';
-import catalog from '../catalog/data';
+import { getCatalog } from '../catalog/catalogStore';
 
 export interface ActiveDownloadsSummary {
   count: number;
@@ -102,7 +102,7 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
 function entryInfoForKey(key: string): { entry: CatalogEntry; label: string } | null {
   const parts = key.split(':');
   const [hebrewYear, occasionId] = (isChapterKey(key) ? parts.slice(1) : parts).map(Number);
-  const entry = (catalog[hebrewYear] ?? []).find((e) => e.occasionId === occasionId);
+  const entry = (getCatalog()[hebrewYear] ?? []).find((e) => e.occasionId === occasionId);
   if (!entry) return null;
   if (!isChapterKey(key)) return { entry, label: entry.occasionLabel };
   const chapterIndex = Number(parts[3]);

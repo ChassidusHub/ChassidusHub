@@ -1,6 +1,6 @@
 import React from 'react';
 import { browsableYears } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
+import { useCatalog } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { BrowseYearsScreenProps } from '../navigation/types';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
@@ -11,6 +11,7 @@ import { TabHelp } from '../ui/Typography';
 
 /** Every year with something indexed (web: `/years`). */
 export function BrowseYearsScreen({ navigation }: BrowseYearsScreenProps) {
+  const catalog = useCatalog();
   const { t, language } = useTranslation();
   const allYears = browsableYears(catalog);
 

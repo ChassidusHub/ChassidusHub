@@ -1,14 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { CheckCircle2, ChevronDown, ChevronRight, Download } from 'lucide-react-native';
+import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
-import catalog from '../catalog/data';
-import { DownloadProgressRing } from '../components/DownloadProgressRing';
+import { useCatalog } from '../catalog/catalogStore';
+import { OccasionActions } from '../components/OccasionActions';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
-import { ShareButton } from '../components/ShareButton';
-import { useDownload } from '../download/useDownload';
-import { useDownloadProgress } from '../download/useDownloadProgress';
-import { useDownloadState } from '../download/useDownloadState';
 import { useTranslation } from '../i18n/useTranslation';
 import type { FarbrengenScreenProps } from '../navigation/types';
 import { usePlayer } from '../player/usePlayer';
@@ -22,7 +18,6 @@ import { Card, PdfLabel } from '../ui/Card';
 import { CategoryRow } from '../ui/CategoryRow';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { Spinner } from '../ui/Spinner';
 import { AppText } from '../ui/Text';
 import { GapMessage, Subtitle } from '../ui/Typography';
 import { useColors } from '../ui/theme';
@@ -36,15 +31,13 @@ import { row } from '../ui/rtl';
  * section (web: `/follow/:year/:id`, `/browse/:year/:id`, ...).
  */
 export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
+  const catalog = useCatalog();
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const player = usePlayer();
   const progressMap = useProgressMap();
   const [autoplayOnHanacha] = useAutoplayOnHanacha();
-  const { downloadOccasion } = useDownload();
-  const resolved = useMemo(() => resolveOccasionRoute(catalog, route.params, language), [language, route.params]);
-  const downloadState = useDownloadState(resolved?.entry);
-  const downloadProgress = useDownloadProgress(resolved?.entry);
+  const resolved = useMemo(() => resolveOccasionRoute(catalog, route.params, language), [catalog, language, route.params]);
   const [moreOpen, setMoreOpen] = useState(false);
   useRecordVisit(resolved?.entry);
 
@@ -101,43 +94,7 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
         {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}
       </Subtitle>
 
-      <ShareButton title={entry.occasionLabel} hebrewYear={entry.hebrewYear} occasionId={entry.occasionId} />
-
-      {downloadState !== 'unavailable' && downloadState !== 'loading' && (
-        <View style={[styles.downloadState, { flexDirection: row(isRtl) }]}>
-          {downloadState === 'downloaded' && (
-            <>
-              <CheckCircle2 size={16} color={colors.accent} />
-              <AppText style={[styles.downloadStateText, { color: colors.muted }]}>{t.downloadedLabel}</AppText>
-            </>
-          )}
-          {downloadState === 'downloading' && downloadProgress !== undefined && (
-            <>
-              <DownloadProgressRing size={16} progress={downloadProgress} />
-              <AppText style={[styles.downloadStateText, { color: colors.muted }]}>{t.downloadingLabel}</AppText>
-            </>
-          )}
-          {(downloadState === 'queued' || (downloadState === 'downloading' && downloadProgress === undefined)) && (
-            <>
-              <Spinner size={16} color={colors.muted} />
-              <AppText style={[styles.downloadStateText, { color: colors.muted }]}>{t.downloadingLabel}</AppText>
-            </>
-          )}
-          {downloadState === 'none' && (
-            <Pressable
-              onPress={() => {
-                downloadOccasion(entry).catch(() => undefined);
-              }}
-              hitSlop={6}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.downloadButton, { flexDirection: row(isRtl) }, pressed && styles.pressed]}
-            >
-              <Download size={16} color={colors.accent} />
-              <AppText style={[styles.downloadStateText, { color: colors.accent }]}>{t.downloadLabel}</AppText>
-            </Pressable>
-          )}
-        </View>
-      )}
+      <OccasionActions entry={entry} />
 
       {isEmpty && <GapMessage>{t.nothingDownloadable}</GapMessage>}
 
@@ -179,11 +136,6 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  /** Web: `.occasion-download-state` - row, gap 6, margin-bottom 12, 14px/600 muted. */
-  downloadState: { alignItems: 'center', gap: 6, marginBottom: 12 },
-  downloadStateText: { fontSize: 14, fontWeight: '600' },
-  downloadButton: { alignItems: 'center', gap: 6 },
-  pressed: { opacity: 0.7 },
   /** Web: `.more-section` - margin-top 24; `[open]` also margin-bottom 24. */
   moreSection: { marginTop: 24 },
   moreSectionOpen: { marginBottom: 24 },

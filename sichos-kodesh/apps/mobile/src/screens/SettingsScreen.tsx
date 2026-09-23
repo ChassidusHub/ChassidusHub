@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react-native';
 import { contentPreset } from '@sichos-kodesh/app-core';
 import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { isBackgroundSyncAvailable, requestNotificationPermission } from '../background/backgroundNative';
-import catalog from '../catalog/data';
+import { useCatalog, useCatalogInfo } from '../catalog/catalogStore';
+import { checkForCatalogUpdate, useCatalogUpdateStatus } from '../catalog/catalogUpdater';
+import type { CatalogUpdateStatus } from '../catalog/catalogUpdater';
 import { APP_VERSION } from '../changelog';
 import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
@@ -15,12 +18,12 @@ import { useNotificationSettings } from '../settings/notificationSettings';
 import type { NotificationSettings } from '../settings/notificationSettings';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
+import { Spinner } from '../ui/Spinner';
 import { Segmented, SettingRow, SettingsGroup, Toggle } from '../ui/settings/SettingsControls';
-import { useTheme } from '../ui/theme';
+import { useColors, useTheme } from '../ui/theme';
 import type { ThemeMode } from '../ui/theme';
 import { formatBytes } from '../utils/formatBytes';
 
-const ALL_ENTRIES = Object.values(catalog).flat();
 /** A language switch names each language in itself, whichever one is active. */
 const LANGUAGE_NATIVE_NAMES: Record<Language, string> = { en: 'English', he: 'עברית' };
 
@@ -31,6 +34,24 @@ export function presetLabel(t: Translation, preset: ContentPreset): string {
   return preset === 'essentials' ? t.presetEssentials : preset === 'everything' ? t.presetEverything : t.presetCustom;
 }
 
+/** The one line under "Update catalog" that says what the last check found - same wording as the web's About screen. */
+export function catalogStatusLine(t: Translation, status: CatalogUpdateStatus): string {
+  switch (status.phase) {
+    case 'checking':
+      return t.catalogChecking;
+    case 'downloading':
+      return t.catalogDownloading(status.version);
+    case 'updated':
+      return t.catalogUpdated(status.version);
+    case 'up-to-date':
+      return t.catalogUpToDate;
+    case 'error':
+      return t.catalogUpdateFailed;
+    default:
+      return t.catalogUpdateHelp;
+  }
+}
+
 /**
  * Settings home (web: SettingsScreen): every quick preference as a real
  * control on this screen (theme, PDF colours, language, playback, and on
@@ -39,6 +60,10 @@ export function presetLabel(t: Translation, preset: ContentPreset): string {
  * current state as the row's value.
  */
 export function SettingsScreen({ navigation }: SettingsScreenProps) {
+  const catalog = useCatalog();
+  const catalogInfo = useCatalogInfo();
+  const catalogStatus = useCatalogUpdateStatus();
+  const colors = useColors();
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
   const { mode: theme, setMode: setTheme } = useTheme();
@@ -52,10 +77,10 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const notificationsAvailable = isBackgroundSyncAvailable();
 
   useEffect(() => {
-    getDownloadStorageUsage(ALL_ENTRIES)
+    getDownloadStorageUsage(Object.values(catalog).flat())
       .then(setUsage)
       .catch(() => setUsage(null));
-  }, []);
+  }, [catalog]);
 
   function toggleNotification(key: keyof NotificationSettings): void {
     const next = !notifications[key];
@@ -117,6 +142,20 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
       <SettingsGroup title={t.offlineGroup}>
         <SettingRow label={t.downloadSettingsTitle} value={offlineSummary} chevron onPress={() => navigation.navigate('DownloadSettings')} first />
         <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} chevron onPress={() => navigation.navigate('Downloaded')} />
+      </SettingsGroup>
+
+      {/* The list of farbrengens itself has its own releases (packages/catalog) - the phone fetches a newer one from api.sk.shmuky.dev on its own once a day, and on demand here. */}
+      <SettingsGroup title={t.catalogSection}>
+        <SettingRow label={t.catalogVersionLabel} value={`${catalogInfo.version} · ${catalogInfo.source === 'bundled' ? t.catalogSourceBundled : t.catalogSourceUpdated}`} first />
+        <SettingRow
+          label={t.catalogUpdateLabel}
+          help={catalogStatusLine(t, catalogStatus)}
+          onPress={() => {
+            checkForCatalogUpdate().catch(() => undefined);
+          }}
+        >
+          {catalogStatus.phase === 'checking' || catalogStatus.phase === 'downloading' ? <Spinner size={18} color={colors.muted} /> : <RefreshCw size={18} color={colors.muted} />}
+        </SettingRow>
       </SettingsGroup>
 
       <SettingsGroup>

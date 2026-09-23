@@ -14,6 +14,9 @@ interface Props {
  * OS share sheet (`navigator.share`, mobile Safari/Chrome) where available;
  * falls back to copying the URL to the clipboard with a brief confirmation,
  * for desktop browsers that don't implement it.
+ *
+ * Rendered as one of the matching pills in OccasionActions - never on its
+ * own - so Share and Download always sit side by side in the same shape.
  */
 export function ShareButton({ title }: Props) {
   const { t } = useTranslation();
@@ -40,7 +43,7 @@ export function ShareButton({ title }: Props) {
   }
 
   return (
-    <button type="button" className="share-button" onClick={() => void handleShare()}>
+    <button type="button" className="action-pill" onClick={() => void handleShare()}>
       {copied ? <Check size={16} aria-hidden /> : <Share2 size={16} aria-hidden />}
       {copied ? t.linkCopiedLabel : t.shareLabel}
     </button>

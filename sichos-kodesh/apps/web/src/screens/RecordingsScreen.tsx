@@ -7,12 +7,10 @@ import { chapterProgressFraction, getOccasionProgress, isChapterFinished } from 
 import type { OccasionProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
 import { useChapterDownload } from '../download/useChapterDownload';
-import { useDownload } from '../download/useDownload';
-import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
 import { isRtlLanguage, useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
-import { ShareButton } from '../components/ShareButton';
+import { OccasionActions } from '../components/OccasionActions';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
 import { formatDuration, totalDurationSeconds } from '../utils/formatDuration';
 
@@ -134,46 +132,15 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
 }
 
 export function RecordingsScreen({ resolved }: Props) {
-  const { t, language } = useTranslation();
+  const { language } = useTranslation();
   const isRtl = isRtlLanguage(language);
   const player = usePlayer();
   const progressMap = useProgressMap();
-  const { downloadAllChapters } = useDownload();
-  const allChaptersState = useAllChaptersDownloadState(resolved.entry);
   const { entry, basePath } = resolved;
 
   const isThisPlaylistActive = player.playlist?.title === entry.occasionLabel;
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
   const totalDuration = formatDuration(totalDurationSeconds(entry.audio));
-  let headerDownload = null;
-  if (allChaptersState === 'downloaded') {
-    headerDownload = (
-      <span className="playlist-header-status" role="status" aria-label={t.downloadedLabel}>
-        <CheckCircle2 size={18} className="download-state-done" aria-hidden />
-      </span>
-    );
-  } else if (allChaptersState === 'downloading') {
-    headerDownload = (
-      <span className="playlist-header-status" role="status" aria-label={t.downloadingLabel}>
-        <Loader2 size={18} className="download-state-spinner" aria-hidden />
-      </span>
-    );
-  } else if (allChaptersState === 'none') {
-    headerDownload = (
-      <button
-        type="button"
-        className="playlist-header-action"
-        onClick={() => downloadAllChapters(entry)}
-        aria-label={t.downloadAllRecordingsLabel}
-        title={t.downloadAllRecordingsLabel}
-      >
-        <Download size={18} aria-hidden />
-      </button>
-    );
-  }
-  // 'unavailable' deliberately renders no header action: while offline with
-  // nothing cached yet, this page has no real aggregate download action to
-  // offer.
 
   return (
     <div className="screen">
@@ -186,10 +153,10 @@ export function RecordingsScreen({ resolved }: Props) {
             <p className="playlist-header-subtitle">{totalDuration}</p>
           </div>
         </div>
-        {headerDownload && <div className="playlist-header-side">{headerDownload}</div>}
       </div>
 
-      <ShareButton title={entry.occasionLabel} />
+      {/* "Download all" + Share as the same pair of pills the occasion page shows - the aggregate download state lives here now, not as an icon in the header card. */}
+      <OccasionActions entry={entry} mode="recordings" />
 
       <ul className="playlist">
         {entry.audio.map((chapter, index) => (

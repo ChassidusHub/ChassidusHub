@@ -4,7 +4,7 @@ import { currentHebrewYear, mafteiachMonthToken, resolveThisWeek, resolveWeekWit
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
-import catalog from '../catalog/data';
+import { getCatalog } from '../catalog/catalogStore';
 import type { DownloadSettings } from './downloadSettings';
 import { useDownload } from './useDownload';
 
@@ -12,14 +12,14 @@ import { useDownload } from './useDownload';
 function resolveEntriesForYear(sourceYear: number, targetYear: number, settings: DownloadSettings, today: Date): CatalogEntry[] {
   if (settings.scope === 'week') {
     if (settings.useKviusFallback) {
-      return (resolveWeekWithFallback(sourceYear, targetYear, catalog, IL, today)?.occasions ?? []).map((occasion) => occasion.entry);
+      return (resolveWeekWithFallback(sourceYear, targetYear, getCatalog(), IL, today)?.occasions ?? []).map((occasion) => occasion.entry);
     }
-    return resolveThisWeek(sourceYear, catalog, today).map((occasion) => occasion.entry);
+    return resolveThisWeek(sourceYear, getCatalog(), today).map((occasion) => occasion.entry);
   }
 
   const hdate = new HDate(today);
   const monthToken = mafteiachMonthToken(toMafteiachHebrewDateKey({ year: sourceYear, month: hdate.getMonth(), day: hdate.getDate() }));
-  return (catalog[sourceYear] ?? []).filter((entry) => mafteiachMonthToken(entry.hebrewDate) === monthToken);
+  return (getCatalog()[sourceYear] ?? []).filter((entry) => mafteiachMonthToken(entry.hebrewDate) === monthToken);
 }
 
 /** Which occasions `settings` currently points at - one or more manually-pinned years if set, otherwise the best current kvius match (the same default KviusYearsScreen itself uses). Same resolution as the web's useAutoDownloadSync. */

@@ -1,45 +1,51 @@
 import { useState } from 'react';
+import type { ResolvedScheme } from './useResolvedScheme';
 
-const STORAGE_KEY = 'sichos-kodesh:invert-pdf-dark-mode';
-const CLASS_NAME = 'invert-pdf-dark';
+/**
+ * Whether a PDF's pages are shown with their colours flipped (white text
+ * on black), remembered separately for dark mode and for light mode: on
+ * by default at night, off by default by day. Settings' "Invert PDF
+ * colors in dark mode" switch sets the dark one; the colours button in
+ * the PDF reader flips whichever applies to the theme on screen right
+ * now (see PdfViewerScreen). Both keys are shared with the mobile app.
+ */
+const STORAGE_KEYS: Record<ResolvedScheme, string> = {
+  dark: 'sichos-kodesh:invert-pdf-dark-mode',
+  light: 'sichos-kodesh:invert-pdf-light-mode',
+};
+const DEFAULTS: Record<ResolvedScheme, boolean> = { dark: true, light: false };
 
-function readStored(): boolean {
+export function readPdfInversion(scheme: ResolvedScheme): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) !== 'false';
+    const raw = localStorage.getItem(STORAGE_KEYS[scheme]);
+    return raw == null ? DEFAULTS[scheme] : raw === 'true';
   } catch {
-    return true;
+    return DEFAULTS[scheme];
   }
 }
 
-/**
- * Applying the DOM class lives in this standalone function, not a
- * `useEffect` - same reasoning as `applyTheme`: one shared class on
- * `<html>`, every visual reaction to it is pure CSS (see index.css's
- * `.invert-pdf-dark` rules, gated to only take effect while dark mode is
- * *actually* active), so applying it once before mount (main.tsx) and
- * again wherever the setting itself changes (SettingsScreen) is enough -
- * no Context needed.
- */
-export function applyInvertPdfInDarkMode(enabled: boolean): void {
-  document.documentElement.classList.toggle(CLASS_NAME, enabled);
+function writePdfInversion(scheme: ResolvedScheme, value: boolean): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS[scheme], String(value));
+  } catch {
+    // Best-effort persistence only.
+  }
 }
 
-/**
- * On by default - only while dark mode itself is active (see index.css),
- * so it improves the night-reading default without affecting light mode.
- */
+/** Both flags at once, so the reader can follow a theme switch without re-reading storage; `set` writes the one for `scheme`. */
+export function usePdfInversion(): [(scheme: ResolvedScheme) => boolean, (scheme: ResolvedScheme, value: boolean) => void] {
+  const [values, setValues] = useState<Record<ResolvedScheme, boolean>>(() => ({ dark: readPdfInversion('dark'), light: readPdfInversion('light') }));
+
+  function set(scheme: ResolvedScheme, value: boolean): void {
+    setValues((current) => ({ ...current, [scheme]: value }));
+    writePdfInversion(scheme, value);
+  }
+
+  return [(scheme) => values[scheme], set];
+}
+
+/** Settings' own switch - the dark-mode flag alone. */
 export function useInvertPdfInDarkMode(): [boolean, (next: boolean) => void] {
-  const [enabled, setEnabledState] = useState<boolean>(readStored);
-
-  function setEnabled(next: boolean): void {
-    setEnabledState(next);
-    applyInvertPdfInDarkMode(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, String(next));
-    } catch {
-      // Best-effort persistence only.
-    }
-  }
-
-  return [enabled, setEnabled];
+  const [get, set] = usePdfInversion();
+  return [get('dark'), (next) => set('dark', next)];
 }
