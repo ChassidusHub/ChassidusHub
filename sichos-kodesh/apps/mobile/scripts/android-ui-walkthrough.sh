@@ -93,10 +93,14 @@ print(top)
 ' "$SCREEN_H" "$((SCREEN_H * 3 / 40))"
 }
 
-# Scrolls the current screen up by most of a screen height (a swipe, not a tap).
+# Scrolls the current screen up by most of a screen height (a swipe, not a
+# tap). A slow swipe, so the list stops where the finger stops instead of
+# flinging on - a dump taken while it is still moving reports bounds the
+# next tap misses by a row - and a moment for it to settle before the next
+# dump.
 scroll_down() {
-  adb shell input swipe "$((SCREEN_W / 2))" "$((SCREEN_H * 2 / 3))" "$((SCREEN_W / 2))" "$((SCREEN_H / 4))" 300
-  sleep 2
+  adb shell input swipe "$((SCREEN_W / 2))" "$((SCREEN_H * 2 / 3))" "$((SCREEN_W / 2))" "$((SCREEN_H / 4))" 900
+  sleep 3
 }
 
 # Back to the top of a scrolled screen (two swipes cover any screen in the app).
