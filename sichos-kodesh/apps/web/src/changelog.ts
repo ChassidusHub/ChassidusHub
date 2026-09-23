@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1.0';
 
 interface ChangelogEntry {
   version: string;

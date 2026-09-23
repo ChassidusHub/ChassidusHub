@@ -11,6 +11,7 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.1.0',
     en: [
+      "This week's farbrengens download on their own from the first launch - on Wi-Fi, and every few hours while the app is closed - so the phone is ready offline without touching a setting",
       'Settings rebuilt: real switches and choices instead of check lists, grouped by what they do, with the current state readable on the Settings screen itself',
       'Offline & downloads asks three plain questions - keep this week ready, what to keep, which year - with the rarely-needed options tucked behind Advanced, and a "Download this week now" button at the top',
       '"This occasion, every year" now finds the same farbrengen in each year - even when several share a date, or it fell on the eve one year and the day itself the next - and lists the rest of that date beneath it',
@@ -18,6 +19,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Swipe the player down to shrink it, down again to put it away (playback pauses); swipe up on the handle at the bottom edge, or tap it, to bring it back',
     ],
     he: [
+      'התוועדויות השבוע יורדות מעצמן כבר מההפעלה הראשונה - ב-Wi-Fi, וכל כמה שעות גם כשהאפליקציה סגורה - כך שהטלפון מוכן לשימוש לא מקוון בלי לגעת בהגדרה',
       'ההגדרות נבנו מחדש: מתגים ובחירות אמיתיים במקום רשימות סימון, מקובצים לפי מה שהם עושים, כשהמצב הנוכחי נקרא כבר במסך ההגדרות עצמו',
       '"לא מקוון והורדות" שואל שלוש שאלות פשוטות - השבוע מוכן מראש, מה לשמור, איזו שנה - האפשרויות הנדירות מאחורי "מתקדם", וכפתור "הורדת השבוע עכשיו" למעלה',
       '"אירוע זה, בכל השנים" מוצא כעת את אותה התוועדות בכל שנה - גם כשכמה חולקות תאריך, או כשהיא חלה בערב בשנה אחת וביום עצמו בשנה אחרת - ומציג את שאר האירועים של אותו תאריך מתחתיה',

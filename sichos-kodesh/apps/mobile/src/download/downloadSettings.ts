@@ -7,7 +7,15 @@ export type SourceYearMode = 'auto' | 'manual';
 /** How long an auto-downloaded file survives after it's no longer relevant to a sync run before pruneAutoDownloads.ts deletes it - 'never' keeps everything. */
 export type RetentionPeriod = 'never' | '2w' | '4w' | '8w' | '12w';
 
-/** Same fields, defaults and semantics as apps/web/src/settings/useDownloadSettings.ts - see that file's own comments for each one. */
+/**
+ * Same fields and semantics as apps/web/src/settings/useDownloadSettings.ts
+ * (see that file's own comments for each one), with one deliberate
+ * difference in the defaults: `autoDownloadEnabled` starts *on* here. A
+ * phone is where this app is used away from a connection, and the
+ * download is Wi-Fi-only by default, so a fresh install keeps the current
+ * week ready without anyone touching a setting - on open, and every few
+ * hours while closed (see src/background). The web keeps it opt-in.
+ */
 export interface DownloadSettings {
   autoDownloadEnabled: boolean;
   /**
@@ -36,7 +44,7 @@ export interface DownloadSettings {
 const STORAGE_KEY = 'sichos-kodesh:mobile-download-settings';
 
 export const DEFAULT_DOWNLOAD_SETTINGS: DownloadSettings = {
-  autoDownloadEnabled: false,
+  autoDownloadEnabled: true,
   backgroundSyncEnabled: true,
   scope: 'week',
   sourceYearMode: 'auto',

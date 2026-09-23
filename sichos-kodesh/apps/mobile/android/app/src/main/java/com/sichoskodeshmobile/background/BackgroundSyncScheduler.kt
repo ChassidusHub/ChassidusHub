@@ -2,6 +2,7 @@ package com.sichoskodeshmobile.background
 
 import android.content.Context
 import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -30,6 +31,10 @@ object BackgroundSyncScheduler {
     fun schedule(context: Context, intervalHours: Long) {
         val request = PeriodicWorkRequestBuilder<BackgroundSyncWorker>(intervalHours.coerceAtLeast(1), TimeUnit.HOURS)
             .setInputData(workDataOf(BackgroundSyncWorker.KEY_REASON to "periodic"))
+            // Starting the JS runtime in the background is real work; a nearly
+            // flat battery can wait for the next period (the in-app sync on
+            // open still runs regardless).
+            .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
             .setInitialDelay(FIRST_RUN_DELAY_MINUTES, TimeUnit.MINUTES)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
             .build()

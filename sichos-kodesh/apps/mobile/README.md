@@ -124,9 +124,12 @@ produces a real installable APK, no Expo/EAS account needed.
 Two things a phone can do that the web app cannot (`src/background/`,
 `android/.../background/`):
 
-- **Background auto-download.** With auto-download on, "Also when the app
-  is closed" (default on) registers a WorkManager periodic job
-  (`BackgroundSyncScheduler`, every 6 h, no network constraint of its own).
+- **Background auto-download.** Auto-download is on from the first launch
+  on the phone (Wi-Fi only; the web keeps it opt-in - see
+  `downloadSettings.ts`), and its "Also when the app is closed" option
+  (default on) registers a WorkManager periodic job
+  (`BackgroundSyncScheduler`, every 6 h, battery-not-low, no network
+  constraint of its own).
   `BackgroundSyncWorker` starts the React runtime in-process when the app
   isn't running and runs the headless JS task `SichosKodeshBackgroundSync`
   (`backgroundSyncTask.ts`, registered in `index.js`): it resolves this
@@ -146,8 +149,8 @@ Two things a phone can do that the web app cannot (`src/background/`,
   the `sichoskodesh://` scheme (manifest intent filter + `linking` in
   `App.tsx`). Texts come from JS in the user's language.
 
-To exercise it on a device: Settings > Downloads > "Download this week
-now", then pull down the notification shade. `adb shell cmd statusbar
+To exercise it on a device: Settings > Offline & downloads > "Download
+this week now", then pull down the notification shade. `adb shell cmd statusbar
 expand-notifications` does the same from a terminal, and the walkthrough
 script screenshots it.
 
