@@ -70,7 +70,7 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
       <CategoryHeader first>{t.autoDownloadSection}</CategoryHeader>
       <Row
         label={t.autoDownloadEnabledLabel}
-        selected={settings.autoDownloadEnabled}
+        marquee selected={settings.autoDownloadEnabled}
         trailing={<OptionCheck checked={settings.autoDownloadEnabled} />}
         onPress={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}
       />
@@ -81,20 +81,20 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
             <Row
               key={scope}
               label={scope === 'week' ? t.downloadScopeWeek : t.downloadScopeMonth}
-              selected={settings.scope === scope}
+              marquee selected={settings.scope === scope}
               trailing={<OptionCheck checked={settings.scope === scope} />}
               onPress={() => setSettings({ ...settings, scope })}
             />
           ))}
 
-          <Row label={t.wifiOnlyLabel} selected={settings.wifiOnly} trailing={<OptionCheck checked={settings.wifiOnly} />} onPress={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })} />
+          <Row label={t.wifiOnlyLabel} marquee selected={settings.wifiOnly} trailing={<OptionCheck checked={settings.wifiOnly} />} onPress={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })} />
 
           <CategoryHeader>{t.sourceYearSection}</CategoryHeader>
           {(['auto', 'manual'] as SourceYearMode[]).map((mode) => (
             <Row
               key={mode}
               label={mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel}
-              selected={settings.sourceYearMode === mode}
+              marquee selected={settings.sourceYearMode === mode}
               trailing={<OptionCheck checked={settings.sourceYearMode === mode} />}
               onPress={() =>
                 setSettings({
@@ -111,7 +111,7 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
               <Row
                 key={year}
                 label={hebrewYearLabel(year, language)}
-                selected={settings.manualSourceYears.includes(year)}
+                marquee selected={settings.manualSourceYears.includes(year)}
                 trailing={<OptionCheck checked={settings.manualSourceYears.includes(year)} />}
                 onPress={() => toggleManualYear(year)}
               />
@@ -120,7 +120,7 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
           {settings.scope === 'week' && (
             <Row
               label={t.kviusFallbackLabel}
-              selected={settings.useKviusFallback}
+              marquee selected={settings.useKviusFallback}
               trailing={<OptionCheck checked={settings.useKviusFallback} />}
               onPress={() => setSettings({ ...settings, useKviusFallback: !settings.useKviusFallback })}
             />
@@ -131,14 +131,14 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
       <CategoryHeader>{t.contentTypesSection}</CategoryHeader>
       <Row
         label={t.manualDownloadAllContentLabel}
-        selected={settings.manualDownloadAllContent}
+        marquee selected={settings.manualDownloadAllContent}
         trailing={<OptionCheck checked={settings.manualDownloadAllContent} />}
         onPress={() => setSettings({ ...settings, manualDownloadAllContent: !settings.manualDownloadAllContent })}
       />
       <TabHelp>{t.manualDownloadAllContentHelp}</TabHelp>
       <Row
         label={t.audioTypeLabel}
-        selected={settings.contentTypes.audio}
+        marquee selected={settings.contentTypes.audio}
         trailing={<OptionCheck checked={settings.contentTypes.audio} />}
         onPress={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, audio: !settings.contentTypes.audio } })}
       />
@@ -146,14 +146,14 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
         <Row
           key={edition}
           label={edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel}
-          selected={settings.contentTypes.hanachaEditions.includes(edition)}
+          marquee selected={settings.contentTypes.hanachaEditions.includes(edition)}
           trailing={<OptionCheck checked={settings.contentTypes.hanachaEditions.includes(edition)} />}
           onPress={() => toggleEdition(edition)}
         />
       ))}
-      <Row label={t.sectionLabels.mugah} selected={settings.contentTypes.mugah} trailing={<OptionCheck checked={settings.contentTypes.mugah} />} onPress={() => toggleSection('mugah')} />
+      <Row label={t.sectionLabels.mugah} marquee selected={settings.contentTypes.mugah} trailing={<OptionCheck checked={settings.contentTypes.mugah} />} onPress={() => toggleSection('mugah')} />
       {OTHER_SECTIONS.map((section) => (
-        <Row key={section} label={t.sectionLabels[section]} selected={settings.contentTypes[section]} trailing={<OptionCheck checked={settings.contentTypes[section]} />} onPress={() => toggleSection(section)} />
+        <Row key={section} label={t.sectionLabels[section]} marquee selected={settings.contentTypes[section]} trailing={<OptionCheck checked={settings.contentTypes[section]} />} onPress={() => toggleSection(section)} />
       ))}
 
       <CategoryHeader>{t.retentionSection}</CategoryHeader>
@@ -162,7 +162,7 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
         <Row
           key={period}
           label={period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))}
-          selected={settings.retentionPeriod === period}
+          marquee selected={settings.retentionPeriod === period}
           trailing={<OptionCheck checked={settings.retentionPeriod === period} />}
           onPress={() => setSettings({ ...settings, retentionPeriod: period })}
         />
@@ -171,7 +171,7 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
       {settings.retentionPeriod !== 'never' && (
         <Row
           label={t.keepFinishedContentLabel}
-          selected={settings.keepFinishedContent}
+          marquee selected={settings.keepFinishedContent}
           trailing={<OptionCheck checked={settings.keepFinishedContent} />}
           onPress={() => setSettings({ ...settings, keepFinishedContent: !settings.keepFinishedContent })}
         />
@@ -181,6 +181,7 @@ export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
       <TabHelp>{usage != null ? t.storageUsageLabel(formatBytes(usage)) : ''}</TabHelp>
       <Row
         label={t.clearDownloadsLabel}
+        marquee
         onPress={() => {
           handleClearDownloads().catch(() => undefined);
         }}

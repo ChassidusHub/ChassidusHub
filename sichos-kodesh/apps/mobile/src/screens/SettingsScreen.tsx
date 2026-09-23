@@ -43,18 +43,18 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
     <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title={t.settingsTitle} />}>
       <CategoryHeader first>{t.appearanceSection}</CategoryHeader>
       {themeOptions.map((option) => (
-        <Row key={option.value} label={option.label} selected={theme === option.value} trailing={<OptionCheck checked={theme === option.value} />} onPress={() => setTheme(option.value)} />
+        <Row key={option.value} label={option.label} marquee selected={theme === option.value} trailing={<OptionCheck checked={theme === option.value} />} onPress={() => setTheme(option.value)} />
       ))}
 
-      <Row label={t.invertPdfDarkModeLabel} selected={invertPdf} trailing={<OptionCheck checked={invertPdf} />} onPress={() => setInvertPdf(!invertPdf)} />
+      <Row label={t.invertPdfDarkModeLabel} marquee selected={invertPdf} trailing={<OptionCheck checked={invertPdf} />} onPress={() => setInvertPdf(!invertPdf)} />
 
       <CategoryHeader>{t.languageSection}</CategoryHeader>
       {languageOptions.map((option) => (
-        <Row key={option.value} label={option.label} selected={language === option.value} trailing={<OptionCheck checked={language === option.value} />} onPress={() => setLanguage(option.value)} />
+        <Row key={option.value} label={option.label} marquee selected={language === option.value} trailing={<OptionCheck checked={language === option.value} />} onPress={() => setLanguage(option.value)} />
       ))}
 
       <CategoryHeader>{t.playbackSection}</CategoryHeader>
-      <Row label={t.autoplayHanachaLabel} selected={autoplay} trailing={<OptionCheck checked={autoplay} />} onPress={() => setAutoplay(!autoplay)} />
+      <Row label={t.autoplayHanachaLabel} marquee selected={autoplay} trailing={<OptionCheck checked={autoplay} />} onPress={() => setAutoplay(!autoplay)} />
       <TabHelp>{t.autoplayHanachaHelp}</TabHelp>
 
       <View style={styles.linkList}>

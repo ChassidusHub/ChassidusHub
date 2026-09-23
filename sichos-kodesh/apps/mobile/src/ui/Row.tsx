@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useTranslation } from '../i18n/useTranslation';
+import { OverflowMarquee } from './OverflowMarquee';
 import { AppText } from './Text';
 import { useColors } from './theme';
 import { marginStart, row } from './rtl';
@@ -13,6 +14,8 @@ interface RowProps {
   trailing?: ReactNode;
   /** Web: `.year-row-selected` - accent-colored label for a chosen settings option. */
   selected?: boolean;
+  /** Web: `.settings-option-label` + OverflowMarquee - a label too long for the row scrolls instead of clipping to an ellipsis. */
+  marquee?: boolean;
   onPress?: () => void;
   /** Extra content below the label line - the home page's Continue rows put a date and progress track here. */
   children?: ReactNode;
@@ -25,15 +28,20 @@ interface RowProps {
  * list's own edge on both sides (negative horizontal margin), and an
  * optional trailing group on the opposite side.
  */
-export function Row({ label, trailing, selected = false, onPress, children, style }: RowProps) {
+export function Row({ label, trailing, selected = false, marquee = false, onPress, children, style }: RowProps) {
   const colors = useColors();
   const { isRtl } = useTranslation();
 
+  const labelStyle = [styles.label, { color: selected ? colors.accent : colors.fg }];
   const labelLine = (
     <>
-      <AppText numberOfLines={1} style={[styles.label, { color: selected ? colors.accent : colors.fg }]}>
-        {label}
-      </AppText>
+      {marquee ? (
+        <OverflowMarquee text={label} style={labelStyle} />
+      ) : (
+        <AppText numberOfLines={1} style={labelStyle}>
+          {label}
+        </AppText>
+      )}
       {trailing}
     </>
   );

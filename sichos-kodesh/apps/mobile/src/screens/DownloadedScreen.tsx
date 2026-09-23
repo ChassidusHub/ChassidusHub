@@ -90,6 +90,7 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
       {downloaded && downloaded.length > 0 && (
         <Row
           label={t.deleteContentLabel}
+          marquee
           onPress={() => {
             deleteAllContent().catch(() => undefined);
           }}
