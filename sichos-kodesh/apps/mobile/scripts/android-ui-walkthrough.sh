@@ -37,19 +37,22 @@ dump_ui() {
 }
 
 # Prints "x y" for the center of the first node whose text or content-desc
-# contains $1 (case-insensitive), or nothing.
+# contains $1 (case-insensitive), or nothing. uiautomator single-quotes an
+# attribute whose value contains a double quote (common in Hebrew labels
+# like יו"כ), so both quote styles are read.
 find_node() {
   dump_ui | python3 -c '
 import re, sys
 needle = sys.argv[1].lower()
 xml = sys.stdin.read()
-for m in re.finditer(r"<node [^>]*>", xml):
+def attr(node, name):
+    m = re.search(name + r"=(?:\"([^\"]*)\"|\x27([^\x27]*)\x27)", node)
+    return (m.group(1) or m.group(2) or "") if m else ""
+for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
     node = m.group(0)
-    text = re.search(r"text=\"([^\"]*)\"", node)
-    desc = re.search(r"content-desc=\"([^\"]*)\"", node)
-    hay = ((text.group(1) if text else "") + " " + (desc.group(1) if desc else "")).lower()
+    hay = (attr(node, "text") + " " + attr(node, "content-desc")).lower()
     if needle in hay:
-        b = re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", node)
+        b = re.search(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", attr(node, "bounds"))
         if b:
             x1, y1, x2, y2 = map(int, b.groups())
             if x2 > x1 and y2 > y1:
@@ -103,6 +106,8 @@ adb shell settings put global animator_duration_scale 0 >/dev/null 2>&1
 adb logcat -c
 
 log "launching"
+# Always from a cold start on the home screen, even if the app was already open.
+adb shell am force-stop $PKG >/dev/null 2>&1
 adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
 wait_text "Browse any year" && shot 01-home 3
 
@@ -114,11 +119,13 @@ wait_text "All of" && shot 03-this-week
 xy="$(dump_ui | python3 -c '
 import re, sys
 xml = sys.stdin.read()
-for m in re.finditer(r"<node [^>]*>", xml):
+def attr(node, name):
+    m = re.search(name + r"=(?:\"([^\"]*)\"|\x27([^\x27]*)\x27)", node)
+    return (m.group(1) or m.group(2) or "") if m else ""
+for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
     node = m.group(0)
-    text = re.search(r"text=\"([^\"]*)\"", node)
-    if text and re.search(r"[֐-׿]", text.group(1)):
-        b = re.search(r"bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"", node)
+    if "Button" in attr(node, "class") and re.search(r"[֐-׿]", attr(node, "content-desc")):
+        b = re.search(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", attr(node, "bounds"))
         if b:
             x1, y1, x2, y2 = map(int, b.groups())
             if y1 > 400:
