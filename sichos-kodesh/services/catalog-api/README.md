@@ -32,8 +32,8 @@ runs `npm run release-files -w @sichos-kodesh/catalog`, which writes
 `catalog.json` + `manifest.json` from the year files the apps bundle,
 stamped with `CATALOG_VERSION` and the deployed commit's date (the build
 time when no git metadata is around), and bakes both into
-`generated/release.ts`; `api/index.ts` serves those strings' exact UTF-8
-bytes. So the release the API serves is **the catalog of the
+`generated/release.ts`; `src/handler.ts` (bundled to `api/index.js` by the
+build) serves those strings' exact UTF-8 bytes. So the release the API serves is **the catalog of the
 commit deployed to production** - `main`:
 
 1. Rebuild the data and bump `CATALOG_VERSION` + the changelog
@@ -70,9 +70,9 @@ so the dashboard holds no build settings:
 ## Developing
 
 ```
-npm run build -w @sichos-kodesh/catalog-api   # generates generated/release.ts from the repo's catalog
+npm run build -w @sichos-kodesh/catalog-api   # generates generated/release.ts, bundles api/index.js
 npm test -w @sichos-kodesh/catalog-api        # router tests: shapes, headers, sha256 round-trip, 404/405/OPTIONS
 npm run dev -w @sichos-kodesh/catalog-api     # http://localhost:8788 through the same handler
 ```
 
-`generated/` is build output and git-ignored.
+`generated/` and `api/index.js` are build output and git-ignored.

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const { tsImport } = await import('tsx/esm/api');
-const { default: handler } = await tsImport(pathToFileURL(path.join(here, '..', 'api', 'index.ts')).href, import.meta.url);
+const { default: handler } = await tsImport(pathToFileURL(path.join(here, '..', 'src', 'handler.ts')).href, import.meta.url);
 
 const port = Number(process.env.PORT ?? 8788);
 createServer((req, res) => handler(req, res)).listen(port, () => {

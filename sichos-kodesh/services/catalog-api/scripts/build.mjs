@@ -60,3 +60,13 @@ const lines = [
 ];
 await writeFile(generatedModule, lines.join('\n'), 'utf8');
 console.log(`catalog-api: generated release.ts for catalog ${manifest.version} (${(manifest.bytes / 1024 / 1024).toFixed(2)} MB, sha256 ${manifest.sha256.slice(0, 12)}…)`);
+
+// Bundle the Vercel function. The entry is TypeScript importing
+// src/router.ts, which Vercel's builder does not compile, so a bare build
+// used to deploy a function that crashed on boot (ERR_MODULE_NOT_FOUND
+// for ../src/router -> 500 on every request). Bundling here produces the
+// single self-contained api/index.js that Vercel deploys. The source
+// lives in src/handler.ts (not api/) so api/ never holds both index.ts
+// and index.js; api/index.js is gitignored build output.
+execFileSync('npx', ['esbuild', 'src/handler.ts', '--bundle', '--platform=node', '--target=node22', '--format=esm', '--outfile=api/index.js', '--log-level=warning'], { cwd: serviceRoot, stdio: 'inherit' });
+console.log('catalog-api: bundled src/handler.ts -> api/index.js');
