@@ -22,6 +22,7 @@ import { DownloadProgressBar } from './src/components/DownloadProgressBar';
 import { GlobalPlayerBar } from './src/components/GlobalPlayerBar';
 import { navigationRef } from './src/navigation/navigationRef';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { applyNavigationBarScheme } from './src/ui/systemBars';
 import { ThemeProvider, useTheme } from './src/ui/theme';
 
 function AppShell() {
@@ -35,6 +36,12 @@ function AppShell() {
   useEffect(() => {
     hydrateProgressStore().catch(() => undefined);
   }, []);
+
+  // The status bar follows the theme via <StatusBar barStyle> below; the
+  // Android navigation bar needs the same treatment by hand.
+  useEffect(() => {
+    applyNavigationBarScheme(scheme);
+  }, [scheme]);
 
   const navigationTheme = useMemo(() => {
     const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
