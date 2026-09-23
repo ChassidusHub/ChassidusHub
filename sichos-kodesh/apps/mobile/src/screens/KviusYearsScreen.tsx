@@ -1,56 +1,77 @@
-import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { findMatchingYears, kviusCode } from '@sichos-kodesh/kvius-engine';
+import React, { useMemo } from 'react';
+import { resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
+import { SPECIAL_ANNIVERSARY_YEARS, findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
+import { IL } from '../config';
+import catalog from '../catalog/data';
+import { useTranslation } from '../i18n/useTranslation';
 import type { KviusYearsScreenProps } from '../navigation/types';
-import { colors, spacing } from '../ui/theme';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
+import { Row, RowDistance } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { ListRow, RowSeparator } from '../ui/ListRow';
-import { SectionLabel } from '../ui/SectionLabel';
-import { EmptyState } from '../ui/EmptyState';
+import { CategoryHeader, TabHelp } from '../ui/Typography';
 
+/** Drops a candidate year with nothing indexed for the current week, then sorts chronologically (oldest first) - `findMatchingYears`/`findPartialWeekMatches` return nearest-first, which is right for finding the best match but wrong for reading a list top to bottom. */
+function filterAndSortForDisplay(results: MatchingYearResult[], today: Date): MatchingYearResult[] {
+  return results
+    .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
+    .slice()
+    .sort((a, b) => a.hebrewYear - b.hebrewYear);
+}
+
+interface SpecialAnniversaryMatch {
+  hebrewYear: number;
+  anniversaryNumber: number;
+}
+
+/** Years hitting a round-number anniversary this calendar year - independent of kvius matching, so a separate section. Same "must have something for this week, oldest first" filtering as the other two. */
+function findSpecialAnniversaries(targetYear: number, today: Date): SpecialAnniversaryMatch[] {
+  return SPECIAL_ANNIVERSARY_YEARS.map((anniversaryNumber) => ({ hebrewYear: targetYear - anniversaryNumber, anniversaryNumber }))
+    .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
+    .sort((a, b) => a.hebrewYear - b.hebrewYear);
+}
+
+/** Every kvius-matched year with something indexed for the current week, oldest first; below it, partial (this-week-only) matches and special anniversaries (web: `/kvius`). */
 export function KviusYearsScreen({ navigation, route }: KviusYearsScreenProps) {
   const { targetYear } = route.params;
-  const matches = findMatchingYears(targetYear);
+  const { t, language } = useTranslation();
+  const today = useMemo(() => new Date(), []);
+  const matches = useMemo(() => filterAndSortForDisplay(findMatchingYears(targetYear), today), [targetYear, today]);
+  const partialMatches = useMemo(() => filterAndSortForDisplay(findPartialWeekMatches(targetYear, thisWeekDays(today), IL), today), [targetYear, today]);
+  const specialAnniversaries = useMemo(() => findSpecialAnniversaries(targetYear, today), [targetYear, today]);
 
   return (
-    <Screen>
-      <ScreenHeader
-        title="Follow Along"
-        onBack={() => navigation.goBack()}
-        backLabel="< Back"
-      />
-      <View style={styles.meta}>
-        <Text style={styles.metaLine}>
-          Year {targetYear} · kvius {kviusCode(targetYear)}
-        </Text>
-        <Text style={styles.metaHelp}>
-          Kvius-matched years — "this week" resolves automatically against {targetYear}.
-        </Text>
-      </View>
-      <SectionLabel label={`${matches.length} matched year${matches.length === 1 ? '' : 's'}`} />
-      <FlatList
-        data={matches}
-        keyExtractor={(item) => String(item.hebrewYear)}
-        renderItem={({ item }: { item: MatchingYearResult }) => (
-          <ListRow
-            label={String(item.hebrewYear)}
-            sublabel={`${item.distance} year${item.distance === 1 ? '' : 's'} ago`}
-            right={<Text style={styles.chevron}>›</Text>}
-            onPress={() => navigation.navigate('ThisWeek', { sourceYear: item.hebrewYear })}
-          />
-        )}
-        ItemSeparatorComponent={RowSeparator}
-        ListEmptyComponent={<EmptyState title="No matched years found" />}
-      />
+    <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title={t.weekKviusFarbrengens} />}>
+      <TabHelp>{t.kviusHelp(targetYear)}</TabHelp>
+      {matches.map((item) => (
+        <Row key={item.hebrewYear} label={hebrewYearLabel(item.hebrewYear, language)} onPress={() => navigation.navigate('ThisWeek', { sourceYear: item.hebrewYear })} />
+      ))}
+
+      {partialMatches.length > 0 && (
+        <>
+          <CategoryHeader>{t.partialKviusMatchesHeader}</CategoryHeader>
+          <TabHelp>{t.partialKviusMatchesHelp}</TabHelp>
+          {partialMatches.map((item) => (
+            <Row key={item.hebrewYear} label={hebrewYearLabel(item.hebrewYear, language)} onPress={() => navigation.navigate('ThisWeek', { sourceYear: item.hebrewYear })} />
+          ))}
+        </>
+      )}
+
+      {specialAnniversaries.length > 0 && (
+        <>
+          <CategoryHeader>{t.specialAnniversariesHeader}</CategoryHeader>
+          <TabHelp>{t.specialAnniversariesHelp}</TabHelp>
+          {specialAnniversaries.map((item) => (
+            <Row
+              key={item.hebrewYear}
+              label={hebrewYearLabel(item.hebrewYear, language)}
+              trailing={<RowDistance>{t.specialAnniversaryLabel(item.anniversaryNumber)}</RowDistance>}
+              onPress={() => navigation.navigate('ThisWeek', { sourceYear: item.hebrewYear })}
+            />
+          ))}
+        </>
+      )}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
-  metaLine: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs },
-  metaHelp: { fontSize: 13, color: colors.textMuted, lineHeight: 18 },
-  chevron: { fontSize: 18, color: colors.textMuted },
-});

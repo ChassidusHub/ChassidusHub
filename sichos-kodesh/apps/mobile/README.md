@@ -221,9 +221,29 @@ so no mocking of the native module is required in Jest.
 
 | Path | Command | Device required | Used in |
 |---|---|---|---|
+| Pre-build gate | `npm run prebuild:check -w @sichos-kodesh/mobile` | No | Every `android:release` / `android:assembleDebug` |
 | Build-only | `npm run android:smoke:buildonly -w @sichos-kodesh/mobile` | No | Any VM / local |
 | Local smoke | `npm run android:smoke -w @sichos-kodesh/mobile` | Yes (exit 2 if none) | Local dev machine |
+| UI walkthrough | `npm run android:ui-walkthrough -w @sichos-kodesh/mobile -- <apk> [out-dir]` | Yes | Before handing out an APK |
 | CI emulator smoke | `mobile-android-smoke.yml` GitHub Actions workflow | Provided by CI | GitHub Actions |
+
+**Pre-build gate** (`scripts/prebuild-check.sh`) runs automatically in front
+of `npm run android:release` and `npm run android:assembleDebug`: it rebuilds
+the workspace packages, re-applies the react-native-track-player source
+patch, checks the bundled Noto Sans fonts are present, refuses any emoji in
+UI source (every glyph comes from `lucide-react-native`), then typechecks,
+lints and runs the unit tests. Nothing here needs a device; a failure means
+no APK.
+
+**UI walkthrough** (`scripts/android-ui-walkthrough.sh`) is the "does the
+UI actually show up and work" check: it installs an APK on the connected
+device/emulator and taps through every screen the way a person would (kvius
+years → this week → occasion → recordings → play → PDF → all-years lists →
+browse → search → settings → dark mode → Hebrew), screenshotting each one.
+Taps are found by on-screen text via `uiautomator dump`, so the script works
+on any screen size and fails loudly (with a screenshot of what was actually
+there) when an expected label is missing. Logcat is scanned for crashes at
+the end. Screenshots land in `smoke-artifacts/ui/` by default.
 
 **Important for coding agents:** Local coding-agent VMs typically lack
 nested KVM (nested virtualization), so `npm run android:smoke` will exit
@@ -303,9 +323,11 @@ npm run android:smoke:buildonly -w @sichos-kodesh/mobile
 # APK written to: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-For a release APK: `cd android && ./gradlew assembleRelease`, output at
+For a release APK: `npm run android:release -w @sichos-kodesh/mobile`
+(the pre-build gate above, then `./gradlew assembleRelease`), output at
 `android/app/build/outputs/apk/release/app-release.apk` (this uses the
-same release signing config as the `.aab` build below).
+same release signing config as the `.aab` build below). Run the UI
+walkthrough against it before handing it to anyone.
 
 ## Google Play (Internal testing track)
 

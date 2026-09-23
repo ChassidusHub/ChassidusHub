@@ -159,7 +159,6 @@ export function resolveOccasionRoute(
         params: {
           sourceHebrewYear: route.sourceHebrewYear,
           sourceOccasionId: route.sourceOccasionId,
-          sourceRoute: undefined,
         },
         backLabelKey: 'back',
       },

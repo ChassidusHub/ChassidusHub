@@ -1,117 +1,193 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useRef, useState } from 'react';
+import { PanResponder, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pause, Play, SkipBack, SkipForward } from 'lucide-react-native';
 import { usePlayer } from '../player/usePlayer';
-
-function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
+import { useTranslation } from '../i18n/useTranslation';
+import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
+import { formatTime } from '../utils/formatDuration';
+import { AppText } from '../ui/Text';
+import { Spinner } from '../ui/Spinner';
+import { useColors } from '../ui/theme';
+import { row } from '../ui/rtl';
+import { Scrubber } from './Scrubber';
 
 /**
- * Persistent global media player bar.
- * Shown when a queue/playlist exists (chapters.length > 0).
- * Mounted at app root so it survives screen navigation.
+ * The single, always-mounted (at the app root, beside the navigator)
+ * player bar - Spotify/YouTube-style: survives navigating between screens
+ * because it reads from PlayerContext rather than owning playback itself.
+ * Renders nothing until something has actually been played this session.
+ * Swiping down on it collapses it to a one-line summary; swiping up (or
+ * tapping the summary) expands it again.
  */
 export function GlobalPlayerBar() {
-  const insets = useSafeAreaInsets();
-  const { chapters, currentIndex, isPlaying, isLoading, hasError, errorMessage, position, duration, togglePlay, next, prev } =
-    usePlayer();
+  const { t, language, isRtl } = useTranslation();
+  const colors = useColors();
+  const player = usePlayer();
+  const { height: windowHeight } = useWindowDimensions();
+  const [showChapters, setShowChapters] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [dragPercent, setDragPercent] = useState<number | null>(null);
+  const collapsedRef = useRef(collapsed);
+  collapsedRef.current = collapsed;
 
-  if (chapters.length === 0) return null;
+  const swipe = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 12 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.5,
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dy > 40 && !collapsedRef.current) {
+          setCollapsed(true);
+          setShowChapters(false);
+        } else if (gesture.dy < -40 && collapsedRef.current) {
+          setCollapsed(false);
+        }
+      },
+    }),
+  ).current;
 
-  const current = currentIndex != null ? chapters[currentIndex] : chapters[0];
-  const hasPrev = currentIndex != null && currentIndex > 0;
-  const hasNext = currentIndex != null && currentIndex < chapters.length - 1;
-  const progress = duration > 0 ? Math.max(0, Math.min(position / duration, 1)) : 0;
+  if (!player.playlist) return null;
 
-  const title = current?.chapterName ?? current?.occasionLabel ?? 'Unknown recording';
-  const chapterLabel =
-    chapters.length > 1 && currentIndex != null
-      ? `${currentIndex + 1}/${chapters.length} · ${title}`
-      : title;
+  const { audio } = player.playlist;
+  const current = audio[player.currentIndex] ?? audio[0]!;
+  const hasPrev = player.currentIndex > 0;
+  const hasNext = player.currentIndex < audio.length - 1;
+  const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
+  const displayedPercent = dragPercent ?? progressPercent;
+  const chapterLabel = current.chapterName ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
+  const dateLabel = hebrewFullDateLabel(player.playlist.hebrewDate, player.playlist.hebrewYear, language);
+  const subtitle = `${dateLabel}${chapterLabel ? ` · ${audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}` : ''}`;
+  const errorText = player.error ? (player.error.offline ? t.audioOfflineNotDownloaded : t.audioLoadError) : null;
+
+  const titleBlock = (
+    <>
+      <AppText numberOfLines={1} style={[styles.titleMain, { color: colors.fg }]}>
+        {player.playlist.title}
+      </AppText>
+      <AppText numberOfLines={1} style={[styles.titleSub, { color: colors.muted }]}>
+        {subtitle}
+      </AppText>
+    </>
+  );
 
   return (
-    <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      <View style={styles.container}>
-        {chapters.length > 1 && (
-          <Pressable style={styles.skip} onPress={() => { prev().catch(() => undefined); }} disabled={!hasPrev}>
-            <Text style={[styles.skipText, !hasPrev && styles.skipTextDisabled]}>⏮</Text>
+    <View {...swipe.panHandlers} style={[styles.player, { backgroundColor: colors.bgElevated, borderTopColor: colors.border }]}>
+      {showChapters && !collapsed && (
+        <ScrollView style={[styles.chapters, { maxHeight: windowHeight * 0.4, borderBottomColor: colors.border }]}>
+          <AppText style={[styles.chaptersTitle, { color: colors.muted }]}>{player.playlist.title}</AppText>
+          {audio.map((chapter, index) => {
+            const active = index === player.currentIndex;
+            return (
+              <Pressable
+                key={chapter.workerFilename}
+                onPress={() => {
+                  player.playChapter(index);
+                  setShowChapters(false);
+                }}
+                style={({ pressed }) => [styles.chapter, { flexDirection: row(isRtl) }, pressed && { backgroundColor: colors.cardHover }]}
+              >
+                <AppText numberOfLines={1} style={[styles.chapterName, { color: active ? colors.accent : colors.fg }, active && styles.chapterActive]}>
+                  {chapter.chapterName ?? t.track(index + 1)}
+                </AppText>
+                <AppText style={[styles.chapterDuration, { color: colors.muted }]}>{formatTime(chapter.durationMs / 1000)}</AppText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
+
+      <View style={[styles.controls, collapsed && styles.controlsCollapsed, { flexDirection: row(isRtl) }]}>
+        {collapsed ? (
+          <Pressable onPress={() => setCollapsed(false)} style={styles.summary}>
+            {titleBlock}
+            {errorText ? (
+              <AppText style={[styles.error, { color: colors.danger }]}>{errorText}</AppText>
+            ) : (
+              <View style={[styles.collapsedTrack, { backgroundColor: colors.border }]}>
+                <View style={[styles.collapsedFill, { backgroundColor: colors.accent, width: `${displayedPercent}%` }, isRtl ? styles.fillRtl : styles.fillLtr]} />
+              </View>
+            )}
           </Pressable>
+        ) : (
+          <>
+            {/* Pinned LTR regardless of language - prev/play/next are a fixed physical control cluster, like every real media player. */}
+            <View style={styles.transport}>
+              {audio.length > 1 && (
+                <Pressable onPress={player.prev} disabled={!hasPrev} accessibilityRole="button" accessibilityLabel={t.previousChapter} style={[styles.skip, !hasPrev && styles.disabled]}>
+                  <SkipBack size={20} color={colors.accent} fill={colors.accent} strokeWidth={0} />
+                </Pressable>
+              )}
+              <Pressable
+                onPress={player.togglePlay}
+                accessibilityRole="button"
+                accessibilityLabel={player.loading ? t.loading : player.playing ? t.pause : t.play}
+                style={({ pressed }) => [styles.toggle, { backgroundColor: colors.accent }, pressed && styles.pressed]}
+              >
+                {player.loading ? (
+                  <Spinner size={20} color={colors.bg} />
+                ) : player.playing ? (
+                  <Pause size={20} color={colors.bg} fill={colors.bg} strokeWidth={0} />
+                ) : (
+                  <Play size={20} color={colors.bg} fill={colors.bg} strokeWidth={0} style={styles.playNudge} />
+                )}
+              </Pressable>
+              {audio.length > 1 && (
+                <Pressable onPress={player.next} disabled={!hasNext} accessibilityRole="button" accessibilityLabel={t.nextChapter} style={[styles.skip, !hasNext && styles.disabled]}>
+                  <SkipForward size={20} color={colors.accent} fill={colors.accent} strokeWidth={0} />
+                </Pressable>
+              )}
+            </View>
+
+            <View style={styles.scrub}>
+              <Pressable onPress={() => setShowChapters((value) => !value)} style={styles.titleButton}>
+                {titleBlock}
+              </Pressable>
+              {errorText ? (
+                <AppText style={[styles.error, { color: colors.danger }]}>{errorText}</AppText>
+              ) : (
+                <>
+                  <Scrubber percent={displayedPercent} onSeek={(percent) => player.seekToFraction(percent / 100)} onDrag={setDragPercent} accessibilityLabel={t.seek} />
+                  <View style={[styles.times, { flexDirection: row(isRtl) }]}>
+                    <AppText style={[styles.time, { color: colors.muted }]}>{formatTime(player.currentTime)}</AppText>
+                    <AppText style={[styles.time, { color: colors.muted }]}>{formatTime(player.duration)}</AppText>
+                  </View>
+                </>
+              )}
+            </View>
+          </>
         )}
-        <Pressable style={styles.toggle} onPress={() => { togglePlay().catch(() => undefined); }} disabled={isLoading}>
-          <Text style={styles.toggleText}>
-            {isLoading ? '⏳' : isPlaying ? '⏸' : '▶'}
-          </Text>
-        </Pressable>
-        {chapters.length > 1 && (
-          <Pressable style={styles.skip} onPress={() => { next().catch(() => undefined); }} disabled={!hasNext}>
-            <Text style={[styles.skipText, !hasNext && styles.skipTextDisabled]}>⏭</Text>
-          </Pressable>
-        )}
-        <View style={styles.scrub}>
-          <Text style={styles.titleText} numberOfLines={1}>
-            {chapterLabel}
-          </Text>
-          <View style={styles.track}>
-            <View style={[styles.fill, { width: `${progress * 100}%` }]} />
-          </View>
-          <View style={styles.times}>
-            <Text style={styles.timeText}>{formatTime(position)}</Text>
-            <Text style={styles.timeText}>{formatTime(duration)}</Text>
-          </View>
-          {hasError ? (
-            <Text style={styles.errorText} numberOfLines={1}>
-              {errorMessage ?? 'Playback error'}
-            </Text>
-          ) : null}
-        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#f2f2f2',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#ccc',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-  },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-  },
-  toggle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#3366cc',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleText: { color: '#fff', fontSize: 18 },
-  skip: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  skipText: { fontSize: 16, color: '#333' },
-  skipTextDisabled: { opacity: 0.3 },
-  scrub: { flex: 1 },
-  titleText: { fontSize: 12, fontWeight: '600', color: '#333', marginBottom: 4 },
-  track: { height: 4, borderRadius: 2, backgroundColor: '#ddd', overflow: 'hidden' },
-  fill: { height: 4, backgroundColor: '#3366cc' },
-  times: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  timeText: { fontSize: 11, color: '#888' },
-  errorText: { fontSize: 11, color: '#a30000', marginTop: 4 },
+  /** Web: `.global-player` - elevated background, 1px top border. */
+  player: { borderTopWidth: 1 },
+  /** Web: `.global-player-controls` - gap 14, padding 12px 16px. */
+  controls: { alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 16 },
+  controlsCollapsed: { paddingVertical: 8 },
+  summary: { flex: 1, gap: 4 },
+  collapsedTrack: { width: '100%', height: 4, borderRadius: 999, overflow: 'hidden' },
+  collapsedFill: { position: 'absolute', top: 0, bottom: 0, borderRadius: 999 },
+  fillLtr: { left: 0 },
+  fillRtl: { right: 0 },
+  /** Web: `.global-player-transport` - gap 14, direction ltr. */
+  transport: { flexDirection: 'row', alignItems: 'center', gap: 14, flexShrink: 0 },
+  toggle: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  skip: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  disabled: { opacity: 0.3 },
+  pressed: { opacity: 0.92 },
+  playNudge: { marginLeft: 2 },
+  scrub: { flex: 1, minWidth: 0 },
+  titleButton: { marginBottom: 4 },
+  titleMain: { fontSize: 13, fontWeight: '700' },
+  titleSub: { fontSize: 12 },
+  times: { justifyContent: 'space-between', marginTop: 2 },
+  time: { fontSize: 11 },
+  error: { fontSize: 13, lineHeight: 17 },
+  chapters: { borderBottomWidth: 1 },
+  chaptersTitle: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 4, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.66 },
+  chapter: { justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 16, gap: 12 },
+  chapterName: { flexShrink: 1, fontSize: 14, fontWeight: '500' },
+  chapterActive: { fontWeight: '700' },
+  chapterDuration: { fontSize: 12, flexShrink: 0 },
 });

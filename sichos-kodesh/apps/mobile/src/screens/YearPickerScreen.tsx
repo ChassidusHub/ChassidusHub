@@ -1,98 +1,70 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { currentHebrewYear } from '@sichos-kodesh/catalog';
-import { kviusCode } from '@sichos-kodesh/kvius-engine';
+import { Search, Settings } from 'lucide-react-native';
+import { currentHebrewYear, currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
+import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
+import { IL } from '../config';
+import { ContinueSection } from '../components/ContinueSection';
 import { useTranslation } from '../i18n/useTranslation';
 import type { HomeScreenProps } from '../navigation/types';
-import { AppText } from '../ui/AppText';
+import { useOnlineStatus } from '../network/useOnlineStatus';
+import { parshaLabel } from '../utils/formatHebrewDate';
+import { Button } from '../ui/Button';
+import { CategoryRow } from '../ui/CategoryRow';
+import { OfflineNote } from '../ui/OfflineNote';
 import { Screen } from '../ui/Screen';
-import { AppButton } from '../ui/AppButton';
-import { ListRow } from '../ui/ListRow';
-import { SectionLabel } from '../ui/SectionLabel';
-import { colors, spacing, typography } from '../ui/theme';
+import { H1, Subtitle } from '../ui/Typography';
+import { useColors } from '../ui/theme';
+import { row } from '../ui/rtl';
 
+/** The home page (web: `/`). */
 export function YearPickerScreen({ navigation }: HomeScreenProps) {
+  const { t, language, isRtl } = useTranslation();
+  const colors = useColors();
+  const online = useOnlineStatus();
   const targetYear = currentHebrewYear();
-  const { t } = useTranslation();
+  const bestMatch = findMatchingYears(targetYear)[0];
+  const { parsha } = currentParsha(IL);
+  const hebrewDate = todayHebrewDateLabel();
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <AppText variant="titleMedium" style={styles.appName}>
-            {t.appTitle}
-          </AppText>
-          <Pressable hitSlop={8} onPress={() => navigation.navigate('Settings')}>
-            <AppText style={styles.settingsIcon}>⚙</AppText>
+      <View style={[styles.headerRow, { flexDirection: row(isRtl) }]}>
+        <H1>{t.appTitle}</H1>
+        <View style={[styles.actions, { flexDirection: row(isRtl) }]}>
+          <Pressable onPress={() => navigation.navigate('Search')} hitSlop={6} accessibilityRole="button" accessibilityLabel={t.searchLink} style={styles.iconLink}>
+            <Search size={22} strokeWidth={2} color={colors.muted} />
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Settings')} hitSlop={6} accessibilityRole="button" accessibilityLabel={t.settingsLabel} style={styles.iconLink}>
+            <Settings size={22} strokeWidth={2} color={colors.muted} />
           </Pressable>
         </View>
-        <AppText variant="bodySmall" color="secondary" style={styles.yearBadge}>
-          {targetYear} · kvius {kviusCode(targetYear)}
-        </AppText>
       </View>
+      <Subtitle>
+        {hebrewDate}
+        {parsha ? ` · ${parshaLabel(parsha, language)}` : ''}
+      </Subtitle>
 
-      <View style={styles.actionsSection}>
-        <AppButton
-          label={t.weekKviusFarbrengens}
-          variant="primary"
-          style={styles.primaryAction}
-          onPress={() => navigation.navigate('KviusYears', { targetYear })}
-        />
-        <AppButton
-          label={t.browseAnyYear}
-          variant="secondary"
-          style={styles.secondaryAction}
-          onPress={() => navigation.navigate('BrowseYears')}
-        />
-      </View>
+      {/* Browsing/search read from the bundled catalog with no network needed, and already-downloaded content still opens offline - only content that was never downloaded needs a connection. */}
+      {!online && <OfflineNote text={t.offlineNote} />}
+      {!online && <CategoryRow label={t.viewDownloadedLabel} onPress={() => navigation.navigate('Downloaded')} />}
 
-      <View style={styles.linksSection}>
-        <SectionLabel label={t.comingSoonSection} />
-        <ListRow
-          label={t.allFarbrengensThisWeek}
-          right={<AppText color="muted">›</AppText>}
-          onPress={() => navigation.navigate('AllYearsThisWeek')}
-        />
-        <ListRow
-          label={`🔍 ${t.searchLink}`}
-          onPress={() => navigation.navigate('Search')}
-        />
-        <ListRow
-          label={`⬇ ${t.viewDownloadedLabel}`}
-          sublabel={t.downloadForegroundOnlyHelp}
-          right={<AppText color="muted">›</AppText>}
-          onPress={() => navigation.navigate('Downloaded')}
-        />
-      </View>
+      {bestMatch && <Button hero label={t.weekKviusFarbrengens} onPress={() => navigation.navigate('KviusYears', { targetYear })} />}
+
+      <CategoryRow label={t.allFarbrengensThisWeek} onPress={() => navigation.navigate('AllYearsThisWeek')} />
+
+      <CategoryRow label={t.browseAnyYear} onPress={() => navigation.navigate('BrowseYears')} />
+
+      <ContinueSection />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  appName: { ...typography.titleMedium, color: colors.textDefault },
-  settingsIcon: { fontSize: 20, color: colors.textSecondary },
-  yearBadge: { color: colors.textSecondary },
-  actionsSection: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    gap: spacing.md,
-  },
-  primaryAction: { marginBottom: 0 },
-  secondaryAction: {},
-  linksSection: {
-    marginTop: spacing.xxl,
-  },
+  /** Web: `.header-row` - flex, space-between, centered. */
+  headerRow: { alignItems: 'center', justifyContent: 'space-between' },
+  /** Web: `.header-row-actions` - gap 4. */
+  actions: { alignItems: 'center', gap: 4 },
+  /** Web: `.settings-link` - padding 4. */
+  iconLink: { padding: 4 },
 });

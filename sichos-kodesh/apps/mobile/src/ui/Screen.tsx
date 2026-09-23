@@ -1,32 +1,60 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import type { ViewStyle, StyleProp } from 'react-native';
 // React Native's own SafeAreaView is a no-op on Android, and with edge-to-edge
 // enabled (Android 15+ enforces it) screen content is drawn under the status
 // bar. react-native-safe-area-context reads the real insets on both platforms.
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing } from './theme';
+import { useColors } from './theme';
 
 interface Props {
-  children: React.ReactNode;
-  /** Extra horizontal/vertical padding override. */
-  padded?: boolean;
-  style?: object;
+  children: ReactNode;
+  /**
+   * The screen's own ScreenHeader - rendered as the first, sticky child of
+   * the scroll view so it pins to the top once scrolled past, exactly like
+   * the web's `position: sticky` `.screen-header`.
+   */
+  header?: ReactNode;
+  /** `false` for a screen that lays itself out (the PDF viewer) instead of scrolling a padded column. */
+  scroll?: boolean;
+  contentStyle?: StyleProp<ViewStyle>;
 }
 
 /**
- * Base screen wrapper - provides safe area insets and a consistent
- * background so every screen starts from the same baseline.
+ * The `.screen` container: a 640px-max reading column with 24px/20px
+ * padding on the web; on a phone that column is simply the whole width.
  */
-export function Screen({ children, padded = false, style }: Props) {
+export function Screen({ children, header, scroll = true, contentStyle }: Props) {
+  const colors = useColors();
+
   return (
-    <SafeAreaView style={[styles.safeArea, style]}>
-      <View style={[styles.container, padded && styles.padded]}>{children}</View>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.bg }]}>
+      {scroll ? (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.content, contentStyle]}
+          stickyHeaderIndices={header ? [0] : undefined}
+          keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="never"
+        >
+          {header}
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={styles.fill}>
+          {header}
+          {children}
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.backgroundDefault },
-  container: { flex: 1 },
-  padded: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  safeArea: { flex: 1 },
+  scroll: { flex: 1 },
+  fill: { flex: 1 },
+  /** Web: `.screen { padding: 24px 20px }` */
+  content: { paddingTop: 24, paddingHorizontal: 20, paddingBottom: 24 },
 });

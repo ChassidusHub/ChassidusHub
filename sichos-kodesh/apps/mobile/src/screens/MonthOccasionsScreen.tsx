@@ -1,65 +1,38 @@
 import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import catalog from '../catalog/data';
+import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useTranslation } from '../i18n/useTranslation';
 import type { MonthOccasionsScreenProps } from '../navigation/types';
+import { useProgressMap } from '../player/useProgressMap';
 import { monthNameForToken, resolveMonthOccasions } from '../routes/catalogRoutes';
-import { AppText } from '../ui/AppText';
-import { EmptyState } from '../ui/EmptyState';
-import { ListRow, RowSeparator } from '../ui/ListRow';
+import { Row, RowTrailing } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { spacing } from '../ui/theme';
-import catalog from '../catalog/data';
+import { Subtitle } from '../ui/Typography';
 
+/** One month of a browsed year (web: `/browse/:hebrewYear/month/:monthToken`). */
 export function MonthOccasionsScreen({ navigation, route }: MonthOccasionsScreenProps) {
+  const { hebrewYear, monthToken } = route.params;
   const { t, language } = useTranslation();
-  const entries = useMemo(
-    () => resolveMonthOccasions(catalog, route.params.hebrewYear, route.params.monthToken),
-    [route.params.hebrewYear, route.params.monthToken],
-  );
-  const title = monthNameForToken(route.params.hebrewYear, route.params.monthToken, language);
+  const progressMap = useProgressMap();
+  const entries = useMemo(() => resolveMonthOccasions(catalog, hebrewYear, monthToken), [hebrewYear, monthToken]);
+  const monthName = monthNameForToken(hebrewYear, monthToken, language);
 
   return (
-    <Screen>
-      <ScreenHeader
-        title={title}
-        onBack={() => navigation.navigate('YearBrowser', { hebrewYear: route.params.hebrewYear })}
-        backLabel={t.back}
-      />
-      <View style={styles.meta}>
-        <AppText variant="bodySmall" color="secondary">
-          {t.occasionsIndexed(entries.length)}
-        </AppText>
-      </View>
-      <FlatList
-        data={entries}
-        keyExtractor={(item) => String(item.occasionId)}
-        renderItem={({ item }) => (
-          <ListRow
-            label={item.occasionLabel}
-            sublabel={[
-              item.audio.length > 0 ? t.recordingsCount(item.audio.length) : null,
-              item.pdfs.length > 0 ? t.pdfCount(item.pdfs.length) : null,
-            ]
-              .filter(Boolean)
-              .join(' • ')}
-            right={<AppText color="muted">›</AppText>}
-            onPress={() =>
-              navigation.navigate('Farbrengen', {
-                kind: 'browse',
-                hebrewYear: route.params.hebrewYear,
-                occasionId: item.occasionId,
-              })
-            }
-          />
-        )}
-        ItemSeparatorComponent={RowSeparator}
-        ListEmptyComponent={<EmptyState title={t.nothingDownloadable} />}
-      />
+    <Screen header={<ScreenHeader back={{ name: 'YearBrowser', params: { hebrewYear } }} title={monthName} />}>
+      <Subtitle>{t.occasionsIndexed(entries.length)}</Subtitle>
+      {entries.map((entry) => (
+        <Row
+          key={entry.occasionId}
+          label={entry.occasionLabel}
+          trailing={
+            <RowTrailing>
+              <OccasionRowIcon entry={entry} progressMap={progressMap} />
+            </RowTrailing>
+          }
+          onPress={() => navigation.navigate('Farbrengen', { kind: 'browse', hebrewYear, occasionId: entry.occasionId })}
+        />
+      ))}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  meta: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
-});

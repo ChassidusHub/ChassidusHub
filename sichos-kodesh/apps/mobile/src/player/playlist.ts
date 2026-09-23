@@ -1,34 +1,27 @@
 import type { Track } from 'react-native-track-player';
 import type { CatalogAudio, CatalogEntry } from '@sichos-kodesh/catalog';
-import type { PlayerChapter } from './playerContext';
 import { audioUrl, localAudioFileUrlIfExists } from '../download/download';
 
+type PlaylistSource = Pick<CatalogEntry, 'audio' | 'occasionLabel'>;
+
 /**
- * Maps a catalog entry's audio list to react-native-track-player Track objects.
- * Uses the worker proxy URL as the track URL — the same URL the web player uses.
- * If a local cached copy exists, the caller should substitute `file://` URLs;
- * this function produces the network fallback URLs.
+ * Maps a playlist's audio list to react-native-track-player Track objects.
+ * A chapter already downloaded plays from its local file; otherwise the
+ * track URL is services/media-proxy's - the same URL the web player streams.
  */
-export async function catalogAudioToTracks(entry: CatalogEntry): Promise<Track[]> {
+export async function catalogAudioToTracks(source: PlaylistSource): Promise<Track[]> {
   return Promise.all(
-    entry.audio.map(async (audio, index) =>
-      catalogAudioToTrack(entry, audio, index, await resolveTrackUrl(audio.workerFilename)),
-    ),
+    source.audio.map(async (audio, index) => catalogAudioToTrack(source, audio, index, await resolveTrackUrl(audio.workerFilename))),
   );
 }
 
-export function catalogAudioToTrack(
-  entry: CatalogEntry,
-  audio: CatalogAudio,
-  index: number,
-  url: string = audioUrl(audio.workerFilename),
-): Track {
+export function catalogAudioToTrack(source: PlaylistSource, audio: CatalogAudio, index: number, url: string = audioUrl(audio.workerFilename)): Track {
   return {
     id: audio.workerFilename,
     url,
-    title: audio.chapterName ?? (entry.audio.length > 1 ? `Track ${index + 1}` : entry.occasionLabel),
+    title: audio.chapterName ?? (source.audio.length > 1 ? `Track ${index + 1}` : source.occasionLabel),
     artist: 'Sichos Kodesh',
-    album: entry.occasionLabel,
+    album: source.occasionLabel,
     duration: audio.durationMs / 1000,
   };
 }
@@ -36,18 +29,4 @@ export function catalogAudioToTrack(
 export async function resolveTrackUrl(workerFilename: string): Promise<string> {
   const localUrl = await localAudioFileUrlIfExists(workerFilename);
   return localUrl ?? audioUrl(workerFilename);
-}
-
-export function catalogAudioToChapter(
-  entry: CatalogEntry,
-  audio: CatalogAudio,
-): PlayerChapter {
-  return {
-    workerFilename: audio.workerFilename,
-    chapterName: audio.chapterName ?? null,
-    durationMs: audio.durationMs,
-    occasionId: entry.occasionId,
-    hebrewYear: entry.hebrewYear,
-    occasionLabel: entry.occasionLabel,
-  };
 }

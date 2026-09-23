@@ -1,135 +1,190 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { browsableYears, currentHebrewYear } from '@sichos-kodesh/catalog';
 import type { PdfEdition } from '@sichos-kodesh/catalog';
-import { useTranslation } from '../i18n/useTranslation';
-import type { DownloadSettingsScreenProps } from '../navigation/types';
+import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
+import { PDF_SECTION_ORDER } from '@sichos-kodesh/catalog';
+import catalog from '../catalog/data';
 import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
-import catalog from '../catalog/data';
-import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
-import { ListRow, RowSeparator } from '../ui/ListRow';
+import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../download/downloadSettings';
+import { useTranslation } from '../i18n/useTranslation';
+import type { DownloadSettingsScreenProps } from '../navigation/types';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
+import { Row } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { SectionLabel } from '../ui/SectionLabel';
-import { colors, spacing } from '../ui/theme';
+import { CategoryHeader, TabHelp } from '../ui/Typography';
+import { OptionCheck } from './SettingsScreen';
 
 const ALL_ENTRIES = Object.values(catalog).flat();
 const HANACHA_EDITIONS: PdfEdition[] = ['sichosKodesh', 'torasMenachem'];
-const OTHER_SECTIONS: Array<'mugah' | 'maamorim' | 'hagahos' | 'hosofos'> = ['mugah', 'maamorim', 'hagahos', 'hosofos'];
+/** PDF_SECTION_ORDER minus biltiMugah (the highlighted hanacha, handled separately above) and mugah (its own toggle, ordered right after the hanacha editions). */
+const OTHER_SECTIONS = PDF_SECTION_ORDER.filter((s): s is 'maamorim' | 'hagahos' | 'hosofos' => s !== 'biltiMugah' && s !== 'mugah');
+const RETENTION_PERIODS: RetentionPeriod[] = ['never', '2w', '4w', '8w', '12w'];
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenProps) {
-  const { t } = useTranslation();
-  const { settings, setSettings, clearDownloads, hydrated } = useDownload();
+/** Download settings (web: `/settings/downloads`). */
+export function DownloadSettingsScreen(_: DownloadSettingsScreenProps) {
+  const { t, language } = useTranslation();
+  const { settings, setSettings, clearDownloads } = useDownload();
   const [usage, setUsage] = useState<number | null>(null);
 
   useEffect(() => {
-    getDownloadStorageUsage(ALL_ENTRIES).then(setUsage).catch(() => setUsage(null));
-  }, [hydrated, settings]);
+    getDownloadStorageUsage(ALL_ENTRIES)
+      .then(setUsage)
+      .catch(() => setUsage(null));
+  }, [settings]); // Depends on `settings` too, so usage refreshes after actions like clearing downloads.
 
-  const editionOptions = useMemo(
-    () => HANACHA_EDITIONS.map((edition) => ({ edition, label: edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel })),
-    [t],
-  );
+  const matchedYears = findMatchingYears(currentHebrewYear())
+    .map((m) => m.hebrewYear)
+    .sort((a, b) => a - b);
+  const allYears = browsableYears(catalog);
+
+  function toggleManualYear(year: number): void {
+    const enabled = settings.manualSourceYears.includes(year);
+    const manualSourceYears = enabled ? settings.manualSourceYears.filter((y) => y !== year) : [...settings.manualSourceYears, year].sort((a, b) => a - b);
+    setSettings({ ...settings, manualSourceYears });
+  }
 
   function toggleEdition(edition: PdfEdition): void {
-    const included = settings.contentTypes.hanachaEditions.includes(edition);
-    setSettings({
-      ...settings,
-      contentTypes: {
-        ...settings.contentTypes,
-        hanachaEditions: included ? settings.contentTypes.hanachaEditions.filter((value) => value !== edition) : [...settings.contentTypes.hanachaEditions, edition],
-      },
-    });
+    const enabled = settings.contentTypes.hanachaEditions.includes(edition);
+    const hanachaEditions = enabled ? settings.contentTypes.hanachaEditions.filter((e) => e !== edition) : [...settings.contentTypes.hanachaEditions, edition];
+    setSettings({ ...settings, contentTypes: { ...settings.contentTypes, hanachaEditions } });
+  }
+
+  function toggleSection(section: 'mugah' | 'maamorim' | 'hagahos' | 'hosofos'): void {
+    setSettings({ ...settings, contentTypes: { ...settings.contentTypes, [section]: !settings.contentTypes[section] } });
+  }
+
+  async function handleClearDownloads(): Promise<void> {
+    await clearDownloads();
+    setUsage(await getDownloadStorageUsage(ALL_ENTRIES).catch(() => 0));
   }
 
   return (
-    <Screen>
-      <ScreenHeader title={t.downloadSettingsTitle} onBack={() => navigation.goBack()} backLabel={t.back} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <SectionLabel label={t.autoDownloadSection} />
-        <AppText variant="bodySmall" color="muted" style={styles.help}>
-          {t.downloadForegroundOnlyHelp}
-        </AppText>
-        <View style={styles.sectionWrap}>
-          <Card style={styles.flatCard}>
-            <ListRow
-              label={t.autoDownloadEnabledLabel}
-              sublabel={t.downloadMvpAutoHelp}
-              right={settings.autoDownloadEnabled ? <AppText color="accent">✓</AppText> : null}
-              onPress={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}
-            />
-            <RowSeparator />
-            <ListRow
-              label={t.wifiOnlyLabel}
-              sublabel={t.wifiOnlyHelp}
-              right={<AppText color="muted">{settings.wifiOnly ? '✓' : '—'}</AppText>}
-            />
-          </Card>
-        </View>
+    <Screen header={<ScreenHeader back={{ name: 'Settings', params: undefined }} title={t.downloadSettingsTitle} />}>
+      <CategoryHeader first>{t.autoDownloadSection}</CategoryHeader>
+      <Row
+        label={t.autoDownloadEnabledLabel}
+        selected={settings.autoDownloadEnabled}
+        trailing={<OptionCheck checked={settings.autoDownloadEnabled} />}
+        onPress={() => setSettings({ ...settings, autoDownloadEnabled: !settings.autoDownloadEnabled })}
+      />
 
-        <SectionLabel label={t.contentTypesSection} />
-        <AppText variant="bodySmall" color="muted" style={styles.help}>
-          {t.manualDownloadAllContentHelp}
-        </AppText>
-        <View style={styles.sectionWrap}>
-          <Card style={styles.flatCard}>
-            <ListRow
-              label={t.manualDownloadAllContentLabel}
-              right={settings.manualDownloadAllContent ? <AppText color="accent">✓</AppText> : null}
-              onPress={() => setSettings({ ...settings, manualDownloadAllContent: !settings.manualDownloadAllContent })}
+      {settings.autoDownloadEnabled && (
+        <>
+          {(['week', 'month'] as DownloadScope[]).map((scope) => (
+            <Row
+              key={scope}
+              label={scope === 'week' ? t.downloadScopeWeek : t.downloadScopeMonth}
+              selected={settings.scope === scope}
+              trailing={<OptionCheck checked={settings.scope === scope} />}
+              onPress={() => setSettings({ ...settings, scope })}
             />
-            <RowSeparator />
-            <ListRow
-              label={t.audioTypeLabel}
-              right={settings.contentTypes.audio ? <AppText color="accent">✓</AppText> : null}
-              onPress={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, audio: !settings.contentTypes.audio } })}
-            />
-            {editionOptions.map((option) => (
-              <React.Fragment key={option.edition}>
-                <RowSeparator />
-                <ListRow
-                  label={option.label}
-                  right={settings.contentTypes.hanachaEditions.includes(option.edition) ? <AppText color="accent">✓</AppText> : null}
-                  onPress={() => toggleEdition(option.edition)}
-                />
-              </React.Fragment>
-            ))}
-            {OTHER_SECTIONS.map((section) => (
-              <React.Fragment key={section}>
-                <RowSeparator />
-                <ListRow
-                  label={t.sectionLabels[section]}
-                  right={settings.contentTypes[section] ? <AppText color="accent">✓</AppText> : null}
-                  onPress={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, [section]: !settings.contentTypes[section] } })}
-                />
-              </React.Fragment>
-            ))}
-          </Card>
-        </View>
+          ))}
 
-        <SectionLabel label={t.storageSection} />
-        <AppText variant="bodySmall" color="muted" style={styles.help}>
-          {usage != null ? t.storageUsageLabel(formatBytes(usage)) : t.loading}
-        </AppText>
-        <View style={styles.sectionWrap}>
-          <Card style={styles.flatCard}>
-            <ListRow label={t.clearDownloadsLabel} sublabel={t.deleteContentLabel} onPress={() => { clearDownloads().then(() => setUsage(0)); }} />
-          </Card>
-        </View>
-      </ScrollView>
+          <Row label={t.wifiOnlyLabel} selected={settings.wifiOnly} trailing={<OptionCheck checked={settings.wifiOnly} />} onPress={() => setSettings({ ...settings, wifiOnly: !settings.wifiOnly })} />
+
+          <CategoryHeader>{t.sourceYearSection}</CategoryHeader>
+          {(['auto', 'manual'] as SourceYearMode[]).map((mode) => (
+            <Row
+              key={mode}
+              label={mode === 'auto' ? t.sourceYearAutoLabel : t.sourceYearManualLabel}
+              selected={settings.sourceYearMode === mode}
+              trailing={<OptionCheck checked={settings.sourceYearMode === mode} />}
+              onPress={() =>
+                setSettings({
+                  ...settings,
+                  sourceYearMode: mode,
+                  manualSourceYears: mode === 'manual' && settings.manualSourceYears.length === 0 && matchedYears[0] != null ? [matchedYears[0]] : settings.manualSourceYears,
+                })
+              }
+            />
+          ))}
+
+          {settings.sourceYearMode === 'manual' &&
+            allYears.map((year) => (
+              <Row
+                key={year}
+                label={hebrewYearLabel(year, language)}
+                selected={settings.manualSourceYears.includes(year)}
+                trailing={<OptionCheck checked={settings.manualSourceYears.includes(year)} />}
+                onPress={() => toggleManualYear(year)}
+              />
+            ))}
+
+          {settings.scope === 'week' && (
+            <Row
+              label={t.kviusFallbackLabel}
+              selected={settings.useKviusFallback}
+              trailing={<OptionCheck checked={settings.useKviusFallback} />}
+              onPress={() => setSettings({ ...settings, useKviusFallback: !settings.useKviusFallback })}
+            />
+          )}
+        </>
+      )}
+
+      <CategoryHeader>{t.contentTypesSection}</CategoryHeader>
+      <Row
+        label={t.manualDownloadAllContentLabel}
+        selected={settings.manualDownloadAllContent}
+        trailing={<OptionCheck checked={settings.manualDownloadAllContent} />}
+        onPress={() => setSettings({ ...settings, manualDownloadAllContent: !settings.manualDownloadAllContent })}
+      />
+      <TabHelp>{t.manualDownloadAllContentHelp}</TabHelp>
+      <Row
+        label={t.audioTypeLabel}
+        selected={settings.contentTypes.audio}
+        trailing={<OptionCheck checked={settings.contentTypes.audio} />}
+        onPress={() => setSettings({ ...settings, contentTypes: { ...settings.contentTypes, audio: !settings.contentTypes.audio } })}
+      />
+      {HANACHA_EDITIONS.map((edition) => (
+        <Row
+          key={edition}
+          label={edition === 'sichosKodesh' ? t.sichosKodeshEditionLabel : t.torasMenachemEditionLabel}
+          selected={settings.contentTypes.hanachaEditions.includes(edition)}
+          trailing={<OptionCheck checked={settings.contentTypes.hanachaEditions.includes(edition)} />}
+          onPress={() => toggleEdition(edition)}
+        />
+      ))}
+      <Row label={t.sectionLabels.mugah} selected={settings.contentTypes.mugah} trailing={<OptionCheck checked={settings.contentTypes.mugah} />} onPress={() => toggleSection('mugah')} />
+      {OTHER_SECTIONS.map((section) => (
+        <Row key={section} label={t.sectionLabels[section]} selected={settings.contentTypes[section]} trailing={<OptionCheck checked={settings.contentTypes[section]} />} onPress={() => toggleSection(section)} />
+      ))}
+
+      <CategoryHeader>{t.retentionSection}</CategoryHeader>
+      <TabHelp>{t.retentionHelp}</TabHelp>
+      {RETENTION_PERIODS.map((period) => (
+        <Row
+          key={period}
+          label={period === 'never' ? t.retentionNeverLabel : t.retentionAfterWeeksLabel(Number(period.slice(0, -1)))}
+          selected={settings.retentionPeriod === period}
+          trailing={<OptionCheck checked={settings.retentionPeriod === period} />}
+          onPress={() => setSettings({ ...settings, retentionPeriod: period })}
+        />
+      ))}
+
+      {settings.retentionPeriod !== 'never' && (
+        <Row
+          label={t.keepFinishedContentLabel}
+          selected={settings.keepFinishedContent}
+          trailing={<OptionCheck checked={settings.keepFinishedContent} />}
+          onPress={() => setSettings({ ...settings, keepFinishedContent: !settings.keepFinishedContent })}
+        />
+      )}
+
+      <CategoryHeader>{t.storageSection}</CategoryHeader>
+      <TabHelp>{usage != null ? t.storageUsageLabel(formatBytes(usage)) : ''}</TabHelp>
+      <Row
+        label={t.clearDownloadsLabel}
+        onPress={() => {
+          handleClearDownloads().catch(() => undefined);
+        }}
+      />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: { paddingBottom: spacing.xxl },
-  help: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm, lineHeight: 20 },
-  sectionWrap: { paddingHorizontal: spacing.lg, marginBottom: spacing.md },
-  flatCard: { paddingVertical: 0, paddingHorizontal: 0, backgroundColor: colors.backgroundElevated },
-});

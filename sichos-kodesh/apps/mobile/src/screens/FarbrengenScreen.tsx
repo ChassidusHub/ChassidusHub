@@ -1,272 +1,195 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { CheckCircle2, ChevronDown, ChevronRight, Download } from 'lucide-react-native';
+import type { CatalogPdf } from '@sichos-kodesh/catalog';
+import catalog from '../catalog/data';
+import { DownloadProgressRing } from '../components/DownloadProgressRing';
+import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
+import { ShareButton } from '../components/ShareButton';
 import { useDownload } from '../download/useDownload';
+import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useDownloadState } from '../download/useDownloadState';
 import { useTranslation } from '../i18n/useTranslation';
 import type { FarbrengenScreenProps } from '../navigation/types';
 import { usePlayer } from '../player/usePlayer';
+import { useProgressMap } from '../player/useProgressMap';
+import { useRecordVisit } from '../player/useRecordVisit';
 import { resolveOccasionRoute, splitFarbrengenContent } from '../routes/catalogRoutes';
-import { ShareButton } from '../components/ShareButton';
-import { AppButton } from '../ui/AppButton';
-import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
-import { EmptyState } from '../ui/EmptyState';
-import { ListRow } from '../ui/ListRow';
+import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
+import { hebrewYearLabel } from '../utils/formatHebrewDate';
+import { Button } from '../ui/Button';
+import { Card, PdfLabel } from '../ui/Card';
+import { CategoryRow } from '../ui/CategoryRow';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { SectionLabel } from '../ui/SectionLabel';
-import { colors, spacing, typography } from '../ui/theme';
-import catalog from '../catalog/data';
-import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
+import { Spinner } from '../ui/Spinner';
+import { AppText } from '../ui/Text';
+import { GapMessage, Subtitle } from '../ui/Typography';
+import { useColors } from '../ui/theme';
+import { row } from '../ui/rtl';
 
-function totalDurationLabel(durationMs: number): string {
-  const totalSeconds = Math.round(durationMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  if (hours > 0) return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
-}
-
+/**
+ * An occasion's own page: its hanacha (and any recordings) are shown
+ * inline and first, since together they *are* the farbrengen. Mugah, the
+ * maamar, hagahos, hosofos, and any biltiMugah PDF citing some other,
+ * unrelated source are demoted into a collapsed "More from this occasion"
+ * section (web: `/follow/:year/:id`, `/browse/:year/:id`, ...).
+ */
 export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
   const { t, language, isRtl } = useTranslation();
-  const { playOccasion, togglePlay, chapters, isPlaying, isLoading, hasError, errorMessage } = usePlayer();
+  const colors = useColors();
+  const player = usePlayer();
+  const progressMap = useProgressMap();
+  const [autoplayOnHanacha] = useAutoplayOnHanacha();
   const { downloadOccasion } = useDownload();
-  const resolved = useMemo(
-    () => resolveOccasionRoute(catalog, route.params, language),
-    [language, route.params],
-  );
+  const resolved = useMemo(() => resolveOccasionRoute(catalog, route.params, language), [language, route.params]);
   const downloadState = useDownloadState(resolved?.entry);
+  const downloadProgress = useDownloadProgress(resolved?.entry);
+  const [moreOpen, setMoreOpen] = useState(false);
+  useRecordVisit(resolved?.entry);
 
   if (!resolved) {
     return (
-      <Screen>
-        <ScreenHeader title={t.occasionNotFound} onBack={() => navigation.goBack()} backLabel={t.back} />
-        <EmptyState title={t.occasionNotFound} />
+      <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title="" />}>
+        <GapMessage>{t.occasionNotFound}</GapMessage>
       </Screen>
     );
   }
 
-  const { entry, backRoute } = resolved;
+  const { entry, subtitle, backRoute } = resolved;
   const { hanachaPdfs, otherPdfs, categoryLinks } = splitFarbrengenContent(entry);
-  const totalDurationMs = entry.audio.reduce((sum, audio) => sum + audio.durationMs, 0);
-  const totalDuration = totalDurationMs > 0 ? totalDurationLabel(totalDurationMs) : null;
-  const isThisOccasionLoaded =
-    chapters.length > 0 &&
-    chapters[0]?.occasionId === entry.occasionId &&
-    chapters[0]?.hebrewYear === entry.hebrewYear;
-  const pdfsByDriveFileId = new Map(entry.pdfs.map((pdf) => [pdf.driveFileId, pdf]));
+  const hasMore = otherPdfs.length > 0 || categoryLinks.length > 0;
+  const isEmpty = entry.audio.length === 0 && hanachaPdfs.length === 0 && !hasMore;
 
-  function navigateBack(): void {
-    switch (backRoute.name) {
-      case 'AllYearsThisWeek':
-        navigation.navigate('AllYearsThisWeek');
-        return;
-      case 'Search':
-        navigation.navigate('Search');
-        return;
-      case 'Downloaded':
-        navigation.navigate('Downloaded');
-        return;
-      case 'ThisWeek':
-        navigation.navigate('ThisWeek', backRoute.params);
-        return;
-      case 'MonthOccasions':
-        navigation.navigate('MonthOccasions', backRoute.params);
-        return;
-      case 'FollowMonthOccasions':
-        navigation.navigate('FollowMonthOccasions', backRoute.params);
-        return;
-      case 'OccasionAllYears':
-        navigation.navigate('OccasionAllYears', backRoute.params);
-        return;
-    }
-  }
-
-  function openPdf(driveFileId: string): void {
-    const pdf = pdfsByDriveFileId.get(driveFileId);
-    if (!pdf) return;
+  function openPdf(pdf: CatalogPdf): void {
     navigation.navigate('PdfViewer', {
       hebrewYear: entry.hebrewYear,
       occasionId: entry.occasionId,
       driveFileId: pdf.driveFileId,
       resourceKey: pdf.resourceKey ?? null,
       label: pdf.label,
-      occasionLabel: entry.occasionLabel,
-      sectionLabel: t.sectionLabels[pdf.section],
     });
   }
 
+  /** Opening the hanacha also starts its recording, unless it's already this occasion's own recording that's active - then it's left exactly as it is. If a different recording is already playing, `autoplayOnHanacha` decides whether to override it. */
+  function readHanacha(pdf: CatalogPdf): void {
+    if (entry.audio.length > 0) {
+      const isThisPlaylistActive = player.playlist?.hebrewYear === entry.hebrewYear && player.playlist?.occasionId === entry.occasionId;
+      const differentRecordingPlaying = player.playing && player.playlist !== null;
+      if (!isThisPlaylistActive && (!differentRecordingPlaying || autoplayOnHanacha)) {
+        player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, 0);
+      }
+    }
+    openPdf(pdf);
+  }
+
+  const moreRows = (
+    <View>
+      {categoryLinks.map((item) => (
+        <CategoryRow key={item.section} label={t.sectionLabels[item.section]} count={item.count} onPress={() => navigation.navigate('Category', { ...route.params, categoryId: item.section })} />
+      ))}
+      {otherPdfs.map((pdf) => (
+        <CategoryRow key={pdf.driveFileId} label={pdf.label} onPress={() => openPdf(pdf)} />
+      ))}
+    </View>
+  );
+
   return (
-    <Screen>
-      <ScreenHeader
-        title={entry.occasionLabel}
-        onBack={navigateBack}
-        backLabel={t[backRoute.backLabelKey]}
-      />
-      <ScrollView contentContainerStyle={styles.content}>
-        <AppText variant="bodySmall" color="secondary" style={styles.subtitle}>
-          {hebrewFullDateLabel(entry.hebrewDate, entry.hebrewYear, language)}
-        </AppText>
+    <Screen header={<ScreenHeader back={{ name: backRoute.name, params: backRoute.params } as never} title={entry.occasionLabel} />}>
+      {/* `subtitle` is this occasion's own day+month; the year is appended here so this page shows the full date. */}
+      <Subtitle>
+        {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}
+      </Subtitle>
 
-        <ShareButton
-          title={entry.occasionLabel}
-          hebrewYear={entry.hebrewYear}
-          occasionId={entry.occasionId}
-          style={isRtl ? styles.shareButtonRtl : styles.shareButton}
+      <ShareButton title={entry.occasionLabel} hebrewYear={entry.hebrewYear} occasionId={entry.occasionId} />
+
+      {downloadState !== 'unavailable' && downloadState !== 'loading' && (
+        <View style={[styles.downloadState, { flexDirection: row(isRtl) }]}>
+          {downloadState === 'downloaded' && (
+            <>
+              <CheckCircle2 size={16} color={colors.accent} />
+              <AppText style={[styles.downloadStateText, { color: colors.muted }]}>{t.downloadedLabel}</AppText>
+            </>
+          )}
+          {downloadState === 'downloading' && downloadProgress !== undefined && (
+            <>
+              <DownloadProgressRing size={16} progress={downloadProgress} />
+              <AppText style={[styles.downloadStateText, { color: colors.muted }]}>{t.downloadingLabel}</AppText>
+            </>
+          )}
+          {(downloadState === 'queued' || (downloadState === 'downloading' && downloadProgress === undefined)) && (
+            <>
+              <Spinner size={16} color={colors.muted} />
+              <AppText style={[styles.downloadStateText, { color: colors.muted }]}>{t.downloadingLabel}</AppText>
+            </>
+          )}
+          {downloadState === 'none' && (
+            <Pressable
+              onPress={() => {
+                downloadOccasion(entry).catch(() => undefined);
+              }}
+              hitSlop={6}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.downloadButton, { flexDirection: row(isRtl) }, pressed && styles.pressed]}
+            >
+              <Download size={16} color={colors.accent} />
+              <AppText style={[styles.downloadStateText, { color: colors.accent }]}>{t.downloadLabel}</AppText>
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {isEmpty && <GapMessage>{t.nothingDownloadable}</GapMessage>}
+
+      {entry.audio.length > 0 && (
+        <CategoryRow
+          label={t.recordings}
+          count={t.recordingsCount(entry.audio.length)}
+          trailing={<PlaylistPlayButton entry={entry} progressMap={progressMap} variant="compact" />}
+          onPress={() => navigation.navigate('Recordings', route.params)}
         />
+      )}
 
-        {downloadState === 'downloaded' ? (
-          <AppText variant="bodySmall" color="accent" style={styles.downloadState}>
-            {t.downloadedLabel}
-          </AppText>
+      {hanachaPdfs.map((pdf) => (
+        <Card key={pdf.driveFileId}>
+          <PdfLabel>{pdf.label}</PdfLabel>
+          <Button label={t.read} lastInCard onPress={() => readHanacha(pdf)} />
+        </Card>
+      ))}
+
+      {hasMore &&
+        (hanachaPdfs.length > 0 ? (
+          // With a hanacha present this is secondary content, collapsed by default (the web's <details>).
+          <View style={[styles.moreSection, moreOpen && styles.moreSectionOpen]}>
+            <Pressable onPress={() => setMoreOpen((open) => !open)} hitSlop={6} accessibilityRole="button" accessibilityState={{ expanded: moreOpen }} style={[styles.moreSummary, { flexDirection: row(isRtl) }]}>
+              {/* The web's native <details> disclosure marker. */}
+              {moreOpen ? <ChevronDown size={14} color={colors.muted} /> : <ChevronRight size={14} color={colors.muted} style={isRtl && styles.mirrored} />}
+              <AppText style={[styles.moreSummaryText, { color: colors.muted }]}>{t.moreFromThisOccasion}</AppText>
+            </Pressable>
+            {moreOpen && moreRows}
+          </View>
         ) : (
-          <AppButton
-            label={t.downloadLabel}
-            variant="secondary"
-            style={styles.downloadButton}
-            onPress={() => {
-              downloadOccasion(entry).catch(() => undefined);
-            }}
-          />
-        )}
-
-        {entry.audio.length > 0 ? (
-          <Card style={styles.sectionCard}>
-            <SectionLabel label={t.recordings} />
-            <AppText style={styles.recordingMeta}>
-              {t.recordingsCount(entry.audio.length)}
-              {totalDuration ? ` • ${totalDuration}` : ''}
-            </AppText>
-            <View style={styles.rowActions}>
-              <AppButton
-                label={isThisOccasionLoaded && !isLoading ? (isPlaying ? t.pause : t.play) : isLoading ? t.loading : t.play}
-                style={styles.actionButton}
-                onPress={() => {
-                  if (isThisOccasionLoaded) {
-                    togglePlay().catch(() => undefined);
-                    return;
-                  }
-                  playOccasion(entry).catch(() => undefined);
-                }}
-              />
-              <AppButton
-                label={t.recordings}
-                variant="secondary"
-                style={styles.actionButton}
-                onPress={() => navigation.navigate('Recordings', route.params)}
-              />
-            </View>
-          </Card>
-        ) : null}
-
-        {hanachaPdfs.map((pdf) => (
-          <Card key={pdf.driveFileId} style={styles.sectionCard}>
-            <AppText style={styles.cardTitle}>{pdf.label}</AppText>
-            <View style={styles.rowActions}>
-              <AppButton
-                label={t.read}
-                style={styles.actionButton}
-                onPress={() => openPdf(pdf.driveFileId)}
-              />
-              <AppButton
-                label={t.sectionLabels[pdf.section]}
-                variant="secondary"
-                style={styles.actionButton}
-                onPress={() =>
-                  navigation.navigate('Category', { ...route.params, categoryId: pdf.section })
-                }
-              />
-            </View>
-          </Card>
+          // With no hanacha at all this is the only content this occasion has, so it's shown directly.
+          <View style={styles.moreStandalone}>{moreRows}</View>
         ))}
 
-        {hanachaPdfs.length === 0 && entry.pdfs.length > 0 ? (
-          <Card style={styles.sectionCard}>
-            <AppText style={styles.cardTitle}>{t.sectionLabels.biltiMugah}</AppText>
-            <AppButton
-              label={t.sectionLabels.biltiMugah}
-              onPress={() => navigation.navigate('Category', { ...route.params, categoryId: 'biltiMugah' })}
-            />
-          </Card>
-        ) : null}
-
-        {(categoryLinks.length > 0 || otherPdfs.length > 0) && (
-          <View style={styles.moreSection}>
-            <SectionLabel label={t.moreFromThisOccasion} />
-            <Card style={styles.flatCard}>
-              {categoryLinks.map((item, index) => (
-                <View key={item.section} style={index > 0 ? styles.rowBorder : undefined}>
-                  <ListRow
-                    label={t.sectionLabels[item.section]}
-                    sublabel={t.pdfCount(item.count)}
-                    right={<AppText color="muted">›</AppText>}
-                    onPress={() =>
-                      navigation.navigate('Category', { ...route.params, categoryId: item.section })
-                    }
-                  />
-                </View>
-              ))}
-              {otherPdfs.map((pdf, index) => (
-                <View
-                  key={pdf.driveFileId}
-                  style={categoryLinks.length > 0 || index > 0 ? styles.rowBorder : undefined}
-                >
-                  <ListRow
-                    label={pdf.label}
-                    right={<AppText color="muted">›</AppText>}
-                    onPress={() => openPdf(pdf.driveFileId)}
-                  />
-                </View>
-              ))}
-            </Card>
-          </View>
-        )}
-
-        <Card style={styles.flatCard}>
-          <ListRow
-            label={t.thisOccasionAllYears}
-            right={<AppText color="muted">›</AppText>}
-            onPress={() =>
-              navigation.navigate('OccasionAllYears', {
-                sourceHebrewYear: entry.hebrewYear,
-                sourceOccasionId: entry.occasionId,
-                sourceRoute: route.params,
-              })
-            }
-          />
-        </Card>
-
-        {entry.audio.length === 0 && entry.pdfs.length === 0 ? (
-          <EmptyState title={t.nothingDownloadable} />
-        ) : null}
-        {hasError && isThisOccasionLoaded ? (
-          <AppText color="error" style={styles.error}>
-            {errorMessage ?? t.audioLoadError}
-          </AppText>
-        ) : null}
-      </ScrollView>
+      <CategoryRow label={t.thisOccasionAllYears} onPress={() => navigation.navigate('OccasionAllYears', { sourceHebrewYear: entry.hebrewYear, sourceOccasionId: entry.occasionId })} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  subtitle: { marginBottom: spacing.xs },
-  shareButton: { alignSelf: 'flex-start', marginLeft: -spacing.lg },
-  shareButtonRtl: { alignSelf: 'flex-end', marginLeft: 0, marginRight: -spacing.lg },
-  downloadState: { marginBottom: spacing.sm },
-  downloadButton: { alignSelf: 'flex-start' },
-  sectionCard: { gap: spacing.sm },
-  flatCard: { paddingHorizontal: 0, paddingVertical: 0 },
-  recordingMeta: { ...typography.bodySmall, color: colors.textSecondary },
-  cardTitle: { ...typography.bodyMedium, color: colors.textDefault },
-  rowActions: { flexDirection: 'row', gap: spacing.sm },
-  actionButton: { flex: 1 },
-  moreSection: { marginTop: spacing.sm },
-  rowBorder: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  error: { marginTop: spacing.sm },
+  /** Web: `.occasion-download-state` - row, gap 6, margin-bottom 12, 14px/600 muted. */
+  downloadState: { alignItems: 'center', gap: 6, marginBottom: 12 },
+  downloadStateText: { fontSize: 14, fontWeight: '600' },
+  downloadButton: { alignItems: 'center', gap: 6 },
+  pressed: { opacity: 0.7 },
+  /** Web: `.more-section` - margin-top 24; `[open]` also margin-bottom 24. */
+  moreSection: { marginTop: 24 },
+  moreSectionOpen: { marginBottom: 24 },
+  moreStandalone: { marginBottom: 24 },
+  /** Web: `.more-section-summary` - muted 13px/700 uppercase, margin-bottom 12. */
+  moreSummary: { alignItems: 'center', gap: 4, marginBottom: 12, alignSelf: 'flex-start' },
+  moreSummaryText: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.78 },
+  mirrored: { transform: [{ scaleX: -1 }] },
 });

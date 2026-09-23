@@ -1,24 +1,28 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from './theme';
+import { StyleSheet, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { AppText } from './Text';
+import { useColors } from './theme';
 
 interface Props {
-  title: string;
-  body?: string;
+  /** A lucide icon at size 40 - rendered at 40% opacity, like the web's `.empty-state-icon`. */
+  icon?: ReactNode;
+  text: string;
 }
 
-/** Centered empty/zero-state message. Use when a list has no items. */
-export function EmptyState({ title, body }: Props) {
+/** Web: `.empty-state` - a centered, muted placeholder for a page with nothing to show yet. */
+export function EmptyState({ icon, text }: Props) {
+  const colors = useColors();
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      {body ? <Text style={styles.body}>{body}</Text> : null}
+      {icon && <View style={styles.icon}>{icon}</View>}
+      <AppText style={[styles.text, { color: colors.muted }]}>{text}</AppText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-  title: { fontSize: 16, fontWeight: '600', color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.sm },
-  body: { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },
+  container: { alignItems: 'center', gap: 12, paddingVertical: 48, paddingHorizontal: 24 },
+  icon: { opacity: 0.4 },
+  text: { fontSize: 15, lineHeight: 21, textAlign: 'center' },
 });

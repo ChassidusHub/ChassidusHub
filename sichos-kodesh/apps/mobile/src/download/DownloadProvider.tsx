@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
-import { currentHebrewYear, resolveThisWeek } from '@sichos-kodesh/catalog';
-import type { CatalogAudio, CatalogEntry, CatalogPdf } from '@sichos-kodesh/catalog';
+import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import catalog from '../catalog/data';
+import { looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
 import { DownloadContext } from './downloadContext';
+import type { EnqueueMode } from './downloadContext';
+import { clearAutoDownloadLedger, forgetAutoDownload, hydrateAutoDownloadLedger, recordAutoDownload } from './downloadLedger';
 import { DEFAULT_DOWNLOAD_SETTINGS, useDownloadSettings } from './downloadSettings';
 import {
   clearAllDownloadedFiles,
@@ -61,15 +63,21 @@ function recordToTarget(record: StoredDownloadRecord): DownloadTarget {
       };
 }
 
+/**
+ * The download queue: files are fetched one at a time through the native
+ * WorkManager downloader where available (surviving the app being closed)
+ * or in the foreground otherwise, and every row in the app reads its live
+ * state from `targetStates`. The context's surface mirrors the web
+ * DownloadProvider's - see downloadContext.ts.
+ */
 export function DownloadProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings, settingsHydrated] = useDownloadSettings();
   const [hydrated, setHydrated] = useState(false);
-  const [downloadedRecords, setDownloadedRecords] = useState<Awaited<ReturnType<typeof reconcileStoredDownloads>>>([]);
+  const [downloadedRecords, setDownloadedRecords] = useState<StoredDownloadRecord[]>([]);
   const [targetStates, setTargetStates] = useState<Record<string, TargetDownloadState>>({});
   const queueRef = useRef<DownloadTarget[]>([]);
   const processingRef = useRef(false);
   const targetStatesRef = useRef<Record<string, TargetDownloadState>>({});
-  const autoQueuedRef = useRef(false);
   const wifiOnlyRef = useRef(settings.wifiOnly);
   // Tracks targets handed off to WorkManager so native events can resolve them.
   const nativePendingRef = useRef<Map<string, DownloadTarget>>(new Map());
@@ -143,16 +151,20 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     }));
 
     try {
-      const result = await executeDownload(next, (progress) => {
-        setTargetStates((prev) => ({
-          ...prev,
-          [next.key]: toState(next, 'downloading', { progress }),
-        }));
-      }, { wifiOnly: wifiOnlyRef.current });
+      const result = await executeDownload(
+        next,
+        (progress) => {
+          setTargetStates((prev) => ({
+            ...prev,
+            [next.key]: toState(next, 'downloading', { progress }),
+          }));
+        },
+        { wifiOnly: wifiOnlyRef.current },
+      );
 
       if (result.mode === 'native') {
-        // Download enqueued in WorkManager — remove from blocking queue and track
-        // in nativePendingRef so the event subscription can finalize it.
+        // Download enqueued in WorkManager - remove from the blocking queue and
+        // track in nativePendingRef so the event subscription can finalize it.
         nativePendingRef.current.set(next.key, next);
         queueRef.current = queueRef.current.filter((target) => target.key !== next.key);
         await writePendingDownloads(queueRef.current);
@@ -162,7 +174,8 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Foreground path — result.localPath is available
+      // Foreground path - result.localPath is available, and a real network round-trip just succeeded.
+      reportFetchSuccess();
       const path = result.localPath!;
       const records = await upsertStoredDownload(next, path);
       setDownloadedRecords(records);
@@ -171,12 +184,13 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         [next.key]: toState(next, 'downloaded', { progress: 1, localPath: path }),
       }));
     } catch (error) {
+      if (looksLikeNetworkError(error)) reportFetchFailure();
       setTargetStates((prev) => ({
         ...prev,
         [next.key]: toState(next, 'error', { error: String(error) }),
       }));
     } finally {
-      // Only remove from queue here for foreground path (native already removed above).
+      // Only remove from queue here for the foreground path (native already removed above).
       if (!nativePendingRef.current.has(next.key)) {
         queueRef.current = queueRef.current.filter((target) => target.key !== next.key);
         await writePendingDownloads(queueRef.current);
@@ -204,13 +218,16 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         const pending = nativePendingRef.current.get(targetKey);
         if (!pending) return;
         nativePendingRef.current.delete(targetKey);
-        upsertStoredDownload(pending, localPath).then((records) => {
-          setDownloadedRecords(records);
-          setTargetStates((prev) => ({
-            ...prev,
-            [targetKey]: toState(pending, 'downloaded', { progress: 1, localPath }),
-          }));
-        }).catch(() => undefined);
+        reportFetchSuccess();
+        upsertStoredDownload(pending, localPath)
+          .then((records) => {
+            setDownloadedRecords(records);
+            setTargetStates((prev) => ({
+              ...prev,
+              [targetKey]: toState(pending, 'downloaded', { progress: 1, localPath }),
+            }));
+          })
+          .catch(() => undefined);
       },
       onCanceled: ({ targetKey }) => {
         const pending = nativePendingRef.current.get(targetKey);
@@ -225,6 +242,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         const pending = nativePendingRef.current.get(targetKey);
         if (!pending) return;
         nativePendingRef.current.delete(targetKey);
+        if (looksLikeNetworkError(error)) reportFetchFailure();
         setTargetStates((prev) => ({
           ...prev,
           [targetKey]: toState(pending, 'error', { error }),
@@ -235,11 +253,17 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const enqueueTargets = useCallback(
-    async (targets: DownloadTarget[]) => {
+    async (targets: DownloadTarget[], mode: EnqueueMode = 'manual') => {
       const queuedKeys = new Set(queueRef.current.map((target) => target.key));
       const nextTargets: DownloadTarget[] = [];
 
       for (const target of targets) {
+        // The ledger decides what auto-cleanup may later reclaim: an auto sync
+        // (re-)claims the file, while any manual download of the same file
+        // takes it out of the auto-managed set for good.
+        if (mode === 'auto') recordAutoDownload(target.key, target.hebrewYear, target.occasionId);
+        else forgetAutoDownload(target.key);
+
         const currentStatus = targetStatesRef.current[target.key]?.status;
         if (queuedKeys.has(target.key) || currentStatus === 'queued' || currentStatus === 'downloading') continue;
         if (await isTargetDownloaded(target)) {
@@ -275,36 +299,42 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
 
   const downloadOccasion = useCallback(
     async (entry: CatalogEntry) => {
-      await enqueueTargets(getOccasionTargets(entry, 'manual'));
+      await enqueueTargets(getOccasionTargets(entry, 'manual'), 'manual');
     },
     [enqueueTargets, getOccasionTargets],
   );
 
-  const downloadAudio = useCallback(
-    async (entry: CatalogEntry, audio: CatalogAudio, chapterIndex: number) => {
-      const target = listDownloadTargets([entry], ALL_CONTENT_TYPES).find(
-        (item) => item.kind === 'audio' && item.workerFilename === audio.workerFilename && item.chapterIndex === chapterIndex,
-      );
-      if (target) await enqueueTargets([target]);
+  const enqueueBulk = useCallback(
+    async (entries: CatalogEntry[], mode: EnqueueMode = 'manual') => {
+      const contentTypes = mode === 'manual' && settings.manualDownloadAllContent ? ALL_CONTENT_TYPES : settings.contentTypes;
+      await enqueueTargets(listDownloadTargets(entries, contentTypes), mode);
+    },
+    [enqueueTargets, settings.contentTypes, settings.manualDownloadAllContent],
+  );
+
+  const downloadChapter = useCallback(
+    async (entry: CatalogEntry, chapterIndex: number) => {
+      const target = listDownloadTargets([entry], ALL_CONTENT_TYPES).find((item) => item.kind === 'audio' && item.chapterIndex === chapterIndex);
+      if (target) await enqueueTargets([target], 'manual');
     },
     [enqueueTargets],
   );
 
-  const downloadPdf = useCallback(
-    async (entry: CatalogEntry, pdf: CatalogPdf) => {
-      const target = listDownloadTargets([entry], ALL_CONTENT_TYPES).find(
-        (item) => item.kind === 'pdf' && item.driveFileId === pdf.driveFileId,
+  const downloadAllChapters = useCallback(
+    async (entry: CatalogEntry) => {
+      await enqueueTargets(
+        listDownloadTargets([entry], ALL_CONTENT_TYPES).filter((item) => item.kind === 'audio'),
+        'manual',
       );
-      if (target) await enqueueTargets([target]);
     },
     [enqueueTargets],
   );
 
   const cancelDownload = useCallback(async (targetKey: string) => {
     const current = targetStatesRef.current[targetKey];
-    // Cancel in WorkManager if native path was used.
+    // Cancel in WorkManager if the native path was used.
     await nativeCancelDownload(targetKey, current ? fileNameForTarget(current.target) : undefined);
-    // Remove from local queue if it hasn't been handed off yet.
+    // Remove from the local queue if it hasn't been handed off yet.
     queueRef.current = queueRef.current.filter((t) => t.key !== targetKey);
     nativePendingRef.current.delete(targetKey);
     await writePendingDownloads(queueRef.current);
@@ -315,32 +345,31 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const deleteOccasionDownloads = useCallback(async (entry: CatalogEntry) => {
-    await deleteEntryDownloads(entry);
-    await refreshDownloads();
-    const occasionKeys = new Set(getOccasionTargets(entry, 'all').map((target) => target.key));
-    setTargetStates((prev) => {
-      const next = { ...prev };
-      for (const key of occasionKeys) {
-        delete next[key];
-      }
-      return next;
-    });
-  }, [getOccasionTargets, refreshDownloads]);
+  const deleteOccasionDownloads = useCallback(
+    async (entry: CatalogEntry) => {
+      await deleteEntryDownloads(entry);
+      await refreshDownloads();
+      const occasionKeys = new Set(getOccasionTargets(entry, 'all').map((target) => target.key));
+      for (const key of occasionKeys) forgetAutoDownload(key);
+      setTargetStates((prev) => {
+        const next = { ...prev };
+        for (const key of occasionKeys) {
+          delete next[key];
+        }
+        return next;
+      });
+    },
+    [getOccasionTargets, refreshDownloads],
+  );
 
   const clearDownloads = useCallback(async () => {
     await clearAllDownloadedFiles(ALL_ENTRIES);
     await clearPendingDownloads();
+    clearAutoDownloadLedger();
     queueRef.current = [];
     nativePendingRef.current.clear();
     setDownloadedRecords([]);
-    setTargetStates((prev) => {
-      const next: Record<string, TargetDownloadState> = {};
-      for (const [key, state] of Object.entries(prev)) {
-        if (state.status === 'queued' || state.status === 'downloading') next[key] = toState(state.target, 'error');
-      }
-      return next;
-    });
+    setTargetStates({});
   }, []);
 
   const listDownloadedSummaries = useCallback(async () => listDownloadedOccasions(ALL_ENTRIES), []);
@@ -348,9 +377,10 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
+      hydrateAutoDownloadLedger(),
       reconcileNativeState(),
       listPendingDownloads().then(async (targets) => {
-        if (!cancelled && targets.length > 0) await enqueueTargets(targets);
+        if (!cancelled && targets.length > 0) await enqueueTargets(targets, 'manual');
       }),
     ]).then(() => {
       if (!cancelled) setHydrated(true);
@@ -371,13 +401,6 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
     };
   }, [reconcileNativeState]);
 
-  useEffect(() => {
-    if (!settingsHydrated || !settings.autoDownloadEnabled || autoQueuedRef.current) return;
-    autoQueuedRef.current = true;
-    const entries = resolveThisWeek(currentHebrewYear(), catalog).map((item) => item.entry);
-    enqueueTargets(listDownloadTargets(entries, settings.contentTypes)).catch(() => undefined);
-  }, [enqueueTargets, settings.autoDownloadEnabled, settings.contentTypes, settingsHydrated]);
-
   const value = useMemo(
     () => ({
       settings: settingsHydrated ? settings : DEFAULT_DOWNLOAD_SETTINGS,
@@ -386,8 +409,9 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       targetStates,
       downloadedRecords,
       downloadOccasion,
-      downloadAudio,
-      downloadPdf,
+      enqueueBulk,
+      downloadChapter,
+      downloadAllChapters,
       enqueueTargets,
       cancelDownload,
       refreshDownloads,
@@ -396,7 +420,25 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
       getOccasionTargets,
       listDownloadedSummaries,
     }),
-    [cancelDownload, clearDownloads, deleteOccasionDownloads, downloadedRecords, downloadAudio, downloadOccasion, downloadPdf, enqueueTargets, getOccasionTargets, hydrated, listDownloadedSummaries, refreshDownloads, setSettings, settings, settingsHydrated, targetStates],
+    [
+      cancelDownload,
+      clearDownloads,
+      deleteOccasionDownloads,
+      downloadAllChapters,
+      downloadChapter,
+      downloadOccasion,
+      downloadedRecords,
+      enqueueBulk,
+      enqueueTargets,
+      getOccasionTargets,
+      hydrated,
+      listDownloadedSummaries,
+      refreshDownloads,
+      setSettings,
+      settings,
+      settingsHydrated,
+      targetStates,
+    ],
   );
 
   return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;

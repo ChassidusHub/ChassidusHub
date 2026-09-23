@@ -14,9 +14,12 @@
     "test": "jest",
     "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
     "typecheck": "tsc --noEmit",
-    "android:assembleDebug": "cd android && ./gradlew assembleDebug --stacktrace",
+    "android:assembleDebug": "npm run prebuild:check && cd android && ./gradlew assembleDebug --stacktrace",
     "android:smoke": "bash scripts/android-smoke-test.sh",
-    "android:smoke:buildonly": "bash scripts/android-smoke-test.sh --build-only"
+    "android:smoke:buildonly": "bash scripts/android-smoke-test.sh --build-only",
+    "prebuild:check": "bash scripts/prebuild-check.sh",
+    "android:release": "npm run prebuild:check && cd android && ./gradlew assembleRelease",
+    "android:ui-walkthrough": "bash scripts/android-ui-walkthrough.sh"
   },
   "dependencies": {
     "@hebcal/core": "^6.9.2",
@@ -27,6 +30,7 @@
     "@sichos-kodesh/app-core": "^0.1.0",
     "@sichos-kodesh/catalog": "^0.1.0",
     "@sichos-kodesh/kvius-engine": "^0.1.0",
+    "lucide-react-native": "^1.47.0",
     "react": "19.2.3",
     "react-native": "0.87.1",
     "react-native-blob-util": "^0.24.11",
@@ -34,7 +38,7 @@
     "react-native-pdf": "^7.0.5",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.28.0",
-    "react-native-sound": "^0.11.2",
+    "react-native-svg": "^15.15.5",
     "react-native-track-player": "^4.1.2"
   },
   "devDependencies": {

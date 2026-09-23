@@ -1,131 +1,73 @@
 import React from 'react';
-import { ScrollView, StyleSheet, useColorScheme, View } from 'react-native';
-import type { PdfEdition } from '@sichos-kodesh/catalog';
-import { useTranslation, useLanguage } from '../i18n/useTranslation';
+import { StyleSheet, View } from 'react-native';
+import { Check } from 'lucide-react-native';
+import { useLanguage, useTranslation } from '../i18n/useTranslation';
 import type { Language } from '../i18n/translations';
 import type { SettingsScreenProps } from '../navigation/types';
 import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
-import { useEditionPreference } from '../settings/editionPreference';
-import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
-import { ListRow, RowSeparator } from '../ui/ListRow';
+import { useInvertPdfInDarkMode } from '../settings/invertPdfInDarkMode';
+import { CategoryRow } from '../ui/CategoryRow';
+import { Row } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
-import { SectionLabel } from '../ui/SectionLabel';
-import { spacing } from '../ui/theme';
+import { CategoryHeader, TabHelp } from '../ui/Typography';
+import { useColors, useTheme } from '../ui/theme';
+import type { ThemeMode } from '../ui/theme';
+import { marginStart } from '../ui/rtl';
 
-const OPTIONS: Array<{ value: PdfEdition | null; labelKey: 'pdfEditionNoPreference' | 'sichosKodeshEditionLabel' | 'pdfEditionSefer' | 'torasMenachemEditionLabel'; sublabelKey: 'pdfEditionNoPreferenceHelp' | 'pdfEditionSichosKodeshHelp' | 'pdfEditionSeferHelp' | 'pdfEditionTorasMenachemHelp' }> = [
-  { value: null, labelKey: 'pdfEditionNoPreference', sublabelKey: 'pdfEditionNoPreferenceHelp' },
-  { value: 'sichosKodesh', labelKey: 'sichosKodeshEditionLabel', sublabelKey: 'pdfEditionSichosKodeshHelp' },
-  { value: 'sefer', labelKey: 'pdfEditionSefer', sublabelKey: 'pdfEditionSeferHelp' },
-  { value: 'torasMenachem', labelKey: 'torasMenachemEditionLabel', sublabelKey: 'pdfEditionTorasMenachemHelp' },
-];
-
-const LANGUAGE_OPTIONS: Array<{ value: Language; labelKey: 'languageEnglish' | 'languageHebrew' }> = [
-  { value: 'en', labelKey: 'languageEnglish' },
-  { value: 'he', labelKey: 'languageHebrew' },
-];
+/** Web: `.settings-option-end-slot` - a fixed 18px slot holding the check mark of a chosen option, so labels line up whether or not a row is selected. */
+export function OptionCheck({ checked }: { checked: boolean }) {
+  const colors = useColors();
+  const { isRtl } = useTranslation();
+  return <View style={[styles.endSlot, marginStart(isRtl, 12)]}>{checked && <Check size={18} color={colors.muted} />}</View>;
+}
 
 export function SettingsScreen({ navigation }: SettingsScreenProps) {
-  const { t, isRtl } = useTranslation();
+  const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
-  const [preference, setPreference] = useEditionPreference();
+  const { mode: theme, setMode: setTheme } = useTheme();
   const [autoplay, setAutoplay] = useAutoplayOnHanacha();
-  const systemScheme = useColorScheme();
+  const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
+
+  const themeOptions: Array<{ value: ThemeMode; label: string }> = [
+    { value: 'dark', label: t.themeDark },
+    { value: 'light', label: t.themeLight },
+    { value: 'system', label: t.themeSystem },
+  ];
+  const languageOptions: Array<{ value: Language; label: string }> = [
+    { value: 'en', label: t.languageEnglish },
+    { value: 'he', label: t.languageHebrew },
+  ];
 
   return (
-    <Screen>
-      <ScreenHeader title={t.settingsTitle} onBack={() => navigation.goBack()} backLabel={t.back} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <SectionLabel label={t.languageSection} />
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            {LANGUAGE_OPTIONS.map((option, index) => (
-              <React.Fragment key={option.value}>
-                {index > 0 ? <RowSeparator /> : null}
-                <ListRow
-                  label={t[option.labelKey]}
-                  right={language === option.value ? <AppText color="accent">✓</AppText> : null}
-                  onPress={() => setLanguage(option.value)}
-                />
-              </React.Fragment>
-            ))}
-          </Card>
-        </View>
+    <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title={t.settingsTitle} />}>
+      <CategoryHeader first>{t.appearanceSection}</CategoryHeader>
+      {themeOptions.map((option) => (
+        <Row key={option.value} label={option.label} selected={theme === option.value} trailing={<OptionCheck checked={theme === option.value} />} onPress={() => setTheme(option.value)} />
+      ))}
 
-        <SectionLabel label={t.pdfEditionPreferenceSection} />
-        <AppText variant="bodySmall" color="muted" style={[styles.sectionHelp, isRtl && styles.textRight]}>
-          {t.pdfEditionPreferenceHelp}
-        </AppText>
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            {OPTIONS.map((option, index) => (
-              <React.Fragment key={String(option.value)}>
-                {index > 0 ? <RowSeparator /> : null}
-                <ListRow
-                  label={t[option.labelKey]}
-                  sublabel={t[option.sublabelKey]}
-                  right={preference === option.value ? <AppText color="accent">✓</AppText> : null}
-                  onPress={() => setPreference(option.value)}
-                />
-              </React.Fragment>
-            ))}
-          </Card>
-        </View>
+      <Row label={t.invertPdfDarkModeLabel} selected={invertPdf} trailing={<OptionCheck checked={invertPdf} />} onPress={() => setInvertPdf(!invertPdf)} />
 
-        <SectionLabel label={t.appearanceSection} />
-        <View style={styles.cardWrap}>
-          <Card>
-            <AppText variant="bodyMedium">{t.themeSystem}</AppText>
-            <AppText variant="bodySmall" color="muted" style={[styles.cardHelp, isRtl && styles.textRight]}>
-              {t.appearanceFollowsSystem(systemScheme === 'dark' ? t.themeDark : t.themeLight)}
-            </AppText>
-          </Card>
-        </View>
+      <CategoryHeader>{t.languageSection}</CategoryHeader>
+      {languageOptions.map((option) => (
+        <Row key={option.value} label={option.label} selected={language === option.value} trailing={<OptionCheck checked={language === option.value} />} onPress={() => setLanguage(option.value)} />
+      ))}
 
-        <SectionLabel label={t.playbackSection} />
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            <ListRow
-              label={t.autoplayHanachaLabel}
-              sublabel={t.autoplayHanachaHelp}
-              right={autoplay ? <AppText color="accent">✓</AppText> : null}
-              onPress={() => setAutoplay(!autoplay)}
-            />
-          </Card>
-        </View>
+      <CategoryHeader>{t.playbackSection}</CategoryHeader>
+      <Row label={t.autoplayHanachaLabel} selected={autoplay} trailing={<OptionCheck checked={autoplay} />} onPress={() => setAutoplay(!autoplay)} />
+      <TabHelp>{t.autoplayHanachaHelp}</TabHelp>
 
-        <SectionLabel label={t.downloadsLink} />
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            <ListRow
-              label={t.downloadSettingsTitle}
-              sublabel={t.downloadForegroundOnlyHelp}
-              right={<AppText color="muted">›</AppText>}
-              onPress={() => navigation.navigate('DownloadSettings')}
-            />
-          </Card>
-        </View>
-
-        <View style={styles.cardWrap}>
-          <Card style={styles.cardReset}>
-            <ListRow
-              label={t.aboutLink}
-              right={<AppText color="muted">›</AppText>}
-              onPress={() => navigation.navigate('About')}
-            />
-          </Card>
-        </View>
-      </ScrollView>
+      <View style={styles.linkList}>
+        <CategoryRow label={t.viewDownloadedLabel} onPress={() => navigation.navigate('Downloaded')} />
+        <CategoryRow label={t.downloadsLink} onPress={() => navigation.navigate('DownloadSettings')} />
+        <CategoryRow label={t.aboutLink} onPress={() => navigation.navigate('About')} />
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: spacing.xxl },
-  sectionHelp: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  textRight: { textAlign: 'right' },
-  cardWrap: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
-  cardReset: { paddingVertical: 0, paddingHorizontal: 0 },
-  cardHelp: { marginTop: spacing.xs, lineHeight: 19 },
+  endSlot: { width: 18, minWidth: 18, alignItems: 'flex-end', justifyContent: 'center', flexShrink: 0 },
+  /** Web: `.settings-link-list` - margin-top 8. */
+  linkList: { marginTop: 8 },
 });
