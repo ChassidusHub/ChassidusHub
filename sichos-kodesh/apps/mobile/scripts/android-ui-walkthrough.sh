@@ -191,6 +191,10 @@ adb shell settings put global animator_duration_scale 0 >/dev/null 2>&1
 adb logcat -c
 
 log "launching"
+# Android 13+ asks for notification permission on first launch; granted up
+# front so the dialog doesn't sit over the home screen (the prompt itself
+# is Android's, not this app's).
+adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
 # Always from a cold start on the home screen, even if the app was already open.
 adb shell am force-stop $PKG >/dev/null 2>&1
 adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
@@ -300,7 +304,7 @@ back; shot 22-home-hebrew
 tap_text "הגדרות" && tap_text "English" && back
 
 log "crash / JS error lines in logcat:"
-adb logcat -d | grep -E "FATAL EXCEPTION|AndroidRuntime: .*Exception|ReactNativeJS: .*Error|JavascriptException" | head -20 | tee "$OUT/logcat-errors.txt"
+adb logcat -d | grep -E "FATAL EXCEPTION|AndroidRuntime: .*Exception|ReactNativeJS: .*Error|JavascriptException|ANR in $PKG" | head -20 | tee "$OUT/logcat-errors.txt"
 if [ -s "$OUT/logcat-errors.txt" ]; then FAILED=1; fi
 adb logcat -d > "$OUT/logcat.txt"
 
