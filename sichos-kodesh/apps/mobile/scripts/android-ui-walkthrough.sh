@@ -99,6 +99,13 @@ scroll_down() {
   sleep 2
 }
 
+# Back to the top of a scrolled screen (two swipes cover any screen in the app).
+scroll_to_top() {
+  adb shell input swipe "$((SCREEN_W / 2))" "$((SCREEN_H / 4))" "$((SCREEN_W / 2))" "$((SCREEN_H * 3 / 4))" 300
+  adb shell input swipe "$((SCREEN_W / 2))" "$((SCREEN_H / 4))" "$((SCREEN_W / 2))" "$((SCREEN_H * 3 / 4))" 300
+  sleep 2
+}
+
 # Taps the first node matching $1, retrying for up to ~20s while the screen
 # renders. The global player bar floats over the bottom of every screen, so
 # a list item sitting behind it is scrolled clear of it first (the bar's own
@@ -258,12 +265,32 @@ tap_text "Search occasions" && type_text "Tishrei" && sleep 4 && shot 14-search-
 tap_text "Back"
 wait_text "Browse any year"
 
-# --- Settings, dark mode, Hebrew
+# --- Settings, dark mode (incl. the PDF), Hebrew
 tap_text "Settings" && wait_text "Appearance" && shot 15-settings
+# The phone-only Notifications section sits below the fold.
+scroll_down && shot 15-settings-notifications
+scroll_to_top
 tap_text "Dark" && sleep 2 && shot 16-settings-dark
 back; shot 17-home-dark
+# The PDF read earlier, now in dark mode - inverted like the web's, and local by now so it opens at once.
+if tap_text 'מוצאי י"ג תשרי'; then
+  wait_text "This occasion, every year"
+  if tap_text "Read"; then
+    wait_gone "Opening file" 20 && shot 17-pdf-dark 6
+    back
+  fi
+  back
+fi
 tap_text "Settings" && tap_text "Light" && sleep 1
 tap_text "Downloads" && wait_text "Auto-download" && shot 18-download-settings
+# Switch the automatic sync on (reveals the phone-only "also when closed"
+# option) and kick one run off: the sync task posts the new-week notice
+# within seconds and queues this week's files, whose progress shows in the
+# notification shade.
+tap_text "Auto-download automatically" && sleep 1 && shot 18-download-settings-auto
+tap_text "Download this week now" && sleep 20
+adb shell cmd statusbar expand-notifications && shot 19-notifications 3
+adb shell cmd statusbar collapse; sleep 1
 back
 tap_text "About" && wait_text "Powered by" && shot 19-about
 tap_text "Privacy Policy" && wait_text "Last updated" && shot 20-privacy
