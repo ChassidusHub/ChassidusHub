@@ -15,7 +15,7 @@ import { ScreenHeader } from '../ui/ScreenHeader';
 import { Spinner } from '../ui/Spinner';
 import { AppText } from '../ui/Text';
 import { GapMessage } from '../ui/Typography';
-import { useTheme } from '../ui/theme';
+import { lightColors, useTheme } from '../ui/theme';
 import { row } from '../ui/rtl';
 
 type LoadState = { status: 'loading'; percent: number | null; path: string | null } | { status: 'ready'; path: string } | { status: 'error'; message: string; offline: boolean };
@@ -40,7 +40,9 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const entry = useMemo(() => catalog[hebrewYear]?.find((item) => item.occasionId === occasionId) ?? null, [hebrewYear, occasionId]);
   const pdf = useMemo(() => entry?.pdfs.find((item) => item.driveFileId === driveFileId) ?? null, [driveFileId, entry]);
   const savedPage = useMemo(() => (entry ? getPdfPage(getOccasionProgress(readProgressMap(), entry.hebrewYear, entry.occasionId), driveFileId) : undefined), [driveFileId, entry]);
-  const dimForDarkMode = invertInDarkMode && scheme === 'dark';
+  // The web's `.pdf-page-canvas { filter: invert(1) hue-rotate(180deg) }`,
+  // applied to the native viewer through React Native's own `filter` style.
+  const invertForDarkMode = invertInDarkMode && scheme === 'dark';
   const backTarget = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear, occasionId } } as const;
 
   useEffect(() => {
@@ -136,12 +138,13 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
       </View>
 
       {path && (
-        <View style={styles.pdfWrap}>
+        <View style={[styles.pdfWrap, invertForDarkMode && styles.pdfInverted]}>
+          {/* Inverted along with the pages, so the gap between pages ends up dark: the light theme's card colour flips to the dark theme's. */}
           <Pdf
             key={driveFileId}
             source={{ uri: `file://${path}` }}
             page={savedPage ?? 1}
-            style={[styles.pdf, { backgroundColor: colors.cardBg }]}
+            style={[styles.pdf, { backgroundColor: invertForDarkMode ? lightColors.cardBg : colors.cardBg }]}
             enableDoubleTapZoom
             spacing={4}
             renderActivityIndicator={() => (
@@ -156,8 +159,6 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
             onPageChanged={(page, pages) => schedulePersist(page, pages)}
             onError={(error) => setState({ status: 'error', message: String(error), offline: false })}
           />
-          {/* Night reading: react-native-pdf can't invert colors, so the closest equivalent of the web's `invert(1) hue-rotate(180deg)` is dimming the page. */}
-          {dimForDarkMode && <View pointerEvents="none" style={styles.dimOverlay} />}
         </View>
       )}
     </Screen>
@@ -173,5 +174,6 @@ const styles = StyleSheet.create({
   pdfWrap: { flex: 1 },
   pdf: { flex: 1, width: '100%' },
   pdfLoading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  dimOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.35)' },
+  /** Web: `.pdf-page-canvas` in dark mode - invert(1) hue-rotate(180deg). */
+  pdfInverted: { filter: [{ invert: 1 }, { hueRotate: '180deg' }] },
 });
