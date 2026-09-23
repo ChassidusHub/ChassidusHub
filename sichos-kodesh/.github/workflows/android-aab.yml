@@ -37,6 +37,25 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # Fail in a second, not after the 15-minute build: signing needs all
+      # four repository secrets (apps/mobile/README.md, "Google Play").
+      - name: Check the signing secrets are set
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=""
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Repository secrets not set:$missing - add them under Settings > Secrets and variables > Actions, then run this workflow again."
+            exit 1
+          fi
+          echo "All four signing secrets are set."
+
       - name: Decode upload keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
