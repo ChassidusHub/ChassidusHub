@@ -24,15 +24,15 @@ When he explicitly asks for a tagged release (e.g. "make a tagged release v1.2.0
 3. Wait for the run to finish — the Gradle build takes about 15 minutes.
 4. CI attaches the signed APKs (`arm64-v8a`, `armeabi-v7a`, `universal`)
    and publishes the release automatically. Nothing is left as a draft.
-5. Tell Shmuly it's ready, with a direct link to the new release:
-   https://github.com/shmuky/Sichos-Kodesh/releases/tag/vX.Y.Z
+5. Tell Shmuly it's ready, with the release tag as a clickable link:
+   [vX.Y.Z](https://github.com/shmuky/Sichos-Kodesh/releases/tag/vX.Y.Z)
 
 Shipping a finished major feature yourself: when a major feature or function
 is done, you don't need to ask — bump `versionName` (and `versionCode`) in
 `apps/mobile/android/app/build.gradle`, merge your work to main, push the
 tag `vX.Y.Z`, and let CI build and publish the release. Then tell Shmuly
-it's live, with a direct link to the release:
-https://github.com/shmuky/Sichos-Kodesh/releases/tag/vX.Y.Z
+it's live, with the release tag as a clickable link:
+[vX.Y.Z](https://github.com/shmuky/Sichos-Kodesh/releases/tag/vX.Y.Z)
 
 Notes:
 - This workflow is APK-only. The Play Store AAB lives in the separate
