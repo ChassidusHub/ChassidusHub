@@ -11,10 +11,12 @@ export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.10.0',
     en: [
+      'Installs again on phones behind a filtering VPN: the app is packed so a filter can no longer change it on the way down (v1.8 and v1.9 showed "package appears to be invalid" there)',
       'The reader sets a Hebrew sefer right to left always, whatever the app language: a justified paragraph ends on the right, and a line opening with a number or an English word still starts there',
       'A chapter\'s edition is one control under its heading - the edition being read - that opens the list of the others, and of the ones read on Sefaria',
     ],
     he: [
+      'ההתקנה עובדת שוב בטלפונים עם VPN מסנן: האפליקציה ארוזה כך שסינון כבר לא יכול לשנות אותה בדרך (בגרסאות 1.8 ו-1.9 הופיעה שם ההודעה "נראה שהחבילה לא תקינה")',
       'הקורא מציג ספר בעברית תמיד מימין לשמאל, בכל שפת אפליקציה: פסקה מיושרת מסתיימת בימין, ושורה שנפתחת במספר או במילה באנגלית עדיין מתחילה שם',
       'המהדורה של הפרק היא כפתור אחד מתחת לכותרת - המהדורה שנקראת - שפותח את רשימת האחרות, ואת אלה שנקראות בספריא',
     ],
