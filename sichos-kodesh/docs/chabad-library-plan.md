@@ -24,7 +24,7 @@ built is thrown away.
 | Source | What it has | How we can read it | What we may do with it |
 | --- | --- | --- | --- |
 | **chabadlibrary.org** (ספריית ליובאוויטש) | Text of the seforim of every Rebbe, the Baal Shem Tov and the Maggid, 12 works of Chassidim (אוצר החסידים) and 17 of history (מסביב לחסידות). The Rebbe's include Igros Kodesh (28 volumes), Toras Menachem (73 volumes), Likkutei Sichos, Maamarim Melukatim, Reshimos, Hayom Yom and the Haggadah. | A JSON API behind its app: `books/api/main?path=/<id>` for the tree and pages, `api/search` and `api/statistics` for search. The full tree loads (11 top groups, 73 works). Page and search calls returned server errors throughout research, so page access is the first thing to confirm. | Free to read. Links and online reading are fine. Offline copies in packs are a decision (section 6). |
-| **Sefaria** | Kehot's own Hebrew text of Tanya, Likkutei Torah, Torah Or, Derech Mitzvosecha and Shulchan Aruch HaRav, plus English translations, the Chabad siddur and a few more. | An open API and a bulk export (`Sefaria-Export` on GitHub). | Kehot's texts carry **CC-BY-NC**: free, non-commercial use with credit. This app qualifies, so these can go in packs today. |
+| **Sefaria** | Kehot's own Hebrew text of Tanya, Likkutei Torah, Torah Or, Derech Mitzvosecha and Shulchan Aruch HaRav, plus English translations, the Chabad siddur and a few more: 12 works in all (WP8 results). | An open API and a bulk export (`Sefaria-Export` on GitHub). | Kehot's texts carry **CC-BY-NC**: free, non-commercial use with credit. This app qualifies, so these can go in packs today. |
 | **HebrewBooks.org** | 60,419 scanned seforim as PDFs. The Chabad shelf is about 1,450 books and 440,000 pages (section 2a). | The site has no public API and blocks automated clients with a Cloudflare challenge. The metadata is open another way: אוצריא (Otzaria) publishes the whole HebrewBooks catalog as a SQLite file (section 2a). WorldCat (NYHBW) and an OAI-PMH gateway on request (oai@hebrewbooks.org) are the official routes. | Its terms forbid redistributing the scans, and its linking rules forbid linking to PDFs directly. We may link to a book's page (`hebrewbooks.org/<id>`) and to a page in its viewer, and show its thumbnail. Offline copies need its permission. |
 | mafteiach.app, JEM, RebbeDrive | Already indexed (WP2b): the farbrengens, hanachos, Likkutei Sichos, maamorim, yomanim, hadranim, michtavim, JEM audio. | Done. | As now. |
 | To evaluate | Chabadpedia's text wiki (it has the text of "חלק מ"), chabad.org (translations), Sichos in English. | MediaWiki API; the others by page. | Links only, until licences are checked. |
@@ -195,6 +195,52 @@ their numbers.
 - Output: a table of every work, its sources and its rights, filled into
   this document.
 
+**Results (2026-09-24, second check).**
+
+chabadlibrary.org still serves no text:
+
+- The tree root and the 11 top groups answer (`api/main?path=/100000000`
+  lists its works).
+- Every work-level path returns `500 Internal Server Error`:
+  - `path=/300000000` (Keser Shem Tov);
+  - `path=/3400000000` (Tanya);
+  - the nested and slash-less forms.
+- `api/search` and `api/statistics` fail the same way, including with the
+  exact parameters the site's own bundle sends (`phrase`, `section_id`,
+  `offset`).
+- The old static pages (`books/admur/ig/10/2973.htm` and the like) now
+  return the single-page app's 1 KB shell.
+
+So the site's text backend is down, not just its public API. WP10 waits on
+it, or on the library sending an export. That is decision 1, which now
+means asking for the text as well as the blessing.
+
+HebrewBooks: the Chabad shelf numbers in section 2a stand. This session
+cannot reach GitHub repositories outside this project, so WP11 reads
+Otzaria's catalog release in a session that can.
+
+Sefaria's Chabad texts, with every edition's licence as Sefaria records
+it:
+
+| Work (Sefaria title) | Hebrew | English | For packs |
+| --- | --- | --- | --- |
+| Tanya | Kehot, CC-BY-NC | Kehot, CC-BY-NC; community, CC0 | ship with credit |
+| Torah Ohr | Kehot, CC-BY-NC | community, CC0 | ship with credit |
+| Likkutei Torah | Kehot, CC-BY-NC | community, CC0 (one AI translation, excluded) | ship with credit |
+| Sources and References on Likkutei Torah / on Torah Ohr | Kehot, CC-BY-NC | - | ship with credit |
+| Derekh Mitzvotekha | Kehot, CC-BY-NC | community, CC0 | ship with credit |
+| Shulchan Arukh HaRav | Kehot, CC-BY-NC (plain and vocalized) | community, CC0 | ship with credit |
+| Kuntres Acharon on Shulchan Arukh HaRav | Kehot, CC-BY-NC | - | ship with credit |
+| Ma'aneh Lashon Chabad | Warsaw 1869, public domain | community, CC0 | ship |
+| Weekday Siddur Chabad | Wikisource, licence "unknown" | community, CC0 | English ships; Hebrew link-only until checked |
+| The Gate of Unity (Shaar HaYichud) | Neirot, "unknown" | Markel (Neirot), CC-BY | English ships with credit; Hebrew link-only |
+| Kuntres HaHitpa'alut | Neirot, "unknown" | Neirot, "unknown" | link-only |
+
+Every edition with no licence, or "unknown", stays link-only. So do the
+single-chapter samples in other languages. The rule is per edition, as
+section 5 has it. WP11 reads Sefaria through its API
+(`api/texts/versions/<title>`, then the texts), which answers here.
+
 ### WP9 - `packages/works`
 
 - The model from section 5, the curated authors and works registry, and
@@ -239,9 +285,9 @@ under the CLAUDE.md rule: version bump, merge, tag.
 
 ## 8. Risks
 
-- **chabadlibrary.org availability.** Its page API failed during
-  research. If that persists, fall back to its legacy static pages, or ask
-  the library for an export.
+- **chabadlibrary.org availability.** Its page API failed during research,
+  and again at WP8 (see the WP8 results). Its legacy static pages are gone
+  too. So the path is to ask the library for an export.
 - **Size.** All text of all Rabbeim is probably a few hundred MB. The
   catalog carries only metadata. Text lives in per-work packs a person
   chooses to download.
