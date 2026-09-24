@@ -9,6 +9,21 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    en: [
+      'Offline packs: Settings > Offline packs brings farbrengens onto the phone with no internet - a pack file (.skpack) from the yeshiva station or a friend, a shared ZIP, or a folder of recordings and PDFs. Every file is checked before it is saved, and what the phone already has is skipped',
+      'Pick a shared folder once (Documents/SichosKodesh) and anything put in its "import" folder comes in on its own the next time you open the app',
+      'Share a month or a year: what is on the phone goes into one ZIP file with Hebrew folder names, ready to pass on - another phone takes it in with "Import files"',
+      'About lists the packs imported on this phone',
+    ],
+    he: [
+      'חבילות לא מקוונות: הגדרות > חבילות לא מקוונות מכניס התוועדויות לטלפון בלי אינטרנט - קובץ חבילה (.skpack) מעמדת הישיבה או מחבר, קובץ ZIP ששותף, או תיקייה של הקלטות וקובצי PDF. כל קובץ נבדק לפני שהוא נשמר, ומה שכבר יש בטלפון מדולג',
+      'בוחרים פעם אחת תיקייה משותפת (Documents/SichosKodesh), וכל מה שמונח בתיקיית "import" שבה נכנס מעצמו בפעם הבאה שפותחים את האפליקציה',
+      'שיתוף חודש או שנה: מה שיש בטלפון נכנס לקובץ ZIP אחד עם שמות תיקיות בעברית, מוכן להעברה - טלפון אחר מכניס אותו ב"ייבוא קבצים"',
+      'במסך אודות מופיעות החבילות שיובאו לטלפון',
+    ],
+  },
+  {
     version: '1.2.0',
     en: [
       'The list of farbrengens now updates on its own: the phone checks api.sk.shmuky.dev once a day (also in the background) for a newer catalog and applies it in place - a corrected date or a new recording no longer waits for a new APK. "Update catalog" in Settings checks right now',
