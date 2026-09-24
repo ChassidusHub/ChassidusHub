@@ -89,7 +89,7 @@ export function ReaderSettingsSheet({ visible, settings, onClose }: Props) {
                 <Pressable key={theme} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t.readerThemes[theme]} onPress={() => set({ theme })} style={styles.theme}>
                   <View style={[styles.swatch, { backgroundColor: swatch.background, borderColor: on ? colors.accent : colors.border, borderWidth: on ? 2 : 1 }]}>
                     {theme === 'app' && <View style={[styles.swatchHalf, { backgroundColor: '#0a0a0a' }, isRtl ? styles.swatchHalfLeft : styles.swatchHalfRight]} />}
-                    <Text style={[styles.swatchLetter, { color: theme === 'app' ? '#121212' : swatch.text, fontFamily: 'FrankRuehlCLM' }]}>א</Text>
+                    <Text style={[styles.swatchLetter, { color: theme === 'app' ? lightColors.accent : swatch.text, fontFamily: 'FrankRuehlCLM' }]}>א</Text>
                   </View>
                   <AppText numberOfLines={1} style={[styles.themeName, { color: on ? colors.fg : colors.muted }]}>
                     {t.readerThemes[theme]}
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   sizeLabel: { fontSize: 12, fontWeight: '600' },
   sizePercent: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
   eyebrow: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginTop: 4, marginHorizontal: 4 },
-  fonts: { gap: 10, paddingHorizontal: 2 },
+  fonts: { gap: 10, paddingHorizontal: 2, alignItems: 'flex-start' },
   fontCard: { width: 108, borderRadius: 14, borderWidth: 2, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center', gap: 6 },
   fontSample: { fontSize: 26, lineHeight: 40 },
   fontName: { fontSize: 12, fontWeight: '600' },

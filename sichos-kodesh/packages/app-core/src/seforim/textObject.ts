@@ -238,6 +238,12 @@ export function stripNiqqud(text: string): string {
   return text.replace(NIQQUD, '');
 }
 
+/** A page or study marker as the reader shows it: in brackets, once (Sefaria's markers often carry their own). */
+export function markLabel(text: string): string {
+  const trimmed = text.trim();
+  return /^\[.*\]$/.test(trimmed) ? trimmed : `[${trimmed}]`;
+}
+
 /** The words of a text object, for a search result's snippet: paragraphs and notes, no heading or credit. */
 export function textObjectPlainText(html: string): string {
   const parsed = parseTextObject(html);

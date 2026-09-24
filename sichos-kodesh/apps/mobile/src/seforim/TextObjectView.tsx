@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TextStyle } from 'react-native';
-import { readerFont, readerLineHeight, readerTextSize, stripNiqqud, type Footnote, type Inline, type ReaderPalette, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
+import { markLabel, readerFont, readerLineHeight, readerTextSize, stripNiqqud, type Footnote, type Inline, type ReaderPalette, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
 import { useTranslation } from '../i18n/useTranslation';
 import { AppText } from '../ui/Text';
 
@@ -46,7 +46,7 @@ function InlineRun({ inline, context }: { inline: Inline; context: RunContext })
   if (inline.kind === 'break') return <Text>{'\n'}</Text>;
   if (inline.kind === 'mark') {
     if (!settings.marks) return null;
-    return <Text style={{ color: palette.muted, fontSize: small }}>{`\u2009[${inline.text}]\u2009`}</Text>;
+    return <Text style={{ color: palette.muted, fontSize: small }}>{`\u2009${markLabel(inline.text)}\u2009`}</Text>;
   }
   if (inline.kind === 'note') {
     const note = notes.get(inline.note!);

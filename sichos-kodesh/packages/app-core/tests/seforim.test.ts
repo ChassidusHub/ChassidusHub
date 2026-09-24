@@ -6,7 +6,7 @@ import { emptyReadingState, parseReadingState, recentPlaces, withBookmarkToggled
 import { authorSections, chooseEdition, citation, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, unitPosition, workKind } from '../src/seforim/seforimModel.js';
 import { searchNames } from '../src/seforim/searchNames.js';
 import { fetchFromSefaria, TextLoadError } from '../src/seforim/sefariaText.js';
-import { parseTextObject, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
+import { markLabel, parseTextObject, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
 
 // Invented works and texts in the catalog's shape - not real editions.
 const tanya: CatalogWork = {
@@ -150,6 +150,13 @@ describe('searching names', () => {
     expect(searchNames(works, contentsOf, 'פרק א').map((h) => h.unit?.id)).toEqual(['part1/1', 'part1/app/1']);
     expect(searchNames(works, contentsOf, 'תניא הסכמות').map((h) => h.unit?.id)).toEqual(['part1/app/1']);
     expect(searchNames(works, contentsOf, 'x')).toEqual([]);
+  });
+});
+
+describe('markers', () => {
+  it('are bracketed once, whether or not Sefaria bracketed them', () => {
+    expect(markLabel('[מ: כד כסלו]')).toBe('[מ: כד כסלו]');
+    expect(markLabel(' 5b ')).toBe('[5b]');
   });
 });
 
