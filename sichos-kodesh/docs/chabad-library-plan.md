@@ -247,6 +247,20 @@ section 5 has it. WP11 reads Sefaria through its API
   the per-edition rights gate. Includes mapping the seven existing
   collections, with tests that every existing item id survives.
 
+**Built** (`packages/works`; its README has the details):
+
+- The registry names the Baal Shem Tov, the Maggid and the seven Rebbeim.
+- It holds every work chabadlibrary.org lists (73, from a snapshot of its
+  tree, which still answers), each with an id, an English title and a
+  genre.
+- It attaches Sefaria's 12 Chabad texts to the same works, each copy with
+  its licence.
+- The seven collections map in as works (`likkutei-sichos`,
+  `sefer-hamaamarim-melukat` and so on), and every bundled item id
+  survives as a unit id (tested).
+- The gate is per edition: the stricter of the licence and a per-source
+  decision. A test holds it to the catalog's per-collection table.
+
 ### WP10 - `packages/chabadlibrary-index`
 
 - A polite crawler for the tree and pages, like the mafteiach sections
