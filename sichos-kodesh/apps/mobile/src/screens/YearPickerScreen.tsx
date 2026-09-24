@@ -55,6 +55,9 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
 
       <CategoryRow label={t.browseAnyYear} onPress={() => navigation.navigate('BrowseYears')} />
 
+      {/* Phone only: the library of catalog schema 2 (docs/offline-plan.md WP4b). */}
+      <CategoryRow label={t.libraryLink} onPress={() => navigation.navigate('Library')} />
+
       <ContinueSection />
     </Screen>
   );

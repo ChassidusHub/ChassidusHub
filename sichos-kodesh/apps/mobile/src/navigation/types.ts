@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { PdfSection } from '@sichos-kodesh/catalog';
+import type { LibraryCollectionId, PdfSection } from '@sichos-kodesh/catalog';
 
 /** Which list an occasion was reached from - decides the fallback "back" destination (see routes/catalogRoutes.ts), mirroring the web's distinct /follow, /browse, /this-week-all-years and /occasion-all-years URL families. */
 export type OccasionRouteParams =
@@ -58,7 +58,27 @@ export type RootStackParamList = {
     driveFileId: string;
     resourceKey: string | null;
     label: string;
+    /** Set for a library item's PDF (no farbrengen behind it): back goes to the item, and there is no reading position to keep. */
+    library?: { collection: LibraryCollectionId; id: string };
   };
+
+  /** The library: every collection beyond the dated farbrengens (Android only; WP4b). */
+  Library: undefined;
+
+  /** One collection, on one of its browse axes. */
+  LibraryCollection: { collection: LibraryCollectionId; axis?: string };
+
+  /** One group of an axis: a volume, a year, a parsha, a masechta. */
+  LibraryGroup: { collection: LibraryCollectionId; axis: string; slug: string };
+
+  /** One item: its facts, files and recordings. */
+  LibraryItem: { collection: LibraryCollectionId; id: string };
+
+  /** Farbrengens by mafteiach's moadim or parshiyos. */
+  OccasionGroups: { axis: 'moadim' | 'parshiyos' };
+
+  /** The farbrengens of one moed or parsha, every year. */
+  OccasionGroup: { axis: 'moadim' | 'parshiyos'; slug: string };
 
   Search: undefined;
 
@@ -105,6 +125,12 @@ export type DownloadedScreenProps = NativeStackScreenProps<RootStackParamList, '
 export type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 export type DownloadSettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'DownloadSettings'>;
 export type OfflineScreenProps = NativeStackScreenProps<RootStackParamList, 'Offline'>;
+export type LibraryScreenProps = NativeStackScreenProps<RootStackParamList, 'Library'>;
+export type LibraryCollectionScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryCollection'>;
+export type LibraryGroupScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryGroup'>;
+export type LibraryItemScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryItem'>;
+export type OccasionGroupsScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionGroups'>;
+export type OccasionGroupScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionGroup'>;
 export type AboutScreenProps = NativeStackScreenProps<RootStackParamList, 'About'>;
 export type PrivacyScreenProps = NativeStackScreenProps<RootStackParamList, 'Privacy'>;
 export type AllYearsThisWeekScreenProps = NativeStackScreenProps<RootStackParamList, 'AllYearsThisWeek'>;

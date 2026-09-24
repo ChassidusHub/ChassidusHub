@@ -9,6 +9,7 @@ import type { PdfViewerScreenProps } from '../navigation/types';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
 import { getOccasionProgress, getPdfPage, readProgressMap, recordPdfProgress } from '../player/progressStore';
 import { useInvertPdfInDarkMode, useInvertPdfInLightMode } from '../settings/invertPdfInDarkMode';
+import type { BackTarget } from '../ui/BackLink';
 import { Button } from '../ui/Button';
 import { OfflineNote } from '../ui/OfflineNote';
 import { Screen } from '../ui/Screen';
@@ -31,7 +32,7 @@ type LoadState = { status: 'loading'; percent: number | null; path: string | nul
  */
 export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const catalog = useCatalog();
-  const { driveFileId, resourceKey, label, hebrewYear, occasionId } = route.params;
+  const { driveFileId, resourceKey, label, hebrewYear, occasionId, library } = route.params;
   const { t, isRtl } = useTranslation();
   const { colors, baseScheme, setSchemeOverride } = useTheme();
   const [invertInDarkMode, setInvertInDarkMode] = useInvertPdfInDarkMode();
@@ -41,7 +42,11 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const lastPageRef = useRef<{ page: number; total: number | null } | null>(null);
 
   const entry = useMemo(() => catalog[hebrewYear]?.find((item) => item.occasionId === occasionId) ?? null, [catalog, hebrewYear, occasionId]);
-  const pdf = useMemo(() => entry?.pdfs.find((item) => item.driveFileId === driveFileId) ?? null, [driveFileId, entry]);
+  // A library item's PDF has no farbrengen behind it: the route carries all the viewer needs, and there is no reading position to keep.
+  const pdf = useMemo(
+    () => (library ? { label, driveFileId, resourceKey: resourceKey ?? undefined } : (entry?.pdfs.find((item) => item.driveFileId === driveFileId) ?? null)),
+    [driveFileId, entry, label, library, resourceKey],
+  );
   const savedPage = useMemo(() => (entry ? getPdfPage(getOccasionProgress(readProgressMap(), entry.hebrewYear, entry.occasionId), driveFileId) : undefined), [driveFileId, entry]);
   // The web's `.pdf-inverted .pdf-page canvas { filter: invert(1) hue-rotate(180deg) }`,
   // applied to the native viewer through React Native's own `filter` style.
@@ -61,7 +66,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
     setSchemeOverride(wanted === baseScheme ? null : wanted);
     return () => setSchemeOverride(null);
   }, [baseScheme, inverted, setSchemeOverride]);
-  const backTarget = { name: 'Farbrengen', params: { kind: 'browse', hebrewYear, occasionId } } as const;
+  const backTarget: BackTarget = library ? { name: 'LibraryItem', params: library } : { name: 'Farbrengen', params: { kind: 'browse', hebrewYear, occasionId } };
   const colourToggle = (
     <Pressable onPress={() => setInverted(!inverted)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.pdfInvertToggle} accessibilityState={{ selected: inverted }} style={({ pressed }) => [styles.headerAction, pressed && { backgroundColor: colors.cardBg }]}>
       <Contrast size={20} color={inverted ? colors.accent : colors.muted} />
@@ -119,7 +124,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
     [],
   );
 
-  if (!pdf || !entry) {
+  if (!pdf || (!entry && !library)) {
     return (
       <Screen scroll={false} header={<ScreenHeader back={backTarget} title={label} inset />}>
         <View style={styles.status}>

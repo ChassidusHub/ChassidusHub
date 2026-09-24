@@ -204,6 +204,23 @@ with no internet at all:
   player bar while an import or export runs. About lists the imported
   packs.
 
+## Phone-only: the library
+
+Home > Library (`src/library/libraryModel.ts`, `src/screens/library/`)
+browses catalog schema 2's `library`:
+
+- the farbrengens by mafteiach's 101 moadim and 53 parshiyos;
+- each collection on its own axes (Likkutei Sichos by volume, parsha or
+  moed; maamorim by year or Melukat volume; yomanim and reshimos by year;
+  michtavim by moed or year; hadranim by masechta or year; JEM events by
+  year or type);
+- each item's facts, recordings and PDFs.
+
+Library audio plays through the same player and progress store, keyed by
+a negative per-item playlist id (`playlistOccasionId`). Library PDFs open
+in `PdfViewerScreen` with a `library` route param (no farbrengen, no
+saved page). The bundled library is read on first use, not at start-up.
+
 ## Not built yet
 
 - A gap-handling UI with manual overrides (a gap just shows a plain
