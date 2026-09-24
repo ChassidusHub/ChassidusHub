@@ -74,6 +74,18 @@ export type RootStackParamList = {
   /** One item: its facts, files and recordings. */
   LibraryItem: { collection: LibraryCollectionId; id: string };
 
+  /** The seforim of the Rebbeim (catalog schema 3; docs/chabad-library-plan.md WP13). */
+  Seforim: undefined;
+
+  /** One sefer: its editions and contents; `path` drills into a part (indexes into the contents). */
+  Work: { workId: string; path?: number[] };
+
+  /** One unit of a sefer, in one edition (`source` is its index in the work's sources). */
+  Reader: { workId: string; unitId: string; source?: number };
+
+  /** Search the seforim: names everywhere, text in the seforim whose pack is on the phone. */
+  SeforimSearch: undefined;
+
   /** Farbrengens by mafteiach's moadim or parshiyos. */
   OccasionGroups: { axis: 'moadim' | 'parshiyos' };
 
@@ -130,6 +142,10 @@ export type LibraryCollectionScreenProps = NativeStackScreenProps<RootStackParam
 export type LibraryGroupScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryGroup'>;
 export type LibraryItemScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryItem'>;
 export type OccasionGroupsScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionGroups'>;
+export type SeforimScreenProps = NativeStackScreenProps<RootStackParamList, 'Seforim'>;
+export type WorkScreenProps = NativeStackScreenProps<RootStackParamList, 'Work'>;
+export type ReaderScreenProps = NativeStackScreenProps<RootStackParamList, 'Reader'>;
+export type SeforimSearchScreenProps = NativeStackScreenProps<RootStackParamList, 'SeforimSearch'>;
 export type OccasionGroupScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionGroup'>;
 export type AboutScreenProps = NativeStackScreenProps<RootStackParamList, 'About'>;
 export type PrivacyScreenProps = NativeStackScreenProps<RootStackParamList, 'Privacy'>;

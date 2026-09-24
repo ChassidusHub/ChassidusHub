@@ -1,6 +1,6 @@
 {
   "name": "@sichos-kodesh/mobile",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "scripts": {
     "preandroid": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/pack-format",
@@ -32,6 +32,8 @@
     "@sichos-kodesh/catalog": "^0.1.0",
     "@sichos-kodesh/kvius-engine": "^0.1.0",
     "@sichos-kodesh/pack-format": "^0.1.0",
+    "@sichos-kodesh/sefaria-index": "^0.1.0",
+    "@sichos-kodesh/works": "^0.1.0",
     "fuse.js": "^7.5.0",
     "lucide-react-native": "^1.47.0",
     "react": "19.2.3",

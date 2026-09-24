@@ -2,6 +2,7 @@ package com.sichoskodeshmobile.offline
 
 import android.app.Activity
 import android.content.Intent
+import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import android.os.Build
 import android.os.StatFs
@@ -57,6 +58,8 @@ class PackModule(private val context: ReactApplicationContext) : ReactContextBas
     }
 
     private val io = Executors.newSingleThreadExecutor()
+    /** Searches run apart from imports, so a long import never holds a search up. */
+    private val searchIo = Executors.newSingleThreadExecutor()
     private var pendingPick: Promise? = null
 
     init {
@@ -240,6 +243,43 @@ class PackModule(private val context: ReactApplicationContext) : ReactContextBas
         Arguments.createMap().apply {
             putString("sha256", hex(digest.digest()))
             putDouble("bytes", bytes.toDouble())
+        }
+    }
+
+    // ── Searching a sefer ─────────────────────────────────────────────────────
+
+    /**
+     * Searches one work's index (a text pack's `search` object, an SQLite
+     * FTS4 database under `indexes/`, relative to the files directory) with
+     * Android's own SQLite, read-only. `match` is an FTS query built by
+     * pack-format's `searchIndexQuery`. The query below is pack-format's
+     * `SEARCH_INDEX_QUERY` for index format 1; an index of another format is
+     * refused rather than misread. Resolves `{ unit, source }[]` in reading
+     * order.
+     */
+    @ReactMethod
+    fun searchIndex(dest: String, match: String, limit: Double, promise: Promise) {
+        searchIo.execute {
+            try {
+                val file = File(context.filesDir, safeRelative(dest))
+                val rows = Arguments.createArray()
+                SQLiteDatabase.openDatabase(file.absolutePath, null, SQLiteDatabase.OPEN_READONLY or SQLiteDatabase.NO_LOCALIZED_COLLATORS).use { db ->
+                    val format = db.rawQuery("SELECT value FROM meta WHERE key = 'format'", null).use { if (it.moveToFirst()) it.getString(0) else null }
+                    if (format != "1") throw IllegalStateException("search index format $format")
+                    val max = limit.toInt().coerceIn(1, 500)
+                    db.rawQuery("SELECT rows.unit, rows.source FROM search JOIN rows ON rows.id = search.docid WHERE search MATCH ? ORDER BY rows.id LIMIT $max", arrayOf(match)).use { cursor ->
+                        while (cursor.moveToNext()) {
+                            rows.pushMap(Arguments.createMap().apply {
+                                putString("unit", cursor.getString(0))
+                                putInt("source", cursor.getInt(1))
+                            })
+                        }
+                    }
+                }
+                promise.resolve(rows)
+            } catch (e: Exception) {
+                promise.reject("SEARCH_FAILED", e.message ?: "SEARCH_FAILED", e)
+            }
         }
     }
 

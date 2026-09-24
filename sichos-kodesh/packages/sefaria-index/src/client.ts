@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { sefariaRefPath } from '@sichos-kodesh/works';
 import type { SefariaIndex, SefariaTextResponse } from './types.js';
+import { SEFARIA_BASE_URL, indexUrl, textUrl } from './urls.js';
+
+export { SEFARIA_BASE_URL, indexUrl, textUrl };
 
 /**
  * A polite Sefaria reader:
@@ -17,7 +19,6 @@ import type { SefariaIndex, SefariaTextResponse } from './types.js';
 export const DEFAULT_USER_AGENT =
   'SichosKodeshAppResearch/0.1 (+https://github.com/shmuky/Sichos-Kodesh; an offline library of Chabad texts with their licences; see repo for contact)';
 
-export const SEFARIA_BASE_URL = 'https://www.sefaria.org';
 
 export interface SefariaClientOptions {
   fetchFn?: typeof fetch;
@@ -52,15 +53,6 @@ export class SefariaError extends Error {
   }
 }
 
-const LANGUAGE_FAMILY = { he: 'hebrew', en: 'english' } as const;
-
-export function indexUrl(title: string, baseUrl = SEFARIA_BASE_URL): string {
-  return `${baseUrl}/api/v2/index/${sefariaRefPath(title)}?with_content_counts=1`;
-}
-
-export function textUrl(ref: string, language: 'he' | 'en', version: string, baseUrl = SEFARIA_BASE_URL): string {
-  return `${baseUrl}/api/v3/texts/${sefariaRefPath(ref)}?version=${encodeURIComponent(`${LANGUAGE_FAMILY[language]}|${version}`)}`;
-}
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 

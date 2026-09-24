@@ -159,8 +159,8 @@ if (existsSync(path.join(libraryDir, 'meta.json'))) {
   console.log(`Catalog ${CATALOG_VERSION} with the library (schema 2): ${counts}; ${(libraryManifest.bytes / 1024 / 1024).toFixed(2)} MB, sha256 ${libraryManifest.sha256.slice(0, 12)}…`);
 
   // Schema 3 - schema 2 plus the works the phone bundles.
-  if (existsSync(path.join(worksDir, 'index.json'))) {
-    const index = JSON.parse(await readFile(path.join(worksDir, 'index.json'), 'utf8')) as Record<string, unknown>;
+  if (existsSync(path.join(worksDir, 'works.json'))) {
+    const index = JSON.parse(await readFile(path.join(worksDir, 'works.json'), 'utf8')) as Record<string, unknown>;
     const contents: Record<string, unknown> = {};
     const contentsDir = path.join(worksDir, 'contents');
     for (const name of existsSync(contentsDir) ? (await readdir(contentsDir)).filter((n) => n.endsWith('.json')).sort() : []) {
