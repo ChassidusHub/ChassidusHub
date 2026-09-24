@@ -1,11 +1,13 @@
 name: Android Signed Release APK
 
-# Manual only. Builds the signed release APKs for phones and releases them:
+# Builds the signed release APKs for phones and attaches them to a
+# *draft* GitHub Release to publish when it looks right:
 #
-#   - From GitHub's website (a phone will do): Actions -> Android Signed
-#     Release APK -> Run workflow, type the version (v1.2.3) and run. The
-#     APKs are attached to a *draft* GitHub Release to publish when it
-#     looks right; publishing creates the tag if it isn't there.
+#   - Push a tag like v1.2.3 and CI does the rest. The tag must match
+#     the app's versionName in apps/mobile/android/app/build.gradle.
+#   - Or from GitHub's website (a phone will do): Actions -> Android
+#     Signed Release APK -> Run workflow, type the version (v1.2.3) and
+#     run; publishing the draft creates the tag if it isn't there.
 #   - A manual run with the version left empty only builds them - as
 #     downloadable workflow artifacts to try first.
 #
@@ -21,6 +23,9 @@ name: Android Signed Release APK
 # build.
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       version:
@@ -32,12 +37,28 @@ permissions:
   contents: write
 
 jobs:
+  # The version is the pushed tag, or the manual input.
+  setup:
+    name: Resolve the version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
   # A release gets its draft made once, up front, and the build attaches
   # its APKs to it - each making its own could race into duplicate drafts.
   # Skipped when nothing is being released.
   draft:
     name: Draft the release
-    if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+    needs: setup
+    if: needs.setup.outputs.version != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -58,7 +79,7 @@ jobs:
         id: draft
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.version }}
+          TAG: ${{ needs.setup.outputs.version }}
         run: |
           version=$(sed -n 's/^ *versionName "\(.*\)"/\1/p' apps/mobile/android/app/build.gradle | head -1)
           if [ "$TAG" != "v$version" ]; then
@@ -87,7 +108,7 @@ jobs:
 
   release:
     name: Signed release APK
-    needs: draft
+    needs: [setup, draft]
     # Also when there's no release to draft (the draft job skipped) - but
     # not when drafting it failed.
     if: ${{ !cancelled() && needs.draft.result != 'failure' }}
@@ -182,7 +203,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ inputs.version }}" "$RUNNER_TEMP"/apks/*.apk --clobber
+          gh release upload "${{ needs.setup.outputs.version }}" "$RUNNER_TEMP"/apks/*.apk --clobber
 
       - name: Keep the APKs
         if: needs.draft.outputs.release_id == ''
