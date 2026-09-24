@@ -14,6 +14,7 @@ import { PrivacyScreen } from '../screens/PrivacyScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { DownloadedScreen } from '../screens/DownloadedScreen';
 import { DownloadSettingsScreen } from '../screens/DownloadSettingsScreen';
+import { OfflineScreen } from '../screens/OfflineScreen';
 import { MonthOccasionsScreen } from '../screens/MonthOccasionsScreen';
 import { FollowMonthListScreen } from '../screens/FollowMonthListScreen';
 import { FollowMonthOccasionsScreen } from '../screens/FollowMonthOccasionsScreen';
@@ -45,6 +46,7 @@ export function RootNavigator() {
       <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="Downloaded" component={DownloadedScreen} />
       <Stack.Screen name="DownloadSettings" component={DownloadSettingsScreen} />
+      <Stack.Screen name="Offline" component={OfflineScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="AllYearsThisWeek" component={AllYearsThisWeekScreen} />

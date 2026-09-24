@@ -19,7 +19,7 @@ Every command takes the archive root, like `sk-archive` (`--root`, or
 `SK_ARCHIVE_ROOT`).
 
 ```
-sk-pack keygen [--out file] [--force]
+sk-pack keygen [--out file] [--force] [--dev]
 sk-pack transcode --profile opus24 [--collection farbrengens] [--scope 5736-01] [--limit N] [--concurrency N] [--ffmpeg path]
 sk-pack build --scope 5736-01 [--profile src] [--sections essentials] [--max-mb 200] [--out dir]
               [--catalog-dir dir] [--catalog-version v] [--catalog-release file]
@@ -35,7 +35,10 @@ From the repository: `npm run pack -w @sichos-kodesh/pack-builder -- <command>`.
   and never commit it. Add the printed line to `TRUSTED_PACK_KEYS` in
   `packages/pack-format/src/signing.ts`, and every app built after that
   trusts packs signed with it. A second keygen refuses to overwrite the key,
-  since that would orphan every pack already signed.
+  since that would orphan every pack already signed. `--dev` writes the
+  published development key instead: debug builds of the app trust it,
+  release builds never do. It is for testing an import before the real key
+  exists.
 - **transcode** encodes the original recordings into a smaller profile,
   once each. It uses ffmpeg with libopus (`-ac 1 -c:a libopus -b:a 24k -vbr
   on -application audio -frame_duration 60`), or libmp3lame for `mp3-32`.

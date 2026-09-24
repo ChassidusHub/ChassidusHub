@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Headphones, KeyRound, RefreshCw } from 'lucide-react-native';
 import { CATALOG_CHANGELOG } from '@sichos-kodesh/catalog';
@@ -6,6 +6,10 @@ import { useCatalogInfo } from '../catalog/catalogStore';
 import { APP_VERSION, CHANGELOG } from '../changelog';
 import { useTranslation } from '../i18n/useTranslation';
 import type { AboutScreenProps } from '../navigation/types';
+import type { InstalledPack } from '../offline/objectStore';
+import { readInstalledPacks } from '../offline/objectStore';
+import { useOfflineStatus } from '../offline/offlineJobs';
+import { getPacksNative } from '../offline/packsNative';
 import { CategoryRow } from '../ui/CategoryRow';
 import { Row } from '../ui/Row';
 import { Screen } from '../ui/Screen';
@@ -49,6 +53,17 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
   const catalogInfo = useCatalogInfo();
   // The bundled changelog only knows releases up to the one this build shipped with - a newer release fetched later shows its version, with the notes the bundled list has for it if any.
   const catalogNotes = CATALOG_CHANGELOG.find((entry) => entry.version === catalogInfo.version);
+  // Android only (src/offline): the packs imported on this phone, newest first.
+  const packsAvailable = getPacksNative() !== null;
+  const { filesVersion } = useOfflineStatus();
+  const [packs, setPacks] = useState<InstalledPack[]>([]);
+
+  useEffect(() => {
+    if (!packsAvailable) return;
+    readInstalledPacks()
+      .then(setPacks)
+      .catch(() => setPacks([]));
+  }, [packsAvailable, filesVersion]);
 
   return (
     <Screen header={<ScreenHeader back={{ name: 'Settings', params: undefined }} title={t.aboutTitle} />}>
@@ -101,6 +116,24 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
       )}
       <Row label={t.catalogUpdateLabel} trailing={<RefreshCw size={18} color={colors.muted} />} onPress={() => navigation.navigate('Settings')} />
 
+      {packsAvailable && (
+        <>
+          <CategoryHeader>{t.aboutPacksSection}</CategoryHeader>
+          {packs.length === 0 ? (
+            <TabHelp>{t.aboutPacksNone}</TabHelp>
+          ) : (
+            packs.map((pack) => (
+              <View key={pack.packId} style={styles.pack}>
+                <AppText style={styles.packTitle}>
+                  {(language === 'he' ? pack.scope.label.he : pack.scope.label.en) + (pack.part ? t.offlineReportPart(pack.part.index + 1, pack.part.count) : '')}
+                </AppText>
+                <AppText style={[styles.packLine, { color: colors.muted }]}>{t.aboutPackLine(pack.importedAt.slice(0, 10), pack.added, pack.objects)}</AppText>
+              </View>
+            ))
+          )}
+        </>
+      )}
+
       <CategoryHeader>{t.aboutUpdateSection}</CategoryHeader>
       <Row label={t.aboutCheckForUpdate} trailing={<RefreshCw size={18} color={colors.muted} />} onPress={() => openUrl(PLAY_STORE_URL, PLAY_STORE_WEB_URL)} />
       <TabHelp>{t.aboutUpdatesViaPlay}</TabHelp>
@@ -121,4 +154,7 @@ const styles = StyleSheet.create({
   changelogItem: { gap: 8, marginBottom: 6 },
   bullet: { fontSize: 16, lineHeight: 22 },
   changelogText: { flex: 1, fontSize: 16, lineHeight: 22 },
+  pack: { marginBottom: 10 },
+  packTitle: { fontWeight: '700' },
+  packLine: { fontSize: 14, lineHeight: 20 },
 });

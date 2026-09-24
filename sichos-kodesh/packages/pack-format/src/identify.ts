@@ -45,8 +45,10 @@ const HEBREW_MONTHS: Record<string, string> = {
   'אדר': '06',
   'אדר א': '06A',
   "אדר א'": '06A',
+  'אדר א׳': '06A',
   'אדר ב': '06B',
   "אדר ב'": '06B',
+  'אדר ב׳': '06B',
   'ניסן': '07',
   'אייר': '08',
   'סיון': '09',
@@ -57,6 +59,8 @@ const HEBREW_MONTHS: Record<string, string> = {
   'מנחם-אב': '11',
   'אלול': '12',
 };
+
+const MONTH_NAMES_LONGEST_FIRST = Object.keys(HEBREW_MONTHS).sort((a, b) => b.length - a.length);
 
 const HEBREW_LETTER_VALUES: Record<string, number> = {
   'א': 1, 'ב': 2, 'ג': 3, 'ד': 4, 'ה': 5, 'ו': 6, 'ז': 7, 'ח': 8, 'ט': 9,
@@ -98,11 +102,17 @@ export function parseFolderScope(path: string): FolderScope | null {
       month = monthToken[1]!.toUpperCase();
       continue;
     }
-    for (const token of trimmed.split(/\s+/)) {
+    const words = trimmed.split(/\s+/);
+    for (const token of words) {
+      if (year !== null) break;
+      // Inside a longer name, a word is a year only when written as one, with a
+      // quote mark (`שיחות תשל"ו`): an occasion folder's `שבת` is not 5702.
+      if (words.length > 1 && !/[׳״'"]/.test(token)) continue;
       const gematria = hebrewYearFromGematria(token);
       if (gematria) year = gematria;
     }
-    const monthName = Object.keys(HEBREW_MONTHS).find((name) => trimmed === name || trimmed.endsWith(` ${name}`) || trimmed.startsWith(`${name} `));
+    // Longest name first, so `אדר א׳` is Adar I and not Adar followed by a word.
+    const monthName = MONTH_NAMES_LONGEST_FIRST.find((name) => trimmed === name || trimmed.endsWith(` ${name}`) || trimmed.startsWith(`${name} `));
     if (monthName) month = HEBREW_MONTHS[monthName];
   }
   if (year === null) return null;

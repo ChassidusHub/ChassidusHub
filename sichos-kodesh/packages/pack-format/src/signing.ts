@@ -1,6 +1,6 @@
 import nacl from 'tweetnacl';
 import { fromBase64, toBase64, toHex } from './base64.js';
-import { canonicalBytes } from './canonical.js';
+import { canonicalBytes, utf8Bytes } from './canonical.js';
 import type { PackManifest, PackSignature } from './manifest.js';
 
 /**
@@ -26,6 +26,24 @@ export type TrustedKeys = Record<string, string>;
  * the test suite uses its own throwaway key and never touches this.
  */
 export const TRUSTED_PACK_KEYS: TrustedKeys = {};
+
+/**
+ * The development key: derived from a published seed, so anyone can sign a
+ * pack with it (`sk-pack keygen --dev`) to test an import on a debug build.
+ * Debug builds of the app trust it; release builds never do.
+ */
+export const DEVELOPMENT_KEY_SEED_TEXT = 'sichos-kodesh development pack key v1';
+
+export function developmentKeyPair(): PackKeyPair {
+  const seed = nacl.hash(utf8Bytes(DEVELOPMENT_KEY_SEED_TEXT)).slice(0, nacl.sign.seedLength);
+  return generateKeyPair(seed);
+}
+
+/** `{ keyId: publicKey }` for the development key - for debug builds only. */
+export function developmentTrustedKeys(): TrustedKeys {
+  const { keyId, publicKey } = developmentKeyPair();
+  return { [keyId]: publicKey };
+}
 
 /** A key id is the first 16 hex characters of SHA-512 of the public key - short, and derivable by anyone holding the key. */
 export function keyIdFor(publicKeyBase64: string): string {

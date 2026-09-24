@@ -104,9 +104,8 @@ export async function reconcileStoredDownloads(records?: StoredDownloadRecord[])
   return kept;
 }
 
-export async function upsertStoredDownload(target: DownloadTarget, localPath: string): Promise<StoredDownloadRecord[]> {
-  const records = await reconcileStoredDownloads();
-  const nextRecord: StoredDownloadRecord = {
+function recordFor(target: DownloadTarget, localPath: string, downloadedAt: string): StoredDownloadRecord {
+  return {
     key: target.key,
     hebrewYear: target.hebrewYear,
     occasionId: target.occasionId,
@@ -118,9 +117,21 @@ export async function upsertStoredDownload(target: DownloadTarget, localPath: st
     resourceKey: target.resourceKey ?? null,
     section: target.section,
     localPath,
-    downloadedAt: new Date().toISOString(),
+    downloadedAt,
   };
-  const next = [...records.filter((record) => record.key !== target.key), nextRecord];
+}
+
+export async function upsertStoredDownload(target: DownloadTarget, localPath: string): Promise<StoredDownloadRecord[]> {
+  return upsertStoredDownloads([{ target, localPath }]);
+}
+
+/** Many at once (an offline pack import): one reconcile and one write, however many files. */
+export async function upsertStoredDownloads(items: Array<{ target: DownloadTarget; localPath: string }>): Promise<StoredDownloadRecord[]> {
+  const records = await reconcileStoredDownloads();
+  if (items.length === 0) return records;
+  const now = new Date().toISOString();
+  const incoming = new Map(items.map((item) => [item.target.key, recordFor(item.target, item.localPath, now)]));
+  const next = [...records.filter((record) => !incoming.has(record.key)), ...incoming.values()];
   await writeJsonArray(COMPLETED_STORAGE_KEY, next);
   return next;
 }

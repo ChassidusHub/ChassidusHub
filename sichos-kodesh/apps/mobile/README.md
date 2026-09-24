@@ -156,9 +156,56 @@ this week now", then pull down the notification shade. `adb shell cmd statusbar
 expand-notifications` does the same from a terminal, and the walkthrough
 script screenshots it.
 
+## Phone-only: offline packs and sharing
+
+Settings > Offline packs (`src/offline/`, `android/.../offline/PackModule.kt`;
+the plan is `docs/offline-plan.md`, WP4) brings farbrengens onto a phone
+with no internet at all:
+
+- **Signed packs** (`.skpack`, built by `services/pack-builder`). The
+  manifest is the ZIP's first entry. Its Ed25519 signature is checked in
+  JS (`packages/pack-format`, tweetnacl), and the delta against what the
+  phone holds is computed there too. The native module then streams the
+  ZIP once with `ZipInputStream`. It hashes every object on the way and
+  moves each into place only when its SHA-256 and size match the
+  manifest. `objects.json` and a newer `catalog.json` come in the same
+  pass, checked against the signed stamps.
+- **Shared ZIPs and folders**: what bochurim pass around, or another
+  phone's export. Every file is staged and hashed natively. A hash that a
+  trusted objects index knows is stored. A file named like a JEM
+  recording or a Drive PDF is kept only when the catalog lists it, the
+  index does not contradict it, and the phone has no copy yet. It is
+  recorded as unverified, so a signed pack's copy later replaces it. A
+  pack this build does not trust (unsigned, or signed with an unknown key)
+  is read the same way: its manifest only names the `objects/<sha256>`
+  entries, and each entry's bytes must hash to its name.
+- **Where files go.** Imported files land at the paths the downloader
+  already uses: `DocumentDir/<workerFilename>` and
+  `DocumentDir/<driveFileId>.pdf`. Each gets a `StoredDownloadRecord`
+  (`upsertStoredDownloads`), so every screen, the player and the PDF
+  viewer see them as downloaded with no new lookup. `objectStore.ts` keeps
+  the index by hash (`files/offline/held-objects.json`). Only `src` audio
+  (the original MP3) is imported for now. Opus waits until playback is
+  verified on real phones (`placement.ts`).
+- **The shared folder**, picked once through the Storage Access Framework
+  and kept across restarts (Documents/SichosKodesh):
+  - `import/`: everything dropped here is imported on launch and whenever
+    the app comes back to the foreground. A file that imported cleanly is
+    deleted.
+  - `export/`: "Share a month or a year" writes a stored ZIP here, with an
+    unsigned manifest first, Hebrew folders (`תשל״ו/תשרי/י״ג - …/`) and
+    upstream file names.
+  - `state/`: `have.json` and `device.json`, for the yeshiva station.
+- **Trust.** Release builds trust only `TRUSTED_PACK_KEYS`. Debug builds
+  (`__DEV__`) also trust the published development key, so a pack built
+  after `sk-pack keygen --dev` imports as a pack in a debug build run
+  against Metro.
+- **Progress.** One line on the Offline screen, and a strip above the
+  player bar while an import or export runs. About lists the imported
+  packs.
+
 ## Not built yet
 
-- Batch month/year downloads, zip bundling.
 - A gap-handling UI with manual overrides (a gap just shows a plain
   message right now).
 
