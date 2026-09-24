@@ -9,6 +9,8 @@ import { crawl } from '../src/crawl.js';
 import { verify } from '../src/verify.js';
 import { stats, unresolved } from '../src/report.js';
 import { exportObjectsIndex } from '../src/objectsIndex.js';
+import { importText } from '../src/importText.js';
+import type { TextRecord } from '../src/importText.js';
 
 /**
  * sk-archive: the canonical archive's command line. Every command takes
@@ -176,6 +178,32 @@ program
       const index = exportObjectsIndex(store, opts.catalogVersion);
       await writeFile(opts.out, JSON.stringify(index));
       log(`wrote ${opts.out}: ${Object.keys(index.objects).length} objects`);
+    } finally {
+      store.close();
+    }
+  });
+
+program
+  .command('import-text')
+  .description("store the Igros or Maanos (build-igros's output) as text objects - gated: kept in the archive, never packed until the rights are cleared")
+  .requiredOption('--collection <id>', 'igros or maanos')
+  .requiredOption('--dir <dir>', "packages/igros-index's build output (igros/, maanos/)")
+  .option('--dry-run', 'count what would be stored; write nothing')
+  .action(async (opts: { collection: string; dir: string; dryRun?: boolean }) => {
+    if (opts.collection !== 'igros' && opts.collection !== 'maanos') throw new Error(`--collection must be igros or maanos, not ${opts.collection}`);
+    const { letterHtml, maanehHtml, readIgrosOutput, TEXT_OBJECT_MIME } = await import('@sichos-kodesh/igros-index');
+    const output = readIgrosOutput(opts.dir);
+    const records: TextRecord[] =
+      opts.collection === 'igros'
+        ? output.letters.map((letter, index) => ({ collection: 'igros', itemId: letter.id, text: letterHtml(letter), mime: TEXT_OBJECT_MIME, label: letter.numberLabel, hebrewYear: letter.hebrewYear, ord: index + 1 }))
+        : output.maanos.map((maaneh, index) => ({ collection: 'maanos', itemId: maaneh.id, text: maanehHtml(maaneh), mime: TEXT_OBJECT_MIME, label: maaneh.numberLabel, hebrewYear: maaneh.year, ord: index + 1 }));
+    const g = globals();
+    const store = await ArchiveStore.open(g.root);
+    try {
+      const result = await importText(store, records, { author: 'igros-import', message: `import-text ${opts.collection}: ${records.length} item(s) from ${opts.dir}`, dryRun: opts.dryRun, log });
+      log(
+        `import-text ${opts.collection}${opts.dryRun ? ' (dry run)' : ''}: ${result.records} item(s); ${result.added} new object(s), ${formatBytes(result.bytes)}; ${result.changed} changed, ${result.unchanged} unchanged`,
+      );
     } finally {
       store.close();
     }

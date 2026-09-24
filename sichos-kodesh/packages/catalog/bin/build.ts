@@ -7,6 +7,7 @@ import { existsSync } from 'node:fs';
 import { MIN_HISTORICAL_YEAR } from '@sichos-kodesh/kvius-engine';
 import { buildCatalog } from '../src/buildCatalog.js';
 import { buildLibrary } from '../src/library/buildLibrary.js';
+import { buildGatedLibrary } from '../src/library/gated.js';
 import { LIBRARY_COLLECTION_IDS } from '../src/library/types.js';
 
 /**
@@ -18,6 +19,9 @@ import { LIBRARY_COLLECTION_IDS } from '../src/library/types.js';
  *   --db <path>        mafteiach.db (default: packages/mafteiach-index/mafteiach.db)
  *   --jem-db <path>    jem.db for the jemEvents collection (default: packages/jem-index/jem.db, skipped when absent)
  *   --without-jem      build the library without the jemEvents collection
+ *   --igros <dir>      also build the Igros and Maanos from packages/igros-index's output, into
+ *                      <out>/library-gated/ - gated (src/rights.ts): for local use only, never copied
+ *                      into an app, and refused when --out is inside apps/
  *   --out <dir>        default: packages/catalog/data
  */
 
@@ -32,6 +36,17 @@ const dbPath = arg('db', path.join(__dirname, '..', '..', 'mafteiach-index', 'ma
 const jemDbPath = arg('jem-db', path.join(__dirname, '..', '..', 'jem-index', 'jem.db'));
 const withJem = !process.argv.includes('--without-jem') && existsSync(jemDbPath);
 const outDir = arg('out', path.join(__dirname, '..', 'data'));
+// The Igros and Maanos are gated (src/rights.ts): refused up front when the
+// output is inside apps/, before anything is written.
+const igrosDir = arg('igros', '');
+if (igrosDir) {
+  const appsDir = path.resolve(__dirname, '..', '..', '..', 'apps');
+  const resolvedOut = path.resolve(outDir);
+  if (resolvedOut === appsDir || resolvedOut.startsWith(appsDir + path.sep)) {
+    console.error(`--igros: ${resolvedOut} is inside apps/. The Igros and Maanos are gated (src/rights.ts) and never go into an app; pass another --out.`);
+    process.exit(1);
+  }
+}
 
 const db = new DatabaseSync(dbPath, { readOnly: true });
 const byYear = buildCatalog(db);
@@ -111,3 +126,16 @@ const libraryIndexLines = [
 await writeFile(path.join(libraryDir, 'index.ts'), libraryIndexLines.join('\n'), 'utf8');
 const counts = LIBRARY_COLLECTION_IDS.map((id) => `${id} ${library.collections[id].items.length}`).join(', ');
 console.log(`Wrote the library to ${libraryDir}: ${library.moadim.length} moadim, ${library.parshiyos.length} parshiyos; ${counts}${withJem ? '' : ' (without jem.db)'}`);
+
+// The gated collections get their own folder, so copying library/ into the
+// phone can never take them along.
+if (igrosDir) {
+  const { readIgrosOutput } = await import('@sichos-kodesh/igros-index');
+  const { letters, maanos } = readIgrosOutput(igrosDir);
+  const gated = buildGatedLibrary(letters, maanos);
+  const gatedDir = path.join(outDir, 'library-gated');
+  await mkdir(gatedDir, { recursive: true });
+  await writeFile(path.join(gatedDir, 'igros.json'), JSON.stringify(gated.igros), 'utf8');
+  await writeFile(path.join(gatedDir, 'maanos.json'), JSON.stringify(gated.maanos), 'utf8');
+  console.log(`Wrote the gated collections to ${gatedDir}: igros ${gated.igros.items.length} in ${gated.igros.groups.volume!.length} volumes, maanos ${gated.maanos.items.length} in ${gated.maanos.groups.year!.length} years - local only until the rights are cleared`);
+}

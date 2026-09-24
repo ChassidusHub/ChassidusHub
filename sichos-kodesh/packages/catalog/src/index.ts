@@ -44,6 +44,10 @@ export type {
 } from './library/types.js';
 export { libraryCounts, libraryItem, moadBySlug, occasionMoadim, occasionParshiyos } from './library/lookup.js';
 export { parseCatalogLibrary } from './library/parse.js';
+export { buildGatedLibrary } from './library/gated.js';
+export type { GatedLibrary, IgrosItem, IgrosLetterInput, MaanehInput, MaanehItem } from './library/gated.js';
+export { assertShippable, GATED_COLLECTION_IDS, isShippable, SHIPPABLE_COLLECTIONS } from './rights.js';
+export type { GatedCollectionId, KnownCollectionId } from './rights.js';
 export { CATALOG_CHANGELOG } from './changelog.js';
 export type { CatalogChangelogEntry } from './changelog.js';
 export {

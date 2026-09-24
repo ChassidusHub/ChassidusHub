@@ -1,5 +1,6 @@
 import type { CatalogLibrary, CatalogRef, LibraryCollection, LibraryGroup, LibraryItemBase, OccasionGroup } from './types.js';
 import { LIBRARY_COLLECTION_IDS } from './types.js';
+import { GATED_COLLECTION_IDS } from '../rights.js';
 
 /**
  * Validates a library read from a fetched or stored release. Checks what
@@ -56,5 +57,7 @@ export function parseCatalogLibrary(value: unknown): CatalogLibrary | null {
   for (const id of LIBRARY_COLLECTION_IDS) {
     if (!isCollection(value.collections[id])) return null;
   }
+  // A library that carries a gated collection (src/rights.ts) never reaches an app.
+  if (GATED_COLLECTION_IDS.some((id) => id in (value.collections as Record<string, unknown>))) return null;
   return value as unknown as CatalogLibrary;
 }

@@ -393,9 +393,15 @@ screens), **C** the igros index (gated).
 - (B, later) `objects.json` next to `catalog.json` once the archive has
   hashes to put in it (WP3).
 - (C) New `packages/igros-index`: reads the Igros app's `data.sqlite`,
-  `tags.sqlite` and `miniletters.zip` (kept out of git; a documented
-  local input like `mafteiach.db`) into per-volume / per-year JSON with
-  cleaned HTML, tags and summaries. Gated on the publisher's permission.
+  `tags.json` and `miniletters.zip` (kept out of git; a documented local
+  input like `mafteiach.db`) into per-volume / per-year JSON with cleaned
+  HTML: 11,059 letters in 28 volumes (numbered from the printed numeral,
+  which also fixes 7 slips in the source's own numbering) and 3,761
+  maanos in 11 years. Gated on the publisher's permission:
+  `packages/catalog/src/rights.ts` holds the gate. `build-catalog
+  --igros` builds the two collections into a folder of their own. A
+  release refuses them, and so will the pack builder. `sk-archive
+  import-text` stores each letter and maaneh as a text object.
 - (later) `packages/jem-index`: transcripts, links, playlists per event.
 - Acceptance: every section crawled with counts in the README; the
   farbrengens data is byte-identical to today's (checked by rebuilding

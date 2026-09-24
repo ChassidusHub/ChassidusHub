@@ -36,6 +36,7 @@ import { CATALOG_CHANGELOG } from '../src/changelog.js';
 import { libraryCounts } from '../src/library/lookup.js';
 import { parseCatalogLibrary } from '../src/library/parse.js';
 import { LIBRARY_COLLECTION_IDS } from '../src/library/types.js';
+import { assertShippable, GATED_COLLECTION_IDS } from '../src/rights.js';
 import { CATALOG_LIBRARY_SCHEMA_VERSION, CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from '../src/version.js';
 import { catalogReleasePath, catalogReleaseTag, serializeCatalogRelease, serializeLibraryRelease } from '../src/release.js';
 import type { CatalogManifest } from '../src/release.js';
@@ -124,6 +125,13 @@ console.log(`Catalog ${CATALOG_VERSION}: ${years.length} years, ${occasions} occ
 
 // Schema 2 - the same farbrengens plus the library the phone bundles.
 if (existsSync(path.join(libraryDir, 'meta.json'))) {
+  // The Igros and Maanos are gated (src/rights.ts): a library folder that
+  // holds them is refused outright, as is any collection not cleared to ship.
+  assertShippable(
+    GATED_COLLECTION_IDS.filter((id) => existsSync(path.join(libraryDir, `${id}.json`))),
+    libraryDir,
+  );
+  assertShippable(LIBRARY_COLLECTION_IDS, 'the release');
   const meta = JSON.parse(await readFile(path.join(libraryDir, 'meta.json'), 'utf8')) as Record<string, unknown>;
   const collections: Record<string, unknown> = {};
   for (const id of LIBRARY_COLLECTION_IDS) collections[id] = JSON.parse(await readFile(path.join(libraryDir, `${id}.json`), 'utf8'));

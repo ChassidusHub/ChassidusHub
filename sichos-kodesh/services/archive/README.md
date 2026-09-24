@@ -70,7 +70,19 @@ sk-archive verify [--sample 0.02] [--full] re-hash objects; bad bytes are droppe
 sk-archive stats [--json]
 sk-archive report-unresolved [--json]      files upstream would not give us, by item
 sk-archive export-objects-index --catalog-version 1.0.0 [--out objects.json]
+sk-archive import-text --collection igros|maanos --dir <build-igros output> [--dry-run]
 ```
+
+`import-text` stores text that arrives as data rather than as a file to
+fetch: the Igros and Maanos that `packages/igros-index` builds locally.
+Each letter or maaneh becomes one `text` object, a small HTML document
+whose sha256 is its identity. It gets a `wanted` row (source
+`contribution`, url `text:<collection>/<item id>`) and a ref from its
+item, under a commit by `igros-import`. Importing the same build again
+adds nothing. An edited text gets a new object, and its item's ref moves
+to it. These two collections are gated: the archive keeps them, but no
+pack carries them until the rights are cleared
+(`packages/catalog/src/rights.ts`).
 
 Global options: `--root` (or `SK_ARCHIVE_ROOT`), `--jem-db`,
 `--mafteiach-db` (default: the databases in this repository). From the

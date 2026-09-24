@@ -114,6 +114,24 @@ It also holds 101 moadim and 53 parshiyos. That is 4.1 MB of JSON, 0.7
 MB gzipped. The phone's Hermes bytecode grows by 1.6 MB, 0.7 MB
 compressed, and the schema-2 catalog.json is 6.4 MB.
 
+## Gated collections (`rights.ts`, `library/gated.ts`)
+
+`SHIPPABLE_COLLECTIONS` says which collections may leave the machine they
+were built on, meaning bundled in an app, released in a catalog, or put in
+a pack. Every collection mafteiach and JEM index ships. The Igros and
+Maanos do not: their text comes from a commercial app's data files, so they
+stay local until Shmuly clears the rights with its publisher. Flipping them
+to `true` is that decision.
+
+- `build-catalog --igros <dir>` turns `packages/igros-index`'s output into
+  the `igros` and `maanos` collections. They have the library's item shape,
+  with one `text` ref each. They are written to `<out>/library-gated/`,
+  never into `library/`. The command refuses an `--out` inside `apps/`.
+- `parseCatalogLibrary` rejects a library that carries either collection.
+- `release-files` refuses a library folder that holds `igros.json` or
+  `maanos.json`, so no release can include them.
+- The pack builder (WP3) reads the same table.
+
 ## Catalog releases (`version.ts`, `changelog.ts`, `release.ts`, `bin/release.ts`)
 
 The catalog data has its own version, changelog and release tags,
