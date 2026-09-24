@@ -70,6 +70,9 @@ export type RootStackParamList = {
   /** Download settings (web: `/settings/downloads`) */
   DownloadSettings: undefined;
 
+  /** Settings > Offline packs: the shared folder, imports and exports (Android only; no web route). */
+  Offline: undefined;
+
   About: undefined;
 
   Privacy: undefined;
@@ -101,6 +104,7 @@ export type SearchScreenProps = NativeStackScreenProps<RootStackParamList, 'Sear
 export type DownloadedScreenProps = NativeStackScreenProps<RootStackParamList, 'Downloaded'>;
 export type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 export type DownloadSettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'DownloadSettings'>;
+export type OfflineScreenProps = NativeStackScreenProps<RootStackParamList, 'Offline'>;
 export type AboutScreenProps = NativeStackScreenProps<RootStackParamList, 'About'>;
 export type PrivacyScreenProps = NativeStackScreenProps<RootStackParamList, 'Privacy'>;
 export type AllYearsThisWeekScreenProps = NativeStackScreenProps<RootStackParamList, 'AllYearsThisWeek'>;

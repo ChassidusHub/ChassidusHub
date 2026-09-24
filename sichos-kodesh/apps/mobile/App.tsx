@@ -17,12 +17,14 @@ import { useAutoCatalogUpdate } from './src/catalog/catalogUpdater';
 import { DownloadProvider } from './src/download/DownloadProvider';
 import { useAutoDownloadSync } from './src/download/useAutoDownloadSync';
 import { useDownloadRetention } from './src/download/useDownloadRetention';
+import { useOfflineAutoImport } from './src/offline/useOfflineAutoImport';
 import { LanguageProvider } from './src/i18n/LanguageProvider';
 import { PlayerProvider } from './src/player/PlayerProvider';
 import { hydrateProgressStore } from './src/player/progressStore';
 import { onNavigationStateChange, useConnectivityRecheckTriggers } from './src/network/useConnectivityRecheckTriggers';
 import { ConnectivityBanner, useConnectivityBannerVisible } from './src/components/ConnectivityBanner';
 import { DownloadProgressBar } from './src/components/DownloadProgressBar';
+import { OfflineActivityBar } from './src/components/OfflineActivityBar';
 import { GlobalPlayerBar } from './src/components/GlobalPlayerBar';
 import { navigationRef } from './src/navigation/navigationRef';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -43,6 +45,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       Downloaded: 'downloaded',
       Settings: 'settings',
       DownloadSettings: 'settings/downloads',
+      Offline: 'settings/offline',
     },
   },
 };
@@ -56,6 +59,7 @@ function AppShell() {
   useAutoCatalogUpdate();
   useAutoDownloadSync();
   useDownloadRetention();
+  useOfflineAutoImport();
   useConnectivityRecheckTriggers();
   useBackgroundSyncScheduling();
   useNotificationPermissionOnLaunch();
@@ -91,8 +95,9 @@ function AppShell() {
           </NavigationContainer>
         </View>
       </SafeAreaInsetsContext.Provider>
-      {/* One bottom container, not two - DownloadProgressBar and GlobalPlayerBar each hide themselves independently and stack here. The safe-area inset lives here once. */}
+      {/* One bottom container, not two - OfflineActivityBar, DownloadProgressBar and GlobalPlayerBar each hide themselves independently and stack here. The safe-area inset lives here once. */}
       <View style={{ paddingBottom: insets.bottom }}>
+        <OfflineActivityBar />
         <DownloadProgressBar />
         <GlobalPlayerBar />
       </View>

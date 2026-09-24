@@ -42,9 +42,14 @@ program
   .description('create the pack signing key (once); prints the public half for TRUSTED_PACK_KEYS')
   .option('--out <file>', 'key file (default <root>/keys/pack-signing.json)')
   .option('--force', 'replace an existing key (every pack signed with it stops verifying)')
-  .action(async (opts: { out?: string; force?: boolean }) => {
+  .option('--dev', 'write the published development key instead (debug builds of the app trust it; release builds never do)')
+  .action(async (opts: { out?: string; force?: boolean; dev?: boolean }) => {
     const file = opts.out ?? defaultKeyFile(root());
-    const pair = await createKeyFile(file, { force: opts.force });
+    const pair = await createKeyFile(file, { force: opts.force, development: opts.dev });
+    if (opts.dev) {
+      log(`wrote the development key to ${file}: packs signed with it import on debug builds only`);
+      return;
+    }
     log(`wrote ${file} (keep an offline copy; never commit it)`);
     log(`key id:     ${pair.keyId}`);
     log(`public key: ${pair.publicKey}`);

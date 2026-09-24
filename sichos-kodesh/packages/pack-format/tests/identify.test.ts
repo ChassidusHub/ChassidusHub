@@ -8,6 +8,10 @@ describe('folder scopes', () => {
     expect(parseFolderScope('5748-06A/x.mp3')).toEqual({ hebrewYear: 5748, month: '06A' });
     expect(parseFolderScope('תשמ"ח/תשרי/x.mp3')).toEqual({ hebrewYear: 5748, month: '01' });
     expect(parseFolderScope('שיחות תשל"ו/x.mp3')).toEqual({ hebrewYear: 5736 });
+    // The phone's export: gershayim and geresh, and Adar I/II not read as Adar.
+    expect(parseFolderScope('תשמ״ו/אדר א׳/י״א - שבת/x.mp3')).toEqual({ hebrewYear: 5746, month: '06A' });
+    expect(parseFolderScope("תשמ\"ו/אדר ב'/x.mp3")).toEqual({ hebrewYear: 5746, month: '06B' });
+    expect(parseFolderScope('תשל״ו/אדר/x.mp3')).toEqual({ hebrewYear: 5736, month: '06' });
     expect(parseFolderScope('random/x.mp3')).toBeNull();
     expect(parseFolderScope('x.mp3')).toBeNull();
   });

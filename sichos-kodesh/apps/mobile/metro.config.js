@@ -18,6 +18,13 @@ const config = {
   watchFolders: [workspaceRoot],
   resolver: {
     nodeModulesPaths: [path.resolve(projectRoot, 'node_modules'), path.resolve(workspaceRoot, 'node_modules')],
+    // tweetnacl (the pack signature check in packages/pack-format) probes
+    // `require('crypto')` for a random source it only needs to make keys;
+    // the app only verifies, so Node's crypto resolves to an empty module.
+    resolveRequest: (context, moduleName, platform) => {
+      if (moduleName === 'crypto') return { type: 'empty' };
+      return context.resolveRequest(context, moduleName, platform);
+    },
   },
 };
 

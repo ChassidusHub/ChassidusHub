@@ -454,7 +454,7 @@ next to the original) were sent to Shmuly; the default profile waits for
 his choice. Not built yet: `upload` (R2) and `catalog-bundle`, which
 belong with WP5's pack API.
 
-### WP4 - the phone: object store, import, community zips, export (`apps/mobile`)
+### WP4 - the phone: object store, import, community zips, export (`apps/mobile`) (built; device check open)
 
 1. **Object store + index.** `files/objects/<sha256>` in app-private
    storage with an index `(kind, sourceId, profile) -> sha256`. The
@@ -492,6 +492,45 @@ UI: Settings > Offline gains the folder chooser, import and export;
 About lists installed packs. Milestone M2: the APK plus the Tishrei pack
 copied by hand plays offline with no station; a zip exported on one phone
 imports on another.
+
+**Built** (`apps/mobile/src/offline/`, `PackModule.kt`; the mobile README
+has the details). Items 2 to 4 are done. Item 5 waits for real phones.
+Where the build differs from the text above:
+
+- **Objects stay at the downloader's paths.** An imported object lands
+  where the downloader writes, at `DocumentDir/<workerFilename>` or
+  `<driveFileId>.pdf`, not under `files/objects/<sha256>`. It gets a
+  `StoredDownloadRecord`, so no resolver or screen changed. The index by
+  hash is `offline/held-objects.json`. It is what `have.json` lists, and
+  imports use it to dedupe. Downloads are hashed into it the first time
+  `have.json` is written (the one-time migration), then incrementally.
+- **Only `src` audio for now.** A pack in another profile imports its PDFs
+  and counts its recordings as "a format this version does not play yet".
+  One line in `placement.ts` opens Opus once item 5 passes.
+- **Untrusted packs still bring their files.** Release builds trust only
+  `TRUSTED_PACK_KEYS`, which stays empty until the real key is generated.
+  A pack signed with any other key, or unsigned, is imported as a shared
+  ZIP, and its manifest names the `objects/<sha256>` entries the way a
+  file name would. Each entry must hash to its name, and each file is
+  kept unverified: a signed copy replaces it later. So M2 can run on a
+  release APK before the key exists. Debug builds also trust the
+  published development key (`sk-pack keygen --dev`).
+- **A shared file known only by its name** is kept when the catalog lists
+  its id, rather than when its folder gives a scope. The catalog is the
+  stronger check, and the id places the file exactly.
+- **Triggers**: launch, every return to the foreground, and "ייבוא
+  חבילות". There is no USB-disconnect receiver. The station user unplugs
+  and opens the app, which is the resume trigger.
+  `MANAGE_EXTERNAL_STORAGE` is not requested: the Storage Access Framework
+  folder is enough.
+
+Not verified here: a device run. This container has no `/dev/kvm`, so
+there is no emulator. What was verified: Java's `ZipInputStream` streams
+the real M1 Tishrei pack (manifest first, 33 objects, every hash
+matching). The export writer's stored ZIP passes `unzip -t` with Hebrew
+paths. The JS runs end to end in Jest against a fake native module, with
+a pack signed by the development key. M2 on a real phone is Shmuly's
+check.
 
 ### WP4b - library browsers + per-collection auto-download (phone only; after WP2b)
 

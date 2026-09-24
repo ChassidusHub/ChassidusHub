@@ -1,7 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { PackKeyPair } from '@sichos-kodesh/pack-format';
-import { generateKeyPair, keyIdFor } from '@sichos-kodesh/pack-format';
+import { developmentKeyPair, generateKeyPair, keyIdFor } from '@sichos-kodesh/pack-format';
 
 /**
  * The signing key lives in `<archive>/keys/pack-signing.json` (mode 0600)
@@ -25,9 +25,9 @@ async function exists(file: string): Promise<boolean> {
 }
 
 /** Generates a key pair and writes it; refuses to overwrite a key unless `force`. */
-export async function createKeyFile(file: string, options: { force?: boolean; seed?: Uint8Array } = {}): Promise<PackKeyPair> {
+export async function createKeyFile(file: string, options: { force?: boolean; seed?: Uint8Array; development?: boolean } = {}): Promise<PackKeyPair> {
   if (!options.force && (await exists(file))) throw new Error(`${file} already exists; a new key would orphan every pack signed with it (use --force to replace it)`);
-  const pair = generateKeyPair(options.seed);
+  const pair = options.development ? developmentKeyPair() : generateKeyPair(options.seed);
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, `${JSON.stringify(pair, null, 2)}\n`, { mode: 0o600 });
   return pair;

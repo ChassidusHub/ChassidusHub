@@ -15,6 +15,8 @@ import type { SettingsScreenProps } from '../navigation/types';
 import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
 import { useInvertPdfInDarkMode } from '../settings/invertPdfInDarkMode';
 import { useNotificationSettings } from '../settings/notificationSettings';
+import { getOfflineFolder, useOfflineStatus } from '../offline/offlineJobs';
+import { getPacksNative } from '../offline/packsNative';
 import type { NotificationSettings } from '../settings/notificationSettings';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
@@ -75,6 +77,13 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [usage, setUsage] = useState<number | null>(null);
   // Phone only (see src/background) - a web app has no notifications of its own here.
   const notificationsAvailable = isBackgroundSyncAvailable();
+  // Android only (see src/offline): packs, shared ZIPs and the station folder.
+  const packsAvailable = getPacksNative() !== null;
+  const { folder: offlineFolder } = useOfflineStatus();
+
+  useEffect(() => {
+    if (packsAvailable) getOfflineFolder().catch(() => undefined);
+  }, [packsAvailable]);
 
   useEffect(() => {
     getDownloadStorageUsage(Object.values(catalog).flat())
@@ -142,6 +151,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
       <SettingsGroup title={t.offlineGroup}>
         <SettingRow label={t.downloadSettingsTitle} value={offlineSummary} chevron onPress={() => navigation.navigate('DownloadSettings')} first />
         <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} chevron onPress={() => navigation.navigate('Downloaded')} />
+        {packsAvailable && <SettingRow label={t.offlinePacksLink} value={offlineFolder ? t.offlineSummaryFolder : t.offlineSummaryNoFolder} chevron onPress={() => navigation.navigate('Offline')} />}
       </SettingsGroup>
 
       {/* The list of farbrengens itself has its own releases (packages/catalog) - the phone fetches a newer one from api.sk.shmuky.dev on its own once a day, and on demand here. */}

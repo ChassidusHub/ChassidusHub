@@ -28,3 +28,15 @@ describe('signing', () => {
     expect(signManifest(a, key).signature?.sig).toBe(signManifest(b, key).signature?.sig);
   });
 });
+
+describe('the development key', () => {
+  it('is the same key on every machine, and a pack signed with it verifies only where it is trusted', async () => {
+    const { developmentKeyPair, developmentTrustedKeys, signManifest, verifyManifest } = await import('../src/signing.js');
+    const { fixtureManifest } = await import('./fixtures.js');
+    expect(developmentKeyPair()).toEqual(developmentKeyPair());
+    expect(Object.keys(developmentTrustedKeys())).toEqual([developmentKeyPair().keyId]);
+    const signed = signManifest(fixtureManifest(), developmentKeyPair());
+    expect(verifyManifest(signed, developmentTrustedKeys())).toEqual({ ok: true, keyId: developmentKeyPair().keyId });
+    expect(verifyManifest(signed)).toEqual({ ok: false, reason: 'unknown-key' });
+  });
+});
