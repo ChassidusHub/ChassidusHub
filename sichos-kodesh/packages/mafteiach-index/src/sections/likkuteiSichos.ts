@@ -25,9 +25,6 @@ export const LS_ENTRY = { parsha: 'bereshit', moad: 'rosh_hashanah' } as const;
 const SICHA_BUTTON_ID = /^likkut_sicha_(\d+)_(\d+)__button$/;
 const KITZUR_HREF = /\/likkutei_sichos\/(\d+)\/kitzur/;
 
-/** How many volumes past the menu's last one the crawl looks at (two exist as of 2026-09). */
-const LS_MAX_UNLISTED_VOLUMES = 5;
-
 const ONES = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
 const TENS = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
 
@@ -127,26 +124,33 @@ export async function crawlLikkuteiSichos(ctx: SectionContext): Promise<void> {
     addSichos(parsed);
   }
 
-  // The volume menu stops at 39, but the site serves volumes past it (40,
-  // "ח"מ", and 41, the "מלוקט" sichos) and the parsha/moad pages list their
-  // sichos. Read on past the menu's last volume until a page lists none of
-  // its own; a pilot run (`limit`) skips this.
-  if (ctx.limit === undefined) {
-    let next = Math.max(0, ...volumes.map((v) => Number(v.slug)).filter(Number.isInteger)) + 1;
-    for (let probed = 0; probed < LS_MAX_UNLISTED_VOLUMES; probed += 1, next += 1) {
-      const parsed = parseLsVolumePage(await fetchPage(ctx, jsTwinUrl(lsVolumePath(next))));
-      if (parsed.length === 0 || parsed.some((record) => record.volume !== next)) break;
-      volumes.push({ slug: String(next), name: hebrewNumeral(next), ord: volumes.length + 1 });
-      addSichos(parsed);
-    }
-  }
-
   const grouped: Array<{ kind: 'parsha' | 'moad'; nav: NavEntry[]; pages: MembershipPage[] }> = [];
   for (const kind of ['parsha', 'moad'] as const) {
     const entry = await fetchPage(ctx, jsTwinUrl(lsGroupedPath(kind, LS_ENTRY[kind])));
     const nav = parseLsNav(entry, kind);
     const pages = (await fetchEach(ctx, `by_${kind}`, nav, (n) => jsTwinUrl(lsGroupedPath(kind, n.slug)))).map(({ item, raw }) => ({ slug: item.slug, itemIds: parseLsGroupedPage(raw) }));
     grouped.push({ kind, nav, pages });
+  }
+
+  // The volume menu stops at 39, but the parsha/moad pages also list the
+  // sichos of volume 40 (חלק מ, published 5781), whose page exists without
+  // a menu entry. So a volume those pages point into is read too. Volume
+  // 41's page is not Likkutei Sichos at all (it is Sefer HaMaamarim
+  // Melukat, which the maamorim section has), and no parsha or moad page
+  // points into it, so it is never read.
+  const listed = new Set(volumes.map((v) => v.slug));
+  const unlisted = [...new Set(grouped.flatMap((g) => g.pages.flatMap((page) => page.itemIds.map((id) => id.split(':')[0]!))))]
+    .filter((slug) => /^\d+$/.test(slug) && !listed.has(slug))
+    .sort((a, b) => Number(a) - Number(b));
+  for (const slug of unlisted) {
+    const volume = Number(slug);
+    const parsed = parseLsVolumePage(await fetchPage(ctx, jsTwinUrl(lsVolumePath(volume))));
+    if (parsed.length === 0 || parsed.some((record) => record.volume !== volume)) {
+      ctx.result.warnings.push(`likkuteiSichos: volume ${slug}, which the parsha/moad pages list, has no page of its own`);
+      continue;
+    }
+    volumes.push({ slug, name: hebrewNumeral(volume), ord: volumes.length + 1 });
+    addSichos(parsed);
   }
 
   inTransaction(ctx.db, () => {

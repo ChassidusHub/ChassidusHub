@@ -102,7 +102,7 @@ From the first full sections crawl (2026-09-24) the library holds:
 
 | Collection | Items |
 | --- | --- |
-| likkuteiSichos | 2,451 |
+| likkuteiSichos | 2,262 |
 | maamorim | 1,568 |
 | yomanim | 2,890 |
 | hadranim | 144 |
@@ -110,7 +110,7 @@ From the first full sections crawl (2026-09-24) the library holds:
 | reshimos | 38 |
 | jemEvents | 2,909 |
 
-It also holds 101 moadim and 53 parshiyos. That is 4.1 MB of JSON, 0.7
+It also holds 101 moadim and 53 parshiyos. That is 4.0 MB of JSON, 0.7
 MB gzipped. The phone's Hermes bytecode grows by 1.6 MB, 0.7 MB
 compressed, and the schema-2 catalog.json is 6.4 MB.
 

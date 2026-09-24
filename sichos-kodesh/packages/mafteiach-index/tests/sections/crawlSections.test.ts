@@ -133,11 +133,10 @@ describe('crawlSections change tracking (a synthetic Likkutei Sichos and /all/mo
   ];
   const site = new FakeSite((url) => {
     if (url.endsWith('/likkutei_sichos/by_volume/1.js')) return lsVolume(volumeSichos);
-    // Past the menu's last volume: one more volume the menu omits, then an empty page.
+    // A volume the menu omits but a moad page points into (like volume 40 on the site).
     if (url.endsWith('/likkutei_sichos/by_volume/2.js')) return lsVolume([{ page: 7, label: 'ח"ב ע\' 7' }], 2);
-    if (url.endsWith('/likkutei_sichos/by_volume/3.js')) return lsVolume([], 3);
     if (url.endsWith('/likkutei_sichos/by_parsha/bereshit.js')) return lsGrouped('parsha', 'bereshit', ['1:1', '1:4', '1:99']);
-    if (url.endsWith('/likkutei_sichos/by_moad/rosh_hashanah.js')) return lsGrouped('moad', 'rosh_hashanah', ['1:4']);
+    if (url.endsWith('/likkutei_sichos/by_moad/rosh_hashanah.js')) return lsGrouped('moad', 'rosh_hashanah', ['1:4', '2:7']);
     if (url.endsWith('/all/moadim/rosh_hashanah.js')) return moadimPage(['rosh_hashanah', 'purim'], []);
     if (url.endsWith('/all/moadim/rosh_hashanah.js?include_right_nav=false')) return moadimPage([], [10, 11]);
     if (url.endsWith('/all/moadim/purim.js?include_right_nav=false')) return moadimPage([], [12]);
@@ -151,7 +150,7 @@ describe('crawlSections change tracking (a synthetic Likkutei Sichos and /all/mo
   insertOccasion.run(10);
   insertOccasion.run(11);
 
-  it('inserts on the first run, reads the volume past the menu, and warns about a sicha only a grouped view lists', async () => {
+  it('inserts on the first run, reads a volume only the grouped views point into, and warns about a sicha no volume page has', async () => {
     const [ls] = await crawlSections({ db, fetcher: site, sections: ['likkuteiSichos'], now: 't1' });
     expect(ls).toMatchObject({ inserted: 3, updated: 0, unchanged: 0, newIds: ['1:1', '1:4', '2:7'], missingIds: [] });
     expect(ls!.warnings).toEqual(['likkuteiSichos: by_parsha/bereshit lists 1 sicha(s) no volume page has: 1:99']);
@@ -162,7 +161,6 @@ describe('crawlSections change tracking (a synthetic Likkutei Sichos and /all/mo
     expect(site.requests.filter((u) => u.includes('/by_volume/'))).toEqual([
       'https://www.mafteiach.app/likkutei_sichos/by_volume/1.js',
       'https://www.mafteiach.app/likkutei_sichos/by_volume/2.js',
-      'https://www.mafteiach.app/likkutei_sichos/by_volume/3.js',
     ]);
   });
 
