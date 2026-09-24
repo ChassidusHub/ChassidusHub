@@ -4,6 +4,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-02",
     "occasionLabel": "יום ב' דר\"ה",
+    "occasionLabelEn": "Rosh Hashanah, day 2",
     "audio": [],
     "pdfs": [
       {
@@ -33,6 +34,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-06",
     "occasionLabel": "וילך, ש\"ת, ו' תשרי",
+    "occasionLabelEn": "Vayeilech, Shabbos Shuvah, 6 Tishrei",
     "audio": [],
     "pdfs": [
       {
@@ -67,6 +69,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-09",
     "occasionLabel": "ו'-ט' תשרי, ביום הסתלקות אמו הרה\"צ מרת חנה נ\"ע, ובעת ביקורי אדמורי\"ם, ר\"י ורבנים בימי ה\"שבעה\"",
+    "occasionLabelEn": "6-9 Tishrei, on the day his mother, Rebbetzin Chana, passed away, and during visits by Rebbes, roshei yeshivah and rabbanim during the shivah",
     "audio": [],
     "pdfs": [
       {
@@ -86,6 +89,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-09b",
     "occasionLabel": "ערב יו\"כ, ברכת הבנים",
+    "occasionLabelEn": "Erev Yom Kippur, Birkas Habanim",
     "audio": [],
     "pdfs": [
       {
@@ -105,11 +109,13 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-09c",
     "occasionLabel": "ערב יו\"כ, לפני כל נדרי, לאנ\"ש שי'",
+    "occasionLabelEn": "Erev Yom Kippur, before Kol Nidrei, to Anash",
     "audio": [
       {
         "workerFilename": "AR0020029.mp3",
         "durationMs": 27428,
-        "chapterName": "Brachah, Erev Yom Kippur, 5725"
+        "chapterName": "Brachah, Erev Yom Kippur, 5725",
+        "chapterNameHe": "ברכה, ערב יום הכיפורים, תשכ״ה"
       }
     ],
     "pdfs": [
@@ -130,6 +136,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-12",
     "occasionLabel": "י\"ב תשרי, בעת מסירת האתרוגים",
+    "occasionLabelEn": "12 Tishrei, while giving out esrogim",
     "audio": [],
     "pdfs": [
       {
@@ -149,6 +156,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-13",
     "occasionLabel": "האזינו, י\"ג תשרי",
+    "occasionLabelEn": "Haazinu, 13 Tishrei",
     "audio": [],
     "pdfs": [
       {
@@ -178,6 +186,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-16",
     "occasionLabel": "יום ב' דחה\"ס",
+    "occasionLabelEn": "Sukkos, day 2",
     "audio": [],
     "pdfs": [
       {
@@ -212,6 +221,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-19",
     "occasionLabel": "יום ה' דחה\"ס, ג' דחוה\"מ, בעת יחידות למשלחת מתושבי כפר חב\"ד",
+    "occasionLabelEn": "Sukkos, day 5, Chol Hamoed, day 3, at a yechidus for a delegation of residents of Kfar Chabad",
     "audio": [],
     "pdfs": [
       {
@@ -231,6 +241,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-20",
     "occasionLabel": "שבת חוה\"מ סוכות",
+    "occasionLabelEn": "Shabbos Chol Hamoed Sukkos",
     "audio": [],
     "pdfs": []
   },
@@ -239,6 +250,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-22",
     "occasionLabel": "ליל שמח\"ת, לפני הקפות",
+    "occasionLabelEn": "Simchas Torah night, before hakafos",
     "audio": [],
     "pdfs": [
       {
@@ -253,6 +265,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-23",
     "occasionLabel": "יום שמח\"ת",
+    "occasionLabelEn": "Simchas Torah day",
     "audio": [],
     "pdfs": [
       {
@@ -282,6 +295,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-23b",
     "occasionLabel": "שמע\"צ-שמח\"ת, בעת הקפות",
+    "occasionLabelEn": "Shemini Atzeres-Simchas Torah, during hakafos",
     "audio": [],
     "pdfs": [
       {
@@ -296,6 +310,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-01-27",
     "occasionLabel": "בראשית, מבה\"ח מ\"ח",
+    "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -335,6 +350,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-02-04",
     "occasionLabel": "נח, ד' מ\"ח",
+    "occasionLabelEn": "Noach, 4 Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -414,6 +430,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-02-11",
     "occasionLabel": "לך לך, י\"א מ\"ח",
+    "occasionLabelEn": "Lech Lecha, 11 Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -463,6 +480,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-02-18",
     "occasionLabel": "וירא, י\"ח מ\"ח",
+    "occasionLabelEn": "Vayeira, 18 Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -519,6 +537,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-02-23",
     "occasionLabel": "כ\"ג מ\"ח, בעת ביקר הסנטור דנ.י. ופמלייתו",
+    "occasionLabelEn": "23 Cheshvan, during the visit of the New York senator and his entourage",
     "audio": [],
     "pdfs": [
       {
@@ -533,6 +552,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-02-25",
     "occasionLabel": "חיי שרה, מבה\"ח כסלו",
+    "occasionLabelEn": "Chayei Sarah, Shabbos Mevarchim Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -577,6 +597,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-02-26",
     "occasionLabel": "כ\"ו מ\"ח, יחידות ליהודי אפגניסטן",
+    "occasionLabelEn": "26 Cheshvan, yechidus for the Jews of Afghanistan",
     "audio": [],
     "pdfs": [
       {
@@ -596,6 +617,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-03-02",
     "occasionLabel": "תולדות, ב' כסלו",
+    "occasionLabelEn": "Toldos, 2 Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -645,6 +667,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-03-09",
     "occasionLabel": "ויצא, ט' כסלו",
+    "occasionLabelEn": "Vayeitzei, 9 Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -684,6 +707,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-03-16",
     "occasionLabel": "וישלח, ט\"ז כסלו",
+    "occasionLabelEn": "Vayishlach, 16 Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -754,111 +778,133 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-03-19",
     "occasionLabel": "י\"ט כסלו",
+    "occasionLabelEn": "19 Kislev",
     "audio": [
       {
         "workerFilename": "JEMSK0801A.mp3",
         "durationMs": 426000,
-        "chapterName": "Nigun 1"
+        "chapterName": "Nigun 1",
+        "chapterNameHe": "ניגון א׳"
       },
       {
         "workerFilename": "JEMSK0801B.mp3",
         "durationMs": 1294000,
-        "chapterName": "Sicha 1"
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
       },
       {
         "workerFilename": "JEMSK0801C.mp3",
         "durationMs": 402000,
-        "chapterName": "Nigun 2"
+        "chapterName": "Nigun 2",
+        "chapterNameHe": "ניגון ב׳"
       },
       {
         "workerFilename": "JEMSK0802A.mp3",
         "durationMs": 907000,
-        "chapterName": "Sicha 2"
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
       },
       {
         "workerFilename": "JEMSK0802B.mp3",
         "durationMs": 875000,
-        "chapterName": "Nigun 3"
+        "chapterName": "Nigun 3",
+        "chapterNameHe": "ניגון ג׳"
       },
       {
         "workerFilename": "JEMSK0802C.mp3",
         "durationMs": 1526000,
-        "chapterName": "Sicha 3"
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
       },
       {
         "workerFilename": "JEMSK0803A.mp3",
         "durationMs": 291000,
-        "chapterName": "Nigun 4"
+        "chapterName": "Nigun 4",
+        "chapterNameHe": "ניגון ד׳"
       },
       {
         "workerFilename": "JEMSK0803B.mp3",
         "durationMs": 94000,
-        "chapterName": "Ma’amar Nigun"
+        "chapterName": "Ma’amar Nigun",
+        "chapterNameHe": "ניגון המאמר"
       },
       {
         "workerFilename": "AR0015702.mp3",
         "durationMs": 1233319,
-        "chapterName": "Ma’amar"
+        "chapterName": "Ma’amar",
+        "chapterNameHe": "מאמר"
       },
       {
         "workerFilename": "JEMSK0804A.mp3",
         "durationMs": 1719000,
-        "chapterName": "Nigun 5"
+        "chapterName": "Nigun 5",
+        "chapterNameHe": "ניגון ה׳"
       },
       {
         "workerFilename": "JEMSK0804B.mp3",
         "durationMs": 3462000,
-        "chapterName": "Sicha 4"
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
       },
       {
         "workerFilename": "JEMSK0805A.mp3",
         "durationMs": 301000,
-        "chapterName": "Nigun 6"
+        "chapterName": "Nigun 6",
+        "chapterNameHe": "ניגון ו׳"
       },
       {
         "workerFilename": "JEMSK0805B.mp3",
         "durationMs": 95000,
-        "chapterName": "Sicha 5"
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
       },
       {
         "workerFilename": "JEMSK0806A.mp3",
         "durationMs": 530000,
-        "chapterName": "Nigun 7"
+        "chapterName": "Nigun 7",
+        "chapterNameHe": "ניגון ז׳"
       },
       {
         "workerFilename": "JEMSK0806B.mp3",
         "durationMs": 2949000,
-        "chapterName": "Sicha 6"
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
       },
       {
         "workerFilename": "JEMSK0807A.mp3",
         "durationMs": 502000,
-        "chapterName": "Nigun 8"
+        "chapterName": "Nigun 8",
+        "chapterNameHe": "ניגון ח׳"
       },
       {
         "workerFilename": "JEMSK0807B.mp3",
         "durationMs": 777000,
-        "chapterName": "Sicha 7"
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
       },
       {
         "workerFilename": "JEMSK0808A.mp3",
         "durationMs": 322000,
-        "chapterName": "Nigun 9"
+        "chapterName": "Nigun 9",
+        "chapterNameHe": "ניגון ט׳"
       },
       {
         "workerFilename": "JEMSK0808B.mp3",
         "durationMs": 563000,
-        "chapterName": "Sicha 8"
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
       },
       {
         "workerFilename": "JEMSK0809A.mp3",
         "durationMs": 506000,
-        "chapterName": "Nigun 10"
+        "chapterName": "Nigun 10",
+        "chapterNameHe": "ניגון י׳"
       },
       {
         "workerFilename": "JEMSK0809B.mp3",
         "durationMs": 39000,
-        "chapterName": "End of Farbrengen"
+        "chapterName": "End of Farbrengen",
+        "chapterNameHe": "סיום ההתוועדות"
       }
     ],
     "pdfs": [
@@ -919,6 +965,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-03-23",
     "occasionLabel": "וישב, מבה\"ח טבת",
+    "occasionLabelEn": "Vayeishev, Shabbos Mevarchim Teves",
     "audio": [],
     "pdfs": [
       {
@@ -948,6 +995,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-03-30",
     "occasionLabel": "מקץ, חנוכה",
+    "occasionLabelEn": "Mikeitz, Chanukah",
     "audio": [],
     "pdfs": [
       {
@@ -987,6 +1035,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-04-07",
     "occasionLabel": "ויגש, ז' טבת",
+    "occasionLabelEn": "Vayigash, 7 Teves",
     "audio": [],
     "pdfs": [
       {
@@ -1031,6 +1080,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-04-14",
     "occasionLabel": "ויחי, י\"ד טבת",
+    "occasionLabelEn": "Vayechi, 14 Teves",
     "audio": [],
     "pdfs": [
       {
@@ -1070,6 +1120,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-04-21",
     "occasionLabel": "שמות, כ\"א טבת",
+    "occasionLabelEn": "Shemos, 21 Teves",
     "audio": [],
     "pdfs": [
       {
@@ -1104,6 +1155,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-04-28",
     "occasionLabel": "וארא, מבה\"ח שבט",
+    "occasionLabelEn": "Va'eira, Shabbos Mevarchim Shevat",
     "audio": [],
     "pdfs": [
       {
@@ -1138,6 +1190,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-05-06",
     "occasionLabel": "בא, ו' שבט",
+    "occasionLabelEn": "Bo, 6 Shevat",
     "audio": [],
     "pdfs": [
       {
@@ -1167,146 +1220,175 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-05-10",
     "occasionLabel": "יו\"ד שבט",
+    "occasionLabelEn": "10 Shevat",
     "audio": [
       {
         "workerFilename": "AR0017179.mp3",
         "durationMs": 350040,
-        "chapterName": "V'harikosi Lachem Bracha (slow)"
+        "chapterName": "V'harikosi Lachem Bracha (slow)",
+        "chapterNameHe": "והריקותי לכם ברכה (איטי)"
       },
       {
         "workerFilename": "AR0017167.mp3",
         "durationMs": 785345,
-        "chapterName": "Sicha 1"
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
       },
       {
         "workerFilename": "AR0017180.mp3",
         "durationMs": 317361,
-        "chapterName": "Nigun Shabbos V'Yom Tov"
+        "chapterName": "Nigun Shabbos V'Yom Tov",
+        "chapterNameHe": "ניגון לשבת ויום טוב"
       },
       {
         "workerFilename": "AR0017168.mp3",
         "durationMs": 1705012,
-        "chapterName": "Sicha 2"
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
       },
       {
         "workerFilename": "AR0017181.mp3",
         "durationMs": 631980,
-        "chapterName": "Hu Elokeinu"
+        "chapterName": "Hu Elokeinu",
+        "chapterNameHe": "הוא אלקינו"
       },
       {
         "workerFilename": "AR0017169.mp3",
         "durationMs": 2252460,
-        "chapterName": "Sicha 3"
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
       },
       {
         "workerFilename": "AR0017182.mp3",
         "durationMs": 458657,
-        "chapterName": "Klimovitcher Nigun"
+        "chapterName": "Klimovitcher Nigun",
+        "chapterNameHe": "ניגון קלימוביץ׳"
       },
       {
         "workerFilename": "AR0017170.mp3",
         "durationMs": 917368,
-        "chapterName": "Sicha 4"
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
       },
       {
         "workerFilename": "AR0017183.mp3",
         "durationMs": 334236,
-        "chapterName": "Beinoni"
+        "chapterName": "Beinoni",
+        "chapterNameHe": "הבינוני"
       },
       {
         "workerFilename": "AR0017172.mp3",
         "durationMs": 1699970,
-        "chapterName": "Sicha 5"
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
       },
       {
         "workerFilename": "AR0017184.mp3",
         "durationMs": 483813,
-        "chapterName": "Nigun Hisva'adus"
+        "chapterName": "Nigun Hisva'adus",
+        "chapterNameHe": "ניגון התוועדות"
       },
       {
         "workerFilename": "AR0017173.mp3",
         "durationMs": 967993,
-        "chapterName": "Sicha 6"
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
       },
       {
         "workerFilename": "AR0017185.mp3",
         "durationMs": 337266,
-        "chapterName": "Tzamah Lecha Nafshi (Slow)"
+        "chapterName": "Tzamah Lecha Nafshi (Slow)",
+        "chapterNameHe": "צמאה לך נפשי (איטי)"
       },
       {
         "workerFilename": "AR0017187.mp3",
         "durationMs": 183013,
-        "chapterName": "Ma’amar Nigun"
+        "chapterName": "Ma’amar Nigun",
+        "chapterNameHe": "ניגון המאמר"
       },
       {
         "workerFilename": "AR0017197.mp3",
         "durationMs": 2007405,
-        "chapterName": "Ma’amar"
+        "chapterName": "Ma’amar",
+        "chapterNameHe": "מאמר"
       },
       {
         "workerFilename": "AR0017188.mp3",
         "durationMs": 1166053,
-        "chapterName": "Two Nigunim"
+        "chapterName": "Two Nigunim",
+        "chapterNameHe": "שני ניגונים"
       },
       {
         "workerFilename": "AR0017174.mp3",
         "durationMs": 3647190,
-        "chapterName": "Sicha 7"
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
       },
       {
         "workerFilename": "AR0017189.mp3",
         "durationMs": 598204,
-        "chapterName": "Two Nigunim"
+        "chapterName": "Two Nigunim",
+        "chapterNameHe": "שני ניגונים"
       },
       {
         "workerFilename": "AR0017175.mp3",
         "durationMs": 1724995,
-        "chapterName": "Sicha 8"
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
       },
       {
         "workerFilename": "AR0017190.mp3",
         "durationMs": 248920,
-        "chapterName": "Lechatchila Ariber"
+        "chapterName": "Lechatchila Ariber",
+        "chapterNameHe": "לכתחילה אריבער"
       },
       {
         "workerFilename": "AR0017191.mp3",
         "durationMs": 350380,
-        "chapterName": "Magbis"
+        "chapterName": "Magbis",
+        "chapterNameHe": "מגבית"
       },
       {
         "workerFilename": "AR0017192.mp3",
         "durationMs": 166008,
-        "chapterName": "V’harikosi Lachem Bracha (Fast)"
+        "chapterName": "V’harikosi Lachem Bracha (Fast)",
+        "chapterNameHe": "והריקותי לכם ברכה (מהיר)"
       },
       {
         "workerFilename": "AR0017176.mp3",
         "durationMs": 628271,
-        "chapterName": "Sicha 9"
+        "chapterName": "Sicha 9",
+        "chapterNameHe": "שיחה ט׳"
       },
       {
         "workerFilename": "AR0017193.mp3",
         "durationMs": 12408,
-        "chapterName": "Yemin Hashem"
+        "chapterName": "Yemin Hashem",
+        "chapterNameHe": "ימין ה׳"
       },
       {
         "workerFilename": "AR0017177.mp3",
         "durationMs": 235154,
-        "chapterName": "Sicha 10"
+        "chapterName": "Sicha 10",
+        "chapterNameHe": "שיחה י׳"
       },
       {
         "workerFilename": "AR0017194.mp3",
         "durationMs": 224287,
-        "chapterName": "Yemin Hashem 2"
+        "chapterName": "Yemin Hashem 2",
+        "chapterNameHe": "ימין ה׳ ב׳"
       },
       {
         "workerFilename": "AR0017178.mp3",
         "durationMs": 134556,
-        "chapterName": "Sicha 11"
+        "chapterName": "Sicha 11",
+        "chapterNameHe": "שיחה י״א"
       },
       {
         "workerFilename": "AR0017195.mp3",
         "durationMs": 334236,
-        "chapterName": "End of Farbrengen"
+        "chapterName": "End of Farbrengen",
+        "chapterNameHe": "סיום ההתוועדות"
       }
     ],
     "pdfs": [
@@ -1368,6 +1450,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-05-13",
     "occasionLabel": "בשלח, י\"ג שבט",
+    "occasionLabelEn": "Beshalach, 13 Shevat",
     "audio": [],
     "pdfs": [
       {
@@ -1407,6 +1490,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-05-20",
     "occasionLabel": "יתרו, כ' שבט",
+    "occasionLabelEn": "Yisro, 20 Shevat",
     "audio": [],
     "pdfs": [
       {
@@ -1446,6 +1530,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-05-27",
     "occasionLabel": "משפטים, מבה\"ח אד\"ר",
+    "occasionLabelEn": "Mishpatim, Shabbos Mevarchim Adar I",
     "audio": [],
     "pdfs": [
       {
@@ -1485,6 +1570,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06A-04",
     "occasionLabel": "תרומה, ד' אד\"ר",
+    "occasionLabelEn": "Terumah, 4 Adar I",
     "audio": [],
     "pdfs": [
       {
@@ -1519,6 +1605,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06A-11",
     "occasionLabel": "תצוה, י\"א אד\"ר",
+    "occasionLabelEn": "Tetzaveh, 11 Adar I",
     "audio": [],
     "pdfs": [
       {
@@ -1553,6 +1640,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06A-18",
     "occasionLabel": "תשא, י\"ח אד\"ר",
+    "occasionLabelEn": "Ki Sisa, 18 Adar I",
     "audio": [],
     "pdfs": [
       {
@@ -1572,6 +1660,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06A-25",
     "occasionLabel": "ויקהל, פ' שקלים, מבה\"ח אד\"ש",
+    "occasionLabelEn": "Vayakhel, Parshas Shekalim, Shabbos Mevarchim Adar II",
     "audio": [],
     "pdfs": [
       {
@@ -1611,6 +1700,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06B-02",
     "occasionLabel": "פקודי, ב' אד\"ש",
+    "occasionLabelEn": "Pekudei, 2 Adar II",
     "audio": [],
     "pdfs": [
       {
@@ -1655,6 +1745,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06B-09",
     "occasionLabel": "ויקרא, פ' זכור, ט' אד\"ש",
+    "occasionLabelEn": "Vayikra, Parshas Zachor, 9 Adar II",
     "audio": [],
     "pdfs": [
       {
@@ -1699,6 +1790,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06B-14",
     "occasionLabel": "פורים, בעת הסעודה",
+    "occasionLabelEn": "Purim, during the meal",
     "audio": [],
     "pdfs": [
       {
@@ -1713,156 +1805,187 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06B-14b",
     "occasionLabel": "פורים",
+    "occasionLabelEn": "Purim",
     "audio": [
       {
         "workerFilename": "AR0015247.mp3",
         "durationMs": 598157,
-        "chapterName": "Nigun 1"
+        "chapterName": "Nigun 1",
+        "chapterNameHe": "ניגון א׳"
       },
       {
         "workerFilename": "AR0015248.mp3",
         "durationMs": 1204250,
-        "chapterName": "Sicha 1"
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
       },
       {
         "workerFilename": "AR0015249.mp3",
         "durationMs": 245139,
-        "chapterName": "Nigun 2"
+        "chapterName": "Nigun 2",
+        "chapterNameHe": "ניגון ב׳"
       },
       {
         "workerFilename": "AR0015250.mp3",
         "durationMs": 1010840,
-        "chapterName": "Sicha 2"
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
       },
       {
         "workerFilename": "AR0015251.mp3",
         "durationMs": 287196,
-        "chapterName": "Nigun 3"
+        "chapterName": "Nigun 3",
+        "chapterNameHe": "ניגון ג׳"
       },
       {
         "workerFilename": "AR0015252.mp3",
         "durationMs": 1383894,
-        "chapterName": "Sicha 3"
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
       },
       {
         "workerFilename": "AR0015253.mp3",
         "durationMs": 608319,
-        "chapterName": "Nigun 4"
+        "chapterName": "Nigun 4",
+        "chapterNameHe": "ניגון ד׳"
       },
       {
         "workerFilename": "AR0015254.mp3",
         "durationMs": 2334595,
-        "chapterName": "Sicha 4"
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
       },
       {
         "workerFilename": "AR0015255.mp3",
         "durationMs": 509681,
-        "chapterName": "Nigun 5"
+        "chapterName": "Nigun 5",
+        "chapterNameHe": "ניגון ה׳"
       },
       {
         "workerFilename": "AR0015256.mp3",
         "durationMs": 1464796,
-        "chapterName": "Sicha 5"
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
       },
       {
         "workerFilename": "AR0015257.mp3",
         "durationMs": 230484,
-        "chapterName": "Nigun 6"
+        "chapterName": "Nigun 6",
+        "chapterNameHe": "ניגון ו׳"
       },
       {
         "workerFilename": "AR0015258.mp3",
         "durationMs": 174321,
-        "chapterName": "Ma'amar Nigun"
+        "chapterName": "Ma'amar Nigun",
+        "chapterNameHe": "ניגון המאמר"
       },
       {
         "workerFilename": "AR0015259.mp3",
         "durationMs": 1668185,
-        "chapterName": "Ma'amar"
+        "chapterName": "Ma'amar",
+        "chapterNameHe": "מאמר"
       },
       {
         "workerFilename": "AR0015260.mp3",
         "durationMs": 1463228,
-        "chapterName": "Nigun 7"
+        "chapterName": "Nigun 7",
+        "chapterNameHe": "ניגון ז׳"
       },
       {
         "workerFilename": "AR0015261.mp3",
         "durationMs": 987460,
-        "chapterName": "Sicha 6"
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
       },
       {
         "workerFilename": "AR0015262.mp3",
         "durationMs": 382386,
-        "chapterName": "Nigun 8"
+        "chapterName": "Nigun 8",
+        "chapterNameHe": "ניגון ח׳"
       },
       {
         "workerFilename": "AR0015263.mp3",
         "durationMs": 178213,
-        "chapterName": "Sicha 7"
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
       },
       {
         "workerFilename": "AR0015264.mp3",
         "durationMs": 913037,
-        "chapterName": "Nigun 9"
+        "chapterName": "Nigun 9",
+        "chapterNameHe": "ניגון ט׳"
       },
       {
         "workerFilename": "AR0015265.mp3",
         "durationMs": 1325955,
-        "chapterName": "Sicha 8"
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
       },
       {
         "workerFilename": "AR0015266.mp3",
         "durationMs": 140126,
-        "chapterName": "Nigun 10"
+        "chapterName": "Nigun 10",
+        "chapterNameHe": "ניגון י׳"
       },
       {
         "workerFilename": "AR0015267.mp3",
         "durationMs": 1962193,
-        "chapterName": "Sicha 9"
+        "chapterName": "Sicha 9",
+        "chapterNameHe": "שיחה ט׳"
       },
       {
         "workerFilename": "AR0015268.mp3",
         "durationMs": 215281,
-        "chapterName": "Nigun 11"
+        "chapterName": "Nigun 11",
+        "chapterNameHe": "ניגון י״א"
       },
       {
         "workerFilename": "AR0015269.mp3",
         "durationMs": 40652,
-        "chapterName": "Sicha 10"
+        "chapterName": "Sicha 10",
+        "chapterNameHe": "שיחה י׳"
       },
       {
         "workerFilename": "AR0015270.mp3",
         "durationMs": 309191,
-        "chapterName": "Nigun 12"
+        "chapterName": "Nigun 12",
+        "chapterNameHe": "ניגון י״ב"
       },
       {
         "workerFilename": "AR0015271.mp3",
         "durationMs": 166040,
-        "chapterName": "Sicha 11"
+        "chapterName": "Sicha 11",
+        "chapterNameHe": "שיחה י״א"
       },
       {
         "workerFilename": "AR0015272.mp3",
         "durationMs": 213348,
-        "chapterName": "Nigun 13"
+        "chapterName": "Nigun 13",
+        "chapterNameHe": "ניגון י״ג"
       },
       {
         "workerFilename": "AR0015273.mp3",
         "durationMs": 492910,
-        "chapterName": "Sicha 12"
+        "chapterName": "Sicha 12",
+        "chapterNameHe": "שיחה י״ב"
       },
       {
         "workerFilename": "AR0015274.mp3",
         "durationMs": 529351,
-        "chapterName": "Daled Bavos"
+        "chapterName": "Daled Bavos",
+        "chapterNameHe": "ד׳ בבות"
       },
       {
         "workerFilename": "AR0015275.mp3",
         "durationMs": 362402,
-        "chapterName": "Nigun 14"
+        "chapterName": "Nigun 14",
+        "chapterNameHe": "ניגון י״ד"
       },
       {
         "workerFilename": "AR0015276.mp3",
         "durationMs": 64659,
-        "chapterName": "End of Farbrengen"
+        "chapterName": "End of Farbrengen",
+        "chapterNameHe": "סיום ההתוועדות"
       }
     ],
     "pdfs": [
@@ -1914,6 +2037,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06B-16",
     "occasionLabel": "צו, ט\"ז אד\"ש",
+    "occasionLabelEn": "Tzav, 16 Adar II",
     "audio": [],
     "pdfs": [
       {
@@ -1958,6 +2082,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06B-23",
     "occasionLabel": "שמיני, פ' פרה, מבה\"ח ניסן",
+    "occasionLabelEn": "Shemini, Parshas Parah, Shabbos Mevarchim Nisan",
     "audio": [],
     "pdfs": [
       {
@@ -2012,6 +2137,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-06B-26",
     "occasionLabel": "כ\"ו אד\"ש, שיחה להתלמידים שי' הנוסעים לאה\"ק ת\"ו (ע\"י המזכירות)",
+    "occasionLabelEn": "26 Adar II, sicha to the students traveling to Eretz Yisroel (through the secretariat)",
     "audio": [],
     "pdfs": [
       {
@@ -2036,6 +2162,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-01",
     "occasionLabel": "תזריע, פ' החודש, ר\"ח ניסן",
+    "occasionLabelEn": "Tazria, Parshas Hachodesh, Rosh Chodesh Nisan",
     "audio": [],
     "pdfs": [
       {
@@ -2101,6 +2228,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-08",
     "occasionLabel": "מצורע, שבת הגדול",
+    "occasionLabelEn": "Metzora, Shabbos Hagadol",
     "audio": [],
     "pdfs": [
       {
@@ -2150,6 +2278,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-14",
     "occasionLabel": "ליל א' דחה\"פ, ברכה להת'",
+    "occasionLabelEn": "Pesach, night 1, bracha to the students",
     "audio": [],
     "pdfs": [
       {
@@ -2164,6 +2293,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-15",
     "occasionLabel": "ליל ב' דחה\"פ",
+    "occasionLabelEn": "Pesach, night 2",
     "audio": [],
     "pdfs": [
       {
@@ -2203,6 +2333,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-16",
     "occasionLabel": "ימים ראשונים דחה\"פ, בעת הסעודה",
+    "occasionLabelEn": "The first days of Pesach, during the meal",
     "audio": [],
     "pdfs": [
       {
@@ -2227,6 +2358,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-22",
     "occasionLabel": "אחש\"פ",
+    "occasionLabelEn": "Acharon shel Pesach",
     "audio": [],
     "pdfs": [
       {
@@ -2282,6 +2414,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-22b",
     "occasionLabel": "ימים אחרונים דחה\"פ, בעת הסעודה",
+    "occasionLabelEn": "The last days of Pesach, during the meal",
     "audio": [],
     "pdfs": [
       {
@@ -2306,6 +2439,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-07-29",
     "occasionLabel": "אחרי, מבה\"ח אייר",
+    "occasionLabelEn": "Acharei, Shabbos Mevarchim Iyar",
     "audio": [],
     "pdfs": [
       {
@@ -2350,6 +2484,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-08-06",
     "occasionLabel": "קדושים, ו' אייר",
+    "occasionLabelEn": "Kedoshim, 6 Iyar",
     "audio": [],
     "pdfs": [
       {
@@ -2395,6 +2530,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-08-13",
     "occasionLabel": "אמור, י\"ג אייר",
+    "occasionLabelEn": "Emor, 13 Iyar",
     "audio": [],
     "pdfs": [
       {
@@ -2450,11 +2586,13 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-08-14",
     "occasionLabel": "י\"ד אייר, שיחה לנשי ובנות חב\"ד",
+    "occasionLabelEn": "14 Iyar, sicha to N'shei uBnos Chabad",
     "audio": [
       {
         "workerFilename": "AR0020118.mp3",
         "durationMs": 1522860,
-        "chapterName": "Kinus N'Shei Chabad, Pesach Sheini, 5725"
+        "chapterName": "Kinus N'Shei Chabad, Pesach Sheini, 5725",
+        "chapterNameHe": "כינוס נשי חב״ד, פסח שני, תשכ״ה"
       }
     ],
     "pdfs": [
@@ -2490,6 +2628,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-08-20",
     "occasionLabel": "בהר, כ' אייר",
+    "occasionLabelEn": "Behar, 20 Iyar",
     "audio": [],
     "pdfs": [
       {
@@ -2534,6 +2673,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-08-27",
     "occasionLabel": "בחוקותי, מבה\"ח סיון",
+    "occasionLabelEn": "Bechukosai, Shabbos Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -2593,6 +2733,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-09-05",
     "occasionLabel": "במדבר, ערב חה\"ש",
+    "occasionLabelEn": "Bamidbar, Erev Shavuos",
     "audio": [],
     "pdfs": [
       {
@@ -2617,6 +2758,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-09-05b",
     "occasionLabel": "ליל א' דחה\"ש, לפנות בוקר",
+    "occasionLabelEn": "Shavuos, night 1, before dawn",
     "audio": [],
     "pdfs": [
       {
@@ -2641,6 +2783,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-09-07",
     "occasionLabel": "יום ב' דחה\"ש",
+    "occasionLabelEn": "Shavuos, day 2",
     "audio": [],
     "pdfs": [
       {
@@ -2680,6 +2823,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-09-12",
     "occasionLabel": "נשא, י\"ב סיון",
+    "occasionLabelEn": "Nasso, 12 Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -2714,6 +2858,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-09-19",
     "occasionLabel": "בהעלותך, י\"ט סיון",
+    "occasionLabelEn": "Behaaloscha, 19 Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -2748,11 +2893,13 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-09-20",
     "occasionLabel": "כ' סיון, שיחה להמסיימות ד\"בית רבקה\" ולהמדריכות ד\"מחנה אמונה\" תחי'",
+    "occasionLabelEn": "20 Sivan, sicha to the graduates of Beis Rivkah and to the counselors of Camp Emunah",
     "audio": [
       {
         "workerFilename": "AR0016537.mp3",
         "durationMs": 1245178,
-        "chapterName": "Sicha to Graduating Students, Chof Sivan, 5725"
+        "chapterName": "Sicha to Graduating Students, Chof Sivan, 5725",
+        "chapterNameHe": "שיחה למסיימי הלימודים, כ׳ סיוון, תשכ״ה"
       }
     ],
     "pdfs": [
@@ -2773,6 +2920,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-09-26",
     "occasionLabel": "שלח, מבה\"ח תמוז",
+    "occasionLabelEn": "Shelach, Shabbos Mevarchim Tamuz",
     "audio": [],
     "pdfs": [
       {
@@ -2813,6 +2961,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-10-03",
     "occasionLabel": "קרח, ג' תמוז",
+    "occasionLabelEn": "Korach, 3 Tamuz",
     "audio": [],
     "pdfs": [
       {
@@ -2848,6 +2997,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-10-10",
     "occasionLabel": "חוקת, יו\"ד תמוז",
+    "occasionLabelEn": "Chukas, 10 Tamuz",
     "audio": [],
     "pdfs": [
       {
@@ -2897,121 +3047,145 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-10-12",
     "occasionLabel": "י\"ב תמוז",
+    "occasionLabelEn": "12 Tamuz",
     "audio": [
       {
         "workerFilename": "AR0016198.mp3",
         "durationMs": 447373,
-        "chapterName": "Sicha 1"
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
       },
       {
         "workerFilename": "AR0016199.mp3",
         "durationMs": 536372,
-        "chapterName": "Nyet Nyet Nikavo"
+        "chapterName": "Nyet Nyet Nikavo",
+        "chapterNameHe": "ניעט ניעט ניקאווא"
       },
       {
         "workerFilename": "AR0016200.mp3",
         "durationMs": 276532,
-        "chapterName": "Sicha 2"
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
       },
       {
         "workerFilename": "AR0016226.mp3",
         "durationMs": 482925,
-        "chapterName": "Yud Beis Tammuz Nigun"
+        "chapterName": "Yud Beis Tammuz Nigun",
+        "chapterNameHe": "ניגון י״ב תמוז"
       },
       {
         "workerFilename": "AR0016231.mp3",
         "durationMs": 2493857,
-        "chapterName": "Sicha 3"
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
       },
       {
         "workerFilename": "AR0016232.mp3",
         "durationMs": 488542,
-        "chapterName": "Nyet Nyet Nikavo 2"
+        "chapterName": "Nyet Nyet Nikavo 2",
+        "chapterNameHe": "ניעט ניעט ניקאווא ב׳"
       },
       {
         "workerFilename": "AR0016233.mp3",
         "durationMs": 1018279,
-        "chapterName": "Sicha 4"
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
       },
       {
         "workerFilename": "AR0016234.mp3",
         "durationMs": 372218,
-        "chapterName": "Klimovitcher Nigun"
+        "chapterName": "Klimovitcher Nigun",
+        "chapterNameHe": "ניגון קלימוביץ׳"
       },
       {
         "workerFilename": "AR0016235.mp3",
         "durationMs": 1067102,
-        "chapterName": "Sicha 5"
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
       },
       {
         "workerFilename": "AR0016236.mp3",
         "durationMs": 398393,
-        "chapterName": "Hu Elokeinu"
+        "chapterName": "Hu Elokeinu",
+        "chapterNameHe": "הוא אלקינו"
       },
       {
         "workerFilename": "AR0016237.mp3",
         "durationMs": 687124,
-        "chapterName": "Sicha 6"
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
       },
       {
         "workerFilename": "AR0016238.mp3",
         "durationMs": 430393,
-        "chapterName": "Nyet Nyet Nikavo 2"
+        "chapterName": "Nyet Nyet Nikavo 2",
+        "chapterNameHe": "ניעט ניעט ניקאווא ב׳"
       },
       {
         "workerFilename": "AR0016239.mp3",
         "durationMs": 182831,
-        "chapterName": "Ma’amar Nigun"
+        "chapterName": "Ma’amar Nigun",
+        "chapterNameHe": "ניגון המאמר"
       },
       {
         "workerFilename": "AR0016240.mp3",
         "durationMs": 1996669,
-        "chapterName": "Ma'amar"
+        "chapterName": "Ma'amar",
+        "chapterNameHe": "מאמר"
       },
       {
         "workerFilename": "AR0016241.mp3",
         "durationMs": 968463,
-        "chapterName": "Two Nigunim"
+        "chapterName": "Two Nigunim",
+        "chapterNameHe": "שני ניגונים"
       },
       {
         "workerFilename": "AR0016242.mp3",
         "durationMs": 1420643,
-        "chapterName": "Sicha 7"
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
       },
       {
         "workerFilename": "AR0016243.mp3",
         "durationMs": 234083,
-        "chapterName": "Mipi Kel"
+        "chapterName": "Mipi Kel",
+        "chapterNameHe": "מפי אל"
       },
       {
         "workerFilename": "AR0016244.mp3",
         "durationMs": 563330,
-        "chapterName": "Sicha 8"
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
       },
       {
         "workerFilename": "AR0016245.mp3",
         "durationMs": 433658,
-        "chapterName": "Viharikosi Lachem Brachah"
+        "chapterName": "Viharikosi Lachem Brachah",
+        "chapterNameHe": "והריקותי לכם ברכה"
       },
       {
         "workerFilename": "AR0016248.mp3",
         "durationMs": 244506,
-        "chapterName": "Sicha 9"
+        "chapterName": "Sicha 9",
+        "chapterNameHe": "שיחה ט׳"
       },
       {
         "workerFilename": "AR0016249.mp3",
         "durationMs": 820976,
-        "chapterName": "The Alter Rebbe's Nigun"
+        "chapterName": "The Alter Rebbe's Nigun",
+        "chapterNameHe": "ניגון אדמו״ר הזקן"
       },
       {
         "workerFilename": "AR0016250.mp3",
         "durationMs": 549093,
-        "chapterName": "Sicha 10"
+        "chapterName": "Sicha 10",
+        "chapterNameHe": "שיחה י׳"
       },
       {
         "workerFilename": "AR0016251.mp3",
         "durationMs": 361325,
-        "chapterName": "End of Farbrengen"
+        "chapterName": "End of Farbrengen",
+        "chapterNameHe": "סיום ההתוועדות"
       }
     ],
     "pdfs": [
@@ -3058,6 +3232,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-10-17",
     "occasionLabel": "בלק, י\"ז תמוז - נדחה",
+    "occasionLabelEn": "Balak, 17 Tamuz - postponed",
     "audio": [],
     "pdfs": [
       {
@@ -3112,6 +3287,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-10-24",
     "occasionLabel": "פנחס, מבה\"ח מנ\"א",
+    "occasionLabelEn": "Pinchas, Shabbos Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -3156,6 +3332,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-11-02",
     "occasionLabel": "מטו\"מ, ב' מנ\"א",
+    "occasionLabelEn": "Matos-Masei, 2 Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -3210,36 +3387,43 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-11-05",
     "occasionLabel": "ה' מנ\"א, סיום הקדיש (אחרי תפילת ערבית)",
+    "occasionLabelEn": "5 Menachem Av, end of the year of Kaddish (after Maariv)",
     "audio": [
       {
         "workerFilename": "JEMSK0851A.mp3",
         "durationMs": 1592000,
-        "chapterName": "Sicha 1"
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
       },
       {
         "workerFilename": "JEMSK0851B.mp3",
         "durationMs": 341000,
-        "chapterName": "Nigun 1"
+        "chapterName": "Nigun 1",
+        "chapterNameHe": "ניגון א׳"
       },
       {
         "workerFilename": "JEMSK0852A.mp3",
         "durationMs": 732000,
-        "chapterName": "Sicha 2"
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
       },
       {
         "workerFilename": "JEMSK0852B.mp3",
         "durationMs": 683000,
-        "chapterName": "Nigun 2"
+        "chapterName": "Nigun 2",
+        "chapterNameHe": "ניגון ב׳"
       },
       {
         "workerFilename": "JEMSK0853A.mp3",
         "durationMs": 1447000,
-        "chapterName": "Sicha 3"
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
       },
       {
         "workerFilename": "JEMSK0853B.mp3",
         "durationMs": 67000,
-        "chapterName": "End of Farbrengen"
+        "chapterName": "End of Farbrengen",
+        "chapterNameHe": "סיום ההתוועדות"
       }
     ],
     "pdfs": [
@@ -3290,6 +3474,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-11-09",
     "occasionLabel": "דברים, חזון, ט' באב - נדחה",
+    "occasionLabelEn": "Devarim, Shabbos Chazon, Tishah B'Av - postponed",
     "audio": [],
     "pdfs": [
       {
@@ -3329,6 +3514,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-11-16",
     "occasionLabel": "ואתחנן, נחמו",
+    "occasionLabelEn": "Va'eschanan, Shabbos Nachamu",
     "audio": [],
     "pdfs": [
       {
@@ -3384,91 +3570,109 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-11-20",
     "occasionLabel": "כ' מנ\"א",
+    "occasionLabelEn": "20 Menachem Av",
     "audio": [
       {
         "workerFilename": "JEMSK0854A.mp3",
         "durationMs": 485000,
-        "chapterName": "Nigun 1"
+        "chapterName": "Nigun 1",
+        "chapterNameHe": "ניגון א׳"
       },
       {
         "workerFilename": "JEMSK0854B.mp3",
         "durationMs": 2210000,
-        "chapterName": "Sicha 1"
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
       },
       {
         "workerFilename": "JEMSK0855A.mp3",
         "durationMs": 544000,
-        "chapterName": "Nigun 2"
+        "chapterName": "Nigun 2",
+        "chapterNameHe": "ניגון ב׳"
       },
       {
         "workerFilename": "JEMSK0855B.mp3",
         "durationMs": 792000,
-        "chapterName": "Sicha 2"
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
       },
       {
         "workerFilename": "JEMSK0856A.mp3",
         "durationMs": 268000,
-        "chapterName": "Nigun 3"
+        "chapterName": "Nigun 3",
+        "chapterNameHe": "ניגון ג׳"
       },
       {
         "workerFilename": "JEMSK0856B.mp3",
         "durationMs": 1170000,
-        "chapterName": "Sicha 3"
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
       },
       {
         "workerFilename": "JEMSK0857A.mp3",
         "durationMs": 211000,
-        "chapterName": "Nigun 4"
+        "chapterName": "Nigun 4",
+        "chapterNameHe": "ניגון ד׳"
       },
       {
         "workerFilename": "JEMSK0857B.mp3",
         "durationMs": 1161000,
-        "chapterName": "Sicha 4"
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
       },
       {
         "workerFilename": "JEMSK0858A.mp3",
         "durationMs": 838000,
-        "chapterName": "Nigun 5"
+        "chapterName": "Nigun 5",
+        "chapterNameHe": "ניגון ה׳"
       },
       {
         "workerFilename": "JEMSK0858B.mp3",
         "durationMs": 1240000,
-        "chapterName": "Sicha 5"
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
       },
       {
         "workerFilename": "JEMSK0859A.mp3",
         "durationMs": 222000,
-        "chapterName": "Nigun 6"
+        "chapterName": "Nigun 6",
+        "chapterNameHe": "ניגון ו׳"
       },
       {
         "workerFilename": "JEMSK0859B.mp3",
         "durationMs": 784000,
-        "chapterName": "Sicha 6"
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
       },
       {
         "workerFilename": "JEMSK0860A.mp3",
         "durationMs": 355000,
-        "chapterName": "Nigun 7"
+        "chapterName": "Nigun 7",
+        "chapterNameHe": "ניגון ז׳"
       },
       {
         "workerFilename": "JEMSK0860B.mp3",
         "durationMs": 1460000,
-        "chapterName": "Sicha 7"
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
       },
       {
         "workerFilename": "JEMSK0861A.mp3",
         "durationMs": 269000,
-        "chapterName": "Nigun 8"
+        "chapterName": "Nigun 8",
+        "chapterNameHe": "ניגון ח׳"
       },
       {
         "workerFilename": "JEMSK0861B.mp3",
         "durationMs": 727000,
-        "chapterName": "Sicha 8"
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
       },
       {
         "workerFilename": "JEMSK0861C.mp3",
         "durationMs": 210000,
-        "chapterName": "End of Farbrengen"
+        "chapterName": "End of Farbrengen",
+        "chapterNameHe": "סיום ההתוועדות"
       }
     ],
     "pdfs": [
@@ -3500,6 +3704,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-11-23",
     "occasionLabel": "עקב, מבה\"ח אלול",
+    "occasionLabelEn": "Eikev, Shabbos Mevarchim Elul",
     "audio": [],
     "pdfs": [
       {
@@ -3540,6 +3745,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-11-30",
     "occasionLabel": "ראה, אדר\"ח אלול",
+    "occasionLabelEn": "Re'eh, Rosh Chodesh Elul, day 1",
     "audio": [],
     "pdfs": [
       {
@@ -3600,6 +3806,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-12-07",
     "occasionLabel": "שופטים, ז' אלול",
+    "occasionLabelEn": "Shoftim, 7 Elul",
     "audio": [],
     "pdfs": [
       {
@@ -3629,6 +3836,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-12-14",
     "occasionLabel": "תצא, י\"ד אלול",
+    "occasionLabelEn": "Ki Seitzei, 14 Elul",
     "audio": [],
     "pdfs": [
       {
@@ -3678,6 +3886,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-12-21",
     "occasionLabel": "תבא, כ\"א אלול",
+    "occasionLabelEn": "Ki Savo, 21 Elul",
     "audio": [],
     "pdfs": [
       {
@@ -3728,11 +3937,13 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-12-24",
     "occasionLabel": "כ\"ד אלול, ג' דסליחות, שיחה להעסקניות דישיבות תות\"ל ו\"בית רבקה\" תחי'",
+    "occasionLabelEn": "24 Elul, Selichos, day 3, sicha to the women supporters of the Tomchei Temimim yeshivos and Beis Rivkah",
     "audio": [
       {
         "workerFilename": "AR0021218.mp3",
         "durationMs": 478078,
-        "chapterName": "Sicha to Supporters of Tomchei Temimim, Chof Daled Elul, 5725"
+        "chapterName": "Sicha to Supporters of Tomchei Temimim, Chof Daled Elul, 5725",
+        "chapterNameHe": "שיחה לתומכי ישיבת תומכי תמימים, כ״ד אלול, תשכ״ה"
       }
     ],
     "pdfs": [
@@ -3753,6 +3964,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-12-28",
     "occasionLabel": "נצבים, כ\"ח אלול",
+    "occasionLabelEn": "Nitzavim, 28 Elul",
     "audio": [],
     "pdfs": [
       {
@@ -3792,6 +4004,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-12-29",
     "occasionLabel": "ערב ר\"ה, אחר התרת נדרים",
+    "occasionLabelEn": "Erev Rosh Hashanah, after Hataras Nedarim",
     "audio": [],
     "pdfs": [
       {
@@ -3806,6 +4019,7 @@
     "hebrewYear": 5725,
     "hebrewDate": "5725-12-29b",
     "occasionLabel": "ערב ר\"ה, ברכה",
+    "occasionLabelEn": "Erev Rosh Hashanah, bracha",
     "audio": [],
     "pdfs": [
       {

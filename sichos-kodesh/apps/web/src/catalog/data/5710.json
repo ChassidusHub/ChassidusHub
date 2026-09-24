@@ -4,6 +4,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-01-00",
     "occasionLabel": "שמבה\"ש",
+    "occasionLabelEn": "Simchas Beis Hashoevah",
     "audio": [],
     "pdfs": [
       {
@@ -18,6 +19,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-01-20",
     "occasionLabel": "יום ד' דחוה\"מ סוכות, שמחת ביה\"ש",
+    "occasionLabelEn": "Chol Hamoed Sukkos, day 4, Simchas Beis Hashoevah",
     "audio": [],
     "pdfs": [
       {
@@ -37,6 +39,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-01-29",
     "occasionLabel": "בראשית, מבה\"ח מרחשון",
+    "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -51,6 +54,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-02-06",
     "occasionLabel": "נח, ו' מרחשון",
+    "occasionLabelEn": "Noach, 6 Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -65,6 +69,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-04-18",
     "occasionLabel": "ויחי, ח\"י טבת",
+    "occasionLabelEn": "Vayechi, 18 Teves",
     "audio": [],
     "pdfs": [
       {
@@ -79,6 +84,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-04-24",
     "occasionLabel": "כ\"ד טבת, סיום הש\"ס",
+    "occasionLabelEn": "24 Teves, Siyum Hashas",
     "audio": [],
     "pdfs": [
       {
@@ -93,6 +99,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-04-25",
     "occasionLabel": "שמות, מבה\"ח שבט",
+    "occasionLabelEn": "Shemos, Shabbos Mevarchim Shevat",
     "audio": [],
     "pdfs": [
       {
@@ -107,6 +114,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-05-04",
     "occasionLabel": "יום א', ד' שבט",
+    "occasionLabelEn": "Sunday, 4 Shevat",
     "audio": [],
     "pdfs": [
       {
@@ -121,6 +129,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-05-14b",
     "occasionLabel": "י\"ד-ט\"ז שבט, במשך ימי השבעה",
+    "occasionLabelEn": "14-16 Shevat, during the shivah",
     "audio": [],
     "pdfs": [
       {
@@ -160,6 +169,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-05-24",
     "occasionLabel": "יתרו, מבה\"ח אדר",
+    "occasionLabelEn": "Yisro, Shabbos Mevarchim Adar",
     "audio": [],
     "pdfs": [
       {
@@ -179,6 +189,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-06-08",
     "occasionLabel": "תרומה, פ' זכור, ח' אדר",
+    "occasionLabelEn": "Terumah, Parshas Zachor, 8 Adar",
     "audio": [],
     "pdfs": [
       {
@@ -198,6 +209,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-06-10",
     "occasionLabel": "יו\"ד אדר, סיום השלושים",
+    "occasionLabelEn": "10 Adar, end of the shloshim",
     "audio": [],
     "pdfs": [
       {
@@ -217,6 +229,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-06-15",
     "occasionLabel": "תצוה, שושן פורים",
+    "occasionLabelEn": "Tetzaveh, Shushan Purim",
     "audio": [],
     "pdfs": [
       {
@@ -236,6 +249,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-06-29",
     "occasionLabel": "ויקה\"פ, פ' החודש, מבה\"ח וער\"ח ניסן",
+    "occasionLabelEn": "Vayakhel-Pekudei, Parshas Hachodesh, Shabbos Mevarchim and Erev Rosh Chodesh Nisan",
     "audio": [],
     "pdfs": [
       {
@@ -265,6 +279,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-07-01",
     "occasionLabel": "ר\"ח ניסן",
+    "occasionLabelEn": "Rosh Chodesh Nisan",
     "audio": [],
     "pdfs": [
       {
@@ -284,6 +299,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-07-15",
     "occasionLabel": "יום א' דחה\"פ",
+    "occasionLabelEn": "Pesach, day 1",
     "audio": [],
     "pdfs": [
       {
@@ -308,6 +324,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-07-16",
     "occasionLabel": "ימים ראשונים דחה\"פ, בעת הסעודה",
+    "occasionLabelEn": "The first days of Pesach, during the meal",
     "audio": [],
     "pdfs": [
       {
@@ -322,6 +339,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-07-22",
     "occasionLabel": "אחש\"פ",
+    "occasionLabelEn": "Acharon shel Pesach",
     "audio": [],
     "pdfs": [
       {
@@ -356,6 +374,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-07-28",
     "occasionLabel": "שמיני, מבה\"ח אייר",
+    "occasionLabelEn": "Shemini, Shabbos Mevarchim Iyar",
     "audio": [],
     "pdfs": [
       {
@@ -395,6 +414,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-08-01",
     "occasionLabel": "ליל ב' אייר, ת\"ת שבת\"ת",
+    "occasionLabelEn": "Night of 2 Iyar, Tiferes sheb'Tiferes",
     "audio": [],
     "pdfs": [
       {
@@ -429,6 +449,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-08-14",
     "occasionLabel": "מוצאי פסח שני",
+    "occasionLabelEn": "Motzei Pesach Sheni",
     "audio": [],
     "pdfs": [
       {
@@ -453,6 +474,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-08-17",
     "occasionLabel": "ליל ל\"ג בעומר",
+    "occasionLabelEn": "Lag BaOmer night",
     "audio": [],
     "pdfs": [
       {
@@ -492,6 +514,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-08-26",
     "occasionLabel": "בה\"ב, מבה\"ח סיון",
+    "occasionLabelEn": "Behar-Bechukosai, Shabbos Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -536,6 +559,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-08-29",
     "occasionLabel": "ליל ר\"ח סיון",
+    "occasionLabelEn": "Rosh Chodesh Sivan night",
     "audio": [],
     "pdfs": [
       {
@@ -565,6 +589,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-09-07",
     "occasionLabel": "יום ב' דחה\"ש",
+    "occasionLabelEn": "Shavuos, day 2",
     "audio": [],
     "pdfs": [
       {
@@ -589,6 +614,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-09-11",
     "occasionLabel": "נשא, י\"א סיון",
+    "occasionLabelEn": "Nasso, 11 Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -608,6 +634,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-09-25",
     "occasionLabel": "שלח, מבה\"ח תמוז",
+    "occasionLabelEn": "Shelach, Shabbos Mevarchim Tamuz",
     "audio": [],
     "pdfs": [
       {
@@ -647,6 +674,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-09-26",
     "occasionLabel": "כ\"ו סיון, שיחה באסיפת מל\"ח",
+    "occasionLabelEn": "26 Sivan, sicha at a Merkos meeting",
     "audio": [],
     "pdfs": [
       {
@@ -666,6 +694,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-10-09",
     "occasionLabel": "חוקת, ט' תמוז",
+    "occasionLabelEn": "Chukas, 9 Tamuz",
     "audio": [],
     "pdfs": [
       {
@@ -695,6 +724,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-10-12",
     "occasionLabel": "י\"ב תמוז",
+    "occasionLabelEn": "12 Tamuz",
     "audio": [],
     "pdfs": [
       {
@@ -724,6 +754,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-10-23",
     "occasionLabel": "פנחס, מבה\"ח מנ\"א",
+    "occasionLabelEn": "Pinchas, Shabbos Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -768,6 +799,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-11-12",
     "occasionLabel": "י\"ב מנ\"א, שיחה להת' שי' הנוסעים בשליחות המל\"ח",
+    "occasionLabelEn": "12 Menachem Av, sicha to the students traveling on Merkos shlichus",
     "audio": [],
     "pdfs": [
       {
@@ -787,6 +819,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-11-20",
     "occasionLabel": "מוצאי כ' מנ\"א",
+    "occasionLabelEn": "Motzei 20 Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -831,6 +864,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-11-29",
     "occasionLabel": "ראה, מבה\"ח וער\"ח אלול",
+    "occasionLabelEn": "Re'eh, Shabbos Mevarchim and Erev Rosh Chodesh Elul",
     "audio": [],
     "pdfs": [
       {
@@ -870,6 +904,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-12-18",
     "occasionLabel": "מוצאי ח\"י אלול",
+    "occasionLabelEn": "Motzei 18 Elul",
     "audio": [],
     "pdfs": [
       {
@@ -889,6 +924,7 @@
     "hebrewYear": 5710,
     "hebrewDate": "5710-12-27",
     "occasionLabel": "נצבים, כ\"ז אלול",
+    "occasionLabelEn": "Nitzavim, 27 Elul",
     "audio": [],
     "pdfs": [
       {
