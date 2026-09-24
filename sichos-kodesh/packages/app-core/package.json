@@ -15,18 +15,19 @@
     "dist"
   ],
   "scripts": {
-    "prebuild": "npm run build -w @sichos-kodesh/catalog",
+    "prebuild": "npm run build -w @sichos-kodesh/sefaria-index",
     "build": "tsc -p tsconfig.json",
-    "pretest": "npm run build -w @sichos-kodesh/catalog",
+    "pretest": "npm run build -w @sichos-kodesh/sefaria-index",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pretypecheck": "npm run build -w @sichos-kodesh/catalog",
+    "pretypecheck": "npm run build -w @sichos-kodesh/sefaria-index",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
   },
   "license": "ISC",
   "dependencies": {
     "@hebcal/core": "^6.9.2",
     "@sichos-kodesh/catalog": "^0.1.0",
+    "@sichos-kodesh/sefaria-index": "^0.1.0",
     "fuse.js": "^7.5.0"
   },
   "devDependencies": {

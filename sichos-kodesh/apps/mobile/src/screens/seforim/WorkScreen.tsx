@@ -7,7 +7,7 @@ import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
 import { getWorkContents, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { WorkScreenProps } from '../../navigation/types';
-import { contentsAt, names, unitCount, workKind } from '../../seforim/seforimModel';
+import { contentsAt, names, unitCount, workKind } from '@sichos-kodesh/app-core';
 import { useReadingState } from '../../seforim/readingState';
 import { Button } from '../../ui/Button';
 import { CategoryRow } from '../../ui/CategoryRow';

@@ -4,7 +4,7 @@ import { getWorkContents, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { SeforimSearchScreenProps } from '../../navigation/types';
 import { getPacksNative } from '../../offline/packsNative';
-import { names } from '../../seforim/seforimModel';
+import { names } from '@sichos-kodesh/app-core';
 import { heldSearchIndexes, searchNames, searchTexts, type TextHit } from '../../seforim/seforimSearch';
 import { Row } from '../../ui/Row';
 import { Screen } from '../../ui/Screen';

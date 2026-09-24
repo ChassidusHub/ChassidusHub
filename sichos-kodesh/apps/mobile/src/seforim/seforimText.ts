@@ -1,6 +1,6 @@
 import RNBlobUtil from 'react-native-blob-util';
 import type { CatalogEdition, CatalogUnit, CatalogWork } from '@sichos-kodesh/catalog';
-import { renderUnit, textUrl, type SefariaTextResponse } from '@sichos-kodesh/sefaria-index/reader';
+import { TextLoadError, fetchFromSefaria, type TextFetch } from '@sichos-kodesh/app-core';
 import { documentPath, readHeldObjects } from '../offline/objectStore';
 import { getSavedState, savedTextPath } from './savedStore';
 
@@ -10,7 +10,8 @@ import { getSavedState, savedTextPath } from './savedStore';
  *    sha256 the catalog names);
  * 2. its saved copy, when the sefer was saved on the phone (savedStore.ts);
  * 3. otherwise Sefaria, read live and rendered by the same code that made
- *    the packs, so it looks the same.
+ *    the packs, so it looks the same (app-core's `fetchFromSefaria`, which
+ *    the web reads with too).
  * Only editions whose source may ship come here (the reader shows the
  * others as links).
  */
@@ -22,13 +23,7 @@ export interface LoadedText {
   from: TextFrom;
 }
 
-export type TextProblem = 'offline' | 'unavailable';
-
-export class TextLoadError extends Error {
-  constructor(readonly problem: TextProblem) {
-    super(problem);
-  }
-}
+export { TextLoadError, fetchFromSefaria, type TextProblem } from '@sichos-kodesh/app-core';
 
 /** The file of a held text object, relative to the files directory, or null. */
 export async function heldTextFile(sha256: string | undefined): Promise<string | null> {
@@ -62,38 +57,7 @@ export async function readUnitTextFile(workId: string, unitId: string, edition: 
   return null;
 }
 
-type FetchLike = (url: string) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
-
-/** The unit read live from Sefaria and rendered as a text object. */
-export async function fetchFromSefaria(work: CatalogWork, unit: CatalogUnit, edition: CatalogEdition, fetchFn: FetchLike = fetch as FetchLike): Promise<string> {
-  const source = work.sources[edition.source];
-  if (!source || source.source !== 'sefaria' || !unit.ref || !source.version || (source.language !== 'he' && source.language !== 'en')) throw new TextLoadError('unavailable');
-  let response: { ok: boolean; json(): Promise<unknown> };
-  try {
-    response = await fetchFn(textUrl(unit.ref, source.language, source.version));
-  } catch {
-    throw new TextLoadError('offline');
-  }
-  if (!response.ok) throw new TextLoadError('unavailable');
-  const answer = (await response.json()) as SefariaTextResponse;
-  const text = answer.versions?.[0]?.text;
-  if (text === undefined) throw new TextLoadError('unavailable');
-  const licence = source.licence as Parameters<typeof renderUnit>[0]['licence'];
-  return renderUnit({
-    workId: work.id,
-    unitId: unit.id,
-    heading: source.language === 'en' ? (unit.labelEn ?? unit.label) : unit.label,
-    language: source.language,
-    ref: unit.ref,
-    version: source.version,
-    licence,
-    credit: source.credit,
-    text,
-    sectionNames: [],
-  });
-}
-
-export async function loadUnitText(work: CatalogWork, unit: CatalogUnit, edition: CatalogEdition, online: boolean, fetchFn?: FetchLike): Promise<LoadedText> {
+export async function loadUnitText(work: CatalogWork, unit: CatalogUnit, edition: CatalogEdition, online: boolean, fetchFn?: TextFetch): Promise<LoadedText> {
   const html = await readUnitTextFile(work.id, unit.id, edition);
   if (html !== null) return { html, from: 'phone' };
   if (!online) throw new TextLoadError('offline');

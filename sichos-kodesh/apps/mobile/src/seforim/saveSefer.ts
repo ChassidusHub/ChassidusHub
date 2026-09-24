@@ -6,7 +6,7 @@ import { catalogStore } from '../catalog/catalogStore';
 import { documentPath } from '../offline/objectStore';
 import type { PacksNativeModule } from '../offline/packsNative';
 import { forgetSaved, getSavedState, recordSaved, savedDir, savedIndexPath, savedTextPath } from './savedStore';
-import { mayRead } from './seforimModel';
+import { mayRead } from '@sichos-kodesh/app-core';
 import { TextLoadError, fetchFromSefaria, type TextProblem } from './seforimText';
 
 /**

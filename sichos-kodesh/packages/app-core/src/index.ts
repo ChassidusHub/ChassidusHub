@@ -1,5 +1,6 @@
 export * from './search/cholHamoedHebrew.js';
 export * from './search/language.js';
+export * from './search/normalizeSearchText.js';
 export * from './search/parseSmartQuery.js';
 export * from './search/parshaOptions.js';
 export * from './search/searchOccasions.js';
@@ -10,3 +11,9 @@ export * from './download/contentPresets.js';
 export * from './catalog/catalogStore.js';
 export * from './catalog/catalogUpdate.js';
 export * from './catalog/displayNames.js';
+export * from './seforim/textObject.js';
+export * from './seforim/seforimModel.js';
+export * from './seforim/searchNames.js';
+export * from './seforim/sefariaText.js';
+export * from './seforim/readerSettings.js';
+export * from './seforim/readingState.js';

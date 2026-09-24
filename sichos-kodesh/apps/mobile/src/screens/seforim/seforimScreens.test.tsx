@@ -27,6 +27,8 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
 }));
 
+const AsyncStorage = require('@react-native-async-storage/async-storage') as { setItem: jest.Mock };
+const reading = require('../../seforim/readingState') as typeof import('../../seforim/readingState');
 const { SafeAreaProvider } = require('react-native-safe-area-context') as typeof import('react-native-safe-area-context');
 const { ThemeProvider } = require('../../ui/theme') as typeof import('../../ui/theme');
 const { LanguageProvider } = require('../../i18n/LanguageProvider') as typeof import('../../i18n/LanguageProvider');
@@ -100,6 +102,49 @@ describe('seforim screens', () => {
     expect(shown).toContain('Try again');
     // Once: a failure is not retried on its own, only when the connection comes back.
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  describe('the reader settings', () => {
+    const sefaria = (segment: string) =>
+      jest.fn(async () => ({ ok: true, json: async () => ({ versions: [{ text: [segment] }] }) })) as unknown as typeof fetch;
+    afterEach(() => reading.resetReadingState());
+
+    it('says where the chapter falls in the sefer', async () => {
+      globalThis.fetch = sefaria('words');
+      expect(await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />)).toMatch(/Chapter \d+ of \d+/);
+    });
+
+    it('takes the vowels off when asked', async () => {
+      // בְּרֵאשִׁית with its points, then the same word bare.
+      const pointed = '\u05D1\u05BC\u05B0\u05E8\u05B5\u05D0\u05E9\u05C1\u05B4\u05D9\u05EA';
+      globalThis.fetch = sefaria(pointed);
+      expect(await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />)).toContain(pointed);
+      reading.setReaderSettings({ niqqud: false });
+      globalThis.fetch = sefaria(pointed);
+      const bare = await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />);
+      expect(bare).toContain('\u05D1\u05E8\u05D0\u05E9\u05D9\u05EA');
+      expect(bare).not.toContain(pointed);
+    });
+
+    it('shows a note in the text, or as a number with the notes at the end', async () => {
+      const noted = 'The words<sup class="footnote-marker">1</sup><i class="footnote">The note itself</i> go on.';
+      globalThis.fetch = sefaria(noted);
+      const atEnd = await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />);
+      expect(atEnd).toContain('Notes');
+      reading.setReaderSettings({ notes: 'inline' });
+      globalThis.fetch = sefaria(noted);
+      const inline = await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />);
+      expect(inline).toContain('The note itself');
+      expect(inline).not.toContain('"Notes"');
+    });
+
+    it('keeps the settings on the phone', () => {
+      reading.setReaderSettings({ font: 'david', theme: 'sepia', scale: 1.4 });
+      const stored = JSON.parse(AsyncStorage.setItem.mock.calls.at(-1)[1]);
+      expect(stored.settings).toMatchObject({ font: 'david', theme: 'sepia', scale: 1.4 });
+      reading.recordPlace('tanya', 'part1/1', 1, 0.4567);
+      expect(reading.getReadingState().places.tanya).toMatchObject({ unitId: 'part1/1', source: 1, offset: 0.457 });
+    });
   });
 
   it('opens the search', async () => {

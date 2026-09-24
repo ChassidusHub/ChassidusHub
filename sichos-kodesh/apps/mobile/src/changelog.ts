@@ -9,6 +9,27 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.6.0',
+    en: [
+      'A new reader for the seforim: set in Frank Ruehl, David, SBL Hebrew or Noto Serif (or the phone\'s own font), each shipped in the app, so a sefer reads the same with no internet',
+      'Reading settings (the Aa button): text size, line spacing, margins, and the page - like the app, paper, sepia or night. Vowels and cantillation on or off, justified as a printed sefer is set, the notes at the end or right in the text, page markers on or off',
+      'Read straight on: at the end of a chapter the next one follows on the same page. The bar slides out of the way while reading, a thin line shows how far into the chapter you are, and the screen stays on while a sefer is open (each can be turned off)',
+      'A sefer reopens at the very paragraph where it was left, not just its chapter',
+      'Press and hold a paragraph to share it with its source: the sefer, the chapter and a link',
+      'Packs signed with the app\'s own key are now trusted, so a text pack imports with its search index',
+      'About credits each of the reader\'s fonts and its licence',
+    ],
+    he: [
+      'קורא חדש לספרים: בגופן פרנק-ריהל, דוד, SBL עברית או נוטו סריף (או הגופן של הטלפון), כולם כלולים באפליקציה, כך שספר נראה אותו דבר גם בלי אינטרנט',
+      'הגדרות קריאה (הכפתור Aa): גודל האותיות, ריווח השורות, השוליים והדף - כמו האפליקציה, נייר, ספיה או לילה. ניקוד וטעמים לפי הבחירה, יישור לשני הצדדים כמו בספר מודפס, ההערות בסוף הפרק או בתוך הטקסט, וסימוני עמודים לפי הבחירה',
+      'להמשיך ישר: בסוף פרק הפרק הבא ממשיך באותו דף. הסרגל מתפנה בזמן הקריאה, קו דק מראה כמה מהפרק נקרא, והמסך נשאר דולק כל עוד ספר פתוח (כל אחד מהם אפשר לכבות)',
+      'ספר נפתח בדיוק בפסקה שבה הפסקתם, לא רק בפרק',
+      'לחיצה ארוכה על פסקה משתפת אותה עם המקור: הספר, הפרק וקישור',
+      'חבילות שנחתמו במפתח של האפליקציה מקובלות עכשיו, כך שחבילת טקסט נכנסת עם אינדקס החיפוש שלה',
+      'במסך אודות: קרדיט לכל אחד מהגופנים של הקורא ולרישיון שלו',
+    ],
+  },
+  {
     version: '1.5.0',
     en: [
       'Seforim: Library > Seforim lists the Rebbeim and their seforim. Tanya, Likkutei Torah, Torah Or, the Shulchan Aruch HaRav, Derech Mitzvosecha and Maaneh Lashon read right in the app, chapter by chapter, in Hebrew and in English; a few more in English only, and the rest link to where they are read',

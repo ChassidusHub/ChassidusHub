@@ -227,6 +227,17 @@ export function parseTextObject(html: string): TextObject {
   return result;
 }
 
+/**
+ * Hebrew vowel points and cantillation marks (U+0591 to U+05C7), without the
+ * maqaf and sof pasuq, which read as punctuation. For the reader's "vowels
+ * off": the letters stay exactly as they are.
+ */
+const NIQQUD = /[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g;
+
+export function stripNiqqud(text: string): string {
+  return text.replace(NIQQUD, '');
+}
+
 /** The words of a text object, for a search result's snippet: paragraphs and notes, no heading or credit. */
 export function textObjectPlainText(html: string): string {
   const parsed = parseTextObject(html);
