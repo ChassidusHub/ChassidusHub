@@ -23,6 +23,7 @@
     "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine && npm run build -w @sichos-kodesh/mafteiach-index && npm run build -w @sichos-kodesh/igros-index",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "build-catalog": "tsx bin/build.ts",
+    "translation-coverage": "tsx bin/translations.ts",
     "release-files": "tsx bin/release.ts"
   },
   "license": "ISC",

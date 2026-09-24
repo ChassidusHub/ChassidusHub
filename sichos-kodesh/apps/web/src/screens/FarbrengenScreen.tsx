@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
 import { isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
+import { playlistForEntry } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import { useRecordVisit } from '../player/useRecordVisit';
 import { useProgressMap } from '../player/useProgressMap';
@@ -85,12 +87,12 @@ export function FarbrengenScreen({ resolved }: Props) {
     if (isThisPlaylistActive) return;
     const differentRecordingPlaying = player.playing && player.playlist !== null;
     if (differentRecordingPlaying && !autoplayOnHanacha) return;
-    player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, 0);
+    player.play(playlistForEntry(entry), 0);
   }
 
   return (
     <div className="screen">
-      <ScreenHeader to={backPath} title={entry.occasionLabel} />
+      <ScreenHeader to={backPath} title={occasionTitle(entry, language)} />
       {/* `subtitle` is this occasion's own day+month only (see
           useResolvedEntry) - the year is appended here, not folded into
           that shared field, so this page shows its occasion's full date

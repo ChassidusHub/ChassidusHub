@@ -16,6 +16,18 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.1.0',
+    date: '2026-09-24',
+    en: [
+      'Every occasion now has its name in English too (e.g. "Rosh Hashanah, day 2", "Motzei 13 Tishrei") - 1,438 of the 1,454 distinct names; the rest keep their Hebrew',
+      'Every recording\'s chapter name now has its Hebrew too (e.g. "שיחה א׳", "מאמר", "שני ניגונים") - 783 of the 785 distinct names',
+    ],
+    he: [
+      'לכל אירוע יש כעת גם שם באנגלית (למשל "Rosh Hashanah, day 2") - 1,438 מתוך 1,454 השמות השונים; השאר נשארים בעברית',
+      'לשם הקטע של כל הקלטה יש כעת גם שם בעברית (למשל "שיחה א׳", "מאמר", "שני ניגונים") - 783 מתוך 785 השמות השונים',
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2026-09-23',
     en: [

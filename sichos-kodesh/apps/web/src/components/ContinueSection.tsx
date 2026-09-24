@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from './OccasionRowIcon';
 import {
@@ -10,6 +11,7 @@ import {
 } from '../player/progressStore';
 import type { OccasionProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
+import { playlistForEntry } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
@@ -80,15 +82,11 @@ export function ContinueSection() {
                 onClick={() => {
                   if (resumeChapterIndex === null) return;
                   const position = progress.chapters[resumeChapterIndex]?.position ?? 0;
-                  player.play(
-                    { title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate },
-                    resumeChapterIndex,
-                    position,
-                  );
+                  player.play(playlistForEntry(entry), resumeChapterIndex, position);
                 }}
               >
                 <span className="year-row-title-line">
-                  <span className="year-row-year">{entry.occasionLabel}</span>
+                  <span className="year-row-year">{occasionTitle(entry, language)}</span>
                   <OccasionRowIcon entry={entry} progressMap={progressMap} />
                 </span>
                 {/* This list spans every year, not one source year the way

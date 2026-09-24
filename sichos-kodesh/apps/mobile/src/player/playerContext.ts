@@ -1,13 +1,39 @@
 import { createContext } from 'react';
-import type { CatalogAudio, PlaybackRate } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
+import type { Language } from '@sichos-kodesh/app-core';
+import type { CatalogAudio, CatalogEntry, PlaybackRate } from '@sichos-kodesh/catalog';
 
 /** What the player is currently loaded with - one occasion's recordings, in chapter order. Same shape the web's PlayerProvider takes. */
 export interface PlayerPlaylist {
+  /**
+   * The occasion's own Hebrew label (`occasionLabel`) - what saved progress
+   * is recorded under and what "is this playlist the one playing" compares.
+   * Shown through `playlistTitle`, never directly.
+   */
   title: string;
+  /** The occasion's English name (`occasionLabelEn`), for the English UI - absent where it has none. */
+  titleEn?: string;
   audio: CatalogAudio[];
   hebrewYear: number;
   occasionId: number;
   hebrewDate: string;
+}
+
+/** An occasion's recordings as a playlist - every screen that plays one builds it here. */
+export function playlistForEntry(entry: CatalogEntry): PlayerPlaylist {
+  return {
+    title: entry.occasionLabel,
+    ...(entry.occasionLabelEn && { titleEn: entry.occasionLabelEn }),
+    audio: entry.audio,
+    hebrewYear: entry.hebrewYear,
+    occasionId: entry.occasionId,
+    hebrewDate: entry.hebrewDate,
+  };
+}
+
+/** The playlist's occasion name in the UI language (see `occasionTitle`). */
+export function playlistTitle(playlist: PlayerPlaylist, language: Language): string {
+  return occasionTitle({ occasionLabel: playlist.title, occasionLabelEn: playlist.titleEn }, language);
 }
 
 export interface PlayerError {

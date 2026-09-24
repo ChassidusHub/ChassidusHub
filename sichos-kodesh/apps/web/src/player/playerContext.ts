@@ -1,15 +1,40 @@
 import { createContext } from 'react';
-import type { CatalogAudio, PlaybackRate } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
+import type { Language } from '@sichos-kodesh/app-core';
+import type { CatalogAudio, CatalogEntry, PlaybackRate } from '@sichos-kodesh/catalog';
 
 export interface Playlist {
-  /** What the player bar shows as context for what's playing - an occasion's label. */
+  /**
+   * The occasion's own Hebrew label (`occasionLabel`) - what saved progress
+   * is recorded under and what "is this playlist the one playing" compares.
+   * Shown through `playlistTitle`, never directly.
+   */
   title: string;
+  /** The occasion's English name (`occasionLabelEn`), for the English UI - absent where it has none, and in a playlist saved before it existed. */
+  titleEn?: string;
   audio: CatalogAudio[];
   /** The occasion this playlist belongs to - lets PlayerProvider record per-chapter listening progress against it (see player/progressStore.ts) for the home page's Continue section. */
   hebrewYear: number;
   occasionId: number;
   /** The occasion's own raw mafteiach-index date key (e.g. "5736-06A-06") - shown alongside the title (see `hebrewFullDateLabel`) since the player bar and OS media session are never scoped to one source year the way an occasion's own page is, so the occasion label alone doesn't say which year's occurrence is actually playing. */
   hebrewDate: string;
+}
+
+/** An occasion's recordings as a playlist - every screen that plays one builds it here. */
+export function playlistForEntry(entry: CatalogEntry): Playlist {
+  return {
+    title: entry.occasionLabel,
+    ...(entry.occasionLabelEn && { titleEn: entry.occasionLabelEn }),
+    audio: entry.audio,
+    hebrewYear: entry.hebrewYear,
+    occasionId: entry.occasionId,
+    hebrewDate: entry.hebrewDate,
+  };
+}
+
+/** The playlist's occasion name in the UI language (see `occasionTitle`). */
+export function playlistTitle(playlist: Playlist, language: Language): string {
+  return occasionTitle({ occasionLabel: playlist.title, occasionLabelEn: playlist.titleEn }, language);
 }
 
 export interface PlayerState {

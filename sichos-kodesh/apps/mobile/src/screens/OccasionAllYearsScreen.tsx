@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { resolveOccasionAllYears } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useTranslation } from '../i18n/useTranslation';
@@ -38,7 +39,7 @@ export function OccasionAllYearsScreen({ navigation, route }: OccasionAllYearsSc
 
   return (
     <Screen header={<ScreenHeader back={back} title={t.thisOccasionAllYearsTitle} />}>
-      <TabHelp>{t.thisOccasionAllYearsHelp(sourceEntry.occasionLabel, hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</TabHelp>
+      <TabHelp>{t.thisOccasionAllYearsHelp(occasionTitle(sourceEntry, language), hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</TabHelp>
 
       {yearGroups.length === 0 && <GapMessage>{t.noFarbrengensAnyYear}</GapMessage>}
 
@@ -57,7 +58,7 @@ export function OccasionAllYearsScreen({ navigation, route }: OccasionAllYearsSc
             {matches.map((entry) => (
               <Row
                 key={entry.occasionId}
-                label={entry.occasionLabel}
+                label={occasionTitle(entry, language)}
                 trailing={
                   <RowTrailing>
                     <OccasionRowIcon entry={entry} progressMap={progressMap} />
@@ -72,7 +73,7 @@ export function OccasionAllYearsScreen({ navigation, route }: OccasionAllYearsSc
                 {others.map((entry) => (
                   <Row
                     key={entry.occasionId}
-                    label={entry.occasionLabel}
+                    label={occasionTitle(entry, language)}
                     muted
                     trailing={
                       <RowTrailing>

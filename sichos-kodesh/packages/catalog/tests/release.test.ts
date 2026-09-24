@@ -88,7 +88,42 @@ describe('parseCatalogRelease', () => {
     expect(parseCatalogRelease({ schemaVersion: 1, version: '1.0.1', releasedAt: 'x', byYear: { abc: [] } })).toBeNull();
     expect(parseCatalogRelease({ schemaVersion: 1, version: '1.0.1', releasedAt: 'x', byYear: [] })).toBeNull();
   });
+
+  it('accepts the display translations (catalog 1.1.0), as strings, and entries without them', () => {
+    const release = { schemaVersion: 1, version: '1.1.0', releasedAt: 'x', byYear: { '5711': [translatedEntry, entry] } };
+    expect(parseCatalogRelease(release)?.byYear[5711]).toEqual([translatedEntry, entry]);
+    const badLabel = { ...translatedEntry, occasionLabelEn: 5 };
+    const badChapter = { ...translatedEntry, audio: [{ workerFilename: 'a.mp3', durationMs: 1, chapterNameHe: null }] };
+    expect(parseCatalogRelease({ ...release, byYear: { '5711': [badLabel] } })).toBeNull();
+    expect(parseCatalogRelease({ ...release, byYear: { '5711': [badChapter] } })).toBeNull();
+  });
+
+  it('serves the translations to apps built before them: their entry check (catalog 1.0.0) lets a 1.1.0 release through', () => {
+    // Frozen copy of the entry check an installed app runs (packages/catalog/src/release.ts as of catalog 1.0.0).
+    function isCatalogEntry1_0_0(value: unknown): boolean {
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+      const { occasionId, hebrewYear, hebrewDate, occasionLabel, audio, pdfs } = value as Record<string, unknown>;
+      if (typeof occasionId !== 'number' || typeof hebrewYear !== 'number' || typeof hebrewDate !== 'string' || typeof occasionLabel !== 'string') return false;
+      if (!Array.isArray(audio) || !Array.isArray(pdfs)) return false;
+      return (
+        audio.every((a) => typeof a === 'object' && a !== null && typeof a.workerFilename === 'string' && typeof a.durationMs === 'number') &&
+        pdfs.every((p) => typeof p === 'object' && p !== null && typeof p.section === 'string' && typeof p.label === 'string' && typeof p.driveFileId === 'string')
+      );
+    }
+    const wire = JSON.parse(serializeCatalogRelease({ schemaVersion: 1, version: '1.1.0', releasedAt: 'x' }, JSON.stringify({ 5711: [translatedEntry] })));
+    expect(wire.byYear['5711'].every(isCatalogEntry1_0_0)).toBe(true);
+    // The fields an old app reads are all there, unchanged - the Hebrew label it keys progress by included.
+    expect(wire.byYear['5711'][0]).toMatchObject({ occasionId: 1, hebrewYear: 5711, hebrewDate: '5711-01-09', occasionLabel: `ו' תשרי`, pdfs: [] });
+    expect(wire.byYear['5711'][0].audio[0]).toMatchObject({ workerFilename: 'a.mp3', durationMs: 1, chapterName: 'Sicha 1' });
+  });
 });
+
+const translatedEntry = {
+  ...entry,
+  occasionLabel: `ו' תשרי`,
+  occasionLabelEn: '6 Tishrei',
+  audio: [{ workerFilename: 'a.mp3', durationMs: 1, chapterName: 'Sicha 1', chapterNameHe: 'שיחה א׳' }],
+};
 
 const collection = (items: unknown[] = []) => ({ items, groups: {} });
 const library = {

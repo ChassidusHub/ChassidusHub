@@ -1,6 +1,8 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { extractDriveFileId, extractDriveResourceKey, isReshimosLabel } from './driveLinks.js';
 import { PDF_SECTION_ORDER } from './pdfSections.js';
+import { translateChapterName } from './translate/chapterNameHe.js';
+import { translateOccasionLabel } from './translate/occasionLabelEn.js';
 import type { CatalogAudio, CatalogEntry, CatalogPdf, PdfSection } from './types.js';
 
 interface OccasionRow {
@@ -43,7 +45,9 @@ function workerFilenameFromUrl(url: string): string | null {
  * "nothing available" rather than silently omitting the occasion.
  * Reshima-labeled PDF links (see `isReshimosLabel`) are dropped, since this
  * app is scoped to farbrengen sichos/maamarim, not the Rebbe's private
- * notes or the separately published "Reshimos" series.
+ * notes or the separately published "Reshimos" series. Each entry and
+ * recording also gets its display translation when the rules have one
+ * (`occasionLabelEn`, `chapterNameHe` - see translate/), omitted otherwise.
  */
 export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
   const occasions = db.prepare('SELECT id, hebrew_year, hebrew_date, occasion_label FROM occasions').all() as unknown as OccasionRow[];
@@ -60,7 +64,13 @@ export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
     const workerFilename = workerFilenameFromUrl(row.url);
     if (!workerFilename) continue;
     const list = audioByOccasion.get(row.occasion_id) ?? [];
-    list.push({ workerFilename, durationMs: row.duration_ms, ...(row.chapter_name && { chapterName: row.chapter_name }) });
+    const chapterNameHe = row.chapter_name ? translateChapterName(row.chapter_name) : null;
+    list.push({
+      workerFilename,
+      durationMs: row.duration_ms,
+      ...(row.chapter_name && { chapterName: row.chapter_name }),
+      ...(chapterNameHe && { chapterNameHe }),
+    });
     audioByOccasion.set(row.occasion_id, list);
   }
 
@@ -77,11 +87,13 @@ export function buildCatalog(db: DatabaseSync): Record<number, CatalogEntry[]> {
 
   const byYear: Record<number, CatalogEntry[]> = {};
   for (const occasion of occasions) {
+    const occasionLabelEn = translateOccasionLabel(occasion.occasion_label);
     const entry: CatalogEntry = {
       occasionId: occasion.id,
       hebrewYear: occasion.hebrew_year,
       hebrewDate: occasion.hebrew_date,
       occasionLabel: occasion.occasion_label,
+      ...(occasionLabelEn && { occasionLabelEn }),
       audio: audioByOccasion.get(occasion.id) ?? [],
       pdfs: pdfsByOccasion.get(occasion.id) ?? [],
     };

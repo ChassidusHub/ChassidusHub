@@ -15,9 +15,11 @@ bridge to the real crawled data.
 
 - `CatalogEntry`: one occasion — `occasionId`, `hebrewYear`, `hebrewDate`
   (mafteiach-index's raw date key, e.g. `"5711-05-10"`), `occasionLabel`,
+  optional `occasionLabelEn` (see "Display translations" below),
   `audio: CatalogAudio[]`, `pdfs: CatalogPdf[]`.
 - `CatalogAudio`: `workerFilename` (for `services/media-proxy`'s
-  `/jem-audio/:filename` route), `durationMs`, optional `chapterName`.
+  `/jem-audio/:filename` route), `durationMs`, optional `chapterName` and
+  its Hebrew, optional `chapterNameHe`.
 - `CatalogPdf`: `section` (`PdfSection`), `label`, `driveFileId` (for
   `/drive/:fileId`), optional `resourceKey`.
 - `PdfSection`: `'mugah' | 'biltiMugah' | 'maamorim' | 'hagahos' | 'hosofos'`.
@@ -48,6 +50,49 @@ text/audio bytes stay server-fetched on demand through
 
 An occasion with neither audio nor a PDF is still included, with empty
 arrays — a genuine gap, not a silently dropped row.
+
+Each entry also gets `occasionLabelEn` and each named recording
+`chapterNameHe` when the display translators can produce them (next
+section).
+
+## Display translations (`translate/`)
+
+mafteiach.app labels its occasions in Hebrew and JEM names its recordings
+in English, so each UI language would otherwise show the two mixed. The
+catalog build adds the missing language next to each, and the apps show
+each UI language its own (`occasionTitle` / `chapterTitle` in
+packages/app-core):
+
+- `translateOccasionLabel(label)` (`translate/occasionLabelEn.ts`): Hebrew
+  occasion label -> English, e.g. `יום ב' דר"ה` -> "Rosh Hashanah, day 2",
+  `מוצאי י"ג תשרי` -> "Motzei 13 Tishrei", `בראשית, מבה"ח וער"ח מ"ח` ->
+  "Bereishis, Shabbos Mevarchim and Erev Rosh Chodesh Cheshvan". The label
+  is split where it splits itself (commas, " - ", parentheses), and every
+  part must be one the rules read: a date (Hebrew numerals, including
+  Chabad's יו"ד and ז"ך), a parsha, a Yom Tov and its numbered day or
+  night, Rosh Chodesh and Shabbos Mevarchim, a time of day, or who a sicha
+  was said to, chunk by chunk from `translate/occasionDictionary.ts`.
+- `translateChapterName(name)` (`translate/chapterNameHe.ts`): JEM chapter
+  name -> Hebrew, e.g. "Sicha 1" -> "שיחה א׳", "Two Nigunim" -> "שני
+  ניגונים", "Sicha, Yud Zayin Tishrei, 5748" -> "שיחה, י״ז תשרי, תשמ״ח",
+  from `translate/chapterDictionary.ts`.
+
+Both are pure, deterministic rules - no network, nothing learned at run
+time - and return `null` rather than guess: a label with one part the rules
+do not know gets no English, and the UI keeps the original. Only labels are
+translated, never mafteiach's editorial writing. Ashkenazi (Chabad)
+pronunciation throughout, the app's own month names (mafteiachMonth.ts),
+and the Hebrew UI's geresh and gershayim (׳ ״).
+
+`npm run translation-coverage -w @sichos-kodesh/catalog -- --db <mafteiach.db>`
+reports how much of the catalog each covers and lists what is left; from
+the 2026-09-24 crawl that is 1,438 of 1,454 distinct occasion labels
+(3,314 of 3,330 occasions) and 783 of 785 chapter names. The leftovers are
+names the rules cannot spell with confidence (visitors known only by
+initials, an unknown abbreviation), a label whose parentheses do not
+balance, and two pieces of editorial text. `tests/translatedCatalog.test.ts`
+fails when the bundled year files are not what the current rules produce -
+after changing a dictionary, rebuild the catalog.
 
 `bin/build.ts` runs `buildCatalog` against a SQLite database and writes one
 JSON file per Hebrew year at or above `MIN_HISTORICAL_YEAR` (5710, see
@@ -346,4 +391,5 @@ npm test              # vitest run (also builds kvius-engine first)
 npm run test:watch
 npm run typecheck
 npm run build-catalog -- --db <path> --out <dir>   # tsx bin/build.ts
+npm run translation-coverage -- --db <path>        # tsx bin/translations.ts
 ```

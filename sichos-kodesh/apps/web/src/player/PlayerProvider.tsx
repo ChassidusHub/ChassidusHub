@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { audioChapterName } from '@sichos-kodesh/app-core';
 import { DEFAULT_PLAYBACK_RATE, effectivePlaybackRate, isPlaybackRate, isPlaybackRateAllowed } from '@sichos-kodesh/catalog';
 import type { PlaybackRate } from '@sichos-kodesh/catalog';
 import { audioUrl } from '../download/download';
@@ -8,7 +9,7 @@ import { forMediaSession } from '../utils/hebrewPunctuation';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
 import { useLanguage } from '../i18n/useLanguage';
 import { recordChapterProgress } from './progressStore';
-import { PlayerContext } from './playerContext';
+import { PlayerContext, playlistTitle } from './playerContext';
 import type { Playlist, PlayerContextValue, PlayerState } from './playerContext';
 
 const PERSIST_KEY = 'sichos-kodesh:player-state';
@@ -336,9 +337,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     // the lock-screen/notification gets for *which* year's occurrence of
     // a recurring occasion is actually playing.
     const dateLabel = hebrewFullDateLabel(state.playlist.hebrewDate, state.playlist.hebrewYear, language);
+    const title = playlistTitle(state.playlist, language);
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: forMediaSession(current.chapterName ?? state.playlist.title),
-      artist: forMediaSession(`${state.playlist.title} · ${dateLabel}`),
+      title: forMediaSession(audioChapterName(current, language) ?? title),
+      artist: forMediaSession(`${title} · ${dateLabel}`),
       album: 'Sichos Kodesh',
       artwork: [
         { src: `${import.meta.env.BASE_URL}icon-192.png`, sizes: '192x192', type: 'image/png' },

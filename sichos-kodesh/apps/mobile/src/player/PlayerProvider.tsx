@@ -6,10 +6,12 @@ import TrackPlayer, { AppKilledPlaybackBehavior, Capability, Event, State, useAc
 import { DEFAULT_PLAYBACK_RATE, effectivePlaybackRate, isPlaybackRate, isPlaybackRateAllowed } from '@sichos-kodesh/catalog';
 import type { PlaybackRate } from '@sichos-kodesh/catalog';
 import { getCatalog } from '../catalog/catalogStore';
+import { useLanguage } from '../i18n/useTranslation';
+import type { Language } from '../i18n/translations';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
-import { catalogAudioToTracks } from './playlist';
+import { catalogAudioToTracks, trackMetadata } from './playlist';
 import type { PlayerContextValue, PlayerError, PlayerPlaylist } from './playerContext';
-import { PlayerContext } from './playerContext';
+import { PlayerContext, playlistForEntry } from './playerContext';
 import {
   flushProgressStore,
   getLastPlaylist,
@@ -48,6 +50,11 @@ async function doSetup(): Promise<void> {
   });
 }
 
+/** What the track names are made from: the playlist's recordings and both names of its occasion. */
+function trackSource(playlist: PlayerPlaylist) {
+  return { audio: playlist.audio, occasionLabel: playlist.title, occasionLabelEn: playlist.titleEn };
+}
+
 /** Idempotent: all concurrent callers await the same in-flight setup promise. */
 function ensurePlayer(): Promise<void> {
   if (!playerSetupPromise) {
@@ -80,10 +87,27 @@ export function PlayerProvider({ children }: Props) {
   const playlistRef = useRef<PlayerPlaylist | null>(null);
   const lastProgressBucketRef = useRef<string | null>(null);
   const restoredRef = useRef(false);
+  // The track names the notification and lock screen show follow the UI
+  // language: the queue is built in the current one, and renamed in place
+  // when the language changes. `queueLanguageRef` is the language the
+  // native queue's names are in - null while a new queue is being built,
+  // 'unknown' for a queue adopted from before this launch.
+  const { language } = useLanguage();
+  const languageRef = useRef<Language>(language);
+  const queueLanguageRef = useRef<Language | 'unknown' | null>(null);
 
   useEffect(() => {
     playlistRef.current = playlist;
   }, [playlist]);
+
+  useEffect(() => {
+    languageRef.current = language;
+    const queueLanguage = queueLanguageRef.current;
+    if (!playlist || queueLanguage === null || queueLanguage === language) return;
+    queueLanguageRef.current = language;
+    const source = trackSource(playlist);
+    Promise.all(playlist.audio.map((audio, index) => TrackPlayer.updateMetadataForTrack(index, trackMetadata(source, audio, index, language)))).catch(() => undefined);
+  }, [language, playlist]);
 
   const playbackState = usePlaybackState();
   const progress = useProgress(500);
@@ -188,11 +212,15 @@ export function PlayerProvider({ children }: Props) {
         // a quick relaunch) - if it still holds a queue, adopt it instead of
         // resetting whatever is currently playing.
         if (queue.length === 0) {
-          await TrackPlayer.add(await catalogAudioToTracks(entry));
+          const trackLanguage = languageRef.current;
+          await TrackPlayer.add(await catalogAudioToTracks(entry, trackLanguage));
           await TrackPlayer.skip(chapterIndex, last.position);
+          queueLanguageRef.current = trackLanguage;
+        } else {
+          queueLanguageRef.current = 'unknown';
         }
         if (cancelled) return;
-        setPlaylist({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate });
+        setPlaylist(playlistForEntry(entry));
       } catch {
         // Player unavailable (a test environment, a broken audio stack) - the bar just stays hidden.
       }
@@ -206,14 +234,17 @@ export function PlayerProvider({ children }: Props) {
     (next: PlayerPlaylist, chapterIndex = 0, position = 0) => {
       if (next.audio.length === 0) return;
       const safeIndex = Math.max(0, Math.min(chapterIndex, next.audio.length - 1));
+      queueLanguageRef.current = null;
       setPlaylist(next);
       setRequestedIndex(safeIndex);
       lastProgressBucketRef.current = null;
       recordLastPlaylist({ hebrewYear: next.hebrewYear, occasionId: next.occasionId, chapterIndex: safeIndex, position });
       runPlayerAction(async () => {
-        const tracks = await catalogAudioToTracks({ audio: next.audio, occasionLabel: next.title });
+        const trackLanguage = languageRef.current;
+        const tracks = await catalogAudioToTracks(trackSource(next), trackLanguage);
         await TrackPlayer.reset();
         await TrackPlayer.add(tracks);
+        queueLanguageRef.current = trackLanguage;
         await TrackPlayer.skip(safeIndex, position > 0 ? position : undefined);
         await TrackPlayer.play();
       }).catch(() => undefined);

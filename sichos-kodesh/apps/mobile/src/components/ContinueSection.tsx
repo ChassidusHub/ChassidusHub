@@ -3,8 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import type { RootStackParamList } from '../navigation/types';
+import { playlistForEntry } from '../player/playerContext';
 import { isChapterFinished, isOccasionFinished, listRecentOccasions, occasionProgressFraction } from '../player/progressStore';
 import type { OccasionProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
@@ -70,7 +72,7 @@ export function ContinueSection() {
         return (
           <Row
             key={`${entry.hebrewYear}-${entry.occasionId}`}
-            label={entry.occasionLabel}
+            label={occasionTitle(entry, language)}
             trailing={<OccasionRowIcon entry={entry} progressMap={progressMap} />}
             onPress={() => {
               if (destination.kind === 'pdf') {
@@ -86,11 +88,7 @@ export function ContinueSection() {
               }
               if (destination.resumeChapterIndex !== null) {
                 const position = progress.chapters[destination.resumeChapterIndex]?.position ?? 0;
-                player.play(
-                  { title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate },
-                  destination.resumeChapterIndex,
-                  position,
-                );
+                player.play(playlistForEntry(entry), destination.resumeChapterIndex, position);
               }
               navigation.navigate('Farbrengen', { kind: 'browse', hebrewYear: entry.hebrewYear, occasionId: entry.occasionId });
             }}

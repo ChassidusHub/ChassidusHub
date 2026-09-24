@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { ALL_CONTENT_TYPES, downloadTargetKey, listDownloadTargets } from '../src/download/downloadTargets.js';
+import { ALL_CONTENT_TYPES, downloadTargetKey, downloadTargetTitle, listDownloadTargets } from '../src/download/downloadTargets.js';
 import type { DownloadContentTypes } from '../src/download/downloadTargets.js';
 
 function makeEntry(overrides: Partial<CatalogEntry> & Pick<CatalogEntry, 'occasionId' | 'hebrewYear'>): CatalogEntry {
@@ -81,5 +81,29 @@ describe('listDownloadTargets', () => {
 
     expect(audioKey).toBe('audio:5711:42:0:a.mp3');
     expect(pdfKey).toBe('pdf:5711:42:file-id');
+  });
+});
+
+describe('downloadTargetTitle', () => {
+  const entry = makeEntry({
+    occasionId: 1,
+    hebrewYear: 5711,
+    audio: [
+      { workerFilename: 'a.mp3', durationMs: 1000, chapterName: 'Sicha 1', chapterNameHe: 'שיחה א׳' },
+      { workerFilename: 'b.mp3', durationMs: 1000 },
+    ],
+    pdfs: [{ section: 'mugah', label: 'מוגה', driveFileId: 'm' }],
+  });
+  const [sicha, unnamed, pdf] = listDownloadTargets([entry], ALL_CONTENT_TYPES);
+
+  it('names a recording by its chapter in the UI language', () => {
+    expect(downloadTargetTitle(sicha!, entry, 'he')).toBe('שיחה א׳');
+    expect(downloadTargetTitle(sicha!, entry, 'en')).toBe('Sicha 1');
+    expect(downloadTargetTitle(unnamed!, entry, 'he')).toBe('קטע 2');
+  });
+
+  it("keeps the target's own label for a PDF, or when the entry is not at hand", () => {
+    expect(downloadTargetTitle(pdf!, entry, 'en')).toBe('מוגה');
+    expect(downloadTargetTitle(sicha!, undefined, 'he')).toBe('Sicha 1');
   });
 });

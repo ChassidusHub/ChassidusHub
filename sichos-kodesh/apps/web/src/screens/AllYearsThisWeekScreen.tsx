@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveThisWeekAllYears } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -29,7 +30,7 @@ export function AllYearsThisWeekScreen() {
             {entries.map((entry) => (
               <li key={entry.occasionId}>
                 <Link className="year-row" to={`/this-week-all-years/${hebrewYear}/${entry.occasionId}`}>
-                  <span className="year-row-year">{entry.occasionLabel}</span>
+                  <span className="year-row-year">{occasionTitle(entry, language)}</span>
                   <span className="year-row-trailing">
                     <OccasionRowIcon entry={entry} progressMap={progressMap} />
                   </span>

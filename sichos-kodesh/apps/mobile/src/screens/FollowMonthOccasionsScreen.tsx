@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Download } from 'lucide-react-native';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useDownload } from '../download/useDownload';
@@ -33,7 +34,7 @@ export function FollowMonthOccasionsScreen({ navigation, route }: FollowMonthOcc
       {entries.map((entry) => (
         <Row
           key={entry.occasionId}
-          label={entry.occasionLabel}
+          label={occasionTitle(entry, language)}
           trailing={
             <RowTrailing>
               <OccasionRowIcon entry={entry} progressMap={progressMap} />

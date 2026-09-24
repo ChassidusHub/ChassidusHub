@@ -69,6 +69,8 @@ export function normalize(text: string): string {
 interface IndexedEntry {
   entry: CatalogEntry;
   label: string;
+  /** The English name (`occasionLabelEn`), so an English query finds it too - empty when the label has none. */
+  labelEn: string;
 }
 
 /**
@@ -84,17 +86,27 @@ interface IndexedEntry {
  */
 let cachedCatalog: CatalogByYear | null = null;
 let cachedFuse: Fuse<IndexedEntry> | null = null;
+/** Every word of the English names, for parseSmartQuery's `literalWords` - built with the index, from the same catalog. */
+let cachedEnglishWords: ReadonlySet<string> = new Set();
 
 function getFuseIndex(catalog: CatalogByYear): Fuse<IndexedEntry> {
   if (cachedFuse && cachedCatalog === catalog) return cachedFuse;
   const items: IndexedEntry[] = [];
+  const englishWords = new Set<string>();
   for (const year of Object.keys(catalog).map(Number)) {
     for (const entry of catalog[year] ?? []) {
-      items.push({ entry, label: normalize(entry.occasionLabel) });
+      const labelEn = normalize(entry.occasionLabelEn ?? '');
+      items.push({ entry, label: normalize(entry.occasionLabel), labelEn });
+      for (const word of labelEn.split(/[^\p{L}\p{N}]+/u)) if (word) englishWords.add(word);
     }
   }
+  cachedEnglishWords = englishWords;
   cachedFuse = new Fuse(items, {
-    keys: ['label'],
+    // Both names, in either UI language: every word of a query must match
+    // within one of them (Fuse runs the whole extended-search query against
+    // each key on its own), so a Hebrew query reads the Hebrew label and an
+    // English one the English name.
+    keys: ['label', 'labelEn'],
     // 0.3 balances typo tolerance against false positives: much looser and
     // short, similarly-worded Hebrew labels start cross-matching (e.g.
     // "יחידות", an unrelated occasion type, fuzzy-matches "יו"ד שבט"),
@@ -163,8 +175,11 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters, 
   // like its own dropdown filter would be (see parseSmartQuery's own doc
   // comment) - an explicit dropdown selection still wins over whatever the
   // text also happens to mention, rather than fighting it. Only the text
-  // left over after that goes to Fuse for fuzzy label matching.
-  const { detected, remainingText } = parseSmartQuery(filters.query, { min: years[0] ?? 0, max: years[years.length - 1] ?? 0 });
+  // left over after that goes to Fuse for fuzzy label matching. A word the
+  // English names use as it is ("torah", "mincha") stays text for them,
+  // rather than being read as a typo of a parsha name.
+  const fuse = getFuseIndex(catalog);
+  const { detected, remainingText } = parseSmartQuery(filters.query, { min: years[0] ?? 0, max: years[years.length - 1] ?? 0 }, { literalWords: cachedEnglishWords });
   const effectiveYear = filters.hebrewYear ?? detected.hebrewYear;
   const effectiveMonth = filters.hdateMonth ?? detected.hdateMonth;
   const effectiveDay = filters.day ?? detected.day;
@@ -173,7 +188,7 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters, 
   // Computed once per call, not per entry - `fuse.search()` itself does the
   // whole-index scan, so running it inside the per-entry filter below would
   // repeat that scan once per entry instead of once total.
-  const matchedEntries = remainingText ? new Set(getFuseIndex(catalog).search(remainingText).map((result) => result.item.entry)) : null;
+  const matchedEntries = remainingText ? new Set(fuse.search(remainingText).map((result) => result.item.entry)) : null;
   const results: SearchResultGroup[] = [];
 
   for (const year of years) {

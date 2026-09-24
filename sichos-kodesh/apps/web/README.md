@@ -162,6 +162,13 @@ screen - including `GlobalPlayerBar`, which never unmounts - re-renders
 immediately on a change, and flips `<html dir>`/`lang` so Hebrew lays out
 right-to-left. `useTranslation()` is the hook every screen calls.
 
+Catalog names follow the UI language too: an occasion is shown through
+`occasionTitle(entry, language)` and a recording's chapter through
+`chapterTitle` / `audioChapterName` (packages/app-core), which pick the
+catalog's own translation (`occasionLabelEn`, `chapterNameHe`) and fall back
+to the original. The player's `Playlist` carries both names (`title`, the
+Hebrew label it is keyed by, and `titleEn`); `playlistTitle` picks one.
+
 ## Service worker & caching
 
 `vite.config.ts` configures `vite-plugin-pwa` in `generateSW` mode:

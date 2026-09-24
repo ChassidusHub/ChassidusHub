@@ -2,11 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionActions } from '../components/OccasionActions';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
 import { useTranslation } from '../i18n/useTranslation';
 import type { FarbrengenScreenProps } from '../navigation/types';
+import { playlistForEntry } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import { useProgressMap } from '../player/useProgressMap';
 import { useRecordVisit } from '../player/useRecordVisit';
@@ -70,7 +72,7 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
       const isThisPlaylistActive = player.playlist?.hebrewYear === entry.hebrewYear && player.playlist?.occasionId === entry.occasionId;
       const differentRecordingPlaying = player.playing && player.playlist !== null;
       if (!isThisPlaylistActive && (!differentRecordingPlaying || autoplayOnHanacha)) {
-        player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, 0);
+        player.play(playlistForEntry(entry), 0);
       }
     }
     openPdf(pdf);
@@ -88,7 +90,7 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
   );
 
   return (
-    <Screen header={<ScreenHeader back={{ name: backRoute.name, params: backRoute.params } as never} title={entry.occasionLabel} />}>
+    <Screen header={<ScreenHeader back={{ name: backRoute.name, params: backRoute.params } as never} title={occasionTitle(entry, language)} />}>
       {/* `subtitle` is this occasion's own day+month; the year is appended here so this page shows the full date. */}
       <Subtitle>
         {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}

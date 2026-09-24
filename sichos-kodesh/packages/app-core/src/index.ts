@@ -9,3 +9,4 @@ export * from './progress/audioProgress.js';
 export * from './download/contentPresets.js';
 export * from './catalog/catalogStore.js';
 export * from './catalog/catalogUpdate.js';
+export * from './catalog/displayNames.js';

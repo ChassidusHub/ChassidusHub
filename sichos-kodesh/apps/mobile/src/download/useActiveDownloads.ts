@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { useCatalog } from '../catalog/catalogStore';
+import { useLanguage } from '../i18n/useTranslation';
 import { parseLibraryTargetKey } from '../library/libraryDownloads';
 import { useDownload } from './useDownload';
 
@@ -57,6 +59,7 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
 export function useActiveDownloadRows(): ActiveDownloadRow[] {
   const catalog = useCatalog();
   const { targetStates } = useDownload();
+  const { language } = useLanguage();
 
   return useMemo(() => {
     const groups = new Map<string, { row: ActiveDownloadRow; sum: number; files: number }>();
@@ -77,7 +80,7 @@ export function useActiveDownloadRows(): ActiveDownloadRow[] {
           key: groupKey,
           hebrewYear: state.target.hebrewYear,
           occasionId: state.target.occasionId,
-          label: entry?.occasionLabel ?? state.target.label,
+          label: entry ? occasionTitle(entry, language) : state.target.label,
           percent: 0,
           ...(library ? { library: { collection: library.collection, id: library.itemId } } : {}),
         },
@@ -88,5 +91,5 @@ export function useActiveDownloadRows(): ActiveDownloadRow[] {
     return [...groups.values()]
       .map(({ row, sum, files }) => ({ ...row, percent: Math.round((sum / files) * 100) }))
       .sort((a, b) => a.hebrewYear - b.hebrewYear || a.occasionId - b.occasionId);
-  }, [catalog, targetStates]);
+  }, [catalog, language, targetStates]);
 }

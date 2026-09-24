@@ -17,6 +17,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       'About lists the packs imported on this phone',
       'The library: Home > Library browses Likkutei Sichos by volume, parsha and moed; maamorim by year and by the six Melukat volumes; reshimos, yomanim, general letters, hadranim and every JEM recording - and the farbrengens by mafteiach\'s own moadim and parshiyos. Recordings play in the player, PDFs open in the reader',
       'Library items download like farbrengens, and Offline & downloads can keep them ready on its own: this week\'s parsha in Likkutei Sichos, this month\'s maamorim and yomanim, the current moed\'s letters - each a switch of its own',
+      'Names now follow the app\'s language: in English every occasion has its English name ("Rosh Hashanah, day 2", "Motzei 13 Tishrei") - lists, the occasion page, the player, the notification and the lock screen - and in Hebrew each recording\'s chapter is named in Hebrew ("שיחה א׳", "מאמר"), download notifications included. A name without a translation yet keeps its original',
+      'Search finds an occasion by its English name too',
     ],
     he: [
       'חבילות לא מקוונות: הגדרות > חבילות לא מקוונות מכניס התוועדויות לטלפון בלי אינטרנט - קובץ חבילה (.skpack) מעמדת הישיבה או מחבר, קובץ ZIP ששותף, או תיקייה של הקלטות וקובצי PDF. כל קובץ נבדק לפני שהוא נשמר, ומה שכבר יש בטלפון מדולג',
@@ -25,6 +27,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       'במסך אודות מופיעות החבילות שיובאו לטלפון',
       'הספרייה: בית > הספרייה מציג את לקוטי שיחות לפי חלק, פרשה ומועד; מאמרים לפי שנה ולפי ששת חלקי המלוקט; רשימות, יומנים, מכתבים כלליים, הדרנים וכל הקלטה של JEM - ואת ההתוועדויות לפי המועדים והפרשיות של המפתח. ההקלטות מתנגנות בנגן, וקובצי ה-PDF נפתחים בקורא',
       'פריטי הספרייה יורדים כמו התוועדויות, ו"לא מקוון והורדות" יכול לשמור אותם מוכנים מעצמו: פרשת השבוע בלקוטי שיחות, המאמרים והיומנים של החודש, המכתבים של המועד - כל אחד במתג משלו',
+      'השמות תואמים כעת את שפת האפליקציה: באנגלית לכל אירוע שם באנגלית ("Rosh Hashanah, day 2") - ברשימות, בדף האירוע, בנגן, בהתראה ובמסך הנעילה - ובעברית כל קטע בהקלטה נקרא בעברית ("שיחה א׳", "מאמר"), גם בהתראות ההורדה. שם שעדיין אין לו תרגום נשאר כמקורו',
+      'החיפוש מוצא אירוע גם לפי שמו באנגלית',
     ],
   },
   {

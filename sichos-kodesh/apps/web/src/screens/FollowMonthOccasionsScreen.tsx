@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Download } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -35,7 +36,7 @@ export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
         {entries.map((entry) => (
           <li key={entry.occasionId}>
             <Link className="year-row" to={`/follow/${sourceYear}/${entry.occasionId}`}>
-              <span className="year-row-year">{entry.occasionLabel}</span>
+              <span className="year-row-year">{occasionTitle(entry, language)}</span>
               <span className="year-row-trailing">
                 <OccasionRowIcon entry={entry} progressMap={progressMap} />
               </span>

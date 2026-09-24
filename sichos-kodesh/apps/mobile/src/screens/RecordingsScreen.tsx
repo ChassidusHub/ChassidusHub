@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CheckCircle2, Download, Pause, Play } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { chapterTitle, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 import { OccasionActions } from '../components/OccasionActions';
@@ -11,6 +12,7 @@ import { useChapterDownload } from '../download/useChapterDownload';
 import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useTranslation';
 import type { RecordingsScreenProps } from '../navigation/types';
+import { playlistForEntry } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import type { PlayerContextValue } from '../player/playerContext';
 import { chapterProgressFraction, getOccasionProgress, isChapterFinished } from '../player/progressStore';
@@ -37,7 +39,7 @@ interface PlaylistRowProps {
 
 /** Its own component because it calls `useChapterDownload` - one hook instance per row. */
 function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowProps) {
-  const { t, isRtl } = useTranslation();
+  const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const chapter = entry.audio[index]!;
   const download = useChapterDownload(entry, index);
@@ -74,7 +76,7 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
             return;
           }
           const savedPosition = progress?.chapters[index]?.position ?? 0;
-          player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, index, savedPosition);
+          player.play(playlistForEntry(entry), index, savedPosition);
         }}
       >
         <View style={styles.rowIcon}>
@@ -89,7 +91,7 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
           )}
         </View>
         <AppText numberOfLines={1} style={[styles.rowName, { color: tint === colors.accent ? colors.accent : colors.fg }]}>
-          {chapter.chapterName ?? t.track(index + 1)}
+          {chapterTitle(chapter, index, language, t.track)}
         </AppText>
         {/* Always rendered, even at 0%, so every row reserves the same space. */}
         <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
@@ -158,12 +160,12 @@ export function RecordingsScreen({ route }: RecordingsScreenProps) {
   }
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'Farbrengen', params: route.params }} title={entry.occasionLabel} />}>
+    <Screen header={<ScreenHeader back={{ name: 'Farbrengen', params: route.params }} title={occasionTitle(entry, language)} />}>
       <View style={[styles.playlistHeader, { backgroundColor: colors.cardBg, flexDirection: row(isRtl) }]}>
         <View style={[styles.playlistHeaderMain, { flexDirection: row(isRtl) }]}>
           <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
           <View style={styles.playlistHeaderCopy}>
-            <AppText style={styles.playlistTitle}>{entry.occasionLabel}</AppText>
+            <AppText style={styles.playlistTitle}>{occasionTitle(entry, language)}</AppText>
             <AppText style={[styles.playlistSubtitle, { color: colors.muted }]}>{totalDuration}</AppText>
           </View>
         </View>

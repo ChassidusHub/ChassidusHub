@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.3.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.3.0',
+    en: [
+      'Names now follow the app\'s language: in English every occasion has its English name ("Rosh Hashanah, day 2", "Motzei 13 Tishrei") - lists, the occasion page, the player and the lock screen - and in Hebrew each recording\'s chapter is named in Hebrew ("שיחה א׳", "מאמר"). A name without a translation yet keeps its original',
+      'Search finds an occasion by its English name too',
+    ],
+    he: [
+      'השמות תואמים כעת את שפת האפליקציה: באנגלית לכל אירוע שם באנגלית ("Rosh Hashanah, day 2") - ברשימות, בדף האירוע, בנגן ובמסך הנעילה - ובעברית כל קטע בהקלטה נקרא בעברית ("שיחה א׳", "מאמר"). שם שעדיין אין לו תרגום נשאר כמקורו',
+      'החיפוש מוצא אירוע גם לפי שמו באנגלית',
+    ],
+  },
   {
     version: '1.2.0',
     en: [

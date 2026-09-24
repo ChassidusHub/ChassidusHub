@@ -2,7 +2,7 @@ import React, { useDeferredValue, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
-import { chagOptions, hasActiveFilters, isChagCategory, parshaOptions, searchOccasions, specialDayOptions } from '@sichos-kodesh/app-core';
+import { chagOptions, hasActiveFilters, isChagCategory, occasionTitle, parshaOptions, searchOccasions, specialDayOptions } from '@sichos-kodesh/app-core';
 import type { ContentType, SearchFilters } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -130,7 +130,7 @@ export function SearchScreen({ navigation }: SearchScreenProps) {
               {entries.map((entry) => (
                 <Row
                   key={entry.occasionId}
-                  label={entry.occasionLabel}
+                  label={occasionTitle(entry, language)}
                   trailing={
                     <RowTrailing>
                       <OccasionRowIcon entry={entry} progressMap={progressMap} />

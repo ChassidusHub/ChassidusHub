@@ -1,4 +1,5 @@
 import { CheckCircle2, Download, Loader2 } from 'lucide-react';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from '../download/useDownload';
 import { useDownloadState } from '../download/useDownloadState';
@@ -22,7 +23,7 @@ interface Props {
  * lives in the playlist header). The mobile app renders the same bar.
  */
 export function OccasionActions({ entry, showDownload = true }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { downloadOccasion } = useDownload();
   const state = useDownloadState(entry);
   const progress = useDownloadProgress(entry);
@@ -61,7 +62,7 @@ export function OccasionActions({ entry, showDownload = true }: Props) {
   return (
     <div className="action-bar">
       {download}
-      <ShareButton title={entry.occasionLabel} />
+      <ShareButton title={occasionTitle(entry, language)} />
     </div>
   );
 }

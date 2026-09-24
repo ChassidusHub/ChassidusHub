@@ -217,5 +217,20 @@ describe('parseSmartQuery', () => {
       expect(detected.hebrewYear).toBe(5736);
       expect(detected.hdateMonth).toBeNull();
     });
+
+    it('keeps a word the English occasion names use as text, rather than a fuzzy parsha guess', () => {
+      expect(parseSmartQuery('simchas torah', RANGE).detected.parsha).toBe('Korach');
+      const literalWords = new Set(['simchas', 'torah', 'mincha']);
+      const { detected, remainingText } = parseSmartQuery('simchas torah', RANGE, { literalWords });
+      expect(detected.parsha).toBeNull();
+      expect(remainingText).toBe('simchas torah');
+      expect(parseSmartQuery('after mincha', RANGE, { literalWords }).detected.parsha).toBeNull();
+    });
+
+    it('still reads an exact month or parsha name as a filter, even when the English names use it too', () => {
+      const literalWords = new Set(['tishrei', 'noach']);
+      expect(parseSmartQuery('tishrei', RANGE, { literalWords }).detected.hdateMonth).toBe(7);
+      expect(parseSmartQuery('noach', RANGE, { literalWords }).detected.parsha).toBe('Noach');
+    });
   });
 });

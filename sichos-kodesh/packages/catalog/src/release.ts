@@ -189,15 +189,28 @@ export function serializeLibraryRelease(meta: ReleaseMeta, byYearJson: string, l
   return `${releaseHead(meta)}${byYearJson},"library":${libraryJson}}`;
 }
 
+/**
+ * The fields the apps read. The display translations (`occasionLabelEn`,
+ * `chapterNameHe`, catalog 1.1.0) are optional - absent in older releases -
+ * but must be strings when present. An app built before them never looks
+ * at either, and its copy of this check (no rule for unknown fields) lets
+ * a release that carries them through unchanged.
+ */
 function isCatalogEntry(value: unknown): value is CatalogEntry {
   if (!isRecord(value)) return false;
-  const { occasionId, hebrewYear, hebrewDate, occasionLabel, audio, pdfs } = value;
+  const { occasionId, hebrewYear, hebrewDate, occasionLabel, occasionLabelEn, audio, pdfs } = value;
   if (typeof occasionId !== 'number' || typeof hebrewYear !== 'number' || typeof hebrewDate !== 'string' || typeof occasionLabel !== 'string') return false;
+  if (!isOptionalString(occasionLabelEn)) return false;
   if (!Array.isArray(audio) || !Array.isArray(pdfs)) return false;
   return (
-    audio.every((a) => isRecord(a) && typeof a.workerFilename === 'string' && typeof a.durationMs === 'number') &&
-    pdfs.every((p) => isRecord(p) && typeof p.section === 'string' && typeof p.label === 'string' && typeof p.driveFileId === 'string')
+    audio.every(
+      (a) => isRecord(a) && typeof a.workerFilename === 'string' && typeof a.durationMs === 'number' && isOptionalString(a.chapterName) && isOptionalString(a.chapterNameHe),
+    ) && pdfs.every((p) => isRecord(p) && typeof p.section === 'string' && typeof p.label === 'string' && typeof p.driveFileId === 'string')
   );
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string';
 }
 
 function isChangelogEntry(value: unknown): value is CatalogChangelogEntry {

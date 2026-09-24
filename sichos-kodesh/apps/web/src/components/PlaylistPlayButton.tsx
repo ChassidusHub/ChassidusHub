@@ -1,6 +1,7 @@
 import type { MouseEvent } from 'react';
 import { Loader2, Pause, Play } from 'lucide-react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { playlistForEntry } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import { getOccasionProgress, resumeAudioChapter } from '../player/progressStore';
 import type { ProgressStore } from '../player/progressStore';
@@ -43,11 +44,7 @@ export function PlaylistPlayButton({ entry, progressMap, variant }: Props) {
       return;
     }
     const { chapterIndex, position } = resumeAudioChapter(progress, entry);
-    player.play(
-      { title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate },
-      chapterIndex,
-      position,
-    );
+    player.play(playlistForEntry(entry), chapterIndex, position);
   }
 
   const size = variant === 'large' ? 20 : 16;

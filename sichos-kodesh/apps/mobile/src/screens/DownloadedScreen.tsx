@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Download } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { getLibrary } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { SwipeToDelete } from '../components/SwipeToDelete';
@@ -138,7 +139,7 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
               }}
             >
               <Row
-                label={entry.occasionLabel}
+                label={occasionTitle(entry, language)}
                 trailing={
                   <RowTrailing>
                     <OccasionRowIcon entry={entry} progressMap={progressMap} />

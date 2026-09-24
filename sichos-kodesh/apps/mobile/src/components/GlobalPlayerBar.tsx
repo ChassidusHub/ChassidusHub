@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { PanResponder, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pause, Play, SkipBack, SkipForward } from 'lucide-react-native';
+import { audioChapterName, chapterTitle } from '@sichos-kodesh/app-core';
 import { formatPlaybackRate, nextPlaybackRate } from '@sichos-kodesh/catalog';
+import { playlistTitle } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useTranslation';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
@@ -90,7 +92,8 @@ export function GlobalPlayerBar() {
   const hasNext = player.currentIndex < audio.length - 1;
   const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
   const displayedPercent = dragPercent ?? progressPercent;
-  const chapterLabel = current.chapterName ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
+  const chapterLabel = audioChapterName(current, language) ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
+  const title = playlistTitle(player.playlist, language);
   // A library item (a Likkutei Sichos recording, a JEM event) can have no single date.
   const dateLabel = player.playlist.hebrewDate ? hebrewFullDateLabel(player.playlist.hebrewDate, player.playlist.hebrewYear, language) : '';
   const chapterPart = chapterLabel ? (audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel) : '';
@@ -100,7 +103,7 @@ export function GlobalPlayerBar() {
   const titleBlock = (
     <>
       <AppText numberOfLines={1} style={[styles.titleMain, { color: colors.fg }]}>
-        {player.playlist.title}
+        {title}
       </AppText>
       <AppText numberOfLines={1} style={[styles.titleSub, { color: colors.muted }]}>
         {subtitle}
@@ -112,7 +115,7 @@ export function GlobalPlayerBar() {
     <View {...swipe.panHandlers} style={[styles.player, { backgroundColor: colors.bgElevated, borderTopColor: colors.border }]}>
       {showChapters && !collapsed && (
         <ScrollView style={[styles.chapters, { maxHeight: windowHeight * 0.4, borderBottomColor: colors.border }]}>
-          <AppText style={[styles.chaptersTitle, { color: colors.muted }]}>{player.playlist.title}</AppText>
+          <AppText style={[styles.chaptersTitle, { color: colors.muted }]}>{title}</AppText>
           {audio.map((chapter, index) => {
             const active = index === player.currentIndex;
             return (
@@ -125,7 +128,7 @@ export function GlobalPlayerBar() {
                 style={({ pressed }) => [styles.chapter, { flexDirection: row(isRtl) }, pressed && { backgroundColor: colors.cardHover }]}
               >
                 <AppText numberOfLines={1} style={[styles.chapterName, { color: active ? colors.accent : colors.fg }, active && styles.chapterActive]}>
-                  {chapter.chapterName ?? t.track(index + 1)}
+                  {chapterTitle(chapter, index, language, t.track)}
                 </AppText>
                 <AppText style={[styles.chapterDuration, { color: colors.muted }]}>{formatTime(chapter.durationMs / 1000)}</AppText>
               </Pressable>

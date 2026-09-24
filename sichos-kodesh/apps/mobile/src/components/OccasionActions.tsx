@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CheckCircle2, Download } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useDownload } from '../download/useDownload';
 import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useDownloadState } from '../download/useDownloadState';
@@ -29,7 +30,7 @@ interface Props {
  * same bar with Share alone (its download lives in the playlist header).
  */
 export function OccasionActions({ entry, showDownload = true }: Props) {
-  const { t, isRtl } = useTranslation();
+  const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const { downloadOccasion } = useDownload();
   const state = useDownloadState(entry);
@@ -77,7 +78,7 @@ export function OccasionActions({ entry, showDownload = true }: Props) {
   return (
     <View style={[styles.bar, direction]}>
       {download}
-      <ShareButton title={entry.occasionLabel} hebrewYear={entry.hebrewYear} occasionId={entry.occasionId} />
+      <ShareButton title={occasionTitle(entry, language)} hebrewYear={entry.hebrewYear} occasionId={entry.occasionId} />
     </View>
   );
 }
