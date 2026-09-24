@@ -24,7 +24,7 @@ function mafteiachDb(): DatabaseSync {
     INSERT INTO nav_entries (section, kind, slug, name, ord) VALUES
       ('moadim', 'moad', 'rosh_hashanah', 'ראש השנה', 1), ('moadim', 'moad', '10_shvat', 'יו"ד שבט', 2),
       ('parshiyos', 'parsha', 'bo', 'בא', 1),
-      ('likkuteiSichos', 'volume', '1', 'א', 1), ('likkuteiSichos', 'parsha', 'noach', 'נח', 1),
+      ('likkuteiSichos', 'volume', '1', 'א', 1), ('likkuteiSichos', 'supplement', '40', 'מ', 1), ('likkuteiSichos', 'parsha', 'noach', 'נח', 1),
       ('maamorim', 'year', '5711', 'תשי"א', 1), ('maamorim', 'melukat', '1', 'א', 1), ('maamorim', 'melukat', '2', 'ב', 2),
       ('yomanim', 'year', '5711', 'תשי"א', 1),
       ('hadranim', 'masechta', 'berachos', 'ברכות', 1), ('hadranim', 'masechta', 'shabbos', 'שבת', 2), ('hadranim', 'year', '5725', 'תשכ"ה', 1),
@@ -32,7 +32,7 @@ function mafteiachDb(): DatabaseSync {
     INSERT INTO memberships (section, kind, slug, item_id, ord) VALUES
       ('moadim', 'moad', '10_shvat', '100', 1),
       ('parshiyos', 'parsha', 'bo', '100', 1),
-      ('likkuteiSichos', 'parsha', 'noach', '1:4', 1),
+      ('likkuteiSichos', 'parsha', 'noach', '1:4', 1), ('likkuteiSichos', 'parsha', 'noach', '40:9', 2),
       ('maamorim', 'melukat', '1', '1', 1), ('maamorim', 'melukat', '2', '1', 3),
       ('hadranim', 'year', '5725', '101', 1),
       ('hadranim', 'masechta', 'berachos', '101', 1), ('hadranim', 'masechta', 'shabbos', '101', 1),
@@ -40,12 +40,14 @@ function mafteiachDb(): DatabaseSync {
 
     INSERT INTO ls_sichos (id, volume, page, label, section_seq, section_label, ord, kitzur_id, has_sicha, has_translated, has_kitzur, content_hash, first_seen_at, last_crawled_at, last_changed_at) VALUES
       ('1:4', 1, 4, 'ח"א ע'' 4 (נח)', 2, 'נח', 2, 2, 1, 1, 1, ${bookkeeping}),
-      ('1:1', 1, 1, 'ח"א ע'' 1 (בראשית)', 1, 'בראשית', 1, NULL, 1, 0, 0, ${bookkeeping});
+      ('1:1', 1, 1, 'ח"א ע'' 1 (בראשית)', 1, 'בראשית', 1, NULL, 1, 0, 0, ${bookkeeping}),
+      ('40:9', 40, 9, 'ח"מ [א] ע'' 9 (נח)', 1, 'נח', 1, NULL, 1, 0, 0, ${bookkeeping});
     INSERT INTO ls_links (sicha_id, role, label, url) VALUES
       ('1:4', 'sicha', 'שיחה', 'https://drive.google.com/open?id=LS4'),
       ('1:4', 'translated', 'מתורגם', 'https://drive.google.com/file/d/LS4T/view'),
       ('1:4', 'kitzur', 'קיצור', '/likkutei_sichos/2/kitzur'),
-      ('1:1', 'sicha', 'שיחה', 'https://drive.google.com/open?id=LS1');
+      ('1:1', 'sicha', 'שיחה', 'https://drive.google.com/open?id=LS1'),
+      ('40:9', 'sicha', 'שיחה', 'https://drive.google.com/open?id=LS40');
 
     INSERT INTO maamorim (id, hebrew_year, month_token, occasion_label, dibur_hamaschil, hemshech, kuntres, hebrew_date, occasion_id, has_mugah, has_bilti_mugah, has_audio, has_video, has_tochen_inyanim, has_hagahos, content_hash, first_seen_at, last_crawled_at, last_changed_at)
       VALUES (1, 5711, '05', 'יו"ד שבט', 'באתי לגני', 'א', 'מאמר יו"ד שבט', '5711-05-10', 100, 1, 1, 1, 0, 1, 0, ${bookkeeping});
@@ -106,7 +108,7 @@ describe('buildLibrary', () => {
 
   it('builds Likkutei Sichos: printed label, Drive refs for the sicha and its translation, the kitzur only as an id', () => {
     const { items, groups } = library.collections.likkuteiSichos;
-    expect(items.map((i) => i.id)).toEqual(['1:1', '1:4']);
+    expect(items.map((i) => i.id)).toEqual(['1:1', '1:4', '40:9']);
     expect(libraryItem(library, 'likkuteiSichos', '1:4')).toEqual({
       id: '1:4',
       label: 'ח"א ע\' 4 (נח)',
@@ -122,7 +124,14 @@ describe('buildLibrary', () => {
       ],
     });
     expect(groups.volume).toEqual([{ slug: '1', name: 'א', itemIds: ['1:1', '1:4'] }]);
-    expect(groups.parsha).toEqual([{ slug: 'noach', name: 'נח', itemIds: ['1:4'] }]);
+    expect(groups.parsha).toEqual([{ slug: 'noach', name: 'נח', itemIds: ['1:4', '40:9'] }]);
+  });
+
+  it('keeps "חלק מ" out of the volumes: its sichos are flagged and grouped as a supplement', () => {
+    const { groups } = library.collections.likkuteiSichos;
+    expect(libraryItem(library, 'likkuteiSichos', '40:9')).toMatchObject({ volume: 40, supplement: true });
+    expect(libraryItem(library, 'likkuteiSichos', '1:4')).not.toHaveProperty('supplement');
+    expect(groups.supplement).toEqual([{ slug: '40', name: 'מילואים - "חלק מ"', itemIds: ['40:9'] }]);
   });
 
   it('builds maamorim: citations, Melukat volumes, the farbrengen, PDFs and the resolved audio', () => {
@@ -177,7 +186,7 @@ describe('buildLibrary', () => {
 
   it('validates, and counts per collection', () => {
     expect(parseCatalogLibrary(JSON.parse(JSON.stringify(library)))).not.toBeNull();
-    expect(libraryCounts(library)).toEqual({ likkuteiSichos: 2, maamorim: 1, yomanim: 1, hadranim: 1, michtavimKlolim: 1, reshimos: 1, jemEvents: 2 });
+    expect(libraryCounts(library)).toEqual({ likkuteiSichos: 3, maamorim: 1, yomanim: 1, hadranim: 1, michtavimKlolim: 1, reshimos: 1, jemEvents: 2 });
   });
 
   it('gives empty collections for a database the section crawler never touched', () => {

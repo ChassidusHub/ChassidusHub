@@ -79,7 +79,10 @@ browsers. `buildLibrary(maf, jem)` reads the section tables
   (`CatalogRef`: a Drive PDF by `driveFileId`, a JEM recording by
   `workerFilename`), so downloads, packs and search stay generic; each
   collection adds its own fields and browse axes in `groups` (Likkutei
-  Sichos by volume, parsha and moed; maamorim by year and Melukat volume;
+  Sichos by volume, parsha and moed, with the 34 sichos of "חלק מ" in
+  `supplement` and flagged `supplement: true`, since that book is Vaad
+  L'hafotzas Sichos' disputed 5781 supplement, not one of the 39 volumes;
+  maamorim by year and Melukat volume;
   hadranim by masechta and year; michtavim by moed and year; JEM events by
   year and type).
 
@@ -102,7 +105,7 @@ From the first full sections crawl (2026-09-24) the library holds:
 
 | Collection | Items |
 | --- | --- |
-| likkuteiSichos | 2,262 |
+| likkuteiSichos | 2,262 (2,228 in the 39 volumes, 34 in the "חלק מ" supplement) |
 | maamorim | 1,568 |
 | yomanim | 2,890 |
 | hadranim | 144 |

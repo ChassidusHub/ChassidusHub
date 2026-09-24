@@ -62,6 +62,13 @@ export interface LikkuteiSichosItem extends LibraryItemBase {
   hasKitzur: boolean;
   /** The id of mafteiach's kitzur page, when one exists (a link, not its text). */
   kitzurId?: number;
+  /**
+   * Set on the sichos of "חלק מ": the two books of supplements (מילואים)
+   * Vaad L'hafotzas Sichos printed in 5781. It is not one of the 39 volumes
+   * of the set, and Kehot disputes the Vaad's right to print it, so it is
+   * grouped under `supplement`, never under `volume`.
+   */
+  supplement?: true;
 }
 
 export interface MaamarItem extends LibraryItemBase {

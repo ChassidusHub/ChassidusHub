@@ -129,6 +129,13 @@ function buildLikkuteiSichos(db: DatabaseSync): LibraryCollection<LikkuteiSichos
     has_translated: number;
     has_kitzur: number;
   }>;
+  // The volumes mafteiach has a page for but leaves out of its volume menu
+  // (the crawler stores them as supplements): "חלק מ", not one of the 39.
+  const supplementSlugs = new Set(
+    (hasTable(db, 'nav_entries') ? (db.prepare("SELECT slug FROM nav_entries WHERE section = 'likkuteiSichos' AND kind = 'supplement'").all() as Array<{ slug: string }>) : []).map(
+      (row) => row.slug,
+    ),
+  );
   const items = rows.map((row) => {
     const item: LikkuteiSichosItem = {
       id: row.id,
@@ -144,12 +151,14 @@ function buildLikkuteiSichos(db: DatabaseSync): LibraryCollection<LikkuteiSichos
         .filter((ref): ref is CatalogRef => ref !== null),
     };
     if (row.kitzur_id !== null) item.kitzurId = row.kitzur_id;
+    if (supplementSlugs.has(String(row.volume))) item.supplement = true;
     return item;
   });
   return {
     items,
     groups: {
       volume: navGroups(db, 'likkuteiSichos', 'volume', items, (item) => item.volume),
+      supplement: navGroups(db, 'likkuteiSichos', 'supplement', items, (item) => item.volume).map((group) => ({ ...group, name: `מילואים - "חלק ${group.name}"` })),
       parsha: storedGroups(db, 'likkuteiSichos', 'parsha'),
       moad: storedGroups(db, 'likkuteiSichos', 'moad'),
     },

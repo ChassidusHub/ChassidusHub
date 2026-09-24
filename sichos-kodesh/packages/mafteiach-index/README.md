@@ -225,7 +225,7 @@ carries a content hash, so only real changes are written and bump
 
 | Section | Pages read | Keyed by | Tables |
 | --- | --- | --- | --- |
-| Likkutei Sichos | `/likkutei_sichos/by_volume/{n}` (the 39 in the menu, and 40), `by_parsha/{slug}` (54), `by_moad/{slug}` (57) | `{volume}:{page}` from the element id `likkut_sicha_{vol}_{page}` - the same in all three views, and present when there is no kitzur | `ls_sichos`, `ls_links`; parsha/moed views in `memberships` |
+| Likkutei Sichos | `/likkutei_sichos/by_volume/{n}` (the 39 in the menu, and the "חלק מ" supplement), `by_parsha/{slug}` (54), `by_moad/{slug}` (57) | `{volume}:{page}` from the element id `likkut_sicha_{vol}_{page}` - the same in all three views, and present when there is no kitzur | `ls_sichos`, `ls_links`; parsha/moed views in `memberships` |
 | Maamorim | `/maamorim?order=by_year&year=Y` (40), `?melukat=true&order=by_volume&volume=N` (6), `/maamorim/{id}/fragment.js` | the site's maamar id | `maamorim`, `maamorim_links`, `maamor_jem_audio`; Melukat volumes in `memberships` |
 | Yomanim | `/yomanim/by_year/{Y}` (45) | the Drive url (they have no ids) | `yomanim` |
 | Hadranim | `/hadranim/by_masechta/{slug}` (48), `by_year/{Y}` (38) | the site's hadran id | `hadranim`, `hadranim_links`, `hadran_occasions`; masechtos and years in `memberships` |
@@ -247,11 +247,18 @@ Details that matter:
   שבט lists other dates the yahrzeit was marked on). The catalog takes the
   moadim, their Hebrew names and their occasions from here instead of the
   hand-made lists.
-- **Volume 40, past the menu.** The Likkutei Sichos volume menu stops at
-  39, but the parsha and moad pages also list the sichos of volume 40 (חלק
-  מ, published 5781 by Vaad L'hafotzas Sichos; mafteiach has its first
-  part), whose `by_volume/40` page exists without a menu entry. The crawl
-  reads any volume those pages point into. `by_volume/41` is not Likkutei
+- **"חלק מ" is a supplement, not volume 40.** The volume menu lists the
+  39 volumes of the set. The parsha and moad pages also list 34 sichos of
+  "חלק מ" (labelled ח"מ [א]), whose `by_volume/40` page has no menu entry.
+  It is the two books of supplements (מילואים) that Vaad L'hafotzas Sichos
+  printed for Yud Shevat 5781, 20 years after volume 39: sichos and
+  hadranim the Rebbe edited that were never gathered into a volume,
+  starting with ענינה של תורת החסידות. Kehot, which publishes the 39,
+  disputes the Vaad's right to print Likkutei Sichos, and mafteiach keeps
+  the book out of its menu and heads it "חלק" with no number on the
+  parsha and moad pages. mafteiach has the first book only. The crawl reads
+  any volume those pages point into, but stores it in `nav_entries` as
+  kind `supplement`, never `volume`. `by_volume/41` is not Likkutei
   Sichos: it is mafteiach's copy of Sefer HaMaamarim Melukat (the
   maamorim section has it), no parsha or moad page points into it, and it
   is not read.
@@ -282,7 +289,7 @@ Counts from the first full crawl (2026-09-24):
 
 | Section | Rows |
 | --- | --- |
-| Likkutei Sichos | 2,262 sichos in 40 volumes (volume 40, not in the site's menu: 34); 4,527 links (965 with a translation, 1,300 with a kitzur page); 54 parsha and 57 moad groupings |
+| Likkutei Sichos | 2,262 sichos: 2,228 in the 39 volumes and 34 in the "חלק מ" supplement; 4,527 links (965 with a translation, 1,300 with a kitzur page); 54 parsha and 57 moad groupings |
 | Maamorim | 1,568 maamorim, every one linked to a farbrengen; 2,991 links (210 with a mugah edition, 375 with an audio link); 6 melukat volumes |
 | Maamorim audio | 368 of the 375 resolved to JEM recordings (374 files); 44 of them through the farbrengen's maamar part, their own JEM event being gone. The other 7: JEM has no separate maamar part for their farbrengen, or no farbrengen event at all |
 | Yomanim | 2,891 files in 45 years |

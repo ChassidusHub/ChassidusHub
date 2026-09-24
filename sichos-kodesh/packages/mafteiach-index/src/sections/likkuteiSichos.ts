@@ -132,16 +132,20 @@ export async function crawlLikkuteiSichos(ctx: SectionContext): Promise<void> {
     grouped.push({ kind, nav, pages });
   }
 
-  // The volume menu stops at 39, but the parsha/moad pages also list the
-  // sichos of volume 40 (חלק מ, published 5781), whose page exists without
-  // a menu entry. So a volume those pages point into is read too. Volume
-  // 41's page is not Likkutei Sichos at all (it is Sefer HaMaamarim
-  // Melukat, which the maamorim section has), and no parsha or moad page
-  // points into it, so it is never read.
+  // The volume menu lists the 39 volumes of the set. The parsha/moad pages
+  // also list the sichos of "חלק מ", which has a page but no menu entry:
+  // the two books of supplements (מילואים) that Vaad L'hafotzas Sichos
+  // printed for Yud Shevat 5781. Kehot disputes the Vaad's right to print
+  // Likkutei Sichos, and the book is not one of the 39. So a volume those
+  // pages point into is read, but stored as a supplement, never as a
+  // volume. Volume 41's page is not Likkutei Sichos at all (it is Sefer
+  // HaMaamarim Melukat, which the maamorim section has), and no parsha or
+  // moad page points into it, so it is never read.
   const listed = new Set(volumes.map((v) => v.slug));
   const unlisted = [...new Set(grouped.flatMap((g) => g.pages.flatMap((page) => page.itemIds.map((id) => id.split(':')[0]!))))]
     .filter((slug) => /^\d+$/.test(slug) && !listed.has(slug))
     .sort((a, b) => Number(a) - Number(b));
+  const supplements: NavEntry[] = [];
   for (const slug of unlisted) {
     const volume = Number(slug);
     const parsed = parseLsVolumePage(await fetchPage(ctx, jsTwinUrl(lsVolumePath(volume))));
@@ -149,12 +153,18 @@ export async function crawlLikkuteiSichos(ctx: SectionContext): Promise<void> {
       ctx.result.warnings.push(`likkuteiSichos: volume ${slug}, which the parsha/moad pages list, has no page of its own`);
       continue;
     }
-    volumes.push({ slug, name: hebrewNumeral(volume), ord: volumes.length + 1 });
+    supplements.push({ slug, name: hebrewNumeral(volume), ord: supplements.length + 1 });
     addSichos(parsed);
   }
 
   inTransaction(ctx.db, () => {
     saveNav(ctx, 'likkuteiSichos', 'volume', volumes);
+    replaceRows(
+      ctx.db,
+      'nav_entries',
+      { section: 'likkuteiSichos', kind: 'supplement' },
+      supplements.map((entry) => ({ section: 'likkuteiSichos', kind: 'supplement', slug: entry.slug, name: entry.name, ord: entry.ord })),
+    );
     for (const record of records.values()) {
       const status = upsertTracked(
         ctx.db,

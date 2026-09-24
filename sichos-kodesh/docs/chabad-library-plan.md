@@ -25,19 +25,78 @@ built is thrown away.
 | --- | --- | --- | --- |
 | **chabadlibrary.org** (ספריית ליובאוויטש) | Text of the seforim of every Rebbe, the Baal Shem Tov and the Maggid, 12 works of Chassidim (אוצר החסידים) and 17 of history (מסביב לחסידות). The Rebbe's include Igros Kodesh (28 volumes), Toras Menachem (73 volumes), Likkutei Sichos, Maamarim Melukatim, Reshimos, Hayom Yom and the Haggadah. | A JSON API behind its app: `books/api/main?path=/<id>` for the tree and pages, `api/search` and `api/statistics` for search. The full tree loads (11 top groups, 73 works). Page and search calls returned server errors throughout research, so page access is the first thing to confirm. | Free to read. Links and online reading are fine. Offline copies in packs are a decision (section 6). |
 | **Sefaria** | Kehot's own Hebrew text of Tanya, Likkutei Torah, Torah Or, Derech Mitzvosecha and Shulchan Aruch HaRav, plus English translations, the Chabad siddur and a few more. | An open API and a bulk export (`Sefaria-Export` on GitHub). | Kehot's texts carry **CC-BY-NC**: free, non-commercial use with credit. This app qualifies, so these can go in packs today. |
-| **HebrewBooks.org** | Thousands of scanned seforim as PDFs, among them most Kehot and Chassidic printings. | No public API. Metadata reaches libraries through WorldCat (institution code NYHBW) and an OAI-PMH gateway on request (oai@hebrewbooks.org). The site blocks automated clients with a Cloudflare challenge. | Its terms forbid redistributing the scans, and its linking rules forbid linking to PDFs directly. We may link to a book's page and to a page in its viewer, and show its thumbnail. Offline copies need its permission. |
+| **HebrewBooks.org** | 60,419 scanned seforim as PDFs. The Chabad shelf is about 1,450 books and 440,000 pages (section 2a). | The site has no public API and blocks automated clients with a Cloudflare challenge. The metadata is open another way: אוצריא (Otzaria) publishes the whole HebrewBooks catalog as a SQLite file (section 2a). WorldCat (NYHBW) and an OAI-PMH gateway on request (oai@hebrewbooks.org) are the official routes. | Its terms forbid redistributing the scans, and its linking rules forbid linking to PDFs directly. We may link to a book's page (`hebrewbooks.org/<id>`) and to a page in its viewer, and show its thumbnail. Offline copies need its permission. |
 | mafteiach.app, JEM, RebbeDrive | Already indexed (WP2b): the farbrengens, hanachos, Likkutei Sichos, maamorim, yomanim, hadranim, michtavim, JEM audio. | Done. | As now. |
-| To evaluate | Chabadpedia's text wiki (it has Likkutei Sichos חלק מ), chabad.org (translations), Sichos in English. | MediaWiki API; the others by page. | Links only, until licences are checked. |
+| To evaluate | Chabadpedia's text wiki (it has the text of "חלק מ"), chabad.org (translations), Sichos in English. | MediaWiki API; the others by page. | Links only, until licences are checked. |
 
 Two corrections found on the way, both fixed in PR #107:
 
-- **Likkutei Sichos volume 40 is real.** It is חלק מ, published in 5781
-  by Vaad L'hafotzas Sichos in two parts. mafteiach has the first part:
-  34 sichos, not in its volume menu.
+- **"חלק מ" is not a volume of Likkutei Sichos.** The set is 39 volumes.
+  "חלק מ" is two books of supplements (מילואים) that Vaad L'hafotzas
+  Sichos printed for Yud Shevat 5781, 20 years after volume 39. It holds
+  sichos and hadranim the Rebbe edited that were never gathered into a
+  volume, starting with ענינה של תורת החסידות. Kehot, which publishes the
+  39, disputes the Vaad's right to print Likkutei Sichos. mafteiach keeps
+  it out of its volume menu: its `by_volume/40` page is reached only from
+  14 parsha and moad pages, where the group is headed "חלק" with no
+  number, and it has the first book only (34 sichos, ח"מ [א]). HebrewBooks
+  also has the 39 volumes and no 40th. The library now keeps the 39
+  volumes (2,228 sichos) and puts the 34 in a separate group,
+  `supplement`, named מילואים - "חלק מ", with each item flagged
+  `supplement: true`.
 - **mafteiach's "volume 41" is not Likkutei Sichos.** It is its copy of
   Sefer HaMaamarim Melukat, which the maamorim section already has. The
-  crawler no longer reads it. The library now has 2,262 sichos in 40
-  volumes.
+  crawler no longer reads it.
+
+### 2a. How אוצריא reaches HebrewBooks
+
+Otzaria, the open-source seforim app, shows every HebrewBooks book in its
+library and can download the PDF. Its code (`github.com/Otzaria/otzaria`)
+shows two separate pieces:
+
+- **The catalog is public.** Otzaria downloads
+  `otzar-HB_catalog.db.zst` from the latest release of
+  `github.com/Otzaria/otzar-HB_catalog` (6 MB compressed, 37 MB SQLite,
+  catalog version 9 today). Its `hebrew_books` table has one row per
+  HebrewBooks book: `id_book` (the HebrewBooks id), `title`, `author`,
+  `printing_place`, `printing_year`, `pub_date`, `pages` and `tags` (a
+  JSON list such as `["חבד"]`). The same file carries the Otzar HaChochma
+  catalog (`otzar_hahochma`, 163,416 books) and `otzaria_hebrew_books`,
+  which maps HebrewBooks ids to the books Otzaria has as text, with a
+  confidence and a best match. It has no licence file. It is bibliographic
+  facts, and the only link it gives is the book page,
+  `hebrewbooks.org/<id>`.
+- **The PDFs come from a private mirror.** Otzaria downloads
+  `files.hebrewbooksoffline.dpdns.org/HebrewBooks/books/<id>.pdf`, a copy
+  of the offline HebrewBooks drive (HebrewBooks' own hard-drive product,
+  `Katalog.db` plus the PDFs), and sends Otzaria's own app key in a
+  header. Without that key the server answers 403. That key is Otzaria's.
+  We don't use it, and the mirror doesn't change what HebrewBooks' terms
+  allow.
+
+What the catalog shows for Chabad (read 2026-09-24):
+
+- About **1,450 books and 440,000 pages** carry the tag חבד or חב"ד, or
+  have a Rebbe, Tomchei Temimim or Lubavitch as the author. About 500
+  are the Rebbe's.
+- **The Rebbe's**: Likkutei Sichos 1-39 in two scan sets (no 40th), Toras
+  Menachem Hisvaaduyos by year, Sichos Kodesh 5710-5741, Igros Kodesh (32
+  books), Sefer HaSichos 5747-5752, Reshimos, the Haggadah, Hayom Yom,
+  Sefer HaMaamarim Melukat, the שערי series and English translations.
+- **The other Rabbeim**: the Alter Rebbe (about 130 books), the Tzemach
+  Tzedek (87), the Frierdiker Rebbe (about 130), the Rebbe Rashab (69) and
+  the Rebbe Maharash (31). The Mitteler Rebbe has one book under his name
+  as written, so his works need a title search.
+- **97 of those books map to text in Otzaria's own library**: Tanya, Torah
+  Or, Likkutei Torah, Shulchan Aruch HaRav, the Tzemach Tzedek's responsa,
+  Derech Mitzvosecha, the siddur and more. Otzaria's text library is a
+  source to evaluate, with its own licences per book.
+
+So HebrewBooks metadata no longer waits on HebrewBooks' OAI-PMH gateway.
+WP11 reads Otzaria's catalog at build time, filters it to Chabad, and ties
+each scan to our works (Likkutei Sichos volume N is a HebrewBooks id,
+page for page). Offline PDFs still need HebrewBooks' permission. That is
+decision 2.
 
 ## 3. What is still missing of the Rebbe's own Torah
 
@@ -48,7 +107,7 @@ Two corrections found on the way, both fixed in PR #107:
 | Likkutei Sichos, text | chabadlibrary.org | Today the library links the PDFs. Text makes it searchable. Volume and page tie each sicha to the existing items. |
 | Maamarim Melukatim, text | chabadlibrary.org | Joins the existing maamorim items by dibur hamaschil and date. |
 | Reshimos, Hayom Yom, the Haggadah, ענינה של תורת החסידות | chabadlibrary.org | Small works, each one volume or a few. |
-| Sefer HaSichos 5747-5752, Sichos Kodesh text | HebrewBooks scans, others to find | Link the scans. Text only where a source has it. |
+| Sefer HaSichos 5747-5752, Sichos Kodesh text | HebrewBooks scans (in Otzaria's catalog), others to find | Link the scans. Text only where a source has it. |
 | Chiddushim uBiurim b'Shas, Biurim l'Pirush Rashi, Heichal Menachem | HebrewBooks scans | Link-only for now. |
 | JEM video | JEM (ccdb) | The archive has JEM audio only. The same events carry video. |
 
@@ -67,8 +126,8 @@ In the order the phone would show them:
    Hemshech Ayin-Beis, Sefer HaMaamarim and Sefer HaSichos, and each
    Rebbe's Igros.
 4. **Chassidim and history**: אוצר החסידים and מסביב לחסידות from
-   chabadlibrary.org, then HebrewBooks' Chabad shelf by author and
-   publisher (Kehot, Otzar HaChassidim) as scans and links.
+   chabadlibrary.org, then HebrewBooks' Chabad shelf (the חבד tag and the
+   authors in Otzaria's catalog, section 2a) as scans and links.
 5. **Shiurim** by mashpiim, as audio, are a later question. Section 6
    has it.
 
@@ -109,9 +168,11 @@ schema 1.
    recommendation: read and link online in the app now, and ask the
    Library of Agudas Chassidei Chabad for its blessing on offline packs.
    If you'd rather ship without asking, the gate flips in one line.
-2. **HebrewBooks.** Should I draft the email asking for OAI-PMH access
-   and for permission to keep offline copies? Until then it is links and
-   thumbnails.
+2. **HebrewBooks.** The metadata no longer needs HebrewBooks: Otzaria's
+   public catalog has it (section 2a). Should I draft the email to
+   HebrewBooks asking for permission to keep offline copies of the Chabad
+   shelf? Until then it is links and thumbnails. Otzaria's mirror is not
+   an option without Otzaria's and HebrewBooks' agreement.
 3. **Scope.** Is it texts and seforim first, with shiurim audio later?
 4. **The Igros source.** Should the Igros app's data files be dropped for
    chabadlibrary.org's text once page access works? I recommend yes. The
@@ -126,8 +187,10 @@ their numbers.
 
 - Confirm chabadlibrary.org page access and its page shape (text, notes,
   navigation), and measure its size: works, units, bytes.
-- Pull HebrewBooks metadata for Chabad from WorldCat (NYHBW) to size its
-  Chabad shelf. Send the OAI-PMH request if decision 2 is yes.
+- Pull the HebrewBooks Chabad shelf from Otzaria's catalog (section 2a),
+  and curate the author and title list (the Mitteler Rebbe, Chassidim,
+  Kehot printings with no Chabad tag). Send the permission request if
+  decision 2 is yes.
 - Map Sefaria's Chabad texts and licences.
 - Output: a table of every work, its sources and its rights, filled into
   this document.
@@ -149,9 +212,10 @@ their numbers.
 ### WP11 - `packages/sefaria-index` and `packages/hebrewbooks-index`
 
 - Sefaria: import the Chabad texts from its export with their licences.
-- HebrewBooks: metadata from OAI-PMH or WorldCat, filtered to Chabad by
-  author and publisher, as links, thumbnails and page-viewer deep links.
-  It mirrors no PDFs unless permission comes.
+- HebrewBooks: metadata from Otzaria's catalog release (checked by its
+  version file, like Otzaria does), filtered to Chabad by tag and author,
+  as links, thumbnails and page-viewer deep links. Credit Otzaria for the
+  catalog. It mirrors no PDFs unless permission comes.
 
 ### WP12 - catalog schema 3, API `/v3`, text packs
 
@@ -186,3 +250,7 @@ under the CLAUDE.md rule: version bump, merge, tag.
   rebuilding packs, not a code change.
 - **Matching the same work across sources** takes curation. The registry
   in WP9 is hand-kept on purpose.
+- **Otzaria's catalog** has no licence file and could change shape or
+  stop. The HebrewBooks importer reads it at build time and keeps what it
+  took, so a missing release leaves the last good copy in place. WorldCat
+  and OAI-PMH stay the fallback.

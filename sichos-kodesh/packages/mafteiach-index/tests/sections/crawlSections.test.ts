@@ -150,14 +150,14 @@ describe('crawlSections change tracking (a synthetic Likkutei Sichos and /all/mo
   insertOccasion.run(10);
   insertOccasion.run(11);
 
-  it('inserts on the first run, reads a volume only the grouped views point into, and warns about a sicha no volume page has', async () => {
+  it('inserts on the first run, reads a volume only the grouped views point into as a supplement, and warns about a sicha no volume page has', async () => {
     const [ls] = await crawlSections({ db, fetcher: site, sections: ['likkuteiSichos'], now: 't1' });
     expect(ls).toMatchObject({ inserted: 3, updated: 0, unchanged: 0, newIds: ['1:1', '1:4', '2:7'], missingIds: [] });
     expect(ls!.warnings).toEqual(['likkuteiSichos: by_parsha/bereshit lists 1 sicha(s) no volume page has: 1:99']);
-    expect(db.prepare("SELECT slug, name, ord FROM nav_entries WHERE section = 'likkuteiSichos' AND kind = 'volume' ORDER BY ord").all().map((r) => ({ ...r }))).toEqual([
-      { slug: '1', name: 'א', ord: 1 },
-      { slug: '2', name: 'ב', ord: 2 },
-    ]);
+    const nav = (kind: string) =>
+      db.prepare("SELECT slug, name, ord FROM nav_entries WHERE section = 'likkuteiSichos' AND kind = ? ORDER BY ord").all(kind).map((r) => ({ ...r }));
+    expect(nav('volume')).toEqual([{ slug: '1', name: 'א', ord: 1 }]);
+    expect(nav('supplement')).toEqual([{ slug: '2', name: 'ב', ord: 1 }]);
     expect(site.requests.filter((u) => u.includes('/by_volume/'))).toEqual([
       'https://www.mafteiach.app/likkutei_sichos/by_volume/1.js',
       'https://www.mafteiach.app/likkutei_sichos/by_volume/2.js',
