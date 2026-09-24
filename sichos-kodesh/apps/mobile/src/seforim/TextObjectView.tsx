@@ -23,6 +23,9 @@ interface RunContext {
   nested?: boolean;
 }
 
+/** RIGHT-TO-LEFT MARK: opens a Hebrew paragraph so its first letters cannot turn it left to right. */
+const RLM = '\u200F';
+
 function words(text: string, settings: ReaderSettings): string {
   return settings.niqqud ? text : stripNiqqud(text);
 }
@@ -103,15 +106,21 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
   const lineHeight = readerLineHeight(settings);
   const fontFamily = readerFont(settings.font).family ?? undefined;
   const rtl = text.dir === 'rtl';
-  const writingDirection = rtl ? 'rtl' : 'ltr';
-  const start = rtl ? 'right' : 'left';
-  const end = rtl ? 'left' : 'right';
+  // The app lays itself out left to right (rtl.ts), so a Hebrew text is set right to left here, on
+  // the text itself: Android takes a paragraph's direction from its layout direction, not from
+  // writingDirection (iOS only). Set so, the start side (the default alignment) is the right, a
+  // justified paragraph's last line ends there too, and 'right' is the end side - the left.
+  const direction = rtl ? 'rtl' : 'ltr';
+  const start = rtl ? 'auto' : 'left';
+  const end = 'right';
+  // A paragraph that opens with a Latin letter or a number would otherwise be ordered left to right.
+  const mark = rtl ? RLM : '';
   const notes = useMemo(() => new Map(text.notes.map((note) => [note.n, note])), [text.notes]);
   const referenced = useMemo(() => referencedNotes(text), [text]);
   const after = notesAfterText(text, settings.notes);
   const label = (note: Footnote) => noteLabel(note, referenced);
   const context: RunContext = { size, settings, palette, notes, onNote: (n) => setOpen(notes.get(n) ?? null) };
-  const body: TextStyle = { fontFamily, writingDirection, color: palette.text };
+  const body: TextStyle = { fontFamily, direction, writingDirection: direction, color: palette.text };
   const noteSize = Math.round(size * 0.82);
 
   const share = (index: number, inlines: Inline[]) => {
@@ -126,6 +135,7 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
       {text.blocks.map((block, i) =>
         block.kind === 'heading' ? (
           <Text key={i} style={[body, styles.heading, { fontSize: Math.round(size * (block.level === 2 ? 1.12 : 1.02)), lineHeight: Math.round(lineHeight * 1.05) }]}>
+            {mark}
             <Runs inlines={block.inlines} context={context} />
           </Text>
         ) : (
@@ -144,6 +154,7 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
               pressed === i ? { backgroundColor: palette.rule } : null,
             ]}
           >
+            {mark}
             <Runs inlines={block.inlines} context={context} />
           </Text>
         ),
@@ -151,9 +162,10 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
 
       {after.length > 0 && (
         <View style={[styles.notes, { borderTopColor: palette.rule }]}>
-          <AppText style={[styles.notesTitle, { color: palette.muted, textAlign: start }]}>{t.readerNotes}</AppText>
+          <AppText style={[styles.notesTitle, { color: palette.muted, textAlign: rtl ? 'right' : 'left' }]}>{t.readerNotes}</AppText>
           {after.map((note) => (
             <Text key={note.n} selectable style={[body, styles.note, { fontSize: noteSize, lineHeight: Math.round(noteSize * 1.5), textAlign: start }]}>
+              {mark}
               {label(note) ? <Text style={[styles.strong, { color: palette.accent }]}>{`${label(note)} `}</Text> : null}
               <Runs inlines={note.inlines} context={{ ...context, size: noteSize, nested: true }} />
             </Text>
@@ -168,6 +180,7 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
           <View style={[styles.sheet, { backgroundColor: palette.background, borderColor: palette.rule }]}>
             {open && (
               <Text selectable style={[body, { fontSize: Math.round(size * 0.9), lineHeight: Math.round(size * 1.45), textAlign: start }]}>
+                {mark}
                 {label(open) ? <Text style={[styles.strong, { color: palette.accent }]}>{`${label(open)} `}</Text> : null}
                 <Runs inlines={open.inlines} context={{ ...context, size: Math.round(size * 0.9), nested: true }} />
               </Text>

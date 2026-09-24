@@ -57,6 +57,14 @@ react {
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
 
+    /* Bundle compression */
+    //   The JS bundle is deflated inside the APK, not stored. Stored, its text crosses the network
+    //   as it is, and a filtering VPN on the phone rewrote bytes in it on the way down: the APK
+    //   then fails Android's signature check ("package appears to be invalid",
+    //   INSTALL_PARSE_FAILED_NO_CERTIFICATES). Deflated, the APK is smaller too; the cost is the
+    //   bundle is read into memory at start instead of mapped from the APK.
+    enableBundleCompression = true
+
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
@@ -89,8 +97,8 @@ android {
         applicationId "com.sichoskodeshmobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10
-        versionName "1.9.0"
+        versionCode 11
+        versionName "1.10.0"
     }
     // Release signing reads from env vars (ANDROID_KEYSTORE_PATH etc., for a CI
     // environment that sets them) or, for local release builds, from a

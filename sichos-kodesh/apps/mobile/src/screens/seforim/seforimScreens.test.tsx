@@ -95,6 +95,23 @@ describe('seforim screens', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('sets a Hebrew text right to left, whatever the app language', async () => {
+    globalThis.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ versions: [{ text: ['1 The first words'] }] }) })) as unknown as typeof fetch;
+    const shown = await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />);
+    // Right to left on the text itself (Android ignores writingDirection), and a paragraph opening
+    // with a number or a Latin letter still starts on the right.
+    expect(shown).toContain('"direction":"rtl"');
+    expect(shown).toContain('"‏"');
+  });
+
+  it('shows the edition being read as one control, the others behind it', async () => {
+    globalThis.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ versions: [{ text: ['The first words'] }] }) })) as unknown as typeof fetch;
+    const shown = await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />);
+    expect(shown).toContain('Edition: Hebrew');
+    // The other editions are in its sheet, closed until it is opened.
+    expect(shown).not.toContain('English (Kehot)');
+  });
+
   it('reads a letter of the Igros from the catalog API, in David, with its notes after it', async () => {
     // The first volume's letters as the catalog API hosts them (packages/igros-index's import-igros).
     const bundle = require('../../../../../services/catalog-api/texts/igros-kodesh-rebbe/vol-01.json') as { texts: string[] };
