@@ -91,8 +91,10 @@ export function GlobalPlayerBar() {
   const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
   const displayedPercent = dragPercent ?? progressPercent;
   const chapterLabel = current.chapterName ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
-  const dateLabel = hebrewFullDateLabel(player.playlist.hebrewDate, player.playlist.hebrewYear, language);
-  const subtitle = `${dateLabel}${chapterLabel ? ` · ${audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}` : ''}`;
+  // A library item (a Likkutei Sichos recording, a JEM event) can have no single date.
+  const dateLabel = player.playlist.hebrewDate ? hebrewFullDateLabel(player.playlist.hebrewDate, player.playlist.hebrewYear, language) : '';
+  const chapterPart = chapterLabel ? (audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel) : '';
+  const subtitle = [dateLabel, chapterPart].filter(Boolean).join(' · ');
   const errorText = player.error ? (player.error.offline ? t.audioOfflineNotDownloaded : t.audioLoadError) : null;
 
   const titleBlock = (

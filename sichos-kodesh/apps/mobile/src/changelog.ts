@@ -15,12 +15,16 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Pick a shared folder once (Documents/SichosKodesh) and anything put in its "import" folder comes in on its own the next time you open the app',
       'Share a month or a year: what is on the phone goes into one ZIP file with Hebrew folder names, ready to pass on - another phone takes it in with "Import files"',
       'About lists the packs imported on this phone',
+      'The library: Home > Library browses Likkutei Sichos by volume, parsha and moed; maamorim by year and by the six Melukat volumes; reshimos, yomanim, general letters, hadranim and every JEM recording - and the farbrengens by mafteiach\'s own moadim and parshiyos. Recordings play in the player, PDFs open in the reader',
+      'Library items download like farbrengens, and Offline & downloads can keep them ready on its own: this week\'s parsha in Likkutei Sichos, this month\'s maamorim and yomanim, the current moed\'s letters - each a switch of its own',
     ],
     he: [
       'חבילות לא מקוונות: הגדרות > חבילות לא מקוונות מכניס התוועדויות לטלפון בלי אינטרנט - קובץ חבילה (.skpack) מעמדת הישיבה או מחבר, קובץ ZIP ששותף, או תיקייה של הקלטות וקובצי PDF. כל קובץ נבדק לפני שהוא נשמר, ומה שכבר יש בטלפון מדולג',
       'בוחרים פעם אחת תיקייה משותפת (Documents/SichosKodesh), וכל מה שמונח בתיקיית "import" שבה נכנס מעצמו בפעם הבאה שפותחים את האפליקציה',
       'שיתוף חודש או שנה: מה שיש בטלפון נכנס לקובץ ZIP אחד עם שמות תיקיות בעברית, מוכן להעברה - טלפון אחר מכניס אותו ב"ייבוא קבצים"',
       'במסך אודות מופיעות החבילות שיובאו לטלפון',
+      'הספרייה: בית > הספרייה מציג את לקוטי שיחות לפי חלק, פרשה ומועד; מאמרים לפי שנה ולפי ששת חלקי המלוקט; רשימות, יומנים, מכתבים כלליים, הדרנים וכל הקלטה של JEM - ואת ההתוועדויות לפי המועדים והפרשיות של המפתח. ההקלטות מתנגנות בנגן, וקובצי ה-PDF נפתחים בקורא',
+      'פריטי הספרייה יורדים כמו התוועדויות, ו"לא מקוון והורדות" יכול לשמור אותם מוכנים מעצמו: פרשת השבוע בלקוטי שיחות, המאמרים והיומנים של החודש, המכתבים של המועד - כל אחד במתג משלו',
     ],
   },
   {

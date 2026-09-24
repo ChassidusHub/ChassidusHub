@@ -4,7 +4,8 @@ import { currentHebrewYear, mafteiachMonthToken, resolveThisWeek, resolveWeekWit
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
-import { getCatalog } from '../catalog/catalogStore';
+import { getCatalog, getLibrary } from '../catalog/catalogStore';
+import { resolveLibraryAutoTargets } from '../library/libraryAutoDownload';
 import type { DownloadSettings } from './downloadSettings';
 import { useDownload } from './useDownload';
 
@@ -22,11 +23,16 @@ function resolveEntriesForYear(sourceYear: number, targetYear: number, settings:
   return (getCatalog()[sourceYear] ?? []).filter((entry) => mafteiachMonthToken(entry.hebrewDate) === monthToken);
 }
 
+/** The source year(s) the automatic sync follows: the manually pinned ones if set, otherwise the best current kvius match. */
+export function autoSourceYears(settings: DownloadSettings): number[] {
+  const targetYear = currentHebrewYear();
+  return settings.sourceYearMode === 'manual' && settings.manualSourceYears.length > 0 ? settings.manualSourceYears : [findMatchingYears(targetYear)[0]?.hebrewYear ?? targetYear];
+}
+
 /** Which occasions `settings` currently points at - one or more manually-pinned years if set, otherwise the best current kvius match (the same default KviusYearsScreen itself uses). Same resolution as the web's useAutoDownloadSync. */
 export function resolveAutoDownloadEntries(settings: DownloadSettings, today: Date): CatalogEntry[] {
   const targetYear = currentHebrewYear();
-  const sourceYears =
-    settings.sourceYearMode === 'manual' && settings.manualSourceYears.length > 0 ? settings.manualSourceYears : [findMatchingYears(targetYear)[0]?.hebrewYear ?? targetYear];
+  const sourceYears = autoSourceYears(settings);
 
   const seen = new Set<string>();
   const entries: CatalogEntry[] = [];
@@ -48,7 +54,7 @@ export function resolveAutoDownloadEntries(settings: DownloadSettings, today: Da
  * before the first fetch gives a cold launch's radio/DNS time to come up.
  */
 export function useAutoDownloadSync(): void {
-  const { settings, hydrated, enqueueBulk } = useDownload();
+  const { settings, hydrated, enqueueBulk, enqueueTargets } = useDownload();
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -56,9 +62,13 @@ export function useAutoDownloadSync(): void {
     ranRef.current = true;
     if (!settings.autoDownloadEnabled) return;
     const timer = setTimeout(() => {
-      const entries = resolveAutoDownloadEntries(settings, new Date());
+      const today = new Date();
+      const entries = resolveAutoDownloadEntries(settings, today);
       if (entries.length > 0) enqueueBulk(entries, 'auto').catch(() => undefined);
+      // Phone only: the library collections the user asked to keep ready, after the farbrengens.
+      const libraryTargets = resolveLibraryAutoTargets(getLibrary(), settings.libraryAutoDownload, autoSourceYears(settings), today);
+      if (libraryTargets.length > 0) enqueueTargets(libraryTargets, 'auto').catch(() => undefined);
     }, 2500);
     return () => clearTimeout(timer);
-  }, [enqueueBulk, hydrated, settings]);
+  }, [enqueueBulk, enqueueTargets, hydrated, settings]);
 }

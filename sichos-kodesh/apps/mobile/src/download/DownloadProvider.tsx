@@ -4,7 +4,8 @@ import { AppState } from 'react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
-import { getCatalog } from '../catalog/catalogStore';
+import { getCatalog, getLibrary } from '../catalog/catalogStore';
+import { libraryFileNames } from '../library/libraryDownloads';
 import { downloadedDeepLink } from '../background/backgroundNative';
 import { useTranslation } from '../i18n/useTranslation';
 import { looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
@@ -399,7 +400,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
   );
 
   const clearDownloads = useCallback(async () => {
-    await clearAllDownloadedFiles(Object.values(getCatalog()).flat());
+    await clearAllDownloadedFiles(Object.values(getCatalog()).flat(), libraryFileNames(getLibrary()));
     await clearPendingDownloads();
     clearAutoDownloadLedger();
     queueRef.current = [];

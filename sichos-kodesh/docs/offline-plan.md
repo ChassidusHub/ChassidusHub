@@ -546,6 +546,43 @@ parsha"; yomanim/michtavim "this year's dates"; maamorim "this month".
 Lands collection by collection, farbrengens first so nothing regresses;
 ships as a mobile release through the signed-APK workflow.
 
+**Part 1 built** (`apps/mobile/src/library/`, `src/screens/library/`).
+Home has a "Library" row leading to:
+
+- the farbrengens by mafteiach's moadim and parshiyos;
+- one browser per collection (Likkutei Sichos, maamorim, reshimos,
+  yomanim, michtavim, hadranim, every JEM event), with the collection's
+  axes as tabs. The disputed "חלק מ" is set apart at the end of Likkutei
+  Sichos' volumes, with a note;
+- an item page with its facts (hemshech, kuntres, printed citations,
+  date lines, languages), a link to the farbrengen it was said at, its
+  recordings, and its PDFs.
+
+Recordings play in the existing player under a negative playlist id of
+their own, so their progress never mixes with a farbrengen's chapter
+indexes. PDFs open in the viewer's library mode.
+
+Library items also download. Each item has a Download pill; storage
+usage and "Delete all" cover library files; the Downloaded screen lists
+the items that are fully downloaded.
+
+Auto-download per collection is built too. It follows the farbrengens'
+source year(s), and each collection has its own switch in Offline &
+downloads, off until turned on:
+
+- Likkutei Sichos: this week's parsha, matched to hebcal's list by
+  position (both are in Torah order, 54 each);
+- maamorim and yomanim: this month;
+- general letters: the current moed.
+
+The background task queues them with the farbrengens, and auto-cleanup
+prunes them the same way.
+
+Still to come:
+
+- the collection filter in search, and the moadim-based dropdowns;
+- the text reader, which waits on the Igros rights.
+
 ### WP5 - `apps/download` + `services/pack-api`
 
 - `apps/download`: a small Vite site in Hebrew RTL on the shared design

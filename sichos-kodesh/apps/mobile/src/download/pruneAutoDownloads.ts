@@ -1,5 +1,7 @@
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
-import { getCatalog } from '../catalog/catalogStore';
+import { getCatalog, getLibrary } from '../catalog/catalogStore';
+import { deleteLibraryItemFiles, libraryItemTargets, parseLibraryTargetKey } from '../library/libraryDownloads';
+import { findItem } from '../library/libraryModel';
 import { getOccasionProgress, isOccasionFinished, readProgressMap } from '../player/progressStore';
 import type { DownloadSettings, RetentionPeriod } from './downloadSettings';
 import { forgetAutoDownload, listAutoDownloads } from './downloadLedger';
@@ -30,6 +32,18 @@ export async function pruneAutoDownloads(settings: DownloadSettings): Promise<vo
 
   const progressMap = readProgressMap();
   for (const entry of stale) {
+    // Phone only: a library collection's auto file (src/library/libraryAutoDownload.ts). Its item is found by the key; a
+    // file a downloaded farbrengen also uses is kept.
+    const library = parseLibraryTargetKey(entry.targetKey);
+    if (library) {
+      const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
+      if (progress && progress.lastVisitedAt > entry.cachedAt) continue;
+      const item = findItem(getLibrary(), library.collection, library.itemId);
+      const target = item ? libraryItemTargets(library.collection, item).find((candidate) => candidate.key === entry.targetKey) : undefined;
+      if (target) await deleteLibraryItemFiles([target]);
+      forgetAutoDownload(entry.targetKey);
+      continue;
+    }
     const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
     if (progress && progress.lastVisitedAt > entry.cachedAt) continue; // Opened since - keep.
     const catalogEntry = (getCatalog()[entry.hebrewYear] ?? []).find((e) => e.occasionId === entry.occasionId);

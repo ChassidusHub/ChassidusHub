@@ -3,13 +3,15 @@ import { HDate } from '@hebcal/core';
 import { currentParsha } from '@sichos-kodesh/catalog';
 import { listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
+import { getLibrary } from '../catalog/catalogStore';
 import { checkForCatalogUpdateIfDue, loadStoredCatalog } from '../catalog/catalogUpdater';
 import { IL } from '../config';
 import { hydrateAutoDownloadLedger, recordAutoDownload } from '../download/downloadLedger';
 import { readStoredDownloadSettings } from '../download/downloadSettings';
 import { enqueueNativeDownload } from '../download/downloadExecutor';
 import { isTargetDownloaded } from '../download/downloadStorage';
-import { resolveAutoDownloadEntries } from '../download/useAutoDownloadSync';
+import { autoSourceYears, resolveAutoDownloadEntries } from '../download/useAutoDownloadSync';
+import { resolveLibraryAutoTargets } from '../library/libraryAutoDownload';
 import { readStoredLanguage } from '../i18n/languageStorage';
 import { STRINGS } from '../i18n/translations';
 import { readStoredNotificationSettings } from '../settings/notificationSettings';
@@ -78,7 +80,8 @@ export async function runBackgroundSync(data?: BackgroundSyncData): Promise<void
 
   await hydrateAutoDownloadLedger();
   const entries = resolveAutoDownloadEntries(settings, today);
-  const targets = listDownloadTargets(entries, settings.contentTypes);
+  // Phone only: the library collections the user asked to keep ready ride along, after the farbrengens.
+  const targets = [...listDownloadTargets(entries, settings.contentTypes), ...resolveLibraryAutoTargets(getLibrary(), settings.libraryAutoDownload, autoSourceYears(settings), today)];
   const missing: DownloadTarget[] = [];
   for (const target of targets) {
     // The ledger is what auto-cleanup later consults - re-claim every file this run wants, downloaded already or not.
@@ -87,7 +90,8 @@ export async function runBackgroundSync(data?: BackgroundSyncData): Promise<void
   }
   if (missing.length === 0) return;
 
-  const sourceYear = entries[0]?.hebrewYear ?? missing[0]!.hebrewYear;
+  // Library files can have no year of their own (a Likkutei Sichos sicha); the notification names the year the sync follows.
+  const sourceYear = entries[0]?.hebrewYear ?? autoSourceYears(settings)[0] ?? missing[0]!.hebrewYear;
   const notifyWhenDone =
     notifications.downloadsReady && canNotify
       ? { title: t.downloadsReadyTitle, body: t.downloadsReadyBody(missing.length, hebrewYearLabel(sourceYear, language)), deepLink: downloadedDeepLink() }

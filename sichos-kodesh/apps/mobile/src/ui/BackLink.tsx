@@ -37,7 +37,8 @@ export function BackLink({ fallback, spacer = false }: Props) {
       navigation.goBack();
       return;
     }
-    navigation.replace(fallback.name, fallback.params as never);
+    // BackTarget already pairs each name with its own params; the overloads cannot see that through the union.
+    (navigation.replace as (name: string, params?: object) => void)(fallback.name, fallback.params ?? undefined);
   }
 
   const content = (

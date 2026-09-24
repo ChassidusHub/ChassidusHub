@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { useCatalog } from '../catalog/catalogStore';
+import { parseLibraryTargetKey } from '../library/libraryDownloads';
 import { useDownload } from './useDownload';
 
 export interface ActiveDownloadsSummary {
@@ -15,6 +17,8 @@ export interface ActiveDownloadRow {
   occasionId: number;
   /** 0-100 */
   percent: number;
+  /** Set for a library item's files (src/library): its row opens the item, not a farbrengen. */
+  library?: { collection: LibraryCollectionId; id: string };
 }
 
 /** One entry per real in-flight file transfer, aggregated for the global download-progress bar - with the web's own "never go backward, simulate a slow climb until real bytes arrive" smoothing. */
@@ -67,8 +71,16 @@ export function useActiveDownloadRows(): ActiveDownloadRow[] {
         continue;
       }
       const entry = catalog[state.target.hebrewYear]?.find((item) => item.occasionId === state.target.occasionId);
+      const library = parseLibraryTargetKey(state.target.key);
       groups.set(groupKey, {
-        row: { key: groupKey, hebrewYear: state.target.hebrewYear, occasionId: state.target.occasionId, label: entry?.occasionLabel ?? state.target.label, percent: 0 },
+        row: {
+          key: groupKey,
+          hebrewYear: state.target.hebrewYear,
+          occasionId: state.target.occasionId,
+          label: entry?.occasionLabel ?? state.target.label,
+          percent: 0,
+          ...(library ? { library: { collection: library.collection, id: library.itemId } } : {}),
+        },
         sum: fraction,
         files: 1,
       });

@@ -181,9 +181,12 @@ export async function deleteTargetDownloads(targets: DownloadTarget[]): Promise<
   );
 }
 
-export async function clearAllDownloadedFiles(entries: CatalogEntry[]): Promise<void> {
+/** `extraFileNames`: files beyond the farbrengens' own (the phone's library - see src/library/libraryDownloads.ts). */
+export async function clearAllDownloadedFiles(entries: CatalogEntry[], extraFileNames: Iterable<string> = []): Promise<void> {
   const targets = listDownloadTargets(entries, ALL_CONTENT_TYPES);
-  await Promise.all([...new Set(targets.map(localPathForTarget))].map(unlinkIfExists));
+  const paths = new Set(targets.map(localPathForTarget));
+  for (const fileName of extraFileNames) paths.add(`${RNBlobUtil.fs.dirs.DocumentDir}/${fileName}`);
+  await Promise.all([...paths].map(unlinkIfExists));
   try {
     await AsyncStorage.removeItem(COMPLETED_STORAGE_KEY);
   } catch {
@@ -192,8 +195,9 @@ export async function clearAllDownloadedFiles(entries: CatalogEntry[]): Promise<
   await clearPendingDownloads();
 }
 
-export async function getDownloadStorageUsage(entries: CatalogEntry[]): Promise<number> {
+export async function getDownloadStorageUsage(entries: CatalogEntry[], extraFileNames: Iterable<string> = []): Promise<number> {
   const fileNames = new Set(listDownloadTargets(entries, ALL_CONTENT_TYPES).map(fileNameForTarget));
+  for (const fileName of extraFileNames) fileNames.add(fileName);
   const files = await listDocumentFiles();
   let total = 0;
   for (const fileName of files) {

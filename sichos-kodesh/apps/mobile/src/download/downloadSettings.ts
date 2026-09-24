@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { DownloadContentTypes } from '@sichos-kodesh/app-core';
+import type { LibraryAutoSettings } from '../library/libraryAutoDownload';
 
 export type DownloadScope = 'week' | 'month';
 export type SourceYearMode = 'auto' | 'manual';
@@ -36,6 +37,8 @@ export interface DownloadSettings {
   keepFinishedContent: boolean;
   /** When true (the default), manual downloads fetch every available content type regardless of the `contentTypes` filter, which then only governs the automatic sync. */
   manualDownloadAllContent: boolean;
+  /** Phone only: which library collections the automatic sync also keeps ready (src/library/libraryAutoDownload.ts). All off until chosen. */
+  libraryAutoDownload: LibraryAutoSettings;
 }
 
 const STORAGE_KEY = 'sichos-kodesh:mobile-download-settings';
@@ -50,6 +53,7 @@ export const DEFAULT_DOWNLOAD_SETTINGS: DownloadSettings = {
   retentionPeriod: 'never',
   keepFinishedContent: true,
   manualDownloadAllContent: true,
+  libraryAutoDownload: {},
   contentTypes: {
     audio: true,
     hanachaEditions: ['sichosKodesh', 'torasMenachem'],
@@ -74,6 +78,10 @@ function normalizeSettings(value: unknown): DownloadSettings {
     sourceYearMode: parsed.sourceYearMode === 'manual' ? 'manual' : 'auto',
     manualSourceYears: Array.isArray(parsed.manualSourceYears) ? parsed.manualSourceYears.filter((year): year is number => typeof year === 'number' && Number.isFinite(year)) : [],
     retentionPeriod: RETENTION_PERIODS.includes(parsed.retentionPeriod as RetentionPeriod) ? (parsed.retentionPeriod as RetentionPeriod) : 'never',
+    libraryAutoDownload:
+      parsed.libraryAutoDownload && typeof parsed.libraryAutoDownload === 'object'
+        ? Object.fromEntries(Object.entries(parsed.libraryAutoDownload).filter(([, enabled]) => typeof enabled === 'boolean'))
+        : {},
     contentTypes: {
       ...DEFAULT_DOWNLOAD_SETTINGS.contentTypes,
       ...parsed.contentTypes,

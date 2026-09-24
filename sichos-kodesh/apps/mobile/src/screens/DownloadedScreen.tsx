@@ -2,11 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Download } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { getLibrary } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { SwipeToDelete } from '../components/SwipeToDelete';
 import { useActiveDownloadRows } from '../download/useActiveDownloads';
 import { useDownload } from '../download/useDownload';
 import { useTranslation } from '../i18n/useTranslation';
+import type { DownloadedLibraryItem } from '../library/libraryDownloads';
+import { deleteLibraryItemFiles, listDownloadedLibraryItems } from '../library/libraryDownloads';
+import { itemSubtitle } from '../library/libraryModel';
 import type { DownloadedScreenProps } from '../navigation/types';
 import { useProgressMap } from '../player/useProgressMap';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
@@ -35,9 +39,23 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const progressMap = useProgressMap();
-  const { clearDownloads, deleteOccasionDownloads, listDownloadedSummaries, downloadedRecords } = useDownload();
+  const { clearDownloads, deleteOccasionDownloads, listDownloadedSummaries, downloadedRecords, refreshDownloads } = useDownload();
   const activeRows = useActiveDownloadRows();
   const [downloaded, setDownloaded] = useState<CatalogEntry[] | null>(null);
+  // Phone only: library items (src/library) whose files are all here.
+  const [libraryItems, setLibraryItems] = useState<DownloadedLibraryItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listDownloadedLibraryItems(getLibrary())
+      .then((items) => {
+        if (!cancelled) setLibraryItems(items);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [downloadedRecords]);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +73,13 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
   async function deleteAllContent(): Promise<void> {
     await clearDownloads();
     setDownloaded([]);
+    setLibraryItems([]);
+  }
+
+  async function deleteLibraryItem(item: DownloadedLibraryItem): Promise<void> {
+    await deleteLibraryItemFiles(item.targets);
+    await refreshDownloads();
+    setLibraryItems(await listDownloadedLibraryItems(getLibrary()));
   }
 
   async function deleteOccasion(entry: CatalogEntry): Promise<void> {
@@ -71,7 +96,12 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
           <CategoryHeader first>{t.downloadsInProgressTitle}</CategoryHeader>
           {activeRows.map((item) => (
             <View key={item.key} style={[styles.activeRow, { flexDirection: row(isRtl) }]}>
-              <Pressable style={styles.activeLabel} onPress={() => navigation.navigate('Farbrengen', { kind: 'browse', hebrewYear: item.hebrewYear, occasionId: item.occasionId })}>
+              <Pressable
+                style={styles.activeLabel}
+                onPress={() =>
+                  item.library ? navigation.navigate('LibraryItem', item.library) : navigation.navigate('Farbrengen', { kind: 'browse', hebrewYear: item.hebrewYear, occasionId: item.occasionId })
+                }
+              >
                 <AppText numberOfLines={1} style={styles.activeLabelText}>
                   {item.label}
                 </AppText>
@@ -85,9 +115,9 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
         </View>
       )}
 
-      {downloaded && downloaded.length === 0 && activeRows.length === 0 && <EmptyState icon={<Download size={40} color={colors.muted} />} text={t.noDownloadedContent} />}
+      {downloaded && downloaded.length === 0 && libraryItems.length === 0 && activeRows.length === 0 && <EmptyState icon={<Download size={40} color={colors.muted} />} text={t.noDownloadedContent} />}
 
-      {downloaded && downloaded.length > 0 && (
+      {downloaded && (downloaded.length > 0 || libraryItems.length > 0) && (
         <Row
           label={t.deleteContentLabel}
           marquee
@@ -120,6 +150,26 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
           ))}
         </View>
       ))}
+
+      {libraryItems.length > 0 && (
+        <View>
+          <CategoryHeader>{t.libraryTitle}</CategoryHeader>
+          {libraryItems.map((downloadedItem) => (
+            <SwipeToDelete
+              key={`${downloadedItem.collection}:${downloadedItem.item.id}`}
+              onDelete={() => {
+                deleteLibraryItem(downloadedItem).catch(() => undefined);
+              }}
+            >
+              <Row label={downloadedItem.item.label} marquee onPress={() => navigation.navigate('LibraryItem', { collection: downloadedItem.collection, id: downloadedItem.item.id })}>
+                <AppText numberOfLines={1} style={[styles.librarySubtitle, { color: colors.muted }]}>
+                  {[t.collectionNames[downloadedItem.collection], itemSubtitle(downloadedItem.collection, downloadedItem.item, language)].filter(Boolean).join(' · ')}
+                </AppText>
+              </Row>
+            </SwipeToDelete>
+          ))}
+        </View>
+      )}
     </Screen>
   );
 }
@@ -136,4 +186,5 @@ const styles = StyleSheet.create({
   fillLtr: { left: 0 },
   fillRtl: { right: 0 },
   activePercent: { width: 34, textAlign: 'right', fontSize: 12, flexShrink: 0, fontVariant: ['tabular-nums'] },
+  librarySubtitle: { fontSize: 14 },
 });

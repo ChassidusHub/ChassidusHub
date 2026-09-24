@@ -15,6 +15,12 @@ import { SearchScreen } from '../screens/SearchScreen';
 import { DownloadedScreen } from '../screens/DownloadedScreen';
 import { DownloadSettingsScreen } from '../screens/DownloadSettingsScreen';
 import { OfflineScreen } from '../screens/OfflineScreen';
+import { LibraryScreen } from '../screens/library/LibraryScreen';
+import { LibraryCollectionScreen } from '../screens/library/LibraryCollectionScreen';
+import { LibraryGroupScreen } from '../screens/library/LibraryGroupScreen';
+import { LibraryItemScreen } from '../screens/library/LibraryItemScreen';
+import { OccasionGroupsScreen } from '../screens/library/OccasionGroupsScreen';
+import { OccasionGroupScreen } from '../screens/library/OccasionGroupScreen';
 import { MonthOccasionsScreen } from '../screens/MonthOccasionsScreen';
 import { FollowMonthListScreen } from '../screens/FollowMonthListScreen';
 import { FollowMonthOccasionsScreen } from '../screens/FollowMonthOccasionsScreen';
@@ -47,6 +53,12 @@ export function RootNavigator() {
       <Stack.Screen name="Downloaded" component={DownloadedScreen} />
       <Stack.Screen name="DownloadSettings" component={DownloadSettingsScreen} />
       <Stack.Screen name="Offline" component={OfflineScreen} />
+      <Stack.Screen name="Library" component={LibraryScreen} />
+      <Stack.Screen name="LibraryCollection" component={LibraryCollectionScreen} />
+      <Stack.Screen name="LibraryGroup" component={LibraryGroupScreen} />
+      <Stack.Screen name="LibraryItem" component={LibraryItemScreen} />
+      <Stack.Screen name="OccasionGroups" component={OccasionGroupsScreen} />
+      <Stack.Screen name="OccasionGroup" component={OccasionGroupScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="AllYearsThisWeek" component={AllYearsThisWeekScreen} />
