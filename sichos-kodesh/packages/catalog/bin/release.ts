@@ -7,8 +7,11 @@
  *   <out>/manifest.json         its version, size, SHA-256, years, changelog and URL
  *   <out>/v2/catalog.json       schema 2: the same farbrengens plus the library - the phone app
  *   <out>/v2/manifest.json
- *   <out>/parts/byYear.json     the farbrengens' JSON, and the library's, as they sit inside the two
- *   <out>/parts/library.json    catalog.json files - services/catalog-api keeps one copy of each
+ *   <out>/v3/catalog.json       schema 3: schema 2 plus the works (the Rebbeim's seforim) - the phone app from mobile 1.5.0
+ *   <out>/v3/manifest.json
+ *   <out>/parts/byYear.json     the farbrengens', the library's and the works' JSON, as they sit inside
+ *   <out>/parts/library.json    the catalog.json files - services/catalog-api keeps one copy of each
+ *   <out>/parts/works.json
  *
  * Reads the per-year JSON the apps bundle (apps/web/src/catalog/data by
  * default; apps/mobile carries an identical copy, checked here) and the
@@ -21,6 +24,7 @@
  *   --data <dir>          where the year files are (default: apps/web/src/catalog/data)
  *   --mobile-data <dir>   the phone's copy, which must be identical (default: apps/mobile/src/catalog/data)
  *   --library <dir>       the library files (default: apps/mobile/src/catalog/data/library); no library, no v2
+ *   --works <dir>         the works files (default: apps/mobile/src/catalog/data/works); no works, no v3
  *   --out <dir>           where to write (default: packages/catalog/dist-release)
  *   --base-url <url>      the API origin the manifests' `url` points into (default: https://api.sk.shmuky.dev)
  *   --released-at <iso>   the release timestamp to stamp (default: now) - services/catalog-api passes the
@@ -37,8 +41,9 @@ import { libraryCounts } from '../src/library/lookup.js';
 import { parseCatalogLibrary } from '../src/library/parse.js';
 import { LIBRARY_COLLECTION_IDS } from '../src/library/types.js';
 import { assertShippable, GATED_COLLECTION_IDS } from '../src/rights.js';
-import { CATALOG_LIBRARY_SCHEMA_VERSION, CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from '../src/version.js';
-import { catalogReleasePath, catalogReleaseTag, serializeCatalogRelease, serializeLibraryRelease } from '../src/release.js';
+import { CATALOG_LIBRARY_SCHEMA_VERSION, CATALOG_SCHEMA_VERSION, CATALOG_VERSION, CATALOG_WORKS_SCHEMA_VERSION } from '../src/version.js';
+import { catalogReleasePath, catalogReleaseTag, serializeCatalogRelease, serializeLibraryRelease, serializeWorksRelease } from '../src/release.js';
+import { parseCatalogWorks, worksRightsProblems } from '../src/works/parse.js';
 import type { CatalogManifest } from '../src/release.js';
 import type { CatalogByYear } from '../src/catalogLookup.js';
 import type { CatalogEntry } from '../src/types.js';
@@ -54,6 +59,7 @@ function arg(name: string, fallback: string): string {
 const dataDir = arg('data', path.join(repoRoot, 'apps', 'web', 'src', 'catalog', 'data'));
 const mobileDataDir = arg('mobile-data', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data'));
 const libraryDir = arg('library', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'library'));
+const worksDir = arg('works', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'works'));
 const outDir = arg('out', path.join(__dirname, '..', 'dist-release'));
 const baseUrl = arg('base-url', 'https://api.sk.shmuky.dev').replace(/\/$/, '');
 const checkOnly = process.argv.includes('--check');
@@ -151,6 +157,37 @@ if (existsSync(path.join(libraryDir, 'meta.json'))) {
     .map(([id, n]) => `${id} ${n}`)
     .join(', ');
   console.log(`Catalog ${CATALOG_VERSION} with the library (schema 2): ${counts}; ${(libraryManifest.bytes / 1024 / 1024).toFixed(2)} MB, sha256 ${libraryManifest.sha256.slice(0, 12)}…`);
+
+  // Schema 3 - schema 2 plus the works the phone bundles.
+  if (existsSync(path.join(worksDir, 'index.json'))) {
+    const index = JSON.parse(await readFile(path.join(worksDir, 'index.json'), 'utf8')) as Record<string, unknown>;
+    const contents: Record<string, unknown> = {};
+    const contentsDir = path.join(worksDir, 'contents');
+    for (const name of existsSync(contentsDir) ? (await readdir(contentsDir)).filter((n) => n.endsWith('.json')).sort() : []) {
+      contents[name.slice(0, -'.json'.length)] = JSON.parse(await readFile(path.join(contentsDir, name), 'utf8'));
+    }
+    const works = parseCatalogWorks({ authors: index.authors, works: index.works, contents });
+    if (!works) {
+      console.error(`The works in ${worksDir} do not validate (parseCatalogWorks); rebuild them with build-catalog-works.`);
+      process.exit(1);
+    }
+    const problems = worksRightsProblems(works);
+    if (problems.length > 0) {
+      console.error(`The works in ${worksDir} carry text that may not ship:\n  ${problems.join('\n  ')}`);
+      process.exit(1);
+    }
+    const worksJson = JSON.stringify(works);
+    const worksBytes = Buffer.from(serializeWorksRelease({ schemaVersion: CATALOG_WORKS_SCHEMA_VERSION, version: CATALOG_VERSION, releasedAt }, byYearJson, libraryJson, worksJson), 'utf8');
+    const units = Object.values(works.contents).reduce((sum, part) => sum + part.units.length, 0);
+    const worksManifest = manifestFor(CATALOG_WORKS_SCHEMA_VERSION, worksBytes, { collections: libraryCounts(library), works: { works: works.works.length, units } });
+    await mkdir(path.join(outDir, 'v3'), { recursive: true });
+    await writeFile(path.join(outDir, 'v3', 'catalog.json'), worksBytes);
+    await writeFile(path.join(outDir, 'v3', 'manifest.json'), JSON.stringify(worksManifest, null, 2) + '\n', 'utf8');
+    await writeFile(path.join(outDir, 'parts', 'works.json'), worksJson, 'utf8');
+    console.log(`Catalog ${CATALOG_VERSION} with the works (schema 3): ${works.works.length} works, ${units} units; ${(worksManifest.bytes / 1024 / 1024).toFixed(2)} MB, sha256 ${worksManifest.sha256.slice(0, 12)}…`);
+  } else {
+    console.log(`No works in ${worksDir} - wrote schemas 1 and 2 only.`);
+  }
 } else {
   console.log(`No library in ${libraryDir} - wrote schema 1 only.`);
 }

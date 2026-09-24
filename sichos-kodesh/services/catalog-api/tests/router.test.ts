@@ -3,11 +3,13 @@ import {
   CATALOG_LIBRARY_SCHEMA_VERSION,
   CATALOG_SCHEMA_VERSION,
   CATALOG_VERSION,
+  CATALOG_WORKS_SCHEMA_VERSION,
   LIBRARY_COLLECTION_IDS,
   isCatalogUpdateApplicable,
   parseCatalogManifest,
   parseCatalogRelease,
   parseLibraryRelease,
+  parseWorksRelease,
 } from '@sichos-kodesh/catalog';
 import { describe, expect, it } from 'vitest';
 import { CHANGELOG_PATH, LATEST_PATH, MANIFEST_PATH, SERVED_SCHEMAS, SERVED_VERSION, catalogPath, handleRequest, manifestPath } from '../src/router';
@@ -113,16 +115,16 @@ describe('the rest of the surface', () => {
   });
 
   it('describes itself at the root and 404s everything unknown', () => {
-    expect(bodyJson(get('/'))).toMatchObject({ catalog: CATALOG_VERSION, schemas: [1, 2] });
-    for (const path of ['/v3/catalog/manifest.json', '/v3', '/v1/catalog/manifest', '/favicon.ico', '/api/index']) {
+    expect(bodyJson(get('/'))).toMatchObject({ catalog: CATALOG_VERSION, schemas: [1, 2, 3] });
+    for (const path of ['/v4/catalog/manifest.json', '/v4', '/v1/catalog/manifest', '/favicon.ico', '/api/index']) {
       expect(get(path).status).toBe(404);
     }
   });
 });
 
 describe('schema 2: the phone app\'s library, under /v2/', () => {
-  it('is served next to schema 1', () => {
-    expect(SERVED_SCHEMAS).toEqual([1, 2]);
+  it('is served next to schemas 1 and 3', () => {
+    expect(SERVED_SCHEMAS).toEqual([1, 2, 3]);
   });
 
   it('has a manifest of its own schema, with the collection counts, pointing at /v2/', () => {
@@ -152,5 +154,32 @@ describe('schema 2: the phone app\'s library, under /v2/', () => {
   it('404s a schema-2 path for another version, and redirects its /latest/', () => {
     expect(get(catalogPath('0.0.1', 2)).status).toBe(404);
     expect(get('/v2/catalog/latest/catalog.json').headers.Location).toBe(`${ORIGIN}${catalogPath(CATALOG_VERSION, 2)}`);
+  });
+});
+
+describe('schema 3: the phone app\'s works, under /v3/', () => {
+  it('has a manifest of its own schema, with the work counts, pointing at /v3/', () => {
+    const manifest = parseCatalogManifest(bodyJson(get(manifestPath(3))))!;
+    expect(manifest.schemaVersion).toBe(CATALOG_WORKS_SCHEMA_VERSION);
+    expect(manifest.version).toBe(CATALOG_VERSION);
+    expect(manifest.url).toBe(`${ORIGIN}${catalogPath(CATALOG_VERSION, 3)}`);
+    expect(manifest.works!.works).toBeGreaterThan(0);
+    expect(isCatalogUpdateApplicable(manifest, '0.0.1', CATALOG_WORKS_SCHEMA_VERSION)).toBe(true);
+    // A phone still on schema 2 never takes it.
+    expect(isCatalogUpdateApplicable(manifest, '0.0.1', CATALOG_LIBRARY_SCHEMA_VERSION)).toBe(false);
+  });
+
+  it('serves exactly the bytes its manifest describes: schema 2 as it is, plus the works', () => {
+    const manifest = parseCatalogManifest(bodyJson(get(manifestPath(3))))!;
+    const response = get(new URL(manifest.url).pathname);
+    expect(response.status).toBe(200);
+    expect(response.headers['Content-Length']).toBe(String(manifest.bytes));
+    expect(createHash('sha256').update(response.body!).digest('hex')).toBe(manifest.sha256);
+    const release = parseWorksRelease(bodyJson(response))!;
+    expect(release).not.toBeNull();
+    const v2 = parseLibraryRelease(bodyJson(get(catalogPath(CATALOG_VERSION, 2))))!;
+    expect(JSON.stringify(release.library)).toBe(JSON.stringify(v2.library));
+    expect(release.works.works).toHaveLength(manifest.works!.works);
+    expect(Object.values(release.works.contents).reduce((n, part) => n + part.units.length, 0)).toBe(manifest.works!.units);
   });
 });

@@ -5,3 +5,4 @@ export { WORKS, workById, workForCollection } from './registry/works.js';
 export { CHABADLIBRARY_TREE, type LibraryTreeNode } from './registry/chabadlibraryTree.js';
 export { collectionUnits, libraryUnits } from './collections.js';
 export { editionUrl, sefariaRefPath } from './links.js';
+export { buildCatalogWorks } from './catalogWorks.js';

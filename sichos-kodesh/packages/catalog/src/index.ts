@@ -23,7 +23,7 @@ export { occasionIdentity, resolveOccasionAllYears, scoreOccasionMatch } from '.
 export type { OccasionIdentity, TimeOfDay, YearOccasionMatches } from './occasionIdentity.js';
 export { DEFAULT_PLAYBACK_RATE, PLAYBACK_RATES, effectivePlaybackRate, formatPlaybackRate, isPlaybackRate, isPlaybackRateAllowed, nextPlaybackRate } from './playbackPolicy.js';
 export type { PlaybackRate } from './playbackPolicy.js';
-export { CATALOG_LIBRARY_SCHEMA_VERSION, CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from './version.js';
+export { CATALOG_LIBRARY_SCHEMA_VERSION, CATALOG_SCHEMA_VERSION, CATALOG_VERSION, CATALOG_WORKS_SCHEMA_VERSION } from './version.js';
 export { LIBRARY_COLLECTION_IDS } from './library/types.js';
 export type {
   CatalogLibrary,
@@ -59,14 +59,33 @@ export {
   isCatalogUpdateApplicable,
   isLibraryRelease,
   isValidCatalogVersion,
+  isWorksRelease,
   parseCatalogManifest,
   parseCatalogRelease,
   parseCatalogReleaseFile,
   parseLibraryRelease,
+  parseWorksRelease,
   serializeCatalogRelease,
   serializeLibraryRelease,
+  serializeWorksRelease,
 } from './release.js';
-export type { CatalogManifest, CatalogRelease, LibraryRelease } from './release.js';
+export type { CatalogManifest, CatalogRelease, LibraryRelease, WorksRelease } from './release.js';
+export { parseCatalogWorks, parseCatalogWorksIndex, parseWorkContents, worksRightsProblems } from './works/parse.js';
+export { catalogUnit, catalogWork, editionSource, unitsInOrder, worksByAuthor } from './works/lookup.js';
+export type {
+  CatalogAuthor,
+  CatalogContentsEntry,
+  CatalogContentsNode,
+  CatalogEdition,
+  CatalogNames,
+  CatalogRights,
+  CatalogUnit,
+  CatalogWork,
+  CatalogWorkContents,
+  CatalogWorks,
+  CatalogWorksIndex,
+  CatalogWorkSource,
+} from './works/types.js';
 export type { CatalogByYear } from './catalogLookup.js';
 export type { AudioKind, CatalogAudio, CatalogEntry, CatalogPdf, CatalogYear, PdfSection } from './types.js';
 export type { WeekDay, WeekOccasion, WeekResolution, YearWeekOccasions } from './resolveThisWeek.js';

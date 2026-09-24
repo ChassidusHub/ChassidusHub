@@ -1,5 +1,5 @@
-import type { CatalogByYear, CatalogLibrary, CatalogRelease, LibraryRelease } from '@sichos-kodesh/catalog';
-import { compareCatalogVersions, isLibraryRelease } from '@sichos-kodesh/catalog';
+import type { CatalogByYear, CatalogLibrary, CatalogRelease, CatalogWorkContents, CatalogWorks, CatalogWorksIndex, LibraryRelease, WorksRelease } from '@sichos-kodesh/catalog';
+import { compareCatalogVersions, isLibraryRelease, isWorksRelease } from '@sichos-kodesh/catalog';
 
 /** Where the catalog an app is currently showing came from. */
 export type CatalogSource = 'bundled' | 'stored' | 'fetched';
@@ -22,14 +22,27 @@ export interface CatalogStore {
    * `useSyncExternalStore`.
    */
   getLibrary(): CatalogLibrary | null;
+  /**
+   * The works (schema 3): every author and work, without units - null in an
+   * app built without them. Read on first call, like the library.
+   */
+  getWorks(): CatalogWorksIndex | null;
+  /** An imported work's contents and units, read when the work is opened; null for a work without its own. */
+  getWorkContents(workId: string): CatalogWorkContents | null;
   subscribe(listener: () => void): () => void;
   /**
    * Replaces the current catalog with `release` when it is newer (same
    * schema), returning whether anything changed. Older or equal data is
    * ignored - a stale file on disk never downgrades a newer bundle. A store
-   * that has a library only takes releases that carry one.
+   * that has a library (or works) only takes releases that carry them.
    */
-  apply(release: CatalogRelease | LibraryRelease, source: Exclude<CatalogSource, 'bundled'>): boolean;
+  apply(release: CatalogRelease | LibraryRelease | WorksRelease, source: Exclude<CatalogSource, 'bundled'>): boolean;
+}
+
+/** The works an app bundles: the index, and each imported work's contents, both read on demand. */
+export interface BundledWorks {
+  index: () => CatalogWorksIndex;
+  contents: (workId: string) => CatalogWorkContents | null;
 }
 
 /**
@@ -42,12 +55,22 @@ export interface CatalogStore {
  * is interrupted.
  *
  * The phone passes its bundled library as a function (`bundledLibrary`):
- * the library is several megabytes and only its own screens need it.
+ * the library is several megabytes and only its own screens need it. Its
+ * works (schema 3) come the same way, each work's units in a part of its
+ * own.
  */
-export function createCatalogStore(bundled: CatalogByYear, bundledVersion: string, schemaVersion: number, bundledLibrary?: () => CatalogLibrary): CatalogStore {
+export function createCatalogStore(
+  bundled: CatalogByYear,
+  bundledVersion: string,
+  schemaVersion: number,
+  bundledLibrary?: () => CatalogLibrary,
+  bundledWorks?: BundledWorks,
+): CatalogStore {
   let snapshot: CatalogSnapshot = { catalog: bundled, version: bundledVersion, releasedAt: null, source: 'bundled' };
   let appliedLibrary: CatalogLibrary | null = null;
   let loadedBundledLibrary: CatalogLibrary | null = null;
+  let appliedWorks: CatalogWorks | null = null;
+  let loadedBundledWorks: CatalogWorksIndex | null = null;
   const listeners = new Set<() => void>();
 
   return {
@@ -59,6 +82,16 @@ export function createCatalogStore(bundled: CatalogByYear, bundledVersion: strin
       loadedBundledLibrary ??= bundledLibrary();
       return loadedBundledLibrary;
     },
+    getWorks() {
+      if (appliedWorks) return appliedWorks;
+      if (!bundledWorks) return null;
+      loadedBundledWorks ??= bundledWorks.index();
+      return loadedBundledWorks;
+    },
+    getWorkContents(workId) {
+      if (appliedWorks) return appliedWorks.contents[workId] ?? null;
+      return bundledWorks ? bundledWorks.contents(workId) : null;
+    },
     subscribe(listener) {
       listeners.add(listener);
       return () => {
@@ -68,10 +101,13 @@ export function createCatalogStore(bundled: CatalogByYear, bundledVersion: strin
     apply(release, source) {
       if (release.schemaVersion !== schemaVersion) return false;
       const library = isLibraryRelease(release) ? release.library : null;
+      const works = isWorksRelease(release) ? release.works : null;
       if (bundledLibrary && !library) return false;
+      if (bundledWorks && !works) return false;
       if (compareCatalogVersions(release.version, snapshot.version) <= 0) return false;
       snapshot = { catalog: release.byYear, version: release.version, releasedAt: release.releasedAt, source };
       if (library) appliedLibrary = library;
+      if (works) appliedWorks = works;
       for (const listener of listeners) listener();
       return true;
     },

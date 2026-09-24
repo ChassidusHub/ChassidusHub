@@ -12,6 +12,24 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.3.0 - 2026-09-24
+
+- The Rebbeim and their seforim (schema 3, the phone's `/v3/`): 80 works
+  from the Baal Shem Tov to the Rebbe, each with its sources and what each
+  source's licence allows.
+- Nine seforim chapter by chapter from Sefaria, 2,026 units in all:
+  - the Alter Rebbe's Tanya, Torah Or, Likkutei Torah, Shulchan Aruch
+    HaRav and weekday Siddur;
+  - the Mitteler Rebbe's Shaar HaYichud and Kuntres HaHispaalus;
+  - the Tzemach Tzedek's Derech Mitzvosecha;
+  - Ma'aneh Lashon.
+
+  Each unit lists its editions. Those that may ship name their text object
+  (its sha256), for the text packs. The rest are links to Sefaria.
+- Data shape (schema 3 only): `works` next to `byYear` and `library`
+  (`src/works/types.ts`). Schemas 1 and 2 are byte-for-byte those of 1.2.0
+  but for the version stamp.
+
 ## 1.2.0 - 2026-09-24
 
 - The library's 101 moadim and 53 parshiyos now have their English names

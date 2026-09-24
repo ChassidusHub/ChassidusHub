@@ -1,5 +1,5 @@
 import { catalogManifestPath, isCatalogUpdateApplicable, parseCatalogManifest, parseCatalogReleaseFile } from '@sichos-kodesh/catalog';
-import type { CatalogManifest, CatalogRelease, LibraryRelease } from '@sichos-kodesh/catalog';
+import type { CatalogManifest, CatalogRelease, LibraryRelease, WorksRelease } from '@sichos-kodesh/catalog';
 
 /** The origin the apps fetch catalog releases from - see packages/catalog/src/release.ts for what it serves. */
 export const CATALOG_API_BASE_URL = 'https://api.sk.shmuky.dev';
@@ -57,7 +57,7 @@ export async function checkCatalogUpdate(options: { manifestUrl?: string; curren
  * stale CDN copy or a mislabelled upload is rejected rather than applied.
  * Throws on any failure; callers turn that into their own error state.
  */
-export async function fetchCatalogRelease(manifest: CatalogManifest, fetchFn: FetchLike = fetch as FetchLike): Promise<CatalogRelease | LibraryRelease> {
+export async function fetchCatalogRelease(manifest: CatalogManifest, fetchFn: FetchLike = fetch as FetchLike): Promise<CatalogRelease | LibraryRelease | WorksRelease> {
   const response = await fetchFn(manifest.url);
   if (!response.ok) throw new Error(`catalog: HTTP ${response.status}`);
   const release = parseCatalogReleaseFile(await response.json());
