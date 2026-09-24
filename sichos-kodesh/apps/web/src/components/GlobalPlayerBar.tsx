@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Loader2, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
+import { audioChapterName, chapterTitle } from '@sichos-kodesh/app-core';
 import { formatPlaybackRate, nextPlaybackRate } from '@sichos-kodesh/catalog';
+import { playlistTitle } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
@@ -109,7 +111,8 @@ export function GlobalPlayerBar() {
   const hasNext = player.currentIndex < audio.length - 1;
   const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
   const displayedPercent = dragPercent ?? progressPercent;
-  const chapterLabel = current.chapterName ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
+  const chapterLabel = audioChapterName(current, language) ?? (audio.length > 1 ? t.track(player.currentIndex + 1) : null);
+  const title = playlistTitle(player.playlist, language);
   // The playlist's own occasion label recurs every year - without its
   // date alongside it, this bar (and the OS lock-screen description it
   // feeds, see PlayerProvider) can't say *which* year's occurrence is
@@ -169,14 +172,14 @@ export function GlobalPlayerBar() {
     >
       {showChapters && (
         <div className="global-player-chapters">
-          <div className="global-player-chapters-title">{player.playlist.title}</div>
+          <div className="global-player-chapters-title">{title}</div>
           {audio.map((chapter, index) => (
             <button
               key={chapter.workerFilename}
               className={index === player.currentIndex ? 'global-player-chapter global-player-chapter-active' : 'global-player-chapter'}
               onClick={() => selectChapter(index)}
             >
-              <span>{chapter.chapterName ?? t.track(index + 1)}</span>
+              <span>{chapterTitle(chapter, index, language, t.track)}</span>
               <span className="global-player-chapter-duration">{formatTime(chapter.durationMs / 1000)}</span>
             </button>
           ))}
@@ -185,7 +188,7 @@ export function GlobalPlayerBar() {
       <div className="global-player-controls">
         {collapsed ? (
           <button type="button" className="global-player-collapsed-summary" onClick={expandPlayer}>
-            <span className="global-player-title-main">{player.playlist.title}</span>
+            <span className="global-player-title-main">{title}</span>
             <span className="global-player-title-sub">
               {dateLabel}
               {chapterLabel && ` · ${audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}`}
@@ -244,7 +247,7 @@ export function GlobalPlayerBar() {
         </div>
         <div className="global-player-scrub">
           <button className="global-player-title" onClick={() => setShowChapters((v) => !v)}>
-            <span className="global-player-title-main">{player.playlist.title}</span>
+            <span className="global-player-title-main">{title}</span>
             <span className="global-player-title-sub">
               {dateLabel}
               {chapterLabel && ` · ${audio.length > 1 ? `${player.currentIndex + 1}/${audio.length} · ${chapterLabel}` : chapterLabel}`}

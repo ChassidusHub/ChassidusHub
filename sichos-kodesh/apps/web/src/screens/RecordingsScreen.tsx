@@ -1,7 +1,9 @@
 import { CheckCircle2, Download, Loader2, Pause, Play } from 'lucide-react';
+import { chapterTitle, occasionTitle } from '@sichos-kodesh/app-core';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { usePlayer } from '../player/usePlayer';
+import { playlistForEntry } from '../player/playerContext';
 import type { PlayerContextValue } from '../player/playerContext';
 import { chapterProgressFraction, getOccasionProgress, isChapterFinished } from '../player/progressStore';
 import type { OccasionProgress } from '../player/progressStore';
@@ -41,7 +43,7 @@ interface PlaylistRowProps {
  * component identity per row, not a loop body.
  */
 function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const chapter = entry.audio[index]!;
   const download = useChapterDownload(entry, index);
   const finished = !isActive && isChapterFinished(progress, index, chapter);
@@ -95,11 +97,7 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
           // `onEnded`) is untouched by this and still starts its chapter
           // at 0 - that's a fresh chapter, not one someone chose to resume.
           const savedPosition = progress?.chapters[index]?.position ?? 0;
-          player.play(
-            { title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate },
-            index,
-            savedPosition,
-          );
+          player.play(playlistForEntry(entry), index, savedPosition);
         }}
       >
         <span className="playlist-row-icon">
@@ -116,7 +114,7 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
             <Play size={16} fill="currentColor" strokeWidth={0} />
           )}
         </span>
-        <span className="playlist-row-name">{chapter.chapterName ?? t.track(index + 1)}</span>
+        <span className="playlist-row-name">{chapterTitle(chapter, index, language, t.track)}</span>
         {/* Always rendered, even at 0%, so every row reserves the same
             space - conditionally rendering it would shift other rows'
             layout depending on whether this row happens to have progress. */}
@@ -180,12 +178,12 @@ export function RecordingsScreen({ resolved }: Props) {
 
   return (
     <div className="screen">
-      <ScreenHeader to={basePath} title={entry.occasionLabel} />
+      <ScreenHeader to={basePath} title={occasionTitle(entry, language)} />
       <div className="playlist-header" dir={isRtl ? 'rtl' : 'ltr'}>
         <div className="playlist-header-main">
           <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
           <div className="playlist-header-copy">
-            <p className="playlist-header-title">{entry.occasionLabel}</p>
+            <p className="playlist-header-title">{occasionTitle(entry, language)}</p>
             <p className="playlist-header-subtitle">{totalDuration}</p>
           </div>
         </div>

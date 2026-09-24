@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { audioChapterName, occasionTitle } from '@sichos-kodesh/app-core';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from './useDownload';
 import type { RowDownloadState } from './downloadContext';
 import { getCatalog } from '../catalog/catalogStore';
+import { useLanguage } from '../i18n/useLanguage';
+import type { Language } from '../i18n/translations';
 
 export interface ActiveDownloadsSummary {
   count: number;
@@ -98,26 +101,29 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
   return { count, percent };
 }
 
-/** `key` -> the catalog entry + label for it, or `null` for a key whose occasion/chapter can no longer be resolved. */
-function entryInfoForKey(key: string): { entry: CatalogEntry; label: string } | null {
+/** `key` -> the catalog entry + label for it (in the UI language), or `null` for a key whose occasion/chapter can no longer be resolved. */
+function entryInfoForKey(key: string, language: Language): { entry: CatalogEntry; label: string } | null {
   const parts = key.split(':');
   const [hebrewYear, occasionId] = (isChapterKey(key) ? parts.slice(1) : parts).map(Number);
   const entry = (getCatalog()[hebrewYear] ?? []).find((e) => e.occasionId === occasionId);
   if (!entry) return null;
-  if (!isChapterKey(key)) return { entry, label: entry.occasionLabel };
+  const title = occasionTitle(entry, language);
+  if (!isChapterKey(key)) return { entry, label: title };
   const chapterIndex = Number(parts[3]);
   const chapter = entry.audio[chapterIndex];
-  return { entry, label: chapter?.chapterName ? `${entry.occasionLabel} - ${chapter.chapterName}` : entry.occasionLabel };
+  const chapterName = chapter && audioChapterName(chapter, language);
+  return { entry, label: chapterName ? `${title} - ${chapterName}` : title };
 }
 
 /** Per-item detail for DownloadedScreen's "in progress" section - the full list the global progress bar's own aggregate summarizes. */
 export function useActiveDownloadRows(): ActiveDownloadRow[] {
   const { liveState, progress } = useDownload();
+  const { language } = useLanguage();
   const countedKeys = countedActiveKeys(liveState);
 
   const rows: ActiveDownloadRow[] = [];
   for (const key of countedKeys) {
-    const info = entryInfoForKey(key);
+    const info = entryInfoForKey(key, language);
     if (info) {
       rows.push({
         key,

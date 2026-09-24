@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveOccasionAllYears } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { BackLink } from '../components/BackLink';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -47,7 +48,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
   return (
     <div className="screen">
       <ScreenHeader to={`/browse/${sourceHebrewYear}/${sourceOccasionId}`} title={t.thisOccasionAllYearsTitle} />
-      <p className="tab-help">{t.thisOccasionAllYearsHelp(sourceEntry.occasionLabel, hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</p>
+      <p className="tab-help">{t.thisOccasionAllYearsHelp(occasionTitle(sourceEntry, language), hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</p>
 
       {yearGroups.length === 0 && <p className="gap-message">{t.noFarbrengensAnyYear}</p>}
 
@@ -59,7 +60,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
               {matches.map((entry) => (
                 <li key={entry.occasionId}>
                   <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
-                    <span className="year-row-year">{entry.occasionLabel}</span>
+                    <span className="year-row-year">{occasionTitle(entry, language)}</span>
                     <span className="year-row-trailing">
                       <OccasionRowIcon entry={entry} progressMap={progressMap} />
                     </span>
@@ -75,7 +76,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
                 {others.map((entry) => (
                   <li key={entry.occasionId}>
                     <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
-                      <span className="year-row-year">{entry.occasionLabel}</span>
+                      <span className="year-row-year">{occasionTitle(entry, language)}</span>
                       <span className="year-row-trailing">
                         <OccasionRowIcon entry={entry} progressMap={progressMap} />
                       </span>

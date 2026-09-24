@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { currentHebrewYear, currentParsha, resolveThisWeek, resolveWeekWithFallback } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { IL } from '../config';
 import { useCatalog } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -100,7 +101,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
         {occasions.map((occasion) => (
           <li key={occasion.entry.occasionId}>
             <Link className="year-row" to={`/follow/${sourceYear}/${occasion.entry.occasionId}`}>
-              <span className="year-row-year">{occasion.entry.occasionLabel}</span>
+              <span className="year-row-year">{occasionTitle(occasion.entry, language)}</span>
               <span className="year-row-trailing">
                 <OccasionRowIcon
                   entry={occasion.entry}
