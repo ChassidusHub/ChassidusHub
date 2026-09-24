@@ -70,6 +70,7 @@ sk-archive verify [--sample 0.02] [--full] re-hash objects; bad bytes are droppe
 sk-archive stats [--json]
 sk-archive report-unresolved [--json]      files upstream would not give us, by item
 sk-archive export-objects-index --catalog-version 1.0.0 [--out objects.json]
+sk-archive import-text --collection works --dir packages/sefaria-index/data [--dry-run]
 sk-archive import-text --collection igros|maanos --dir <build-igros output> [--dry-run]
 ```
 
@@ -85,7 +86,18 @@ again from the original; `objects.json` lists them under their original's
 item and upstream id, with their own profile.
 
 `import-text` stores text that arrives as data rather than as a file to
-fetch: the Igros and Maanos that `packages/igros-index` builds locally.
+fetch.
+
+- **`works`**: the seforim `packages/sefaria-index` imports. Each kept
+  edition of each unit becomes one object under item `<work>/<unit>`,
+  with its own source id (`work:<work>:<hash prefix>`) and role (the
+  edition). The url is `text:works/<work>/<unit>@<source id>`, so a unit's
+  editions never collide. The commit is by `sefaria-import`. Only texts
+  the rights gate lets ship were written by the import, and `sk-pack
+  build-work` packs them by the sha256 the catalog names. The first import
+  (2026-09-24) stored 2,629 texts, 36.6 MB. A second run added nothing.
+- **`igros`, `maanos`**: the letters and maanos that `packages/igros-index`
+  builds locally.
 Each letter or maaneh becomes one `text` object, a small HTML document
 whose sha256 is its identity. It gets a `wanted` row (source
 `contribution`, url `text:<collection>/<item id>`) and a ref from its

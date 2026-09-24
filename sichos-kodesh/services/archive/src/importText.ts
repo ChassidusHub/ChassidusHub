@@ -5,10 +5,11 @@ import type { ArchiveStore } from './store.js';
 
 /**
  * Text that arrives as data rather than as a file to fetch - the Igros and
- * Maanos, built locally by packages/igros-index - stored like any other
- * object: by the sha256 of its bytes, under a commit, with a `wanted` row
- * (source `contribution`, url `text:<collection>/<item id>`) and a ref from
- * the item. Importing the same text again adds nothing; an edited text gets
+ * Maanos, built locally by packages/igros-index, and the seforim imported
+ * by packages/sefaria-index - stored like any other object: by the sha256
+ * of its bytes, under a commit, with a `wanted` row (source `contribution`,
+ * url `text:<collection>/<item id>`, plus `@<source id>` when an item has
+ * several texts) and a ref from the item. Importing the same text again adds nothing; an edited text gets
  * a new object and the item's ref moves to it (the old one is retired, as
  * when an upstream file changes).
  *
@@ -19,6 +20,10 @@ import type { ArchiveStore } from './store.js';
 export interface TextRecord {
   collection: string;
   itemId: string;
+  /** Which of the item's texts this is, when it has several (a unit's editions); defaults to the item id. */
+  sourceId?: string;
+  /** The text's role for the item (a unit's edition: its source index); defaults to none. */
+  role?: string;
   /** The text object's content (UTF-8). */
   text: string;
   mime: string;
@@ -48,7 +53,7 @@ export interface ImportTextResult {
 
 const UPSERT_WANTED = `
 INSERT INTO wanted (collection, item_id, kind, source_id, role, source, url, resource_key, label, ord, duration_ms, hebrew_year, hebrew_date, seen_at)
-VALUES (?, ?, 'text', ?, '', 'contribution', ?, NULL, ?, ?, NULL, ?, NULL, ?)
+VALUES (?, ?, 'text', ?, ?, 'contribution', ?, NULL, ?, ?, NULL, ?, NULL, ?)
 ON CONFLICT(collection, item_id, kind, source_id, role) DO UPDATE SET
   source = excluded.source, url = excluded.url, label = excluded.label, ord = excluded.ord, hebrew_year = excluded.hebrew_year, seen_at = excluded.seen_at`;
 
@@ -57,16 +62,16 @@ INSERT INTO sources (source, url, sha256, status, http_status, etag, last_modifi
 VALUES ('contribution', ?, ?, 'ok', NULL, NULL, NULL, ?, NULL, 1, ?)
 ON CONFLICT(source, url) DO UPDATE SET sha256 = excluded.sha256, status = 'ok', content_type = excluded.content_type, error = NULL, fetched_at = excluded.fetched_at`;
 
-const RETIRE_REFS = `UPDATE refs SET removed_commit = ? WHERE collection = ? AND item_id = ? AND kind = 'text' AND sha256 = ? AND removed_commit IS NULL`;
+const RETIRE_REFS = `UPDATE refs SET removed_commit = ? WHERE collection = ? AND item_id = ? AND kind = 'text' AND sha256 = ? AND role = ? AND removed_commit IS NULL`;
 
 // A text changed back to an earlier version revives that version's retired ref.
 const INSERT_REF = `
 INSERT INTO refs (collection, item_id, sha256, kind, source_id, role, label, ord, duration_ms, commit_id)
-VALUES (?, ?, ?, 'text', ?, '', ?, ?, NULL, ?)
+VALUES (?, ?, ?, 'text', ?, ?, ?, ?, NULL, ?)
 ON CONFLICT(collection, item_id, sha256, role) DO UPDATE SET removed_commit = NULL`;
 
-export function textUrl(collection: string, itemId: string): string {
-  return `text:${collection}/${itemId}`;
+export function textUrl(collection: string, itemId: string, sourceId: string = itemId): string {
+  return sourceId === itemId ? `text:${collection}/${itemId}` : `text:${collection}/${itemId}@${sourceId}`;
 }
 
 export async function importText(store: ArchiveStore, records: readonly TextRecord[], options: ImportTextOptions): Promise<ImportTextResult> {
@@ -75,7 +80,7 @@ export async function importText(store: ArchiveStore, records: readonly TextReco
   const plan = records.map((record) => {
     const bytes = Buffer.from(record.text, 'utf8');
     const sha256 = createHash('sha256').update(bytes).digest('hex');
-    const url = textUrl(record.collection, record.itemId);
+    const url = textUrl(record.collection, record.itemId, record.sourceId);
     const previous = (previousSha.get(url) as { sha256: string | null } | undefined)?.sha256 ?? null;
     return { record, bytes, sha256, url, previous };
   });
@@ -96,7 +101,7 @@ export async function importText(store: ArchiveStore, records: readonly TextReco
   store.db.exec('BEGIN');
   try {
     for (const { record, url } of plan) {
-      upsertWanted.run(record.collection, record.itemId, record.itemId, url, record.label ?? null, record.ord ?? null, record.hebrewYear ?? null, seenAt);
+      upsertWanted.run(record.collection, record.itemId, record.sourceId ?? record.itemId, record.role ?? '', url, record.label ?? null, record.ord ?? null, record.hebrewYear ?? null, seenAt);
     }
     store.db.exec('COMMIT');
   } catch (error) {
@@ -123,8 +128,8 @@ export async function importText(store: ArchiveStore, records: readonly TextReco
         .run(sha256, bytes.length, 'text', record.mime, commitId, nowIso());
     }
     upsertSource.run(url, sha256, record.mime, nowIso());
-    if (previous) retireRefs.run(commitId, record.collection, record.itemId, previous);
-    insertRef.run(record.collection, record.itemId, sha256, record.itemId, record.label ?? null, record.ord ?? null, commitId);
+    if (previous) retireRefs.run(commitId, record.collection, record.itemId, previous, record.role ?? '');
+    insertRef.run(record.collection, record.itemId, sha256, record.sourceId ?? record.itemId, record.role ?? '', record.label ?? null, record.ord ?? null, commitId);
   }
   options.log?.(`import-text: ${pending.length} item(s) stored under commit ${commitId.slice(0, 12)}`);
   return result;

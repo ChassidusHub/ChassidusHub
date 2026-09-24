@@ -114,7 +114,8 @@ export function planLooseImport(staged: StagedFile[], index: ObjectsIndex | null
   for (const item of base.unknown) {
     const hint = hints.get(item.path);
     const named = sha256FromEntryName(item.path);
-    if (!hint || !named || named !== byPath.get(item.path)?.sha256 || hint.kind === 'text') {
+    // Texts and search indexes come only with a trusted manifest: the catalog vouches for them by hash, not by name.
+    if (!hint || !named || named !== byPath.get(item.path)?.sha256 || hint.kind === 'text' || hint.kind === 'search') {
       plan.unrecognized += 1;
       continue;
     }

@@ -61,6 +61,32 @@ count and the pack entries to build - through `app-core`'s
 `listDownloadTargets`, so what the download site quotes, what the
 builder packs and what the phone would download are one function.
 
+## Text packs (catalog schema 3)
+
+One pack per work (`src/text.ts`): scope `{ kind: 'work', collection:
+'works', work }`, and entries in the `works` collection.
+
+- **A unit** is `<work>/<unit>`, with one `text` ref per edition that may
+  ship. `workTextEntries` takes them from the catalog, leaving out any
+  source that is link-only whatever the catalog says.
+- **The work** is `<work>`, with one `search` ref: an SQLite database.
+  - `rows` holds the unit and edition, and `search` is a contentless FTS4
+    table (`SEARCH_INDEX_SQL`).
+  - The phone runs `SEARCH_INDEX_QUERY` through Android's own SQLite. FTS4
+    is always there, so the app needs no SQLite of its own.
+  - It stores no copy of the text: the phone holds the texts, and makes its
+    snippets from them.
+- **Words** are normalised the same way on both sides
+  (`normalizeSearchText`):
+  - no niqqud, geresh or quotes;
+  - lower case;
+  - only letters and digits.
+
+  Each Hebrew word is indexed with its prefixes off too (`withHebrewStems`:
+  ו ה ב כ ל מ ש, and the pairs Hebrew stacks), so "בינוני" finds
+  "והבינוני". `searchIndexQuery` turns what a person types into prefix
+  terms, all required.
+
 ## Scripts
 
 ```

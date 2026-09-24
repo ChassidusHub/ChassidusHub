@@ -6,3 +6,4 @@ export { parseScope, parseSections, entriesInScope, type ParsedScope } from './s
 export { loadYearEntries } from './catalogData.js';
 export { writeStoredZip, readZipDirectory, readEntry, entryStream, type ZipEntry, type ZipSource } from './zip.js';
 export { transcode, encoderArgs, ffmpegEncoder, isNigun, type EncodedProfile, type Encode, type TranscodeOptions, type TranscodeResult } from './transcode.js';
+export { buildWorkPack, workPackFileName, writeSearchIndex, type WorkPackOptions, type WorkPackResult } from './workPack.js';

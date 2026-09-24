@@ -24,6 +24,8 @@ sk-pack transcode --profile opus24 [--collection farbrengens] [--scope 5736-01] 
 sk-pack build --scope 5736-01 [--profile src] [--sections essentials] [--max-mb 200] [--out dir]
               [--catalog-dir dir] [--catalog-version v] [--catalog-release file]
               [--key file | --unsigned] [--no-objects-index] [--allow-missing]
+sk-pack build-work --work tanya [more ids | all] [--works-dir dir] [--max-mb 200] [--out dir]
+                   [--key file | --unsigned] [--allow-missing]
 sk-pack verify <packs...> [--key file] [--trust keyId=publicKey ...]
 sk-pack index [--dir dir] [--out file]
 sk-pack publish [--out dir] [--catalog-dir dir] [--catalog-version v] [--packs dir]
@@ -92,6 +94,29 @@ From the repository: `npm run pack -w @sichos-kodesh/pack-builder -- <command>`.
 
   CRCs are cached in `.crc-cache.json`, so a second publish reads only
   new objects. Then `rclone sync <root>/published r2:<bucket>` uploads it.
+- **build-work** builds a sefer's text pack (catalog schema 3,
+  `work-<id>.skpack`):
+  - its texts that may ship, read from the archive by the sha256 the
+    catalog's units name (`apps/mobile/src/catalog/data/works`);
+  - its search index, built from those same texts (packages/pack-format's
+    "Text packs" has the layout).
+
+  The same texts make the same pack. `all` builds every work that has text
+  that may ship. First store the texts with `sk-archive import-text
+  --collection works --dir packages/sefaria-index/data`. The first build
+  (2026-09-24, catalog 1.3.0):
+
+  | Work | Texts | Search index | Pack |
+  | --- | --- | --- | --- |
+  | Tanya | 258 (2.8 MB) | 1.4 MB | 4.4 MB |
+  | Torah Or | 306 (3.7 MB) | 2.6 MB | 6.5 MB |
+  | Likkutei Torah | 618 (9.2 MB) | 6.2 MB | 15.7 MB |
+  | Shulchan Aruch HaRav | 1,245 (17.9 MB) | 8.4 MB | 27.0 MB |
+  | Shaar HaYichud (English) | 55 (0.8 MB) | 0.3 MB | 1.1 MB |
+  | Derech Mitzvosecha | 134 (2.0 MB) | 1.5 MB | 3.6 MB |
+  | Weekday Siddur (English) | 6 (12 KB) | 48 KB | 64 KB |
+  | Ma'aneh Lashon | 7 (0.1 MB) | 0.1 MB | 0.2 MB |
+
 - **serve** runs the pack API's handler on a published directory: local
   development of the download site (`apps/download`), or a server with no
   cloud at all. Custom packs are signed with the archive's key.

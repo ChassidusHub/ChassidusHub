@@ -8,8 +8,9 @@ import { TRUSTED_PACK_KEYS, developmentTrustedKeys } from '@sichos-kodesh/pack-f
  * the app's files directory, RNBlobUtil's DocumentDir): a recording at its
  * JEM `workerFilename`, a PDF at `<driveFileId>.pdf`. So every screen that
  * shows "downloaded", the player and the PDF viewer find an imported file
- * exactly as they find a downloaded one, with no new lookup. Texts (igros,
- * maanos, transcripts; WP4b reads them) go under `texts/`.
+ * exactly as they find a downloaded one, with no new lookup. Texts (the
+ * seforim of catalog schema 3, and later igros, maanos, transcripts) go
+ * under `texts/`, and each work's search index under `indexes/`.
  */
 
 /**
@@ -39,6 +40,7 @@ export function objectFileName(kind: ObjectKind, sourceId: string, profile?: Aud
   if (kind === 'audio') return WORKER_FILENAME_RE.test(sourceId) ? sourceId : null;
   if (kind === 'pdf') return DRIVE_FILE_ID_RE.test(sourceId) ? `${sourceId}.pdf` : null;
   if (!TEXT_ID_RE.test(sourceId) || sourceId.includes('..')) return null;
+  if (kind === 'search') return `indexes/${sourceId.replace(/:/g, '_')}.sqlite`;
   return `texts/${sourceId.replace(/:/g, '_')}.html`;
 }
 

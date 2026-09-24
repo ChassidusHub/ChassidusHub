@@ -22,10 +22,16 @@ export const OBJECTS_DIR = 'objects/';
 export type AudioProfile = 'src' | 'opus16' | 'opus24' | 'opus32' | 'mp3-32';
 export const AUDIO_PROFILES: readonly AudioProfile[] = ['src', 'opus16', 'opus24', 'opus32', 'mp3-32'];
 
-export type ObjectKind = 'audio' | 'pdf' | 'text';
-export const OBJECT_KINDS: readonly ObjectKind[] = ['audio', 'pdf', 'text'];
+/** `search`: a work's full-text search index, an SQLite FTS4 database (text.ts). */
+export type ObjectKind = 'audio' | 'pdf' | 'text' | 'search';
+export const OBJECT_KINDS: readonly ObjectKind[] = ['audio', 'pdf', 'text', 'search'];
 
-/** The collections of the library. `farbrengens` is today's catalog; the rest arrive with catalog schema 2. */
+/**
+ * The collections of the library. `farbrengens` is today's catalog; the
+ * next ones arrived with catalog schema 2. `works` (schema 3) holds the
+ * seforim's texts: an entry per unit, `<work id>/<unit id>`, and one per
+ * work for its search index.
+ */
 export type CollectionId =
   | 'farbrengens'
   | 'likkuteiSichos'
@@ -36,7 +42,8 @@ export type CollectionId =
   | 'yomanim'
   | 'michtavimKlolim'
   | 'hadranim'
-  | 'jemEvents';
+  | 'jemEvents'
+  | 'works';
 export const COLLECTION_IDS: readonly CollectionId[] = [
   'farbrengens',
   'likkuteiSichos',
@@ -48,6 +55,7 @@ export const COLLECTION_IDS: readonly CollectionId[] = [
   'michtavimKlolim',
   'hadranim',
   'jemEvents',
+  'works',
 ];
 
 /** One stored file, as an item refers to it. */
@@ -75,7 +83,7 @@ export interface PackEntry {
   refs: ObjectRef[];
 }
 
-export type PackScopeKind = 'month' | 'year' | 'occasions' | 'volume' | 'custom';
+export type PackScopeKind = 'month' | 'year' | 'occasions' | 'volume' | 'custom' | 'work';
 
 export interface PackScope {
   kind: PackScopeKind;
@@ -84,6 +92,8 @@ export interface PackScope {
   /** mafteiach month token, `01`..`12`, `06A`/`06B` in a leap year. */
   month?: string;
   volume?: number;
+  /** `work` scopes: the work id (catalog schema 3). */
+  work?: string;
   label: { en: string; he: string };
 }
 
@@ -169,17 +179,19 @@ export function parsePackEntry(value: unknown): PackEntry | null {
 
 function parseScope(value: unknown): PackScope | null {
   if (!isRecord(value)) return null;
-  const { kind, collection, hebrewYear, month, volume, label } = value;
-  if (typeof kind !== 'string' || !['month', 'year', 'occasions', 'volume', 'custom'].includes(kind)) return null;
+  const { kind, collection, hebrewYear, month, volume, work, label } = value;
+  if (typeof kind !== 'string' || !['month', 'year', 'occasions', 'volume', 'custom', 'work'].includes(kind)) return null;
   if (typeof collection !== 'string' || !(COLLECTION_IDS as readonly string[]).includes(collection)) return null;
   if (!isRecord(label) || typeof label.en !== 'string' || typeof label.he !== 'string') return null;
   if (hebrewYear !== undefined && !isNonNegativeInt(hebrewYear)) return null;
   if (month !== undefined && typeof month !== 'string') return null;
   if (volume !== undefined && !isNonNegativeInt(volume)) return null;
+  if (work !== undefined && typeof work !== 'string') return null;
   const scope: PackScope = { kind: kind as PackScopeKind, collection: collection as CollectionId, label: { en: label.en, he: label.he } };
   if (hebrewYear !== undefined) scope.hebrewYear = hebrewYear;
   if (month !== undefined) scope.month = month;
   if (volume !== undefined) scope.volume = volume;
+  if (work !== undefined) scope.work = work;
   return scope;
 }
 

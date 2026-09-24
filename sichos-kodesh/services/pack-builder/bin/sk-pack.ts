@@ -3,7 +3,7 @@ import { readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Command } from 'commander';
 import { ArchiveStore } from '@sichos-kodesh/archive';
-import { CATALOG_VERSION, parseCatalogReleaseFile } from '@sichos-kodesh/catalog';
+import { CATALOG_VERSION, parseCatalogReleaseFile, parseCatalogWorksIndex, parseWorkContents } from '@sichos-kodesh/catalog';
 import type { AudioProfile, TrustedKeys } from '@sichos-kodesh/pack-format';
 import { AUDIO_PROFILES, TRUSTED_PACK_KEYS, manifestBytes } from '@sichos-kodesh/pack-format';
 import { buildPacks } from '../src/build.js';
@@ -16,6 +16,7 @@ import { servePublished } from '../src/serve.js';
 import { entriesInScope, parseScope, parseSections } from '../src/scope.js';
 import { ffmpegEncoder, transcode, type EncodedProfile } from '../src/transcode.js';
 import { verifyPack } from '../src/verify.js';
+import { buildWorkPack } from '../src/workPack.js';
 
 /**
  * sk-pack: builds signed packs from the archive (`sk-archive`), verifies
@@ -155,6 +156,51 @@ program
       }
     },
   );
+
+program
+  .command('build-work')
+  .description("build a sefer's text pack (catalog schema 3): its texts from the archive and a search index")
+  .requiredOption('--work <id...>', 'work ids, as the catalog names them (tanya, torah-or, ...); "all" for every work with texts that may ship')
+  .option('--works-dir <dir>', 'the works the phone bundles', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'works'))
+  .option('--catalog-version <v>', 'the catalog version the works are', CATALOG_VERSION)
+  .option('--max-mb <n>', 'split into parts of at most this many MB', (v) => Number(v), 200)
+  .option('--out <dir>', 'output directory (default <root>/packs)')
+  .option('--key <file>', 'signing key (default <root>/keys/pack-signing.json)')
+  .option('--unsigned', 'build without a signature')
+  .option('--allow-missing', 'build even when some texts are not archived yet')
+  .action(async (opts: { work: string[]; worksDir: string; catalogVersion: string; maxMb: number; out?: string; key?: string; unsigned?: boolean; allowMissing?: boolean }) => {
+    if (!(opts.maxMb > 0)) throw new Error('--max-mb must be a positive number');
+    const index = parseCatalogWorksIndex(JSON.parse(await readFile(path.join(opts.worksDir, 'index.json'), 'utf8')));
+    if (!index) throw new Error(`${opts.worksDir}/index.json is not a works index`);
+    // "all": every work with a text that may ship (the link-only ones have none to pack).
+    const ids = opts.work.includes('all') ? index.works.filter((w) => (w.textBytes ?? 0) > 0).map((w) => w.id) : opts.work;
+    const key = opts.unsigned ? null : await readKeyFile(opts.key ?? defaultKeyFile(root()));
+    const store = await ArchiveStore.open(root());
+    try {
+      for (const id of ids) {
+        const work = index.works.find((w) => w.id === id);
+        if (!work) throw new Error(`the catalog has no work "${id}"`);
+        const contents = parseWorkContents(JSON.parse(await readFile(path.join(opts.worksDir, 'contents', `${id}.json`), 'utf8').catch(() => 'null')), work);
+        if (!contents) throw new Error(`${id} has no contents of its own (only imported works have texts)`);
+        const result = await buildWorkPack(store, {
+          work,
+          contents,
+          catalogVersion: opts.catalogVersion,
+          outDir: opts.out ?? path.join(root(), 'packs'),
+          key,
+          maxBytes: opts.maxMb * 1024 * 1024,
+          allowMissing: !!opts.allowMissing,
+          log,
+        });
+        log(
+          `${work.title.en}: ${result.packs.length} pack(s), ${result.texts} text(s) (${formatBytes(result.textBytes)}), search index ${formatBytes(result.search.bytes)} over ${result.search.rows} rows` +
+            `${result.missing.length ? `; ${result.missing.length} text(s) left out, not archived yet` : ''}${key ? `; signed with ${key.keyId}` : '; UNSIGNED'}`,
+        );
+      }
+    } finally {
+      store.close();
+    }
+  });
 
 program
   .command('verify')

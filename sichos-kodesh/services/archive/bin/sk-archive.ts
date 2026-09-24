@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { writeFile } from 'node:fs/promises';
+import { readdir, writeFile } from 'node:fs/promises';
 import { Command } from 'commander';
 import { ArchiveStore } from '../src/store.js';
 import { loadInventory } from '../src/inventory.js';
@@ -185,24 +186,45 @@ program
     }
   });
 
+/** The seforim an importer wrote (packages/sefaria-index's output), as text records: one per kept edition of each unit. */
+async function worksRecords(dir: string): Promise<TextRecord[]> {
+  const { readWorkImport, TEXT_OBJECT_MIME } = await import('@sichos-kodesh/sefaria-index');
+  const { workTextSourceId, workUnitItemId } = await import('@sichos-kodesh/pack-format');
+  const records: TextRecord[] = [];
+  const workIds = (await readdir(dir, { withFileTypes: true })).filter((d) => d.isDirectory() && !d.name.startsWith('.')).map((d) => d.name).sort();
+  for (const workId of workIds) {
+    const { texts } = await readWorkImport(dir, workId);
+    for (const [index, text] of texts.entries()) {
+      const sha256 = createHash('sha256').update(text.html, 'utf8').digest('hex');
+      records.push({ collection: 'works', itemId: workUnitItemId(workId, text.unitId), sourceId: workTextSourceId(workId, sha256), role: text.key, text: text.html, mime: TEXT_OBJECT_MIME, label: text.label, ord: index + 1 });
+    }
+  }
+  return records;
+}
+
 program
   .command('import-text')
-  .description("store the Igros or Maanos (build-igros's output) as text objects - gated: kept in the archive, never packed until the rights are cleared")
-  .requiredOption('--collection <id>', 'igros or maanos')
-  .requiredOption('--dir <dir>', "packages/igros-index's build output (igros/, maanos/)")
+  .description("store texts that arrive as data as text objects: the seforim (works), or the Igros and Maanos - gated: kept in the archive, never packed until the rights are cleared")
+  .requiredOption('--collection <id>', 'works, igros or maanos')
+  .requiredOption('--dir <dir>', "works: packages/sefaria-index's output (data/); igros, maanos: packages/igros-index's build output")
   .option('--dry-run', 'count what would be stored; write nothing')
   .action(async (opts: { collection: string; dir: string; dryRun?: boolean }) => {
-    if (opts.collection !== 'igros' && opts.collection !== 'maanos') throw new Error(`--collection must be igros or maanos, not ${opts.collection}`);
-    const { letterHtml, maanehHtml, readIgrosOutput, TEXT_OBJECT_MIME } = await import('@sichos-kodesh/igros-index');
-    const output = readIgrosOutput(opts.dir);
-    const records: TextRecord[] =
-      opts.collection === 'igros'
-        ? output.letters.map((letter, index) => ({ collection: 'igros', itemId: letter.id, text: letterHtml(letter), mime: TEXT_OBJECT_MIME, label: letter.numberLabel, hebrewYear: letter.hebrewYear, ord: index + 1 }))
-        : output.maanos.map((maaneh, index) => ({ collection: 'maanos', itemId: maaneh.id, text: maanehHtml(maaneh), mime: TEXT_OBJECT_MIME, label: maaneh.numberLabel, hebrewYear: maaneh.year, ord: index + 1 }));
+    if (opts.collection !== 'works' && opts.collection !== 'igros' && opts.collection !== 'maanos') throw new Error(`--collection must be works, igros or maanos, not ${opts.collection}`);
+    let records: TextRecord[];
+    if (opts.collection === 'works') records = await worksRecords(opts.dir);
+    else {
+      const { letterHtml, maanehHtml, readIgrosOutput, TEXT_OBJECT_MIME } = await import('@sichos-kodesh/igros-index');
+      const output = readIgrosOutput(opts.dir);
+      records =
+        opts.collection === 'igros'
+          ? output.letters.map((letter, index) => ({ collection: 'igros', itemId: letter.id, text: letterHtml(letter), mime: TEXT_OBJECT_MIME, label: letter.numberLabel, hebrewYear: letter.hebrewYear, ord: index + 1 }))
+          : output.maanos.map((maaneh, index) => ({ collection: 'maanos', itemId: maaneh.id, text: maanehHtml(maaneh), mime: TEXT_OBJECT_MIME, label: maaneh.numberLabel, hebrewYear: maaneh.year, ord: index + 1 }));
+    }
     const g = globals();
     const store = await ArchiveStore.open(g.root);
     try {
-      const result = await importText(store, records, { author: 'igros-import', message: `import-text ${opts.collection}: ${records.length} item(s) from ${opts.dir}`, dryRun: opts.dryRun, log });
+      const author = opts.collection === 'works' ? 'sefaria-import' : 'igros-import';
+      const result = await importText(store, records, { author, message: `import-text ${opts.collection}: ${records.length} item(s) from ${opts.dir}`, dryRun: opts.dryRun, log });
       log(
         `import-text ${opts.collection}${opts.dryRun ? ' (dry run)' : ''}: ${result.records} item(s); ${result.added} new object(s), ${formatBytes(result.bytes)}; ${result.changed} changed, ${result.unchanged} unchanged`,
       );

@@ -82,4 +82,27 @@ describe('importText', () => {
       { sha256: sha('<article>א - מתוקן</article>'), removed: true },
     ]);
   });
+
+  it('keeps a unit\'s several editions apart, each with its own source, role and ref', async () => {
+    const edition = (sourceId: string, role: string, text: string): TextRecord => ({ collection: 'works', itemId: 'tanya/part1/1', sourceId, role, text, mime: MIME, label: 'פרק א׳' });
+    const he = edition('work:tanya:aaaa', 'he-kehot', '<article lang="he">א</article>');
+    const en = edition('work:tanya:bbbb', 'en-community', '<article lang="en">a</article>');
+    const result = await importText(store, [he, en], { author: 'sefaria-import', message: 'test' });
+    expect(result).toMatchObject({ records: 2, added: 2 });
+    expect(textUrl('works', 'tanya/part1/1', 'work:tanya:aaaa')).toBe('text:works/tanya/part1/1@work:tanya:aaaa');
+    const wanted = store.db.prepare("SELECT source_id, role, url FROM wanted WHERE collection = 'works' ORDER BY role").all();
+    expect(wanted).toEqual([
+      { source_id: 'work:tanya:bbbb', role: 'en-community', url: 'text:works/tanya/part1/1@work:tanya:bbbb' },
+      { source_id: 'work:tanya:aaaa', role: 'he-kehot', url: 'text:works/tanya/part1/1@work:tanya:aaaa' },
+    ]);
+    const unitRefs = store.db.prepare("SELECT sha256, role FROM refs WHERE collection = 'works' AND removed_commit IS NULL ORDER BY role").all();
+    expect(unitRefs).toEqual([
+      { sha256: sha('<article lang="en">a</article>'), role: 'en-community' },
+      { sha256: sha('<article lang="he">א</article>'), role: 'he-kehot' },
+    ]);
+    // Editing one edition moves only its own ref.
+    const again = await importText(store, [he, { ...en, text: '<article lang="en">b</article>' }], { author: 'sefaria-import', message: 'test' });
+    expect(again).toMatchObject({ unchanged: 1, changed: 1 });
+    expect(store.db.prepare("SELECT role FROM refs WHERE collection = 'works' AND removed_commit IS NOT NULL").all()).toEqual([{ role: 'en-community' }]);
+  });
 });

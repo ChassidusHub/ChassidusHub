@@ -95,6 +95,9 @@ describe('placement', () => {
     expect(placement.objectFileName('audio', 'JEMSK0562A.mp3', 'src')).toBe('JEMSK0562A.mp3');
     expect(placement.objectFileName('pdf', '1Sff_afTE96gZbJb6GRv8P8j08vOVDxDs')).toBe('1Sff_afTE96gZbJb6GRv8P8j08vOVDxDs.pdf');
     expect(placement.objectFileName('text', 'igros:123')).toBe('texts/igros_123.html');
+    expect(placement.objectFileName('text', 'work:tanya:0123456789abcdef')).toBe('texts/work_tanya_0123456789abcdef.html');
+    expect(placement.objectFileName('search', 'search:tanya')).toBe('indexes/search_tanya.sqlite');
+    expect(placement.objectFileName('search', '../x')).toBeNull();
     expect(placement.objectFileName('audio', '../evil.mp3', 'src')).toBeNull();
     expect(placement.objectFileName('pdf', '../../x')).toBeNull();
     expect(placement.objectFileName('text', 'a/../../b')).toBeNull();

@@ -341,6 +341,28 @@ session cannot fetch (section 2a). Decision 2 still gates any PDFs.
 - **The API** serves `/v3/` next to `/v1/` and `/v2/`, so phones on 1.4.0
   keep what they have.
 
+**Built: the text packs** (WP12b):
+
+- **One pack per sefer**, in the `works` collection:
+  - every text of it that may ship, from the archive (`sk-archive
+    import-text --collection works`);
+  - its search index. This is FTS4 rather than FTS5, because Android's own
+    SQLite always has FTS4, so the phone needs no SQLite of its own.
+- **The index is contentless.** It holds no second copy of the text, and
+  the phone makes its snippets from the texts it holds. Tanya's index is
+  1.4 MB for 2.8 MB of text.
+- **Hebrew search:**
+  - the same normalising on both sides: no niqqud, geresh or quotes;
+  - each word also indexed without its prefixes, so "בינוני" finds
+    "והבינוני".
+- **The same texts make the same pack**, byte for byte.
+- **The first build** covers all eight seforim with text that may ship:
+  63 MB of packs in all, from Tanya's 4.4 MB to the Shulchan Aruch HaRav's
+  27 MB. Kuntres HaHispaalus has none: both its editions are link-only.
+- **The phone** places texts under `texts/` and search indexes under
+  `indexes/`. A search index or a text comes only with a signed manifest,
+  never as a loose file.
+
 ### WP13 - the phone: browse, read, search
 
 - Browse from the Rabbeim, to works, to volumes, to units.
