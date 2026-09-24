@@ -2,6 +2,8 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { extractDriveFileId, extractDriveResourceKey } from '@sichos-kodesh/catalog';
 import { nowIso } from './db.js';
+import { loadSectionsInventory } from './sectionsInventory.js';
+import type { CollectionsInventory } from './sectionsInventory.js';
 import type { ArchiveStore } from './store.js';
 
 /**
@@ -13,7 +15,9 @@ import type { ArchiveStore } from './store.js';
  *                 one `jemEvents` item per ccdb event, and a `farbrengens`
  *                 ref for the ones mafteiach links to an occasion
  *   mafteiach.db  every Drive link by occasion and section -> pdf objects
- *                 under `farbrengens`
+ *                 under `farbrengens`; and, when the section crawlers have
+ *                 run, Likkutei Sichos, maamorim, yomanim, hadranim,
+ *                 michtavim klolim and reshimos (sectionsInventory.ts)
  *
  * Re-running is an upsert: rows carry `seen_at`, so a later "no longer in
  * any index" report is possible without deleting history.
@@ -29,6 +33,8 @@ export interface InventoryResult {
   pdfs: number;
   farbrengenAudioRefs: number;
   skipped: { nonDriveLinks: number; badDriveUrls: number };
+  /** The collections beyond farbrengens and jemEvents, by collection. */
+  collections: CollectionsInventory;
 }
 
 const UPSERT = `
@@ -43,7 +49,7 @@ export function jemFilename(url: string): string {
 }
 
 export function loadInventory(store: ArchiveStore, options: InventoryOptions): InventoryResult {
-  const result: InventoryResult = { audio: 0, pdfs: 0, farbrengenAudioRefs: 0, skipped: { nonDriveLinks: 0, badDriveUrls: 0 } };
+  const result: InventoryResult = { audio: 0, pdfs: 0, farbrengenAudioRefs: 0, skipped: { nonDriveLinks: 0, badDriveUrls: 0 }, collections: {} };
   const seenAt = nowIso();
   const upsert = store.db.prepare(UPSERT);
 
@@ -108,6 +114,7 @@ export function loadInventory(store: ArchiveStore, options: InventoryOptions): I
         upsert.run('farbrengens', String(row.occasion_id), 'audio', jemFilename(row.url), String(row.chapter_index), 'jem', row.url, null, row.chapter_name, row.chapter_index, row.duration_ms, row.hebrew_year, row.hebrew_date, seenAt);
         result.farbrengenAudioRefs += 1;
       }
+      result.collections = loadSectionsInventory(maf, upsert, seenAt, jemFilename);
       store.db.exec('COMMIT');
     } finally {
       maf.close();

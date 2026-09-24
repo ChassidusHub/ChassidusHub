@@ -4,6 +4,7 @@ import { writeFile } from 'node:fs/promises';
 import { Command } from 'commander';
 import { ArchiveStore } from '../src/store.js';
 import { loadInventory } from '../src/inventory.js';
+import type { InventoryResult } from '../src/inventory.js';
 import { crawl } from '../src/crawl.js';
 import { verify } from '../src/verify.js';
 import { stats, unresolved } from '../src/report.js';
@@ -43,6 +44,12 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 }
 
+function logCollections(collections: InventoryResult['collections']): void {
+  for (const [collection, counts] of Object.entries(collections)) {
+    log(`  ${collection}: ${counts.pdfs} Drive PDFs${counts.audio ? `, ${counts.audio} audio refs` : ''}${counts.nonDrive ? ` (${counts.nonDrive} links that are not Drive files)` : ''}`);
+  }
+}
+
 program
   .command('inventory')
   .description('read the indexers and record what the archive should hold (upsert; safe to repeat)')
@@ -52,6 +59,7 @@ program
     try {
       const result = loadInventory(store, { jemDb: g.jemDb, mafteiachDb: g.mafteiachDb });
       log(`inventory: ${result.audio} JEM recordings, ${result.pdfs} Drive PDFs, ${result.farbrengenAudioRefs} farbrengen audio refs (skipped ${result.skipped.nonDriveLinks} non-Drive links, ${result.skipped.badDriveUrls} unparsable Drive urls)`);
+      logCollections(result.collections);
     } finally {
       store.close();
     }
@@ -87,6 +95,7 @@ program
     try {
       const inv = loadInventory(store, { jemDb: g.jemDb, mafteiachDb: g.mafteiachDb });
       log(`inventory: ${inv.audio} JEM recordings, ${inv.pdfs} Drive PDFs`);
+      logCollections(inv.collections);
       const result = await crawl(store, { ...opts, log });
       log(`crawl: ${result.fetched} fetched (${formatBytes(result.bytes)}), ${result.unresolved} unresolved, ${result.errors} errors`);
     } finally {

@@ -194,39 +194,97 @@ above.
 
 ## Known gaps / not yet modeled precisely
 
-- `maamorim` link extraction is generic (same "nearest preceding heading"
-  grouping as everything else); the real per-maamor structure is richer
-  (maamor title, an internal `/maamorim/{id}` page, per-edition
-  sub-sections) and could be modeled more precisely if maamarim become a
-  first-class feature rather than secondary to sichos/farbrengens.
+- A farbrengen's own `maamorim` links are still grouped generically (same
+  "nearest preceding heading" grouping as everything else); the maamarim
+  themselves are now modeled precisely by the sections crawler below,
+  joined back to the farbrengen through the `/maamorim/{id}` link.
 - Some early (pre-Nesius) entries have `hebrewDate` ending in `-00` — an
   explicit "day unknown" placeholder in the source data, not a bug here.
 
-## What this doesn't cover (mafteiach.app has more than farbrengens)
+## The other sections (`src/sections/`, `npm run crawl-sections`)
 
-This package only crawls `/all/by_year/...` (and the two alternate views
-`/all/moadim/...` / `/all/parshiyos/...`, which are the *same* farbrengen
-ids re-grouped by holiday/parsha, not new content — not worth crawling
-separately). The site has real additional sections this package does not
-touch at all:
+mafteiach.app has more than the dated farbrengens. The sections crawler
+reads the rest of the site into the same `mafteiach.db`:
 
-| Section | URL pattern | id space | Page shape |
-|---|---|---|---|
-| Likkutei Sichos | `/likkutei_sichos/by_volume/{n}` (also `by_parsha`, `by_moad`) | its own per-sicha ids (e.g. `/likkutei_sichos/{id}/kitzur`) | full server-rendered HTML per volume, not the JS-fragment pattern; every sicha listed inline (no per-item AJAX fetch needed) |
-| Maamorim (standalone index) | `/maamorim` | small sequential ids via `loadMaamorFragment(event, id)`, distinct from farbrengen ids | same JS-fragment pattern as farbrengens |
-| Hadranim | `/hadranim/by_masechta` (also `by_year`) | not yet mapped | full server-rendered HTML, same family as Likkutei Sichos |
-| General letters | `/michtavim_klolim_new/by_moed` (also `by_year`) | not yet mapped | full server-rendered HTML; per-letter tabs look like farbrengens (מוגה/English/תוכן ענינים) |
-| Diaries (yomanim) | `/yomanim/by_year` | not yet mapped | full server-rendered HTML |
+```
+npm run sync                         # first: the farbrengens (moadim, parshiyos and maamorim point at them)
+npm run crawl-sections               # every section; the first run crawls, every later run syncs
+npm run crawl-sections -- --sections moadim,parshiyos --limit 3   # a pilot
+npm run crawl-sections -- --no-revalidate                          # re-parse from the cache, no requests
+npm run resolve-maamar-audio         # the maamorim's JEM recordings (ccdb), like resolve-jem-audio
+npm run resolve-maamar-audio -- --missing-only   # only those not resolved yet
+```
 
-Extending to these is a real option (the same politeness/caching approach
-would apply directly), but **Likkutei Sichos specifically needs a more
-careful line than farbrengens did**: it's Rabbi Schneerson's actively
-published, currently-sold book series, not archival hanachos. Indexing
-bibliographic facts (volume/sicha number, parsha, page range, kitzur/
-English/mugah *availability flags*, links) is the same category of thing
-already done for farbrengens — but before storing any "teaser" text
-alongside it, it needs to be determined which of that text is mafteiach.app's
-own editorial writing (safe, like `tochenInyanim`) versus a direct excerpt
-of the copyrighted sicha itself (not safe to bulk-store). That
-determination hasn't been made yet, so no Likkutei Sichos crawler has been
-built pending it.
+Crawl and sync are one command. Every page goes through
+`fetchWithRevalidation`: a URL never fetched is a plain GET, one fetched
+before is a conditional GET that costs the site a `304` when nothing
+changed, and the cached body is kept under `.cache/etag/`. Every item row
+carries a content hash, so only real changes are written and bump
+`last_changed_at`; items the site stops listing are reported
+(`missingIds`), never deleted.
+
+| Section | Pages read | Keyed by | Tables |
+| --- | --- | --- | --- |
+| Likkutei Sichos | `/likkutei_sichos/by_volume/{n}` (41, and one empty page past the last), `by_parsha/{slug}` (54), `by_moad/{slug}` (57) | `{volume}:{page}` from the element id `likkut_sicha_{vol}_{page}` - the same in all three views, and present when there is no kitzur | `ls_sichos`, `ls_links`; parsha/moed views in `memberships` |
+| Maamorim | `/maamorim?order=by_year&year=Y` (40), `?melukat=true&order=by_volume&volume=N` (6), `/maamorim/{id}/fragment.js` | the site's maamar id | `maamorim`, `maamorim_links`, `maamor_jem_audio`; Melukat volumes in `memberships` |
+| Yomanim | `/yomanim/by_year/{Y}` (45) | the Drive url (they have no ids) | `yomanim` |
+| Hadranim | `/hadranim/by_masechta/{slug}` (48), `by_year/{Y}` (38) | the site's hadran id | `hadranim`, `hadranim_links`, `hadran_occasions`; masechtos and years in `memberships` |
+| Michtavim klolim | `/michtavim_klolim_new/by_moed/{slug}` (10), `by_year/{Y}` (42) | the site's letter id | `michtavim`, `michtavim_links`, `michtavim_citations`; years in `memberships` |
+| Moadim | `/all/moadim/{slug}` (101) | slug, verbatim (`22_shevat%20`) | `moadim`, `occasion_moadim` (views over `nav_entries` / `memberships`) |
+| Parshiyos | `/all/parshiyos/{slug}` (53) | slug | `parshiyos`, `occasion_parshiyos` |
+
+Details that matter:
+
+- **Three response shapes.** Every page's `.js` twin carries the same
+  markup as the HTML page, side-nav included, wrapped either in the
+  farbrengen pattern (`let html = "..."`), in a template literal
+  (`setOuterHTMLWithScripts(document..., \`...\`)`: Likkutei Sichos,
+  hadranim, michtavim), or not at all (yomanim). `sectionHtml()` reads all
+  three.
+- **Moadim and parshiyos are mafteiach's own grouping, not date math.**
+  The 101 moadim include every Yom Tov and erev, Rosh Chodesh, the Chabad
+  dates, rallies, yechidus days and more, and membership is curated (כ"ב
+  שבט lists other dates the yahrzeit was marked on). The catalog takes the
+  moadim, their Hebrew names and their occasions from here instead of the
+  hand-made lists.
+- **Volumes past the menu.** The Likkutei Sichos volume menu stops at
+  39, but `by_volume/40` (ח"מ) and `by_volume/41` (the מלוקט sichos) exist
+  and the parsha and moad pages list their sichos. The crawl reads on past
+  the menu's last volume until a page lists none of its own sichos (a
+  missing volume serves an empty page, not a 404).
+- **A hadran can close several masechtos.** One siyum is listed on each
+  masechta page it covers (up to five); the hadran keeps the first as
+  `masechta_slug`, and every masechta page it is on is a membership.
+- **Month tokens** on maamorim and yomanim pages come from the group ids
+  (`group_6A`, `month_6B`), the same tokens as the farbrengen dates, so a
+  leap year keeps Adar I and II apart.
+- **A maamar belongs to a farbrengen** through the farbrengen fragment's
+  `/maamorim/{id}` link (`links`, 1,568 of them, one occasion each); the
+  maamar fragment's "ראה ההתוועדות" date is kept as a cross-check. The
+  מוגה links' labels are the printed citations (סה"מ מלוקט ח"א/ ...).
+- **Reshimos** have no section on the site; they are the pre-Nesius
+  entries' מוגה links (see "What the parser captures" above), read from
+  `links` by the catalog and the archive.
+- **No igros section exists on the site** (probed; not in the menu).
+
+**Only facts, flags and links.** mafteiach's own writing - the Likkutei
+Sichos teasers and kitzur pages, tochen inyanim, the hadranim "toichen"
+box, the michtavim summaries the site marks as AI-written - is never read
+or stored; the schema has no text column for it (a test asserts that),
+only `has_*` flags. Likkutei Sichos is a currently published book series:
+indexing its bibliographic facts is the same kind of thing as the
+farbrengen citations, its text is not.
+
+Counts from the first full crawl (2026-09-24):
+
+| Section | Rows |
+| --- | --- |
+| Likkutei Sichos | 2,451 sichos in 41 volumes (volumes 40 and 41, past the site's menu: 34 and 189); 4,722 links (965 with a translation, 1,306 with a kitzur page); 54 parsha and 57 moad groupings |
+| Maamorim | 1,568 maamorim, every one linked to a farbrengen; 2,991 links (210 with a mugah edition, 375 with an audio link); 6 melukat volumes |
+| Maamorim audio | 368 of the 375 resolved to JEM recordings (374 files); 44 of them through the farbrengen's maamar part, their own JEM event being gone. The other 7: JEM has no separate maamar part for their farbrengen, or no farbrengen event at all |
+| Yomanim | 2,891 files in 45 years |
+| Hadranim | 144 hadranim on 48 masechtos (36 of them close more than one); 228 links; 220 farbrengen dates |
+| Michtavim klolim | 193 michtavim for 10 moadim; 524 links; 525 citations |
+| Moadim | 101 moadim, 2,881 farbrengen assignments |
+| Parshiyos | 53 parshiyos, 1,433 farbrengen assignments |
+| Pages | 2,106 pages; a later run re-fetches them all as conditional requests |

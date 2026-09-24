@@ -1,4 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
+import { SECTIONS_SCHEMA_SQL } from './sections/schema.js';
 import type { FarbrengenRecord, LinkRef } from './types.js';
 
 /**
@@ -100,6 +101,9 @@ export function openDatabase(path: string): DatabaseSync {
 
     CREATE INDEX IF NOT EXISTS idx_jem_audio_occasion ON jem_audio(occasion_id);
   `);
+  // Every other section of the site (Likkutei Sichos, maamorim, yomanim,
+  // hadranim, michtavim, moadim, parshiyos) - src/sections/schema.ts.
+  db.exec(SECTIONS_SCHEMA_SQL);
   return db;
 }
 
