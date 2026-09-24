@@ -1,5 +1,6 @@
 import RNBlobUtil from 'react-native-blob-util';
 import { MEDIA_PROXY_BASE_URL } from '../config';
+import { audioFileNames } from '../offline/placement';
 
 export interface DownloadProgress {
   received: number;
@@ -33,14 +34,21 @@ export function localAudioPath(workerFilename: string): string {
   return `${RNBlobUtil.fs.dirs.DocumentDir}/${workerFilename}`;
 }
 
+/**
+ * The recording on the phone, if it is there: the MP3 (downloaded, or from
+ * a pack of originals), else the best Opus encoding a pack brought
+ * (offline/placement.ts's `audioFileNames`).
+ */
 export async function localAudioFileUrlIfExists(workerFilename: string): Promise<string | null> {
-  const path = localAudioPath(workerFilename);
-  try {
-    const exists = await RNBlobUtil.fs.exists(path);
-    return exists ? `file://${path}` : null;
-  } catch {
-    return null;
+  for (const name of audioFileNames(workerFilename)) {
+    const path = localAudioPath(name);
+    try {
+      if (await RNBlobUtil.fs.exists(path)) return `file://${path}`;
+    } catch {
+      // Unreadable: try the next.
+    }
   }
+  return null;
 }
 
 /** Downloads one occasion's audio to the local document directory and returns its absolute path. Uses the same proxy URL as audioUrl(). */

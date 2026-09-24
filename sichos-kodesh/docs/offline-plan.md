@@ -455,9 +455,10 @@ between them. The measurements agree. The tapes carry almost nothing
 above 8 kHz: in the sicha, the energy above 8 kHz is about 50 dB below
 the whole. Opus at 16 kbps keeps that band, and each encode's energy above
 4 kHz and above 8 kHz is within about 1 dB of the original's. So `opus16`
-(nigunim one step up) is the candidate default. It becomes the default
-once Opus plays on real phones (WP4 item 5). Until then, packs stay
-`src`. `upload` (R2) and `catalog-bundle` became WP5's `sk-pack publish`.
+(nigunim one step up) is the candidate default. **Since WP18 (mobile
+1.8.0) it is the default**: `sk-pack transcode` and `sk-pack build`
+default to `opus16`, and the download site offers it first. The phone
+plays Opus; see WP4 item 5 for what was checked and what is left. `upload` (R2) and `catalog-bundle` became WP5's `sk-pack publish`.
 
 ### WP4 - the phone: object store, import, community zips, export (`apps/mobile`) (built; device check open)
 
@@ -491,7 +492,8 @@ once Opus plays on real phones (WP4 item 5). Until then, packs stay
    natively (~100-300 MB/s), with progress.
 5. **Opus playback.** Verify seek and background playback with a real
    `.opus` object on the emulator and on two real kosher phones before
-   `opus24` packs are built for the public.
+   `opus24` packs are built for the public. *(WP18: the emulator part is
+   done, see below. The two real phones are Shmuly's check, with 1.8.0.)*
 
 UI: Settings > Offline gains the folder chooser, import and export;
 About lists installed packs. Milestone M2: the APK plus the Tishrei pack
@@ -499,7 +501,7 @@ copied by hand plays offline with no station; a zip exported on one phone
 imports on another.
 
 **Built** (`apps/mobile/src/offline/`, `PackModule.kt`; the mobile README
-has the details). Items 2 to 4 are done. Item 5 waits for real phones.
+has the details). Items 2 to 4 are done. Item 5 is done on the emulator (WP18) and waits for real phones.
 Where the build differs from the text above:
 
 - **Objects stay at the downloader's paths.** An imported object lands
@@ -509,9 +511,16 @@ Where the build differs from the text above:
   hash is `offline/held-objects.json`. It is what `have.json` lists, and
   imports use it to dedupe. Downloads are hashed into it the first time
   `have.json` is written (the one-time migration), then incrementally.
-- **Only `src` audio for now.** A pack in another profile imports its PDFs
-  and counts its recordings as "a format this version does not play yet".
-  One line in `placement.ts` opens Opus once item 5 passes.
+- **Opus since 1.8.0 (WP18).** `src`, `opus16`, `opus24` and `opus32`
+  import. An Opus recording lands beside the MP3's name, under its
+  profile (`JEMSK0562A.opus16.opus`), so two encodings never overwrite
+  each other. The player, the download marks, the Downloaded screen,
+  storage use and deleting all look for the MP3 first, then the Opus
+  encodings from the largest down (`placement.ts`'s `audioFileNames`).
+  `mp3-32` (for MP3 players) is still counted as "a format this version
+  does not play". An Opus file is taken only by a hash the phone trusts
+  (a trusted manifest or the objects index), never by its name alone.
+  Export still shares the MP3s only.
 - **Untrusted packs still bring their files.** Release builds trust only
   `TRUSTED_PACK_KEYS`: the production key `aac79a9724647680`, made on
   2026-09-24 (mobile 1.6.0 is the first build that trusts it).

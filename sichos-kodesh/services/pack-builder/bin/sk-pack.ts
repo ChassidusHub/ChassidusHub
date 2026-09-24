@@ -64,7 +64,7 @@ program
 program
   .command('transcode')
   .description('encode the original recordings into a smaller audio profile, once each (needs ffmpeg with libopus)')
-  .requiredOption('--profile <profile>', 'opus16, opus24, opus32 or mp3-32')
+  .option('--profile <profile>', 'opus16 (the default: the phone plays it, and the listening test heard no difference), opus24, opus32 or mp3-32', 'opus16')
   .option('--collection <id>', 'only the recordings of one collection')
   .option('--scope <year[-month]>', 'only the recordings of items dated in a Hebrew year or month')
   .option('--limit <n>', 'stop after this many encodes', (v) => Number(v))
@@ -94,7 +94,7 @@ program
   .command('build')
   .description('build the pack(s) for a scope from the objects the archive holds')
   .requiredOption('--scope <year[-month]>', 'a Hebrew year (5736) or year and mafteiach month token (5736-01)')
-  .option('--profile <profile>', `audio profile (${AUDIO_PROFILES.join(', ')})`, 'src')
+  .option('--profile <profile>', `audio profile (${AUDIO_PROFILES.join(', ')}); opus16 by default, src for the originals`, 'opus16')
   .option('--sections <list>', 'essentials | everything | audio,biltiMugah[:sichosKodesh+torasMenachem],mugah,maamorim,hagahos,hosofos', 'essentials')
   .option('--max-mb <n>', 'split into parts of at most this many MB', (v) => Number(v), 200)
   .option('--out <dir>', 'output directory (default <root>/packs)')

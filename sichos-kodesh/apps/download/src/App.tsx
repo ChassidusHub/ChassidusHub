@@ -62,7 +62,8 @@ function Builder({ meta }: { meta: Meta }) {
     month: null,
     preset: 'essentials',
     custom: DEFAULT_CUSTOM,
-    profile: meta.profiles.includes('src') ? 'src' : meta.profiles[0]!,
+    // Opus 16 when the mirror has it: the phone plays it (mobile 1.8.0), at about a quarter of the originals' size.
+    profile: meta.profiles.includes('opus16') ? 'opus16' : meta.profiles.includes('src') ? 'src' : meta.profiles[0]!,
     maxMb: 200,
   }));
   const year = useLoad<CatalogEntry[]>((signal) => api.catalogYear(choice.year, signal), [choice.year]);

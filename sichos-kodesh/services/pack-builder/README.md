@@ -20,8 +20,8 @@ Every command takes the archive root, like `sk-archive` (`--root`, or
 
 ```
 sk-pack keygen [--out file] [--force] [--dev]
-sk-pack transcode --profile opus24 [--collection farbrengens] [--scope 5736-01] [--limit N] [--concurrency N] [--ffmpeg path]
-sk-pack build --scope 5736-01 [--profile src] [--sections essentials] [--max-mb 200] [--out dir]
+sk-pack transcode [--profile opus16] [--collection farbrengens] [--scope 5736-01] [--limit N] [--concurrency N] [--ffmpeg path]
+sk-pack build --scope 5736-01 [--profile opus16|src] [--sections essentials] [--max-mb 200] [--out dir]
               [--catalog-dir dir] [--catalog-version v] [--catalog-release file]
               [--key file | --unsigned] [--no-objects-index] [--allow-missing]
 sk-pack build-work --work tanya [more ids | all] [--works-dir dir] [--max-mb 200] [--out dir]

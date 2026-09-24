@@ -11,7 +11,7 @@ import { findCatalogEntry, targetsBySourceId } from './catalogTargets';
 import type { HeldObject } from './objectStore';
 import { documentPath, readHeldObjects, recordHeldObjects, recordInstalledPack, storeTrustedObjectsIndex } from './objectStore';
 import type { NativeImportItem, PacksNativeModule } from './packsNative';
-import { IMPORT_SPACE_MARGIN, objectFileName, trustedPackKeys } from './placement';
+import { IMPORT_SPACE_MARGIN, isImportableProfile, objectFileName, trustedPackKeys } from './placement';
 
 /**
  * Importing a signed pack (`.skpack`, docs/offline-plan.md WP4 item 2):
@@ -86,7 +86,7 @@ export function planPackImport(manifest: PackManifest, phone: PhoneState): PackI
       if (!file) {
         if (!decided.has(ref.sha256)) {
           decided.add(ref.sha256);
-          if (ref.kind === 'audio' && profile !== 'src') plan.unsupported += 1;
+          if (!isImportableProfile(ref.kind, profile)) plan.unsupported += 1;
           else plan.unplaceable += 1;
         }
         continue;

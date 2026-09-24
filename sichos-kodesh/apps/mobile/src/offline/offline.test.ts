@@ -1,5 +1,5 @@
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import type { ObjectsIndex, PackManifest } from '@sichos-kodesh/pack-format';
+import type { AudioProfile, ObjectsIndex, PackManifest } from '@sichos-kodesh/pack-format';
 
 // An in-memory file system behind react-native-blob-util: the object store,
 // the download ledger and the import all read and write through it.
@@ -63,7 +63,7 @@ function realEntry(): CatalogEntry {
   return entry;
 }
 
-function manifestFor(entry: CatalogEntry, profile: 'src' | 'opus24' = 'src'): PackManifest {
+function manifestFor(entry: CatalogEntry, profile: AudioProfile = 'src'): PackManifest {
   const audio = entry.audio.slice(0, 2).map((chapter, index) => ({ sha256: sha(index + 1), bytes: 10 + index, kind: 'audio' as const, profile, sourceId: chapter.workerFilename, role: String(index) }));
   const pdf = entry.pdfs.find((p) => p.section === 'mugah')!;
   const refs = [...audio, { sha256: sha(9), bytes: 30, kind: 'pdf' as const, sourceId: pdf.driveFileId, role: 'mugah' }];
@@ -101,8 +101,13 @@ describe('placement', () => {
     expect(placement.objectFileName('audio', '../evil.mp3', 'src')).toBeNull();
     expect(placement.objectFileName('pdf', '../../x')).toBeNull();
     expect(placement.objectFileName('text', 'a/../../b')).toBeNull();
-    // Opus waits for playback to be verified on real phones.
-    expect(placement.objectFileName('audio', 'JEMSK0562A.mp3', 'opus24')).toBeNull();
+    // An Opus encoding sits beside the MP3, under its profile's name; the MP3-player encoding is not taken.
+    expect(placement.objectFileName('audio', 'JEMSK0562A.mp3', 'opus24')).toBe('JEMSK0562A.opus24.opus');
+    expect(placement.objectFileName('audio', 'JEMSK0562A.mp3', 'opus16')).toBe('JEMSK0562A.opus16.opus');
+    expect(placement.objectFileName('audio', 'JEMSK0562A.mp3', 'mp3-32')).toBeNull();
+    expect(placement.objectFileName('audio', '../evil.mp3', 'opus16')).toBeNull();
+    // Where a recording may be, best first: the original, then the encodings from the largest down.
+    expect(placement.audioFileNames('JEMSK0562A.mp3')).toEqual(['JEMSK0562A.mp3', 'JEMSK0562A.opus32.opus', 'JEMSK0562A.opus24.opus', 'JEMSK0562A.opus16.opus']);
   });
 
   it('trusts the development key on debug builds only', () => {
@@ -136,10 +141,15 @@ describe('planPackImport', () => {
     expect(plan.write.map((o) => o.sha256)).toEqual([pdf!.sha256]);
   });
 
-  it('counts recordings in a profile this build does not take', () => {
-    const plan = packImport.planPackImport(manifestFor(realEntry(), 'opus24'), emptyPhone());
-    expect(plan.unsupported).toBe(2);
-    expect(plan.write).toHaveLength(1);
+  it('writes an Opus pack\'s recordings beside the MP3 names, and counts a profile this build does not take', () => {
+    const opus = packImport.planPackImport(manifestFor(realEntry(), 'opus24'), emptyPhone());
+    expect(opus.unsupported).toBe(0);
+    expect(opus.write.filter((o) => o.kind === 'audio').map((o) => [o.file, o.profile])).toEqual(
+      realEntry().audio.slice(0, 2).map((a) => [a.workerFilename.replace('.mp3', '.opus24.opus'), 'opus24']),
+    );
+    const mp3 = packImport.planPackImport(manifestFor(realEntry(), 'mp3-32'), emptyPhone());
+    expect(mp3.unsupported).toBe(2);
+    expect(mp3.write).toHaveLength(1);
   });
 });
 
@@ -298,7 +308,7 @@ describe('export', () => {
 describe('state and store', () => {
   it('lists every held hash in have.json, sorted', () => {
     const have = stateFiles.buildHaveFile({ [sha(2)]: {} as never, [sha(1)]: {} as never }, '1.2.3', new Date('2026-09-24T00:00:00Z'));
-    expect(packFormat.parseHaveFile(have)).toMatchObject({ catalogVersion: '1.2.3', profiles: ['src'], objects: [sha(1), sha(2)] });
+    expect(packFormat.parseHaveFile(have)).toMatchObject({ catalogVersion: '1.2.3', profiles: ['src', 'opus16', 'opus24', 'opus32'], objects: [sha(1), sha(2)] });
   });
 
   it('merges objects indexes, the newer one winning', () => {

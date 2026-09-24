@@ -10,7 +10,7 @@ import { documentPath, readTrustedObjectsIndex, recordHeldObjects } from './obje
 import type { PhoneState } from './packImport';
 import { readPhoneState } from './packImport';
 import type { PacksNativeModule, StagedFile } from './packsNative';
-import { objectFileName } from './placement';
+import { isImportableProfile, objectFileName } from './placement';
 
 /**
  * Shared ZIPs and folders (docs/offline-plan.md WP4 item 4): what bochurim
@@ -94,7 +94,7 @@ export function planLooseImport(staged: StagedFile[], index: ObjectsIndex | null
     const stagedFile = byPath.get(item.path)!;
     const file = objectFileName(item.entry.kind, item.entry.sourceId, item.entry.profile);
     if (!file) {
-      if (item.entry.kind === 'audio' && (item.entry.profile ?? 'src') !== 'src') plan.unsupported += 1;
+      if (!isImportableProfile(item.entry.kind, item.entry.profile)) plan.unsupported += 1;
       else plan.unrecognized += 1;
       continue;
     }
@@ -119,6 +119,7 @@ export function planLooseImport(staged: StagedFile[], index: ObjectsIndex | null
       plan.unrecognized += 1;
       continue;
     }
+    // An encoding (Opus) is taken only by a hash the phone trusts: a name alone could be any bytes, and the catalog knows only the originals' sizes.
     if (hint.kind === 'audio' && (hint.profile ?? 'src') !== 'src') {
       plan.unsupported += 1;
       continue;

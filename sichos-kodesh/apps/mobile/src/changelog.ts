@@ -9,6 +9,17 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.8.0',
+    en: [
+      'Packs in Opus: a pack of recordings in Opus 16 (about half the size of the originals, and to the ear the same) now imports and plays like any other - offline, with seeking and in the background. The download site offers Opus 16 first',
+      'A recording that came in Opus counts as on the phone everywhere: its download mark, the Downloaded screen, storage use and "Delete"',
+    ],
+    he: [
+      'חבילות ב-Opus: חבילת הקלטות ב-Opus 16 (בערך חצי מגודל המקור, ולאוזן אותו דבר) מיובאת ומתנגנת עכשיו כמו כל חבילה - בלי אינטרנט, עם דילוג ובניגון ברקע. אתר ההורדות מציע קודם את Opus 16',
+      'הקלטה שהגיעה ב-Opus נחשבת בכל מקום כשמורה בטלפון: סימן ההורדה, מסך "הורדות", נפח האחסון ו"מחיקה"',
+    ],
+  },
+  {
     version: '1.7.0',
     en: [
       'Igros Kodesh: the Rebbe\'s letters to read, all 11,059 in 28 volumes, each with its date, its notes and where it is printed. Library > Seforim > the Rebbe > Igros Kodesh opens them volume by volume; search finds a letter by its number',

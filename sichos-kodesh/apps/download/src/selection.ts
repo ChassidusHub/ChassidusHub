@@ -79,9 +79,9 @@ export function yearLabel(year: number): string {
 
 export const PROFILE_LABELS: Record<string, string> = {
   src: 'מקור (MP3, האיכות המלאה)',
-  opus32: 'Opus 32 (חוסך כרבע)',
-  opus24: 'Opus 24 (חוסך כשליש)',
-  opus16: 'Opus 16 (הקטן ביותר)',
+  opus32: 'Opus 32 (חוסך כרבע, לאפליקציה מגרסה 1.8.0)',
+  opus24: 'Opus 24 (חוסך כשליש, לאפליקציה מגרסה 1.8.0)',
+  opus16: 'Opus 16 (מומלץ: הקטן ביותר, לאפליקציה מגרסה 1.8.0)',
   'mp3-32': 'MP3 32 (לנגנים פשוטים)',
 };
 

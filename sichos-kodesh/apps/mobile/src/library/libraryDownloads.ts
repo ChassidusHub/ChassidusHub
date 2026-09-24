@@ -2,7 +2,7 @@ import RNBlobUtil from 'react-native-blob-util';
 import type { CatalogLibrary, LibraryCollectionId, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS } from '@sichos-kodesh/catalog';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
-import { deleteTargetDownloads, fileNameForTarget, listStoredDownloads, localPathForTarget } from '../download/downloadStorage';
+import { deleteTargetDownloads, fileNameForTarget, fileNamesForTarget, listStoredDownloads, localPathsForTarget } from '../download/downloadStorage';
 import { playlistOccasionId } from '@sichos-kodesh/app-core';
 
 /**
@@ -87,7 +87,7 @@ export function downloadedLibraryItems(library: CatalogLibrary, files: ReadonlyS
   for (const collection of LIBRARY_COLLECTION_IDS) {
     for (const item of library.collections[collection].items as LibraryItemBase[]) {
       const targets = libraryItemTargets(collection, item);
-      if (targets.length > 0 && targets.every((target) => files.has(fileNameForTarget(target)))) result.push({ collection, item, targets });
+      if (targets.length > 0 && targets.every((target) => fileNamesForTarget(target).some((name) => files.has(name)))) result.push({ collection, item, targets });
     }
   }
   return result;
@@ -112,5 +112,5 @@ export async function listDownloadedLibraryItems(library: CatalogLibrary): Promi
 export async function deleteLibraryItemFiles(targets: DownloadTarget[]): Promise<void> {
   const records = await listStoredDownloads();
   const keep = new Set(records.filter((record) => !isLibraryTargetKey(record.key)).map((record) => record.localPath));
-  await deleteTargetDownloads(targets.filter((target) => !keep.has(localPathForTarget(target))));
+  await deleteTargetDownloads(targets.filter((target) => !localPathsForTarget(target).some((path) => keep.has(path))));
 }

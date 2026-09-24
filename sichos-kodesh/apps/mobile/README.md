@@ -189,9 +189,13 @@ with no internet at all:
   `DocumentDir/<driveFileId>.pdf`. Each gets a `StoredDownloadRecord`
   (`upsertStoredDownloads`), so every screen, the player and the PDF
   viewer see them as downloaded with no new lookup. `objectStore.ts` keeps
-  the index by hash (`files/offline/held-objects.json`). Only `src` audio
-  (the original MP3) is imported for now. Opus waits until playback is
-  verified on real phones (`placement.ts`).
+  the index by hash (`files/offline/held-objects.json`). Audio imports in
+  `src` (the original MP3) and, since 1.8.0, `opus16`, `opus24` and
+  `opus32`. An Opus encoding lands beside the MP3's name, under its
+  profile (`JEMSK0562A.opus16.opus`). The player and every "downloaded"
+  check look for the MP3 first, then the Opus encodings, largest first
+  (`placement.ts`'s `audioFileNames`). `mp3-32`, meant for MP3 players,
+  is skipped and counted.
 - **The shared folder**, picked once through the Storage Access Framework
   and kept across restarts (Documents/SichosKodesh):
   - `import/`: everything dropped here is imported on launch and whenever

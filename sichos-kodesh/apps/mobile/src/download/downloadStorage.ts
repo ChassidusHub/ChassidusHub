@@ -3,6 +3,7 @@ import RNBlobUtil from 'react-native-blob-util';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
+import { audioFileNames } from '../offline/placement';
 
 const COMPLETED_STORAGE_KEY = 'sichos-kodesh:mobile-download-ledger';
 const PENDING_STORAGE_KEY = 'sichos-kodesh:mobile-pending-downloads';
@@ -72,6 +73,16 @@ export function fileNameForTarget(target: DownloadTarget): string {
 
 export function localPathForTarget(target: DownloadTarget): string {
   return `${RNBlobUtil.fs.dirs.DocumentDir}/${fileNameForTarget(target)}`;
+}
+
+/** Every file a target may be on the phone as: a recording's MP3 and the Opus encodings a pack may have brought instead. */
+export function fileNamesForTarget(target: DownloadTarget): string[] {
+  const name = fileNameForTarget(target);
+  return target.kind === 'audio' ? audioFileNames(name) : [name];
+}
+
+export function localPathsForTarget(target: DownloadTarget): string[] {
+  return fileNamesForTarget(target).map((name) => `${RNBlobUtil.fs.dirs.DocumentDir}/${name}`);
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -164,7 +175,7 @@ async function unlinkIfExists(path: string): Promise<void> {
 
 export async function deleteEntryDownloads(entry: CatalogEntry): Promise<void> {
   const targets = listDownloadTargets([entry], ALL_CONTENT_TYPES);
-  await Promise.all([...new Set(targets.map(localPathForTarget))].map(unlinkIfExists));
+  await Promise.all([...new Set(targets.flatMap(localPathsForTarget))].map(unlinkIfExists));
   const records = await listStoredDownloads();
   const next = records.filter((record) => !(record.hebrewYear === entry.hebrewYear && record.occasionId === entry.occasionId));
   await writeJsonArray(COMPLETED_STORAGE_KEY, next);
@@ -172,7 +183,7 @@ export async function deleteEntryDownloads(entry: CatalogEntry): Promise<void> {
 
 /** Deletes specific files (auto-cleanup's per-target pruning) and drops their completed records, leaving the rest of the occasion alone. */
 export async function deleteTargetDownloads(targets: DownloadTarget[]): Promise<void> {
-  await Promise.all([...new Set(targets.map(localPathForTarget))].map(unlinkIfExists));
+  await Promise.all([...new Set(targets.flatMap(localPathsForTarget))].map(unlinkIfExists));
   const keys = new Set(targets.map((target) => target.key));
   const records = await listStoredDownloads();
   await writeJsonArray(
@@ -184,8 +195,8 @@ export async function deleteTargetDownloads(targets: DownloadTarget[]): Promise<
 /** `extraFileNames`: files beyond the farbrengens' own (the phone's library - see src/library/libraryDownloads.ts). */
 export async function clearAllDownloadedFiles(entries: CatalogEntry[], extraFileNames: Iterable<string> = []): Promise<void> {
   const targets = listDownloadTargets(entries, ALL_CONTENT_TYPES);
-  const paths = new Set(targets.map(localPathForTarget));
-  for (const fileName of extraFileNames) paths.add(`${RNBlobUtil.fs.dirs.DocumentDir}/${fileName}`);
+  const paths = new Set(targets.flatMap(localPathsForTarget));
+  for (const fileName of extraFileNames) for (const name of audioFileNames(fileName)) paths.add(`${RNBlobUtil.fs.dirs.DocumentDir}/${name}`);
   await Promise.all([...paths].map(unlinkIfExists));
   try {
     await AsyncStorage.removeItem(COMPLETED_STORAGE_KEY);
@@ -196,8 +207,8 @@ export async function clearAllDownloadedFiles(entries: CatalogEntry[], extraFile
 }
 
 export async function getDownloadStorageUsage(entries: CatalogEntry[], extraFileNames: Iterable<string> = []): Promise<number> {
-  const fileNames = new Set(listDownloadTargets(entries, ALL_CONTENT_TYPES).map(fileNameForTarget));
-  for (const fileName of extraFileNames) fileNames.add(fileName);
+  const fileNames = new Set(listDownloadTargets(entries, ALL_CONTENT_TYPES).flatMap(fileNamesForTarget));
+  for (const fileName of extraFileNames) for (const name of audioFileNames(fileName)) fileNames.add(name);
   const files = await listDocumentFiles();
   let total = 0;
   for (const fileName of files) {
@@ -212,15 +223,21 @@ export async function getDownloadStorageUsage(entries: CatalogEntry[], extraFile
   return total;
 }
 
+/** The file a target is on the phone as (its MP3, or an Opus encoding from a pack), or null. */
+export async function existingLocalPathForTarget(target: DownloadTarget): Promise<string | null> {
+  for (const path of localPathsForTarget(target)) if (await pathExists(path)) return path;
+  return null;
+}
+
 export async function isTargetDownloaded(target: DownloadTarget): Promise<boolean> {
-  return pathExists(localPathForTarget(target));
+  return (await existingLocalPathForTarget(target)) !== null;
 }
 
 export async function listDownloadedOccasions(entries: CatalogEntry[]): Promise<DownloadedOccasionSummary[]> {
   const files = await listDocumentFiles();
   const summaries: DownloadedOccasionSummary[] = [];
   for (const entry of entries) {
-    const targets = listDownloadTargets([entry], ALL_CONTENT_TYPES).filter((target) => files.has(fileNameForTarget(target)));
+    const targets = listDownloadTargets([entry], ALL_CONTENT_TYPES).filter((target) => fileNamesForTarget(target).some((name) => files.has(name)));
     if (targets.length === 0) continue;
     summaries.push({
       entry,

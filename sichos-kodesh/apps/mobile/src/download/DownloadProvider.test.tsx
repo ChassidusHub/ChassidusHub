@@ -94,6 +94,8 @@ jest.mock('./downloadStorage', () => ({
   clearPendingDownloads: jest.fn(() => Promise.resolve()),
   deleteEntryDownloads: jest.fn(() => Promise.resolve()),
   isTargetDownloaded: (...args: unknown[]) => mockIsTargetDownloaded(...args),
+  // On the phone as its MP3 (or an Opus copy) when the test says it is downloaded.
+  existingLocalPathForTarget: async (target: DownloadTarget) => ((await mockIsTargetDownloaded(target)) ? `/documents/${target.key}` : null),
   listDownloadedOccasions: jest.fn(() => Promise.resolve([])),
   listPendingDownloads: (...args: unknown[]) =>
     mockListPendingDownloads(...args),

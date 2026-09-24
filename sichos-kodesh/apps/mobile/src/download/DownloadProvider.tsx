@@ -19,6 +19,7 @@ import {
   clearAllDownloadedFiles,
   clearPendingDownloads,
   deleteEntryDownloads,
+  existingLocalPathForTarget,
   fileNameForTarget,
   isTargetDownloaded,
   listDownloadedOccasions,
@@ -302,8 +303,9 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
 
         const currentStatus = targetStatesRef.current[target.key]?.status;
         if (queuedKeys.has(target.key) || currentStatus === 'queued' || currentStatus === 'downloading') continue;
-        if (await isTargetDownloaded(target)) {
-          const localPath = localPathForTarget(target);
+        const onPhone = await existingLocalPathForTarget(target);
+        if (onPhone) {
+          const localPath = onPhone;
           const records = await upsertStoredDownload(target, localPath);
           setDownloadedRecords(records);
           setTargetStates((prev) => ({
