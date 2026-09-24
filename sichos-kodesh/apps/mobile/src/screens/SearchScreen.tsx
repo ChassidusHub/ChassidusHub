@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
-import { collectionYears, hasActiveFilters, itemSubtitle, LIBRARY_ORDER, occasionFilter, occasionGroupName, occasionTitle, searchLibrary, searchOccasions } from '@sichos-kodesh/app-core';
+import { collectionYears, hasActiveFilters, itemSubtitle, itemTitle, LIBRARY_ORDER, occasionFilter, occasionGroupName, occasionTitle, searchLibrary, searchOccasions } from '@sichos-kodesh/app-core';
 import type { ContentType, SearchFilters } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -167,7 +167,7 @@ export function SearchScreen({ navigation }: SearchScreenProps) {
           {items.slice(0, LIBRARY_RESULT_LIMIT).map((item) => {
             const subtitle = itemSubtitle(collection, item, language);
             return (
-              <Row key={item.id} label={item.label} marquee onPress={() => navigation.navigate('LibraryItem', { collection, id: item.id })}>
+              <Row key={item.id} label={itemTitle(collection, item, language)} marquee onPress={() => navigation.navigate('LibraryItem', { collection, id: item.id })}>
                 {subtitle ? (
                   <AppText numberOfLines={2} style={[styles.subtitle, { color: colors.muted }]}>
                     {subtitle}

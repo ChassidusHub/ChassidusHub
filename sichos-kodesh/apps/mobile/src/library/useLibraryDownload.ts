@@ -25,8 +25,9 @@ export function useTargetsDownload(targets: DownloadTarget[]): TargetsDownload {
   const keys = targets.map((target) => target.key).join('|');
 
   const statuses = targets.map((target) => targetStates[target.key]?.status);
-  const anyDownloading = statuses.includes('downloading');
-  const anyQueued = statuses.includes('queued');
+  // With no connection a queued or started file isn't coming (see useDownloadState).
+  const anyDownloading = online && statuses.includes('downloading');
+  const anyQueued = online && statuses.includes('queued');
   const allLiveDownloaded = targets.length > 0 && statuses.every((status) => status === 'downloaded');
 
   useEffect(() => {

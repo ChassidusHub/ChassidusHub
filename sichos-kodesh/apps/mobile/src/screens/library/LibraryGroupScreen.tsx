@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { useLibrary } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { findGroup, groupDisplayName, groupItems, itemSubtitle } from '@sichos-kodesh/app-core';
+import { findGroup, groupDisplayName, groupItems, itemSubtitle, itemTitle } from '@sichos-kodesh/app-core';
 import type { LibraryGroupScreenProps } from '../../navigation/types';
 import { EmptyState } from '../../ui/EmptyState';
 import { Row } from '../../ui/Row';
@@ -30,9 +30,11 @@ export function LibraryGroupScreen({ navigation, route }: LibraryGroupScreenProp
       {collection === 'likkuteiSichos' && slug === '40' && <TabHelp>{t.libraryDisputedNote}</TabHelp>}
       {items.length === 0 && <EmptyState text={t.libraryNotFound} />}
       {items.map((item) => {
-        const subtitle = itemSubtitle(collection, item, language);
+        // The group this list is (a sicha's parsha) is already its title: not repeated under each item.
+        const line = itemSubtitle(collection, item, language);
+        const subtitle = line === title ? '' : line;
         return (
-          <Row key={item.id} label={item.label} marquee onPress={() => navigation.navigate('LibraryItem', { collection, id: item.id })}>
+          <Row key={item.id} label={itemTitle(collection, item, language)} marquee onPress={() => navigation.navigate('LibraryItem', { collection, id: item.id })}>
             {subtitle ? (
               <AppText numberOfLines={2} style={[styles.subtitle, { color: colors.muted }]}>
                 {subtitle}

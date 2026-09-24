@@ -1,6 +1,6 @@
 {
   "name": "@sichos-kodesh/mobile",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "private": true,
   "scripts": {
     "preandroid": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/pack-format",

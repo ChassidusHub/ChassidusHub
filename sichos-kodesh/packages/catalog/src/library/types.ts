@@ -27,6 +27,9 @@ export interface CatalogRef {
   /** What the file is to the item: a PDF edition (mugah, biltiMugah, sicha, translated, he:mugah), an audio chapter's index. */
   role?: string;
   label?: string;
+  /** The label in the other language: Hebrew for JEM's English chapter names, English for mafteiach's Hebrew ones. */
+  labelHe?: string;
+  labelEn?: string;
   durationMs?: number;
   /** Legacy Drive shares need their resource key (see the catalog's CatalogPdf). */
   resourceKey?: string;
@@ -36,6 +39,9 @@ export interface LibraryItemBase {
   /** Unique within its collection. */
   id: string;
   label: string;
+  /** The label in the other language (translations/, applied when the library is built): Hebrew for JEM's English names, English for mafteiach's Hebrew ones. */
+  labelHe?: string;
+  labelEn?: string;
   hebrewYear?: number;
   /** A mafteiach date key (`5711-05-10`), when the item has one date. */
   hebrewDate?: string;
@@ -58,6 +64,7 @@ export interface LikkuteiSichosItem extends LibraryItemBase {
   page: number;
   /** The parsha or moed heading it sits under in its volume. */
   sectionLabel: string;
+  sectionLabelEn?: string;
   hasTranslated: boolean;
   hasKitzur: boolean;
   /** The id of mafteiach's kitzur page, when one exists (a link, not its text). */
@@ -75,6 +82,7 @@ export interface MaamarItem extends LibraryItemBase {
   diburHamaschil: string;
   /** Where it was said: יו"ד שבט, בשלח, י"ג שבט. */
   occasionLabel: string;
+  occasionLabelEn?: string;
   hemshech?: string;
   kuntres?: string;
   /** mafteiach month token of the year page it is listed under. */
@@ -114,6 +122,7 @@ export interface ReshimaItem extends LibraryItemBase {
 export interface JemEventItem extends LibraryItemBase {
   /** JEM's event type: Farbrengen, Sicha, Children's Rally, General Audience, ... */
   type: string;
+  typeHe?: string;
   /** JEM's own name for the event (English). */
   name: string;
   hasTranscript: boolean;

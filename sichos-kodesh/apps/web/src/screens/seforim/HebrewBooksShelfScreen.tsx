@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import type { CatalogScan } from '@sichos-kodesh/catalog';
-import { authorShelf, hebrewBooksUrl, names, scanLabel, searchShelf } from '@sichos-kodesh/app-core';
+import { authorShelf, hebrewBooksUrl, names, scanLabel, searchShelf, sharedLabels } from '@sichos-kodesh/app-core';
 import { useShelf, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useTranslation } from '../../i18n/useLanguage';
@@ -19,18 +19,22 @@ interface Props {
   series?: number;
 }
 
-/** One book: its page on HebrewBooks, with its page count and where it was printed. */
-export function ScanRow({ scan, label }: { scan: CatalogScan; label: string }) {
+/**
+ * One book, opening on its page at hebrewbooks.org: its name, and its pages
+ * beside the link. Where it was printed only with `printed`, for the rows
+ * whose name alone doesn't tell them apart (sharedLabels). Same as the phone's.
+ */
+export function ScanRow({ scan, label, printed = false }: { scan: CatalogScan; label: string; printed?: boolean }) {
   const { t } = useTranslation();
-  const details = [scan.pages ? t.shelfPages(scan.pages) : null, scan.printed].filter(Boolean).join(' · ');
   return (
     <li>
       <a className="year-row library-item-row" href={hebrewBooksUrl(scan.id)} target="_blank" rel="noreferrer">
         <span className="library-item-text">
           <span className="year-row-year">{label}</span>
-          {details && <span className="library-item-subtitle">{details}</span>}
+          {printed && scan.printed && <span className="library-item-subtitle">{scan.printed}</span>}
         </span>
         <span className="year-row-trailing">
+          {scan.pages ? <span className="year-row-distance">{t.shelfPages(scan.pages)}</span> : null}
           <ExternalLink size={16} aria-hidden />
         </span>
       </a>
@@ -41,7 +45,8 @@ export function ScanRow({ scan, label }: { scan: CatalogScan; label: string }) {
 /**
  * An author's books on HebrewBooks that no sefer here holds, or the Chabad
  * books by anyone else: series by series, each book opening on its page at
- * hebrewbooks.org. Same as the phone's.
+ * hebrewbooks.org. Headed by the author's name alone (the help line says
+ * HebrewBooks). Same as the phone's.
  */
 export function HebrewBooksShelfScreen({ authorId, series: seriesIndex }: Props) {
   const shelf = useShelf();
@@ -64,13 +69,14 @@ export function HebrewBooksShelfScreen({ authorId, series: seriesIndex }: Props)
   }
 
   if (seriesIndex !== undefined) {
+    const shared = sharedLabels((one?.scans ?? []).map(scanLabel));
     return (
       <div className="screen">
-        <ScreenHeader to={shelfPath(authorId)} title={one?.title ?? t.shelfTitle(authorName)} />
+        <ScreenHeader to={shelfPath(authorId)} title={one?.title ?? authorName} />
         {one ? (
           <ul className="year-list">
             {one.scans.map((scan) => (
-              <ScanRow key={scan.id} scan={scan} label={scanLabel(scan)} />
+              <ScanRow key={scan.id} scan={scan} label={scanLabel(scan)} printed={shared.has(scanLabel(scan))} />
             ))}
           </ul>
         ) : (
@@ -83,7 +89,7 @@ export function HebrewBooksShelfScreen({ authorId, series: seriesIndex }: Props)
 
   return (
     <div className="screen">
-      <ScreenHeader to="/seforim" title={t.shelfTitle(authorName)} />
+      <ScreenHeader to="/seforim" title={authorName} />
       <p className="tab-help">{t.shelfHelp}</p>
       {all.length >= FILTER_FROM && (
         <input

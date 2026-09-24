@@ -15,7 +15,8 @@ export function useAllChaptersDownloadState(entry: CatalogEntry): AllChaptersDow
   const [cachedAllDownloaded, setCachedAllDownloaded] = useState<boolean | null>(null);
 
   const statuses = targets.map((target) => targetStates[target.key]?.status);
-  const anyInFlight = statuses.some((status) => status === 'queued' || status === 'downloading');
+  // With no connection nothing is in flight (see useDownloadState).
+  const anyInFlight = online && statuses.some((status) => status === 'queued' || status === 'downloading');
   const allLiveDownloaded = targets.length > 0 && statuses.every((status) => status === 'downloaded');
 
   useEffect(() => {

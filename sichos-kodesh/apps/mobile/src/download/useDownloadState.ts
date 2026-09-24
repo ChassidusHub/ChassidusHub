@@ -20,8 +20,9 @@ export function useDownloadState(entry: CatalogEntry | null | undefined): RowDow
   const [cachedState, setCachedState] = useState<'downloaded' | 'none' | null>(null);
 
   const statuses = targets.map((target) => targetStates[target.key]?.status);
-  const anyDownloading = statuses.includes('downloading');
-  const anyQueued = statuses.includes('queued');
+  // With no connection a queued or started file isn't coming: the row shows what is on the phone, not a download.
+  const anyDownloading = online && statuses.includes('downloading');
+  const anyQueued = online && statuses.includes('queued');
   const allLiveDownloaded = targets.length > 0 && statuses.every((status) => status === 'downloaded');
   const live = anyDownloading || anyQueued || allLiveDownloaded;
   const targetKeys = targets.map((target) => target.key).join('|');

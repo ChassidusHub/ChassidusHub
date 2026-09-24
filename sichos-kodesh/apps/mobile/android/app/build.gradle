@@ -97,8 +97,8 @@ android {
         applicationId "com.sichoskodeshmobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
-        versionName "1.10.0"
+        versionCode 12
+        versionName "1.11.0"
     }
     // Release signing reads from env vars (ANDROID_KEYSTORE_PATH etc., for a CI
     // environment that sets them) or, for local release builds, from a

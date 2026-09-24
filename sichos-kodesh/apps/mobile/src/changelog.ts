@@ -9,6 +9,23 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.11.0',
+    en: [
+      'Made to work offline: once a pack is on the phone, no bar or note says there is no connection. Without a connection and without a pack, the app asks for the pack and opens where to import it',
+      'With no connection, nothing shows as downloading: no progress bar, no spinning rows - the downloads carry on when the connection is back',
+      'Every recording has its Hebrew name in Hebrew, and so does each of its parts; the names of where a maamar was said, a sicha\'s parsha, the reshimos, the letters and the hadranim have their English in English',
+      'A sicha of Likkutei Sichos names its parsha once, under its volume and page; a translation is "Translation", not "Translation · translated"',
+      'The HebrewBooks lists are headed by the Rebbe\'s name, which fits, and each book is one line - its name and its pages. Where it was printed shows only to tell editions of one book apart',
+    ],
+    he: [
+      'בנויה לעבוד בלי חיבור: כשיש חבילה בטלפון, שום פס או הודעה לא אומרים שאין חיבור. בלי חיבור ובלי חבילה, האפליקציה מבקשת את החבילה ופותחת את המקום לייבא אותה',
+      'בלי חיבור, שום דבר לא מוצג כיורד: אין פס התקדמות ואין שורות מסתובבות - ההורדות ממשיכות כשהחיבור חוזר',
+      'לכל הקלטה יש שם בעברית, וגם לכל אחד מחלקיה; לשמות של היכן נאמר מאמר, פרשת השיחה, הרשימות, המכתבים וההדרנים יש שם באנגלית',
+      'שיחה בלקוטי שיחות מציינת את הפרשה פעם אחת, מתחת לחלק ולעמוד; תרגום נקרא "תרגום", לא "תרגום · מתורגם"',
+      'רשימות HebrewBooks נפתחות בשם הרבי, שנכנס בכותרת, וכל ספר הוא שורה אחת - שמו ומספר העמודים. מקום ההדפסה מופיע רק כדי להבחין בין מהדורות של אותו ספר',
+    ],
+  },
+  {
     version: '1.10.0',
     en: [
       'Installs again on phones behind a filtering VPN: the app is packed so a filter can no longer change it on the way down (v1.8 and v1.9 showed "package appears to be invalid" there)',

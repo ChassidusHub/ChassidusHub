@@ -7,7 +7,7 @@ import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
 import { getWorkContents, useShelf, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { WorkScreenProps } from '../../navigation/types';
-import { contentsAt, hebrewBooksUrl, names, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
+import { contentsAt, names, sharedLabels, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
 import { useReadingState } from '../../seforim/readingState';
 import { Button } from '../../ui/Button';
 import { CategoryRow } from '../../ui/CategoryRow';
@@ -15,6 +15,7 @@ import { EmptyState } from '../../ui/EmptyState';
 import { Row, RowDistance, RowTrailing } from '../../ui/Row';
 import { Screen } from '../../ui/Screen';
 import { SaveSeferPanel } from './SaveSeferPanel';
+import { ScanRow } from './HebrewBooksShelfScreen';
 import { ScreenHeader } from '../../ui/ScreenHeader';
 import { AppText } from '../../ui/Text';
 import { CategoryHeader, Subtitle, TabHelp } from '../../ui/Typography';
@@ -107,21 +108,13 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
 
   // Its scans on HebrewBooks, each opening on its page there.
   const scans = scanSeries.flatMap((series) => series.scans.map((scan) => ({ scan, label: scanTitle(scan, series.title, scanSeries.length > 1) })));
+  const sharedScanLabels = sharedLabels(scans.map(({ label }) => label));
   const scanRows =
     scans.length > 0 ? (
       <>
         <CategoryHeader>{t.workScans}</CategoryHeader>
         {(allScans ? scans : scans.slice(0, SCANS_SHOWN)).map(({ scan, label }) => (
-          <Row
-            key={scan.id}
-            label={label}
-            trailing={<RowTrailing><ExternalLink size={16} color={colors.muted} /></RowTrailing>}
-            onPress={() => Linking.openURL(hebrewBooksUrl(scan.id)).catch(() => undefined)}
-          >
-            {scan.pages || scan.printed ? (
-              <AppText style={[styles.sourceLine, { color: colors.muted }]}>{[scan.pages ? t.shelfPages(scan.pages) : null, scan.printed].filter(Boolean).join(' · ')}</AppText>
-            ) : null}
-          </Row>
+          <ScanRow key={scan.id} scan={scan} label={label} printed={sharedScanLabels.has(label)} />
         ))}
         {!allScans && scans.length > SCANS_SHOWN && <Row label={t.workScansAll(scans.length)} onPress={() => setAllScans(true)} />}
       </>

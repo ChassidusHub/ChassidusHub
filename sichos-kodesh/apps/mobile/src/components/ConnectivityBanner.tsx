@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Wifi, WifiOff } from 'lucide-react-native';
+import { PackageOpen, Wifi } from 'lucide-react-native';
 import { useOnlineStatus } from '../network/useOnlineStatus';
+import { useHasOfflinePack } from '../offline/useHasOfflinePack';
 import { useTranslation } from '../i18n/useTranslation';
 import { navigateTo } from '../navigation/navigationRef';
 import { AppText } from '../ui/Text';
@@ -11,9 +12,15 @@ import { row } from '../ui/rtl';
 /** How long the green "back online" confirmation stays up before clearing itself. */
 const BACK_ONLINE_VISIBLE_MS = 5000;
 
-/** Whether the banner currently occupies space - App.tsx needs this to hand the status-bar inset to the banner instead of the screen below it. */
+/**
+ * Whether the banner currently occupies space - App.tsx needs this to hand
+ * the status-bar inset to the banner instead of the screen below it. The
+ * app is meant to work offline: with a pack imported there is nothing to
+ * say about the connection, so the banner never shows.
+ */
 export function useConnectivityBannerVisible(): boolean {
   const online = useOnlineStatus();
+  const hasPack = useHasOfflinePack();
   const [justReconnected, setJustReconnected] = useState(false);
   const wasOnlineRef = useRef(online);
 
@@ -27,6 +34,7 @@ export function useConnectivityBannerVisible(): boolean {
     }
   }, [online]);
 
+  if (hasPack !== false) return false;
   return !online || justReconnected;
 }
 
@@ -36,7 +44,12 @@ interface Props {
   topInset: number;
 }
 
-/** A slim strip at the very top of the app reflecting overall connectivity - visible from any screen. Grey while offline (a plain heads-up, not an error), green for a moment on reconnecting. */
+/**
+ * A slim strip at the very top of the app, from any screen, on a phone with
+ * no pack yet: with no connection it asks for the pack (tapping it opens
+ * Settings > Offline packs, where one is imported); green for a moment on
+ * reconnecting.
+ */
 export function ConnectivityBanner({ visible, topInset }: Props) {
   const { t, isRtl } = useTranslation();
   const colors = useColors();
@@ -47,12 +60,12 @@ export function ConnectivityBanner({ visible, topInset }: Props) {
   if (!online) {
     return (
       <Pressable
-        onPress={() => navigateTo('Downloaded', undefined)}
+        onPress={() => navigateTo('Offline', undefined)}
         accessibilityRole="button"
         style={[styles.banner, { backgroundColor: colors.cardHover, paddingTop: 10 + topInset, flexDirection: row(isRtl) }]}
       >
-        <WifiOff size={16} color={colors.muted} />
-        <AppText style={[styles.text, { color: colors.muted }]}>{t.connectivityOffline}</AppText>
+        <PackageOpen size={16} color={colors.muted} />
+        <AppText style={[styles.text, { color: colors.muted }]}>{t.connectivityAskForPack}</AppText>
       </Pressable>
     );
   }

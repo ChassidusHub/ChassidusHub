@@ -22,7 +22,8 @@ export function useChapterDownload(entry: CatalogEntry, chapterIndex: number): C
     [entry, chapterIndex],
   );
   const live = target ? targetStates[target.key] : undefined;
-  const liveStatus = live?.status;
+  // With no connection a queued or started file isn't coming (see useDownloadState): only 'downloaded' still answers.
+  const liveStatus = !online && (live?.status === 'queued' || live?.status === 'downloading') ? undefined : live?.status;
   const liveAnswers = liveStatus === 'queued' || liveStatus === 'downloading' || liveStatus === 'downloaded';
   const [cachedState, setCachedState] = useState<'downloaded' | 'none' | null>(null);
 

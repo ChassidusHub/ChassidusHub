@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
-import { LIBRARY_ORDER, collectionYears, itemSubtitle, occasionTitle, searchLibrary } from '@sichos-kodesh/app-core';
+import { LIBRARY_ORDER, collectionYears, itemSubtitle, itemTitle, occasionTitle, searchLibrary } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -258,7 +258,7 @@ function LibrarySearch({ collection }: { collection: LibraryCollectionId }) {
                 <li key={item.id}>
                   <Link className="year-row library-item-row" to={`/library/item/${collection}/${encodeURIComponent(item.id)}`}>
                     <span className="library-item-text">
-                      <span className="year-row-year">{item.label}</span>
+                      <span className="year-row-year">{itemTitle(collection, item, language)}</span>
                       {subtitle && <span className="library-item-subtitle">{subtitle}</span>}
                     </span>
                   </Link>
