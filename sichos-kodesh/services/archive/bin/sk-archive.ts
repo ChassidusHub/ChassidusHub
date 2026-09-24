@@ -72,10 +72,12 @@ program
   .description('fetch every wanted file the archive does not hold yet')
   .option('--limit <n>', 'stop after this many urls', (v) => Number(v))
   .option('--source <jem|drive>', 'only one upstream')
+  .option('--collection <id>', 'only the files of one collection (farbrengens, likkuteiSichos, ...)')
+  .option('--scope <year[-month]>', 'only the files of items dated in a Hebrew year (5736) or month (5736-01)')
   .option('--concurrency <n>', 'connections per host', (v) => Number(v), 2)
   .option('--min-gap-ms <n>', 'minimum gap between request starts per host', (v) => Number(v), 1000)
   .option('--dry-run', 'only count what would be fetched')
-  .action(async (opts: { limit?: number; source?: 'jem' | 'drive'; concurrency: number; minGapMs: number; dryRun?: boolean }) => {
+  .action(async (opts: { limit?: number; source?: 'jem' | 'drive'; collection?: string; scope?: string; concurrency: number; minGapMs: number; dryRun?: boolean }) => {
     const g = globals();
     const store = await ArchiveStore.open(g.root);
     try {

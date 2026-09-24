@@ -16,6 +16,14 @@ import { ArchiveStore, hashFile } from './store.js';
 export interface CrawlOptions extends FetchOptions {
   limit?: number;
   source?: 'jem' | 'drive';
+  /** Only the files of one collection's items. */
+  collection?: string;
+  /**
+   * Only the files of items dated in this scope: a Hebrew year (`5736`) or
+   * a year and mafteiach month token (`5736-01`, `5746-06B`). What a pack
+   * build for that scope needs, without waiting for the whole archive.
+   */
+  scope?: string;
   dryRun?: boolean;
   /** Stop retrying a url after this many failed runs. */
   maxRunsPerUrl?: number;
@@ -46,12 +54,26 @@ interface WantedUrl {
 
 const PENDING_URLS = `
 SELECT w.source, w.url, w.kind, w.source_id, w.resource_key, s.attempts, s.status, s.sha256 AS previous_sha256
-FROM (SELECT DISTINCT source, url, kind, source_id, resource_key FROM wanted) w
+FROM (
+  SELECT DISTINCT source, url, kind, source_id, resource_key FROM wanted
+  WHERE (:collection = '' OR collection = :collection)
+    AND (:year IS NULL OR hebrew_year = :year)
+    AND (:datePrefix = '' OR hebrew_date LIKE :datePrefix || '-%')
+) w
 LEFT JOIN sources s ON s.source = w.source AND s.url = w.url
 WHERE (s.status IS NULL OR s.status = 'error')
-  AND (? = '' OR w.source = ?)
+  AND (:source = '' OR w.source = :source)
 ORDER BY w.source, w.url
-LIMIT ?`;
+LIMIT :limit`;
+
+const SCOPE = /^(\d{4})(?:-(\d{2}[AB]?))?$/;
+
+/** `5736` -> the year; `5736-01` -> the year and the `hebrew_date` prefix of its month. */
+export function parseCrawlScope(scope: string): { year: number; datePrefix: string } {
+  const match = SCOPE.exec(scope.trim());
+  if (!match) throw new Error(`scope must be a Hebrew year (5736) or a year and month token (5736-01, 5746-06B), not "${scope}"`);
+  return { year: Number(match[1]), datePrefix: match[2] ? `${match[1]}-${match[2]}` : '' };
+}
 
 const UPSERT_SOURCE = `
 INSERT INTO sources (source, url, sha256, status, http_status, etag, last_modified, content_type, error, attempts, fetched_at)
@@ -79,7 +101,14 @@ export async function crawl(store: ArchiveStore, options: CrawlOptions = {}): Pr
   const log = options.log ?? (() => undefined);
   const limit = options.limit ?? Number.MAX_SAFE_INTEGER;
   const maxRuns = options.maxRunsPerUrl ?? 8;
-  const rows = store.db.prepare(PENDING_URLS).all(options.source ?? '', options.source ?? '', limit) as unknown as WantedUrl[];
+  const scope = options.scope ? parseCrawlScope(options.scope) : null;
+  const rows = store.db.prepare(PENDING_URLS).all({
+    source: options.source ?? '',
+    collection: options.collection ?? '',
+    year: scope?.year ?? null,
+    datePrefix: scope?.datePrefix ?? '',
+    limit,
+  }) as unknown as WantedUrl[];
   const result: CrawlResult = { attempted: 0, fetched: 0, bytes: 0, unresolved: 0, errors: 0, skippedExisting: 0, commitId: null };
   const pending = rows.filter((row) => (row.attempts ?? 0) < maxRuns);
   if (pending.length === 0 || options.dryRun) {

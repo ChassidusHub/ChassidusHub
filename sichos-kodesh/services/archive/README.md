@@ -64,7 +64,7 @@ object with two refs; a reshima is likewise one object under both
 
 ```
 sk-archive inventory                       read the indexers (upsert; safe to repeat)
-sk-archive crawl [--limit N] [--source jem|drive] [--dry-run] [--concurrency 2]
+sk-archive crawl [--limit N] [--source jem|drive] [--collection id] [--scope 5736|5736-01] [--dry-run] [--concurrency 2]
 sk-archive sync [--limit N]                inventory, then crawl - the nightly job
 sk-archive verify [--sample 0.02] [--full] re-hash objects; bad bytes are dropped and re-fetched next crawl (the object and its refs stay)
 sk-archive stats [--json]
@@ -72,6 +72,17 @@ sk-archive report-unresolved [--json]      files upstream would not give us, by 
 sk-archive export-objects-index --catalog-version 1.0.0 [--out objects.json]
 sk-archive import-text --collection igros|maanos --dir <build-igros output> [--dry-run]
 ```
+
+`crawl --scope` fetches only the files of items dated in a Hebrew year
+(`5736`) or month (`5736-01`, `5746-06B`), and `--collection` only one
+collection's - what a pack build for that scope needs, without waiting for
+the whole archive.
+
+The `derivations` table records each original recording's encoding in a
+smaller audio profile (`sk-pack transcode`, services/pack-builder), with
+the bytes under `derived/<profile>/`. Derived bytes can always be made
+again from the original; `objects.json` lists them under their original's
+item and upstream id, with their own profile.
 
 `import-text` stores text that arrives as data rather than as a file to
 fetch: the Igros and Maanos that `packages/igros-index` builds locally.

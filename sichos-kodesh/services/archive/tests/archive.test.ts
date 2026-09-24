@@ -6,7 +6,7 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { parseObjectsIndex } from '@sichos-kodesh/pack-format';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { crawl } from '../src/crawl.js';
+import { crawl, parseCrawlScope } from '../src/crawl.js';
 import { loadInventory } from '../src/inventory.js';
 import { exportObjectsIndex } from '../src/objectsIndex.js';
 import { stats, unresolved } from '../src/report.js';
@@ -137,6 +137,23 @@ describe('sk-archive end to end', () => {
     expect(result).toMatchObject({ audio: 2, pdfs: 4, farbrengenAudioRefs: 1, skipped: { nonDriveLinks: 1, badDriveUrls: 0 } });
     expect(loadInventory(store, dbs)).toMatchObject({ audio: 2, pdfs: 4 }); // upsert, not duplicate
     expect((store.db.prepare('SELECT count(*) AS n FROM wanted').get() as { n: number }).n).toBe(7);
+  });
+
+  it('narrows a crawl to a collection or to the items of a Hebrew year or month', async () => {
+    const pending = async (options: { collection?: string; scope?: string }) => {
+      const lines: string[] = [];
+      await crawl(store, { ...crawlOptions, ...options, dryRun: true, log: (line) => lines.push(line) });
+      return lines.join('\n');
+    };
+    expect(await pending({})).toContain('dry run: 6 url(s)');
+    expect(await pending({ scope: '5736' })).toContain('dry run: 5 url(s)');
+    expect(await pending({ scope: '5736-01' })).toContain('dry run: 5 url(s)');
+    expect(await pending({ scope: '5736-02' })).toBe('dry run: 0 url(s) would be fetched (0 past the retry cap)');
+    expect(await pending({ scope: '5748' })).toContain('dry run: 1 url(s)');
+    expect(await pending({ collection: 'jemEvents' })).toContain('dry run: 2 url(s)');
+    expect(await pending({ collection: 'farbrengens', scope: '5748' })).toBe('dry run: 0 url(s) would be fetched (0 past the retry cap)');
+    expect(parseCrawlScope('5746-06B')).toEqual({ year: 5746, datePrefix: '5746-06B' });
+    expect(() => parseCrawlScope('tishrei')).toThrow('scope must be');
   });
 
   it('crawls: resumes a cut download, follows the Drive confirm token, records unresolved files, refs every wanting item', async () => {

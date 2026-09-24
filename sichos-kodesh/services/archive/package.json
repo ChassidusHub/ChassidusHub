@@ -4,6 +4,14 @@
   "private": true,
   "description": "The canonical archive of the Rebbe's Torah media: every upstream file (JEM audio, Drive hanachos) fetched once, stored by SHA-256 with provenance in a versioned SQLite store, verified on a schedule. The source everything downstream (packs, the download site, the Drive, the apps) builds from.",
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
   "bin": {
     "sk-archive": "./dist/bin/sk-archive.js"
   },

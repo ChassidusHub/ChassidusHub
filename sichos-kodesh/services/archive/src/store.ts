@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdir, rename, stat } from 'node:fs/promises';
+import { mkdir, rename, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import type { AudioProfile, ObjectKind } from '@sichos-kodesh/pack-format';
 import { nowIso, openDb, type Db } from './db.js';
@@ -77,6 +77,37 @@ export class ArchiveStore {
     return !onDisk;
   }
 
+  /** Where an encoded recording lives: `derived/<profile>/<aa>/<sha256>`. */
+  derivedPath(profile: AudioProfile, sha256: string): string {
+    return path.join(this.root, 'derived', profile, sha256.slice(0, 2), sha256);
+  }
+
+  /**
+   * Where an object's bytes are: an upstream original under raw/, or an
+   * encoded profile under derived/. Null for a hash the store does not know.
+   */
+  pathOf(sha256: string): string | null {
+    if (this.hasObject(sha256)) return this.objectPath(sha256);
+    const row = this.db.prepare('SELECT profile FROM derivations WHERE sha256 = ? LIMIT 1').get(sha256) as { profile: AudioProfile } | undefined;
+    return row ? this.derivedPath(row.profile, sha256) : null;
+  }
+
+  /**
+   * Records an original's encoding in `profile` and moves the encoded file
+   * into place (or drops it, when identical bytes are already there).
+   */
+  async putDerived(tmpFile: string, srcSha256: string, profile: AudioProfile, sha256: string, bytes: number, encoder: string): Promise<void> {
+    const dest = this.derivedPath(profile, sha256);
+    if (await exists(dest)) await unlink(tmpFile);
+    else {
+      await mkdir(path.dirname(dest), { recursive: true });
+      await rename(tmpFile, dest);
+    }
+    this.db
+      .prepare('INSERT OR REPLACE INTO derivations (src_sha256, profile, sha256, bytes, encoder, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(srcSha256, profile, sha256, bytes, encoder, nowIso());
+  }
+
   async objectExistsOnDisk(sha256: string): Promise<boolean> {
     try {
       await stat(this.objectPath(sha256));
@@ -84,6 +115,15 @@ export class ArchiveStore {
     } catch {
       return false;
     }
+  }
+}
+
+async function exists(file: string): Promise<boolean> {
+  try {
+    await stat(file);
+    return true;
+  } catch {
+    return false;
   }
 }
 

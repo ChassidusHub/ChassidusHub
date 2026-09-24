@@ -14,6 +14,9 @@
  *              the indexers - the crawler's to-do list
  *   refs       item -> object, as actually stored (a wanted row that
  *              was fetched), with the commit that added it
+ *   derivations an original recording -> its encoding in a smaller audio
+ *              profile (sk-pack transcode), stored under derived/<profile>/;
+ *              derived bytes can always be made again from the original
  */
 export const SCHEMA_VERSION = 1;
 
@@ -93,6 +96,17 @@ CREATE TABLE IF NOT EXISTS refs (
   PRIMARY KEY (collection, item_id, sha256, role)
 );
 CREATE INDEX IF NOT EXISTS refs_sha256 ON refs(sha256);
+
+CREATE TABLE IF NOT EXISTS derivations (
+  src_sha256 TEXT NOT NULL REFERENCES objects(sha256),
+  profile TEXT NOT NULL,
+  sha256 TEXT NOT NULL,
+  bytes INTEGER NOT NULL,
+  encoder TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (src_sha256, profile)
+);
+CREATE INDEX IF NOT EXISTS derivations_sha256 ON derivations(sha256);
 
 CREATE TABLE IF NOT EXISTS verifications (
   sha256 TEXT NOT NULL REFERENCES objects(sha256),

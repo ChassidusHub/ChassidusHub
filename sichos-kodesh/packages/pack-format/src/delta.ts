@@ -1,4 +1,5 @@
 import type { PackManifest } from './manifest.js';
+import { isSha256, parsePackManifest } from './manifest.js';
 
 /**
  * Delta is set difference over object hashes: what a pack (or a set of
@@ -41,6 +42,45 @@ export interface PackIndexEntry {
   scope: PackManifest['scope'];
   /** sha256 -> bytes, the pack's own object list, so the delta is computable without downloading it. */
   objects: Record<string, number>;
+  /** Set when the pack is one part of a split scope. */
+  part?: PackManifest['part'];
+}
+
+export const PACK_INDEX_SCHEMA_VERSION = 1 as const;
+
+/** `index.json` next to the built packs: what the download site and the station read. */
+export interface PackIndexFile {
+  schema: typeof PACK_INDEX_SCHEMA_VERSION;
+  builtAt: string;
+  packs: PackIndexEntry[];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Validates a fetched index.json. Each entry's scope, profile, object list
+ * and part are checked with the manifest's own rules; one bad entry
+ * rejects the file. Never throws.
+ */
+export function parsePackIndexFile(value: unknown): PackIndexFile | null {
+  if (!isRecord(value) || value.schema !== PACK_INDEX_SCHEMA_VERSION) return null;
+  if (typeof value.builtAt !== 'string' || !Array.isArray(value.packs)) return null;
+  const packs: PackIndexEntry[] = [];
+  for (const raw of value.packs) {
+    if (!isRecord(raw)) return null;
+    const { packId, file, bytes, sha256, catalogVersion, profile, scope, objects, part } = raw;
+    if (typeof file !== 'string' || file.length === 0 || file.includes('/') || file.includes('\\')) return null;
+    if (typeof bytes !== 'number' || !Number.isInteger(bytes) || bytes < 0 || !isSha256(sha256)) return null;
+    // The rest has the manifest's shape; reuse its parser on a stand-in manifest.
+    const manifest = parsePackManifest({ schema: 1, packId, builtAt: value.builtAt, catalogVersion, profile: { audio: profile }, scope, entries: [], objects, part });
+    if (!manifest) return null;
+    const entry: PackIndexEntry = { packId: manifest.packId, file, bytes, sha256, catalogVersion: manifest.catalogVersion, profile: manifest.profile.audio, scope: manifest.scope, objects: manifest.objects };
+    if (manifest.part) entry.part = manifest.part;
+    packs.push(entry);
+  }
+  return { schema: PACK_INDEX_SCHEMA_VERSION, builtAt: value.builtAt, packs };
 }
 
 export interface PackChoice {

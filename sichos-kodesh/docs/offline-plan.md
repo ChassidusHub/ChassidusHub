@@ -315,7 +315,7 @@ commit in the archive.
 
 ## 4. Work packages and deliverables
 
-### WP1 - `packages/pack-format` (done; this PR)
+### WP1 - `packages/pack-format` (done, PR #105)
 
 `@sichos-kodesh/pack-format`, dependency-light (`tweetnacl` only), used by
 everything that makes or reads packs:
@@ -335,7 +335,7 @@ everything that makes or reads packs:
 - 20 vitest tests with a fixture pack and a fixture community zip; README
   documents the format.
 
-### WP2 - `services/archive` (`sk-archive`) (done; this PR)
+### WP2 - `services/archive` (`sk-archive`) (done, PR #105)
 
 One place that holds every upstream byte, verified, so nothing downstream
 ever fetches JEM, Ashreinu or Drive again. Node CLI on `node:sqlite`
@@ -371,7 +371,7 @@ Acceptance on the VPS: `sk-archive stats` reports 8,142 audio objects and
 of PDF refs, and a second `sync` fetches nothing. The README has the first
 run (`crawl --limit 20` first).
 
-### WP2b - indexers for every section + catalog schema 2 (parallel with WP3)
+### WP2b - indexers for every section + catalog schema 2 (done, PR #107)
 
 Three PRs: **A** the sections indexer and the archive's readers, **B**
 catalog schema 2 with the API's `/v2/` and the phone's store (no
@@ -411,7 +411,7 @@ screens), **C** the igros index (gated).
   farbrengens data is byte-identical to today's (checked by rebuilding
   and diffing against both apps' bundled copies).
 
-### WP3 - `services/pack-builder` (`sk-pack`)
+### WP3 - `services/pack-builder` (`sk-pack`) (done)
 
 - `keygen` (Shmuly runs it; the public key goes into
   `TRUSTED_PACK_KEYS`), `transcode` (idempotent, parallel `ffmpeg -ac 1
@@ -433,6 +433,26 @@ screens), **C** the igros index (gated).
 Milestone M1: one `5736-01-tishrei-src.skpack` (~105 MB), verified by
 `sk-pack verify`, `unzip -l` showing stored entries, manifest hashes equal
 to `sha256sum` of the extracted objects.
+
+**Done (2026-09-24).** `sk-pack keygen / transcode / build / verify /
+index` are in `services/pack-builder`, and `sk-archive crawl` gained
+`--scope` and `--collection`. M1 passed on real files:
+- The Tishrei 5736 pack is 11 occasions, 33 objects and 82.4 MB with the
+  plan's sections. It builds in about a second.
+- `sk-pack verify` is ok, `unzip -v` shows every entry Stored, and
+  `sha256sum` of all 33 extracted objects equals the manifest.
+- A 30 MB split gives 4 valid parts.
+- `transcode --profile opus24` encodes bit-exact: the same original always
+  gives the same hash.
+
+One finding changes the size table below: the JEM originals are already
+32 kbps mono MP3 for speech (64 kbps for some nigunim). So opus24 saves
+about a quarter, not two thirds (Tishrei: 82.4 MB `src`, 61.7 MB
+`opus24`), and `opus16` is where the real saving is. The listening-test
+files (a sicha, a nigun and crowd singing, 90 s each, at 16/24/32 kbps
+next to the original) were sent to Shmuly; the default profile waits for
+his choice. Not built yet: `upload` (R2) and `catalog-bundle`, which
+belong with WP5's pack API.
 
 ### WP4 - the phone: object store, import, community zips, export (`apps/mobile`)
 
