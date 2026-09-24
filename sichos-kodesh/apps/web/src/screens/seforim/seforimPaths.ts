@@ -9,3 +9,8 @@ export function readerPath(workId: string, unitId: string, source?: number): str
 export function workPath(workId: string, path: readonly number[] = []): string {
   return `/seforim/${encodeURIComponent(workId)}${path.length > 0 ? `?path=${path.join('.')}` : ''}`;
 }
+
+/** An author's books on HebrewBooks (`null`: the other Chabad books), or one series of them (its index in that list). */
+export function shelfPath(authorId: string | null, series?: number): string {
+  return `/seforim/hebrewbooks/${encodeURIComponent(authorId ?? 'others')}${series !== undefined ? `?series=${series}` : ''}`;
+}

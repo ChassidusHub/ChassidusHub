@@ -12,6 +12,15 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.5.0 - 2026-09-24
+
+- The Chabad shelf of HebrewBooks.org (schema 3, `works.shelf`): 1,539
+  scanned seforim from Otzaria's open catalog of HebrewBooks (version 9),
+  by author and series, each a link to its page at hebrewbooks.org and
+  never the scan. 689 of them are placed with their sefer, among them two
+  works new to the registry, Sichos Kodesh and the Rebbe's Sefer HaSichos,
+  which HebrewBooks alone has. Read by packages/hebrewbooks-index.
+
 ## 1.4.0 - 2026-09-24
 
 - Igros Kodesh of the Rebbe as a readable sefer (schema 3): 11,059 letters

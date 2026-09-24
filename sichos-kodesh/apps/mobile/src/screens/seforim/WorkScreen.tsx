@@ -1,13 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { ExternalLink } from 'lucide-react-native';
-import type { CatalogUnit, CatalogWorkSource, LibraryCollectionId } from '@sichos-kodesh/catalog';
+import type { CatalogScan, CatalogUnit, CatalogWorkSource, LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS, catalogUnit } from '@sichos-kodesh/catalog';
 import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
-import { getWorkContents, useWorks } from '../../catalog/catalogStore';
+import { getWorkContents, useShelf, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { WorkScreenProps } from '../../navigation/types';
-import { contentsAt, names, unitCount, unitsAreLetters, workKind } from '@sichos-kodesh/app-core';
+import { contentsAt, hebrewBooksUrl, names, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
 import { useReadingState } from '../../seforim/readingState';
 import { Button } from '../../ui/Button';
 import { CategoryRow } from '../../ui/CategoryRow';
@@ -37,21 +37,27 @@ function sourceLine(t: Translation, source: CatalogWorkSource): string {
 
 const SOURCE_NAMES: Readonly<Record<string, string>> = { sefaria: 'Sefaria', chabadlibrary: 'chabadlibrary.org', hebrewbooks: 'HebrewBooks' };
 
+/** How many scans show before "show all". */
+const SCANS_SHOWN = 10;
+
 /**
  * One sefer: who wrote it, its editions and where each may be read, where
  * the reader left off, and its contents - a part at a time, down to the
- * chapters that open in the reader.
+ * chapters that open in the reader - and its scans on HebrewBooks.
  */
 export function WorkScreen({ navigation, route }: WorkScreenProps) {
   const works = useWorks();
+  const shelf = useShelf();
   const reading = useReadingState();
   const { t, language } = useTranslation();
   const colors = useColors();
+  const [allScans, setAllScans] = useState(false);
   const { workId } = route.params;
   const path = route.params.path ?? [];
   const work = works.works.find((w) => w.id === workId);
   const contents = useMemo(() => (work?.units ? getWorkContents(workId) : null), [work, workId]);
   const unitsById = useMemo(() => new Map((contents?.units ?? []).map((unit) => [unit.id, unit])), [contents]);
+  const scanSeries = useMemo(() => workScans(shelf, workId), [shelf, workId]);
 
   const back = path.length > 0 ? ({ name: 'Work', params: { workId, path: path.slice(0, -1) } } as const) : ({ name: 'Seforim', params: undefined } as const);
   if (!work) {
@@ -74,13 +80,15 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
   const unitLabel = (label: string) => (prefix && label.startsWith(prefix) ? label.slice(prefix.length) : label);
   const collection = work.collection && (LIBRARY_COLLECTION_IDS as readonly string[]).includes(work.collection) ? (work.collection as LibraryCollectionId) : null;
   const linkSources = work.sources.filter((s) => editionUrl({ source: s.source as 'sefaria', sourceId: s.sourceId, language: s.language, version: s.version }));
+  // HebrewBooks' copy is its scans, listed below on their own.
+  const shownSources = work.sources.filter((s) => s.source !== 'hebrewbooks');
 
   // A sefer that reads here opens on its chapters; its editions come after them.
   const editions =
-    work.sources.length > 0 && kind !== 'collection' ? (
+    shownSources.length > 0 && kind !== 'collection' ? (
       <>
         <CategoryHeader>{t.workSources}</CategoryHeader>
-        {work.sources.map((source, index) => {
+        {shownSources.map((source, index) => {
           const url = linkSources.includes(source) ? editionUrl({ source: source.source as 'sefaria', sourceId: source.sourceId, language: source.language, version: source.version }) : null;
           return (
             <Row
@@ -97,6 +105,28 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
       </>
     ) : null;
 
+  // Its scans on HebrewBooks, each opening on its page there.
+  const scans = scanSeries.flatMap((series) => series.scans.map((scan) => ({ scan, label: scanTitle(scan, series.title, scanSeries.length > 1) })));
+  const scanRows =
+    scans.length > 0 ? (
+      <>
+        <CategoryHeader>{t.workScans}</CategoryHeader>
+        {(allScans ? scans : scans.slice(0, SCANS_SHOWN)).map(({ scan, label }) => (
+          <Row
+            key={scan.id}
+            label={label}
+            trailing={<RowTrailing><ExternalLink size={16} color={colors.muted} /></RowTrailing>}
+            onPress={() => Linking.openURL(hebrewBooksUrl(scan.id)).catch(() => undefined)}
+          >
+            {scan.pages || scan.printed ? (
+              <AppText style={[styles.sourceLine, { color: colors.muted }]}>{[scan.pages ? t.shelfPages(scan.pages) : null, scan.printed].filter(Boolean).join(' · ')}</AppText>
+            ) : null}
+          </Row>
+        ))}
+        {!allScans && scans.length > SCANS_SHOWN && <Row label={t.workScansAll(scans.length)} onPress={() => setAllScans(true)} />}
+      </>
+    ) : null;
+
   return (
     <Screen header={<ScreenHeader back={back} title={title} />}>
       {path.length === 0 && (
@@ -104,7 +134,7 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
           <AppText style={styles.title}>{names(work.title, language)}</AppText>
           {authorNames.length > 0 && <Subtitle>{authorNames.join(', ')}</Subtitle>}
           {kind === 'read' && contents && <SaveSeferPanel work={work} contents={contents} />}
-          {kind === 'links' && <TabHelp>{t.workNoText}</TabHelp>}
+          {kind === 'links' && <TabHelp>{scans.length > 0 && linkSources.length === 0 ? t.workNoTextScans : t.workNoText}</TabHelp>}
           {collection && (
             <View style={styles.block}>
               <Button label={t.workOpenCollection} onPress={() => navigation.navigate('LibraryCollection', { collection })} />
@@ -120,6 +150,7 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
             </View>
           )}
           {kind !== 'read' && editions}
+          {kind !== 'read' && scanRows}
         </>
       )}
 
@@ -151,8 +182,15 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
       )}
 
       {kind === 'read' && path.length === 0 && editions}
+      {kind === 'read' && path.length === 0 && scanRows}
     </Screen>
   );
+}
+
+/** A scan's name on a sefer's screen: its volume, with the series when the sefer has several. */
+function scanTitle(scan: CatalogScan, series: string, severalSeries: boolean): string {
+  if (!scan.volume) return scan.title;
+  return severalSeries ? `${series} · ${scan.volume}` : scan.volume;
 }
 
 function unitDisplay(unit: CatalogUnit | undefined, unitId: string, language: 'he' | 'en'): string {

@@ -1,5 +1,8 @@
 import type {
   CatalogAuthor,
+  CatalogScan,
+  CatalogScanSeries,
+  CatalogShelf,
   CatalogContentsEntry,
   CatalogEdition,
   CatalogUnit,
@@ -95,6 +98,27 @@ export function parseCatalogWorksIndex(value: unknown): CatalogWorksIndex | null
   return { authors: value.authors as CatalogAuthor[], works: value.works as CatalogWork[] };
 }
 
+function isScan(value: unknown): value is CatalogScan {
+  if (!isRecord(value)) return false;
+  const { id, title, volume, printed, pages } = value;
+  if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0 || typeof title !== 'string') return false;
+  return isOptionalString(volume) && isOptionalString(printed) && (pages === undefined || typeof pages === 'number');
+}
+
+function isSeries(value: unknown): value is CatalogScanSeries {
+  if (!isRecord(value)) return false;
+  return typeof value.title === 'string' && isOptionalString(value.workId) && Array.isArray(value.scans) && value.scans.length > 0 && value.scans.every(isScan);
+}
+
+/** The HebrewBooks shelf; null when it is malformed. */
+export function parseCatalogShelf(value: unknown): CatalogShelf | null {
+  if (!isRecord(value) || typeof value.catalogVersion !== 'string' || !Array.isArray(value.authors)) return null;
+  const ok = value.authors.every(
+    (author) => isRecord(author) && (author.authorId === null || typeof author.authorId === 'string') && Array.isArray(author.series) && author.series.every(isSeries),
+  );
+  return ok ? (value as unknown as CatalogShelf) : null;
+}
+
 export function parseCatalogWorks(value: unknown): CatalogWorks | null {
   const index = parseCatalogWorksIndex(value);
   if (!index || !isRecord(value) || !isRecord(value.contents)) return null;
@@ -106,7 +130,9 @@ export function parseCatalogWorks(value: unknown): CatalogWorks | null {
     if (!parsed) return null;
     contents[workId] = parsed;
   }
-  return { ...index, contents };
+  if (value.shelf === undefined) return { ...index, contents };
+  const shelf = parseCatalogShelf(value.shelf);
+  return shelf ? { ...index, contents, shelf } : null;
 }
 
 /**

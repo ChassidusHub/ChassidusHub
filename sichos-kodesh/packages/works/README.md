@@ -46,6 +46,16 @@ has **editions**: one source's copy.
 - **Links** (`src/links.ts`): `editionUrl(edition)` is where a person reads
   an edition at its source (a Sefaria page, a HebrewBooks book).
 
+- **The HebrewBooks shelf** (`src/shelf.ts`, WP19): `placeShelf` places
+  each series of packages/hebrewbooks-index's shelf with its work, by the
+  same author, when the series carries the work's own Hebrew title or one
+  of the names in `src/registry/hebrewbooks.ts`. That file is kept by hand
+  like the rest of the registry. It also lists the two works only
+  HebrewBooks has (Sichos Kodesh, the Rebbe's Sefer HaSichos), kept only
+  when the shelf has their scans. A placed work gains a HebrewBooks source
+  (scans, link-only). `build-catalog-works --shelf <file>` writes the
+  apps' `shelf.json`, and prints any name that matched no series.
+
 The Sefaria importer (`packages/sefaria-index`, WP11) fills in units and
 editions for the works with Sefaria copies. Catalog schema 3 (WP12) builds
 `works` from both.

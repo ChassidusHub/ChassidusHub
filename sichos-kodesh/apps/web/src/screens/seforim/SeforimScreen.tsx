@@ -2,21 +2,23 @@ import { Fragment, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { catalogUnit } from '@sichos-kodesh/catalog';
-import { authorSections, names, unitsAreLetters, workKind } from '@sichos-kodesh/app-core';
-import { catalogStore, useWorks } from '../../catalog/catalogStore';
+import { authorSections, authorShelf, names, scanCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
+import { catalogStore, useShelf, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useTranslation } from '../../i18n/useLanguage';
 import { recentPlaces, useReadingState } from '../../seforim/readingState';
 import { LibraryLoading } from '../library/LibraryLoading';
-import { readerPath } from './seforimPaths';
+import { readerPath, shelfPath } from './seforimPaths';
 
 /**
  * The seforim (catalog schema 3): where the reader left off, the
  * bookmarks, then the Rebbeim in order - the Baal Shem Tov and the Maggid,
- * the Alter Rebbe to the Rebbe - each with his seforim. Same as the phone's.
+ * the Alter Rebbe to the Rebbe - each with his seforim, and his other books
+ * on HebrewBooks. Same as the phone's.
  */
 export function SeforimScreen() {
   const works = useWorks();
+  const shelf = useShelf();
   const reading = useReadingState();
   const { t, language } = useTranslation();
   const sections = useMemo(() => (works ? authorSections(works) : []), [works]);
@@ -40,11 +42,27 @@ export function SeforimScreen() {
         return t.seforimChapters(work.units ?? 0, unitsAreLetters(work));
       case 'collection':
         return t.seforimInLibrary;
-      case 'links':
-        return t.seforimLink;
+      case 'links': {
+        const scans = scanCount(workScans(shelf, workId));
+        return scans > 0 ? t.seforimScans(scans) : t.seforimLink;
+      }
       default:
         return '';
     }
+  };
+
+  // An author's books on HebrewBooks that no sefer here holds.
+  const shelfRow = (authorId: string | null) => {
+    const count = scanCount(authorShelf(shelf, authorId));
+    if (count === 0) return null;
+    return (
+      <li>
+        <Link className="year-row" to={shelfPath(authorId)}>
+          <span className="year-row-year">{authorId ? t.shelfRow : t.shelfOthersRow}</span>
+          <span className="year-row-distance">{t.shelfBooks(count)}</span>
+        </Link>
+      </li>
+    );
   };
 
   return (
@@ -102,9 +120,16 @@ export function SeforimScreen() {
                 </Link>
               </li>
             ))}
+            {shelfRow(section.author?.id ?? null)}
           </ul>
         </Fragment>
       ))}
+      {works && !sections.some((section) => !section.author) && authorShelf(shelf, null).length > 0 && (
+        <>
+          <h2 className="category-header">{t.seforimOtherAuthors}</h2>
+          <ul className="year-list">{shelfRow(null)}</ul>
+        </>
+      )}
     </div>
   );
 }

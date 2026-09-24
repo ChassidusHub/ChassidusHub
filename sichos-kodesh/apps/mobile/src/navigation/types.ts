@@ -86,6 +86,9 @@ export type RootStackParamList = {
   /** Search the seforim: names everywhere, text in the seforim whose pack is on the phone. */
   SeforimSearch: undefined;
 
+  /** An author's books on HebrewBooks that no sefer here holds (`authorId` null: the other Chabad books); `series` opens one series. */
+  HebrewBooksShelf: { authorId: string | null; series?: number };
+
   /** Farbrengens by mafteiach's moadim or parshiyos. */
   OccasionGroups: { axis: 'moadim' | 'parshiyos' };
 
@@ -146,6 +149,7 @@ export type SeforimScreenProps = NativeStackScreenProps<RootStackParamList, 'Sef
 export type WorkScreenProps = NativeStackScreenProps<RootStackParamList, 'Work'>;
 export type ReaderScreenProps = NativeStackScreenProps<RootStackParamList, 'Reader'>;
 export type SeforimSearchScreenProps = NativeStackScreenProps<RootStackParamList, 'SeforimSearch'>;
+export type HebrewBooksShelfScreenProps = NativeStackScreenProps<RootStackParamList, 'HebrewBooksShelf'>;
 export type OccasionGroupScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionGroup'>;
 export type AboutScreenProps = NativeStackScreenProps<RootStackParamList, 'About'>;
 export type PrivacyScreenProps = NativeStackScreenProps<RootStackParamList, 'Privacy'>;

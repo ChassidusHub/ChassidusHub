@@ -84,6 +84,7 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
         {t.aboutTextsBySuffix}
       </Subtitle>
       <Subtitle>{t.aboutIgros}</Subtitle>
+      <Subtitle>{t.aboutHebrewBooks}</Subtitle>
 
       <CategoryHeader>{t.aboutPoweredBy}</CategoryHeader>
       <View style={[styles.badges, { flexDirection: row(isRtl) }]}>

@@ -1,9 +1,9 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { CATALOG_VERSION, CATALOG_WORKS_SCHEMA_VERSION } from '@sichos-kodesh/catalog';
-import type { CatalogByYear, CatalogLibrary, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
+import type { CatalogByYear, CatalogLibrary, CatalogShelf, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
 import { createCatalogStore } from '@sichos-kodesh/app-core';
 import type { CatalogSnapshot } from '@sichos-kodesh/app-core';
-import { bundledParts, loadBundledLibrary, loadBundledWorkContents, loadBundledWorks } from './bundledParts';
+import { bundledParts, loadBundledLibrary, loadBundledShelf, loadBundledWorkContents, loadBundledWorks } from './bundledParts';
 import bundledCatalog from './data';
 
 /**
@@ -24,6 +24,7 @@ import bundledCatalog from './data';
 export const catalogStore = createCatalogStore(bundledCatalog, CATALOG_VERSION, CATALOG_WORKS_SCHEMA_VERSION, bundledParts.library, {
   index: bundledParts.works,
   contents: bundledParts.contents,
+  shelf: bundledParts.shelf,
 });
 
 export function getCatalog(): CatalogByYear {
@@ -41,6 +42,7 @@ export function useCatalogInfo(): CatalogSnapshot {
 
 const getLibrary = () => catalogStore.getLibrary();
 const getWorks = () => catalogStore.getWorks();
+const getShelf = () => catalogStore.getShelf();
 
 /** The library, or null while its part of the bundle is on its way (it is fetched on first use). */
 export function useLibrary(): CatalogLibrary | null {
@@ -58,6 +60,15 @@ export function useWorks(): CatalogWorksIndex | null {
     if (!works) loadBundledWorks().then(() => catalogStore.refresh(), () => undefined);
   }, [works]);
   return works;
+}
+
+/** The HebrewBooks shelf, or null while its part of the bundle is on its way. */
+export function useShelf(): CatalogShelf | null {
+  const shelf = useSyncExternalStore(catalogStore.subscribe, getShelf, getShelf);
+  useEffect(() => {
+    if (!shelf) loadBundledShelf().then(() => catalogStore.refresh(), () => undefined);
+  }, [shelf]);
+  return shelf;
 }
 
 /**

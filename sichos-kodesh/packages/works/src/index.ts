@@ -6,3 +6,5 @@ export { CHABADLIBRARY_TREE, type LibraryTreeNode } from './registry/chabadlibra
 export { collectionUnits, libraryUnits } from './collections.js';
 export { editionUrl, sefariaRefPath } from './links.js';
 export { buildCatalogWorks } from './catalogWorks.js';
+export { placeShelf, type PlacedShelf } from './shelf.js';
+export { HEBREWBOOKS_ONLY, HEBREWBOOKS_SERIES } from './registry/hebrewbooks.js';
