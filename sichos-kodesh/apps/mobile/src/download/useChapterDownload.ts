@@ -5,6 +5,7 @@ import { useDownload } from './useDownload';
 import type { RowDownloadState } from './downloadContext';
 import { isTargetDownloaded } from './downloadStorage';
 import { useOnlineStatus } from '../network/useOnlineStatus';
+import { useDownloadsCanRun } from './useDownloadsCanRun';
 
 export interface ChapterDownloadState {
   state: RowDownloadState;
@@ -22,8 +23,9 @@ export function useChapterDownload(entry: CatalogEntry, chapterIndex: number): C
     [entry, chapterIndex],
   );
   const live = target ? targetStates[target.key] : undefined;
-  // With no connection a queued or started file isn't coming (see useDownloadState): only 'downloaded' still answers.
-  const liveStatus = !online && (live?.status === 'queued' || live?.status === 'downloading') ? undefined : live?.status;
+  // While downloads can't run a queued or started file isn't coming (see useDownloadState): only 'downloaded' still answers.
+  const canRun = useDownloadsCanRun();
+  const liveStatus = !canRun && (live?.status === 'queued' || live?.status === 'downloading') ? undefined : live?.status;
   const liveAnswers = liveStatus === 'queued' || liveStatus === 'downloading' || liveStatus === 'downloaded';
   const [cachedState, setCachedState] = useState<'downloaded' | 'none' | null>(null);
 

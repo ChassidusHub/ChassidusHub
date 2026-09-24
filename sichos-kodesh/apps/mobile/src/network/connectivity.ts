@@ -1,4 +1,6 @@
 import { MEDIA_PROXY_BASE_URL } from '../config';
+import { watchNetworkState } from './networkState';
+import type { NetworkState } from './networkState';
 
 type Listener = () => void;
 
@@ -23,11 +25,11 @@ export function subscribeOnline(listener: Listener): () => void {
 }
 
 /**
- * The one and only way this app ever decides it's offline: a real fetch -
- * a PDF, a recording, a download - actually failed to reach
- * services/media-proxy. There is no background timer pinging anything to
- * guess at this ahead of time (see apps/web's connectivity.ts for the
- * reasoning; this file mirrors it).
+ * One of the two ways this app decides it's offline: a real fetch - a PDF,
+ * a recording, a download - actually failed to reach services/media-proxy.
+ * The other is the phone's own network state (followNetworkState). There is
+ * no background timer pinging anything to guess at this ahead of time (see
+ * apps/web's connectivity.ts for the reasoning).
  */
 export function reportFetchFailure(): void {
   setOnline(false);
@@ -51,6 +53,27 @@ async function pingMediaProxy(): Promise<boolean> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * What the phone itself says: with no network at all the app is offline at
+ * once - nothing else would say so while a download waits for its network,
+ * since a waiting download never fails. A network Android has seen reach
+ * the internet is online. One it hasn't (a filter that blocks Android's
+ * own check, a captive portal, a signal with no service) is asked the only
+ * question that matters: can the media proxy be reached.
+ */
+async function applyNetworkState(next: NetworkState): Promise<void> {
+  if (!next.connected) setOnline(false);
+  else if (next.validated) setOnline(true);
+  else setOnline(await pingMediaProxy());
+}
+
+/** Mounted once at the app root (useConnectivityRecheckTriggers): follows the phone's network state from start-up on. */
+export function followNetworkState(): () => void {
+  return watchNetworkState((next) => {
+    applyNetworkState(next).catch(() => undefined);
+  });
 }
 
 /** Actively re-verifies connectivity - a no-op while currently believed online, so this is cheap to call from every navigation, tap, or return to the foreground (see useConnectivityRecheckTriggers). */
