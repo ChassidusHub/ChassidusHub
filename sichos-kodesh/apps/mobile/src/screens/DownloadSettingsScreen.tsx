@@ -9,6 +9,7 @@ import { getLibrary, useCatalog } from '../catalog/catalogStore';
 import { isBackgroundSyncAvailable, runBackgroundSyncNow } from '../background/backgroundNative';
 import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
+import { LIBRARY_AUTO_COLLECTIONS } from '../library/libraryAutoDownload';
 import { libraryFileNames } from '../library/libraryDownloads';
 import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../download/downloadSettings';
 import { resolveAutoDownloadEntries } from '../download/useAutoDownloadSync';
@@ -175,6 +176,23 @@ export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenPro
           </SettingRow>
         )}
       </SettingsGroup>
+
+      {/* Phone only: the library collections the automatic sync also keeps ready (src/library/libraryAutoDownload.ts). */}
+      {settings.autoDownloadEnabled && (
+        <SettingsGroup title={t.libraryAutoGroup} help={t.libraryAutoHelp}>
+          {LIBRARY_AUTO_COLLECTIONS.map((collection, index) => (
+            <SettingRow
+              key={collection}
+              label={t.collectionNames[collection]}
+              help={t.libraryAutoRule[collection]}
+              onPress={() => setSettings({ ...settings, libraryAutoDownload: { ...settings.libraryAutoDownload, [collection]: !settings.libraryAutoDownload[collection] } })}
+              first={index === 0}
+            >
+              <Toggle checked={!!settings.libraryAutoDownload[collection]} label={t.collectionNames[collection]} decorative />
+            </SettingRow>
+          ))}
+        </SettingsGroup>
+      )}
 
       <SettingsGroup title={t.advancedGroup}>
         <SettingRow label={showAdvanced ? t.hideAdvancedLabel : t.showAdvancedLabel} onPress={() => setShowAdvanced((v) => !v)} first>

@@ -303,6 +303,14 @@ const en = {
   libraryDisputedNote: 'Printed in 5781 by Vaad L\'hafotzas Sichos as supplements. It is not one of the 39 volumes, and the right to print it is disputed.',
   libraryNoFiles: 'No files for this yet',
   libraryNotFound: 'This item is not in the library any more',
+  libraryAutoGroup: 'Also keep ready from the library',
+  libraryAutoHelp: 'Follows the same year as the farbrengens. Each one is extra storage, so all are off until you turn them on.',
+  libraryAutoRule: {
+    likkuteiSichos: "Every sicha on this week's parsha",
+    maamorim: "This month's maamorim",
+    yomanim: "This month's yomanim",
+    michtavimKlolim: "The current moed's letters",
+  } as Record<string, string>,
   collectionNames: {
     likkuteiSichos: 'Likkutei Sichos',
     maamorim: 'Maamorim',
@@ -628,6 +636,14 @@ const he: typeof en = {
   libraryDisputedNote: 'נדפס בתשפ״א על ידי ועד להפצת שיחות כמילואים. אינו אחד מל״ט החלקים, והזכות להדפיסו שנויה במחלוקת.',
   libraryNoFiles: 'אין עדיין קבצים לפריט זה',
   libraryNotFound: 'פריט זה כבר אינו בספרייה',
+  libraryAutoGroup: 'לשמור מוכן גם מהספרייה',
+  libraryAutoHelp: 'לפי אותה שנה כמו ההתוועדויות. כל אחד מהם תופס מקום נוסף, ולכן כולם כבויים עד שמפעילים אותם.',
+  libraryAutoRule: {
+    likkuteiSichos: 'כל השיחות על פרשת השבוע',
+    maamorim: 'המאמרים של החודש',
+    yomanim: 'היומנים של החודש',
+    michtavimKlolim: 'המכתבים של המועד הנוכחי',
+  } as Record<string, string>,
   collectionNames: {
     likkuteiSichos: 'לקוטי שיחות',
     maamorim: 'מאמרים',

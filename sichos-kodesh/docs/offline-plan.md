@@ -566,9 +566,20 @@ Library items also download. Each item has a Download pill; storage
 usage and "Delete all" cover library files; the Downloaded screen lists
 the items that are fully downloaded.
 
+Auto-download per collection is built too. It follows the farbrengens'
+source year(s), and each collection has its own switch in Offline &
+downloads, off until turned on:
+
+- Likkutei Sichos: this week's parsha, matched to hebcal's list by
+  position (both are in Torah order, 54 each);
+- maamorim and yomanim: this month;
+- general letters: the current moed.
+
+The background task queues them with the farbrengens, and auto-cleanup
+prunes them the same way.
+
 Still to come:
 
-- auto-download per collection;
 - the collection filter in search, and the moadim-based dropdowns;
 - the text reader, which waits on the Igros rights.
 
