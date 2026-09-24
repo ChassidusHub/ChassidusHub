@@ -3,9 +3,12 @@ import { StyleSheet, View } from 'react-native';
 import { FileText } from 'lucide-react-native';
 import type { CatalogEntry, CatalogRef, LibraryCollectionId, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
+import { DownloadPill } from '../../components/DownloadPill';
 import { PlaylistPlayButton } from '../../components/PlaylistPlayButton';
 import { useTranslation } from '../../i18n/useTranslation';
 import { findItem, formatDuration, itemAudio, itemPdfs, itemSubtitle, linkedOccasion, playlistOccasionId } from '../../library/libraryModel';
+import { libraryItemTargets } from '../../library/libraryDownloads';
+import { useTargetsDownload } from '../../library/useLibraryDownload';
 import type { LibraryItemScreenProps } from '../../navigation/types';
 import { usePlayer } from '../../player/usePlayer';
 import { useProgressMap } from '../../player/useProgressMap';
@@ -91,6 +94,8 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   const item = findItem(library, collection, id);
   const occasion = useMemo(() => (item ? linkedOccasion(catalog, item) : undefined), [catalog, item]);
   const entry = useMemo(() => (item ? playlistEntry(collection, item) : null), [collection, item]);
+  const targets = useMemo(() => (item ? libraryItemTargets(collection, item) : []), [collection, item]);
+  const download = useTargetsDownload(targets);
 
   if (!item) {
     return (
@@ -117,6 +122,10 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
         </AppText>
       ))}
       {disputed && <TabHelp>{t.libraryDisputedNote}</TabHelp>}
+
+      <View style={[styles.actions, { flexDirection: row(isRtl) }]}>
+        <DownloadPill state={download.state} progress={download.progress} onStart={download.start} />
+      </View>
 
       {occasion && (
         <View style={styles.block}>
@@ -185,5 +194,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700', lineHeight: 30, marginBottom: 6 },
   fact: { fontSize: 15, lineHeight: 21, marginBottom: 4 },
   block: { marginTop: 12 },
+  actions: { flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 4 },
   sectionHeader: { alignItems: 'center', justifyContent: 'space-between' },
 });

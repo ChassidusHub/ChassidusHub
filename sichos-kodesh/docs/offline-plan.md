@@ -562,9 +562,13 @@ Recordings play in the existing player under a negative playlist id of
 their own, so their progress never mixes with a farbrengen's chapter
 indexes. PDFs open in the viewer's library mode.
 
+Library items also download. Each item has a Download pill; storage
+usage and "Delete all" cover library files; the Downloaded screen lists
+the items that are fully downloaded.
+
 Still to come:
 
-- download state and auto-download per collection;
+- auto-download per collection;
 - the collection filter in search, and the moadim-based dropdowns;
 - the text reader, which waits on the Igros rights.
 

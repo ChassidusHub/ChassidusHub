@@ -5,10 +5,11 @@ import type { PdfEdition } from '@sichos-kodesh/catalog';
 import { contentPreset, presetContentTypes } from '@sichos-kodesh/app-core';
 import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
-import { useCatalog } from '../catalog/catalogStore';
+import { getLibrary, useCatalog } from '../catalog/catalogStore';
 import { isBackgroundSyncAvailable, runBackgroundSyncNow } from '../background/backgroundNative';
 import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
+import { libraryFileNames } from '../library/libraryDownloads';
 import type { DownloadScope, RetentionPeriod, SourceYearMode } from '../download/downloadSettings';
 import { resolveAutoDownloadEntries } from '../download/useAutoDownloadSync';
 import { useTranslation } from '../i18n/useTranslation';
@@ -49,7 +50,7 @@ export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenPro
   const backgroundAvailable = isBackgroundSyncAvailable();
 
   useEffect(() => {
-    getDownloadStorageUsage(Object.values(catalog).flat())
+    getDownloadStorageUsage(Object.values(catalog).flat(), libraryFileNames(getLibrary()))
       .then(setUsage)
       .catch(() => setUsage(null));
   }, [catalog, settings]); // Depends on `settings` too, so usage refreshes after actions like clearing downloads.
@@ -108,7 +109,7 @@ export function DownloadSettingsScreen({ navigation }: DownloadSettingsScreenPro
   async function handleClearDownloads(): Promise<void> {
     await clearDownloads();
     setConfirmingClear(false);
-    setUsage(await getDownloadStorageUsage(Object.values(catalog).flat()).catch(() => 0));
+    setUsage(await getDownloadStorageUsage(Object.values(catalog).flat(), libraryFileNames(getLibrary())).catch(() => 0));
   }
 
   const presetOptions = (['essentials', 'everything', 'custom'] as ContentPreset[]).map((value) => ({ value, label: presetLabel(t, value) }));

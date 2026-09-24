@@ -217,7 +217,12 @@ browses catalog schema 2's `library`:
 - each item's facts, recordings and PDFs.
 
 Library audio plays through the same player and progress store, keyed by
-a negative per-item playlist id (`playlistOccasionId`). Library PDFs open
+a negative per-item playlist id (`playlistOccasionId`). An item's Download
+pill queues one `DownloadTarget` per file (`libraryDownloads.ts`, keys
+`lib:<collection>:<item>:<kind>:<id>`) through the same queue, executor
+and paths as a farbrengen's. Storage usage and "Delete all" include
+library files. The Downloaded screen lists fully downloaded library items;
+deleting one never removes a file that a downloaded farbrengen also uses. Library PDFs open
 in `PdfViewerScreen` with a `library` route param (no farbrengen, no
 saved page). The bundled library is read on first use, not at start-up.
 

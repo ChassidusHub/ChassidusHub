@@ -3,12 +3,13 @@ import { RefreshCw } from 'lucide-react-native';
 import { contentPreset } from '@sichos-kodesh/app-core';
 import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { isBackgroundSyncAvailable, requestNotificationPermission } from '../background/backgroundNative';
-import { useCatalog, useCatalogInfo } from '../catalog/catalogStore';
+import { getLibrary, useCatalog, useCatalogInfo } from '../catalog/catalogStore';
 import { checkForCatalogUpdate, useCatalogUpdateStatus } from '../catalog/catalogUpdater';
 import type { CatalogUpdateStatus } from '../catalog/catalogUpdater';
 import { APP_VERSION } from '../changelog';
 import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
+import { libraryFileNames } from '../library/libraryDownloads';
 import { useLanguage, useTranslation } from '../i18n/useTranslation';
 import type { Language } from '../i18n/translations';
 import type { SettingsScreenProps } from '../navigation/types';
@@ -86,7 +87,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   }, [packsAvailable]);
 
   useEffect(() => {
-    getDownloadStorageUsage(Object.values(catalog).flat())
+    getDownloadStorageUsage(Object.values(catalog).flat(), libraryFileNames(getLibrary()))
       .then(setUsage)
       .catch(() => setUsage(null));
   }, [catalog]);
