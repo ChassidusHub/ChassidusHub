@@ -513,13 +513,13 @@ Where the build differs from the text above:
   and counts its recordings as "a format this version does not play yet".
   One line in `placement.ts` opens Opus once item 5 passes.
 - **Untrusted packs still bring their files.** Release builds trust only
-  `TRUSTED_PACK_KEYS`, which stays empty until the real key is generated.
+  `TRUSTED_PACK_KEYS`: the production key `aac79a9724647680`, made on
+  2026-09-24 (mobile 1.6.0 is the first build that trusts it).
   A pack signed with any other key, or unsigned, is imported as a shared
   ZIP, and its manifest names the `objects/<sha256>` entries the way a
   file name would. Each entry must hash to its name, and each file is
-  kept unverified: a signed copy replaces it later. So M2 can run on a
-  release APK before the key exists. Debug builds also trust the
-  published development key (`sk-pack keygen --dev`).
+  kept unverified: a signed copy replaces it later. Debug builds also
+  trust the published development key (`sk-pack keygen --dev`).
 - **A shared file known only by its name** is kept when the catalog lists
   its id, rather than when its folder gives a scope. The catalog is the
   stronger check, and the id places the file exactly.
@@ -742,8 +742,10 @@ Answered by Shmuly:
    backup run unattended; the CLI itself is host-agnostic.
 2. **First work package: WP1 + WP2 in one PR** with this document; WP3
    follows as the next PR.
-3. **Key custody: Shmuly generates the key** with `sk-pack keygen`
-   (WP3), keeps the secret offline, commits only the public key.
+3. **Key custody.** The production key was made with `sk-pack keygen`
+   on 2026-09-24 (key id `aac79a9724647680`). Only its public half is
+   committed; the secret stays off the repository, with whoever signs
+   packs.
 4. **The library extension is phone-only**; the web app keeps the
    farbrengens experience it has.
 5. **The Rebbe Drive adds to the download site**, it does not replace it.
