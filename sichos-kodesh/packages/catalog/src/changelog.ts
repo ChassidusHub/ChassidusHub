@@ -16,6 +16,16 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.4.0',
+    date: '2026-09-24',
+    en: [
+      'Igros Kodesh of the Rebbe to read: 11,059 letters in 28 volumes, each with its date, its notes and where it is printed',
+    ],
+    he: [
+      'אגרות קודש של הרבי לקריאה: 11,059 אגרות ב-28 חלקים, כל אחת עם התאריך, ההערות והמקום שבו נדפסה',
+    ],
+  },
+  {
     version: '1.3.0',
     date: '2026-09-24',
     en: [

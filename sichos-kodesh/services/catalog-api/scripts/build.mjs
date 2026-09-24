@@ -21,7 +21,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -117,6 +117,48 @@ await writeFile(generatedModule, lines.join('\n'), 'utf8');
 console.log(
   `catalog-api: generated release.ts for catalog ${manifest.version} (${(manifest.bytes / 1024 / 1024).toFixed(2)} MB${libraryJson ? `; with the library, ${(JSON.parse(libraryManifestJson).bytes / 1024 / 1024).toFixed(2)} MB` : ''}${worksJson ? `; with the works, ${(JSON.parse(worksManifestJson).bytes / 1024 / 1024).toFixed(2)} MB` : ''})`,
 );
+
+// The texts the API hosts - the Igros Kodesh' letters, which no other site
+// serves - are static files at their own sha256, public/v3/texts/<sha256>,
+// which Vercel serves before any rewrite (vercel.json gives them their type,
+// CORS and a year in every cache). texts/<work>/*.json are the bundles
+// packages/igros-index's import-igros writes, `{texts: [html, ...]}`. Every
+// text the works name for a source other than Sefaria must be among them,
+// or the build fails rather than deploy a sefer that cannot be read.
+const textsRoot = path.join(serviceRoot, 'texts');
+const publicTexts = path.join(serviceRoot, 'public', 'v3', 'texts');
+await rm(publicTexts, { recursive: true, force: true });
+await mkdir(publicTexts, { recursive: true });
+const hosted = new Set();
+let hostedBytes = 0;
+if (existsSync(textsRoot)) {
+  for (const work of (await readdir(textsRoot)).sort()) {
+    const dir = path.join(textsRoot, work);
+    for (const name of (await readdir(dir)).filter((n) => n.endsWith('.json')).sort()) {
+      const bundle = JSON.parse(await readFile(path.join(dir, name), 'utf8'));
+      for (const html of bundle.texts) {
+        const sha = sha256(html);
+        if (hosted.has(sha)) continue;
+        hosted.add(sha);
+        hostedBytes += Buffer.byteLength(html, 'utf8');
+        await writeFile(path.join(publicTexts, sha), html, 'utf8');
+      }
+    }
+  }
+}
+if (worksJson) {
+  const works = JSON.parse(worksJson);
+  const missing = [];
+  for (const work of works.works) {
+    for (const unit of works.contents[work.id]?.units ?? []) {
+      for (const edition of unit.editions) {
+        if (edition.sha256 && work.sources[edition.source]?.source !== 'sefaria' && !hosted.has(edition.sha256)) missing.push(`${work.id}/${unit.id}`);
+      }
+    }
+  }
+  if (missing.length > 0) throw new Error(`${missing.length} texts the works name are not under texts/ (first: ${missing.slice(0, 3).join(', ')}) - run import-igros (packages/igros-index)`);
+}
+console.log(`catalog-api: ${hosted.size} hosted texts (${(hostedBytes / 1024 / 1024).toFixed(1)} MB) in public/v3/texts`);
 
 // Bundle the Vercel function. The entry is TypeScript importing
 // src/router.ts, which Vercel's builder does not compile, so a bare build

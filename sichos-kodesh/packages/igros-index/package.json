@@ -2,7 +2,7 @@
   "name": "@sichos-kodesh/igros-index",
   "version": "0.1.0",
   "private": true,
-  "description": "Reads the Igros Kodesh letters and the Maanos from the data files of an existing Igros app into plain JSON. Gated: the output is built locally and never released or packed until the rights are cleared (see README).",
+  "description": "Reads the Igros Kodesh letters and the Maanos from the data files of an existing Igros app into plain JSON, and makes the Igros a readable sefer. The Igros ship (cleared 2026-09-24); the Maanos stay local (see README).",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,7 +19,8 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-    "build-igros": "tsx bin/build.ts"
+    "build-igros": "tsx bin/build.ts",
+    "import-igros": "tsx bin/import.ts"
   },
   "license": "ISC",
   "devDependencies": {

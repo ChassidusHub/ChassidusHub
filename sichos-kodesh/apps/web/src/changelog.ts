@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.4.0';
+export const APP_VERSION = '1.5.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.5.0',
+    en: [
+      'Igros Kodesh: the Rebbe\'s letters to read, all 11,059 in 28 volumes, each with its date, its notes and where it is printed. The seforim > the Rebbe > Igros Kodesh opens them volume by volume; search finds a letter by its number',
+      'The letters open in David, until you pick another font in the reading settings',
+      'In a letter, the date line and the signature sit on the left, as in the printed volumes, and the volume\'s notes follow the letter. A letter once read opens again with no internet',
+    ],
+    he: [
+      'אגרות קודש: אגרות הרבי לקריאה, כל 11,059 האגרות ב-28 חלקים, כל אחת עם התאריך, ההערות והמקום שבו נדפסה. ספרים > הרבי > אגרות קודש פותח אותן חלק אחר חלק; החיפוש מוצא אגרת לפי מספרה',
+      'האגרות נפתחות בגופן דוד, עד שתבחרו גופן אחר בהגדרות הקריאה',
+      'באגרת, שורת התאריך והחתימה בצד שמאל, כמו בכרכים המודפסים, והערות הכרך באות אחרי האגרת. אגרת שנקראה פעם נפתחת שוב גם בלי אינטרנט',
+    ],
+  },
   {
     version: '1.4.0',
     en: [

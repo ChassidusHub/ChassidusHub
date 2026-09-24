@@ -180,7 +180,8 @@ const COLLECTION_OF: Readonly<Record<string, { collection: NonNullable<Work['col
   'likkutei-sichos': { collection: 'likkuteiSichos', sources: [mafteiach()] },
   'sefer-hamaamarim-melukat': { collection: 'maamorim', sources: [mafteiach(), jem()] },
   reshimos: { collection: 'reshimos', sources: [mafteiach()] },
-  'igros-kodesh-rebbe': { collection: 'igros', sources: [{ source: 'igros-app', sourceId: 'igros', kind: 'text', licence: 'commercial' }] },
+  // The letters as the Igros app holds them (packages/igros-index), cleared to ship on 2026-09-24.
+  'igros-kodesh-rebbe': { collection: 'igros', sources: [{ source: 'igros-app', sourceId: 'igros', kind: 'text', language: 'he', licence: 'commercial', credit: 'Kehot Publication Society' }] },
 };
 
 function libraryHeading(heading: string): string {

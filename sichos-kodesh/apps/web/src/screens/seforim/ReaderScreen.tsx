@@ -10,7 +10,7 @@ import {
   chooseEdition,
   citation,
   editionLabel,
-  fetchFromSefaria,
+  fetchUnitText,
   linkEditions,
   names,
   neighbours,
@@ -18,8 +18,11 @@ import {
   pathToUnit,
   readableEditions,
   readerFont,
+  readerFontFor,
   readerTextSize,
+  unitPart,
   unitPosition,
+  unitsAreLetters,
   type TextObject,
   type TextProblem,
 } from '@sichos-kodesh/app-core';
@@ -58,9 +61,10 @@ function textLanguage(work: CatalogWork, edition: CatalogEdition): 'he' | 'en' {
   return work.sources[edition.source]?.language === 'en' ? 'en' : 'he';
 }
 
+/** Online, from where the edition is served: Sefaria's texts from Sefaria, the Igros from the catalog API (the service worker keeps both once read). */
 async function loadText(work: CatalogWork, unit: CatalogUnit, edition: CatalogEdition): Promise<TextObject> {
   if (!navigator.onLine) throw new TextLoadError('offline');
-  return parseTextObject(await fetchFromSefaria(work, unit, edition));
+  return parseTextObject(await fetchUnitText(work, unit, edition));
 }
 
 /** A selected passage and where to show the share buttons over it. */
@@ -94,7 +98,8 @@ export function ReaderScreen({ workId }: Props) {
   const contents = useWorkContents(workId, !!work?.units);
   const unit = contents ? catalogUnit(contents, unitId) : undefined;
   const reading = useReadingState();
-  const settings = reading.settings;
+  // The settings as this sefer is read: the Igros open in their own font until one is chosen.
+  const settings = useMemo(() => ({ ...reading.settings, font: readerFontFor(reading.settings, work) }), [reading.settings, work]);
   const online = useOnlineStatus();
   const { t, language } = useTranslation();
   const isRtl = language === 'he';
@@ -396,6 +401,8 @@ export function ReaderScreen({ workId }: Props) {
 
         {sections.map((section, index) => {
           const position = unitPosition(contents, section.unit.id);
+          // A letter is placed by its volume (its number is its title); a chapter by its place in the sefer.
+          const part = unitsAreLetters(work) ? unitPart(contents, section.unit.id) : null;
           const readable = readableEditions(work, section.unit);
           const links = index === 0 ? linkEditions(work, section.unit) : [];
           const languageCount = (lang: string | undefined) => readable.filter((e) => work.sources[e.source]?.language === lang).length;
@@ -409,7 +416,7 @@ export function ReaderScreen({ workId }: Props) {
               }}
             >
               <div className="reader-head">
-                {position && position.total > 1 && <span className="reader-eyebrow">{t.readerChapterOf(position.number, position.total)}</span>}
+                {part ? <span className="reader-eyebrow">{names(part, language)}</span> : position && position.total > 1 && <span className="reader-eyebrow">{t.readerChapterOf(position.number, position.total)}</span>}
                 <h1 className="reader-heading">{label(section.unit)}</h1>
                 <span className="reader-ornament" aria-hidden />
                 {index === 0 && (readable.length > 1 || links.length > 0) && (
@@ -447,7 +454,7 @@ export function ReaderScreen({ workId }: Props) {
               )}
               {section.loaded.state === 'ready' && (
                 <>
-                  {index === 0 && <p className="reader-from">{t.readerFromSefaria}</p>}
+                  {index === 0 && work.sources[section.edition.source]?.source === 'sefaria' && <p className="reader-from">{t.readerFromSefaria}</p>}
                   <TextObjectView text={section.loaded.text} settings={settings} />
                 </>
               )}

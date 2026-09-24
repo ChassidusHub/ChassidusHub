@@ -66,7 +66,7 @@ export function ReaderSettingsPanel({ settings, onClose }: Props) {
               role="radio"
               aria-checked={font.id === settings.font}
               className={font.id === settings.font ? 'reader-font reader-font-active' : 'reader-font'}
-              onClick={() => set({ font: font.id })}
+              onClick={() => set({ font: font.id, fontChosen: true })}
             >
               <span className="reader-font-sample" style={{ fontFamily: fontStack(font.family) }} lang="he">
                 {SAMPLE}

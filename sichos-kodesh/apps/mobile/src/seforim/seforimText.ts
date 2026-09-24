@@ -1,6 +1,6 @@
 import RNBlobUtil from 'react-native-blob-util';
 import type { CatalogEdition, CatalogUnit, CatalogWork } from '@sichos-kodesh/catalog';
-import { TextLoadError, fetchFromSefaria, type TextFetch } from '@sichos-kodesh/app-core';
+import { TextLoadError, fetchUnitText, type TextFetch } from '@sichos-kodesh/app-core';
 import { documentPath, readHeldObjects } from '../offline/objectStore';
 import { getSavedState, savedTextPath } from './savedStore';
 
@@ -9,21 +9,23 @@ import { getSavedState, savedTextPath } from './savedStore';
  * 1. its text object, when a text pack put it on the phone (found by the
  *    sha256 the catalog names);
  * 2. its saved copy, when the sefer was saved on the phone (savedStore.ts);
- * 3. otherwise Sefaria, read live and rendered by the same code that made
- *    the packs, so it looks the same (app-core's `fetchFromSefaria`, which
- *    the web reads with too).
+ * 3. otherwise online (app-core's `fetchUnitText`, which the web reads with
+ *    too): Sefaria's texts live from Sefaria, rendered by the same code that
+ *    made the packs so they look the same; the Igros from the catalog API,
+ *    at their sha256.
  * Only editions whose source may ship come here (the reader shows the
  * others as links).
  */
 
-export type TextFrom = 'phone' | 'sefaria';
+/** `sefaria`: read live from Sefaria; `online`: from the catalog API. */
+export type TextFrom = 'phone' | 'sefaria' | 'online';
 
 export interface LoadedText {
   html: string;
   from: TextFrom;
 }
 
-export { TextLoadError, fetchFromSefaria, type TextProblem } from '@sichos-kodesh/app-core';
+export { TextLoadError, fetchUnitText, type TextProblem } from '@sichos-kodesh/app-core';
 
 /** The file of a held text object, relative to the files directory, or null. */
 export async function heldTextFile(sha256: string | undefined): Promise<string | null> {
@@ -61,5 +63,6 @@ export async function loadUnitText(work: CatalogWork, unit: CatalogUnit, edition
   const html = await readUnitTextFile(work.id, unit.id, edition);
   if (html !== null) return { html, from: 'phone' };
   if (!online) throw new TextLoadError('offline');
-  return { html: await fetchFromSefaria(work, unit, edition, fetchFn), from: 'sefaria' };
+  const from: TextFrom = work.sources[edition.source]?.source === 'sefaria' ? 'sefaria' : 'online';
+  return { html: await fetchUnitText(work, unit, edition, fetchFn), from };
 }

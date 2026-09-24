@@ -94,6 +94,23 @@ describe('seforim screens', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 
+  it('reads a letter of the Igros from the catalog API, in David, with its notes after it', async () => {
+    // The first volume's letters as the catalog API hosts them (packages/igros-index's import-igros).
+    const bundle = require('../../../../../services/catalog-api/texts/igros-kodesh-rebbe/vol-01.json') as { texts: string[] };
+    const letter = bundle.texts[0]!;
+    const asked: string[] = [];
+    globalThis.fetch = jest.fn(async (url: string) => {
+      asked.push(url);
+      return { ok: true, json: async () => ({}), text: async () => letter };
+    }) as unknown as typeof fetch;
+    const shown = await render(<screens.ReaderScreen {...props({ workId: 'igros-kodesh-rebbe', unitId: '1' })} />);
+    expect(asked).toEqual(['https://api.sk.shmuky.dev/v3/texts/3dda44babea1c3ef52ee262b5d2456dda32c8604eb9b80819d5110aad953ef47']);
+    expect(shown).toContain('Letter 1');
+    expect(shown).toContain('DavidCLM');
+    expect(shown).toContain('Notes');
+    expect(shown).toContain('\u05D0\u05D2\u05E8\u05D5\u05EA \u05E7\u05D5\u05D3\u05E9 \u05D7\u05DC\u05E7 \u05D0');
+  });
+
   it('says so when Sefaria cannot be reached', async () => {
     globalThis.fetch = jest.fn(async () => {
       throw new Error('network');

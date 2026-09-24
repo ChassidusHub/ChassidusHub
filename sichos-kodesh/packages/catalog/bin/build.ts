@@ -19,9 +19,10 @@ import { LIBRARY_COLLECTION_IDS } from '../src/library/types.js';
  *   --db <path>        mafteiach.db (default: packages/mafteiach-index/mafteiach.db)
  *   --jem-db <path>    jem.db for the jemEvents collection (default: packages/jem-index/jem.db, skipped when absent)
  *   --without-jem      build the library without the jemEvents collection
- *   --igros <dir>      also build the Igros and Maanos from packages/igros-index's output, into
- *                      <out>/library-gated/ - gated (src/rights.ts): for local use only, never copied
- *                      into an app, and refused when --out is inside apps/
+ *   --igros <dir>      also build the Igros and Maanos as library collections from packages/igros-index's
+ *                      output, into <out>/library-gated/ - for local use only, never copied into an
+ *                      app, and refused when --out is inside apps/ (the Maanos are gated, src/rights.ts;
+ *                      the Igros reach the apps as a sefer instead: igros-index's import-igros)
  *   --out <dir>        default: packages/catalog/data
  */
 
@@ -36,14 +37,14 @@ const dbPath = arg('db', path.join(__dirname, '..', '..', 'mafteiach-index', 'ma
 const jemDbPath = arg('jem-db', path.join(__dirname, '..', '..', 'jem-index', 'jem.db'));
 const withJem = !process.argv.includes('--without-jem') && existsSync(jemDbPath);
 const outDir = arg('out', path.join(__dirname, '..', 'data'));
-// The Igros and Maanos are gated (src/rights.ts): refused up front when the
-// output is inside apps/, before anything is written.
+// The Maanos are gated (src/rights.ts), and these collections go into no
+// app: refused up front when the output is inside apps/, before anything is written.
 const igrosDir = arg('igros', '');
 if (igrosDir) {
   const appsDir = path.resolve(__dirname, '..', '..', '..', 'apps');
   const resolvedOut = path.resolve(outDir);
   if (resolvedOut === appsDir || resolvedOut.startsWith(appsDir + path.sep)) {
-    console.error(`--igros: ${resolvedOut} is inside apps/. The Igros and Maanos are gated (src/rights.ts) and never go into an app; pass another --out.`);
+    console.error(`--igros: ${resolvedOut} is inside apps/. These collections never go into an app (the Maanos are gated, src/rights.ts); pass another --out.`);
     process.exit(1);
   }
 }
@@ -137,5 +138,5 @@ if (igrosDir) {
   await mkdir(gatedDir, { recursive: true });
   await writeFile(path.join(gatedDir, 'igros.json'), JSON.stringify(gated.igros), 'utf8');
   await writeFile(path.join(gatedDir, 'maanos.json'), JSON.stringify(gated.maanos), 'utf8');
-  console.log(`Wrote the gated collections to ${gatedDir}: igros ${gated.igros.items.length} in ${gated.igros.groups.volume!.length} volumes, maanos ${gated.maanos.items.length} in ${gated.maanos.groups.year!.length} years - local only until the rights are cleared`);
+  console.log(`Wrote the gated collections to ${gatedDir}: igros ${gated.igros.items.length} in ${gated.igros.groups.volume!.length} volumes, maanos ${gated.maanos.items.length} in ${gated.maanos.groups.year!.length} years - local only`);
 }

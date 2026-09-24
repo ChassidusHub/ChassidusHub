@@ -176,7 +176,8 @@ schema 1.
 3. **Scope.** Is it texts and seforim first, with shiurim audio later?
 4. **The Igros source.** Should the Igros app's data files be dropped for
    chabadlibrary.org's text once page access works? I recommend yes. The
-   reader stays as a cross-check.
+   reader stays as a cross-check. (Until then the app's files are the
+   source: Shmuly cleared them on 2026-09-24, WP17.)
 
 ## 7. Work packages
 
@@ -564,6 +565,76 @@ and sepia, with Sefaria answered by a fixture: the library down to an
 item, the seforim, the reader and its settings, continuous reading (four
 chapters on one page) and the saved place. The check found the settings
 panel squeezing its font row to nothing; its children no longer shrink.
+
+### WP17 - the Igros Kodesh as a readable sefer
+
+Shmuly: "Igros is fine to use." On 2026-09-24 he cleared the Igros Kodesh
+from the Igros app's data files (`packages/igros-index`). The Maanos stay
+local.
+
+**Built** (mobile 1.7.0, web 1.5.0, catalog 1.4.0):
+
+- **The gate, by collection.** `SHIPPABLE_COLLECTIONS.igros` is `true` in
+  packages/catalog; `maanos` stays `false`. packages/works no longer rules
+  on the Igros app as a whole: its copies go by their collection, from that
+  same table (`igros` ships with credit to Kehot Publication Society;
+  `maanos`, or a copy with no collection, stays local). The release
+  builder still refuses a library folder holding the Maanos.
+- **The sefer.** `import-igros` (packages/igros-index) makes the work
+  `igros-kodesh-rebbe`:
+  - 28 volumes, 11,059 letters. Each letter is a unit: `אגרת ג'ערה` /
+    `Letter 3275`.
+  - Each letter is one text object in the reader's own form: the date
+    line and city set to the end side, the letter itself, the signature
+    at the end side, the volume's notes after it, and where it is printed
+    (`אגרות קודש חלק א, אגרת ו, עמ׳ טו`).
+  - `build-catalog-works --imports <sefaria> --imports <igros>` adds it to
+    the works. The Sefaria works come out unchanged.
+- **Hosting, by sha256.**
+  - The text objects are committed as 28 bundles, 26 MB in all, in
+    `services/catalog-api/texts/igros-kodesh-rebbe/`.
+  - The API's build writes each one to `public/v3/texts/<sha256>`, and
+    Vercel serves them as static files. `vercel.json` gives them HTML, CORS
+    and a strict CSP.
+  - The build fails when a text the works name is missing.
+- **Reading, in both apps.**
+  - app-core's `fetchUnitText` reads Sefaria's texts from Sefaria and
+    everything else from `https://api.sk.shmuky.dev/v3/texts/<sha256>`. It
+    checks each text's length against the catalog's `bytes`.
+  - The phone reads a text from its packs or saved copies first, as
+    before. It can save the whole Igros (about 28 MB), with its word
+    search. The save runs 8 fetches at a time, since these are static
+    files; Sefaria keeps its gentler 3.
+  - The web's service worker keeps each letter once it is read
+    (`hosted-texts-v1`, cache first: the address never serves anything
+    else).
+- **The reader.**
+  - `<p class="end">` lines sit on the end side.
+  - A note nothing in the text points to follows the text unnumbered,
+    whether the notes are set to go at the end or in the text.
+  - The Igros open in David until a font is picked in the settings
+    (`fontChosen`, `readerFontFor`). An older settings row that already had
+    a font other than the default counts as picked.
+- **Wording.** A work whose last level is `letter` counts letters, not
+  chapters ("169 letters"), and the reader names a letter's volume above it
+  (its number is its title).
+- **About** in both apps says where the letters come from.
+
+**Checked:**
+
+- Tests pass in each package:
+  - igros-index: 15 (text objects, numerals, the import);
+  - catalog: 200, with the gate now holding back only the Maanos;
+  - works: 11 (the Igros app's copies by collection);
+  - app-core: 116 (end lines, unanchored notes, hosted fetch and its
+    length check, the Igros font, letters and volumes);
+  - catalog-api: 18 (every named text is at its sha256);
+  - mobile: 97 (a letter read from the API in David, with its notes);
+  - web: 91.
+- In Chromium, an Igros letter was read from the API's own build output,
+  in Hebrew and English: David, the date line on the end side, nine notes
+  after the letter with no numbers, the volume above the letter, and
+  "letters" on the volume list.
 
 ## 8. Risks
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Download } from 'lucide-react-native';
 import type { CatalogWork, CatalogWorkContents } from '@sichos-kodesh/catalog';
+import { mayRead, unitsAreLetters } from '@sichos-kodesh/app-core';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useOnlineStatus } from '../../network/useOnlineStatus';
 import { getPacksNative } from '../../offline/packsNative';
@@ -105,8 +106,8 @@ export function SaveSeferPanel({ work, contents }: { work: CatalogWork; contents
 
   return (
     <View style={styles.block}>
-      <TabHelp>{t.workReadOnline}</TabHelp>
-      {partly ? <TabHelp>{partly}</TabHelp> : <TabHelp>{t.workSaveHelp(formatBytes(saveBytes(work, contents)))}</TabHelp>}
+      <TabHelp>{work.sources.some((s) => s.source === 'sefaria' && mayRead(s)) ? t.workReadOnline : t.workReadOnlineHosted}</TabHelp>
+      {partly ? <TabHelp>{partly}</TabHelp> : <TabHelp>{t.workSaveHelp(formatBytes(saveBytes(work, contents)), unitsAreLetters(work))}</TabHelp>}
       {canSave ? <Button label={saved || stopped ? t.workSaveContinue : t.workSave} icon={<Download size={16} color={colors.accentFg} />} onPress={start} /> : native ? <TabHelp>{t.workSaveNeedsConnection}</TabHelp> : null}
       {(saved || stopped) && <RemoveAction workId={work.id} />}
     </View>

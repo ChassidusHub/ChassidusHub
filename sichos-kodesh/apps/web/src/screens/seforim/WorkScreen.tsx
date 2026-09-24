@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import type { CatalogWork, CatalogWorkSource, LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS, catalogUnit } from '@sichos-kodesh/catalog';
-import { contentsAt, names, unitCount, workKind } from '@sichos-kodesh/app-core';
+import { contentsAt, mayRead, names, unitCount, unitsAreLetters, workKind } from '@sichos-kodesh/app-core';
 import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
 import { useWorkContents, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -133,7 +133,7 @@ export function WorkScreen({ workId }: Props) {
         <>
           <h1 className="library-item-title">{names(work.title, language)}</h1>
           {authorNames.length > 0 && <p className="subtitle">{authorNames.join(', ')}</p>}
-          {kind === 'read' && <p className="tab-help">{t.workReadOnline}</p>}
+          {kind === 'read' && <p className="tab-help">{work.sources.some((s) => s.source === 'sefaria' && mayRead(s)) ? t.workReadOnline : t.workReadOnlineHosted}</p>}
           {kind === 'links' && <p className="tab-help">{t.workNoText}</p>}
           {collection && (
             <Link className="button" to={`/library/c/${collection}`}>
@@ -165,7 +165,7 @@ export function WorkScreen({ workId }: Props) {
                 <li key={`part-${index}`}>
                   <Link className="year-row" to={workPath(workId, [...path, index])}>
                     <span className="year-row-year">{names(entry.title, language)}</span>
-                    <span className="year-row-distance">{t.workPartOf(unitCount(entry))}</span>
+                    <span className="year-row-distance">{t.workPartOf(unitCount(entry), unitsAreLetters(work))}</span>
                   </Link>
                 </li>
               ),

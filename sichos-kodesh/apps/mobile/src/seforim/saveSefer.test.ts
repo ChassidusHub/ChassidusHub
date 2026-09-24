@@ -67,7 +67,7 @@ function sefaria(failFrom = Infinity) {
     calls += 1;
     if (calls >= failFrom) throw new Error('network');
     const ref = decodeURIComponent(/texts\/([^?]+)/.exec(url)![1]!).replace(/_/g, ' ');
-    return { ok: true, json: async () => ({ versions: [{ text: [texts[ref] ?? ''] }] }) };
+    return { ok: true, json: async () => ({ versions: [{ text: [texts[ref] ?? ''] }] }), text: async (): Promise<string> => '' };
   });
   return fetchFn;
 }
@@ -136,7 +136,7 @@ describe('saving a sefer on the phone', () => {
 
   it('leaves out a unit Sefaria does not serve, indexes the rest, and tries it again on continue', async () => {
     const { native, built } = fakeNative();
-    const missing = jest.fn(async (url: string) => (url.includes('Tanya_2') ? { ok: false, json: async () => ({}) } : sefaria()(url)));
+    const missing = jest.fn(async (url: string) => (url.includes('Tanya_2') ? { ok: false, json: async () => ({}), text: async (): Promise<string> => '' } : sefaria()(url)));
     await saveSefer(native, work, contents, missing);
     expect(getSaveJob('tanya')).toMatchObject({ state: 'stopped', problem: 'unavailable', done: 2, total: 3 });
     expect((await getSavedState()).seforim.tanya).toMatchObject({ units: 2, complete: false, index: 'indexes/saved_tanya.sqlite' });

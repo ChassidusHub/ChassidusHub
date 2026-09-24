@@ -2,7 +2,7 @@ import { Fragment, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { catalogUnit } from '@sichos-kodesh/catalog';
-import { authorSections, names, workKind } from '@sichos-kodesh/app-core';
+import { authorSections, names, unitsAreLetters, workKind } from '@sichos-kodesh/app-core';
 import { catalogStore, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useTranslation } from '../../i18n/useLanguage';
@@ -37,7 +37,7 @@ export function SeforimScreen() {
     const work = byId.get(workId)!;
     switch (workKind(work)) {
       case 'read':
-        return t.seforimChapters(work.units ?? 0);
+        return t.seforimChapters(work.units ?? 0, unitsAreLetters(work));
       case 'collection':
         return t.seforimInLibrary;
       case 'links':

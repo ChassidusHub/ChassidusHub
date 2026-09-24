@@ -1,9 +1,10 @@
+import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { cleanHtml, htmlToText, letterHtml, lettersByVolume, maanehHtml, parseHebrewNumeral, parseLetterNumber, readIgros, readIgrosOutput, readMaanos, readTags, yearFromDateLine } from '../src/index.js';
+import { cleanHtml, hebrewNumeral, htmlToText, igrosImport, letterHtml, lettersByVolume, maanehHtml, parseHebrewNumeral, parseLetterNumber, readIgros, readIgrosOutput, readMaanos, readTags, yearFromDateLine } from '../src/index.js';
 
 // Synthetic rows in the source's shape. The wording is invented for the
 // test - no text from the source is in this repository.
@@ -132,20 +133,41 @@ describe('readMaanos / readTags', () => {
 });
 
 describe('text objects', () => {
-  it('writes a letter as one stable RTL article, escaping the plain-text fields', () => {
+  it('writes a letter in the reader\'s form: date and city to the end side, the signature too, the notes after it, where it is printed', () => {
     const [first] = readIgros(join(dir, 'data.sqlite')).letters;
-    const html = letterHtml({ ...first!, city: 'עיר <א>' });
+    const html = letterHtml({ ...first!, city: 'עיר <א>', bookPage: 'טו' });
     expect(html).toBe(
-      '<article dir="rtl" lang="he" data-id="igros:1"><header><p class="number">א</p><p class="date">ב"ה, א\' ניסן, תש"ט</p><p class="city">עיר &lt;א&gt;</p></header>' +
-        '<div class="addressee"><p>לכבוד</p></div><div class="body"><p>שלום וברכה!</p><p>שורה</p></div><div class="signature"><p><b>החותם</b></p></div><aside class="notes"><p><b>הערה:</b> מקור.</p></aside></article>\n',
+      '<article dir="rtl" lang="he" data-id="igros:1"><p class="end">ב"ה, א\' ניסן, תש"ט</p><p class="end">עיר &lt;א&gt;</p>' +
+        '<p>לכבוד</p><p>שלום וברכה!</p><p>שורה</p><p class="end"><b>החותם</b></p><aside class="notes"><p><b>הערה:</b> מקור.</p></aside>' +
+        '<footer class="source">אגרות קודש חלק א, אגרת א, עמ׳ טו</footer></article>\n',
     );
-    expect(letterHtml({ ...first!, city: 'עיר <א>' })).toBe(html);
+    expect(letterHtml({ ...first!, city: 'עיר <א>', bookPage: 'טו' })).toBe(html);
   });
 
   it('writes a maaneh with only what it has', () => {
     expect(maanehHtml({ id: 'maanos:5742:1', year: 5742, number: 1, numberLabel: 'א', dateLine: '', body: '<p>מענה</p>' })).toBe(
-      '<article dir="rtl" lang="he" data-id="maanos:5742:1"><header><p class="number">א</p></header><div class="body"><p>מענה</p></div></article>\n',
+      '<article dir="rtl" lang="he" data-id="maanos:5742:1"><p>מענה</p><footer class="source">מענות תשמ״ב, א</footer></article>\n',
     );
+  });
+
+  it('writes numbers as Hebrew numerals, bare or marked', () => {
+    expect([1, 15, 16, 28, 141, 742].map((n) => hebrewNumeral(n))).toEqual(['א', 'טו', 'טז', 'כח', 'קמא', 'תשמב']);
+    expect([5, 742].map((n) => hebrewNumeral(n, true))).toEqual(['ה׳', 'תשמ״ב']);
+  });
+
+  it('makes the Igros a work of volumes and letters, each letter a text object named by its sha256', () => {
+    const { letters } = readIgros(join(dir, 'data.sqlite'));
+    const { work, bundles } = igrosImport(letters);
+    expect(work.workId).toBe('igros-kodesh-rebbe');
+    expect(work.units.map((u) => u.id)).toEqual(letters.map((l) => l.id.replace('igros:', '')));
+    expect(work.contents.map((node) => node.title.he)).toEqual(bundles.map((b) => `חלק ${hebrewNumeral(b.volume)}`));
+    expect(work.contents.flatMap((node) => node.entries.map((e) => e.unitId))).toEqual(work.units.map((u) => u.id));
+    const unit = work.units[0]!;
+    const html = bundles[0]!.texts[0]!;
+    expect(unit.label).toBe(`אגרת ${letters[0]!.numberLabel}`);
+    expect(unit.editions[0]!.text).toEqual({ sha256: createHash('sha256').update(html, 'utf8').digest('hex'), bytes: Buffer.byteLength(html, 'utf8') });
+    expect(unit.editions[0]).toMatchObject({ source: 'igros-app', sourceId: letters[0]!.id, kind: 'text', language: 'he' });
+    expect(bundles.flatMap((b) => b.texts)).toHaveLength(letters.length);
   });
 
   it('reads the build output back', () => {

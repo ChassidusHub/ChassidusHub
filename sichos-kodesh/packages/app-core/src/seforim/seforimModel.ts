@@ -3,6 +3,7 @@ import type {
   CatalogContentsEntry,
   CatalogContentsNode,
   CatalogEdition,
+  CatalogNames,
   CatalogUnit,
   CatalogWork,
   CatalogWorkContents,
@@ -88,6 +89,18 @@ export function unitPosition(contents: CatalogWorkContents, unitId: string): { n
   const ordered = unitsInOrder(contents);
   const at = ordered.findIndex((u) => u.id === unitId);
   return at < 0 ? null : { number: at + 1, total: ordered.length };
+}
+
+/** Whether a work's units are letters (the Igros): the apps count and name them as letters, not chapters. */
+export function unitsAreLetters(work: Pick<CatalogWork, 'levels'>): boolean {
+  return work.levels.at(-1) === 'letter';
+}
+
+/** The part of the sefer a unit is in, by its title (a volume of the Igros: `חלק א`), or null for a unit at the top. */
+export function unitPart(contents: CatalogWorkContents, unitId: string): CatalogNames | null {
+  const path = pathToUnit(contents, unitId);
+  const node = path.length > 0 ? contents.contents[path[0]!] : undefined;
+  return node && !('unitId' in node) ? node.title : null;
 }
 
 /**

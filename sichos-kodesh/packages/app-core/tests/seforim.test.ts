@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogWork, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
 import { renderUnit } from '@sichos-kodesh/sefaria-index/reader';
-import { DEFAULT_READER_SETTINGS, clampScale, parseReaderSettings, readerFont, readerLineHeight, readerTextSize } from '../src/seforim/readerSettings.js';
+import { DEFAULT_READER_SETTINGS, clampScale, parseReaderSettings, readerFont, readerFontFor, readerLineHeight, readerTextSize } from '../src/seforim/readerSettings.js';
 import { emptyReadingState, parseReadingState, recentPlaces, withBookmarkToggled, withPlace, withSettings, isBookmarked } from '../src/seforim/readingState.js';
-import { authorSections, chooseEdition, citation, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, unitPosition, workKind } from '../src/seforim/seforimModel.js';
+import { authorSections, chooseEdition, citation, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, unitPart, unitPosition, unitsAreLetters, workKind } from '../src/seforim/seforimModel.js';
 import { searchNames } from '../src/seforim/searchNames.js';
 import { fetchFromSefaria, TextLoadError } from '../src/seforim/sefariaText.js';
-import { markLabel, parseTextObject, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
+import { markLabel, noteLabel, notesAfterText, parseTextObject, referencedNotes, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
+import { fetchHostedText, fetchUnitText, hostedTextUrl, utf8Length } from '../src/seforim/unitText.js';
 
 // Invented works and texts in the catalog's shape - not real editions.
 const tanya: CatalogWork = {
@@ -130,7 +131,7 @@ describe('text objects', () => {
   });
 
   it('renders a unit read live from Sefaria the way the packs carry it, and says why it cannot', async () => {
-    const ok = async () => ({ ok: true, json: async () => ({ versions: [{ text: ['second'] }] }) });
+    const ok = async () => ({ ok: true, json: async () => ({ versions: [{ text: ['second'] }] }), text: async () => '' });
     const live = await fetchFromSefaria(tanya, contents.units[1]!, contents.units[1]!.editions[0]!, ok);
     expect(live).toContain('data-version="Kehot Publication Society"');
     expect(live).toContain('<p>second</p>');
@@ -176,6 +177,17 @@ describe('the reader settings', () => {
     expect(parseReaderSettings({ scale: 7 }).scale).toBe(1);
   });
 
+  it('opens the Igros in David until a font is chosen, and counts an older row\'s own font as chosen', () => {
+    const igros = { genre: 'igros' };
+    expect(readerFontFor(DEFAULT_READER_SETTINGS, igros)).toBe('david');
+    expect(readerFontFor(DEFAULT_READER_SETTINGS, { genre: 'chassidus' })).toBe('frank-ruehl');
+    expect(readerFontFor({ font: 'frank-ruehl', fontChosen: true }, igros)).toBe('frank-ruehl');
+    expect(readerFontFor({ font: 'noto-serif', fontChosen: false }, null)).toBe('noto-serif');
+    expect(parseReaderSettings({ font: 'sbl-hebrew' }).fontChosen).toBe(true);
+    expect(parseReaderSettings({ font: 'frank-ruehl' }).fontChosen).toBe(false);
+    expect(parseReaderSettings({ font: 'frank-ruehl', fontChosen: true }).fontChosen).toBe(true);
+  });
+
   it('keeps the text size older versions stored on its own', () => {
     expect(parseReadingState({ fontScale: 1.4 }).settings.scale).toBe(1.4);
     expect(parseReadingState({ fontScale: 1.4, settings: { scale: 1.1 } }).settings.scale).toBe(1.1);
@@ -218,5 +230,82 @@ describe('the reading state', () => {
       places: { a: { unitId: '1', source: 0, at: '2026-09-01T00:00:00Z' }, b: { unitId: '2', source: 0, at: '2026-09-03T00:00:00Z' }, c: { unitId: '3', source: 0, at: '2026-09-02T00:00:00Z' } },
     });
     expect(recentPlaces(state, 2).map((p) => p.workId)).toEqual(['b', 'c']);
+  });
+});
+
+describe('a letter of the Igros as the reader reads it', () => {
+  const letter =
+    '<article dir="rtl" lang="he" data-id="igros:6"><p class="end">ב"ה, י"ב כסלו</p><p>שלום וברכה!</p><p>מכתבו הגיעני.</p><p class="end"><b>מ. שניאורסאהן</b></p>' +
+    '<aside class="notes"><p>מגוכתי"ק.</p><p><b>מכתבו:</b> לא נמצא.</p></aside><footer class="source">אגרות קודש חלק א, אגרת ו, עמ׳ טו</footer></article>\n';
+
+  it('sets the date line and the signature to the end side, and lists the notes after it, unnumbered, wherever the notes go', () => {
+    const text = parseTextObject(letter);
+    expect(text.blocks.map((b) => b.align ?? null)).toEqual(['end', null, null, 'end']);
+    expect(text.notes).toHaveLength(2);
+    expect(referencedNotes(text).size).toBe(0);
+    expect(notesAfterText(text, 'end')).toHaveLength(2);
+    expect(notesAfterText(text, 'inline')).toHaveLength(2);
+    expect(noteLabel(text.notes[0]!, referencedNotes(text))).toBe('');
+    expect(text.source).toBe('אגרות קודש חלק א, אגרת ו, עמ׳ טו');
+  });
+
+  it('keeps a pointed-to note in the text when the notes go there', () => {
+    const text = parseTextObject('<article><p>a<sup class="fn"><a href="#n1">1</a></sup></p><aside class="notes"><p id="n1">one</p><p id="n2">two</p></aside></article>');
+    expect(notesAfterText(text, 'inline').map((n) => n.n)).toEqual([2]);
+    expect(noteLabel(text.notes[0]!, referencedNotes(text))).toBe('1');
+  });
+});
+
+describe('a sefer of letters', () => {
+  it('counts letters, not chapters, and names the volume a letter is in', () => {
+    expect(unitsAreLetters({ levels: ['volume', 'letter'] })).toBe(true);
+    expect(unitsAreLetters({ levels: ['part', 'chapter'] })).toBe(false);
+    expect(unitsAreLetters({ levels: [] })).toBe(false);
+    const igros = { workId: 'igros', contents: [{ title: { he: 'חלק א', en: 'Volume 1' }, entries: [{ unitId: '1' }, { unitId: '2' }] }, { title: { he: 'חלק ב', en: 'Volume 2' }, entries: [{ unitId: '400' }] }], units: [] };
+    expect(unitPart(igros, '400')).toEqual({ he: 'חלק ב', en: 'Volume 2' });
+    expect(unitPart(contents, 'intro')).toBeNull();
+  });
+});
+
+describe('texts the catalog API hosts', () => {
+  const igros: CatalogWork = {
+    id: 'igros-kodesh-rebbe',
+    title: { he: 'אגרות קודש', en: 'Igros Kodesh' },
+    authors: ['the-rebbe'],
+    genre: 'igros',
+    levels: ['volume', 'letter'],
+    sources: [
+      { source: 'chabadlibrary', sourceId: '1', kind: 'text', licence: 'free-to-read', rights: 'link-only' },
+      { source: 'igros-app', sourceId: 'igros', kind: 'text', language: 'he', licence: 'commercial', rights: 'ship-with-credit', credit: 'Kehot Publication Society' },
+    ],
+    units: 1,
+  };
+  const html = '<article><p>שלום</p></article>\n';
+  const edition = { source: 1, sha256: 'a'.repeat(64), bytes: utf8Length(html) };
+  const unit = { id: '6', label: 'אגרת ו', editions: [edition] };
+
+  it('reads a text at its sha256, checked against its length', async () => {
+    expect(hostedTextUrl('ab')).toBe('https://api.sk.shmuky.dev/v3/texts/ab');
+    const asked: string[] = [];
+    const serve = (body: string) => async (url: string) => {
+      asked.push(url);
+      return { ok: true, json: async () => ({}), text: async () => body };
+    };
+    expect(await fetchUnitText(igros, unit, edition, serve(html))).toBe(html);
+    expect(asked).toEqual([`https://api.sk.shmuky.dev/v3/texts/${'a'.repeat(64)}`]);
+    await expect(fetchHostedText(edition, serve('<p>other</p>'))).rejects.toEqual(new TextLoadError('unavailable'));
+    await expect(fetchHostedText({ source: 1 }, serve(html))).rejects.toEqual(new TextLoadError('unavailable'));
+    await expect(fetchHostedText(edition, async () => ({ ok: false, json: async () => ({}), text: async () => '' }))).rejects.toEqual(new TextLoadError('unavailable'));
+    await expect(
+      fetchHostedText(edition, async () => {
+        throw new Error('network');
+      }),
+    ).rejects.toEqual(new TextLoadError('offline'));
+  });
+
+  it('counts UTF-8 bytes as the catalog does', () => {
+    expect(utf8Length('abc')).toBe(3);
+    expect(utf8Length('שלום')).toBe(8);
+    expect(utf8Length('😀')).toBe(4);
   });
 });

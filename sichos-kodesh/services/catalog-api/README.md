@@ -24,6 +24,7 @@ The shapes are `CatalogManifest` / `CatalogRelease` in
 | `/v3/catalog/manifest.json` | schema 3 - the phone app from mobile 1.5.0: schema 2's fields plus `works` (how many works, and how many units the imported ones have) | `public, max-age=300` |
 | `/v3/catalog/<version>/catalog.json` | schema 2's file, byte for byte, plus `works` (`WorksRelease`) | `public, max-age=31536000, immutable` |
 | `/v3/catalog/changelog.json`, `/v3/catalog/latest/catalog.json` | as under `/v1/` | |
+| `/v3/texts/<sha256>` | a text object the works name for a source other than Sefaria (the Igros' letters): static files written by `scripts/build.mjs` from `texts/`, with the headers `vercel.json` gives them (HTML, CORS, a strict CSP) | `public, max-age=86400, s-maxage=31536000` |
 | `/` | a small index | |
 
 Any other path, and any other version than the one served, is a JSON
@@ -58,6 +59,13 @@ commit deployed to production** - `main`:
 3. Tag the same commit `catalog-v<version>` and push the tag - the
    `catalog-release` workflow attaches the identical two files to a GitHub
    release, the archive of what the API served.
+
+The hosted texts come the same way: `texts/<work>/*.json` are committed
+bundles of text objects (`{texts: [html, ...]}`, written by
+`packages/igros-index`'s `import-igros`), and the build writes each to
+`public/v3/texts/<sha256>`. It fails when a text the works name for a
+source other than Sefaria is missing, so a sefer is never deployed that
+cannot be read. `npm run dev` serves them from disk too.
 
 `main` must therefore never carry a half-bumped catalog: `release-files
 --check` (run by the build) fails when the changelog's first entry is not

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TextStyle } from 'react-native';
-import { markLabel, readerFont, readerLineHeight, readerTextSize, stripNiqqud, type Footnote, type Inline, type ReaderPalette, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
+import { markLabel, noteLabel, notesAfterText, readerFont, readerLineHeight, readerTextSize, referencedNotes, stripNiqqud, type Footnote, type Inline, type ReaderPalette, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
 import { useTranslation } from '../i18n/useTranslation';
 import { AppText } from '../ui/Text';
 
@@ -90,7 +90,10 @@ function Runs({ inlines, context }: { inlines: Inline[]; context: RunContext }) 
  * reader's settings ask: its font, size, spacing and paper; justified or
  * not; with or without vowels and markers; its notes at the end (numbers
  * that open them) or in the text. Headings are centred, as a sefer sets
- * them; the credit line closes the unit.
+ * them, and a line marked for the end side (a letter's date and signature)
+ * sits there. Notes nothing in the text points to (the Igros' notes on a
+ * letter) follow the text unnumbered, wherever the notes go. The credit
+ * line closes the unit.
  */
 export function TextObjectView({ text, settings, palette, onShare }: Props) {
   const { t } = useTranslation();
@@ -102,7 +105,11 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
   const rtl = text.dir === 'rtl';
   const writingDirection = rtl ? 'rtl' : 'ltr';
   const start = rtl ? 'right' : 'left';
+  const end = rtl ? 'left' : 'right';
   const notes = useMemo(() => new Map(text.notes.map((note) => [note.n, note])), [text.notes]);
+  const referenced = useMemo(() => referencedNotes(text), [text]);
+  const after = notesAfterText(text, settings.notes);
+  const label = (note: Footnote) => noteLabel(note, referenced);
   const context: RunContext = { size, settings, palette, notes, onNote: (n) => setOpen(notes.get(n) ?? null) };
   const body: TextStyle = { fontFamily, writingDirection, color: palette.text };
   const noteSize = Math.round(size * 0.82);
@@ -131,7 +138,7 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
               {
                 fontSize: size,
                 lineHeight,
-                textAlign: settings.justify ? 'justify' : start,
+                textAlign: block.align === 'end' ? end : settings.justify ? 'justify' : start,
                 marginBottom: Math.round(size * 0.7),
               },
               pressed === i ? { backgroundColor: palette.rule } : null,
@@ -142,13 +149,13 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
         ),
       )}
 
-      {settings.notes === 'end' && text.notes.length > 0 && (
+      {after.length > 0 && (
         <View style={[styles.notes, { borderTopColor: palette.rule }]}>
           <AppText style={[styles.notesTitle, { color: palette.muted, textAlign: start }]}>{t.readerNotes}</AppText>
-          {text.notes.map((note) => (
+          {after.map((note) => (
             <Text key={note.n} selectable style={[body, styles.note, { fontSize: noteSize, lineHeight: Math.round(noteSize * 1.5), textAlign: start }]}>
-              <Text style={[styles.strong, { color: palette.accent }]}>{`${note.marker || note.n} `}</Text>
-              <Runs inlines={note.inlines} context={{ ...context, size: noteSize }} />
+              {label(note) ? <Text style={[styles.strong, { color: palette.accent }]}>{`${label(note)} `}</Text> : null}
+              <Runs inlines={note.inlines} context={{ ...context, size: noteSize, nested: true }} />
             </Text>
           ))}
         </View>
@@ -161,7 +168,7 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
           <View style={[styles.sheet, { backgroundColor: palette.background, borderColor: palette.rule }]}>
             {open && (
               <Text selectable style={[body, { fontSize: Math.round(size * 0.9), lineHeight: Math.round(size * 1.45), textAlign: start }]}>
-                <Text style={[styles.strong, { color: palette.accent }]}>{`${open.marker || open.n} `}</Text>
+                {label(open) ? <Text style={[styles.strong, { color: palette.accent }]}>{`${label(open)} `}</Text> : null}
                 <Runs inlines={open.inlines} context={{ ...context, size: Math.round(size * 0.9), nested: true }} />
               </Text>
             )}

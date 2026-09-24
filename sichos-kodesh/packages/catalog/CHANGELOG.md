@@ -12,6 +12,13 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.4.0 - 2026-09-24
+
+- Igros Kodesh of the Rebbe as a readable sefer (schema 3): 11,059 letters
+  in 28 volumes, from packages/igros-index, cleared to ship on 2026-09-24.
+  Each letter is a text object the catalog API hosts at its sha256
+  (`/v3/texts/<sha256>`). The Maanos stay local.
+
 ## 1.3.0 - 2026-09-24
 
 - The Rebbeim and their seforim (schema 3, the phone's `/v3/`): 80 works

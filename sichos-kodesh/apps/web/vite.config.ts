@@ -247,6 +247,18 @@ export default defineConfig({
               expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },
+          {
+            // The texts the catalog API hosts (the Igros' letters), each at
+            // its sha256: the address never serves anything else, so a
+            // letter once read is kept and opens again offline.
+            urlPattern: ({ url }) => url.hostname === 'api.sk.shmuky.dev' && url.pathname.startsWith('/v3/texts/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'hosted-texts-v1',
+              cacheableResponse: { statuses: [200] },
+              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
         ],
       },
     }),

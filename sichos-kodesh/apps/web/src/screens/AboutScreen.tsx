@@ -74,6 +74,7 @@ export function AboutScreen() {
         <strong>Sefaria</strong>
         {t.aboutTextsBySuffix}
       </p>
+      <p className="subtitle">{t.aboutIgros}</p>
 
       <p className="category-header">{t.aboutPoweredBy}</p>
       <div className="about-badges">
