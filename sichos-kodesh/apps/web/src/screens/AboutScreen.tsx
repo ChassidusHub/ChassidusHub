@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Headphones, KeyRound, Loader2, RefreshCw } from 'lucide-react';
+import { READER_FONTS } from '@sichos-kodesh/app-core';
 import { CATALOG_CHANGELOG } from '@sichos-kodesh/catalog';
 import { useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -68,6 +69,11 @@ export function AboutScreen() {
         <strong>JEM</strong>
         {t.aboutAudioBySuffix}
       </p>
+      <p className="subtitle">
+        {t.aboutTextsBy}
+        <strong>Sefaria</strong>
+        {t.aboutTextsBySuffix}
+      </p>
 
       <p className="category-header">{t.aboutPoweredBy}</p>
       <div className="about-badges">
@@ -90,6 +96,28 @@ export function AboutScreen() {
           </span>
         </a>
       </div>
+
+      <p className="category-header">{t.aboutFonts}</p>
+      <p className="tab-help">{t.aboutFontsHelp}</p>
+      <ul className="year-list">
+        {READER_FONTS.filter((font) => font.family !== null).map((font) => (
+          <li key={font.id}>
+            <a className="year-row library-item-row" href={font.url} target="_blank" rel="noopener noreferrer">
+              <span className="library-item-text">
+                <span className="about-font-name" style={{ fontFamily: `'${font.family}', serif` }}>
+                  {font.name[language]}
+                </span>
+                <span className="library-item-subtitle">{`${font.origin} · ${font.licence}`}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="tab-help">
+        <a href="/fonts/reader/licences/README.txt" target="_blank" rel="noopener noreferrer">
+          {t.aboutFontLicences}
+        </a>
+      </p>
 
       <div className="settings-link-list">
         <Link className="category-row settings-link-row" to="/privacy">

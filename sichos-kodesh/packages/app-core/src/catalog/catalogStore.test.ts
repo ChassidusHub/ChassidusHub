@@ -41,7 +41,7 @@ describe('createCatalogStore', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('has no library in an app built without one (the web)', () => {
+  it('has no library in an app built without one', () => {
     expect(createCatalogStore(bundled, '1.0.0', 1).getLibrary()).toBeNull();
   });
 });
@@ -122,5 +122,48 @@ describe('createCatalogStore with works (schema 3, the phone)', () => {
   it('has no works in an app built without them', () => {
     expect(createCatalogStore(bundled, '1.0.0', 2, () => library).getWorks()).toBeNull();
     expect(createCatalogStore(bundled, '1.0.0', 1).getWorkContents('tanya')).toBeNull();
+  });
+});
+
+describe('createCatalogStore with parts that arrive later (the web)', () => {
+  const lateLibrary = { collections: {} } as unknown as CatalogLibrary;
+  const lateWorks = { authors: [], works: [] } as unknown as CatalogWorks;
+
+  /** A bundled part fetched after start-up: null until `arrive()`. */
+  function latePart<T>(value: T) {
+    let loaded = false;
+    const read = vi.fn(() => (loaded ? value : null));
+    return {
+      read,
+      arrive: () => {
+        loaded = true;
+      },
+    };
+  }
+
+  it('reads null while a part is on its way, then the part once it is in, and keeps it', () => {
+    const library = latePart(lateLibrary);
+    const index = latePart(lateWorks);
+    const store = createCatalogStore(bundled, '1.0.0', 3, library.read, { index: index.read, contents: () => null });
+    expect(store.getLibrary()).toBeNull();
+    expect(store.getWorks()).toBeNull();
+    library.arrive();
+    index.arrive();
+    expect(store.getLibrary()).toBe(lateLibrary);
+    expect(store.getWorks()).toBe(lateWorks);
+    const reads = library.read.mock.calls.length;
+    store.getLibrary();
+    expect(library.read).toHaveBeenCalledTimes(reads);
+  });
+
+  it('refresh tells every subscriber to look again, and no one after unsubscribing', () => {
+    const store = createCatalogStore(bundled, '1.0.0', 3, () => null, { index: () => null, contents: () => null });
+    const listener = vi.fn();
+    const unsubscribe = store.subscribe(listener);
+    store.refresh();
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    store.refresh();
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

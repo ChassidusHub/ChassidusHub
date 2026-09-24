@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { useLibrary } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { findGroup, groupDisplayName, groupItems, itemSubtitle } from '../../library/libraryModel';
+import { findGroup, groupDisplayName, groupItems, itemSubtitle } from '@sichos-kodesh/app-core';
 import type { LibraryGroupScreenProps } from '../../navigation/types';
 import { EmptyState } from '../../ui/EmptyState';
 import { Row } from '../../ui/Row';

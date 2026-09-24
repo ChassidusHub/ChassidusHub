@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLibrary, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { LIBRARY_ORDER } from '../../library/libraryModel';
+import { LIBRARY_ORDER } from '@sichos-kodesh/app-core';
 import type { LibraryScreenProps } from '../../navigation/types';
 import { CategoryRow } from '../../ui/CategoryRow';
 import { Screen } from '../../ui/Screen';

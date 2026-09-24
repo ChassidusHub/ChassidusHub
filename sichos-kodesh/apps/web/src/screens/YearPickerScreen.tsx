@@ -66,6 +66,10 @@ export function YearPickerScreen({ targetYear }: Props) {
         <span className="category-row-name">{t.browseAnyYear}</span>
       </Link>
 
+      <Link className="category-row" to="/library">
+        <span className="category-row-name">{t.libraryLink}</span>
+      </Link>
+
       <ContinueSection />
     </div>
   );

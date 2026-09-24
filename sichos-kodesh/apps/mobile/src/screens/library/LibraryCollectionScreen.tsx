@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLibrary } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { COLLECTION_AXES, axisGroups, groupDisplayName } from '../../library/libraryModel';
+import { COLLECTION_AXES, axisGroups, groupDisplayName } from '@sichos-kodesh/app-core';
 import type { LibraryCollectionScreenProps } from '../../navigation/types';
 import { Row, RowDistance } from '../../ui/Row';
 import { Screen } from '../../ui/Screen';

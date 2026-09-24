@@ -2,8 +2,9 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gematriya } from '@hebcal/core';
 import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sichos-kodesh/catalog';
-import { occasionTitle } from '@sichos-kodesh/app-core';
-import { useCatalog } from '../catalog/catalogStore';
+import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
+import { LIBRARY_ORDER, collectionYears, itemSubtitle, occasionTitle, searchLibrary } from '@sichos-kodesh/app-core';
+import { useCatalog, useLibrary } from '../catalog/catalogStore';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
@@ -13,8 +14,11 @@ import { hasActiveFilters, isChagCategory, searchOccasions } from '../search/sea
 import type { ContentType, SearchFilters } from '../search/searchOccasions';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
+import { LibraryLoading } from './library/LibraryLoading';
 
 const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
+/** A collection's results render as plain rows; past this many, the list asks for a narrower search instead of growing (as on the phone). */
+const LIBRARY_RESULT_LIMIT = 200;
 
 /**
  * Free-text search plus filters (year, month, day, parsha, content type)
@@ -27,7 +31,7 @@ const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
  * timer) so fast typing on a slower device doesn't force a catalog-wide
  * re-scan on every keystroke, while still feeling instant on a fast one.
  */
-export function SearchScreen() {
+function FarbrengenSearch() {
   const catalog = useCatalog();
   const { t, language } = useTranslation();
   const progressMap = useProgressMap();
@@ -74,10 +78,7 @@ export function SearchScreen() {
   ];
 
   return (
-    <div className="screen">
-      <ScreenHeader to="/" title={t.searchTitle} />
-      <p className="tab-help">{t.searchHelp}</p>
-
+    <>
       <input
         className="search-input"
         type="search"
@@ -204,6 +205,101 @@ export function SearchScreen() {
           ))}
         </>
       )}
+    </>
+  );
+}
+
+/** One library collection, searched by name and by where and when it was said (app-core's searchLibrary, as on the phone). */
+function LibrarySearch({ collection }: { collection: LibraryCollectionId }) {
+  const library = useLibrary();
+  const { t, language } = useTranslation();
+  const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
+  const [hebrewYear, setHebrewYear] = useState<number | null>(null);
+  const years = useMemo(() => (library ? collectionYears(library, collection) : []), [library, collection]);
+  const items = useMemo(() => (library ? searchLibrary(library, collection, deferredQuery, hebrewYear) : []), [library, collection, deferredQuery, hebrewYear]);
+  const active = query.trim() !== '' || hebrewYear != null;
+
+  return (
+    <>
+      <input
+        className="search-input"
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={t.searchLibraryPlaceholder}
+        aria-label={t.searchLibraryPlaceholder}
+        dir="auto"
+      />
+      {years.length > 0 && (
+        <div className="search-filters">
+          <label className="search-filter">
+            <span className="search-filter-label">{t.yearFilterLabel}</span>
+            <select value={hebrewYear ?? ''} onChange={(e) => setHebrewYear(e.target.value ? Number(e.target.value) : null)}>
+              <option value="">{t.anyFilterOption}</option>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {hebrewYearLabel(year, language)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      {!library && <LibraryLoading />}
+      {active && library && (
+        <>
+          <p className="subtitle search-results-count">{t.searchResultsCount(items.length)}</p>
+          {items.length === 0 && <p className="gap-message">{t.noSearchResults}</p>}
+          <ul className="year-list">
+            {items.slice(0, LIBRARY_RESULT_LIMIT).map((item) => {
+              const subtitle = itemSubtitle(collection, item, language);
+              return (
+                <li key={item.id}>
+                  <Link className="year-row library-item-row" to={`/library/item/${collection}/${encodeURIComponent(item.id)}`}>
+                    <span className="library-item-text">
+                      <span className="year-row-year">{item.label}</span>
+                      {subtitle && <span className="library-item-subtitle">{subtitle}</span>}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          {items.length > LIBRARY_RESULT_LIMIT && <p className="gap-message">{t.searchShowingFirst(LIBRARY_RESULT_LIMIT, items.length)}</p>}
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * Search: the farbrengens by default (free text plus year, month, day,
+ * parsha, chag, special day and content type), or - picked in "Search in" -
+ * one collection of the library.
+ */
+export function SearchScreen() {
+  const { t } = useTranslation();
+  const [collection, setCollection] = useState<LibraryCollectionId | null>(null);
+
+  return (
+    <div className="screen">
+      <ScreenHeader to="/" title={t.searchTitle} />
+      <p className="tab-help">{collection ? t.searchLibraryHelp : t.searchHelp}</p>
+      <div className="search-filters search-in">
+        <label className="search-filter">
+          <span className="search-filter-label">{t.searchInLabel}</span>
+          <select value={collection ?? ''} onChange={(e) => setCollection((e.target.value || null) as LibraryCollectionId | null)}>
+            <option value="">{t.searchInFarbrengens}</option>
+            {LIBRARY_ORDER.map((id) => (
+              <option key={id} value={id}>
+                {t.collectionNames[id]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {collection ? <LibrarySearch key={collection} collection={collection} /> : <FarbrengenSearch />}
     </div>
   );
 }

@@ -61,6 +61,16 @@ function copyPdfAssets(): Plugin {
 // it and re-opening it both work fully offline afterward, the same real
 // behavior apps/mobile gets from a local file.
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        // The bundled library and works (the phone's generated JSON, read
+        // by src/catalog/bundledParts.ts) get a folder of their own, so the
+        // service worker can leave them out of the precache.
+        chunkFileNames: (chunk) => (chunk.facadeModuleId && /\/catalog\/data\/(library|works)\//.test(chunk.facadeModuleId) ? 'assets/catalog-parts/[name]-[hash].js' : 'assets/[name]-[hash].js'),
+      },
+    },
+  },
   plugins: [
     react(),
     copyPdfAssets(),
@@ -119,6 +129,11 @@ export default defineConfig({
         // recovered from the real dataset - raise the cap rather than drop
         // precaching, since offline-from-first-load is the point.
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // The library and the works (src/catalog/bundledParts.ts, several MB)
+        // and the reader's fonts are fetched only by the screens that need
+        // them; precaching them would make every first visit download them.
+        // They are cached as they are used (runtimeCaching below).
+        globIgnores: ['**/assets/catalog-parts/**', '**/fonts/reader/**'],
         runtimeCaching: [
           {
             // Matches the deployed services/media-proxy origin - see src/config.ts. Both
@@ -205,6 +220,31 @@ export default defineConfig({
             options: {
               cacheName: PDF_RUNTIME_CACHE_NAME,
               cacheableResponse: { statuses: [200] },
+            },
+          },
+          {
+            // The library's and the works' parts (hashed, so never stale)
+            // and the reader's fonts: kept once fetched, so the library and
+            // a sefer already opened keep working offline.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && (url.pathname.includes('/assets/catalog-parts/') || url.pathname.startsWith('/fonts/reader/')),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'catalog-parts-v1',
+              cacheableResponse: { statuses: [200] },
+              expiration: { maxEntries: 200 },
+            },
+          },
+          {
+            // The seforim's chapters, read live from Sefaria's API: the
+            // newest text when online, and the last one read when not - so
+            // a chapter once opened opens again offline.
+            urlPattern: ({ url }) => url.hostname === 'www.sefaria.org' && url.pathname.startsWith('/api/v3/texts/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'sefaria-texts-v1',
+              networkTimeoutSeconds: 6,
+              cacheableResponse: { statuses: [200] },
+              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 365 },
             },
           },
         ],

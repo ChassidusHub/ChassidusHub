@@ -3,7 +3,7 @@ import type { CatalogLibrary, LibraryCollectionId, LibraryItemBase } from '@sich
 import { LIBRARY_COLLECTION_IDS } from '@sichos-kodesh/catalog';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import { deleteTargetDownloads, fileNameForTarget, listStoredDownloads, localPathForTarget } from '../download/downloadStorage';
-import { playlistOccasionId } from './libraryModel';
+import { playlistOccasionId } from '@sichos-kodesh/app-core';
 
 /**
  * Downloads for library items go through the same queue, executor and

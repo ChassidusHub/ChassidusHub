@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { audioChapterName, chapterTitle, occasionTitle, trackLabel } from '../src/catalog/displayNames.js';
+import { hebrewDayMonthLabel, hebrewFullDateLabel } from '../src/catalog/formatHebrewDate.js';
 
 const translated = { occasionLabel: `יום ב' דר"ה`, occasionLabelEn: 'Rosh Hashanah, day 2' };
 const hebrewOnly = { occasionLabel: `תמוז, ר"ד לפני הנשים מוואסטער` };
@@ -36,5 +37,17 @@ describe('audioChapterName / chapterTitle', () => {
   it("uses the apps' own track words", () => {
     expect(trackLabel(4, 'en')).toBe('Track 4');
     expect(trackLabel(4, 'he')).toBe('קטע 4');
+  });
+});
+
+describe('Hebrew dates', () => {
+  it('shows a full date, and what a partial one has', () => {
+    expect(hebrewFullDateLabel('5736-06A-06', 5736, 'en')).toBe('6 Adar I 5736');
+    expect(hebrewFullDateLabel('5736-05-10', 5736, 'he')).toBe('י׳ שבט תשל״ו');
+    // A library item with only a month, or with no date at all, never throws.
+    expect(hebrewFullDateLabel('5736-05', 5736, 'he')).toBe('שבט תשל״ו');
+    expect(hebrewFullDateLabel('', 5736, 'he')).toBe('תשל״ו');
+    expect(hebrewFullDateLabel('', 0, 'en')).toBe('');
+    expect(hebrewDayMonthLabel('', 'he')).toBe('');
   });
 });

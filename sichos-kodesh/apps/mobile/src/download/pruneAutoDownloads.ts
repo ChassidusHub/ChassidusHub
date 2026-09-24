@@ -1,7 +1,6 @@
-import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
+import { ALL_CONTENT_TYPES, findItem, listDownloadTargets } from '@sichos-kodesh/app-core';
 import { getCatalog, getLibrary } from '../catalog/catalogStore';
 import { deleteLibraryItemFiles, libraryItemTargets, parseLibraryTargetKey } from '../library/libraryDownloads';
-import { findItem } from '../library/libraryModel';
 import { getOccasionProgress, isOccasionFinished, readProgressMap } from '../player/progressStore';
 import type { DownloadSettings, RetentionPeriod } from './downloadSettings';
 import { forgetAutoDownload, listAutoDownloads } from './downloadLedger';

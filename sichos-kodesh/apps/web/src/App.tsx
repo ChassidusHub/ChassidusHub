@@ -37,6 +37,8 @@ import { AboutScreen } from './screens/AboutScreen';
 import { PrivacyScreen } from './screens/PrivacyScreen';
 import { SearchScreen } from './screens/SearchScreen';
 import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry, useOccasionAllYearsEntry } from './routes/useResolvedEntry';
+import { LibraryRoutes } from './routes/LibraryRoutes';
+import { SeforimRoutes } from './routes/SeforimRoutes';
 
 function ThisWeekRoute() {
   const { sourceYear } = useParams<{ sourceYear: string }>();
@@ -218,6 +220,8 @@ function AppContent() {
         <Route path="/downloaded" element={<DownloadedScreen />} />
         <Route path="/about" element={<AboutScreen />} />
         <Route path="/privacy" element={<PrivacyScreen />} />
+        <Route path="/library/*" element={<LibraryRoutes />} />
+        <Route path="/seforim/*" element={<SeforimRoutes />} />
 
         <Route path="/follow/:sourceYear" element={<ThisWeekRoute />} />
         <Route path="/follow/:sourceYear/month" element={<FollowMonthListRoute />} />

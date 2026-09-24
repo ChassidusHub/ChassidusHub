@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.3.0';
+export const APP_VERSION = '1.4.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,25 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.4.0',
+    en: [
+      'The whole library opens on the web too: the library, on the home page, has Likkutei Sichos by volume, parsha and moed, the maamorim, reshimos, yomanim, the general letters, hadranim and every JEM recording, and the farbrengens by moed and special day or by parsha. Each item plays and opens its PDFs here as on the phone - only the offline packs stay a phone feature',
+      'Seforim: the Rebbeim and their seforim. Tanya, Likkutei Torah, Torah Or, the Shulchan Aruch HaRav and more read right here, chapter by chapter, in Hebrew and in English, with the next chapter following on at the end of each one',
+      'A reader made for learning: Frank Ruehl, David, SBL Hebrew, Noto Serif or your device\'s font; text size, line spacing, margins, and the page - like the app, paper, sepia or night; vowels and cantillation on or off, justified text, the notes at the end or right in the text, and page markers on or off. The arrow keys turn the chapter',
+      'A sefer reopens at the paragraph where you left it; the seforim page starts with what you read last and your bookmarks. Select a passage to copy or share it with the sefer, the chapter and a link',
+      'Search in: pick the farbrengens or one of the library\'s collections, and find an item by its name or by where and when it was said',
+      'About credits Sefaria, where the texts come from, and each of the reader\'s fonts with its licence',
+    ],
+    he: [
+      'כל הספרייה נפתחת גם באתר: "הספרייה" בדף הבית מציגה לקוטי שיחות לפי כרך, פרשה ומועד, מאמרים, רשימות, יומנים, מכתבים כלליים, הדרנים וכל הקלטה של JEM, ואת ההתוועדויות לפי מועד ויום מיוחד או לפי פרשה. כל פריט מתנגן ופותח את קובצי ה-PDF שלו כאן כמו בטלפון - רק החבילות הלא מקוונות נשארות בטלפון',
+      'ספרים: רבותינו נשיאינו וספריהם. תניא, לקוטי תורה, תורה אור, שולחן ערוך הרב ועוד נקראים ישר כאן, פרק אחר פרק, בעברית ובאנגלית, והפרק הבא ממשיך בסוף כל פרק',
+      'קורא שנועד ללימוד: פרנק-ריהל, דוד, SBL עברית, נוטו סריף או הגופן של המכשיר; גודל האותיות, ריווח השורות, השוליים והדף - כמו האפליקציה, נייר, ספיה או לילה; ניקוד וטעמים לפי הבחירה, יישור לשני הצדדים, ההערות בסוף הפרק או בתוך הטקסט, וסימוני עמודים לפי הבחירה. מקשי החצים מעבירים פרק',
+      'ספר נפתח בפסקה שבה הפסקתם; דף הספרים מתחיל במה שנלמד לאחרונה ובסימניות שלכם. סמנו קטע כדי להעתיק או לשתף אותו עם שם הספר, הפרק וקישור',
+      '"חיפוש ב": בחרו בהתוועדויות או באחד מאוספי הספרייה, ומצאו פריט לפי שמו או לפי היכן ומתי נאמר',
+      'במסך אודות: קרדיט לספריא, ממנה באים הטקסטים, ולכל אחד מגופני הקורא עם הרישיון שלו',
+    ],
+  },
   {
     version: '1.3.0',
     en: [

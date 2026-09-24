@@ -1,13 +1,12 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FileText } from 'lucide-react-native';
-import type { CatalogEntry, CatalogRef, LibraryCollectionId, LibraryItemBase } from '@sichos-kodesh/catalog';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import type { CatalogRef, LibraryItemBase } from '@sichos-kodesh/catalog';
+import { findItem, formatDuration, itemFacts, itemPdfLabel, itemPdfs, itemPlaylistEntry, itemSubtitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { DownloadPill } from '../../components/DownloadPill';
 import { PlaylistPlayButton } from '../../components/PlaylistPlayButton';
 import { useTranslation } from '../../i18n/useTranslation';
-import { findItem, formatDuration, itemAudio, itemPdfs, itemSubtitle, linkedOccasion, playlistOccasionId } from '../../library/libraryModel';
 import { libraryItemTargets } from '../../library/libraryDownloads';
 import { useTargetsDownload } from '../../library/useLibraryDownload';
 import type { LibraryItemScreenProps } from '../../navigation/types';
@@ -23,66 +22,6 @@ import { CategoryHeader, Subtitle, TabHelp } from '../../ui/Typography';
 import { useColors } from '../../ui/theme';
 import { row } from '../../ui/rtl';
 
-type Translation = ReturnType<typeof useTranslation>['t'];
-
-/** The facts worth a line of their own, per collection: citations, hemshech, languages, date lines. Bibliographic facts only. */
-function itemFacts(t: Translation, collection: LibraryCollectionId, item: LibraryItemBase): string[] {
-  const record = item as LibraryItemBase & Record<string, unknown>;
-  const facts: string[] = [];
-  const text = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : null);
-  switch (collection) {
-    case 'maamorim': {
-      const occasion = text(record.occasionLabel);
-      if (occasion) facts.push(`${t.librarySaidAt}: ${occasion}`);
-      const hemshech = text(record.hemshech);
-      if (hemshech) facts.push(t.libraryHemshech(hemshech));
-      const kuntres = text(record.kuntres);
-      if (kuntres) facts.push(t.libraryKuntres(kuntres));
-      const citations = Array.isArray(record.citations) ? (record.citations as string[]).filter(Boolean) : [];
-      if (citations.length) facts.push(`${t.libraryPrintedIn}: ${citations.join(' · ')}`);
-      break;
-    }
-    case 'hadranim':
-      if (Array.isArray(record.dateLines)) facts.push(...(record.dateLines as string[]));
-      break;
-    case 'michtavimKlolim': {
-      const citations = Array.isArray(record.citations) ? (record.citations as Array<{ prefix: string; label: string }>).filter((c) => c.label) : [];
-      for (const citation of citations) facts.push(`${citation.prefix}: ${citation.label}`);
-      break;
-    }
-    case 'likkuteiSichos':
-      if (record.hasTranslated === true) facts.push(t.libraryHasTranslation);
-      break;
-    case 'jemEvents':
-      if (record.hasTranscript === true) facts.push(t.libraryHasTranscript);
-      break;
-    default:
-      break;
-  }
-  return facts;
-}
-
-function pdfLabel(t: Translation, ref: CatalogRef): string {
-  const role = ref.role ?? '';
-  const roleName = t.pdfRoleNames[role] ?? (role.includes(':') ? role.split(':').slice(1).join(':') : role);
-  if (ref.label && roleName && !ref.label.includes(roleName)) return `${roleName} · ${ref.label}`;
-  return ref.label || roleName || t.libraryDocuments;
-}
-
-/** A library item as the player takes a playlist: its own recordings under an id no catalog occasion has. */
-function playlistEntry(collection: LibraryCollectionId, item: LibraryItemBase): CatalogEntry | null {
-  const audio = itemAudio(item);
-  if (audio.length === 0) return null;
-  return {
-    occasionId: playlistOccasionId(collection, item),
-    hebrewYear: item.hebrewYear ?? 0,
-    hebrewDate: item.hebrewDate ?? '',
-    occasionLabel: item.label,
-    audio,
-    pdfs: [],
-  };
-}
-
 /** One item of the library: what it is, the farbrengen it was said at, its recordings and its documents. */
 export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps) {
   const library = useLibrary();
@@ -94,7 +33,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   const { collection, id } = route.params;
   const item = findItem(library, collection, id);
   const occasion = useMemo(() => (item ? linkedOccasion(catalog, item) : undefined), [catalog, item]);
-  const entry = useMemo(() => (item ? playlistEntry(collection, item) : null), [collection, item]);
+  const entry = useMemo(() => (item ? itemPlaylistEntry(collection, item) : null), [collection, item]);
   const targets = useMemo(() => (item ? libraryItemTargets(collection, item) : []), [collection, item]);
   const download = useTargetsDownload(targets);
 
@@ -109,7 +48,8 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   const record = item as LibraryItemBase & Record<string, unknown>;
   const title = collection === 'maamorim' && typeof record.diburHamaschil === 'string' ? record.diburHamaschil : item.label;
   const subtitle = itemSubtitle(collection, item, language);
-  const facts = itemFacts(t, collection, item);
+  const facts = itemFacts(collection, item, { saidAt: t.librarySaidAt, printedIn: t.libraryPrintedIn, hemshech: t.libraryHemshech, kuntres: t.libraryKuntres, hasTranslation: t.libraryHasTranslation, hasTranscript: t.libraryHasTranscript });
+  const pdfLabel = (ref: CatalogRef) => itemPdfLabel(ref, t.pdfRoleNames, t.libraryDocuments);
   const pdfs = itemPdfs(item);
   const disputed = collection === 'likkuteiSichos' && record.supplement === true;
 
@@ -164,7 +104,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
           {pdfs.map((ref) => (
             <Row
               key={`${ref.sourceId}-${ref.role ?? ''}`}
-              label={pdfLabel(t, ref)}
+              label={pdfLabel(ref)}
               marquee
               trailing={
                 <RowTrailing>
@@ -177,7 +117,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
                   occasionId: 0,
                   driveFileId: ref.sourceId,
                   resourceKey: ref.resourceKey ?? null,
-                  label: pdfLabel(t, ref),
+                  label: pdfLabel(ref),
                   library: { collection, id: item.id },
                 })
               }

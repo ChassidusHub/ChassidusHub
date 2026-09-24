@@ -1,8 +1,8 @@
 import type { CatalogLibrary } from '@sichos-kodesh/catalog';
 
 const { catalogStore } = require('../catalog/catalogStore') as typeof import('../catalog/catalogStore');
-const search = require('./librarySearch') as typeof import('./librarySearch');
-const model = require('./libraryModel') as typeof import('./libraryModel');
+const search = require('@sichos-kodesh/app-core') as typeof import('@sichos-kodesh/app-core');
+const model = require('@sichos-kodesh/app-core') as typeof import('@sichos-kodesh/app-core');
 
 const library = (): CatalogLibrary => catalogStore.getLibrary()!;
 
