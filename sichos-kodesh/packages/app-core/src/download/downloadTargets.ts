@@ -1,5 +1,7 @@
 import type { CatalogEntry, CatalogPdf, PdfEdition, PdfSection } from '@sichos-kodesh/catalog';
 import { classifyPdfEdition, isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
+import { chapterTitle } from '../catalog/displayNames.js';
+import type { Language } from '../search/language.js';
 
 export interface DownloadContentTypes {
   audio: boolean;
@@ -31,6 +33,20 @@ export const ALL_CONTENT_TYPES: DownloadContentTypes = {
   hagahos: true,
   hosofos: true,
 };
+
+/**
+ * What to call a target where the user sees it (a download notification):
+ * a recording by its chapter name in the UI language (see `chapterTitle`),
+ * looked up in its occasion's `entry`; a PDF, or a recording whose entry is
+ * not at hand, by the target's own `label`.
+ */
+export function downloadTargetTitle(target: DownloadTarget, entry: Pick<CatalogEntry, 'audio'> | undefined, language: Language): string {
+  if (target.kind === 'audio' && target.chapterIndex !== undefined) {
+    const audio = entry?.audio[target.chapterIndex];
+    if (audio && audio.workerFilename === target.workerFilename) return chapterTitle(audio, target.chapterIndex, language);
+  }
+  return target.label;
+}
 
 export function downloadTargetKey(target: Omit<DownloadTarget, 'key'>): string {
   return target.kind === 'audio'
