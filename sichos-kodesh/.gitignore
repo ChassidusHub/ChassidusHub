@@ -32,3 +32,8 @@ packages/catalog/dist-release/
 # packages/igros-index: the letters and maanos built from a commercial app's
 # data files - gated content, built locally only (see that package's README).
 packages/igros-index/data/
+
+# packages/sefaria-index: Sefaria's answers and the imported texts - a local
+# build, reproducible from the importer (see that package's README).
+packages/sefaria-index/.cache/
+packages/sefaria-index/data/

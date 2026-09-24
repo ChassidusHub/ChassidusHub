@@ -6,7 +6,10 @@ person reads or hears (a letter, a maamar, a sicha, a chapter), and each
 has **editions**: one source's copy.
 
 - **Types** (`src/types.ts`): `Author`, `Work`, `WorkSource`, `Unit`,
-  `Edition`, `Licence`, `RightsDecision`.
+  `Edition`, `Licence`, `RightsDecision`, plus what an importer produces:
+  - `ImportedWork`: a work's units and its contents;
+  - `ContentsNode`: the table of contents, in the work's own order;
+  - `TextObjectRef`: the sha256 and size of an edition's kept text.
 - **The registry** (`src/registry/`), kept by hand on purpose:
   - the authors: the Baal Shem Tov, the Maggid and the seven Rebbeim;
   - every work chabadlibrary.org lists, 73 under 11 groups, from a
@@ -40,8 +43,12 @@ has **editions**: one source's copy.
   Flipping one is that decision and nothing else. A test holds the gate to
   the catalog's per-collection table (`packages/catalog/src/rights.ts`).
 
-Nothing consumes the package yet. Catalog schema 3 (WP12) builds `works` from
-it, and the importers (WP10, WP11) add units and editions.
+- **Links** (`src/links.ts`): `editionUrl(edition)` is where a person reads
+  an edition at its source (a Sefaria page, a HebrewBooks book).
+
+The Sefaria importer (`packages/sefaria-index`, WP11) fills in units and
+editions for the works with Sefaria copies. Catalog schema 3 (WP12) builds
+`works` from both.
 
 ```
 npm test -w @sichos-kodesh/works        # against the library the phone bundles
