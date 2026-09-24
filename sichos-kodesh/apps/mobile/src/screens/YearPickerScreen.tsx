@@ -51,7 +51,7 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
       </Subtitle>
 
       {/* The app is meant to work offline: with a pack on the phone nothing needs saying. Without one, with no connection - or no Wi-Fi for downloads set to Wi-Fi only - it asks for the pack. */}
-      {askForPack && <OfflineNote text={online ? t.noWifiAskForPack : t.offlineAskForPack} />}
+      {askForPack && <OfflineNote pack text={online ? t.noWifiAskForPack : t.offlineAskForPack} />}
       {askForPack && <CategoryRow label={t.offlineImportPack} onPress={() => navigation.navigate('Offline')} />}
 
       {bestMatch && <Button hero label={t.weekKviusFarbrengens} onPress={() => navigation.navigate('KviusYears', { targetYear })} />}
