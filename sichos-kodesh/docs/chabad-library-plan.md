@@ -417,11 +417,11 @@ under the CLAUDE.md rule: version bump, merge, tag.
 **Not done, and why:**
 
 - **Text packs on a release build.** A text or a search index comes only
-  inside a pack signed with a key the build trusts. Release builds trust
-  no key until the production key exists (`sk-pack keygen`, one of the
-  open decisions), and no text pack is published yet. Debug builds trust
-  the development key, which is how packs are tested. Until then a phone
-  with internet saves a sefer itself (WP14).
+  inside a pack signed with a key the build trusts. Release builds up to
+  1.5.0 trust no key; from 1.6.0 they trust the production key
+  (`aac79a9724647680`, made 2026-09-24), but no text pack is published
+  yet. Debug builds trust the development key, which is how packs are
+  tested. Until then a phone with internet saves a sefer itself (WP14).
 
 - **"Open the scan"** needs HebrewBooks (WP11's other half), which is
   waiting on its permission.
@@ -432,8 +432,8 @@ under the CLAUDE.md rule: version bump, merge, tag.
 
 ### WP14 - saving a sefer on the phone
 
-Packs serve places with no internet, and they wait on the production
-signing key and a place to publish them. A phone that has internet can
+Packs serve places with no internet, and they wait on a place to
+publish them. A phone that has internet can
 save a sefer itself, the way a farbrengen downloads straight from its
 source.
 

@@ -21,11 +21,15 @@ export interface PackKeyPair {
 export type TrustedKeys = Record<string, string>;
 
 /**
- * The keys packs are trusted from. Filled in when Shmuly runs
- * `sk-pack keygen` (services/pack-builder) and commits the public half;
- * the test suite uses its own throwaway key and never touches this.
+ * The keys packs are trusted from: the public halves of the keys made with
+ * `sk-pack keygen` (services/pack-builder). The secret halves live only
+ * with whoever signs packs, never in this repository. The test suite uses
+ * its own throwaway key and never touches this.
  */
-export const TRUSTED_PACK_KEYS: TrustedKeys = {};
+export const TRUSTED_PACK_KEYS: TrustedKeys = {
+  // The production key, made 2026-09-24.
+  aac79a9724647680: 'DVHCrystbVvNVUuU85cp1hwMNlt2FQ/60UmEgjLOJvY=',
+};
 
 /**
  * The development key: derived from a published seed, so anyone can sign a

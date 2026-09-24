@@ -37,3 +37,8 @@ packages/igros-index/data/
 # build, reproducible from the importer (see that package's README).
 packages/sefaria-index/.cache/
 packages/sefaria-index/data/
+
+# sk-pack keygen's pack signing key (<archive root>/keys/pack-signing.json):
+# its secret half never enters the repository.
+keys/
+pack-signing*.json
