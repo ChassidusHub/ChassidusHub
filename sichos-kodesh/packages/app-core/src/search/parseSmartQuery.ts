@@ -18,6 +18,18 @@ export interface SmartQueryResult {
   remainingText: string;
 }
 
+export interface SmartQueryOptions {
+  /**
+   * Normalized words that occur, as they are, in the catalog's English
+   * occasion names ("torah", "mincha", "shemini") - kept as text for the
+   * label search, never read as a one-letter-off typo of a parsha or month
+   * ("torah" is two edits from "Korach", "mincha" from "Pinchas"). Only the
+   * fuzzy guess is skipped: an exact month, parsha or chag name is still a
+   * filter.
+   */
+  literalWords?: ReadonlySet<string>;
+}
+
 interface PhraseFilter {
   normalized: string;
   apply: (detected: DetectedFilters) => void;
@@ -251,7 +263,7 @@ function gematriyaDay(rawToken: string): number | null {
  * a gematriya year/day could never be told apart from an ordinary word
  * missing its geresh entirely.
  */
-export function parseSmartQuery(query: string, yearRange: { min: number; max: number }): SmartQueryResult {
+export function parseSmartQuery(query: string, yearRange: { min: number; max: number }, options: SmartQueryOptions = {}): SmartQueryResult {
   const rawTokens = query.split(/\s+/).filter(Boolean);
   const remainingRawTokens: string[] = [];
   const detected: DetectedFilters = { hebrewYear: null, hdateMonth: null, day: null, parsha: null };
@@ -336,7 +348,7 @@ export function parseSmartQuery(query: string, yearRange: { min: number; max: nu
   const keptWords: string[] = [];
   for (const word of text.split(' ')) {
     if (!word) continue;
-    const match = bestFuzzyPhrase(word, phrases);
+    const match = options.literalWords?.has(word) ? null : bestFuzzyPhrase(word, phrases);
     if (match) match.apply(detected);
     else keptWords.push(word);
   }

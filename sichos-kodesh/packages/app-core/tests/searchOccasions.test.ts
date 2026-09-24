@@ -167,7 +167,16 @@ describe('searchOccasions', () => {
       occasionLabel: 'שיחה לקבוצת סטודנטים',
       pdfs: [{ section: 'mugah', label: 'מוגה', driveFileId: 'o' }],
     });
-    const englishCatalog: CatalogByYear = { 5711: [motzei, hebrewOnly, mevarchim] };
+    // 22 Tishrei 5711 - not in Korach's week, which is what "torah" would be misread as.
+    const simchasTorah = makeEntry({
+      occasionId: 11,
+      hebrewYear: 5711,
+      hebrewDate: '5711-01-22',
+      occasionLabel: 'ליל שמח"ת, לפני הקפות',
+      occasionLabelEn: 'Simchas Torah night, before hakafos',
+      pdfs: [{ section: 'mugah', label: 'מוגה', driveFileId: 'p' }],
+    });
+    const englishCatalog: CatalogByYear = { 5711: [simchasTorah, motzei, hebrewOnly, mevarchim] };
     const search = (query: string) => searchOccasions(englishCatalog, { ...EMPTY_FILTERS, query })[0]?.entries ?? [];
 
     it('finds an occasion by its English name, typos and case included', () => {
@@ -183,6 +192,11 @@ describe('searchOccasions', () => {
 
     it('matches every word of a query within one name, not across the two', () => {
       expect(search('motzei סטודנטים')).toEqual([]);
+    });
+
+    it('reads a word of the English names as text, not as a typo of a parsha ("torah" is two letters from Korach)', () => {
+      expect(search('simchas torah')).toEqual([simchasTorah]);
+      expect(search('hakafos')).toEqual([simchasTorah]);
     });
   });
 
