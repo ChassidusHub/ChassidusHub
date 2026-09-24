@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLibrary } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { occasionGroupName } from '../../library/libraryModel';
+import { occasionGroupName } from '@sichos-kodesh/app-core';
 import type { OccasionGroupsScreenProps } from '../../navigation/types';
 import { Row, RowDistance } from '../../ui/Row';
 import { Screen } from '../../ui/Screen';

@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import { occasionGroupEntries, occasionGroupName, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { OccasionRowIcon } from '../../components/OccasionRowIcon';
 import { useTranslation } from '../../i18n/useTranslation';
-import { occasionGroupEntries, occasionGroupName } from '../../library/libraryModel';
 import type { OccasionGroupScreenProps } from '../../navigation/types';
 import { useProgressMap } from '../../player/useProgressMap';
 import { CategoryHeader, Subtitle } from '../../ui/Typography';

@@ -4,7 +4,7 @@ import { currentParsha, mafteiachMonthToken, toMafteiachHebrewDateKey } from '@s
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import { IL } from '../config';
 import { libraryItemTargets } from './libraryDownloads';
-import { findGroup, findItem } from './libraryModel';
+import { findGroup, findItem } from '@sichos-kodesh/app-core';
 
 /**
  * Auto-download per collection (docs/offline-plan.md WP4b), on top of the

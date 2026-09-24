@@ -510,6 +510,61 @@ same reader (WP16), so the reader's core moved out of the phone.
 - **Sharing**: a long press on a paragraph shares its words with the
   sefer, the chapter and a Sefaria link.
 
+### WP16 - the web app: the whole library and the seforim
+
+Shmuly: "All full library opens also in webapp. Just offline packed
+aren't." The web app (1.4.0) now has everything the phone browses. What
+stays on the phone is what needs its own storage: packs, saving a sefer,
+and searching the words of saved seforim.
+
+**Built:**
+
+- **Catalog schema 3 on the web**, like the phone: the store reads the
+  farbrengens, the library and the works. The library and works stay out
+  of the start-up bundle: `bundledParts.ts` loads the phone's own JSON
+  files with `import.meta.glob`, so each one is a chunk of its own
+  (`assets/catalog-parts/`), fetched the first time a screen asks for it.
+  Until then the store returns null (`BundledWorks.index` and
+  `bundledLibrary` may now return null), and `refresh()` re-renders the
+  readers once a part is in. The chunks and the reader fonts are not
+  precached (the precache stays at about 12 MB); the service worker
+  caches each one on first use (`catalog-parts-v1`). A catalog update
+  from `/v3` replaces all of it, as on the phone.
+- **Shared with the phone in app-core**: `libraryModel` and
+  `librarySearch` (moved from mobile, with new `itemFacts`,
+  `itemPdfLabel` and `itemPlaylistEntry`) and `formatHebrewDate`, now
+  safe for a date without a day (just the month) or without a year.
+- **The library** (`/library/*`): the collections and their axes
+  (volume, parsha, moed, year, masechta), farbrengens by moed and special
+  day or by parsha, and each item's page. An item's recordings play in
+  the site's own player and its PDFs open in the site's own viewer: the
+  same screens, reached through `useLibraryItem`.
+- **The seforim** (`/seforim/*`): the Rebbeim and their works, a work's
+  contents, name search over every work and chapter, and the reader.
+  Texts are read from Sefaria (it allows CORS); the service worker keeps
+  each chapter read (`sefaria-texts-v1`, network first), so a chapter
+  read once opens again offline.
+- **The reader**, with the same settings as the phone's, stored in the
+  same shape (localStorage, `sichos-kodesh:seforim-reading`):
+  - the same fonts, served from `public/fonts/reader/` with their
+    licences;
+  - size, spacing, margins and page, as CSS variables on the page;
+  - continuous reading, the place kept to the paragraph, bookmarks;
+  - a Wake Lock while a sefer is open (where the browser has one);
+  - the arrow keys turn the chapter;
+  - selecting text brings up Copy and Share, with the sefer, the chapter
+    and a link.
+- **Search** gains "Search in": the farbrengens (as before) or one of the
+  library's collections.
+- **About** credits Sefaria and each reader font with its licence.
+
+**Checked:** tsc, app-core, web and mobile tests; a production build; in
+Chromium at phone and desktop sizes, in Hebrew and English, light, dark
+and sepia, with Sefaria answered by a fixture: the library down to an
+item, the seforim, the reader and its settings, continuous reading (four
+chapters on one page) and the saved place. The check found the settings
+panel squeezing its font row to nothing; its children no longer shrink.
+
 ## 8. Risks
 
 - **chabadlibrary.org availability.** Its page API failed during research,

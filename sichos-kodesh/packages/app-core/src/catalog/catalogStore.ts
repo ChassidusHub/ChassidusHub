@@ -37,11 +37,21 @@ export interface CatalogStore {
    * that has a library (or works) only takes releases that carry them.
    */
   apply(release: CatalogRelease | LibraryRelease | WorksRelease, source: Exclude<CatalogSource, 'bundled'>): boolean;
+  /**
+   * Tells every reader to look again: for an app whose bundled library and
+   * works arrive after start-up (the web loads them as a separate part of
+   * its bundle), once they have.
+   */
+  refresh(): void;
 }
 
-/** The works an app bundles: the index, and each imported work's contents, both read on demand. */
+/**
+ * The works an app bundles: the index, and each imported work's contents,
+ * both read on demand. The index is null while it is not loaded yet (the
+ * web's arrives later, see `refresh`).
+ */
 export interface BundledWorks {
-  index: () => CatalogWorksIndex;
+  index: () => CatalogWorksIndex | null;
   contents: (workId: string) => CatalogWorkContents | null;
 }
 
@@ -54,16 +64,17 @@ export interface BundledWorks {
  * new data in place - nothing is remounted and nothing the user is doing
  * is interrupted.
  *
- * The phone passes its bundled library as a function (`bundledLibrary`):
- * the library is several megabytes and only its own screens need it. Its
+ * Both apps pass their bundled library as a function (`bundledLibrary`):
+ * the library is several megabytes and only its own screens need it. Their
  * works (schema 3) come the same way, each work's units in a part of its
- * own.
+ * own. The phone reads them at once when asked; the web returns null until
+ * it has fetched that part of its bundle, then calls `refresh`.
  */
 export function createCatalogStore(
   bundled: CatalogByYear,
   bundledVersion: string,
   schemaVersion: number,
-  bundledLibrary?: () => CatalogLibrary,
+  bundledLibrary?: () => CatalogLibrary | null,
   bundledWorks?: BundledWorks,
 ): CatalogStore {
   let snapshot: CatalogSnapshot = { catalog: bundled, version: bundledVersion, releasedAt: null, source: 'bundled' };
@@ -72,6 +83,9 @@ export function createCatalogStore(
   let appliedWorks: CatalogWorks | null = null;
   let loadedBundledWorks: CatalogWorksIndex | null = null;
   const listeners = new Set<() => void>();
+  const notify = () => {
+    for (const listener of listeners) listener();
+  };
 
   return {
     get: () => snapshot,
@@ -108,8 +122,9 @@ export function createCatalogStore(
       snapshot = { catalog: release.byYear, version: release.version, releasedAt: release.releasedAt, source };
       if (library) appliedLibrary = library;
       if (works) appliedWorks = works;
-      for (const listener of listeners) listener();
+      notify();
       return true;
     },
+    refresh: notify,
   };
 }

@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js';
-import { normalize } from '@sichos-kodesh/app-core';
+import { normalize } from '../search/searchOccasions.js';
 import type { CatalogLibrary, LibraryCollectionId, LibraryItemBase, OccasionGroup } from '@sichos-kodesh/catalog';
-import { itemSubtitle } from './libraryModel';
+import { itemSubtitle } from './libraryModel.js';
 
 /**
  * Search over one library collection (docs/offline-plan.md WP4b: the

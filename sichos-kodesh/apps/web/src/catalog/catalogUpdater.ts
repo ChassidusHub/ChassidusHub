@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react';
-import { CATALOG_SCHEMA_VERSION } from '@sichos-kodesh/catalog';
+import { CATALOG_WORKS_SCHEMA_VERSION } from '@sichos-kodesh/catalog';
 import { checkCatalogUpdate, fetchCatalogRelease, shouldCheckCatalog } from '@sichos-kodesh/app-core';
 import type { CatalogCheckRecord } from '@sichos-kodesh/app-core';
 import { APP_VERSION } from '../changelog';
@@ -63,7 +63,7 @@ export function checkForCatalogUpdate(): Promise<void> {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     setStatus({ phase: 'checking' });
-    const result = await checkCatalogUpdate({ currentVersion: catalogStore.get().version, schemaVersion: CATALOG_SCHEMA_VERSION });
+    const result = await checkCatalogUpdate({ currentVersion: catalogStore.get().version, schemaVersion: CATALOG_WORKS_SCHEMA_VERSION });
     if (result.status === 'error') {
       writeCheckRecord();
       setStatus({ phase: 'error', checkedAt: Date.now() });

@@ -1,12 +1,13 @@
 import type { CatalogAudio, CatalogByYear, CatalogEntry, CatalogLibrary, CatalogRef, LibraryCollectionId, LibraryGroup, LibraryItemBase, OccasionGroup } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew } from '@sichos-kodesh/catalog';
-import type { Language } from '../i18n/translations';
-import { hebrewFullDateLabel, hebrewYearLabel } from '../utils/formatHebrewDate';
+import { hebrewFullDateLabel, hebrewYearLabel } from '../catalog/formatHebrewDate.js';
+import type { Language } from '../search/language.js';
 
 /**
- * The phone's library browsers (docs/offline-plan.md WP4b) over catalog
- * schema 2's `library`: pure lookups the screens share, kept out of the
- * components so they are testable and cheap to memoise.
+ * The library browsers (docs/offline-plan.md WP4b; the web's since WP16)
+ * over catalog schema 2's `library`: pure lookups both apps' screens
+ * share, kept out of the components so they are testable and cheap to
+ * memoise.
  */
 
 /** The order collections appear in on the library page. */
@@ -171,4 +172,73 @@ export function linkedOccasion(catalog: CatalogByYear, item: LibraryItemBase): C
     if (found) return found;
   }
   return undefined;
+}
+
+/** The words `itemFacts` puts around the facts, in the interface language. */
+export interface ItemFactWords {
+  saidAt: string;
+  printedIn: string;
+  hemshech: (hemshech: string) => string;
+  kuntres: (kuntres: string) => string;
+  hasTranslation: string;
+  hasTranscript: string;
+}
+
+/** The facts worth a line of their own on an item's page, per collection: citations, hemshech, date lines. Bibliographic facts only. */
+export function itemFacts(collection: LibraryCollectionId, item: LibraryItemBase, words: ItemFactWords): string[] {
+  const record = item as LibraryItemBase & Record<string, unknown>;
+  const facts: string[] = [];
+  const text = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : null);
+  switch (collection) {
+    case 'maamorim': {
+      const occasion = text(record.occasionLabel);
+      if (occasion) facts.push(`${words.saidAt}: ${occasion}`);
+      const hemshech = text(record.hemshech);
+      if (hemshech) facts.push(words.hemshech(hemshech));
+      const kuntres = text(record.kuntres);
+      if (kuntres) facts.push(words.kuntres(kuntres));
+      const citations = Array.isArray(record.citations) ? (record.citations as string[]).filter(Boolean) : [];
+      if (citations.length) facts.push(`${words.printedIn}: ${citations.join(' · ')}`);
+      break;
+    }
+    case 'hadranim':
+      if (Array.isArray(record.dateLines)) facts.push(...(record.dateLines as string[]));
+      break;
+    case 'michtavimKlolim': {
+      const citations = Array.isArray(record.citations) ? (record.citations as Array<{ prefix: string; label: string }>).filter((c) => c.label) : [];
+      for (const citation of citations) facts.push(`${citation.prefix}: ${citation.label}`);
+      break;
+    }
+    case 'likkuteiSichos':
+      if (record.hasTranslated === true) facts.push(words.hasTranslation);
+      break;
+    case 'jemEvents':
+      if (record.hasTranscript === true) facts.push(words.hasTranscript);
+      break;
+    default:
+      break;
+  }
+  return facts;
+}
+
+/** A document's name on an item's page: its role (mugah, translation...) with mafteiach's own label. */
+export function itemPdfLabel(ref: CatalogRef, roleNames: Record<string, string>, fallback: string): string {
+  const role = ref.role ?? '';
+  const roleName = roleNames[role] ?? (role.includes(':') ? role.split(':').slice(1).join(':') : role);
+  if (ref.label && roleName && !ref.label.includes(roleName)) return `${roleName} · ${ref.label}`;
+  return ref.label || roleName || fallback;
+}
+
+/** What an item's recordings play as: a playlist under an id no catalog occasion has (see playlistOccasionId), or null for an item without any. */
+export function itemPlaylistEntry(collection: LibraryCollectionId, item: LibraryItemBase): CatalogEntry | null {
+  const audio = itemAudio(item);
+  if (audio.length === 0) return null;
+  return {
+    occasionId: playlistOccasionId(collection, item),
+    hebrewYear: item.hebrewYear ?? 0,
+    hebrewDate: item.hebrewDate ?? '',
+    occasionLabel: item.label,
+    audio,
+    pdfs: [],
+  };
 }
