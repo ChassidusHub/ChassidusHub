@@ -12,6 +12,16 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.2.0 - 2026-09-24
+
+- The library's 101 moadim and 53 parshiyos now have their English names
+  too (e.g. "Rosh Chodesh Kislev", "Tzivos Hashem rally - Purim"), for the
+  phone's English interface.
+- Data shape (schema 2 only): `OccasionGroup` gained an optional `nameEn`,
+  filled by the catalog build (`src/translate/groupNameEn.ts`): the
+  occasion-label rules, plus a table for the 30 headings they do not read.
+  The farbrengens (schema 1) are byte-for-byte those of 1.1.0.
+
 ## 1.1.0 - 2026-09-24
 
 - Every occasion now has its name in English too (e.g. "Rosh Hashanah,

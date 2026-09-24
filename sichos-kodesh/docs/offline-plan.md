@@ -583,10 +583,23 @@ downloads, off until turned on:
 The background task queues them with the farbrengens, and auto-cleanup
 prunes them the same way.
 
-Still to come:
+Search is built too (mobile 1.4.0):
 
-- the collection filter in search, and the moadim-based dropdowns;
-- the text reader, which waits on the Igros rights.
+- **Search in.** It picks the farbrengens or one collection. A collection
+  is searched by each item's name and by the line under it (where and
+  when it was said), in both languages, with the same Fuse settings as the
+  farbrengens. A year narrows it.
+- **Parsha and moed dropdowns.** They list mafteiach's own 53 parshiyos
+  and 101 moadim, replacing the date-math parsha, chag and special-day
+  lists. A choice passes the occasions mafteiach files there to app-core's
+  `searchOccasions` (`occasionIds`), so the web's search is unchanged. A
+  parsha or chag typed into the box is still read as before.
+- **English names.** Catalog 1.2.0 gives the moadim and parshiyos English
+  names (`nameEn`), used in the English interface. Most come from the
+  occasion-label rules, and a table covers the 30 headings they do not
+  read.
+
+Still to come: the text reader, which waits on the Igros rights.
 
 ### WP5 - `apps/download` + `services/pack-api`
 

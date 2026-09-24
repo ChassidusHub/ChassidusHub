@@ -35,6 +35,12 @@ export interface SearchFilters {
   specialDay: string | null;
   /** OR'd together - an entry matches if it has *any* of the selected types; empty means no type filter. */
   types: ContentType[];
+  /**
+   * Only these occasions, when set: the phone's moed and parsha dropdowns
+   * read mafteiach's own lists (the library's moadim and parshiyos) rather
+   * than date math, and pass the occasions the chosen ones group.
+   */
+  occasionIds?: ReadonlySet<number> | null;
 }
 
 export const EMPTY_FILTERS: SearchFilters = { query: '', hebrewYear: null, hdateMonth: null, day: null, parsha: null, specialDay: null, types: [] };
@@ -149,7 +155,8 @@ export function hasActiveFilters(filters: SearchFilters): boolean {
     filters.day != null ||
     filters.parsha != null ||
     filters.specialDay != null ||
-    filters.types.length > 0
+    filters.types.length > 0 ||
+    filters.occasionIds != null
   );
 }
 
@@ -195,6 +202,7 @@ export function searchOccasions(catalog: CatalogByYear, filters: SearchFilters, 
     if (effectiveYear != null && year !== effectiveYear) continue;
     const entries = (catalog[year] ?? []).filter((entry) => {
       if (entry.audio.length === 0 && entry.pdfs.length === 0) return false;
+      if (filters.occasionIds && !filters.occasionIds.has(entry.occasionId)) return false;
       if (matchedEntries && !matchedEntries.has(entry)) return false;
       if (effectiveMonth != null && mafteiachMonthTokenToHDateMonth(mafteiachMonthToken(entry.hebrewDate)) !== effectiveMonth) return false;
       if (effectiveDay != null && mafteiachDay(entry.hebrewDate) !== effectiveDay) return false;

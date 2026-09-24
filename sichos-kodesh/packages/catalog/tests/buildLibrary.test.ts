@@ -99,8 +99,8 @@ describe('buildLibrary', () => {
 
   it("takes mafteiach's moadim and parshiyos, with the farbrengens each groups", () => {
     expect(library.moadim).toEqual([
-      { slug: 'rosh_hashanah', name: 'ראש השנה', occasionIds: [] },
-      { slug: '10_shvat', name: 'יו"ד שבט', occasionIds: [100] },
+      { slug: 'rosh_hashanah', name: 'ראש השנה', nameEn: 'Rosh Hashanah', occasionIds: [] },
+      { slug: '10_shvat', name: 'יו"ד שבט', nameEn: '10 Shevat', occasionIds: [100] },
     ]);
     expect(occasionMoadim(library, 100).map((m) => m.slug)).toEqual(['10_shvat']);
     expect(occasionParshiyos(library, 100).map((p) => p.name)).toEqual(['בא']);

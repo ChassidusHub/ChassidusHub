@@ -141,6 +141,8 @@ export interface LibraryCollections {
 export interface OccasionGroup {
   slug: string;
   name: string;
+  /** Its English name (catalog 1.2.0+, `groupNameEn`); omitted when there is none. */
+  nameEn?: string;
   occasionIds: number[];
 }
 
