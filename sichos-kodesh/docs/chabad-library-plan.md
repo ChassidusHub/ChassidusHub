@@ -376,6 +376,60 @@ session cannot fetch (section 2a). Decision 2 still gates any PDFs.
 After WP13 the phone has a user-visible feature, so it ships as a release
 under the CLAUDE.md rule: version bump, merge, tag.
 
+**Built** (mobile 1.5.0; `apps/mobile/src/seforim/` and
+`src/screens/seforim/`):
+
+- **Browse.** Library > Seforim lists the Rebbeim in order, each with his
+  works, then the works of no Rebbe. A work opens on its contents, one
+  level at a time, down to its units. A work that is a library collection
+  (Likkutei Sichos, the maamorim) opens that collection. A work with no
+  text that may ship lists its sources as links.
+- **The reader** draws a text object with React Native's own `<Text>`, with
+  no web view. It shows:
+  - the edition's direction;
+  - page and study markers, muted;
+  - footnote numbers that open their note;
+  - the notes and the credit line at the end.
+
+  It also has:
+  - text size (0.8 to 1.8);
+  - the next and the previous unit;
+  - a bookmark on any unit;
+  - a chip for each edition that may be read. Editions that are link-only
+    open on their source's site.
+- **Where the text comes from.** The reader uses the pack's text object
+  when the phone holds it (by sha256). Otherwise it reads the unit live
+  from Sefaria and renders it with the same code the import uses
+  (`@sichos-kodesh/sefaria-index/reader`), so both look the same. With no
+  pack and no internet, the reader says so, and tries again once the
+  connection is back.
+- **Continue reading.** Each work's last unit and edition, and the
+  bookmarks, are kept on the phone (one AsyncStorage row). The Seforim
+  page opens with them.
+- **Search:**
+  - names of works and of units, from the catalog, so it works offline
+    for every sefer;
+  - the text of every sefer whose pack is on the phone, through its FTS4
+    index (`searchIndex` on the native pack module, Android's own SQLite),
+    with snippets cut from the held texts.
+- **About** credits Sefaria and each edition's licence.
+
+**Not done, and why:**
+
+- **Text packs on a release build.** A text or a search index comes only
+  inside a pack signed with a key the build trusts. Release builds trust
+  no key until the production key exists (`sk-pack keygen`, one of the
+  open decisions), and no text pack is published yet. So in 1.5.0 the
+  seforim read online, and search covers names. Debug builds trust the
+  development key, which is how packs are tested.
+
+- **"Open the scan"** needs HebrewBooks (WP11's other half), which is
+  waiting on its permission.
+- **The Toras Menachem text on a farbrengen screen** needs a source for it,
+  and none may ship yet (WP10: chabadlibrary.org).
+- **Text search online through the API.** There is no API for it yet.
+  Search without a pack covers names only.
+
 ## 8. Risks
 
 - **chabadlibrary.org availability.** Its page API failed during research,

@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./reader": {
+      "types": "./dist/reader.d.ts",
+      "default": "./dist/reader.js"
     }
   },
   "files": [

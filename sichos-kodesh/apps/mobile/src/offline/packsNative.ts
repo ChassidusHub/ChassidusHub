@@ -78,6 +78,8 @@ export interface PacksNativeModule {
   deleteDocument(uri: string): Promise<boolean>;
   exportZip(treeUri: string, subdir: string, fileName: string, entries: ExportZipEntry[], jobId: string): Promise<string>;
   deviceInfo(): Promise<DeviceInfo>;
+  /** One sefer's search index (`dest` relative to the files directory), queried with pack-format's searchIndexQuery. */
+  searchIndex(dest: string, match: string, limit: number): Promise<Array<{ unit: string; source: number }>>;
 }
 
 export function getPacksNative(): PacksNativeModule | null {

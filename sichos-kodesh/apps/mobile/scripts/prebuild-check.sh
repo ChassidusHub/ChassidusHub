@@ -10,13 +10,14 @@
 #   3. The bundled UI fonts must be present (a missing font silently falls
 #      back to Roboto on the device).
 #   4. No emoji in UI source - every glyph comes from lucide-react-native.
-#   5. Typecheck, lint, unit tests.
+#   5. No folder with both an index.ts and an index.json (Metro picks the JSON).
+#   6. Typecheck, lint, unit tests.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$(cd ../.. && pwd)"
 
 echo "▶ workspace packages"
-(cd "$ROOT" && npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/pack-format >/dev/null)
+(cd "$ROOT" && npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/pack-format -w @sichos-kodesh/works -w @sichos-kodesh/sefaria-index >/dev/null)
 
 echo "▶ react-native-track-player patch"
 (cd "$ROOT" && node scripts/patch-react-native-track-player.mjs)
@@ -47,6 +48,16 @@ if bad:
     print("✗ emoji found in UI source - use a lucide-react-native icon instead", file=sys.stderr)
     sys.exit(1)
 PY
+
+echo "▶ no folder with both index.ts and index.json"
+# Metro resolves a folder import to index.json before index.ts, so the app
+# would get the data in place of its loaders - and Jest, which prefers .ts,
+# would never notice.
+clash=$(find src -name index.json -exec sh -c '[ -e "$(dirname "$1")/index.ts" ] && echo "$1"' _ {} \;)
+if [ -n "$clash" ]; then
+  echo "✗ $clash sits beside an index.ts - rename the JSON" >&2
+  exit 1
+fi
 
 echo "▶ typecheck"
 npx tsc --noEmit

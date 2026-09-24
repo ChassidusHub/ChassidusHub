@@ -127,7 +127,8 @@ built by `packages/works` (`npm run build-catalog-works -w
   `editionSource` are the lookups.
 
 The phone bundles `apps/mobile/src/catalog/data/works/`:
-- `index.json`, read on first use;
+- `works.json`, read on first use (not `index.json`: Metro would resolve
+  the folder to it before `index.ts`);
 - one `contents/<work>.json` per imported work, read when that work is
   opened.
 

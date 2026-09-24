@@ -2,9 +2,13 @@
 /**
  * Writes the works the phone bundles (catalog schema 3):
  *
- *   <out>/index.json              every author and work, without units
+ *   <out>/works.json              every author and work, without units
  *   <out>/contents/<work>.json    an imported work's contents and units, one file per work
  *   <out>/index.ts                the loaders the phone imports (each part read on first use)
+ *
+ * The index is `works.json`, never `index.json`: Metro resolves the folder
+ * to `index.json` before `index.ts`, and the phone would import the data in
+ * place of its loaders.
  *
  *   --imports <dir>   an importer's output, one folder per work with a work.json
  *                     (default: packages/sefaria-index/data); may be given more than once
@@ -61,7 +65,7 @@ if (problems.length > 0) {
 
 await rm(outDir, { recursive: true, force: true });
 await mkdir(path.join(outDir, 'contents'), { recursive: true });
-await writeFile(path.join(outDir, 'index.json'), JSON.stringify({ authors: works.authors, works: works.works }), 'utf8');
+await writeFile(path.join(outDir, 'works.json'), JSON.stringify({ authors: works.authors, works: works.works }), 'utf8');
 const ids = Object.keys(works.contents);
 for (const id of ids) await writeFile(path.join(outDir, 'contents', `${id}.json`), JSON.stringify(works.contents[id]), 'utf8');
 
@@ -78,7 +82,7 @@ const lines = [
   '',
   '/** Every author and work bundled with this build, read on first use. */',
   'export default function bundledWorks(): CatalogWorksIndex {',
-  "  index ??= require('./index.json') as CatalogWorksIndex;",
+  "  index ??= require('./works.json') as CatalogWorksIndex;",
   '  return index;',
   '}',
   '',

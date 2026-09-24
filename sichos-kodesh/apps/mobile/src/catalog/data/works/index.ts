@@ -7,7 +7,7 @@ let index: CatalogWorksIndex | null = null;
 
 /** Every author and work bundled with this build, read on first use. */
 export default function bundledWorks(): CatalogWorksIndex {
-  index ??= require('./index.json') as CatalogWorksIndex;
+  index ??= require('./works.json') as CatalogWorksIndex;
   return index;
 }
 
