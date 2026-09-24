@@ -33,6 +33,13 @@ export interface CatalogAudio {
    * recording ccdb itself doesn't name.
    */
   chapterName?: string;
+  /**
+   * `chapterName` in Hebrew, for the Hebrew UI (translate/chapterNameHe.ts,
+   * filled by the catalog build) - e.g. "שיחה א׳", "מאמר". Omitted when the
+   * rules cannot translate the name; the Hebrew UI then shows JEM's English.
+   * Added in catalog 1.1.0: an app from before it simply ignores the field.
+   */
+  chapterNameHe?: string;
 }
 
 export interface CatalogPdf {
@@ -54,7 +61,16 @@ export interface CatalogEntry {
   hebrewYear: number;
   /** Raw mafteiach-index date key, e.g. "5711-05-10" or "5711-06A-14" for a leap-year Adar I date - see packages/mafteiach-index/src/types.ts. */
   hebrewDate: string;
+  /** mafteiach.app's own Hebrew label, e.g. `יום ב' דר"ה` - also what the apps key saved progress and playlists by, so it never changes shape. */
   occasionLabel: string;
+  /**
+   * `occasionLabel` in English, for the English UI (translate/occasionLabelEn.ts,
+   * filled by the catalog build) - e.g. "Rosh Hashanah, day 2". Omitted when
+   * the rules cannot translate every part of the label; the English UI then
+   * shows the Hebrew. Added in catalog 1.1.0: an app from before it simply
+   * ignores the field.
+   */
+  occasionLabelEn?: string;
   audio: CatalogAudio[];
   pdfs: CatalogPdf[];
 }

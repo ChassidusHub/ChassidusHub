@@ -144,18 +144,37 @@ describe('buildCatalog', () => {
 
     const [entry] = buildCatalog(db)[5711]!;
     expect(entry!.audio).toEqual([
-      { workerFilename: 'JEMSK0001.mp3', durationMs: 1259000, chapterName: 'Sicha 1' },
-      { workerFilename: 'JEMSK0002.mp3', durationMs: 130000, chapterName: 'Sicha 2' },
-      { workerFilename: 'JEMSK0003.mp3', durationMs: 2407000, chapterName: 'Ma’amar' },
+      { workerFilename: 'JEMSK0001.mp3', durationMs: 1259000, chapterName: 'Sicha 1', chapterNameHe: 'שיחה א׳' },
+      { workerFilename: 'JEMSK0002.mp3', durationMs: 130000, chapterName: 'Sicha 2', chapterNameHe: 'שיחה ב׳' },
+      { workerFilename: 'JEMSK0003.mp3', durationMs: 2407000, chapterName: 'Ma’amar', chapterNameHe: 'מאמר' },
     ]);
   });
 
-  it('omits chapterName entirely (not chapterName: undefined) for a recording ccdb left unnamed', () => {
+  it('omits chapterName and chapterNameHe entirely (not undefined) for a recording ccdb left unnamed', () => {
     upsertRecord(db, makeRecord(), null, '2026-01-01T00:00:00.000Z');
     insertJemAudio(db, 1, 'https://dtgj2yu3gmlic.cloudfront.net/JEMSK0001.mp3', 1259000);
 
     const [entry] = buildCatalog(db)[5711]!;
     expect(entry!.audio[0]).not.toHaveProperty('chapterName');
+    expect(entry!.audio[0]).not.toHaveProperty('chapterNameHe');
+  });
+
+  it('omits chapterNameHe for a chapter name the rules cannot translate, keeping JEM\'s own', () => {
+    upsertRecord(db, makeRecord(), null, '2026-01-01T00:00:00.000Z');
+    insertJemAudio(db, 1, 'https://dtgj2yu3gmlic.cloudfront.net/JEMSK0001.mp3', 1259000, 0, 'Vayanchem');
+
+    const [entry] = buildCatalog(db)[5711]!;
+    expect(entry!.audio[0]).toEqual({ workerFilename: 'JEMSK0001.mp3', durationMs: 1259000, chapterName: 'Vayanchem' });
+  });
+
+  it('adds occasionLabelEn next to the Hebrew label, and nothing when the label is not translated', () => {
+    upsertRecord(db, makeRecord({ id: 1, occasionLabel: `ערב יו"כ, אחרי מנחה` }), null, '2026-01-01T00:00:00.000Z');
+    upsertRecord(db, makeRecord({ id: 2, hebrewDate: '5711-05-11' }), null, '2026-01-01T00:00:00.000Z');
+
+    const [translated, untranslated] = buildCatalog(db)[5711]!;
+    expect(translated).toMatchObject({ occasionLabel: `ערב יו"כ, אחרי מנחה`, occasionLabelEn: 'Erev Yom Kippur, after Mincha' });
+    expect(Object.keys(translated!)).toEqual(['occasionId', 'hebrewYear', 'hebrewDate', 'occasionLabel', 'occasionLabelEn', 'audio', 'pdfs']);
+    expect(untranslated).not.toHaveProperty('occasionLabelEn');
   });
 
   it('an occasion with neither audio nor a PDF is still included, with empty arrays (a genuine gap, not omitted)', () => {
