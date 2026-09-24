@@ -14,6 +14,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.ReadableArray
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -29,6 +30,7 @@ import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import org.json.JSONObject
 
 /**
  * Offline packs and shared files, streamed - never held in memory whole.
@@ -281,6 +283,68 @@ class PackModule(private val context: ReactApplicationContext) : ReactContextBas
                 promise.reject("SEARCH_FAILED", e.message ?: "SEARCH_FAILED", e)
             }
         }
+    }
+
+    /**
+     * Builds a search index on the phone, for a sefer saved from its source
+     * rather than imported in a pack. `rowsFile` (relative to the files
+     * directory) holds one JSON object per line - `{ unit, source, title,
+     * body }`, the title and body already normalised by pack-format - and
+     * `sql` is pack-format's `SEARCH_INDEX_SQL`, so both builders make the
+     * same layout. The database is written beside `dest` and moved into
+     * place whole; the rows file is deleted. Resolves the number of rows.
+     */
+    @ReactMethod
+    fun buildSearchIndex(rowsFile: String, dest: String, sql: ReadableArray, meta: ReadableMap, promise: Promise) = background(promise, "BUILD_INDEX_FAILED") {
+        val rows = File(context.filesDir, safeRelative(rowsFile))
+        val target = File(context.filesDir, safeRelative(dest))
+        val partial = File(target.path + ".partial")
+        target.parentFile?.mkdirs()
+        partial.delete()
+        File(partial.path + "-journal").delete()
+        var count = 0
+        try {
+            SQLiteDatabase.openOrCreateDatabase(partial, null).use { db ->
+                for (i in 0 until sql.size()) db.execSQL(sql.getString(i))
+                val iterator = meta.keySetIterator()
+                while (iterator.hasNextKey()) {
+                    val key = iterator.nextKey()
+                    db.execSQL("INSERT INTO meta (key, value) VALUES (?, ?)", arrayOf(key, meta.getString(key)))
+                }
+                val putRow = db.compileStatement("INSERT INTO rows (id, unit, source) VALUES (?, ?, ?)")
+                val putText = db.compileStatement("INSERT INTO search (docid, title, body) VALUES (?, ?, ?)")
+                db.beginTransaction()
+                try {
+                    rows.bufferedReader().useLines { lines ->
+                        for (line in lines) {
+                            if (line.isBlank()) continue
+                            val row = JSONObject(line)
+                            count += 1
+                            putRow.clearBindings()
+                            putRow.bindLong(1, count.toLong())
+                            putRow.bindString(2, row.getString("unit"))
+                            putRow.bindLong(3, row.getLong("source"))
+                            putRow.executeInsert()
+                            putText.clearBindings()
+                            putText.bindLong(1, count.toLong())
+                            putText.bindString(2, row.getString("title"))
+                            putText.bindString(3, row.getString("body"))
+                            putText.executeInsert()
+                        }
+                    }
+                    db.setTransactionSuccessful()
+                } finally {
+                    db.endTransaction()
+                }
+                db.execSQL("INSERT INTO search(search) VALUES ('optimize')")
+            }
+            File(partial.path + "-journal").delete()
+            moveInto(partial, target)
+        } finally {
+            partial.delete()
+            rows.delete()
+        }
+        count
     }
 
     // ── The shared folder (Storage Access Framework) ──────────────────────────

@@ -419,9 +419,9 @@ under the CLAUDE.md rule: version bump, merge, tag.
 - **Text packs on a release build.** A text or a search index comes only
   inside a pack signed with a key the build trusts. Release builds trust
   no key until the production key exists (`sk-pack keygen`, one of the
-  open decisions), and no text pack is published yet. So in 1.5.0 the
-  seforim read online, and search covers names. Debug builds trust the
-  development key, which is how packs are tested.
+  open decisions), and no text pack is published yet. Debug builds trust
+  the development key, which is how packs are tested. Until then a phone
+  with internet saves a sefer itself (WP14).
 
 - **"Open the scan"** needs HebrewBooks (WP11's other half), which is
   waiting on its permission.
@@ -429,6 +429,36 @@ under the CLAUDE.md rule: version bump, merge, tag.
   and none may ship yet (WP10: chabadlibrary.org).
 - **Text search online through the API.** There is no API for it yet.
   Search without a pack covers names only.
+
+### WP14 - saving a sefer on the phone
+
+Packs serve places with no internet, and they wait on the production
+signing key and a place to publish them. A phone that has internet can
+save a sefer itself, the way a farbrengen downloads straight from its
+source.
+
+**Built** (mobile 1.5.0, with WP13; `apps/mobile/src/seforim/savedStore.ts`
+and `saveSefer.ts`):
+
+- **Saving.** A sefer's page has "Save on this phone", with the size the
+  catalog gives. It saves every unit in every edition that may be read
+  (the same rights gate as the reader). Each unit is fetched from Sefaria,
+  three at a time, rendered by the same code as online reading, and
+  stored under `texts/saved/<work>/`.
+  - A unit already saved is not fetched again, so a stopped saving
+    continues where it stopped.
+  - It can be stopped, and it stops by itself when the connection goes.
+  - "Remove from this phone" deletes the texts, the index and the record.
+- **Its search index is built on the phone**, in the packs' own layout:
+  pack-format's `SEARCH_INDEX_SQL`, `normalizeSearchText` and
+  `textObjectWords`. JS writes the rows as JSON lines, and the native
+  `buildSearchIndex` fills the FTS4 table with Android's own SQLite, then
+  moves it into place whole. Search queries it like a pack's index.
+- **The reader's order:** a pack's text object (vouched for by the
+  catalog's sha256), then the saved copy, then Sefaria online.
+- **Not verified by hash.** A saved copy is what Sefaria served, the same
+  as reading online. When Sefaria has edited a text since the catalog was
+  built, the copy differs from the pack's, and the pack's copy still wins.
 
 ## 8. Risks
 

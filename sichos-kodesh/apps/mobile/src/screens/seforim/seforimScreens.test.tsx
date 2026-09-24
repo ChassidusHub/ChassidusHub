@@ -77,7 +77,10 @@ describe('seforim screens', () => {
   });
 
   it('opens a sefer on its contents, and a part of it on its chapters', async () => {
-    expect(await render(<screens.WorkScreen {...props({ workId: 'tanya' })} />)).toContain('Part I; Likkutei Amarim');
+    const top = await render(<screens.WorkScreen {...props({ workId: 'tanya' })} />);
+    expect(top).toContain('Part I; Likkutei Amarim');
+    // How much saving it on the phone takes: its texts, as the catalog counts them.
+    expect(top).toMatch(/Saves every chapter here \(about \d+\.\d MB\)/);
     expect(await render(<screens.WorkScreen {...props({ workId: 'tanya', path: [0] })} />)).toContain('Chapter 1');
   });
 

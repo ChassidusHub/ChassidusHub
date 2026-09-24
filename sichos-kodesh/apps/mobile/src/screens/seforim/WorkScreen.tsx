@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { ExternalLink } from 'lucide-react-native';
 import type { CatalogUnit, CatalogWorkSource, LibraryCollectionId } from '@sichos-kodesh/catalog';
@@ -8,13 +8,13 @@ import { getWorkContents, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { WorkScreenProps } from '../../navigation/types';
 import { contentsAt, names, unitCount, workKind } from '../../seforim/seforimModel';
-import { heldSearchIndexes } from '../../seforim/seforimSearch';
 import { useReadingState } from '../../seforim/readingState';
 import { Button } from '../../ui/Button';
 import { CategoryRow } from '../../ui/CategoryRow';
 import { EmptyState } from '../../ui/EmptyState';
 import { Row, RowDistance, RowTrailing } from '../../ui/Row';
 import { Screen } from '../../ui/Screen';
+import { SaveSeferPanel } from './SaveSeferPanel';
 import { ScreenHeader } from '../../ui/ScreenHeader';
 import { AppText } from '../../ui/Text';
 import { CategoryHeader, Subtitle, TabHelp } from '../../ui/Typography';
@@ -52,17 +52,6 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
   const work = works.works.find((w) => w.id === workId);
   const contents = useMemo(() => (work?.units ? getWorkContents(workId) : null), [work, workId]);
   const unitsById = useMemo(() => new Map((contents?.units ?? []).map((unit) => [unit.id, unit])), [contents]);
-  const [onPhone, setOnPhone] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    heldSearchIndexes()
-      .then((indexes) => alive && setOnPhone(indexes.has(workId)))
-      .catch(() => alive && setOnPhone(false));
-    return () => {
-      alive = false;
-    };
-  }, [workId]);
 
   const back = path.length > 0 ? ({ name: 'Work', params: { workId, path: path.slice(0, -1) } } as const) : ({ name: 'Seforim', params: undefined } as const);
   if (!work) {
@@ -86,13 +75,35 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
   const collection = work.collection && (LIBRARY_COLLECTION_IDS as readonly string[]).includes(work.collection) ? (work.collection as LibraryCollectionId) : null;
   const linkSources = work.sources.filter((s) => editionUrl({ source: s.source as 'sefaria', sourceId: s.sourceId, language: s.language, version: s.version }));
 
+  // A sefer that reads here opens on its chapters; its editions come after them.
+  const editions =
+    work.sources.length > 0 && kind !== 'collection' ? (
+      <>
+        <CategoryHeader>{t.workSources}</CategoryHeader>
+        {work.sources.map((source, index) => {
+          const url = linkSources.includes(source) ? editionUrl({ source: source.source as 'sefaria', sourceId: source.sourceId, language: source.language, version: source.version }) : null;
+          return (
+            <Row
+              key={`${index}-${source.source}-${source.version ?? ''}`}
+              label={SOURCE_NAMES[source.source] ?? source.source}
+              muted={!url}
+              trailing={url ? <RowTrailing><ExternalLink size={16} color={colors.muted} /></RowTrailing> : undefined}
+              onPress={url ? () => Linking.openURL(url).catch(() => undefined) : undefined}
+            >
+              <AppText style={[styles.sourceLine, { color: colors.muted }]}>{sourceLine(t, source)}</AppText>
+            </Row>
+          );
+        })}
+      </>
+    ) : null;
+
   return (
     <Screen header={<ScreenHeader back={back} title={title} />}>
       {path.length === 0 && (
         <>
           <AppText style={styles.title}>{names(work.title, language)}</AppText>
           {authorNames.length > 0 && <Subtitle>{authorNames.join(', ')}</Subtitle>}
-          {kind === 'read' && onPhone !== null && <TabHelp>{onPhone ? t.workOnPhone : t.workReadOnline}</TabHelp>}
+          {kind === 'read' && contents && <SaveSeferPanel work={work} contents={contents} />}
           {kind === 'links' && <TabHelp>{t.workNoText}</TabHelp>}
           {collection && (
             <View style={styles.block}>
@@ -108,25 +119,7 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
               />
             </View>
           )}
-          {work.sources.length > 0 && kind !== 'collection' && (
-            <>
-              <CategoryHeader>{t.workSources}</CategoryHeader>
-              {work.sources.map((source, index) => {
-                const url = linkSources.includes(source) ? editionUrl({ source: source.source as 'sefaria', sourceId: source.sourceId, language: source.language, version: source.version }) : null;
-                return (
-                  <Row
-                    key={`${index}-${source.source}-${source.version ?? ''}`}
-                    label={SOURCE_NAMES[source.source] ?? source.source}
-                    muted={!url}
-                    trailing={url ? <RowTrailing><ExternalLink size={16} color={colors.muted} /></RowTrailing> : undefined}
-                    onPress={url ? () => Linking.openURL(url).catch(() => undefined) : undefined}
-                  >
-                    <AppText style={[styles.sourceLine, { color: colors.muted }]}>{sourceLine(t, source)}</AppText>
-                  </Row>
-                );
-              })}
-            </>
-          )}
+          {kind !== 'read' && editions}
         </>
       )}
 
@@ -156,6 +149,8 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
           )}
         </>
       )}
+
+      {kind === 'read' && path.length === 0 && editions}
     </Screen>
   );
 }

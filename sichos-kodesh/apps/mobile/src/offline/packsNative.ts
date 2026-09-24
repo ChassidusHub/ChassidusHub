@@ -80,6 +80,12 @@ export interface PacksNativeModule {
   deviceInfo(): Promise<DeviceInfo>;
   /** One sefer's search index (`dest` relative to the files directory), queried with pack-format's searchIndexQuery. */
   searchIndex(dest: string, match: string, limit: number): Promise<Array<{ unit: string; source: number }>>;
+  /**
+   * Builds a search index on the phone from `rowsFile` (JSON lines of `{ unit, source, title, body }`,
+   * normalised by pack-format) with `sql` (pack-format's SEARCH_INDEX_SQL); both paths relative to the
+   * files directory. Deletes the rows file; resolves the row count.
+   */
+  buildSearchIndex(rowsFile: string, dest: string, sql: readonly string[], meta: Record<string, string>): Promise<number>;
 }
 
 export function getPacksNative(): PacksNativeModule | null {

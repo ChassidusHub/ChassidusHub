@@ -1,18 +1,20 @@
-import RNBlobUtil from 'react-native-blob-util';
 import type { CatalogUnit, CatalogWork, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
 import { normalizeSearchText, searchIndexQuery } from '@sichos-kodesh/pack-format';
-import { documentPath, readHeldObjects } from '../offline/objectStore';
+import { readHeldObjects } from '../offline/objectStore';
 import type { PacksNativeModule } from '../offline/packsNative';
+import { savedSearchIndexes } from './savedStore';
 import { snippetAround } from './seforimModel';
+import { readUnitTextFile } from './seforimText';
 import { textObjectPlainText } from './textObject';
 
 /**
  * Searching the seforim:
  * - by name, always and offline: work titles and unit labels, from the
  *   catalog;
- * - in the text, offline, in every sefer whose text pack is on the phone:
- *   each pack carries its search index, which Android's own SQLite
- *   queries. The snippet is cut from the text object itself.
+ * - in the text, offline, in every sefer on the phone: a text pack brings
+ *   its search index, and a sefer saved on the phone gets one the phone
+ *   builds (saveSefer.ts); Android's own SQLite queries both. The snippet
+ *   is cut from the text itself.
  */
 
 export interface NameHit {
@@ -49,10 +51,10 @@ export function searchNames(works: CatalogWorksIndex, contentsOf: (workId: strin
   return hits.slice(0, limit);
 }
 
-/** The seforim whose search index is on the phone: work id -> the index file. */
+/** The seforim whose search index is on the phone: work id -> the index file. A pack's index wins over one the phone built. */
 export async function heldSearchIndexes(): Promise<Map<string, string>> {
   const held = await readHeldObjects();
-  const indexes = new Map<string, string>();
+  const indexes = await savedSearchIndexes();
   for (const object of Object.values(held)) {
     if (object.kind === 'search' && object.collection === 'works' && object.itemId) indexes.set(object.itemId, object.file);
   }
@@ -73,7 +75,6 @@ export async function searchTexts(
   const match = searchIndexQuery(query);
   if (!match) return [];
   const indexes = await heldSearchIndexes();
-  const held = await readHeldObjects();
   const hits: TextHit[] = [];
   for (const work of works.works) {
     const file = indexes.get(work.id);
@@ -93,14 +94,10 @@ export async function searchTexts(
   }
   const snippets = options.snippets ?? 30;
   for (const hit of hits.slice(0, snippets)) {
-    const sha = hit.unit.editions.find((e) => e.source === hit.source)?.sha256;
-    const file = sha ? held[sha]?.file : undefined;
-    if (!file) continue;
-    try {
-      hit.snippet = snippetAround(textObjectPlainText(String(await RNBlobUtil.fs.readFile(documentPath(file), 'utf8'))), query);
-    } catch {
-      // No snippet; the hit still stands.
-    }
+    const edition = hit.unit.editions.find((e) => e.source === hit.source);
+    const html = edition ? await readUnitTextFile(hit.work.id, hit.unit.id, edition) : null;
+    // With no text on the phone there is no snippet; the hit still stands.
+    if (html !== null) hit.snippet = snippetAround(textObjectPlainText(html), query);
   }
   return hits;
 }
