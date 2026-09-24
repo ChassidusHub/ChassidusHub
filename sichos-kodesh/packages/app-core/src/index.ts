@@ -19,5 +19,6 @@ export * from './seforim/sefariaText.js';
 export * from './seforim/unitText.js';
 export * from './seforim/readerSettings.js';
 export * from './seforim/readingState.js';
+export * from './seforim/shelf.js';
 export * from './library/libraryModel.js';
 export * from './library/librarySearch.js';

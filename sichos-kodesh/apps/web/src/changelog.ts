@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.5.0';
+export const APP_VERSION = '1.6.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.6.0',
+    en: [
+      'HebrewBooks: the scanned seforim of the Rebbeim on HebrewBooks.org, 1,539 of them, a tap away. Each sefer lists its own volumes (Likkutei Sichos, Toras Menachem, the Igros, Or HaTorah and more), each opening on its page at HebrewBooks',
+      'Sichos Kodesh and the Rebbe\'s Sefer HaSichos join the seforim, as their scans',
+      'Under each Rebbe, "More on HebrewBooks" lists his other books there, series by series, with a filter; "Chabad books on HebrewBooks" holds the yeshivos\' kovtzim and the Chassidim\'s seforim',
+    ],
+    he: [
+      'HebrewBooks: הספרים הסרוקים של רבותינו נשיאינו באתר HebrewBooks.org, 1,539 מהם, בנגיעה. כל ספר מציג את הכרכים שלו (לקוטי שיחות, תורת מנחם, האגרות, אור התורה ועוד), וכל כרך נפתח בעמוד שלו ב-HebrewBooks',
+      'שיחות קודש וספר השיחות של הרבי נוספו לספרים, כסריקות',
+      'תחת כל רבי, "עוד ב-HebrewBooks" מציג את שאר ספריו שם, סדרה אחר סדרה, עם סינון; "ספרי חב״ד ב-HebrewBooks" מרכז את קובצי הישיבות וספרי החסידים',
+    ],
+  },
   {
     version: '1.5.0',
     en: [

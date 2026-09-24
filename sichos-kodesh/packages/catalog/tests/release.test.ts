@@ -239,6 +239,24 @@ describe('schema 3 (the works)', () => {
     expect(parseCatalogWorks(orphan)).toBeNull();
   });
 
+  it('carries the HebrewBooks shelf (catalog 1.5.0), and rejects the works over a malformed one', () => {
+    const shelf = {
+      catalogVersion: '9',
+      authors: [
+        { authorId: 'the-rebbe', series: [{ title: 'לקוטי שיחות', workId: 'likkutei-sichos', scans: [{ id: 14924, title: 'לקוטי שיחות - א', volume: 'א', printed: 'ניו יורק', pages: 306 }] }] },
+        { authorId: null, series: [{ title: 'קובץ', scans: [{ id: 26000, title: 'קובץ' }] }] },
+      ],
+    };
+    expect(parseCatalogWorks({ ...works, shelf })?.shelf).toEqual(shelf);
+    // Without one, the works parse as before and carry none.
+    expect(parseCatalogWorks(works)).not.toHaveProperty('shelf');
+    const noId = structuredClone(shelf) as unknown as { authors: Array<{ series: Array<{ scans: Array<{ id: unknown }> }> }> };
+    noId.authors[0]!.series[0]!.scans[0]!.id = '14924';
+    expect(parseCatalogWorks({ ...works, shelf: noId })).toBeNull();
+    const empty = { catalogVersion: '9', authors: [{ authorId: 'the-rebbe', series: [{ title: 'x', scans: [] }] }] };
+    expect(parseCatalogWorks({ ...works, shelf: empty })).toBeNull();
+  });
+
   it('finds text kept for an edition that may not ship, and any local-only source', () => {
     expect(worksRightsProblems(works)).toEqual([]);
     const leaked = structuredClone(works);

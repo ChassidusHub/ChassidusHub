@@ -1,11 +1,11 @@
 import { useSyncExternalStore } from 'react';
 import { CATALOG_VERSION, CATALOG_WORKS_SCHEMA_VERSION } from '@sichos-kodesh/catalog';
-import type { CatalogByYear, CatalogLibrary, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
+import type { CatalogByYear, CatalogLibrary, CatalogShelf, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
 import { createCatalogStore } from '@sichos-kodesh/app-core';
 import type { CatalogSnapshot } from '@sichos-kodesh/app-core';
 import bundledCatalog from './data';
 import bundledLibrary from './data/library';
-import bundledWorks, { bundledWorkContents } from './data/works';
+import bundledWorks, { bundledShelf, bundledWorkContents } from './data/works';
 
 /**
  * The one catalog the whole app reads (see app-core's createCatalogStore):
@@ -27,6 +27,7 @@ import bundledWorks, { bundledWorkContents } from './data/works';
 export const catalogStore = createCatalogStore(bundledCatalog, CATALOG_VERSION, CATALOG_WORKS_SCHEMA_VERSION, bundledLibrary, {
   index: bundledWorks,
   contents: bundledWorkContents,
+  shelf: bundledShelf,
 });
 
 export function getCatalog(): CatalogByYear {
@@ -63,4 +64,9 @@ export function useWorks(): CatalogWorksIndex {
 /** A sefer's contents and chapters, for the works imported with their own; null for the rest. */
 export function getWorkContents(workId: string): CatalogWorkContents | null {
   return catalogStore.getWorkContents(workId);
+}
+
+/** The HebrewBooks shelf, read the first time a screen asks for it. */
+export function useShelf(): CatalogShelf | null {
+  return useSyncExternalStore(catalogStore.subscribe, catalogStore.getShelf, catalogStore.getShelf);
 }

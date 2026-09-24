@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { Search } from 'lucide-react-native';
 import { catalogUnit } from '@sichos-kodesh/catalog';
-import { getWorkContents, useWorks } from '../../catalog/catalogStore';
+import { getWorkContents, useShelf, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { SeforimScreenProps } from '../../navigation/types';
-import { authorSections, names, unitsAreLetters, workKind } from '@sichos-kodesh/app-core';
+import { authorSections, authorShelf, names, scanCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
 import { recentPlaces, useReadingState } from '../../seforim/readingState';
 import { CategoryRow } from '../../ui/CategoryRow';
 import { Row, RowDistance, RowTrailing } from '../../ui/Row';
@@ -16,10 +16,12 @@ import { useColors } from '../../ui/theme';
 /**
  * The seforim (catalog schema 3): where the reader left off, the
  * bookmarks, then the Rebbeim in order - the Baal Shem Tov and the Maggid,
- * the Alter Rebbe to the Rebbe - each with his seforim.
+ * the Alter Rebbe to the Rebbe - each with his seforim, and his other books
+ * on HebrewBooks.
  */
 export function SeforimScreen({ navigation }: SeforimScreenProps) {
   const works = useWorks();
+  const shelf = useShelf();
   const reading = useReadingState();
   const { t, language } = useTranslation();
   const colors = useColors();
@@ -39,11 +41,30 @@ export function SeforimScreen({ navigation }: SeforimScreenProps) {
         return t.seforimChapters(work.units ?? 0, unitsAreLetters(work));
       case 'collection':
         return t.seforimInLibrary;
-      case 'links':
-        return t.seforimLink;
+      case 'links': {
+        const scans = scanCount(workScans(shelf, workId));
+        return scans > 0 ? t.seforimScans(scans) : t.seforimLink;
+      }
       default:
         return '';
     }
+  };
+
+  // An author's books on HebrewBooks that no sefer here holds.
+  const shelfRow = (authorId: string | null) => {
+    const count = scanCount(authorShelf(shelf, authorId));
+    if (count === 0) return null;
+    return (
+      <Row
+        label={authorId ? t.shelfRow : t.shelfOthersRow}
+        trailing={
+          <RowTrailing>
+            <RowDistance standalone={false}>{t.shelfBooks(count)}</RowDistance>
+          </RowTrailing>
+        }
+        onPress={() => navigation.navigate('HebrewBooksShelf', { authorId })}
+      />
+    );
   };
 
   return (
@@ -93,8 +114,15 @@ export function SeforimScreen({ navigation }: SeforimScreenProps) {
               onPress={() => navigation.navigate('Work', { workId: work.id })}
             />
           ))}
+          {shelfRow(section.author?.id ?? null)}
         </React.Fragment>
       ))}
+      {!sections.some((section) => !section.author) && authorShelf(shelf, null).length > 0 && (
+        <>
+          <CategoryHeader>{t.seforimOtherAuthors}</CategoryHeader>
+          {shelfRow(null)}
+        </>
+      )}
     </Screen>
   );
 }

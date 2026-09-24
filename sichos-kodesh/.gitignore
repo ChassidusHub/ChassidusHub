@@ -41,6 +41,10 @@ packages/igros-index/import/
 packages/sefaria-index/.cache/
 packages/sefaria-index/data/
 
+# packages/hebrewbooks-index: the shelf read from Otzaria's catalog - a local
+# build (import-hebrewbooks); packages/works bundles what the apps need.
+packages/hebrewbooks-index/data/
+
 # sk-pack keygen's pack signing key (<archive root>/keys/pack-signing.json):
 # its secret half never enters the repository.
 keys/

@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import type { CatalogLibrary, LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS, SHIPPABLE_COLLECTIONS, parseCatalogLibrary, parseCatalogWorks, worksRightsProblems } from '@sichos-kodesh/catalog';
 import type { ImportedWork } from '../src/index.js';
-import { AUTHORS, CHABADLIBRARY_TREE, WORKS, buildCatalogWorks, collectionUnits, editionUrl, libraryUnits, mayShip, rightsFor, workById, workForCollection } from '../src/index.js';
+import type { HebrewBooksShelf } from '@sichos-kodesh/hebrewbooks-index';
+import { AUTHORS, CHABADLIBRARY_TREE, HEBREWBOOKS_ONLY, HEBREWBOOKS_SERIES, WORKS, buildCatalogWorks, collectionUnits, editionUrl, libraryUnits, mayShip, placeShelf, rightsFor, workById, workForCollection } from '../src/index.js';
 
 /** The library the phone bundles (apps/mobile/src/catalog/data/library): the real item ids. */
 const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'apps', 'mobile', 'src', 'catalog', 'data', 'library');
@@ -161,5 +162,60 @@ describe('the works as catalog schema 3 carries them', () => {
       'https://www.sefaria.org/Tanya,_Part_I%3B_Likkutei_Amarim_1?ven=Sefaria_Community_Translation&lang=en',
     );
     expect(editionUrl({ source: 'jem', sourceId: 'x.mp3' })).toBeNull();
+  });
+});
+
+describe('the HebrewBooks shelf', () => {
+  // A shelf in hebrewbooks-index's shape; the series keys are its own.
+  const scan = (id: number, volume?: string) => ({ id, title: `x ${id}`, ...(volume ? { volume } : {}), pages: 100 });
+  const shelf: HebrewBooksShelf = {
+    catalogVersion: '9',
+    authors: [
+      {
+        authorId: 'the-rebbe',
+        series: [
+          { key: 'לקוטי שיחות', title: 'לקוטי שיחות', scans: [scan(14924, 'א'), scan(14925, 'ב')] },
+          { key: 'שיחות קודש', title: 'שיחות קודש', scans: [scan(20001, 'תש״י')] },
+          { key: 'שערי המועדים', title: 'שערי המועדים', scans: [scan(30001)] },
+        ],
+      },
+      { authorId: 'alter-rebbe', series: [{ key: 'לקוטי אמרים תניא', title: 'לקוטי אמרים תניא', scans: [scan(43319)] }] },
+      // Toras Menachem's name for Likkutei Sichos, under another author: never placed.
+      { authorId: 'frierdiker-rebbe', series: [{ key: 'לקוטי שיחות', title: 'לקוטי שיחות', scans: [scan(90000)] }] },
+      { authorId: null, series: [{ key: 'קובץ', title: 'קובץ', scans: [scan(26000)] }] },
+    ],
+  };
+
+  it('places a series with its sefer by title or by the registry\'s other names, only under the same author', () => {
+    const placed = placeShelf(shelf, WORKS);
+    expect(placed.byWork.get('likkutei-sichos')!.map((s) => s.scans.length)).toEqual([2]);
+    expect(placed.byWork.get('tanya')!.map((s) => s.title)).toEqual(['לקוטי אמרים תניא']);
+    expect(placed.byWork.get('sichos-kodesh')!.map((s) => s.title)).toEqual(['שיחות קודש']);
+    const frierdiker = placed.shelf.authors.find((a) => a.authorId === 'frierdiker-rebbe')!;
+    expect(frierdiker.series[0]!.workId).toBeUndefined();
+    expect(placed.shelf.authors.find((a) => a.authorId === 'the-rebbe')!.series[2]!.workId).toBeUndefined();
+    // The shelf's own matching keys stay behind.
+    expect(JSON.stringify(placed.shelf)).not.toContain('"key"');
+  });
+
+  it('gives a sefer with scans a HebrewBooks source, link-only, and keeps a HebrewBooks-only sefer only when it has scans', () => {
+    const without = buildCatalogWorks([]);
+    expect(without.works.some((w) => w.id === 'sichos-kodesh')).toBe(false);
+    expect(without).not.toHaveProperty('shelf');
+    const withShelf = buildCatalogWorks([], shelf);
+    const sichosKodesh = withShelf.works.find((w) => w.id === 'sichos-kodesh')!;
+    expect(sichosKodesh.sources).toEqual([{ source: 'hebrewbooks', sourceId: 'שיחות קודש', kind: 'scan', language: 'he', licence: 'site-terms', rights: 'link-only' }]);
+    expect(withShelf.works.find((w) => w.id === 'tanya')!.sources.at(-1)).toMatchObject({ source: 'hebrewbooks', rights: 'link-only' });
+    expect(withShelf.works.some((w) => w.id === 'sefer-hasichos-rebbe')).toBe(false);
+    expect(parseCatalogWorks(withShelf)?.shelf?.authors).toHaveLength(4);
+    expect(worksRightsProblems(withShelf)).toEqual([]);
+  });
+
+  it('names only series the real shelf has', () => {
+    for (const [workId, names] of Object.entries(HEBREWBOOKS_SERIES)) {
+      expect(workById(workId), workId).toBeDefined();
+      expect(names.length).toBeGreaterThan(0);
+    }
+    expect(HEBREWBOOKS_ONLY.every((work) => work.authors.length > 0 && work.sources.length === 0)).toBe(true);
   });
 });

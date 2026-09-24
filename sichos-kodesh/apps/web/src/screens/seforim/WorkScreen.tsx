@@ -1,15 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import type { CatalogWork, CatalogWorkSource, LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS, catalogUnit } from '@sichos-kodesh/catalog';
-import { contentsAt, mayRead, names, unitCount, unitsAreLetters, workKind } from '@sichos-kodesh/app-core';
+import { contentsAt, mayRead, names, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
 import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
-import { useWorkContents, useWorks } from '../../catalog/catalogStore';
+import { useShelf, useWorkContents, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useTranslation } from '../../i18n/useLanguage';
 import { useReadingState } from '../../seforim/readingState';
 import { LibraryLoading } from '../library/LibraryLoading';
+import { ScanRow } from './HebrewBooksShelfScreen';
 import { readerPath, workPath } from './seforimPaths';
 
 type Translation = ReturnType<typeof useTranslation>['t'];
@@ -33,13 +34,21 @@ function sourceUrl(source: CatalogWorkSource): string | null {
   return editionUrl({ source: source.source as 'sefaria', sourceId: source.sourceId, language: source.language, version: source.version });
 }
 
+/** How many scans show before "show all". */
+const SCANS_SHOWN = 10;
+
+/** The sources a sefer lists as editions: HebrewBooks' copy is its scans, listed on their own. */
+function editionSources(work: CatalogWork): CatalogWorkSource[] {
+  return work.sources.filter((source) => source.source !== 'hebrewbooks');
+}
+
 function Editions({ work }: { work: CatalogWork }) {
   const { t } = useTranslation();
   return (
     <div className="category">
       <h2 className="category-header">{t.workSources}</h2>
       <ul className="year-list">
-        {work.sources.map((source, index) => {
+        {editionSources(work).map((source, index) => {
           const url = sourceUrl(source);
           const body = (
             <span className="library-item-text">
@@ -67,6 +76,33 @@ function Editions({ work }: { work: CatalogWork }) {
   );
 }
 
+/** A sefer's scans on HebrewBooks, each opening on its page there; the first few until asked for all. */
+function Scans({ workId }: { workId: string }) {
+  const shelf = useShelf();
+  const { t } = useTranslation();
+  const [all, setAll] = useState(false);
+  const series = workScans(shelf, workId);
+  const scans = series.flatMap((s) => s.scans.map((scan) => ({ scan, label: scan.volume ? (series.length > 1 ? `${s.title} · ${scan.volume}` : scan.volume) : scan.title })));
+  if (scans.length === 0) return null;
+  return (
+    <div className="category">
+      <h2 className="category-header">{t.workScans}</h2>
+      <ul className="year-list">
+        {(all ? scans : scans.slice(0, SCANS_SHOWN)).map(({ scan, label }) => (
+          <ScanRow key={scan.id} scan={scan} label={label} />
+        ))}
+        {!all && scans.length > SCANS_SHOWN && (
+          <li>
+            <button type="button" className="year-row" onClick={() => setAll(true)}>
+              <span className="year-row-year">{t.workScansAll(scans.length)}</span>
+            </button>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
 interface Props {
   workId: string;
 }
@@ -78,6 +114,7 @@ interface Props {
  */
 export function WorkScreen({ workId }: Props) {
   const works = useWorks();
+  const shelf = useShelf();
   const reading = useReadingState();
   const { t, language } = useTranslation();
   const [params] = useSearchParams();
@@ -124,7 +161,8 @@ export function WorkScreen({ workId }: Props) {
     return prefix && label.startsWith(prefix) ? label.slice(prefix.length) : label;
   };
   const collection = work.collection && (LIBRARY_COLLECTION_IDS as readonly string[]).includes(work.collection) ? (work.collection as LibraryCollectionId) : null;
-  const editions = work.sources.length > 0 && kind !== 'collection' ? <Editions work={work} /> : null;
+  const editions = editionSources(work).length > 0 && kind !== 'collection' ? <Editions work={work} /> : null;
+  const onlyScans = workScans(shelf, workId).length > 0 && !work.sources.some((source) => sourceUrl(source));
 
   return (
     <div className="screen">
@@ -134,7 +172,7 @@ export function WorkScreen({ workId }: Props) {
           <h1 className="library-item-title">{names(work.title, language)}</h1>
           {authorNames.length > 0 && <p className="subtitle">{authorNames.join(', ')}</p>}
           {kind === 'read' && <p className="tab-help">{work.sources.some((s) => s.source === 'sefaria' && mayRead(s)) ? t.workReadOnline : t.workReadOnlineHosted}</p>}
-          {kind === 'links' && <p className="tab-help">{t.workNoText}</p>}
+          {kind === 'links' && <p className="tab-help">{onlyScans ? t.workNoTextScans : t.workNoText}</p>}
           {collection && (
             <Link className="button" to={`/library/c/${collection}`}>
               {t.workOpenCollection}
@@ -147,6 +185,7 @@ export function WorkScreen({ workId }: Props) {
             </Link>
           )}
           {kind !== 'read' && editions}
+          {kind !== 'read' && <Scans workId={workId} />}
         </>
       )}
 
@@ -175,6 +214,7 @@ export function WorkScreen({ workId }: Props) {
       )}
 
       {kind === 'read' && path.length === 0 && editions}
+      {kind === 'read' && path.length === 0 && <Scans workId={workId} />}
     </div>
   );
 }

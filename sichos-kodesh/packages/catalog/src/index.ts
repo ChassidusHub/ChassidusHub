@@ -70,7 +70,7 @@ export {
   serializeWorksRelease,
 } from './release.js';
 export type { CatalogManifest, CatalogRelease, LibraryRelease, WorksRelease } from './release.js';
-export { parseCatalogWorks, parseCatalogWorksIndex, parseWorkContents, worksRightsProblems } from './works/parse.js';
+export { parseCatalogShelf, parseCatalogWorks, parseCatalogWorksIndex, parseWorkContents, worksRightsProblems } from './works/parse.js';
 export { catalogUnit, catalogWork, editionSource, unitsInOrder, worksByAuthor } from './works/lookup.js';
 export type {
   CatalogAuthor,
@@ -79,6 +79,9 @@ export type {
   CatalogEdition,
   CatalogNames,
   CatalogRights,
+  CatalogScan,
+  CatalogScanSeries,
+  CatalogShelf,
   CatalogUnit,
   CatalogWork,
   CatalogWorkContents,

@@ -1,4 +1,4 @@
-import type { CatalogByYear, CatalogLibrary, CatalogRelease, CatalogWorkContents, CatalogWorks, CatalogWorksIndex, LibraryRelease, WorksRelease } from '@sichos-kodesh/catalog';
+import type { CatalogByYear, CatalogLibrary, CatalogRelease, CatalogShelf, CatalogWorkContents, CatalogWorks, CatalogWorksIndex, LibraryRelease, WorksRelease } from '@sichos-kodesh/catalog';
 import { compareCatalogVersions, isLibraryRelease, isWorksRelease } from '@sichos-kodesh/catalog';
 
 /** Where the catalog an app is currently showing came from. */
@@ -29,6 +29,8 @@ export interface CatalogStore {
   getWorks(): CatalogWorksIndex | null;
   /** An imported work's contents and units, read when the work is opened; null for a work without its own. */
   getWorkContents(workId: string): CatalogWorkContents | null;
+  /** The HebrewBooks shelf (catalog 1.5.0 on), read when a screen first needs it; null in an app built without it. */
+  getShelf(): CatalogShelf | null;
   subscribe(listener: () => void): () => void;
   /**
    * Replaces the current catalog with `release` when it is newer (same
@@ -53,6 +55,8 @@ export interface CatalogStore {
 export interface BundledWorks {
   index: () => CatalogWorksIndex | null;
   contents: (workId: string) => CatalogWorkContents | null;
+  /** The HebrewBooks shelf; absent or null when the build has none (or, on the web, until it has loaded). */
+  shelf?: () => CatalogShelf | null;
 }
 
 /**
@@ -82,6 +86,7 @@ export function createCatalogStore(
   let loadedBundledLibrary: CatalogLibrary | null = null;
   let appliedWorks: CatalogWorks | null = null;
   let loadedBundledWorks: CatalogWorksIndex | null = null;
+  let loadedBundledShelf: CatalogShelf | null = null;
   const listeners = new Set<() => void>();
   const notify = () => {
     for (const listener of listeners) listener();
@@ -105,6 +110,13 @@ export function createCatalogStore(
     getWorkContents(workId) {
       if (appliedWorks) return appliedWorks.contents[workId] ?? null;
       return bundledWorks ? bundledWorks.contents(workId) : null;
+    },
+    getShelf() {
+      // A release built without the shelf keeps the bundled one: scans are
+      // links, and a list a little older is still right.
+      if (appliedWorks?.shelf) return appliedWorks.shelf;
+      loadedBundledShelf ??= bundledWorks?.shelf?.() ?? null;
+      return loadedBundledShelf;
     },
     subscribe(listener) {
       listeners.add(listener);

@@ -94,7 +94,41 @@ export interface CatalogWorksIndex {
   works: CatalogWork[];
 }
 
+/** One scanned book on HebrewBooks.org: facts and its id, never the scan (the link is hebrewbooks.org/<id>). */
+export interface CatalogScan {
+  /** HebrewBooks' own id. */
+  id: number;
+  /** The title as HebrewBooks lists it. */
+  title: string;
+  /** What sets it apart within its series: `חלק ג`, `תשמ״ה`. */
+  volume?: string;
+  /** Where and when it was printed, as listed. */
+  printed?: string;
+  pages?: number;
+}
+
+/** The scans of one series: a sefer's volumes, or a single book. */
+export interface CatalogScanSeries {
+  title: string;
+  /** The registry work it is, when it is one; its screen lists these scans. */
+  workId?: string;
+  scans: CatalogScan[];
+}
+
+/**
+ * The Chabad shelf of HebrewBooks, by author (packages/hebrewbooks-index,
+ * from Otzaria's public catalog). `authorId` null holds the Chabad books by
+ * anyone else: the yeshivos' kovtzim, the Chassidim's seforim.
+ */
+export interface CatalogShelf {
+  /** The version of Otzaria's catalog it was read from. */
+  catalogVersion: string;
+  authors: Array<{ authorId: string | null; series: CatalogScanSeries[] }>;
+}
+
 /** The whole of it, as a schema-3 release carries it. */
 export interface CatalogWorks extends CatalogWorksIndex {
   contents: Record<string, CatalogWorkContents>;
+  /** The HebrewBooks shelf (since catalog 1.5.0); an app reads it when a screen needs it. */
+  shelf?: CatalogShelf;
 }

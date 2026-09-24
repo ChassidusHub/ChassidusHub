@@ -16,6 +16,16 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.5.0',
+    date: '2026-09-24',
+    en: [
+      'The Chabad shelf of HebrewBooks.org: 1,539 scanned seforim, each linked to its page there. The seforim list their own volumes (689 scans), among them Sichos Kodesh and the Rebbe\'s Sefer HaSichos; the rest are under their author',
+    ],
+    he: [
+      'מדף חב״ד של HebrewBooks.org: 1,539 ספרים סרוקים, כל אחד בקישור לעמוד שלו שם. הספרים מציגים את הכרכים שלהם (689 סריקות), וביניהם שיחות קודש וספר השיחות של הרבי; השאר תחת המחבר שלהם',
+    ],
+  },
+  {
     version: '1.4.0',
     date: '2026-09-24',
     en: [

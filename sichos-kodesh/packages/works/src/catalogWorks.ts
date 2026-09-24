@@ -1,8 +1,10 @@
 import type { CatalogContentsEntry, CatalogEdition, CatalogUnit, CatalogWork, CatalogWorkContents, CatalogWorks, CatalogWorkSource } from '@sichos-kodesh/catalog';
 import { isShippable } from '@sichos-kodesh/catalog';
+import type { HebrewBooksShelf } from '@sichos-kodesh/hebrewbooks-index';
 import { AUTHORS } from './registry/authors.js';
 import { WORKS } from './registry/works.js';
 import { rightsFor } from './rights.js';
+import { placeShelf } from './shelf.js';
 import type { ContentsEntry, Edition, ImportedWork, Work, WorkSource } from './types.js';
 
 /**
@@ -19,6 +21,8 @@ import type { ContentsEntry, Edition, ImportedWork, Work, WorkSource } from './t
  * - An imported edition points at its work's source by index and keeps
  *   its text object's sha256, which is how the phone finds the text in a
  *   downloaded pack.
+ * - With the HebrewBooks shelf, a work whose scans it holds gains a
+ *   HebrewBooks source (scans, link-only), and the shelf rides along whole.
  */
 
 function catalogSource(source: WorkSource): CatalogWorkSource {
@@ -70,14 +74,22 @@ function workContents(work: Work, kept: readonly WorkSource[], imported: Importe
   return { workId: work.id, contents: contentsOf(imported.contents), units };
 }
 
-/** The catalog's works: the registry's, with the imported ones' contents and units. */
-export function buildCatalogWorks(imports: readonly ImportedWork[]): CatalogWorks {
+/** The source a work gains from its scans on the HebrewBooks shelf. */
+function hebrewBooksSource(seriesTitle: string): WorkSource {
+  return { source: 'hebrewbooks', sourceId: seriesTitle, kind: 'scan', language: 'he', licence: 'site-terms' };
+}
+
+/** The catalog's works: the registry's, with the imported ones' contents and units, and the HebrewBooks shelf when given. */
+export function buildCatalogWorks(imports: readonly ImportedWork[], hebrewBooks?: HebrewBooksShelf): CatalogWorks {
   const byWork = new Map(imports.map((imported) => [imported.workId, imported]));
   for (const workId of byWork.keys()) if (!WORKS.some((w) => w.id === workId)) throw new Error(`an import names work "${workId}", which the registry does not have`);
+  const placed = hebrewBooks ? placeShelf(hebrewBooks, WORKS) : null;
   const works: CatalogWork[] = [];
   const contents: Record<string, CatalogWorkContents> = {};
   for (const work of WORKS) {
-    const kept = work.sources.filter((source) => rightsFor(source) !== 'local-only');
+    const scans = placed?.byWork.get(work.id);
+    const sources = scans ? [...work.sources, hebrewBooksSource(scans[0]!.title)] : work.sources;
+    const kept = sources.filter((source) => rightsFor(source) !== 'local-only');
     const collection = work.collection && isShippable(work.collection) ? work.collection : undefined;
     if (kept.length === 0 && !collection) continue;
     const out: CatalogWork = { id: work.id, title: { he: work.title.he, en: work.title.en }, authors: [...work.authors], genre: work.genre, levels: [...work.levels], sources: kept.map(catalogSource) };
@@ -92,5 +104,5 @@ export function buildCatalogWorks(imports: readonly ImportedWork[]): CatalogWork
     works.push(out);
   }
   const authors = AUTHORS.map((author) => ({ id: author.id, name: { he: author.name.he, en: author.name.en }, ...(author.rebbe ? { rebbe: author.rebbe } : {}) }));
-  return { authors, works, contents };
+  return placed ? { authors, works, contents, shelf: placed.shelf } : { authors, works, contents };
 }

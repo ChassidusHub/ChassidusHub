@@ -316,8 +316,8 @@ The first full run (2026-09-24):
 It took 506 requests (about four minutes at half a second apart), with no
 warnings. A second run reads everything from the cache and sends none.
 
-The HebrewBooks half waits on Otzaria's catalog release, which this
-session cannot fetch (section 2a). Decision 2 still gates any PDFs.
+The HebrewBooks half is built too: WP19 below. Decision 2 still gates
+any PDFs.
 
 ### WP12 - catalog schema 3, API `/v3`, text packs
 
@@ -635,6 +635,69 @@ local.
   in Hebrew and English: David, the date line on the end side, nine notes
   after the letter with no numbers, the volume above the letter, and
   "letters" on the volume list.
+
+### WP19 - the HebrewBooks shelf, as links
+
+**Built** (catalog 1.5.0, mobile 1.9.0, web 1.6.0):
+
+- **`packages/hebrewbooks-index`** reads Otzaria's catalog release
+  (`otzar-HB_catalog.db.zst`, version 9) and keeps the Chabad shelf:
+  - every book whose first author is one of the Rebbeim, the Baal Shem Tov
+    or the Maggid;
+  - every other book tagged חב״ד or published by a Chabad yeshiva or
+    institution;
+  - for each, its HebrewBooks id, title, volume, pages and where and when
+    it was printed. Never the scan.
+- **Series.** Each title splits into a series and a volume, however the
+  catalog writes the volume (after a dash, a year, a numeral after a
+  bracket, `חלק` / `ח״` / `כרך`). So a sefer's volumes come together:
+  Toras Menachem 160 scans, Sichos Kodesh 85, Likkutei Sichos 78, Or
+  HaTorah 41.
+- **Placed with its sefer** by packages/works:
+  - a series whose title is the work's own, by the same author;
+  - or one of the names `src/registry/hebrewbooks.ts` gives it, kept by
+    hand like the rest of the registry;
+  - 689 of the 1,539 scans are placed;
+  - a placed work gains a HebrewBooks source (scans, `site-terms`,
+    link-only).
+  - Two works come from HebrewBooks alone (section 3): Sichos Kodesh and
+    the Rebbe's Sefer HaSichos. Each is kept only when the shelf has its
+    scans.
+- **The catalog** carries the shelf in the works (`works.shelf`, schema 3):
+  - the phone bundles it (`shelf.json`, 250 KB, read when a screen first
+    needs it);
+  - the web loads it as its own part (31 KB gzipped);
+  - `/v3/` serves it with the rest;
+  - apps before it ignore the field.
+- **Both apps**:
+  - a sefer's screen lists its scans ("Scans on HebrewBooks", the first ten
+    and then all), each opening on its page at hebrewbooks.org;
+  - under each Rebbe, "More on HebrewBooks" lists the rest of his books
+    there, series by series, with a filter for a long list;
+  - "Chabad books on HebrewBooks" holds the yeshivos' kovtzim and the
+    Chassidim's seforim;
+  - About credits Otzaria's catalog.
+
+**Checked:**
+
+- Tests pass in each package:
+  - hebrewbooks-index: 7 (a synthetic catalog as `.db` and `.db.zst`,
+    titles, order, authors);
+  - works: 14 (placing, sources, the HebrewBooks-only works);
+  - catalog: 201 (the shelf parsed, a malformed one rejected);
+  - app-core: 122;
+  - mobile: 100 (the three screens);
+  - web: 92.
+- In Chromium, in Hebrew and in English: the shelf rows under each Rebbe,
+  Likkutei Sichos' 78 scans, the Rebbe's shelf filtered, and a series of
+  the other Chabad books (130 issues of הערות התמימים ואנ״ש).
+
+**Open:**
+
+- Page-level links. "Open the scan" at a sicha's page needs each scan's
+  page offset (the PDF page of printed page 1), which the catalog does not
+  have.
+- Thumbnails. HebrewBooks allows them; the apps show none yet.
 
 ## 8. Risks
 

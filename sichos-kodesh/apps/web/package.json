@@ -1,13 +1,13 @@
 {
   "name": "@sichos-kodesh/web",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
+    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/sefaria-index",
     "build": "tsc -b && vite build",
-    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/sefaria-index",
     "typecheck": "tsc -b --noEmit",
     "lint": "oxlint",
     "preview": "vite preview",

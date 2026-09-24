@@ -166,7 +166,10 @@ if (existsSync(path.join(libraryDir, 'meta.json'))) {
     for (const name of existsSync(contentsDir) ? (await readdir(contentsDir)).filter((n) => n.endsWith('.json')).sort() : []) {
       contents[name.slice(0, -'.json'.length)] = JSON.parse(await readFile(path.join(contentsDir, name), 'utf8'));
     }
-    const works = parseCatalogWorks({ authors: index.authors, works: index.works, contents });
+    // The HebrewBooks shelf rides in the works when the build has one (catalog 1.5.0 on).
+    const shelfFile = path.join(worksDir, 'shelf.json');
+    const shelf = existsSync(shelfFile) ? (JSON.parse(await readFile(shelfFile, 'utf8')) as unknown) : undefined;
+    const works = parseCatalogWorks(shelf === undefined ? { authors: index.authors, works: index.works, contents } : { authors: index.authors, works: index.works, contents, shelf });
     if (!works) {
       console.error(`The works in ${worksDir} do not validate (parseCatalogWorks); rebuild them with build-catalog-works.`);
       process.exit(1);

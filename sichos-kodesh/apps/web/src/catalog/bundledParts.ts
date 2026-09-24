@@ -1,4 +1,4 @@
-import type { CatalogLibrary, CatalogWorkContents, CatalogWorksIndex, LibraryCollections, OccasionGroup } from '@sichos-kodesh/catalog';
+import type { CatalogLibrary, CatalogShelf, CatalogWorkContents, CatalogWorksIndex, LibraryCollections, OccasionGroup } from '@sichos-kodesh/catalog';
 
 /**
  * The library and the works this build bundles, as parts of the bundle of
@@ -15,6 +15,7 @@ import type { CatalogLibrary, CatalogWorkContents, CatalogWorksIndex, LibraryCol
 const LIBRARY_FILES = import.meta.glob<unknown>('../../../mobile/src/catalog/data/library/*.json', { import: 'default' });
 const WORKS_FILES = import.meta.glob<unknown>('../../../mobile/src/catalog/data/works/works.json', { import: 'default' });
 const CONTENTS_FILES = import.meta.glob<unknown>('../../../mobile/src/catalog/data/works/contents/*.json', { import: 'default' });
+const SHELF_FILES = import.meta.glob<unknown>('../../../mobile/src/catalog/data/works/shelf.json', { import: 'default' });
 
 function loader(files: Record<string, () => Promise<unknown>>, name: string): () => Promise<unknown> {
   const key = Object.keys(files).find((path) => path.endsWith(`/${name}.json`));
@@ -24,6 +25,7 @@ function loader(files: Record<string, () => Promise<unknown>>, name: string): ()
 
 let library: CatalogLibrary | null = null;
 let works: CatalogWorksIndex | null = null;
+let shelf: CatalogShelf | null = null;
 const contents = new Map<string, CatalogWorkContents>();
 
 /** What the store reads: null until each part has arrived. */
@@ -31,10 +33,12 @@ export const bundledParts = {
   library: (): CatalogLibrary | null => library,
   works: (): CatalogWorksIndex | null => works,
   contents: (workId: string): CatalogWorkContents | null => contents.get(workId) ?? null,
+  shelf: (): CatalogShelf | null => shelf,
 };
 
 let libraryLoad: Promise<void> | null = null;
 let worksLoad: Promise<void> | null = null;
+let shelfLoad: Promise<void> | null = null;
 const contentsLoads = new Map<string, Promise<void>>();
 
 /** Fetches the library's parts once; a failed fetch (offline before they were ever cached) is tried again on the next call. */
@@ -88,4 +92,18 @@ export function loadBundledWorkContents(workId: string): Promise<void> {
     contentsLoads.set(workId, load);
   }
   return load;
+}
+
+/** The HebrewBooks shelf, fetched once; a build without one resolves with nothing (the store then says null). */
+export function loadBundledShelf(): Promise<void> {
+  if (Object.keys(SHELF_FILES).length === 0) return Promise.resolve();
+  shelfLoad ??= (loader(SHELF_FILES, 'shelf')() as Promise<CatalogShelf>)
+    .then((value) => {
+      shelf = value;
+    })
+    .catch((error: unknown) => {
+      shelfLoad = null;
+      throw error;
+    });
+  return shelfLoad;
 }

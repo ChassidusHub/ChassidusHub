@@ -1,6 +1,7 @@
 import type { Genre, Work, WorkSource } from '../types.js';
 import { AUTHOR_BY_LIBRARY_GROUP } from './authors.js';
 import { CHABADLIBRARY_TREE } from './chabadlibraryTree.js';
+import { HEBREWBOOKS_ONLY } from './hebrewbooks.js';
 
 /**
  * The works registry, kept by hand on purpose (the plan's risk "matching
@@ -13,6 +14,7 @@ import { CHABADLIBRARY_TREE } from './chabadlibraryTree.js';
  *    that the library does not list separately.
  * 3. The collections the phone already browses, as works whose units keep
  *    the collections' item ids (see collections.ts).
+ * 4. The few works only HebrewBooks has, as scans (hebrewbooks.ts).
  */
 
 interface LibraryWork {
@@ -215,6 +217,7 @@ function buildWorks(): Work[] {
   }
   for (const work of SEFARIA_ONLY) works.push({ ...work, sources: SEFARIA[work.id] ?? [] });
   works.push(...COLLECTION_ONLY);
+  works.push(...HEBREWBOOKS_ONLY);
   return works;
 }
 

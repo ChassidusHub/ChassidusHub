@@ -75,6 +75,7 @@ export function AboutScreen() {
         {t.aboutTextsBySuffix}
       </p>
       <p className="subtitle">{t.aboutIgros}</p>
+      <p className="subtitle">{t.aboutHebrewBooks}</p>
 
       <p className="category-header">{t.aboutPoweredBy}</p>
       <div className="about-badges">

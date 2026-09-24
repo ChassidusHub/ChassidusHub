@@ -39,6 +39,7 @@ const screens = {
   ...(require('./WorkScreen') as typeof import('./WorkScreen')),
   ...(require('./ReaderScreen') as typeof import('./ReaderScreen')),
   ...(require('./SeforimSearchScreen') as typeof import('./SeforimSearchScreen')),
+  ...(require('./HebrewBooksShelfScreen') as typeof import('./HebrewBooksShelfScreen')),
 };
 
 async function render(element: React.ReactElement): Promise<string> {
@@ -161,6 +162,40 @@ describe('seforim screens', () => {
       expect(stored.settings).toMatchObject({ font: 'david', theme: 'sepia', scale: 1.4 });
       reading.recordPlace('tanya', 'part1/1', 1, 0.4567);
       expect(reading.getReadingState().places.tanya).toMatchObject({ unitId: 'part1/1', source: 1, offset: 0.457 });
+    });
+  });
+
+  describe('the HebrewBooks shelf', () => {
+    it('gives each Rebbe his other books on HebrewBooks, and the other Chabad books a row of their own', async () => {
+      const shown = await render(<screens.SeforimScreen {...props(undefined)} />);
+      expect(shown).toContain('More on HebrewBooks');
+      expect(shown).toContain('Chabad books on HebrewBooks');
+      // Sichos Kodesh has no text anywhere yet: it is its scans.
+      expect(shown).toContain('Sichos Kodesh');
+      expect(shown).toMatch(/\d+ scans/);
+    });
+
+    it('lists a sefer\'s scans on its screen, each opening on HebrewBooks', async () => {
+      const shown = await render(<screens.WorkScreen {...props({ workId: 'likkutei-sichos' })} />);
+      expect(shown).toContain('Scans on HebrewBooks');
+      expect(shown).toContain('\u05D0 (\u05D1\u05E8\u05D0\u05E9\u05D9\u05EA - \u05E9\u05DE\u05D5\u05EA - \u05D5\u05D9\u05E7\u05E8\u05D0)');
+      expect(shown).toMatch(/Show all \d+/);
+      expect(shown).toContain('306 pages');
+      // A sefer with only scans says where to read it.
+      expect(await render(<screens.WorkScreen {...props({ workId: 'sichos-kodesh' })} />)).toContain('its scans open on HebrewBooks');
+    });
+
+    it('lists an author\'s other books by series, with Otzaria credited', async () => {
+      const shelf = await render(<screens.HebrewBooksShelfScreen {...props({ authorId: 'the-rebbe' })} />);
+      expect(shelf).toContain('The Rebbe on HebrewBooks');
+      expect(shelf).toContain('\u05E9\u05E2\u05E8\u05D9 \u05D4\u05DE\u05D5\u05E2\u05D3\u05D9\u05DD');
+      expect(shelf).toContain('Otzaria');
+      // The seforim here list their own scans; the shelf leaves them out.
+      expect(shelf).not.toContain('"\u05DC\u05E7\u05D5\u05D8\u05D9 \u05E9\u05D9\u05D7\u05D5\u05EA"');
+      const others = await render(<screens.HebrewBooksShelfScreen {...props({ authorId: null })} />);
+      expect(others).toContain('Chabad books on HebrewBooks');
+      const series = await render(<screens.HebrewBooksShelfScreen {...props({ authorId: 'the-rebbe', series: 0 })} />);
+      expect(series).toMatch(/\d+ pages/);
     });
   });
 
