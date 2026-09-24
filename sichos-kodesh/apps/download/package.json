@@ -1,0 +1,30 @@
+{
+  "name": "@sichos-kodesh/download",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The download site (Hebrew RTL): prebuilt packs in one click, or any year, month, content and audio quality as signed packs from the pack API.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "pretest": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hebcal/core": "^6.9.2",
+    "@sichos-kodesh/catalog": "^0.1.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^3.0.0"
+  }
+}
