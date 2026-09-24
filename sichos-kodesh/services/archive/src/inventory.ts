@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { extractDriveFileId, extractDriveResourceKey } from '@sichos-kodesh/catalog';
+import { extractDriveFileId, extractDriveResourceKey, jemHebrewDate } from '@sichos-kodesh/catalog';
 import { nowIso } from './db.js';
 import { loadSectionsInventory } from './sectionsInventory.js';
 import type { CollectionsInventory } from './sectionsInventory.js';
@@ -56,22 +56,31 @@ export function loadInventory(store: ArchiveStore, options: InventoryOptions): I
   if (options.jemDb) {
     const jem = new DatabaseSync(options.jemDb, { readOnly: true });
     try {
+      // One jemEvents item per top-level ccdb event, its sub-events'
+      // recordings as chapters in order - the same items and roles as the
+      // catalog library's jemEvents (packages/catalog buildLibrary.ts).
       const rows = jem
         .prepare(
-          `SELECT r.event_id, r.ccdb_recording_id, r.name, r.duration_ms, r.url, e.hebrew_year, e.hebrew_month, e.hebrew_day
-           FROM audio_recordings r LEFT JOIN events e ON e.id = r.event_id ORDER BY r.event_id, r.ccdb_recording_id`,
+          `SELECT root.id AS root, r.name, r.duration_ms, r.url, root.hebrew_year, root.hebrew_month, root.hebrew_day
+           FROM audio_recordings r JOIN events e ON e.id = r.event_id JOIN events root ON root.id = coalesce(e.parent_id, e.id)
+           ORDER BY root.id, CASE WHEN e.parent_id IS NULL THEN 0 ELSE 1 END, e.id, r.ccdb_recording_id`,
         )
-        .all() as Array<{ event_id: number; ccdb_recording_id: number; name: string | null; duration_ms: number | null; url: string; hebrew_year: number | null; hebrew_month: number | null; hebrew_day: number | null }>;
+        .all() as Array<{ root: number; name: string | null; duration_ms: number | null; url: string; hebrew_year: number | null; hebrew_month: number | null; hebrew_day: number | null }>;
       let ord = 0;
-      let lastEvent: number | null = null;
+      let lastRoot: number | null = null;
+      let seenFiles = new Set<string>();
       store.db.exec('BEGIN');
       for (const row of rows) {
-        if (row.event_id !== lastEvent) {
+        if (row.root !== lastRoot) {
           ord = 0;
-          lastEvent = row.event_id;
+          lastRoot = row.root;
+          seenFiles = new Set();
         }
         const filename = jemFilename(row.url);
-        upsert.run('jemEvents', String(row.event_id), 'audio', filename, String(ord), 'jem', row.url, null, row.name, ord, row.duration_ms, row.hebrew_year, null, seenAt);
+        if (seenFiles.has(filename)) continue;
+        seenFiles.add(filename);
+        const hebrewDate = jemHebrewDate(row.hebrew_year, row.hebrew_month, row.hebrew_day) ?? null;
+        upsert.run('jemEvents', String(row.root), 'audio', filename, String(ord), 'jem', row.url, null, row.name, ord, row.duration_ms, row.hebrew_year, hebrewDate, seenAt);
         ord += 1;
         result.audio += 1;
       }

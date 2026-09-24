@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CATALOG_SCHEMA_VERSION } from '@sichos-kodesh/catalog';
+import { CATALOG_LIBRARY_SCHEMA_VERSION } from '@sichos-kodesh/catalog';
 import { checkCatalogUpdate, fetchCatalogRelease, shouldCheckCatalog } from '@sichos-kodesh/app-core';
 import type { CatalogCheckRecord } from '@sichos-kodesh/app-core';
 import { getOnlineSnapshot } from '../network/connectivity';
@@ -65,7 +65,8 @@ export function checkForCatalogUpdate(): Promise<CatalogUpdateStatus> {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     setStatus({ phase: 'checking' });
-    const result = await checkCatalogUpdate({ currentVersion: catalogStore.get().version, schemaVersion: CATALOG_SCHEMA_VERSION });
+    // Schema 2: the manifest under /v2/, whose catalog carries the library too.
+    const result = await checkCatalogUpdate({ currentVersion: catalogStore.get().version, schemaVersion: CATALOG_LIBRARY_SCHEMA_VERSION });
     if (result.status === 'error') {
       await writeCheckRecord();
       setStatus({ phase: 'error', checkedAt: Date.now() });

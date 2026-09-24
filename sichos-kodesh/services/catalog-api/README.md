@@ -18,12 +18,22 @@ The shapes are `CatalogManifest` / `CatalogRelease` in
 | `/v1/catalog/<version>/catalog.json` | that release's data (`byYear`), ~2.6 MB, byte-exact (`sha256` in the manifest, also the `ETag`) | `public, max-age=31536000, immutable` |
 | `/v1/catalog/changelog.json` | the changelog array alone | `public, max-age=300` |
 | `/v1/catalog/latest/catalog.json` | `302` to the served version | `public, max-age=300` |
+| `/v2/catalog/manifest.json` | schema 2 - the phone app: the same fields plus `collections` (items per library collection) | `public, max-age=300` |
+| `/v2/catalog/<version>/catalog.json` | the same farbrengens as `/v1/`, byte for byte, plus `library` (`LibraryRelease`) | `public, max-age=31536000, immutable` |
+| `/v2/catalog/changelog.json`, `/v2/catalog/latest/catalog.json` | as under `/v1/` | |
 | `/` | a small index | |
 
 Any other path, and any other version than the one served, is a JSON
 `404` (`{"error":"not_found", ...}`); other methods a JSON `405`. The
 manifest's `url` is rewritten to the origin the request arrived on, so a
 preview deployment's manifest points at that preview's own catalog.
+
+The web app reads `/v1/` (catalog schema 1) and the phone app `/v2/`
+(schema 2, with the library); an app never takes the other schema. The
+bundle keeps one copy of the farbrengens: `scripts/build.mjs` bakes the
+farbrengens' JSON, the library's JSON and each file's short head, checks
+that both reassemble to their manifest's sha256, and the router puts each
+catalog.json back together.
 
 ## How the API gets the files
 

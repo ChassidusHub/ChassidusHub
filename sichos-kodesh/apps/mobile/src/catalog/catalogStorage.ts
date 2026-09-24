@@ -1,6 +1,6 @@
 import RNBlobUtil from 'react-native-blob-util';
-import { parseCatalogRelease } from '@sichos-kodesh/catalog';
-import type { CatalogRelease } from '@sichos-kodesh/catalog';
+import { parseCatalogReleaseFile } from '@sichos-kodesh/catalog';
+import type { CatalogRelease, LibraryRelease } from '@sichos-kodesh/catalog';
 
 /**
  * Where a fetched catalog release lives between launches: one JSON file in
@@ -17,18 +17,24 @@ function catalogPath(): string {
   return `${RNBlobUtil.fs.dirs.DocumentDir}/${CATALOG_FILENAME}`;
 }
 
-export async function readStoredCatalog(): Promise<CatalogRelease | null> {
+/**
+ * The stored release, whichever schema it has. A schema-1 file left by an
+ * app version from before the library parses fine and is then refused by
+ * the store (schema mismatch), so the bundled library stays in use until
+ * the next check replaces the file with a schema-2 one.
+ */
+export async function readStoredCatalog(): Promise<CatalogRelease | LibraryRelease | null> {
   try {
     const path = catalogPath();
     if (!(await RNBlobUtil.fs.exists(path))) return null;
     const raw = await RNBlobUtil.fs.readFile(path, 'utf8');
-    return parseCatalogRelease(JSON.parse(String(raw)));
+    return parseCatalogReleaseFile(JSON.parse(String(raw)));
   } catch {
     return null;
   }
 }
 
-export async function writeStoredCatalog(release: CatalogRelease): Promise<void> {
+export async function writeStoredCatalog(release: CatalogRelease | LibraryRelease): Promise<void> {
   try {
     const path = catalogPath();
     const tempPath = `${path}.part`;

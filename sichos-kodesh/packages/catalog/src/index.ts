@@ -1,4 +1,5 @@
 export { buildCatalog } from './buildCatalog.js';
+export { buildLibrary, jemHebrewDate } from './library/buildLibrary.js';
 export { extractDriveFileId, extractDriveResourceKey } from './driveLinks.js';
 export { mafteiachMonthTokenToHDateMonth, toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 export { browsableYears, entryHasContent, findCatalogEntryForOccasion, hasContent } from './catalogLookup.js';
@@ -22,20 +23,46 @@ export { occasionIdentity, resolveOccasionAllYears, scoreOccasionMatch } from '.
 export type { OccasionIdentity, TimeOfDay, YearOccasionMatches } from './occasionIdentity.js';
 export { DEFAULT_PLAYBACK_RATE, PLAYBACK_RATES, effectivePlaybackRate, formatPlaybackRate, isPlaybackRate, isPlaybackRateAllowed, nextPlaybackRate } from './playbackPolicy.js';
 export type { PlaybackRate } from './playbackPolicy.js';
-export { CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from './version.js';
+export { CATALOG_LIBRARY_SCHEMA_VERSION, CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from './version.js';
+export { LIBRARY_COLLECTION_IDS } from './library/types.js';
+export type {
+  CatalogLibrary,
+  CatalogRef,
+  HadranItem,
+  JemEventItem,
+  LibraryCollection,
+  LibraryCollectionId,
+  LibraryCollections,
+  LibraryGroup,
+  LibraryItemBase,
+  LikkuteiSichosItem,
+  MaamarItem,
+  MichtavItem,
+  OccasionGroup,
+  ReshimaItem,
+  YomanItem,
+} from './library/types.js';
+export { libraryCounts, libraryItem, moadBySlug, occasionMoadim, occasionParshiyos } from './library/lookup.js';
+export { parseCatalogLibrary } from './library/parse.js';
 export { CATALOG_CHANGELOG } from './changelog.js';
 export type { CatalogChangelogEntry } from './changelog.js';
 export {
   CATALOG_MANIFEST_PATH,
+  catalogManifestPath,
   catalogReleasePath,
   catalogReleaseTag,
   compareCatalogVersions,
   isCatalogUpdateApplicable,
+  isLibraryRelease,
   isValidCatalogVersion,
   parseCatalogManifest,
   parseCatalogRelease,
+  parseCatalogReleaseFile,
+  parseLibraryRelease,
+  serializeCatalogRelease,
+  serializeLibraryRelease,
 } from './release.js';
-export type { CatalogManifest, CatalogRelease } from './release.js';
+export type { CatalogManifest, CatalogRelease, LibraryRelease } from './release.js';
 export type { CatalogByYear } from './catalogLookup.js';
 export type { AudioKind, CatalogAudio, CatalogEntry, CatalogPdf, CatalogYear, PdfSection } from './types.js';
 export type { WeekDay, WeekOccasion, WeekResolution, YearWeekOccasions } from './resolveThisWeek.js';

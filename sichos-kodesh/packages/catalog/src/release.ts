@@ -1,5 +1,7 @@
 import type { CatalogChangelogEntry } from './changelog.js';
 import type { CatalogByYear } from './catalogLookup.js';
+import { parseCatalogLibrary } from './library/parse.js';
+import type { CatalogLibrary } from './library/types.js';
 import type { CatalogEntry } from './types.js';
 
 /**
@@ -29,6 +31,8 @@ export interface CatalogManifest {
   occasions: number;
   /** Most recent first, at least the entry for `version`. */
   changelog: CatalogChangelogEntry[];
+  /** Schema 2 only: items per library collection. */
+  collections?: Record<string, number>;
 }
 
 /** `catalog.json` - the data itself, self-describing so a file on disk can be trusted on its own. */
@@ -39,12 +43,26 @@ export interface CatalogRelease {
   byYear: CatalogByYear;
 }
 
-/** Path of the manifest under the API's origin; the catalog's own URL comes from the manifest. */
+/**
+ * Schema 2 (the phone app's library): the same farbrengens, byte for byte,
+ * plus the library next to them. Served under `/v2/`, while the web app
+ * keeps reading schema 1 under `/v1/`.
+ */
+export interface LibraryRelease extends CatalogRelease {
+  library: CatalogLibrary;
+}
+
+/** Path of the schema-1 manifest under the API's origin; the catalog's own URL comes from the manifest. */
 export const CATALOG_MANIFEST_PATH = '/v1/catalog/manifest.json';
 
+/** The manifest path for a schema: `/v1/...` for the farbrengens (web), `/v2/...` with the library (phone). */
+export function catalogManifestPath(schemaVersion = 1): string {
+  return `/v${schemaVersion}/catalog/manifest.json`;
+}
+
 /** Path template for one release's data under the API's origin - what `CatalogManifest.url` points at. */
-export function catalogReleasePath(version: string): string {
-  return `/v1/catalog/${version}/catalog.json`;
+export function catalogReleasePath(version: string, schemaVersion = 1): string {
+  return `/v${schemaVersion}/catalog/${version}/catalog.json`;
 }
 
 /** The git tag a catalog release ships under. */
@@ -100,6 +118,7 @@ export function parseCatalogManifest(value: unknown): CatalogManifest | null {
     years: Array.isArray(years) ? years.filter((y): y is number => typeof y === 'number') : [],
     occasions: typeof occasions === 'number' ? occasions : 0,
     changelog: Array.isArray(changelog) ? changelog.filter(isChangelogEntry) : [],
+    ...(isRecord(value.collections) ? { collections: Object.fromEntries(Object.entries(value.collections).filter((e): e is [string, number] => typeof e[1] === 'number')) } : {}),
   };
 }
 
@@ -124,6 +143,50 @@ export function parseCatalogRelease(value: unknown): CatalogRelease | null {
     result[year] = entries as CatalogEntry[];
   }
   return { schemaVersion, version, releasedAt, byYear: result };
+}
+
+/** Validates a schema-2 file: the farbrengens as `parseCatalogRelease` checks them, and the library. */
+export function parseLibraryRelease(value: unknown): LibraryRelease | null {
+  const base = parseCatalogRelease(value);
+  if (!base || base.schemaVersion !== 2 || !isRecord(value)) return null;
+  const library = parseCatalogLibrary(value.library);
+  return library ? { ...base, library } : null;
+}
+
+/** Validates a catalog file of either schema - what a store reads from disk or the network. */
+export function parseCatalogReleaseFile(value: unknown): CatalogRelease | LibraryRelease | null {
+  if (isRecord(value) && value.schemaVersion === 2) return parseLibraryRelease(value);
+  return parseCatalogRelease(value);
+}
+
+export function isLibraryRelease(release: CatalogRelease | LibraryRelease): release is LibraryRelease {
+  return 'library' in release && isRecord((release as LibraryRelease).library);
+}
+
+interface ReleaseMeta {
+  schemaVersion: number;
+  version: string;
+  releasedAt: string;
+}
+
+function releaseHead(meta: ReleaseMeta): string {
+  return `{"schemaVersion":${meta.schemaVersion},"version":${JSON.stringify(meta.version)},"releasedAt":${JSON.stringify(meta.releasedAt)},"byYear":`;
+}
+
+/**
+ * `catalog.json` of schema 1, from the farbrengens' JSON - exactly
+ * `JSON.stringify({ schemaVersion, version, releasedAt, byYear })`, built by
+ * concatenation so services/catalog-api can keep one copy of `byYear` for
+ * both schemas and still serve each file byte for byte (its sha256 is in
+ * the manifest).
+ */
+export function serializeCatalogRelease(meta: ReleaseMeta, byYearJson: string): string {
+  return `${releaseHead(meta)}${byYearJson}}`;
+}
+
+/** `catalog.json` of schema 2: `JSON.stringify({ ..., byYear, library })`, sharing `byYearJson` with schema 1. */
+export function serializeLibraryRelease(meta: ReleaseMeta, byYearJson: string, libraryJson: string): string {
+  return `${releaseHead(meta)}${byYearJson},"library":${libraryJson}}`;
 }
 
 function isCatalogEntry(value: unknown): value is CatalogEntry {

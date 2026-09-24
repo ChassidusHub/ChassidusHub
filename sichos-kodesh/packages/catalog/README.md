@@ -61,6 +61,59 @@ npm run build
 npm run build-catalog -- --db ../mafteiach-index/mafteiach.db --out ./data
 ```
 
+## The library (`library/`, catalog schema 2 - the phone app only)
+
+Everything beyond the dated farbrengens, for the phone app's library
+browsers. `buildLibrary(maf, jem)` reads the section tables
+`packages/mafteiach-index`'s section crawler fills (and, for JEM events,
+`packages/jem-index/jem.db`) and returns a `CatalogLibrary`:
+
+- `moadim` (mafteiach's 101 moadim and yemei d'pagra, Hebrew names, the
+  farbrengen occasions each lists) and `parshiyos` (53) - mafteiach's own,
+  curated grouping, which the phone's search moves to (WP4b) from the
+  hand-made `SPECIAL_DAYS` / `CHAG_CATEGORIES` and the date math. Those
+  stay as they are here: the web app still uses them.
+- `collections`: `likkuteiSichos`, `maamorim`, `yomanim`, `hadranim`,
+  `michtavimKlolim`, `reshimos`, `jemEvents`. Every item has `id`,
+  `label`, optional `hebrewYear` / `hebrewDate` and the same `refs`
+  (`CatalogRef`: a Drive PDF by `driveFileId`, a JEM recording by
+  `workerFilename`), so downloads, packs and search stay generic; each
+  collection adds its own fields and browse axes in `groups` (Likkutei
+  Sichos by volume, parsha and moed; maamorim by year and Melukat volume;
+  hadranim by masechta and year; michtavim by moed and year; JEM events by
+  year and type).
+
+Only bibliographic facts, flags and links - never mafteiach's editorial
+writing (see packages/mafteiach-index's README). `lookup.ts` has the
+reverse indexes (`occasionMoadim`, `occasionParshiyos`, `libraryItem`),
+`parse.ts` validates a fetched library.
+
+`bin/build.ts` writes it next to the year files, as `data/library/`: one
+JSON file per collection plus `meta.json` (moadim, parshiyos), and an
+`index.ts` whose default export reads them on first call - Metro bundles
+every file a literal `require` names, and a `require` inside a function
+only parses its JSON when called, so the library costs the phone nothing
+at start-up. `--jem-db` (default `packages/jem-index/jem.db`, skipped when
+absent) and `--without-jem` control the jemEvents collection. Copy
+`data/library/` into `apps/mobile/src/catalog/data/` only; the web app
+does not bundle it.
+
+From the first full sections crawl (2026-09-24) the library holds:
+
+| Collection | Items |
+| --- | --- |
+| likkuteiSichos | 2,451 |
+| maamorim | 1,568 |
+| yomanim | 2,890 |
+| hadranim | 144 |
+| michtavimKlolim | 193 |
+| reshimos | 38 |
+| jemEvents | 2,909 |
+
+It also holds 101 moadim and 53 parshiyos. That is 4.1 MB of JSON, 0.7
+MB gzipped. The phone's Hermes bytecode grows by 1.6 MB, 0.7 MB
+compressed, and the schema-2 catalog.json is 6.4 MB.
+
 ## Catalog releases (`version.ts`, `changelog.ts`, `release.ts`, `bin/release.ts`)
 
 The catalog data has its own version, changelog and release tags,
@@ -73,6 +126,9 @@ reaches every phone without an app update.
   `CATALOG_SCHEMA_VERSION` is the shape of it, bumped only for a change
   that would break an older app's parsing (an app never applies data of
   another schema version - it keeps its bundled copy).
+  `CATALOG_LIBRARY_SCHEMA_VERSION` (2) is the phone's: the same
+  farbrengens plus the library. The two schemas are released together,
+  under one `CATALOG_VERSION`: `/v1/` for the web, `/v2/` for the phone.
 - `CATALOG_CHANGELOG` (`changelog.ts`, en + he) is the machine-readable
   changelog the apps show under "Catalog" on their About screens;
   `CHANGELOG.md` is the human copy. Keep both in step.
@@ -84,8 +140,15 @@ reaches every phone without an app update.
   `isCatalogUpdateApplicable` decides whether an app should fetch it.
 - `bin/release.ts` (`npm run release-files -w @sichos-kodesh/catalog`)
   writes the two files into `dist-release/` from the year files the apps
-  bundle. `--check` only verifies the version/changelog agree (CI);
-  `--released-at` pins the timestamp (the API passes the commit's date).
+  bundle (and fails if the two apps' copies differ), and, from the
+  library the phone bundles, `dist-release/v2/{catalog,manifest}.json`
+  (schema 2, the manifest with `collections` counts) plus
+  `dist-release/parts/` (the farbrengens' and the library's JSON, which
+  services/catalog-api keeps one copy of). `serializeCatalogRelease` /
+  `serializeLibraryRelease` build each catalog.json byte for byte like
+  `JSON.stringify`. `--check` only verifies the version/changelog agree
+  (CI); `--released-at` pins the timestamp (the API passes the commit's
+  date).
 
 How the API gets the files: `api.sk.shmuky.dev` is
 `services/catalog-api`, a Vercel project whose build runs this same
@@ -98,7 +161,8 @@ endpoints and the Vercel settings.)
 To ship a catalog release:
 
 1. Rebuild the data (`build-catalog` above) and copy the year files into
-   both apps' `src/catalog/data` (they are identical copies).
+   both apps' `src/catalog/data` (they are identical copies), and
+   `data/library/` into `apps/mobile/src/catalog/data/` only.
 2. Bump `CATALOG_VERSION`, add the entry to `changelog.ts` and
    `CHANGELOG.md`.
 3. Merge to `main`. Vercel deploys the API from that commit; the apps pick
@@ -106,7 +170,8 @@ To ship a catalog release:
    the phone).
 4. Tag the same commit `catalog-v<version>` and push the tag. The
    `catalog-release` workflow (`.github/workflows/catalog-release.yml`)
-   runs `release-files` and attaches `catalog.json` + `manifest.json` to a
+   runs `release-files` and attaches `catalog.json` + `manifest.json` (and
+   the schema-2 pair as `catalog-v2.json` + `manifest-v2.json`) to a
    GitHub release of that tag - the archive of what the API serves.
 
 ## Playback policy (`playbackPolicy.ts`)

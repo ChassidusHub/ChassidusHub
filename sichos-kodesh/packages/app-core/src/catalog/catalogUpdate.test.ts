@@ -62,3 +62,29 @@ describe('fetchCatalogRelease', () => {
     await expect(fetchCatalogRelease(manifest, fakeFetch({}))).rejects.toThrow(/404/);
   });
 });
+
+describe('schema 2 (the phone)', () => {
+  const collection = { items: [], groups: {} };
+  const library = {
+    moadim: [],
+    parshiyos: [],
+    collections: { likkuteiSichos: collection, maamorim: collection, yomanim: collection, hadranim: collection, michtavimKlolim: collection, reshimos: collection, jemEvents: collection },
+  };
+  const manifest2 = { ...manifest, schemaVersion: 2, url: 'https://api.sk.shmuky.dev/v2/catalog/1.1.0/catalog.json' };
+
+  it('reads its own manifest under /v2/', async () => {
+    expect(catalogManifestUrl()).toBe('https://api.sk.shmuky.dev/v1/catalog/manifest.json');
+    expect(catalogManifestUrl(undefined, 2)).toBe('https://api.sk.shmuky.dev/v2/catalog/manifest.json');
+    const result = await checkCatalogUpdate({ currentVersion: '1.0.0', schemaVersion: 2, fetchFn: fakeFetch({ [catalogManifestUrl(undefined, 2)]: manifest2 }) });
+    expect(result.status).toBe('available');
+  });
+
+  it('fetches a release that carries the library', async () => {
+    const release = await fetchCatalogRelease(manifest2, fakeFetch({ [manifest2.url]: { schemaVersion: 2, version: '1.1.0', releasedAt: 'x', byYear: { 5711: [entry] }, library } }));
+    expect(release).toHaveProperty('library.moadim', []);
+  });
+
+  it('rejects a schema-2 file without its library', async () => {
+    await expect(fetchCatalogRelease(manifest2, fakeFetch({ [manifest2.url]: { schemaVersion: 2, version: '1.1.0', releasedAt: 'x', byYear: {} } }))).rejects.toThrow(/shape/);
+  });
+});
