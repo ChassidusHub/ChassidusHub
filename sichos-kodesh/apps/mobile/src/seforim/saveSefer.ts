@@ -7,17 +7,18 @@ import { documentPath } from '../offline/objectStore';
 import type { PacksNativeModule } from '../offline/packsNative';
 import { forgetSaved, getSavedState, recordSaved, savedDir, savedIndexPath, savedTextPath } from './savedStore';
 import { mayRead } from '@sichos-kodesh/app-core';
-import { TextLoadError, fetchFromSefaria, type TextProblem } from './seforimText';
+import { TextLoadError, fetchUnitText, type TextProblem } from './seforimText';
 
 /**
  * Saving a sefer on the phone: every unit, in every edition that may be
- * read, fetched from Sefaria and rendered exactly as the reader renders it
- * online, then a search index built from those texts in the packs' own
+ * read, fetched exactly as the reader reads it online (from Sefaria, or,
+ * for the Igros, from the catalog API), then a search index built from
+ * those texts in the packs' own
  * layout (pack-format's SEARCH_INDEX_SQL and normalising) - so reading
  * and searching it need no internet.
  *
  * A few units at a time; a unit already saved is not fetched again, so a
- * stopped saving continues where it stopped. A unit Sefaria does not serve
+ * stopped saving continues where it stopped. A unit its source does not serve
  * is left out and the rest go on: the sefer is then saved in part, with
  * its index over what was saved, and "continue" tries the missing ones
  * again. One saving per sefer; the state below is what the work screen
@@ -26,7 +27,9 @@ import { TextLoadError, fetchFromSefaria, type TextProblem } from './seforimText
 
 export type SaveJob = { state: 'saving'; done: number; total: number } | { state: 'indexing'; total: number } | { state: 'stopped'; problem: TextProblem | 'cancelled' | 'failed'; done: number; total: number };
 
+/** Units fetched at a time: gently from Sefaria, faster from the catalog API's static files. */
 const CONCURRENCY = 3;
+const HOSTED_CONCURRENCY = 8;
 
 let jobs: Readonly<Record<string, SaveJob>> = {};
 const cancelled = new Set<string>();
@@ -93,7 +96,7 @@ async function ensureDir(relative: string): Promise<void> {
   if (!(await RNBlobUtil.fs.exists(path))) await RNBlobUtil.fs.mkdir(path).catch(() => undefined);
 }
 
-type FetchLike = Parameters<typeof fetchFromSefaria>[3];
+type FetchLike = Parameters<typeof fetchUnitText>[3];
 
 /**
  * Saves the sefer; resolves when it is saved and indexed, or stopped.
@@ -148,9 +151,9 @@ async function runSave(native: PacksNativeModule, work: CatalogWork, contents: C
         } else {
           let html: string;
           try {
-            html = await fetchFromSefaria(work, unit, edition, fetchFn);
+            html = await fetchUnitText(work, unit, edition, fetchFn);
           } catch (error) {
-            // One unit Sefaria does not serve is left out; no connection stops the saving.
+            // One unit its source does not serve is left out; no connection stops the saving.
             if (error instanceof TextLoadError && error.problem === 'unavailable') {
               skipped.add(part);
               continue;
@@ -167,7 +170,7 @@ async function runSave(native: PacksNativeModule, work: CatalogWork, contents: C
       }
     };
     await Promise.all(
-      Array.from({ length: CONCURRENCY }, () =>
+      Array.from({ length: parts.some((p) => work.sources[p.edition.source]?.source === 'sefaria') ? CONCURRENCY : HOSTED_CONCURRENCY }, () =>
         worker().catch((error: unknown) => {
           stop.problem ??= error instanceof TextLoadError ? error.problem : 'failed';
         }),

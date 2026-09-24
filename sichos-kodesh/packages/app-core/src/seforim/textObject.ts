@@ -9,8 +9,11 @@
  *   <sup class="fn"><a href="#nN">marker</a></sup>   a footnote reference
  *   <aside class="notes"><p id="nN">...</p></aside>   the footnotes
  *   <footer class="source">...</footer>              the credit line
+ *   <p class="end">                                  a line set to the end side (a letter's date, its signature)
  *
- * Anything else is read as its text.
+ * Anything else is read as its text. A note need not be pointed to from
+ * the text: the Igros' notes on a letter stand after it with no mark in the
+ * letter (see `notesAfterText`).
  */
 
 export interface Inline {
@@ -27,6 +30,8 @@ export interface Inline {
 export interface Block {
   kind: 'heading' | 'paragraph';
   level?: number;
+  /** `end`: set to the line's end side, as a letter's date line and signature are printed. */
+  align?: 'end';
   inlines: Inline[];
 }
 
@@ -176,6 +181,7 @@ export function parseTextObject(html: string): TextObject {
         current = currentNote.inlines;
       } else {
         currentBlock = name === 'p' ? { kind: 'paragraph', inlines: [] } : { kind: 'heading', level: Number(name[1]), inlines: [] };
+        if ((attrs.class ?? '').split(/\s+/).includes('end')) currentBlock.align = 'end';
         current = currentBlock.inlines;
       }
       continue;
@@ -225,6 +231,29 @@ export function parseTextObject(html: string): TextObject {
   closeBlock();
   result.source = sourceText.replace(/\s+/g, ' ').trim() || null;
   return result;
+}
+
+/** The notes the text points to, by number. */
+export function referencedNotes(text: TextObject): Set<number> {
+  const found = new Set<number>();
+  for (const block of text.blocks) for (const inline of block.inlines) if (inline.kind === 'note' && inline.note !== undefined) found.add(inline.note);
+  return found;
+}
+
+/**
+ * The notes the reader lists after the text: all of them when the notes go
+ * at the end; in the text, only those nothing points to, which have no
+ * other place to be shown.
+ */
+export function notesAfterText(text: TextObject, place: 'end' | 'inline'): Footnote[] {
+  if (place === 'end') return text.notes;
+  const referenced = referencedNotes(text);
+  return text.notes.filter((note) => !referenced.has(note.n));
+}
+
+/** What a note is labelled with: its own marker, its number when the text points to it, or nothing (a note on the whole text). */
+export function noteLabel(note: Footnote, referenced: ReadonlySet<number>): string {
+  return note.marker || (referenced.has(note.n) ? String(note.n) : '');
 }
 
 /**

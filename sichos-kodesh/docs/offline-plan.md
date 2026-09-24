@@ -599,7 +599,7 @@ Search is built too (mobile 1.4.0):
   occasion-label rules, and a table covers the 30 headings they do not
   read.
 
-Still to come: the text reader, which waits on the Igros rights.
+The text reader came later: the seforim reader (WP13, WP15), which reads the Igros too since their rights were cleared (WP17 in docs/chabad-library-plan.md).
 
 ### WP5 - `apps/download` + `services/pack-api`
 
@@ -761,7 +761,10 @@ Still open:
 8. **Igros / Maanos text rights**: the source is a commercial app's data
    file. Shmuly confirms permission from its publisher (or that the text
    is free to redistribute) before `packages/igros-index` output goes into
-   a catalog release or a pack.
+   a catalog release or a pack. **Decided for the Igros (2026-09-24):**
+   Shmuly cleared the Igros Kodesh; they ship as a readable sefer (WP17 in
+   docs/chabad-library-plan.md). The Maanos stay local until they are
+   cleared too.
 9. **Likkutei Sichos text**: facts, flags and links only until it is
    settled which text on mafteiach is its own editorial writing.
 10. **Permission from JEM**: redistributing JEM and mafteiach content as
@@ -786,8 +789,9 @@ Still open:
   pass with the same politeness as today's crawler (cached pages, one
   request at a time); the archive never hits mafteiach at all, only the
   files its links point at.
-- **Rights**: Igros/Maanos and Likkutei Sichos text stay locked (section
-  6) - the Drive's per-collection policy exists for this.
+- **Rights**: the Maanos and Likkutei Sichos text stay locked (section
+  6) - the Drive's per-collection policy exists for this. The Igros are
+  cleared (decision 8).
 - **`node:sqlite` is marked experimental** in Node 22; it is the same
   SQLite behind a stable-enough API, and the archive isolates it in
   `src/db.ts` so a swap to `better-sqlite3` is one file.

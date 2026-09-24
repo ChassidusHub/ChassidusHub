@@ -3,7 +3,7 @@ import { Animated, Linking, Pressable, ScrollView, Share, StyleSheet, View } fro
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ALargeSmall, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react-native';
-import { catalogUnit, type CatalogEdition, type CatalogUnit, type CatalogWork } from '@sichos-kodesh/catalog';
+import { catalogUnit, type CatalogEdition, type CatalogNames, type CatalogUnit, type CatalogWork } from '@sichos-kodesh/catalog';
 import {
   MARGIN_POINTS,
   chooseEdition,
@@ -16,8 +16,11 @@ import {
   pathToUnit,
   readableEditions,
   readerFont,
+  readerFontFor,
   readerTextSize,
+  unitPart,
   unitPosition,
+  unitsAreLetters,
   type ReaderPalette,
   type ReaderSettings,
   type TextObject,
@@ -78,14 +81,15 @@ function sefariaLink(work: CatalogWork, unit: CatalogUnit, edition: CatalogEditi
 export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
   const works = useWorks();
   const reading = useReadingState();
-  const settings = reading.settings;
   const online = useOnlineStatus();
   const { t, language, isRtl } = useTranslation();
   const { colors, baseScheme, setSchemeOverride } = useTheme();
   const insets = useSafeAreaInsets();
-  const palette = readerPalette(settings.theme, colors);
   const { workId, unitId } = route.params;
   const work = works.works.find((w) => w.id === workId);
+  // The settings as this sefer is read: the Igros open in their own font until one is chosen.
+  const settings = useMemo(() => ({ ...reading.settings, font: readerFontFor(reading.settings, work) }), [reading.settings, work]);
+  const palette = readerPalette(settings.theme, colors);
   const contents = useMemo(() => (work?.units ? getWorkContents(workId) : null), [work, workId]);
   const unit = contents ? catalogUnit(contents, unitId) : undefined;
   const place = reading.places[workId];
@@ -303,7 +307,7 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
 
         {sections.map((section, index) => (
           <View key={section.unit.id} onLayout={onSectionLayout(index, section)} style={index > 0 ? styles.nextSection : null}>
-            <SectionHead work={work} section={section} position={unitPosition(contents, section.unit.id)} settings={settings} palette={palette} first={index === 0} onEdition={(source) => navigation.setParams({ source })} />
+            <SectionHead work={work} section={section} position={unitPosition(contents, section.unit.id)} part={unitsAreLetters(work) ? unitPart(contents, section.unit.id) : null} settings={settings} palette={palette} first={index === 0} onEdition={(source) => navigation.setParams({ source })} />
             {section.loaded.state === 'loading' && (
               <View style={styles.center}>
                 <Spinner size={22} color={palette.accent} />
@@ -387,6 +391,7 @@ function SectionHead({
   work,
   section,
   position,
+  part,
   settings,
   palette,
   first,
@@ -395,6 +400,8 @@ function SectionHead({
   work: CatalogWork;
   section: Section;
   position: { number: number; total: number } | null;
+  /** A letter's volume, which places it (its number is its title); null for a chapter, placed by its position. */
+  part: CatalogNames | null;
   settings: ReaderSettings;
   palette: ReaderPalette;
   first: boolean;
@@ -410,7 +417,11 @@ function SectionHead({
 
   return (
     <View style={styles.head}>
-      {position && position.total > 1 && <AppText style={[styles.position, { color: palette.muted }]}>{t.readerChapterOf(position.number, position.total)}</AppText>}
+      {part ? (
+        <AppText style={[styles.position, { color: palette.muted }]}>{names(part, language)}</AppText>
+      ) : (
+        position && position.total > 1 && <AppText style={[styles.position, { color: palette.muted }]}>{t.readerChapterOf(position.number, position.total)}</AppText>
+      )}
       <AppText style={[styles.heading, { color: palette.text, fontFamily: readerFont(settings.font).family ?? undefined, fontSize: Math.round(size * 1.25), lineHeight: Math.round(size * 1.7) }]}>{heading}</AppText>
       <View style={[styles.ornament, { backgroundColor: palette.accent }]} />
       {first && (readable.length > 1 || links.length > 0) && (

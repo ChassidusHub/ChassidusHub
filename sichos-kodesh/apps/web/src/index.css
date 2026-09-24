@@ -2547,6 +2547,11 @@ body:has(.reader) {
   hyphens: auto;
 }
 
+/* A line set to the end side, as a letter's date line and signature are printed. */
+.reader-paragraph-end {
+  text-align: end;
+}
+
 .reader-subheading {
   margin: 1.2em 0 0.6em;
   font-size: 1.04em;

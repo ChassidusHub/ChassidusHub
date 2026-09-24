@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { markLabel, stripNiqqud, type Footnote, type Inline, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
+import { markLabel, noteLabel, notesAfterText, referencedNotes, stripNiqqud, type Footnote, type Inline, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -61,13 +61,19 @@ function Runs({ inlines, context }: { inlines: Inline[]; context: RunContext }) 
 /**
  * A text object drawn as the reader's settings ask - the same rules as the
  * phone's TextObjectView: vowels and markers on or off, the notes at the
- * end (numbers that open them) or in the text. Size, font, spacing,
- * margins, paper and justification come from the reader's CSS variables.
+ * end (numbers that open them) or in the text. A line marked for the end
+ * side (a letter's date and signature) sits there, and notes nothing in the
+ * text points to (the Igros' notes on a letter) follow it unnumbered,
+ * wherever the notes go. Size, font, spacing, margins, paper and
+ * justification come from the reader's CSS variables.
  */
 export function TextObjectView({ text, settings }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState<Footnote | null>(null);
   const notes = useMemo(() => new Map(text.notes.map((note) => [note.n, note])), [text.notes]);
+  const referenced = useMemo(() => referencedNotes(text), [text]);
+  const after = notesAfterText(text, settings.notes);
+  const label = (note: Footnote) => noteLabel(note, referenced);
   const context: RunContext = { settings, notes, onNote: setOpen };
 
   return (
@@ -78,18 +84,19 @@ export function TextObjectView({ text, settings }: Props) {
             <Runs inlines={block.inlines} context={context} />
           </h3>
         ) : (
-          <p key={i} className="reader-paragraph">
+          <p key={i} className={block.align === 'end' ? 'reader-paragraph reader-paragraph-end' : 'reader-paragraph'}>
             <Runs inlines={block.inlines} context={context} />
           </p>
         ),
       )}
 
-      {settings.notes === 'end' && text.notes.length > 0 && (
+      {after.length > 0 && (
         <aside className="reader-notes">
           <h4 className="reader-notes-title">{t.readerNotes}</h4>
-          {text.notes.map((note) => (
+          {after.map((note) => (
             <p key={note.n} className="reader-note" id={`note-${note.n}`}>
-              <span className="reader-note-marker">{note.marker || note.n}</span> <Runs inlines={note.inlines} context={{ ...context, nested: true }} />
+              {label(note) && <span className="reader-note-marker">{label(note)} </span>}
+              <Runs inlines={note.inlines} context={{ ...context, nested: true }} />
             </p>
           ))}
         </aside>
@@ -101,7 +108,8 @@ export function TextObjectView({ text, settings }: Props) {
         <div className="reader-note-backdrop" onClick={() => setOpen(null)} role="presentation">
           <div className="reader-note-sheet" role="dialog" aria-modal="true" aria-label={t.readerNotes} dir={text.dir} lang={text.lang} onClick={(event) => event.stopPropagation()}>
             <p>
-              <span className="reader-note-marker">{open.marker || open.n}</span> <Runs inlines={open.inlines} context={{ ...context, nested: true }} />
+              {label(open) && <span className="reader-note-marker">{label(open)} </span>}
+              <Runs inlines={open.inlines} context={{ ...context, nested: true }} />
             </p>
             <button type="button" className="button button-secondary" onClick={() => setOpen(null)}>
               {t.readerClose}

@@ -19,15 +19,17 @@ const letters: IgrosLetterInput[] = [
 const maanos: MaanehInput[] = [{ id: 'maanos:5742:1', year: 5742, number: 1, numberLabel: 'א', dateLine: '[תשרי]' }];
 
 describe('the rights gate', () => {
-  it('ships every indexed collection and holds back the Igros and Maanos', () => {
+  it('ships every indexed collection and the Igros, and holds back the Maanos', () => {
     expect(GATED_COLLECTION_IDS).toEqual(['igros', 'maanos']);
-    for (const id of GATED_COLLECTION_IDS) expect(SHIPPABLE_COLLECTIONS[id]).toBe(false);
+    expect(SHIPPABLE_COLLECTIONS.igros).toBe(true);
+    expect(SHIPPABLE_COLLECTIONS.maanos).toBe(false);
     expect(isShippable('maamorim')).toBe(true);
     expect(isShippable('farbrengens')).toBe(true);
-    expect(isShippable('igros')).toBe(false);
+    expect(isShippable('igros')).toBe(true);
+    expect(isShippable('maanos')).toBe(false);
     expect(isShippable('something-new')).toBe(false);
-    expect(() => assertShippable(['maamorim', 'likkuteiSichos'], 'x')).not.toThrow();
-    expect(() => assertShippable(['maamorim', 'igros', 'maanos', 'igros'], 'the release')).toThrow('the release: igros, maanos may not ship');
+    expect(() => assertShippable(['maamorim', 'likkuteiSichos', 'igros'], 'x')).not.toThrow();
+    expect(() => assertShippable(['maamorim', 'igros', 'maanos', 'maanos'], 'the release')).toThrow('the release: maanos may not ship');
   });
 });
 
@@ -84,9 +86,9 @@ describe('release-files', () => {
       const libraryDir = path.join(dir, 'library');
       await import('node:fs/promises').then((fs) => fs.mkdir(libraryDir));
       writeFileSync(path.join(libraryDir, 'meta.json'), JSON.stringify({ moadim: [], parshiyos: [] }));
-      writeFileSync(path.join(libraryDir, 'igros.json'), JSON.stringify(buildGatedLibrary(letters, maanos).igros));
+      writeFileSync(path.join(libraryDir, 'maanos.json'), JSON.stringify(buildGatedLibrary(letters, maanos).maanos));
       const run = promisify(execFile)(process.execPath, ['--import', 'tsx', 'bin/release.ts', '--library', libraryDir, '--out', path.join(dir, 'out')], { cwd: packageDir });
-      await expect(run).rejects.toMatchObject({ stderr: expect.stringContaining('igros may not ship') });
+      await expect(run).rejects.toMatchObject({ stderr: expect.stringContaining('maanos may not ship') });
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

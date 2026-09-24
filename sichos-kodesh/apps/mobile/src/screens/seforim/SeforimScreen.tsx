@@ -4,7 +4,7 @@ import { catalogUnit } from '@sichos-kodesh/catalog';
 import { getWorkContents, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { SeforimScreenProps } from '../../navigation/types';
-import { authorSections, names, workKind } from '@sichos-kodesh/app-core';
+import { authorSections, names, unitsAreLetters, workKind } from '@sichos-kodesh/app-core';
 import { recentPlaces, useReadingState } from '../../seforim/readingState';
 import { CategoryRow } from '../../ui/CategoryRow';
 import { Row, RowDistance, RowTrailing } from '../../ui/Row';
@@ -36,7 +36,7 @@ export function SeforimScreen({ navigation }: SeforimScreenProps) {
     const work = byId.get(workId)!;
     switch (workKind(work)) {
       case 'read':
-        return t.seforimChapters(work.units ?? 0);
+        return t.seforimChapters(work.units ?? 0, unitsAreLetters(work));
       case 'collection':
         return t.seforimInLibrary;
       case 'links':

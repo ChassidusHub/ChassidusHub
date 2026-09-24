@@ -83,6 +83,7 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
         <AppText style={[styles.strong, { color: colors.muted }]}>Sefaria</AppText>
         {t.aboutTextsBySuffix}
       </Subtitle>
+      <Subtitle>{t.aboutIgros}</Subtitle>
 
       <CategoryHeader>{t.aboutPoweredBy}</CategoryHeader>
       <View style={[styles.badges, { flexDirection: row(isRtl) }]}>

@@ -67,7 +67,7 @@ export function ReaderSettingsSheet({ visible, settings, onClose }: Props) {
                   accessibilityRole="radio"
                   accessibilityState={{ checked: on }}
                   accessibilityLabel={font.name[language]}
-                  onPress={() => set({ font: font.id })}
+                  onPress={() => set({ font: font.id, fontChosen: true })}
                   style={[styles.fontCard, { backgroundColor: colors.cardBg, borderColor: on ? colors.accent : 'transparent' }]}
                 >
                   <Text style={[styles.fontSample, { color: colors.fg, fontFamily: font.family ?? undefined }]}>{SAMPLE}</Text>

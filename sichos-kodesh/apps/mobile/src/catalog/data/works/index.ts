@@ -18,6 +18,7 @@ const CONTENTS: Record<string, () => CatalogWorkContents> = {
   "shulchan-aruch-harav": () => require('./contents/shulchan-aruch-harav.json') as CatalogWorkContents,
   "ner-mitzvah-vetorah-or": () => require('./contents/ner-mitzvah-vetorah-or.json') as CatalogWorkContents,
   "derech-mitzvosecha": () => require('./contents/derech-mitzvosecha.json') as CatalogWorkContents,
+  "igros-kodesh-rebbe": () => require('./contents/igros-kodesh-rebbe.json') as CatalogWorkContents,
   "kuntres-hahispaalus": () => require('./contents/kuntres-hahispaalus.json') as CatalogWorkContents,
   "siddur-weekday": () => require('./contents/siddur-weekday.json') as CatalogWorkContents,
   "maaneh-lashon": () => require('./contents/maaneh-lashon.json') as CatalogWorkContents,

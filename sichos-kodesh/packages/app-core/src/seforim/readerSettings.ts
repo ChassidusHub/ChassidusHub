@@ -73,6 +73,8 @@ export type ReaderNotes = 'end' | 'inline';
 
 export interface ReaderSettings {
   font: ReaderFontId;
+  /** Whether the font was picked in the settings; until it is, a work may open in its own (`readerFontFor`). */
+  fontChosen: boolean;
   /** Multiplies the reader's base text size (19 points): 0.8 to 2, in steps of 0.1. */
   scale: number;
   spacing: ReaderSpacing;
@@ -97,6 +99,7 @@ export const FONT_SCALE_MAX = 2;
 
 export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   font: 'frank-ruehl',
+  fontChosen: false,
   scale: 1,
   spacing: 'normal',
   margins: 'normal',
@@ -132,6 +135,8 @@ export function parseReaderSettings(raw: unknown, legacyScale?: unknown): Reader
   const scaleIn = typeof value.scale === 'number' ? value.scale : typeof legacyScale === 'number' ? legacyScale : d.scale;
   return {
     font: oneOf(value.font, READER_FONTS.map((f) => f.id), d.font),
+    // A row from before the flag: a font other than the default was chosen.
+    fontChosen: flag(value.fontChosen, typeof value.font === 'string' && value.font !== d.font),
     scale: Number.isFinite(scaleIn) && scaleIn >= FONT_SCALE_MIN && scaleIn <= FONT_SCALE_MAX ? clampScale(scaleIn) : d.scale,
     spacing: oneOf(value.spacing, READER_SPACINGS, d.spacing),
     margins: oneOf(value.margins, READER_MARGINS, d.margins),
@@ -143,6 +148,16 @@ export function parseReaderSettings(raw: unknown, legacyScale?: unknown): Reader
     continuous: flag(value.continuous, d.continuous),
     keepAwake: flag(value.keepAwake, d.keepAwake),
   };
+}
+
+/**
+ * The font a work opens in: the one picked in the settings, or, until one
+ * is picked, the work's own - David for the Igros (genre `igros`), the
+ * default for everything else.
+ */
+export function readerFontFor(settings: Pick<ReaderSettings, 'font' | 'fontChosen'>, work: { genre: string } | null | undefined): ReaderFontId {
+  if (settings.fontChosen || !work) return settings.font;
+  return work.genre === 'igros' ? 'david' : settings.font;
 }
 
 /** The text size in points (or CSS pixels) for these settings. */

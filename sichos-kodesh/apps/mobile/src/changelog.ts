@@ -9,6 +9,21 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.0',
+    en: [
+      'Igros Kodesh: the Rebbe\'s letters to read, all 11,059 in 28 volumes, each with its date, its notes and where it is printed. Library > Seforim > the Rebbe > Igros Kodesh opens them volume by volume; search finds a letter by its number',
+      'The letters open in David, as the reader\'s own choice for them, until you pick another font in the Aa settings',
+      'Save the Igros on the phone like any sefer (about 28 MB), to read with no internet and to search word by word',
+      'In a letter, the date line and the signature sit on the left, as in the printed volumes, and the volume\'s notes follow the letter',
+    ],
+    he: [
+      'אגרות קודש: אגרות הרבי לקריאה, כל 11,059 האגרות ב-28 חלקים, כל אחת עם התאריך, ההערות והמקום שבו נדפסה. ספרייה > ספרים > הרבי > אגרות קודש פותח אותן חלק אחר חלק; החיפוש מוצא אגרת לפי מספרה',
+      'האגרות נפתחות בגופן דוד, עד שתבחרו גופן אחר בהגדרות Aa',
+      'אפשר לשמור את האגרות בטלפון כמו כל ספר (כ-28 MB), לקריאה בלי אינטרנט ולחיפוש מילה במילה',
+      'באגרת, שורת התאריך והחתימה בצד שמאל, כמו בכרכים המודפסים, והערות הכרך באות אחרי האגרת',
+    ],
+  },
+  {
     version: '1.6.0',
     en: [
       'A new reader for the seforim: set in Frank Ruehl, David, SBL Hebrew or Noto Serif (or the phone\'s own font), each shipped in the app, so a sefer reads the same with no internet',

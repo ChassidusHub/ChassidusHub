@@ -15,13 +15,13 @@ export class TextLoadError extends Error {
   }
 }
 
-/** Just what the text read needs of `fetch`. */
-export type TextFetch = (url: string) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
+/** Just what reading a text needs of `fetch`: Sefaria answers in JSON, the catalog API's hosted texts as the text itself. */
+export type TextFetch = (url: string) => Promise<{ ok: boolean; json(): Promise<unknown>; text(): Promise<string> }>;
 
 export async function fetchFromSefaria(work: CatalogWork, unit: CatalogUnit, edition: CatalogEdition, fetchFn: TextFetch = fetch as TextFetch): Promise<string> {
   const source = work.sources[edition.source];
   if (!source || source.source !== 'sefaria' || !unit.ref || !source.version || (source.language !== 'he' && source.language !== 'en')) throw new TextLoadError('unavailable');
-  let response: { ok: boolean; json(): Promise<unknown> };
+  let response: Awaited<ReturnType<TextFetch>>;
   try {
     response = await fetchFn(textUrl(unit.ref, source.language, source.version));
   } catch {

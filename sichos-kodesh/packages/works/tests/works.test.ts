@@ -76,6 +76,11 @@ describe('the rights gate', () => {
     expect(rightsFor({ source: 'chabadlibrary', licence: 'free-to-read' })).toBe('link-only');
     expect(rightsFor({ source: 'chabadlibrary', licence: 'cc0' })).toBe('link-only');
     expect(rightsFor({ source: 'hebrewbooks', licence: 'site-terms' })).toBe('link-only');
+    // The Igros app's copies go by their collection: the Igros ship with credit, the Maanos and anything unnamed stay local.
+    expect(rightsFor({ source: 'igros-app', sourceId: 'igros', licence: 'commercial' })).toBe('ship-with-credit');
+    expect(rightsFor({ source: 'igros-app', sourceId: 'igros:3275', licence: 'commercial' })).toBe('ship-with-credit');
+    expect(rightsFor({ source: 'igros-app', sourceId: 'maanos', licence: 'commercial' })).toBe('local-only');
+    expect(rightsFor({ source: 'igros-app', sourceId: 'maanos:5742:4', licence: 'commercial' })).toBe('local-only');
     expect(rightsFor({ source: 'igros-app', licence: 'commercial' })).toBe('local-only');
     expect(rightsFor({ source: 'mafteiach', licence: 'facts-and-links' })).toBe('ship');
   });
@@ -142,7 +147,10 @@ describe('the works as catalog schema 3 carries them', () => {
   it('never carries a local-only source nor a gated collection, and keeps the shippable ones', () => {
     const works = buildCatalogWorks([]);
     for (const work of works.works) for (const source of work.sources) expect(source.rights).not.toBe('local-only');
-    expect(works.works.some((w) => w.collection === 'igros' || w.collection === 'maanos')).toBe(false);
+    expect(works.works.some((w) => w.collection === 'maanos')).toBe(false);
+    const igros = works.works.find((w) => w.id === 'igros-kodesh-rebbe')!;
+    expect(igros.collection).toBe('igros');
+    expect(igros.sources.find((s) => s.source === 'igros-app')).toMatchObject({ sourceId: 'igros', language: 'he', rights: 'ship-with-credit', credit: 'Kehot Publication Society' });
     expect(works.works.find((w) => w.id === 'likkutei-sichos')!.collection).toBe('likkuteiSichos');
     expect(works.authors.map((a) => a.id)).toEqual(AUTHORS.map((a) => a.id));
     expect(() => buildCatalogWorks([{ ...torahOr, workId: 'no-such-work' }])).toThrow(/no-such-work/);

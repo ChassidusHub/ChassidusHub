@@ -19,6 +19,9 @@ import { byYearJson, catalogHead, libraryHead, libraryJson, libraryManifestJson,
  * services/media-proxy's CORS headers).
  */
 
+/** Where the hosted texts are, each at its sha256: static files Vercel serves before this function (vercel.json). */
+export const TEXTS_PATH = '/v3/texts/<sha256>';
+
 export interface RouteResponse {
   status: number;
   headers: Record<string, string>;
@@ -153,6 +156,8 @@ export function handleRequest(method: string, path: string, origin: string): Rou
         catalog: SERVED_VERSION,
         schemas: SERVED_SCHEMAS,
         endpoints: SERVED.flatMap((s) => [manifestPath(s.schema), catalogPath(s.manifest.version, s.schema), changelogPath(s.schema), latestPath(s.schema)]),
+        // Static files beside the function (scripts/build.mjs): each hosted text at its sha256, as the works name it.
+        texts: TEXTS_PATH,
         source: 'https://github.com/shmuky/Sichos-Kodesh/tree/main/services/catalog-api',
       },
       MANIFEST_CACHE,
