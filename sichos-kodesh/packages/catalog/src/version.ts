@@ -8,7 +8,7 @@
  * api.sk.shmuky.dev serves (release.ts) to decide whether a newer catalog
  * is available to fetch.
  */
-export const CATALOG_VERSION = '1.1.0';
+export const CATALOG_VERSION = '1.2.0';
 
 /**
  * The shape of the data itself - bumped only when a change to

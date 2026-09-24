@@ -1,6 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { gematriya, HDate } from '@hebcal/core';
 import { extractDriveFileId, extractDriveResourceKey } from '../driveLinks.js';
+import { groupNameEn } from '../translate/groupNameEn.js';
 import type {
   CatalogLibrary,
   CatalogRef,
@@ -109,11 +110,15 @@ function yearGroups<T extends LibraryItemBase>(items: T[]): LibraryGroup[] {
 }
 
 function occasionGroups(db: DatabaseSync, section: 'moadim' | 'parshiyos'): OccasionGroup[] {
-  return storedGroups(db, section, section === 'moadim' ? 'moad' : 'parsha').map((group) => ({
-    slug: group.slug,
-    name: group.name,
-    occasionIds: group.itemIds.map(Number).filter(Number.isInteger),
-  }));
+  return storedGroups(db, section, section === 'moadim' ? 'moad' : 'parsha').map((group) => {
+    const nameEn = groupNameEn(group);
+    return {
+      slug: group.slug,
+      name: group.name,
+      ...(nameEn ? { nameEn } : {}),
+      occasionIds: group.itemIds.map(Number).filter(Number.isInteger),
+    };
+  });
 }
 
 function buildLikkuteiSichos(db: DatabaseSync): LibraryCollection<LikkuteiSichosItem> {

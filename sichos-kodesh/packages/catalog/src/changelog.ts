@@ -16,6 +16,12 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.2.0',
+    date: '2026-09-24',
+    en: ['The library\'s 101 moadim and 53 parshiyos now have their English names too (e.g. "Rosh Chodesh Kislev", "Tzivos Hashem rally - Purim")'],
+    he: ['ל-101 המועדים ול-53 הפרשיות שבספרייה יש כעת גם שמות באנגלית (למשל "Rosh Chodesh Kislev")'],
+  },
+  {
     version: '1.1.0',
     date: '2026-09-24',
     en: [

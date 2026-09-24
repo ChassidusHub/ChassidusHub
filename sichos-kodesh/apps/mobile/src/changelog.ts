@@ -9,6 +9,19 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.0',
+    en: [
+      'Search in the library: "Search in" picks Likkutei Sichos, maamorim, yomanim, the general letters, hadranim, reshimos or every JEM recording, and finds an item by its name or by where and when it was said - typos and missing quote marks included',
+      'Search the farbrengens by mafteiach\'s own moadim and parshiyos: the Moed list has all 101 of its moadim and special days (Yud Shevat, a Tzivos Hashem rally, Kinus Hashluchim...), and a choice finds exactly the farbrengens mafteiach files there',
+      'The moadim and parshiyos have English names in the English interface - in search and in Library > By moed and special day',
+    ],
+    he: [
+      'חיפוש בספרייה: "חיפוש ב" בוחר לקוטי שיחות, מאמרים, יומנים, מכתבים כלליים, הדרנים, רשימות או כל הקלטה של JEM, ומוצא פריט לפי שמו או לפי היכן ומתי נאמר - גם עם טעות הקלדה ובלי גרשיים',
+      'חיפוש ההתוועדויות לפי המועדים והפרשיות של המפתח עצמו: ברשימת המועדים כל 101 המועדים והימים המיוחדים שלו (יו"ד שבט, כינוס צבאות ה\', כינוס השלוחים...), ובחירה מוצאת בדיוק את ההתוועדויות שהמפתח משייך אליהם',
+      'למועדים ולפרשיות יש שמות באנגלית בממשק האנגלי - בחיפוש ובספרייה > לפי מועד ויום מיוחד',
+    ],
+  },
+  {
     version: '1.3.0',
     en: [
       'Offline packs: Settings > Offline packs brings farbrengens onto the phone with no internet - a pack file (.skpack) from the yeshiva station or a friend, a shared ZIP, or a folder of recordings and PDFs. Every file is checked before it is saved, and what the phone already has is skipped',

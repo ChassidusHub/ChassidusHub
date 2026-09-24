@@ -2,7 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import type { OccasionGroup } from '../src/library/types.js';
 import { translateChapterName } from '../src/translate/chapterNameHe.js';
+import { GROUP_NAMES_EN, groupNameEn } from '../src/translate/groupNameEn.js';
 import { translateOccasionLabel } from '../src/translate/occasionLabelEn.js';
 import type { CatalogEntry } from '../src/types.js';
 
@@ -40,5 +42,28 @@ describe('the bundled catalog carries the current translations', () => {
     const translatedChapters = new Set(entries.flatMap((entry) => entry.audio.flatMap((audio) => (audio.chapterNameHe ? [audio.chapterName] : []))));
     expect(translatedLabels.size / labels.size).toBeGreaterThan(0.98);
     expect(translatedChapters.size / chapters.size).toBeGreaterThan(0.99);
+  });
+});
+
+describe("the phone's bundled moadim and parshiyos carry their English names", () => {
+  const metaFile = path.join(dataDir, '..', '..', '..', '..', 'mobile', 'src', 'catalog', 'data', 'library', 'meta.json');
+  const meta = JSON.parse(readFileSync(metaFile, 'utf8')) as { moadim: OccasionGroup[]; parshiyos: OccasionGroup[] };
+  const groups = [...meta.moadim, ...meta.parshiyos];
+
+  it('names every group exactly as groupNameEn does', () => {
+    const stale = groups.filter((group) => group.nameEn !== (groupNameEn(group) ?? undefined));
+    expect(stale.map((group) => group.slug)).toEqual([]);
+  });
+
+  it('names all 154, and the table only holds slugs mafteiach uses', () => {
+    expect(groups.every((group) => group.nameEn)).toBe(true);
+    const slugs = new Set(groups.map((group) => group.slug));
+    expect(Object.keys(GROUP_NAMES_EN).filter((slug) => !slugs.has(slug))).toEqual([]);
+  });
+
+  it('capitalises a name the occasion rules start in lower case', () => {
+    expect(groupNameEn({ slug: 'camps', name: 'מחנות קיץ' })).toBe('The summer camps');
+    expect(groupNameEn({ slug: 'shavuos', name: 'חג השבועות' })).toBe('Shavuos');
+    expect(groupNameEn({ slug: 'unknown', name: 'שם שאין לו כלל' })).toBeNull();
   });
 });

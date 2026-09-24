@@ -40,6 +40,7 @@ const screens = {
   ...(require('./OccasionGroupsScreen') as typeof import('./OccasionGroupsScreen')),
   ...(require('./OccasionGroupScreen') as typeof import('./OccasionGroupScreen')),
 };
+const { SearchScreen } = require('../SearchScreen') as typeof import('../SearchScreen');
 
 async function render(element: React.ReactElement): Promise<string> {
   let renderer: ReactTestRenderer.ReactTestRenderer | null = null;
@@ -86,8 +87,20 @@ describe('library screens', () => {
     expect(await render(<screens.LibraryItemScreen {...props({ collection: 'maamorim', id: 'no-such-id' })} />)).toContain('not in the library');
   });
 
-  it('shows the farbrengens of a moed', async () => {
-    expect(await render(<screens.OccasionGroupsScreen {...props({ axis: 'moadim' })} />)).toContain('ראש השנה');
-    expect(await render(<screens.OccasionGroupScreen {...props({ axis: 'moadim', slug: 'rosh_hashanah' })} />)).toContain('occasions indexed');
+  it('shows the farbrengens of a moed, named in the interface language', async () => {
+    const moadim = await render(<screens.OccasionGroupsScreen {...props({ axis: 'moadim' })} />);
+    expect(moadim).toContain('Rosh Hashanah');
+    expect(moadim).not.toContain('ראש השנה');
+    const moed = await render(<screens.OccasionGroupScreen {...props({ axis: 'moadim', slug: 'rosh_hashanah' })} />);
+    expect(moed).toContain('occasions indexed');
+    expect(moed).toContain('Rosh Hashanah');
+  });
+
+  it('searches the farbrengens by mafteiach moed and parsha, and a collection by name', async () => {
+    const screen = await render(<SearchScreen {...props(undefined)} />);
+    expect(screen).toContain('Search in');
+    expect(screen).toContain('Farbrengens');
+    expect(screen).toContain('Moed');
+    expect(screen).not.toContain('Special Day');
   });
 });

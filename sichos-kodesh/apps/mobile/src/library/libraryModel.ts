@@ -143,6 +143,11 @@ export function playlistOccasionId(collection: LibraryCollectionId, item: Librar
   return -hash - 1;
 }
 
+/** A moed's or parsha's name in the interface language: its English name (catalog 1.2.0+), else mafteiach's Hebrew. */
+export function occasionGroupName(group: OccasionGroup, language: Language): string {
+  return language === 'en' ? (group.nameEn ?? group.name) : group.name;
+}
+
 /** The catalog occasions a moed or parsha lists, oldest first. Occasions the catalog does not hold are left out. */
 export function occasionGroupEntries(catalog: CatalogByYear, group: OccasionGroup): CatalogEntry[] {
   const wanted = new Set(group.occasionIds);

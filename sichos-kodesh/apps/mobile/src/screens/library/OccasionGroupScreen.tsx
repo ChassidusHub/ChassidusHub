@@ -3,7 +3,7 @@ import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { OccasionRowIcon } from '../../components/OccasionRowIcon';
 import { useTranslation } from '../../i18n/useTranslation';
-import { occasionGroupEntries } from '../../library/libraryModel';
+import { occasionGroupEntries, occasionGroupName } from '../../library/libraryModel';
 import type { OccasionGroupScreenProps } from '../../navigation/types';
 import { useProgressMap } from '../../player/useProgressMap';
 import { CategoryHeader, Subtitle } from '../../ui/Typography';
@@ -30,7 +30,7 @@ export function OccasionGroupScreen({ navigation, route }: OccasionGroupScreenPr
   }
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'OccasionGroups', params: { axis } }} title={group?.name ?? ''} />}>
+    <Screen header={<ScreenHeader back={{ name: 'OccasionGroups', params: { axis } }} title={group ? occasionGroupName(group, language) : ''} />}>
       <Subtitle>{t.occasionsIndexed(entries.length)}</Subtitle>
       {byYear.map(({ year, entries: yearEntries }, index) => (
         <React.Fragment key={year}>

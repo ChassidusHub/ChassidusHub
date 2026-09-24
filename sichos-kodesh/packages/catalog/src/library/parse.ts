@@ -41,7 +41,13 @@ function isGroup(value: unknown): value is LibraryGroup {
 
 function isOccasionGroup(value: unknown): value is OccasionGroup {
   if (!isRecord(value)) return false;
-  return typeof value.slug === 'string' && typeof value.name === 'string' && Array.isArray(value.occasionIds) && value.occasionIds.every((id) => typeof id === 'number');
+  return (
+    typeof value.slug === 'string' &&
+    typeof value.name === 'string' &&
+    (value.nameEn === undefined || typeof value.nameEn === 'string') &&
+    Array.isArray(value.occasionIds) &&
+    value.occasionIds.every((id) => typeof id === 'number')
+  );
 }
 
 function isCollection(value: unknown): value is LibraryCollection<LibraryItemBase> {

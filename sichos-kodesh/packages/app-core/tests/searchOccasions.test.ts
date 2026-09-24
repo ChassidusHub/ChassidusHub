@@ -135,6 +135,17 @@ describe('searchOccasions', () => {
     expect(noMatch).toEqual([]);
   });
 
+  it('keeps to a set of occasions (the phone\'s mafteiach moed and parsha lists), alone or with other filters', () => {
+    expect(hasActiveFilters({ ...EMPTY_FILTERS, occasionIds: new Set([1]) })).toBe(true);
+    expect(searchOccasions(catalog, { ...EMPTY_FILTERS, occasionIds: new Set([1, 2]) })).toEqual([
+      { hebrewYear: 5711, entries: [yudShevat] },
+      { hebrewYear: 5712, entries: [purim] },
+    ]);
+    expect(searchOccasions(catalog, { ...EMPTY_FILTERS, occasionIds: new Set([1, 2]), hebrewYear: 5712 })).toEqual([{ hebrewYear: 5712, entries: [purim] }]);
+    // A contentless occasion stays out even when the set names it.
+    expect(searchOccasions(catalog, { ...EMPTY_FILTERS, occasionIds: new Set([3]) })).toEqual([]);
+  });
+
   it('combines multiple filters with AND', () => {
     const result = searchOccasions(catalog, { ...EMPTY_FILTERS, hebrewYear: 5711, hdateMonth: 11, types: ['audio'] });
     expect(result).toEqual([{ hebrewYear: 5711, entries: [yudShevat] }]);
