@@ -450,9 +450,14 @@ One finding changes the size table below: the JEM originals are already
 about a quarter, not two thirds (Tishrei: 82.4 MB `src`, 61.7 MB
 `opus24`), and `opus16` is where the real saving is. The listening-test
 files (a sicha, a nigun and crowd singing, 90 s each, at 16/24/32 kbps
-next to the original) were sent to Shmuly; the default profile waits for
-his choice. Not built yet: `upload` (R2) and `catalog-bundle`, which
-belong with WP5's pack API.
+next to the original) were sent to Shmuly, and he hears no difference
+between them. The measurements agree. The tapes carry almost nothing
+above 8 kHz: in the sicha, the energy above 8 kHz is about 50 dB below
+the whole. Opus at 16 kbps keeps that band, and each encode's energy above
+4 kHz and above 8 kHz is within about 1 dB of the original's. So `opus16`
+(nigunim one step up) is the candidate default. It becomes the default
+once Opus plays on real phones (WP4 item 5). Until then, packs stay
+`src`. `upload` (R2) and `catalog-bundle` became WP5's `sk-pack publish`.
 
 ### WP4 - the phone: object store, import, community zips, export (`apps/mobile`) (built; device check open)
 
@@ -596,6 +601,47 @@ Still to come:
   custom builds (a build is a concatenation, seconds), cached by selection
   hash, signing with the key as a Worker secret. Serves `index.json` for
   the station. Deployed like `services/media-proxy` (wrangler).
+
+**Built; not deployed.** The pieces are `services/pack-api`,
+`apps/download`, `sk-pack publish` and `sk-pack serve`, and each README
+has the details. Where the build differs from the text above:
+
+- **No queue and no build cache.** A custom pack is streamed, not built.
+  At publish time, `sk-pack publish` records every object's size and
+  CRC-32 in a per-year shard, `index/<year>.json`. With those, the Worker
+  writes each stored-ZIP header before the object's bytes and knows the
+  exact `Content-Length` before the first byte. It reads only the
+  selection's year catalog, its shard and the objects.
+  - The URL is the selection, and a build is dated to the publish time,
+    so a CDN caches builds by URL. There is nothing to queue or store.
+  - pack-format's `zipLayout` and `packPlan` are shared with `sk-pack
+    build`. A test proves the two write byte-identical packs.
+- **The publish layout** (`services/pack-api/src/layout.ts`) is
+  `meta.json`, `catalog/<year>.json`, `index/<year>.json`,
+  `objects.json`, `objects/<sha256>` and `packs/`. The station reads the
+  same `meta.json`, `objects.json` and `packs/index.json`.
+- **`sk-pack serve`** runs the same handler over a published directory:
+  for local development, and for a server with no cloud at all.
+- **The site's first version** picks farbrengens only, by year and month.
+  It chooses the sections (the essentials, everything, or a custom set),
+  the audio profile, and the largest file wanted.
+  - Over that size, the pack splits into parts, each downloaded on its
+    own. Auto-trim is not built.
+  - Other collections, a date range and this year's kvius come later, on
+    the same API.
+
+Verified locally: `sk-pack publish` on the M1 archive (61 objects, `src`
+and `opus24`), then `sk-pack serve`, then a streamed Tishrei 5736 `opus24`
+pack (61.7 MB). `sk-pack verify` passes on it. The site against that
+server shows the exact size of each selection.
+
+Deploying needs:
+
+- a Cloudflare account with R2;
+- the archive published and synced to R2 (`rclone`);
+- the real signing key, stored as the Worker secret.
+
+M3 is done when a pack downloaded from the public site imports on a phone.
 
 ### WP5b - the Rebbe Drive (`apps/drive`, `services/drive`; after WP5)
 

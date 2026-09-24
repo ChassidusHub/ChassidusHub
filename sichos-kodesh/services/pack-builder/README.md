@@ -26,6 +26,8 @@ sk-pack build --scope 5736-01 [--profile src] [--sections essentials] [--max-mb 
               [--key file | --unsigned] [--no-objects-index] [--allow-missing]
 sk-pack verify <packs...> [--key file] [--trust keyId=publicKey ...]
 sk-pack index [--dir dir] [--out file]
+sk-pack publish [--out dir] [--catalog-dir dir] [--catalog-version v] [--packs dir]
+sk-pack serve [--dir dir] [--port 8787] [--host 127.0.0.1] [--key file | --unsigned]
 ```
 
 From the repository: `npm run pack -w @sichos-kodesh/pack-builder -- <command>`.
@@ -77,6 +79,24 @@ From the repository: `npm run pack -w @sichos-kodesh/pack-builder -- <command>`.
   file, size, sha256, catalog version, profile, scope, object list, part.
   Its shape is `PackIndexFile` in pack-format, and the station's
   `choosePacks` reads it.
+- **publish** writes the archive the way the pack API
+  (`services/pack-api`) reads it, into `<root>/published` by default:
+  - `meta.json`;
+  - per year: the catalog, `catalog/<year>.json`, and an index shard,
+    `index/<year>.json`, holding each object's size and CRC-32 for that
+    year's selections;
+  - `objects.json`;
+  - `objects/<sha256>`, hard-linked from the archive, so they take no
+    extra disk;
+  - `packs/` with its `index.json`, when there are prebuilt packs.
+
+  CRCs are cached in `.crc-cache.json`, so a second publish reads only
+  new objects. Then `rclone sync <root>/published r2:<bucket>` uploads it.
+- **serve** runs the pack API's handler on a published directory: local
+  development of the download site (`apps/download`), or a server with no
+  cloud at all. Custom packs are signed with the archive's key.
+  `--unsigned` serves them unsigned, and the phone then takes them as
+  loose files.
 
 ## The ZIP
 
@@ -105,7 +125,9 @@ files, 94.4 MB), then built with
 
 The JEM originals are already small: the Tishrei sichos are 32 kbps mono
 MP3 at 22 kHz, and some nigun tracks are 64 kbps. So opus24 saves about a
-quarter on speech, and the default profile is the listening test's call
+quarter on speech, and opus16 saves about half. In the listening test,
+Shmuly heard no difference between the profiles. That makes `opus16` the
+candidate default once Opus plays on real phones
 (`docs/offline-plan.md`, WP3).
 
 ## Scripts
@@ -115,6 +137,3 @@ npm run build -w @sichos-kodesh/pack-builder
 npm test -w @sichos-kodesh/pack-builder        # fake encoder; no ffmpeg needed
 npm run typecheck -w @sichos-kodesh/pack-builder
 ```
-
-Not built yet: `upload` (R2) and `catalog-bundle`, which arrive with the
-download site's pack API (WP5).

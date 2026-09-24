@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { crc32 } from 'node:zlib';
@@ -56,5 +56,33 @@ describe('stored ZIP', () => {
     const file = path.join(dir, 'not.zip');
     await writeFile(file, 'hello');
     await expect(readZipDirectory(file)).rejects.toThrow('not a ZIP file');
+  });
+});
+
+describe('the portable layout (pack-format zipLayout)', () => {
+  it('gives the same bytes as writeStoredZip, so the pack API can stream what sk-pack writes', async () => {
+    const { crc32: portableCrc32, planStoredZip, zipLocalHeader } = await import('@sichos-kodesh/pack-format');
+    const manifest = new TextEncoder().encode('{"schema":1,"שם":"תשרי"}');
+    const object = new Uint8Array(4096).map((_, i) => (i * 31) % 251);
+    await writeFile(path.join(dir, 'object.bin'), object);
+    const out = path.join(dir, 'layout.skpack');
+    await writeStoredZip(out, [
+      { name: 'manifest.json', data: manifest },
+      { name: `objects/${'b'.repeat(64)}`, file: path.join(dir, 'object.bin'), bytes: object.length },
+    ]);
+    const written = new Uint8Array(await readFile(out));
+    const entries = [
+      { name: 'manifest.json', size: manifest.length, crc32: portableCrc32(manifest) },
+      { name: `objects/${'b'.repeat(64)}`, size: object.length, crc32: portableCrc32(object) },
+    ];
+    const plan = planStoredZip(entries);
+    const parts = [zipLocalHeader(entries[0]!), manifest, zipLocalHeader(entries[1]!), object, plan.trailer];
+    const streamed = new Uint8Array(plan.totalBytes);
+    let at = 0;
+    for (const part of parts) {
+      streamed.set(part, at);
+      at += part.length;
+    }
+    expect(Buffer.from(streamed).equals(Buffer.from(written))).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Command } from 'commander';
 import { ArchiveStore } from '@sichos-kodesh/archive';
@@ -8,8 +8,11 @@ import type { AudioProfile, TrustedKeys } from '@sichos-kodesh/pack-format';
 import { AUDIO_PROFILES, TRUSTED_PACK_KEYS, manifestBytes } from '@sichos-kodesh/pack-format';
 import { buildPacks } from '../src/build.js';
 import { loadYearEntries } from '../src/catalogData.js';
+import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { createKeyFile, defaultKeyFile, readKeyFile, readPublicKey } from '../src/keys.js';
 import { indexPacks } from '../src/packIndex.js';
+import { publishArchive } from '../src/publish.js';
+import { servePublished } from '../src/serve.js';
 import { entriesInScope, parseScope, parseSections } from '../src/scope.js';
 import { ffmpegEncoder, transcode, type EncodedProfile } from '../src/transcode.js';
 import { verifyPack } from '../src/verify.js';
@@ -195,6 +198,44 @@ program
     await writeFile(out, `${JSON.stringify(index, null, 2)}\n`);
     log(`index: ${index.packs.length} pack(s) -> ${out}`);
     for (const line of skipped) log(`  skipped ${line}`);
+  });
+
+program
+  .command('publish')
+  .description('write the archive as the pack API reads it (objects, per-year shards, packs), for rclone sync to R2 or sk-pack serve')
+  .option('--out <dir>', 'published directory (default <root>/published)')
+  .option('--catalog-dir <dir>', 'catalog year files', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data'))
+  .option('--catalog-version <v>', 'the catalog version the year files are', CATALOG_VERSION)
+  .option('--packs <dir>', 'prebuilt packs to publish too (default <root>/packs when it exists)')
+  .action(async (opts: { out?: string; catalogDir: string; catalogVersion: string; packs?: string }) => {
+    const years = new Map<number, CatalogEntry[]>();
+    for (let year = 5680; year <= 5780; year += 1) {
+      const entries = await loadYearEntries(opts.catalogDir, year).catch(() => []);
+      if (entries.length > 0) years.set(year, entries);
+    }
+    const packsDir = opts.packs ?? path.join(root(), 'packs');
+    const hasPacks = await stat(packsDir).then((info) => info.isDirectory()).catch(() => false);
+    const store = await ArchiveStore.open(root());
+    try {
+      await publishArchive(store, { years, catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
+    } finally {
+      store.close();
+    }
+  });
+
+program
+  .command('serve')
+  .description('run the pack API on a published directory (local development, or a server with no cloud)')
+  .option('--dir <dir>', 'published directory (default <root>/published)')
+  .option('--port <n>', 'port', (v) => Number(v), 8787)
+  .option('--host <host>', 'address to listen on', '127.0.0.1')
+  .option('--key <file>', 'signing key (default <root>/keys/pack-signing.json)')
+  .option('--unsigned', 'serve unsigned custom packs (the apps take them only as loose files)')
+  .action(async (opts: { dir?: string; port: number; host: string; key?: string; unsigned?: boolean }) => {
+    const key = opts.unsigned ? null : await readKeyFile(opts.key ?? defaultKeyFile(root()));
+    const dir = opts.dir ?? path.join(root(), 'published');
+    await servePublished(dir, { port: opts.port, host: opts.host, signingKey: key });
+    log(`pack API on http://${opts.host}:${opts.port}/v1/meta (${dir}, ${key ? `signing as ${key.keyId}` : 'UNSIGNED'})`);
   });
 
 program.parseAsync().catch((error: unknown) => {
