@@ -325,6 +325,22 @@ session cannot fetch (section 2a). Decision 2 still gates any PDFs.
 - Text packs per work, with a full-text search index (SQLite FTS5) inside
   each pack so search works offline.
 
+**Built: schema 3 and `/v3`** (WP12a):
+
+- **The format** (`packages/catalog/src/works/`):
+  - every author and work, each source with its rights decided;
+  - each imported work's contents and units, whose editions point at a
+    source and, when the text may ship, carry its object's sha256.
+- **The build**: `packages/works` builds it (`build-catalog-works`) from
+  the registry and the Sefaria import. A local-only source, or text kept
+  for a source that may not ship, fails the build and the release.
+- **The phone** bundles it (784 KB):
+  - the index is read on first use;
+  - each work's units are read when the work is opened;
+  - it runs on schema 3.
+- **The API** serves `/v3/` next to `/v1/` and `/v2/`, so phones on 1.4.0
+  keep what they have.
+
 ### WP13 - the phone: browse, read, search
 
 - Browse from the Rabbeim, to works, to volumes, to units.

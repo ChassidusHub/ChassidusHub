@@ -106,6 +106,31 @@ npm run build
 npm run build-catalog -- --db ../mafteiach-index/mafteiach.db --out ./data
 ```
 
+## The works (`works/`, catalog schema 3 - the phone app only)
+
+The Rebbeim and their seforim (`docs/chabad-library-plan.md`, section 5),
+built by `packages/works` (`npm run build-catalog-works -w
+@sichos-kodesh/works`) from its registry and the importers' output
+(`packages/sefaria-index`). This package owns the format:
+
+- `CatalogWorksIndex`: every author and work. Each work lists its sources,
+  each with the rights the works gate decided (`ship`, `ship-with-credit`,
+  `link-only`). A work the library already holds names its `collection`,
+  and its units are that collection's items.
+- `CatalogWorkContents`: an imported work's contents (its parts, in order)
+  and its units. Each unit's editions point at a source by index and, when
+  the text may ship, carry its text object's sha256.
+- `parseCatalogWorks` validates a fetched file. `worksRightsProblems` lists
+  any text kept for a source that may not ship, and any local-only source.
+  The build and `bin/release.ts` both refuse such works.
+- `unitsInOrder`, `catalogWork`, `catalogUnit`, `worksByAuthor` and
+  `editionSource` are the lookups.
+
+The phone bundles `apps/mobile/src/catalog/data/works/`:
+- `index.json`, read on first use;
+- one `contents/<work>.json` per imported work, read when that work is
+  opened.
+
 ## The library (`library/`, catalog schema 2 - the phone app only)
 
 Everything beyond the dated farbrengens, for the phone app's library
@@ -192,9 +217,13 @@ reaches every phone without an app update.
   `CATALOG_SCHEMA_VERSION` is the shape of it, bumped only for a change
   that would break an older app's parsing (an app never applies data of
   another schema version - it keeps its bundled copy).
-  `CATALOG_LIBRARY_SCHEMA_VERSION` (2) is the phone's: the same
-  farbrengens plus the library. The two schemas are released together,
-  under one `CATALOG_VERSION`: `/v1/` for the web, `/v2/` for the phone.
+  `CATALOG_LIBRARY_SCHEMA_VERSION` (2) is the same farbrengens plus the
+  library, and `CATALOG_WORKS_SCHEMA_VERSION` (3) adds the works: the
+  phone runs on 3 from mobile 1.5.0. All three schemas are released
+  together, under one `CATALOG_VERSION`:
+  - `/v1/` for the web;
+  - `/v2/` for phones up to 1.4.0;
+  - `/v3/` for the phone from 1.5.0.
 - `CATALOG_CHANGELOG` (`changelog.ts`, en + he) is the machine-readable
   changelog the apps show under "Catalog" on their About screens;
   `CHANGELOG.md` is the human copy. Keep both in step.
@@ -208,11 +237,13 @@ reaches every phone without an app update.
   writes the two files into `dist-release/` from the year files the apps
   bundle (and fails if the two apps' copies differ), and, from the
   library the phone bundles, `dist-release/v2/{catalog,manifest}.json`
-  (schema 2, the manifest with `collections` counts) plus
-  `dist-release/parts/` (the farbrengens' and the library's JSON, which
-  services/catalog-api keeps one copy of). `serializeCatalogRelease` /
-  `serializeLibraryRelease` build each catalog.json byte for byte like
-  `JSON.stringify`. `--check` only verifies the version/changelog agree
+  (schema 2, the manifest with `collections` counts). From the works it
+  bundles, it writes `dist-release/v3/{catalog,manifest}.json` (schema 3,
+  the manifest also counts `works`). It also writes `dist-release/parts/`:
+  the farbrengens', the library's and the works' JSON, which
+  services/catalog-api keeps one copy of. `serializeCatalogRelease`,
+  `serializeLibraryRelease` and `serializeWorksRelease` build each
+  catalog.json byte for byte like `JSON.stringify`. `--check` only verifies the version/changelog agree
   (CI); `--released-at` pins the timestamp (the API passes the commit's
   date).
 
@@ -228,7 +259,9 @@ To ship a catalog release:
 
 1. Rebuild the data (`build-catalog` above) and copy the year files into
    both apps' `src/catalog/data` (they are identical copies), and
-   `data/library/` into `apps/mobile/src/catalog/data/` only.
+   `data/library/` into `apps/mobile/src/catalog/data/` only. For the
+   works, run the importers, then `build-catalog-works` (it writes
+   `apps/mobile/src/catalog/data/works/` directly).
 2. Bump `CATALOG_VERSION`, add the entry to `changelog.ts` and
    `CHANGELOG.md`.
 3. Merge to `main`. Vercel deploys the API from that commit; the apps pick
@@ -237,7 +270,8 @@ To ship a catalog release:
 4. Tag the same commit `catalog-v<version>` and push the tag. The
    `catalog-release` workflow (`.github/workflows/catalog-release.yml`)
    runs `release-files` and attaches `catalog.json` + `manifest.json` (and
-   the schema-2 pair as `catalog-v2.json` + `manifest-v2.json`) to a
+   the schema-2 and schema-3 pairs as `catalog-v2.json` + `manifest-v2.json`
+   and `catalog-v3.json` + `manifest-v3.json`) to a
    GitHub release of that tag - the archive of what the API serves.
 
 ## Playback policy (`playbackPolicy.ts`)

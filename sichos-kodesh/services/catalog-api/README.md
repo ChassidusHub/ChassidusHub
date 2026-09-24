@@ -21,6 +21,9 @@ The shapes are `CatalogManifest` / `CatalogRelease` in
 | `/v2/catalog/manifest.json` | schema 2 - the phone app: the same fields plus `collections` (items per library collection) | `public, max-age=300` |
 | `/v2/catalog/<version>/catalog.json` | the same farbrengens as `/v1/`, byte for byte, plus `library` (`LibraryRelease`) | `public, max-age=31536000, immutable` |
 | `/v2/catalog/changelog.json`, `/v2/catalog/latest/catalog.json` | as under `/v1/` | |
+| `/v3/catalog/manifest.json` | schema 3 - the phone app from mobile 1.5.0: schema 2's fields plus `works` (how many works, and how many units the imported ones have) | `public, max-age=300` |
+| `/v3/catalog/<version>/catalog.json` | schema 2's file, byte for byte, plus `works` (`WorksRelease`) | `public, max-age=31536000, immutable` |
+| `/v3/catalog/changelog.json`, `/v3/catalog/latest/catalog.json` | as under `/v1/` | |
 | `/` | a small index | |
 
 Any other path, and any other version than the one served, is a JSON
@@ -28,12 +31,14 @@ Any other path, and any other version than the one served, is a JSON
 manifest's `url` is rewritten to the origin the request arrived on, so a
 preview deployment's manifest points at that preview's own catalog.
 
-The web app reads `/v1/` (catalog schema 1) and the phone app `/v2/`
-(schema 2, with the library); an app never takes the other schema. The
-bundle keeps one copy of the farbrengens: `scripts/build.mjs` bakes the
-farbrengens' JSON, the library's JSON and each file's short head, checks
-that both reassemble to their manifest's sha256, and the router puts each
-catalog.json back together.
+The web app reads `/v1/` (catalog schema 1). Phones up to mobile 1.4.0
+read `/v2/` (schema 2, with the library), and from 1.5.0 `/v3/` (schema 3,
+with the works too). An app never takes another schema.
+
+The bundle keeps one copy of each part. `scripts/build.mjs` bakes the
+farbrengens', the library's and the works' JSON and each file's short
+head, and checks that every file reassembles to its manifest's sha256. The
+router puts each catalog.json back together.
 
 ## How the API gets the files
 

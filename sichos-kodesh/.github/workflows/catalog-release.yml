@@ -38,13 +38,15 @@ jobs:
             exit 1
           fi
 
-      - name: Write catalog.json and manifest.json (schema 1, and schema 2 with the library)
+      - name: Write catalog.json and manifest.json (schema 1, schema 2 with the library, schema 3 with the works)
         run: |
           set -euo pipefail
           npm run release-files -w @sichos-kodesh/catalog
-          # A release's assets share one namespace: the phone's schema-2 files get their own names.
+          # A release's assets share one namespace: the phone's schema-2 and schema-3 files get their own names.
           cp packages/catalog/dist-release/v2/catalog.json packages/catalog/dist-release/catalog-v2.json
           cp packages/catalog/dist-release/v2/manifest.json packages/catalog/dist-release/manifest-v2.json
+          cp packages/catalog/dist-release/v3/catalog.json packages/catalog/dist-release/catalog-v3.json
+          cp packages/catalog/dist-release/v3/manifest.json packages/catalog/dist-release/manifest-v3.json
 
       - name: Publish the GitHub release
         uses: softprops/action-gh-release@v2
@@ -56,3 +58,5 @@ jobs:
             packages/catalog/dist-release/manifest.json
             packages/catalog/dist-release/catalog-v2.json
             packages/catalog/dist-release/manifest-v2.json
+            packages/catalog/dist-release/catalog-v3.json
+            packages/catalog/dist-release/manifest-v3.json

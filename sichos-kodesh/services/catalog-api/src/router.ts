@@ -1,4 +1,4 @@
-import { byYearJson, catalogHead, libraryHead, libraryJson, libraryManifestJson, manifestJson } from '../generated/release';
+import { byYearJson, catalogHead, libraryHead, libraryJson, libraryManifestJson, manifestJson, worksHead, worksJson, worksManifestJson } from '../generated/release';
 
 /**
  * The whole API as one pure function of (method, path, origin) -> response,
@@ -7,11 +7,11 @@ import { byYearJson, catalogHead, libraryHead, libraryJson, libraryManifestJson,
  * packages/catalog/src/release.ts; the client is
  * packages/app-core/src/catalog/catalogUpdate.ts.
  *
- * Two schemas side by side: `/v1/` is the farbrengens (the web app),
- * `/v2/` is the same farbrengens plus the library (the phone app). Both
- * catalog.json files are put back together here from one copy of the
- * farbrengens (see scripts/build.mjs), byte for byte what each manifest's
- * sha256 describes.
+ * Three schemas side by side: `/v1/` is the farbrengens (the web app),
+ * `/v2/` is the same farbrengens plus the library (phones up to mobile
+ * 1.4.0), `/v3/` adds the works (the phone from 1.5.0). Every catalog.json
+ * is put back together here from one copy of each part (see
+ * scripts/build.mjs), byte for byte what its manifest's sha256 describes.
  *
  * Every response carries `Access-Control-Allow-Origin: *` - the web app is
  * on another origin, and everything here is public, read-only data with
@@ -61,10 +61,13 @@ const SERVED: Served[] = [
   ...(libraryManifestJson
     ? [{ schema: 2, manifest: JSON.parse(libraryManifestJson) as ParsedManifest, bytes: encoder.encode(`${libraryHead}${byYearJson},"library":${libraryJson}}`) }]
     : []),
+  ...(worksManifestJson
+    ? [{ schema: 3, manifest: JSON.parse(worksManifestJson) as ParsedManifest, bytes: encoder.encode(`${worksHead}${byYearJson},"library":${libraryJson},"works":${worksJson}}`) }]
+    : []),
 ];
 
 export const SERVED_VERSION = SERVED[0]!.manifest.version;
-/** The schemas this deployment serves: [1] or [1, 2]. */
+/** The schemas this deployment serves: [1], [1, 2] or [1, 2, 3]. */
 export const SERVED_SCHEMAS = SERVED.map((s) => s.schema);
 
 export function manifestPath(schema = 1): string {

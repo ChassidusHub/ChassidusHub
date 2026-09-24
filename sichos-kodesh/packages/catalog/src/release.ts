@@ -3,6 +3,8 @@ import type { CatalogByYear } from './catalogLookup.js';
 import { parseCatalogLibrary } from './library/parse.js';
 import type { CatalogLibrary } from './library/types.js';
 import type { CatalogEntry } from './types.js';
+import { parseCatalogWorks } from './works/parse.js';
+import type { CatalogWorks } from './works/types.js';
 
 /**
  * What api.sk.shmuky.dev serves and what the apps consume - the contract
@@ -31,8 +33,10 @@ export interface CatalogManifest {
   occasions: number;
   /** Most recent first, at least the entry for `version`. */
   changelog: CatalogChangelogEntry[];
-  /** Schema 2 only: items per library collection. */
+  /** Schema 2 and up: items per library collection. */
   collections?: Record<string, number>;
+  /** Schema 3: how many works, and how many units the imported ones have. */
+  works?: { works: number; units: number };
 }
 
 /** `catalog.json` - the data itself, self-describing so a file on disk can be trusted on its own. */
@@ -52,10 +56,19 @@ export interface LibraryRelease extends CatalogRelease {
   library: CatalogLibrary;
 }
 
+/**
+ * Schema 3 (the phone app's works): schema 2 unchanged, plus the Rebbeim,
+ * their seforim, and the imported works' contents and units. Served under
+ * `/v3/`.
+ */
+export interface WorksRelease extends LibraryRelease {
+  works: CatalogWorks;
+}
+
 /** Path of the schema-1 manifest under the API's origin; the catalog's own URL comes from the manifest. */
 export const CATALOG_MANIFEST_PATH = '/v1/catalog/manifest.json';
 
-/** The manifest path for a schema: `/v1/...` for the farbrengens (web), `/v2/...` with the library (phone). */
+/** The manifest path for a schema: `/v1/...` for the farbrengens (web), `/v2/...` with the library, `/v3/...` with the works (phone). */
 export function catalogManifestPath(schemaVersion = 1): string {
   return `/v${schemaVersion}/catalog/manifest.json`;
 }
@@ -119,6 +132,7 @@ export function parseCatalogManifest(value: unknown): CatalogManifest | null {
     occasions: typeof occasions === 'number' ? occasions : 0,
     changelog: Array.isArray(changelog) ? changelog.filter(isChangelogEntry) : [],
     ...(isRecord(value.collections) ? { collections: Object.fromEntries(Object.entries(value.collections).filter((e): e is [string, number] => typeof e[1] === 'number')) } : {}),
+    ...(isRecord(value.works) && typeof value.works.works === 'number' && typeof value.works.units === 'number' ? { works: { works: value.works.works, units: value.works.units } } : {}),
   };
 }
 
@@ -153,14 +167,28 @@ export function parseLibraryRelease(value: unknown): LibraryRelease | null {
   return library ? { ...base, library } : null;
 }
 
-/** Validates a catalog file of either schema - what a store reads from disk or the network. */
-export function parseCatalogReleaseFile(value: unknown): CatalogRelease | LibraryRelease | null {
+/** Validates a schema-3 file: schema 2's checks, and the works. */
+export function parseWorksRelease(value: unknown): WorksRelease | null {
+  const base = parseCatalogRelease(value);
+  if (!base || base.schemaVersion !== 3 || !isRecord(value)) return null;
+  const library = parseCatalogLibrary(value.library);
+  const works = library ? parseCatalogWorks(value.works) : null;
+  return library && works ? { ...base, library, works } : null;
+}
+
+/** Validates a catalog file of any schema - what a store reads from disk or the network. */
+export function parseCatalogReleaseFile(value: unknown): CatalogRelease | LibraryRelease | WorksRelease | null {
+  if (isRecord(value) && value.schemaVersion === 3) return parseWorksRelease(value);
   if (isRecord(value) && value.schemaVersion === 2) return parseLibraryRelease(value);
   return parseCatalogRelease(value);
 }
 
 export function isLibraryRelease(release: CatalogRelease | LibraryRelease): release is LibraryRelease {
   return 'library' in release && isRecord((release as LibraryRelease).library);
+}
+
+export function isWorksRelease(release: CatalogRelease | LibraryRelease | WorksRelease): release is WorksRelease {
+  return isLibraryRelease(release) && 'works' in release && isRecord((release as WorksRelease).works);
 }
 
 interface ReleaseMeta {
@@ -187,6 +215,11 @@ export function serializeCatalogRelease(meta: ReleaseMeta, byYearJson: string): 
 /** `catalog.json` of schema 2: `JSON.stringify({ ..., byYear, library })`, sharing `byYearJson` with schema 1. */
 export function serializeLibraryRelease(meta: ReleaseMeta, byYearJson: string, libraryJson: string): string {
   return `${releaseHead(meta)}${byYearJson},"library":${libraryJson}}`;
+}
+
+/** `catalog.json` of schema 3: `JSON.stringify({ ..., byYear, library, works })`, sharing the other two parts with schemas 1 and 2. */
+export function serializeWorksRelease(meta: ReleaseMeta, byYearJson: string, libraryJson: string, worksJson: string): string {
+  return `${releaseHead(meta)}${byYearJson},"library":${libraryJson},"works":${worksJson}}`;
 }
 
 /**

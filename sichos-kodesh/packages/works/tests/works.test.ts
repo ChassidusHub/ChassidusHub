@@ -3,8 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { CatalogLibrary, LibraryCollectionId } from '@sichos-kodesh/catalog';
-import { LIBRARY_COLLECTION_IDS, SHIPPABLE_COLLECTIONS, parseCatalogLibrary } from '@sichos-kodesh/catalog';
-import { AUTHORS, CHABADLIBRARY_TREE, WORKS, collectionUnits, libraryUnits, mayShip, rightsFor, workById, workForCollection } from '../src/index.js';
+import { LIBRARY_COLLECTION_IDS, SHIPPABLE_COLLECTIONS, parseCatalogLibrary, parseCatalogWorks, worksRightsProblems } from '@sichos-kodesh/catalog';
+import type { ImportedWork } from '../src/index.js';
+import { AUTHORS, CHABADLIBRARY_TREE, WORKS, buildCatalogWorks, collectionUnits, editionUrl, libraryUnits, mayShip, rightsFor, workById, workForCollection } from '../src/index.js';
 
 /** The library the phone bundles (apps/mobile/src/catalog/data/library): the real item ids. */
 const dataDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'apps', 'mobile', 'src', 'catalog', 'data', 'library');
@@ -95,5 +96,62 @@ describe('the rights gate', () => {
     expect(tanya.filter((s) => s.licence === 'cc-by-nc').every((s) => s.credit === 'Kehot Publication Society')).toBe(true);
     const gate = workById('ner-mitzvah-vetorah-or')!.sources.filter((s) => s.source === 'sefaria');
     expect(gate.filter(mayShip).map((s) => s.language)).toEqual(['en']);
+  });
+});
+
+describe('the works as catalog schema 3 carries them', () => {
+  const KEHOT = 'Kehot Publication Society';
+  const torahOr: ImportedWork = {
+    workId: 'torah-or',
+    source: 'sefaria',
+    contents: [{ title: { he: 'נח', en: 'Noach' }, entries: [{ unitId: 'noach/1' }] }, { title: { he: 'מראי מקומות', en: 'Sources and References' }, entries: [{ unitId: 'sources-and-references/noach/1' }] }],
+    units: [
+      {
+        id: 'noach/1',
+        workId: 'torah-or',
+        label: 'נח, פרק א׳',
+        labelEn: 'Noach, Chapter 1',
+        editions: [
+          { source: 'sefaria', sourceId: 'Torah Ohr, Noach 1', kind: 'text', licence: 'cc-by-nc', language: 'he', version: KEHOT, credit: KEHOT, text: { sha256: 'a'.repeat(64), bytes: 10 } },
+          { source: 'sefaria', sourceId: 'Torah Ohr, Noach 1', kind: 'text', licence: 'cc0', language: 'en', version: 'Sefaria Community Translation', text: { sha256: 'b'.repeat(64), bytes: 5 } },
+        ],
+      },
+      {
+        id: 'sources-and-references/noach/1',
+        workId: 'torah-or',
+        label: 'מראי מקומות, נח, דף א׳',
+        editions: [{ source: 'sefaria', sourceId: 'Sources and References on Torah Ohr, Noach 1', kind: 'text', licence: 'cc-by-nc', language: 'he', version: KEHOT, credit: KEHOT, text: { sha256: 'c'.repeat(64), bytes: 7 } }],
+      },
+    ],
+  };
+
+  it('carries every work with its rights, points each edition at its own title, and validates', () => {
+    const works = buildCatalogWorks([torahOr]);
+    expect(parseCatalogWorks(works)).not.toBeNull();
+    expect(worksRightsProblems(works)).toEqual([]);
+    const work = works.works.find((w) => w.id === 'torah-or')!;
+    expect(work).toMatchObject({ units: 2, textBytes: 22 });
+    const [first, second] = works.contents['torah-or']!.units;
+    expect(work.sources[first!.editions[0]!.source]).toMatchObject({ sourceId: 'Torah Ohr', language: 'he', rights: 'ship-with-credit' });
+    expect(work.sources[first!.editions[1]!.source]).toMatchObject({ language: 'en', rights: 'ship' });
+    // The companion's edition goes to its own title, not the main one with the same version.
+    expect(work.sources[second!.editions[0]!.source]!.sourceId).toBe('Sources and References on Torah Ohr');
+    expect(first!.ref).toBe('Torah Ohr, Noach 1');
+  });
+
+  it('never carries a local-only source nor a gated collection, and keeps the shippable ones', () => {
+    const works = buildCatalogWorks([]);
+    for (const work of works.works) for (const source of work.sources) expect(source.rights).not.toBe('local-only');
+    expect(works.works.some((w) => w.collection === 'igros' || w.collection === 'maanos')).toBe(false);
+    expect(works.works.find((w) => w.id === 'likkutei-sichos')!.collection).toBe('likkuteiSichos');
+    expect(works.authors.map((a) => a.id)).toEqual(AUTHORS.map((a) => a.id));
+    expect(() => buildCatalogWorks([{ ...torahOr, workId: 'no-such-work' }])).toThrow(/no-such-work/);
+  });
+
+  it('links an edition to its page on Sefaria', () => {
+    expect(editionUrl({ source: 'sefaria', sourceId: 'Tanya, Part I; Likkutei Amarim 1', language: 'en', version: 'Sefaria Community Translation' })).toBe(
+      'https://www.sefaria.org/Tanya,_Part_I%3B_Likkutei_Amarim_1?ven=Sefaria_Community_Translation&lang=en',
+    );
+    expect(editionUrl({ source: 'jem', sourceId: 'x.mp3' })).toBeNull();
   });
 });

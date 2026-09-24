@@ -8,7 +8,7 @@
  * api.sk.shmuky.dev serves (release.ts) to decide whether a newer catalog
  * is available to fetch.
  */
-export const CATALOG_VERSION = '1.2.0';
+export const CATALOG_VERSION = '1.3.0';
 
 /**
  * The shape of the data itself - bumped only when a change to
@@ -29,3 +29,11 @@ export const CATALOG_SCHEMA_VERSION = 1;
  * which the web app still builds with.
  */
 export const CATALOG_LIBRARY_SCHEMA_VERSION = 2;
+
+/**
+ * Schema 3: schema 2 unchanged (`byYear`, `library`), plus the works - the
+ * Rebbeim, their seforim, and the imported works' contents and units (see
+ * works/types.ts). The phone runs on it and fetches `/v3/`. Phones still on
+ * schema 2 keep fetching `/v2/`, which stays served.
+ */
+export const CATALOG_WORKS_SCHEMA_VERSION = 3;

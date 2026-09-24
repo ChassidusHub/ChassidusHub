@@ -16,6 +16,18 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-09-24',
+    en: [
+      'The Rebbeim and their seforim: 80 works from the Baal Shem Tov to the Rebbe, each with where it can be read',
+      'Nine seforim chapter by chapter from Sefaria (2,026 chapters): Tanya, Torah Or, Likkutei Torah, the Shulchan Aruch HaRav, Shaar HaYichud, Derech Mitzvosecha, the Siddur and more, each text with its licence and credit',
+    ],
+    he: [
+      'רבותינו נשיאינו וספריהם: 80 ספרים מהבעל שם טוב ועד הרבי, וליד כל אחד היכן ניתן ללמוד בו',
+      'תשעה ספרים פרק אחר פרק מספריא (2,026 פרקים): תניא, תורה אור, לקוטי תורה, שולחן ערוך הרב, שער היחוד, דרך מצוותיך, הסידור ועוד, כל טקסט עם הרישיון והקרדיט שלו',
+    ],
+  },
+  {
     version: '1.2.0',
     date: '2026-09-24',
     en: ['The library\'s 101 moadim and 53 parshiyos now have their English names too (e.g. "Rosh Chodesh Kislev", "Tzivos Hashem rally - Purim")'],

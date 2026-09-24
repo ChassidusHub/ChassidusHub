@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CatalogLibrary, CatalogRelease, LibraryRelease } from '@sichos-kodesh/catalog';
+import type { CatalogLibrary, CatalogRelease, CatalogWorks, LibraryRelease, WorksRelease } from '@sichos-kodesh/catalog';
 import { createCatalogStore } from './catalogStore.js';
 
 const entry = { occasionId: 1, hebrewYear: 5711, hebrewDate: '5711-01-09', occasionLabel: 'x', audio: [], pdfs: [] };
@@ -79,5 +79,48 @@ describe('createCatalogStore with a library (schema 2, the phone)', () => {
     expect(store.apply(release('1.0.1', 2), 'fetched')).toBe(false);
     expect(store.apply(release('1.0.1', 1), 'stored')).toBe(false);
     expect(store.getLibrary()?.moadim[0]?.name).toBe('bundled');
+  });
+});
+
+describe('createCatalogStore with works (schema 3, the phone)', () => {
+  const collection = { items: [], groups: {} };
+  const library: CatalogLibrary = {
+    moadim: [],
+    parshiyos: [],
+    collections: { likkuteiSichos: collection, maamorim: collection, yomanim: collection, hadranim: collection, michtavimKlolim: collection, reshimos: collection, jemEvents: collection },
+  };
+  function works(title: string): CatalogWorks {
+    return {
+      authors: [],
+      works: [{ id: 'tanya', title: { he: title, en: title }, authors: [], genre: 'chassidus', levels: [], sources: [], units: 1 }],
+      contents: { tanya: { workId: 'tanya', contents: [{ unitId: '1' }], units: [{ id: '1', label: title, editions: [] }] } },
+    };
+  }
+  const bundledWorks = () => ({ index: vi.fn(() => works('bundled')), contents: vi.fn((id: string) => works('bundled').contents[id] ?? null) });
+
+  it('reads the bundled works and each work\'s units only when asked', () => {
+    const bundle = bundledWorks();
+    const store = createCatalogStore(bundled, '1.0.0', 3, () => library, bundle);
+    expect(bundle.index).not.toHaveBeenCalled();
+    expect(store.getWorks()?.works[0]?.title.he).toBe('bundled');
+    expect(store.getWorks()).toBe(store.getWorks());
+    expect(bundle.contents).not.toHaveBeenCalled();
+    expect(store.getWorkContents('tanya')?.units[0]?.label).toBe('bundled');
+    expect(store.getWorkContents('nothing')).toBeNull();
+  });
+
+  it('applies a newer schema-3 release, and refuses one without works', () => {
+    const store = createCatalogStore(bundled, '1.0.0', 3, () => library, bundledWorks());
+    const libraryOnly: LibraryRelease = { ...release('1.0.1', 3), library };
+    expect(store.apply(libraryOnly, 'fetched')).toBe(false);
+    const next: WorksRelease = { ...release('1.0.1', 3), library, works: works('fetched') };
+    expect(store.apply(next, 'fetched')).toBe(true);
+    expect(store.getWorks()?.works[0]?.title.he).toBe('fetched');
+    expect(store.getWorkContents('tanya')?.units[0]?.label).toBe('fetched');
+  });
+
+  it('has no works in an app built without them', () => {
+    expect(createCatalogStore(bundled, '1.0.0', 2, () => library).getWorks()).toBeNull();
+    expect(createCatalogStore(bundled, '1.0.0', 1).getWorkContents('tanya')).toBeNull();
   });
 });

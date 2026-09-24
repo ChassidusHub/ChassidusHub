@@ -74,6 +74,12 @@ jest.mock('../catalog/data/library', () => ({
   default: () => ({ moadim: [], parshiyos: [], collections: {} }),
 }));
 
+jest.mock('../catalog/data/works', () => ({
+  __esModule: true,
+  default: () => ({ authors: [], works: [] }),
+  bundledWorkContents: () => null,
+}));
+
 jest.mock('./downloadSettings', () => ({
   DEFAULT_DOWNLOAD_SETTINGS: mockDefaultDownloadSettings,
   useDownloadSettings: jest.fn(() => [

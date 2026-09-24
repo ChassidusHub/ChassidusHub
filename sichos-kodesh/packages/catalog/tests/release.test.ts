@@ -10,9 +10,14 @@ import {
   parseCatalogRelease,
   parseCatalogReleaseFile,
   parseLibraryRelease,
+  parseWorksRelease,
   serializeCatalogRelease,
   serializeLibraryRelease,
+  serializeWorksRelease,
 } from '../src/release.js';
+import { catalogUnit, unitsInOrder, worksByAuthor } from '../src/works/lookup.js';
+import { parseCatalogWorks, worksRightsProblems } from '../src/works/parse.js';
+import type { CatalogWorks } from '../src/works/types.js';
 import { CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from '../src/version.js';
 
 const manifest = {
@@ -176,5 +181,83 @@ describe('schema 2 (the library)', () => {
 
   it('keeps the collection counts of a schema-2 manifest', () => {
     expect(parseCatalogManifest({ ...manifest, schemaVersion: 2, collections: { maamorim: 1568, bad: 'x' } })?.collections).toEqual({ maamorim: 1568 });
+  });
+});
+
+describe('schema 3 (the works)', () => {
+  const meta = { schemaVersion: 3, version: '1.3.0', releasedAt: '2026-10-01T00:00:00.000Z' };
+  const works: CatalogWorks = {
+    authors: [{ id: 'alter-rebbe', name: { he: 'אדמו״ר הזקן', en: 'The Alter Rebbe' }, rebbe: 1 }],
+    works: [
+      {
+        id: 'tanya',
+        title: { he: 'תניא', en: 'Tanya' },
+        authors: ['alter-rebbe'],
+        genre: 'chassidus',
+        levels: ['part', 'chapter'],
+        sources: [
+          { source: 'sefaria', sourceId: 'Tanya', kind: 'text', language: 'he', licence: 'cc-by-nc', rights: 'ship-with-credit', credit: 'Kehot', version: 'Kehot' },
+          { source: 'sefaria', sourceId: 'Tanya', kind: 'text', language: 'en', licence: 'unknown', rights: 'link-only', version: 'Other' },
+        ],
+        units: 2,
+        textBytes: 20,
+      },
+      { id: 'likkutei-sichos', title: { he: 'לקוטי שיחות', en: 'Likkutei Sichos' }, authors: ['the-rebbe'], genre: 'sichos', levels: ['volume'], collection: 'likkuteiSichos', sources: [] },
+    ],
+    contents: {
+      tanya: {
+        workId: 'tanya',
+        contents: [{ title: { he: 'ליקוטי אמרים', en: 'Likkutei Amarim' }, entries: [{ unitId: 'part1/2' }, { unitId: 'part1/1' }] }],
+        units: [
+          { id: 'part1/1', label: 'פרק א׳', ref: 'Tanya, Part I 1', editions: [{ source: 0, sha256: 'a'.repeat(64), bytes: 20 }, { source: 1 }] },
+          { id: 'part1/2', label: 'פרק ב׳', labelEn: 'Chapter 2', ref: 'Tanya, Part I 2', editions: [{ source: 1 }] },
+        ],
+      },
+    },
+  };
+
+  it('parses a release with the works, and dispatches on the schema', () => {
+    const file = { ...meta, byYear: { '5711': [entry] }, library, works };
+    const parsed = parseWorksRelease(file);
+    expect(parsed?.works.contents.tanya?.units).toHaveLength(2);
+    expect(parseCatalogReleaseFile(file)).toEqual(parsed);
+    expect(catalogManifestPath(3)).toBe('/v3/catalog/manifest.json');
+    // A schema-2 file never passes as schema 3, nor the other way round.
+    expect(parseWorksRelease({ ...file, schemaVersion: 2 })).toBeNull();
+    expect(parseWorksRelease({ ...meta, byYear: {}, library })).toBeNull();
+  });
+
+  it('rejects works whose editions point past their sources, or whose contents name a missing unit', () => {
+    const badEdition = structuredClone(works);
+    badEdition.contents.tanya!.units[0]!.editions.push({ source: 2 });
+    expect(parseCatalogWorks(badEdition)).toBeNull();
+    const badContents = structuredClone(works);
+    badContents.contents.tanya!.contents = [{ unitId: 'part1/9' }];
+    expect(parseCatalogWorks(badContents)).toBeNull();
+    const orphan = structuredClone(works) as unknown as { contents: Record<string, unknown> };
+    orphan.contents.nothing = works.contents.tanya;
+    expect(parseCatalogWorks(orphan)).toBeNull();
+  });
+
+  it('finds text kept for an edition that may not ship, and any local-only source', () => {
+    expect(worksRightsProblems(works)).toEqual([]);
+    const leaked = structuredClone(works);
+    leaked.contents.tanya!.units[1]!.editions[0]!.sha256 = 'b'.repeat(64);
+    const local = structuredClone(works);
+    local.works[0]!.sources.push({ source: 'igros-app', sourceId: 'x', kind: 'text', licence: 'commercial', rights: 'local-only' });
+    expect(worksRightsProblems(leaked)).toEqual(['tanya/part1/2: a text kept for a link-only source']);
+    expect(worksRightsProblems(local)).toEqual(['tanya: a local-only source (igros-app x)']);
+  });
+
+  it('serializes schema 3 byte for byte like JSON.stringify, sharing the other parts', () => {
+    const byYear = { 5711: [entry] };
+    expect(serializeWorksRelease(meta, JSON.stringify(byYear), JSON.stringify(library), JSON.stringify(works))).toBe(JSON.stringify({ ...meta, byYear, library, works }));
+    expect(parseCatalogManifest({ ...manifest, schemaVersion: 3, works: { works: 80, units: 2026 } })?.works).toEqual({ works: 80, units: 2026 });
+  });
+
+  it('reads units in the order of the contents, and works by author', () => {
+    expect(unitsInOrder(works.contents.tanya!).map((u) => u.id)).toEqual(['part1/2', 'part1/1']);
+    expect(catalogUnit(works.contents.tanya!, 'part1/2')?.labelEn).toBe('Chapter 2');
+    expect(worksByAuthor(works).get('alter-rebbe')?.map((w) => w.id)).toEqual(['tanya']);
   });
 });

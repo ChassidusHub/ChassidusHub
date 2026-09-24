@@ -20,7 +20,8 @@
     "pretest": "npm run build -w @sichos-kodesh/catalog",
     "test": "vitest run",
     "pretypecheck": "npm run build -w @sichos-kodesh/catalog",
-    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "build-catalog-works": "tsx bin/build-catalog-works.ts"
   },
   "license": "ISC",
   "dependencies": {
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
+    "tsx": "^4.19.2",
     "typescript": "~6.0.2",
     "vitest": "^3.0.0"
   }
