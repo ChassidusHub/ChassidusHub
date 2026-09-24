@@ -1,21 +1,100 @@
 name: Android Signed Release APK
 
-# Manual only. Builds the signed release APKs for phones and publishes them
-# as a GitHub Release - tag v<versionName> (from android/app/build.gradle),
-# created at the commit the workflow runs on - because the Releases tab is
-# where a phone downloads an APK from. android-aab.yml is the Play Console
-# bundle; this one is what gets handed to people directly.
+# Manual only. Builds the signed release APKs for phones and releases them:
+#
+#   - From GitHub's website (a phone will do): Actions -> Android Signed
+#     Release APK -> Run workflow, type the version (v1.2.3) and run. The
+#     APKs are attached to a *draft* GitHub Release to publish when it
+#     looks right; publishing creates the tag if it isn't there.
+#   - A manual run with the version left empty only builds them - as
+#     downloadable workflow artifacts to try first.
+#
+# APK only - no Play Store bundle. The Play bundle lives in
+# android-aab.yml; this is the file that gets handed to people directly,
+# because the Releases tab is where a phone downloads an APK from.
+#
+# Signing needs all four repository secrets (Settings -> Secrets and
+# variables -> Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+#   ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# Without them the run fails fast in seconds, not after the 15-minute
+# build.
+
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. v1.2.3 (the app's versionName in apps/mobile/android/app/build.gradle). Leave empty to only build the APKs."
+        required: false
+        default: ""
 
 permissions:
   contents: write
 
 jobs:
-  android-apk:
+  # A release gets its draft made once, up front, and the build attaches
+  # its APKs to it - each making its own could race into duplicate drafts.
+  # Skipped when nothing is being released.
+  draft:
+    name: Draft the release
+    if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.draft.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Draft the release (or find the draft a failed run left)
+        id: draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.version }}
+        run: |
+          version=$(sed -n 's/^ *versionName "\(.*\)"/\1/p' apps/mobile/android/app/build.gradle | head -1)
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::The app's versionName is $version (apps/mobile/android/app/build.gradle), so the release is v$version, not \"$TAG\". Change the version there first to release another one."
+            exit 1
+          fi
+          existing=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
+            --jq ".[] | select(.tag_name == \"$TAG\") | \"\(.id) \(.draft)\"" | head -n 1)
+          if [ -n "$existing" ]; then
+            read -r id draft <<< "$existing"
+            if [ "$draft" != "true" ]; then
+              echo "::error::$TAG is already released. Raise the version to release again."
+              exit 1
+            fi
+            echo "Adding to the existing draft of $TAG."
+          else
+            npm run --silent release-notes -w @sichos-kodesh/mobile > "$RUNNER_TEMP/release-notes.md"
+            cat "$RUNNER_TEMP/release-notes.md"
+            id=$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+              -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" \
+              -f name="Sichos Kodesh $TAG" -F body=@"$RUNNER_TEMP/release-notes.md" \
+              -F draft=true -F prerelease=false --jq .id)
+            echo "Drafted $TAG from $GITHUB_SHA."
+          fi
+          echo "release_id=$id" >> "$GITHUB_OUTPUT"
+
+  release:
     name: Signed release APK
+    needs: draft
+    # Also when there's no release to draft (the draft job skipped) - but
+    # not when drafting it failed.
+    if: ${{ !cancelled() && needs.draft.result != 'failure' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    permissions:
+      contents: write
 
     steps:
       - name: Free up disk space
@@ -43,7 +122,7 @@ jobs:
           java-version: "17"
 
       # Fail in a second, not after the 15-minute build: signing needs all
-      # four repository secrets (apps/mobile/README.md, "Google Play").
+      # four repository secrets (see the header comment).
       - name: Check the signing secrets are set
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -68,11 +147,6 @@ jobs:
           test -n "$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Releasing $version"
-
-      - name: Write the release notes from the changelog
-        run: |
-          npm run --silent release-notes -w @sichos-kodesh/mobile > "$RUNNER_TEMP/release-notes.md"
-          cat "$RUNNER_TEMP/release-notes.md"
 
       - name: Decode upload keystore
         env:
@@ -101,19 +175,20 @@ jobs:
           done
           ls -la "$RUNNER_TEMP/apks"
 
-      - name: Upload signed APKs as a workflow artifact
+      # Attached to the draft when releasing; otherwise they're just
+      # downloadable artifacts to try first.
+      - name: Attach the APKs to the draft release
+        if: needs.draft.outputs.release_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ inputs.version }}" "$RUNNER_TEMP"/apks/*.apk --clobber
+
+      - name: Keep the APKs
+        if: needs.draft.outputs.release_id == ''
         uses: actions/upload-artifact@v4
         with:
           name: sichos-kodesh-release-apk
           path: ${{ runner.temp }}/apks/*.apk
           if-no-files-found: error
-
-      - name: Publish the GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Sichos Kodesh ${{ steps.version.outputs.version }}
-          body_path: ${{ runner.temp }}/release-notes.md
-          files: ${{ runner.temp }}/apks/*.apk
-          make_latest: true
-          fail_on_unmatched_files: true
+          retention-days: 14
