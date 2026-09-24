@@ -2,6 +2,7 @@ package com.sichoskodeshmobile.systembars
 
 import android.os.Build
 import android.view.View
+import android.view.WindowManager
 import android.view.WindowInsetsController
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -19,6 +20,9 @@ import com.facebook.react.bridge.UiThreadUtil
  * controller on Android 11+ (the compat wrapper also rewrites the legacy
  * system-UI flags, which briefly disturbed the status bar React Native's own
  * StatusBar module had just styled).
+ *
+ * It also keeps the screen on while a sefer is open, when the reader asks
+ * for it (`setKeepScreenOn`).
  *
  * JS name: `SichosKodeshSystemBars` (see src/ui/systemBars.ts).
  */
@@ -54,6 +58,19 @@ class SystemBarsModule(
                 val flag = View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
                 decorView.systemUiVisibility =
                     if (lightBar) decorView.systemUiVisibility or flag else decorView.systemUiVisibility and flag.inv()
+            }
+        }
+    }
+
+    /** Keeps the screen from dimming and locking while `on`; the window's own flag, so it ends with the activity. */
+    @ReactMethod
+    fun setKeepScreenOn(on: Boolean) {
+        val activity = reactApplicationContext.currentActivity ?: return
+        UiThreadUtil.runOnUiThread {
+            if (on) {
+                activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
     }

@@ -10,16 +10,15 @@ import type {
   CatalogWorkSource,
 } from '@sichos-kodesh/catalog';
 import { unitsInOrder } from '@sichos-kodesh/catalog';
-import { normalizeSearchText } from '@sichos-kodesh/pack-format';
+import { normalizeSearchText } from '../search/normalizeSearchText.js';
+import type { Language } from '../search/language.js';
 
 /**
- * The seforim (catalog schema 3) as the phone shows them: the Rebbeim in
+ * The seforim (catalog schema 3) as both apps show them: the Rebbeim in
  * order, each with his seforim, then the works of many hands; a sefer's
  * contents, drilled into part by part; and which of a unit's editions the
  * reader shows.
  */
-
-export type Language = 'he' | 'en';
 
 export function names(value: { he: string; en: string }, language: Language): string {
   return language === 'he' ? value.he : value.en;
@@ -82,6 +81,22 @@ export function neighbours(contents: CatalogWorkContents, unitId: string): { pre
   const at = ordered.findIndex((u) => u.id === unitId);
   if (at < 0) return { previous: null, next: null };
   return { previous: ordered[at - 1] ?? null, next: ordered[at + 1] ?? null };
+}
+
+/** Where a unit falls in the whole sefer, counted from 1 in reading order ("chapter 3 of 53"), or null. */
+export function unitPosition(contents: CatalogWorkContents, unitId: string): { number: number; total: number } | null {
+  const ordered = unitsInOrder(contents);
+  const at = ordered.findIndex((u) => u.id === unitId);
+  return at < 0 ? null : { number: at + 1, total: ordered.length };
+}
+
+/**
+ * A passage as the reader shares it: its words, then the sefer and the
+ * unit it is from (in the passage's own language), then where to read it.
+ */
+export function citation(passage: string, work: CatalogWork, unit: CatalogUnit, language: Language, url?: string | null): string {
+  const label = language === 'en' ? (unit.labelEn ?? unit.label) : unit.label;
+  return `${passage.trim()}\n\n— ${names(work.title, language)}, ${label}${url ? `\n${url}` : ''}`;
 }
 
 /** The contents path (indexes) that leads to the part holding a unit, so "up" from the reader lands where the unit is listed. */

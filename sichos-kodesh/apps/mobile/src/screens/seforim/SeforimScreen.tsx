@@ -4,7 +4,7 @@ import { catalogUnit } from '@sichos-kodesh/catalog';
 import { getWorkContents, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { SeforimScreenProps } from '../../navigation/types';
-import { authorSections, names, workKind } from '../../seforim/seforimModel';
+import { authorSections, names, workKind } from '@sichos-kodesh/app-core';
 import { recentPlaces, useReadingState } from '../../seforim/readingState';
 import { CategoryRow } from '../../ui/CategoryRow';
 import { Row, RowDistance, RowTrailing } from '../../ui/Row';

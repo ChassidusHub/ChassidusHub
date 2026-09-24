@@ -1,5 +1,9 @@
 import type { CatalogWork, CatalogWorkContents } from '@sichos-kodesh/catalog';
+import { normalizeSearchText } from '@sichos-kodesh/app-core';
 import type { ObjectRef, PackEntry, PackScope } from './manifest.js';
+
+/** Lives in app-core, so both apps can search without the pack format. */
+export { normalizeSearchText };
 
 /**
  * Text packs (catalog schema 3): one pack per work, carrying every text of
@@ -80,25 +84,6 @@ export function workTextEntries(work: CatalogWork, contents: CatalogWorkContents
 /** The entry that carries a work's search index. */
 export function searchIndexEntry(work: Pick<CatalogWork, 'id' | 'title'>, sha256: string, bytes: number): PackEntry {
   return { collection: 'works', itemId: work.id, label: work.title.he, refs: [{ sha256, bytes, kind: 'search', sourceId: searchIndexSourceId(work.id), role: 'search' }] };
-}
-
-/**
- * Text as the search index holds it, and as a query must be written to
- * match it:
- * - no niqqud or cantillation;
- * - no geresh, gershayim or quotes, so ה"ה and ה״ה are both הה;
- * - lower case;
- * - every other character that is not a letter or digit becomes a space.
- * Plain code only (no Unicode property escapes, no `normalize`), so the
- * phone's JavaScript engine gives the same answer as the builder.
- */
-export function normalizeSearchText(text: string): string {
-  return text
-    .replace(/[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g, '')
-    .replace(/[\u05F3\u05F4"'`\u2018\u2019\u201C\u201D]/g, '')
-    .toLowerCase()
-    .replace(/[^0-9a-z\u00C0-\u024F\u05D0-\u05EA\u05F0-\u05F2]+/g, ' ')
-    .trim();
 }
 
 /** The letters that attach to the front of a Hebrew word: ו ה ב כ ל מ ש. */

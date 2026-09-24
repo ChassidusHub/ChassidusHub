@@ -1,10 +1,12 @@
+import { describe, expect, it } from 'vitest';
 import type { CatalogWork, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
 import { renderUnit } from '@sichos-kodesh/sefaria-index/reader';
-import { parseReadingState, recentPlaces } from './readingState';
-import { authorSections, chooseEdition, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, workKind } from './seforimModel';
-import { searchNames } from './seforimSearch';
-import { fetchFromSefaria, TextLoadError } from './seforimText';
-import { parseTextObject, textObjectPlainText } from './textObject';
+import { DEFAULT_READER_SETTINGS, clampScale, parseReaderSettings, readerFont, readerLineHeight, readerTextSize } from '../src/seforim/readerSettings.js';
+import { emptyReadingState, parseReadingState, recentPlaces, withBookmarkToggled, withPlace, withSettings, isBookmarked } from '../src/seforim/readingState.js';
+import { authorSections, chooseEdition, citation, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, unitPosition, workKind } from '../src/seforim/seforimModel.js';
+import { searchNames } from '../src/seforim/searchNames.js';
+import { fetchFromSefaria, TextLoadError } from '../src/seforim/sefariaText.js';
+import { markLabel, parseTextObject, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
 
 // Invented works and texts in the catalog's shape - not real editions.
 const tanya: CatalogWork = {
@@ -61,6 +63,14 @@ describe('the seforim model', () => {
     expect(unitCount(contents.contents[1]!)).toBe(2);
     expect(pathToUnit(contents, 'part1/app/1')).toEqual([1, 1]);
     expect(neighbours(contents, 'part1/1')).toMatchObject({ previous: { id: 'intro' }, next: { id: 'part1/app/1' } });
+    expect(unitPosition(contents, 'part1/1')).toEqual({ number: 2, total: 3 });
+    expect(unitPosition(contents, 'nowhere')).toBeNull();
+  });
+
+  it('shares a passage with the sefer and chapter it is from, in its own language', () => {
+    const unit = contents.units[1]!;
+    expect(citation(' The words. ', tanya, unit, 'en', 'https://example.org/t')).toBe('The words.\n\n— Tanya, Likkutei Amarim, Chapter 1\nhttps://example.org/t');
+    expect(citation('המילים', tanya, unit, 'he')).toBe('המילים\n\n— תניא, ליקוטי אמרים, פרק א׳');
   });
 
   it('opens the asked edition, else the remembered one, else the Hebrew - never a link-only one', () => {
@@ -143,17 +153,64 @@ describe('searching names', () => {
   });
 });
 
+describe('markers', () => {
+  it('are bracketed once, whether or not Sefaria bracketed them', () => {
+    expect(markLabel('[מ: כד כסלו]')).toBe('[מ: כד כסלו]');
+    expect(markLabel(' 5b ')).toBe('[5b]');
+  });
+});
+
+describe('vowels off', () => {
+  it('takes the vowel points and cantillation off and leaves the letters, the maqaf and the sof pasuq', () => {
+    const pointed = 'הִנֵּה מַיִם־רַבִּים׃';
+    expect(stripNiqqud(pointed)).toBe('הנה מים־רבים׃');
+    expect(stripNiqqud('Tanya, chapter 1')).toBe('Tanya, chapter 1');
+  });
+});
+
+describe('the reader settings', () => {
+  it('reads what reads right, and falls back to the defaults for the rest', () => {
+    expect(parseReaderSettings(undefined)).toEqual(DEFAULT_READER_SETTINGS);
+    const parsed = parseReaderSettings({ font: 'david', scale: 1.34, spacing: 'loose', theme: 'sepia', niqqud: false, notes: 'inline', continuous: 'yes' });
+    expect(parsed).toMatchObject({ font: 'david', scale: 1.3, spacing: 'normal', theme: 'sepia', niqqud: false, notes: 'inline', continuous: true });
+    expect(parseReaderSettings({ scale: 7 }).scale).toBe(1);
+  });
+
+  it('keeps the text size older versions stored on its own', () => {
+    expect(parseReadingState({ fontScale: 1.4 }).settings.scale).toBe(1.4);
+    expect(parseReadingState({ fontScale: 1.4, settings: { scale: 1.1 } }).settings.scale).toBe(1.1);
+  });
+
+  it('sizes the text and its lines from the scale and the spacing', () => {
+    expect(clampScale(0.3)).toBe(0.8);
+    expect(clampScale(1.26)).toBe(1.3);
+    expect(readerTextSize({ scale: 1 })).toBe(19);
+    expect(readerLineHeight({ scale: 1, spacing: 'relaxed' })).toBe(38);
+    expect(readerFont('david').family).toBe('DavidCLM');
+  });
+});
+
 describe('the reading state', () => {
   it('keeps what reads right and drops the rest', () => {
     const parsed = parseReadingState({
-      fontScale: 9,
-      places: { tanya: { unitId: 'part1/1', source: 1, at: '2026-09-24T10:00:00Z' }, bad: { unitId: 3 } },
+      places: { tanya: { unitId: 'part1/1', source: 1, at: '2026-09-24T10:00:00Z', offset: 0.5 }, bad: { unitId: 3 }, far: { unitId: 'x', source: 0, at: '2026-09-24T10:00:00Z', offset: 3 } },
       bookmarks: [{ workId: 'tanya', unitId: 'intro', at: '2026-09-24T09:00:00Z' }, { workId: 1 }],
     });
-    expect(parsed.fontScale).toBe(1);
     expect(Object.keys(parsed.places)).toEqual(['tanya']);
     expect(parsed.bookmarks).toHaveLength(1);
-    expect(parseReadingState(null)).toEqual({ fontScale: 1, places: {}, bookmarks: [] });
+    expect(parseReadingState(null)).toEqual(emptyReadingState());
+  });
+
+  it('records a place with how far into it the reader was, and gives the same state back when nothing changed', () => {
+    const now = new Date('2026-09-24T12:00:00Z');
+    const once = withPlace(emptyReadingState(), 'tanya', 'part1/1', 1, 0.42345, now);
+    expect(once.places.tanya).toEqual({ unitId: 'part1/1', source: 1, at: now.toISOString(), offset: 0.423 });
+    expect(withPlace(once, 'tanya', 'part1/1', 1, 0.4231, now)).toBe(once);
+    const settings = withSettings(once, { font: 'sbl-hebrew', scale: 5 });
+    expect(settings.settings).toMatchObject({ font: 'sbl-hebrew', scale: 1 });
+    const marked = withBookmarkToggled(settings, 'tanya', 'part1/1', now);
+    expect(isBookmarked(marked, 'tanya', 'part1/1')).toBe(true);
+    expect(isBookmarked(withBookmarkToggled(marked, 'tanya', 'part1/1'), 'tanya', 'part1/1')).toBe(false);
   });
 
   it('lists the seforim last read, newest first', () => {

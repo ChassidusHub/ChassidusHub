@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Headphones, KeyRound, RefreshCw } from 'lucide-react-native';
+import { READER_FONTS } from '@sichos-kodesh/app-core';
 import { CATALOG_CHANGELOG } from '@sichos-kodesh/catalog';
 import { useCatalogInfo } from '../catalog/catalogStore';
 import { APP_VERSION, CHANGELOG } from '../changelog';
@@ -89,6 +90,15 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
         <Badge icon={<Headphones size={20} color={colors.accentFg} />} eyebrow={t.aboutAshreinuBadgeEyebrow} name={t.aboutAshreinuBadgeName} onPress={() => openUrl(ASHREINU_URL)} />
       </View>
 
+      <CategoryHeader>{t.aboutFonts}</CategoryHeader>
+      <TabHelp>{t.aboutFontsHelp}</TabHelp>
+      {READER_FONTS.filter((font) => font.family !== null).map((font) => (
+        <Pressable key={font.id} accessibilityRole="link" onPress={() => openUrl(font.url)} style={({ pressed }) => [styles.font, { borderBottomColor: colors.border }, pressed && styles.pressed]}>
+          <Text style={[styles.fontName, { color: colors.fg, fontFamily: font.family ?? undefined, textAlign: isRtl ? 'right' : 'left' }]}>{font.name[language]}</Text>
+          <AppText style={[styles.fontLine, { color: colors.muted }]}>{`${font.origin} \u00B7 ${font.licence}`}</AppText>
+        </Pressable>
+      ))}
+
       <View style={styles.linkList}>
         <CategoryRow label={t.privacyLink} onPress={() => navigation.navigate('Privacy')} />
       </View>
@@ -148,6 +158,9 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
 
 const styles = StyleSheet.create({
   strong: { fontWeight: '700' },
+  font: { paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, gap: 2 },
+  fontName: { fontSize: 20, lineHeight: 30 },
+  fontLine: { fontSize: 13, lineHeight: 18 },
   /** Web: `.about-badges` - wrap, gap 10, margin-bottom 8. */
   badges: { flexWrap: 'wrap', gap: 10, marginBottom: 8 },
   badge: { alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10 },

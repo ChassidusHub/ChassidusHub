@@ -460,6 +460,56 @@ and `saveSefer.ts`):
   as reading online. When Sefaria has edited a text since the catalog was
   built, the copy differs from the pack's, and the pack's copy still wins.
 
+### WP15 - the reader, shared, with its settings
+
+Shmuly asked for a premium reader, with SBL Hebrew, Noto or the system
+font, and with good options. The web app gets the full library and the
+same reader (WP16), so the reader's core moved out of the phone.
+
+**Built** (mobile 1.6.0):
+
+- **Shared core in `packages/app-core/src/seforim/`.** The text object
+  parser and `stripNiqqud`, the seforim model (now with `unitPosition` and
+  `citation`), name search, reading from Sefaria (`fetchFromSefaria`), and
+  the reader's settings and reading state. The two apps keep only their
+  storage and their screens. `normalizeSearchText` moved into app-core
+  too; pack-format re-exports it, because pack-format already depends on
+  app-core and the other way round would be a cycle.
+- **Fonts, shipped unchanged in the APK** (`android/app/src/main/assets/
+  fonts`, licences in `fonts/licences/`):
+  - Frank Ruehl CLM (the default) and David CLM: Culmus 0.140, GPL-2
+    with the font exception.
+  - SBL Hebrew 1.56a: its EULA allows free, non-commercial,
+    unmodified redistribution.
+  - Noto Serif Hebrew: OFL 1.1.
+  - The device's own font.
+  About lists each font with its licence and a link to where it is
+  published.
+- **Settings** (`ReaderSettings`, the Aa button), all stored in the
+  reading state's row, which older rows read into (`fontScale` becomes
+  `scale`):
+  - size, 80% to 200%;
+  - line spacing and margins, three steps each;
+  - page: like the app, paper, sepia or night;
+  - vowels and cantillation on or off;
+  - justified or not;
+  - notes at the end, or in the text;
+  - page markers on or off;
+  - continuous reading;
+  - keeping the screen on (a window flag, through
+    `SystemBarsModule.setKeepScreenOn`).
+- **The page.**
+  - The bar slides away while reading down and comes back on the way up.
+  - A thin line shows how far into the chapter the reader is.
+  - Each chapter opens with its place in the sefer ("Chapter 3 of 53").
+  - In continuous reading the next chapter loads onto the same page when
+    the end comes near. The place, and the bookmark button, follow the
+    chapter being read.
+- **The place is kept to the paragraph**: the offset into the unit (0 to
+  1) is saved when a scroll comes to rest, and the chapter reopens there.
+- **Sharing**: a long press on a paragraph shares its words with the
+  sefer, the chapter and a Sefaria link.
+
 ## 8. Risks
 
 - **chabadlibrary.org availability.** Its page API failed during research,
