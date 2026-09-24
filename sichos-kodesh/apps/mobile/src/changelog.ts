@@ -9,6 +9,17 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.10.0',
+    en: [
+      'The reader sets a Hebrew sefer right to left always, whatever the app language: a justified paragraph ends on the right, and a line opening with a number or an English word still starts there',
+      'A chapter\'s edition is one control under its heading - the edition being read - that opens the list of the others, and of the ones read on Sefaria',
+    ],
+    he: [
+      'הקורא מציג ספר בעברית תמיד מימין לשמאל, בכל שפת אפליקציה: פסקה מיושרת מסתיימת בימין, ושורה שנפתחת במספר או במילה באנגלית עדיין מתחילה שם',
+      'המהדורה של הפרק היא כפתור אחד מתחת לכותרת - המהדורה שנקראת - שפותח את רשימת האחרות, ואת אלה שנקראות בספריא',
+    ],
+  },
+  {
     version: '1.9.0',
     en: [
       'HebrewBooks: the scanned seforim of the Rebbeim on HebrewBooks.org, 1,539 of them, a tap away. Each sefer lists its own volumes (Likkutei Sichos, Toras Menachem, the Igros, Or HaTorah and more), each opening on its page at HebrewBooks',

@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.6.0';
+export const APP_VERSION = '1.7.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,11 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.7.0',
+    en: ['A chapter\'s edition is one control under its heading - the edition being read - that opens the list of the others, and of the ones read on Sefaria'],
+    he: ['המהדורה של הפרק היא כפתור אחד מתחת לכותרת - המהדורה שנקראת - שפותח את רשימת האחרות, ואת אלה שנקראות בספריא'],
+  },
   {
     version: '1.6.0',
     en: [

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ALargeSmall, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Copy, ExternalLink, Share2 } from 'lucide-react';
+import { ALargeSmall, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Copy, Share2 } from 'lucide-react';
 import { catalogUnit, type CatalogEdition, type CatalogUnit, type CatalogWork } from '@sichos-kodesh/catalog';
 import {
   LINE_HEIGHTS,
@@ -33,6 +33,7 @@ import { useTranslation } from '../../i18n/useLanguage';
 import { useOnlineStatus } from '../../network/useOnlineStatus';
 import { fontStack, readerPalette } from '../../seforim/readerPalette';
 import { isBookmarked, recordPlace, toggleBookmark, useReadingState } from '../../seforim/readingState';
+import { EditionPicker } from '../../seforim/EditionPicker';
 import { TextObjectView } from '../../seforim/TextObjectView';
 import { LibraryLoading } from '../library/LibraryLoading';
 import { ReaderSettingsPanel } from './ReaderSettingsPanel';
@@ -419,27 +420,16 @@ export function ReaderScreen({ workId }: Props) {
                 {part ? <span className="reader-eyebrow">{names(part, language)}</span> : position && position.total > 1 && <span className="reader-eyebrow">{t.readerChapterOf(position.number, position.total)}</span>}
                 <h1 className="reader-heading">{label(section.unit)}</h1>
                 <span className="reader-ornament" aria-hidden />
-                {index === 0 && (readable.length > 1 || links.length > 0) && (
-                  <div className="reader-editions">
-                    {readable.map((e) => {
-                      const source = work.sources[e.source]!;
-                      const active = e.source === section.edition.source;
-                      return (
-                        <button key={e.source} type="button" className={active ? 'reader-chip reader-chip-active' : 'reader-chip'} aria-pressed={active} onClick={() => setParams({ unit: section.unit.id, source: String(e.source) })}>
-                          {editionLabel(source, t.editionLanguages, languageCount(source.language))}
-                        </button>
-                      );
-                    })}
-                    {links.map((e) => {
+                {index === 0 && (
+                  <EditionPicker
+                    editions={readable.map((e) => ({ source: e.source, label: editionLabel(work.sources[e.source]!, t.editionLanguages, languageCount(work.sources[e.source]!.language)) }))}
+                    current={section.edition.source}
+                    links={links.flatMap((e) => {
                       const url = sefariaLink(work, section.unit, e);
-                      return url ? (
-                        <a key={`link-${e.source}`} className="reader-chip" href={url} target="_blank" rel="noreferrer">
-                          {editionLabel(work.sources[e.source]!, t.editionLanguages, 1)}
-                          <ExternalLink size={13} aria-hidden />
-                        </a>
-                      ) : null;
+                      return url ? [{ source: e.source, label: editionLabel(work.sources[e.source]!, t.editionLanguages, 1), url }] : [];
                     })}
-                  </div>
+                    onChoose={(source) => setParams({ unit: section.unit.id, source: String(source) })}
+                  />
                 )}
               </div>
 

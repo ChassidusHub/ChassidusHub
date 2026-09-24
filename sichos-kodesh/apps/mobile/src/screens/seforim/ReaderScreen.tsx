@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ALargeSmall, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react-native';
+import { ALargeSmall, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { catalogUnit, type CatalogEdition, type CatalogNames, type CatalogUnit, type CatalogWork } from '@sichos-kodesh/catalog';
 import {
   MARGIN_POINTS,
@@ -33,6 +33,7 @@ import { useOnlineStatus } from '../../network/useOnlineStatus';
 import { readerPalette, readerScheme } from '../../seforim/readerPalette';
 import { isBookmarked, recordPlace, toggleBookmark, useReadingState } from '../../seforim/readingState';
 import { TextLoadError, loadUnitText, type TextFrom, type TextProblem } from '../../seforim/seforimText';
+import { EditionPicker } from '../../seforim/EditionPicker';
 import { TextObjectView } from '../../seforim/TextObjectView';
 import { BackLink } from '../../ui/BackLink';
 import { Button } from '../../ui/Button';
@@ -386,7 +387,7 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
   );
 }
 
-/** A chapter's head: where it falls in the sefer, its name, and (for the chapter opened) its editions. */
+/** A chapter's head: where it falls in the sefer, its name, and (for the chapter opened) its edition, to change. */
 function SectionHead({
   work,
   section,
@@ -407,7 +408,7 @@ function SectionHead({
   first: boolean;
   onEdition: (source: number) => void;
 }) {
-  const { t, language, isRtl } = useTranslation();
+  const { t, language } = useTranslation();
   const { unit, edition } = section;
   const readable = readableEditions(work, unit);
   const links = first ? linkEditions(work, unit) : [];
@@ -424,34 +425,18 @@ function SectionHead({
       )}
       <AppText style={[styles.heading, { color: palette.text, fontFamily: readerFont(settings.font).family ?? undefined, fontSize: Math.round(size * 1.25), lineHeight: Math.round(size * 1.7) }]}>{heading}</AppText>
       <View style={[styles.ornament, { backgroundColor: palette.accent }]} />
-      {first && (readable.length > 1 || links.length > 0) && (
-        <View style={[styles.editions, { flexDirection: row(isRtl) }]}>
-          {readable.map((e) => {
-            const source = work.sources[e.source]!;
-            const active = e.source === edition.source;
-            return (
-              <Pressable
-                key={e.source}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                onPress={() => onEdition(e.source)}
-                style={[styles.chip, { borderColor: active ? palette.accent : palette.rule }, active ? { backgroundColor: palette.accent } : null]}
-              >
-                <AppText style={[styles.chipText, { color: active ? palette.background : palette.text }]}>{editionLabel(source, t.editionLanguages, languageCount(source.language))}</AppText>
-              </Pressable>
-            );
-          })}
-          {links.map((e) => {
+      {first && (
+        <EditionPicker
+          editions={readable.map((e) => ({ source: e.source, label: editionLabel(work.sources[e.source]!, t.editionLanguages, languageCount(work.sources[e.source]!.language)) }))}
+          current={edition.source}
+          links={links.flatMap((e) => {
             const url = sefariaLink(work, unit, e);
-            if (!url) return null;
-            return (
-              <Pressable key={`link-${e.source}`} accessibilityRole="link" onPress={() => Linking.openURL(url).catch(() => undefined)} style={[styles.chip, styles.linkChip, { borderColor: palette.rule, flexDirection: row(isRtl) }]}>
-                <AppText style={[styles.chipText, { color: palette.muted }]}>{editionLabel(work.sources[e.source]!, t.editionLanguages, 1)}</AppText>
-                <ExternalLink size={14} color={palette.muted} />
-              </Pressable>
-            );
+            return url ? [{ source: e.source, label: editionLabel(work.sources[e.source]!, t.editionLanguages, 1), url }] : [];
           })}
-        </View>
+          palette={palette}
+          onChoose={onEdition}
+          onOpenLink={(url) => Linking.openURL(url).catch(() => undefined)}
+        />
       )}
     </View>
   );
@@ -476,10 +461,6 @@ const styles = StyleSheet.create({
   position: { fontSize: 12, fontWeight: '600', letterSpacing: 0.4, marginBottom: 4 },
   heading: { fontWeight: '700', textAlign: 'center' },
   ornament: { width: 36, height: 2, borderRadius: 1, marginTop: 10, marginBottom: 4, opacity: 0.8 },
-  editions: { flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 14 },
-  chip: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 },
-  linkChip: { alignItems: 'center', gap: 6 },
-  chipText: { fontSize: 14, fontWeight: '600' },
   nextSection: { marginTop: 40 },
   center: { alignItems: 'center', paddingVertical: 28 },
   block: { marginTop: 8 },
