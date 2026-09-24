@@ -64,14 +64,31 @@ export interface Work {
   sources: WorkSource[];
 }
 
+/** A text object: one edition's text of one unit, stored by the sha256 of its bytes. */
+export interface TextObjectRef {
+  sha256: string;
+  bytes: number;
+}
+
 /** One source's copy of one unit. */
 export interface Edition {
   source: SourceId;
+  /** The source's own id: a mafteiach/JEM file id, a Sefaria ref. */
   sourceId: string;
   kind: EditionKind;
   licence: Licence;
   role?: string;
   label?: string;
+  language?: 'he' | 'en' | 'yi';
+  /** Which of the source's versions it is (Sefaria's version title). */
+  version?: string;
+  /** Who is credited when the licence asks for it. */
+  credit?: string;
+  /**
+   * The text itself, when it was imported and its rights let it leave the
+   * machine. A link-only edition has none: the reader opens the source.
+   */
+  text?: TextObjectRef;
 }
 
 /** What a person reads or hears: a letter, a maamar, a sicha, a chapter. */
@@ -79,7 +96,9 @@ export interface Unit {
   /** Unique within its work; for a library collection, the item's own id. */
   id: string;
   workId: string;
+  /** In Hebrew, its place in the work without the work's title: `ליקוטי אמרים, פרק א׳`. */
   label: string;
+  labelEn?: string;
   hebrewYear?: number;
   hebrewDate?: string;
   /** The farbrengen(s) it belongs to (mafteiach occasion ids). */
@@ -89,3 +108,24 @@ export interface Unit {
 
 /** Whether a copy may leave the machine it was built on. */
 export type RightsDecision = 'ship' | 'ship-with-credit' | 'link-only' | 'local-only';
+
+/**
+ * A work's table of contents: its parts, down to its units, in the work's
+ * own order. A part can hold units and smaller parts side by side (Tanya's
+ * first part: the title page, the approbations, the foreword, then 53
+ * chapters), so the entries are one ordered list.
+ */
+export interface ContentsNode {
+  title: Names;
+  entries: ContentsEntry[];
+}
+
+export type ContentsEntry = { unitId: string } | ContentsNode;
+
+/** What an importer (Sefaria, chabadlibrary.org) produces for one work. */
+export interface ImportedWork {
+  workId: string;
+  source: SourceId;
+  contents: ContentsEntry[];
+  units: Unit[];
+}

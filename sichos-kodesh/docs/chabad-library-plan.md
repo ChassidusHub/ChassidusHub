@@ -277,6 +277,47 @@ section 5 has it. WP11 reads Sefaria through its API
   as links, thumbnails and page-viewer deep links. Credit Otzaria for the
   catalog. It mirrors no PDFs unless permission comes.
 
+**Built: the Sefaria half** (`packages/sefaria-index`; its README has the
+details). Sefaria has no bulk export that keeps each version's licence
+apart, so the importer reads its API, politely and cached:
+
+- For each work the registry gives Sefaria copies, it walks each title's
+  schema to its leaves and fetches each leaf once per version.
+- A unit is a chapter, a siman, a maamar or a prayer. Its id is its path in
+  the work (`part1/32`), and its labels come from Sefaria's Hebrew and
+  English titles.
+- Each version with text for a unit is an edition, with its licence and
+  credit.
+- An edition that may ship keeps its text, as a small HTML object:
+  - paragraphs, with Kehot's page and daily-study markers kept;
+  - footnotes gathered at the end, linked both ways;
+  - its credit and licence in the footer.
+- Unknown-licence editions (the Siddur's Hebrew, Neirot's Hebrew Shaar
+  HaYichud, Kuntres HaHitpa'alus) stay links to Sefaria, with no text.
+- If Sefaria's reported licence ever differs from the registry, that
+  edition drops to link-only and the import warns.
+
+The first full run (2026-09-24):
+
+| Work | Units | Texts kept | Links only |
+| --- | --- | --- | --- |
+| Tanya | 124 | 258 (2.8 MB) | - |
+| Torah Or, with its Sources and References | 296 | 306 (3.7 MB) | - |
+| Likkutei Torah, with its Sources and References | 615 | 618 (9.2 MB) | - |
+| Shulchan Aruch HaRav, with the Kuntres Acharon | 708 | 1,245 (17.9 MB) | - |
+| Shaar HaYichud (The Gate of Unity) | 55 | 55 (0.8 MB, the English) | 55 (the Hebrew) |
+| Derech Mitzvosecha | 133 | 134 (2.0 MB) | - |
+| Kuntres HaHispaalus | 43 | - | 86 |
+| Weekday Siddur | 47 | 6 (the English that exists) | 47 (the Hebrew) |
+| Ma'aneh Lashon | 5 | 7 (0.1 MB) | - |
+| **Total** | **2,026** | **2,629 (36.6 MB)** | **188** |
+
+It took 506 requests (about four minutes at half a second apart), with no
+warnings. A second run reads everything from the cache and sends none.
+
+The HebrewBooks half waits on Otzaria's catalog release, which this
+session cannot fetch (section 2a). Decision 2 still gates any PDFs.
+
 ### WP12 - catalog schema 3, API `/v3`, text packs
 
 - `works` in the catalog, served under `/v3/`, and the phone plumbing, as
