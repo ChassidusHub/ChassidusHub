@@ -5,17 +5,19 @@ import type { DownloadContentTypes, DownloadTarget } from '@sichos-kodesh/app-co
 import type { ArchiveStore } from '@sichos-kodesh/archive';
 import { exportObjectsIndex } from '@sichos-kodesh/archive';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import type { AudioProfile, PackEntry, PackKeyPair, PackManifest, PackScope } from '@sichos-kodesh/pack-format';
+import type { AudioProfile, PackKeyPair, PackManifest, PackScope } from '@sichos-kodesh/pack-format';
 import {
   CATALOG_ENTRY_NAME,
   MANIFEST_ENTRY_NAME,
   OBJECTS_INDEX_ENTRY_NAME,
-  PACK_EXTENSION,
-  PACK_SCHEMA_VERSION,
   canonicalBytes,
+  composeManifests,
   objectEntryName,
+  packFileName,
+  packIdPayload,
   signManifest,
   sizeSelection,
+  splitEntries,
 } from '@sichos-kodesh/pack-format';
 import { writeStoredZip, type ZipSource } from './zip.js';
 
@@ -79,48 +81,10 @@ function sha256Hex(bytes: Uint8Array): string {
 
 /** Stable for a selection: the same scope, profile and objects always give the same id. */
 export function packIdFor(scope: PackScope, profile: AudioProfile, objects: Record<string, number>, part?: number): string {
-  return sha256Hex(canonicalBytes({ scope, profile, objects, ...(part === undefined ? {} : { part }) }));
+  return sha256Hex(packIdPayload(scope, profile, objects, part));
 }
 
-interface Part {
-  entries: PackEntry[];
-  objects: Record<string, number>;
-  bytes: number;
-}
-
-/**
- * Greedy, in catalog order, whole occasions only: a manifest may only
- * refer to objects its own part carries, so an occasion is never cut in
- * two. An object two occasions share is carried by each part that needs it.
- */
-export function splitEntries(entries: PackEntry[], maxBytes: number): Part[] {
-  const parts: Part[] = [];
-  let current: Part = { entries: [], objects: {}, bytes: 0 };
-  const extraFor = (part: Part, entry: PackEntry): number => {
-    const seen = new Set<string>();
-    let extra = 0;
-    for (const ref of entry.refs) {
-      if (part.objects[ref.sha256] !== undefined || seen.has(ref.sha256)) continue;
-      seen.add(ref.sha256);
-      extra += ref.bytes;
-    }
-    return extra;
-  };
-  for (const entry of entries) {
-    if (current.entries.length > 0 && current.bytes + extraFor(current, entry) > maxBytes) {
-      parts.push(current);
-      current = { entries: [], objects: {}, bytes: 0 };
-    }
-    current.entries.push(entry);
-    for (const ref of entry.refs) {
-      if (current.objects[ref.sha256] !== undefined) continue;
-      current.objects[ref.sha256] = ref.bytes;
-      current.bytes += ref.bytes;
-    }
-  }
-  if (current.entries.length > 0) parts.push(current);
-  return parts;
-}
+export { splitEntries };
 
 function describeMissing(missing: DownloadTarget[]): string {
   const sample = missing.slice(0, 5).map((t) => `${t.hebrewYear}/${t.occasionId} ${t.kind} ${t.kind === 'audio' ? t.workerFilename : t.driveFileId}`);
@@ -146,36 +110,30 @@ export async function buildPacks(store: ArchiveStore, options: BuildOptions): Pr
   }
 
   const parts = splitEntries(selection.entries, options.maxBytes);
-  const setId = packIdFor(options.scope, options.profile, selection.objects);
-  const builtAt = now().toISOString();
   const indexBytes = options.embedObjectsIndex ? canonicalBytes(index) : null;
   const catalogBytes = options.catalogRelease ? await readFile(options.catalogRelease.file) : null;
+  const manifests = await composeManifests({
+    scope: options.scope,
+    profile: options.profile,
+    catalogVersion: options.catalogVersion,
+    builtAt: now().toISOString(),
+    parts,
+    hash: sha256Hex,
+    ...(indexBytes ? { objectsIndex: { version: options.catalogVersion, sha256: sha256Hex(indexBytes) } } : {}),
+    ...(catalogBytes && options.catalogRelease ? { catalog: { version: options.catalogRelease.version, sha256: sha256Hex(catalogBytes) } } : {}),
+  });
   await mkdir(options.outDir, { recursive: true });
 
   const packs: BuiltPack[] = [];
-  for (const [i, part] of parts.entries()) {
-    const split = parts.length > 1;
-    let manifest: PackManifest = {
-      schema: PACK_SCHEMA_VERSION,
-      packId: split ? packIdFor(options.scope, options.profile, part.objects, i) : setId,
-      builtAt,
-      catalogVersion: options.catalogVersion,
-      profile: { audio: options.profile },
-      scope: options.scope,
-      entries: part.entries,
-      objects: part.objects,
-    };
-    if (split) manifest.part = { index: i, count: parts.length, setId };
-    if (indexBytes) manifest.objectsIndex = { version: options.catalogVersion, sha256: sha256Hex(indexBytes) };
-    if (catalogBytes && options.catalogRelease) manifest.catalog = { version: options.catalogRelease.version, sha256: sha256Hex(catalogBytes) };
-    if (options.key) manifest = signManifest(manifest, options.key);
-
+  for (const [i, unsigned] of manifests.entries()) {
+    const part = parts[i]!;
+    const manifest = options.key ? signManifest(unsigned, options.key) : unsigned;
     const sources: ZipSource[] = [{ name: MANIFEST_ENTRY_NAME, data: canonicalBytes(manifest) }];
     if (indexBytes) sources.push({ name: OBJECTS_INDEX_ENTRY_NAME, data: indexBytes });
     if (catalogBytes) sources.push({ name: CATALOG_ENTRY_NAME, data: catalogBytes });
     for (const [sha, bytes] of Object.entries(part.objects)) sources.push({ name: objectEntryName(sha), file: paths.get(sha)!, bytes });
 
-    const name = `${options.slug}-${options.profile}${split ? `.part${i + 1}of${parts.length}` : ''}${PACK_EXTENSION}`;
+    const name = packFileName(options.slug, options.profile, manifest.part);
     const file = path.join(options.outDir, name);
     const bytes = await writeStoredZip(file, sources);
     log(`${name}: ${part.entries.length} occasion(s), ${Object.keys(part.objects).length} object(s), ${bytes} bytes`);

@@ -25,6 +25,7 @@
   },
   "license": "ISC",
   "dependencies": {
+    "@hebcal/core": "^6.9.2",
     "@sichos-kodesh/app-core": "^0.1.0",
     "@sichos-kodesh/catalog": "^0.1.0",
     "tweetnacl": "^1.0.3"

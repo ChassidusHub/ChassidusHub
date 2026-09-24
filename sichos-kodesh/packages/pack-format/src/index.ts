@@ -8,3 +8,5 @@ export * from './delta.js';
 export * from './identify.js';
 export * from './selection.js';
 export * from './zipLayout.js';
+export * from './scope.js';
+export * from './packPlan.js';
