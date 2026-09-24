@@ -4,6 +4,7 @@ import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core'
 import { useDownload } from './useDownload';
 import { isTargetDownloaded } from './downloadStorage';
 import { useOnlineStatus } from '../network/useOnlineStatus';
+import { useDownloadsCanRun } from './useDownloadsCanRun';
 
 export type AllChaptersDownloadState = 'unavailable' | 'none' | 'downloading' | 'downloaded';
 
@@ -15,7 +16,9 @@ export function useAllChaptersDownloadState(entry: CatalogEntry): AllChaptersDow
   const [cachedAllDownloaded, setCachedAllDownloaded] = useState<boolean | null>(null);
 
   const statuses = targets.map((target) => targetStates[target.key]?.status);
-  const anyInFlight = statuses.some((status) => status === 'queued' || status === 'downloading');
+  // While downloads can't run nothing is in flight (see useDownloadState).
+  const canRun = useDownloadsCanRun();
+  const anyInFlight = canRun && statuses.some((status) => status === 'queued' || status === 'downloading');
   const allLiveDownloaded = targets.length > 0 && statuses.every((status) => status === 'downloaded');
 
   useEffect(() => {

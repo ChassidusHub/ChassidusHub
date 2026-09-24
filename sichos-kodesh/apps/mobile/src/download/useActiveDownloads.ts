@@ -5,6 +5,7 @@ import { useCatalog } from '../catalog/catalogStore';
 import { useLanguage } from '../i18n/useTranslation';
 import { parseLibraryTargetKey } from '../library/libraryDownloads';
 import { useDownload } from './useDownload';
+import { useDownloadsCanRun } from './useDownloadsCanRun';
 
 export interface ActiveDownloadsSummary {
   count: number;
@@ -23,10 +24,18 @@ export interface ActiveDownloadRow {
   library?: { collection: LibraryCollectionId; id: string };
 }
 
-/** One entry per real in-flight file transfer, aggregated for the global download-progress bar - with the web's own "never go backward, simulate a slow climb until real bytes arrive" smoothing. */
+/**
+ * One entry per real in-flight file transfer, aggregated for the global
+ * download-progress bar - with the web's own "never go backward, simulate a
+ * slow climb until real bytes arrive" smoothing. While downloads can't run
+ * (no connection, or no Wi-Fi for Wi-Fi-only downloads - useDownloadsCanRun)
+ * nothing is in flight: the queue waits, and neither the bar nor a climbing
+ * percentage says otherwise.
+ */
 export function useActiveDownloads(): ActiveDownloadsSummary {
   const { targetStates } = useDownload();
-  const active = Object.values(targetStates).filter((state) => state.status === 'queued' || state.status === 'downloading');
+  const canRun = useDownloadsCanRun();
+  const active = canRun ? Object.values(targetStates).filter((state) => state.status === 'queued' || state.status === 'downloading') : [];
   const count = active.length;
   const rawFraction = count > 0 ? active.reduce((sum, state) => sum + (state.status === 'downloading' ? state.progress : 0), 0) / count : 0;
   const realPercent = Math.round(rawFraction * 100);
@@ -55,13 +64,15 @@ export function useActiveDownloads(): ActiveDownloadsSummary {
   return { count, percent };
 }
 
-/** Per-occasion detail for DownloadedScreen's "in progress" section - the full list the global progress bar's own aggregate summarizes. */
+/** Per-occasion detail for DownloadedScreen's "in progress" section - the full list the global progress bar's own aggregate summarizes (none while downloads can't run, as there). */
 export function useActiveDownloadRows(): ActiveDownloadRow[] {
   const catalog = useCatalog();
   const { targetStates } = useDownload();
   const { language } = useLanguage();
+  const canRun = useDownloadsCanRun();
 
   return useMemo(() => {
+    if (!canRun) return [];
     const groups = new Map<string, { row: ActiveDownloadRow; sum: number; files: number }>();
     for (const state of Object.values(targetStates)) {
       if (state.status !== 'queued' && state.status !== 'downloading') continue;
@@ -91,5 +102,5 @@ export function useActiveDownloadRows(): ActiveDownloadRow[] {
     return [...groups.values()]
       .map(({ row, sum, files }) => ({ ...row, percent: Math.round((sum / files) * 100) }))
       .sort((a, b) => a.hebrewYear - b.hebrewYear || a.occasionId - b.occasionId);
-  }, [catalog, language, targetStates]);
+  }, [canRun, catalog, language, targetStates]);
 }

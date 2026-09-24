@@ -8,6 +8,8 @@ import { ContinueSection } from '../components/ContinueSection';
 import { useTranslation } from '../i18n/useTranslation';
 import type { HomeScreenProps } from '../navigation/types';
 import { useOnlineStatus } from '../network/useOnlineStatus';
+import { useHasOfflinePack } from '../offline/useHasOfflinePack';
+import { useDownloadsCanRun } from '../download/useDownloadsCanRun';
 import { parshaLabel } from '../utils/formatHebrewDate';
 import { Button } from '../ui/Button';
 import { CategoryRow } from '../ui/CategoryRow';
@@ -22,6 +24,9 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const online = useOnlineStatus();
+  const hasPack = useHasOfflinePack();
+  const downloadsCanRun = useDownloadsCanRun();
+  const askForPack = hasPack === false && (!online || !downloadsCanRun);
   const targetYear = currentHebrewYear();
   const bestMatch = findMatchingYears(targetYear)[0];
   const { parsha } = currentParsha(IL);
@@ -45,9 +50,9 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
         {parsha ? ` · ${parshaLabel(parsha, language)}` : ''}
       </Subtitle>
 
-      {/* Browsing/search read from the bundled catalog with no network needed, and already-downloaded content still opens offline - only content that was never downloaded needs a connection. */}
-      {!online && <OfflineNote text={t.offlineNote} />}
-      {!online && <CategoryRow label={t.viewDownloadedLabel} onPress={() => navigation.navigate('Downloaded')} />}
+      {/* The app is meant to work offline: with a pack on the phone nothing needs saying. Without one, with no connection - or no Wi-Fi for downloads set to Wi-Fi only - it asks for the pack. */}
+      {askForPack && <OfflineNote pack text={online ? t.noWifiAskForPack : t.offlineAskForPack} />}
+      {askForPack && <CategoryRow label={t.offlineImportPack} onPress={() => navigation.navigate('Offline')} />}
 
       {bestMatch && <Button hero label={t.weekKviusFarbrengens} onPress={() => navigation.navigate('KviusYears', { targetYear })} />}
 

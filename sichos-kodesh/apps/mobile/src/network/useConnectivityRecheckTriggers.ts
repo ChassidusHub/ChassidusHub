@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { recheckIfOffline } from './connectivity';
+import { followNetworkState, recheckIfOffline } from './connectivity';
 
 function recheck(): void {
   recheckIfOffline().catch(() => undefined);
 }
 
 /**
- * Mounted once at the app root - actively re-verifies connectivity at the
+ * Mounted once at the app root - follows the phone's own network state
+ * (followNetworkState), and actively re-verifies connectivity at the
  * moments someone currently marked offline is most likely to want a real
  * answer: returning to the app after it was backgrounded, and (via
  * `onNavigationStateChange`, wired in App.tsx) navigating to a different
@@ -17,10 +18,14 @@ function recheck(): void {
 export function useConnectivityRecheckTriggers(): void {
   useEffect(() => {
     recheck();
+    const unfollow = followNetworkState();
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') recheck();
     });
-    return () => subscription.remove();
+    return () => {
+      unfollow();
+      subscription.remove();
+    };
   }, []);
 }
 

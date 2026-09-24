@@ -2921,9 +2921,12 @@ body:has(.reader) {
   scroll-snap-type: x proximity;
 }
 
+/* At least 104px, and as wide as its sample: a wide font or a larger text
+   size never breaks the word (the ת used to fall to a second line). */
 .reader-font {
   display: flex;
-  flex: 0 0 104px;
+  flex: 0 0 auto;
+  min-width: 104px;
   flex-direction: column;
   align-items: center;
   gap: 6px;
@@ -2943,6 +2946,7 @@ body:has(.reader) {
 .reader-font-sample {
   font-size: 1.6rem;
   line-height: 1.5;
+  white-space: nowrap;
 }
 
 .reader-font-name {

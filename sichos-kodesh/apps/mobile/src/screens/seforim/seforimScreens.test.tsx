@@ -204,15 +204,19 @@ describe('seforim screens', () => {
 
     it('lists an author\'s other books by series, with Otzaria credited', async () => {
       const shelf = await render(<screens.HebrewBooksShelfScreen {...props({ authorId: 'the-rebbe' })} />);
-      expect(shelf).toContain('The Rebbe on HebrewBooks');
+      // Headed by the name alone, so it fits instead of trailing off; the help line says HebrewBooks.
+      expect(shelf).toContain('"The Rebbe"');
+      expect(shelf).not.toContain('The Rebbe on HebrewBooks');
       expect(shelf).toContain('\u05E9\u05E2\u05E8\u05D9 \u05D4\u05DE\u05D5\u05E2\u05D3\u05D9\u05DD');
       expect(shelf).toContain('Otzaria');
       // The seforim here list their own scans; the shelf leaves them out.
       expect(shelf).not.toContain('"\u05DC\u05E7\u05D5\u05D8\u05D9 \u05E9\u05D9\u05D7\u05D5\u05EA"');
       const others = await render(<screens.HebrewBooksShelfScreen {...props({ authorId: null })} />);
-      expect(others).toContain('Chabad books on HebrewBooks');
+      expect(others).toContain('"Chabad books"');
       const series = await render(<screens.HebrewBooksShelfScreen {...props({ authorId: 'the-rebbe', series: 0 })} />);
       expect(series).toMatch(/\d+ pages/);
+      // Each book is one line, its name and its pages: no line of where it was printed under every one.
+      expect(series).not.toContain(' pages \u00B7 ');
     });
   });
 

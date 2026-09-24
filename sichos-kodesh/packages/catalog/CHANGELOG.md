@@ -12,6 +12,19 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.6.0 - 2026-09-24
+
+- The library (schema 2) names everything in both languages. JEM's
+  recordings, in English, gain `labelHe` (the item), `typeHe` and each
+  chapter ref's `labelHe`: 2,909 recordings and 8,142 chapter names.
+  mafteiach's names, in Hebrew, gain their English: a maamar's
+  `occasionLabelEn` (1,568), a sicha's `sectionLabelEn` (2,262), and the
+  `labelEn` of the reshimos (38), michtavim klolim (193) and hadranim (144).
+  The rules in `src/translate` go first; `translations/library-he.json` and
+  `library-en.json` hold the names they can't do, translated once and
+  checked. `npm run translate-library` applies them to the committed
+  library files; `build-catalog` applies them on every build.
+
 ## 1.5.0 - 2026-09-24
 
 - The Chabad shelf of HebrewBooks.org (schema 3, `works.shelf`): 1,539

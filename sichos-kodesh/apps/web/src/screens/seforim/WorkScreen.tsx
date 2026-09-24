@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import type { CatalogWork, CatalogWorkSource, LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS, catalogUnit } from '@sichos-kodesh/catalog';
-import { contentsAt, mayRead, names, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
+import { contentsAt, mayRead, names, sharedLabels, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
 import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
 import { useShelf, useWorkContents, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -84,12 +84,13 @@ function Scans({ workId }: { workId: string }) {
   const series = workScans(shelf, workId);
   const scans = series.flatMap((s) => s.scans.map((scan) => ({ scan, label: scan.volume ? (series.length > 1 ? `${s.title} · ${scan.volume}` : scan.volume) : scan.title })));
   if (scans.length === 0) return null;
+  const shared = sharedLabels(scans.map(({ label }) => label));
   return (
     <div className="category">
       <h2 className="category-header">{t.workScans}</h2>
       <ul className="year-list">
         {(all ? scans : scans.slice(0, SCANS_SHOWN)).map(({ scan, label }) => (
-          <ScanRow key={scan.id} scan={scan} label={label} />
+          <ScanRow key={scan.id} scan={scan} label={label} printed={shared.has(label)} />
         ))}
         {!all && scans.length > SCANS_SHOWN && (
           <li>

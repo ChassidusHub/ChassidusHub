@@ -41,7 +41,9 @@ export function useLibraryItem(): LibraryItemRoute | null | undefined {
       occasionId: playlistOccasionId(collection, item),
       hebrewYear: item.hebrewYear ?? 0,
       hebrewDate: item.hebrewDate ?? '',
-      occasionLabel: item.label,
+      // Named in both languages where the catalog has both (see itemPlaylistEntry).
+      occasionLabel: item.labelHe ?? item.label,
+      ...(item.labelHe ? { occasionLabelEn: item.label } : item.labelEn ? { occasionLabelEn: item.labelEn } : {}),
       audio: itemAudio(item),
       pdfs,
     };

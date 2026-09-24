@@ -26,7 +26,8 @@ function collectionIndex(library: CatalogLibrary, collection: LibraryCollectionI
   if (!fuse) {
     const items = (source.items as LibraryItemBase[]).map((item) => ({
       item,
-      label: normalize(item.label),
+      // The name in both languages, where the catalog has it in both (JEM's recordings, mafteiach's names).
+      label: normalize([item.label, item.labelHe, item.labelEn].filter(Boolean).join(' ')),
       details: normalize(`${itemSubtitle(collection, item, 'he')} ${itemSubtitle(collection, item, 'en')}`),
     }));
     fuse = new Fuse(items, { keys: ['label', 'details'], threshold: 0.3, ignoreLocation: true, minMatchCharLength: 2, useExtendedSearch: true });

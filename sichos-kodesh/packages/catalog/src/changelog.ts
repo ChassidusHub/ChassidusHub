@@ -16,6 +16,16 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.6.0',
+    date: '2026-09-24',
+    en: [
+      'Every JEM recording has its Hebrew name, and each of its chapters too (2,909 recordings, 8,142 chapters); mafteiach\'s occasions and names have their English: where each maamar was said, each sicha\'s parsha or moed, the reshimos, the letters and the hadranim',
+    ],
+    he: [
+      'לכל הקלטה של JEM יש שם בעברית, וגם לכל אחד מחלקיה (2,909 הקלטות, 8,142 חלקים); למועדים ולשמות של mafteiach יש שם באנגלית: היכן נאמר כל מאמר, הפרשה או המועד של כל שיחה, הרשימות, המכתבים וההדרנים',
+    ],
+  },
+  {
     version: '1.5.0',
     date: '2026-09-24',
     en: [

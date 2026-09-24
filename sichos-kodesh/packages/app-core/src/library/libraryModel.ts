@@ -80,16 +80,40 @@ export function formatDuration(ms: number): string {
   return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
 }
 
+/** A mafteiach name (Hebrew) in the interface language: its English form when the catalog has one. */
+function inLanguage(hebrew: unknown, english: unknown, language: Language): string | null {
+  if (language === 'en' && typeof english === 'string' && english) return english;
+  return typeof hebrew === 'string' && hebrew ? hebrew : null;
+}
+
+/**
+ * An item's name, as its row and its own screen show it: a maamar by its
+ * dibur hamaschil; a sicha by its volume and page, without the parsha
+ * mafteiach adds in brackets (ח"א ע' 1 (בראשית)) - its subtitle, or the
+ * group it is listed under, already names it; anything else in the
+ * interface language when the catalog has the name in both (JEM's
+ * recordings in Hebrew, the reshimos' and letters' names in English).
+ */
+export function itemTitle(collection: LibraryCollectionId, item: LibraryItemBase, language: Language): string {
+  const record = item as LibraryItemBase & Record<string, unknown>;
+  if (collection === 'maamorim' && typeof record.diburHamaschil === 'string' && record.diburHamaschil) return record.diburHamaschil;
+  if (collection === 'likkuteiSichos') {
+    const section = typeof record.sectionLabel === 'string' ? ` (${record.sectionLabel})` : null;
+    return section && item.label.endsWith(section) ? item.label.slice(0, -section.length).trim() : item.label;
+  }
+  return (language === 'he' ? item.labelHe : item.labelEn) ?? item.label;
+}
+
 /** The muted line under an item in a list: where and when, in a few words. */
 export function itemSubtitle(collection: LibraryCollectionId, item: LibraryItemBase, language: Language): string {
   const record = item as LibraryItemBase & Record<string, unknown>;
   const parts: Array<string | null> = [];
   switch (collection) {
     case 'likkuteiSichos':
-      parts.push(typeof record.sectionLabel === 'string' ? record.sectionLabel : null);
+      parts.push(inLanguage(record.sectionLabel, record.sectionLabelEn, language));
       break;
     case 'maamorim':
-      parts.push(typeof record.occasionLabel === 'string' ? record.occasionLabel : null, dateLine(item, language));
+      parts.push(inLanguage(record.occasionLabel, record.occasionLabelEn, language), dateLine(item, language));
       break;
     case 'yomanim':
       parts.push(monthLine(item.hebrewYear, typeof record.monthToken === 'string' ? record.monthToken : undefined, language));
@@ -102,7 +126,8 @@ export function itemSubtitle(collection: LibraryCollectionId, item: LibraryItemB
       break;
     case 'jemEvents': {
       const minutes = item.refs.reduce((sum, ref) => sum + (ref.durationMs ?? 0), 0);
-      parts.push(typeof record.type === 'string' ? record.type : null, dateLine(item, language), minutes > 0 ? formatDuration(minutes) : null);
+      const type = language === 'he' && typeof record.typeHe === 'string' ? record.typeHe : typeof record.type === 'string' ? record.type : null;
+      parts.push(type, dateLine(item, language), minutes > 0 ? formatDuration(minutes) : null);
       break;
     }
     default:
@@ -124,6 +149,7 @@ export function itemAudio(item: LibraryItemBase): CatalogAudio[] {
     .map((ref) => {
       const audio: CatalogAudio = { workerFilename: ref.sourceId, durationMs: ref.durationMs ?? 0 };
       if (ref.label) audio.chapterName = ref.label;
+      if (ref.labelHe) audio.chapterNameHe = ref.labelHe;
       return audio;
     });
 }
@@ -185,13 +211,13 @@ export interface ItemFactWords {
 }
 
 /** The facts worth a line of their own on an item's page, per collection: citations, hemshech, date lines. Bibliographic facts only. */
-export function itemFacts(collection: LibraryCollectionId, item: LibraryItemBase, words: ItemFactWords): string[] {
+export function itemFacts(collection: LibraryCollectionId, item: LibraryItemBase, words: ItemFactWords, language: Language = 'he'): string[] {
   const record = item as LibraryItemBase & Record<string, unknown>;
   const facts: string[] = [];
   const text = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : null);
   switch (collection) {
     case 'maamorim': {
-      const occasion = text(record.occasionLabel);
+      const occasion = text(inLanguage(record.occasionLabel, record.occasionLabelEn, language));
       if (occasion) facts.push(`${words.saidAt}: ${occasion}`);
       const hemshech = text(record.hemshech);
       if (hemshech) facts.push(words.hemshech(hemshech));
@@ -225,9 +251,14 @@ export function itemFacts(collection: LibraryCollectionId, item: LibraryItemBase
 export function itemPdfLabel(ref: CatalogRef, roleNames: Record<string, string>, fallback: string): string {
   const role = ref.role ?? '';
   const roleName = roleNames[role] ?? (role.includes(':') ? role.split(':').slice(1).join(':') : role);
+  // mafteiach's own label that only says what kind of file it is (שיחה, מתורגם): the role's name says it, in the interface language.
+  if (ref.label && roleName && KIND_LABELS.has(ref.label.trim())) return roleName;
   if (ref.label && roleName && !ref.label.includes(roleName)) return `${roleName} · ${ref.label}`;
   return ref.label || roleName || fallback;
 }
+
+/** mafteiach's labels that name a file's kind rather than the file (the Likkutei Sichos buttons). */
+const KIND_LABELS: ReadonlySet<string> = new Set(['שיחה', 'מתורגם', 'תרגום', 'קיצור', 'יומן']);
 
 /** What an item's recordings play as: a playlist under an id no catalog occasion has (see playlistOccasionId), or null for an item without any. */
 export function itemPlaylistEntry(collection: LibraryCollectionId, item: LibraryItemBase): CatalogEntry | null {
@@ -237,7 +268,9 @@ export function itemPlaylistEntry(collection: LibraryCollectionId, item: Library
     occasionId: playlistOccasionId(collection, item),
     hebrewYear: item.hebrewYear ?? 0,
     hebrewDate: item.hebrewDate ?? '',
-    occasionLabel: item.label,
+    // The catalog's occasions carry a Hebrew name and an English one; so does the playlist.
+    occasionLabel: item.labelHe ?? item.label,
+    ...(item.labelHe ? { occasionLabelEn: item.label } : item.labelEn ? { occasionLabelEn: item.labelEn } : {}),
     audio,
     pdfs: [],
   };

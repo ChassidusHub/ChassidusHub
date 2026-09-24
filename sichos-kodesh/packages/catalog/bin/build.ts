@@ -7,6 +7,8 @@ import { existsSync } from 'node:fs';
 import { MIN_HISTORICAL_YEAR } from '@sichos-kodesh/kvius-engine';
 import { buildCatalog } from '../src/buildCatalog.js';
 import { buildLibrary } from '../src/library/buildLibrary.js';
+import { translateLibrary } from '../src/translate/library.js';
+import { loadLibraryTranslations } from './libraryTranslations.js';
 import { buildGatedLibrary } from '../src/library/gated.js';
 import { LIBRARY_COLLECTION_IDS } from '../src/library/types.js';
 
@@ -89,7 +91,8 @@ console.log(`Wrote ${years.length} year files + index.ts (${totalEntries} occasi
 // parshiyos. Compact JSON: these files are bundled only by the phone app and
 // read by bin/release.ts, never diffed by hand.
 const jemDb = withJem ? new DatabaseSync(jemDbPath, { readOnly: true }) : null;
-const library = buildLibrary(db, jemDb);
+// With each name in the other language beside it (src/translate/library.ts).
+const library = translateLibrary(buildLibrary(db, jemDb), await loadLibraryTranslations());
 const libraryDir = path.join(outDir, 'library');
 await mkdir(libraryDir, { recursive: true });
 await writeFile(path.join(libraryDir, 'meta.json'), JSON.stringify({ moadim: library.moadim, parshiyos: library.parshiyos }), 'utf8');

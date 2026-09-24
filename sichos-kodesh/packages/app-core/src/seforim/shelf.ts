@@ -39,6 +39,19 @@ export function scanLabel(scan: CatalogScan): string {
   return scan.volume ?? scan.title;
 }
 
+/**
+ * The labels more than one row of a list shares (the editions of a book
+ * that has no volumes, say). Only those rows add where and when each was
+ * printed, to tell them apart; every other row is its name and its pages,
+ * on one line.
+ */
+export function sharedLabels(labels: readonly string[]): Set<string> {
+  const seen = new Set<string>();
+  const shared = new Set<string>();
+  for (const label of labels) (seen.has(label) ? shared : seen).add(label);
+  return shared;
+}
+
 /** The series whose title, or one of whose scans, holds every word of the query (niqqud, quotes and case ignored). */
 export function searchShelf(series: readonly CatalogScanSeries[], query: string): CatalogScanSeries[] {
   const words = normalizeSearchText(query).split(' ').filter(Boolean);

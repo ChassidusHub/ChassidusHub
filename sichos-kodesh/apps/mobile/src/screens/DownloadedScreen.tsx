@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Download } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { itemSubtitle, occasionTitle } from '@sichos-kodesh/app-core';
+import { itemSubtitle, itemTitle, occasionTitle } from '@sichos-kodesh/app-core';
 import { getLibrary } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { SwipeToDelete } from '../components/SwipeToDelete';
@@ -161,7 +161,7 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
                 deleteLibraryItem(downloadedItem).catch(() => undefined);
               }}
             >
-              <Row label={downloadedItem.item.label} marquee onPress={() => navigation.navigate('LibraryItem', { collection: downloadedItem.collection, id: downloadedItem.item.id })}>
+              <Row label={itemTitle(downloadedItem.collection, downloadedItem.item, language)} marquee onPress={() => navigation.navigate('LibraryItem', { collection: downloadedItem.collection, id: downloadedItem.item.id })}>
                 <AppText numberOfLines={1} style={[styles.librarySubtitle, { color: colors.muted }]}>
                   {[t.collectionNames[downloadedItem.collection], itemSubtitle(downloadedItem.collection, downloadedItem.item, language)].filter(Boolean).join(' · ')}
                 </AppText>

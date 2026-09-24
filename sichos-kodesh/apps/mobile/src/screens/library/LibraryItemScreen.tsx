@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FileText } from 'lucide-react-native';
 import type { CatalogRef, LibraryItemBase } from '@sichos-kodesh/catalog';
-import { findItem, formatDuration, itemFacts, itemPdfLabel, itemPdfs, itemPlaylistEntry, itemSubtitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
+import { audioChapterName, findItem, formatDuration, itemFacts, itemPdfLabel, itemPdfs, itemPlaylistEntry, itemSubtitle, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { DownloadPill } from '../../components/DownloadPill';
 import { PlaylistPlayButton } from '../../components/PlaylistPlayButton';
@@ -46,9 +46,9 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   }
 
   const record = item as LibraryItemBase & Record<string, unknown>;
-  const title = collection === 'maamorim' && typeof record.diburHamaschil === 'string' ? record.diburHamaschil : item.label;
+  const title = itemTitle(collection, item, language);
   const subtitle = itemSubtitle(collection, item, language);
-  const facts = itemFacts(collection, item, { saidAt: t.librarySaidAt, printedIn: t.libraryPrintedIn, hemshech: t.libraryHemshech, kuntres: t.libraryKuntres, hasTranslation: t.libraryHasTranslation, hasTranscript: t.libraryHasTranscript });
+  const facts = itemFacts(collection, item, { saidAt: t.librarySaidAt, printedIn: t.libraryPrintedIn, hemshech: t.libraryHemshech, kuntres: t.libraryKuntres, hasTranslation: t.libraryHasTranslation, hasTranscript: t.libraryHasTranscript }, language);
   const pdfLabel = (ref: CatalogRef) => itemPdfLabel(ref, t.pdfRoleNames, t.libraryDocuments);
   const pdfs = itemPdfs(item);
   const disputed = collection === 'likkuteiSichos' && record.supplement === true;
@@ -83,7 +83,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
           {entry.audio.map((audio, index) => (
             <Row
               key={`${audio.workerFilename}-${index}`}
-              label={audio.chapterName ?? t.track(index + 1)}
+              label={audioChapterName(audio, language) ?? t.track(index + 1)}
               selected={player.playlist?.occasionId === entry.occasionId && player.currentIndex === index}
               trailing={
                 <RowTrailing>
@@ -91,7 +91,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
                 </RowTrailing>
               }
               onPress={() =>
-                player.play({ title: entry.occasionLabel, audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, index)
+                player.play({ title: occasionTitle(entry, language), audio: entry.audio, hebrewYear: entry.hebrewYear, occasionId: entry.occasionId, hebrewDate: entry.hebrewDate }, index)
               }
             />
           ))}

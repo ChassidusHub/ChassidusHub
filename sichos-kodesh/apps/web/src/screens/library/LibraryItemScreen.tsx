@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import type { LibraryItemBase } from '@sichos-kodesh/catalog';
-import { itemFacts, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
+import { itemFacts, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../../catalog/catalogStore';
 import { PlaylistPlayButton } from '../../components/PlaylistPlayButton';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -24,7 +24,7 @@ export function LibraryItemScreen({ route }: Props) {
   const occasion = useMemo(() => linkedOccasion(catalog, item), [catalog, item]);
   const { entry, basePath } = resolved;
   const record = item as LibraryItemBase & Record<string, unknown>;
-  const title = collection === 'maamorim' && typeof record.diburHamaschil === 'string' ? record.diburHamaschil : item.label;
+  const title = itemTitle(collection, item, language);
   const facts = itemFacts(collection, item, {
     saidAt: t.librarySaidAt,
     printedIn: t.libraryPrintedIn,
@@ -32,7 +32,7 @@ export function LibraryItemScreen({ route }: Props) {
     kuntres: t.libraryKuntres,
     hasTranslation: t.libraryHasTranslation,
     hasTranscript: t.libraryHasTranscript,
-  });
+  }, language);
   const disputed = collection === 'likkuteiSichos' && record.supplement === true;
 
   return (

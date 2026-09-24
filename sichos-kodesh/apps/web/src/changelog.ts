@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.7.0';
+export const APP_VERSION = '1.8.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.8.0',
+    en: [
+      'Every recording has its Hebrew name in Hebrew, and so does each of its parts; the names of where a maamar was said, a sicha\'s parsha, the reshimos, the letters and the hadranim have their English in English',
+      'A sicha of Likkutei Sichos names its parsha once, under its volume and page; a translation is "Translation", not "Translation · translated"',
+      'The HebrewBooks lists are headed by the Rebbe\'s name, and each book is one line - its name and its pages. Where it was printed shows only to tell editions of one book apart',
+      'The font picker shows its sample word whole in every font and at every text size: the ת of בראשית no longer falls to a second line',
+    ],
+    he: [
+      'לכל הקלטה יש שם בעברית, וגם לכל אחד מחלקיה; לשמות של היכן נאמר מאמר, פרשת השיחה, הרשימות, המכתבים וההדרנים יש שם באנגלית',
+      'שיחה בלקוטי שיחות מציינת את הפרשה פעם אחת, מתחת לחלק ולעמוד; תרגום נקרא "תרגום", לא "תרגום · מתורגם"',
+      'רשימות HebrewBooks נפתחות בשם הרבי, וכל ספר הוא שורה אחת - שמו ומספר העמודים. מקום ההדפסה מופיע רק כדי להבחין בין מהדורות של אותו ספר',
+      'בחירת הגופן מציגה את מילת הדוגמה שלמה בכל גופן ובכל גודל טקסט: ה-ת של בראשית כבר לא יורדת לשורה שנייה',
+    ],
+  },
   {
     version: '1.7.0',
     en: ['A chapter\'s edition is one control under its heading - the edition being read - that opens the list of the others, and of the ones read on Sefaria'],

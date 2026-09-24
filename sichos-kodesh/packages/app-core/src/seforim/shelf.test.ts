@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogShelf } from '@sichos-kodesh/catalog';
 import { createCatalogStore } from '../catalog/catalogStore.js';
-import { authorShelf, hebrewBooksUrl, scanCount, scanLabel, searchShelf, workScans } from './shelf.js';
+import { authorShelf, hebrewBooksUrl, scanCount, scanLabel, searchShelf, sharedLabels, workScans } from './shelf.js';
 
 // A shelf in the catalog's shape; the ids are HebrewBooks', the rest trimmed.
 const SHELF: CatalogShelf = {
@@ -44,6 +44,11 @@ describe('the HebrewBooks shelf', () => {
   it('names a scan by its volume, or its title when it has none', () => {
     expect(scanLabel(SHELF.authors[0]!.series[0]!.scans[1]!)).toBe('ב (במדבר - דברים)');
     expect(scanLabel(SHELF.authors[0]!.series[2]!.scans[0]!)).toBe('היום יום');
+  });
+
+  it('tells apart only the rows that share a name: four editions of one book, not its volumes', () => {
+    expect([...sharedLabels(['מדרש ריב״ש טוב', 'מדרש ריב״ש טוב', 'כתר שם טוב', 'מדרש ריב״ש טוב'])]).toEqual(['מדרש ריב״ש טוב']);
+    expect(sharedLabels(SHELF.authors[0]!.series[0]!.scans.map(scanLabel)).size).toBe(0);
   });
 
   it('finds a series by its title, or the scans that match inside it', () => {

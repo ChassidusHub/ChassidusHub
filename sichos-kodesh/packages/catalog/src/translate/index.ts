@@ -7,3 +7,4 @@
 export { translateChapterName } from './chapterNameHe.js';
 export { translateOccasionLabel } from './occasionLabelEn.js';
 export { groupNameEn } from './groupNameEn.js';
+export { translateLibrary, type LibraryTranslations } from './library.js';

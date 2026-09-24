@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
-import { findGroup, groupDisplayName, groupItems, itemSubtitle } from '@sichos-kodesh/app-core';
+import { findGroup, groupDisplayName, groupItems, itemSubtitle, itemTitle } from '@sichos-kodesh/app-core';
 import { useLibrary } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useTranslation } from '../../i18n/useLanguage';
@@ -38,12 +38,14 @@ export function LibraryGroupScreen({ collection, axis, slug }: Props) {
       )}
       <ul className="year-list">
         {items.map((item) => {
-          const subtitle = itemSubtitle(collection, item, language);
+          // The group this list is (a sicha's parsha) is already its title: not repeated under each item.
+          const line = itemSubtitle(collection, item, language);
+          const subtitle = line === title ? '' : line;
           return (
             <li key={item.id}>
               <Link className="year-row library-item-row" to={`/library/item/${collection}/${encodeURIComponent(item.id)}`}>
                 <span className="library-item-text">
-                  <span className="year-row-year">{item.label}</span>
+                  <span className="year-row-year">{itemTitle(collection, item, language)}</span>
                   {subtitle && <span className="library-item-subtitle">{subtitle}</span>}
                 </span>
               </Link>

@@ -4,6 +4,7 @@ import type { RowDownloadState } from '../download/downloadContext';
 import { isTargetDownloaded } from '../download/downloadStorage';
 import { useDownload } from '../download/useDownload';
 import { useOnlineStatus } from '../network/useOnlineStatus';
+import { useDownloadsCanRun } from '../download/useDownloadsCanRun';
 
 export interface TargetsDownload {
   state: RowDownloadState;
@@ -25,8 +26,10 @@ export function useTargetsDownload(targets: DownloadTarget[]): TargetsDownload {
   const keys = targets.map((target) => target.key).join('|');
 
   const statuses = targets.map((target) => targetStates[target.key]?.status);
-  const anyDownloading = statuses.includes('downloading');
-  const anyQueued = statuses.includes('queued');
+  // While downloads can't run a queued or started file isn't coming (see useDownloadState).
+  const canRun = useDownloadsCanRun();
+  const anyDownloading = canRun && statuses.includes('downloading');
+  const anyQueued = canRun && statuses.includes('queued');
   const allLiveDownloaded = targets.length > 0 && statuses.every((status) => status === 'downloaded');
 
   useEffect(() => {

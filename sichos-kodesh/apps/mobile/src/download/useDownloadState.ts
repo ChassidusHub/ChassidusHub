@@ -4,6 +4,7 @@ import { useDownload } from './useDownload';
 import type { RowDownloadState } from './downloadContext';
 import { isTargetDownloaded } from './downloadStorage';
 import { useOnlineStatus } from '../network/useOnlineStatus';
+import { useDownloadsCanRun } from './useDownloadsCanRun';
 
 /**
  * Live download state for one occasion, for the row icon (see
@@ -20,8 +21,10 @@ export function useDownloadState(entry: CatalogEntry | null | undefined): RowDow
   const [cachedState, setCachedState] = useState<'downloaded' | 'none' | null>(null);
 
   const statuses = targets.map((target) => targetStates[target.key]?.status);
-  const anyDownloading = statuses.includes('downloading');
-  const anyQueued = statuses.includes('queued');
+  // While downloads can't run (no connection, or no Wi-Fi for Wi-Fi-only downloads) a queued or started file isn't coming: the row shows what is on the phone, not a download.
+  const canRun = useDownloadsCanRun();
+  const anyDownloading = canRun && statuses.includes('downloading');
+  const anyQueued = canRun && statuses.includes('queued');
   const allLiveDownloaded = targets.length > 0 && statuses.every((status) => status === 'downloaded');
   const live = anyDownloading || anyQueued || allLiveDownloaded;
   const targetKeys = targets.map((target) => target.key).join('|');
