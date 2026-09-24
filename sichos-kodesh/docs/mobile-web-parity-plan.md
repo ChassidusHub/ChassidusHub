@@ -127,7 +127,7 @@ Android downloader bridge:
 | `npm run typecheck -w @sichos-kodesh/mobile` | ✅ PASS |
 | `npm run lint -w @sichos-kodesh/mobile` | ✅ PASS |
 | `npm run android:smoke:buildonly -w @sichos-kodesh/mobile` | ✅ APK confirmed, exit 0 |
-| `npm run android:smoke` (runtime) | ⚠️ Skipped — no emulator in agent VM. Run via CI: `gh workflow run mobile-android-smoke.yml` |
+| `npm run android:smoke` (runtime) | ⚠️ Skipped — no emulator in agent VM. Run it locally on a machine with an emulator or phone. |
 
 ### Phase 4B remaining gaps
 
@@ -167,7 +167,7 @@ Android downloader bridge:
 | `npm run test -w @sichos-kodesh/app-core` | shared package regression guard |
 | `npm run typecheck -w @sichos-kodesh/app-core` | shared package regression guard |
 | `npm run android:smoke:buildonly -w @sichos-kodesh/mobile` | APK build verification without device |
-| `mobile-android-smoke.yml` | emulator install/launch smoke on PRs touching mobile/packages/workflows |
+| `npm run android:smoke` + `android:ui-walkthrough` (local) | emulator install/launch smoke and screen walkthrough, run locally (never in CI) |
 
 ### Remaining real runtime gaps
 
@@ -267,8 +267,8 @@ Android downloader bridge:
   - `cd apps/mobile/android && ./gradlew assembleDebug --stacktrace`
   - `npm run android:smoke -w @sichos-kodesh/mobile`
 - Local coding-agent VMs may still lack `adb` / an attached emulator, so
-  runtime proof should come from the PR's `mobile-android-smoke.yml` run when
-  local smoke cannot launch.
+  runtime proof has to come from a local run on a machine that has one.
+  There is no CI emulator run.
 
 ### Remaining PDF parity gaps
 
@@ -318,8 +318,8 @@ Android downloader bridge:
   - `npm run android:smoke:buildonly -w @sichos-kodesh/mobile`
   - `cd apps/mobile/android && ./gradlew assembleDebug --stacktrace`
   - `npm run android:smoke -w @sichos-kodesh/mobile`
-- Runtime smoke should be confirmed via `.github/workflows/mobile-android-smoke.yml`
-  when local `adb`/emulator is unavailable.
+- Runtime smoke is confirmed locally, on a machine with `adb` and an
+  emulator or phone. There is no CI emulator run.
 
 ### Remaining PDF parity gaps
 

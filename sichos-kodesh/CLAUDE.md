@@ -9,6 +9,10 @@ CI builds: never trigger CI builds on your own — not test builds, not
 releases — unless Shmuly explicitly asks, with one exception: when you
 finish a major feature or function, you may ship it yourself (see below).
 
+The Android emulator tests (`android:smoke`, `android:ui-walkthrough`) run
+locally only, when needed. Never run them in CI, and never add a CI
+workflow for them.
+
 When he asks for a test build ("build an APK to try"), trigger the release
 workflow manually with the version left empty:
 `gh workflow run android-release-apk.yml --ref main`

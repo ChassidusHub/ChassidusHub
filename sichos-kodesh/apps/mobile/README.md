@@ -95,9 +95,10 @@ produces a real installable APK, no Expo/EAS account needed.
   CSS filter: the same two functions applied through React Native's own
   `filter` style on the viewer's wrapper (`PdfViewerScreen`), which Android
   renders over the native PDF view and its pages alike.
-- Validation for future PDF work should use the same command/workflow set
-  listed under **Phase 3B required command set** below, plus the PR-triggered
-  `mobile-android-smoke.yml` workflow for honest runtime verification.
+- Validation for future PDF work should use the same command set listed
+  under **Phase 3B required command set** below, plus a local emulator run
+  (`npm run android:smoke`, then the UI walkthrough) for runtime
+  verification.
 
 ## Phase 5C PDF reader polish status
 
@@ -259,7 +260,9 @@ so no mocking of the native module is required in Jest.
 | Build-only | `npm run android:smoke:buildonly -w @sichos-kodesh/mobile` | No | Any VM / local |
 | Local smoke | `npm run android:smoke -w @sichos-kodesh/mobile` | Yes (exit 2 if none) | Local dev machine |
 | UI walkthrough | `npm run android:ui-walkthrough -w @sichos-kodesh/mobile -- <apk> [out-dir]` | Yes | Before handing out an APK |
-| CI emulator smoke | `mobile-android-smoke.yml` GitHub Actions workflow | Provided by CI | GitHub Actions |
+
+The emulator tests run locally only, never in CI (there is no CI emulator
+workflow).
 
 **Pre-build gate** (`scripts/prebuild-check.sh`) runs automatically in front
 of `npm run android:release` and `npm run android:assembleDebug`: it rebuilds
@@ -282,39 +285,21 @@ the end. Screenshots land in `smoke-artifacts/ui/` by default.
 **Important for coding agents:** Local coding-agent VMs typically lack
 nested KVM (nested virtualization), so `npm run android:smoke` will exit
 with code `2` ("no device connected — skipped"). That is a normal local
-skip, not a test pass. It does **not** count as runtime verification.
+skip, not a test pass. It does **not** count as runtime verification: run
+the smoke test and the UI walkthrough on a machine with an emulator or a
+connected phone.
 
-The required runtime verification path is the GitHub Actions workflow
-`mobile-android-smoke.yml`. It starts a real Android emulator via
-`reactivecircus/android-emulator-runner`, installs the APK, launches the
-app, collects logcat, and uploads artifacts. Exit code `2` from the smoke
-script inside that workflow is treated as a **job failure** (not a skip)
-because the workflow's entire purpose is to provide an emulator.
-
-The workflow runs automatically on PRs that touch `apps/mobile/**`,
-`packages/**`, `package.json`, `package-lock.json`, or the workflow
-files themselves. It can also be triggered manually:
-
-```sh
-gh workflow run mobile-android-smoke.yml
-```
-
-> **Note:** GitHub only exposes `workflow_dispatch` for workflow files
-> that exist on the repository's default branch. If `mobile-android-smoke.yml`
-> was added in a feature branch and not yet merged, you may need to merge
-> it first before the manual trigger appears in the GitHub UI.
-
-**Artifacts** from each CI emulator run are uploaded to the
-`mobile-android-smoke-artifacts` artifact bundle and include:
-- `apps/mobile/smoke-artifacts/metro-smoke.log`
-- `apps/mobile/smoke-artifacts/android-smoke-logcat.log`
-- `apps/mobile/smoke-artifacts/android-smoke-screenshot.png`
-- `apps/mobile/smoke-artifacts/gradle-build.log`
-- Gradle build reports from `android/app/build/reports/`
+Each local run writes its logs and screenshots to
+`apps/mobile/smoke-artifacts/`:
+- `metro-smoke.log`
+- `android-smoke-logcat.log`
+- `android-smoke-screenshot.png`
+- `gradle-build.log`
+- `ui/`, the UI walkthrough's screenshots
 
 ### Manual notification-cancel verification checklist
 
-Use an emulator/device (local or `mobile-android-smoke.yml` artifacts/logs) and:
+Use a local emulator or device and:
 
 1. Start a download from `Downloaded`/occasion UI.
 2. Confirm the Android foreground download notification appears with a
@@ -341,12 +326,8 @@ npm run android:smoke -w @sichos-kodesh/mobile
 ```
 
 If the local VM has no emulator/device and runtime smoke exits `2`,
-runtime verification must come from the PR's
-`mobile-android-smoke.yml` run (auto-triggered by path filters), or via:
-
-```sh
-gh workflow run mobile-android-smoke.yml
-```
+runtime verification must come from a machine that has one. There is no
+CI emulator run.
 
 ### Getting an APK
 
