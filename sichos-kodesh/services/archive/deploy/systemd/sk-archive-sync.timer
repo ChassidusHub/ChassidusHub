@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Sichos Kodesh archive sync every night
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+RandomizedDelaySec=20m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

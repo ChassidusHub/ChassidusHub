@@ -1,0 +1,12 @@
+# docker compose -f services/archive/deploy/docker-compose.yml run --rm archive sync
+services:
+  archive:
+    build:
+      context: ../../..
+      dockerfile: services/archive/deploy/Dockerfile
+    volumes:
+      - /srv/sk/archive:/archive
+      - ../../../packages/jem-index/jem.db:/repo/packages/jem-index/jem.db:ro
+      - ../../../packages/mafteiach-index/mafteiach.db:/repo/packages/mafteiach-index/mafteiach.db:ro
+    environment:
+      SK_ARCHIVE_ROOT: /archive
