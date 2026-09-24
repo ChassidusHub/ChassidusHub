@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FileText } from 'lucide-react-native';
 import type { CatalogEntry, CatalogRef, LibraryCollectionId, LibraryItemBase } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { DownloadPill } from '../../components/DownloadPill';
 import { PlaylistPlayButton } from '../../components/PlaylistPlayButton';
@@ -129,7 +130,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
 
       {occasion && (
         <View style={styles.block}>
-          <CategoryRow label={t.libraryOpenFarbrengen} count={occasion.occasionLabel} onPress={() => navigation.navigate('Farbrengen', { kind: 'browse', hebrewYear: occasion.hebrewYear, occasionId: occasion.occasionId })} />
+          <CategoryRow label={t.libraryOpenFarbrengen} count={occasionTitle(occasion, language)} onPress={() => navigation.navigate('Farbrengen', { kind: 'browse', hebrewYear: occasion.hebrewYear, occasionId: occasion.occasionId })} />
         </View>
       )}
 

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { OccasionRowIcon } from '../../components/OccasionRowIcon';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -37,7 +38,7 @@ export function OccasionGroupScreen({ navigation, route }: OccasionGroupScreenPr
           {yearEntries.map((entry) => (
             <Row
               key={entry.occasionId}
-              label={entry.occasionLabel}
+              label={occasionTitle(entry, language)}
               trailing={
                 <RowTrailing>
                   <OccasionRowIcon entry={entry} progressMap={progressMap} dateSlot={<RowDistance standalone={false}>{hebrewDayMonthLabel(entry.hebrewDate, language)}</RowDistance>} />
