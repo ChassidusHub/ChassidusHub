@@ -1,13 +1,15 @@
 name: Android Signed Release APK
 
-# Builds the signed release APKs for phones and attaches them to a
-# *draft* GitHub Release to publish when it looks right:
+# Builds the signed release APKs for phones and publishes the GitHub
+# Release with them attached - automatically, no draft to click through:
 #
-#   - Push a tag like v1.2.3 and CI does the rest. The tag must match
-#     the app's versionName in apps/mobile/android/app/build.gradle.
+#   - Push a tag like v1.2.3 and CI does the rest: build, attach, publish.
+#     The tag must match the app's versionName in
+#     apps/mobile/android/app/build.gradle.
 #   - Or from GitHub's website (a phone will do): Actions -> Android
 #     Signed Release APK -> Run workflow, type the version (v1.2.3) and
-#     run; publishing the draft creates the tag if it isn't there.
+#     run; the release is published automatically (creating the tag if it
+#     isn't there).
 #   - A manual run with the version left empty only builds them - as
 #     downloadable workflow artifacts to try first.
 #
@@ -52,11 +54,12 @@ jobs:
             echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           fi
 
-  # A release gets its draft made once, up front, and the build attaches
-  # its APKs to it - each making its own could race into duplicate drafts.
+  # The release is created once, up front as a draft, and the build
+  # attaches its APKs to it - each making its own could race into
+  # duplicates. It's published automatically once the APKs are attached.
   # Skipped when nothing is being released.
   draft:
-    name: Draft the release
+    name: Create the release
     needs: setup
     if: needs.setup.outputs.version != ''
     runs-on: ubuntu-latest
@@ -75,7 +78,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Draft the release (or find the draft a failed run left)
+      - name: Create the release (or reuse the one a failed run left)
         id: draft
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -87,14 +90,10 @@ jobs:
             exit 1
           fi
           existing=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
-            --jq ".[] | select(.tag_name == \"$TAG\") | \"\(.id) \(.draft)\"" | head -n 1)
+            --jq ".[] | select(.tag_name == \"$TAG\") | .id" | head -n 1)
           if [ -n "$existing" ]; then
-            read -r id draft <<< "$existing"
-            if [ "$draft" != "true" ]; then
-              echo "::error::$TAG is already released. Raise the version to release again."
-              exit 1
-            fi
-            echo "Adding to the existing draft of $TAG."
+            echo "Reusing the existing release for $TAG."
+            id="$existing"
           else
             npm run --silent release-notes -w @sichos-kodesh/mobile > "$RUNNER_TEMP/release-notes.md"
             cat "$RUNNER_TEMP/release-notes.md"
@@ -102,7 +101,7 @@ jobs:
               -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" \
               -f name="Sichos Kodesh $TAG" -F body=@"$RUNNER_TEMP/release-notes.md" \
               -F draft=true -F prerelease=false --jq .id)
-            echo "Drafted $TAG from $GITHUB_SHA."
+            echo "Created the release for $TAG from $GITHUB_SHA; it gets published once the APKs are attached."
           fi
           echo "release_id=$id" >> "$GITHUB_OUTPUT"
 
@@ -196,14 +195,22 @@ jobs:
           done
           ls -la "$RUNNER_TEMP/apks"
 
-      # Attached to the draft when releasing; otherwise they're just
-      # downloadable artifacts to try first.
-      - name: Attach the APKs to the draft release
+      # Attached to the release when releasing (it's published right
+      # after); otherwise they're just downloadable artifacts to try first.
+      - name: Attach the APKs to the release
         if: needs.draft.outputs.release_id != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ needs.setup.outputs.version }}" "$RUNNER_TEMP"/apks/*.apk --clobber
+
+      - name: Publish the release
+        if: needs.draft.outputs.release_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.draft.outputs.release_id }}" \
+            -F draft=false --jq '"Published at \(.published_at)"'
 
       - name: Keep the APKs
         if: needs.draft.outputs.release_id == ''
