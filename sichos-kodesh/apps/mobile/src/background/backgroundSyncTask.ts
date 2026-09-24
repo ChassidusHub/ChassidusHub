@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HDate } from '@hebcal/core';
 import { currentParsha } from '@sichos-kodesh/catalog';
-import { listDownloadTargets } from '@sichos-kodesh/app-core';
+import { downloadTargetTitle, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import { getLibrary } from '../catalog/catalogStore';
 import { checkForCatalogUpdateIfDue, loadStoredCatalog } from '../catalog/catalogUpdater';
@@ -97,6 +97,8 @@ export async function runBackgroundSync(data?: BackgroundSyncData): Promise<void
       ? { title: t.downloadsReadyTitle, body: t.downloadsReadyBody(missing.length, hebrewYearLabel(sourceYear, language)), deepLink: downloadedDeepLink() }
       : undefined;
   for (const target of missing) {
-    await enqueueNativeDownload(target, { wifiOnly: settings.wifiOnly, auto: true, label: target.label, progressTitle: t.downloadingTitle, notifyWhenDone });
+    const entry = entries.find((item) => item.hebrewYear === target.hebrewYear && item.occasionId === target.occasionId);
+    const label = downloadTargetTitle(target, entry, language);
+    await enqueueNativeDownload(target, { wifiOnly: settings.wifiOnly, auto: true, label, progressTitle: t.downloadingTitle, notifyWhenDone });
   }
 }

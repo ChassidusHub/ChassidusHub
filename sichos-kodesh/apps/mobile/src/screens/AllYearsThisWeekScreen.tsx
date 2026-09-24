@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { resolveThisWeekAllYears } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useTranslation } from '../i18n/useTranslation';
@@ -31,7 +32,7 @@ export function AllYearsThisWeekScreen({ navigation }: AllYearsThisWeekScreenPro
           {entries.map((entry) => (
             <Row
               key={entry.occasionId}
-              label={entry.occasionLabel}
+              label={occasionTitle(entry, language)}
               trailing={
                 <RowTrailing>
                   <OccasionRowIcon entry={entry} progressMap={progressMap} />

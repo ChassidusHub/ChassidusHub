@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react-native';
 import { currentHebrewYear, currentParsha, resolveThisWeek, resolveWeekWithFallback } from '@sichos-kodesh/catalog';
+import { occasionTitle } from '@sichos-kodesh/app-core';
 import { IL } from '../config';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
@@ -85,7 +86,7 @@ export function ThisWeekScreen({ navigation, route }: ThisWeekScreenProps) {
       {occasions.map((occasion) => (
         <Row
           key={occasion.entry.occasionId}
-          label={occasion.entry.occasionLabel}
+          label={occasionTitle(occasion.entry, language)}
           trailing={
             <RowTrailing>
               <OccasionRowIcon entry={occasion.entry} progressMap={progressMap} dateSlot={<RowDistance standalone={false}>{hebrewDayMonthLabel(occasion.hebrewDate, language)}</RowDistance>} />

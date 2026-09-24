@@ -149,7 +149,12 @@ Two things a phone can do that the web app cannot (`src/background/`,
   toggles under Settings > Notifications; turning one on asks for the
   Android 13+ permission, and the first launch asks once. Deep links use
   the `sichoskodesh://` scheme (manifest intent filter + `linking` in
-  `App.tsx`). Texts come from JS in the user's language.
+  `App.tsx`). Texts come from JS in the user's language, and so do the
+  names in them: a download notification names a recording by its chapter
+  in the UI language (`downloadTargetTitle` in packages/app-core), and the
+  player's notification and lock-screen tracks carry the occasion and
+  chapter names in it too (`trackMetadata` in `src/player/playlist.ts`),
+  renamed in place when the language changes.
 
 To exercise it on a device: Settings > Offline & downloads > "Download
 this week now", then pull down the notification shade. `adb shell cmd statusbar

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react';
 import { AppState } from 'react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
+import { ALL_CONTENT_TYPES, downloadTargetTitle, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import { getCatalog, getLibrary } from '../catalog/catalogStore';
 import { libraryFileNames } from '../library/libraryDownloads';
@@ -180,7 +180,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         {
           wifiOnly: wifiOnlyRef.current,
           auto: isAuto,
-          label: next.label,
+          label: downloadTargetTitle(next, getCatalog()[next.hebrewYear]?.find((entry) => entry.occasionId === next.occasionId), lang),
           progressTitle: strings.downloadingTitle,
           notifyWhenDone:
             isAuto && notify.downloadsReady

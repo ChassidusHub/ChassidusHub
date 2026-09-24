@@ -59,6 +59,7 @@ const TrackPlayer = {
   getState: jest.fn(() => Promise.resolve(State.None)),
   getProgress: jest.fn(() => Promise.resolve({ position: 0, duration: 0, buffered: 0 })),
   updateNowPlayingMetadata: jest.fn(() => Promise.resolve()),
+  updateMetadataForTrack: jest.fn(() => Promise.resolve()),
   updateOptions: jest.fn(() => Promise.resolve()),
   registerPlaybackService: jest.fn((factory) => factory),
   addEventListener: jest.fn(() => ({ remove: jest.fn() })),

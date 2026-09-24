@@ -45,7 +45,7 @@ describe('catalogAudioToTracks', () => {
       ],
     });
 
-    const tracks = await playlist.catalogAudioToTracks(entry);
+    const tracks = await playlist.catalogAudioToTracks(entry, 'en');
 
     expect(tracks).toHaveLength(2);
     expect(tracks[0]).toMatchObject({
@@ -71,8 +71,32 @@ describe('catalogAudioToTracks', () => {
       audio: [{ workerFilename: 'xyz.mp3', durationMs: 7200000, chapterName: undefined }],
     });
 
-    const tracks = await playlist.catalogAudioToTracks(entry);
+    const tracks = await playlist.catalogAudioToTracks(entry, 'en');
     expect(tracks[0]?.title).toBe('Yud Tes Kislev Farbrengen');
+  });
+
+  it('names the tracks in the UI language - the notification and lock screen follow it', async () => {
+    const entry = makeEntry({
+      occasionId: 3,
+      hebrewYear: 5712,
+      occasionLabel: `ו' תשרי`,
+      occasionLabelEn: '6 Tishrei',
+      audio: [
+        { workerFilename: 'a.mp3', durationMs: 1000, chapterName: 'Sicha 1', chapterNameHe: 'שיחה א׳' },
+        { workerFilename: 'b.mp3', durationMs: 1000 },
+      ],
+    });
+
+    const english = await playlist.catalogAudioToTracks(entry, 'en');
+    expect(english.map((track) => [track.title, track.album])).toEqual([
+      ['Sicha 1', '6 Tishrei'],
+      ['Track 2', '6 Tishrei'],
+    ]);
+    const hebrew = await playlist.catalogAudioToTracks(entry, 'he');
+    expect(hebrew.map((track) => [track.title, track.album])).toEqual([
+      ['שיחה א׳', `ו' תשרי`],
+      ['קטע 2', `ו' תשרי`],
+    ]);
   });
 
   it('uses file:// URL for downloaded chapters and network URL otherwise', async () => {
@@ -89,7 +113,7 @@ describe('catalogAudioToTracks', () => {
       workerFilename === 'cached.mp3' ? 'file:///documents/cached.mp3' : null,
     );
 
-    const tracks = await playlist.catalogAudioToTracks(entry);
+    const tracks = await playlist.catalogAudioToTracks(entry, 'en');
 
     expect(tracks[0]?.url).toBe('file:///documents/cached.mp3');
     expect(String(tracks[1]?.url)).toContain('/jem-audio/remote.mp3');
