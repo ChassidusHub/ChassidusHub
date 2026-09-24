@@ -1,5 +1,5 @@
 export { buildCatalog } from './buildCatalog.js';
-export { extractDriveFileId } from './driveLinks.js';
+export { extractDriveFileId, extractDriveResourceKey } from './driveLinks.js';
 export { mafteiachMonthTokenToHDateMonth, toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 export { browsableYears, entryHasContent, findCatalogEntryForOccasion, hasContent } from './catalogLookup.js';
 export { STARTER_FIXED_OCCASIONS } from './fixedOccasions.js';

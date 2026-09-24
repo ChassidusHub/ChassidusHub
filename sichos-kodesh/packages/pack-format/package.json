@@ -1,0 +1,37 @@
+{
+  "name": "@sichos-kodesh/pack-format",
+  "version": "0.1.0",
+  "description": "The .skpack contract: manifest and objects.json types, canonical JSON, Ed25519 signing, delta against have.json, identification of loose files, and selection sizing. Shared by the archive, the pack builder, the download site, the station and both apps.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "npm run build -w @sichos-kodesh/app-core",
+    "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build -w @sichos-kodesh/app-core",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "pretypecheck": "npm run build -w @sichos-kodesh/app-core",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@sichos-kodesh/app-core": "^0.1.0",
+    "@sichos-kodesh/catalog": "^0.1.0",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "~6.0.2",
+    "vitest": "^3.0.0"
+  }
+}

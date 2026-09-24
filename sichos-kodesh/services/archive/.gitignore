@@ -1,0 +1,2 @@
+# The archive itself never lives in git: point SK_ARCHIVE_ROOT elsewhere.
+archive/
