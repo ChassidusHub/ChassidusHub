@@ -9,6 +9,10 @@ because it could only see the deployed web bundle, and the concrete
 packages, services, files and milestones, in the order they unblock each
 other. Numbers below are recomputed from the data in this repository.
 
+`docs/chabad-library-plan.md` widens the library beyond the Rebbe to all of
+Chabad: every Rebbe, the Chassidim and the history, from chabadlibrary.org,
+Sefaria and HebrewBooks. Its work packages continue from WP8.
+
 Two reviews by Shmuly extended the scope after the first draft, and this
 document carries both:
 
