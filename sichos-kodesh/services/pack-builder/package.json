@@ -4,6 +4,14 @@
   "private": true,
   "description": "sk-pack: builds signed .skpack files (plain stored ZIPs of archive objects plus a manifest) from the archive, verifies them, and writes the index.json the download site and the station read.",
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
   "bin": {
     "sk-pack": "./dist/bin/sk-pack.js"
   },

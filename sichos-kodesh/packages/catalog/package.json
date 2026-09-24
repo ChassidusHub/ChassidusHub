@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./translate": {
+      "types": "./dist/translate/index.d.ts",
+      "default": "./dist/translate/index.js"
     }
   },
   "files": [

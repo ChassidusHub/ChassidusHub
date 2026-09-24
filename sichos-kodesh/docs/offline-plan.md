@@ -675,6 +675,37 @@ latest GitHub Release. Dumb-player mode: plain MP3 (`mp3-32`) into
 `SichosKodesh/<year>/<month>/<date - occasion>/NN sicha.mp3`. Later: a
 "sources" plugin so the same station serves other yeshiva content.
 
+**The core is built** (`apps/station`, `sk-station`; its README has the
+routine). The Windows shell is not: Tauri and MTP need a Windows machine to
+build and test. Today a phone is reached as a folder, which covers USB
+storage, a card reader, or a synced folder. Where the core differs from the
+text above:
+
+- **The mirror is built from the pack API, not from `index.json`.** Each
+  configured scope (a year or a month) is fetched as the API's parts and
+  checked with pack-builder's `verifyPack`. A pack is fetched again only
+  after a new publish. The mirror's own `packs/index.json` is what a phone
+  is planned against.
+- **The plan counts space.** Each round takes the pack that brings the most
+  new bytes and fits `device.json`'s free space, less a reserve. A pack
+  costs its size plus the objects its import writes. Packs already waiting
+  in `import/` count as held. The one-line summary is Hebrew ("טען תשרי
+  תשל״ו · 83 MB").
+- **There is no disconnect trigger.** The app imports when it next opens
+  (WP4), so the station only copies. Each pack is copied under a
+  `.partial` name and renamed once whole.
+- **Player mode reads `src` too**, since the JEM originals are MP3 already.
+  It writes numbered folders a player sorts right, with Hebrew chapter
+  names.
+- **The APK** comes from the latest release: `sk-station apk`, then
+  `apk-to` copies it into a phone's `Download/`.
+
+Verified: tests against pack-api's handler in process, and a run on the M1
+archive. `sk-pack serve`, then `sync`, then `load` into a phone folder; each
+copied pack passes `sk-pack verify`; `player` wrote the 17 recordings.
+M4 (a phone loaded at a real station) waits for the Windows shell and a
+real phone.
+
 ### WP7 - later
 
 JEM-only events (723 h) as browsable items; Ashreinu transcripts and
