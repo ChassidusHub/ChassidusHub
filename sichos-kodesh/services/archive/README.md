@@ -40,9 +40,25 @@ two indexers' databases and fetches the files they point at:
 - `packages/mafteiach-index/mafteiach.db`: every Drive link by occasion
   and section → PDF objects under `farbrengens`; the occasion ↔ recording
   table → `farbrengens` audio refs to the same objects.
+- The same database's section tables, once `npm run crawl-sections` has
+  filled them (`src/sectionsInventory.ts`; each reader only runs when its
+  table exists):
+
+  | Collection | From | Item id | Role |
+  | --- | --- | --- | --- |
+  | `likkuteiSichos` | `ls_links` | `{volume}:{page}` | `sicha`, `translated` |
+  | `maamorim` | `maamorim_links`, `maamor_jem_audio` | maamar id | `mugah`, `biltiMugah`, `hanachos`, `hagahos`; audio by chapter |
+  | `yomanim` | `yomanim` | the Drive file id | - |
+  | `hadranim` | `hadranim_links` | hadran id | `mugah`, `biltiMugah` |
+  | `michtavimKlolim` | `michtavim_links` | letter id | `{language}:{edition}` (`he:mugah`) |
+  | `reshimos` | the pre-Nesius occasions' mugah links | occasion id | `reshimos` |
+
+  Links that are not Drive files (kitzur pages, ashreinu players, Google
+  Docs) are counted, not fetched.
 
 A recording that is both a JEM event and a farbrengen chapter is one
-object with two refs.
+object with two refs; a reshima is likewise one object under both
+`farbrengens` and `reshimos`.
 
 ## Commands
 
@@ -54,7 +70,19 @@ sk-archive verify [--sample 0.02] [--full] re-hash objects; bad bytes are droppe
 sk-archive stats [--json]
 sk-archive report-unresolved [--json]      files upstream would not give us, by item
 sk-archive export-objects-index --catalog-version 1.0.0 [--out objects.json]
+sk-archive import-text --collection igros|maanos --dir <build-igros output> [--dry-run]
 ```
+
+`import-text` stores text that arrives as data rather than as a file to
+fetch: the Igros and Maanos that `packages/igros-index` builds locally.
+Each letter or maaneh becomes one `text` object, a small HTML document
+whose sha256 is its identity. It gets a `wanted` row (source
+`contribution`, url `text:<collection>/<item id>`) and a ref from its
+item, under a commit by `igros-import`. Importing the same build again
+adds nothing. An edited text gets a new object, and its item's ref moves
+to it. These two collections are gated: the archive keeps them, but no
+pack carries them until the rights are cleared
+(`packages/catalog/src/rights.ts`).
 
 Global options: `--root` (or `SK_ARCHIVE_ROOT`), `--jem-db`,
 `--mafteiach-db` (default: the databases in this repository). From the

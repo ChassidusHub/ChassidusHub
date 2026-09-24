@@ -6,6 +6,12 @@ from this package's npm version. `src/changelog.ts` is the machine-readable
 copy the apps and the release manifest carry; keep the two in step. Each
 release is tagged `catalog-v<version>` - see README.md's "Catalog releases".
 
+Since schema 2 (the phone app's library, served under `/v2/`), a release
+is published in both schemas under one version: the farbrengens are the
+same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
+hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
+and parshiyos.
+
 ## 1.0.0 - 2026-09-23
 
 - First catalog release: every farbrengen indexed by mafteiach.app from

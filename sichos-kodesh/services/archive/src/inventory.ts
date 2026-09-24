@@ -1,7 +1,9 @@
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { extractDriveFileId, extractDriveResourceKey } from '@sichos-kodesh/catalog';
+import { extractDriveFileId, extractDriveResourceKey, jemHebrewDate } from '@sichos-kodesh/catalog';
 import { nowIso } from './db.js';
+import { loadSectionsInventory } from './sectionsInventory.js';
+import type { CollectionsInventory } from './sectionsInventory.js';
 import type { ArchiveStore } from './store.js';
 
 /**
@@ -13,7 +15,9 @@ import type { ArchiveStore } from './store.js';
  *                 one `jemEvents` item per ccdb event, and a `farbrengens`
  *                 ref for the ones mafteiach links to an occasion
  *   mafteiach.db  every Drive link by occasion and section -> pdf objects
- *                 under `farbrengens`
+ *                 under `farbrengens`; and, when the section crawlers have
+ *                 run, Likkutei Sichos, maamorim, yomanim, hadranim,
+ *                 michtavim klolim and reshimos (sectionsInventory.ts)
  *
  * Re-running is an upsert: rows carry `seen_at`, so a later "no longer in
  * any index" report is possible without deleting history.
@@ -29,6 +33,8 @@ export interface InventoryResult {
   pdfs: number;
   farbrengenAudioRefs: number;
   skipped: { nonDriveLinks: number; badDriveUrls: number };
+  /** The collections beyond farbrengens and jemEvents, by collection. */
+  collections: CollectionsInventory;
 }
 
 const UPSERT = `
@@ -43,29 +49,38 @@ export function jemFilename(url: string): string {
 }
 
 export function loadInventory(store: ArchiveStore, options: InventoryOptions): InventoryResult {
-  const result: InventoryResult = { audio: 0, pdfs: 0, farbrengenAudioRefs: 0, skipped: { nonDriveLinks: 0, badDriveUrls: 0 } };
+  const result: InventoryResult = { audio: 0, pdfs: 0, farbrengenAudioRefs: 0, skipped: { nonDriveLinks: 0, badDriveUrls: 0 }, collections: {} };
   const seenAt = nowIso();
   const upsert = store.db.prepare(UPSERT);
 
   if (options.jemDb) {
     const jem = new DatabaseSync(options.jemDb, { readOnly: true });
     try {
+      // One jemEvents item per top-level ccdb event, its sub-events'
+      // recordings as chapters in order - the same items and roles as the
+      // catalog library's jemEvents (packages/catalog buildLibrary.ts).
       const rows = jem
         .prepare(
-          `SELECT r.event_id, r.ccdb_recording_id, r.name, r.duration_ms, r.url, e.hebrew_year, e.hebrew_month, e.hebrew_day
-           FROM audio_recordings r LEFT JOIN events e ON e.id = r.event_id ORDER BY r.event_id, r.ccdb_recording_id`,
+          `SELECT root.id AS root, r.name, r.duration_ms, r.url, root.hebrew_year, root.hebrew_month, root.hebrew_day
+           FROM audio_recordings r JOIN events e ON e.id = r.event_id JOIN events root ON root.id = coalesce(e.parent_id, e.id)
+           ORDER BY root.id, CASE WHEN e.parent_id IS NULL THEN 0 ELSE 1 END, e.id, r.ccdb_recording_id`,
         )
-        .all() as Array<{ event_id: number; ccdb_recording_id: number; name: string | null; duration_ms: number | null; url: string; hebrew_year: number | null; hebrew_month: number | null; hebrew_day: number | null }>;
+        .all() as Array<{ root: number; name: string | null; duration_ms: number | null; url: string; hebrew_year: number | null; hebrew_month: number | null; hebrew_day: number | null }>;
       let ord = 0;
-      let lastEvent: number | null = null;
+      let lastRoot: number | null = null;
+      let seenFiles = new Set<string>();
       store.db.exec('BEGIN');
       for (const row of rows) {
-        if (row.event_id !== lastEvent) {
+        if (row.root !== lastRoot) {
           ord = 0;
-          lastEvent = row.event_id;
+          lastRoot = row.root;
+          seenFiles = new Set();
         }
         const filename = jemFilename(row.url);
-        upsert.run('jemEvents', String(row.event_id), 'audio', filename, String(ord), 'jem', row.url, null, row.name, ord, row.duration_ms, row.hebrew_year, null, seenAt);
+        if (seenFiles.has(filename)) continue;
+        seenFiles.add(filename);
+        const hebrewDate = jemHebrewDate(row.hebrew_year, row.hebrew_month, row.hebrew_day) ?? null;
+        upsert.run('jemEvents', String(row.root), 'audio', filename, String(ord), 'jem', row.url, null, row.name, ord, row.duration_ms, row.hebrew_year, hebrewDate, seenAt);
         ord += 1;
         result.audio += 1;
       }
@@ -108,6 +123,7 @@ export function loadInventory(store: ArchiveStore, options: InventoryOptions): I
         upsert.run('farbrengens', String(row.occasion_id), 'audio', jemFilename(row.url), String(row.chapter_index), 'jem', row.url, null, row.chapter_name, row.chapter_index, row.duration_ms, row.hebrew_year, row.hebrew_date, seenAt);
         result.farbrengenAudioRefs += 1;
       }
+      result.collections = loadSectionsInventory(maf, upsert, seenAt, jemFilename);
       store.db.exec('COMMIT');
     } finally {
       maf.close();

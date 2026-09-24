@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG_CHANGELOG } from '../src/changelog.js';
-import { catalogReleasePath, catalogReleaseTag, compareCatalogVersions, isCatalogUpdateApplicable, parseCatalogManifest, parseCatalogRelease } from '../src/release.js';
+import {
+  catalogManifestPath,
+  catalogReleasePath,
+  catalogReleaseTag,
+  compareCatalogVersions,
+  isCatalogUpdateApplicable,
+  parseCatalogManifest,
+  parseCatalogRelease,
+  parseCatalogReleaseFile,
+  parseLibraryRelease,
+  serializeCatalogRelease,
+  serializeLibraryRelease,
+} from '../src/release.js';
 import { CATALOG_SCHEMA_VERSION, CATALOG_VERSION } from '../src/version.js';
 
 const manifest = {
@@ -75,5 +87,59 @@ describe('parseCatalogRelease', () => {
     expect(parseCatalogRelease({ schemaVersion: 1, version: '1.0.1', releasedAt: 'x', byYear: { '5711': [entry, { occasionId: 'no' }] } })).toBeNull();
     expect(parseCatalogRelease({ schemaVersion: 1, version: '1.0.1', releasedAt: 'x', byYear: { abc: [] } })).toBeNull();
     expect(parseCatalogRelease({ schemaVersion: 1, version: '1.0.1', releasedAt: 'x', byYear: [] })).toBeNull();
+  });
+});
+
+const collection = (items: unknown[] = []) => ({ items, groups: {} });
+const library = {
+  moadim: [{ slug: '10_shvat', name: 'יו"ד שבט', occasionIds: [1] }],
+  parshiyos: [],
+  collections: {
+    likkuteiSichos: collection([{ id: '1:4', label: 'ח"א ע\' 4', refs: [{ kind: 'pdf', sourceId: 'LS4', role: 'sicha' }], volume: 1, page: 4 }]),
+    maamorim: collection(),
+    yomanim: collection(),
+    hadranim: collection(),
+    michtavimKlolim: collection(),
+    reshimos: collection(),
+    jemEvents: collection(),
+  },
+};
+
+describe('schema 2 (the library)', () => {
+  const meta = { schemaVersion: 2, version: '1.0.1', releasedAt: '2026-10-01T00:00:00.000Z' };
+
+  it('has its own manifest and data paths', () => {
+    expect(catalogManifestPath()).toBe('/v1/catalog/manifest.json');
+    expect(catalogManifestPath(2)).toBe('/v2/catalog/manifest.json');
+    expect(catalogReleasePath('1.2.0', 2)).toBe('/v2/catalog/1.2.0/catalog.json');
+  });
+
+  it('parses a release with the farbrengens and the library, and dispatches on the schema', () => {
+    const file = { ...meta, byYear: { '5711': [entry] }, library };
+    const parsed = parseLibraryRelease(file);
+    expect(parsed?.library.moadim[0]?.occasionIds).toEqual([1]);
+    expect(parsed?.byYear[5711]).toEqual([entry]);
+    expect(parseCatalogReleaseFile(file)).toEqual(parsed);
+    expect(parseCatalogReleaseFile({ ...file, schemaVersion: 1 })).not.toHaveProperty('library');
+  });
+
+  it('rejects a schema-2 file without a valid library - a web-shaped file never passes as a library', () => {
+    expect(parseLibraryRelease({ ...meta, byYear: {} })).toBeNull();
+    expect(parseLibraryRelease({ ...meta, byYear: {}, library: { ...library, collections: { ...library.collections, jemEvents: undefined } } })).toBeNull();
+    const badRef = { ...library, collections: { ...library.collections, maamorim: collection([{ id: '1', label: 'x', refs: [{ kind: 'pdf' }] }]) } };
+    expect(parseLibraryRelease({ ...meta, byYear: {}, library: badRef })).toBeNull();
+    expect(parseLibraryRelease({ ...meta, schemaVersion: 1, byYear: {}, library })).toBeNull();
+  });
+
+  it('serializes both schemas byte for byte like JSON.stringify, sharing the farbrengens', () => {
+    const byYear = { 5711: [entry] };
+    const byYearJson = JSON.stringify(byYear);
+    const v1 = { ...meta, schemaVersion: 1 };
+    expect(serializeCatalogRelease(v1, byYearJson)).toBe(JSON.stringify({ ...v1, byYear }));
+    expect(serializeLibraryRelease(meta, byYearJson, JSON.stringify(library))).toBe(JSON.stringify({ ...meta, byYear, library }));
+  });
+
+  it('keeps the collection counts of a schema-2 manifest', () => {
+    expect(parseCatalogManifest({ ...manifest, schemaVersion: 2, collections: { maamorim: 1568, bad: 'x' } })?.collections).toEqual({ maamorim: 1568 });
   });
 });

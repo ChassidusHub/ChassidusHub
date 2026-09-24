@@ -84,7 +84,6 @@ DEVICE_COUNT="$(adb devices 2>/dev/null | awk 'NR>1 && $2=="device" { count++ } 
 if [[ "$DEVICE_COUNT" -lt 1 ]]; then
   echo "⚠ No Android emulator/device connected — skipping runtime smoke (exit 2)."
   echo "  Start an emulator or connect a device, then re-run without --build-only."
-  echo "  To trigger CI smoke: gh workflow run mobile-android-smoke.yml"
   exit 2
 fi
 

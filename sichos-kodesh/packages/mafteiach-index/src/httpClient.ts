@@ -31,6 +31,16 @@ interface RevalidationCacheEntry {
   body: string;
 }
 
+export interface RevalidateOptions {
+  /**
+   * `false` answers from the revalidation cache without a request when the
+   * URL was fetched before - the "re-parse everything from disk" mode of
+   * the section crawlers (a parser fix, a schema change) that costs the site
+   * nothing. A URL never seen is still fetched.
+   */
+  revalidate?: boolean;
+}
+
 export interface RevalidationResult {
   body: string;
   etag: string | null;
@@ -88,10 +98,11 @@ export class PoliteFetcher {
    * the full body, and it's how the sync tells "unchanged" from "new/edited"
    * instead of just guessing from a TTL).
    */
-  async fetchWithRevalidation(url: string): Promise<RevalidationResult> {
+  async fetchWithRevalidation(url: string, options: RevalidateOptions = {}): Promise<RevalidationResult> {
     const cachePath = revalidationCachePathFor(this.cacheDir, url);
     const cachedRaw = await readFile(cachePath, 'utf8').catch(() => null);
     const cached: RevalidationCacheEntry | null = cachedRaw ? JSON.parse(cachedRaw) : null;
+    if (cached && options.revalidate === false) return { body: cached.body, etag: cached.etag, changed: false };
 
     await mkdir(path.dirname(cachePath), { recursive: true });
     let lastError: unknown;

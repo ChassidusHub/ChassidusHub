@@ -1,4 +1,4 @@
-import { catalogJson, manifestJson } from '../generated/release';
+import { byYearJson, catalogHead, libraryHead, libraryJson, libraryManifestJson, manifestJson } from '../generated/release';
 
 /**
  * The whole API as one pure function of (method, path, origin) -> response,
@@ -6,6 +6,12 @@ import { catalogJson, manifestJson } from '../generated/release';
  * function signature in api/index.ts. What it serves is the contract in
  * packages/catalog/src/release.ts; the client is
  * packages/app-core/src/catalog/catalogUpdate.ts.
+ *
+ * Two schemas side by side: `/v1/` is the farbrengens (the web app),
+ * `/v2/` is the same farbrengens plus the library (the phone app). Both
+ * catalog.json files are put back together here from one copy of the
+ * farbrengens (see scripts/build.mjs), byte for byte what each manifest's
+ * sha256 describes.
  *
  * Every response carries `Access-Control-Allow-Origin: *` - the web app is
  * on another origin, and everything here is public, read-only data with
@@ -44,18 +50,43 @@ interface ParsedManifest {
   [key: string]: unknown;
 }
 
-const manifest = JSON.parse(manifestJson) as ParsedManifest;
-const catalogBytes = encoder.encode(catalogJson);
-export const SERVED_VERSION = manifest.version;
-
-export const MANIFEST_PATH = '/v1/catalog/manifest.json';
-export const CHANGELOG_PATH = '/v1/catalog/changelog.json';
-export const LATEST_PATH = '/v1/catalog/latest/catalog.json';
-const CATALOG_PATH_PATTERN = /^\/v1\/catalog\/(\d+\.\d+\.\d+)\/catalog\.json$/;
-
-export function catalogPath(version: string = SERVED_VERSION): string {
-  return `/v1/catalog/${version}/catalog.json`;
+interface Served {
+  schema: number;
+  manifest: ParsedManifest;
+  bytes: Uint8Array;
 }
+
+const SERVED: Served[] = [
+  { schema: 1, manifest: JSON.parse(manifestJson) as ParsedManifest, bytes: encoder.encode(`${catalogHead}${byYearJson}}`) },
+  ...(libraryManifestJson
+    ? [{ schema: 2, manifest: JSON.parse(libraryManifestJson) as ParsedManifest, bytes: encoder.encode(`${libraryHead}${byYearJson},"library":${libraryJson}}`) }]
+    : []),
+];
+
+export const SERVED_VERSION = SERVED[0]!.manifest.version;
+/** The schemas this deployment serves: [1] or [1, 2]. */
+export const SERVED_SCHEMAS = SERVED.map((s) => s.schema);
+
+export function manifestPath(schema = 1): string {
+  return `/v${schema}/catalog/manifest.json`;
+}
+
+export function changelogPath(schema = 1): string {
+  return `/v${schema}/catalog/changelog.json`;
+}
+
+export function latestPath(schema = 1): string {
+  return `/v${schema}/catalog/latest/catalog.json`;
+}
+
+export function catalogPath(version: string = SERVED_VERSION, schema = 1): string {
+  return `/v${schema}/catalog/${version}/catalog.json`;
+}
+
+export const MANIFEST_PATH = manifestPath(1);
+export const CHANGELOG_PATH = changelogPath(1);
+export const LATEST_PATH = latestPath(1);
+const CATALOG_PATH_PATTERN = /^\/v(\d+)\/catalog\/(\d+\.\d+\.\d+)\/catalog\.json$/;
 
 function json(status: number, value: unknown, cacheControl: string, extra: Record<string, string> = {}): RouteResponse {
   return {
@@ -79,47 +110,46 @@ export function handleRequest(method: string, path: string, origin: string): Rou
     return json(405, { error: 'method_not_allowed', method: upper }, 'no-store', { Allow: 'GET, HEAD, OPTIONS' });
   }
 
-  if (path === MANIFEST_PATH) {
-    const served = { ...manifest, url: `${origin}${catalogPath()}` };
-    return json(200, served, MANIFEST_CACHE);
+  for (const served of SERVED) {
+    const version = served.manifest.version;
+    if (path === manifestPath(served.schema)) {
+      return json(200, { ...served.manifest, url: `${origin}${catalogPath(version, served.schema)}` }, MANIFEST_CACHE);
+    }
+    if (path === latestPath(served.schema)) {
+      return { status: 302, headers: { ...CORS_HEADERS, Location: `${origin}${catalogPath(version, served.schema)}`, 'Cache-Control': MANIFEST_CACHE }, body: null };
+    }
+    if (path === changelogPath(served.schema)) {
+      return json(200, served.manifest.changelog, MANIFEST_CACHE);
+    }
   }
 
   const catalogMatch = CATALOG_PATH_PATTERN.exec(path);
   if (catalogMatch) {
-    if (catalogMatch[1] !== SERVED_VERSION) return notFound(path);
+    const served = SERVED.find((s) => s.schema === Number(catalogMatch[1]));
+    if (!served || catalogMatch[2] !== served.manifest.version) return notFound(path);
     return {
       status: 200,
       headers: {
         ...CORS_HEADERS,
         'Content-Type': JSON_TYPE,
-        'Content-Length': String(catalogBytes.byteLength),
+        'Content-Length': String(served.bytes.byteLength),
         'Cache-Control': CATALOG_CACHE,
-        ETag: `"${manifest.sha256}"`,
-        'X-Catalog-Version': SERVED_VERSION,
+        ETag: `"${served.manifest.sha256}"`,
+        'X-Catalog-Version': served.manifest.version,
       },
-      body: catalogBytes,
+      body: served.bytes,
     };
   }
 
-  if (path === LATEST_PATH) {
-    return {
-      status: 302,
-      headers: { ...CORS_HEADERS, Location: `${origin}${catalogPath()}`, 'Cache-Control': MANIFEST_CACHE },
-      body: null,
-    };
-  }
-
-  if (path === CHANGELOG_PATH) {
-    return json(200, manifest.changelog, MANIFEST_CACHE);
-  }
-
-  if (path === '/' || path === '/v1' || path === '/v1/catalog' || path === '/v1/catalog/') {
+  const indexMatch = /^\/v(\d+)(?:\/catalog)?\/?$/.exec(path);
+  if (path === '/' || (indexMatch && SERVED_SCHEMAS.includes(Number(indexMatch[1])))) {
     return json(
       200,
       {
         name: 'Sichos Kodesh catalog API',
         catalog: SERVED_VERSION,
-        endpoints: [MANIFEST_PATH, catalogPath(), CHANGELOG_PATH, LATEST_PATH],
+        schemas: SERVED_SCHEMAS,
+        endpoints: SERVED.flatMap((s) => [manifestPath(s.schema), catalogPath(s.manifest.version, s.schema), changelogPath(s.schema), latestPath(s.schema)]),
         source: 'https://github.com/shmuky/Sichos-Kodesh/tree/main/services/catalog-api',
       },
       MANIFEST_CACHE,

@@ -18,3 +18,14 @@ export const CATALOG_VERSION = '1.0.0';
  * its bundled data and waits for its own update instead.
  */
 export const CATALOG_SCHEMA_VERSION = 1;
+
+/**
+ * Schema 2: the same farbrengens (`byYear`, unchanged) plus the library -
+ * Likkutei Sichos, maamorim, yomanim, hadranim, michtavim klolim,
+ * reshimos, JEM events, and mafteiach's moadim and parshiyos (see
+ * library/types.ts). The phone app runs on it and fetches `/v2/`; the web
+ * app stays on schema 1 and `/v1/`, so neither ever receives data it
+ * cannot read. A separate constant rather than bumping the one above,
+ * which the web app still builds with.
+ */
+export const CATALOG_LIBRARY_SCHEMA_VERSION = 2;

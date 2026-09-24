@@ -4,10 +4,13 @@ import { writeFile } from 'node:fs/promises';
 import { Command } from 'commander';
 import { ArchiveStore } from '../src/store.js';
 import { loadInventory } from '../src/inventory.js';
+import type { InventoryResult } from '../src/inventory.js';
 import { crawl } from '../src/crawl.js';
 import { verify } from '../src/verify.js';
 import { stats, unresolved } from '../src/report.js';
 import { exportObjectsIndex } from '../src/objectsIndex.js';
+import { importText } from '../src/importText.js';
+import type { TextRecord } from '../src/importText.js';
 
 /**
  * sk-archive: the canonical archive's command line. Every command takes
@@ -43,6 +46,12 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 }
 
+function logCollections(collections: InventoryResult['collections']): void {
+  for (const [collection, counts] of Object.entries(collections)) {
+    log(`  ${collection}: ${counts.pdfs} Drive PDFs${counts.audio ? `, ${counts.audio} audio refs` : ''}${counts.nonDrive ? ` (${counts.nonDrive} links that are not Drive files)` : ''}`);
+  }
+}
+
 program
   .command('inventory')
   .description('read the indexers and record what the archive should hold (upsert; safe to repeat)')
@@ -52,6 +61,7 @@ program
     try {
       const result = loadInventory(store, { jemDb: g.jemDb, mafteiachDb: g.mafteiachDb });
       log(`inventory: ${result.audio} JEM recordings, ${result.pdfs} Drive PDFs, ${result.farbrengenAudioRefs} farbrengen audio refs (skipped ${result.skipped.nonDriveLinks} non-Drive links, ${result.skipped.badDriveUrls} unparsable Drive urls)`);
+      logCollections(result.collections);
     } finally {
       store.close();
     }
@@ -87,6 +97,7 @@ program
     try {
       const inv = loadInventory(store, { jemDb: g.jemDb, mafteiachDb: g.mafteiachDb });
       log(`inventory: ${inv.audio} JEM recordings, ${inv.pdfs} Drive PDFs`);
+      logCollections(inv.collections);
       const result = await crawl(store, { ...opts, log });
       log(`crawl: ${result.fetched} fetched (${formatBytes(result.bytes)}), ${result.unresolved} unresolved, ${result.errors} errors`);
     } finally {
@@ -167,6 +178,32 @@ program
       const index = exportObjectsIndex(store, opts.catalogVersion);
       await writeFile(opts.out, JSON.stringify(index));
       log(`wrote ${opts.out}: ${Object.keys(index.objects).length} objects`);
+    } finally {
+      store.close();
+    }
+  });
+
+program
+  .command('import-text')
+  .description("store the Igros or Maanos (build-igros's output) as text objects - gated: kept in the archive, never packed until the rights are cleared")
+  .requiredOption('--collection <id>', 'igros or maanos')
+  .requiredOption('--dir <dir>', "packages/igros-index's build output (igros/, maanos/)")
+  .option('--dry-run', 'count what would be stored; write nothing')
+  .action(async (opts: { collection: string; dir: string; dryRun?: boolean }) => {
+    if (opts.collection !== 'igros' && opts.collection !== 'maanos') throw new Error(`--collection must be igros or maanos, not ${opts.collection}`);
+    const { letterHtml, maanehHtml, readIgrosOutput, TEXT_OBJECT_MIME } = await import('@sichos-kodesh/igros-index');
+    const output = readIgrosOutput(opts.dir);
+    const records: TextRecord[] =
+      opts.collection === 'igros'
+        ? output.letters.map((letter, index) => ({ collection: 'igros', itemId: letter.id, text: letterHtml(letter), mime: TEXT_OBJECT_MIME, label: letter.numberLabel, hebrewYear: letter.hebrewYear, ord: index + 1 }))
+        : output.maanos.map((maaneh, index) => ({ collection: 'maanos', itemId: maaneh.id, text: maanehHtml(maaneh), mime: TEXT_OBJECT_MIME, label: maaneh.numberLabel, hebrewYear: maaneh.year, ord: index + 1 }));
+    const g = globals();
+    const store = await ArchiveStore.open(g.root);
+    try {
+      const result = await importText(store, records, { author: 'igros-import', message: `import-text ${opts.collection}: ${records.length} item(s) from ${opts.dir}`, dryRun: opts.dryRun, log });
+      log(
+        `import-text ${opts.collection}${opts.dryRun ? ' (dry run)' : ''}: ${result.records} item(s); ${result.added} new object(s), ${formatBytes(result.bytes)}; ${result.changed} changed, ${result.unchanged} unchanged`,
+      );
     } finally {
       store.close();
     }

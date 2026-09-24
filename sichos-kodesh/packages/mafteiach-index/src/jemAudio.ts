@@ -116,6 +116,17 @@ function collectAudioRecordings(event: CcdbEvent): JemAudioRecording[] {
   return results;
 }
 
+/** ccdb answered with an error status; `status` 404 means the event id no longer exists. */
+export class CcdbHttpError extends Error {
+  constructor(
+    readonly eventId: number,
+    readonly status: number,
+  ) {
+    super(`ccdb event/${eventId} failed: HTTP ${status}`);
+    this.name = 'CcdbHttpError';
+  }
+}
+
 /**
  * Fetches `event/{eventId}` and returns every audio recording found at
  * that event or nested under it, in the order ccdb's own `sub_events`
@@ -127,7 +138,7 @@ function collectAudioRecordings(event: CcdbEvent): JemAudioRecording[] {
 export async function resolveJemAudio(eventId: number, fetchImpl: typeof fetch = fetch): Promise<JemAudioRecording[]> {
   const response = await fetchImpl(`${CCDB_BASE}/event/${eventId}`);
   if (!response.ok) {
-    throw new Error(`ccdb event/${eventId} failed: HTTP ${response.status}`);
+    throw new CcdbHttpError(eventId, response.status);
   }
   const body = (await response.json()) as CcdbEventResponse;
   return collectAudioRecordings(body.data);

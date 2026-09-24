@@ -1,7 +1,16 @@
 import { createHash } from 'node:crypto';
-import { CATALOG_SCHEMA_VERSION, CATALOG_VERSION, isCatalogUpdateApplicable, parseCatalogManifest, parseCatalogRelease } from '@sichos-kodesh/catalog';
+import {
+  CATALOG_LIBRARY_SCHEMA_VERSION,
+  CATALOG_SCHEMA_VERSION,
+  CATALOG_VERSION,
+  LIBRARY_COLLECTION_IDS,
+  isCatalogUpdateApplicable,
+  parseCatalogManifest,
+  parseCatalogRelease,
+  parseLibraryRelease,
+} from '@sichos-kodesh/catalog';
 import { describe, expect, it } from 'vitest';
-import { CHANGELOG_PATH, LATEST_PATH, MANIFEST_PATH, SERVED_VERSION, catalogPath, handleRequest } from '../src/router';
+import { CHANGELOG_PATH, LATEST_PATH, MANIFEST_PATH, SERVED_SCHEMAS, SERVED_VERSION, catalogPath, handleRequest, manifestPath } from '../src/router';
 
 const ORIGIN = 'https://preview.example.test';
 const decoder = new TextDecoder();
@@ -104,9 +113,44 @@ describe('the rest of the surface', () => {
   });
 
   it('describes itself at the root and 404s everything unknown', () => {
-    expect(bodyJson(get('/'))).toMatchObject({ catalog: CATALOG_VERSION });
-    for (const path of ['/v2/catalog/manifest.json', '/v1/catalog/manifest', '/favicon.ico', '/api/index']) {
+    expect(bodyJson(get('/'))).toMatchObject({ catalog: CATALOG_VERSION, schemas: [1, 2] });
+    for (const path of ['/v3/catalog/manifest.json', '/v3', '/v1/catalog/manifest', '/favicon.ico', '/api/index']) {
       expect(get(path).status).toBe(404);
     }
+  });
+});
+
+describe('schema 2: the phone app\'s library, under /v2/', () => {
+  it('is served next to schema 1', () => {
+    expect(SERVED_SCHEMAS).toEqual([1, 2]);
+  });
+
+  it('has a manifest of its own schema, with the collection counts, pointing at /v2/', () => {
+    const manifest = parseCatalogManifest(bodyJson(get(manifestPath(2))))!;
+    expect(manifest.schemaVersion).toBe(CATALOG_LIBRARY_SCHEMA_VERSION);
+    expect(manifest.version).toBe(CATALOG_VERSION);
+    expect(manifest.url).toBe(`${ORIGIN}${catalogPath(CATALOG_VERSION, 2)}`);
+    expect(Object.keys(manifest.collections ?? {})).toEqual([...LIBRARY_COLLECTION_IDS]);
+    expect(isCatalogUpdateApplicable(manifest, '0.0.1', CATALOG_LIBRARY_SCHEMA_VERSION)).toBe(true);
+    // A schema-1 app (the web) never takes it.
+    expect(isCatalogUpdateApplicable(manifest, '0.0.1', CATALOG_SCHEMA_VERSION)).toBe(false);
+  });
+
+  it('serves exactly the bytes its manifest describes: the same farbrengens as /v1/, plus the library', () => {
+    const manifest = parseCatalogManifest(bodyJson(get(manifestPath(2))))!;
+    const response = get(new URL(manifest.url).pathname);
+    expect(response.status).toBe(200);
+    expect(response.headers['Content-Length']).toBe(String(manifest.bytes));
+    expect(createHash('sha256').update(response.body!).digest('hex')).toBe(manifest.sha256);
+    const release = parseLibraryRelease(bodyJson(response));
+    expect(release).not.toBeNull();
+    const v1 = parseCatalogRelease(bodyJson(get(catalogPath())))!;
+    expect(JSON.stringify(release!.byYear)).toBe(JSON.stringify(v1.byYear));
+    for (const id of LIBRARY_COLLECTION_IDS) expect(release!.library.collections[id].items.length).toBe(manifest.collections![id]);
+  });
+
+  it('404s a schema-2 path for another version, and redirects its /latest/', () => {
+    expect(get(catalogPath('0.0.1', 2)).status).toBe(404);
+    expect(get('/v2/catalog/latest/catalog.json').headers.Location).toBe(`${ORIGIN}${catalogPath(CATALOG_VERSION, 2)}`);
   });
 });

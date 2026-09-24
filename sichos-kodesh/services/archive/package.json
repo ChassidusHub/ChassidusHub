@@ -8,22 +8,24 @@
     "sk-archive": "./dist/bin/sk-archive.js"
   },
   "scripts": {
-    "prebuild": "npm run build -w @sichos-kodesh/pack-format",
+    "prebuild": "npm run build -w @sichos-kodesh/pack-format && npm run build -w @sichos-kodesh/igros-index",
     "build": "tsc -p tsconfig.json",
-    "pretest": "npm run build -w @sichos-kodesh/pack-format",
+    "pretest": "npm run build -w @sichos-kodesh/pack-format && npm run build -w @sichos-kodesh/mafteiach-index && npm run build -w @sichos-kodesh/igros-index",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pretypecheck": "npm run build -w @sichos-kodesh/pack-format",
+    "pretypecheck": "npm run build -w @sichos-kodesh/pack-format && npm run build -w @sichos-kodesh/mafteiach-index && npm run build -w @sichos-kodesh/igros-index",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "archive": "tsx bin/sk-archive.ts"
   },
   "license": "ISC",
   "dependencies": {
     "@sichos-kodesh/catalog": "^0.1.0",
+    "@sichos-kodesh/igros-index": "^0.1.0",
     "@sichos-kodesh/pack-format": "^0.1.0",
     "commander": "^13.1.0"
   },
   "devDependencies": {
+    "@sichos-kodesh/mafteiach-index": "^0.1.0",
     "@types/node": "^24.13.3",
     "tsx": "^4.19.2",
     "typescript": "~6.0.2",

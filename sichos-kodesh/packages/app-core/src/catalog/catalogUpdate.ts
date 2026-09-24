@@ -1,11 +1,12 @@
-import { CATALOG_MANIFEST_PATH, isCatalogUpdateApplicable, parseCatalogManifest, parseCatalogRelease } from '@sichos-kodesh/catalog';
-import type { CatalogManifest, CatalogRelease } from '@sichos-kodesh/catalog';
+import { catalogManifestPath, isCatalogUpdateApplicable, parseCatalogManifest, parseCatalogReleaseFile } from '@sichos-kodesh/catalog';
+import type { CatalogManifest, CatalogRelease, LibraryRelease } from '@sichos-kodesh/catalog';
 
 /** The origin the apps fetch catalog releases from - see packages/catalog/src/release.ts for what it serves. */
 export const CATALOG_API_BASE_URL = 'https://api.sk.shmuky.dev';
 
-export function catalogManifestUrl(baseUrl: string = CATALOG_API_BASE_URL): string {
-  return `${baseUrl.replace(/\/$/, '')}${CATALOG_MANIFEST_PATH}`;
+/** The manifest an app of `schemaVersion` reads: `/v1/` for the web (farbrengens), `/v2/` for the phone (with the library). */
+export function catalogManifestUrl(baseUrl: string = CATALOG_API_BASE_URL, schemaVersion = 1): string {
+  return `${baseUrl.replace(/\/$/, '')}${catalogManifestPath(schemaVersion)}`;
 }
 
 /** How often an app checks the manifest on its own (a manual "Update catalog" tap always checks). */
@@ -36,7 +37,8 @@ export type CatalogUpdateCheck = { status: 'up-to-date'; manifest: CatalogManife
  * ignores, not something that can break start-up.
  */
 export async function checkCatalogUpdate(options: { manifestUrl?: string; currentVersion: string; schemaVersion: number; fetchFn?: FetchLike }): Promise<CatalogUpdateCheck> {
-  const { manifestUrl = catalogManifestUrl(), currentVersion, schemaVersion, fetchFn = fetch as FetchLike } = options;
+  const { currentVersion, schemaVersion, fetchFn = fetch as FetchLike } = options;
+  const manifestUrl = options.manifestUrl ?? catalogManifestUrl(CATALOG_API_BASE_URL, schemaVersion);
   let manifest: CatalogManifest | null;
   try {
     const response = await fetchFn(manifestUrl, { cache: 'no-store' });
@@ -55,10 +57,10 @@ export async function checkCatalogUpdate(options: { manifestUrl?: string; curren
  * stale CDN copy or a mislabelled upload is rejected rather than applied.
  * Throws on any failure; callers turn that into their own error state.
  */
-export async function fetchCatalogRelease(manifest: CatalogManifest, fetchFn: FetchLike = fetch as FetchLike): Promise<CatalogRelease> {
+export async function fetchCatalogRelease(manifest: CatalogManifest, fetchFn: FetchLike = fetch as FetchLike): Promise<CatalogRelease | LibraryRelease> {
   const response = await fetchFn(manifest.url);
   if (!response.ok) throw new Error(`catalog: HTTP ${response.status}`);
-  const release = parseCatalogRelease(await response.json());
+  const release = parseCatalogReleaseFile(await response.json());
   if (!release) throw new Error('catalog: unrecognised shape');
   if (release.version !== manifest.version) throw new Error(`catalog: file is ${release.version}, manifest promised ${manifest.version}`);
   if (release.schemaVersion !== manifest.schemaVersion) throw new Error('catalog: schema mismatch');

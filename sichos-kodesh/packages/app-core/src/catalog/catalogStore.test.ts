@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CatalogRelease } from '@sichos-kodesh/catalog';
+import type { CatalogLibrary, CatalogRelease, LibraryRelease } from '@sichos-kodesh/catalog';
 import { createCatalogStore } from './catalogStore.js';
 
 const entry = { occasionId: 1, hebrewYear: 5711, hebrewDate: '5711-01-09', occasionLabel: 'x', audio: [], pdfs: [] };
@@ -39,5 +39,45 @@ describe('createCatalogStore', () => {
     store.subscribe(listener)();
     store.apply(release('1.0.1'), 'fetched');
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('has no library in an app built without one (the web)', () => {
+    expect(createCatalogStore(bundled, '1.0.0', 1).getLibrary()).toBeNull();
+  });
+});
+
+describe('createCatalogStore with a library (schema 2, the phone)', () => {
+  const collection = { items: [], groups: {} };
+  function library(moedName: string): CatalogLibrary {
+    return {
+      moadim: [{ slug: '10_shvat', name: moedName, occasionIds: [1] }],
+      parshiyos: [],
+      collections: { likkuteiSichos: collection, maamorim: collection, yomanim: collection, hadranim: collection, michtavimKlolim: collection, reshimos: collection, jemEvents: collection },
+    };
+  }
+
+  it('reads the bundled library only when first asked, and keeps returning the same object', () => {
+    const bundledLibrary = vi.fn(() => library('bundled'));
+    const store = createCatalogStore(bundled, '1.0.0', 2, bundledLibrary);
+    expect(bundledLibrary).not.toHaveBeenCalled();
+    const first = store.getLibrary();
+    expect(first?.moadim[0]?.name).toBe('bundled');
+    expect(store.getLibrary()).toBe(first);
+    expect(bundledLibrary).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies a newer schema-2 release, farbrengens and library together', () => {
+    const store = createCatalogStore(bundled, '1.0.0', 2, () => library('bundled'));
+    const next: LibraryRelease = { ...release('1.0.1', 2), library: library('fetched') };
+    expect(store.apply(next, 'fetched')).toBe(true);
+    expect(store.getCatalog()[5712]).toHaveLength(1);
+    expect(store.getLibrary()?.moadim[0]?.name).toBe('fetched');
+  });
+
+  it('refuses a release without a library, even of the right schema number, and any schema-1 release', () => {
+    const store = createCatalogStore(bundled, '1.0.0', 2, () => library('bundled'));
+    expect(store.apply(release('1.0.1', 2), 'fetched')).toBe(false);
+    expect(store.apply(release('1.0.1', 1), 'stored')).toBe(false);
+    expect(store.getLibrary()?.moadim[0]?.name).toBe('bundled');
   });
 });

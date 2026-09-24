@@ -21,7 +21,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "crawl": "tsx bin/crawl.ts",
     "load-db": "tsx bin/loadIntoDb.ts",
-    "sync": "tsx bin/sync.ts"
+    "sync": "tsx bin/sync.ts",
+    "resolve-jem-audio": "tsx bin/resolveJemAudio.ts",
+    "crawl-sections": "tsx bin/crawlSections.ts",
+    "resolve-maamar-audio": "tsx bin/resolveMaamarAudio.ts"
   },
   "license": "ISC",
   "dependencies": {

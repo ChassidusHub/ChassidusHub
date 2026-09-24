@@ -14,6 +14,10 @@ on:
       - 'services/catalog-api/**'
       - 'packages/catalog/**'
       - 'packages/kvius-engine/**'
+      # The release data itself: the year files both apps bundle, and the
+      # library only the phone bundles (packages/catalog/bin/release.ts).
+      - 'apps/web/src/catalog/data/**'
+      - 'apps/mobile/src/catalog/data/**'
       - '.github/workflows/catalog-api-bundle.yml'
   workflow_dispatch:
 

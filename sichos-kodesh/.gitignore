@@ -28,3 +28,7 @@ packages/catalog/data/
 # packages/catalog's release files (bin/release.ts) - built by the
 # catalog-release workflow on a tag, never committed.
 packages/catalog/dist-release/
+
+# packages/igros-index: the letters and maanos built from a commercial app's
+# data files - gated content, built locally only (see that package's README).
+packages/igros-index/data/

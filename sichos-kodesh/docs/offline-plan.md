@@ -9,6 +9,10 @@ because it could only see the deployed web bundle, and the concrete
 packages, services, files and milestones, in the order they unblock each
 other. Numbers below are recomputed from the data in this repository.
 
+`docs/chabad-library-plan.md` widens the library beyond the Rebbe to all of
+Chabad: every Rebbe, the Chassidim and the history, from chabadlibrary.org,
+Sefaria and HebrewBooks. Its work packages continue from WP8.
+
 Two reviews by Shmuly extended the scope after the first draft, and this
 document carries both:
 
@@ -193,10 +197,13 @@ month, the Chabad dates (Yud Shevat, Yud-Tes Kislev, Beis Iyar, Chof Av,
 ...), the four parshiyos, Shabbos Chazon / Nachamu / Selichos / Teshuva /
 Hagadol, rallies, yechidus days, Kinus Hashluchim, camps, N'shei Chabad,
 Machane Yisroel. That list, with mafteiach's Hebrew names and its
-per-moed occasion membership, becomes `packages/catalog/src/moadim.ts`
-and replaces the hand-made `SPECIAL_DAYS`, `CHAG_CATEGORIES` and the
-search dropdowns; `/all/parshiyos/<parsha>` gives the parsha assignment
-per occasion the same way (today it is computed from the date).
+per-moed occasion membership, ships in the library (`moadim`, with
+`occasionMoadim()` and friends in `packages/catalog/src/library/`) and
+replaces the hand-made `SPECIAL_DAYS`, `CHAG_CATEGORIES` and the search
+dropdowns on the phone (WP4b); `/all/parshiyos/<parsha>` gives the parsha
+assignment per occasion the same way (today it is computed from the
+date). The hand lists stay for the web app, under their old names, so
+nothing changes there.
 
 **Browse axes.** The farbrengens browser gains by parsha, by moed and by
 month next to by year/date. The maamorim view gets by year → month →
@@ -208,25 +215,28 @@ dibur-hamaschil search. Igros: by volume, by year/date, by subject tag,
 full text. Yomanim by year; michtavim by moed/year; hadranim by masechta;
 JEM events by date and type.
 
-**Catalog schema 2: collections.** `CatalogRelease` grows from `byYear`
-to `byCollection`; each collection has its own item shape and browse axes
-but every item exposes the same `refs` (audio objects, PDF objects, text
-objects) so downloads, packs, search and "downloaded" state stay generic:
-`farbrengens` (today's occasions, unchanged), `likkuteiSichos` (volume /
-sicha, parsha, moed, page range, availability flags, links), `maamorim`
-(dibur hamaschil, date, year, Melukat volume, printed citation;
-cross-linked to JEM "Farbrengen – Ma'amar" audio by date), `igros`
-(volume, page, date, addressee, summary, tags, text object), `maanos`
-(year, number, date, text object), `reshimos`, `yomanim` (by year),
-`michtavimKlolim` (by moed / year), `hadranim` (by masechta / year),
-`jemEvents` (every non-farbrengen recording, by date and type, with
-transcript text); plus the shared `moadim` and parsha tables every
-collection's items point into. Data ships as
-`data/<collection>/<shard>.json` so the bundle stays lazy. Schema 2 needs
-an app release (apps only apply their own schema; that rule exists for
-exactly this). The catalog API serves schema 1 to the web app
-(`/v1/catalog/...`) and schema 2 to the phone (`/v2/catalog/...`), so
-neither app breaks the other.
+**Catalog schema 2: the library.** A schema-2 release is the farbrengens
+exactly as today (`byYear`, byte for byte, so every existing screen,
+download record and progress key is untouched) plus `library` next to
+them. Each collection has its own item shape and browse axes (`groups`),
+but every item exposes the same `refs` (a Drive PDF, a JEM recording, a
+text object) so downloads, packs, search and "downloaded" state stay
+generic: `likkuteiSichos` (volume, page, parsha/moed section, availability
+flags, links), `maamorim` (dibur hamaschil, date, year, Melukat volumes,
+printed citations, the farbrengen it was said at, its own JEM audio),
+`reshimos`, `yomanim` (by year), `michtavimKlolim` (by moed / year),
+`hadranim` (by masechta / year), `jemEvents` (every JEM event with audio,
+by year and type, with the catalog occasion when mafteiach lists it),
+later `igros` and `maanos` (gated); plus mafteiach's `moadim` and
+`parshiyos` with the farbrengen occasions each lists. The phone bundles
+it as one JSON file per collection, read on first use (`require` inside a
+function, which Metro allows), so start-up does not pay for it. Schema 2
+needs an app release (apps only apply their own schema; that rule exists
+for exactly this): `CATALOG_SCHEMA_VERSION` stays 1 for the web, and a
+separate `CATALOG_LIBRARY_SCHEMA_VERSION = 2` is the phone's. The catalog
+API serves schema 1 to the web app (`/v1/catalog/...`) and schema 2 to the
+phone (`/v2/catalog/...`), keeping one copy of the farbrengens for both,
+so neither app breaks the other.
 
 **Text rights.** Likkutei Sichos: bibliographic facts, availability flags
 and links only, until it is settled which text on mafteiach is its own
@@ -363,29 +373,43 @@ run (`crawl --limit 20` first).
 
 ### WP2b - indexers for every section + catalog schema 2 (parallel with WP3)
 
-- `packages/mafteiach-index`: crawlers for `likkutei_sichos` (by volume;
-  the parsha/moed views are the same ids regrouped), `maamorim` (fragment
-  ids, printed citation per maamar), `yomanim`, `hadranim`,
-  `michtavim_klolim_new`; reshimos derived from pre-Nesius entries;
-  `moadim` (`/all/moadim/<slug>`, all ~100 slugs with Hebrew names and
-  occasion membership) and `parshiyos`. Same politeness and caching as
-  the farbrengens crawler; bibliographic facts, availability flags and
-  links only.
-- New `packages/igros-index`: reads the Igros app's `data.sqlite`,
-  `tags.sqlite` and `miniletters.zip` (kept out of git; a documented
-  local input like `mafteiach.db`) into per-volume / per-year JSON with
-  cleaned HTML, tags and summaries. Gated on the publisher's permission.
-- `packages/jem-index`: transcripts, links, playlists per event.
-- `packages/catalog`: `moadim.ts` generated from the crawl replaces the
-  hand lists (same exported helpers so the search screens keep working);
-  each occasion carries its parsha and moed ids from mafteiach; schema 2
-  (`byCollection`, per-collection item types, shared `refs`),
-  `bin/build.ts` writes `data/<collection>/…`, `bin/release.ts` emits
-  `objects.json` next to `catalog.json`; `CATALOG_SCHEMA_VERSION = 2`.
-- The archive's inventory grows one reader per collection as each index
-  lands, so the crawler fetches the new objects with the next `sync`.
+Three PRs: **A** the sections indexer and the archive's readers, **B**
+catalog schema 2 with the API's `/v2/` and the phone's store (no
+screens), **C** the igros index (gated).
+
+- (A) `packages/mafteiach-index/src/sections/`: crawlers for
+  `likkutei_sichos` (by volume; the parsha/moed views as membership),
+  `maamorim` (by year, the six Melukat volumes, fragments with the printed
+  citation per maamar), `yomanim`, `hadranim`, `michtavim_klolim_new`;
+  `moadim` (`/all/moadim/<slug>`, all 101 slugs with Hebrew names and
+  occasion membership) and `parshiyos`. Crawl and sync are one command
+  (conditional GETs through the existing ETag cache). Bibliographic facts,
+  availability flags and links only. Reshimos are derived from the
+  pre-Nesius entries' links.
+- (A) The archive's inventory has one reader per collection, so the
+  crawler fetches the new objects with the next `sync`.
+- (B) `packages/catalog/src/library/`: `buildLibrary()`, the item types,
+  lookups (`occasionMoadim`, `occasionParshiyos`, `libraryItem`) and
+  validation; `bin/build.ts` writes `data/library/`, `bin/release.ts`
+  emits the schema-2 pair next to schema 1; app-core's store and updater
+  take an optional library and a schema; `services/catalog-api` serves
+  `/v2/`; the phone switches to schema 2. The web app is untouched.
+- (B, later) `objects.json` next to `catalog.json` once the archive has
+  hashes to put in it (WP3).
+- (C) New `packages/igros-index`: reads the Igros app's `data.sqlite`,
+  `tags.json` and `miniletters.zip` (kept out of git; a documented local
+  input like `mafteiach.db`) into per-volume / per-year JSON with cleaned
+  HTML: 11,059 letters in 28 volumes (numbered from the printed numeral,
+  which also fixes 7 slips in the source's own numbering) and 3,761
+  maanos in 11 years. Gated on the publisher's permission:
+  `packages/catalog/src/rights.ts` holds the gate. `build-catalog
+  --igros` builds the two collections into a folder of their own. A
+  release refuses them, and so will the pack builder. `sk-archive
+  import-text` stores each letter and maaneh as a text object.
+- (later) `packages/jem-index`: transcripts, links, playlists per event.
 - Acceptance: every section crawled with counts in the README; the
-  farbrengens collection is byte-identical to today's data.
+  farbrengens data is byte-identical to today's (checked by rebuilding
+  and diffing against both apps' bundled copies).
 
 ### WP3 - `services/pack-builder` (`sk-pack`)
 

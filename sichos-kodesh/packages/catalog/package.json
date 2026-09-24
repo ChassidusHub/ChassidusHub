@@ -17,10 +17,10 @@
   "scripts": {
     "prebuild": "npm run build -w @sichos-kodesh/kvius-engine",
     "build": "tsc -p tsconfig.json",
-    "pretest": "npm run build -w @sichos-kodesh/kvius-engine",
+    "pretest": "npm run build -w @sichos-kodesh/kvius-engine && npm run build -w @sichos-kodesh/mafteiach-index",
     "test": "vitest run",
     "test:watch": "vitest",
-    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine",
+    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine && npm run build -w @sichos-kodesh/mafteiach-index && npm run build -w @sichos-kodesh/igros-index",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "build-catalog": "tsx bin/build.ts",
     "release-files": "tsx bin/release.ts"
@@ -31,6 +31,7 @@
     "@sichos-kodesh/kvius-engine": "^0.1.0"
   },
   "devDependencies": {
+    "@sichos-kodesh/igros-index": "^0.1.0",
     "@sichos-kodesh/mafteiach-index": "^0.1.0",
     "@types/node": "^22.20.2",
     "tsx": "^4.19.2",
