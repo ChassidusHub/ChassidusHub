@@ -143,6 +143,49 @@ describe('searchOccasions', () => {
     expect(noMatch).toEqual([]);
   });
 
+  describe('English names (occasionLabelEn)', () => {
+    const motzei = makeEntry({
+      occasionId: 8,
+      hebrewYear: 5711,
+      hebrewDate: '5711-01-13',
+      occasionLabel: 'מוצאי י"ג תשרי',
+      occasionLabelEn: 'Motzei 13 Tishrei',
+      pdfs: [{ section: 'mugah', label: 'מוגה', driveFileId: 'm' }],
+    });
+    const mevarchim = makeEntry({
+      occasionId: 9,
+      hebrewYear: 5711,
+      hebrewDate: '5711-04-27',
+      occasionLabel: 'וארא, מבה"ח שבט',
+      occasionLabelEn: "Va'eira, Shabbos Mevarchim Shevat",
+      pdfs: [{ section: 'mugah', label: 'מוגה', driveFileId: 'n' }],
+    });
+    const hebrewOnly = makeEntry({
+      occasionId: 10,
+      hebrewYear: 5711,
+      hebrewDate: '5711-02-02',
+      occasionLabel: 'שיחה לקבוצת סטודנטים',
+      pdfs: [{ section: 'mugah', label: 'מוגה', driveFileId: 'o' }],
+    });
+    const englishCatalog: CatalogByYear = { 5711: [motzei, hebrewOnly, mevarchim] };
+    const search = (query: string) => searchOccasions(englishCatalog, { ...EMPTY_FILTERS, query })[0]?.entries ?? [];
+
+    it('finds an occasion by its English name, typos and case included', () => {
+      expect(search('motzei')).toEqual([motzei]);
+      expect(search('Motzai')).toEqual([motzei]);
+      expect(search('shabbos mevarchim')).toEqual([mevarchim]);
+    });
+
+    it('still finds it by its Hebrew label', () => {
+      expect(search('וארא מבה"ח')).toEqual([mevarchim]);
+      expect(search('סטודנטים')).toEqual([hebrewOnly]);
+    });
+
+    it('matches every word of a query within one name, not across the two', () => {
+      expect(search('motzei סטודנטים')).toEqual([]);
+    });
+  });
+
   describe('special day filter', () => {
     // Erev Yud Shevat 5711 - the day *before* yudShevat above, labeled as its eve. Kept in its own small
     // catalog (not the shared one above) since adding it there would perturb the free-text and month-filter

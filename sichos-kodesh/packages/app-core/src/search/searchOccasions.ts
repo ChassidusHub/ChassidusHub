@@ -69,6 +69,8 @@ export function normalize(text: string): string {
 interface IndexedEntry {
   entry: CatalogEntry;
   label: string;
+  /** The English name (`occasionLabelEn`), so an English query finds it too - empty when the label has none. */
+  labelEn: string;
 }
 
 /**
@@ -90,11 +92,15 @@ function getFuseIndex(catalog: CatalogByYear): Fuse<IndexedEntry> {
   const items: IndexedEntry[] = [];
   for (const year of Object.keys(catalog).map(Number)) {
     for (const entry of catalog[year] ?? []) {
-      items.push({ entry, label: normalize(entry.occasionLabel) });
+      items.push({ entry, label: normalize(entry.occasionLabel), labelEn: normalize(entry.occasionLabelEn ?? '') });
     }
   }
   cachedFuse = new Fuse(items, {
-    keys: ['label'],
+    // Both names, in either UI language: every word of a query must match
+    // within one of them (Fuse runs the whole extended-search query against
+    // each key on its own), so a Hebrew query reads the Hebrew label and an
+    // English one the English name.
+    keys: ['label', 'labelEn'],
     // 0.3 balances typo tolerance against false positives: much looser and
     // short, similarly-worded Hebrew labels start cross-matching (e.g.
     // "יחידות", an unrelated occasion type, fuzzy-matches "יו"ד שבט"),
