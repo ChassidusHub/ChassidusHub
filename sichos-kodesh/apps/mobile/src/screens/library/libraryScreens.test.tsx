@@ -96,11 +96,12 @@ describe('library screens', () => {
     expect(moed).toContain('Rosh Hashanah');
   });
 
-  it('searches the farbrengens by mafteiach moed and parsha, and a collection by name', async () => {
+  it('searches everything at once, or one part, with its filters folded away until asked for', async () => {
     const screen = await render(<SearchScreen {...props(undefined)} />);
-    expect(screen).toContain('Search in');
+    expect(screen).toContain('Everything');
     expect(screen).toContain('Farbrengens');
-    expect(screen).toContain('Moed');
+    expect(screen).toContain('Maamorim');
+    expect(screen).toContain('Filters');
     expect(screen).not.toContain('Special Day');
   });
 });

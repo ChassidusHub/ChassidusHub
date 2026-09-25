@@ -152,6 +152,15 @@ describe('searching names', () => {
     expect(searchNames(works, contentsOf, 'תניא הסכמות').map((h) => h.unit?.id)).toEqual(['part1/app/1']);
     expect(searchNames(works, contentsOf, 'x')).toEqual([]);
   });
+
+  it("finds a sefer by its name alone without listing its chapters, and a chapter when the query names one", () => {
+    const contentsOf = (id: string) => (id === 'tanya' ? contents : null);
+    expect(searchNames(works, contentsOf, 'תניא').map((h) => [h.work.id, h.unit?.id])).toEqual([['tanya', undefined]]);
+    expect(searchNames(works, contentsOf, 'Tanya').map((h) => [h.work.id, h.unit?.id])).toEqual([['tanya', undefined]]);
+    expect(searchNames(works, contentsOf, 'תניא פרק א').map((h) => h.unit?.id)).toEqual(['part1/1', 'part1/app/1']);
+    // A one-letter chapter number is a whole word: א is not in אמרים.
+    expect(searchNames(works, contentsOf, 'אמרים ב').map((h) => h.unit?.id)).toEqual([]);
+  });
 });
 
 describe('markers', () => {

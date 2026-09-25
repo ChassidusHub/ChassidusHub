@@ -1,5 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { LibraryCollectionId, PdfSection } from '@sichos-kodesh/catalog';
+import type { SearchScope } from '@sichos-kodesh/app-core';
 
 /** Which list an occasion was reached from - decides the fallback "back" destination (see routes/catalogRoutes.ts), mirroring the web's distinct /follow, /browse, /this-week-all-years and /occasion-all-years URL families. */
 export type OccasionRouteParams =
@@ -84,7 +85,6 @@ export type RootStackParamList = {
   Reader: { workId: string; unitId: string; source?: number };
 
   /** Search the seforim: names everywhere, text in the seforim whose pack is on the phone. */
-  SeforimSearch: undefined;
 
   /** An author's books on HebrewBooks that no sefer here holds (`authorId` null: the other Chabad books); `series` opens one series. */
   HebrewBooksShelf: { authorId: string | null; series?: number };
@@ -95,7 +95,8 @@ export type RootStackParamList = {
   /** The farbrengens of one moed or parsha, every year. */
   OccasionGroup: { axis: 'moadim' | 'parshiyos'; slug: string };
 
-  Search: undefined;
+  /** `scope`: where the search starts looking (the seforim's own search link opens it on the seforim). */
+  Search: { scope?: SearchScope } | undefined;
 
   /** Downloaded content manager (web: `/downloaded`) */
   Downloaded: undefined;
@@ -148,7 +149,6 @@ export type OccasionGroupsScreenProps = NativeStackScreenProps<RootStackParamLis
 export type SeforimScreenProps = NativeStackScreenProps<RootStackParamList, 'Seforim'>;
 export type WorkScreenProps = NativeStackScreenProps<RootStackParamList, 'Work'>;
 export type ReaderScreenProps = NativeStackScreenProps<RootStackParamList, 'Reader'>;
-export type SeforimSearchScreenProps = NativeStackScreenProps<RootStackParamList, 'SeforimSearch'>;
 export type HebrewBooksShelfScreenProps = NativeStackScreenProps<RootStackParamList, 'HebrewBooksShelf'>;
 export type OccasionGroupScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionGroup'>;
 export type AboutScreenProps = NativeStackScreenProps<RootStackParamList, 'About'>;

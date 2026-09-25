@@ -69,7 +69,7 @@ export function SeforimScreen() {
     <div className="screen">
       <ScreenHeader to="/library" title={t.seforimTitle} />
       <p className="tab-help">{t.seforimHelp}</p>
-      <Link className="category-row" to="/seforim/search">
+      <Link className="category-row" to="/search?in=seforim">
         <span className="category-row-name">{t.seforimSearchRow}</span>
         <span className="category-row-trailing">
           <Search size={18} aria-hidden />

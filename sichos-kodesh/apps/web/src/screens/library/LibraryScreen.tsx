@@ -27,7 +27,7 @@ export function LibraryScreen() {
           <span className="category-row-name">{t.seforimRow}</span>
           {works && <span className="category-row-count">{works.works.length}</span>}
         </Link>
-        <Link className="category-row" to="/seforim/search">
+        <Link className="category-row" to="/search?in=seforim">
           <span className="category-row-name">{t.seforimSearchRow}</span>
         </Link>
       </div>

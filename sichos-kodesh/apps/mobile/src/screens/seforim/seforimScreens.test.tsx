@@ -38,7 +38,7 @@ const screens = {
   ...(require('./SeforimScreen') as typeof import('./SeforimScreen')),
   ...(require('./WorkScreen') as typeof import('./WorkScreen')),
   ...(require('./ReaderScreen') as typeof import('./ReaderScreen')),
-  ...(require('./SeforimSearchScreen') as typeof import('./SeforimSearchScreen')),
+  ...(require('../SearchScreen') as typeof import('../SearchScreen')),
   ...(require('./HebrewBooksShelfScreen') as typeof import('./HebrewBooksShelfScreen')),
 };
 
@@ -220,7 +220,10 @@ describe('seforim screens', () => {
     });
   });
 
-  it('opens the search', async () => {
-    expect(await render(<screens.SeforimSearchScreen {...props(undefined)} />)).toContain('Search');
+  it("opens the one search on the seforim, from the seforim's own link", async () => {
+    const page = await render(<screens.SearchScreen {...props({ scope: 'seforim' })} />);
+    expect(page).toContain('Search');
+    expect(page).toContain('Everything');
+    expect(page).toContain('Seforim');
   });
 });

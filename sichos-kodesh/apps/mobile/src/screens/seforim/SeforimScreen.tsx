@@ -70,7 +70,7 @@ export function SeforimScreen({ navigation }: SeforimScreenProps) {
   return (
     <Screen header={<ScreenHeader back={{ name: 'Library', params: undefined }} title={t.seforimTitle} />}>
       <TabHelp>{t.seforimHelp}</TabHelp>
-      <CategoryRow label={t.seforimSearchRow} trailing={<Search size={18} color={colors.muted} />} onPress={() => navigation.navigate('SeforimSearch')} />
+      <CategoryRow label={t.seforimSearchRow} trailing={<Search size={18} color={colors.muted} />} onPress={() => navigation.navigate('Search', { scope: 'seforim' })} />
 
       {recent.length > 0 && (
         <>

@@ -1,8 +1,7 @@
-import { Route, Routes, useParams, useSearchParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { HebrewBooksShelfScreen } from '../screens/seforim/HebrewBooksShelfScreen';
 import { ReaderScreen } from '../screens/seforim/ReaderScreen';
 import { SeforimScreen } from '../screens/seforim/SeforimScreen';
-import { SeforimSearchScreen } from '../screens/seforim/SeforimSearchScreen';
 import { WorkScreen } from '../screens/seforim/WorkScreen';
 
 function WorkRoute() {
@@ -28,7 +27,7 @@ export function SeforimRoutes() {
   return (
     <Routes>
       <Route index element={<SeforimScreen />} />
-      <Route path="search" element={<SeforimSearchScreen />} />
+      <Route path="search" element={<Navigate replace to="/search?in=seforim" />} />
       <Route path="hebrewbooks/:authorId" element={<ShelfRoute />} />
       <Route path=":workId" element={<WorkRoute />} />
       <Route path=":workId/read" element={<ReaderRoute />} />

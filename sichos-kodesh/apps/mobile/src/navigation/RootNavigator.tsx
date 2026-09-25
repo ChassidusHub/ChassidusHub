@@ -24,7 +24,6 @@ import { OccasionGroupScreen } from '../screens/library/OccasionGroupScreen';
 import { SeforimScreen } from '../screens/seforim/SeforimScreen';
 import { WorkScreen } from '../screens/seforim/WorkScreen';
 import { ReaderScreen } from '../screens/seforim/ReaderScreen';
-import { SeforimSearchScreen } from '../screens/seforim/SeforimSearchScreen';
 import { HebrewBooksShelfScreen } from '../screens/seforim/HebrewBooksShelfScreen';
 import { MonthOccasionsScreen } from '../screens/MonthOccasionsScreen';
 import { FollowMonthListScreen } from '../screens/FollowMonthListScreen';
@@ -67,7 +66,6 @@ export function RootNavigator() {
       <Stack.Screen name="Seforim" component={SeforimScreen} />
       <Stack.Screen name="Work" component={WorkScreen} />
       <Stack.Screen name="Reader" component={ReaderScreen} />
-      <Stack.Screen name="SeforimSearch" component={SeforimSearchScreen} />
       <Stack.Screen name="HebrewBooksShelf" component={HebrewBooksShelfScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />

@@ -25,7 +25,7 @@ export function LibraryScreen({ navigation }: LibraryScreenProps) {
 
       <CategoryHeader first>{t.librarySeforimSection}</CategoryHeader>
       <CategoryRow label={t.seforimRow} count={works.works.length} onPress={() => navigation.navigate('Seforim')} />
-      <CategoryRow label={t.seforimSearchRow} onPress={() => navigation.navigate('SeforimSearch')} />
+      <CategoryRow label={t.seforimSearchRow} onPress={() => navigation.navigate('Search', { scope: 'seforim' })} />
 
       <CategoryHeader>{t.libraryFarbrengensSection}</CategoryHeader>
       <CategoryRow label={t.libraryByMoed} count={library.moadim.length} onPress={() => navigation.navigate('OccasionGroups', { axis: 'moadim' })} />
