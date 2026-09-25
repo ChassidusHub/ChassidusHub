@@ -12,7 +12,8 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import type { LinkingOptions } from '@react-navigation/native';
 import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBackgroundSyncScheduling } from './src/background/useBackgroundSyncScheduling';
-import { useNotificationPermissionOnLaunch } from './src/background/useNotificationPermission';
+import { NotificationInvite } from './src/background/NotificationInvite';
+import { useNotificationInvite } from './src/background/useNotificationPermission';
 import { useAutoCatalogUpdate } from './src/catalog/catalogUpdater';
 import { DownloadProvider } from './src/download/DownloadProvider';
 import { useAutoDownloadSync } from './src/download/useAutoDownloadSync';
@@ -64,7 +65,6 @@ function AppShell() {
   useOfflineAutoImport();
   useConnectivityRecheckTriggers();
   useBackgroundSyncScheduling();
-  useNotificationPermissionOnLaunch();
 
   useEffect(() => {
     hydrateProgressStore().catch(() => undefined);
@@ -74,6 +74,8 @@ function AppShell() {
   useEffect(() => {
     loadAppMode().catch(() => undefined);
   }, []);
+  // Notifications are offered only once setup is done, in the app's own words before the phone's question.
+  const invite = useNotificationInvite(mode === 'online' || mode === 'offline');
 
   // The status bar follows the theme via <StatusBar barStyle> below; the
   // Android navigation bar needs the same treatment by hand.
@@ -119,6 +121,7 @@ function AppShell() {
         <DownloadProgressBar />
         <GlobalPlayerBar />
       </View>
+      <NotificationInvite visible={invite.visible} online={mode === 'online'} onAllow={invite.allow} onLater={invite.later} />
     </View>
   );
 }
