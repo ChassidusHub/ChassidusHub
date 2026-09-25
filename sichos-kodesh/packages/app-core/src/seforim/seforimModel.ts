@@ -58,6 +58,40 @@ export function authorSections(works: CatalogWorksIndex): AuthorSection[] {
   return sections.filter((s) => s.works.length > 0);
 }
 
+/**
+ * The works with a tile of their own on the home screen, beside the library
+ * collections, and so not in the seforim browser: Igros Kodesh, and the
+ * Maanos once they may ship (the works index holds them only then).
+ */
+export const HOME_WORK_IDS: readonly string[] = ['igros-kodesh-rebbe', 'maanos'];
+
+/** The seforim browser's two shelves: what opens in the app (text, and the library's PDFs), and what opens on other sites. */
+export type SeforimShelf = 'text' | 'links';
+
+/** Whether a work is on a shelf of the seforim browser. Works with nothing to open, the home screen's own and the recordings are on neither. */
+export function onShelf(work: CatalogWork, shelf: SeforimShelf): boolean {
+  const kind = workKind(work);
+  if (shelf === 'links') return kind === 'links';
+  if (HOME_WORK_IDS.includes(work.id) || work.collection === 'jemEvents') return false;
+  return kind === 'read' || kind === 'collection';
+}
+
+/**
+ * One shelf of the seforim browser, by Rebbe in the registry's order, then
+ * the works of many hands. On the links shelf an author with books on
+ * HebrewBooks (`hasScans`) keeps his place even with no work of his own there.
+ */
+export function shelfSections(works: CatalogWorksIndex, shelf: SeforimShelf, hasScans: (authorId: string | null) => boolean = () => false): AuthorSection[] {
+  const known = new Set(works.authors.map((a) => a.id));
+  const sections: AuthorSection[] = [
+    ...works.authors.map((author) => ({ author, works: works.works.filter((w) => w.authors.includes(author.id)) })),
+    { author: null, works: works.works.filter((w) => !w.authors.some((id) => known.has(id))) },
+  ];
+  return sections
+    .map((section) => ({ author: section.author, works: section.works.filter((w) => onShelf(w, shelf)) }))
+    .filter((section) => section.works.length > 0 || (shelf === 'links' && hasScans(section.author?.id ?? null)));
+}
+
 /** How many units a contents entry holds, the parts below it included. */
 export function unitCount(entry: CatalogContentsEntry): number {
   return 'unitId' in entry ? 1 : entry.entries.reduce((n, e) => n + unitCount(e), 0);

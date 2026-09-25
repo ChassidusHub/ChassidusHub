@@ -92,6 +92,10 @@ From the repository: `npm run pack -w @sichos-kodesh/pack-builder -- <command>`.
   - `objects/<sha256>`, hard-linked from the archive, so they take no
     extra disk;
   - `packs/` with its `index.json`, when there are prebuilt packs.
+  - the seforim, from the text packs among the prebuilt ones
+    (`build-work`): `works/shelf.json` (bundled by author, the small
+    ones together), `works/<id>.json` (each sefer's entries) and
+    `index/works.json`, so the API can add them to any pack.
 
   CRCs are cached in `.crc-cache.json`, so a second publish reads only
   new objects. Then `rclone sync <root>/published r2:<bucket>` uploads it,

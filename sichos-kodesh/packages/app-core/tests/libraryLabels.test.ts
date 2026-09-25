@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogRef, LibraryItemBase } from '@sichos-kodesh/catalog';
-import { itemAudio, itemDescription, itemFacts, itemPdfLabel, itemPlaylistEntry, itemSubtitle, itemTitle } from '../src/library/libraryModel.js';
+import { itemAudio, itemDescription, itemFacts, itemPdfLabel, itemPlaylistEntry, itemSubtitle, itemTitle, volumeSections } from '../src/library/libraryModel.js';
 
 // Items as the library files have them (apps/mobile/src/catalog/data/library), trimmed.
 const sicha = {
@@ -62,6 +62,35 @@ describe('the library labels', () => {
     expect(itemPdfLabel(translation, { translated: 'Translation' }, 'Documents')).toBe('Translation');
     // A label that says more than the kind keeps it.
     expect(itemPdfLabel({ kind: 'pdf', sourceId: 'c', role: 'mugah', label: `לקו"ש חי"ט ע' 291` }, roleNames, 'Documents')).toBe(`מוגה · לקו"ש חי"ט ע' 291`);
+  });
+
+  it('names a michtav\'s copies plainly by language: the Hebrew mugah is "מוגה", the English "מוגה בתרגום לאנגלית"', () => {
+    const doc = (role: string, label: string): CatalogRef => ({ kind: 'pdf', sourceId: 'x', role, label });
+    expect(itemPdfLabel(doc('he:mugah', 'לה"ק - מוגה'), roleNames, 'Documents', 'he')).toBe('מוגה');
+    expect(itemPdfLabel(doc('en:mugah', 'English - מוגה'), roleNames, 'Documents', 'he')).toBe('מוגה בתרגום לאנגלית');
+    expect(itemPdfLabel(doc('yi:mugah', 'אידיש - מוגה'), roleNames, 'Documents', 'he')).toBe('מוגה באידיש');
+    expect(itemPdfLabel(doc('he:תרגום', 'לה"ק - תרגום'), roleNames, 'Documents', 'he')).toBe('תרגום ללשון הקודש');
+    expect(itemPdfLabel(doc('en:Translation', 'English - Translation'), roleNames, 'Documents', 'he')).toBe('תרגום לאנגלית');
+    expect(itemPdfLabel(doc('he:mugah', 'לה"ק - מוגה'), roleNames, 'Documents', 'en')).toBe('Mugah (Lashon HaKodesh)');
+    expect(itemPdfLabel(doc('en:mugah', 'English - מוגה'), roleNames, 'Documents', 'en')).toBe('Mugah (English)');
+  });
+
+  it('opens a Likkutei Sichos volume on its parshiyos, in the volume\'s order', () => {
+    const at = (id: string, he: string, en: string) => ({ ...sicha, id, sectionLabel: he, sectionLabelEn: en });
+    const items = [at('1:1', 'בראשית', 'Bereishis'), at('1:2', 'בראשית', 'Bereishis'), at('1:9', 'נח', 'Noach'), at('1:15', 'לך לך', 'Lech Lecha')];
+    const sections = volumeSections('likkuteiSichos', 'volume', items)!;
+    expect(sections.map((s) => [s.name.he, s.name.en, s.items.map((i) => i.id)])).toEqual([
+      ['בראשית', 'Bereishis', ['1:1', '1:2']],
+      ['נח', 'Noach', ['1:9']],
+      ['לך לך', 'Lech Lecha', ['1:15']],
+    ]);
+    expect(volumeSections('likkuteiSichos', 'parsha', items)).toBeNull();
+    expect(volumeSections('likkuteiSichos', 'volume', items.slice(0, 2))).toBeNull();
+  });
+
+  it('says nothing about a sicha\'s translation on top: its documents list it', () => {
+    const words = { saidAt: '', printedIn: '', hemshech: () => '', kuntres: () => '', hasTranslation: 'יש תרגום', hasTranscript: '' };
+    expect(itemFacts('likkuteiSichos', sicha, words, 'he')).toEqual([]);
   });
 
   it("gives JEM's recordings their Hebrew names in the Hebrew interface, and keeps JEM's English in the English one", () => {

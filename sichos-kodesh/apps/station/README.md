@@ -18,7 +18,7 @@ sk-station sync                 # overnight: fetch, verify, index
 sk-station status <phone>       # what loading this phone would copy
 sk-station load <phone>         # copy it
 sk-station player <folder>      # plain MP3 folders for a player with no app
-sk-station apk                  # the latest release's phone APKs, for phones without the app
+sk-station apk                  # the newest release's phone APKs (from the app server), for phones without the app
 sk-station apk-to <storage>     # one of them into the phone's Download/
 ```
 
@@ -73,8 +73,9 @@ npm run station -w @sichos-kodesh/station -- <command>
     `@sichos-kodesh/catalog/translate`.
   - A second run writes only what is new.
   - `--scope` narrows it to years or months.
-- **apk** keeps the latest GitHub Release's `arm64-v8a` and `armeabi-v7a`
-  APKs in `apk/`. **apk-to** copies one into a phone's `Download/`, where its
+- **apk** keeps the newest release's `arm64-v8a` and `armeabi-v7a` APKs in
+  `apk/`, from the app server (`api.sk.shmuky.dev/v1/app/android/`), each
+  checked against its sha256. **apk-to** copies one into a phone's `Download/`, where its
   file manager installs it.
 
 ## Checked

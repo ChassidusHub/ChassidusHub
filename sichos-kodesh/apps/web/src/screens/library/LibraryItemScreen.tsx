@@ -32,7 +32,6 @@ export function LibraryItemScreen({ route }: Props) {
     printedIn: t.libraryPrintedIn,
     hemshech: t.libraryHemshech,
     kuntres: t.libraryKuntres,
-    hasTranslation: t.libraryHasTranslation,
     hasTranscript: t.libraryHasTranscript,
   }, language);
   const disputed = collection === 'likkuteiSichos' && record.supplement === true;

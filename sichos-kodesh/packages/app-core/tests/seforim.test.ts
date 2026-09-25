@@ -3,7 +3,7 @@ import type { CatalogWork, CatalogWorkContents, CatalogWorksIndex } from '@sicho
 import { renderUnit } from '@sichos-kodesh/sefaria-index/reader';
 import { DEFAULT_READER_SETTINGS, clampScale, parseReaderSettings, readerFont, readerFontFor, readerLineHeight, readerTextSize } from '../src/seforim/readerSettings.js';
 import { emptyReadingState, parseReadingState, recentPlaces, withBookmarkToggled, withPlace, withSettings, isBookmarked } from '../src/seforim/readingState.js';
-import { authorSections, chooseEdition, citation, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, unitPart, unitPosition, unitsAreLetters, workKind } from '../src/seforim/seforimModel.js';
+import { authorSections, HOME_WORK_IDS, shelfSections, chooseEdition, citation, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, unitPart, unitPosition, unitsAreLetters, workKind } from '../src/seforim/seforimModel.js';
 import { searchNames } from '../src/seforim/searchNames.js';
 import { fetchFromSefaria, TextLoadError } from '../src/seforim/sefariaText.js';
 import { layoutLetter, markLabel, noteLabel, notesAfterText, parseTextObject, referencedNotes, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
@@ -55,6 +55,24 @@ describe('the seforim model', () => {
       [null, ['kesser']],
     ]);
     expect([workKind(tanya), workKind(sichos), workKind(listed)]).toEqual(['read', 'collection', 'listed']);
+  });
+
+  it('puts what opens in the app on one shelf and the links on the other, the home screen\'s own and the recordings on neither', () => {
+    const letters: CatalogWork = { ...tanya, id: HOME_WORK_IDS[0]!, authors: ['the-rebbe'] };
+    const recordings: CatalogWork = { ...sichos, id: 'jem-recordings', collection: 'jemEvents' };
+    const torahOr: CatalogWork = { id: 'torah-or', title: { he: 'תורה אור', en: 'Torah Or' }, authors: ['alter-rebbe'], genre: 'chassidus', levels: [], sources: [{ source: 'hebrewbooks', sourceId: '1', kind: 'scan', licence: 'unknown', rights: 'link-only' }] };
+    const index: CatalogWorksIndex = { ...works, works: [tanya, torahOr, sichos, letters, recordings, listed] };
+    const shelf = (name: 'text' | 'links', hasScans?: (id: string | null) => boolean) => shelfSections(index, name, hasScans).map((s) => [s.author?.id ?? null, s.works.map((w) => w.id)]);
+    expect(shelf('text')).toEqual([
+      ['alter-rebbe', ['tanya']],
+      ['the-rebbe', ['likkutei-sichos']],
+    ]);
+    expect(shelf('links')).toEqual([['alter-rebbe', ['torah-or']]]);
+    // An author with books on HebrewBooks keeps his place on the links shelf.
+    expect(shelf('links', (id) => id === 'mitteler-rebbe')).toEqual([
+      ['alter-rebbe', ['torah-or']],
+      ['mitteler-rebbe', []],
+    ]);
   });
 
   it('walks the contents by path, counts units, and finds a unit\'s place', () => {

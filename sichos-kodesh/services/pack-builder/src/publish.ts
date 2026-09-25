@@ -5,12 +5,13 @@ import { crc32 } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import type { ArchiveStore } from '@sichos-kodesh/archive';
 import { exportObjectsIndex } from '@sichos-kodesh/archive';
-import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, CatalogWorksIndex, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { AudioProfile, ObjectsIndex, PackableLibraryCollection } from '@sichos-kodesh/pack-format';
 import { AUDIO_PROFILES, PACKABLE_LIBRARY_COLLECTIONS, PACK_EXTENSION, buildSourceLookup, canonicalBytes, sourceKey } from '@sichos-kodesh/pack-format';
 import type { PublishMeta, YearShard } from '@sichos-kodesh/pack-api';
 import { PUBLISH_SCHEMA, publishKeys } from '@sichos-kodesh/pack-api';
+import { publishWorks } from './worksPublish.js';
 
 /**
  * `sk-pack publish`: the archive as the pack API reads it (see
@@ -28,6 +29,8 @@ export interface PublishOptions {
   years: Map<number, CatalogEntry[]>;
   /** The library's collections as the catalog has them (apps/mobile/src/catalog/data/library): published once the archive holds any of their files. */
   library?: Partial<Record<PackableLibraryCollection, LibraryCollection<LibraryItemBase>>>;
+  /** The catalog's works (apps/mobile/src/catalog/data/works/works.json): the seforim's titles and authors, for the text packs in `packsDir`. */
+  works?: CatalogWorksIndex;
   catalogVersion: string;
   outDir: string;
   /** A directory of built packs (and their index.json) to publish too. */
@@ -222,6 +225,27 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     await writeAtomic(path.join(out, publishKeys.libraryShard(collection)), JSON.stringify(shard));
   }
 
+  // The seforim, from the text packs among the prebuilt ones: added to any pack the API builds.
+  let works = 0;
+  if (options.packsDir) {
+    const published = await publishWorks({
+      packsDir: options.packsDir,
+      outDir: out,
+      works: options.works ?? null,
+      catalogVersion: options.catalogVersion,
+      builtAt: index.builtAt,
+      crcs,
+      mirrored: mirroredList,
+    });
+    if (published) {
+      works = published.shelf.works.length;
+      for (const [id, list] of published.entries) await writeAtomic(path.join(out, publishKeys.workEntries(id)), JSON.stringify(list));
+      await writeAtomic(path.join(out, publishKeys.worksShelf), JSON.stringify(published.shelf));
+      await writeAtomic(path.join(out, publishKeys.worksShard), JSON.stringify(published.shard));
+      await writeAtomic(cacheFile, JSON.stringify(Object.fromEntries(crcs)));
+    }
+  }
+
   if (options.packsDir) {
     await mkdir(path.join(out, 'packs'), { recursive: true });
     for (const name of await readdir(options.packsDir)) {
@@ -240,10 +264,11 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     objects: Object.keys(index.objects).length,
     bytes: Object.values(index.objects).reduce((sum, entry) => sum + entry.bytes, 0),
     ...(library.length > 0 ? { library } : {}),
+    ...(works > 0 ? { works } : {}),
   };
   await writeAtomic(path.join(out, publishKeys.meta), `${JSON.stringify(meta, null, 2)}\n`);
   log(
-    `published ${meta.objects} object(s) (${linked} linked, ${copied} copied, ${skipped} already there, ${mirrored} only in the mirror), ${years.length} year(s)${library.length ? `, library: ${library.join(', ')}` : ''}, to ${out}`,
+    `published ${meta.objects} object(s) (${linked} linked, ${copied} copied, ${skipped} already there, ${mirrored} only in the mirror), ${years.length} year(s)${library.length ? `, library: ${library.join(', ')}` : ''}${works ? `, ${works} seforim` : ''}, to ${out}`,
   );
   return { meta, linked, copied, skipped, mirrored };
 }

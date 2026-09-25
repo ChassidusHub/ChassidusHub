@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.9.0';
+export const APP_VERSION = '1.10.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,23 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.10.0',
+    en: [
+      'Igros Kodesh has its own tile on the home page, beside Likkutei Sichos and the maamorim',
+      'The seforim on two shelves: text and PDFs, which open here, and external links - each by Rebbe, in tiles like the home page\'s',
+      'A volume of Likkutei Sichos opens on its parshiyos, and a parsha on its sichos',
+      'Plain names for a michtav\'s files - מוגה, or מוגה בתרגום לאנגלית - in place of a language and an edition side by side; Likkutei Sichos\' translation is named for what it is, the Hebrew one, and the note about a translation above a sicha is gone',
+      'The recordings on an item\'s page no longer look like a link',
+    ],
+    he: [
+      'לאגרות קודש יש אריח משלהן בעמוד הבית, לצד לקוטי שיחות והמאמרים',
+      'הספרים בשני מדפים: טקסט ו-PDF, שנפתחים כאן, וקישורים חיצוניים - כל אחד לפי רבי, באריחים כמו בעמוד הבית',
+      'חלק של לקוטי שיחות נפתח על פרשיותיו, ופרשה על שיחותיה',
+      'שמות פשוטים לקבצים של מכתב - מוגה, או מוגה בתרגום לאנגלית - במקום שפה ומהדורה זו לצד זו; התרגום של לקוטי שיחות נקרא בשמו, תרגום ללשון הקודש, וההערה על תרגום מעל שיחה הוסרה',
+      'ההקלטות בעמוד של פריט כבר לא נראות כמו קישור',
+    ],
+  },
   {
     version: '1.9.0',
     en: [

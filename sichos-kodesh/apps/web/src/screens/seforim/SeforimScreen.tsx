@@ -1,30 +1,40 @@
 import { Fragment, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { BookText, ExternalLink, Library, Search } from 'lucide-react';
+import type { CatalogWork, LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { catalogUnit } from '@sichos-kodesh/catalog';
-import { authorSections, authorShelf, names, scanCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
+import { authorShelf, names, scanCount, shelfSections, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
+import type { SeforimShelf } from '@sichos-kodesh/app-core';
 import { catalogStore, useShelf, useWorks } from '../../catalog/catalogStore';
+import { COLLECTION_ICONS } from '../../components/collectionIcons';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { Segmented } from '../../components/settings/SettingsControls';
 import { useTranslation } from '../../i18n/useLanguage';
 import { recentPlaces, useReadingState } from '../../seforim/readingState';
 import { LibraryLoading } from '../library/LibraryLoading';
 import { readerPath, shelfPath } from './seforimPaths';
 
 /**
- * The seforim (catalog schema 3): where the reader left off, the
- * bookmarks, then the Rebbeim in order - the Baal Shem Tov and the Maggid,
- * the Alter Rebbe to the Rebbe - each with his seforim, and his other books
- * on HebrewBooks. Same as the phone's.
+ * The seforim (catalog schema 3) on two shelves: what opens here - the
+ * texts, and the library's PDFs - and what opens on other sites
+ * (`?shelf=links`). Each shelf goes by Rebbe - the Baal Shem Tov and the
+ * Maggid, the Alter Rebbe to the Rebbe - his seforim as tiles, like the
+ * home page's. Igros Kodesh has a tile of its own on the home page, and is
+ * not here. Same as the phone's.
  */
 export function SeforimScreen() {
   const works = useWorks();
   const shelf = useShelf();
   const reading = useReadingState();
   const { t, language } = useTranslation();
-  const sections = useMemo(() => (works ? authorSections(works) : []), [works]);
+  const [params, setParams] = useSearchParams();
+  const shown: SeforimShelf = params.get('shelf') === 'links' ? 'links' : 'text';
+  const sections = useMemo(() => (works ? shelfSections(works, shown, (authorId) => scanCount(authorShelf(shelf, authorId)) > 0) : []), [shelf, shown, works]);
   const byId = useMemo(() => new Map((works?.works ?? []).map((w) => [w.id, w])), [works]);
   const recent = recentPlaces(reading).filter(({ workId }) => byId.has(workId));
   const bookmarks = reading.bookmarks.filter((b) => byId.has(b.workId));
+
+  const pick = (next: SeforimShelf) => setParams(next === 'links' ? { shelf: 'links' } : {}, { replace: true });
 
   // A unit's name when its sefer's chapters are already loaded; its sefer's name alone otherwise.
   const placeLabel = (workId: string, unitId: string) => {
@@ -35,15 +45,14 @@ export function SeforimScreen() {
     return label ? `${names(work.title, language)} · ${label}` : names(work.title, language);
   };
 
-  const meta = (workId: string): string => {
-    const work = byId.get(workId)!;
+  const meta = (work: CatalogWork): string => {
     switch (workKind(work)) {
       case 'read':
         return t.seforimChapters(work.units ?? 0, unitsAreLetters(work));
       case 'collection':
         return t.seforimInLibrary;
       case 'links': {
-        const scans = scanCount(workScans(shelf, workId));
+        const scans = scanCount(workScans(shelf, work.id));
         return scans > 0 ? t.seforimScans(scans) : t.seforimLink;
       }
       default:
@@ -51,19 +60,7 @@ export function SeforimScreen() {
     }
   };
 
-  // An author's books on HebrewBooks that no sefer here holds.
-  const shelfRow = (authorId: string | null) => {
-    const count = scanCount(authorShelf(shelf, authorId));
-    if (count === 0) return null;
-    return (
-      <li>
-        <Link className="year-row" to={shelfPath(authorId)}>
-          <span className="year-row-year">{authorId ? t.shelfRow : t.shelfOthersRow}</span>
-          <span className="year-row-distance">{t.shelfBooks(count)}</span>
-        </Link>
-      </li>
-    );
-  };
+  const iconOf = (work: CatalogWork) => (workKind(work) === 'links' ? ExternalLink : (work.collection && COLLECTION_ICONS[work.collection as LibraryCollectionId]) || BookText);
 
   return (
     <div className="screen">
@@ -75,10 +72,21 @@ export function SeforimScreen() {
           <Search size={18} aria-hidden />
         </span>
       </Link>
+      <div className="seforim-shelves">
+        <Segmented<SeforimShelf>
+          label={t.seforimShelves}
+          value={shown}
+          onChange={pick}
+          options={[
+            { value: 'text', label: t.seforimShelfText },
+            { value: 'links', label: t.seforimShelfLinks },
+          ]}
+        />
+      </div>
 
       {!works && <LibraryLoading />}
 
-      {recent.length > 0 && (
+      {shown === 'text' && recent.length > 0 && (
         <div className="category">
           <h2 className="category-header">{t.seforimContinue}</h2>
           <ul className="year-list">
@@ -93,7 +101,7 @@ export function SeforimScreen() {
         </div>
       )}
 
-      {bookmarks.length > 0 && (
+      {shown === 'text' && bookmarks.length > 0 && (
         <div className="category">
           <h2 className="category-header">{t.seforimBookmarks}</h2>
           <ul className="year-list">
@@ -108,28 +116,38 @@ export function SeforimScreen() {
         </div>
       )}
 
-      {sections.map((section) => (
-        <Fragment key={section.author?.id ?? 'others'}>
-          <h2 className="category-header">{section.author ? names(section.author.name, language) : t.seforimOtherAuthors}</h2>
-          <ul className="year-list">
-            {section.works.map((work) => (
-              <li key={work.id}>
-                <Link className={workKind(work) === 'listed' ? 'year-row seforim-row-muted' : 'year-row'} to={`/seforim/${encodeURIComponent(work.id)}`}>
-                  <span className="year-row-year">{names(work.title, language)}</span>
-                  <span className="year-row-distance">{meta(work.id)}</span>
+      {sections.map((section) => {
+        const authorId = section.author?.id ?? null;
+        const scans = shown === 'links' ? scanCount(authorShelf(shelf, authorId)) : 0;
+        return (
+          <Fragment key={authorId ?? 'others'}>
+            <h2 className="category-header">{section.author ? names(section.author.name, language) : t.seforimOtherAuthors}</h2>
+            <div className="home-tiles">
+              {section.works.map((work) => {
+                const Glyph = iconOf(work);
+                return (
+                  <Link key={work.id} className="home-tile" to={`/seforim/${encodeURIComponent(work.id)}`}>
+                    <span className="home-tile-well">
+                      <Glyph size={20} aria-hidden />
+                    </span>
+                    <span className="home-tile-name">{names(work.title, language)}</span>
+                    <span className="home-tile-blurb">{meta(work)}</span>
+                  </Link>
+                );
+              })}
+              {scans > 0 && (
+                <Link className="home-tile" to={shelfPath(authorId)}>
+                  <span className="home-tile-well">
+                    <Library size={20} aria-hidden />
+                  </span>
+                  <span className="home-tile-name">{authorId ? t.shelfRow : t.shelfOthersRow}</span>
+                  <span className="home-tile-blurb">{t.shelfBooks(scans)}</span>
                 </Link>
-              </li>
-            ))}
-            {shelfRow(section.author?.id ?? null)}
-          </ul>
-        </Fragment>
-      ))}
-      {works && !sections.some((section) => !section.author) && authorShelf(shelf, null).length > 0 && (
-        <>
-          <h2 className="category-header">{t.seforimOtherAuthors}</h2>
-          <ul className="year-list">{shelfRow(null)}</ul>
-        </>
-      )}
+              )}
+            </div>
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

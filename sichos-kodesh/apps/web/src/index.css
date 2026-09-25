@@ -1084,6 +1084,12 @@ h1 {
   text-align: start;
 }
 
+/* On a library item the header opens its recordings: a link, not dressed as one. */
+a.playlist-header-copy {
+  color: inherit;
+  text-decoration: none;
+}
+
 /* The playlist's own "download all" - an icon beside the play button in
    the header card (see RecordingsScreen), not a pill in the action bar. */
 .playlist-header-side {
@@ -1585,6 +1591,11 @@ h1 {
 }
 
 /* A door into each part of the library, two to a row (three on a wide screen). */
+/* The seforim browser's two shelves: text & PDFs, external links. */
+.seforim-shelves {
+  margin: 14px 0 4px;
+}
+
 .home-tiles {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

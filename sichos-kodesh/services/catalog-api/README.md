@@ -25,6 +25,8 @@ The shapes are `CatalogManifest` / `CatalogRelease` in
 | `/v3/catalog/<version>/catalog.json` | schema 2's file, byte for byte, plus `works` (`WorksRelease`) | `public, max-age=31536000, immutable` |
 | `/v3/catalog/changelog.json`, `/v3/catalog/latest/catalog.json` | as under `/v1/` | |
 | `/v3/texts/<sha256>` | a text object the works name for a source other than Sefaria (the Igros' letters): static files written by `scripts/build.mjs` from `texts/`, with the headers `vercel.json` gives them (HTML, CORS, a strict CSP) | `public, max-age=86400, s-maxage=31536000` |
+| `/v1/app/android/latest.json` | the phone app's newest release (`LatestAppRelease` in `packages/app-core/src/appRelease/appRelease.ts`): version, versionCode, the changelog entry and each APK's size and sha256. Passed through from the app server (the pack API Worker, whose R2 bucket the release workflow uploads to) by a `vercel.json` rewrite | `public, max-age=300` |
+| `/v1/app/android/download/<abi>` | `307` to that release's APK on the app server: `arm64-v8a`, `armeabi-v7a` or `universal`. The link stays, each release replaces what it serves | |
 | `/` | a small index | |
 
 Any other path, and any other version than the one served, is a JSON

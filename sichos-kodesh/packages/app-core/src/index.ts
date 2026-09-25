@@ -10,6 +10,7 @@ export * from './progress/audioProgress.js';
 export * from './download/contentPresets.js';
 export * from './catalog/catalogStore.js';
 export * from './catalog/catalogUpdate.js';
+export * from './appRelease/appRelease.js';
 export * from './catalog/displayNames.js';
 export * from './catalog/formatHebrewDate.js';
 export * from './seforim/textObject.js';

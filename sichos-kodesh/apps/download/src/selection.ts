@@ -1,11 +1,12 @@
-import { gematriya } from '@hebcal/core';
-import { mafteiachMonthNameHebrew, mafteiachMonthToken } from '@sichos-kodesh/catalog';
+import { HDate, gematriya } from '@hebcal/core';
+import { mafteiachMonthToken } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 
 /**
- * The site's choices, as the pack API takes them (pack-format's parseScope
- * and parseSections): a scope (`5736`, `5736-01`), a sections list, an
- * audio profile and a part size. Pure, so it is tested without a browser.
+ * The site's vocabulary, as the pack API takes it (pack-format's parseScope
+ * and parseSections): the months, the content presets, the audio
+ * qualities, the library's collections and axes. The cart (cart.ts) puts
+ * them together. Pure, so it is tested without a browser.
  */
 
 export type Preset = 'essentials' | 'everything' | 'custom';
@@ -20,19 +21,31 @@ export interface CustomSections {
   hosofos: boolean;
 }
 
-export interface Choice {
-  year: number;
-  /** A mafteiach month token, or null for the whole year. */
-  month: string | null;
-  preset: Preset;
-  custom: CustomSections;
-  profile: string;
-  maxMb: number;
+/** The months as the site offers them, Tishrei first. Adar is one choice: Adar in a plain year, Adar I and II in a leap year. */
+export const MONTHS: Array<{ key: string; name: string }> = [
+  { key: '01', name: 'תשרי' },
+  { key: '02', name: 'חשוון' },
+  { key: '03', name: 'כסלו' },
+  { key: '04', name: 'טבת' },
+  { key: '05', name: 'שבט' },
+  { key: '06', name: 'אדר' },
+  { key: '07', name: 'ניסן' },
+  { key: '08', name: 'אייר' },
+  { key: '09', name: 'סיוון' },
+  { key: '10', name: 'תמוז' },
+  { key: '11', name: 'אב' },
+  { key: '12', name: 'אלול' },
+];
+
+/** A month key's mafteiach tokens in a year: Adar is 06A and 06B in a leap year. */
+export function monthTokens(year: number, key: string): string[] {
+  if (key !== '06') return [key];
+  return HDate.isLeapYear(year) ? ['06A', '06B'] : ['06'];
 }
 
 export const DEFAULT_CUSTOM: CustomSections = { audio: true, sichosKodesh: true, torasMenachem: false, mugah: true, maamorim: false, hagahos: false, hosofos: false };
 
-export function sectionsParam(choice: Pick<Choice, 'preset' | 'custom'>): string | null {
+export function sectionsParam(choice: { preset: Preset; custom: CustomSections }): string | null {
   if (choice.preset !== 'custom') return choice.preset;
   const c = choice.custom;
   const parts: string[] = [];
@@ -43,34 +56,20 @@ export function sectionsParam(choice: Pick<Choice, 'preset' | 'custom'>): string
   return parts.length > 0 ? parts.join(',') : null;
 }
 
-export function scopeParam(choice: Pick<Choice, 'year' | 'month'>): string {
-  return choice.month ? `${choice.year}-${choice.month}` : String(choice.year);
-}
-
-/** The query every size and build request carries; null while the choice selects nothing. */
-export function selectionQuery(choice: Choice): string | null {
-  const sections = sectionsParam(choice);
-  if (!sections) return null;
-  const params = new URLSearchParams({ scope: scopeParam(choice), profile: choice.profile, sections, maxMb: String(choice.maxMb) });
-  return params.toString();
-}
-
 export interface MonthOption {
   token: string;
   name: string;
   occasions: number;
 }
 
-/** The months of a year that have farbrengens, in the year's order (Tishrei first). */
+/** The months of a year that have farbrengens (Adar I and II together, as MONTHS has them), Tishrei first, with how many each has. */
 export function monthsOf(entries: CatalogEntry[]): MonthOption[] {
-  const counts = new Map<string, { name: string; occasions: number }>();
+  const counts = new Map<string, number>();
   for (const entry of entries) {
-    const token = mafteiachMonthToken(entry.hebrewDate);
-    const current = counts.get(token);
-    if (current) current.occasions += 1;
-    else counts.set(token, { name: mafteiachMonthNameHebrew(entry.hebrewDate), occasions: 1 });
+    const key = mafteiachMonthToken(entry.hebrewDate).slice(0, 2);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
-  return [...counts.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([token, value]) => ({ token, ...value }));
+  return MONTHS.filter((m) => counts.has(m.key)).map((m) => ({ token: m.key, name: m.name, occasions: counts.get(m.key)! }));
 }
 
 export function yearLabel(year: number): string {
@@ -154,24 +153,4 @@ export const AXES: Array<{ id: string; name: string }> = [
 /** A collection's axes that the site knows, in AXES order. */
 export function axesOf(groups: Record<string, unknown>): Array<{ id: string; name: string }> {
   return AXES.filter((axis) => Array.isArray(groups[axis.id]) && (groups[axis.id] as unknown[]).length > 0);
-}
-
-export interface LibraryChoice {
-  collection: string;
-  /** null: the whole collection. */
-  axis: string | null;
-  group: string | null;
-  profile: string;
-  maxMb: number;
-}
-
-/** `maamorim`, or `maamorim:year:5711`: pack-format's library scope. */
-export function libraryScopeParam(choice: Pick<LibraryChoice, 'collection' | 'axis' | 'group'>): string {
-  return choice.axis && choice.group ? `${choice.collection}:${choice.axis}:${choice.group}` : choice.collection;
-}
-
-/** The size and build query of a library choice; null until a group of the chosen axis is picked. */
-export function libraryQuery(choice: LibraryChoice): string | null {
-  if (choice.axis && !choice.group) return null;
-  return new URLSearchParams({ scope: libraryScopeParam(choice), profile: choice.profile, maxMb: String(choice.maxMb) }).toString();
 }

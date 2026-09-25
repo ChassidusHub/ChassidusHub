@@ -257,7 +257,8 @@ program
   .option('--catalog-version <v>', 'the catalog version the year files are', CATALOG_VERSION)
   .option('--packs <dir>', 'prebuilt packs to publish too (default <root>/packs when it exists)')
   .option('--library-dir <dir>', 'the library collections (catalog schema 2)', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'library'))
-  .action(async (opts: { out?: string; catalogDir: string; catalogVersion: string; packs?: string; libraryDir: string }) => {
+  .option('--works-dir <dir>', "the works catalog: the seforim's titles and authors, for the text packs among the prebuilt ones", path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'works'))
+  .action(async (opts: { out?: string; catalogDir: string; catalogVersion: string; packs?: string; libraryDir: string; worksDir: string }) => {
     const years = new Map<number, CatalogEntry[]>();
     for (let year = 5680; year <= 5780; year += 1) {
       const entries = await loadYearEntries(opts.catalogDir, year).catch(() => []);
@@ -272,7 +273,9 @@ program
     const hasPacks = await stat(packsDir).then((info) => info.isDirectory()).catch(() => false);
     const store = await ArchiveStore.open(root());
     try {
-      await publishArchive(store, { years, library, catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
+      const worksText = await readFile(path.join(opts.worksDir, 'works.json'), 'utf8').catch(() => null);
+      const works = worksText ? (parseCatalogWorksIndex(JSON.parse(worksText)) ?? undefined) : undefined;
+      await publishArchive(store, { years, library, ...(works ? { works } : {}), catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
     } finally {
       store.close();
     }

@@ -255,8 +255,38 @@ export interface ItemFactWords {
   printedIn: string;
   hemshech: (hemshech: string) => string;
   kuntres: (kuntres: string) => string;
-  hasTranslation: string;
+  /** No longer shown: a sicha's translation is listed with its documents. Kept so callers need not change at once. */
+  hasTranslation?: string;
   hasTranscript: string;
+}
+
+/** One parsha of a Likkutei Sichos volume, with the volume's sichos on it in their order. */
+export interface ItemSection {
+  key: string;
+  name: { he: string; en: string };
+  items: LibraryItemBase[];
+}
+
+/**
+ * A Likkutei Sichos volume opens on its parshiyos (and moadim), in the
+ * volume's order, each with its sichos - the way the printed volume is laid
+ * out. Null for every other list, and for a volume of one parsha, which
+ * lists its sichos straight away.
+ */
+export function volumeSections(collection: LibraryCollectionId, axis: string, items: LibraryItemBase[]): ItemSection[] | null {
+  if (collection !== 'likkuteiSichos' || axis !== 'volume') return null;
+  const sections = new Map<string, ItemSection>();
+  for (const item of items) {
+    const record = item as LibraryItemBase & { sectionLabel?: unknown; sectionLabelEn?: unknown };
+    const key = typeof record.sectionLabel === 'string' ? record.sectionLabel.trim() : '';
+    let section = sections.get(key);
+    if (!section) {
+      section = { key, name: { he: key, en: typeof record.sectionLabelEn === 'string' && record.sectionLabelEn ? record.sectionLabelEn : key }, items: [] };
+      sections.set(key, section);
+    }
+    section.items.push(item);
+  }
+  return sections.size > 1 ? [...sections.values()] : null;
 }
 
 /** The facts worth a line of their own on an item's page, per collection: citations, hemshech, date lines. Bibliographic facts only. */
@@ -284,9 +314,6 @@ export function itemFacts(collection: LibraryCollectionId, item: LibraryItemBase
       for (const citation of citations) facts.push(`${citation.prefix}: ${citation.label}`);
       break;
     }
-    case 'likkuteiSichos':
-      if (record.hasTranslated === true) facts.push(words.hasTranslation);
-      break;
     case 'jemEvents':
       if (record.hasTranscript === true) facts.push(words.hasTranscript);
       break;
@@ -296,9 +323,42 @@ export function itemFacts(collection: LibraryCollectionId, item: LibraryItemBase
   return facts;
 }
 
+/**
+ * The michtavim's documents: a language and what the copy is (`he:mugah`,
+ * `en:mugah`, `he:תרגום`...). Named plainly - the Hebrew mugah is simply
+ * "מוגה", the English "מוגה בתרגום לאנגלית" - never mafteiach's "English -
+ * מוגה" behind a raw role.
+ */
+const LANGUAGE_ROLE = /^(yi|he|en):(.*)$/;
+const EDITION_NAMES: Record<'mugah' | 'biltiMugah' | 'translation', Record<Language, string>> = {
+  mugah: { he: 'מוגה', en: 'Mugah' },
+  biltiMugah: { he: 'בלתי מוגה', en: 'Bilti mugah' },
+  translation: { he: 'תרגום', en: 'Translation' },
+};
+const IN_LANGUAGE: Record<string, Record<Language, string>> = {
+  he: { he: 'ללשון הקודש', en: 'Lashon HaKodesh' },
+  en: { he: 'לאנגלית', en: 'English' },
+  yi: { he: 'לאידיש', en: 'Yiddish' },
+};
+
+export function languageRoleLabel(role: string, language: Language): string | null {
+  const match = LANGUAGE_ROLE.exec(role);
+  if (!match) return null;
+  const [, lang, rawEdition] = match as unknown as [string, 'yi' | 'he' | 'en', string];
+  const edition = rawEdition === 'mugah' ? 'mugah' : rawEdition === 'biltiMugah' ? 'biltiMugah' : 'translation';
+  const name = EDITION_NAMES[edition][language];
+  if (language === 'en') return `${name} (${IN_LANGUAGE[lang]!.en})`;
+  // Hebrew: a translation is into a language; a mugah or bilti mugah copy in Lashon HaKodesh is the letter itself, in another language it is its translation.
+  if (edition === 'translation') return `${name} ${IN_LANGUAGE[lang]!.he}`;
+  if (lang === 'he') return name;
+  return lang === 'en' ? `${name} בתרגום לאנגלית` : `${name} באידיש`;
+}
+
 /** A document's name on an item's page: its role (mugah, translation...) with mafteiach's own label. */
-export function itemPdfLabel(ref: CatalogRef, roleNames: Record<string, string>, fallback: string): string {
+export function itemPdfLabel(ref: CatalogRef, roleNames: Record<string, string>, fallback: string, language: Language = 'he'): string {
   const role = ref.role ?? '';
+  const byLanguage = languageRoleLabel(role, language);
+  if (byLanguage) return byLanguage;
   const roleName = roleNames[role] ?? (role.includes(':') ? role.split(':').slice(1).join(':') : role);
   // mafteiach's own label that only says what kind of file it is (שיחה, מתורגם): the role's name says it, in the interface language.
   if (ref.label && roleName && KIND_LABELS.has(ref.label.trim())) return roleName;

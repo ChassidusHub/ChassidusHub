@@ -266,24 +266,43 @@ describe('player mode', () => {
 });
 
 describe('the app itself', () => {
-  it('keeps the latest release\'s phone APKs and copies one into Download/', async () => {
+  it("keeps the newest release's phone APKs from the app server and copies one into Download/", async () => {
     const root = await tempDir();
     const apk = new Uint8Array(5000).fill(1);
+    const asked: string[] = [];
     const fetchFn = async (url: string) => {
-      if (url.endsWith('/releases/latest')) {
+      asked.push(url);
+      if (url.endsWith('/v1/app/android/latest.json')) {
         return Response.json({
-          tag_name: 'v1.4.0',
-          assets: ['arm64-v8a', 'armeabi-v7a', 'universal'].map((abi) => ({ name: `sichos-kodesh-1.4.0-${abi}.apk`, size: apk.length, browser_download_url: `https://dl.test/${abi}` })),
+          schema: 1,
+          platform: 'android',
+          version: '1.13.0',
+          versionCode: 14,
+          publishedAt: '2026-09-25T12:00:00.000Z',
+          notes: { he: [], en: [] },
+          files: ['arm64-v8a', 'armeabi-v7a', 'universal'].map((abi) => ({ abi, file: `sichos-kodesh-1.13.0-${abi}.apk`, bytes: apk.length, sha256: sha256(apk), path: `/v1/app/android/download/${abi}` })),
         });
       }
       return new Response(apk);
     };
-    const report = await syncApk(root, fetchFn);
-    expect(report.downloaded.sort()).toEqual(['sichos-kodesh-1.4.0-arm64-v8a.apk', 'sichos-kodesh-1.4.0-armeabi-v7a.apk']);
-    expect((await syncApk(root, fetchFn)).kept).toHaveLength(2);
+    const report = await syncApk(root, fetchFn, 'https://app.test');
+    expect(report.version).toBe('1.13.0');
+    expect(report.downloaded.sort()).toEqual(['sichos-kodesh-1.13.0-arm64-v8a.apk', 'sichos-kodesh-1.13.0-armeabi-v7a.apk']);
+    expect(asked).toContain('https://app.test/v1/app/android/download/arm64-v8a');
+    expect(asked.some((url) => url.includes('github'))).toBe(false);
+    expect((await syncApk(root, fetchFn, 'https://app.test')).kept).toHaveLength(2);
     const storage = await tempDir();
     const copied = await copyApkTo(root, storage);
-    expect(copied).toBe(path.join(storage, 'Download', 'sichos-kodesh-1.4.0-arm64-v8a.apk'));
+    expect(copied).toBe(path.join(storage, 'Download', 'sichos-kodesh-1.13.0-arm64-v8a.apk'));
     expect((await stat(copied)).size).toBe(apk.length);
+  });
+
+  it('refuses an APK whose bytes are not the ones the server listed', async () => {
+    const root = await tempDir();
+    const fetchFn = async (url: string) =>
+      url.endsWith('latest.json')
+        ? Response.json({ schema: 1, platform: 'android', version: '1.13.0', versionCode: 14, publishedAt: 'x', files: [{ abi: 'arm64-v8a', file: 'sichos-kodesh-1.13.0-arm64-v8a.apk', bytes: 3, sha256: 'f'.repeat(64), path: '/v1/app/android/download/arm64-v8a' }] })
+        : new Response(new Uint8Array([1, 2, 3]));
+    await expect(syncApk(root, fetchFn, 'https://app.test')).rejects.toThrow(/sha256/);
   });
 });

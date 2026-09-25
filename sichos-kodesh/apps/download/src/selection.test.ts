@@ -1,31 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { DEFAULT_CUSTOM, axesOf, formatMb, libraryQuery, monthsOf, scopeParam, sectionsParam, selectionQuery } from './selection';
+import { DEFAULT_CUSTOM, axesOf, formatMb, monthTokens, monthsOf, sectionsParam } from './selection';
 
 describe('the download site', () => {
-  it('asks the pack API for exactly what was chosen', () => {
-    expect(scopeParam({ year: 5736, month: '01' })).toBe('5736-01');
-    expect(scopeParam({ year: 5736, month: null })).toBe('5736');
+  it('asks the pack API for exactly the content chosen', () => {
     expect(sectionsParam({ preset: 'everything', custom: DEFAULT_CUSTOM })).toBe('everything');
     expect(sectionsParam({ preset: 'custom', custom: { ...DEFAULT_CUSTOM, torasMenachem: true } })).toBe('audio,biltiMugah:sichosKodesh+torasMenachem,mugah');
     expect(sectionsParam({ preset: 'custom', custom: { audio: false, sichosKodesh: false, torasMenachem: false, mugah: false, maamorim: false, hagahos: false, hosofos: false } })).toBeNull();
-    expect(selectionQuery({ year: 5736, month: '06A', preset: 'essentials', custom: DEFAULT_CUSTOM, profile: 'opus24', maxMb: 500 })).toBe('scope=5736-06A&profile=opus24&sections=essentials&maxMb=500');
+  });
+
+  it("takes Adar as the year has it", () => {
+    expect(monthTokens(5736, '06')).toEqual(['06A', '06B']);
+    expect(monthTokens(5737, '06')).toEqual(['06']);
+    expect(monthTokens(5737, '01')).toEqual(['01']);
   });
 
   it('lists only months that have farbrengens, Tishrei first, with Hebrew names', () => {
     const entry = (hebrewDate: string) => ({ hebrewDate, occasionId: 1, hebrewYear: 5746, occasionLabel: '', audio: [], pdfs: [] }) as CatalogEntry;
-    expect(monthsOf([entry('5746-07-11'), entry('5746-01-13'), entry('5746-06A-14'), entry('5746-07-13')])).toEqual([
+    expect(monthsOf([entry('5746-07-11'), entry('5746-01-13'), entry('5746-06A-14'), entry('5746-06B-14'), entry('5746-07-13')])).toEqual([
       { token: '01', name: 'תשרי', occasions: 1 },
-      { token: '06A', name: 'אדר א׳', occasions: 1 },
+      { token: '06', name: 'אדר', occasions: 2 },
       { token: '07', name: 'ניסן', occasions: 2 },
     ]);
-  });
-
-  it('asks for a library collection whole, or one group of the axis chosen', () => {
-    expect(libraryQuery({ collection: 'reshimos', axis: null, group: null, profile: 'opus16', maxMb: 200 })).toBe('scope=reshimos&profile=opus16&maxMb=200');
-    expect(libraryQuery({ collection: 'maamorim', axis: 'year', group: '5711', profile: 'src', maxMb: 500 })).toBe('scope=maamorim%3Ayear%3A5711&profile=src&maxMb=500');
-    // An axis without its group selects nothing yet.
-    expect(libraryQuery({ collection: 'maamorim', axis: 'year', group: null, profile: 'src', maxMb: 500 })).toBeNull();
   });
 
   it('offers the axes the app browses by, in its order, and only those a collection has', () => {

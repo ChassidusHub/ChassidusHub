@@ -3,21 +3,25 @@ import type { AudioProfile, LibraryScopeSpec, PackEntry, PackKeyPair, PackManife
 import {
   AUDIO_PROFILES,
   composeManifests,
-  entriesInScope,
+  describeScopeList,
+  entriesInScopes,
   isPackableLibraryCollection,
+  isWorksEntry,
   packFileName,
   parseLibraryScopeSpec,
-  parseScope,
+  parseScopeList,
   parseSections,
   resolveLibraryScope,
+  resolveWorks,
   signManifest,
   sizeLibrarySelection,
   sizeSelection,
   splitEntries,
   toHex,
+  worksLabel,
 } from '@sichos-kodesh/pack-format';
 import type { PublishMeta, YearShard } from './layout.js';
-import { parseCatalogYear, parseLibraryCollection, parsePublishMeta, parseYearShard, publishKeys } from './layout.js';
+import { parseCatalogYear, parseLibraryCollection, parsePublishMeta, parseWorkEntries, parseWorksShelf, parseYearShard, publishKeys } from './layout.js';
 import type { PackStore } from './store.js';
 import { readJson } from './store.js';
 import { streamPack } from './stream.js';
@@ -29,6 +33,7 @@ import { streamPack } from './stream.js';
  *   GET /v1/meta                        what is published
  *   GET /v1/catalog/<year>              that year's farbrengens, for the download site's pickers
  *   GET /v1/library/<collection>        a library collection's items and browse axes, for the same
+ *   GET /v1/works                       the seforim that can join a pack, bundled by author
  *   GET /v1/objects.json                the objects index (the phone's trust anchor)
  *   GET /v1/packs/index.json            the prebuilt packs
  *   GET /v1/packs/<file>                one prebuilt pack
@@ -39,9 +44,15 @@ import { streamPack } from './stream.js';
  * pack-format's sizeSelection (as the site, the builder and the phone do),
  * split by whole occasions, signed, and streamed from the archive's objects
  * in one pass. The URL is the selection, so a CDN caches each build.
- * `scope` is a farbrengens year or month (5736, 5736-01) or a library scope
- * (maamorim:year:5711, pack-format's library.ts); a library pack holds
- * every PDF of its items and their recordings in `profile`.
+ * `scope` is a comma list of anything a pack can hold, in any mix - the
+ * download site's cart: farbrengens years or months (5736, 5736-01;
+ * 5736-01,5740-01 is the same month of two years) and library scopes
+ * (maamorim:year:5711, likkuteiSichos:volume:12, pack-format's
+ * library.ts), whose packs hold every PDF of their items and their
+ * recordings in `profile`. `works` adds seforim (bundle ids, work ids or
+ * `all`), their texts and search indexes as their own text packs carry
+ * them; with `works`, `scope` may be left out. One pack holds all of it,
+ * each file once, split into parts by `maxMb` as ever.
  */
 
 export interface HandlerOptions {
@@ -70,9 +81,12 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 }
 
 export interface BuildRequest {
-  /** A farbrengens year or month; null for a library scope. */
-  scope: ParsedScope | null;
-  library: LibraryScopeSpec | null;
+  /** Farbrengens years or months; empty when the pack holds none. */
+  scopes: ParsedScope[];
+  /** Library scopes, in the order asked, each once. */
+  library: LibraryScopeSpec[];
+  /** The `works` parameter as sent (bundles, works or `all`); null for none. */
+  works: string | null;
   profile: AudioProfile;
   sections: string;
   contentTypes: DownloadContentTypes;
@@ -81,12 +95,24 @@ export interface BuildRequest {
 
 export function parseBuildRequest(url: URL): BuildRequest {
   const scopeParam = url.searchParams.get('scope');
-  if (!scopeParam) throw new HttpError(400, 'scope is required: a Hebrew year (5736), a year and month token (5736-01), or a library scope (maamorim:year:5711)');
-  let scope: ParsedScope | null = null;
-  let library: LibraryScopeSpec | null = null;
+  const works = url.searchParams.get('works')?.trim() || null;
+  if (!scopeParam && !works) throw new HttpError(400, 'scope is required (a Hebrew year 5736, a month 5736-01, a list of them, or a library scope maamorim:year:5711), unless works names seforim');
+  let scopes: ParsedScope[] = [];
+  const library: LibraryScopeSpec[] = [];
   try {
-    library = parseLibraryScopeSpec(scopeParam);
-    if (!library) scope = parseScope(scopeParam);
+    if (scopeParam) {
+      const farbrengens: string[] = [];
+      const seen = new Set<string>();
+      for (const token of scopeParam.split(',').map((t) => t.trim()).filter(Boolean)) {
+        const spec = parseLibraryScopeSpec(token);
+        if (!spec) farbrengens.push(token);
+        else if (!seen.has(token)) {
+          seen.add(token);
+          library.push(spec);
+        }
+      }
+      if (farbrengens.length > 0) scopes = parseScopeList(farbrengens.join(','));
+    }
   } catch (error) {
     throw new HttpError(400, error instanceof Error ? error.message : String(error));
   }
@@ -101,7 +127,7 @@ export function parseBuildRequest(url: URL): BuildRequest {
   }
   const maxMb = Number(url.searchParams.get('maxMb') ?? DEFAULT_MAX_MB);
   if (!(maxMb > 0) || maxMb > MAX_MAX_MB) throw new HttpError(400, `maxMb must be between 1 and ${MAX_MAX_MB}`);
-  return { scope, library, profile, sections, contentTypes, maxBytes: Math.floor(maxMb * 1024 * 1024) };
+  return { scopes, library, works, profile, sections, contentTypes, maxBytes: Math.floor(maxMb * 1024 * 1024) };
 }
 
 export interface PlannedBuild {
@@ -114,6 +140,8 @@ export interface PlannedBuild {
   objects: number;
   objectBytes: number;
   shard: YearShard;
+  /** How many seforim the build adds. */
+  works: number;
 }
 
 async function loadMeta(store: PackStore): Promise<PublishMeta> {
@@ -132,14 +160,47 @@ interface Selected {
   shard: YearShard;
 }
 
-async function selectFarbrengens(store: PackStore, meta: PublishMeta, request: BuildRequest, scope: ParsedScope): Promise<Selected> {
-  const year = scope.year;
-  if (!meta.years.includes(year)) throw new HttpError(404, `${year} is not in the published archive`);
-  const entries = parseCatalogYear(await readJson(store, publishKeys.catalogYear(year)));
-  const shard = parseYearShard(await readJson(store, publishKeys.yearShard(year)));
-  if (!entries || !shard) throw new HttpError(503, `the published data for ${year} is unreadable`);
-  const selection = sizeSelection(entriesInScope(entries, scope), request.contentTypes, shard.index, request.profile);
-  return { scope: scope.scope, slug: scope.slug, entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing.length, shard };
+function emptyShard(): YearShard {
+  return { index: { schema: 1, version: '', builtAt: '', objects: {} }, crc32: {} };
+}
+
+/** Several selections as one: their entries in order, each object counted once, their shards merged. */
+function combine(into: Selected, add: Omit<Selected, 'scope' | 'slug'>): void {
+  into.entries.push(...add.entries);
+  for (const [sha, bytes] of Object.entries(add.objects)) {
+    if (into.objects[sha] !== undefined) continue;
+    into.objects[sha] = bytes;
+    into.bytes += bytes;
+  }
+  into.missing += add.missing;
+  Object.assign(into.shard.index.objects, add.shard.index.objects);
+  Object.assign(into.shard.crc32, add.shard.crc32);
+}
+
+/** Every year of the list: its catalog and shard read once, its scopes (a whole year, or months) applied together. */
+async function selectFarbrengens(store: PackStore, meta: PublishMeta, request: BuildRequest, scopes: ParsedScope[]): Promise<Selected> {
+  const { scope, slug } = describeScopeList(scopes);
+  const selected: Selected = { scope, slug, entries: [], objects: {}, bytes: 0, missing: 0, shard: emptyShard() };
+  const years = [...new Set(scopes.map((s) => s.year))];
+  const unpublished = years.filter((year) => !meta.years.includes(year));
+  if (unpublished.length === years.length) throw new HttpError(404, `${unpublished.join(', ')} ${unpublished.length === 1 ? 'is' : 'are'} not in the published archive`);
+  for (const year of years) {
+    if (!meta.years.includes(year)) continue;
+    const entries = parseCatalogYear(await readJson(store, publishKeys.catalogYear(year)));
+    const shard = parseYearShard(await readJson(store, publishKeys.yearShard(year)));
+    if (!entries || !shard) throw new HttpError(503, `the published data for ${year} is unreadable`);
+    const selection = sizeSelection(
+      entriesInScopes(
+        entries,
+        scopes.filter((s) => s.year === year),
+      ),
+      request.contentTypes,
+      shard.index,
+      request.profile,
+    );
+    combine(selected, { entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing.length, shard });
+  }
+  return selected;
 }
 
 async function selectLibrary(store: PackStore, meta: PublishMeta, request: BuildRequest, spec: LibraryScopeSpec): Promise<Selected> {
@@ -157,8 +218,74 @@ async function selectLibrary(store: PackStore, meta: PublishMeta, request: Build
   return { scope: resolved.scope, slug: resolved.slug, entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing, shard };
 }
 
+/** The seforim named: their entries as their text packs carry them, and their objects. */
+async function selectWorks(store: PackStore, meta: PublishMeta, spec: string): Promise<{ selection: Omit<Selected, 'scope' | 'slug'>; label: { he: string; en: string }; ids: string[] }> {
+  if (!meta.works) throw new HttpError(404, 'no seforim are published yet');
+  const shelf = parseWorksShelf(await readJson(store, publishKeys.worksShelf));
+  const shard = parseYearShard(await readJson(store, publishKeys.worksShard));
+  if (!shelf || !shard) throw new HttpError(503, 'the published seforim are unreadable');
+  let ids: string[];
+  try {
+    ids = resolveWorks(spec, shelf);
+  } catch (error) {
+    throw new HttpError(404, error instanceof Error ? error.message : String(error));
+  }
+  const selection: Omit<Selected, 'scope' | 'slug'> = { entries: [], objects: {}, bytes: 0, missing: 0, shard };
+  for (const id of ids) {
+    const entries = parseWorkEntries(await readJson(store, publishKeys.workEntries(id)));
+    if (!entries) throw new HttpError(503, `the published entries of ${id} are unreadable`);
+    selection.entries.push(...entries);
+    for (const entry of entries) {
+      for (const ref of entry.refs) {
+        if (selection.objects[ref.sha256] !== undefined) continue;
+        selection.objects[ref.sha256] = ref.bytes;
+        selection.bytes += ref.bytes;
+      }
+    }
+  }
+  return { selection, label: worksLabel(ids, shelf), ids };
+}
+
+/** A short, stable stem for a file name, from what a mix holds. */
+function mixHash(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return hash.toString(16).padStart(8, '0');
+}
+
+/** "A + B + C", or "A + 4 more" for a longer mix. */
+function mixLabel(labels: Array<{ he: string; en: string }>): { he: string; en: string } {
+  if (labels.length <= 3) return { he: labels.map((l) => l.he).join(' + '), en: labels.map((l) => l.en).join(' + ') };
+  return { he: `${labels[0]!.he} ועוד ${labels.length - 1}`, en: `${labels[0]!.en} + ${labels.length - 1} more` };
+}
+
 export async function planBuild(store: PackStore, meta: PublishMeta, request: BuildRequest, builtAt: string): Promise<PlannedBuild> {
-  const selection = request.library ? await selectLibrary(store, meta, request, request.library) : await selectFarbrengens(store, meta, request, request.scope!);
+  const pieces: Selected[] = [];
+  if (request.scopes.length > 0) pieces.push(await selectFarbrengens(store, meta, request, request.scopes));
+  for (const spec of request.library) pieces.push(await selectLibrary(store, meta, request, spec));
+  const added = request.works ? await selectWorks(store, meta, request.works) : null;
+  const works = added?.ids.length ?? 0;
+  if (pieces.length === 0 && !added) throw new HttpError(400, 'the selection is empty');
+
+  let selection: Selected;
+  if (pieces.length === 1 && !added) {
+    selection = pieces[0]!;
+  } else {
+    // One scope for the whole mix: the one part's own when it is alone, else a custom scope under the first part's collection (a manifest names one).
+    const labels = [...pieces.map((p) => p.scope.label), ...(added ? [added.label] : [])];
+    const slugs = [...pieces.map((p) => p.slug), ...(added ? [added.ids.length === 1 ? `seforim-${added.ids[0]}` : 'seforim'] : [])];
+    const joined = slugs.join('-');
+    const first = pieces[0];
+    const scope: PackScope = first
+      ? pieces.length === 1
+        ? { ...first.scope, label: mixLabel(labels) }
+        : { kind: 'custom', collection: first.scope.collection, label: mixLabel(labels) }
+      : { kind: 'custom', collection: 'works', label: added!.label };
+    const slug = joined.length <= 64 ? joined : `mix-${slugs.length}-${mixHash(joined)}`;
+    selection = { scope, slug, entries: [], objects: {}, bytes: 0, missing: 0, shard: emptyShard() };
+    for (const part of pieces) combine(selection, part);
+    if (added) combine(selection, added.selection);
+  }
   if (selection.entries.length === 0) throw new HttpError(404, 'the archive holds nothing of this selection yet');
   const parts = splitEntries(selection.entries, request.maxBytes);
   const manifests = await composeManifests({
@@ -179,6 +306,7 @@ export async function planBuild(store: PackStore, meta: PublishMeta, request: Bu
     objects: Object.keys(selection.objects).length,
     objectBytes: selection.bytes,
     shard: selection.shard,
+    works,
   };
 }
 
@@ -220,6 +348,7 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
     const catalogMatch = /^\/v1\/catalog\/(\d{4})$/.exec(path);
     if (catalogMatch) return passThrough(store, publishKeys.catalogYear(Number(catalogMatch[1])), 'application/json; charset=utf-8', 'public, max-age=3600');
     const libraryMatch = /^\/v1\/library\/([A-Za-z]+)$/.exec(path);
+    if (path === '/v1/works') return passThrough(store, publishKeys.worksShelf, 'application/json; charset=utf-8', 'public, max-age=3600');
     if (libraryMatch) {
       const collection = libraryMatch[1]!;
       if (!isPackableLibraryCollection(collection)) throw new HttpError(404, 'not found');
@@ -239,7 +368,9 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
             slug: plan.slug,
             profile: buildRequest.profile,
             sections: buildRequest.sections,
-            occasions: plan.manifests.reduce((sum, m) => sum + m.entries.length, 0),
+            // Occasions or library items; a sefer's units are counted as `works`, not here.
+            occasions: plan.manifests.reduce((sum, m) => sum + m.entries.filter((e) => !isWorksEntry(e)).length, 0),
+            works: plan.works,
             objects: plan.objects,
             bytes: plan.objectBytes,
             missing: plan.missing,
@@ -247,7 +378,8 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
             parts: plan.manifests.map((manifest, index) => ({
               index,
               file: packFileName(plan.slug, buildRequest.profile, manifest.part),
-              occasions: manifest.entries.length,
+              occasions: manifest.entries.filter((e) => !isWorksEntry(e)).length,
+              works: new Set(manifest.entries.filter(isWorksEntry).map((e) => e.itemId.split('/')[0])).size,
               bytes: plan.bytes[index],
             })),
           },

@@ -33,7 +33,7 @@ export function useLibraryItem(): LibraryItemRoute | null | undefined {
     const pdfs: CatalogPdf[] = itemPdfs(item).map((ref) => ({
       // The section only groups a farbrengen's documents; the viewer reads the label and file.
       section: 'mugah',
-      label: itemPdfLabel(ref, t.pdfRoleNames, t.libraryDocuments),
+      label: itemPdfLabel(ref, t.pdfRoleNames, t.libraryDocuments, language),
       driveFileId: ref.sourceId,
       ...(ref.resourceKey ? { resourceKey: ref.resourceKey } : {}),
     }));

@@ -28,13 +28,13 @@
   "license": "ISC",
   "dependencies": {
     "@hebcal/core": "^6.9.2",
+    "@sichos-kodesh/app-core": "^0.1.0",
     "@sichos-kodesh/catalog": "^0.1.0",
     "@sichos-kodesh/pack-builder": "^0.1.0",
     "@sichos-kodesh/pack-format": "^0.1.0",
     "commander": "^13.1.0"
   },
   "devDependencies": {
-    "@sichos-kodesh/app-core": "^0.1.0",
     "@sichos-kodesh/pack-api": "^0.1.0",
     "@types/node": "^24.13.3",
     "tsx": "^4.19.2",

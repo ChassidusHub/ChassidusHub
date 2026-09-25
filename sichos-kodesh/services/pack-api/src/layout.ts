@@ -1,4 +1,4 @@
-import type { AudioProfile, ObjectsIndex, PackIndexFile, PackableLibraryCollection } from '@sichos-kodesh/pack-format';
+import type { AudioProfile, ObjectsIndex, PackEntry, PackIndexFile, PackableLibraryCollection, WorksShelf } from '@sichos-kodesh/pack-format';
 import { AUDIO_PROFILES, isPackableLibraryCollection, isSha256, parseObjectsIndex } from '@sichos-kodesh/pack-format';
 import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 
@@ -12,6 +12,9 @@ import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-k
  *   index/<year>.json        the objects that year's farbrengens refer to: an ObjectsIndex subset + CRC-32s
  *   library/<collection>.json   a library collection as the catalog has it: its items and browse axes
  *   index/library-<collection>.json   the objects its items refer to, the same shape as a year's
+ *   works/shelf.json         the seforim that can join a pack, bundled by author (pack-format's works.ts)
+ *   works/<id>.json          a sefer's entries, as its own text pack carries them
+ *   index/works.json         the seforim's objects (texts, search indexes), the same shape as a year's
  *   objects.json             the whole objects index, canonical bytes - embedded in every pack
  *   objects/<sha256>         the objects themselves
  *   packs/index.json         the prebuilt packs (pack-format's PackIndexFile)
@@ -32,6 +35,8 @@ export interface PublishMeta {
   bytes: number;
   /** Library collections with at least one object published (pack-format's library.ts). Absent before the library was. */
   library?: PackableLibraryCollection[];
+  /** How many seforim can join a pack (works/shelf.json). Absent when none. */
+  works?: number;
 }
 
 export interface YearShard {
@@ -46,6 +51,9 @@ export const publishKeys = {
   yearShard: (year: number) => `index/${year}.json`,
   libraryCollection: (collection: PackableLibraryCollection) => `library/${collection}.json`,
   libraryShard: (collection: PackableLibraryCollection) => `index/library-${collection}.json`,
+  worksShelf: 'works/shelf.json',
+  workEntries: (id: string) => `works/${id}.json`,
+  worksShard: 'index/works.json',
   objectsIndex: 'objects.json',
   object: (sha256: string) => `objects/${sha256}`,
   packsIndex: 'packs/index.json',
@@ -58,13 +66,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export function parsePublishMeta(value: unknown): PublishMeta | null {
   if (!isRecord(value) || value.schema !== PUBLISH_SCHEMA) return null;
-  const { catalogVersion, publishedAt, years, profiles, objectsIndex, objects, bytes, library } = value;
+  const { catalogVersion, publishedAt, years, profiles, objectsIndex, objects, bytes, library, works } = value;
   if (typeof catalogVersion !== 'string' || typeof publishedAt !== 'string') return null;
   if (!Array.isArray(years) || !years.every((y) => Number.isInteger(y))) return null;
   if (!Array.isArray(profiles) || !profiles.every((p) => (AUDIO_PROFILES as readonly unknown[]).includes(p))) return null;
   if (!isRecord(objectsIndex) || !isSha256(objectsIndex.sha256) || typeof objectsIndex.bytes !== 'number' || typeof objectsIndex.crc32 !== 'number') return null;
   if (typeof objects !== 'number' || typeof bytes !== 'number') return null;
   if (library !== undefined && (!Array.isArray(library) || !library.every((c) => typeof c === 'string' && isPackableLibraryCollection(c)))) return null;
+  if (works !== undefined && (typeof works !== 'number' || !Number.isInteger(works) || works < 0)) return null;
   return {
     schema: PUBLISH_SCHEMA,
     catalogVersion,
@@ -75,6 +84,7 @@ export function parsePublishMeta(value: unknown): PublishMeta | null {
     objects,
     bytes,
     ...(library ? { library: library as PackableLibraryCollection[] } : {}),
+    ...(works ? { works } : {}),
   };
 }
 
@@ -105,6 +115,27 @@ export function parseLibraryCollection(value: unknown): LibraryCollection<Librar
     if (!Array.isArray(groups) || !groups.every((g) => isRecord(g) && typeof g.slug === 'string' && typeof g.name === 'string' && Array.isArray(g.itemIds))) return null;
   }
   return value as unknown as LibraryCollection<LibraryItemBase>;
+}
+
+export function parseWorksShelf(value: unknown): WorksShelf | null {
+  if (!isRecord(value) || !Array.isArray(value.bundles) || !Array.isArray(value.works)) return null;
+  if (!value.bundles.every((b) => isRecord(b) && typeof b.id === 'string' && isRecord(b.label) && Array.isArray(b.works) && typeof b.bytes === 'number')) return null;
+  if (!value.works.every((w) => isRecord(w) && typeof w.id === 'string' && isRecord(w.title) && typeof w.bundle === 'string' && typeof w.bytes === 'number')) return null;
+  return value as unknown as WorksShelf;
+}
+
+/** A sefer's published entries: works entries, each with refs that carry a hash and a size. */
+export function parseWorkEntries(value: unknown): PackEntry[] | null {
+  if (!Array.isArray(value)) return null;
+  const ok = value.every(
+    (entry) =>
+      isRecord(entry) &&
+      entry.collection === 'works' &&
+      typeof entry.itemId === 'string' &&
+      Array.isArray(entry.refs) &&
+      entry.refs.every((ref) => isRecord(ref) && isSha256(ref.sha256) && typeof ref.bytes === 'number' && typeof ref.kind === 'string' && typeof ref.sourceId === 'string'),
+  );
+  return ok ? (value as PackEntry[]) : null;
 }
 
 export type { PackIndexFile };

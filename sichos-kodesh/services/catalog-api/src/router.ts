@@ -158,6 +158,8 @@ export function handleRequest(method: string, path: string, origin: string): Rou
         endpoints: SERVED.flatMap((s) => [manifestPath(s.schema), catalogPath(s.manifest.version, s.schema), changelogPath(s.schema), latestPath(s.schema)]),
         // Static files beside the function (scripts/build.mjs): each hosted text at its sha256, as the works name it.
         texts: TEXTS_PATH,
+        // The phone app's newest release, passed through from the app server (vercel.json).
+        app: { android: '/v1/app/android/latest.json', download: '/v1/app/android/download/<arm64-v8a|armeabi-v7a|universal>' },
         source: 'https://github.com/shmuky/Sichos-Kodesh/tree/main/services/catalog-api',
       },
       MANIFEST_CACHE,

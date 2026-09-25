@@ -1,5 +1,14 @@
 # Sichos Kodesh
 
+## Merging
+
+- Web updates merge right away, and every web release gets a version
+  number (`apps/web`'s version).
+- Android updates wait: do not merge or release them until a proper
+  release - version bump, tag, and the APKs published per the release
+  rules below. A PR that mixes the two merges its web part now and keeps
+  its Android part for the release.
+
 ## Builds and releases
 
 Local builds: you may build, compile, and test the app locally at any time

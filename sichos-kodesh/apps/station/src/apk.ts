@@ -1,59 +1,59 @@
+import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { APP_RELEASE_BASE_URL, APP_RELEASE_PATH, parseLatestAppRelease } from '@sichos-kodesh/app-core';
 import type { FetchFn } from './api.js';
 
 /**
  * The app itself, for a phone that does not have it yet: the station keeps
- * the latest GitHub Release's phone APKs in `<mirror>/apk/` and copies one
- * into the phone's `Download/` folder, where its file manager installs it.
+ * the newest release's phone APKs in `<mirror>/apk/` and copies one into the
+ * phone's `Download/` folder, where its file manager installs it. They come
+ * from the app server (api.sk.shmuky.dev/v1/app/android/, app-core's
+ * appRelease.ts), each checked against its sha256.
  */
 
 export const APK_DIR = 'apk';
-export const DEFAULT_REPO = 'shmuky/Sichos-Kodesh';
 /** The two per-ABI APKs; the universal one is both in one, twice the size. */
 export const APK_ABIS = ['arm64-v8a', 'armeabi-v7a'] as const;
 export type ApkAbi = (typeof APK_ABIS)[number];
 
-interface ReleaseAsset {
-  name: string;
-  size: number;
-  browser_download_url: string;
-}
-
 export interface ApkReport {
-  tag: string;
+  version: string;
   downloaded: string[];
   kept: string[];
 }
 
-export async function syncApk(root: string, fetchFn: FetchFn = (url) => fetch(url), repo = DEFAULT_REPO): Promise<ApkReport> {
-  const response = await fetchFn(`https://api.github.com/repos/${repo}/releases/latest`);
-  if (!response.ok) throw new Error(`latest release of ${repo}: HTTP ${response.status}`);
-  const release = (await response.json()) as { tag_name: string; assets: ReleaseAsset[] };
+export async function syncApk(root: string, fetchFn: FetchFn = (url) => fetch(url), server: string = APP_RELEASE_BASE_URL): Promise<ApkReport> {
+  const base = server.replace(/\/$/, '');
+  const response = await fetchFn(`${base}${APP_RELEASE_PATH}`);
+  if (!response.ok) throw new Error(`the app server's newest release: HTTP ${response.status}`);
+  const release = parseLatestAppRelease(await response.json());
+  if (!release) throw new Error("the app server's latest.json is unreadable");
   const dir = path.join(root, APK_DIR);
   await mkdir(dir, { recursive: true });
-  const report: ApkReport = { tag: release.tag_name, downloaded: [], kept: [] };
-  const wanted = release.assets.filter((asset) => APK_ABIS.some((abi) => asset.name.endsWith(`-${abi}.apk`)));
-  for (const asset of wanted) {
-    const target = path.join(dir, asset.name);
+  const report: ApkReport = { version: release.version, downloaded: [], kept: [] };
+  const wanted = release.files.filter((file) => (APK_ABIS as readonly string[]).includes(file.abi));
+  for (const file of wanted) {
+    const target = path.join(dir, file.file);
     const size = await stat(target).then(
       (info) => info.size,
       () => null,
     );
-    if (size === asset.size) {
-      report.kept.push(asset.name);
+    if (size === file.bytes) {
+      report.kept.push(file.file);
       continue;
     }
-    const download = await fetchFn(asset.browser_download_url);
-    if (!download.ok) throw new Error(`${asset.name}: HTTP ${download.status}`);
+    const download = await fetchFn(`${base}${file.path}`);
+    if (!download.ok) throw new Error(`${file.file}: HTTP ${download.status}`);
     const bytes = new Uint8Array(await download.arrayBuffer());
-    if (bytes.length !== asset.size) throw new Error(`${asset.name}: got ${bytes.length} of ${asset.size} bytes`);
+    if (bytes.length !== file.bytes) throw new Error(`${file.file}: got ${bytes.length} of ${file.bytes} bytes`);
+    if (file.sha256 && createHash('sha256').update(bytes).digest('hex') !== file.sha256) throw new Error(`${file.file}: the bytes do not match its sha256`);
     await writeFile(`${target}.partial`, bytes);
     await rename(`${target}.partial`, target);
-    report.downloaded.push(asset.name);
+    report.downloaded.push(file.file);
   }
   // Older versions go once the new ones are in.
-  const keep = new Set(wanted.map((asset) => asset.name));
+  const keep = new Set(wanted.map((file) => file.file));
   for (const name of await readdir(dir)) if (name.endsWith('.apk') && !keep.has(name)) await unlink(path.join(dir, name));
   return report;
 }

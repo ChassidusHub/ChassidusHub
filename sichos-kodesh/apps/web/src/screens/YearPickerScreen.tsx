@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, BookText, CalendarRange, ChevronLeft, ChevronRight, Feather, GraduationCap, Headphones, Library, Mail, NotebookPen, ScrollText, Search, Settings, Sparkles, WifiOff } from 'lucide-react';
+import { BookText, CalendarRange, ChevronLeft, ChevronRight, Library, Mails, MessageSquareText, Search, Settings, Sparkles, WifiOff } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
+import { HOME_WORK_IDS, workKind } from '@sichos-kodesh/app-core';
 import { IL } from '../config';
+import { useWorks } from '../catalog/catalogStore';
+import { COLLECTION_ICONS } from '../components/collectionIcons';
 import { ContinueSection } from '../components/ContinueSection';
 import { parshaLabel } from '../utils/formatHebrewDate';
 import { useOnlineStatus } from '../network/useOnlineStatus';
@@ -14,16 +17,27 @@ interface Props {
   targetYear: number;
 }
 
-/** The library's collections on the home page, the Rebbe's own Torah first, then what was written and recorded around it (the phone's order). */
-const COLLECTION_TILES: ReadonlyArray<{ collection: LibraryCollectionId; icon: LucideIcon }> = [
-  { collection: 'likkuteiSichos', icon: BookOpen },
-  { collection: 'maamorim', icon: ScrollText },
-  { collection: 'michtavimKlolim', icon: Mail },
-  { collection: 'reshimos', icon: NotebookPen },
-  { collection: 'hadranim', icon: GraduationCap },
-  { collection: 'yomanim', icon: Feather },
-  { collection: 'jemEvents', icon: Headphones },
+/**
+ * The library on the home page, the Rebbe's own Torah first, then what was
+ * written and recorded around it (the phone's order): its collections, and
+ * the seforim with a tile of their own (app-core's HOME_WORK_IDS) - Igros
+ * Kodesh, and the Maanos once they may ship (only then are they in the
+ * works index).
+ */
+const LIBRARY_TILES: ReadonlyArray<{ collection: LibraryCollectionId } | { workId: string; name: 'igros' | 'maanos'; icon: LucideIcon }> = [
+  { collection: 'likkuteiSichos' },
+  { collection: 'maamorim' },
+  { workId: 'igros-kodesh-rebbe', name: 'igros', icon: Mails },
+  { workId: 'maanos', name: 'maanos', icon: MessageSquareText },
+  { collection: 'michtavimKlolim' },
+  { collection: 'reshimos' },
+  { collection: 'hadranim' },
+  { collection: 'yomanim' },
+  { collection: 'jemEvents' },
 ];
+
+/** Igros Kodesh is cleared to ship: its tile stands before the works index is here, so the grid does not shift when it comes. */
+const SHOWN_BEFORE_WORKS = 'igros-kodesh-rebbe';
 
 /**
  * The home page. What is on this week comes first - the kvius farbrengens,
@@ -35,6 +49,8 @@ const COLLECTION_TILES: ReadonlyArray<{ collection: LibraryCollectionId; icon: L
 export function YearPickerScreen({ targetYear }: Props) {
   const { t, language } = useTranslation();
   const online = useOnlineStatus();
+  const works = useWorks();
+  const homeWorks = new Set((works?.works ?? []).filter((w) => HOME_WORK_IDS.includes(w.id) && workKind(w) !== 'listed').map((w) => w.id));
   const bestMatch = findMatchingYears(targetYear)[0];
   const { parsha } = currentParsha(IL);
   const hebrewDate = todayHebrewDateLabel();
@@ -116,15 +132,31 @@ export function YearPickerScreen({ targetYear }: Props) {
 
       <h2 className="category-header">{t.homeLibrarySection}</h2>
       <div className="home-tiles">
-        {COLLECTION_TILES.map(({ collection, icon: Icon }) => (
-          <Link key={collection} className="home-tile" to={`/library/c/${collection}`}>
-            <span className="home-tile-well">
-              <Icon size={20} aria-hidden />
-            </span>
-            <span className="home-tile-name">{t.collectionNames[collection]}</span>
-            <span className="home-tile-blurb">{t.homeBlurbs[collection]}</span>
-          </Link>
-        ))}
+        {LIBRARY_TILES.map((tile) => {
+          if ('collection' in tile) {
+            const Icon = COLLECTION_ICONS[tile.collection];
+            return (
+              <Link key={tile.collection} className="home-tile" to={`/library/c/${tile.collection}`}>
+                <span className="home-tile-well">
+                  <Icon size={20} aria-hidden />
+                </span>
+                <span className="home-tile-name">{t.collectionNames[tile.collection]}</span>
+                <span className="home-tile-blurb">{t.homeBlurbs[tile.collection]}</span>
+              </Link>
+            );
+          }
+          if (!(works ? homeWorks.has(tile.workId) : tile.workId === SHOWN_BEFORE_WORKS)) return null;
+          const Icon = tile.icon;
+          return (
+            <Link key={tile.workId} className="home-tile" to={`/seforim/${encodeURIComponent(tile.workId)}`}>
+              <span className="home-tile-well">
+                <Icon size={20} aria-hidden />
+              </span>
+              <span className="home-tile-name">{tile.name === 'igros' ? t.homeIgros : t.homeMaanos}</span>
+              <span className="home-tile-blurb">{t.homeBlurbs[tile.name]}</span>
+            </Link>
+          );
+        })}
         <Link className="home-tile" to="/seforim">
           <span className="home-tile-well">
             <Library size={20} aria-hidden />

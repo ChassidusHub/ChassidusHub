@@ -149,6 +149,20 @@ describe('sk-pack publish and serve', () => {
     ]);
   });
 
+  it('builds a cart of farbrengens and a library group as one pack, each shared file once', async () => {
+    const month = (await (await fetch(`${base}/v1/size?scope=5736-01&sections=everything`)).json()) as { objects: number; bytes: number };
+    const cart = (await (await fetch(`${base}/v1/size?scope=5736-01,maamorim:year:5736&sections=everything`)).json()) as { occasions: number; objects: number; bytes: number; slug: string; scope: { kind: string; collection: string; label: { he: string } } };
+    // The maamar's PDF is one of the farbrengen's: the cart holds it once.
+    expect(cart).toMatchObject({ occasions: 2, objects: month.objects, bytes: month.bytes, slug: '5736-01-tishrei-maamorim-year-5736', scope: { kind: 'custom', collection: 'farbrengens', label: { he: 'תשרי תשל״ו + מאמרים, תשל"ו' } } });
+    const response = await fetch(`${base}/v1/build?scope=5736-01,maamorim:year:5736&sections=everything`);
+    expect(response.status).toBe(200);
+    const file = path.join(dir, 'cart.skpack');
+    await writeFile(file, Buffer.from(await response.arrayBuffer()));
+    const check = await verifyPack(file, { [key.keyId]: key.publicKey });
+    expect(check.problems).toEqual([]);
+    expect(check.manifest!.entries.map((entry) => `${entry.collection}:${entry.itemId}`)).toEqual(['farbrengens:101', 'maamorim:7']);
+  });
+
   it('serves the prebuilt packs and their index', async () => {
     const index = (await (await fetch(`${base}/v1/packs/index.json`)).json()) as { packs: Array<{ file: string; bytes: number }> };
     expect(index.packs).toHaveLength(1);

@@ -107,6 +107,34 @@ describe('sk-pack mirror', () => {
     expect(r2.puts).toEqual(['index/5736.json', 'objects.json', 'meta.json']);
   });
 
+  it('never deletes an object the list does not name yet, even when the run breaks off', async () => {
+    const own = await ArchiveStore.open(path.join(dir, 'archive-interrupted'));
+    const commit = own.beginCommit('test', 'fixture objects');
+    const insertRef = own.db.prepare('INSERT INTO refs (collection, item_id, sha256, kind, source_id, role, commit_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    for (const [sourceId, bytes] of Object.entries(FILES)) {
+      const tmp = own.tmpPath();
+      await writeFile(tmp, bytes);
+      const kind = sourceId.endsWith('.mp3') ? 'audio' : 'pdf';
+      await own.putObject(tmp, sha(bytes), bytes.length, kind, kind === 'audio' ? 'src' : null, null, commit);
+      insertRef.run('farbrengens', '101', sha(bytes), kind, sourceId, '', commit);
+    }
+    const out = path.join(dir, 'published-interrupted');
+    await publishArchive(own, { years: new Map([[5736, ENTRIES]]), catalogVersion: '1.1.0', outDir: out });
+    // The first object goes up, the second upload fails: the run stops half way.
+    const r2 = fakeR2();
+    const failing = (async (input: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === 'PUT' && r2.puts.length >= 1) return new Response('refused', { status: 403 });
+      return r2.target.fetch(input, init);
+    }) as typeof fetch;
+    await expect(mirrorPublished({ dir: out, target: { ...r2.target, fetch: failing }, prune: { store: own }, concurrency: 1 })).rejects.toThrow();
+    const listed = new Set<string>(await readFile(path.join(out, '.mirrored.json'), 'utf8').then((text) => JSON.parse(text) as string[], () => []));
+    for (const bytes of Object.values(FILES)) {
+      const onDisk = await exists(own.objectPath(sha(bytes)));
+      expect(onDisk || listed.has(sha(bytes))).toBe(true);
+    }
+    own.close();
+  });
+
   it('refuses to publish an object whose bytes are gone and that was never mirrored', async () => {
     const out = path.join(dir, 'published-2');
     await publishArchive(store, { years: new Map([[5736, ENTRIES]]), catalogVersion: '1.1.0', outDir: out }).then(

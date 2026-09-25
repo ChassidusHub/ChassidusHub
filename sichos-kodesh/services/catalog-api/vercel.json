@@ -3,7 +3,18 @@
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "public",
+  "redirects": [
+    {
+      "source": "/v1/app/android/download/:abi",
+      "destination": "https://sichos-kodesh-pack-api.shmuky.workers.dev/v1/app/android/download/:abi",
+      "permanent": false
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/v1/app/android/latest.json",
+      "destination": "https://sichos-kodesh-pack-api.shmuky.workers.dev/v1/app/android/latest.json"
+    },
     {
       "source": "/(.*)",
       "destination": "/api/index"

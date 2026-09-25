@@ -151,16 +151,31 @@ export async function mirrorPublished(options: MirrorOptions): Promise<MirrorRes
     await writeFile(`${list}.tmp`, JSON.stringify([...mirrored].sort()));
     await rename(`${list}.tmp`, list);
   };
+  // Listed before the bytes go: an object is deleted only once the list on disk names it, so an
+  // interrupted run never leaves an object publish cannot account for. Deletions wait in batches.
+  let pending: string[] = [];
+  let flushing: Promise<void> = Promise.resolve();
+  const flush = (): Promise<void> => {
+    const batch = pending;
+    pending = [];
+    flushing = flushing.then(async () => {
+      if (batch.length === 0) return;
+      await saveMirrored();
+      for (const sha of batch) {
+        await unlink(path.join(options.dir, 'objects', sha)).catch(() => undefined);
+        const archived = options.prune!.store.pathOf(sha);
+        if (archived) await unlink(archived).catch(() => undefined);
+      }
+    });
+    return flushing;
+  };
   const prune = async (key: string): Promise<void> => {
     if (!options.prune) return;
     const sha = key.slice('objects/'.length);
-    // Listed before the bytes go, so an interrupted run never leaves an object publish cannot account for.
     mirrored.add(sha);
     result.pruned += 1;
-    if (result.pruned % 50 === 0) await saveMirrored();
-    const archived = options.prune.store.pathOf(sha);
-    await unlink(path.join(options.dir, key)).catch(() => undefined);
-    if (archived) await unlink(archived).catch(() => undefined);
+    pending.push(sha);
+    if (pending.length >= 50) await flush();
   };
 
   let cursor = 0;
@@ -183,7 +198,7 @@ export async function mirrorPublished(options: MirrorOptions): Promise<MirrorRes
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, options.concurrency ?? 4) }, () => worker()));
-  if (options.prune) await saveMirrored();
+  if (options.prune) await flush();
 
   for (const key of rest) {
     const bytes = await readFile(path.join(options.dir, key));

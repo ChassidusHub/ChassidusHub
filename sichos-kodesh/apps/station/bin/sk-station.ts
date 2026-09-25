@@ -135,11 +135,11 @@ program
 
 program
   .command('apk')
-  .description("fetch the latest release's phone APKs into the mirror, for phones without the app")
-  .option('--repo <owner/name>', 'GitHub repository')
-  .action(async (opts: { repo?: string }) => {
-    const report = await syncApk(root(), undefined, opts.repo);
-    log(`apk ${report.tag}: ${report.downloaded.length} fetched, ${report.kept.length} kept`);
+  .description("fetch the newest release's phone APKs from the app server into the mirror, for phones without the app")
+  .option('--server <url>', 'the app server', 'https://api.sk.shmuky.dev')
+  .action(async (opts: { server: string }) => {
+    const report = await syncApk(root(), undefined, opts.server);
+    log(`apk ${report.version}: ${report.downloaded.length} fetched, ${report.kept.length} kept`);
   });
 
 program

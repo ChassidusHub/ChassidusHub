@@ -44,9 +44,67 @@ export function parseScope(spec: string): ParsedScope {
   };
 }
 
+/**
+ * Several years or months in one pack: `5736,5740` or `5736-01,5740-01`
+ * (the download site sends the same months for every year picked). Each
+ * token reads as parseScope; repeats are dropped, and the list is in year
+ * then month order.
+ */
+export function parseScopeList(spec: string): ParsedScope[] {
+  const tokens = spec
+    .split(',')
+    .map((token) => token.trim())
+    .filter(Boolean);
+  if (tokens.length === 0) throw new Error('scope is empty');
+  const seen = new Map<string, ParsedScope>();
+  for (const token of tokens) {
+    const parsed = parseScope(token);
+    seen.set(parsed.slug, parsed);
+  }
+  return [...seen.values()].sort((a, b) => a.year - b.year || (a.month ?? '').localeCompare(b.month ?? ''));
+}
+
+/** One scope and file stem for a list: the scope itself when there is one, else "Tishrei, 5736-5752" as a custom scope. */
+export function describeScopeList(scopes: ParsedScope[]): { scope: PackScope; slug: string } {
+  if (scopes.length === 1) return { scope: scopes[0]!.scope, slug: scopes[0]!.slug };
+  const years = [...new Set(scopes.map((s) => s.year))].sort((a, b) => a - b);
+  const wholeYears = scopes.every((s) => !s.month);
+  const monthNames = { he: [] as string[], en: [] as string[] };
+  if (!wholeYears) {
+    for (const s of scopes) {
+      if (!s.month) continue;
+      const probe = `${s.year}-${s.month}-01`;
+      const he = mafteiachMonthNameHebrew(probe);
+      const en = mafteiachMonthName(probe);
+      if (!monthNames.he.includes(he)) monthNames.he.push(he);
+      if (!monthNames.en.includes(en)) monthNames.en.push(en);
+    }
+  }
+  const contiguous = years.every((year, i) => i === 0 || year === years[i - 1]! + 1);
+  const yearsLabel =
+    years.length === 1
+      ? { he: gematriya(years[0]!), en: String(years[0]) }
+      : contiguous
+        ? { he: `${gematriya(years[0]!)}–${gematriya(years[years.length - 1]!)}`, en: `${years[0]}-${years[years.length - 1]}` }
+        : years.length <= 4
+          ? { he: years.map((y) => gematriya(y)).join(', '), en: years.join(', ') }
+          : { he: `${years.length} שנים`, en: `${years.length} years` };
+  const label = wholeYears
+    ? yearsLabel
+    : { he: `${monthNames.he.join(', ')} ${yearsLabel.he}`, en: `${monthNames.en.join(', ')} ${yearsLabel.en}` };
+  const monthsSlug = wholeYears ? '' : `-${monthNames.en.length <= 3 ? monthNames.en.map((m) => m.toLowerCase().replace(/[^a-z0-9]+/g, '-')).join('-') : `${monthNames.en.length}-months`}`;
+  const yearsSlug = years.length === 1 ? String(years[0]) : contiguous ? `${years[0]}-${years[years.length - 1]}` : `${years.length}-years-${years[0]}-${years[years.length - 1]}`;
+  return { scope: { kind: 'custom', collection: 'farbrengens', label }, slug: `${yearsSlug}${monthsSlug}` };
+}
+
 /** The catalog entries a scope covers. */
 export function entriesInScope(entries: CatalogEntry[], scope: ParsedScope): CatalogEntry[] {
   return entries.filter((entry) => entry.hebrewYear === scope.year && (!scope.month || mafteiachMonthToken(entry.hebrewDate) === scope.month));
+}
+
+/** The catalog entries any of the scopes covers (a year's list: its whole year, or its months). */
+export function entriesInScopes(entries: CatalogEntry[], scopes: ParsedScope[]): CatalogEntry[] {
+  return entries.filter((entry) => scopes.some((scope) => entry.hebrewYear === scope.year && (!scope.month || mafteiachMonthToken(entry.hebrewDate) === scope.month)));
 }
 
 const EDITIONS: readonly PdfEdition[] = ['sichosKodesh', 'sefer', 'torasMenachem'];

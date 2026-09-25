@@ -16,6 +16,7 @@
   "dependencies": {
     "@hebcal/core": "^6.9.2",
     "@sichos-kodesh/catalog": "^0.1.0",
+    "@sichos-kodesh/kvius-engine": "^0.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

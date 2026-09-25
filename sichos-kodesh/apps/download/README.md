@@ -4,14 +4,23 @@ The download site (`docs/offline-plan.md`, WP5). It is in Hebrew, RTL, and
 uses the web app's colour tokens. It is a static Vite build over the pack
 API (`services/pack-api`):
 
+- **A store with a cart.** The shelves are the farbrengens (years and
+  months: several years at once, the same months of each), the library
+  (a collection, one of its browse axes, any of its groups) and the
+  seforim (bundles). Anything goes into one cart, and the cart becomes
+  one pack: one query to `/v1/size` and `/v1/build`, each shared file
+  once, split into parts by the largest file wanted. One set of
+  settings serves the cart: the farbrengens' content (the essentials,
+  everything, or a custom set), the audio quality, the part size. The
+  cart is kept in the browser (`cart.ts`).
+- **This year's kvius** (`kvius.ts`, kvius-engine's `findMatchingYears`):
+  the years whose calendar is this year's are marked on the year chips,
+  this month and the next on the month chips, and a card adds this
+  month, next month or the whole years of the kvius in one tap.
 - **Ready-made packs** come from `/v1/packs/index.json`, one click each.
-- **A pack of your choice** is picked by year and month (only months
-  with farbrengens), content (the essentials, everything, or a custom
-  set of recordings, hanachos by edition, mugah, maamorim, hagahos and
-  hosofos), audio quality (the profiles the archive holds), and the
-  largest file wanted. The exact size and the parts come from
-  `/v1/size`, and each part downloads from `/v1/build`, signed and
-  streamed.
+- **The phone app** downloads from the app server
+  (`api.sk.shmuky.dev/v1/app/android/`), its newest release whatever it
+  is - never from GitHub.
 - **Putting it on the phone** is explained on the page: copy the pack into
   `import/` of the app's shared folder, or use "Import files".
 
