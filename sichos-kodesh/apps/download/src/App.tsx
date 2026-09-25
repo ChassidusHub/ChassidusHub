@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { HDate } from '@hebcal/core';
 import type { ReactNode } from 'react';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import type { Meta, PrebuiltPack, SizeResult } from './api';
@@ -128,7 +129,7 @@ function Hero({ meta }: { meta: Load<Meta> }) {
           <li>{counted(meta.value.objects, 'קובץ אחד', 'קבצים')}</li>
           <li>{ltr(formatMb(meta.value.bytes))}</li>
           <li>שנים: {meta.value.years.map(yearLabel).join(', ')}</li>
-          <li>עודכן {new Date(meta.value.publishedAt).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}</li>
+          <li>עודכן {new HDate(new Date(meta.value.publishedAt)).renderGematriya(true)}</li>
         </ul>
       )}
     </section>
