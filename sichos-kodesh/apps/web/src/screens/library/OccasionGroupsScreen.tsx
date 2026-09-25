@@ -19,12 +19,12 @@ export function OccasionGroupsScreen({ axis }: Props) {
     <div className="screen">
       <ScreenHeader to="/library" title={axis === 'moadim' ? t.libraryByMoed : t.libraryByParsha} />
       {!library && <LibraryLoading />}
-      <ul className="year-list">
+      <ul className="year-list library-list">
         {groups.map((group) => (
           <li key={group.slug}>
             <Link className="year-row" to={`/library/${axis}/${encodeURIComponent(group.slug)}`}>
               <span className="year-row-year">{occasionGroupName(group, language)}</span>
-              <span className="year-row-distance">{group.occasionIds.length}</span>
+              <span className="library-count">{group.occasionIds.length}</span>
             </Link>
           </li>
         ))}

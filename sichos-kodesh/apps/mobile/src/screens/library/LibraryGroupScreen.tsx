@@ -29,12 +29,12 @@ export function LibraryGroupScreen({ navigation, route }: LibraryGroupScreenProp
       </Subtitle>
       {collection === 'likkuteiSichos' && slug === '40' && <TabHelp>{t.libraryDisputedNote}</TabHelp>}
       {items.length === 0 && <EmptyState text={t.libraryNotFound} />}
-      {items.map((item) => {
+      {items.map((item, index) => {
         // The group this list is (a sicha's parsha) is already its title: not repeated under each item.
         const line = itemSubtitle(collection, item, language);
         const subtitle = line === title ? '' : line;
         return (
-          <Row key={item.id} label={itemTitle(collection, item, language)} marquee onPress={() => navigation.navigate('LibraryItem', { collection, id: item.id })}>
+          <Row key={item.id} label={itemTitle(collection, item, language)} marquee divider={index > 0} onPress={() => navigation.navigate('LibraryItem', { collection, id: item.id })}>
             {subtitle ? (
               <AppText numberOfLines={2} style={[styles.subtitle, { color: colors.muted }]}>
                 {subtitle}

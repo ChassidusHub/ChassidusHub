@@ -21,6 +21,8 @@ interface RowProps {
   onPress?: () => void;
   /** Extra content below the label line - the home page's Continue rows put a date and progress track here. */
   children?: ReactNode;
+  /** Web: `.library-list > li + li` - a hairline above the row, between it and the one before. */
+  divider?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -30,7 +32,7 @@ interface RowProps {
  * list's own edge on both sides (negative horizontal margin), and an
  * optional trailing group on the opposite side.
  */
-export function Row({ label, trailing, selected = false, marquee = false, muted = false, onPress, children, style }: RowProps) {
+export function Row({ label, trailing, selected = false, marquee = false, muted = false, onPress, children, divider = false, style }: RowProps) {
   const colors = useColors();
   const { isRtl } = useTranslation();
 
@@ -53,7 +55,7 @@ export function Row({ label, trailing, selected = false, marquee = false, muted 
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.cardHover }, style]}
+      style={({ pressed }) => [styles.row, divider && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }, pressed && { backgroundColor: colors.cardHover }, style]}
     >
       {children ? (
         <View style={styles.column}>
@@ -73,6 +75,17 @@ export function RowTrailing({ children }: { children: ReactNode }) {
   return <View style={[styles.trailing, { flexDirection: row(isRtl) }, marginStart(isRtl, 12)]}>{children}</View>;
 }
 
+/** Web: `.library-count` - a count in a small pill on a row's trailing side. */
+export function RowCount({ children }: { children: ReactNode }) {
+  const colors = useColors();
+  const { isRtl } = useTranslation();
+  return (
+    <View style={[styles.count, { backgroundColor: colors.cardBg }, marginStart(isRtl, 12)]}>
+      <AppText style={[styles.countText, { color: colors.muted }]}>{children}</AppText>
+    </View>
+  );
+}
+
 /** Web: `.year-row-distance` - the muted, 14px/500 secondary text on a row's trailing side. */
 export function RowDistance({ children, standalone = true }: { children: ReactNode; standalone?: boolean }) {
   const colors = useColors();
@@ -81,6 +94,9 @@ export function RowDistance({ children, standalone = true }: { children: ReactNo
 }
 
 const styles = StyleSheet.create({
+  /** Web: `.library-count`. */
+  count: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 2, flexShrink: 0 },
+  countText: { fontSize: 12, fontWeight: '600', fontVariant: ['tabular-nums'] },
   /** Web: `.year-row` - padding 14px 10px, margin 0 -10px, radius 8. */
   row: { borderRadius: 8, paddingVertical: 14, paddingHorizontal: 10, marginHorizontal: -10 },
   line: { justifyContent: 'space-between', alignItems: 'center', minWidth: 0 },

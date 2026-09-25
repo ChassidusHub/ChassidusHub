@@ -34,8 +34,9 @@ export function OccasionGroupScreen({ navigation, route }: OccasionGroupScreenPr
       {byYear.map(({ year, entries: yearEntries }, index) => (
         <React.Fragment key={year}>
           <CategoryHeader first={index === 0}>{hebrewYearLabel(year, language)}</CategoryHeader>
-          {yearEntries.map((entry) => (
+          {yearEntries.map((entry, i) => (
             <Row
+              divider={i > 0}
               key={entry.occasionId}
               label={occasionTitle(entry, language)}
               trailing={

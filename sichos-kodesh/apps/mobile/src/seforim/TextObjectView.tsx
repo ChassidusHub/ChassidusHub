@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TextStyle } from 'react-native';
-import { markLabel, noteLabel, notesAfterText, readerFont, readerLineHeight, readerTextSize, referencedNotes, stripNiqqud, type Footnote, type Inline, type ReaderPalette, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
+import { markLabel, noteLabel, notesAfterText, readerFont, readerLineHeight, readerTextSize, referencedNotes, stripNiqqud, type Block, type Footnote, type Inline, type ReaderPalette, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
 import { useTranslation } from '../i18n/useTranslation';
 import { AppText } from '../ui/Text';
 
@@ -98,6 +98,11 @@ function Runs({ inlines, context }: { inlines: Inline[]; context: RunContext }) 
  * letter) follow the text unnumbered, wherever the notes go. The credit
  * line closes the unit.
  */
+/** The first paragraph after a letter's date line and city, which stands a line below them. */
+function isAfterDateline(blocks: Block[], i: number): boolean {
+  return i > 0 && blocks[i - 1]!.role === 'dateline' && blocks[i]!.role !== 'dateline';
+}
+
 export function TextObjectView({ text, settings, palette, onShare }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState<Footnote | null>(null);
@@ -148,8 +153,10 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
               {
                 fontSize: size,
                 lineHeight,
-                textAlign: block.align === 'end' ? end : settings.justify ? 'justify' : start,
-                marginBottom: Math.round(size * 0.7),
+                textAlign: block.align === 'end' ? end : block.align === 'center' ? 'center' : settings.justify ? 'justify' : start,
+                // A letter's head and foot (app-core's layoutLetter): the date line and city close together, a gap before the addressee, the greeting set apart, the signature after a gap.
+                marginBottom: Math.round(size * (block.role === 'dateline' || block.role === 'signature' ? 0.15 : block.role === 'addressee' ? 0.3 : block.role === 'greeting' ? 1 : 0.7)),
+                marginTop: block.role === 'greeting' ? Math.round(size * 0.5) : block.role === 'signature' && text.blocks[i - 1]?.role !== 'signature' ? Math.round(size * 1) : isAfterDateline(text.blocks, i) ? Math.round(size * 0.9) : 0,
               },
               pressed === i ? { backgroundColor: palette.rule } : null,
             ]}

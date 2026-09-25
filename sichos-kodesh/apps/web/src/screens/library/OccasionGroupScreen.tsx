@@ -39,7 +39,7 @@ export function OccasionGroupScreen({ axis, slug }: Props) {
       {byYear.map(({ year, entries: yearEntries }) => (
         <Fragment key={year}>
           <h2 className="category-header">{hebrewYearLabel(year, language)}</h2>
-          <ul className="year-list">
+          <ul className="year-list library-list">
             {yearEntries.map((entry) => (
               <li key={entry.occasionId}>
                 <Link className="year-row" to={`/browse/${entry.hebrewYear}/${entry.occasionId}`}>

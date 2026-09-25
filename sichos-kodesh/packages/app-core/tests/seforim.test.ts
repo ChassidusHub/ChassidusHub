@@ -6,7 +6,7 @@ import { emptyReadingState, parseReadingState, recentPlaces, withBookmarkToggled
 import { authorSections, chooseEdition, citation, contentsAt, editionLabel, linkEditions, neighbours, pathToUnit, snippetAround, unitCount, unitPart, unitPosition, unitsAreLetters, workKind } from '../src/seforim/seforimModel.js';
 import { searchNames } from '../src/seforim/searchNames.js';
 import { fetchFromSefaria, TextLoadError } from '../src/seforim/sefariaText.js';
-import { markLabel, noteLabel, notesAfterText, parseTextObject, referencedNotes, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
+import { layoutLetter, markLabel, noteLabel, notesAfterText, parseTextObject, referencedNotes, stripNiqqud, textObjectPlainText } from '../src/seforim/textObject.js';
 import { fetchHostedText, fetchUnitText, hostedTextUrl, utf8Length } from '../src/seforim/unitText.js';
 
 // Invented works and texts in the catalog's shape - not real editions.
@@ -163,6 +163,42 @@ describe('searching names', () => {
   });
 });
 
+describe('a letter of the Igros', () => {
+  // The shape packages/igros-index writes (textObjects.ts), with invented words.
+  const letter = (addressee: string, greeting: string) =>
+    parseTextObject(
+      '<article dir="rtl" lang="he" data-id="igros:3007">' +
+        '<p class="end">ב"ה, ח\' מ"ח, תשט"ו</p><p class="end">ברוקלין.</p>' +
+        addressee +
+        `<p>${greeting}</p><p>גוף המכתב.</p><p>ועוד.</p>` +
+        '<p class="end"><b>מ. שניאורסאהן</b></p>' +
+        '<footer class="source">אגרות קודש חלק י</footer></article>',
+    );
+
+  it('is laid out as printed: the date line and city at the end, the addressee in bold, the greeting centred, the signature at the end', () => {
+    const text = letter('<p>הרה"ח וכו\' פלוני שי\'</p>', 'שלום וברכה!');
+    expect(text.id).toBe('igros:3007');
+    expect(text.blocks.map((b) => [b.role ?? null, b.align ?? null])).toEqual([
+      ['dateline', 'end'],
+      ['dateline', 'end'],
+      ['addressee', null],
+      ['greeting', 'center'],
+      [null, null],
+      [null, null],
+      ['signature', 'end'],
+    ]);
+    expect(text.blocks[2]!.inlines.every((inline) => inline.bold)).toBe(true);
+  });
+
+  it('keeps its paragraphs as they are when no greeting stands near the top, and leaves other texts alone', () => {
+    const text = letter('', 'במענה על מכתבו מיום ועוד כמה מילים שאינן ברכה כלל.');
+    expect(text.blocks.filter((b) => b.role === 'greeting' || b.role === 'addressee')).toEqual([]);
+    const plain = parseTextObject('<article dir="rtl" lang="he"><p class="end">סוף</p><p>שלום וברכה!</p></article>');
+    expect(plain.blocks.map((b) => b.role)).toEqual([undefined, undefined]);
+    expect(layoutLetter(plain).blocks[1]!.align).toBe('center');
+  });
+});
+
 describe('markers', () => {
   it('are bracketed once, whether or not Sefaria bracketed them', () => {
     expect(markLabel('[מ: כד כסלו]')).toBe('[מ: כד כסלו]');
@@ -249,7 +285,7 @@ describe('a letter of the Igros as the reader reads it', () => {
 
   it('sets the date line and the signature to the end side, and lists the notes after it, unnumbered, wherever the notes go', () => {
     const text = parseTextObject(letter);
-    expect(text.blocks.map((b) => b.align ?? null)).toEqual(['end', null, null, 'end']);
+    expect(text.blocks.map((b) => b.align ?? null)).toEqual(['end', 'center', null, 'end']);
     expect(text.notes).toHaveLength(2);
     expect(referencedNotes(text).size).toBe(0);
     expect(notesAfterText(text, 'end')).toHaveLength(2);

@@ -11,6 +11,10 @@
  *   <footer class="source">...</footer>              the credit line
  *   <p class="end">                                  a line set to the end side (a letter's date, its signature)
  *
+ * A letter of the Igros (`data-id="igros:..."`) is laid out as the volumes
+ * print it (`layoutLetter`): its date line and city at the end side, the
+ * addressee in bold, the greeting centred, the signature at the end side.
+ *
  * Anything else is read as its text. A note need not be pointed to from
  * the text: the Igros' notes on a letter stand after it with no mark in the
  * letter (see `notesAfterText`).
@@ -27,11 +31,16 @@ export interface Inline {
   note?: number;
 }
 
+/** The part of a letter's head or foot a paragraph is (see `layoutLetter`). */
+export type LetterRole = 'dateline' | 'addressee' | 'greeting' | 'signature';
+
 export interface Block {
   kind: 'heading' | 'paragraph';
   level?: number;
-  /** `end`: set to the line's end side, as a letter's date line and signature are printed. */
-  align?: 'end';
+  /** `end`: set to the line's end side, as a letter's date line and signature are printed; `center`: a letter's greeting. */
+  align?: 'end' | 'center';
+  /** In a letter: which part of its head or foot this is. */
+  role?: LetterRole;
   inlines: Inline[];
 }
 
@@ -42,6 +51,8 @@ export interface Footnote {
 }
 
 export interface TextObject {
+  /** The article's `data-id`, when it has one: `igros:41`. */
+  id?: string;
   dir: 'rtl' | 'ltr';
   lang: string;
   heading: string | null;
@@ -160,6 +171,7 @@ export function parseTextObject(html: string): TextObject {
     if (name === 'article' && !closing) {
       if (attrs.dir === 'ltr' || attrs.dir === 'rtl') result.dir = attrs.dir;
       if (attrs.lang) result.lang = attrs.lang;
+      if (attrs['data-id']) result.id = attrs['data-id'];
       continue;
     }
     if (name === 'footer') {
@@ -230,7 +242,56 @@ export function parseTextObject(html: string): TextObject {
   }
   closeBlock();
   result.source = sourceText.replace(/\s+/g, ' ').trim() || null;
-  return result;
+  return result.id?.startsWith('igros:') ? layoutLetter(result) : result;
+}
+
+/** A letter's greeting: a short line of its own, שלום וברכה!, ברכה ושלום, or the English letters' Greeting and Blessing. */
+const GREETING = /^(שלום|שלו׳|שלו'|ברכה|ש"ו|שו"ב|שו״ב|greeting|sholom|shalom)/i;
+const GREETING_MAX = 32;
+
+function blockText(block: Block): string {
+  return block.inlines
+    .map((inline) => inline.text)
+    .join('')
+    .replace(/[\u0591-\u05C7]/g, '')
+    .trim();
+}
+
+/**
+ * A letter laid out as the Igros print it: the date line (ב"ה, the date)
+ * and the city at the end side at the top; then the addressee, in bold;
+ * the greeting on a line of its own, centred; the body; and the signature
+ * at the end side. The date line and signature arrive marked for the end
+ * side already (packages/igros-index); the addressee and the greeting are
+ * found by their place - what stands between the date line and a short
+ * greeting line among the first few paragraphs. A letter with no such
+ * greeting keeps its paragraphs as they are.
+ */
+export function layoutLetter(text: TextObject): TextObject {
+  const blocks = text.blocks.map((block) => ({ ...block }));
+  let first = 0;
+  while (first < blocks.length && blocks[first]!.align === 'end') {
+    blocks[first]!.role = 'dateline';
+    first++;
+  }
+  let last = blocks.length - 1;
+  while (last >= first && blocks[last]!.align === 'end') {
+    blocks[last]!.role = 'signature';
+    last--;
+  }
+  for (let i = first; i <= Math.min(last, first + 3); i++) {
+    const block = blocks[i]!;
+    const words = blockText(block);
+    if (block.kind !== 'paragraph' || words.length > GREETING_MAX || !GREETING.test(words)) continue;
+    block.align = 'center';
+    block.role = 'greeting';
+    for (let a = first; a < i; a++) {
+      blocks[a]!.role = 'addressee';
+      blocks[a]!.inlines = blocks[a]!.inlines.map((inline) => (inline.kind === 'text' ? { ...inline, bold: true } : inline));
+    }
+    break;
+  }
+  return { ...text, blocks };
 }
 
 /** The notes the text points to, by number. */

@@ -4,7 +4,8 @@ import { useLibrary } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { AXIS_VARIANTS, COLLECTION_AXES, axisGroups, axisTab, groupDisplayName, isCollectionAxis } from '@sichos-kodesh/app-core';
 import type { LibraryCollectionScreenProps } from '../../navigation/types';
-import { Row, RowDistance } from '../../ui/Row';
+import { GroupGrid, GroupTile } from '../../ui/GroupGrid';
+import { Row, RowCount } from '../../ui/Row';
 import { Screen } from '../../ui/Screen';
 import { ScreenHeader } from '../../ui/ScreenHeader';
 import { TabHelp } from '../../ui/Typography';
@@ -16,6 +17,9 @@ import { Segmented } from '../../ui/settings/SettingsControls';
  * (Melukat: its six volumes, or its edition by the months in four parts)
  * adds a second, smaller toggle under the tabs.
  */
+/** A group whose name is at most this long goes in a tile (web: the same). */
+const COMPACT_NAME = 10;
+
 export function LibraryCollectionScreen({ navigation, route }: LibraryCollectionScreenProps) {
   const library = useLibrary();
   const { t, language } = useTranslation();
@@ -25,6 +29,7 @@ export function LibraryCollectionScreen({ navigation, route }: LibraryCollection
   const tab = axisTab(axis);
   const variants = (AXIS_VARIANTS[tab] ?? []).filter((variant) => axisGroups(library, collection, variant).length > 0);
   const groups = axisGroups(library, collection, axis);
+  const compact = groups.length > 0 && groups.every((group) => groupDisplayName(collection, axis, group, language).length <= COMPACT_NAME);
 
   return (
     <Screen header={<ScreenHeader back={{ name: 'Library', params: undefined }} title={t.collectionNames[collection]} />}>
@@ -49,14 +54,29 @@ export function LibraryCollectionScreen({ navigation, route }: LibraryCollection
           />
         </View>
       )}
-      {groups.map((group) => (
-        <Row
-          key={`${axis}:${group.slug}`}
-          label={groupDisplayName(collection, axis, group, language)}
-          trailing={<RowDistance>{group.itemIds.length}</RowDistance>}
-          onPress={() => navigation.navigate('LibraryGroup', { collection, axis, slug: group.slug })}
-        />
-      ))}
+      {/* Short names (years, months, parshiyos) as a grid of tiles; long ones (moadim, the Melukat's parts) as a list. */}
+      {compact ? (
+        <GroupGrid>
+          {groups.map((group) => (
+            <GroupTile
+              key={`${axis}:${group.slug}`}
+              label={groupDisplayName(collection, axis, group, language)}
+              count={group.itemIds.length}
+              onPress={() => navigation.navigate('LibraryGroup', { collection, axis, slug: group.slug })}
+            />
+          ))}
+        </GroupGrid>
+      ) : (
+        groups.map((group, index) => (
+          <Row
+            key={`${axis}:${group.slug}`}
+            label={groupDisplayName(collection, axis, group, language)}
+            trailing={<RowCount>{group.itemIds.length}</RowCount>}
+            divider={index > 0}
+            onPress={() => navigation.navigate('LibraryGroup', { collection, axis, slug: group.slug })}
+          />
+        ))
+      )}
     </Screen>
   );
 }

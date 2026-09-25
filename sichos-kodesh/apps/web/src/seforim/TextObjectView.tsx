@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { markLabel, noteLabel, notesAfterText, referencedNotes, stripNiqqud, type Footnote, type Inline, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
+import { markLabel, noteLabel, notesAfterText, referencedNotes, stripNiqqud, type Block, type Footnote, type Inline, type ReaderSettings, type TextObject } from '@sichos-kodesh/app-core';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
@@ -67,6 +67,13 @@ function Runs({ inlines, context }: { inlines: Inline[]; context: RunContext }) 
  * wherever the notes go. Size, font, spacing, margins, paper and
  * justification come from the reader's CSS variables.
  */
+/** A paragraph's classes: set to the end side or centred, and its part of a letter's head or foot (app-core's layoutLetter). */
+function paragraphClass(block: Block): string {
+  return ['reader-paragraph', block.align === 'end' && 'reader-paragraph-end', block.align === 'center' && 'reader-paragraph-center', block.role && `reader-letter-${block.role}`]
+    .filter(Boolean)
+    .join(' ');
+}
+
 export function TextObjectView({ text, settings }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState<Footnote | null>(null);
@@ -84,7 +91,7 @@ export function TextObjectView({ text, settings }: Props) {
             <Runs inlines={block.inlines} context={context} />
           </h3>
         ) : (
-          <p key={i} className={block.align === 'end' ? 'reader-paragraph reader-paragraph-end' : 'reader-paragraph'}>
+          <p key={i} className={paragraphClass(block)}>
             <Runs inlines={block.inlines} context={context} />
           </p>
         ),

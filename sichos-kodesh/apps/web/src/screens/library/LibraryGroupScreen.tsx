@@ -36,7 +36,7 @@ export function LibraryGroupScreen({ collection, axis, slug }: Props) {
           <p className="empty-state-text">{t.libraryNotFound}</p>
         </div>
       )}
-      <ul className="year-list">
+      <ul className="year-list library-list">
         {items.map((item) => {
           // The group this list is (a sicha's parsha) is already its title: not repeated under each item.
           const line = itemSubtitle(collection, item, language);

@@ -747,6 +747,77 @@ h1 {
   padding: 0;
 }
 
+/* A collection's groups with short names - years, months, parshiyos - as a grid of tiles, each with its count. */
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 560px) {
+  .library-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.library-grid-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--fg);
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.library-grid-tile:hover {
+  background: var(--card-hover);
+}
+
+.library-grid-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.library-grid-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.library-grid-count {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A list of long names or of items: a hairline between rows, the count in a small pill. */
+.library-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.library-count {
+  flex-shrink: 0;
+  margin-inline-start: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .active-downloads-list {
   list-style: none;
   margin: 0 0 20px;
@@ -2916,6 +2987,34 @@ body:has(.reader) {
 /* A line set to the end side, as a letter's date line and signature are printed. */
 .reader-paragraph-end {
   text-align: end;
+}
+
+/* A letter as the Igros print it (app-core's layoutLetter): the date line
+   and city close together at the end side, the addressee in bold, the
+   greeting on a line of its own in the middle, the signature at the end. */
+.reader-paragraph-center {
+  text-align: center;
+}
+
+.reader-letter-dateline {
+  margin-bottom: 0.15em;
+}
+
+.reader-letter-dateline + .reader-paragraph:not(.reader-letter-dateline) {
+  margin-top: 0.9em;
+}
+
+.reader-letter-addressee {
+  margin-bottom: 0.3em;
+}
+
+.reader-letter-greeting {
+  margin: 0.5em 0 1em;
+}
+
+.reader-letter-signature {
+  margin-top: 1em;
+  margin-bottom: 0.15em;
 }
 
 .reader-subheading {
