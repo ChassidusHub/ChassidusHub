@@ -1,6 +1,9 @@
+import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Contrast, Loader2, WifiOff } from 'lucide-react';
+import { Loader2, SlidersHorizontal, WifiOff } from 'lucide-react';
+import { pdfCssFilter } from '@sichos-kodesh/app-core';
+import type { PdfColors } from '@sichos-kodesh/app-core';
 import type { PDFDocumentLoadingTask } from 'pdfjs-dist';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { pdfUrl } from '../download/download';
@@ -9,6 +12,8 @@ import { loadPdfDocument, renderPdfPages } from '../pdf/renderPdf';
 import { getOccasionProgress, getPdfScrollFraction, recordPdfProgress } from '../player/progressStore';
 import { useProgressMap } from '../player/useProgressMap';
 import { usePdfInversion } from '../settings/useInvertPdfInDarkMode';
+import { setPdfLook, usePdfLook } from '../settings/pdfLook';
+import { PdfSettingsPanel } from './PdfSettingsPanel';
 import { useBaseScheme } from '../settings/useResolvedScheme';
 import { applySchemeOverride } from '../settings/useTheme';
 import { useTranslation } from '../i18n/useLanguage';
@@ -48,13 +53,44 @@ export function PdfViewerScreen({ resolved }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null });
   const [zoomed, setZoomed] = useState(false);
-  // The colours button flips the pages between black-on-white and
-  // white-on-black for the user's own theme, and remembers the choice per
-  // theme (see useInvertPdfInDarkMode.ts) - so night reading stays
-  // inverted while a daytime flip doesn't change the night default.
+  // Dark pages (white on black) are chosen for the user's own theme and
+  // remembered per theme (see useInvertPdfInDarkMode.ts) - so night reading
+  // stays dark while a daytime choice doesn't change the night default.
+  // The rest of the look (a tint, contrast, paging, the screen kept on) is
+  // one setting (settings/pdfLook.ts); the header button opens both.
   const scheme = useBaseScheme();
   const [invertedFor, setInvertedFor] = usePdfInversion();
   const inverted = invertedFor(scheme);
+  const look = usePdfLook();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const pageColors: PdfColors = inverted ? 'dark' : look.tint;
+  const chooseColors = (next: PdfColors) => {
+    setInvertedFor(scheme, next === 'dark');
+    if (next !== 'dark') setPdfLook({ tint: next });
+  };
+  // The screen stays on while a PDF is open, if asked (Screen Wake Lock, where the browser has it).
+  useEffect(() => {
+    if (!look.keepAwake || !('wakeLock' in navigator)) return;
+    let lock: WakeLockSentinel | null = null;
+    let alive = true;
+    const acquire = () => {
+      if (document.visibilityState !== 'visible') return;
+      navigator.wakeLock.request('screen').then(
+        (sentinel) => {
+          if (alive) lock = sentinel;
+          else sentinel.release().catch(() => undefined);
+        },
+        () => undefined,
+      );
+    };
+    acquire();
+    document.addEventListener('visibilitychange', acquire);
+    return () => {
+      alive = false;
+      document.removeEventListener('visibilitychange', acquire);
+      lock?.release().catch(() => undefined);
+    };
+  }, [look.keepAwake]);
   // Flipped pages get the dark chrome, plain pages the light one - the
   // header and background follow the page rather than sitting in the
   // opposite palette next to it. Cleared on the way out, so the app
@@ -183,14 +219,17 @@ export function PdfViewerScreen({ resolved }: Props) {
   }
 
   return (
-    <div className={['pdf-viewer-screen', zoomed && 'zoomed', inverted && 'pdf-inverted'].filter(Boolean).join(' ')}>
+    <div
+      className={['pdf-viewer-screen', zoomed && 'zoomed', inverted && 'pdf-inverted', look.paging === 'pages' && 'pdf-paged'].filter(Boolean).join(' ')}
+      style={{ '--pdf-filter': pdfCssFilter(pageColors, look.contrast) } as CSSProperties}
+    >
       <ScreenHeader
         to={resolved.basePath}
         title={pdf.label}
         className="screen-header-inset"
         action={
-          <button type="button" className="icon-button" onClick={() => setInvertedFor(scheme, !inverted)} aria-label={t.pdfInvertToggle} aria-pressed={inverted} title={t.pdfInvertToggle}>
-            <Contrast size={20} aria-hidden />
+          <button type="button" className="icon-button" onClick={() => setSheetOpen(true)} aria-label={t.pdfSettings} title={t.pdfSettings}>
+            <SlidersHorizontal size={20} aria-hidden />
           </button>
         }
       />
@@ -227,6 +266,7 @@ export function PdfViewerScreen({ resolved }: Props) {
       </div>
 
       <div ref={containerRef} className="pdf-pages" />
+      {sheetOpen && <PdfSettingsPanel look={look} colors={pageColors} onColors={chooseColors} onClose={() => setSheetOpen(false)} />}
     </div>
   );
 }

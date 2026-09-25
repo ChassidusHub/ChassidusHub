@@ -1893,16 +1893,40 @@ h1 {
   display: block;
 }
 
-/* Inverted page colours (white text on black) - a class the reader itself
-   sets from the per-theme flags in useInvertPdfInDarkMode.ts (on by
-   default in dark mode, off in light mode, and flipped for the current
-   theme by the colours button in the header), so a theme switch and the
-   button both take effect without touching <html>. `hue-rotate(180deg)`
-   alongside `invert(1)` un-inverts hue while keeping the inverted
-   lightness - a plain `invert(1)` alone would also flip every color (red
-   text would render blue), not just light-vs-dark. */
-.pdf-viewer-screen.pdf-inverted .pdf-page canvas {
-  filter: invert(1) hue-rotate(180deg);
+/* The pages' colours (app-core's pdfCssFilter, set by the reader as
+   --pdf-filter): dark pages from the per-theme flags in
+   useInvertPdfInDarkMode.ts (on by default in dark mode, off in light
+   mode), else the tint and contrast of the settings sheet. For dark
+   pages `hue-rotate(180deg)` alongside `invert(1)` un-inverts hue while
+   keeping the inverted lightness - a plain `invert(1)` alone would also
+   flip every color (red text would render blue), not just light-vs-dark. */
+.pdf-viewer-screen .pdf-page canvas {
+  filter: var(--pdf-filter, none);
+}
+
+/* A page at a time (the settings sheet's "Pages"): the document snaps to
+   each page's top, below the sticky header; not while zoomed in, where
+   panning a page needs the free scroll. */
+html:has(.pdf-viewer-screen.pdf-paged:not(.zoomed)) {
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 64px;
+}
+
+.pdf-viewer-screen.pdf-paged .pdf-page {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* The PDF colours drawn as small pages, taller than wide. */
+.reader-swatch.pdf-swatch {
+  width: 46px;
+  height: 58px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.pdf-settings-note {
+  margin: 0 4px;
 }
 
 /* The single fixed-position container at the bottom of the viewport - both
@@ -3080,7 +3104,8 @@ body:has(.reader) {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.25);
+  /* Lightens as the sheet is dragged down (SettingsSheet sets the shade). */
+  background: rgba(0, 0, 0, calc(0.25 * var(--sheet-shade, 1)));
 }
 
 .reader-panel {
@@ -3098,6 +3123,40 @@ body:has(.reader) {
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
   color: var(--fg);
   outline: none;
+  /* Follows the finger down (SettingsSheet), springs back or slides away. */
+  overscroll-behavior: contain;
+  transform: translateY(var(--sheet-offset, 0px));
+  transition: transform 0.18s ease-out;
+  animation: reader-panel-in 0.22s ease-out;
+}
+
+.reader-panel-dragging {
+  transition: none;
+}
+
+@keyframes reader-panel-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* The handle a thumb pulls the sheet down by (a phone only). */
+.reader-panel-grabber {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 40px;
+  height: 4px;
+  margin-left: -20px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-panel {
+    animation: none;
+    transition: none;
+  }
 }
 
 @media (min-width: 900px) {
@@ -3111,6 +3170,12 @@ body:has(.reader) {
   .reader-panel {
     max-height: calc(100vh - 100px);
     border-radius: 16px;
+    transform: none;
+    animation: none;
+  }
+
+  .reader-panel-grabber {
+    display: none;
   }
 }
 
@@ -3125,9 +3190,13 @@ body:has(.reader) {
 }
 
 .reader-panel-head {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top: 6px;
+  /* The whole head is the handle: no scrolling starts here. */
+  touch-action: none;
 }
 
 .reader-panel-head h2 {

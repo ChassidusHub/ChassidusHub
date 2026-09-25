@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
-import { Contrast } from 'lucide-react-native';
+import { SlidersHorizontal } from 'lucide-react-native';
 import Pdf from 'react-native-pdf';
+import { pdfFilters } from '@sichos-kodesh/app-core';
+import type { PdfColors } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { downloadPdf, localPdfPathIfExists, pdfUrl } from '../download/download';
 import { useTranslation } from '../i18n/useTranslation';
@@ -9,6 +11,7 @@ import type { PdfViewerScreenProps } from '../navigation/types';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure, reportFetchSuccess } from '../network/connectivity';
 import { getOccasionProgress, getPdfPage, readProgressMap, recordPdfProgress } from '../player/progressStore';
 import { useInvertPdfInDarkMode, useInvertPdfInLightMode } from '../settings/invertPdfInDarkMode';
+import { setPdfLook, usePdfLook } from '../settings/pdfLook';
 import type { BackTarget } from '../ui/BackLink';
 import { Button } from '../ui/Button';
 import { OfflineNote } from '../ui/OfflineNote';
@@ -18,6 +21,8 @@ import { Spinner } from '../ui/Spinner';
 import { AppText } from '../ui/Text';
 import { GapMessage } from '../ui/Typography';
 import { lightColors, useTheme } from '../ui/theme';
+import { setKeepScreenOn } from '../ui/systemBars';
+import { PdfSettingsSheet } from './PdfSettingsSheet';
 import { row } from '../ui/rtl';
 
 type LoadState = { status: 'loading'; percent: number | null; path: string | null } | { status: 'ready'; path: string } | { status: 'error'; message: string; offline: boolean };
@@ -48,9 +53,9 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
     [driveFileId, entry, label, library, resourceKey],
   );
   const savedPage = useMemo(() => (entry ? getPdfPage(getOccasionProgress(readProgressMap(), entry.hebrewYear, entry.occasionId), driveFileId) : undefined), [driveFileId, entry]);
-  // The web's `.pdf-inverted .pdf-page canvas { filter: invert(1) hue-rotate(180deg) }`,
-  // applied to the native viewer through React Native's own `filter` style.
-  // The colours button in the header flips it for the user's own theme,
+  // Dark pages: the web's `invert(1) hue-rotate(180deg)`, applied to the
+  // native viewer through React Native's own `filter` style (see pdfFilters).
+  // The settings sheet's "Dark" choice sets it for the user's own theme,
   // remembered per theme (see settings/invertPdfInDarkMode.ts) - so night
   // reading stays inverted while a daytime flip doesn't change the night
   // default. `baseScheme`, not `scheme`: while reading, the whole screen
@@ -67,9 +72,22 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
     return () => setSchemeOverride(null);
   }, [baseScheme, inverted, setSchemeOverride]);
   const backTarget: BackTarget = library ? { name: 'LibraryItem', params: library } : { name: 'Farbrengen', params: { kind: 'browse', hebrewYear, occasionId } };
-  const colourToggle = (
-    <Pressable onPress={() => setInverted(!inverted)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.pdfInvertToggle} accessibilityState={{ selected: inverted }} style={({ pressed }) => [styles.headerAction, pressed && { backgroundColor: colors.cardBg }]}>
-      <Contrast size={20} color={inverted ? colors.accent : colors.muted} />
+  // The rest of how the pages look (app-core's PdfLook): a tint when they aren't dark, contrast, paging, the screen kept on.
+  const look = usePdfLook();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const pageColors: PdfColors = inverted ? 'dark' : look.tint;
+  const chooseColors = (next: PdfColors) => {
+    setInverted(next === 'dark');
+    if (next !== 'dark') setPdfLook({ tint: next });
+  };
+  const filter = pdfFilters(pageColors, look.contrast);
+  useEffect(() => {
+    setKeepScreenOn(look.keepAwake);
+    return () => setKeepScreenOn(false);
+  }, [look.keepAwake]);
+  const settingsButton = (
+    <Pressable onPress={() => setSheetOpen(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t.pdfSettings} style={({ pressed }) => [styles.headerAction, pressed && { backgroundColor: colors.cardBg }]}>
+      <SlidersHorizontal size={20} color={colors.muted} />
     </Pressable>
   );
 
@@ -137,7 +155,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const path = state.status === 'error' ? null : state.path;
 
   return (
-    <Screen scroll={false} header={<ScreenHeader back={backTarget} title={pdf.label} inset action={colourToggle} />}>
+    <Screen scroll={false} header={<ScreenHeader back={backTarget} title={pdf.label} inset action={settingsButton} />}>
       <View style={styles.status}>
         {state.status === 'loading' && !path && (
           <View style={[styles.loading, { flexDirection: row(isRtl) }]}>
@@ -166,7 +184,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
       </View>
 
       {path && (
-        <View style={[styles.pdfWrap, inverted && styles.pdfInverted]}>
+        <View style={[styles.pdfWrap, filter.length > 0 && { filter }]}>
           {/* Inverted along with the pages, so the gap between pages matches them: the light theme's card colour flips to the dark theme's (the chrome is dark whenever the pages are - see the override above). */}
           <Pdf
             key={driveFileId}
@@ -175,6 +193,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
             style={[styles.pdf, { backgroundColor: inverted ? lightColors.cardBg : colors.cardBg }]}
             enableDoubleTapZoom
             spacing={4}
+            enablePaging={look.paging === 'pages'}
             renderActivityIndicator={() => (
               <View style={styles.pdfLoading}>
                 <Spinner size={16} color={colors.muted} />
@@ -189,6 +208,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
           />
         </View>
       )}
+      <PdfSettingsSheet visible={sheetOpen} look={look} colors={pageColors} onColors={chooseColors} onClose={() => setSheetOpen(false)} />
     </Screen>
   );
 }
@@ -202,8 +222,6 @@ const styles = StyleSheet.create({
   pdfWrap: { flex: 1 },
   pdf: { flex: 1, width: '100%' },
   pdfLoading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  /** Web: `.pdf-inverted .pdf-page canvas` - invert(1) hue-rotate(180deg). */
-  pdfInverted: { filter: [{ invert: 1 }, { hueRotate: '180deg' }] },
   /** Web: `.icon-button` - a bare icon in a 36px circle. */
   headerAction: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

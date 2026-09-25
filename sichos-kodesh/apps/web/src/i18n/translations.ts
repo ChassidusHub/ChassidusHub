@@ -1,5 +1,6 @@
 import { gematriya } from '@hebcal/core';
 import type { LibraryCollectionId, PdfSection } from '@sichos-kodesh/catalog';
+import type { PdfColors, PdfPaging } from '@sichos-kodesh/app-core';
 
 export type Language = 'en' | 'he';
 
@@ -113,6 +114,16 @@ const en = {
   themeLabel: 'Theme',
   showPlayer: 'Show the player',
   playbackSpeed: 'Playback speed',
+  /** The PDF reader's settings sheet: the reader's, without the text's own options. */
+  pdfSettings: 'Page settings',
+  pdfColors: 'Colors',
+  pdfColorNames: { original: 'As scanned', sepia: 'Sepia', gray: 'Gray', dark: 'Dark' } satisfies Record<PdfColors, string>,
+  pdfContrast: 'Stronger contrast',
+  pdfContrastHelp: 'Darker ink, for a faint scan.',
+  pdfDisplay: 'Display',
+  pdfPaging: 'Pages',
+  pdfPagings: { scroll: 'Scroll', pages: 'One at a time' } satisfies Record<PdfPaging, string>,
+  pdfDarkNote: 'Dark pages are remembered separately for the light and the dark theme.',
   pdfInvertToggle: 'Invert page colors',
   autoplayHanachaLabel: 'Opening a hanacha switches the recording',
   autoplayHanachaHelp: "A hanacha always starts its own farbrengen's recording when nothing is playing. With this on, it also replaces a different recording that's already playing.",
@@ -505,6 +516,15 @@ const he: typeof en = {
   themeLabel: 'ערכת נושא',
   showPlayer: 'הצגת הנגן',
   playbackSpeed: 'מהירות ניגון',
+  pdfSettings: 'הגדרות תצוגה',
+  pdfColors: 'צבעים',
+  pdfColorNames: { original: 'כמו בסריקה', sepia: 'ספיה', gray: 'אפור', dark: 'כהה' } satisfies Record<PdfColors, string>,
+  pdfContrast: 'ניגודיות חזקה',
+  pdfContrastHelp: 'דיו כהה יותר, לסריקה דהויה.',
+  pdfDisplay: 'תצוגה',
+  pdfPaging: 'דפים',
+  pdfPagings: { scroll: 'גלילה', pages: 'דף אחר דף' } satisfies Record<PdfPaging, string>,
+  pdfDarkNote: 'דפים כהים נשמרים בנפרד לערכה הבהירה ולכהה.',
   pdfInvertToggle: 'היפוך צבעי העמוד',
   autoplayHanachaLabel: 'פתיחת הנחה מחליפה את ההקלטה',
   autoplayHanachaHelp: 'הנחה תמיד מפעילה את ההקלטה של ההתוועדות שלה כשלא מתנגן דבר. כשזה פועל, היא גם מחליפה הקלטה אחרת שכבר מתנגנת.',

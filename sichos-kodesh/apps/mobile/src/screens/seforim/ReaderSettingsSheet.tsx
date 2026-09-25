@@ -1,12 +1,12 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AArrowDown, AArrowUp } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEFAULT_READER_SETTINGS, FONT_SCALE_MAX, FONT_SCALE_MIN, READER_FONTS, READER_MARGINS, READER_SPACINGS, READER_THEME_IDS, clampScale, type ReaderSettings } from '@sichos-kodesh/app-core';
 import { useTranslation } from '../../i18n/useTranslation';
 import { readerPalette } from '../../seforim/readerPalette';
 import { setReaderSettings } from '../../seforim/readingState';
 import { Segmented, SettingRow, Toggle } from '../../ui/settings/SettingsControls';
+import { BottomSheet } from '../../ui/BottomSheet';
 import { AppText } from '../../ui/Text';
 import { useColors, lightColors } from '../../ui/theme';
 import { row } from '../../ui/rtl';
@@ -28,7 +28,6 @@ interface Props {
  */
 export function ReaderSettingsSheet({ visible, settings, onClose }: Props) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const { t, language, isRtl } = useTranslation();
   const set = (change: Partial<ReaderSettings>) => setReaderSettings(change);
   const percent = `${Math.round(settings.scale * 100)}%`;
@@ -38,115 +37,103 @@ export function ReaderSettingsSheet({ visible, settings, onClose }: Props) {
   const align = { textAlign: isRtl ? 'right' : 'left' } as const;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t.readerClose} />
-      <View style={[styles.sheet, { backgroundColor: colors.bgElevated, borderColor: colors.border, paddingBottom: insets.bottom + 12 }]}>
-        <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-        <AppText style={[styles.title, align]}>{t.readerSettings}</AppText>
-        <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-          <View style={[styles.sizeRow, flip, { backgroundColor: colors.cardBg }]}>
-            <Pressable accessibilityRole="button" accessibilityLabel={t.readerTextSmaller} disabled={settings.scale <= FONT_SCALE_MIN} onPress={() => set({ scale: smaller })} style={styles.sizeButton}>
-              <AArrowDown size={24} color={settings.scale <= FONT_SCALE_MIN ? colors.border : colors.fg} />
-            </Pressable>
-            <View style={styles.sizeValue}>
-              <AppText style={[styles.sizeLabel, { color: colors.muted }]}>{t.readerSize}</AppText>
-              <AppText style={styles.sizePercent}>{percent}</AppText>
-            </View>
-            <Pressable accessibilityRole="button" accessibilityLabel={t.readerTextLarger} disabled={settings.scale >= FONT_SCALE_MAX} onPress={() => set({ scale: larger })} style={styles.sizeButton}>
-              <AArrowUp size={24} color={settings.scale >= FONT_SCALE_MAX ? colors.border : colors.fg} />
-            </Pressable>
-          </View>
-
-          <AppText style={[styles.eyebrow, align, { color: colors.muted }]}>{t.readerFont}</AppText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.fonts, flip]}>
-            {READER_FONTS.map((font) => {
-              const on = font.id === settings.font;
-              return (
-                <Pressable
-                  key={font.id}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: on }}
-                  accessibilityLabel={font.name[language]}
-                  onPress={() => set({ font: font.id, fontChosen: true })}
-                  style={[styles.fontCard, { backgroundColor: colors.cardBg, borderColor: on ? colors.accent : 'transparent' }]}
-                >
-                  <Text numberOfLines={1} style={[styles.fontSample, { color: colors.fg, fontFamily: font.family ?? undefined }]}>
-                    {SAMPLE}
-                  </Text>
-                  <AppText numberOfLines={1} style={[styles.fontName, { color: on ? colors.accent : colors.muted }]}>
-                    {font.name[language]}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          <AppText style={[styles.eyebrow, align, { color: colors.muted }]}>{t.readerTheme}</AppText>
-          <View style={[styles.themes, flip]}>
-            {READER_THEME_IDS.map((theme) => {
-              const on = theme === settings.theme;
-              // "Like the app" shows the app's light page: the swatch is a picture, not the current scheme.
-              const swatch = theme === 'app' ? readerPalette('app', lightColors) : readerPalette(theme, colors);
-              return (
-                <Pressable key={theme} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t.readerThemes[theme]} onPress={() => set({ theme })} style={styles.theme}>
-                  <View style={[styles.swatch, { backgroundColor: swatch.background, borderColor: on ? colors.accent : colors.border, borderWidth: on ? 2 : 1 }]}>
-                    {theme === 'app' && <View style={[styles.swatchHalf, { backgroundColor: '#0a0a0a' }, isRtl ? styles.swatchHalfLeft : styles.swatchHalfRight]} />}
-                    <Text style={[styles.swatchLetter, { color: theme === 'app' ? lightColors.accent : swatch.text, fontFamily: 'FrankRuehlCLM' }]}>א</Text>
-                  </View>
-                  <AppText numberOfLines={1} style={[styles.themeName, { color: on ? colors.fg : colors.muted }]}>
-                    {t.readerThemes[theme]}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
-            <SettingRow label={t.readerSpacing} stack first>
-              <Segmented label={t.readerSpacing} value={settings.spacing} onChange={(spacing) => set({ spacing })} options={READER_SPACINGS.map((value) => ({ value, label: t.readerSpacings[value] }))} />
-            </SettingRow>
-            <SettingRow label={t.readerMargins} stack>
-              <Segmented label={t.readerMargins} value={settings.margins} onChange={(margins) => set({ margins })} options={READER_MARGINS.map((value) => ({ value, label: t.readerMarginSizes[value] }))} />
-            </SettingRow>
-            <SettingRow label={t.readerNotesPlace} stack>
-              <Segmented label={t.readerNotesPlace} value={settings.notes} onChange={(notes) => set({ notes })} options={(['end', 'inline'] as const).map((value) => ({ value, label: t.readerNotesPlaces[value] }))} />
-            </SettingRow>
-          </View>
-
-          <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
-            <SettingRow label={t.readerNiqqud} onPress={() => set({ niqqud: !settings.niqqud })} first>
-              <Toggle checked={settings.niqqud} label={t.readerNiqqud} decorative />
-            </SettingRow>
-            <SettingRow label={t.readerJustify} onPress={() => set({ justify: !settings.justify })}>
-              <Toggle checked={settings.justify} label={t.readerJustify} decorative />
-            </SettingRow>
-            <SettingRow label={t.readerMarks} onPress={() => set({ marks: !settings.marks })}>
-              <Toggle checked={settings.marks} label={t.readerMarks} decorative />
-            </SettingRow>
-            <SettingRow label={t.readerContinuous} onPress={() => set({ continuous: !settings.continuous })}>
-              <Toggle checked={settings.continuous} label={t.readerContinuous} decorative />
-            </SettingRow>
-            <SettingRow label={t.readerKeepAwake} onPress={() => set({ keepAwake: !settings.keepAwake })}>
-              <Toggle checked={settings.keepAwake} label={t.readerKeepAwake} decorative />
-            </SettingRow>
-          </View>
-
-          <AppText style={[styles.hint, align, { color: colors.muted }]}>{t.readerShareHint}</AppText>
-          <Pressable accessibilityRole="button" onPress={() => setReaderSettings(DEFAULT_READER_SETTINGS)} style={styles.reset}>
-            <AppText style={[styles.resetText, { color: colors.accent }]}>{t.readerReset}</AppText>
-          </Pressable>
-        </ScrollView>
+    <BottomSheet visible={visible} title={t.readerSettings} onClose={onClose}>
+      <View style={[styles.sizeRow, flip, { backgroundColor: colors.cardBg }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t.readerTextSmaller} disabled={settings.scale <= FONT_SCALE_MIN} onPress={() => set({ scale: smaller })} style={styles.sizeButton}>
+          <AArrowDown size={24} color={settings.scale <= FONT_SCALE_MIN ? colors.border : colors.fg} />
+        </Pressable>
+        <View style={styles.sizeValue}>
+          <AppText style={[styles.sizeLabel, { color: colors.muted }]}>{t.readerSize}</AppText>
+          <AppText style={styles.sizePercent}>{percent}</AppText>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel={t.readerTextLarger} disabled={settings.scale >= FONT_SCALE_MAX} onPress={() => set({ scale: larger })} style={styles.sizeButton}>
+          <AArrowUp size={24} color={settings.scale >= FONT_SCALE_MAX ? colors.border : colors.fg} />
+        </Pressable>
       </View>
-    </Modal>
+
+      <AppText style={[styles.eyebrow, align, { color: colors.muted }]}>{t.readerFont}</AppText>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.fonts, flip]}>
+        {READER_FONTS.map((font) => {
+          const on = font.id === settings.font;
+          return (
+            <Pressable
+              key={font.id}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={font.name[language]}
+              onPress={() => set({ font: font.id, fontChosen: true })}
+              style={[styles.fontCard, { backgroundColor: colors.cardBg, borderColor: on ? colors.accent : 'transparent' }]}
+            >
+              <Text numberOfLines={1} style={[styles.fontSample, { color: colors.fg, fontFamily: font.family ?? undefined }]}>
+                {SAMPLE}
+              </Text>
+              <AppText numberOfLines={1} style={[styles.fontName, { color: on ? colors.accent : colors.muted }]}>
+                {font.name[language]}
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <AppText style={[styles.eyebrow, align, { color: colors.muted }]}>{t.readerTheme}</AppText>
+      <View style={[styles.themes, flip]}>
+        {READER_THEME_IDS.map((theme) => {
+          const on = theme === settings.theme;
+          // "Like the app" shows the app's light page: the swatch is a picture, not the current scheme.
+          const swatch = theme === 'app' ? readerPalette('app', lightColors) : readerPalette(theme, colors);
+          return (
+            <Pressable key={theme} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t.readerThemes[theme]} onPress={() => set({ theme })} style={styles.theme}>
+              <View style={[styles.swatch, { backgroundColor: swatch.background, borderColor: on ? colors.accent : colors.border, borderWidth: on ? 2 : 1 }]}>
+                {theme === 'app' && <View style={[styles.swatchHalf, { backgroundColor: '#0a0a0a' }, isRtl ? styles.swatchHalfLeft : styles.swatchHalfRight]} />}
+                <Text style={[styles.swatchLetter, { color: theme === 'app' ? lightColors.accent : swatch.text, fontFamily: 'FrankRuehlCLM' }]}>א</Text>
+              </View>
+              <AppText numberOfLines={1} style={[styles.themeName, { color: on ? colors.fg : colors.muted }]}>
+                {t.readerThemes[theme]}
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
+        <SettingRow label={t.readerSpacing} stack first>
+          <Segmented label={t.readerSpacing} value={settings.spacing} onChange={(spacing) => set({ spacing })} options={READER_SPACINGS.map((value) => ({ value, label: t.readerSpacings[value] }))} />
+        </SettingRow>
+        <SettingRow label={t.readerMargins} stack>
+          <Segmented label={t.readerMargins} value={settings.margins} onChange={(margins) => set({ margins })} options={READER_MARGINS.map((value) => ({ value, label: t.readerMarginSizes[value] }))} />
+        </SettingRow>
+        <SettingRow label={t.readerNotesPlace} stack>
+          <Segmented label={t.readerNotesPlace} value={settings.notes} onChange={(notes) => set({ notes })} options={(['end', 'inline'] as const).map((value) => ({ value, label: t.readerNotesPlaces[value] }))} />
+        </SettingRow>
+      </View>
+
+      <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
+        <SettingRow label={t.readerNiqqud} onPress={() => set({ niqqud: !settings.niqqud })} first>
+          <Toggle checked={settings.niqqud} label={t.readerNiqqud} decorative />
+        </SettingRow>
+        <SettingRow label={t.readerJustify} onPress={() => set({ justify: !settings.justify })}>
+          <Toggle checked={settings.justify} label={t.readerJustify} decorative />
+        </SettingRow>
+        <SettingRow label={t.readerMarks} onPress={() => set({ marks: !settings.marks })}>
+          <Toggle checked={settings.marks} label={t.readerMarks} decorative />
+        </SettingRow>
+        <SettingRow label={t.readerContinuous} onPress={() => set({ continuous: !settings.continuous })}>
+          <Toggle checked={settings.continuous} label={t.readerContinuous} decorative />
+        </SettingRow>
+        <SettingRow label={t.readerKeepAwake} onPress={() => set({ keepAwake: !settings.keepAwake })}>
+          <Toggle checked={settings.keepAwake} label={t.readerKeepAwake} decorative />
+        </SettingRow>
+      </View>
+
+      <AppText style={[styles.hint, align, { color: colors.muted }]}>{t.readerShareHint}</AppText>
+      <Pressable accessibilityRole="button" onPress={() => setReaderSettings(DEFAULT_READER_SETTINGS)} style={styles.reset}>
+        <AppText style={[styles.resetText, { color: colors.accent }]}>{t.readerReset}</AppText>
+      </Pressable>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.25)' },
-  sheet: { maxHeight: '72%', borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: StyleSheet.hairlineWidth, paddingTop: 8 },
-  grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, marginBottom: 10 },
-  title: { fontSize: 17, fontWeight: '700', paddingHorizontal: 20, marginBottom: 6 },
-  body: { paddingHorizontal: 16, paddingBottom: 8, gap: 12 },
   sizeRow: { alignItems: 'center', borderRadius: 14, paddingHorizontal: 8, paddingVertical: 6 },
   sizeButton: { padding: 12 },
   sizeValue: { flex: 1, alignItems: 'center' },
