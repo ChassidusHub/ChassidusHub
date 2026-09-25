@@ -6,7 +6,6 @@ import { MAFTEIACH_MONTH_OPTIONS, PDF_SECTION_ORDER, browsableYears } from '@sic
 import type { CatalogEntry, LibraryCollectionId, LibraryItemBase } from '@sichos-kodesh/catalog';
 import {
   LIBRARY_ORDER,
-  NO_ITEM_FILTERS,
   SEARCH_SCOPES,
   collectionYears,
   hasItemFilters,
