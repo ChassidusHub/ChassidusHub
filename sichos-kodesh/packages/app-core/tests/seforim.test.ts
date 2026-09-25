@@ -175,23 +175,24 @@ describe('a letter of the Igros', () => {
         '<footer class="source">אגרות קודש חלק י</footer></article>',
     );
 
-  it('is laid out as the Igros app shows it: the date line and city at the start, then the addressee, the greeting, and the signature at the end', () => {
+  it('is laid out as the printed volumes set it: the date line, city and addressee, the greeting, the indented body, and the signature at the end', () => {
     const text = letter('<p>הרה"ח וכו\' פלוני שי\'</p>', 'שלום וברכה!');
     expect(text.id).toBe('igros:3007');
-    expect(text.blocks.map((b) => [b.role ?? null, b.align ?? null])).toEqual([
-      ['dateline', null],
-      ['place', null],
-      ['addressee', null],
-      ['greeting', null],
-      [null, null],
-      [null, null],
-      ['signature', 'end'],
+    expect(text.blocks.map((b) => [b.role ?? null, b.align ?? null, b.indent ?? false])).toEqual([
+      ['dateline', null, false],
+      ['place', null, false],
+      ['addressee', null, false],
+      ['greeting', null, false],
+      [null, null, true],
+      [null, null, true],
+      ['signature', 'end', false],
     ]);
   });
 
-  it('keeps its paragraphs as they are when no greeting stands near the top, and leaves other texts alone', () => {
+  it('keeps its other paragraphs as body when no greeting stands near the top, and leaves other texts alone', () => {
     const text = letter('', 'במענה על מכתבו מיום ועוד כמה מילים שאינן ברכה כלל.');
     expect(text.blocks.filter((b) => b.role === 'greeting' || b.role === 'addressee')).toEqual([]);
+    expect(text.blocks.filter((b) => b.indent)).toHaveLength(3);
     const plain = parseTextObject('<article dir="rtl" lang="he"><p class="end">סוף</p><p>שלום וברכה!</p></article>');
     expect(plain.blocks.map((b) => b.role)).toEqual([undefined, undefined]);
     expect(layoutLetter(plain).blocks.map((b) => b.role)).toEqual(['dateline', 'greeting']);

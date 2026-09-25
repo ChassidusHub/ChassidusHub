@@ -11,10 +11,10 @@
  *   <footer class="source">...</footer>              the credit line
  *   <p class="end">                                  a line set to the end side (a letter's date, its signature)
  *
- * A letter of the Igros (`data-id="igros:..."`) is laid out as the Igros
- * app shows it (`layoutLetter`): its date line and city at the start, the
- * addressee small at the end side, the greeting at the start, the
- * signature at the end side.
+ * A letter of the Igros (`data-id="igros:..."`) is laid out as the printed
+ * volumes set it (`layoutLetter`): its date line at the start, the city and
+ * the addressee indented under it, the greeting at the start, the body's
+ * paragraphs with their first lines indented, the signature at the end side.
  *
  * Anything else is read as its text. A note need not be pointed to from
  * the text: the Igros' notes on a letter stand after it with no mark in the
@@ -42,6 +42,8 @@ export interface Block {
   align?: 'end';
   /** In a letter: which part of its head or foot this is. */
   role?: LetterRole;
+  /** In a letter's body: the first line indented, as the printed volumes set a paragraph. */
+  indent?: boolean;
   inlines: Inline[];
 }
 
@@ -259,15 +261,15 @@ function blockText(block: Block): string {
 }
 
 /**
- * A letter laid out as the Igros app shows it: at the top, the date line
- * (ב"ה, the date) at the start side and the city under it, smaller; then
- * the addressee, small, in a narrow block at the end side; the greeting at
- * the start side after a gap; the body; and the signature at the end side.
- * The date line, city and signature arrive marked for the end side
+ * A letter laid out as the printed volumes set it: the date line (ב"ה, the
+ * date) at the start side; the city under it, indented; the addressee in a
+ * block indented further; the greeting back at the start side; the body's
+ * paragraphs with their first lines indented; the signature at the end
+ * side. The date line, city and signature arrive marked for the end side
  * (packages/igros-index) and are given their places here by role; the
  * addressee and the greeting are found by their place - what stands between
  * the city and a short greeting line among the first few paragraphs. A
- * letter with no such greeting keeps its other paragraphs as they are.
+ * letter with no such greeting keeps its other paragraphs as body.
  */
 export function layoutLetter(text: TextObject): TextObject {
   const blocks: Block[] = text.blocks.map((block) => ({ ...block }));
@@ -283,14 +285,17 @@ export function layoutLetter(text: TextObject): TextObject {
     blocks[last]!.role = 'signature';
     last--;
   }
+  let body = first;
   for (let i = first; i <= Math.min(last, first + 3); i++) {
     const block = blocks[i]!;
     const words = blockText(block);
     if (block.kind !== 'paragraph' || words.length > GREETING_MAX || !GREETING.test(words)) continue;
     block.role = 'greeting';
     for (let a = first; a < i; a++) blocks[a]!.role = 'addressee';
+    body = i + 1;
     break;
   }
+  for (let i = body; i <= last; i++) if (blocks[i]!.kind === 'paragraph') blocks[i]!.indent = true;
   return { ...text, blocks };
 }
 

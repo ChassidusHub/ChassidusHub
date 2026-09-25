@@ -2989,10 +2989,11 @@ body:has(.reader) {
   text-align: end;
 }
 
-/* A letter as the Igros app shows it (app-core's layoutLetter): the date
-   line at the start, the city under it smaller, the addressee small in a
-   narrow block at the end side, the greeting at the start after a gap,
-   the signature at the end side. */
+/* A letter as the printed volumes set it (app-core's layoutLetter): the
+   date line at the start side, the city under it indented, the addressee
+   in a block indented further, the greeting back at the start side, the
+   body's paragraphs with their first lines indented, the signature at the
+   end side. */
 .reader-letter-dateline,
 .reader-letter-place,
 .reader-letter-addressee,
@@ -3002,31 +3003,31 @@ body:has(.reader) {
 }
 
 .reader-letter-dateline {
-  font-size: 1.08em;
-  margin-bottom: 0.3em;
+  margin-bottom: 0.1em;
 }
 
 .reader-letter-place {
-  font-size: 0.85em;
-  margin-bottom: 0.8em;
+  margin-inline-start: 2em;
+  margin-bottom: 1em;
 }
 
 .reader-letter-addressee {
-  max-width: 70%;
-  margin-inline-start: auto;
-  margin-bottom: 0.2em;
-  font-size: 0.82em;
-  line-height: 1.6;
+  margin-inline-start: 16%;
+  margin-bottom: 0;
 }
 
 .reader-letter-greeting {
-  margin-top: 1.6em;
-  margin-bottom: 1em;
+  margin-top: 1em;
+  margin-bottom: 0.6em;
 }
 
 .reader-letter-signature {
   margin-top: 1em;
   margin-bottom: 0.15em;
+}
+
+.reader-paragraph-indent {
+  text-indent: 1.5em;
 }
 
 .reader-subheading {

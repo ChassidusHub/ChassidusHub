@@ -89,6 +89,33 @@ function Runs({ inlines, context }: { inlines: Inline[]; context: RunContext }) 
 }
 
 /**
+ * A letter's head and foot as the printed volumes set them (app-core's
+ * layoutLetter): the date line at the start side, the city under it
+ * indented, the addressee in a block indented further, the greeting back
+ * at the start side, the signature after a gap. This view is laid out left
+ * to right, so for Hebrew the start side is the right. Web:
+ * `.reader-letter-*`.
+ */
+function letterPartStyle(role: LetterRole, size: number, rtl: boolean): TextStyle {
+  const indent = (by: number | `${number}%`): TextStyle => (rtl ? { marginRight: by } : { marginLeft: by });
+  switch (role) {
+    case 'dateline':
+      return { marginBottom: Math.round(size * 0.1) };
+    case 'place':
+      return { ...indent(Math.round(size * 2)), marginBottom: Math.round(size * 1) };
+    case 'addressee':
+      return { ...indent('16%'), marginBottom: 0 };
+    case 'greeting':
+      return { marginTop: Math.round(size * 1), marginBottom: Math.round(size * 0.6) };
+    case 'signature':
+      return { marginTop: Math.round(size * 1), marginBottom: Math.round(size * 0.15) };
+  }
+}
+
+/** A letter's paragraph opens indented by about one and a half letters' width: React Native's Text has no text-indent. */
+const INDENT = '\u2003\u2002';
+
+/**
  * A text object drawn with React Native's own <Text>, set the way the
  * reader's settings ask: its font, size, spacing and paper; justified or
  * not; with or without vowels and markers; its notes at the end (numbers
@@ -98,28 +125,6 @@ function Runs({ inlines, context }: { inlines: Inline[]; context: RunContext }) 
  * letter) follow the text unnumbered, wherever the notes go. The credit
  * line closes the unit.
  */
-/**
- * A letter's head and foot as the Igros app shows them (app-core's
- * layoutLetter): the date line a little larger, the city under it smaller,
- * the addressee small in a narrow block at the end side (the left, for
- * Hebrew: this view is laid out left to right), the greeting after a gap,
- * the signature after a gap. Web: `.reader-letter-*`.
- */
-function letterPartStyle(role: LetterRole, size: number, lineHeight: number, rtl: boolean): TextStyle {
-  switch (role) {
-    case 'dateline':
-      return { fontSize: Math.round(size * 1.08), marginBottom: Math.round(size * 0.3) };
-    case 'place':
-      return { fontSize: Math.round(size * 0.85), lineHeight: Math.round(lineHeight * 0.85), marginBottom: Math.round(size * 0.8) };
-    case 'addressee':
-      return { fontSize: Math.round(size * 0.82), lineHeight: Math.round(lineHeight * 0.85), maxWidth: '70%', alignSelf: rtl ? 'flex-start' : 'flex-end', marginBottom: Math.round(size * 0.2) };
-    case 'greeting':
-      return { marginTop: Math.round(size * 1.6), marginBottom: Math.round(size * 1) };
-    case 'signature':
-      return { marginTop: Math.round(size * 1), marginBottom: Math.round(size * 0.15) };
-  }
-}
-
 export function TextObjectView({ text, settings, palette, onShare }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState<Footnote | null>(null);
@@ -173,11 +178,12 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
                 textAlign: block.align === 'end' ? end : block.role ? start : settings.justify ? 'justify' : start,
                 marginBottom: Math.round(size * 0.7),
               },
-              block.role ? letterPartStyle(block.role, size, lineHeight, rtl) : null,
+              block.role ? letterPartStyle(block.role, size, rtl) : null,
               pressed === i ? { backgroundColor: palette.rule } : null,
             ]}
           >
             {mark}
+            {block.indent ? INDENT : null}
             <Runs inlines={block.inlines} context={context} />
           </Text>
         ),
