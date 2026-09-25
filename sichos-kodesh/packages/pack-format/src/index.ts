@@ -11,3 +11,4 @@ export * from './zipLayout.js';
 export * from './scope.js';
 export * from './packPlan.js';
 export * from './text.js';
+export * from './library.js';

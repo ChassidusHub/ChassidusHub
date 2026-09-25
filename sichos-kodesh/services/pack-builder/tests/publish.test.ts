@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Server } from 'node:http';
 import { ArchiveStore } from '@sichos-kodesh/archive';
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { generateKeyPair } from '@sichos-kodesh/pack-format';
 import { parsePublishMeta } from '@sichos-kodesh/pack-api';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -46,6 +46,15 @@ const ENTRIES: CatalogEntry[] = [
   },
 ];
 
+// A maamar whose PDF is one of the farbrengen's: the library shares the object.
+const MAAMORIM: LibraryCollection<LibraryItemBase> = {
+  items: [
+    { id: '7', label: 'באתי לגני', hebrewYear: 5736, refs: [{ kind: 'pdf', sourceId: 'DRIVE_MUGAH_000000000000000000', role: 'mugah' }] },
+    { id: '8', label: 'לא בארכיון', hebrewYear: 5736, refs: [{ kind: 'pdf', sourceId: 'DRIVE_NOT_ARCHIVED_0000000000' }] },
+  ],
+  groups: { year: [{ slug: '5736', name: 'תשל"ו', itemIds: ['7', '8'] }] },
+};
+
 let dir: string;
 let store: ArchiveStore;
 let server: Server;
@@ -81,7 +90,14 @@ beforeAll(async () => {
   });
   const { index } = await indexPacks(path.join(dir, 'packs'), () => new Date('2026-09-24T00:00:00Z'));
   await writeFile(path.join(dir, 'packs', 'index.json'), JSON.stringify(index));
-  await publishArchive(store, { years: new Map([[5736, ENTRIES]]), catalogVersion: '1.1.0', outDir: path.join(dir, 'published'), packsDir: path.join(dir, 'packs'), now: () => new Date('2026-09-24T08:00:00Z') });
+  await publishArchive(store, {
+    years: new Map([[5736, ENTRIES]]),
+    library: { maamorim: MAAMORIM, reshimos: { items: [], groups: {} } },
+    catalogVersion: '1.1.0',
+    outDir: path.join(dir, 'published'),
+    packsDir: path.join(dir, 'packs'),
+    now: () => new Date('2026-09-24T08:00:00Z'),
+  });
   server = await servePublished(path.join(dir, 'published'), { port: 0, signingKey: key });
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -95,10 +111,11 @@ afterAll(async () => {
 describe('sk-pack publish and serve', () => {
   it('publishes what the archive holds, by year, with its CRCs', async () => {
     const meta = parsePublishMeta(JSON.parse(await readFile(path.join(dir, 'published', 'meta.json'), 'utf8')));
-    expect(meta).toMatchObject({ years: [5736], profiles: ['src'], objects: 4, catalogVersion: '1.1.0' });
+    // A collection with nothing archived (reshimos here) is not published.
+    expect(meta).toMatchObject({ years: [5736], profiles: ['src'], objects: 4, catalogVersion: '1.1.0', library: ['maamorim'] });
     for (const bytes of Object.values(FILES)) expect((await stat(path.join(dir, 'published', 'objects', sha(bytes)))).size).toBe(bytes.length);
     // A second publish finds everything in place.
-    const again = await publishArchive(store, { years: new Map([[5736, ENTRIES]]), catalogVersion: '1.1.0', outDir: path.join(dir, 'published') });
+    const again = await publishArchive(store, { years: new Map([[5736, ENTRIES]]), library: { maamorim: MAAMORIM }, catalogVersion: '1.1.0', outDir: path.join(dir, 'published') });
     expect(again).toMatchObject({ linked: 0, copied: 0, skipped: 4 });
   });
 
@@ -111,6 +128,25 @@ describe('sk-pack publish and serve', () => {
     expect(check.problems).toEqual([]);
     expect(check.ok).toBe(true);
     expect(check.manifest!.entries.map((entry) => entry.itemId)).toEqual(['101']);
+  });
+
+  it('sizes and streams a library group, signed, with the items the archive holds', async () => {
+    const collection = (await (await fetch(`${base}/v1/library/maamorim`)).json()) as LibraryCollection<LibraryItemBase>;
+    expect(collection.groups.year![0]!.itemIds).toEqual(['7', '8']);
+    expect((await fetch(`${base}/v1/library/jemEvents`)).status).toBe(404);
+    const size = (await (await fetch(`${base}/v1/size?scope=maamorim:year:5736`)).json()) as { occasions: number; objects: number; missing: number; slug: string; scope: { kind: string; label: { he: string } } };
+    expect(size).toMatchObject({ occasions: 1, objects: 1, missing: 1, slug: 'maamorim-year-5736', scope: { kind: 'year', label: { he: 'מאמרים, תשל"ו' } } });
+    expect((await fetch(`${base}/v1/size?scope=maamorim:year:5799`)).status).toBe(404);
+    expect((await fetch(`${base}/v1/size?scope=reshimos`)).status).toBe(404);
+    const response = await fetch(`${base}/v1/build?scope=maamorim:year:5736`);
+    expect(response.headers.get('content-disposition')).toContain('maamorim-year-5736-src.skpack');
+    const file = path.join(dir, 'maamorim.skpack');
+    await writeFile(file, Buffer.from(await response.arrayBuffer()));
+    const check = await verifyPack(file, { [key.keyId]: key.publicKey });
+    expect(check.problems).toEqual([]);
+    expect(check.manifest!.entries).toEqual([
+      expect.objectContaining({ collection: 'maamorim', itemId: '7', refs: [expect.objectContaining({ kind: 'pdf', role: 'mugah', sha256: sha(FILES.DRIVE_MUGAH_000000000000000000!) })] }),
+    ]);
   });
 
   it('serves the prebuilt packs and their index', async () => {

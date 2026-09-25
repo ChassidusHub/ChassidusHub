@@ -8,13 +8,18 @@ for any selection.
 | --- | --- |
 | `GET /v1/meta` | What is published: catalog version, years, audio profiles, `objects.json`'s stamp |
 | `GET /v1/catalog/<year>` | That year's farbrengens, for the download site's pickers |
+| `GET /v1/library/<collection>` | A library collection's items and browse axes (volume, year, moed, ...), for the same |
 | `GET /v1/objects.json` | The objects index: the trust anchor for loose files on the phone |
 | `GET /v1/packs/index.json`, `/v1/packs/<file>` | The prebuilt packs |
 | `GET /v1/size?scope=&profile=&sections=&maxMb=` | The exact bytes, occasions and parts of a selection |
 | `GET /v1/build?…&part=N` | That selection (or one part of it) as a signed `.skpack`, streamed |
 
 `scope` and `sections` read exactly as in `sk-pack build` (pack-format's
-`parseScope` and `parseSections`). The plan is also the same:
+`parseScope` and `parseSections`). A `scope` can also name the library:
+a whole collection (`reshimos`) or one group of one of its browse axes
+(`likkuteiSichos:volume:12`, `maamorim:year:5711`; pack-format's
+`library.ts`). Such a pack holds every PDF of its items and their
+recordings in `profile`, and `sections` does not apply. The plan is also the same:
 `sizeSelection`, then `splitEntries`, then `composeManifests`. So a
 pack from the API is the same pack `sk-pack` writes.
 

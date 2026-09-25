@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { HDate } from '@hebcal/core';
 import type { ReactNode } from 'react';
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 import type { Meta, PrebuiltPack, SizeResult } from './api';
 import { api } from './api';
-import type { Choice, CustomSections, Preset } from './selection';
-import { DEFAULT_CUSTOM, formatMb, ltr, monthsOf, orderProfiles, profileInfo, selectionQuery, yearLabel } from './selection';
-import { CheckIcon, DownloadIcon, FolderIcon, HeadphonesIcon, OnwardIcon, PackageIcon, PhoneIcon, ShieldIcon } from './icons';
+import type { Choice, CollectionInfo, CustomSections, LibraryChoice, Preset } from './selection';
+import { COLLECTIONS, DEFAULT_CUSTOM, axesOf, collectionInfo, formatMb, libraryQuery, ltr, monthsOf, orderProfiles, profileInfo, selectionQuery, yearLabel } from './selection';
+import { BookIcon, CheckIcon, DownloadIcon, FolderIcon, HeadphonesIcon, OnwardIcon, PackageIcon, PhoneIcon, ShieldIcon } from './icons';
 
 /** The app itself: its web version, and the phone app's latest release. */
 const WEB_APP_URL = 'https://sichoskodesh.vercel.app';
@@ -30,8 +30,9 @@ const CUSTOM_LABELS: Array<[keyof CustomSections, string]> = [
 
 const PART_SIZES = [100, 200, 500, 1000, 2000];
 
-/** Years as chips while they fit on a few lines; a long run of years as a list. */
+/** Years (and a library axis's groups) as chips while they fit on a few lines; a long run as a list. */
 const YEAR_CHIPS_MAX = 12;
+const GROUP_CHIPS_MAX = 60;
 
 type Load<T> = { state: 'loading' } | { state: 'ready'; value: T } | { state: 'error'; message: string };
 
@@ -116,7 +117,7 @@ function Hero({ meta }: { meta: Load<Meta> }) {
     <section className="hero">
       <p className="eyebrow">חבילות להורדה</p>
       <h1 className="hero-title">הכל בטלפון, גם בלי אינטרנט</h1>
-      <p className="hero-lead">התוועדויות, הנחות והקלטות בחבילה אחת חתומה. מורידים כאן, מעתיקים לטלפון, והאפליקציה מכניסה הכל בלי חיבור.</p>
+      <p className="hero-lead">התוועדויות, הנחות והקלטות, לקוטי שיחות, מאמרים, יומנים ומכתבים, והספרים עצמם, בחבילות חתומות. מורידים כאן, מעתיקים לטלפון, והאפליקציה מכניסה הכל בלי חיבור.</p>
       <ol className="flow">
         {flow.map((step, index) => (
           <li key={step.label} className="flow-step">
@@ -142,6 +143,30 @@ function Hero({ meta }: { meta: Load<Meta> }) {
   );
 }
 
+/** The seforim: one text pack per sefer, the full text and its search, ready to download. */
+function SeforimPacks({ packs }: { packs: PrebuiltPack[] }) {
+  const works = useMemo(() => [...packs].sort((a, b) => b.bytes - a.bytes), [packs]);
+  if (works.length === 0) return null;
+  return (
+    <div className="sefer-grid">
+      {works.map((pack) => (
+        <article key={pack.file} className="card sefer-card">
+          <span className="pack-well">
+            <BookIcon size={20} />
+          </span>
+          <div className="sefer-text">
+            <h4 className="sefer-title">{pack.scope.label.he}</h4>
+            <p className="row-note">
+              {ltr(formatMb(pack.bytes))} · טקסט מלא וחיפוש
+            </p>
+          </div>
+          <DownloadButton href={api.packUrl(pack.file)} file={pack.file} />
+        </article>
+      ))}
+    </div>
+  );
+}
+
 /** The prebuilt packs, one card to a month, each quality a row: the recommended one first. */
 function ReadyPacks({ packs }: { packs: PrebuiltPack[] }) {
   const groups = useMemo(() => {
@@ -156,7 +181,7 @@ function ReadyPacks({ packs }: { packs: PrebuiltPack[] }) {
     });
   }, [packs]);
 
-  if (groups.length === 0) return <p className="empty">עדיין אין חבילות מוכנות. אפשר להרכיב חבילה לפי בחירה, כאן למטה.</p>;
+  if (groups.length === 0) return null;
   return (
     <div className="pack-grid">
       {groups.map((group) => (
@@ -171,7 +196,7 @@ function ReadyPacks({ packs }: { packs: PrebuiltPack[] }) {
             {group.packs.map((pack, index) => {
               const info = profileInfo(pack.profile);
               return (
-                <li key={pack.id} className="row">
+                <li key={pack.file} className="row">
                   <div className="row-text">
                     <span className="row-title">
                       {info.name}
@@ -271,27 +296,7 @@ function Builder({ meta }: { meta: Meta }) {
         </Step>
 
         <Step number={4} title="איכות השמע">
-          <div className="options" role="radiogroup" aria-label="איכות השמע">
-            {profiles.map((profile, index) => {
-              const info = profileInfo(profile);
-              const on = choice.profile === profile;
-              return (
-                <label key={profile} className={on ? 'option option-on' : 'option'}>
-                  <input type="radio" className="visually-hidden" name="profile" id={`profile-${profile}`} checked={on} onChange={() => update({ profile })} />
-                  <span className="option-icon" aria-hidden="true">
-                    <HeadphonesIcon size={18} />
-                  </span>
-                  <span className="option-text">
-                    <span className="option-name">
-                      {info.name}
-                      {index === 0 && profiles.length > 1 && <span className="badge">מומלץ</span>}
-                    </span>
-                    <span className="option-note">{info.note}</span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+          <QualityOptions profiles={profiles} value={choice.profile} onChange={(profile) => update({ profile })} />
         </Step>
 
         <Step number={5} title="גודל קובץ מרבי" hint="חבילה גדולה יותר מתחלקת לכמה קבצים, כל אחד בגודל הזה לכל היותר.">
@@ -299,51 +304,202 @@ function Builder({ meta }: { meta: Meta }) {
         </Step>
       </form>
 
-      <aside className="card result" aria-live="polite">
-        <p className="eyebrow">החבילה שלכם</p>
-        {!query && <p className="result-empty">בחרו לפחות סוג תוכן אחד.</p>}
-        {query && size.state === 'loading' && (
-          <div className="result-loading">
-            <span className="spinner" aria-hidden="true" />
-            מחשבים את הגודל…
-          </div>
-        )}
-        {query && size.state === 'error' && <p className="error">{size.message}</p>}
-        {size.state === 'ready' && size.value && (
-          <>
-            <div className="result-head">
-              <h3 className="result-title">{size.value.scope.label.he}</h3>
-              <p className="result-size">{ltr(formatMb(size.value.bytes))}</p>
-              <p className="result-counts">
-                {counted(size.value.occasions, 'התוועדות אחת', 'התוועדויות')} · {counted(size.value.objects, 'קובץ אחד', 'קבצים')}
-              </p>
-            </div>
-            {size.value.missing > 0 && <p className="note">{counted(size.value.missing, 'קובץ אחד עדיין אינו', 'קבצים עדיין אינם')} בארכיון, ולא ייכללו.</p>}
-            {size.value.signed ? (
-              <p className="signed">
-                <ShieldIcon size={16} />
-                חתומה: האפליקציה בודקת כל קובץ לפני שהוא נכנס.
-              </p>
-            ) : (
-              <p className="error">שרת זה אינו חותם על חבילות: האפליקציה תקבל את הקבצים אחד-אחד.</p>
-            )}
-            <ul className="rows">
-              {size.value.parts.map((part) => (
-                <li key={part.index} className="row">
-                  <div className="row-text">
-                    <span className="row-title">{size.value && size.value.parts.length > 1 ? `חלק ${part.index + 1} מתוך ${size.value.parts.length}` : 'חבילה אחת'}</span>
-                    <span className="row-note">
-                      {counted(part.occasions, 'התוועדות אחת', 'התוועדויות')} · {ltr(formatMb(part.bytes))}
-                    </span>
-                  </div>
-                  <DownloadButton href={api.buildUrl(query!, part.index + 1)} file={part.file} />
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </aside>
+      <ResultPanel query={query} size={size} empty="בחרו לפחות סוג תוכן אחד." counting={collectionInfo('farbrengens')} />
     </div>
+  );
+}
+
+function QualityOptions({ profiles, value, onChange }: { profiles: string[]; value: string; onChange: (profile: string) => void }) {
+  return (
+    <div className="options" role="radiogroup" aria-label="איכות השמע">
+      {profiles.map((profile, index) => {
+        const info = profileInfo(profile);
+        const on = value === profile;
+        return (
+          <label key={profile} className={on ? 'option option-on' : 'option'}>
+            <input type="radio" className="visually-hidden" name="profile" id={`profile-${profile}`} checked={on} onChange={() => onChange(profile)} />
+            <span className="option-icon" aria-hidden="true">
+              <HeadphonesIcon size={18} />
+            </span>
+            <span className="option-text">
+              <span className="option-name">
+                {info.name}
+                {index === 0 && profiles.length > 1 && <span className="badge">מומלץ</span>}
+              </span>
+              <span className="option-note">{info.note}</span>
+            </span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The pack API's refusals, in the site's words. */
+function sizeError(message: string): string {
+  if (/holds nothing|not in the published archive/.test(message)) return 'את זה הארכיון עוד לא מחזיק: הוא מתמלא בימים אלה. אפשר לבחור משהו אחר, או לחזור מאוחר יותר.';
+  return `לא הצלחנו לחשב את הגודל (${message}). נסו שוב בעוד רגע.`;
+}
+
+/** The chosen pack: its exact size and its parts, each a download. */
+function ResultPanel({ query, size, empty, counting }: { query: string | null; size: Load<SizeResult | null>; empty: string; counting: CollectionInfo }) {
+  return (
+    <aside className="card result" aria-live="polite">
+      <p className="eyebrow">החבילה שלכם</p>
+      {!query && <p className="result-empty">{empty}</p>}
+      {query && size.state === 'loading' && (
+        <div className="result-loading">
+          <span className="spinner" aria-hidden="true" />
+          מחשבים את הגודל…
+        </div>
+      )}
+      {query && size.state === 'error' && <p className="error">{sizeError(size.message)}</p>}
+      {size.state === 'ready' && size.value && (
+        <>
+          <div className="result-head">
+            <h3 className="result-title">{size.value.scope.label.he}</h3>
+            <p className="result-size">{ltr(formatMb(size.value.bytes))}</p>
+            <p className="result-counts">
+              {counted(size.value.occasions, counting.one, counting.many)} · {counted(size.value.objects, 'קובץ אחד', 'קבצים')}
+            </p>
+          </div>
+          {size.value.missing > 0 && <p className="note">{counted(size.value.missing, 'קובץ אחד עדיין אינו', 'קבצים עדיין אינם')} בארכיון, ולא ייכללו.</p>}
+          {size.value.signed ? (
+            <p className="signed">
+              <ShieldIcon size={16} />
+              חתומה: האפליקציה בודקת כל קובץ לפני שהוא נכנס.
+            </p>
+          ) : (
+            <p className="error">שרת זה אינו חותם על חבילות: האפליקציה תקבל את הקבצים אחד-אחד.</p>
+          )}
+          <ul className="rows">
+            {size.value.parts.map((part) => (
+              <li key={part.index} className="row">
+                <div className="row-text">
+                  <span className="row-title">{size.value && size.value.parts.length > 1 ? `חלק ${part.index + 1} מתוך ${size.value.parts.length}` : 'חבילה אחת'}</span>
+                  <span className="row-note">
+                    {counted(part.occasions, counting.one, counting.many)} · {ltr(formatMb(part.bytes))}
+                  </span>
+                </div>
+                <DownloadButton href={api.buildUrl(query!, part.index + 1)} file={part.file} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </aside>
+  );
+}
+
+/** A library collection, chosen the way the app browses it: an axis (volume, year, moed...) and one of its groups, or all of it. */
+function LibraryBuilder({ meta, collection }: { meta: Meta; collection: string }) {
+  const profiles = useMemo(() => orderProfiles(meta.profiles), [meta.profiles]);
+  const data = useLoad<LibraryCollection<LibraryItemBase>>((signal) => api.library(collection, signal), [collection]);
+  const axes = useMemo(() => (data.state === 'ready' ? axesOf(data.value.groups) : []), [data]);
+  const hasAudio = data.state === 'ready' && data.value.items.some((item) => item.refs.some((ref) => ref.kind === 'audio'));
+  const [choice, setChoice] = useState<LibraryChoice & { ready: boolean }>({ collection, axis: null, group: null, profile: profiles[0]!, maxMb: 200, ready: false });
+  // Opens on the first axis and its first group, as the app's browser does.
+  useEffect(() => {
+    if (data.state !== 'ready' || choice.ready) return;
+    const axis = axes[0]?.id ?? null;
+    const group = axis ? ((data.value.groups[axis] ?? [])[0]?.slug ?? null) : null;
+    setChoice((current) => ({ ...current, axis, group, ready: true }));
+  }, [data, axes, choice.ready]);
+  const update = (patch: Partial<LibraryChoice>) => setChoice((current) => ({ ...current, ...patch }));
+  const query = choice.ready ? libraryQuery(choice) : null;
+  const size = useLoad<SizeResult | null>((signal) => (query ? api.size(query, signal) : Promise.resolve(null)), [query]);
+  const info = collectionInfo(collection);
+  const groups = data.state === 'ready' && choice.axis ? (data.value.groups[choice.axis] ?? []) : [];
+  const axisOptions = [...axes.map((axis) => ({ value: axis.id, label: axis.name })), { value: '', label: 'הכל' }];
+
+  if (data.state === 'loading') {
+    return (
+      <div className="card loading">
+        <span className="spinner" aria-hidden="true" />
+        טוענים את {info.name}…
+      </div>
+    );
+  }
+  if (data.state === 'error') return <p className="card error">{data.message}</p>;
+  return (
+    <div className="builder">
+      <form className="card builder-form" onSubmit={(event) => event.preventDefault()}>
+        <Step number={1} title="איך בוחרים" hint={`${counted(data.value.items.length, info.one, info.many)}, מסודרים כמו באפליקציה.`}>
+          <div className="chips" role="radiogroup" aria-label="איך בוחרים">
+            {axisOptions.map((option) => (
+              <label key={option.value} className={(choice.axis ?? '') === option.value ? 'chip chip-on' : 'chip'}>
+                <input
+                  type="radio"
+                  className="visually-hidden"
+                  name="axis"
+                  id={`axis-${option.value || 'all'}`}
+                  checked={(choice.axis ?? '') === option.value}
+                  onChange={() => update({ axis: option.value || null, group: option.value ? ((data.value.groups[option.value] ?? [])[0]?.slug ?? null) : null })}
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </Step>
+
+        {choice.axis && (
+          <Step number={2} title={axes.find((a) => a.id === choice.axis)?.name.replace(/^לפי /, '') ?? ''} hint={`המספר ליד כל אחד: כמה ${info.many} יש בו.`}>
+            {groups.length <= GROUP_CHIPS_MAX ? (
+              <div className="chips" role="radiogroup" aria-label="קבוצה">
+                {groups.map((group) => (
+                  <label key={group.slug} className={choice.group === group.slug ? 'chip chip-on' : 'chip'}>
+                    <input type="radio" className="visually-hidden" name="group" id={`group-${group.slug}`} checked={choice.group === group.slug} onChange={() => update({ group: group.slug })} />
+                    {group.name}
+                    <span className="chip-count">{group.itemIds.length}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <select id="group" className="select" value={choice.group ?? ''} onChange={(event) => update({ group: event.target.value })}>
+                {groups.map((group) => (
+                  <option key={group.slug} value={group.slug}>
+                    {group.name} ({group.itemIds.length})
+                  </option>
+                ))}
+              </select>
+            )}
+          </Step>
+        )}
+
+        {hasAudio && (
+          <Step number={choice.axis ? 3 : 2} title="איכות השמע">
+            <QualityOptions profiles={profiles} value={choice.profile} onChange={(profile) => update({ profile })} />
+          </Step>
+        )}
+
+        <Step number={(choice.axis ? 3 : 2) + (hasAudio ? 1 : 0)} title="גודל קובץ מרבי" hint="חבילה גדולה יותר מתחלקת לכמה קבצים, כל אחד בגודל הזה לכל היותר.">
+          <Segmented name="max" value={choice.maxMb} options={PART_SIZES.map((mb) => ({ value: mb, label: partSizeLabel(mb) }))} onChange={(value) => update({ maxMb: value })} />
+        </Step>
+      </form>
+
+      <ResultPanel query={query} size={size} empty="בחרו מה להוריד." counting={info} />
+    </div>
+  );
+}
+
+/** What the custom pack holds: the farbrengens by year and month, or a library collection. */
+function CustomPack({ meta }: { meta: Meta }) {
+  const offered = COLLECTIONS.filter((c) => c.id === 'farbrengens' || meta.library?.includes(c.id));
+  const [collection, setCollection] = useState('farbrengens');
+  return (
+    <>
+      {offered.length > 1 && (
+        <div className="collection-tabs" role="radiogroup" aria-label="מה להוריד">
+          {offered.map((c) => (
+            <label key={c.id} className={collection === c.id ? 'collection-tab collection-tab-on' : 'collection-tab'}>
+              <input type="radio" className="visually-hidden" name="collection" id={`collection-${c.id}`} checked={collection === c.id} onChange={() => setCollection(c.id)} />
+              {c.name}
+            </label>
+          ))}
+        </div>
+      )}
+      {collection === 'farbrengens' ? <Builder meta={meta} /> : <LibraryBuilder key={collection} meta={meta} collection={collection} />}
+    </>
   );
 }
 
@@ -403,15 +559,24 @@ export function App() {
         {meta.state === 'error' && <p className="card error">שרת החבילות אינו זמין כעת ({meta.message}). נסו שוב בעוד רגע.</p>}
         {meta.state === 'ready' && (
           <>
-            <section className="section" aria-labelledby="ready-title">
-              <h2 id="ready-title">חבילות מוכנות</h2>
-              <p className="section-lead">חודש שלם, מוכן להורדה מיידית.</p>
-              {packs.state === 'ready' ? <ReadyPacks packs={packs.value} /> : <p className="empty">טוען…</p>}
-            </section>
+            {packs.state === 'ready' && packs.value.some((p) => p.scope.kind === 'work') && (
+              <section className="section" aria-labelledby="seforim-title">
+                <h2 id="seforim-title">ספרים</h2>
+                <p className="section-lead">כל ספר בחבילה אחת: הטקסט המלא, לקריאה ולחיפוש בלי אינטרנט.</p>
+                <SeforimPacks packs={packs.value.filter((p) => p.scope.kind === 'work')} />
+              </section>
+            )}
+            {packs.state === 'ready' && packs.value.some((p) => p.scope.kind !== 'work') && (
+              <section className="section" aria-labelledby="ready-title">
+                <h2 id="ready-title">חבילות מוכנות</h2>
+                <p className="section-lead">חודש שלם, מוכן להורדה מיידית.</p>
+                <ReadyPacks packs={packs.value.filter((p) => p.scope.kind !== 'work')} />
+              </section>
+            )}
             <section className="section" aria-labelledby="builder-title">
               <h2 id="builder-title">חבילה לפי בחירה</h2>
-              <p className="section-lead">שנה או חודש, התוכן שרוצים והאיכות - והגודל המדויק לפני ההורדה.</p>
-              <Builder meta={meta.value} />
+              <p className="section-lead">התוועדויות לפי שנה וחודש, או לקוטי שיחות, מאמרים, יומנים ועוד, כמו שמעיינים בהם באפליקציה. והגודל המדויק לפני ההורדה.</p>
+              <CustomPack meta={meta.value} />
             </section>
           </>
         )}

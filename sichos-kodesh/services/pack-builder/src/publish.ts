@@ -5,10 +5,10 @@ import { crc32 } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import type { ArchiveStore } from '@sichos-kodesh/archive';
 import { exportObjectsIndex } from '@sichos-kodesh/archive';
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
-import type { AudioProfile, ObjectsIndex } from '@sichos-kodesh/pack-format';
-import { AUDIO_PROFILES, PACK_EXTENSION, buildSourceLookup, canonicalBytes, sourceKey } from '@sichos-kodesh/pack-format';
+import type { AudioProfile, ObjectsIndex, PackableLibraryCollection } from '@sichos-kodesh/pack-format';
+import { AUDIO_PROFILES, PACKABLE_LIBRARY_COLLECTIONS, PACK_EXTENSION, buildSourceLookup, canonicalBytes, sourceKey } from '@sichos-kodesh/pack-format';
 import type { PublishMeta, YearShard } from '@sichos-kodesh/pack-api';
 import { PUBLISH_SCHEMA, publishKeys } from '@sichos-kodesh/pack-api';
 
@@ -26,6 +26,8 @@ import { PUBLISH_SCHEMA, publishKeys } from '@sichos-kodesh/pack-api';
 export interface PublishOptions {
   /** The catalog's farbrengens by year: the builder's catalog year files. */
   years: Map<number, CatalogEntry[]>;
+  /** The library's collections as the catalog has them (apps/mobile/src/catalog/data/library): published once the archive holds any of their files. */
+  library?: Partial<Record<PackableLibraryCollection, LibraryCollection<LibraryItemBase>>>;
   catalogVersion: string;
   outDir: string;
   /** A directory of built packs (and their index.json) to publish too. */
@@ -44,6 +46,24 @@ export interface PublishResult {
 }
 
 const CRC_CACHE = '.crc-cache.json';
+/** The share of the originals a smaller profile must cover to be listed in meta.json. */
+export const PROFILE_COVERAGE = 0.9;
+/**
+ * The share of its files the archive must hold for a year or a library
+ * collection to be listed. Hanachos are shared between years and
+ * collections, so one year's crawl brings a few files of many others;
+ * those wait until their own crawl.
+ */
+export const SCOPE_COVERAGE = 0.5;
+
+/** How many of these (kind, source id) files the index has an original of. */
+function heldShare(files: Array<{ kind: 'audio' | 'pdf'; sourceId: string }>, lookup: Map<string, string>): number {
+  const wanted = new Set(files.map((file) => sourceKey(file.kind, file.sourceId)));
+  if (wanted.size === 0) return 0;
+  let held = 0;
+  for (const key of wanted) if (lookup.has(key)) held += 1;
+  return held / wanted.size;
+}
 export const MIRRORED_LIST = '.mirrored.json';
 
 /** The objects `sk-pack mirror --prune` moved off this disk, by hash. */
@@ -91,6 +111,27 @@ export function yearShard(entries: CatalogEntry[], index: ObjectsIndex, crcs: Ma
       const crc = crcs.get(sha);
       if (crc === undefined) throw new Error(`no CRC-32 for ${sha}`);
       shard.crc32[sha] = crc;
+    }
+  }
+  return shard;
+}
+
+/** The same for a library collection: every PDF and recording its items list. */
+export function libraryShard(items: LibraryItemBase[], index: ObjectsIndex, crcs: Map<string, number>): YearShard {
+  const lookup = buildSourceLookup(index);
+  const shard: YearShard = { index: { schema: index.schema, version: index.version, builtAt: index.builtAt, objects: {} }, crc32: {} };
+  for (const item of items) {
+    for (const ref of item.refs) {
+      if (ref.kind !== 'audio' && ref.kind !== 'pdf') continue;
+      const profiles: Array<AudioProfile | undefined> = ref.kind === 'audio' ? [...AUDIO_PROFILES] : [undefined];
+      for (const profile of profiles) {
+        const sha = lookup.get(sourceKey(ref.kind, ref.sourceId, profile));
+        if (!sha || shard.index.objects[sha]) continue;
+        shard.index.objects[sha] = index.objects[sha]!;
+        const crc = crcs.get(sha);
+        if (crc === undefined) throw new Error(`no CRC-32 for ${sha}`);
+        shard.crc32[sha] = crc;
+      }
     }
   }
   return shard;
@@ -149,14 +190,36 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
   await writeAtomic(cacheFile, JSON.stringify(Object.fromEntries(crcs)));
 
   const years: number[] = [];
-  const profiles = new Set<AudioProfile>();
-  for (const entry of Object.values(index.objects)) if (entry.kind === 'audio') profiles.add(entry.profile ?? 'src');
+  const perProfile = new Map<AudioProfile, number>();
+  for (const entry of Object.values(index.objects)) {
+    if (entry.kind === 'audio') perProfile.set(entry.profile ?? 'src', (perProfile.get(entry.profile ?? 'src') ?? 0) + 1);
+  }
+  // A profile is offered once it covers (nearly) every recording: a trial encode of one month is not a choice for the whole archive.
+  const originals = perProfile.get('src') ?? 0;
+  const profiles = new Set([...perProfile].filter(([profile, count]) => profile === 'src' || count >= PROFILE_COVERAGE * originals).map(([profile]) => profile));
+  const lookup = buildSourceLookup(index);
   for (const [year, entries] of [...options.years.entries()].sort(([a], [b]) => a - b)) {
+    const files = listDownloadTargets(entries, ALL_CONTENT_TYPES).flatMap((target) => {
+      const sourceId = target.kind === 'audio' ? target.workerFilename : target.driveFileId;
+      return sourceId ? [{ kind: target.kind, sourceId }] : [];
+    });
+    if (heldShare(files, lookup) < SCOPE_COVERAGE) continue;
     const shard = yearShard(entries, index, crcs);
-    if (Object.keys(shard.index.objects).length === 0) continue;
     years.push(year);
     await writeAtomic(path.join(out, publishKeys.catalogYear(year)), JSON.stringify(entries));
     await writeAtomic(path.join(out, publishKeys.yearShard(year)), JSON.stringify(shard));
+  }
+
+  const library: PackableLibraryCollection[] = [];
+  for (const collection of PACKABLE_LIBRARY_COLLECTIONS) {
+    const data = options.library?.[collection];
+    if (!data) continue;
+    const files = data.items.flatMap((item) => item.refs.flatMap((ref) => (ref.kind === 'audio' || ref.kind === 'pdf' ? [{ kind: ref.kind, sourceId: ref.sourceId }] : [])));
+    if (heldShare(files, lookup) < SCOPE_COVERAGE) continue;
+    const shard = libraryShard(data.items, index, crcs);
+    library.push(collection);
+    await writeAtomic(path.join(out, publishKeys.libraryCollection(collection)), JSON.stringify(data));
+    await writeAtomic(path.join(out, publishKeys.libraryShard(collection)), JSON.stringify(shard));
   }
 
   if (options.packsDir) {
@@ -176,8 +239,11 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     objectsIndex: { sha256: createHash('sha256').update(indexBytes).digest('hex'), bytes: indexBytes.length, crc32: crc32(Buffer.from(indexBytes)) >>> 0 },
     objects: Object.keys(index.objects).length,
     bytes: Object.values(index.objects).reduce((sum, entry) => sum + entry.bytes, 0),
+    ...(library.length > 0 ? { library } : {}),
   };
   await writeAtomic(path.join(out, publishKeys.meta), `${JSON.stringify(meta, null, 2)}\n`);
-  log(`published ${meta.objects} object(s) (${linked} linked, ${copied} copied, ${skipped} already there, ${mirrored} only in the mirror), ${years.length} year(s), to ${out}`);
+  log(
+    `published ${meta.objects} object(s) (${linked} linked, ${copied} copied, ${skipped} already there, ${mirrored} only in the mirror), ${years.length} year(s)${library.length ? `, library: ${library.join(', ')}` : ''}, to ${out}`,
+  );
   return { meta, linked, copied, skipped, mirrored };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { DEFAULT_CUSTOM, formatMb, monthsOf, scopeParam, sectionsParam, selectionQuery } from './selection';
+import { DEFAULT_CUSTOM, axesOf, formatMb, libraryQuery, monthsOf, scopeParam, sectionsParam, selectionQuery } from './selection';
 
 describe('the download site', () => {
   it('asks the pack API for exactly what was chosen', () => {
@@ -19,6 +19,17 @@ describe('the download site', () => {
       { token: '06A', name: 'אדר א׳', occasions: 1 },
       { token: '07', name: 'ניסן', occasions: 2 },
     ]);
+  });
+
+  it('asks for a library collection whole, or one group of the axis chosen', () => {
+    expect(libraryQuery({ collection: 'reshimos', axis: null, group: null, profile: 'opus16', maxMb: 200 })).toBe('scope=reshimos&profile=opus16&maxMb=200');
+    expect(libraryQuery({ collection: 'maamorim', axis: 'year', group: '5711', profile: 'src', maxMb: 500 })).toBe('scope=maamorim%3Ayear%3A5711&profile=src&maxMb=500');
+    // An axis without its group selects nothing yet.
+    expect(libraryQuery({ collection: 'maamorim', axis: 'year', group: null, profile: 'src', maxMb: 500 })).toBeNull();
+  });
+
+  it('offers the axes the app browses by, in its order, and only those a collection has', () => {
+    expect(axesOf({ moad: [{}], volume: [{}], parsha: [], unknown: [{}] }).map((a) => a.id)).toEqual(['volume', 'moad']);
   });
 
   it('writes sizes the way people read them', () => {

@@ -61,6 +61,13 @@ count and the pack entries to build - through `app-core`'s
 `listDownloadTargets`, so what the download site quotes, what the
 builder packs and what the phone would download are one function.
 
+The library (catalog schema 2) sizes the same way with
+`sizeLibrarySelection`. Its scopes are a whole collection or one group
+of the browse axes the app uses: `parseLibraryScopeSpec` reads
+`maamorim:year:5711`, and `resolveLibraryScope` finds that group's items
+and names the pack. JEM's events are recordings only, and they are not
+packable yet.
+
 ## Text packs (catalog schema 3)
 
 One pack per work (`src/text.ts`): scope `{ kind: 'work', collection:

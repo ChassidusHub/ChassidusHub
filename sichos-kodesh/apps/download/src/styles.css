@@ -478,6 +478,71 @@ main {
   line-height: 1.2;
 }
 
+/* The seforim: a sefer to a row, its name in the display face. */
+.sefer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 10px;
+}
+
+.sefer-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.sefer-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.sefer-title {
+  margin: 0 0 2px;
+  font-family: var(--display);
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+/* What the custom pack holds: dark pills above the form, so the green stays the form's own choices. */
+.collection-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.collection-tab {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.collection-tab:hover {
+  background: var(--card-hover);
+}
+
+.collection-tab-on,
+.collection-tab-on:hover {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.collection-tab:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ---- The builder: the choices beside (or above) what they make ---- */
 
 .builder {

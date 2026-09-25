@@ -1,4 +1,4 @@
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 
 /** The published pack API (services/pack-api's Worker). */
 const PUBLISHED_PACK_API = 'https://sichos-kodesh-pack-api.shmuky.workers.dev';
@@ -13,14 +13,16 @@ export interface Meta {
   profiles: string[];
   objects: number;
   bytes: number;
+  /** The library collections published (pack-format's library.ts); absent from an older pack API. */
+  library?: string[];
 }
 
 export interface PrebuiltPack {
-  id: string;
+  packId: string;
   file: string;
   bytes: number;
   profile: string;
-  scope: { label: { en: string; he: string }; hebrewYear?: number; month?: string };
+  scope: { kind?: string; collection?: string; label: { en: string; he: string }; hebrewYear?: number; month?: string; work?: string };
   part?: { index: number; count: number };
 }
 
@@ -45,6 +47,7 @@ export const api = {
   meta: (signal?: AbortSignal) => getJson<Meta>('/v1/meta', signal),
   packs: async (signal?: AbortSignal) => (await getJson<{ packs: PrebuiltPack[] }>('/v1/packs/index.json', signal).catch(() => ({ packs: [] }))).packs,
   catalogYear: (year: number, signal?: AbortSignal) => getJson<CatalogEntry[]>(`/v1/catalog/${year}`, signal),
+  library: (collection: string, signal?: AbortSignal) => getJson<LibraryCollection<LibraryItemBase>>(`/v1/library/${collection}`, signal),
   size: (query: string, signal?: AbortSignal) => getJson<SizeResult>(`/v1/size?${query}`, signal),
   buildUrl: (query: string, part: number) => `${PACK_API}/v1/build?${query}&part=${part}`,
   packUrl: (file: string) => `${PACK_API}/v1/packs/${encodeURIComponent(file)}`,

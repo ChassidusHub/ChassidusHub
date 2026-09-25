@@ -84,12 +84,13 @@ export interface ProfileInfo {
   recommended?: boolean;
 }
 
+// Sizes as measured on the archive's recordings (opus16 came to 49% of the originals, opus24 to 74%).
 export const PROFILE_INFO: Record<string, ProfileInfo> = {
-  opus16: { name: 'Opus 16', note: 'הקטן ביותר, כרבע מהמקור. לאפליקציה מגרסה 1.8.0', recommended: true },
-  opus24: { name: 'Opus 24', note: 'חוסך כשליש. לאפליקציה מגרסה 1.8.0' },
-  opus32: { name: 'Opus 32', note: 'חוסך כרבע. לאפליקציה מגרסה 1.8.0' },
-  src: { name: 'MP3 מקור', note: 'האיכות המלאה, כמו שהוקלט' },
-  'mp3-32': { name: 'MP3 32', note: 'לנגנים פשוטים' },
+  opus16: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, בחצי מהגודל', recommended: true },
+  opus24: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, בשלושה רבעים מהגודל' },
+  opus32: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, קצת קטן מהמקור' },
+  src: { name: 'הקובץ המקורי', note: 'ה-MP3 כמו שהוקלט, בגודל המלא' },
+  'mp3-32': { name: 'MP3 מוקטן', note: 'לנגני MP3 פשוטים' },
 };
 
 export function profileInfo(profile: string): ProfileInfo {
@@ -111,4 +112,66 @@ export function formatMb(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
   return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+}
+
+/** What a pack can hold: the farbrengens, or one of the library's collections (pack-format's library.ts). */
+export interface CollectionInfo {
+  id: string;
+  name: string;
+  /** How one item and many are counted: "שיחה אחת", "12 שיחות". */
+  one: string;
+  many: string;
+}
+
+export const COLLECTIONS: CollectionInfo[] = [
+  { id: 'farbrengens', name: 'התוועדויות', one: 'התוועדות אחת', many: 'התוועדויות' },
+  { id: 'likkuteiSichos', name: 'לקוטי שיחות', one: 'שיחה אחת', many: 'שיחות' },
+  { id: 'maamorim', name: 'מאמרים', one: 'מאמר אחד', many: 'מאמרים' },
+  { id: 'yomanim', name: 'יומנים', one: 'יומן אחד', many: 'יומנים' },
+  { id: 'michtavimKlolim', name: 'מכתבים כלליים', one: 'מכתב אחד', many: 'מכתבים' },
+  { id: 'hadranim', name: 'הדרנים', one: 'הדרן אחד', many: 'הדרנים' },
+  { id: 'reshimos', name: 'רשימות', one: 'רשימה אחת', many: 'רשימות' },
+];
+
+export function collectionInfo(id: string): CollectionInfo {
+  return COLLECTIONS.find((c) => c.id === id) ?? { id, name: id, one: 'פריט אחד', many: 'פריטים' };
+}
+
+/** The browse axes the app offers, as the site names them, in the order to offer them. */
+export const AXES: Array<{ id: string; name: string }> = [
+  { id: 'volume', name: 'לפי חלק' },
+  { id: 'year', name: 'לפי שנה' },
+  { id: 'melukat', name: 'מלוקט' },
+  { id: 'melukatByMonths', name: 'מלוקט, מהדורה חדשה' },
+  { id: 'masechta', name: 'לפי מסכת' },
+  { id: 'moed', name: 'לפי מועד' },
+  { id: 'moad', name: 'לפי מועד' },
+  { id: 'parsha', name: 'לפי פרשה' },
+  { id: 'month', name: 'לפי חודש' },
+  { id: 'supplement', name: 'מילואים' },
+];
+
+/** A collection's axes that the site knows, in AXES order. */
+export function axesOf(groups: Record<string, unknown>): Array<{ id: string; name: string }> {
+  return AXES.filter((axis) => Array.isArray(groups[axis.id]) && (groups[axis.id] as unknown[]).length > 0);
+}
+
+export interface LibraryChoice {
+  collection: string;
+  /** null: the whole collection. */
+  axis: string | null;
+  group: string | null;
+  profile: string;
+  maxMb: number;
+}
+
+/** `maamorim`, or `maamorim:year:5711`: pack-format's library scope. */
+export function libraryScopeParam(choice: Pick<LibraryChoice, 'collection' | 'axis' | 'group'>): string {
+  return choice.axis && choice.group ? `${choice.collection}:${choice.axis}:${choice.group}` : choice.collection;
+}
+
+/** The size and build query of a library choice; null until a group of the chosen axis is picked. */
+export function libraryQuery(choice: LibraryChoice): string | null {
+  if (choice.axis && !choice.group) return null;
+  return new URLSearchParams({ scope: libraryScopeParam(choice), profile: choice.profile, maxMb: String(choice.maxMb) }).toString();
 }

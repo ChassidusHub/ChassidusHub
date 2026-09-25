@@ -4,11 +4,11 @@ import path from 'node:path';
 import { Command } from 'commander';
 import { ArchiveStore } from '@sichos-kodesh/archive';
 import { CATALOG_VERSION, parseCatalogReleaseFile, parseCatalogWorksIndex, parseWorkContents } from '@sichos-kodesh/catalog';
-import type { AudioProfile, TrustedKeys } from '@sichos-kodesh/pack-format';
-import { AUDIO_PROFILES, TRUSTED_PACK_KEYS, manifestBytes } from '@sichos-kodesh/pack-format';
+import type { AudioProfile, PackableLibraryCollection, TrustedKeys } from '@sichos-kodesh/pack-format';
+import { AUDIO_PROFILES, PACKABLE_LIBRARY_COLLECTIONS, TRUSTED_PACK_KEYS, manifestBytes } from '@sichos-kodesh/pack-format';
 import { buildPacks } from '../src/build.js';
 import { loadYearEntries } from '../src/catalogData.js';
-import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { createKeyFile, defaultKeyFile, readKeyFile, readPublicKey } from '../src/keys.js';
 import { indexPacks } from '../src/packIndex.js';
 import { mirrorPublished } from '../src/mirror.js';
@@ -171,8 +171,10 @@ program
   .option('--allow-missing', 'build even when some texts are not archived yet')
   .action(async (opts: { work: string[]; worksDir: string; catalogVersion: string; maxMb: number; out?: string; key?: string; unsigned?: boolean; allowMissing?: boolean }) => {
     if (!(opts.maxMb > 0)) throw new Error('--max-mb must be a positive number');
-    const index = parseCatalogWorksIndex(JSON.parse(await readFile(path.join(opts.worksDir, 'index.json'), 'utf8')));
-    if (!index) throw new Error(`${opts.worksDir}/index.json is not a works index`);
+    // works.json since WP13's generator; index.json in older checkouts.
+    const indexFile = await readFile(path.join(opts.worksDir, 'works.json'), 'utf8').catch(() => readFile(path.join(opts.worksDir, 'index.json'), 'utf8'));
+    const index = parseCatalogWorksIndex(JSON.parse(indexFile));
+    if (!index) throw new Error(`${opts.worksDir}/works.json is not a works index`);
     // "all": every work with a text that may ship (the link-only ones have none to pack).
     const ids = opts.work.includes('all') ? index.works.filter((w) => (w.textBytes ?? 0) > 0).map((w) => w.id) : opts.work;
     const key = opts.unsigned ? null : await readKeyFile(opts.key ?? defaultKeyFile(root()));
@@ -254,17 +256,23 @@ program
   .option('--catalog-dir <dir>', 'catalog year files', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data'))
   .option('--catalog-version <v>', 'the catalog version the year files are', CATALOG_VERSION)
   .option('--packs <dir>', 'prebuilt packs to publish too (default <root>/packs when it exists)')
-  .action(async (opts: { out?: string; catalogDir: string; catalogVersion: string; packs?: string }) => {
+  .option('--library-dir <dir>', 'the library collections (catalog schema 2)', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'library'))
+  .action(async (opts: { out?: string; catalogDir: string; catalogVersion: string; packs?: string; libraryDir: string }) => {
     const years = new Map<number, CatalogEntry[]>();
     for (let year = 5680; year <= 5780; year += 1) {
       const entries = await loadYearEntries(opts.catalogDir, year).catch(() => []);
       if (entries.length > 0) years.set(year, entries);
     }
+    const library: Partial<Record<PackableLibraryCollection, LibraryCollection<LibraryItemBase>>> = {};
+    for (const collection of PACKABLE_LIBRARY_COLLECTIONS) {
+      const text = await readFile(path.join(opts.libraryDir, `${collection}.json`), 'utf8').catch(() => null);
+      if (text) library[collection] = JSON.parse(text) as LibraryCollection<LibraryItemBase>;
+    }
     const packsDir = opts.packs ?? path.join(root(), 'packs');
     const hasPacks = await stat(packsDir).then((info) => info.isDirectory()).catch(() => false);
     const store = await ArchiveStore.open(root());
     try {
-      await publishArchive(store, { years, catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
+      await publishArchive(store, { years, library, catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
     } finally {
       store.close();
     }

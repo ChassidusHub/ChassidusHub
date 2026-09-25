@@ -1,8 +1,23 @@
 import type { DownloadContentTypes } from '@sichos-kodesh/app-core';
-import type { AudioProfile, PackKeyPair, PackManifest, ParsedScope } from '@sichos-kodesh/pack-format';
-import { AUDIO_PROFILES, composeManifests, entriesInScope, packFileName, parseScope, parseSections, signManifest, sizeSelection, splitEntries, toHex } from '@sichos-kodesh/pack-format';
+import type { AudioProfile, LibraryScopeSpec, PackEntry, PackKeyPair, PackManifest, PackScope, ParsedScope } from '@sichos-kodesh/pack-format';
+import {
+  AUDIO_PROFILES,
+  composeManifests,
+  entriesInScope,
+  isPackableLibraryCollection,
+  packFileName,
+  parseLibraryScopeSpec,
+  parseScope,
+  parseSections,
+  resolveLibraryScope,
+  signManifest,
+  sizeLibrarySelection,
+  sizeSelection,
+  splitEntries,
+  toHex,
+} from '@sichos-kodesh/pack-format';
 import type { PublishMeta, YearShard } from './layout.js';
-import { parseCatalogYear, parsePublishMeta, parseYearShard, publishKeys } from './layout.js';
+import { parseCatalogYear, parseLibraryCollection, parsePublishMeta, parseYearShard, publishKeys } from './layout.js';
 import type { PackStore } from './store.js';
 import { readJson } from './store.js';
 import { streamPack } from './stream.js';
@@ -13,6 +28,7 @@ import { streamPack } from './stream.js';
  *
  *   GET /v1/meta                        what is published
  *   GET /v1/catalog/<year>              that year's farbrengens, for the download site's pickers
+ *   GET /v1/library/<collection>        a library collection's items and browse axes, for the same
  *   GET /v1/objects.json                the objects index (the phone's trust anchor)
  *   GET /v1/packs/index.json            the prebuilt packs
  *   GET /v1/packs/<file>                one prebuilt pack
@@ -23,6 +39,9 @@ import { streamPack } from './stream.js';
  * pack-format's sizeSelection (as the site, the builder and the phone do),
  * split by whole occasions, signed, and streamed from the archive's objects
  * in one pass. The URL is the selection, so a CDN caches each build.
+ * `scope` is a farbrengens year or month (5736, 5736-01) or a library scope
+ * (maamorim:year:5711, pack-format's library.ts); a library pack holds
+ * every PDF of its items and their recordings in `profile`.
  */
 
 export interface HandlerOptions {
@@ -51,7 +70,9 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 }
 
 export interface BuildRequest {
-  scope: ParsedScope;
+  /** A farbrengens year or month; null for a library scope. */
+  scope: ParsedScope | null;
+  library: LibraryScopeSpec | null;
   profile: AudioProfile;
   sections: string;
   contentTypes: DownloadContentTypes;
@@ -60,10 +81,12 @@ export interface BuildRequest {
 
 export function parseBuildRequest(url: URL): BuildRequest {
   const scopeParam = url.searchParams.get('scope');
-  if (!scopeParam) throw new HttpError(400, 'scope is required: a Hebrew year (5736) or a year and month token (5736-01)');
-  let scope: ParsedScope;
+  if (!scopeParam) throw new HttpError(400, 'scope is required: a Hebrew year (5736), a year and month token (5736-01), or a library scope (maamorim:year:5711)');
+  let scope: ParsedScope | null = null;
+  let library: LibraryScopeSpec | null = null;
   try {
-    scope = parseScope(scopeParam);
+    library = parseLibraryScopeSpec(scopeParam);
+    if (!library) scope = parseScope(scopeParam);
   } catch (error) {
     throw new HttpError(400, error instanceof Error ? error.message : String(error));
   }
@@ -78,10 +101,13 @@ export function parseBuildRequest(url: URL): BuildRequest {
   }
   const maxMb = Number(url.searchParams.get('maxMb') ?? DEFAULT_MAX_MB);
   if (!(maxMb > 0) || maxMb > MAX_MAX_MB) throw new HttpError(400, `maxMb must be between 1 and ${MAX_MAX_MB}`);
-  return { scope, profile, sections, contentTypes, maxBytes: Math.floor(maxMb * 1024 * 1024) };
+  return { scope, library, profile, sections, contentTypes, maxBytes: Math.floor(maxMb * 1024 * 1024) };
 }
 
 export interface PlannedBuild {
+  scope: PackScope;
+  /** The file-name stem. */
+  slug: string;
   manifests: PackManifest[];
   bytes: number[];
   missing: number;
@@ -96,17 +122,47 @@ async function loadMeta(store: PackStore): Promise<PublishMeta> {
   return meta;
 }
 
-export async function planBuild(store: PackStore, meta: PublishMeta, request: BuildRequest, builtAt: string): Promise<PlannedBuild> {
-  const year = request.scope.year;
+interface Selected {
+  scope: PackScope;
+  slug: string;
+  entries: PackEntry[];
+  objects: Record<string, number>;
+  bytes: number;
+  missing: number;
+  shard: YearShard;
+}
+
+async function selectFarbrengens(store: PackStore, meta: PublishMeta, request: BuildRequest, scope: ParsedScope): Promise<Selected> {
+  const year = scope.year;
   if (!meta.years.includes(year)) throw new HttpError(404, `${year} is not in the published archive`);
   const entries = parseCatalogYear(await readJson(store, publishKeys.catalogYear(year)));
   const shard = parseYearShard(await readJson(store, publishKeys.yearShard(year)));
   if (!entries || !shard) throw new HttpError(503, `the published data for ${year} is unreadable`);
-  const selection = sizeSelection(entriesInScope(entries, request.scope), request.contentTypes, shard.index, request.profile);
+  const selection = sizeSelection(entriesInScope(entries, scope), request.contentTypes, shard.index, request.profile);
+  return { scope: scope.scope, slug: scope.slug, entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing.length, shard };
+}
+
+async function selectLibrary(store: PackStore, meta: PublishMeta, request: BuildRequest, spec: LibraryScopeSpec): Promise<Selected> {
+  if (!meta.library?.includes(spec.collection)) throw new HttpError(404, `${spec.collection} is not in the published archive`);
+  const collection = parseLibraryCollection(await readJson(store, publishKeys.libraryCollection(spec.collection)));
+  const shard = parseYearShard(await readJson(store, publishKeys.libraryShard(spec.collection)));
+  if (!collection || !shard) throw new HttpError(503, `the published data for ${spec.collection} is unreadable`);
+  let resolved;
+  try {
+    resolved = resolveLibraryScope(spec, collection);
+  } catch (error) {
+    throw new HttpError(404, error instanceof Error ? error.message : String(error));
+  }
+  const selection = sizeLibrarySelection(spec.collection, resolved.items, shard.index, request.profile);
+  return { scope: resolved.scope, slug: resolved.slug, entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing, shard };
+}
+
+export async function planBuild(store: PackStore, meta: PublishMeta, request: BuildRequest, builtAt: string): Promise<PlannedBuild> {
+  const selection = request.library ? await selectLibrary(store, meta, request, request.library) : await selectFarbrengens(store, meta, request, request.scope!);
   if (selection.entries.length === 0) throw new HttpError(404, 'the archive holds nothing of this selection yet');
   const parts = splitEntries(selection.entries, request.maxBytes);
   const manifests = await composeManifests({
-    scope: request.scope.scope,
+    scope: selection.scope,
     profile: request.profile,
     catalogVersion: meta.catalogVersion,
     builtAt,
@@ -114,7 +170,16 @@ export async function planBuild(store: PackStore, meta: PublishMeta, request: Bu
     hash: sha256Hex,
     objectsIndex: { version: meta.catalogVersion, sha256: meta.objectsIndex.sha256 },
   });
-  return { manifests, bytes: parts.map((part) => part.bytes), missing: selection.missing.length, objects: Object.keys(selection.objects).length, objectBytes: selection.bytes, shard };
+  return {
+    scope: selection.scope,
+    slug: selection.slug,
+    manifests,
+    bytes: parts.map((part) => part.bytes),
+    missing: selection.missing,
+    objects: Object.keys(selection.objects).length,
+    objectBytes: selection.bytes,
+    shard: selection.shard,
+  };
 }
 
 function json(value: unknown, init: ResponseInit = {}): Response {
@@ -154,6 +219,12 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
     }
     const catalogMatch = /^\/v1\/catalog\/(\d{4})$/.exec(path);
     if (catalogMatch) return passThrough(store, publishKeys.catalogYear(Number(catalogMatch[1])), 'application/json; charset=utf-8', 'public, max-age=3600');
+    const libraryMatch = /^\/v1\/library\/([A-Za-z]+)$/.exec(path);
+    if (libraryMatch) {
+      const collection = libraryMatch[1]!;
+      if (!isPackableLibraryCollection(collection)) throw new HttpError(404, 'not found');
+      return passThrough(store, publishKeys.libraryCollection(collection), 'application/json; charset=utf-8', 'public, max-age=3600');
+    }
 
     if (path === '/v1/size' || path === '/v1/build') {
       const buildRequest = parseBuildRequest(url);
@@ -164,8 +235,8 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
       if (path === '/v1/size') {
         return json(
           {
-            scope: buildRequest.scope.scope,
-            slug: buildRequest.scope.slug,
+            scope: plan.scope,
+            slug: plan.slug,
             profile: buildRequest.profile,
             sections: buildRequest.sections,
             occasions: plan.manifests.reduce((sum, m) => sum + m.entries.length, 0),
@@ -175,7 +246,7 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
             signed: !!options.signingKey,
             parts: plan.manifests.map((manifest, index) => ({
               index,
-              file: packFileName(buildRequest.scope.slug, buildRequest.profile, manifest.part),
+              file: packFileName(plan.slug, buildRequest.profile, manifest.part),
               occasions: manifest.entries.length,
               bytes: plan.bytes[index],
             })),
@@ -189,7 +260,7 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
       const unsigned = plan.manifests[partIndex]!;
       const manifest = options.signingKey ? signManifest(unsigned, options.signingKey) : unsigned;
       const pack = streamPack(store, manifest, meta, plan.shard);
-      const file = packFileName(buildRequest.scope.slug, buildRequest.profile, manifest.part);
+      const file = packFileName(plan.slug, buildRequest.profile, manifest.part);
       return new Response(request.method === 'HEAD' ? null : pack.body, {
         headers: {
           'Content-Type': 'application/zip',
