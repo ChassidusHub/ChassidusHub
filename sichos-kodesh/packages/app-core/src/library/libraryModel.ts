@@ -1,5 +1,6 @@
 import type { CatalogAudio, CatalogByYear, CatalogEntry, CatalogLibrary, CatalogRef, LibraryCollectionId, LibraryGroup, LibraryItemBase, OccasionGroup } from '@sichos-kodesh/catalog';
 import { mafteiachMonthName, mafteiachMonthNameHebrew } from '@sichos-kodesh/catalog';
+import { parshiot } from '@hebcal/core';
 import { hebrewFullDateLabel, hebrewYearLabel } from '../catalog/formatHebrewDate.js';
 import type { Language } from '../search/language.js';
 
@@ -322,4 +323,15 @@ export function itemPlaylistEntry(collection: LibraryCollectionId, item: Library
     audio,
     pdfs: [],
   };
+}
+
+/**
+ * mafteiach's Likkutei Sichos parsha slugs are in Torah order, like
+ * hebcal's `parshiot`, and both have 54 - so a parsha is found by its
+ * place, not by spelling (`Vayera` / `vayeira`, `Sh'lach` / `shlach`).
+ */
+export function lsParshaSlugs(library: CatalogLibrary, parsha: string[] | null): string[] {
+  const groups = library.collections.likkuteiSichos.groups.parsha ?? [];
+  if (!parsha || groups.length !== parshiot.length) return [];
+  return parsha.map((name) => groups[parshiot.indexOf(name)]?.slug).filter((slug): slug is string => !!slug);
 }

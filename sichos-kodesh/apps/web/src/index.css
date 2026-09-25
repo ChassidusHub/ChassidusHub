@@ -1400,6 +1400,162 @@ h1 {
   justify-content: space-between;
 }
 
+/* ---- The home page (YearPickerScreen; the phone's ui/HomeTiles.tsx) ---- */
+
+.home-date {
+  margin-bottom: 16px;
+}
+
+/* This week: a card tinted with the accent, the kvius button inside it. */
+.home-week {
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: 18px;
+  padding: 14px 16px 6px;
+  margin-bottom: 8px;
+}
+
+.home-week-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.home-week-title {
+  margin: 2px 0 0;
+  font-size: 1.375rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.hero-button.home-week-button {
+  margin: 12px 0 6px;
+}
+
+.home-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 13px 0;
+  color: var(--fg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.home-link:last-child {
+  border-bottom: none;
+}
+
+.home-link svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.home-link:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* The farbrengens' three ways in, side by side. */
+.home-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.home-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--fg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color 0.1s ease;
+}
+
+.home-chip svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.home-chip:hover,
+.home-tile:hover {
+  background: var(--card-hover);
+}
+
+/* A door into each part of the library, two to a row (three on a wide screen). */
+.home-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+@media (min-width: 720px) {
+  .home-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.home-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 118px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--card-bg);
+  color: var(--fg);
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.home-tile-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.home-tile-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.home-tile-blurb {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.home-link:focus-visible,
+.home-chip:focus-visible,
+.home-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .header-row-actions {
   display: flex;
   align-items: center;

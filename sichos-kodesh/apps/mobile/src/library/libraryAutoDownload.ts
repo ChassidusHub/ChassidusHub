@@ -1,10 +1,10 @@
-import { HDate, parshiot } from '@hebcal/core';
+import { HDate } from '@hebcal/core';
 import type { CatalogLibrary, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { currentParsha, mafteiachMonthToken, toMafteiachHebrewDateKey } from '@sichos-kodesh/catalog';
 import type { DownloadTarget } from '@sichos-kodesh/app-core';
 import { IL } from '../config';
 import { libraryItemTargets } from './libraryDownloads';
-import { findGroup, findItem } from '@sichos-kodesh/app-core';
+import { findGroup, findItem, lsParshaSlugs } from '@sichos-kodesh/app-core';
 
 /**
  * Auto-download per collection (docs/offline-plan.md WP4b), on top of the
@@ -22,16 +22,8 @@ export const LIBRARY_AUTO_COLLECTIONS: readonly LibraryAutoCollection[] = ['likk
 
 export type LibraryAutoSettings = Partial<Record<LibraryAutoCollection, boolean>>;
 
-/**
- * mafteiach's Likkutei Sichos parsha slugs are in Torah order, like
- * hebcal's `parshiot`, and both have 54 - so a parsha is found by its
- * place, not by spelling (`Vayera` / `vayeira`, `Sh'lach` / `shlach`).
- */
-export function lsParshaSlugs(library: CatalogLibrary, parsha: string[] | null): string[] {
-  const groups = library.collections.likkuteiSichos.groups.parsha ?? [];
-  if (!parsha || groups.length !== parshiot.length) return [];
-  return parsha.map((name) => groups[parshiot.indexOf(name)]?.slug).filter((slug): slug is string => !!slug);
-}
+// Found by place in Torah order (app-core), shared with the home screens.
+export { lsParshaSlugs };
 
 /** The general letters' moed group for a mafteiach month token. */
 export function michtavMoedSlug(monthToken: string): string | null {
