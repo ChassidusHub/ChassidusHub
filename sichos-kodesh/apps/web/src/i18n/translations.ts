@@ -289,9 +289,15 @@ const en = {
     moad: 'Moed',
     year: 'Year',
     melukat: 'Melukat',
+    month: 'Month',
     masechta: 'Masechta',
     moed: 'Moed',
     type: 'Type',
+  } as Record<string, string>,
+  /** The toggle under a tab with more than one view (libraryModel AXIS_VARIANTS). */
+  axisVariantNames: {
+    melukat: '6 volumes',
+    melukatByMonths: 'By month, 4 parts',
   } as Record<string, string>,
   pdfRoleNames: {
     sicha: 'Sicha',
@@ -642,9 +648,14 @@ const he: typeof en = {
     moad: 'מועד',
     year: 'שנה',
     melukat: 'מלוקט',
+    month: 'חודש',
     masechta: 'מסכת',
     moed: 'מועד',
     type: 'סוג',
+  } as Record<string, string>,
+  axisVariantNames: {
+    melukat: 'ו׳ חלקים',
+    melukatByMonths: 'לפי החודשים, ד׳ חלקים',
   } as Record<string, string>,
   pdfRoleNames: {
     sicha: 'שיחה',

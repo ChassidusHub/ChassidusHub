@@ -55,6 +55,8 @@ export interface LibraryItemBase {
 export interface LibraryGroup {
   slug: string;
   name: string;
+  /** Its English name, when it has one (the views src/library/views.ts adds: months, moadim, parshiyos, the edition's parts). */
+  nameEn?: string;
   itemIds: string[];
 }
 
@@ -132,7 +134,7 @@ export interface JemEventItem extends LibraryItemBase {
 
 export interface LibraryCollection<T extends LibraryItemBase> {
   items: T[];
-  /** Browse axes by name: `volume`, `parsha`, `moad`, `year`, `melukat`, `masechta`, `moed`, `type`. */
+  /** Browse axes by name: `volume`, `parsha`, `moad`, `year`, `month`, `melukat`, `melukatByMonths`, `masechta`, `moed`, `type`. */
   groups: Record<string, LibraryGroup[]>;
 }
 

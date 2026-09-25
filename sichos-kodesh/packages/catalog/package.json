@@ -28,7 +28,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "build-catalog": "tsx bin/build.ts",
     "translation-coverage": "tsx bin/translations.ts",
-    "translate-library": "tsx bin/translate-library.ts",
+    "enrich-library": "tsx bin/enrich-library.ts",
     "release-files": "tsx bin/release.ts"
   },
   "license": "ISC",

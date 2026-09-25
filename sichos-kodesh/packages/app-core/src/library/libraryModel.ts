@@ -13,16 +13,40 @@ import type { Language } from '../search/language.js';
 /** The order collections appear in on the library page. */
 export const LIBRARY_ORDER: readonly LibraryCollectionId[] = ['likkuteiSichos', 'maamorim', 'reshimos', 'yomanim', 'michtavimKlolim', 'hadranim', 'jemEvents'];
 
-/** Each collection's browse axes, in the order its tabs show them. `supplement` is folded into `volume` (see volumeGroups). */
+/**
+ * Each collection's browse axes, in the order its tabs show them.
+ * `supplement` is folded into `volume` (see axisGroups). The month, moed and
+ * parsha views of the maamorim, reshimos and JEM recordings are the
+ * catalog's (packages/catalog/src/library/views.ts).
+ */
 export const COLLECTION_AXES: Record<LibraryCollectionId, readonly string[]> = {
   likkuteiSichos: ['volume', 'parsha', 'moad'],
-  maamorim: ['year', 'melukat'],
-  reshimos: ['year'],
+  maamorim: ['year', 'month', 'melukat', 'parsha', 'moad'],
+  reshimos: ['year', 'month', 'parsha', 'moad'],
   yomanim: ['year'],
   michtavimKlolim: ['moed', 'year'],
   hadranim: ['masechta', 'year'],
-  jemEvents: ['year', 'type'],
+  jemEvents: ['year', 'month', 'type', 'parsha', 'moad'],
 };
+
+/**
+ * Axes one tab holds more than one of, the first its default: ספר המאמרים
+ * מלוקט's six volumes, and its edition by the months of the year in four
+ * parts (a toggle on the Melukat tab).
+ */
+export const AXIS_VARIANTS: Readonly<Record<string, readonly string[]>> = {
+  melukat: ['melukat', 'melukatByMonths'],
+};
+
+/** The tab an axis is shown under: a variant's own tab, or the axis itself. */
+export function axisTab(axis: string): string {
+  return Object.entries(AXIS_VARIANTS).find(([, variants]) => variants.includes(axis))?.[0] ?? axis;
+}
+
+/** An axis a collection can be browsed by: one of its tabs, or a variant of one. */
+export function isCollectionAxis(collection: LibraryCollectionId, axis: string | undefined): axis is string {
+  return !!axis && COLLECTION_AXES[collection].includes(axisTab(axis));
+}
 
 export type OccasionAxis = 'moadim' | 'parshiyos';
 
@@ -60,7 +84,7 @@ export function groupDisplayName(collection: LibraryCollectionId, axis: string, 
   if (axis === 'year' && Number.isInteger(number) && number > 5000) return hebrewYearLabel(number, language);
   if (axis === 'volume' && collection === 'likkuteiSichos' && Number.isInteger(number) && group.slug !== '40') return language === 'he' ? `חלק ${group.name}` : `Volume ${number}`;
   if (axis === 'melukat') return language === 'he' ? `מלוקט ח״${group.name}` : `Melukat, volume ${number}`;
-  return group.name;
+  return language === 'en' ? (group.nameEn ?? group.name) : group.name;
 }
 
 function dateLine(item: LibraryItemBase, language: Language): string | null {

@@ -1,5 +1,7 @@
 export { buildCatalog } from './buildCatalog.js';
 export { buildLibrary, jemHebrewDate } from './library/buildLibrary.js';
+export { addLibraryViews } from './library/views.js';
+export type { LibraryEditions, MelukatByMonthsEdition } from './library/views.js';
 export { extractDriveFileId, extractDriveResourceKey } from './driveLinks.js';
 export { mafteiachMonthTokenToHDateMonth, toMafteiachHebrewDateKey } from './hebrewDateKey.js';
 export { browsableYears, entryHasContent, findCatalogEntryForOccasion, hasContent } from './catalogLookup.js';

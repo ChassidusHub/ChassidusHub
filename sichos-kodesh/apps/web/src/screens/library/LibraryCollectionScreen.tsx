@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
-import { COLLECTION_AXES, axisGroups, groupDisplayName } from '@sichos-kodesh/app-core';
+import { AXIS_VARIANTS, COLLECTION_AXES, axisGroups, axisTab, groupDisplayName, isCollectionAxis } from '@sichos-kodesh/app-core';
 import { useLibrary } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { Segmented } from '../../components/settings/SettingsControls';
@@ -11,14 +11,21 @@ interface Props {
   collection: LibraryCollectionId;
 }
 
-/** One collection of the library: its browse axes as tabs (kept in the URL), and the groups of the chosen one (volumes, years, parshiyos...). */
+/**
+ * One collection of the library: its browse axes as tabs (kept in the URL),
+ * and the groups of the chosen one (volumes, years, months, parshiyos...).
+ * A tab with variants (Melukat: its six volumes, or its edition by the
+ * months in four parts) adds a second toggle. Same as the phone's.
+ */
 export function LibraryCollectionScreen({ collection }: Props) {
   const library = useLibrary();
   const { t, language } = useTranslation();
   const [params, setParams] = useSearchParams();
   const axes = COLLECTION_AXES[collection];
-  const asked = params.get('axis');
-  const axis = asked && axes.includes(asked) ? asked : axes[0]!;
+  const asked = params.get('axis') ?? undefined;
+  const axis = isCollectionAxis(collection, asked) ? asked : axes[0]!;
+  const tab = axisTab(axis);
+  const variants = library ? (AXIS_VARIANTS[tab] ?? []).filter((variant) => axisGroups(library, collection, variant).length > 0) : [];
   const groups = library ? axisGroups(library, collection, axis) : [];
 
   return (
@@ -29,9 +36,19 @@ export function LibraryCollectionScreen({ collection }: Props) {
         <div className="library-tabs">
           <Segmented
             options={axes.map((value) => ({ value, label: t.axisNames[value] ?? value }))}
-            value={axis}
+            value={tab}
             onChange={(next) => setParams({ axis: next }, { replace: true })}
             label={t.collectionNames[collection]}
+          />
+        </div>
+      )}
+      {variants.length > 1 && (
+        <div className="library-tabs">
+          <Segmented
+            options={variants.map((value) => ({ value, label: t.axisVariantNames[value] ?? value }))}
+            value={axis}
+            onChange={(next) => setParams({ axis: next }, { replace: true })}
+            label={t.axisNames[tab] ?? tab}
           />
         </div>
       )}

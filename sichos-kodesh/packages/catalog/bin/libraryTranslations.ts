@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { LibraryTranslations } from '../src/translate/library.js';
+import type { LibraryEditions } from '../src/library/views.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,4 +22,18 @@ export async function loadLibraryTranslations(dir = path.join(__dirname, '..', '
     }
   };
   return { he: await read('library-he.json'), en: await read('library-en.json') };
+}
+
+/**
+ * The printed editions the library places its items in, bibliographic
+ * facts only (editions/): today ספר המאמרים מלוקט by the months of the
+ * year. A missing file is no edition.
+ */
+export async function loadLibraryEditions(dir = path.join(__dirname, '..', 'editions')): Promise<LibraryEditions> {
+  try {
+    return { melukatByMonths: JSON.parse(await readFile(path.join(dir, 'melukat-new.json'), 'utf8')) };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {};
+    throw error;
+  }
 }
