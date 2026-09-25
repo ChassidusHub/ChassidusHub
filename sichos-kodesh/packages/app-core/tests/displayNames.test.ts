@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { audioChapterName, chapterTitle, occasionTitle, trackLabel } from '../src/catalog/displayNames.js';
+import { audioChapterName, chapterTitle, occasionDescription, occasionFullName, occasionTitle, trackLabel } from '../src/catalog/displayNames.js';
 import { hebrewDayMonthLabel, hebrewFullDateLabel } from '../src/catalog/formatHebrewDate.js';
 
 const translated = { occasionLabel: `יום ב' דר"ה`, occasionLabelEn: 'Rosh Hashanah, day 2' };
@@ -16,6 +16,34 @@ describe('occasionTitle', () => {
 
   it('falls back to the Hebrew label where there is no English (or a catalog from before 1.1.0)', () => {
     expect(occasionTitle(hebrewOnly, 'en')).toBe(hebrewOnly.occasionLabel);
+  });
+});
+
+describe('the short titles (catalog 1.7.0)', () => {
+  const yechidus = {
+    occasionLabel: `י"א ניסן, יחידות כללית (לקבוצת אורחים; חתנים וכלות)`,
+    occasionLabelEn: '11 Nisan, general yechidus (for a group of guests; brides and grooms)',
+    occasionLabelShort: `י"א ניסן, יחידות כללית`,
+    occasionLabelShortEn: '11 Nisan, general yechidus',
+  };
+
+  it('title a long name by its short form, and keep the whole name for the description', () => {
+    expect(occasionTitle(yechidus, 'he')).toBe(`י"א ניסן, יחידות כללית`);
+    expect(occasionTitle(yechidus, 'en')).toBe('11 Nisan, general yechidus');
+    expect(occasionDescription(yechidus, 'he')).toBe(yechidus.occasionLabel);
+    expect(occasionDescription(yechidus, 'en')).toBe(yechidus.occasionLabelEn);
+    expect(occasionFullName(yechidus, 'en')).toBe(yechidus.occasionLabelEn);
+  });
+
+  it('have no description where the title is already the whole name', () => {
+    expect(occasionDescription(translated, 'en')).toBeUndefined();
+    expect(occasionDescription(hebrewOnly, 'he')).toBeUndefined();
+  });
+
+  it('fall back to the short Hebrew in the English UI when the name has no English', () => {
+    const hebrewShort = { occasionLabel: yechidus.occasionLabel, occasionLabelShort: yechidus.occasionLabelShort };
+    expect(occasionTitle(hebrewShort, 'en')).toBe(yechidus.occasionLabelShort);
+    expect(occasionDescription(hebrewShort, 'en')).toBe(yechidus.occasionLabel);
   });
 });
 

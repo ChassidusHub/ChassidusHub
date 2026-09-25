@@ -75,6 +75,7 @@
     "hebrewDate": "5715-01-17",
     "occasionLabel": "ליל ד' דחה\"ס, ב' דחוהמה\"ס, שמב\"ה",
     "occasionLabelEn": "Sukkos, night 4, Chol Hamoed Sukkos, day 2, Simchas Beis Hashoevah",
+    "occasionLabelShortEn": "Sukkos, night 4",
     "audio": [],
     "pdfs": [
       {
@@ -175,6 +176,7 @@
     "hebrewDate": "5715-01-26",
     "occasionLabel": "בראשית, מבה\"ח מ\"ח",
     "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
+    "occasionLabelShortEn": "Bereishis, Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -215,6 +217,7 @@
     "hebrewDate": "5715-02-24",
     "occasionLabel": "חיי שרה, מבה\"ח כסלו",
     "occasionLabelEn": "Chayei Sarah, Shabbos Mevarchim Kislev",
+    "occasionLabelShortEn": "Chayei Sarah, Mevarchim Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -494,6 +497,8 @@
     "hebrewDate": "5715-03-28",
     "occasionLabel": "ליל כ\"ט כסלו, ליל ה' דחנוכה, שיחה להת' שי' - בעת מסירת דמי חנוכה",
     "occasionLabelEn": "Night of 29 Kislev, Chanukah, night 5, sicha to the students - while giving out Chanukah gelt",
+    "occasionLabelShort": "ליל כ\"ט כסלו, מסירת דמי חנוכה",
+    "occasionLabelShortEn": "Night of 29 Kislev, Chanukah gelt",
     "audio": [],
     "pdfs": [
       {
@@ -696,6 +701,7 @@
     "hebrewDate": "5715-05-27",
     "occasionLabel": "משפטים, פ' שקלים, מבה\"ח אדר",
     "occasionLabelEn": "Mishpatim, Parshas Shekalim, Shabbos Mevarchim Adar",
+    "occasionLabelShortEn": "Mishpatim, Parshas Shekalim",
     "audio": [],
     "pdfs": [
       {
@@ -746,6 +752,8 @@
     "hebrewDate": "5715-06-05",
     "occasionLabel": "ה' אדר, שיחה למנדבים לישיבות ליובאוויטש",
     "occasionLabelEn": "5 Adar, sicha to the donors to the Lubavitch yeshivos",
+    "occasionLabelShort": "ה' אדר, שיחה למנדבים לישיבות",
+    "occasionLabelShortEn": "5 Adar, Lubavitch yeshivos donors",
     "audio": [],
     "pdfs": [
       {
@@ -915,6 +923,7 @@
     "hebrewDate": "5715-06-25",
     "occasionLabel": "ויק\"פ, פ' החודש, מבה\"ח ניסן",
     "occasionLabelEn": "Vayakhel-Pekudei, Parshas Hachodesh, Shabbos Mevarchim Nisan",
+    "occasionLabelShortEn": "Vayakhel-Pekudei, Parshas Hachodesh",
     "audio": [],
     "pdfs": [
       {
@@ -1136,6 +1145,7 @@
     "hebrewDate": "5715-08-29",
     "occasionLabel": "במדבר, מבה\"ח וער\"ח סיון",
     "occasionLabelEn": "Bamidbar, Shabbos Mevarchim and Erev Rosh Chodesh Sivan",
+    "occasionLabelShortEn": "Bamidbar, Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -1277,6 +1287,8 @@
     "hebrewDate": "5715-09-08",
     "occasionLabel": "אסרו חה\"ש, שיחה להרי\"ם ומנהלי הישיבות שבערי השדה",
     "occasionLabelEn": "Isru Chag Shavuos, sicha to the roshei yeshivah and the principals of the out-of-town yeshivos",
+    "occasionLabelShort": "אסרו חה\"ש, שיחה להרי\"ם שבערי השדה",
+    "occasionLabelShortEn": "Isru Chag Shavuos, roshei yeshivah",
     "audio": [],
     "pdfs": [
       {
@@ -1566,6 +1578,8 @@
     "hebrewDate": "5715-10-14",
     "occasionLabel": "ליל ט\"ו תמוז, שיחה להתלמידים שי' הנוסעים בשליחות המל\"ח",
     "occasionLabelEn": "Night of 15 Tamuz, sicha to the students traveling on Merkos shlichus",
+    "occasionLabelShort": "ליל ט\"ו תמוז, שיחה להנוסעים בשליחות",
+    "occasionLabelShortEn": "Night of 15 Tamuz, Merkos shlichus",
     "audio": [
       {
         "workerFilename": "JEMSK0149.mp3",
@@ -1593,6 +1607,7 @@
     "hebrewDate": "5715-10-26",
     "occasionLabel": "מטו\"מ, מבה\"ח מנ\"א",
     "occasionLabelEn": "Matos-Masei, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Matos-Masei, Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -1855,6 +1870,8 @@
     "hebrewDate": "5715-12-26",
     "occasionLabel": "ג' דסליחות, שיחה להרי\"ם דישיבות תות\"ל",
     "occasionLabelEn": "Selichos, day 3, sicha to the roshei yeshivah of the Tomchei Temimim yeshivos",
+    "occasionLabelShort": "ג' דסליחות, שיחה להרי\"ם דתות\"ל",
+    "occasionLabelShortEn": "Selichos, day 3, to roshei yeshivah",
     "audio": [],
     "pdfs": [
       {

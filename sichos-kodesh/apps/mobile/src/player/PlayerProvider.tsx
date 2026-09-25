@@ -11,7 +11,7 @@ import type { Language } from '../i18n/translations';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
 import { catalogAudioToTracks, trackMetadata } from './playlist';
 import type { PlayerContextValue, PlayerError, PlayerPlaylist } from './playerContext';
-import { PlayerContext, playlistForEntry } from './playerContext';
+import { PlayerContext, playlistForEntry, playlistNames } from './playerContext';
 import {
   flushProgressStore,
   getLastPlaylist,
@@ -52,7 +52,7 @@ async function doSetup(): Promise<void> {
 
 /** What the track names are made from: the playlist's recordings and both names of its occasion. */
 function trackSource(playlist: PlayerPlaylist) {
-  return { audio: playlist.audio, occasionLabel: playlist.title, occasionLabelEn: playlist.titleEn };
+  return { audio: playlist.audio, ...playlistNames(playlist) };
 }
 
 /** Idempotent: all concurrent callers await the same in-flight setup promise. */

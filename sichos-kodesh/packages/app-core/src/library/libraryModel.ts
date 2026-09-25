@@ -125,7 +125,31 @@ export function itemTitle(collection: LibraryCollectionId, item: LibraryItemBase
     const section = typeof record.sectionLabel === 'string' ? ` (${record.sectionLabel})` : null;
     return section && item.label.endsWith(section) ? item.label.slice(0, -section.length).trim() : item.label;
   }
-  return (language === 'he' ? item.labelHe : item.labelEn) ?? item.label;
+  // JEM's English names have `labelHe`; mafteiach's Hebrew ones `labelEn`, and the long ones a short form of each (catalog 1.7.0).
+  if (language === 'en' && item.labelEn) return item.labelShortEn ?? item.labelEn;
+  if (language === 'he' && item.labelHe) return item.labelHe;
+  return item.labelShort ?? item.label;
+}
+
+/** A name in the interface language, its short form where the catalog has one. */
+function shortInLanguage(hebrew: unknown, english: unknown, shortHe: unknown, shortEn: unknown, language: Language): string | null {
+  if (language === 'en' && typeof english === 'string' && english) return typeof shortEn === 'string' && shortEn ? shortEn : english;
+  if (typeof shortHe === 'string' && shortHe) return shortHe;
+  return typeof hebrew === 'string' && hebrew ? hebrew : null;
+}
+
+/**
+ * The whole name a shortened title or subtitle stands for - a letter's or a
+ * reshima's long name, where a maamar was said - for the item's own screen;
+ * undefined when nothing was shortened.
+ */
+export function itemDescription(collection: LibraryCollectionId, item: LibraryItemBase, language: Language): string | undefined {
+  const record = item as LibraryItemBase & Record<string, unknown>;
+  const [full, shown] =
+    collection === 'maamorim'
+      ? [inLanguage(record.occasionLabel, record.occasionLabelEn, language), shortInLanguage(record.occasionLabel, record.occasionLabelEn, record.occasionLabelShort, record.occasionLabelShortEn, language)]
+      : [inLanguage(item.label, item.labelEn, language), itemTitle(collection, item, language)];
+  return full && full !== shown ? full : undefined;
 }
 
 /** The muted line under an item in a list: where and when, in a few words. */
@@ -137,7 +161,7 @@ export function itemSubtitle(collection: LibraryCollectionId, item: LibraryItemB
       parts.push(inLanguage(record.sectionLabel, record.sectionLabelEn, language));
       break;
     case 'maamorim':
-      parts.push(inLanguage(record.occasionLabel, record.occasionLabelEn, language), dateLine(item, language));
+      parts.push(shortInLanguage(record.occasionLabel, record.occasionLabelEn, record.occasionLabelShort, record.occasionLabelShortEn, language), dateLine(item, language));
       break;
     case 'yomanim':
       parts.push(monthLine(item.hebrewYear, typeof record.monthToken === 'string' ? record.monthToken : undefined, language));

@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CheckCircle2, Download } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import { occasionFullName } from '@sichos-kodesh/app-core';
 import { useDownload } from '../download/useDownload';
 import { useOnlineMode } from '../appMode/appMode';
 import { useDownloadProgress } from '../download/useDownloadProgress';
@@ -81,7 +81,7 @@ export function OccasionActions({ entry, showDownload = true }: Props) {
   return (
     <View style={[styles.bar, direction]}>
       {download}
-      <ShareButton title={occasionTitle(entry, language)} hebrewYear={entry.hebrewYear} occasionId={entry.occasionId} />
+      <ShareButton title={occasionFullName(entry, language)} hebrewYear={entry.hebrewYear} occasionId={entry.occasionId} />
     </View>
   );
 }

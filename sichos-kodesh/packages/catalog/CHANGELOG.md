@@ -12,6 +12,26 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.7.0 - 2026-09-25
+
+- Short titles for the long occasion names. A farbrengen gains
+  `occasionLabelShort` and `occasionLabelShortEn` where its name is too
+  long for a row or a header (1,363 of them); a maamar gains the same for
+  where it was said, and the reshimos, michtavim klolim and hadranim
+  `labelShort` and `labelShortEn`. The long names are unchanged: the apps
+  show them as the description, and key saved progress by them.
+  `translations/short-titles.json` holds the short forms, written once and
+  checked; `npm run enrich-library` applies them to the committed year
+  files and library, and `build-catalog` on every build. An app from
+  before 1.7.0 ignores the new fields.
+- New browse views in the library (schema 2), derived from what it holds:
+  the maamorim, reshimos and linked JEM recordings `month` (all years, by
+  day then year), `parsha` and `moad` (through the occasions mafteiach
+  lists under each); and the maamorim's `melukatByMonths`, ספר המאמרים
+  מלוקט in its edition by the months of the year - four parts in the
+  edition's own order (`editions/melukat-new.json`), beside `melukat`, the
+  six volumes.
+
 ## 1.6.0 - 2026-09-24
 
 - The library (schema 2) names everything in both languages. JEM's
@@ -22,7 +42,7 @@ and parshiyos.
   `labelEn` of the reshimos (38), michtavim klolim (193) and hadranim (144).
   The rules in `src/translate` go first; `translations/library-he.json` and
   `library-en.json` hold the names they can't do, translated once and
-  checked. `npm run translate-library` applies them to the committed
+  checked. `npm run translate-library` (now `enrich-library`) applies them to the committed
   library files; `build-catalog` applies them on every build.
 
 ## 1.5.0 - 2026-09-24

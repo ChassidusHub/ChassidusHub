@@ -57,6 +57,7 @@
     "hebrewDate": "5746-01-06",
     "occasionLabel": "וילך, ש\"ת, ו' תשרי",
     "occasionLabelEn": "Vayeilech, Shabbos Shuvah, 6 Tishrei",
+    "occasionLabelShortEn": "Vayeilech, 6 Tishrei",
     "audio": [],
     "pdfs": [
       {
@@ -82,6 +83,7 @@
     "hebrewDate": "5746-01-08",
     "occasionLabel": "ח' תשרי, אחרי מנחה, שיחה לצבאות ה'",
     "occasionLabelEn": "8 Tishrei, after Mincha, sicha to Tzivos Hashem",
+    "occasionLabelShortEn": "8 Tishrei, sicha to Tzivos Hashem",
     "audio": [
       {
         "workerFilename": "JEMSK3640.mp3",
@@ -196,6 +198,7 @@
     "hebrewDate": "5746-01-14",
     "occasionLabel": "ערב חה\"ס, בעת מסירת האתרוגים",
     "occasionLabelEn": "Erev Sukkos, while giving out esrogim",
+    "occasionLabelShortEn": "Erev Sukkos, giving out esrogim",
     "audio": [
       {
         "workerFilename": "AR0020668.mp3",
@@ -229,6 +232,7 @@
     "hebrewDate": "5746-01-14b",
     "occasionLabel": "ליל א' דחה\"ס, אחרי מעריב - שמב\"ה",
     "occasionLabelEn": "Sukkos, night 1, after Maariv - Simchas Beis Hashoevah",
+    "occasionLabelShortEn": "Sukkos, night 1",
     "audio": [],
     "pdfs": [
       {
@@ -249,6 +253,7 @@
     "hebrewDate": "5746-01-14c",
     "occasionLabel": "ליל א' דחה\"ס, ברכה להאורחים",
     "occasionLabelEn": "Sukkos, night 1, bracha to the guests",
+    "occasionLabelShortEn": "Sukkos, night 1, bracha to guests",
     "audio": [],
     "pdfs": [
       {
@@ -269,6 +274,7 @@
     "hebrewDate": "5746-01-15",
     "occasionLabel": "ליל ב' דחה\"ס, אחרי מעריב - שמב\"ה",
     "occasionLabelEn": "Sukkos, night 2, after Maariv - Simchas Beis Hashoevah",
+    "occasionLabelShortEn": "Sukkos, night 2",
     "audio": [],
     "pdfs": [
       {
@@ -294,6 +300,8 @@
     "hebrewDate": "5746-01-16",
     "occasionLabel": "ליל ג' דחה\"ס, א' דחוה\"מ, אחרי מעריב - שמב\"ה",
     "occasionLabelEn": "Sukkos, night 3, Chol Hamoed, day 1, after Maariv - Simchas Beis Hashoevah",
+    "occasionLabelShort": "ליל ג' דחה\"ס, א' דחוה\"מ, שמב\"ה",
+    "occasionLabelShortEn": "Sukkos, night 3",
     "audio": [
       {
         "workerFilename": "AR0020670.mp3",
@@ -326,6 +334,8 @@
     "hebrewDate": "5746-01-17",
     "occasionLabel": "ליל ד' דחה\"ס, ב' דחוה\"מ, אחרי מעריב - שמב\"ה",
     "occasionLabelEn": "Sukkos, night 4, Chol Hamoed, day 2, after Maariv - Simchas Beis Hashoevah",
+    "occasionLabelShort": "ליל ד' דחה\"ס, ב' דחוה\"מ, שמב\"ה",
+    "occasionLabelShortEn": "Sukkos, night 4",
     "audio": [
       {
         "workerFilename": "AR0020672.mp3",
@@ -353,6 +363,8 @@
     "hebrewDate": "5746-01-18",
     "occasionLabel": "יום ד' דחה\"ס, ב' דחוה\"מ, אחרי מנחה, שיחה לצבאות ה'",
     "occasionLabelEn": "Sukkos, day 4, Chol Hamoed, day 2, after Mincha, sicha to Tzivos Hashem",
+    "occasionLabelShort": "יום ד' דחה\"ס, שיחה לצבאות ה'",
+    "occasionLabelShortEn": "Sukkos, day 4, Tzivos Hashem",
     "audio": [
       {
         "workerFilename": "AR0020673.mp3",
@@ -398,6 +410,8 @@
     "hebrewDate": "5746-01-18b",
     "occasionLabel": "ליל ה' דחה\"ס, ג' דחוה\"מ, אחרי מעריב - שמב\"ה",
     "occasionLabelEn": "Sukkos, night 5, Chol Hamoed, day 3, after Maariv - Simchas Beis Hashoevah",
+    "occasionLabelShort": "ליל ה' דחה\"ס, ג' דחוה\"מ, שמב\"ה",
+    "occasionLabelShortEn": "Sukkos, night 5",
     "audio": [
       {
         "workerFilename": "AR0020679.mp3",
@@ -425,6 +439,8 @@
     "hebrewDate": "5746-01-19",
     "occasionLabel": "ליל ו' דחה\"ס, ליל שבת חוה\"מ, אחרי מעריב - שמב\"ה",
     "occasionLabelEn": "Sukkos, night 6, Shabbos Chol Hamoed night, after Maariv - Simchas Beis Hashoevah",
+    "occasionLabelShort": "ליל ו' דחה\"ס, ליל שבת חוה\"מ, שמב\"ה",
+    "occasionLabelShortEn": "Sukkos, night 6",
     "audio": [],
     "pdfs": [
       {
@@ -445,6 +461,7 @@
     "hebrewDate": "5746-01-20",
     "occasionLabel": "ליל הושע\"ר, אחרי מעריב - שמב\"ה",
     "occasionLabelEn": "Hoshana Rabbah night, after Maariv - Simchas Beis Hashoevah",
+    "occasionLabelShortEn": "Hoshana Rabbah night, after Maariv",
     "audio": [
       {
         "workerFilename": "AR0020680.mp3",
@@ -562,6 +579,8 @@
     "hebrewDate": "5746-01-25",
     "occasionLabel": "ליל כ\"ו תשרי, יחידות כללית (לקבוצת אורחים; קבוצת חתני בר מצוה והוריהם; חתנים וכלות; תמימים)",
     "occasionLabelEn": "Night of 26 Tishrei, general yechidus (for a group of guests; a group of bar mitzvah boys and their parents; brides and grooms; Temimim)",
+    "occasionLabelShort": "ליל כ\"ו תשרי, יחידות כללית",
+    "occasionLabelShortEn": "Night of 26 Tishrei, general yechidus",
     "audio": [
       {
         "workerFilename": "AR0020871.mp3",
@@ -612,6 +631,7 @@
     "hebrewDate": "5746-01-27",
     "occasionLabel": "בראשית, מבה\"ח מ\"ח",
     "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
+    "occasionLabelShortEn": "Bereishis, Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -952,6 +972,7 @@
     "hebrewDate": "5746-02-25",
     "occasionLabel": "חיי שרה, מבה\"ח כסלו",
     "occasionLabelEn": "Chayei Sarah, Shabbos Mevarchim Kislev",
+    "occasionLabelShortEn": "Chayei Sarah, Mevarchim Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -1181,6 +1202,8 @@
     "hebrewDate": "5746-03-22",
     "occasionLabel": "כ\"ב כסלו, יחידות כללית (לקבוצת אורחים; קבוצת חתני בר מצוה והוריהם; קבוצת חתנים וכלות)",
     "occasionLabelEn": "22 Kislev, general yechidus (for a group of guests; a group of bar mitzvah boys and their parents; a group of brides and grooms)",
+    "occasionLabelShort": "כ\"ב כסלו, יחידות כללית",
+    "occasionLabelShortEn": "22 Kislev, general yechidus",
     "audio": [
       {
         "workerFilename": "AR0020726.mp3",
@@ -1220,6 +1243,7 @@
     "hebrewDate": "5746-03-24",
     "occasionLabel": "וישב, מבה\"ח טבת, כ\"ד כסלו",
     "occasionLabelEn": "Vayeishev, Shabbos Mevarchim Teves, 24 Kislev",
+    "occasionLabelShortEn": "Vayeishev, 24 Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -1270,6 +1294,8 @@
     "hebrewDate": "5746-03-28",
     "occasionLabel": "כ\"ח כסלו, אור לנר ה' דחנוכה, אחרי מנחה, שיחה להכולל \"תפארת זקנים\" ו\"חכמת נשים\", ולצבאות ה'",
     "occasionLabelEn": "28 Kislev, eve of the 5th Chanukah light, after Mincha, sicha to the Tiferes Zekeinim and Chochmas Nashim kollelim, and to Tzivos Hashem",
+    "occasionLabelShort": "כ\"ח כסלו, שיחה ל\"תפארת זקנים\"",
+    "occasionLabelShortEn": "28 Kislev, Tiferes Zekeinim",
     "audio": [
       {
         "workerFilename": "AR0020729.mp3",
@@ -1345,6 +1371,7 @@
     "hebrewDate": "5746-04-02b",
     "occasionLabel": "מוצש\"פ מקץ, ליל זאת חנוכה",
     "occasionLabelEn": "Motzei Shabbos Mikeitz, Zos Chanukah night",
+    "occasionLabelShortEn": "Motzei Shabbos, Zos Chanukah night",
     "audio": [
       {
         "workerFilename": "AR0020733.mp3",
@@ -1934,6 +1961,8 @@
     "hebrewDate": "5746-05-12",
     "occasionLabel": "ליל י\"ג שבט, יחידות כללית (לקבוצת אורחים (מוגה); קבוצת חתני בר מצוה והוריהם; קבוצת חתנים וכלות)",
     "occasionLabelEn": "Night of 13 Shevat, general yechidus (for a group of guests (edited); a group of bar mitzvah boys and their parents; a group of brides and grooms)",
+    "occasionLabelShort": "ליל י\"ג שבט, יחידות כללית",
+    "occasionLabelShortEn": "Night of 13 Shevat, general yechidus",
     "audio": [
       {
         "workerFilename": "AR0020863.mp3",
@@ -2028,6 +2057,7 @@
     "hebrewDate": "5746-05-29",
     "occasionLabel": "משפטים, מבה\"ח וער\"ח אד\"ר",
     "occasionLabelEn": "Mishpatim, Shabbos Mevarchim and Erev Rosh Chodesh Adar I",
+    "occasionLabelShortEn": "Mishpatim, Mevarchim Adar I",
     "audio": [],
     "pdfs": [
       {
@@ -2208,6 +2238,7 @@
     "hebrewDate": "5746-06A-27",
     "occasionLabel": "ויקהל, פ' שקלים, מבה\"ח אד\"ש",
     "occasionLabelEn": "Vayakhel, Parshas Shekalim, Shabbos Mevarchim Adar II",
+    "occasionLabelShortEn": "Vayakhel, Parshas Shekalim",
     "audio": [],
     "pdfs": [
       {
@@ -2238,6 +2269,7 @@
     "hebrewDate": "5746-06B-13",
     "occasionLabel": "י\"ג אדר, תענית אסתר, אחרי מנחה",
     "occasionLabelEn": "13 Adar, Taanis Esther, after Mincha",
+    "occasionLabelShortEn": "13 Adar, Taanis Esther",
     "audio": [
       {
         "workerFilename": "AR0020794.mp3",
@@ -2411,6 +2443,8 @@
     "hebrewDate": "5746-06B-16",
     "occasionLabel": "ט\"ז אד\"ש, יחידות כללית (לקבוצת אורחים; קבוצת חתני בר מצוה והוריהם; קבוצת חתנים וכלות)",
     "occasionLabelEn": "16 Adar II, general yechidus (for a group of guests; a group of bar mitzvah boys and their parents; a group of brides and grooms)",
+    "occasionLabelShort": "ט\"ז אד\"ש, יחידות כללית",
+    "occasionLabelShortEn": "16 Adar II, general yechidus",
     "audio": [
       {
         "workerFilename": "AR0020824.mp3",
@@ -2490,6 +2524,7 @@
     "hebrewDate": "5746-06B-25",
     "occasionLabel": "שמיני, מבה\"ח ניסן, פ' החודש",
     "occasionLabelEn": "Shemini, Shabbos Mevarchim Nisan, Parshas Hachodesh",
+    "occasionLabelShortEn": "Shemini, Mevarchim Nisan",
     "audio": [],
     "pdfs": [
       {
@@ -2525,6 +2560,8 @@
     "hebrewDate": "5746-06B-26",
     "occasionLabel": "ליל כ\"ז אד\"ש, ביקור הרבנים הראשיים שי'",
     "occasionLabelEn": "Night of 27 Adar II, visit of the Chief Rabbis",
+    "occasionLabelShort": "ליל כ\"ז אד\"ש, ביקור הרבנים הראשיים",
+    "occasionLabelShortEn": "Night of 27 Adar II, Chief Rabbis",
     "audio": [
       {
         "workerFilename": "AR0020827.mp3",
@@ -2552,6 +2589,7 @@
     "hebrewDate": "5746-06B-27",
     "occasionLabel": "כ\"ז אד\"ש, שיחה לחברי מחנה ישראל",
     "occasionLabelEn": "27 Adar II, sicha to the members of Machne Israel",
+    "occasionLabelShortEn": "27 Adar II, sicha to Machne Israel",
     "audio": [
       {
         "workerFilename": "AR0020644.mp3",
@@ -2750,6 +2788,8 @@
     "hebrewDate": "5746-07-19",
     "occasionLabel": "י\"ט ניסן, ג' דחוה\"פ, אחרי מנחה, שיחה לצבאות ה'",
     "occasionLabelEn": "19 Nisan, Chol Hamoed Pesach, day 3, after Mincha, sicha to Tzivos Hashem",
+    "occasionLabelShort": "י\"ט ניסן, שיחה לצבאות ה'",
+    "occasionLabelShortEn": "19 Nisan, sicha to Tzivos Hashem",
     "audio": [
       {
         "workerFilename": "AR0020844.mp3",
@@ -2881,6 +2921,8 @@
     "hebrewDate": "5746-07-26",
     "occasionLabel": "כ\"ו ניסן, יחידות כללית (לקבוצת אורחים; קבוצת חתני בר מצוה והוריהם; קבוצת חתנים וכלות)",
     "occasionLabelEn": "26 Nisan, general yechidus (for a group of guests; a group of bar mitzvah boys and their parents; a group of brides and grooms)",
+    "occasionLabelShort": "כ\"ו ניסן, יחידות כללית",
+    "occasionLabelShortEn": "26 Nisan, general yechidus",
     "audio": [
       {
         "workerFilename": "AR0020862.mp3",
@@ -3156,6 +3198,7 @@
     "hebrewDate": "5746-08-29",
     "occasionLabel": "במדבר, מבה\"ח וער\"ח סיון",
     "occasionLabelEn": "Bamidbar, Shabbos Mevarchim and Erev Rosh Chodesh Sivan",
+    "occasionLabelShortEn": "Bamidbar, Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -3196,6 +3239,7 @@
     "hebrewDate": "5746-09-01",
     "occasionLabel": "ר\"ח סיון, שיחה לנשי ובנות חב\"ד",
     "occasionLabelEn": "Rosh Chodesh Sivan, sicha to N'shei uBnos Chabad",
+    "occasionLabelShortEn": "Rosh Chodesh Sivan, to N'shei",
     "audio": [
       {
         "workerFilename": "AR0020907.mp3",
@@ -3366,6 +3410,8 @@
     "hebrewDate": "5746-09-09",
     "occasionLabel": "ליל יו\"ד סיון, יחידות כללית (לקבוצת אורחים; קבוצת חתני בר מצוה והוריהם; קבוצת חתנים וכלות)",
     "occasionLabelEn": "Night of 10 Sivan, general yechidus (for a group of guests; a group of bar mitzvah boys and their parents; a group of brides and grooms)",
+    "occasionLabelShort": "ליל יו\"ד סיון, יחידות כללית",
+    "occasionLabelShortEn": "Night of 10 Sivan, general yechidus",
     "audio": [
       {
         "workerFilename": "AR0020920.mp3",
@@ -3521,6 +3567,8 @@
     "hebrewDate": "5746-09-17",
     "occasionLabel": "י\"ז סיון, יחידות לקבוצת תושבי אנגלי'",
     "occasionLabelEn": "17 Sivan, yechidus for a group of residents of England",
+    "occasionLabelShort": "י\"ז סיון, יחידות לתושבי אנגלי'",
+    "occasionLabelShortEn": "17 Sivan, yechidus, England group",
     "audio": [],
     "pdfs": []
   },
@@ -3530,6 +3578,8 @@
     "hebrewDate": "5746-09-17b",
     "occasionLabel": "י\"ז סיון, שיחה להמסיימות ד\"בית רבקה\", ולהמדריכות ד\"מחנה אמונה\"",
     "occasionLabelEn": "17 Sivan, sicha to the graduates of Beis Rivkah, and to the counselors of Camp Emunah",
+    "occasionLabelShort": "י\"ז סיון, שיחה ל\"בית רבקה\"",
+    "occasionLabelShortEn": "17 Sivan, Beis Rivkah, Camp Emunah",
     "audio": [
       {
         "workerFilename": "AR0020933.mp3",
@@ -3563,6 +3613,7 @@
     "hebrewDate": "5746-09-28",
     "occasionLabel": "שלח, מבה\"ח תמוז, כ\"ח סיון",
     "occasionLabelEn": "Shelach, Shabbos Mevarchim Tamuz, 28 Sivan",
+    "occasionLabelShortEn": "Shelach, Mevarchim Tamuz, 28 Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -3649,6 +3700,8 @@
     "hebrewDate": "5746-10-14",
     "occasionLabel": "ליל ט\"ו תמוז, יחידות כללית (לקבוצת אורחים; קבוצת חתני בר מצוה והוריהם; קבוצת חתנים וכלות)",
     "occasionLabelEn": "Night of 15 Tamuz, general yechidus (for a group of guests; a group of bar mitzvah boys and their parents; a group of brides and grooms)",
+    "occasionLabelShort": "ליל ט\"ו תמוז, יחידות כללית",
+    "occasionLabelShortEn": "Night of 15 Tamuz, general yechidus",
     "audio": [
       {
         "workerFilename": "AR0020935.mp3",
@@ -3788,6 +3841,7 @@
     "hebrewDate": "5746-10-26",
     "occasionLabel": "מטו\"מ, מבה\"ח מנ\"א",
     "occasionLabelEn": "Matos-Masei, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Matos-Masei, Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -4075,6 +4129,8 @@
     "hebrewDate": "5746-11-22",
     "occasionLabel": "כ\"ב מנ\"א, שיחה לילדי מחנה \"גן ישראל\" ו\"מחנה אמונה\"",
     "occasionLabelEn": "22 Menachem Av, sicha to the children of Camp Gan Israel and Camp Emunah",
+    "occasionLabelShort": "כ\"ב מנ\"א, שיחה לילדי \"גן ישראל\"",
+    "occasionLabelShortEn": "22 Menachem Av, Gan Israel, Emunah",
     "audio": [],
     "pdfs": [
       {
@@ -4385,6 +4441,7 @@
     "hebrewDate": "5746-12-26",
     "occasionLabel": "כ\"ו אלול, שיחה לנשי ובנות חב\"ד",
     "occasionLabelEn": "26 Elul, sicha to N'shei uBnos Chabad",
+    "occasionLabelShortEn": "26 Elul, to N'shei uBnos Chabad",
     "audio": [
       {
         "workerFilename": "AR0021000.mp3",

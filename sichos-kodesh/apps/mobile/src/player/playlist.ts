@@ -4,7 +4,7 @@ import type { Language } from '@sichos-kodesh/app-core';
 import type { CatalogAudio, CatalogEntry } from '@sichos-kodesh/catalog';
 import { audioUrl, localAudioFileUrlIfExists } from '../download/download';
 
-type PlaylistSource = Pick<CatalogEntry, 'audio' | 'occasionLabel' | 'occasionLabelEn'>;
+type PlaylistSource = Pick<CatalogEntry, 'audio' | 'occasionLabel' | 'occasionLabelEn' | 'occasionLabelShort' | 'occasionLabelShortEn'>;
 
 /**
  * Maps a playlist's audio list to react-native-track-player Track objects.

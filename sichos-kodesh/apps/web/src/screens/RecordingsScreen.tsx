@@ -1,5 +1,5 @@
 import { CheckCircle2, Download, Loader2, Pause, Play } from 'lucide-react';
-import { chapterTitle, occasionTitle } from '@sichos-kodesh/app-core';
+import { chapterTitle, occasionFullName, occasionTitle } from '@sichos-kodesh/app-core';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { usePlayer } from '../player/usePlayer';
@@ -183,7 +183,7 @@ export function RecordingsScreen({ resolved }: Props) {
         <div className="playlist-header-main">
           <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
           <div className="playlist-header-copy">
-            <p className="playlist-header-title">{occasionTitle(entry, language)}</p>
+            <p className="playlist-header-title">{occasionFullName(entry, language)}</p>
             <p className="playlist-header-subtitle">{totalDuration}</p>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { CheckCircle2, Download, Loader2 } from 'lucide-react';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import { occasionFullName } from '@sichos-kodesh/app-core';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { useDownload } from '../download/useDownload';
 import { useDownloadState } from '../download/useDownloadState';
@@ -62,7 +62,7 @@ export function OccasionActions({ entry, showDownload = true }: Props) {
   return (
     <div className="action-bar">
       {download}
-      <ShareButton title={occasionTitle(entry, language)} />
+      <ShareButton title={occasionFullName(entry, language)} />
     </div>
   );
 }

@@ -13,6 +13,9 @@ export interface PlayerPlaylist {
   title: string;
   /** The occasion's English name (`occasionLabelEn`), for the English UI - absent where it has none. */
   titleEn?: string;
+  /** The short forms of both, for the player's title where the name is long (catalog 1.7.0). */
+  titleShort?: string;
+  titleShortEn?: string;
   audio: CatalogAudio[];
   hebrewYear: number;
   occasionId: number;
@@ -24,6 +27,8 @@ export function playlistForEntry(entry: CatalogEntry): PlayerPlaylist {
   return {
     title: entry.occasionLabel,
     ...(entry.occasionLabelEn && { titleEn: entry.occasionLabelEn }),
+    ...(entry.occasionLabelShort && { titleShort: entry.occasionLabelShort }),
+    ...(entry.occasionLabelShortEn && { titleShortEn: entry.occasionLabelShortEn }),
     audio: entry.audio,
     hebrewYear: entry.hebrewYear,
     occasionId: entry.occasionId,
@@ -33,7 +38,12 @@ export function playlistForEntry(entry: CatalogEntry): PlayerPlaylist {
 
 /** The playlist's occasion name in the UI language (see `occasionTitle`). */
 export function playlistTitle(playlist: PlayerPlaylist, language: Language): string {
-  return occasionTitle({ occasionLabel: playlist.title, occasionLabelEn: playlist.titleEn }, language);
+  return occasionTitle(playlistNames(playlist), language);
+}
+
+/** The playlist's occasion names, as the catalog's display helpers take them. */
+export function playlistNames(playlist: PlayerPlaylist): Pick<CatalogEntry, 'occasionLabel' | 'occasionLabelEn' | 'occasionLabelShort' | 'occasionLabelShortEn'> {
+  return { occasionLabel: playlist.title, occasionLabelEn: playlist.titleEn, occasionLabelShort: playlist.titleShort, occasionLabelShortEn: playlist.titleShortEn };
 }
 
 export interface PlayerError {

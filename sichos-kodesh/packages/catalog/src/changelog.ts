@@ -16,6 +16,18 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.7.0',
+    date: '2026-09-25',
+    en: [
+      'Short titles for the long occasion names, in Hebrew and English (1,363 farbrengens, and the maamorim, reshimos, letters and hadranim with the longest names): lists and headers show the short one, and the page itself the whole name - who a yechidus was for, where the shluchim were going',
+      'Maamorim, reshimos and JEM recordings by month across all the years, by parsha and by moed; and Sefer HaMaamorim Melukat in its edition by the months of the year, in four parts, beside the six volumes',
+    ],
+    he: [
+      'כותרות קצרות לשמות הארוכים של המאורעות, בעברית ובאנגלית (1,363 התוועדויות, והמאמרים, הרשימות, המכתבים וההדרנים בעלי השמות הארוכים ביותר): הרשימות והכותרות מציגות את הקצר, והעמוד עצמו את השם המלא - למי הייתה היחידות, לאן נסעו השלוחים',
+      'מאמרים, רשימות והקלטות JEM לפי חודש בכל השנים, לפי פרשה ולפי מועד; וספר המאמרים מלוקט במהדורה לפי חודשי השנה, בארבעה חלקים, לצד ששת הכרכים',
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-09-24',
     en: [

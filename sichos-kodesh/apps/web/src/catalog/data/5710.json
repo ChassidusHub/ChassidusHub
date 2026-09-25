@@ -20,6 +20,7 @@
     "hebrewDate": "5710-01-20",
     "occasionLabel": "יום ד' דחוה\"מ סוכות, שמחת ביה\"ש",
     "occasionLabelEn": "Chol Hamoed Sukkos, day 4, Simchas Beis Hashoevah",
+    "occasionLabelShortEn": "Chol Hamoed Sukkos, day 4",
     "audio": [],
     "pdfs": [
       {
@@ -40,6 +41,7 @@
     "hebrewDate": "5710-01-29",
     "occasionLabel": "בראשית, מבה\"ח מרחשון",
     "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
+    "occasionLabelShortEn": "Bereishis, Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -250,6 +252,7 @@
     "hebrewDate": "5710-06-29",
     "occasionLabel": "ויקה\"פ, פ' החודש, מבה\"ח וער\"ח ניסן",
     "occasionLabelEn": "Vayakhel-Pekudei, Parshas Hachodesh, Shabbos Mevarchim and Erev Rosh Chodesh Nisan",
+    "occasionLabelShortEn": "Vayakhel-Pekudei, Parshas Hachodesh",
     "audio": [],
     "pdfs": [
       {
@@ -325,6 +328,7 @@
     "hebrewDate": "5710-07-16",
     "occasionLabel": "ימים ראשונים דחה\"פ, בעת הסעודה",
     "occasionLabelEn": "The first days of Pesach, during the meal",
+    "occasionLabelShortEn": "The first days of Pesach",
     "audio": [],
     "pdfs": [
       {
@@ -515,6 +519,7 @@
     "hebrewDate": "5710-08-26",
     "occasionLabel": "בה\"ב, מבה\"ח סיון",
     "occasionLabelEn": "Behar-Bechukosai, Shabbos Mevarchim Sivan",
+    "occasionLabelShortEn": "Behar-Bechukosai, Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -675,6 +680,7 @@
     "hebrewDate": "5710-09-26",
     "occasionLabel": "כ\"ו סיון, שיחה באסיפת מל\"ח",
     "occasionLabelEn": "26 Sivan, sicha at a Merkos meeting",
+    "occasionLabelShortEn": "26 Sivan, at a Merkos meeting",
     "audio": [],
     "pdfs": [
       {
@@ -755,6 +761,7 @@
     "hebrewDate": "5710-10-23",
     "occasionLabel": "פנחס, מבה\"ח מנ\"א",
     "occasionLabelEn": "Pinchas, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Pinchas, Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -800,6 +807,8 @@
     "hebrewDate": "5710-11-12",
     "occasionLabel": "י\"ב מנ\"א, שיחה להת' שי' הנוסעים בשליחות המל\"ח",
     "occasionLabelEn": "12 Menachem Av, sicha to the students traveling on Merkos shlichus",
+    "occasionLabelShort": "י\"ב מנ\"א, שיחה להת' בשליחות המל\"ח",
+    "occasionLabelShortEn": "12 Menachem Av, Merkos shlichus",
     "audio": [],
     "pdfs": [
       {
@@ -865,6 +874,7 @@
     "hebrewDate": "5710-11-29",
     "occasionLabel": "ראה, מבה\"ח וער\"ח אלול",
     "occasionLabelEn": "Re'eh, Shabbos Mevarchim and Erev Rosh Chodesh Elul",
+    "occasionLabelShortEn": "Re'eh, Mevarchim Elul",
     "audio": [],
     "pdfs": [
       {

@@ -224,16 +224,17 @@ export function serializeWorksRelease(meta: ReleaseMeta, byYearJson: string, lib
 
 /**
  * The fields the apps read. The display translations (`occasionLabelEn`,
- * `chapterNameHe`, catalog 1.1.0) are optional - absent in older releases -
+ * `chapterNameHe`, catalog 1.1.0) and short titles (`occasionLabelShort`,
+ * `occasionLabelShortEn`, 1.7.0) are optional - absent in older releases -
  * but must be strings when present. An app built before them never looks
  * at either, and its copy of this check (no rule for unknown fields) lets
  * a release that carries them through unchanged.
  */
 function isCatalogEntry(value: unknown): value is CatalogEntry {
   if (!isRecord(value)) return false;
-  const { occasionId, hebrewYear, hebrewDate, occasionLabel, occasionLabelEn, audio, pdfs } = value;
+  const { occasionId, hebrewYear, hebrewDate, occasionLabel, occasionLabelEn, occasionLabelShort, occasionLabelShortEn, audio, pdfs } = value;
   if (typeof occasionId !== 'number' || typeof hebrewYear !== 'number' || typeof hebrewDate !== 'string' || typeof occasionLabel !== 'string') return false;
-  if (!isOptionalString(occasionLabelEn)) return false;
+  if (!isOptionalString(occasionLabelEn) || !isOptionalString(occasionLabelShort) || !isOptionalString(occasionLabelShortEn)) return false;
   if (!Array.isArray(audio) || !Array.isArray(pdfs)) return false;
   return (
     audio.every(

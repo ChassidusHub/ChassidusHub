@@ -5,6 +5,7 @@
     "hebrewDate": "5711-01-01",
     "occasionLabel": "יום א' דר\"ה, בעת ההליכה לתשליך",
     "occasionLabelEn": "Rosh Hashanah, day 1, on the way to Tashlich",
+    "occasionLabelShortEn": "Rosh Hashanah, day 1, Tashlich",
     "audio": [],
     "pdfs": [
       {
@@ -25,6 +26,7 @@
     "hebrewDate": "5711-01-09",
     "occasionLabel": "ערב יו\"כ, בעת נתינת לקח",
     "occasionLabelEn": "Erev Yom Kippur, while giving out lekach",
+    "occasionLabelShortEn": "Erev Yom Kippur, giving out lekach",
     "audio": [],
     "pdfs": [
       {
@@ -45,6 +47,7 @@
     "hebrewDate": "5711-01-09b",
     "occasionLabel": "ערב יו\"כ, ברכה לפני כל נדרי",
     "occasionLabelEn": "Erev Yom Kippur, bracha before Kol Nidrei",
+    "occasionLabelShortEn": "Erev Yom Kippur, before Kol Nidrei",
     "audio": [],
     "pdfs": [
       {
@@ -85,6 +88,8 @@
     "hebrewDate": "5711-01-17",
     "occasionLabel": "מוצאי יום ג' דחה\"ס, א' דחוה\"מ, שמב\"ה",
     "occasionLabelEn": "Motzei Sukkos, day 3, Chol Hamoed, day 1, Simchas Beis Hashoevah",
+    "occasionLabelShort": "מוצאי יום ג' דחה\"ס, שמב\"ה",
+    "occasionLabelShortEn": "Motzei Sukkos, day 3",
     "audio": [],
     "pdfs": [
       {
@@ -195,6 +200,7 @@
     "hebrewDate": "5711-01-26",
     "occasionLabel": "בראשית, מבה\"ח מ\"ח",
     "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
+    "occasionLabelShortEn": "Bereishis, Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -280,6 +286,7 @@
     "hebrewDate": "5711-02-24",
     "occasionLabel": "חיי שרה, מבה\"ח כסלו",
     "occasionLabelEn": "Chayei Sarah, Shabbos Mevarchim Kislev",
+    "occasionLabelShortEn": "Chayei Sarah, Mevarchim Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -455,6 +462,7 @@
     "hebrewDate": "5711-04-09",
     "occasionLabel": "ט' טבת, סיום הקדיש, אחרי מנחה",
     "occasionLabelEn": "9 Teves, end of the year of Kaddish, after Mincha",
+    "occasionLabelShortEn": "9 Teves, end of Kaddish year",
     "audio": [],
     "pdfs": [
       {
@@ -676,6 +684,7 @@
     "hebrewDate": "5711-05-27",
     "occasionLabel": "משפטים, מבה\"ח אד\"ר",
     "occasionLabelEn": "Mishpatim, Shabbos Mevarchim Adar I",
+    "occasionLabelShortEn": "Mishpatim, Mevarchim Adar I",
     "audio": [],
     "pdfs": [
       {
@@ -706,6 +715,7 @@
     "hebrewDate": "5711-06A-01",
     "occasionLabel": "ליל בדר\"ח אד\"ר, שיחה בקבלת פנים",
     "occasionLabelEn": "Rosh Chodesh Adar I, night 2, sicha at a reception",
+    "occasionLabelShortEn": "Rosh Chodesh Adar I, at a reception",
     "audio": [],
     "pdfs": [
       {
@@ -731,6 +741,7 @@
     "hebrewDate": "5711-06A-04",
     "occasionLabel": "תרומה, ד' אד\"ר, לחתן שעלה לתורה",
     "occasionLabelEn": "Terumah, 4 Adar I, to a chosson called up to the Torah",
+    "occasionLabelShortEn": "Terumah, 4 Adar I, to a chosson",
     "audio": [],
     "pdfs": [
       {
@@ -766,6 +777,8 @@
     "hebrewDate": "5711-06A-11",
     "occasionLabel": "תצוה, פ' זכור, י\"א אד\"ר, לחתן שעלה לתורה",
     "occasionLabelEn": "Tetzaveh, Parshas Zachor, 11 Adar I, to a chosson called up to the Torah",
+    "occasionLabelShort": "תצוה, פ' זכור, י\"א אד\"ר, לחתן",
+    "occasionLabelShortEn": "Tetzaveh, 11 Adar I, to a chosson",
     "audio": [],
     "pdfs": [
       {
@@ -841,6 +854,7 @@
     "hebrewDate": "5711-06A-25",
     "occasionLabel": "ויקהל, פ' שקלים, מבה\"ח אד\"ש",
     "occasionLabelEn": "Vayakhel, Parshas Shekalim, Shabbos Mevarchim Adar II",
+    "occasionLabelShortEn": "Vayakhel, Parshas Shekalim",
     "audio": [],
     "pdfs": [
       {
@@ -1005,6 +1019,7 @@
     "hebrewDate": "5711-06B-23",
     "occasionLabel": "שמיני, פ' פרה, מבה\"ח ניסן",
     "occasionLabelEn": "Shemini, Parshas Parah, Shabbos Mevarchim Nisan",
+    "occasionLabelShortEn": "Shemini, Parshas Parah",
     "audio": [],
     "pdfs": [
       {
@@ -1100,6 +1115,7 @@
     "hebrewDate": "5711-07-14",
     "occasionLabel": "ערב חה\"פ, בעת חלוקת מצה",
     "occasionLabelEn": "Erev Pesach, while giving out matzah",
+    "occasionLabelShortEn": "Erev Pesach, giving out matzah",
     "audio": [],
     "pdfs": [
       {
@@ -1240,6 +1256,7 @@
     "hebrewDate": "5711-07-29",
     "occasionLabel": "אחרי, מבה\"ח וער\"ח אייר",
     "occasionLabelEn": "Acharei, Shabbos Mevarchim and Erev Rosh Chodesh Iyar",
+    "occasionLabelShortEn": "Acharei, Mevarchim Iyar",
     "audio": [],
     "pdfs": [
       {
@@ -1399,6 +1416,7 @@
     "hebrewDate": "5711-08-27",
     "occasionLabel": "בחוקותי, מבה\"ח סיון",
     "occasionLabelEn": "Bechukosai, Shabbos Mevarchim Sivan",
+    "occasionLabelShortEn": "Bechukosai, Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -1694,6 +1712,8 @@
     "hebrewDate": "5711-10-18",
     "occasionLabel": "ח\"י תמוז, שיחה להת' שי' הנוסעים בשליחות המל\"ח",
     "occasionLabelEn": "18 Tamuz, sicha to the students traveling on Merkos shlichus",
+    "occasionLabelShort": "ח\"י תמוז, שיחה להת' בשליחות המל\"ח",
+    "occasionLabelShortEn": "18 Tamuz, sicha to Merkos shlichus",
     "audio": [],
     "pdfs": [
       {
@@ -1734,6 +1754,8 @@
     "hebrewDate": "5711-10-22",
     "occasionLabel": "כ\"ב תמוז, שיחה להת' שי' הנוסעים בשליחות המל\"ח",
     "occasionLabelEn": "22 Tamuz, sicha to the students traveling on Merkos shlichus",
+    "occasionLabelShort": "כ\"ב תמוז, שיחה להת' בשליחות המל\"ח",
+    "occasionLabelShortEn": "22 Tamuz, sicha to Merkos shlichus",
     "audio": [],
     "pdfs": [
       {
@@ -1789,6 +1811,7 @@
     "hebrewDate": "5711-10-24",
     "occasionLabel": "פנחס, מבה\"ח מנ\"א",
     "occasionLabelEn": "Pinchas, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Pinchas, Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -1819,6 +1842,8 @@
     "hebrewDate": "5711-11-09",
     "occasionLabel": "דברים, חזון, ט' באב - נדחה, אחרי מנחה",
     "occasionLabelEn": "Devarim, Shabbos Chazon, Tishah B'Av - postponed, after Mincha",
+    "occasionLabelShort": "דברים, ט' באב - נדחה, אחרי מנחה",
+    "occasionLabelShortEn": "Devarim, Tishah B'Av, after Mincha",
     "audio": [],
     "pdfs": []
   },
@@ -2136,6 +2161,8 @@
     "hebrewDate": "5711-12-24",
     "occasionLabel": "ליל כ\"ה אלול, שיחה (ויחידות) לקבוצת סטודנטים",
     "occasionLabelEn": "Night of 25 Elul, sicha (and yechidus) to a group of college students",
+    "occasionLabelShort": "ליל כ\"ה אלול, שיחה לקבוצת סטודנטים",
+    "occasionLabelShortEn": "Night of 25 Elul, college students",
     "audio": [],
     "pdfs": [
       {

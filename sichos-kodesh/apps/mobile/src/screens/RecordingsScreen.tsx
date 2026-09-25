@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CheckCircle2, Download, Pause, Play } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { chapterTitle, occasionTitle } from '@sichos-kodesh/app-core';
+import { chapterTitle, occasionFullName, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { DownloadProgressRing } from '../components/DownloadProgressRing';
 import { OccasionActions } from '../components/OccasionActions';
@@ -173,7 +173,7 @@ export function RecordingsScreen({ route }: RecordingsScreenProps) {
         <View style={[styles.playlistHeaderMain, { flexDirection: row(isRtl) }]}>
           <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
           <View style={styles.playlistHeaderCopy}>
-            <AppText style={styles.playlistTitle}>{occasionTitle(entry, language)}</AppText>
+            <AppText style={styles.playlistTitle}>{occasionFullName(entry, language)}</AppText>
             <AppText style={[styles.playlistSubtitle, { color: colors.muted }]}>{totalDuration}</AppText>
           </View>
         </View>

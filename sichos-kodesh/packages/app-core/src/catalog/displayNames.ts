@@ -14,9 +14,28 @@ import type { Language } from '../search/language.js';
  * never loses anything.
  */
 
-/** An occasion's name: the English UI's `occasionLabelEn`, else mafteiach's Hebrew `occasionLabel`. */
-export function occasionTitle(entry: Pick<CatalogEntry, 'occasionLabel' | 'occasionLabelEn'>, language: Language): string {
+type OccasionNames = Pick<CatalogEntry, 'occasionLabel' | 'occasionLabelEn' | 'occasionLabelShort' | 'occasionLabelShortEn'>;
+
+/**
+ * An occasion's name as a title - a row, a header, the player: the English
+ * UI's `occasionLabelEn`, else mafteiach's Hebrew `occasionLabel`, each in
+ * its short form where the catalog has one (catalog 1.7.0) - the long name
+ * is then `occasionDescription`.
+ */
+export function occasionTitle(entry: OccasionNames, language: Language): string {
+  if (language === 'en' && entry.occasionLabelEn) return entry.occasionLabelShortEn ?? entry.occasionLabelEn;
+  return entry.occasionLabelShort ?? entry.occasionLabel;
+}
+
+/** An occasion's whole name in the UI language, however long: for sharing, and to search in. */
+export function occasionFullName(entry: OccasionNames, language: Language): string {
   return language === 'en' ? (entry.occasionLabelEn ?? entry.occasionLabel) : entry.occasionLabel;
+}
+
+/** The whole name under a shortened title - where a yechidus says who it was for - or undefined when the title is the whole name. */
+export function occasionDescription(entry: OccasionNames, language: Language): string | undefined {
+  const full = occasionFullName(entry, language);
+  return full !== occasionTitle(entry, language) ? full : undefined;
 }
 
 /** A recording's own chapter name: the Hebrew UI's `chapterNameHe`, else JEM's English - undefined when JEM did not name it. */

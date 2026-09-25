@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js';
 import { normalize } from '../search/searchOccasions.js';
 import type { CatalogLibrary, LibraryCollectionId, LibraryItemBase, OccasionGroup } from '@sichos-kodesh/catalog';
-import { itemSubtitle } from './libraryModel.js';
+import { itemDescription, itemSubtitle } from './libraryModel.js';
 
 /**
  * Search over one library collection (docs/offline-plan.md WP4b: the
@@ -28,7 +28,10 @@ function collectionIndex(library: CatalogLibrary, collection: LibraryCollectionI
       item,
       // The name in both languages, where the catalog has it in both (JEM's recordings, mafteiach's names).
       label: normalize([item.label, item.labelHe, item.labelEn].filter(Boolean).join(' ')),
-      details: normalize(`${itemSubtitle(collection, item, 'he')} ${itemSubtitle(collection, item, 'en')}`),
+      // Where and when, and the whole names the subtitles shorten.
+      details: normalize(
+        [itemSubtitle(collection, item, 'he'), itemSubtitle(collection, item, 'en'), itemDescription(collection, item, 'he'), itemDescription(collection, item, 'en')].filter(Boolean).join(' '),
+      ),
     }));
     fuse = new Fuse(items, { keys: ['label', 'details'], threshold: 0.3, ignoreLocation: true, minMatchCharLength: 2, useExtendedSearch: true });
     indexes.set(source, fuse);

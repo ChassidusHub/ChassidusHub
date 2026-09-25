@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import { occasionDescription, occasionTitle } from '@sichos-kodesh/app-core';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
 import { isHighlightedFarbrengenHanacha } from '@sichos-kodesh/catalog';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
@@ -93,6 +93,8 @@ export function FarbrengenScreen({ resolved }: Props) {
   return (
     <div className="screen">
       <ScreenHeader to={backPath} title={occasionTitle(entry, language)} />
+      {/* The whole name, where the header shortens it - a yechidus says here who it was for. */}
+      {occasionDescription(entry, language) && <p className="item-description">{occasionDescription(entry, language)}</p>}
       {/* `subtitle` is this occasion's own day+month only (see
           useResolvedEntry) - the year is appended here, not folded into
           that shared field, so this page shows its occasion's full date

@@ -30,6 +30,7 @@
     "hebrewDate": "5732-01-06",
     "occasionLabel": "וילך, ש\"ת, ו' תשרי",
     "occasionLabelEn": "Vayeilech, Shabbos Shuvah, 6 Tishrei",
+    "occasionLabelShortEn": "Vayeilech, 6 Tishrei",
     "audio": [],
     "pdfs": [
       {
@@ -144,6 +145,7 @@
     "hebrewDate": "5732-01-14",
     "occasionLabel": "ערב חה\"ס, בעת מסירת האתרוגים",
     "occasionLabelEn": "Erev Sukkos, while giving out esrogim",
+    "occasionLabelShortEn": "Erev Sukkos, giving out esrogim",
     "audio": [],
     "pdfs": [
       {
@@ -164,6 +166,8 @@
     "hebrewDate": "5732-01-14b",
     "occasionLabel": "ערב חה\"ס, בעת נתינת הד' מינים ליוצאי רוסיא",
     "occasionLabelEn": "Erev Sukkos, while giving the daled minim to the immigrants from Russia",
+    "occasionLabelShort": "ערב חה\"ס, נתינת הד' מינים",
+    "occasionLabelShortEn": "Erev Sukkos, immigrants from Russia",
     "audio": [],
     "pdfs": [
       {
@@ -184,6 +188,8 @@
     "hebrewDate": "5732-01-17",
     "occasionLabel": "חוה\"מ סוכות, יחידות להת' יוצאי רוסיא",
     "occasionLabelEn": "Chol Hamoed Sukkos, yechidus for the students from Russia",
+    "occasionLabelShort": "חוה\"מ סוכות, יחידות ליוצאי רוסיא",
+    "occasionLabelShortEn": "Chol Hamoed, students from Russia",
     "audio": [],
     "pdfs": []
   },
@@ -193,6 +199,8 @@
     "hebrewDate": "5732-01-20",
     "occasionLabel": "יום ו' דחה\"ס, שבת חוה\"מ, קודם התפלה",
     "occasionLabelEn": "Sukkos, day 6, Shabbos Chol Hamoed, before davening",
+    "occasionLabelShort": "ו' דחה\"ס, שבת חוה\"מ, קודם התפלה",
+    "occasionLabelShortEn": "Sukkos, day 6, Shabbos Chol Hamoed",
     "audio": [],
     "pdfs": [
       {
@@ -268,6 +276,7 @@
     "hebrewDate": "5732-01-27",
     "occasionLabel": "בראשית, מבה\"ח מ\"ח",
     "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
+    "occasionLabelShortEn": "Bereishis, Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -407,6 +416,8 @@
     "hebrewDate": "5732-01-28",
     "occasionLabel": "יחידות לעולים חדשים מרוסי', תושבי נחלת הר חב\"ד",
     "occasionLabelEn": "Yechidus for new immigrants from Russia, the residents of Nachalas Har Chabad",
+    "occasionLabelShort": "יחידות לעולים חדשים מרוסי'",
+    "occasionLabelShortEn": "Yechidus for new immigrants",
     "audio": [],
     "pdfs": [
       {
@@ -422,6 +433,7 @@
     "hebrewDate": "5732-02-25",
     "occasionLabel": "חיי שרה, מבה\"ח כסלו",
     "occasionLabelEn": "Chayei Sarah, Shabbos Mevarchim Kislev",
+    "occasionLabelShortEn": "Chayei Sarah, Mevarchim Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -740,6 +752,7 @@
     "hebrewDate": "5732-03-30",
     "occasionLabel": "מקץ, חנוכה, אדר\"ח טבת",
     "occasionLabelEn": "Mikeitz, Chanukah, Rosh Chodesh Teves, day 1",
+    "occasionLabelShortEn": "Mikeitz, Rosh Chodesh Teves, day 1",
     "audio": [],
     "pdfs": [
       {
@@ -1350,6 +1363,7 @@
     "hebrewDate": "5732-05-27",
     "occasionLabel": "משפטים, פ' שקלים, מבה\"ח אדר",
     "occasionLabelEn": "Mishpatim, Parshas Shekalim, Shabbos Mevarchim Adar",
+    "occasionLabelShortEn": "Mishpatim, Parshas Shekalim",
     "audio": [],
     "pdfs": [
       {
@@ -1623,6 +1637,7 @@
     "hebrewDate": "5732-06-25",
     "occasionLabel": "ויק\"פ, פ' החודש, מבה\"ח ניסן",
     "occasionLabelEn": "Vayakhel-Pekudei, Parshas Hachodesh, Shabbos Mevarchim Nisan",
+    "occasionLabelShortEn": "Vayakhel-Pekudei, Parshas Hachodesh",
     "audio": [],
     "pdfs": [
       {
@@ -2126,6 +2141,8 @@
     "hebrewDate": "5732-08-02",
     "occasionLabel": "ב' אייר, שיחה להת' החוזרים לאה\"ק ת\"ו ולצרפת",
     "occasionLabelEn": "2 Iyar, sicha to the students returning to Eretz Yisroel and to France",
+    "occasionLabelShort": "ב' אייר, שיחה להת' החוזרים לאה\"ק",
+    "occasionLabelShortEn": "2 Iyar, to returning students",
     "audio": [
       {
         "workerFilename": "JEMSK1335.mp3",
@@ -2153,6 +2170,7 @@
     "hebrewDate": "5732-08-29",
     "occasionLabel": "במדבר, מבה\"ח וער\"ח סיון",
     "occasionLabelEn": "Bamidbar, Shabbos Mevarchim and Erev Rosh Chodesh Sivan",
+    "occasionLabelShortEn": "Bamidbar, Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -2193,6 +2211,7 @@
     "hebrewDate": "5732-09-01",
     "occasionLabel": "ר\"ח סיון, שיחה לנשי ובנות חב\"ד",
     "occasionLabelEn": "Rosh Chodesh Sivan, sicha to N'shei uBnos Chabad",
+    "occasionLabelShortEn": "Rosh Chodesh Sivan, to N'shei",
     "audio": [
       {
         "workerFilename": "JEMSK1336.mp3",
@@ -2384,6 +2403,8 @@
     "hebrewDate": "5732-09-26",
     "occasionLabel": "כ\"ו סיון, שיחה להמסיימות ד\"בית רבקה\" ולהמדריכות ד\"מחנה אמונה\" ו\"פרדס חנה\" תחי'",
     "occasionLabelEn": "26 Sivan, sicha to the graduates of Beis Rivkah and to the counselors of Camp Emunah and Pardes Chana",
+    "occasionLabelShort": "כ\"ו סיון, שיחה למסיימות \"בית רבקה\"",
+    "occasionLabelShortEn": "26 Sivan, Beis Rivkah, Camp Emunah",
     "audio": [
       {
         "workerFilename": "JEMSK1340.mp3",
@@ -2654,6 +2675,7 @@
     "hebrewDate": "5732-10-26",
     "occasionLabel": "מטו\"מ, מבה\"ח מנ\"א",
     "occasionLabelEn": "Matos-Masei, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Matos-Masei, Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -3039,6 +3061,8 @@
     "hebrewDate": "5732-12-26",
     "occasionLabel": "כ\"ו אלול, שיחה להעסקניות דישיבות תות\"ל ו\"בית רבקה\" תחי'",
     "occasionLabelEn": "26 Elul, sicha to the women supporters of the Tomchei Temimim yeshivos and Beis Rivkah",
+    "occasionLabelShort": "כ\"ו אלול, שיחה להעסקניות",
+    "occasionLabelShortEn": "26 Elul, sicha to women supporters",
     "audio": [
       {
         "workerFilename": "JEMSK1369.mp3",

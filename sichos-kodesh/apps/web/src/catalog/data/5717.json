@@ -40,6 +40,7 @@
     "hebrewDate": "5717-01-07",
     "occasionLabel": "ז' תשרי, שיחה לעסקני הישיבה",
     "occasionLabelEn": "7 Tishrei, sicha to the supporters of the yeshivah",
+    "occasionLabelShortEn": "7 Tishrei, to yeshivah supporters",
     "audio": [],
     "pdfs": [
       {
@@ -155,6 +156,8 @@
     "hebrewDate": "5717-01-18",
     "occasionLabel": "ליל ה' דחה\"ס, ג' דחוה\"מ סוכות, שמב\"ה",
     "occasionLabelEn": "Sukkos, night 5, Chol Hamoed Sukkos, day 3, Simchas Beis Hashoevah",
+    "occasionLabelShort": "ליל ה' דחה\"ס, ג' דחוה\"מ, שמב\"ה",
+    "occasionLabelShortEn": "Sukkos, night 5",
     "audio": [
       {
         "workerFilename": "AR0018795.mp3",
@@ -348,6 +351,8 @@
     "hebrewDate": "5717-01-23",
     "occasionLabel": "שמח\"ת לפנות בוקר - ניגון \"כי אנו עמך\" (א)",
     "occasionLabelEn": "Simchas Torah, before dawn - nigun \"Ki Anu Amecha\" (1)",
+    "occasionLabelShort": "שמח\"ת - ניגון \"כי אנו עמך\" (א)",
+    "occasionLabelShortEn": "Simchas Torah, \"Ki Anu Amecha\" (1)",
     "audio": [],
     "pdfs": [
       {
@@ -408,6 +413,7 @@
     "hebrewDate": "5717-01-24",
     "occasionLabel": "בראשית, מבה\"ח מ\"ח (התוועדות א')",
     "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan (farbrengen 1)",
+    "occasionLabelShortEn": "Bereishis (farbrengen 1)",
     "audio": [],
     "pdfs": [
       {
@@ -443,6 +449,7 @@
     "hebrewDate": "5717-01-24b",
     "occasionLabel": "בראשית (התוועדות ב' - המשך לשמח\"ת)",
     "occasionLabelEn": "Bereishis (farbrengen 2 - continuing Simchas Torah)",
+    "occasionLabelShortEn": "Bereishis (farbrengen 2)",
     "audio": [],
     "pdfs": [
       {
@@ -563,6 +570,7 @@
     "hebrewDate": "5717-02-29",
     "occasionLabel": "תולדות, מבה\"ח וער\"ח כסלו",
     "occasionLabelEn": "Toldos, Shabbos Mevarchim and Erev Rosh Chodesh Kislev",
+    "occasionLabelShortEn": "Toldos, Mevarchim Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -904,6 +912,7 @@
     "hebrewDate": "5717-03-27",
     "occasionLabel": "מקץ, חנוכה, מבה\"ח טבת",
     "occasionLabelEn": "Mikeitz, Chanukah, Shabbos Mevarchim Teves",
+    "occasionLabelShortEn": "Mikeitz, Chanukah, Mevarchim Teves",
     "audio": [],
     "pdfs": [
       {
@@ -924,6 +933,8 @@
     "hebrewDate": "5717-03-28",
     "occasionLabel": "ליל כ\"ט כסלו, ליל ה' דחנוכה, שיחה להת' שי' בעת מסירת דמי חנוכה",
     "occasionLabelEn": "Night of 29 Kislev, Chanukah, night 5, sicha to the students while giving out Chanukah gelt",
+    "occasionLabelShort": "ליל כ\"ט כסלו, מסירת דמי חנוכה",
+    "occasionLabelShortEn": "Night of 29 Kislev, Chanukah gelt",
     "audio": [
       {
         "workerFilename": "JEMSK0250.mp3",
@@ -956,6 +967,7 @@
     "hebrewDate": "5717-04-20",
     "occasionLabel": "כ' טבת, באסיפת הנהלת ישיבת תות\"ל",
     "occasionLabelEn": "20 Teves, at a meeting of the Tomchei Temimim administration",
+    "occasionLabelShortEn": "20 Teves, Tomchei Temimim meeting",
     "audio": [],
     "pdfs": []
   },
@@ -1227,6 +1239,8 @@
     "hebrewDate": "5717-05-11",
     "occasionLabel": "י\"א שבט, לקבוצת אנ\"ש, בנוגע לתלמידי תות\"ל",
     "occasionLabelEn": "11 Shevat, to a group of Anash, regarding the students of Tomchei Temimim",
+    "occasionLabelShort": "י\"א שבט, לקבוצת אנ\"ש",
+    "occasionLabelShortEn": "11 Shevat, to a group of Anash",
     "audio": [],
     "pdfs": [
       {
@@ -1242,6 +1256,7 @@
     "hebrewDate": "5717-05-24",
     "occasionLabel": "משפטים, מבה\"ח אד\"ר",
     "occasionLabelEn": "Mishpatim, Shabbos Mevarchim Adar I",
+    "occasionLabelShortEn": "Mishpatim, Mevarchim Adar I",
     "audio": [],
     "pdfs": [
       {
@@ -1328,6 +1343,7 @@
     "hebrewDate": "5717-06A-29",
     "occasionLabel": "פקודי, פ' שקלים, מבה\"ח וער\"ח אד\"ש",
     "occasionLabelEn": "Pekudei, Parshas Shekalim, Shabbos Mevarchim and Erev Rosh Chodesh Adar II",
+    "occasionLabelShortEn": "Pekudei, Parshas Shekalim",
     "audio": [],
     "pdfs": [
       {
@@ -1630,6 +1646,7 @@
     "hebrewDate": "5717-06B-27",
     "occasionLabel": "תזריע, פ' החודש, מבה\"ח ניסן",
     "occasionLabelEn": "Tazria, Parshas Hachodesh, Shabbos Mevarchim Nisan",
+    "occasionLabelShortEn": "Tazria, Parshas Hachodesh",
     "audio": [],
     "pdfs": [
       {
@@ -1695,6 +1712,7 @@
     "hebrewDate": "5717-07-01",
     "occasionLabel": "ר\"ח ניסן, להתלמידים טרם נסיעתם לביתם",
     "occasionLabelEn": "Rosh Chodesh Nisan, to the students before going home",
+    "occasionLabelShortEn": "Rosh Chodesh Nisan, to students",
     "audio": [],
     "pdfs": [
       {
@@ -1905,6 +1923,7 @@
     "hebrewDate": "5717-08-18",
     "occasionLabel": "ל\"ג בעומר, שיחה בעת הפאראד",
     "occasionLabelEn": "Lag BaOmer, sicha during the parade",
+    "occasionLabelShortEn": "Lag BaOmer, during the parade",
     "audio": [
       {
         "workerFilename": "AR0017876.mp3",
@@ -2124,6 +2143,8 @@
     "hebrewDate": "5717-09-14",
     "occasionLabel": "י\"ד סיון, שיחה לבעה\"ב דביהכנ\"ס \"צמח צדק\"",
     "occasionLabelEn": "14 Sivan, sicha to the members of the Tzemach Tzedek shul",
+    "occasionLabelShort": "י\"ד סיון, שיחה לבעה\"ב ד\"צמח צדק\"",
+    "occasionLabelShortEn": "14 Sivan, to Tzemach Tzedek shul",
     "audio": [],
     "pdfs": [
       {
@@ -2144,6 +2165,8 @@
     "hebrewDate": "5717-09-19",
     "occasionLabel": "י\"ט סיון, שיחה לתלמידי ישיבת אהל משה",
     "occasionLabelEn": "19 Sivan, sicha to the students of the Ohel Moshe yeshivah",
+    "occasionLabelShort": "י\"ט סיון, שיחה לישיבת אהל משה",
+    "occasionLabelShortEn": "19 Sivan, to Ohel Moshe yeshivah",
     "audio": [],
     "pdfs": [
       {
@@ -2219,6 +2242,8 @@
     "hebrewDate": "5717-09-24",
     "occasionLabel": "כ\"ד סיון, שיחה להמסיימות ד\"בית רבקה\"",
     "occasionLabelEn": "24 Sivan, sicha to the graduates of Beis Rivkah",
+    "occasionLabelShort": "כ\"ד סיון, שיחה למסיימות \"בית רבקה\"",
+    "occasionLabelShortEn": "24 Sivan, Beis Rivkah graduates",
     "audio": [],
     "pdfs": [
       {
@@ -2234,6 +2259,7 @@
     "hebrewDate": "5717-09-24b",
     "occasionLabel": "כ\"ד סיון, שיחה לילדים מערי השדה",
     "occasionLabelEn": "24 Sivan, sicha to children from out of town",
+    "occasionLabelShortEn": "24 Sivan, children from out of town",
     "audio": [],
     "pdfs": [
       {
@@ -2662,6 +2688,7 @@
     "hebrewDate": "5717-10-28",
     "occasionLabel": "מסעי, מבה\"ח מנ\"א",
     "occasionLabelEn": "Masei, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Masei, Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {

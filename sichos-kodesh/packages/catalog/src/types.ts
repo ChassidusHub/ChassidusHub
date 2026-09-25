@@ -71,6 +71,14 @@ export interface CatalogEntry {
    * ignores the field.
    */
   occasionLabelEn?: string;
+  /**
+   * The short forms of `occasionLabel` and `occasionLabelEn`, for titles
+   * (translate/shortTitles.ts): only where the long name is too long for a
+   * row or a header, which then shows it as the description. Added in
+   * catalog 1.7.0.
+   */
+  occasionLabelShort?: string;
+  occasionLabelShortEn?: string;
   audio: CatalogAudio[];
   pdfs: CatalogPdf[];
 }

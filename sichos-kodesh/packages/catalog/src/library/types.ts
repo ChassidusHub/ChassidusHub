@@ -42,6 +42,9 @@ export interface LibraryItemBase {
   /** The label in the other language (translations/, applied when the library is built): Hebrew for JEM's English names, English for mafteiach's Hebrew ones. */
   labelHe?: string;
   labelEn?: string;
+  /** Short forms of a long `label` and `labelEn`, for titles (translate/shortTitles.ts); the long name is then the description. */
+  labelShort?: string;
+  labelShortEn?: string;
   hebrewYear?: number;
   /** A mafteiach date key (`5711-05-10`), when the item has one date. */
   hebrewDate?: string;
@@ -85,6 +88,9 @@ export interface MaamarItem extends LibraryItemBase {
   /** Where it was said: יו"ד שבט, בשלח, י"ג שבט. */
   occasionLabel: string;
   occasionLabelEn?: string;
+  /** Short forms of a long `occasionLabel` and `occasionLabelEn` (translate/shortTitles.ts). */
+  occasionLabelShort?: string;
+  occasionLabelShortEn?: string;
   hemshech?: string;
   kuntres?: string;
   /** mafteiach month token of the year page it is listed under. */

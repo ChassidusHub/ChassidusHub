@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogRef, LibraryItemBase } from '@sichos-kodesh/catalog';
-import { itemAudio, itemFacts, itemPdfLabel, itemPlaylistEntry, itemSubtitle, itemTitle } from '../src/library/libraryModel.js';
+import { itemAudio, itemDescription, itemFacts, itemPdfLabel, itemPlaylistEntry, itemSubtitle, itemTitle } from '../src/library/libraryModel.js';
 
 // Items as the library files have them (apps/mobile/src/catalog/data/library), trimmed.
 const sicha = {
@@ -80,5 +80,20 @@ describe('the library labels', () => {
     expect(itemTitle('reshimos', reshima, 'en')).toBe('Chol HaMoed Sukkos');
     expect(itemTitle('reshimos', reshima, 'he')).toBe(`חוה"מ סוכות`);
     expect(itemPlaylistEntry('reshimos', reshima)).toBeNull();
+  });
+
+  it('titles a long name by its short form in either language, and gives the whole name as the description', () => {
+    const letter = {
+      id: '7',
+      label: 'מכתב כללי לחודש תשרי, אל בני ובנות ישראל בכל מקום שהם',
+      labelEn: 'General letter for Tishrei, to the Jewish people wherever they are',
+      labelShort: 'מכתב כללי לחודש תשרי',
+      labelShortEn: 'General letter for Tishrei',
+      refs: [],
+    } as LibraryItemBase;
+    expect(itemTitle('michtavimKlolim', letter, 'he')).toBe('מכתב כללי לחודש תשרי');
+    expect(itemTitle('michtavimKlolim', letter, 'en')).toBe('General letter for Tishrei');
+    expect(itemDescription('michtavimKlolim', letter, 'en')).toBe(letter.labelEn);
+    expect(itemDescription('michtavimKlolim', { ...letter, labelShort: undefined, labelShortEn: undefined } as LibraryItemBase, 'he')).toBeUndefined();
   });
 });

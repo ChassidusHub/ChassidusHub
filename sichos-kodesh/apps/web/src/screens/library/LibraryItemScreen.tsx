@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import type { LibraryItemBase } from '@sichos-kodesh/catalog';
-import { itemFacts, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
+import { itemDescription, itemFacts, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../../catalog/catalogStore';
 import { PlaylistPlayButton } from '../../components/PlaylistPlayButton';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -25,6 +25,8 @@ export function LibraryItemScreen({ route }: Props) {
   const { entry, basePath } = resolved;
   const record = item as LibraryItemBase & Record<string, unknown>;
   const title = itemTitle(collection, item, language);
+  // The whole name a shortened title stands for (a maamar's facts already say where it was said in full).
+  const description = collection === 'maamorim' ? undefined : itemDescription(collection, item, language);
   const facts = itemFacts(collection, item, {
     saidAt: t.librarySaidAt,
     printedIn: t.libraryPrintedIn,
@@ -39,6 +41,7 @@ export function LibraryItemScreen({ route }: Props) {
     <div className="screen">
       <ScreenHeader to={resolved.backPath} title={t.collectionNames[collection]} />
       <h1 className="library-item-title">{title}</h1>
+      {description && <p className="item-description">{description}</p>}
       {resolved.subtitle && <p className="subtitle">{resolved.subtitle}</p>}
       {facts.map((fact) => (
         <p key={fact} className="library-item-fact">

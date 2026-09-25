@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import type { PdfSection } from '@sichos-kodesh/catalog';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import { occasionFullName } from '@sichos-kodesh/app-core';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
 import { useTranslation } from '../i18n/useLanguage';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -25,7 +25,7 @@ export function CategoryScreen({ resolved }: Props) {
   return (
     <div className="screen">
       <ScreenHeader to={basePath} title={section ? t.sectionLabels[section] : ''} />
-      <p className="subtitle">{occasionTitle(entry, language)}</p>
+      <p className="subtitle">{occasionFullName(entry, language)}</p>
 
       {pdfs.map((pdf) => (
         <div key={pdf.driveFileId} className="card">

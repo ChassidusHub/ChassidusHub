@@ -21,6 +21,12 @@ export function Subtitle({ children, style }: TextBlockProps) {
   return <AppText style={[styles.subtitle, { color: colors.muted }, style]}>{children}</AppText>;
 }
 
+/** Web: `.item-description` - the whole name above a page's date line, where the header shows it shortened. */
+export function Description({ children, style }: TextBlockProps) {
+  const colors = useColors();
+  return <AppText style={[styles.description, { color: colors.fg }, style]}>{children}</AppText>;
+}
+
 /** Web: `.category-header` - muted 12px/700 uppercase eyebrow, 20px above and 8px below (`first` drops the top margin, like `.category:first-of-type`). */
 export function CategoryHeader({ children, first = false, style }: TextBlockProps & { first?: boolean }) {
   const colors = useColors();
@@ -42,6 +48,7 @@ export function GapMessage({ children, style }: TextBlockProps) {
 const styles = StyleSheet.create({
   h1: { fontSize: 28, lineHeight: 34, fontWeight: '700', marginBottom: 4 },
   subtitle: { fontSize: 15, lineHeight: 21, marginBottom: 20 },
+  description: { fontSize: 16, lineHeight: 23, marginBottom: 6 },
   categoryHeader: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.72, marginTop: 20, marginBottom: 8 },
   first: { marginTop: 0 },
   tabHelp: { fontSize: 13, lineHeight: 18, marginBottom: 16 },

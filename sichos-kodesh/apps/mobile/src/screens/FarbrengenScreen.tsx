@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import type { CatalogPdf } from '@sichos-kodesh/catalog';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import { occasionDescription, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { OccasionActions } from '../components/OccasionActions';
 import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
@@ -21,7 +21,7 @@ import { CategoryRow } from '../ui/CategoryRow';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { AppText } from '../ui/Text';
-import { GapMessage, Subtitle } from '../ui/Typography';
+import { Description, GapMessage, Subtitle } from '../ui/Typography';
 import { useColors } from '../ui/theme';
 import { row } from '../ui/rtl';
 
@@ -91,6 +91,8 @@ export function FarbrengenScreen({ navigation, route }: FarbrengenScreenProps) {
 
   return (
     <Screen header={<ScreenHeader back={{ name: backRoute.name, params: backRoute.params } as never} title={occasionTitle(entry, language)} />}>
+      {/* The whole name, where the header shortens it - a yechidus says here who it was for. */}
+      {occasionDescription(entry, language) && <Description>{occasionDescription(entry, language)}</Description>}
       {/* `subtitle` is this occasion's own day+month; the year is appended here so this page shows the full date. */}
       <Subtitle>
         {subtitle} {hebrewYearLabel(entry.hebrewYear, language)}

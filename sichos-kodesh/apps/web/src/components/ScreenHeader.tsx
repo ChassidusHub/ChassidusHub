@@ -27,11 +27,13 @@ interface Props {
  * invisible, non-interactive copy of BackLink's own icon+label, so it
  * always renders at exactly the same width as the real one and the title
  * sits in a box equally spaced from both edges (see the flex-1
- * `.screen-header-title` rule). A title too long to fit centered just
- * fills that box edge to edge with its own ellipsis, which reads the same
- * as ordinary start-aligned truncation. An `action` is positioned over
+ * `.screen-header-title` rule). A long title steps down a size and wraps
+ * onto a second line, balanced, before it is cut short. An `action` is positioned over
  * that spacer rather than beside it, so it never widens the trailing side.
  */
+/** Past this many characters a title is set a size smaller (the phone's ScreenHeader does the same). */
+const LONG_TITLE = 26;
+
 export function ScreenHeader({ to, title, className, action }: Props) {
   const { t, language } = useTranslation();
   const Chevron = language === 'he' ? ChevronRight : ChevronLeft;
@@ -39,7 +41,7 @@ export function ScreenHeader({ to, title, className, action }: Props) {
   return (
     <div className={['screen-header', className].filter(Boolean).join(' ')}>
       <BackLink to={to} />
-      <span className="screen-header-title">
+      <span className={typeof title === 'string' && title.length > LONG_TITLE ? 'screen-header-title screen-header-title-long' : 'screen-header-title'}>
         {title}
       </span>
       <span className="screen-header-side">

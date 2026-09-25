@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FileText } from 'lucide-react-native';
 import type { CatalogRef, LibraryItemBase } from '@sichos-kodesh/catalog';
-import { audioChapterName, findItem, formatDuration, itemFacts, itemPdfLabel, itemPdfs, itemPlaylistEntry, itemSubtitle, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
+import { audioChapterName, findItem, formatDuration, itemDescription, itemFacts, itemPdfLabel, itemPdfs, itemPlaylistEntry, itemSubtitle, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { DownloadPill } from '../../components/DownloadPill';
 import { useOnlineMode } from '../../appMode/appMode';
@@ -19,7 +19,7 @@ import { Row, RowDistance, RowTrailing } from '../../ui/Row';
 import { Screen } from '../../ui/Screen';
 import { ScreenHeader } from '../../ui/ScreenHeader';
 import { AppText } from '../../ui/Text';
-import { CategoryHeader, Subtitle, TabHelp } from '../../ui/Typography';
+import { CategoryHeader, Description, Subtitle, TabHelp } from '../../ui/Typography';
 import { useColors } from '../../ui/theme';
 import { row } from '../../ui/rtl';
 
@@ -50,6 +50,8 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   const record = item as LibraryItemBase & Record<string, unknown>;
   const title = itemTitle(collection, item, language);
   const subtitle = itemSubtitle(collection, item, language);
+  // The whole name a shortened title stands for (a maamar's facts already say where it was said in full).
+  const description = collection === 'maamorim' ? undefined : itemDescription(collection, item, language);
   const facts = itemFacts(collection, item, { saidAt: t.librarySaidAt, printedIn: t.libraryPrintedIn, hemshech: t.libraryHemshech, kuntres: t.libraryKuntres, hasTranslation: t.libraryHasTranslation, hasTranscript: t.libraryHasTranscript }, language);
   const pdfLabel = (ref: CatalogRef) => itemPdfLabel(ref, t.pdfRoleNames, t.libraryDocuments);
   const pdfs = itemPdfs(item);
@@ -58,6 +60,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   return (
     <Screen header={<ScreenHeader back={{ name: 'LibraryCollection', params: { collection } }} title={t.collectionNames[collection]} />}>
       <AppText style={styles.title}>{title}</AppText>
+      {description && <Description>{description}</Description>}
       {subtitle ? <Subtitle>{subtitle}</Subtitle> : null}
       {facts.map((fact) => (
         <AppText key={fact} style={[styles.fact, { color: colors.muted }]}>

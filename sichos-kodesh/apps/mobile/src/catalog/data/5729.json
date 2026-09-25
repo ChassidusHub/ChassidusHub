@@ -294,6 +294,7 @@
     "hebrewDate": "5729-01-16b",
     "occasionLabel": "ימים ראשונים דחה\"ס, בעת הסעודה",
     "occasionLabelEn": "The first days of Sukkos, during the meal",
+    "occasionLabelShortEn": "The first days of Sukkos",
     "audio": [],
     "pdfs": [
       {
@@ -399,6 +400,7 @@
     "hebrewDate": "5729-01-23b",
     "occasionLabel": "ימים אחרונים דחה\"ס, בעת הסעודה",
     "occasionLabelEn": "The last days of Sukkos, during the meal",
+    "occasionLabelShortEn": "The last days of Sukkos",
     "audio": [],
     "pdfs": [
       {
@@ -424,6 +426,7 @@
     "hebrewDate": "5729-01-23c",
     "occasionLabel": "מוצאי שמח\"ת, בעת חלוקת כוס של ברכה",
     "occasionLabelEn": "Motzei Simchas Torah, during kos shel bracha",
+    "occasionLabelShortEn": "Motzei Simchas Torah, kos shel bracha",
     "audio": [],
     "pdfs": [
       {
@@ -439,6 +442,7 @@
     "hebrewDate": "5729-01-27",
     "occasionLabel": "בראשית, מבה\"ח מ\"ח",
     "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
+    "occasionLabelShortEn": "Bereishis, Mevarchim Cheshvan",
     "audio": [],
     "pdfs": [
       {
@@ -474,6 +478,8 @@
     "hebrewDate": "5729-01-28",
     "occasionLabel": "ליל כ\"ט תשרי, יחידות לתושבי כפר חב\"ד",
     "occasionLabelEn": "Night of 29 Tishrei, yechidus for the residents of Kfar Chabad",
+    "occasionLabelShort": "ליל כ\"ט תשרי, יחידות לתושבי כפ\"ח",
+    "occasionLabelShortEn": "Night of 29 Tishrei, Kfar Chabad",
     "audio": [],
     "pdfs": [
       {
@@ -509,6 +515,7 @@
     "hebrewDate": "5729-02-25",
     "occasionLabel": "חיי שרה, מבה\"ח כסלו",
     "occasionLabelEn": "Chayei Sarah, Shabbos Mevarchim Kislev",
+    "occasionLabelShortEn": "Chayei Sarah, Mevarchim Kislev",
     "audio": [],
     "pdfs": [
       {
@@ -549,6 +556,8 @@
     "hebrewDate": "5729-03-05",
     "occasionLabel": "ה' כסלו, יחידות עם מר לינדסיי - ראש עיר ניו יאָרק",
     "occasionLabelEn": "5 Kislev, yechidus with Mr. Lindsay - Mayor of New York",
+    "occasionLabelShort": "ה' כסלו, יחידות עם מר לינדסיי",
+    "occasionLabelShortEn": "5 Kislev, yechidus, Mr. Lindsay",
     "audio": [
       {
         "workerFilename": "AR0015452.mp3",
@@ -1280,6 +1289,8 @@
     "hebrewDate": "5729-05-11",
     "occasionLabel": "ליל י\"ב שבט, שיחה לצעירי תלמידי תות\"ל דמאנטריעאל",
     "occasionLabelEn": "Night of 12 Shevat, sicha to the young students of Tomchei Temimim of Montreal",
+    "occasionLabelShort": "ליל י\"ב שבט, שיחה לתלמידי תות\"ל",
+    "occasionLabelShortEn": "Night of 12 Shevat, Montreal students",
     "audio": [
       {
         "workerFilename": "JEMSK1087.mp3",
@@ -1367,6 +1378,7 @@
     "hebrewDate": "5729-05-27",
     "occasionLabel": "משפטים, פ' שקלים, מבה\"ח אדר",
     "occasionLabelEn": "Mishpatim, Parshas Shekalim, Shabbos Mevarchim Adar",
+    "occasionLabelShortEn": "Mishpatim, Parshas Shekalim",
     "audio": [],
     "pdfs": [
       {
@@ -1666,6 +1678,7 @@
     "hebrewDate": "5729-06-25",
     "occasionLabel": "ויק\"פ, פ' החודש, מבה\"ח ניסן",
     "occasionLabelEn": "Vayakhel-Pekudei, Parshas Hachodesh, Shabbos Mevarchim Nisan",
+    "occasionLabelShortEn": "Vayakhel-Pekudei, Parshas Hachodesh",
     "audio": [],
     "pdfs": [
       {
@@ -1711,6 +1724,7 @@
     "hebrewDate": "5729-07-01",
     "occasionLabel": "ר\"ח ניסן, אחרי שחרית",
     "occasionLabelEn": "Rosh Chodesh Nisan, after Shacharis",
+    "occasionLabelShortEn": "Rosh Chodesh Nisan",
     "audio": [
       {
         "workerFilename": "JEMSK1101.mp3",
@@ -1738,6 +1752,8 @@
     "hebrewDate": "5729-07-01b",
     "occasionLabel": "ר\"ח ניסן, שיחה להתל' שי' הנוסעים בשליחות לאוסטרלי'",
     "occasionLabelEn": "Rosh Chodesh Nisan, sicha to the students traveling on shlichus to Australia",
+    "occasionLabelShort": "ר\"ח ניסן, שיחה להנוסעים לאוסטרלי'",
+    "occasionLabelShortEn": "Rosh Chodesh Nisan, to Australia",
     "audio": [],
     "pdfs": [
       {
@@ -1819,6 +1835,7 @@
     "hebrewDate": "5729-07-14",
     "occasionLabel": "ליל א' דחה\"פ, ברכה להת'",
     "occasionLabelEn": "Pesach, night 1, bracha to the students",
+    "occasionLabelShortEn": "Pesach, night 1, bracha to students",
     "audio": [],
     "pdfs": [
       {
@@ -1874,6 +1891,7 @@
     "hebrewDate": "5729-07-16",
     "occasionLabel": "ימים ראשונים דחה\"פ, בעת הסעודה",
     "occasionLabelEn": "The first days of Pesach, during the meal",
+    "occasionLabelShortEn": "The first days of Pesach",
     "audio": [],
     "pdfs": [
       {
@@ -1959,6 +1977,7 @@
     "hebrewDate": "5729-07-22b",
     "occasionLabel": "ימים אחרונים דחה\"פ, בעת הסעודה",
     "occasionLabelEn": "The last days of Pesach, during the meal",
+    "occasionLabelShortEn": "The last days of Pesach",
     "audio": [],
     "pdfs": [
       {
@@ -2030,6 +2049,8 @@
     "hebrewDate": "5729-07-27",
     "occasionLabel": "כ\"ז ניסן, שיחה להתלמידים שחזרו משליחות לאוסטרלי'",
     "occasionLabelEn": "27 Nisan, sicha to the students who returned from shlichus to Australia",
+    "occasionLabelShort": "כ\"ז ניסן, שיחה להתלמידים שחזרו",
+    "occasionLabelShortEn": "27 Nisan, returned from Australia",
     "audio": [],
     "pdfs": [
       {
@@ -2072,6 +2093,7 @@
     "hebrewDate": "5729-08-29",
     "occasionLabel": "במדבר, מבה\"ח וער\"ח סיון",
     "occasionLabelEn": "Bamidbar, Shabbos Mevarchim and Erev Rosh Chodesh Sivan",
+    "occasionLabelShortEn": "Bamidbar, Mevarchim Sivan",
     "audio": [],
     "pdfs": [
       {
@@ -2107,6 +2129,7 @@
     "hebrewDate": "5729-09-01",
     "occasionLabel": "ר\"ח סיון, שיחה לנשי ובנות חב\"ד",
     "occasionLabelEn": "Rosh Chodesh Sivan, sicha to N'shei uBnos Chabad",
+    "occasionLabelShortEn": "Rosh Chodesh Sivan, to N'shei",
     "audio": [
       {
         "workerFilename": "JEMSK1103.mp3",
@@ -2295,6 +2318,8 @@
     "hebrewDate": "5729-09-26",
     "occasionLabel": "כ\"ו סיון, שיחה להמסיימות ד\"בית רבקה\", ולהמדריכות ד\"מחנה אמונה\" תחי'",
     "occasionLabelEn": "26 Sivan, sicha to the graduates of Beis Rivkah, and to the counselors of Camp Emunah",
+    "occasionLabelShort": "כ\"ו סיון, שיחה למסיימות \"בית רבקה\"",
+    "occasionLabelShortEn": "26 Sivan, Beis Rivkah, Camp Emunah",
     "audio": [],
     "pdfs": [
       {
@@ -2320,6 +2345,7 @@
     "hebrewDate": "5729-09-28",
     "occasionLabel": "שלח, כ\"ח סיון, מבה\"ח תמוז",
     "occasionLabelEn": "Shelach, 28 Sivan, Shabbos Mevarchim Tamuz",
+    "occasionLabelShortEn": "Shelach, 28 Sivan, Mevarchim Tamuz",
     "audio": [],
     "pdfs": [
       {
@@ -2596,6 +2622,7 @@
     "hebrewDate": "5729-10-26",
     "occasionLabel": "מטו\"מ, מבה\"ח מנ\"א",
     "occasionLabelEn": "Matos-Masei, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Matos-Masei, Mevarchim Menachem Av",
     "audio": [],
     "pdfs": [
       {
@@ -3025,6 +3052,8 @@
     "hebrewDate": "5729-12-20",
     "occasionLabel": "כ' אלול, שיחה להעסקניות דישיבות תות\"ל ו\"בית רבקה\" תחי'",
     "occasionLabelEn": "20 Elul, sicha to the women supporters of the Tomchei Temimim yeshivos and Beis Rivkah",
+    "occasionLabelShort": "כ' אלול, שיחה להעסקניות",
+    "occasionLabelShortEn": "20 Elul, sicha to women supporters",
     "audio": [
       {
         "workerFilename": "JEMSK1123.mp3",

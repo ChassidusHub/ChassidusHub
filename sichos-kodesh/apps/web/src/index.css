@@ -231,6 +231,14 @@ h1 {
   margin: 0 0 20px;
 }
 
+/* The whole name above a page's date line, where the header shows it shortened. */
+.item-description {
+  color: var(--fg);
+  font-size: 1rem;
+  line-height: 1.45;
+  margin: 0 0 6px;
+}
+
 .category-header {
   color: var(--muted);
   font-size: 0.75rem;
@@ -392,11 +400,19 @@ h1 {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-wrap: balance;
   text-align: center;
   font-size: 1.125rem;
+  line-height: 1.3;
   font-weight: 700;
+}
+
+.screen-header-title-long {
+  font-size: 1rem;
 }
 
 /* An invisible, non-interactive mirror of the real BackLink (see

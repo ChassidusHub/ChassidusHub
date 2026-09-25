@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { occasionTitle } from '@sichos-kodesh/app-core';
+import { occasionFullName } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { CategoryScreenProps } from '../navigation/types';
@@ -30,7 +30,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
 
   return (
     <Screen header={<ScreenHeader back={{ name: 'Farbrengen', params: occasionRoute }} title={t.sectionLabels[categoryId]} />}>
-      <Subtitle>{occasionTitle(entry, language)}</Subtitle>
+      <Subtitle>{occasionFullName(entry, language)}</Subtitle>
 
       {pdfs.map((pdf) => (
         <Card key={pdf.driveFileId}>

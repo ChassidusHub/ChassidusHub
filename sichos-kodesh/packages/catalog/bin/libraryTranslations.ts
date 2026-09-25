@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { LibraryTranslations } from '../src/translate/library.js';
 import type { LibraryEditions } from '../src/library/views.js';
+import type { ShortTitles } from '../src/translate/shortTitles.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,6 +35,20 @@ export async function loadLibraryEditions(dir = path.join(__dirname, '..', 'edit
     return { melukatByMonths: JSON.parse(await readFile(path.join(dir, 'melukat-new.json'), 'utf8')) };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {};
+    throw error;
+  }
+}
+
+/**
+ * The short titles of the long occasion names (src/translate/shortTitles.ts),
+ * written once and checked: translations/short-titles.json. A missing file
+ * is an empty table.
+ */
+export async function loadShortTitles(dir = path.join(__dirname, '..', 'translations')): Promise<ShortTitles> {
+  try {
+    return JSON.parse(await readFile(path.join(dir, 'short-titles.json'), 'utf8')) as ShortTitles;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { he: {}, en: {} };
     throw error;
   }
 }
