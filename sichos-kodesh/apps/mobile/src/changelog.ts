@@ -9,6 +9,27 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.12.0',
+    en: [
+      'A new home: this week first - the parsha, the kvius farbrengens, every year\'s farbrengens of the week and the parsha\'s Likkutei Sichos - then where you left off, the farbrengens by year, moed and parsha, and a door into each part of the library',
+      'Two ways to use the app, chosen at the first start and changed in Settings: online, with downloads and connection notices, or offline with packs, where none of that shows and the home asks for a pack. Importing a pack works in both',
+      'One search for everything - the farbrengens, every part of the library and the seforim - with filters by year, month, day, parsha and moed for all of them, and the text of every sefer saved on the phone. A sefer\'s name alone finds the sefer, not all its chapters',
+      'Maamorim, reshimos and recordings by month across all the years, by parsha and by moed; and Sefer HaMaamorim Melukat in its edition by the months of the year, in four parts, beside the six volumes',
+      'Short titles for long names: lists and headers show a short one, and the page itself the whole name - who a yechidus was for, where the shluchim were going. A long header wraps onto a second line instead of being cut short',
+      'The reader\'s settings sheet follows your finger down and closes; the PDF reader has the same sheet for its pages: sepia, grey or dark, a stronger contrast, a page at a time, the screen kept on',
+      'The letters of the Igros are laid out as printed: the date and city at the side, the addressee in bold, the greeting in the middle, the signature at the end. Years, months and parshiyos are a grid of tiles',
+    ],
+    he: [
+      'מסך בית חדש: קודם השבוע - הפרשה, התוועדויות הקביעות, התוועדויות השבוע בכל השנים ולקוטי שיחות על הפרשה - אחר כך היכן שהפסקתם, ההתוועדויות לפי שנה, מועד ופרשה, ודלת לכל חלק של הספרייה',
+      'שתי דרכים להשתמש באפליקציה, נבחרות בהפעלה הראשונה ומשתנות בהגדרות: מקוון, עם הורדות והודעות חיבור, או לא מקוון עם חבילות, שבו שום דבר מאלה לא מופיע ומסך הבית מבקש חבילה. ייבוא חבילה עובד בשתיהן',
+      'חיפוש אחד לכל - ההתוועדויות, כל חלקי הספרייה והספרים - עם סינון לפי שנה, חודש, יום, פרשה ומועד לכולם, ובטקסט של כל ספר השמור בטלפון. שם של ספר לבדו מוצא את הספר, לא את כל פרקיו',
+      'מאמרים, רשימות והקלטות לפי חודש בכל השנים, לפי פרשה ולפי מועד; וספר המאמרים מלוקט במהדורה לפי חודשי השנה, בארבעה חלקים, לצד ששת הכרכים',
+      'כותרות קצרות לשמות ארוכים: הרשימות והכותרות מציגות שם קצר, והעמוד עצמו את השם המלא - למי הייתה היחידות, לאן נסעו השלוחים. כותרת ארוכה עוברת לשורה שנייה במקום להיקטע',
+      'חלון הגדרות הקריאה נגרר למטה עם האצבע ונסגר; לקורא ה-PDF יש אותו חלון לדפים: ספיה, אפור או כהה, ניגודיות חזקה, דף אחר דף, מסך דולק',
+      'מכתבי האגרות מסודרים כמו בדפוס: התאריך והעיר בצד, הנמען מודגש, הברכה באמצע, החתימה בסוף. שנים, חודשים ופרשות מוצגים כאריחים',
+    ],
+  },
+  {
     version: '1.11.0',
     en: [
       'Made to work offline: once a pack is on the phone, no bar or note says there is no connection. Without a connection and without a pack, the app asks for the pack and opens where to import it',

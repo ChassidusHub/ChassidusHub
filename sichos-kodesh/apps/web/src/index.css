@@ -2989,27 +2989,39 @@ body:has(.reader) {
   text-align: end;
 }
 
-/* A letter as the Igros print it (app-core's layoutLetter): the date line
-   and city close together at the end side, the addressee in bold, the
-   greeting on a line of its own in the middle, the signature at the end. */
-.reader-paragraph-center {
-  text-align: center;
+/* A letter as the Igros app shows it (app-core's layoutLetter): the date
+   line at the start, the city under it smaller, the addressee small in a
+   narrow block at the end side, the greeting at the start after a gap,
+   the signature at the end side. */
+.reader-letter-dateline,
+.reader-letter-place,
+.reader-letter-addressee,
+.reader-letter-greeting {
+  text-align: start;
+  hyphens: none;
 }
 
 .reader-letter-dateline {
-  margin-bottom: 0.15em;
-}
-
-.reader-letter-dateline + .reader-paragraph:not(.reader-letter-dateline) {
-  margin-top: 0.9em;
-}
-
-.reader-letter-addressee {
+  font-size: 1.08em;
   margin-bottom: 0.3em;
 }
 
+.reader-letter-place {
+  font-size: 0.85em;
+  margin-bottom: 0.8em;
+}
+
+.reader-letter-addressee {
+  max-width: 70%;
+  margin-inline-start: auto;
+  margin-bottom: 0.2em;
+  font-size: 0.82em;
+  line-height: 1.6;
+}
+
 .reader-letter-greeting {
-  margin: 0.5em 0 1em;
+  margin-top: 1.6em;
+  margin-bottom: 1em;
 }
 
 .reader-letter-signature {

@@ -175,19 +175,18 @@ describe('a letter of the Igros', () => {
         '<footer class="source">אגרות קודש חלק י</footer></article>',
     );
 
-  it('is laid out as printed: the date line and city at the end, the addressee in bold, the greeting centred, the signature at the end', () => {
+  it('is laid out as the Igros app shows it: the date line and city at the start, then the addressee, the greeting, and the signature at the end', () => {
     const text = letter('<p>הרה"ח וכו\' פלוני שי\'</p>', 'שלום וברכה!');
     expect(text.id).toBe('igros:3007');
     expect(text.blocks.map((b) => [b.role ?? null, b.align ?? null])).toEqual([
-      ['dateline', 'end'],
-      ['dateline', 'end'],
+      ['dateline', null],
+      ['place', null],
       ['addressee', null],
-      ['greeting', 'center'],
+      ['greeting', null],
       [null, null],
       [null, null],
       ['signature', 'end'],
     ]);
-    expect(text.blocks[2]!.inlines.every((inline) => inline.bold)).toBe(true);
   });
 
   it('keeps its paragraphs as they are when no greeting stands near the top, and leaves other texts alone', () => {
@@ -195,7 +194,7 @@ describe('a letter of the Igros', () => {
     expect(text.blocks.filter((b) => b.role === 'greeting' || b.role === 'addressee')).toEqual([]);
     const plain = parseTextObject('<article dir="rtl" lang="he"><p class="end">סוף</p><p>שלום וברכה!</p></article>');
     expect(plain.blocks.map((b) => b.role)).toEqual([undefined, undefined]);
-    expect(layoutLetter(plain).blocks[1]!.align).toBe('center');
+    expect(layoutLetter(plain).blocks.map((b) => b.role)).toEqual(['dateline', 'greeting']);
   });
 });
 
@@ -285,7 +284,7 @@ describe('a letter of the Igros as the reader reads it', () => {
 
   it('sets the date line and the signature to the end side, and lists the notes after it, unnumbered, wherever the notes go', () => {
     const text = parseTextObject(letter);
-    expect(text.blocks.map((b) => b.align ?? null)).toEqual(['end', 'center', null, 'end']);
+    expect(text.blocks.map((b) => [b.role ?? null, b.align ?? null])).toEqual([['dateline', null], ['greeting', null], [null, null], ['signature', 'end']]);
     expect(text.notes).toHaveLength(2);
     expect(referencedNotes(text).size).toBe(0);
     expect(notesAfterText(text, 'end')).toHaveLength(2);

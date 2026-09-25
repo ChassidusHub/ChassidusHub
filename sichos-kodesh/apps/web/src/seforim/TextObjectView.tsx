@@ -67,9 +67,9 @@ function Runs({ inlines, context }: { inlines: Inline[]; context: RunContext }) 
  * wherever the notes go. Size, font, spacing, margins, paper and
  * justification come from the reader's CSS variables.
  */
-/** A paragraph's classes: set to the end side or centred, and its part of a letter's head or foot (app-core's layoutLetter). */
+/** A paragraph's classes: set to the end side, and its part of a letter's head or foot (app-core's layoutLetter). */
 function paragraphClass(block: Block): string {
-  return ['reader-paragraph', block.align === 'end' && 'reader-paragraph-end', block.align === 'center' && 'reader-paragraph-center', block.role && `reader-letter-${block.role}`]
+  return ['reader-paragraph', block.align === 'end' && 'reader-paragraph-end', block.role && `reader-letter-${block.role}`]
     .filter(Boolean)
     .join(' ');
 }

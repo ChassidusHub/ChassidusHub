@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.8.0';
+export const APP_VERSION = '1.9.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,25 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.9.0',
+    en: [
+      'A new home: this week first - the parsha, the kvius farbrengens, every year\'s farbrengens of the week and the parsha\'s Likkutei Sichos - then where you left off, the farbrengens by year, moed and parsha, and a door into each part of the library',
+      'One search for everything - the farbrengens, every part of the library and the seforim - with filters by year, month, day, parsha and moed for all of them. A sefer\'s name alone finds the sefer, not all its chapters',
+      'Maamorim, reshimos and recordings by month across all the years, by parsha and by moed; and Sefer HaMaamorim Melukat in its edition by the months of the year, in four parts, beside the six volumes',
+      'Short titles for long names: lists and headers show a short one, and the page itself the whole name. A long header wraps onto a second line instead of being cut short',
+      'On a phone the reader\'s settings sheet follows your finger down and closes; the PDF reader has the same sheet for its pages: sepia, grey or dark, a stronger contrast, a page at a time, the screen kept on',
+      'The letters of the Igros are laid out as printed: the date and city at the side, the addressee in bold, the greeting in the middle, the signature at the end. Years, months and parshiyos are a grid of tiles',
+    ],
+    he: [
+      'מסך בית חדש: קודם השבוע - הפרשה, התוועדויות הקביעות, התוועדויות השבוע בכל השנים ולקוטי שיחות על הפרשה - אחר כך היכן שהפסקתם, ההתוועדויות לפי שנה, מועד ופרשה, ודלת לכל חלק של הספרייה',
+      'חיפוש אחד לכל - ההתוועדויות, כל חלקי הספרייה והספרים - עם סינון לפי שנה, חודש, יום, פרשה ומועד לכולם. שם של ספר לבדו מוצא את הספר, לא את כל פרקיו',
+      'מאמרים, רשימות והקלטות לפי חודש בכל השנים, לפי פרשה ולפי מועד; וספר המאמרים מלוקט במהדורה לפי חודשי השנה, בארבעה חלקים, לצד ששת הכרכים',
+      'כותרות קצרות לשמות ארוכים: הרשימות והכותרות מציגות שם קצר, והעמוד עצמו את השם המלא. כותרת ארוכה עוברת לשורה שנייה במקום להיקטע',
+      'בטלפון, חלון הגדרות הקריאה נגרר למטה עם האצבע ונסגר; לקורא ה-PDF יש אותו חלון לדפים: ספיה, אפור או כהה, ניגודיות חזקה, דף אחר דף, מסך דולק',
+      'מכתבי האגרות מסודרים כמו בדפוס: התאריך והעיר בצד, הנמען מודגש, הברכה באמצע, החתימה בסוף. שנים, חודשים ופרשות מוצגים כאריחים',
+    ],
+  },
   {
     version: '1.8.0',
     en: [
