@@ -59,6 +59,12 @@ function counted(n: number, one: string, many: string): string {
   return n === 1 ? one : `${n.toLocaleString('he-IL')} ${many}`;
 }
 
+/** A few years by name; a long run as its first and last year. */
+function yearsFact(years: number[]): string {
+  if (years.length <= 3) return `שנים: ${years.map(yearLabel).join(', ')}`;
+  return `${years.length} שנים, ${yearLabel(years[0]!)}–${yearLabel(years[years.length - 1]!)}`;
+}
+
 /** A pick-one row of pills, the chosen one filled (the app's segmented control). */
 function Segmented<T extends string | number>({ name, value, options, onChange }: { name: string; value: T; options: Array<{ value: T; label: string }>; onChange: (value: T) => void }) {
   return (
@@ -128,7 +134,7 @@ function Hero({ meta }: { meta: Load<Meta> }) {
         <ul className="facts" aria-label="בארכיון">
           <li>{counted(meta.value.objects, 'קובץ אחד', 'קבצים')}</li>
           <li>{ltr(formatMb(meta.value.bytes))}</li>
-          <li>שנים: {meta.value.years.map(yearLabel).join(', ')}</li>
+          <li>{yearsFact(meta.value.years)}</li>
           <li>עודכן {new HDate(new Date(meta.value.publishedAt)).renderGematriya(true)}</li>
         </ul>
       )}
