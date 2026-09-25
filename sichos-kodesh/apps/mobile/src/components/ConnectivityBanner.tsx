@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { PackageOpen, Wifi } from 'lucide-react-native';
 import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useHasOfflinePack } from '../offline/useHasOfflinePack';
+import { useOnlineMode } from '../appMode/appMode';
 import { useTranslation } from '../i18n/useTranslation';
 import { navigateTo } from '../navigation/navigationRef';
 import { AppText } from '../ui/Text';
@@ -21,6 +22,7 @@ const BACK_ONLINE_VISIBLE_MS = 5000;
 export function useConnectivityBannerVisible(): boolean {
   const online = useOnlineStatus();
   const hasPack = useHasOfflinePack();
+  const onlineMode = useOnlineMode();
   const [justReconnected, setJustReconnected] = useState(false);
   const wasOnlineRef = useRef(online);
 
@@ -34,7 +36,8 @@ export function useConnectivityBannerVisible(): boolean {
     }
   }, [online]);
 
-  if (hasPack !== false) return false;
+  // Offline pack mode never talks about the connection (the home screen asks for the pack instead).
+  if (!onlineMode || hasPack !== false) return false;
   return !online || justReconnected;
 }
 

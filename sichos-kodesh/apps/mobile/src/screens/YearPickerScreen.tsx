@@ -10,6 +10,7 @@ import type { HomeScreenProps } from '../navigation/types';
 import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useHasOfflinePack } from '../offline/useHasOfflinePack';
 import { useDownloadsCanRun } from '../download/useDownloadsCanRun';
+import { useOnlineMode } from '../appMode/appMode';
 import { parshaLabel } from '../utils/formatHebrewDate';
 import { Button } from '../ui/Button';
 import { CategoryRow } from '../ui/CategoryRow';
@@ -26,7 +27,10 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
   const online = useOnlineStatus();
   const hasPack = useHasOfflinePack();
   const downloadsCanRun = useDownloadsCanRun();
-  const askForPack = hasPack === false && (!online || !downloadsCanRun);
+  const onlineMode = useOnlineMode();
+  // Offline pack mode asks for the pack until one is on the phone; online mode only when it can't download.
+  const askForPack = hasPack === false && (!onlineMode || !online || !downloadsCanRun);
+  const askText = !onlineMode ? t.offlineModeAskForPack : online ? t.noWifiAskForPack : t.offlineAskForPack;
   const targetYear = currentHebrewYear();
   const bestMatch = findMatchingYears(targetYear)[0];
   const { parsha } = currentParsha(IL);
@@ -51,7 +55,7 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
       </Subtitle>
 
       {/* The app is meant to work offline: with a pack on the phone nothing needs saying. Without one, with no connection - or no Wi-Fi for downloads set to Wi-Fi only - it asks for the pack. */}
-      {askForPack && <OfflineNote pack text={online ? t.noWifiAskForPack : t.offlineAskForPack} />}
+      {askForPack && <OfflineNote pack text={askText} />}
       {askForPack && <CategoryRow label={t.offlineImportPack} onPress={() => navigation.navigate('Offline')} />}
 
       {bestMatch && <Button hero label={t.weekKviusFarbrengens} onPress={() => navigation.navigate('KviusYears', { targetYear })} />}

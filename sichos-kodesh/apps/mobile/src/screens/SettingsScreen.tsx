@@ -11,6 +11,8 @@ import { useDownload } from '../download/useDownload';
 import { getDownloadStorageUsage } from '../download/downloadStorage';
 import { libraryFileNames } from '../library/libraryDownloads';
 import { useLanguage, useTranslation } from '../i18n/useTranslation';
+import { setAppMode, useAppMode } from '../appMode/appMode';
+import type { AppMode } from '../appMode/appMode';
 import type { Language } from '../i18n/translations';
 import type { SettingsScreenProps } from '../navigation/types';
 import { useAutoplayOnHanacha } from '../settings/autoplayOnHanacha';
@@ -75,6 +77,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const [notifications, setNotifications] = useNotificationSettings();
   const [notificationsBlocked, setNotificationsBlocked] = useState(false);
   const { settings } = useDownload();
+  const onlineMode = useAppMode() !== 'offline';
   const [usage, setUsage] = useState<number | null>(null);
   // Phone only (see src/background) - a web app has no notifications of its own here.
   const notificationsAvailable = isBackgroundSyncAvailable();
@@ -113,6 +116,10 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
     { value: 'system', label: t.themeSystem },
   ];
   const languageOptions = (['en', 'he'] as Language[]).map((value) => ({ value, label: LANGUAGE_NATIVE_NAMES[value] }));
+  const modeOptions: Array<{ value: AppMode; label: string }> = [
+    { value: 'online', label: t.modeOnline },
+    { value: 'offline', label: t.modeOffline },
+  ];
   const offlineSummary = settings.autoDownloadEnabled ? t.autoDownloadSummaryOn(presetLabel(t, contentPreset(settings.contentTypes)), settings.wifiOnly) : t.autoDownloadSummaryOff;
 
   return (
@@ -132,6 +139,13 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
         </SettingRow>
       </SettingsGroup>
 
+      {/* How this phone uses the app (appMode.ts): online downloads and says when the connection drops; offline pack mode takes everything from a pack and shows none of that. */}
+      <SettingsGroup title={t.appModeSection} help={onlineMode ? t.modeOnlineHelp : t.modeOfflineHelp}>
+        <SettingRow stack first>
+          <Segmented options={modeOptions} value={onlineMode ? 'online' : 'offline'} onChange={setAppMode} label={t.appModeSection} />
+        </SettingRow>
+      </SettingsGroup>
+
       <SettingsGroup title={t.playbackSection}>
         <SettingRow label={t.autoplayHanachaLabel} help={t.autoplayHanachaHelp} onPress={() => setAutoplay(!autoplay)} first>
           <Toggle checked={autoplay} label={t.autoplayHanachaLabel} decorative />
@@ -143,16 +157,19 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
           <SettingRow label={t.notifyNewWeekLabel} help={t.notifyNewWeekHelp} onPress={() => toggleNotification('newWeek')} first>
             <Toggle checked={notifications.newWeek} label={t.notifyNewWeekLabel} decorative />
           </SettingRow>
-          <SettingRow label={t.notifyDownloadsReadyLabel} onPress={() => toggleNotification('downloadsReady')}>
-            <Toggle checked={notifications.downloadsReady} label={t.notifyDownloadsReadyLabel} decorative />
-          </SettingRow>
+          {onlineMode && (
+            <SettingRow label={t.notifyDownloadsReadyLabel} onPress={() => toggleNotification('downloadsReady')}>
+              <Toggle checked={notifications.downloadsReady} label={t.notifyDownloadsReadyLabel} decorative />
+            </SettingRow>
+          )}
         </SettingsGroup>
       )}
 
+      {/* Importing a pack is here in every mode; the download settings only in online mode. */}
       <SettingsGroup title={t.offlineGroup}>
-        <SettingRow label={t.downloadSettingsTitle} value={offlineSummary} chevron onPress={() => navigation.navigate('DownloadSettings')} first />
-        <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} chevron onPress={() => navigation.navigate('Downloaded')} />
-        {packsAvailable && <SettingRow label={t.offlinePacksLink} value={offlineFolder ? t.offlineSummaryFolder : t.offlineSummaryNoFolder} chevron onPress={() => navigation.navigate('Offline')} />}
+        {packsAvailable && <SettingRow label={t.offlinePacksLink} value={offlineFolder ? t.offlineSummaryFolder : t.offlineSummaryNoFolder} chevron onPress={() => navigation.navigate('Offline')} first />}
+        {onlineMode && <SettingRow label={t.downloadSettingsTitle} value={offlineSummary} chevron onPress={() => navigation.navigate('DownloadSettings')} first={!packsAvailable} />}
+        <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} chevron onPress={() => navigation.navigate('Downloaded')} first={!packsAvailable && !onlineMode} />
       </SettingsGroup>
 
       {/* The list of farbrengens itself has its own releases (packages/catalog) - the phone fetches a newer one from api.sk.shmuky.dev on its own once a day, and on demand here. */}

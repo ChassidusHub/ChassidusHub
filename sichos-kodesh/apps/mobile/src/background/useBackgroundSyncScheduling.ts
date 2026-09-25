@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDownload } from '../download/useDownload';
 import { useNotificationSettings } from '../settings/notificationSettings';
 import { scheduleBackgroundSync } from './backgroundNative';
+import { useOnlineMode } from '../appMode/appMode';
 
 /**
  * Keeps the periodic background sync registered exactly when something
@@ -13,9 +14,11 @@ import { scheduleBackgroundSync } from './backgroundNative';
 export function useBackgroundSyncScheduling(): void {
   const { settings, hydrated } = useDownload();
   const [notifications, , notificationsHydrated] = useNotificationSettings();
+  const onlineMode = useOnlineMode();
 
   useEffect(() => {
     if (!hydrated || !notificationsHydrated) return;
-    scheduleBackgroundSync(settings.autoDownloadEnabled || notifications.newWeek);
-  }, [hydrated, notifications.newWeek, notificationsHydrated, settings.autoDownloadEnabled]);
+    // Offline pack mode: the weekly notification may still want the task; the task itself never downloads there (backgroundSyncTask).
+    scheduleBackgroundSync((onlineMode && settings.autoDownloadEnabled) || notifications.newWeek);
+  }, [hydrated, notifications.newWeek, notificationsHydrated, onlineMode, settings.autoDownloadEnabled]);
 }

@@ -4,6 +4,7 @@ import { CheckCircle2, Download } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { occasionTitle } from '@sichos-kodesh/app-core';
 import { useDownload } from '../download/useDownload';
+import { useOnlineMode } from '../appMode/appMode';
 import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useDownloadState } from '../download/useDownloadState';
 import { useTranslation } from '../i18n/useTranslation';
@@ -35,11 +36,13 @@ export function OccasionActions({ entry, showDownload = true }: Props) {
   const { downloadOccasion } = useDownload();
   const state = useDownloadState(entry);
   const progress = useDownloadProgress(entry);
+  const onlineMode = useOnlineMode();
   const tint = hexWithAlpha(colors.accent, 0.14);
   const direction = { flexDirection: row(isRtl) } as const;
 
   let download = null;
-  if (!showDownload) {
+  // Offline pack mode has no downloads to offer or report: Share alone.
+  if (!showDownload || !onlineMode) {
     download = null;
   } else if (state === 'downloaded') {
     download = (

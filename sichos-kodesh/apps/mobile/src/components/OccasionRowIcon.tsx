@@ -6,6 +6,7 @@ import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { getOccasionProgress, isOccasionFinished } from '../player/progressStore';
 import type { ProgressStore } from '../player/progressStore';
 import { useDownload } from '../download/useDownload';
+import { useOnlineMode } from '../appMode/appMode';
 import { useDownloadState } from '../download/useDownloadState';
 import { useDownloadProgress } from '../download/useDownloadProgress';
 import { useTranslation } from '../i18n/useTranslation';
@@ -33,6 +34,7 @@ export function OccasionRowIcon({ entry, progressMap, dateSlot }: Props) {
   const { downloadOccasion } = useDownload();
   const downloadState = useDownloadState(entry);
   const downloadProgress = useDownloadProgress(entry);
+  const onlineMode = useOnlineMode();
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
 
   let statusIcon: ReactNode = null;
@@ -43,7 +45,10 @@ export function OccasionRowIcon({ entry, progressMap, dateSlot }: Props) {
   }
 
   let downloadIcon: ReactNode = null;
-  if (downloadState === 'loading') {
+  if (!onlineMode) {
+    // Offline pack mode: no download arrows, spinners or checks - the slot stays, so rows line up as before.
+    downloadIcon = null;
+  } else if (downloadState === 'loading') {
     downloadIcon = <View style={[styles.loadingDot, { backgroundColor: colors.border }]} />;
   } else if (downloadState === 'downloaded') {
     downloadIcon = <CheckCircle2 size={14} color={colors.accent} accessibilityLabel={t.downloadedLabel} />;

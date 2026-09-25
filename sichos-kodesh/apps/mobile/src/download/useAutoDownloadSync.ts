@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useOnlineMode } from '../appMode/appMode';
 import { HDate } from '@hebcal/core';
 import { currentHebrewYear, mafteiachMonthToken, resolveThisWeek, resolveWeekWithFallback, toMafteiachHebrewDateKey } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
@@ -55,12 +56,14 @@ export function resolveAutoDownloadEntries(settings: DownloadSettings, today: Da
  */
 export function useAutoDownloadSync(): void {
   const { settings, hydrated, enqueueBulk, enqueueTargets } = useDownload();
+  const onlineMode = useOnlineMode();
   const ranRef = useRef(false);
 
   useEffect(() => {
     if (!hydrated || ranRef.current) return;
     ranRef.current = true;
-    if (!settings.autoDownloadEnabled) return;
+    // Offline pack mode never downloads, the automatic download included.
+    if (!settings.autoDownloadEnabled || !onlineMode) return;
     const timer = setTimeout(() => {
       const today = new Date();
       const entries = resolveAutoDownloadEntries(settings, today);
@@ -70,5 +73,5 @@ export function useAutoDownloadSync(): void {
       if (libraryTargets.length > 0) enqueueTargets(libraryTargets, 'auto').catch(() => undefined);
     }, 2500);
     return () => clearTimeout(timer);
-  }, [enqueueBulk, enqueueTargets, hydrated, settings]);
+  }, [enqueueBulk, enqueueTargets, hydrated, onlineMode, settings]);
 }

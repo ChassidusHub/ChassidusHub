@@ -15,6 +15,7 @@ import { resolveLibraryAutoTargets } from '../library/libraryAutoDownload';
 import { readStoredLanguage } from '../i18n/languageStorage';
 import { STRINGS } from '../i18n/translations';
 import { readStoredNotificationSettings } from '../settings/notificationSettings';
+import { readStoredAppMode } from '../appMode/appMode';
 import { hebrewYearLabel, parshaLabel } from '../utils/formatHebrewDate';
 import { areNotificationsEnabled, downloadedDeepLink, postNotification, thisWeekDeepLink } from './backgroundNative';
 
@@ -75,6 +76,8 @@ export async function runBackgroundSync(data?: BackgroundSyncData): Promise<void
     }
   }
 
+  // Offline pack mode never downloads, not even here with the app closed.
+  if ((await readStoredAppMode()) === 'offline') return;
   const shouldDownload = data?.reason === 'manual' || settings.autoDownloadEnabled;
   if (!shouldDownload) return;
 

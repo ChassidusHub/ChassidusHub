@@ -5,6 +5,7 @@ import type { CatalogRef, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { audioChapterName, findItem, formatDuration, itemFacts, itemPdfLabel, itemPdfs, itemPlaylistEntry, itemSubtitle, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog, useLibrary } from '../../catalog/catalogStore';
 import { DownloadPill } from '../../components/DownloadPill';
+import { useOnlineMode } from '../../appMode/appMode';
 import { PlaylistPlayButton } from '../../components/PlaylistPlayButton';
 import { useTranslation } from '../../i18n/useTranslation';
 import { libraryItemTargets } from '../../library/libraryDownloads';
@@ -36,6 +37,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   const entry = useMemo(() => (item ? itemPlaylistEntry(collection, item) : null), [collection, item]);
   const targets = useMemo(() => (item ? libraryItemTargets(collection, item) : []), [collection, item]);
   const download = useTargetsDownload(targets);
+  const onlineMode = useOnlineMode();
 
   if (!item) {
     return (
@@ -65,7 +67,7 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
       {disputed && <TabHelp>{t.libraryDisputedNote}</TabHelp>}
 
       <View style={[styles.actions, { flexDirection: row(isRtl) }]}>
-        <DownloadPill state={download.state} progress={download.progress} onStart={download.start} />
+        {onlineMode && <DownloadPill state={download.state} progress={download.progress} onStart={download.start} />}
       </View>
 
       {occasion && (

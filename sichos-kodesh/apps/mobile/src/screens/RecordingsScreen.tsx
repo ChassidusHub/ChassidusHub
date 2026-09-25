@@ -10,6 +10,7 @@ import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
 import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
 import { useChapterDownload } from '../download/useChapterDownload';
 import { useDownload } from '../download/useDownload';
+import { useOnlineMode } from '../appMode/appMode';
 import { useTranslation } from '../i18n/useTranslation';
 import type { RecordingsScreenProps } from '../navigation/types';
 import { playlistForEntry } from '../player/playerContext';
@@ -43,13 +44,17 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
   const colors = useColors();
   const chapter = entry.audio[index]!;
   const download = useChapterDownload(entry, index);
+  const onlineMode = useOnlineMode();
   const finished = !isActive && isChapterFinished(progress, index, chapter);
   // The active row's fraction comes from the player's live position, not the stored snapshot - what keeps the playing row's bar moving in real time.
   const fraction = isActive ? (player.duration > 0 ? Math.min(player.currentTime / player.duration, 1) : 0) : finished ? 0 : chapterProgressFraction(progress, index, chapter);
   const tint = isActive ? colors.accent : colors.muted;
 
   let downloadIcon = null;
-  if (download.state === 'loading') {
+  if (!onlineMode) {
+    // Offline pack mode: no download icons at all.
+    downloadIcon = null;
+  } else if (download.state === 'loading') {
     downloadIcon = <View style={[styles.loadingDot, { backgroundColor: colors.border }]} />;
   } else if (download.state === 'downloaded') {
     downloadIcon = <CheckCircle2 size={14} color={colors.accent} accessibilityLabel={t.downloadedLabel} />;
@@ -115,6 +120,7 @@ export function RecordingsScreen({ route }: RecordingsScreenProps) {
   const resolved = useMemo(() => resolveOccasionRoute(catalog, route.params, language), [catalog, language, route.params]);
   const entry = resolved?.entry ?? null;
   const allChaptersState = useAllChaptersDownloadState(entry ?? { hebrewYear: 0, occasionId: 0, hebrewDate: '', occasionLabel: '', audio: [], pdfs: [] });
+  const onlineMode = useOnlineMode();
 
   if (!entry) {
     return (
@@ -132,7 +138,9 @@ export function RecordingsScreen({ route }: RecordingsScreenProps) {
   // to the play button (web: `.playlist-header-action`); only Share sits
   // below as a pill.
   let headerDownload = null;
-  if (allChaptersState === 'downloaded') {
+  if (!onlineMode) {
+    headerDownload = null;
+  } else if (allChaptersState === 'downloaded') {
     headerDownload = (
       <View style={styles.headerStatus} accessibilityLabel={t.downloadedLabel}>
         <CheckCircle2 size={18} color={colors.accent} />

@@ -24,6 +24,8 @@ import { hydrateProgressStore } from './src/player/progressStore';
 import { onNavigationStateChange, useConnectivityRecheckTriggers } from './src/network/useConnectivityRecheckTriggers';
 import { ConnectivityBanner, useConnectivityBannerVisible } from './src/components/ConnectivityBanner';
 import { DownloadProgressBar } from './src/components/DownloadProgressBar';
+import { ModeChooser } from './src/components/ModeChooser';
+import { loadAppMode, useAppMode } from './src/appMode/appMode';
 import { OfflineActivityBar } from './src/components/OfflineActivityBar';
 import { GlobalPlayerBar } from './src/components/GlobalPlayerBar';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -68,6 +70,11 @@ function AppShell() {
     hydrateProgressStore().catch(() => undefined);
   }, []);
 
+  const mode = useAppMode();
+  useEffect(() => {
+    loadAppMode().catch(() => undefined);
+  }, []);
+
   // The status bar follows the theme via <StatusBar barStyle> below; the
   // Android navigation bar needs the same treatment by hand.
   useEffect(() => {
@@ -83,6 +90,17 @@ function AppShell() {
   // itself (like the web's `padding-top: calc(10px + env(safe-area-inset-top))`),
   // so the screen below it must not pad for the status bar a second time.
   const screenInsets = useMemo(() => (bannerVisible ? { ...insets, top: 0 } : insets), [bannerVisible, insets]);
+
+  // Until the stored mode is read, a blank page (no flash of the chooser); a phone that never chose sees the chooser first.
+  if (mode === undefined) return <View style={[styles.root, { backgroundColor: colors.bg }]} />;
+  if (mode === null) {
+    return (
+      <View style={[styles.root, { backgroundColor: colors.bg }]}>
+        <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} />
+        <ModeChooser />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: colors.bg }]}>
