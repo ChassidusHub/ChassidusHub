@@ -18,7 +18,9 @@ import { PUBLISH_SCHEMA, publishKeys } from '@sichos-kodesh/pack-api';
  * sync` then mirrors to R2. Objects are hard-linked from the archive when
  * the directory is on the same disk, copied otherwise; CRC-32s are
  * computed once and cached in `.crc-cache.json`, so a re-publish after a
- * crawl only reads the new objects.
+ * crawl only reads the new objects. Objects `sk-pack mirror --prune` sent
+ * to R2 and dropped from this disk are listed in `.mirrored.json`; they stay
+ * in the index on their cached CRC-32 without their bytes.
  */
 
 export interface PublishOptions {
@@ -37,9 +39,21 @@ export interface PublishResult {
   linked: number;
   copied: number;
   skipped: number;
+  /** Objects already in the mirror whose bytes are no longer on this disk. */
+  mirrored: number;
 }
 
 const CRC_CACHE = '.crc-cache.json';
+export const MIRRORED_LIST = '.mirrored.json';
+
+/** The objects `sk-pack mirror --prune` moved off this disk, by hash. */
+export async function readMirrored(outDir: string): Promise<Set<string>> {
+  try {
+    return new Set(JSON.parse(await readFile(path.join(outDir, MIRRORED_LIST), 'utf8')) as string[]);
+  } catch {
+    return new Set();
+  }
+}
 
 async function fileCrc(file: string): Promise<number> {
   let crc = 0;
@@ -101,9 +115,11 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     // First publish.
   }
 
+  const mirroredList = await readMirrored(out);
   let linked = 0;
   let copied = 0;
   let skipped = 0;
+  let mirrored = 0;
   await mkdir(path.join(out, 'objects'), { recursive: true });
   for (const [sha, entry] of Object.entries(index.objects)) {
     const source = store.pathOf(sha);
@@ -111,6 +127,10 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     const target = path.join(out, publishKeys.object(sha));
     if ((await sizeOf(target)) === entry.bytes && crcs.has(sha)) {
       skipped += 1;
+      continue;
+    }
+    if (mirroredList.has(sha) && crcs.has(sha) && (await sizeOf(source)) === null) {
+      mirrored += 1;
       continue;
     }
     if (!crcs.has(sha)) crcs.set(sha, await fileCrc(source));
@@ -158,6 +178,6 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     bytes: Object.values(index.objects).reduce((sum, entry) => sum + entry.bytes, 0),
   };
   await writeAtomic(path.join(out, publishKeys.meta), `${JSON.stringify(meta, null, 2)}\n`);
-  log(`published ${meta.objects} object(s) (${linked} linked, ${copied} copied, ${skipped} already there), ${years.length} year(s), to ${out}`);
-  return { meta, linked, copied, skipped };
+  log(`published ${meta.objects} object(s) (${linked} linked, ${copied} copied, ${skipped} already there, ${mirrored} only in the mirror), ${years.length} year(s), to ${out}`);
+  return { meta, linked, copied, skipped, mirrored };
 }

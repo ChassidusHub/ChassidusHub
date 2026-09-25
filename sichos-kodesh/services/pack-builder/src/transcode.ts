@@ -111,7 +111,8 @@ export async function transcode(store: ArchiveStore, options: TranscodeOptions):
   const pending: Array<{ sha256: string; bytes: number }> = [];
   for (const original of originals) {
     const done = derivation.get(original.sha256, options.profile) as { sha256: string } | undefined;
-    if (done && (await exists(store.derivedPath(options.profile, done.sha256)))) result.skipped += 1;
+    // Encoded before, and either still here or mirrored off this disk with its original (sk-pack mirror --prune).
+    if (done && ((await exists(store.derivedPath(options.profile, done.sha256))) || !(await store.objectExistsOnDisk(original.sha256)))) result.skipped += 1;
     else pending.push(original);
   }
   const queue = pending.slice(0, options.limit ?? pending.length);

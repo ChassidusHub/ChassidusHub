@@ -11,6 +11,7 @@ import { loadYearEntries } from '../src/catalogData.js';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 import { createKeyFile, defaultKeyFile, readKeyFile, readPublicKey } from '../src/keys.js';
 import { indexPacks } from '../src/packIndex.js';
+import { mirrorPublished } from '../src/mirror.js';
 import { publishArchive } from '../src/publish.js';
 import { servePublished } from '../src/serve.js';
 import { entriesInScope, parseScope, parseSections } from '../src/scope.js';
@@ -266,6 +267,31 @@ program
       await publishArchive(store, { years, catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
     } finally {
       store.close();
+    }
+  });
+
+program
+  .command('mirror')
+  .description('copy a published directory to the R2 bucket the pack API reads, over Cloudflare\'s API (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)')
+  .option('--dir <dir>', 'published directory (default <root>/published)')
+  .option('--bucket <name>', 'R2 bucket', 'sichos-kodesh-archive')
+  .option('--concurrency <n>', 'parallel uploads', (v) => Number(v), 4)
+  .option('--prune', 'drop each mirrored object from this disk, the archive\'s copy too (a small disk publishes a year at a time)')
+  .action(async (opts: { dir?: string; bucket: string; concurrency: number; prune?: boolean }) => {
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const token = process.env.CLOUDFLARE_API_TOKEN;
+    if (!accountId || !token) throw new Error('set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN (a token with R2 edit rights)');
+    const store = opts.prune ? await ArchiveStore.open(root()) : null;
+    try {
+      await mirrorPublished({
+        dir: opts.dir ?? path.join(root(), 'published'),
+        target: { accountId, bucket: opts.bucket, token },
+        concurrency: opts.concurrency,
+        ...(store ? { prune: { store } } : {}),
+        log,
+      });
+    } finally {
+      store?.close();
     }
   });
 

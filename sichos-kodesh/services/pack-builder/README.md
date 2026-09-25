@@ -29,6 +29,7 @@ sk-pack build-work --work tanya [more ids | all] [--works-dir dir] [--max-mb 200
 sk-pack verify <packs...> [--key file] [--trust keyId=publicKey ...]
 sk-pack index [--dir dir] [--out file]
 sk-pack publish [--out dir] [--catalog-dir dir] [--catalog-version v] [--packs dir]
+sk-pack mirror [--dir dir] [--bucket sichos-kodesh-archive] [--concurrency 4] [--prune]
 sk-pack serve [--dir dir] [--port 8787] [--host 127.0.0.1] [--key file | --unsigned]
 ```
 
@@ -93,7 +94,31 @@ From the repository: `npm run pack -w @sichos-kodesh/pack-builder -- <command>`.
   - `packs/` with its `index.json`, when there are prebuilt packs.
 
   CRCs are cached in `.crc-cache.json`, so a second publish reads only
-  new objects. Then `rclone sync <root>/published r2:<bucket>` uploads it.
+  new objects. Then `rclone sync <root>/published r2:<bucket>` uploads it,
+  or `sk-pack mirror` does.
+- **mirror** uploads a published directory to the R2 bucket through
+  Cloudflare's API, with `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`
+  (a token with R2 edit rights) in the environment. No rclone is needed.
+  - An object the bucket already holds at the same size is skipped.
+  - Any other file is sent when its MD5 differs from the bucket's ETag.
+  - Objects go first and `meta.json` last, so the Worker never names an
+    object the bucket lacks.
+
+  `--prune` then drops each mirrored object from this disk: both the
+  published copy and the archive's own bytes. It lists them in
+  `.mirrored.json`, and the next publish keeps them in the index using
+  their cached CRC-32. This lets a small disk publish the whole archive a
+  year at a time:
+
+  ```sh
+  sk-archive crawl --collection farbrengens --scope 5737
+  sk-pack transcode --profile opus16 --collection farbrengens --scope 5737
+  sk-pack transcode --profile opus24 --collection farbrengens --scope 5737
+  sk-pack publish --out <dir> && sk-pack mirror --dir <dir> --prune
+  ```
+
+  After a prune, the archive's `stats` counts those objects as off disk.
+  The bucket is where they live.
 - **build-work** builds a sefer's text pack (catalog schema 3,
   `work-<id>.skpack`):
   - its texts that may ship, read from the archive by the sha256 the

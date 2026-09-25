@@ -7,3 +7,5 @@ export { loadYearEntries } from './catalogData.js';
 export { writeStoredZip, readZipDirectory, readEntry, entryStream, type ZipEntry, type ZipSource } from './zip.js';
 export { transcode, encoderArgs, ffmpegEncoder, isNigun, type EncodedProfile, type Encode, type TranscodeOptions, type TranscodeResult } from './transcode.js';
 export { buildWorkPack, workPackFileName, writeSearchIndex, type WorkPackOptions, type WorkPackResult } from './workPack.js';
+export { mirrorPublished, R2Client, type MirrorOptions, type MirrorResult, type R2Target } from './mirror.js';
+export { publishArchive, readMirrored, type PublishOptions, type PublishResult } from './publish.js';
