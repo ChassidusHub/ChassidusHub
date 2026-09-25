@@ -101,7 +101,6 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
   const [sections, setSections] = useState<Section[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [currentId, setCurrentId] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
   const [sheet, setSheet] = useState(false);
   const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const layouts = useRef(new Map<string, { y: number; height: number }>());
@@ -128,7 +127,6 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
     backFailed.current = null;
     layouts.current.clear();
     setCurrentId(null);
-    setProgress(0);
     const remembered = place && place.unitId === unit.id && place.source === edition.source ? (place.offset ?? 0) : 0;
     restoreTo.current = remembered > 0 ? remembered : null;
     setSections([{ unit, edition, loaded: { state: 'loading' } }]);
@@ -264,9 +262,6 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
     if (section && at) {
       const offset = Math.min(1, Math.max(0, (y - at.y) / Math.max(1, at.height)));
       here.current = { unitId: section.unit.id, source: section.edition.source, offset };
-      const read = at.height <= height ? 1 : Math.min(1, Math.max(0, (y - at.y) / (at.height - height * 0.6)));
-      const rounded = Math.round(read * 100) / 100;
-      if (rounded !== progress) setProgress(rounded);
       if (section.unit.id !== currentId) setCurrentId(section.unit.id);
     }
     if (contentSize.height - (y + height) < height * 1.5) readOn();
@@ -419,9 +414,6 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
             <ALargeSmall size={24} color={palette.text} />
           </Pressable>
         </View>
-        <View style={[styles.track, { backgroundColor: palette.rule }]}>
-          <View style={[styles.progress, { backgroundColor: palette.accent, width: `${Math.round(progress * 100)}%` }, isRtl ? styles.fromRight : styles.fromLeft]} />
-        </View>
       </Animated.View>
       {/* The status bar's strip keeps the page's colour while the bar is away. */}
       <View style={[styles.statusStrip, { height: insets.top, backgroundColor: palette.background }]} />
@@ -468,7 +460,6 @@ function SectionHead({
         position && position.total > 1 && <AppText style={[styles.position, { color: palette.muted }]}>{t.readerChapterOf(position.number, position.total)}</AppText>
       )}
       <AppText style={[styles.heading, { color: palette.text, fontFamily: readerFont(settings.font).family ?? undefined, fontSize: Math.round(size * 1.25), lineHeight: Math.round(size * 1.7) }]}>{heading}</AppText>
-      <View style={[styles.ornament, { backgroundColor: palette.accent }]} />
       {first && (
         <EditionPicker
           editions={readable.map((e) => ({ source: e.source, label: editionLabel(work.sources[e.source]!, t.editionLanguages, languageCount(work.sources[e.source]!.language)) }))}
@@ -494,10 +485,6 @@ const styles = StyleSheet.create({
   workTitle: { fontSize: 12, fontWeight: '600' },
   unitTitle: { fontSize: 15, fontWeight: '700' },
   iconButton: { padding: 8 },
-  track: { position: 'absolute', left: 0, right: 0, bottom: -1, height: 2 },
-  progress: { position: 'absolute', top: 0, bottom: 0 },
-  fromLeft: { left: 0 },
-  fromRight: { right: 0 },
   statusStrip: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2 },
   before: { marginBottom: 28 },
   head: { alignItems: 'center', marginBottom: 18 },

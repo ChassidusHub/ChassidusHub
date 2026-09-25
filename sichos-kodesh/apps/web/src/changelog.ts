@@ -22,6 +22,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'The letters of the Igros are laid out as the printed volumes set them: the date at the top, the city and the addressee indented under it, the greeting, paragraphs that open indented, and the signature at the end. Years, months and parshiyos are a grid of tiles',
       'Reading on: scroll up at the top of a chapter or a letter and the one before it is already there, with the page kept where it was - no more button for it. An addressee\'s lines are broken evenly, so a short word never stands alone on the last one',
       'Every page\'s header sits at the very top, steps away as you scroll down and comes back with a small scroll up; the back button sits level with the title',
+      'The reader is quieter: no line under a chapter\'s name and no reading line under the bar',
     ],
     he: [
       'מסך בית חדש: קודם השבוע - הפרשה, התוועדויות הקביעות, התוועדויות השבוע בכל השנים ולקוטי שיחות על הפרשה - אחר כך היכן שהפסקתם, ההתוועדויות לפי שנה, מועד ופרשה, ודלת לכל חלק של הספרייה',
@@ -32,6 +33,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       'מכתבי האגרות מסודרים כמו בכרכים המודפסים: התאריך למעלה, העיר והנמען בהזחה מתחתיו, הברכה, פסקאות שנפתחות בהזחה, והחתימה בסוף. שנים, חודשים ופרשות מוצגים כאריחים',
       'קריאה רציפה: גלילה למעלה בראש פרק או אגרת - והקודם כבר שם, והעמוד נשאר במקומו - בלי כפתור לזה. שורות הנמען נשברות באופן שווה, כך שמילה קצרה לא נשארת לבד בשורה האחרונה',
       'הכותרת של כל עמוד יושבת בראשו, זזה הצידה בגלילה למטה וחוזרת בגלילה קטנה למעלה; כפתור החזרה בגובה הכותרת',
+      'הקורא שקט יותר: בלי קו מתחת לשם הפרק ובלי קו קריאה מתחת לסרגל',
     ],
   },
   {

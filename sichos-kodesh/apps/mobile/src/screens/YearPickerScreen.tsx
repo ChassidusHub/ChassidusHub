@@ -53,9 +53,9 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
   const hasPack = useHasOfflinePack();
   const downloadsCanRun = useDownloadsCanRun();
   const onlineMode = useOnlineMode();
-  // Offline pack mode asks for the pack until one is on the phone; online mode only when it can't download.
-  const askForPack = hasPack === false && (!onlineMode || !online || !downloadsCanRun);
-  const askText = !onlineMode ? t.offlineModeAskForPack : online ? t.noWifiAskForPack : t.offlineAskForPack;
+  // Online, the pack is asked for when nothing can download; offline pack mode never talks about the connection - its import row sits at the foot of the page.
+  const askForPack = onlineMode && hasPack === false && (!online || !downloadsCanRun);
+  const askText = online ? t.noWifiAskForPack : t.offlineAskForPack;
   const targetYear = currentHebrewYear();
   const bestMatch = findMatchingYears(targetYear)[0];
   const { parsha } = currentParsha(IL);

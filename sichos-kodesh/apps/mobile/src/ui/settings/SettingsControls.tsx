@@ -79,19 +79,29 @@ export function SettingRow({ label, help, children, stack = false, onPress, chev
   );
 }
 
-/** Web: `.toggle`. Inside a SettingRow with `onPress` the row is the tap target, so the switch is only the picture of the state. */
+/**
+ * Web: `.toggle`. Inside a SettingRow with `onPress` the row is the tap
+ * target, so the switch is only the picture of the state: it sits in a view
+ * that lets no touch reach it - Android's switch ignores `pointerEvents` on
+ * itself and would flip on its own, the row flipping it back.
+ */
 export function Toggle({ checked, onChange, label, decorative = false }: { checked: boolean; onChange?: (next: boolean) => void; label: string; decorative?: boolean }) {
   const colors = useColors();
-  return (
+  const control = (
     <Switch
       value={checked}
       onValueChange={decorative ? undefined : onChange}
       accessibilityLabel={label}
-      pointerEvents={decorative ? 'none' : 'auto'}
       trackColor={{ false: colors.border, true: colors.accent }}
       thumbColor={colors.bgElevated}
       ios_backgroundColor={colors.border}
     />
+  );
+  if (!decorative) return control;
+  return (
+    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {control}
+    </View>
   );
 }
 

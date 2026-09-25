@@ -2749,6 +2749,7 @@ body:has(.reader) {
   background: color-mix(in srgb, var(--r-bg) 92%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--r-rule);
   transition: transform 0.22s ease;
 }
 
@@ -2787,18 +2788,6 @@ body:has(.reader) {
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.reader-progress {
-  height: 2px;
-  background: var(--r-rule);
-}
-
-.reader-progress span {
-  display: block;
-  height: 100%;
-  background: var(--r-accent);
-  transition: width 0.15s linear;
 }
 
 .reader-page {
@@ -3468,8 +3457,7 @@ body:has(.reader) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reader-bar,
-  .reader-progress span {
+  .reader-bar {
     transition: none;
   }
 }

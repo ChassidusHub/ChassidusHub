@@ -111,7 +111,6 @@ export function ReaderScreen({ workId }: Props) {
   const [sections, setSections] = useState<Section[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [currentId, setCurrentId] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
   const [barHidden, setBarHidden] = useState(false);
   const [panel, setPanel] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -137,7 +136,6 @@ export function ReaderScreen({ workId }: Props) {
     backFailed.current = null;
     anchor.current = null;
     setCurrentId(null);
-    setProgress(0);
     const remembered = place && place.unitId === unit.id && place.source === edition.source ? (place.offset ?? 0) : 0;
     restoreTo.current = remembered > 0 ? remembered : null;
     if (restoreTo.current === null) window.scrollTo(0, 0);
@@ -278,8 +276,6 @@ export function ReaderScreen({ workId }: Props) {
       if (section && node) {
         const offset = Math.min(1, Math.max(0, (y - node.offsetTop) / Math.max(1, node.offsetHeight)));
         here.current = { unitId: section.unit.id, source: section.edition.source, offset };
-        const read = node.offsetHeight <= height ? 1 : Math.min(1, Math.max(0, (y - node.offsetTop) / (node.offsetHeight - height * 0.6)));
-        setProgress(Math.round(read * 100) / 100);
         setCurrentId(section.unit.id);
       }
       if (document.documentElement.scrollHeight - (y + height) < height * 1.5) readOn();
@@ -435,9 +431,6 @@ export function ReaderScreen({ workId }: Props) {
             <ALargeSmall size={24} aria-hidden />
           </button>
         </div>
-        <div className="reader-progress" aria-hidden>
-          <span style={{ width: `${Math.round(progress * 100)}%` }} />
-        </div>
       </header>
 
       <main className="reader-page">
@@ -474,7 +467,6 @@ export function ReaderScreen({ workId }: Props) {
               <div className="reader-head">
                 {part ? <span className="reader-eyebrow">{names(part, language)}</span> : position && position.total > 1 && <span className="reader-eyebrow">{t.readerChapterOf(position.number, position.total)}</span>}
                 <h1 className="reader-heading">{label(section.unit)}</h1>
-                <span className="reader-ornament" aria-hidden />
                 {isOpened && (
                   <EditionPicker
                     editions={readable.map((e) => ({ source: e.source, label: editionLabel(work.sources[e.source]!, t.editionLanguages, languageCount(work.sources[e.source]!.language)) }))}
