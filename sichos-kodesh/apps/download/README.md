@@ -16,7 +16,8 @@ API (`services/pack-api`):
   `import/` of the app's shared folder, or use "Import files".
 
 ```
-VITE_PACK_API=https://<pack-api> npm run build -w @sichos-kodesh/download
+npm run build -w @sichos-kodesh/download   # against the published Worker, https://sichos-kodesh-pack-api.shmuky.workers.dev
+VITE_PACK_API=https://<pack-api> npm run build -w @sichos-kodesh/download   # against another pack API
 npm run dev -w @sichos-kodesh/download   # against sk-pack serve on :8787 by default
 npm test -w @sichos-kodesh/download
 ```

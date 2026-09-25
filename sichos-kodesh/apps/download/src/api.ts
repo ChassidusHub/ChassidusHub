@@ -1,7 +1,10 @@
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
 
-/** The pack API (services/pack-api; `sk-pack serve` on :8787 locally). */
-export const PACK_API = (import.meta.env.VITE_PACK_API as string | undefined)?.replace(/\/+$/, '') ?? 'http://localhost:8787';
+/** The published pack API (services/pack-api's Worker). */
+const PUBLISHED_PACK_API = 'https://sichos-kodesh-pack-api.shmuky.workers.dev';
+
+/** The pack API: VITE_PACK_API when set; else `sk-pack serve` on :8787 in development and the published Worker in a build. */
+export const PACK_API = (import.meta.env.VITE_PACK_API as string | undefined)?.replace(/\/+$/, '') || (import.meta.env.DEV ? 'http://localhost:8787' : PUBLISHED_PACK_API);
 
 export interface Meta {
   catalogVersion: string;
