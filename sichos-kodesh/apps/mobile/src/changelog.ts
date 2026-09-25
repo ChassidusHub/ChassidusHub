@@ -9,6 +9,25 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.13.0',
+    en: [
+      'The app tells you when a new version is out, and asks whether to update: which version it is and what is new in it. Update downloads this phone\'s own file and installs it over this one, with every download and setting kept; Later asks again in a few days. About shows the newest version too, and checks on a tap',
+      'New versions come from the app\'s own server (api.sk.shmuky.dev), no longer from GitHub, and so does the app on the pack site',
+      'Igros Kodesh has its own tile on the home screen, beside Likkutei Sichos and the maamorim',
+      'The seforim on two shelves: text and PDFs, which open in the app, and external links - each by Rebbe, in tiles like the home screen\'s. In offline mode only the first shelf shows',
+      'A volume of Likkutei Sichos opens on its parshiyos, and a parsha on its sichos',
+      'Plain names for a michtav\'s files - מוגה, or מוגה בתרגום לאנגלית - in place of a language and an edition side by side; Likkutei Sichos\' translation is named for what it is, the Hebrew one, and the note about a translation above a sicha is gone',
+    ],
+    he: [
+      'האפליקציה מודיעה כשיוצאת גרסה חדשה ושואלת אם לעדכן: איזו גרסה ומה חדש בה. ״עדכון״ מוריד את הקובץ של הטלפון הזה ומתקין אותו מעל הנוכחית, עם כל ההורדות וההגדרות; ״אחר כך״ שואל שוב בעוד כמה ימים. גם מסך ״אודות״ מראה את הגרסה החדשה, ובודק בנגיעה',
+      'גרסאות חדשות מגיעות מהשרת של האפליקציה (api.sk.shmuky.dev) ולא עוד מ-GitHub, וכך גם האפליקציה באתר החבילות',
+      'לאגרות קודש יש אריח משלהן במסך הבית, לצד לקוטי שיחות והמאמרים',
+      'הספרים בשני מדפים: טקסט ו-PDF, שנפתחים באפליקציה, וקישורים חיצוניים - כל אחד לפי רבי, באריחים כמו במסך הבית. במצב לא מקוון מוצג רק המדף הראשון',
+      'חלק של לקוטי שיחות נפתח על פרשיותיו, ופרשה על שיחותיה',
+      'שמות פשוטים לקבצים של מכתב - מוגה, או מוגה בתרגום לאנגלית - במקום שפה ומהדורה זו לצד זו; התרגום של לקוטי שיחות נקרא בשמו, תרגום ללשון הקודש, וההערה על תרגום מעל שיחה הוסרה',
+    ],
+  },
+  {
     version: '1.12.0',
     en: [
       'A new home: this week first - the parsha, the kvius farbrengens, every year\'s farbrengens of the week and the parsha\'s Likkutei Sichos - then where you left off, the farbrengens by year, moed and parsha, and a door into each part of the library',

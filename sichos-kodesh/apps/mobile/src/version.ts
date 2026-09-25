@@ -3,4 +3,4 @@
  * sync with package.json's "version" and android/app/build.gradle's
  * versionName - there's no build step that derives one from the other.
  */
-export const APP_VERSION = '1.12.0';
+export const APP_VERSION = '1.13.0';

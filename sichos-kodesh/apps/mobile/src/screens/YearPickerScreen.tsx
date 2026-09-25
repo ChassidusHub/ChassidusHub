@@ -1,12 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { BookOpen, BookText, CalendarRange, Feather, GraduationCap, Headphones, Library, Mail, NotebookPen, ScrollText, Search, Settings, Sparkles } from 'lucide-react-native';
+import { BookText, CalendarRange, Library, Mails, MessageSquareText, Search, Settings, Sparkles } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { currentHebrewYear, currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
 import { findMatchingYears } from '@sichos-kodesh/kvius-engine';
+import { HOME_WORK_IDS, workKind } from '@sichos-kodesh/app-core';
 import { IL } from '../config';
-import { getLibrary } from '../catalog/catalogStore';
+import { getLibrary, useWorks } from '../catalog/catalogStore';
 import { ContinueSection } from '../components/ContinueSection';
 import { useTranslation } from '../i18n/useTranslation';
 import { lsParshaSlugs } from '../library/libraryAutoDownload';
@@ -19,6 +20,7 @@ import { parshaLabel } from '../utils/formatHebrewDate';
 import { Button } from '../ui/Button';
 import { CategoryRow } from '../ui/CategoryRow';
 import { hexWithAlpha } from '../ui/color';
+import { COLLECTION_ICONS } from '../ui/collectionIcons';
 import { HomeChip, HomeLink, HomeTile, TileGrid } from '../ui/HomeTiles';
 import { OfflineNote } from '../ui/OfflineNote';
 import { Screen } from '../ui/Screen';
@@ -27,15 +29,23 @@ import { CategoryHeader, H1, Subtitle } from '../ui/Typography';
 import { useColors } from '../ui/theme';
 import { row, textAlign } from '../ui/rtl';
 
-/** The library's collections on the home screen, in the order the Rebbe's own Torah comes first, then what was written and recorded around it. */
-const COLLECTION_TILES: ReadonlyArray<{ collection: LibraryCollectionId; icon: LucideIcon }> = [
-  { collection: 'likkuteiSichos', icon: BookOpen },
-  { collection: 'maamorim', icon: ScrollText },
-  { collection: 'michtavimKlolim', icon: Mail },
-  { collection: 'reshimos', icon: NotebookPen },
-  { collection: 'hadranim', icon: GraduationCap },
-  { collection: 'yomanim', icon: Feather },
-  { collection: 'jemEvents', icon: Headphones },
+/**
+ * The library on the home screen, in the order the Rebbe's own Torah comes
+ * first, then what was written and recorded around it: its collections, and
+ * the seforim with a tile of their own (app-core's HOME_WORK_IDS) - Igros
+ * Kodesh, and the Maanos once they may ship (only then are they in the works
+ * index).
+ */
+const LIBRARY_TILES: ReadonlyArray<{ collection: LibraryCollectionId } | { workId: string; name: 'igros' | 'maanos'; icon: LucideIcon }> = [
+  { collection: 'likkuteiSichos' },
+  { collection: 'maamorim' },
+  { workId: 'igros-kodesh-rebbe', name: 'igros', icon: Mails },
+  { workId: 'maanos', name: 'maanos', icon: MessageSquareText },
+  { collection: 'michtavimKlolim' },
+  { collection: 'reshimos' },
+  { collection: 'hadranim' },
+  { collection: 'yomanim' },
+  { collection: 'jemEvents' },
 ];
 
 /**
@@ -53,6 +63,8 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
   const hasPack = useHasOfflinePack();
   const downloadsCanRun = useDownloadsCanRun();
   const onlineMode = useOnlineMode();
+  const works = useWorks();
+  const homeWorks = new Set(works.works.filter((w) => HOME_WORK_IDS.includes(w.id) && workKind(w) !== 'listed').map((w) => w.id));
   // Online, the pack is asked for when nothing can download; offline pack mode never talks about the connection - its import row sits at the foot of the page.
   const askForPack = onlineMode && hasPack === false && (!online || !downloadsCanRun);
   const askText = online ? t.noWifiAskForPack : t.offlineAskForPack;
@@ -108,9 +120,15 @@ export function YearPickerScreen({ navigation }: HomeScreenProps) {
 
       <CategoryHeader>{t.homeLibrarySection}</CategoryHeader>
       <TileGrid>
-        {COLLECTION_TILES.map(({ collection, icon }) => (
-          <HomeTile key={collection} icon={icon} label={t.collectionNames[collection]} blurb={t.homeBlurbs[collection]} onPress={() => navigation.navigate('LibraryCollection', { collection })} />
-        ))}
+        {LIBRARY_TILES.map((tile) =>
+          'collection' in tile ? (
+            <HomeTile key={tile.collection} icon={COLLECTION_ICONS[tile.collection]} label={t.collectionNames[tile.collection]} blurb={t.homeBlurbs[tile.collection]} onPress={() => navigation.navigate('LibraryCollection', { collection: tile.collection })} />
+          ) : (
+            homeWorks.has(tile.workId) && (
+              <HomeTile key={tile.workId} icon={tile.icon} label={tile.name === 'igros' ? t.homeIgros : t.homeMaanos} blurb={t.homeBlurbs[tile.name]} onPress={() => navigation.navigate('Work', { workId: tile.workId })} />
+            )
+          ),
+        )}
         <HomeTile icon={Library} label={t.homeSeforim} blurb={t.homeBlurbs.seforim} onPress={() => navigation.navigate('Seforim')} />
       </TileGrid>
       <CategoryRow label={t.homeAllLibrary} onPress={() => navigation.navigate('Library')} />

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Headphones, KeyRound, RefreshCw } from 'lucide-react-native';
+import { Download, Headphones, KeyRound, RefreshCw } from 'lucide-react-native';
 import { READER_FONTS } from '@sichos-kodesh/app-core';
 import { CATALOG_CHANGELOG } from '@sichos-kodesh/catalog';
 import { useCatalogInfo } from '../catalog/catalogStore';
 import { APP_VERSION, CHANGELOG } from '../changelog';
 import { useTranslation } from '../i18n/useTranslation';
+import { checkForAppUpdate, openAppUpdate, useAppUpdateStatus } from '../update/appUpdate';
 import type { AboutScreenProps } from '../navigation/types';
 import type { InstalledPack } from '../offline/objectStore';
 import { readInstalledPacks } from '../offline/objectStore';
@@ -52,6 +53,11 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
   const colors = useColors();
   const latest = CHANGELOG[0]!;
   const catalogInfo = useCatalogInfo();
+  // The app server's newest version (src/update/appUpdate.ts): checked when the page opens, and on a tap.
+  const update = useAppUpdateStatus();
+  useEffect(() => {
+    checkForAppUpdate().catch(() => undefined);
+  }, []);
   // The bundled changelog only knows releases up to the one this build shipped with - a newer release fetched later shows its version, with the notes the bundled list has for it if any.
   const catalogNotes = CATALOG_CHANGELOG.find((entry) => entry.version === catalogInfo.version);
   // Android only (src/offline): the packs imported on this phone, newest first.
@@ -152,8 +158,21 @@ export function AboutScreen({ navigation }: AboutScreenProps) {
       )}
 
       <CategoryHeader>{t.aboutUpdateSection}</CategoryHeader>
-      <Row label={t.aboutCheckForUpdate} trailing={<RefreshCw size={18} color={colors.muted} />} onPress={() => openUrl(PLAY_STORE_URL, PLAY_STORE_WEB_URL)} />
-      <TabHelp>{t.aboutUpdatesViaPlay}</TabHelp>
+      {update.phase === 'play' ? (
+        <>
+          <Row label={t.aboutOpenPlayStore} trailing={<RefreshCw size={18} color={colors.muted} />} onPress={() => openUrl(PLAY_STORE_URL, PLAY_STORE_WEB_URL)} />
+          <TabHelp>{t.aboutUpdatesViaPlay}</TabHelp>
+        </>
+      ) : (
+        <>
+          <Row
+            label={update.phase === 'available' ? t.aboutUpdateTo(update.release.version) : update.phase === 'checking' ? t.aboutChecking : update.phase === 'up-to-date' ? t.aboutUpToDate : t.aboutCheckForUpdate}
+            trailing={update.phase === 'available' ? <Download size={18} color={colors.accent} /> : <RefreshCw size={18} color={colors.muted} />}
+            onPress={() => (update.phase === 'available' ? openAppUpdate(update.file) : checkForAppUpdate().catch(() => undefined))}
+          />
+          <TabHelp>{update.phase === 'error' ? t.aboutUpdateCheckFailed : t.aboutUpdatesViaServer}</TabHelp>
+        </>
+      )}
     </Screen>
   );
 }

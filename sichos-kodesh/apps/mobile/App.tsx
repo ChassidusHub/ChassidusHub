@@ -13,6 +13,8 @@ import type { LinkingOptions } from '@react-navigation/native';
 import { SafeAreaInsetsContext, SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBackgroundSyncScheduling } from './src/background/useBackgroundSyncScheduling';
 import { NotificationInvite } from './src/background/NotificationInvite';
+import { UpdateInvite } from './src/update/UpdateInvite';
+import { useAppUpdatePrompt } from './src/update/appUpdate';
 import { useNotificationInvite } from './src/background/useNotificationPermission';
 import { useAutoCatalogUpdate } from './src/catalog/catalogUpdater';
 import { DownloadProvider } from './src/download/DownloadProvider';
@@ -76,6 +78,8 @@ function AppShell() {
   }, []);
   // Notifications are offered only once setup is done, in the app's own words before the phone's question.
   const invite = useNotificationInvite(mode === 'online' || mode === 'offline');
+  // A newer version on the app server: asked once a launch, never over the mode chooser or the notification invite.
+  const appUpdate = useAppUpdatePrompt((mode === 'online' || mode === 'offline') && !invite.visible);
 
   // The status bar follows the theme via <StatusBar barStyle> below; the
   // Android navigation bar needs the same treatment by hand.
@@ -122,6 +126,7 @@ function AppShell() {
         <GlobalPlayerBar />
       </View>
       <NotificationInvite visible={invite.visible} online={mode === 'online'} onAllow={invite.allow} onLater={invite.later} />
+      <UpdateInvite visible={appUpdate.visible && !invite.visible} release={appUpdate.release} file={appUpdate.file} onUpdate={appUpdate.update} onLater={appUpdate.later} />
     </View>
   );
 }

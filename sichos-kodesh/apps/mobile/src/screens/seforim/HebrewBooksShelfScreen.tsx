@@ -50,7 +50,7 @@ export function HebrewBooksShelfScreen({ navigation, route }: HebrewBooksShelfSc
   }
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'Seforim', params: undefined }} title={authorName} />}>
+    <Screen header={<ScreenHeader back={{ name: 'Seforim', params: { shelf: 'links' } }} title={authorName} />}>
       <TabHelp>{t.shelfHelp}</TabHelp>
       {all.length >= FILTER_FROM && (
         <TextInput

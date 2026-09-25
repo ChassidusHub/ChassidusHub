@@ -52,8 +52,8 @@ export function LibraryItemScreen({ navigation, route }: LibraryItemScreenProps)
   const subtitle = itemSubtitle(collection, item, language);
   // The whole name a shortened title stands for (a maamar's facts already say where it was said in full).
   const description = collection === 'maamorim' ? undefined : itemDescription(collection, item, language);
-  const facts = itemFacts(collection, item, { saidAt: t.librarySaidAt, printedIn: t.libraryPrintedIn, hemshech: t.libraryHemshech, kuntres: t.libraryKuntres, hasTranslation: t.libraryHasTranslation, hasTranscript: t.libraryHasTranscript }, language);
-  const pdfLabel = (ref: CatalogRef) => itemPdfLabel(ref, t.pdfRoleNames, t.libraryDocuments);
+  const facts = itemFacts(collection, item, { saidAt: t.librarySaidAt, printedIn: t.libraryPrintedIn, hemshech: t.libraryHemshech, kuntres: t.libraryKuntres, hasTranscript: t.libraryHasTranscript }, language);
+  const pdfLabel = (ref: CatalogRef) => itemPdfLabel(ref, t.pdfRoleNames, t.libraryDocuments, language);
   const pdfs = itemPdfs(item);
   const disputed = collection === 'likkuteiSichos' && record.supplement === true;
 

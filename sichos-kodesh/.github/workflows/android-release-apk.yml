@@ -13,6 +13,13 @@ name: Android Signed Release APK
 #   - A manual run with the version left empty only builds them - as
 #     downloadable workflow artifacts to try first.
 #
+# Once published, the APKs also go to the app server (the pack API
+# Worker's R2 bucket, .github/scripts/publish-apks.sh): the phones ask it
+# for updates, and pack.sk.shmuky.dev and the station download from it
+# (api.sk.shmuky.dev/v1/app/android/...). It keeps only the newest
+# version. The upload proves itself with this run's GitHub OIDC token, so
+# it needs no secret.
+#
 # APK only - no Play Store bundle. The Play bundle lives in
 # android-aab.yml; this is the file that gets handed to people directly,
 # because the Releases tab is where a phone downloads an APK from.
@@ -115,6 +122,8 @@ jobs:
     timeout-minutes: 40
     permissions:
       contents: write
+      # The app server takes the APKs on this run's OIDC token (publish-apks.sh).
+      id-token: write
 
     steps:
       - name: Free up disk space
@@ -211,6 +220,13 @@ jobs:
         run: |
           gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.draft.outputs.release_id }}" \
             -F draft=false --jq '"Published at \(.published_at)"'
+
+      # The same APKs on the app server, replacing the previous version there.
+      - name: Put the APKs on the app server
+        if: needs.draft.outputs.release_id != ''
+        run: |
+          npm run --silent release-notes -w @sichos-kodesh/mobile -- --json > "$RUNNER_TEMP/notes.json"
+          .github/scripts/publish-apks.sh '${{ steps.version.outputs.version }}' "$RUNNER_TEMP/apks" "$RUNNER_TEMP/notes.json"
 
       - name: Keep the APKs
         if: needs.draft.outputs.release_id == ''

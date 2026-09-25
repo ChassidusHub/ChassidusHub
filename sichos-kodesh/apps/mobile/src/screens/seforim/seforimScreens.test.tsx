@@ -29,6 +29,7 @@ jest.mock('@react-navigation/native', () => ({
 
 const AsyncStorage = require('@react-native-async-storage/async-storage') as { setItem: jest.Mock };
 const reading = require('../../seforim/readingState') as typeof import('../../seforim/readingState');
+const appMode = require('../../appMode/appMode') as typeof import('../../appMode/appMode');
 const { SafeAreaProvider } = require('react-native-safe-area-context') as typeof import('react-native-safe-area-context');
 const { ThemeProvider } = require('../../ui/theme') as typeof import('../../ui/theme');
 const { LanguageProvider } = require('../../i18n/LanguageProvider') as typeof import('../../i18n/LanguageProvider');
@@ -189,12 +190,26 @@ describe('seforim screens', () => {
 
   describe('the HebrewBooks shelf', () => {
     it('gives each Rebbe his other books on HebrewBooks, and the other Chabad books a row of their own', async () => {
-      const shown = await render(<screens.SeforimScreen {...props(undefined)} />);
+      // They are on the external links shelf; the text and PDFs are the first one.
+      expect(await render(<screens.SeforimScreen {...props(undefined)} />)).not.toContain('More on HebrewBooks');
+      const shown = await render(<screens.SeforimScreen {...props({ shelf: 'links' })} />);
       expect(shown).toContain('More on HebrewBooks');
       expect(shown).toContain('Chabad books on HebrewBooks');
       // Sichos Kodesh has no text anywhere yet: it is its scans.
       expect(shown).toContain('Sichos Kodesh');
       expect(shown).toMatch(/\d+ scans/);
+    });
+
+    it('never shows the external links in offline mode', async () => {
+      appMode.setAppMode('offline');
+      try {
+        const shown = await render(<screens.SeforimScreen {...props({ shelf: 'links' })} />);
+        expect(shown).not.toContain('External links');
+        expect(shown).not.toContain('More on HebrewBooks');
+        expect(shown).toContain('Tanya');
+      } finally {
+        appMode.setAppMode('online');
+      }
     });
 
     it('lists a sefer\'s scans on its screen, each opening on HebrewBooks', async () => {

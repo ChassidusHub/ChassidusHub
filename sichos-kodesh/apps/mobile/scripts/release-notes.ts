@@ -7,6 +7,10 @@
  * makes on its changelog).
  *
  *   npm run --silent release-notes -w @sichos-kodesh/mobile
+ *
+ * With --json it prints the same entry for the app server instead
+ * ({ version, notes: { he, en } }): the phone shows it when it offers the
+ * update (.github/scripts/publish-apks.sh).
  */
 import { APP_VERSION, CHANGELOG } from '../src/changelog';
 
@@ -14,6 +18,9 @@ const entry = CHANGELOG.find((e) => e.version === APP_VERSION);
 if (!entry) {
   throw new Error(`src/changelog.ts has no entry for APP_VERSION ${APP_VERSION} - add one before releasing.`);
 }
+
+// The app's tsconfig has no Node types; tsx runs this under Node all the same.
+const args = (globalThis as { process?: { argv: string[] } }).process?.argv ?? [];
 
 const apk = (abi: string) => `sichos-kodesh-${APP_VERSION}-${abi}.apk`;
 const lines = [
@@ -35,4 +42,4 @@ const lines = [
   '',
   ...entry.he.map((line) => `- ${line}`),
 ];
-console.log(lines.join('\n'));
+console.log(args.includes('--json') ? JSON.stringify({ version: APP_VERSION, notes: { he: entry.he, en: entry.en } }) : lines.join('\n'));

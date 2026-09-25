@@ -6,6 +6,7 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
+import com.sichoskodeshmobile.appinfo.AppInfoPackage
 import com.sichoskodeshmobile.background.BackgroundPackage
 import com.sichoskodeshmobile.download.DownloadPackage
 import com.sichoskodeshmobile.offline.PackPackage
@@ -22,6 +23,7 @@ class MainApplication : Application(), ReactApplication {
           add(SystemBarsPackage())
           add(BackgroundPackage())
           add(PackPackage())
+          add(AppInfoPackage())
         },
     )
   }

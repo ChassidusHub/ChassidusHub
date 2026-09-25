@@ -70,13 +70,15 @@ export type RootStackParamList = {
   LibraryCollection: { collection: LibraryCollectionId; axis?: string };
 
   /** One group of an axis: a volume, a year, a parsha, a masechta. */
-  LibraryGroup: { collection: LibraryCollectionId; axis: string; slug: string };
+  /** `section`: one parsha of a Likkutei Sichos volume, which lists its parshiyos first. */
+  LibraryGroup: { collection: LibraryCollectionId; axis: string; slug: string; section?: string };
 
   /** One item: its facts, files and recordings. */
   LibraryItem: { collection: LibraryCollectionId; id: string };
 
   /** The seforim of the Rebbeim (catalog schema 3; docs/chabad-library-plan.md WP13). */
-  Seforim: undefined;
+  /** `shelf`: open on the external links (the web's `?shelf=links`); the text and PDFs otherwise. */
+  Seforim: { shelf?: 'links' } | undefined;
 
   /** One sefer: its editions and contents; `path` drills into a part (indexes into the contents). */
   Work: { workId: string; path?: number[] };
