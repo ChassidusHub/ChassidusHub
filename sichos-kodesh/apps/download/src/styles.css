@@ -1,4 +1,4 @@
-/* The web app's tokens (apps/web/src/index.css), light first, dark by the OS. */
+/* The app's own tokens (apps/web/src/index.css), light first, dark by the OS. */
 :root {
   color-scheme: light dark;
   --bg: #fafafa;
@@ -7,9 +7,14 @@
   --muted: #6a6a6a;
   --border: #e2e2e2;
   --card-bg: #f0f0f0;
+  --card-hover: #e6e6e6;
   --accent: #1a8a4a;
   --accent-fg: #ffffff;
   --danger: #b3261e;
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 24%, transparent);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.05);
+  --display: 'FrankRuehlCLM', 'Noto Sans Hebrew', serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,14 +25,56 @@
     --muted: #a7a7a7;
     --border: #282828;
     --card-bg: #181818;
+    --card-hover: #282828;
     --accent: #1ed760;
     --accent-fg: #0a0a0a;
     --danger: #f28b82;
+    --shadow: none;
   }
+}
+
+/* The app's faces, self-hosted (fonts/licences). */
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'FrankRuehlCLM';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/FrankRuehlCLM_bold.otf') format('opentype');
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -36,165 +83,809 @@ body {
   color: var(--fg);
   font-family: 'Noto Sans Hebrew', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
-main {
-  max-width: 44rem;
-  margin: 0 auto;
-  padding: 32px 16px 64px;
-  display: grid;
-  gap: 32px;
+button,
+input,
+select {
+  font: inherit;
 }
 
-h1 {
-  margin: 0 0 8px;
-  font-size: 1.75rem;
-  line-height: 1.25;
-  text-wrap: balance;
+a {
+  color: inherit;
 }
 
-h2 {
-  margin: 0 0 12px;
-  font-size: 1.15rem;
-}
-
-.lead {
-  margin: 0;
-  color: var(--muted);
-  max-width: 36rem;
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.error {
-  color: var(--danger);
-}
-
-.packs {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.packs li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  background: var(--card-bg);
-  border-radius: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.button {
-  flex-shrink: 0;
-  display: inline-block;
-  padding: 8px 18px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-fg);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.button:focus-visible,
-select:focus-visible,
-input:focus-visible {
+:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.builder {
-  display: grid;
-  gap: 14px;
-  padding: 16px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 9rem 1fr;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
   padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
   border: 0;
 }
 
-.row legend {
-  float: right;
-  width: 9rem;
-  font-weight: 600;
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 0 calc(32px + env(safe-area-inset-bottom, 0px));
 }
 
-.row label {
-  font-weight: 600;
+@media (min-width: 640px) {
+  .page {
+    padding-inline: 24px;
+  }
 }
 
-select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
-  font: inherit;
+main {
+  display: grid;
+  gap: 44px;
 }
 
-.choices {
+/* ---- The bar at the top ---- */
+
+.top {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: calc(14px + env(safe-area-inset-top, 0px)) 14px;
 }
 
-.choice {
+.brand {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 400 !important;
+  gap: 10px;
+  text-decoration: none;
 }
 
-.result {
-  display: grid;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
-.summary {
+.brand-name {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.top-links {
+  display: flex;
+  gap: 4px;
+}
+
+.top-links a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.top-links a:hover {
+  background: var(--card-bg);
+  color: var(--fg);
+}
+
+/* ---- The opening ---- */
+
+.hero {
+  padding-top: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.hero-title {
   margin: 0;
+  font-family: var(--display);
+  font-size: clamp(2.1rem, 7vw, 3.1rem);
+  font-weight: 700;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.hero-lead {
+  max-width: 34rem;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border: 1px solid var(--accent-line);
+  border-radius: 16px;
+  background: var(--accent-soft);
+  text-align: center;
+}
+
+.flow-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--accent);
+}
+
+.flow-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Between two steps, a small arrow the way the page reads. */
+.flow-onward {
+  position: absolute;
+  inset-inline-end: -13px;
+  top: 50%;
+  z-index: 1;
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts li {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-.steps {
+/* ---- Sections and cards ---- */
+
+.section h2 {
   margin: 0;
-  padding-inline-start: 1.25rem;
-  display: grid;
-  gap: 6px;
+  font-size: 1.375rem;
+  line-height: 1.3;
 }
 
-@media (max-width: 480px) {
-  .row {
-    grid-template-columns: 1fr;
-    gap: 6px;
+.section-lead {
+  margin: 4px 0 16px;
+  color: var(--muted);
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow);
+}
+
+.empty,
+.tip {
+  margin: 0;
+  color: var(--muted);
+}
+
+.tip {
+  margin-top: 12px;
+  font-size: 0.9375rem;
+}
+
+.loading,
+.result-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.loading {
+  padding: 20px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  .row legend {
-    float: none;
-    width: auto;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}
+
+.card.error {
+  padding: 16px 20px;
+}
+
+.note {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.badge {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+
+/* ---- Rows with a download button (the ready packs, the parts of a built pack) ---- */
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.row-title {
+  font-weight: 700;
+}
+
+.row-part {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.row-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.download-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.08s ease, filter 0.1s ease;
+}
+
+.download-button:hover {
+  filter: brightness(1.08);
+}
+
+.download-button:active {
+  transform: scale(0.97);
+}
+
+/* ---- The ready packs ---- */
+
+/* One card to a month: a lone card takes the whole row, more share it. */
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+}
+
+.pack-card {
+  padding: 16px 18px 6px;
+}
+
+.pack-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pack-well {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pack-card-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+/* ---- The builder: the choices beside (or above) what they make ---- */
+
+.builder {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 760px) {
+  .builder {
+    grid-template-columns: minmax(0, 1fr) 280px;
   }
-  .packs li {
-    flex-direction: column;
-    align-items: stretch;
+
+  .result {
+    position: sticky;
+    top: 16px;
   }
-  .button {
-    text-align: center;
+}
+
+.builder-form {
+  padding: 4px 18px;
+}
+
+.step {
+  min-width: 0;
+  padding: 16px 0;
+}
+
+.step + .step {
+  border-top: 1px solid var(--border);
+}
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.step-head + .step-hint {
+  margin: -4px 0 12px;
+}
+
+/* The chosen content's note, then (for a choice by hand) its checkboxes. */
+.segmented + .step-hint + .chips {
+  margin-top: 12px;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-title {
+  font-size: 1.0625rem;
+}
+
+.step-hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.chip:hover {
+  background: var(--card-hover);
+}
+
+.chip-on,
+.chip-on:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.chip:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.chip-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip-on .chip-count {
+  background: color-mix(in srgb, var(--accent-fg) 22%, transparent);
+  color: var(--accent-fg);
+}
+
+/* A checkbox chip: a tick that shows when it is on. */
+.chip-tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+  color: transparent;
+}
+
+.chip-on .chip-tick {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}
+
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+}
+
+.segmented-option {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 6px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.segmented-on {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* Five sizes in one row still fit a narrow phone. */
+@media (max-width: 420px) {
+  .segmented-option {
+    padding-inline: 2px;
+    font-size: 0.8125rem;
+  }
+}
+
+.segmented-option:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.options {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 520px) {
+  .options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.1s ease, background-color 0.1s ease;
+}
+
+.option:hover {
+  background: var(--card-bg);
+}
+
+.option-on,
+.option-on:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.option:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.option-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.option-on .option-icon {
+  color: var(--accent);
+}
+
+.option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.option-name {
+  font-weight: 700;
+}
+
+.option-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+/* What the choices make: tinted with the accent, like the app's week card. */
+.result {
+  padding: 18px 18px 6px;
+  border-color: var(--accent-line);
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-elevated));
+}
+
+.result-empty {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.result-loading {
+  padding-bottom: 14px;
+}
+
+.result-head {
+  margin-bottom: 12px;
+}
+
+.result-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.result-size {
+  margin: 6px 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-counts {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.signed {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.signed svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---- Putting it on the phone: a real sequence, so numbered ---- */
+
+.import-steps {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .import-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.import-step {
+  position: relative;
+  padding: 18px;
+}
+
+.import-number {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 16px;
+  color: var(--border);
+  font-family: var(--display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.import-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.import-title {
+  margin: 12px 0 4px;
+  font-size: 1rem;
+}
+
+.import-body {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+/* ---- The foot of the page ---- */
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.footer-brand {
+  color: var(--fg);
+  font-family: var(--display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+.footer-links a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-version {
+  font-size: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
   }
 }

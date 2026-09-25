@@ -77,17 +77,34 @@ export function yearLabel(year: number): string {
   return gematriya(year);
 }
 
-export const PROFILE_LABELS: Record<string, string> = {
-  src: 'מקור (MP3, האיכות המלאה)',
-  opus32: 'Opus 32 (חוסך כרבע, לאפליקציה מגרסה 1.8.0)',
-  opus24: 'Opus 24 (חוסך כשליש, לאפליקציה מגרסה 1.8.0)',
-  opus16: 'Opus 16 (מומלץ: הקטן ביותר, לאפליקציה מגרסה 1.8.0)',
-  'mp3-32': 'MP3 32 (לנגנים פשוטים)',
+/** Each audio quality as the site offers it: its name, what it is for, and whether it is the one to take. */
+export interface ProfileInfo {
+  name: string;
+  note: string;
+  recommended?: boolean;
+}
+
+export const PROFILE_INFO: Record<string, ProfileInfo> = {
+  opus16: { name: 'Opus 16', note: 'הקטן ביותר, כרבע מהמקור. לאפליקציה מגרסה 1.8.0', recommended: true },
+  opus24: { name: 'Opus 24', note: 'חוסך כשליש. לאפליקציה מגרסה 1.8.0' },
+  opus32: { name: 'Opus 32', note: 'חוסך כרבע. לאפליקציה מגרסה 1.8.0' },
+  src: { name: 'MP3 מקור', note: 'האיכות המלאה, כמו שהוקלט' },
+  'mp3-32': { name: 'MP3 32', note: 'לנגנים פשוטים' },
 };
 
-/** A left-to-right run (a size, a file name) inside Hebrew text: isolated so "81.2 MB" never shows as "MB 81.2". */
+export function profileInfo(profile: string): ProfileInfo {
+  return PROFILE_INFO[profile] ?? { name: profile, note: '' };
+}
+
+/** The qualities in the order to offer them: the recommended first, the originals last. */
+export function orderProfiles(profiles: string[]): string[] {
+  const order = ['opus16', 'opus24', 'opus32', 'mp3-32', 'src'];
+  return [...profiles].sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
+}
+
+/** A left-to-right run (a size, a file name) inside Hebrew text: isolated so "81.2 MB" never shows as "MB 81.2", and kept on one line. */
 export function ltr(text: string): string {
-  return `\u2066${text}\u2069`;
+  return `\u2066${text.replace(/ /g, '\u00a0')}\u2069`;
 }
 
 export function formatMb(bytes: number): string {
