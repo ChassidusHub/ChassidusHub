@@ -66,6 +66,7 @@ export function BackLink({ fallback, spacer = false }: Props) {
 const styles = StyleSheet.create({
   /** Web: `.back-link` - inline-flex, gap 2px, 15px/600, capitalized. */
   link: { alignItems: 'center', gap: 2, flexShrink: 0 },
-  label: { fontSize: 15, fontWeight: '600', textTransform: 'capitalize' },
+  /** The label's line no taller than the chevron, and no font padding under it, so the two sit on one middle line. */
+  label: { fontSize: 15, lineHeight: 20, fontWeight: '600', textTransform: 'capitalize', includeFontPadding: false, textAlignVertical: 'center' },
   spacer: { opacity: 0 },
 });

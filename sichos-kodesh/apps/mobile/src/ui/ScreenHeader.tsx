@@ -18,12 +18,14 @@ interface Props {
 }
 
 /**
- * The back button + page title every screen shows, pinned below the
- * status bar once scrolled past (Screen renders it as a sticky header).
- * The title is centered in the full bar, not just in the space left over
- * after the back button - the trailing spacer is an invisible copy of the
- * real BackLink so the title's flex box sits between two equal edges. An
- * `action` is positioned over that spacer rather than beside it.
+ * The back button + page title every screen shows, in a bar at the top of
+ * the screen that slides away while scrolling down and comes back on a
+ * small scroll up (Screen). The back button and the title are centred on
+ * the bar's middle line. The title is centered in the full bar, not just
+ * in the space left over after the back button - the trailing spacer is an
+ * invisible copy of the real BackLink so the title's flex box sits between
+ * two equal edges. An `action` is positioned over that spacer rather than
+ * beside it.
  */
 /** Past this many characters a title is set a size smaller, and wraps onto a second line before it is cut short (web: the same). */
 const LONG_TITLE = 26;
@@ -47,16 +49,15 @@ export function ScreenHeader({ back, title, inset = false, action }: Props) {
 }
 
 const styles = StyleSheet.create({
-  /** Web: `.screen-header` - gap 12, padding-block 12, padding-inline 20, margin 0 -20px 4px. */
+  /** Web: `.screen-header` - gap 12, padding-block 12, padding-inline 20. */
   header: {
     alignItems: 'center',
     gap: 12,
+    minHeight: 47,
     paddingVertical: 12,
     paddingHorizontal: 20,
-    marginHorizontal: -20,
-    marginBottom: 4,
   },
-  inset: { marginHorizontal: 0, marginBottom: 16 },
+  inset: { marginBottom: 16 },
   /** Web: `.screen-header-title` - flex 1, centered, 18px/700, up to two lines. */
   title: { flex: 1, minWidth: 0, textAlign: 'center', fontSize: 18, lineHeight: 23, fontWeight: '700' },
   /** Web: `.screen-header-title-long` - a long title a size smaller. */

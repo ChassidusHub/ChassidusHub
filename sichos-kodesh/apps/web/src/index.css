@@ -359,11 +359,13 @@ h1 {
 }
 
 /* Replaces a screen's own inline BackLink+<h1> (see ScreenHeader.tsx) -
-   pinned below ConnectivityBanner (see its own `--connectivity-banner-
-   height` variable) instead of scrolling away, so a long list or document
-   never loses its way back or its own name while scrolling. An opaque
-   background (matching the page's own, since nothing else on this page
-   sets a different one) is what actually hides scrolled-past content
+   a bar at the very top of the page (the negative top margin takes it
+   over .screen's own top padding), pinned below ConnectivityBanner (see
+   its own `--connectivity-banner-height` variable). It slides away while
+   scrolling down and comes back on a small scroll up
+   (`.screen-header-hidden`, set by ScreenHeader), as the phone's does. An
+   opaque background (matching the page's own, since nothing else on this
+   page sets a different one) is what actually hides scrolled-past content
    sliding underneath, not just the sticky positioning alone. */
 .screen-header {
   position: sticky;
@@ -376,7 +378,18 @@ h1 {
   background: var(--bg);
   padding-block: 12px;
   padding-inline: 20px;
-  margin: 0 -20px 4px;
+  margin: -24px -20px 4px;
+  transition: transform 0.18s ease;
+}
+
+.screen-header-hidden {
+  transform: translateY(calc(-100% - var(--connectivity-banner-height)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-header {
+    transition: none;
+  }
 }
 
 /* PdfViewerScreen's own container has zero horizontal padding by design
@@ -394,6 +407,9 @@ h1 {
 .screen-header .back-link {
   flex-shrink: 0;
   margin-bottom: 0;
+  /* The chevron and the word on the bar's middle line, level with the title's. */
+  align-self: center;
+  line-height: 1.3;
 }
 
 .screen-header-title {
@@ -2793,6 +2809,8 @@ body:has(.reader) {
   font-family: var(--r-font);
   font-size: var(--r-size);
   line-height: var(--r-line);
+  /* A chapter put above the one on screen: the reader keeps the place itself (ReaderScreen), the browser must not as well. */
+  overflow-anchor: none;
 }
 
 .reader-eyebrow {
@@ -2805,24 +2823,11 @@ body:has(.reader) {
   line-height: 1.4;
 }
 
-.reader-previous {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 100%;
-  margin: 0 auto 14px;
-  padding: 6px 8px;
-  border: 0;
-  background: none;
-  color: var(--r-muted);
-  font: 600 0.8125rem/1.3 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
-  cursor: pointer;
-}
-
-.reader-previous span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* The chapter before, read chapter by chapter: the same card as the next one's, above the text. */
+.reader-before {
+  margin-bottom: 2em;
+  font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  font-size: 1rem;
 }
 
 .reader-section + .reader-section {
@@ -3014,6 +3019,8 @@ body:has(.reader) {
 .reader-letter-addressee {
   margin-inline-start: 16%;
   margin-bottom: 0;
+  /* Its lines broken evenly, so a short word (וכו') never stands alone on the last one. */
+  text-wrap: balance;
 }
 
 .reader-letter-greeting {

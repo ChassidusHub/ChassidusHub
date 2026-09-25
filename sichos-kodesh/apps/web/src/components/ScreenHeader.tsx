@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { BackLink } from './BackLink';
 import { useTranslation } from '../i18n/useLanguage';
@@ -13,14 +13,14 @@ interface Props {
 }
 
 /**
- * The back button + page title every screen shows, pinned to the top of
- * the viewport once scrolled past instead of scrolling away with the rest
- * of the page - a long list or document would otherwise lose its own name
- * and its way back the moment you scroll a screen's height down. Sits
- * right below ConnectivityBanner in the stacking order (reads its
- * `--connectivity-banner-height` variable, kept live by that component,
- * so the two never overlap regardless of whether the banner is currently
- * shown).
+ * The back button + page title every screen shows, in a bar at the very
+ * top of the page that slides away while scrolling down and comes back on
+ * a small scroll up (the phone's Screen does the same) - out of the way
+ * while reading a long list or document, a flick away when the way back
+ * is wanted. Sits right below ConnectivityBanner in the stacking order
+ * (reads its `--connectivity-banner-height` variable, kept live by that
+ * component, so the two never overlap regardless of whether the banner is
+ * currently shown).
  *
  * The title is centered in the full bar, not just in the space left over
  * after the back button - the trailing `screen-header-spacer` is an
@@ -34,12 +34,36 @@ interface Props {
 /** Past this many characters a title is set a size smaller (the phone's ScreenHeader does the same). */
 const LONG_TITLE = 26;
 
+/** How far a scroll has to move in one step to show or hide the bar - a small scroll up is enough to bring it back. */
+const STEP = 6;
+/** Near the top of the page the bar always shows. */
+const TOP = 64;
+
+/** Whether the bar is stepped aside: from a scroll down past it until a small scroll up. */
+function useHiddenOnScroll(): boolean {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const dy = y - lastY;
+      lastY = y;
+      if (y < TOP || dy < -STEP) setHidden(false);
+      else if (dy > STEP) setHidden(true);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return hidden;
+}
+
 export function ScreenHeader({ to, title, className, action }: Props) {
   const { t, language } = useTranslation();
+  const hidden = useHiddenOnScroll();
   const Chevron = language === 'he' ? ChevronRight : ChevronLeft;
 
   return (
-    <div className={['screen-header', className].filter(Boolean).join(' ')}>
+    <div className={['screen-header', hidden && 'screen-header-hidden', className].filter(Boolean).join(' ')}>
       <BackLink to={to} />
       <span className={typeof title === 'string' && title.length > LONG_TITLE ? 'screen-header-title screen-header-title-long' : 'screen-header-title'}>
         {title}

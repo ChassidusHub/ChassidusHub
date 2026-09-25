@@ -113,11 +113,19 @@ function tidy(inlines: Inline[]): Inline[] {
     } else out.push({ ...inline });
   }
   for (const inline of out) if (inline.kind === 'text') inline.text = inline.text.replace(/\s+/g, ' ');
-  const first = out[0];
-  if (first?.kind === 'text') first.text = first.text.replace(/^\s+/, '');
-  const last = out[out.length - 1];
-  if (last?.kind === 'text') last.text = last.text.replace(/\s+$/, '');
-  return out.filter((inline) => inline.kind !== 'text' || inline.text.length > 0);
+  // A line break that opens or closes the paragraph (`...כו'<br></p>`) would only draw an empty line.
+  let edges = out;
+  for (;;) {
+    const first = edges[0];
+    if (first?.kind === 'text') first.text = first.text.replace(/^\s+/, '');
+    const last = edges[edges.length - 1];
+    if (last?.kind === 'text') last.text = last.text.replace(/\s+$/, '');
+    const kept = edges.filter((inline) => inline.kind !== 'text' || inline.text.length > 0);
+    const start = kept[0]?.kind === 'break' ? 1 : 0;
+    const end = kept[kept.length - 1]?.kind === 'break' && kept.length > start ? kept.length - 1 : kept.length;
+    if (start === 0 && end === kept.length) return kept;
+    edges = kept.slice(start, end);
+  }
 }
 
 export function parseTextObject(html: string): TextObject {

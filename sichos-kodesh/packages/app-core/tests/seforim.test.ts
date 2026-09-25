@@ -189,6 +189,12 @@ describe('a letter of the Igros', () => {
     ]);
   });
 
+  it('drops a line break that closes or opens a paragraph, and keeps one inside it', () => {
+    const text = letter('<p>כבוד הרה"ח וכו\'<br></p><p><br>פלוני<br>שי\' </p>', 'שלום וברכה!');
+    const addressee = text.blocks.filter((b) => b.role === 'addressee');
+    expect(addressee.map((b) => b.inlines.map((i) => i.kind))).toEqual([['text'], ['text', 'break', 'text']]);
+  });
+
   it('keeps its other paragraphs as body when no greeting stands near the top, and leaves other texts alone', () => {
     const text = letter('', 'במענה על מכתבו מיום ועוד כמה מילים שאינן ברכה כלל.');
     expect(text.blocks.filter((b) => b.role === 'greeting' || b.role === 'addressee')).toEqual([]);

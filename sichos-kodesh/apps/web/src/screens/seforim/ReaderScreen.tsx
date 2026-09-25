@@ -41,7 +41,7 @@ import { readerPath, workPath } from './seforimPaths';
 
 type Loaded = { state: 'loading' } | { state: 'ready'; text: TextObject } | { state: 'error'; problem: TextProblem };
 
-/** One chapter on the page: the first is the one opened, the rest were read on into. */
+/** One chapter on the page: the one opened, those read on into after it, and those read back into before it. */
 interface Section {
   unit: CatalogUnit;
   edition: CatalogEdition;
@@ -84,7 +84,8 @@ interface Props {
  * A sefer, read the way the reader's settings set it - the same settings
  * and the same place, bookmarks and reading order as the phone's reader:
  * its font, size, spacing and paper; the bar sliding away while reading
- * down; the next chapter following on the same page. The place is kept to
+ * down; the next chapter following on the same page, and the one before
+ * coming in above as the top is neared. The place is kept to
  * the paragraph, and a passage selected can be shared or copied with its
  * source. Texts are read live from Sefaria (the service worker keeps the
  * ones read for offline).
@@ -109,7 +110,7 @@ export function ReaderScreen({ workId }: Props) {
 
   const [sections, setSections] = useState<Section[]>([]);
   const [attempt, setAttempt] = useState(0);
-  const [current, setCurrent] = useState(0);
+  const [currentId, setCurrentId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [barHidden, setBarHidden] = useState(false);
   const [panel, setPanel] = useState(false);
@@ -118,6 +119,12 @@ export function ReaderScreen({ workId }: Props) {
   const nodes = useRef(new Map<string, HTMLElement>());
   const generation = useRef(0);
   const appending = useRef(false);
+  const prepending = useRef(false);
+  /** The chapter before that could not be had: not asked for again on every scroll. */
+  const backFailed = useRef<string | null>(null);
+  /** The chapter on screen and where it stood, while a chapter is put above it. */
+  const anchor = useRef<{ id: string; top: number } | null>(null);
+  const lastY = useRef(0);
   const restoreTo = useRef<number | null>(null);
   const here = useRef<{ unitId: string; source: number; offset: number } | null>(null);
 
@@ -126,7 +133,10 @@ export function ReaderScreen({ workId }: Props) {
     if (!work || !unit || !edition) return;
     const gen = ++generation.current;
     appending.current = false;
-    setCurrent(0);
+    prepending.current = false;
+    backFailed.current = null;
+    anchor.current = null;
+    setCurrentId(null);
     setProgress(0);
     const remembered = place && place.unitId === unit.id && place.source === edition.source ? (place.offset ?? 0) : 0;
     restoreTo.current = remembered > 0 ? remembered : null;
@@ -135,22 +145,23 @@ export function ReaderScreen({ workId }: Props) {
     loadText(work, unit, edition).then(
       (text) => {
         if (gen !== generation.current) return;
-        setSections((s) => s.map((x, i) => (i === 0 ? { ...x, loaded: { state: 'ready', text } } : x)));
+        setSections((s) => s.map((x) => (x.unit.id === unit.id ? { ...x, loaded: { state: 'ready', text } } : x)));
         here.current = { unitId: unit.id, source: edition.source, offset: remembered };
         recordPlace(work.id, unit.id, edition.source, remembered);
       },
-      (error: unknown) => gen === generation.current && setSections((s) => s.map((x, i) => (i === 0 ? { ...x, loaded: { state: 'error', problem: problemOf(error) } } : x))),
+      (error: unknown) => gen === generation.current && setSections((s) => s.map((x) => (x.unit.id === unit.id ? { ...x, loaded: { state: 'error', problem: problemOf(error) } } : x))),
     );
   }, [work, unit, edition?.source, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A failed load is tried again once when the connection comes back - not on every failure, which would loop.
-  const failed = sections[0]?.loaded.state === 'error';
+  const opened = sections.find((s) => s.unit.id === unit?.id);
+  const failed = opened?.loaded.state === 'error';
   useEffect(() => {
     if (online && failed) setAttempt((n) => n + 1);
   }, [online]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reopening a chapter where it was left, once its text is on the page.
-  const firstReady = sections[0]?.loaded.state === 'ready';
+  const firstReady = opened?.loaded.state === 'ready';
   useLayoutEffect(() => {
     if (!firstReady || restoreTo.current === null || !unit) return;
     const node = nodes.current.get(unit.id);
@@ -193,10 +204,47 @@ export function ReaderScreen({ workId }: Props) {
     );
   }, [settings.continuous, work, contents, sections]);
 
+  /** The chapter before, loaded onto the top of the page as the top is neared; the page stays where it was. */
+  const readBack = useCallback(() => {
+    if (!settings.continuous || prepending.current || restoreTo.current !== null || !work || !contents) return;
+    const first = sections[0];
+    if (!first || first.loaded.state !== 'ready') return;
+    const { previous: before } = neighbours(contents, first.unit.id);
+    const beforeEdition = before ? chooseEdition(work, before, first.edition.source) : null;
+    if (!before || !beforeEdition || backFailed.current === before.id) return;
+    const gen = generation.current;
+    prepending.current = true;
+    loadText(work, before, beforeEdition).then(
+      (text) => {
+        if (gen !== generation.current) return;
+        prepending.current = false;
+        const node = nodes.current.get(first.unit.id);
+        anchor.current = node ? { id: first.unit.id, top: node.getBoundingClientRect().top } : null;
+        setSections((s) => [{ unit: before, edition: beforeEdition, loaded: { state: 'ready', text } }, ...s]);
+      },
+      () => {
+        if (gen !== generation.current) return;
+        prepending.current = false;
+        backFailed.current = before.id;
+      },
+    );
+  }, [settings.continuous, work, contents, sections]);
+
+  // A chapter put above the one on screen: the page moves down by its height, so the words on screen stay put.
+  useLayoutEffect(() => {
+    const held = anchor.current;
+    if (!held) return;
+    anchor.current = null;
+    const node = nodes.current.get(held.id);
+    if (!node) return;
+    window.scrollBy({ top: node.getBoundingClientRect().top - held.top, behavior: 'instant' as ScrollBehavior });
+    lastY.current = window.scrollY;
+  }, [sections]);
+
   const retrySection = (index: number) => {
     const section = sections[index];
     if (!work || !section) return;
-    if (index === 0) {
+    if (section.unit.id === unit?.id) {
       setAttempt((n) => n + 1);
       return;
     }
@@ -208,8 +256,7 @@ export function ReaderScreen({ workId }: Props) {
     );
   };
 
-  // Scrolling: the bar steps aside on the way down, the chapter under the upper part of the screen is the one being read, and the next chapter comes when the end is near.
-  const lastY = useRef(0);
+  // Scrolling: the bar steps aside on the way down, the chapter under the upper part of the screen is the one being read, the next chapter comes when the end is near and the one before when the top is.
   const restTimer = useRef<number | undefined>(undefined);
   useEffect(() => {
     const onScroll = () => {
@@ -233,17 +280,20 @@ export function ReaderScreen({ workId }: Props) {
         here.current = { unitId: section.unit.id, source: section.edition.source, offset };
         const read = node.offsetHeight <= height ? 1 : Math.min(1, Math.max(0, (y - node.offsetTop) / (node.offsetHeight - height * 0.6)));
         setProgress(Math.round(read * 100) / 100);
-        setCurrent(index);
+        setCurrentId(section.unit.id);
       }
       if (document.documentElement.scrollHeight - (y + height) < height * 1.5) readOn();
+      if (y < height * 1.2) readBack();
       window.clearTimeout(restTimer.current);
       restTimer.current = window.setTimeout(remember, 400);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     // A short chapter leaves room on the screen: the next one comes straight away.
     if (document.documentElement.scrollHeight < window.innerHeight * 1.6) readOn();
+    // Opened at its top: the chapter before is put above it straight away, ready to scroll up into.
+    if (window.scrollY < window.innerHeight * 1.2) readBack();
     return () => window.removeEventListener('scroll', onScroll);
-  }, [sections, readOn, remember]);
+  }, [sections, readOn, readBack, remember]);
 
   // The screen stays on while a sefer is open, if asked (Screen Wake Lock, where the browser has it).
   useEffect(() => {
@@ -344,7 +394,7 @@ export function ReaderScreen({ workId }: Props) {
   }
 
   const label = (u: CatalogUnit) => (language === 'en' ? (u.labelEn ?? u.label) : u.label);
-  const shown = sections[current] ?? sections[0];
+  const shown = sections.find((s) => s.unit.id === currentId) ?? opened ?? sections[0];
   const shownUnit = shown?.unit ?? unit;
   const marked = isBookmarked(reading, workId, shownUnit.id);
   const last = sections[sections.length - 1];
@@ -391,11 +441,15 @@ export function ReaderScreen({ workId }: Props) {
       </header>
 
       <main className="reader-page">
-        {previous && (
-          <button type="button" className="reader-previous" onClick={() => open(previous)}>
-            <Back size={16} aria-hidden />
-            <span>{`${t.readerPrevious}: ${label(previous)}`}</span>
-          </button>
+        {/* Read chapter by chapter: the one before is a step away. Read on continuously, it comes in above as the top is neared. */}
+        {!settings.continuous && previous && (
+          <Link className="reader-next reader-before" to={readerPath(workId, previous.id, edition?.source)}>
+            <Back size={20} aria-hidden />
+            <span className="reader-next-text">
+              <span className="reader-eyebrow">{t.readerPrevious}</span>
+              <span className="reader-next-label">{label(previous)}</span>
+            </span>
+          </Link>
         )}
 
         {!edition && <p className="tab-help">{t.workNoText}</p>}
@@ -405,7 +459,8 @@ export function ReaderScreen({ workId }: Props) {
           // A letter is placed by its volume (its number is its title); a chapter by its place in the sefer.
           const part = unitsAreLetters(work) ? unitPart(contents, section.unit.id) : null;
           const readable = readableEditions(work, section.unit);
-          const links = index === 0 ? linkEditions(work, section.unit) : [];
+          const isOpened = section.unit.id === unit.id;
+          const links = isOpened ? linkEditions(work, section.unit) : [];
           const languageCount = (lang: string | undefined) => readable.filter((e) => work.sources[e.source]?.language === lang).length;
           return (
             <section
@@ -420,7 +475,7 @@ export function ReaderScreen({ workId }: Props) {
                 {part ? <span className="reader-eyebrow">{names(part, language)}</span> : position && position.total > 1 && <span className="reader-eyebrow">{t.readerChapterOf(position.number, position.total)}</span>}
                 <h1 className="reader-heading">{label(section.unit)}</h1>
                 <span className="reader-ornament" aria-hidden />
-                {index === 0 && (
+                {isOpened && (
                   <EditionPicker
                     editions={readable.map((e) => ({ source: e.source, label: editionLabel(work.sources[e.source]!, t.editionLanguages, languageCount(work.sources[e.source]!.language)) }))}
                     current={section.edition.source}
@@ -444,7 +499,7 @@ export function ReaderScreen({ workId }: Props) {
               )}
               {section.loaded.state === 'ready' && (
                 <>
-                  {index === 0 && work.sources[section.edition.source]?.source === 'sefaria' && <p className="reader-from">{t.readerFromSefaria}</p>}
+                  {isOpened && work.sources[section.edition.source]?.source === 'sefaria' && <p className="reader-from">{t.readerFromSefaria}</p>}
                   <TextObjectView text={section.loaded.text} settings={settings} />
                 </>
               )}

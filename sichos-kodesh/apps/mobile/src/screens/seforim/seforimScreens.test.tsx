@@ -92,7 +92,12 @@ describe('seforim screens', () => {
     const shown = await render(<screens.ReaderScreen {...props({ workId: 'tanya', unitId: 'part1/1' })} />);
     expect(shown).toContain('The first words');
     expect(shown).toContain('Part I; Likkutei Amarim, Chapter 1');
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    // The chapter opened, then the one before it, put above it to scroll up into.
+    const asked = (globalThis.fetch as jest.Mock).mock.calls.map((call) => decodeURIComponent(String(call[0])));
+    expect(asked).toHaveLength(2);
+    expect(asked[0]).toContain('Likkutei_Amarim_1?');
+    expect(asked[1]).toContain("Compiler's_Foreword");
+    expect(shown).toContain("Part I; Likkutei Amarim, Compiler's Foreword");
   });
 
   it('sets a Hebrew text right to left, whatever the app language', async () => {

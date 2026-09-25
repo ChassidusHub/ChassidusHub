@@ -20,6 +20,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Short titles for long names: lists and headers show a short one, and the page itself the whole name. A long header wraps onto a second line instead of being cut short',
       'On a phone the reader\'s settings sheet follows your finger down and closes; the PDF reader has the same sheet for its pages: sepia, grey or dark, a stronger contrast, a page at a time, the screen kept on',
       'The letters of the Igros are laid out as the printed volumes set them: the date at the top, the city and the addressee indented under it, the greeting, paragraphs that open indented, and the signature at the end. Years, months and parshiyos are a grid of tiles',
+      'Reading on: scroll up at the top of a chapter or a letter and the one before it is already there, with the page kept where it was - no more button for it. An addressee\'s lines are broken evenly, so a short word never stands alone on the last one',
+      'Every page\'s header sits at the very top, steps away as you scroll down and comes back with a small scroll up; the back button sits level with the title',
     ],
     he: [
       'מסך בית חדש: קודם השבוע - הפרשה, התוועדויות הקביעות, התוועדויות השבוע בכל השנים ולקוטי שיחות על הפרשה - אחר כך היכן שהפסקתם, ההתוועדויות לפי שנה, מועד ופרשה, ודלת לכל חלק של הספרייה',
@@ -28,6 +30,8 @@ export const CHANGELOG: ChangelogEntry[] = [
       'כותרות קצרות לשמות ארוכים: הרשימות והכותרות מציגות שם קצר, והעמוד עצמו את השם המלא. כותרת ארוכה עוברת לשורה שנייה במקום להיקטע',
       'בטלפון, חלון הגדרות הקריאה נגרר למטה עם האצבע ונסגר; לקורא ה-PDF יש אותו חלון לדפים: ספיה, אפור או כהה, ניגודיות חזקה, דף אחר דף, מסך דולק',
       'מכתבי האגרות מסודרים כמו בכרכים המודפסים: התאריך למעלה, העיר והנמען בהזחה מתחתיו, הברכה, פסקאות שנפתחות בהזחה, והחתימה בסוף. שנים, חודשים ופרשות מוצגים כאריחים',
+      'קריאה רציפה: גלילה למעלה בראש פרק או אגרת - והקודם כבר שם, והעמוד נשאר במקומו - בלי כפתור לזה. שורות הנמען נשברות באופן שווה, כך שמילה קצרה לא נשארת לבד בשורה האחרונה',
+      'הכותרת של כל עמוד יושבת בראשו, זזה הצידה בגלילה למטה וחוזרת בגלילה קטנה למעלה; כפתור החזרה בגובה הכותרת',
     ],
   },
   {

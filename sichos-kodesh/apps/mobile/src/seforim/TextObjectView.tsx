@@ -170,6 +170,9 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
             key={i}
             onLongPress={onShare ? () => share(i, block.inlines) : undefined}
             suppressHighlighting
+            // The addressee's lines broken evenly, so a short word (וכו') never stands alone on the last one.
+            textBreakStrategy={block.role === 'addressee' ? 'balanced' : undefined}
+            lineBreakStrategyIOS={block.role === 'addressee' ? 'push-out' : undefined}
             style={[
               body,
               {
