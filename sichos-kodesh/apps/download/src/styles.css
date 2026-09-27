@@ -1088,6 +1088,28 @@ main {
   color: var(--danger);
 }
 
+.line-size-retry {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--danger);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+div.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+div.error p {
+  margin: 0;
+}
+
 .icon-button {
   display: inline-flex;
   flex-shrink: 0;
@@ -1312,6 +1334,203 @@ main {
 
 .footer-version {
   font-size: 0.75rem;
+}
+
+/* On a phone the header keeps the brand, the language and the cart: the site link waits in the footer. */
+@media (max-width: 520px) {
+  .top-links .top-site {
+    display: none;
+  }
+
+  .brand-name {
+    font-size: 1rem;
+  }
+}
+
+.top-links {
+  align-items: center;
+  min-width: 0;
+}
+
+/* In the narrow cart a longer name wraps inside its pill rather than being cut. */
+.cart .segmented {
+  border-radius: 16px;
+}
+
+.cart .segmented-option {
+  padding-inline: 8px;
+  white-space: normal;
+  line-height: 1.25;
+  border-radius: 13px;
+}
+
+/* The language switch: the other language, in its own script. */
+.lang-toggle {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lang-toggle:hover {
+  background: var(--card-bg);
+}
+
+/* In English the page runs left to right: the arrows turn with it. */
+[dir='ltr'] .flow-onward svg {
+  transform: scaleX(-1);
+}
+
+/* The three steps: a number, a name, a line under it. */
+.step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.step-number {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-text {
+  min-width: 0;
+}
+
+.step-title {
+  margin: 2px 0 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.step-lead {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.cart-step {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.cart-step .cart-settings,
+.cart-step .cart-total {
+  padding: 0;
+  border-top: 0;
+}
+
+.cart-step-waiting .step-number {
+  background: var(--card-bg);
+  color: var(--muted);
+}
+
+/* A setting as one line until it is opened. */
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.setting-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.setting-title {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.setting-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.setting-change {
+  flex-shrink: 0;
+}
+
+.setting-open {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: 12px;
+}
+
+.setting-done {
+  justify-self: end;
+}
+
+/* Years: two quick choices, and the full list only when asked for. */
+.chip-more {
+  border-style: dashed;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.picked-line {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.chips-years {
+  margin-top: 12px;
+}
+
+.kvius .field {
+  margin-top: 4px;
+}
+
+.kvius-other {
+  align-self: center;
+  margin-inline-start: 4px;
+}
+
+/* A sefer, and the volumes of one that has them. */
+.sefer-parts-toggle {
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.sefer-parts {
+  display: grid;
+  flex-basis: 100%;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
 
 @media (prefers-reduced-motion: reduce) {

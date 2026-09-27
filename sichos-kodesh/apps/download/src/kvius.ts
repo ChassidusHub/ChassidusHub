@@ -48,6 +48,4 @@ export function currentMonths(today: Date): { now: string; next: string } {
   return { now, next: MONTHS[(index + 1) % MONTHS.length]!.key };
 }
 
-export function monthName(key: string): string {
-  return MONTHS.find((m) => m.key === key)?.name ?? key;
-}
+export { monthName } from './selection';

@@ -8,6 +8,15 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="description" content="הורדת התוועדויות, הנחות והקלטות לטלפון, כחבילה אחת חתומה." />
     <title>שיחות קודש · חבילות לטלפון</title>
+    <script>
+      // The language chosen on this browser (src/i18n.tsx), before the first paint: no flash of the other direction.
+      try {
+        if (localStorage.getItem('sk-pack-lang') === 'en') {
+          document.documentElement.lang = 'en';
+          document.documentElement.dir = 'ltr';
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

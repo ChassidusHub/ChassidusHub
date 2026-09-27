@@ -37,6 +37,20 @@ export interface PublishMeta {
   library?: PackableLibraryCollection[];
   /** How many seforim can join a pack (works/shelf.json). Absent when none. */
   works?: number;
+  /**
+   * What a person can take, each file once: a recording counts once
+   * whatever its qualities, and `bytes` is everything in its original
+   * quality. `objects` and `bytes` above count every encoding. Absent from
+   * an older publish.
+   */
+  files?: PublishedFiles;
+}
+
+export interface PublishedFiles {
+  audio: number;
+  pdf: number;
+  text: number;
+  bytes: number;
 }
 
 export interface YearShard {
@@ -53,6 +67,8 @@ export const publishKeys = {
   libraryShard: (collection: PackableLibraryCollection) => `index/library-${collection}.json`,
   worksShelf: 'works/shelf.json',
   workEntries: (id: string) => `works/${id}.json`,
+  /** A sefer's parts: each part id's item ids (`<work>/<unit>`), for a pack that takes some of it. */
+  workParts: (id: string) => `works/${id}.parts.json`,
   worksShard: 'index/works.json',
   objectsIndex: 'objects.json',
   object: (sha256: string) => `objects/${sha256}`,
@@ -66,7 +82,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export function parsePublishMeta(value: unknown): PublishMeta | null {
   if (!isRecord(value) || value.schema !== PUBLISH_SCHEMA) return null;
-  const { catalogVersion, publishedAt, years, profiles, objectsIndex, objects, bytes, library, works } = value;
+  const { catalogVersion, publishedAt, years, profiles, objectsIndex, objects, bytes, library, works, files } = value;
   if (typeof catalogVersion !== 'string' || typeof publishedAt !== 'string') return null;
   if (!Array.isArray(years) || !years.every((y) => Number.isInteger(y))) return null;
   if (!Array.isArray(profiles) || !profiles.every((p) => (AUDIO_PROFILES as readonly unknown[]).includes(p))) return null;
@@ -74,6 +90,8 @@ export function parsePublishMeta(value: unknown): PublishMeta | null {
   if (typeof objects !== 'number' || typeof bytes !== 'number') return null;
   if (library !== undefined && (!Array.isArray(library) || !library.every((c) => typeof c === 'string' && isPackableLibraryCollection(c)))) return null;
   if (works !== undefined && (typeof works !== 'number' || !Number.isInteger(works) || works < 0)) return null;
+  const count = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= 0;
+  if (files !== undefined && (!isRecord(files) || !count(files.audio) || !count(files.pdf) || !count(files.text) || !count(files.bytes))) return null;
   return {
     schema: PUBLISH_SCHEMA,
     catalogVersion,
@@ -85,6 +103,7 @@ export function parsePublishMeta(value: unknown): PublishMeta | null {
     bytes,
     ...(library ? { library: library as PackableLibraryCollection[] } : {}),
     ...(works ? { works } : {}),
+    ...(files ? { files: { audio: files.audio as number, pdf: files.pdf as number, text: files.text as number, bytes: files.bytes as number } } : {}),
   };
 }
 
@@ -136,6 +155,12 @@ export function parseWorkEntries(value: unknown): PackEntry[] | null {
       entry.refs.every((ref) => isRecord(ref) && isSha256(ref.sha256) && typeof ref.bytes === 'number' && typeof ref.kind === 'string' && typeof ref.sourceId === 'string'),
   );
   return ok ? (value as PackEntry[]) : null;
+}
+
+/** A sefer's parts file: part id -> the item ids of its texts. */
+export function parseWorkParts(value: unknown): Record<string, string[]> | null {
+  if (!isRecord(value)) return null;
+  return Object.values(value).every((ids) => Array.isArray(ids) && ids.every((id) => typeof id === 'string')) ? (value as Record<string, string[]>) : null;
 }
 
 export type { PackIndexFile };

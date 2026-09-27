@@ -78,7 +78,8 @@ program
   .option('--concurrency <n>', 'connections per host', (v) => Number(v), 2)
   .option('--min-gap-ms <n>', 'minimum gap between request starts per host', (v) => Number(v), 1000)
   .option('--dry-run', 'only count what would be fetched')
-  .action(async (opts: { limit?: number; source?: 'jem' | 'drive'; collection?: string; scope?: string; concurrency: number; minGapMs: number; dryRun?: boolean }) => {
+  .option('--retry-unresolved', 'also ask again for what upstream said was gone')
+  .action(async (opts: { limit?: number; source?: 'jem' | 'drive'; collection?: string; scope?: string; concurrency: number; minGapMs: number; dryRun?: boolean; retryUnresolved?: boolean }) => {
     const g = globals();
     const store = await ArchiveStore.open(g.root);
     try {

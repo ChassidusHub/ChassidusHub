@@ -32,6 +32,14 @@ export function sizeSelection(entries: CatalogEntry[], contentTypes: DownloadCon
   const lookup = buildSourceLookup(index);
   const result: SelectionSize = { objects: {}, bytes: 0, missing: [], entries: [] };
   const byOccasion = new Map<string, PackEntry>();
+  // The catalog entry of each occasion, and of each occasion in its year: found once, not searched per file.
+  const firstOf = new Map<number, CatalogEntry>();
+  const ofYear = new Map<string, CatalogEntry>();
+  for (const e of entries) {
+    if (!firstOf.has(e.occasionId)) firstOf.set(e.occasionId, e);
+    const key = `${e.occasionId}:${e.hebrewYear}`;
+    if (!ofYear.has(key)) ofYear.set(key, e);
+  }
   const collection: CollectionId = 'farbrengens';
   for (const target of listDownloadTargets(entries, contentTypes)) {
     const kind = target.kind;
@@ -50,7 +58,7 @@ export function sizeSelection(entries: CatalogEntry[], contentTypes: DownloadCon
     const itemId = farbrengenItemId(target.occasionId);
     let entry = byOccasion.get(itemId);
     if (!entry) {
-      const source = entries.find((e) => e.occasionId === target.occasionId && e.hebrewYear === target.hebrewYear);
+      const source = ofYear.get(`${target.occasionId}:${target.hebrewYear}`);
       entry = { collection, itemId, hebrewYear: target.hebrewYear, refs: [] };
       if (source) {
         entry.hebrewDate = source.hebrewDate;
@@ -63,7 +71,7 @@ export function sizeSelection(entries: CatalogEntry[], contentTypes: DownloadCon
     if (kind === 'audio') {
       ref.profile = profile;
       if (target.chapterIndex !== undefined) ref.role = String(target.chapterIndex);
-      const audio = entries.find((e) => e.occasionId === target.occasionId)?.audio.find((a) => a.workerFilename === sourceId);
+      const audio = firstOf.get(target.occasionId)?.audio.find((a) => a.workerFilename === sourceId);
       if (audio?.durationMs !== undefined) ref.durationMs = audio.durationMs;
     } else if (target.section) {
       ref.role = target.section;

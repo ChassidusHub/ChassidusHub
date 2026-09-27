@@ -5,11 +5,11 @@ import { crc32 } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import type { ArchiveStore } from '@sichos-kodesh/archive';
 import { exportObjectsIndex } from '@sichos-kodesh/archive';
-import type { CatalogEntry, CatalogWorksIndex, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, CatalogWorkContents, CatalogWorksIndex, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { ALL_CONTENT_TYPES, listDownloadTargets } from '@sichos-kodesh/app-core';
 import type { AudioProfile, ObjectsIndex, PackableLibraryCollection } from '@sichos-kodesh/pack-format';
 import { AUDIO_PROFILES, PACKABLE_LIBRARY_COLLECTIONS, PACK_EXTENSION, buildSourceLookup, canonicalBytes, sourceKey } from '@sichos-kodesh/pack-format';
-import type { PublishMeta, YearShard } from '@sichos-kodesh/pack-api';
+import type { PublishMeta, PublishedFiles, YearShard } from '@sichos-kodesh/pack-api';
 import { PUBLISH_SCHEMA, publishKeys } from '@sichos-kodesh/pack-api';
 import { publishWorks } from './worksPublish.js';
 
@@ -31,6 +31,8 @@ export interface PublishOptions {
   library?: Partial<Record<PackableLibraryCollection, LibraryCollection<LibraryItemBase>>>;
   /** The catalog's works (apps/mobile/src/catalog/data/works/works.json): the seforim's titles and authors, for the text packs in `packsDir`. */
   works?: CatalogWorksIndex;
+  /** A sefer's contents (apps/mobile/src/catalog/data/works/contents), so a pack can take some of its parts. */
+  workContents?: (workId: string) => Promise<CatalogWorkContents | null>;
   catalogVersion: string;
   outDir: string;
   /** A directory of built packs (and their index.json) to publish too. */
@@ -140,6 +142,32 @@ export function libraryShard(items: LibraryItemBase[], index: ObjectsIndex, crcs
   return shard;
 }
 
+/**
+ * What a person can take from the index, each file once: a recording
+ * (its source id) whatever qualities it is encoded in, a PDF or a text by
+ * its bytes; `bytes` in the original quality. What the site advertises.
+ */
+export function publishedFiles(index: ObjectsIndex): PublishedFiles {
+  const recordings = new Map<string, { src?: number; largest: number }>();
+  const files: PublishedFiles = { audio: 0, pdf: 0, text: 0, bytes: 0 };
+  for (const entry of Object.values(index.objects)) {
+    if (entry.kind === 'audio') {
+      const recording = recordings.get(entry.sourceId) ?? { largest: 0 };
+      if (entry.profile === 'src') recording.src = entry.bytes;
+      recording.largest = Math.max(recording.largest, entry.bytes);
+      recordings.set(entry.sourceId, recording);
+      continue;
+    }
+    if (entry.kind === 'pdf') files.pdf += 1;
+    if (entry.kind === 'text') files.text += 1;
+    files.bytes += entry.bytes;
+  }
+  files.audio = recordings.size;
+  // The original's bytes; a recording with no original, its largest encoding.
+  for (const recording of recordings.values()) files.bytes += recording.src ?? recording.largest;
+  return files;
+}
+
 export async function publishArchive(store: ArchiveStore, options: PublishOptions): Promise<PublishResult> {
   const log = options.log ?? (() => undefined);
   const now = options.now ?? (() => new Date());
@@ -232,6 +260,7 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
       packsDir: options.packsDir,
       outDir: out,
       works: options.works ?? null,
+      ...(options.workContents ? { contents: options.workContents } : {}),
       catalogVersion: options.catalogVersion,
       builtAt: index.builtAt,
       crcs,
@@ -240,6 +269,7 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     if (published) {
       works = published.shelf.works.length;
       for (const [id, list] of published.entries) await writeAtomic(path.join(out, publishKeys.workEntries(id)), JSON.stringify(list));
+      for (const [id, items] of published.parts) await writeAtomic(path.join(out, publishKeys.workParts(id)), JSON.stringify(items));
       await writeAtomic(path.join(out, publishKeys.worksShelf), JSON.stringify(published.shelf));
       await writeAtomic(path.join(out, publishKeys.worksShard), JSON.stringify(published.shard));
       await writeAtomic(cacheFile, JSON.stringify(Object.fromEntries(crcs)));
@@ -265,6 +295,7 @@ export async function publishArchive(store: ArchiveStore, options: PublishOption
     bytes: Object.values(index.objects).reduce((sum, entry) => sum + entry.bytes, 0),
     ...(library.length > 0 ? { library } : {}),
     ...(works > 0 ? { works } : {}),
+    files: publishedFiles(index),
   };
   await writeAtomic(path.join(out, publishKeys.meta), `${JSON.stringify(meta, null, 2)}\n`);
   log(

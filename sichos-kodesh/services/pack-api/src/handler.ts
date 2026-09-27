@@ -1,5 +1,5 @@
 import type { DownloadContentTypes } from '@sichos-kodesh/app-core';
-import type { AudioProfile, LibraryScopeSpec, PackEntry, PackKeyPair, PackManifest, PackScope, ParsedScope } from '@sichos-kodesh/pack-format';
+import type { AudioProfile, LibraryScopeSpec, PackEntry, PackKeyPair, PackPart, PackScope, ParsedScope, WorkSelection } from '@sichos-kodesh/pack-format';
 import {
   AUDIO_PROFILES,
   composeManifests,
@@ -12,7 +12,7 @@ import {
   parseScopeList,
   parseSections,
   resolveLibraryScope,
-  resolveWorks,
+  resolveWorkSelection,
   signManifest,
   sizeLibrarySelection,
   sizeSelection,
@@ -21,7 +21,7 @@ import {
   worksLabel,
 } from '@sichos-kodesh/pack-format';
 import type { PublishMeta, YearShard } from './layout.js';
-import { parseCatalogYear, parseLibraryCollection, parsePublishMeta, parseWorkEntries, parseWorksShelf, parseYearShard, publishKeys } from './layout.js';
+import { parseCatalogYear, parseLibraryCollection, parsePublishMeta, parseWorkEntries, parseWorkParts, parseWorksShelf, parseYearShard, publishKeys } from './layout.js';
 import type { PackStore } from './store.js';
 import { readJson } from './store.js';
 import { streamPack } from './stream.js';
@@ -130,19 +130,27 @@ export function parseBuildRequest(url: URL): BuildRequest {
   return { scopes, library, works, profile, sections, contentTypes, maxBytes: Math.floor(maxMb * 1024 * 1024) };
 }
 
+/**
+ * A selection planned as pack parts. A size request needs only the parts'
+ * sums; a build also needs the CRC-32 of each object it streams. Nothing
+ * else a year or collection publishes is kept past its own step, so a
+ * cart of every year and every collection plans within a Worker's memory.
+ */
 export interface PlannedBuild {
   scope: PackScope;
   /** The file-name stem. */
   slug: string;
-  manifests: PackManifest[];
-  bytes: number[];
+  parts: PackPart[];
   missing: number;
   objects: number;
   objectBytes: number;
-  shard: YearShard;
+  /** sha256 -> CRC-32 of the selected objects; empty unless planned for a build. */
+  crc32: Record<string, number>;
   /** How many seforim the build adds. */
   works: number;
 }
+
+export type PlanMode = 'size' | 'build';
 
 async function loadMeta(store: PackStore): Promise<PublishMeta> {
   const meta = parsePublishMeta(await readJson(store, publishKeys.meta));
@@ -157,15 +165,24 @@ interface Selected {
   objects: Record<string, number>;
   bytes: number;
   missing: number;
-  shard: YearShard;
+  crc32: Record<string, number>;
 }
 
-function emptyShard(): YearShard {
-  return { index: { schema: 1, version: '', builtAt: '', objects: {} }, crc32: {} };
+type SelectedPart = Omit<Selected, 'scope' | 'slug'>;
+
+/** The CRC-32s a build streams: only the selected objects', never a whole shard. */
+function pickCrc32(shard: YearShard, objects: Record<string, number>, mode: PlanMode): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (mode !== 'build') return out;
+  for (const sha of Object.keys(objects)) {
+    const crc = shard.crc32[sha];
+    if (crc !== undefined) out[sha] = crc;
+  }
+  return out;
 }
 
-/** Several selections as one: their entries in order, each object counted once, their shards merged. */
-function combine(into: Selected, add: Omit<Selected, 'scope' | 'slug'>): void {
+/** Several selections as one: their entries in order, each object counted once. */
+function combine(into: SelectedPart, add: SelectedPart): void {
   into.entries.push(...add.entries);
   for (const [sha, bytes] of Object.entries(add.objects)) {
     if (into.objects[sha] !== undefined) continue;
@@ -173,14 +190,13 @@ function combine(into: Selected, add: Omit<Selected, 'scope' | 'slug'>): void {
     into.bytes += bytes;
   }
   into.missing += add.missing;
-  Object.assign(into.shard.index.objects, add.shard.index.objects);
-  Object.assign(into.shard.crc32, add.shard.crc32);
+  Object.assign(into.crc32, add.crc32);
 }
 
 /** Every year of the list: its catalog and shard read once, its scopes (a whole year, or months) applied together. */
-async function selectFarbrengens(store: PackStore, meta: PublishMeta, request: BuildRequest, scopes: ParsedScope[]): Promise<Selected> {
+async function selectFarbrengens(store: PackStore, meta: PublishMeta, request: BuildRequest, scopes: ParsedScope[], mode: PlanMode): Promise<Selected> {
   const { scope, slug } = describeScopeList(scopes);
-  const selected: Selected = { scope, slug, entries: [], objects: {}, bytes: 0, missing: 0, shard: emptyShard() };
+  const selected: Selected = { scope, slug, entries: [], objects: {}, bytes: 0, missing: 0, crc32: {} };
   const years = [...new Set(scopes.map((s) => s.year))];
   const unpublished = years.filter((year) => !meta.years.includes(year));
   if (unpublished.length === years.length) throw new HttpError(404, `${unpublished.join(', ')} ${unpublished.length === 1 ? 'is' : 'are'} not in the published archive`);
@@ -198,12 +214,12 @@ async function selectFarbrengens(store: PackStore, meta: PublishMeta, request: B
       shard.index,
       request.profile,
     );
-    combine(selected, { entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing.length, shard });
+    combine(selected, { entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing.length, crc32: pickCrc32(shard, selection.objects, mode) });
   }
   return selected;
 }
 
-async function selectLibrary(store: PackStore, meta: PublishMeta, request: BuildRequest, spec: LibraryScopeSpec): Promise<Selected> {
+async function selectLibrary(store: PackStore, meta: PublishMeta, request: BuildRequest, spec: LibraryScopeSpec, mode: PlanMode): Promise<Selected> {
   if (!meta.library?.includes(spec.collection)) throw new HttpError(404, `${spec.collection} is not in the published archive`);
   const collection = parseLibraryCollection(await readJson(store, publishKeys.libraryCollection(spec.collection)));
   const shard = parseYearShard(await readJson(store, publishKeys.libraryShard(spec.collection)));
@@ -215,25 +231,32 @@ async function selectLibrary(store: PackStore, meta: PublishMeta, request: Build
     throw new HttpError(404, error instanceof Error ? error.message : String(error));
   }
   const selection = sizeLibrarySelection(spec.collection, resolved.items, shard.index, request.profile);
-  return { scope: resolved.scope, slug: resolved.slug, entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing, shard };
+  return { scope: resolved.scope, slug: resolved.slug, entries: selection.entries, objects: selection.objects, bytes: selection.bytes, missing: selection.missing, crc32: pickCrc32(shard, selection.objects, mode) };
 }
 
 /** The seforim named: their entries as their text packs carry them, and their objects. */
-async function selectWorks(store: PackStore, meta: PublishMeta, spec: string): Promise<{ selection: Omit<Selected, 'scope' | 'slug'>; label: { he: string; en: string }; ids: string[] }> {
+async function selectWorks(store: PackStore, meta: PublishMeta, spec: string, mode: PlanMode): Promise<{ selection: SelectedPart; label: { he: string; en: string }; ids: string[]; slug: string }> {
   if (!meta.works) throw new HttpError(404, 'no seforim are published yet');
   const shelf = parseWorksShelf(await readJson(store, publishKeys.worksShelf));
   const shard = parseYearShard(await readJson(store, publishKeys.worksShard));
   if (!shelf || !shard) throw new HttpError(503, 'the published seforim are unreadable');
-  let ids: string[];
+  let picked: WorkSelection[];
   try {
-    ids = resolveWorks(spec, shelf);
+    picked = resolveWorkSelection(spec, shelf);
   } catch (error) {
     throw new HttpError(404, error instanceof Error ? error.message : String(error));
   }
-  const selection: Omit<Selected, 'scope' | 'slug'> = { entries: [], objects: {}, bytes: 0, missing: 0, shard };
-  for (const id of ids) {
-    const entries = parseWorkEntries(await readJson(store, publishKeys.workEntries(id)));
+  const selection: SelectedPart = { entries: [], objects: {}, bytes: 0, missing: 0, crc32: {} };
+  for (const { id, parts } of picked) {
+    let entries = parseWorkEntries(await readJson(store, publishKeys.workEntries(id)));
     if (!entries) throw new HttpError(503, `the published entries of ${id} are unreadable`);
+    if (parts) {
+      // Some of its parts: their texts, without the whole sefer's search index.
+      const map = parseWorkParts(await readJson(store, publishKeys.workParts(id)));
+      if (!map) throw new HttpError(503, `the published parts of ${id} are unreadable`);
+      const wanted = new Set(parts.flatMap((part) => map[part] ?? []));
+      entries = entries.filter((entry) => wanted.has(entry.itemId));
+    }
     selection.entries.push(...entries);
     for (const entry of entries) {
       for (const ref of entry.refs) {
@@ -243,7 +266,11 @@ async function selectWorks(store: PackStore, meta: PublishMeta, spec: string): P
       }
     }
   }
-  return { selection, label: worksLabel(ids, shelf), ids };
+  selection.crc32 = pickCrc32(shard, selection.objects, mode);
+  // One sefer names the file, with its parts when a few are picked (`seforim-igros-kodesh-rebbe-3-4`).
+  const only = picked.length === 1 ? picked[0]! : null;
+  const slug = !only ? 'seforim' : !only.parts ? `seforim-${only.id}` : only.parts.length <= 3 ? `seforim-${only.id}-${only.parts.join('-')}` : `seforim-${only.id}-parts`;
+  return { selection, label: worksLabel(picked, shelf), ids: picked.map((s) => s.id), slug };
 }
 
 /** A short, stable stem for a file name, from what a mix holds. */
@@ -259,11 +286,11 @@ function mixLabel(labels: Array<{ he: string; en: string }>): { he: string; en: 
   return { he: `${labels[0]!.he} ועוד ${labels.length - 1}`, en: `${labels[0]!.en} + ${labels.length - 1} more` };
 }
 
-export async function planBuild(store: PackStore, meta: PublishMeta, request: BuildRequest, builtAt: string): Promise<PlannedBuild> {
+export async function planBuild(store: PackStore, meta: PublishMeta, request: BuildRequest, mode: PlanMode = 'build'): Promise<PlannedBuild> {
   const pieces: Selected[] = [];
-  if (request.scopes.length > 0) pieces.push(await selectFarbrengens(store, meta, request, request.scopes));
-  for (const spec of request.library) pieces.push(await selectLibrary(store, meta, request, spec));
-  const added = request.works ? await selectWorks(store, meta, request.works) : null;
+  if (request.scopes.length > 0) pieces.push(await selectFarbrengens(store, meta, request, request.scopes, mode));
+  for (const spec of request.library) pieces.push(await selectLibrary(store, meta, request, spec, mode));
+  const added = request.works ? await selectWorks(store, meta, request.works, mode) : null;
   const works = added?.ids.length ?? 0;
   if (pieces.length === 0 && !added) throw new HttpError(400, 'the selection is empty');
 
@@ -273,7 +300,7 @@ export async function planBuild(store: PackStore, meta: PublishMeta, request: Bu
   } else {
     // One scope for the whole mix: the one part's own when it is alone, else a custom scope under the first part's collection (a manifest names one).
     const labels = [...pieces.map((p) => p.scope.label), ...(added ? [added.label] : [])];
-    const slugs = [...pieces.map((p) => p.slug), ...(added ? [added.ids.length === 1 ? `seforim-${added.ids[0]}` : 'seforim'] : [])];
+    const slugs = [...pieces.map((p) => p.slug), ...(added ? [added.slug] : [])];
     const joined = slugs.join('-');
     const first = pieces[0];
     const scope: PackScope = first
@@ -282,31 +309,32 @@ export async function planBuild(store: PackStore, meta: PublishMeta, request: Bu
         : { kind: 'custom', collection: first.scope.collection, label: mixLabel(labels) }
       : { kind: 'custom', collection: 'works', label: added!.label };
     const slug = joined.length <= 64 ? joined : `mix-${slugs.length}-${mixHash(joined)}`;
-    selection = { scope, slug, entries: [], objects: {}, bytes: 0, missing: 0, shard: emptyShard() };
+    selection = { scope, slug, entries: [], objects: {}, bytes: 0, missing: 0, crc32: {} };
     for (const part of pieces) combine(selection, part);
     if (added) combine(selection, added.selection);
   }
   if (selection.entries.length === 0) throw new HttpError(404, 'the archive holds nothing of this selection yet');
-  const parts = splitEntries(selection.entries, request.maxBytes);
-  const manifests = await composeManifests({
-    scope: selection.scope,
-    profile: request.profile,
-    catalogVersion: meta.catalogVersion,
-    builtAt,
-    parts,
-    hash: sha256Hex,
-    objectsIndex: { version: meta.catalogVersion, sha256: meta.objectsIndex.sha256 },
-  });
   return {
     scope: selection.scope,
     slug: selection.slug,
-    manifests,
-    bytes: parts.map((part) => part.bytes),
+    parts: splitEntries(selection.entries, request.maxBytes),
     missing: selection.missing,
     objects: Object.keys(selection.objects).length,
     objectBytes: selection.bytes,
-    shard: selection.shard,
+    crc32: selection.crc32,
     works,
+  };
+}
+
+/** A part's name and counts, as /v1/size lists it. */
+function partSummary(plan: PlannedBuild, profile: AudioProfile, part: PackPart, index: number) {
+  const count = plan.parts.length;
+  return {
+    index,
+    file: packFileName(plan.slug, profile, count > 1 ? { index, count } : undefined),
+    occasions: part.entries.filter((e) => !isWorksEntry(e)).length,
+    works: new Set(part.entries.filter(isWorksEntry).map((e) => e.itemId.split('/')[0])).size,
+    bytes: part.bytes,
   };
 }
 
@@ -358,10 +386,9 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
     if (path === '/v1/size' || path === '/v1/build') {
       const buildRequest = parseBuildRequest(url);
       const meta = await loadMeta(store);
-      // Built "at" the publish time, so the same selection always gives the same bytes (and a CDN can cache it).
-      const plan = await planBuild(store, meta, buildRequest, meta.publishedAt);
-      const count = plan.manifests.length;
       if (path === '/v1/size') {
+        const plan = await planBuild(store, meta, buildRequest, 'size');
+        const parts = plan.parts.map((part, index) => partSummary(plan, buildRequest.profile, part, index));
         return json(
           {
             scope: plan.scope,
@@ -369,29 +396,35 @@ export function createHandler(store: PackStore, options: HandlerOptions): (reque
             profile: buildRequest.profile,
             sections: buildRequest.sections,
             // Occasions or library items; a sefer's units are counted as `works`, not here.
-            occasions: plan.manifests.reduce((sum, m) => sum + m.entries.filter((e) => !isWorksEntry(e)).length, 0),
+            occasions: parts.reduce((sum, p) => sum + p.occasions, 0),
             works: plan.works,
             objects: plan.objects,
             bytes: plan.objectBytes,
             missing: plan.missing,
             signed: !!options.signingKey,
-            parts: plan.manifests.map((manifest, index) => ({
-              index,
-              file: packFileName(plan.slug, buildRequest.profile, manifest.part),
-              occasions: manifest.entries.filter((e) => !isWorksEntry(e)).length,
-              works: new Set(manifest.entries.filter(isWorksEntry).map((e) => e.itemId.split('/')[0])).size,
-              bytes: plan.bytes[index],
-            })),
+            parts,
           },
           { headers: { 'Cache-Control': 'public, max-age=300' } },
         );
       }
+      const plan = await planBuild(store, meta, buildRequest, 'build');
+      const count = plan.parts.length;
       const partParam = url.searchParams.get('part');
       const partIndex = partParam === null ? 0 : Number(partParam) - 1;
       if (!Number.isInteger(partIndex) || partIndex < 0 || partIndex >= count) throw new HttpError(400, count > 1 ? `part must be 1 to ${count}` : 'this selection is one pack; leave part out');
-      const unsigned = plan.manifests[partIndex]!;
+      // Built "at" the publish time, so the same selection always gives the same bytes (and a CDN can cache it).
+      const manifests = await composeManifests({
+        scope: plan.scope,
+        profile: buildRequest.profile,
+        catalogVersion: meta.catalogVersion,
+        builtAt: meta.publishedAt,
+        parts: plan.parts,
+        hash: sha256Hex,
+        objectsIndex: { version: meta.catalogVersion, sha256: meta.objectsIndex.sha256 },
+      });
+      const unsigned = manifests[partIndex]!;
       const manifest = options.signingKey ? signManifest(unsigned, options.signingKey) : unsigned;
-      const pack = streamPack(store, manifest, meta, plan.shard);
+      const pack = streamPack(store, manifest, meta, plan.crc32);
       const file = packFileName(plan.slug, buildRequest.profile, manifest.part);
       return new Response(request.method === 'HEAD' ? null : pack.body, {
         headers: {

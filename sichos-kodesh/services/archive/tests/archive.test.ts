@@ -7,6 +7,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { parseObjectsIndex } from '@sichos-kodesh/pack-format';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { crawl, parseCrawlScope } from '../src/crawl.js';
+import { fetchJemToFile } from '../src/fetch.js';
 import { loadInventory } from '../src/inventory.js';
 import { exportObjectsIndex } from '../src/objectsIndex.js';
 import { stats, unresolved } from '../src/report.js';
@@ -20,6 +21,7 @@ const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
 // interstitial, a private one that only returns a sign-in page, a 404).
 const AUDIO_A = Buffer.from('mp3 bytes of JEMSK0001A, long enough to resume'.repeat(20));
 const AUDIO_B = Buffer.from('mp3 bytes of AR0020397');
+const AUDIO_M4A = Buffer.from('m4a bytes of AR0018586, only on the CDN as .m4a');
 const PDF_SMALL = Buffer.from('%PDF-1.4 small hanacha');
 const PDF_LARGE = Buffer.from('%PDF-1.4 large hanacha'.repeat(50));
 const DRIVE_SMALL = '1SmallSmallSmallSmallSmallSmall1';
@@ -60,6 +62,12 @@ beforeAll(async () => {
       return serveBytes(AUDIO_A, 'audio/mpeg');
     }
     if (url.pathname === '/AR0020397.mp3') return serveBytes(AUDIO_B, 'audio/mpeg');
+    if (url.pathname === '/AR0018586.m4a') return serveBytes(AUDIO_M4A, 'audio/aac');
+    if (/^\/AR\d+\.(mp3|m4a|opus)$/.test(url.pathname)) {
+      res.writeHead(404, { 'content-type': 'application/xml' });
+      res.end('<Error><Code>AccessDenied</Code></Error>');
+      return;
+    }
     if (url.pathname === '/uc') {
       const id = url.searchParams.get('id');
       if (id === DRIVE_SMALL) return serveBytes(PDF_SMALL, 'application/pdf');
@@ -222,5 +230,21 @@ describe('sk-archive end to end', () => {
     expect(await readFile(store.objectPath(missing))).toEqual(AUDIO_B);
     expect((await verify(store, { sample: 1 })).ok).toBe(4);
     expect(stats(store)).toMatchObject({ objects: { count: 4, lost: 0 }, refs: 5, wanted: { fetched: 4, errored: 0 }, commits: 2 });
+  });
+});
+
+describe('fetchJemToFile', () => {
+  it('takes an AR recording from its .m4a when the .mp3 ccdb names is not on the CDN, and says what it is', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'sk-jem-'));
+    try {
+      const dest = path.join(dir, 'a');
+      const outcome = await fetchJemToFile(`${base}/AR0018586.mp3`, dest, crawlOptions);
+      expect(outcome).toMatchObject({ status: 'ok', contentType: 'audio/mp4', bytes: AUDIO_M4A.length });
+      expect(await readFile(dest)).toEqual(AUDIO_M4A);
+      // Nowhere at all: still the .mp3's own 404.
+      expect(await fetchJemToFile(`${base}/AR0000001.mp3`, path.join(dir, 'b'), crawlOptions)).toMatchObject({ status: 'unresolved', httpStatus: 404 });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

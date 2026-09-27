@@ -1,7 +1,7 @@
 import type { PackManifest } from '@sichos-kodesh/pack-format';
 import { MANIFEST_ENTRY_NAME, OBJECTS_INDEX_ENTRY_NAME, canonicalBytes, crc32, objectEntryName, planStoredZip, zipLocalHeader } from '@sichos-kodesh/pack-format';
 import type { ZipLayoutEntry } from '@sichos-kodesh/pack-format';
-import type { PublishMeta, YearShard } from './layout.js';
+import type { PublishMeta } from './layout.js';
 import { publishKeys } from './layout.js';
 import type { PackStore } from './store.js';
 
@@ -21,13 +21,14 @@ export interface PackStream {
   size: number;
 }
 
-export function streamPack(store: PackStore, manifest: PackManifest, meta: PublishMeta, shard: YearShard): PackStream {
+/** `objectCrc32` holds the CRC-32 of every object the manifest carries (the planned selection's, handler.ts). */
+export function streamPack(store: PackStore, manifest: PackManifest, meta: PublishMeta, objectCrc32: Record<string, number>): PackStream {
   const manifestBytes = canonicalBytes(manifest);
   const objects = Object.entries(manifest.objects);
   const entries: ZipLayoutEntry[] = [{ name: MANIFEST_ENTRY_NAME, size: manifestBytes.length, crc32: crc32(manifestBytes) }];
   if (manifest.objectsIndex) entries.push({ name: OBJECTS_INDEX_ENTRY_NAME, size: meta.objectsIndex.bytes, crc32: meta.objectsIndex.crc32 });
   for (const [sha, bytes] of objects) {
-    const crc = shard.crc32[sha];
+    const crc = objectCrc32[sha];
     if (crc === undefined) throw new Error(`no CRC-32 recorded for object ${sha}`);
     entries.push({ name: objectEntryName(sha), size: bytes, crc32: crc });
   }

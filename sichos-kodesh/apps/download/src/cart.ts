@@ -1,13 +1,21 @@
+import type { Lang } from './i18n';
 import type { CustomSections, Preset } from './selection';
-import { MONTHS, collectionInfo, monthTokens, sectionsParam, yearLabel } from './selection';
+import { allOf, collectionInfo, groupName, monthName, monthTokens, sectionsParam, yearLabel } from './selection';
 
 /**
  * The cart: whatever goes into one pack - farbrengens of some years and
- * months, library groups, seforim bundles - picked from the shelves in any
- * mix. The pack API takes all of it in one query (its `scope` list and
- * `works`), sizes it with each file once, and builds it as one pack, split
- * into parts by size. One set of settings serves the whole cart.
+ * months, library groups, seforim (whole, or some of their parts) - picked
+ * from the shelves in any mix. The pack API takes all of it in one query
+ * (its `scope` list and `works`), sizes it with each file once, and builds
+ * it as one pack, split into parts by size. One set of settings serves the
+ * whole cart. Names are kept in both languages, so the cart reads in
+ * whichever the site is in.
  */
+
+export interface Names {
+  he: string;
+  en: string;
+}
 
 export type CartItem =
   | {
@@ -16,7 +24,7 @@ export type CartItem =
       years: number[];
       /** Month keys (MONTHS); empty for whole years. */
       months: string[];
-      /** Added as this year's kvius, which its label says. */
+      /** Added as this year's kvius (all its years or some), which its label says. */
       kvius?: boolean;
     }
   | {
@@ -25,9 +33,16 @@ export type CartItem =
       /** null: the whole collection. */
       axis: string | null;
       /** The axis's groups picked, with their names for the label. */
-      groups: Array<{ slug: string; name: string }>;
+      groups: Array<{ slug: string; name: string; nameEn?: string }>;
     }
-  | { kind: 'works'; bundle: string; name: string };
+  | {
+      kind: 'works';
+      /** What the pack API's `works` takes: sefer ids, bundle ids, or a sefer's parts (`igros-kodesh-rebbe:3`). */
+      tokens: string[];
+      name: Names;
+      /** The parts taken, by name, when not the whole. */
+      parts?: Names[];
+    };
 
 export interface CartSettings {
   preset: Preset;
@@ -40,7 +55,7 @@ export interface CartSettings {
 export function itemKey(item: CartItem): string {
   if (item.kind === 'farbrengens') return `f:${item.years.join('.')}:${item.months.join('.')}`;
   if (item.kind === 'library') return `l:${item.collection}:${item.axis ?? ''}:${item.groups.map((g) => g.slug).join('.')}`;
-  return `w:${item.bundle}`;
+  return `w:${item.tokens.join(',')}`;
 }
 
 export function addItem(items: CartItem[], item: CartItem): CartItem[] {
@@ -57,7 +72,7 @@ export function hasItem(items: CartItem[], item: CartItem): boolean {
   return items.some((i) => itemKey(i) === key);
 }
 
-/** The item's part of the `scope` list: `5736-01,5740-01`, `maamorim:year:5711`; none for a seforim bundle. */
+/** The item's part of the `scope` list: `5736-01,5740-01`, `maamorim:year:5711`; none for seforim. */
 export function itemScopeTokens(item: CartItem): string[] {
   if (item.kind === 'farbrengens') {
     if (item.months.length === 0) return item.years.map(String);
@@ -79,7 +94,7 @@ export function itemHasAudio(item: CartItem): boolean {
 export function cartQuery(items: CartItem[], settings: CartSettings): string | null {
   if (items.length === 0) return null;
   const scope = [...new Set(items.flatMap(itemScopeTokens))];
-  const works = [...new Set(items.flatMap((i) => (i.kind === 'works' ? [i.bundle] : [])))];
+  const works = [...new Set(items.flatMap((i) => (i.kind === 'works' ? i.tokens : [])))];
   const sections = sectionsParam(settings);
   if (items.some((i) => i.kind === 'farbrengens') && !sections) return null;
   const params = new URLSearchParams();
@@ -92,41 +107,67 @@ export function cartQuery(items: CartItem[], settings: CartSettings): string | n
 }
 
 /** A few years by name, a run as its first and last, a long list by count. */
-export function yearsText(years: number[]): string {
-  if (years.length <= 3) return years.map(yearLabel).join(', ');
+export function yearsText(years: number[], lang: Lang = 'he'): string {
+  if (years.length <= 3) return years.map((y) => yearLabel(y, lang)).join(', ');
   const contiguous = years.every((y, i) => i === 0 || y === years[i - 1]! + 1);
-  if (contiguous) return `${yearLabel(years[0]!)}–${yearLabel(years[years.length - 1]!)}`;
-  return `${years.length} שנים`;
+  if (contiguous) return `${yearLabel(years[0]!, lang)}–${yearLabel(years[years.length - 1]!, lang)}`;
+  return lang === 'he' ? `${years.length} שנים` : `${years.length} years`;
 }
 
-function namesText(names: string[], many: string): string {
-  return names.length <= 3 ? names.join(', ') : `${names.length} ${many}`;
+function namesText(names: string[], many: Names, lang: Lang): string {
+  return names.length <= 3 ? names.join(', ') : `${names.length} ${many[lang]}`;
 }
+
+const MONTHS_WORD: Names = { he: 'חודשים', en: 'months' };
+const GROUPS_WORD: Names = { he: 'קבוצות', en: 'groups' };
+const PARTS_WORD: Names = { he: 'חלקים', en: 'parts' };
 
 /** What the cart shows for an item: a title and the line under it. */
-export function itemLabel(item: CartItem): { title: string; detail: string } {
+export function itemLabel(item: CartItem, lang: Lang = 'he'): { title: string; detail: string } {
+  const he = lang === 'he';
   if (item.kind === 'farbrengens') {
-    const months = item.months.map((key) => MONTHS.find((m) => m.key === key)?.name ?? key);
-    const what = months.length === 0 ? 'התוועדויות, השנה כולה' : `התוועדויות ${namesText(months, 'חודשים')}`;
-    if (item.kvius) return { title: `${what} ${item.years.length === 1 ? 'בשנת הקביעות' : 'בשנות הקביעות'}`, detail: item.years.map(yearLabel).join(' · ') };
-    return { title: what, detail: item.years.length === 1 ? yearLabel(item.years[0]!) : `${yearsText(item.years)} (${item.years.length} שנים)` };
+    const months = item.months.map((key) => monthName(key, lang));
+    const what = months.length === 0 ? (he ? 'התוועדויות, השנה כולה' : 'Farbrengens, whole years') : he ? `התוועדויות ${namesText(months, MONTHS_WORD, lang)}` : `Farbrengens: ${namesText(months, MONTHS_WORD, lang)}`;
+    const count = item.years.length;
+    if (item.kvius) {
+      const title = he ? `${what} ${count === 1 ? 'בשנת הקביעות' : 'בשנות הקביעות'}` : `${what}, ${count === 1 ? 'the kvius year' : 'kvius years'}`;
+      return { title, detail: item.years.map((y) => yearLabel(y, lang)).join(' · ') };
+    }
+    return { title: what, detail: count === 1 ? yearLabel(item.years[0]!, lang) : `${yearsText(item.years, lang)} (${he ? `${count} שנים` : `${count} years`})` };
   }
   if (item.kind === 'library') {
-    const info = collectionInfo(item.collection);
-    if (!item.axis || item.groups.length === 0) return { title: info.name, detail: `כל ה${info.many}` };
-    return { title: info.name, detail: namesText(item.groups.map((g) => g.name), 'קבוצות') };
+    const info = collectionInfo(item.collection, lang);
+    if (!item.axis || item.groups.length === 0) return { title: info.name, detail: allOf(info, lang) };
+    return { title: info.name, detail: namesText(item.groups.map((g) => groupName(item.collection, item.axis!, g, lang)), GROUPS_WORD, lang) };
   }
-  return { title: item.name, detail: 'ספרים: הטקסט המלא והחיפוש' };
+  if (item.parts && item.parts.length > 0) return { title: item.name[lang], detail: namesText(item.parts.map((p) => p[lang]), PARTS_WORD, lang) };
+  return { title: item.name[lang], detail: he ? 'ספרים: הטקסט המלא והחיפוש' : 'Seforim: the full text and search' };
 }
 
 const STORAGE_KEY = 'sk-pack-cart-v1';
+
+/** An item as an older site kept it (a seforim bundle by one id and a Hebrew name), in today's shape; null for what is not an item. */
+export function upgradeItem(value: unknown): CartItem | null {
+  if (!value || typeof value !== 'object') return null;
+  const item = value as Record<string, unknown>;
+  if (item.kind === 'farbrengens' && Array.isArray(item.years) && Array.isArray(item.months)) return item as unknown as CartItem;
+  if (item.kind === 'library' && typeof item.collection === 'string' && Array.isArray(item.groups)) return item as unknown as CartItem;
+  if (item.kind === 'works') {
+    if (Array.isArray(item.tokens) && item.name && typeof item.name === 'object') return item as unknown as CartItem;
+    if (typeof item.bundle === 'string') {
+      const name = typeof item.name === 'string' ? item.name : item.bundle;
+      return { kind: 'works', tokens: [item.bundle], name: { he: name, en: name } };
+    }
+  }
+  return null;
+}
 
 /** The cart kept in this browser (a convenience: an empty cart when storage is blocked). */
 export function loadCart(): { items: CartItem[]; settings: Partial<CartSettings> } {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? (JSON.parse(raw) as { items?: unknown; settings?: unknown }) : null;
-    const items = Array.isArray(parsed?.items) ? (parsed!.items as CartItem[]).filter((i) => i && typeof i === 'object' && ['farbrengens', 'library', 'works'].includes((i as CartItem).kind)) : [];
+    const items = Array.isArray(parsed?.items) ? parsed!.items.map(upgradeItem).filter((i): i is CartItem => i !== null) : [];
     const settings = parsed?.settings && typeof parsed.settings === 'object' ? (parsed.settings as Partial<CartSettings>) : {};
     return { items, settings };
   } catch {

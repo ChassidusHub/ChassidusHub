@@ -8,7 +8,7 @@ import type { AudioProfile, PackableLibraryCollection, TrustedKeys } from '@sich
 import { AUDIO_PROFILES, PACKABLE_LIBRARY_COLLECTIONS, TRUSTED_PACK_KEYS, manifestBytes } from '@sichos-kodesh/pack-format';
 import { buildPacks } from '../src/build.js';
 import { loadYearEntries } from '../src/catalogData.js';
-import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
+import type { CatalogEntry, CatalogWorkContents, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 import { createKeyFile, defaultKeyFile, readKeyFile, readPublicKey } from '../src/keys.js';
 import { indexPacks } from '../src/packIndex.js';
 import { mirrorPublished } from '../src/mirror.js';
@@ -275,7 +275,11 @@ program
     try {
       const worksText = await readFile(path.join(opts.worksDir, 'works.json'), 'utf8').catch(() => null);
       const works = worksText ? (parseCatalogWorksIndex(JSON.parse(worksText)) ?? undefined) : undefined;
-      await publishArchive(store, { years, library, ...(works ? { works } : {}), catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
+      const workContents = async (id: string) => {
+        const text = await readFile(path.join(opts.worksDir, 'contents', `${id}.json`), 'utf8').catch(() => null);
+        return text ? (JSON.parse(text) as CatalogWorkContents) : null;
+      };
+      await publishArchive(store, { years, library, ...(works ? { works, workContents } : {}), catalogVersion: opts.catalogVersion, outDir: opts.out ?? path.join(root(), 'published'), ...(hasPacks ? { packsDir } : {}), log });
     } finally {
       store.close();
     }

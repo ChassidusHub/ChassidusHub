@@ -33,7 +33,25 @@ const tanya: CatalogWork = {
   units: 1,
 };
 const contents: CatalogWorkContents = { workId: 'tanya', contents: [{ unitId: '1' }], units: [{ id: '1', label: 'פרק א׳', editions: [{ source: 0, sha256: sha(TEXT), bytes: Buffer.byteLength(TEXT) }] }] };
-const WORKS = { schema: 3, authors: [{ id: 'alter-rebbe', name: { he: 'אדמו"ר הזקן', en: 'the Alter Rebbe' } }], works: [tanya] } as unknown as CatalogWorksIndex;
+// A sefer in two volumes: letters 1 and 2, then letter 3.
+const LETTERS = ['<p>אגרת א</p>\n', '<p>אגרת ב</p>\n', '<p>אגרת ג</p>\n'];
+const igros: CatalogWork = { ...tanya, id: 'igros', title: { he: 'אגרות קודש', en: 'Igros Kodesh' }, authors: ['the-rebbe'], units: 3 };
+const igrosContents: CatalogWorkContents = {
+  workId: 'igros',
+  contents: [
+    { title: { he: 'חלק א', en: 'Volume 1' }, entries: [{ unitId: '1' }, { unitId: '2' }] },
+    { title: { he: 'חלק ב', en: 'Volume 2' }, entries: [{ unitId: '3' }] },
+  ],
+  units: LETTERS.map((text, i) => ({ id: String(i + 1), label: `אגרת ${i + 1}`, editions: [{ source: 0, sha256: sha(text), bytes: Buffer.byteLength(text) }] })),
+};
+const WORKS = {
+  schema: 3,
+  authors: [
+    { id: 'alter-rebbe', name: { he: 'אדמו"ר הזקן', en: 'the Alter Rebbe' } },
+    { id: 'the-rebbe', name: { he: 'הרבי', en: 'the Rebbe' } },
+  ],
+  works: [tanya, igros],
+} as unknown as CatalogWorksIndex;
 
 let dir: string;
 let store: ArchiveStore;
@@ -56,7 +74,14 @@ beforeAll(async () => {
   await importText(store, [{ collection: 'works', itemId: 'tanya/1', sourceId: workTextSourceId('tanya', sha(TEXT)), text: TEXT, mime: 'text/html; charset=utf-8' }], { author: 'test', message: 'test' });
   // The text pack sk-pack build-work makes, among the prebuilt packs.
   await buildWorkPack(store, { work: tanya, contents, catalogVersion: '1.3.0', outDir: path.join(dir, 'packs'), key, maxBytes: 1024 * 1024, allowMissing: false });
-  await publishArchive(store, { years: YEARS, works: WORKS, catalogVersion: '1.1.0', outDir: path.join(dir, 'published'), packsDir: path.join(dir, 'packs'), now: () => new Date('2026-09-25T08:00:00Z') });
+  await importText(
+    store,
+    LETTERS.map((text, i) => ({ collection: 'works', itemId: `igros/${i + 1}`, sourceId: workTextSourceId('igros', sha(text)), text, mime: 'text/html; charset=utf-8' })),
+    { author: 'test', message: 'test' },
+  );
+  await buildWorkPack(store, { work: igros, contents: igrosContents, catalogVersion: '1.3.0', outDir: path.join(dir, 'packs'), key, maxBytes: 1024 * 1024, allowMissing: false });
+  const workContents = async (id: string) => (id === 'tanya' ? contents : id === 'igros' ? igrosContents : null);
+  await publishArchive(store, { years: YEARS, works: WORKS, workContents, catalogVersion: '1.1.0', outDir: path.join(dir, 'published'), packsDir: path.join(dir, 'packs'), now: () => new Date('2026-09-25T08:00:00Z') });
   server = await servePublished(path.join(dir, 'published'), { port: 0, signingKey: key });
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -73,11 +98,12 @@ const size = async (query: string) => (await (await fetch(`${base}/v1/size?${que
 describe('many years and the seforim in one pack', () => {
   it('publishes the seforim from their text packs, bundled by author', async () => {
     const meta = parsePublishMeta(JSON.parse(await readFile(path.join(dir, 'published', 'meta.json'), 'utf8')));
-    expect(meta).toMatchObject({ years: [5736, 5737], works: 1 });
-    const shelf = (await (await fetch(`${base}/v1/works`)).json()) as { bundles: Array<{ id: string; works: string[] }>; works: Array<{ id: string; texts: number; bundle: string }> };
-    // One small author: the "more seforim" bundle holds it.
-    expect(shelf.works).toEqual([expect.objectContaining({ id: 'tanya', texts: 1, bundle: 'more' })]);
-    expect(shelf.bundles.map((b) => b.works)).toEqual([['tanya']]);
+    expect(meta).toMatchObject({ years: [5736, 5737], works: 2 });
+    const shelf = (await (await fetch(`${base}/v1/works`)).json()) as { bundles: Array<{ id: string; works: string[] }>; works: Array<{ id: string; texts: number; bundle: string }>; authors: Array<{ id: string }> };
+    // Small authors: the "more seforim" bundle holds them.
+    expect(shelf.works).toEqual([expect.objectContaining({ id: 'tanya', texts: 1, bundle: 'more', author: 'alter-rebbe' }), expect.objectContaining({ id: 'igros', texts: 3, bundle: 'more', author: 'the-rebbe' })]);
+    expect(shelf.bundles.map((b) => b.works)).toEqual([['tanya', 'igros']]);
+    expect(shelf.authors.map((a) => a.id)).toEqual(['alter-rebbe', 'the-rebbe']);
   });
 
   it('takes the same months of several years', async () => {
@@ -88,14 +114,15 @@ describe('many years and the seforim in one pack', () => {
 
   it('builds the seforim alone, or added to farbrengens, signed, with every text in', async () => {
     const alone = await size('works=all');
-    expect(alone).toMatchObject({ occasions: 0, works: 1, slug: 'seforim-tanya', scope: { kind: 'custom', label: { he: 'כל הספרים' } } });
-    const both = await size('scope=5736-01,5737-01&sections=everything&works=more');
-    expect(both).toMatchObject({ occasions: 2, works: 1, slug: '5736-5737-tishrei-seforim' });
-    expect(both.scope.label.he).toBe('תשרי תשל״ו–תשל״ז + כל הספרים');
+    expect(alone).toMatchObject({ occasions: 0, works: 2, slug: 'seforim', scope: { kind: 'custom', label: { he: 'כל הספרים' } } });
+    expect(await size('works=tanya')).toMatchObject({ works: 1, slug: 'seforim-tanya' });
+    const both = await size('scope=5736-01,5737-01&sections=everything&works=tanya');
+    expect(both).toMatchObject({ occasions: 2, works: 1, slug: '5736-5737-tishrei-seforim-tanya' });
+    expect(both.scope.label.he).toBe('תשרי תשל״ו–תשל״ז + תניא');
     expect(both.parts).toEqual([expect.objectContaining({ occasions: 2, works: 1 })]);
 
-    const response = await fetch(`${base}/v1/build?scope=5736-01,5737-01&sections=everything&works=more`);
-    expect(response.headers.get('content-disposition')).toContain('5736-5737-tishrei-seforim-src.skpack');
+    const response = await fetch(`${base}/v1/build?scope=5736-01,5737-01&sections=everything&works=tanya`);
+    expect(response.headers.get('content-disposition')).toContain('5736-5737-tishrei-seforim-tanya-src.skpack');
     const file = path.join(dir, 'both.skpack');
     await writeFile(file, Buffer.from(await response.arrayBuffer()));
     const check = await verifyPack(file, { [key.keyId]: key.publicKey });
@@ -105,5 +132,30 @@ describe('many years and the seforim in one pack', () => {
 
     expect((await fetch(`${base}/v1/size?works=zohar`)).status).toBe(404);
     expect((await fetch(`${base}/v1/size`)).status).toBe(400);
+  });
+
+  it('takes a sefer by its volumes: their letters, without the whole sefer\'s search index', async () => {
+    const shelf = (await (await fetch(`${base}/v1/works`)).json()) as { works: Array<{ id: string; parts?: Array<{ id: string; label: { en: string }; texts: number; bytes: number }> }> };
+    expect(shelf.works.find((w) => w.id === 'igros')!.parts).toEqual([
+      { id: '1', label: { he: 'חלק א', en: 'Volume 1' }, texts: 2, bytes: Buffer.byteLength(LETTERS[0]!) + Buffer.byteLength(LETTERS[1]!) },
+      { id: '2', label: { he: 'חלק ב', en: 'Volume 2' }, texts: 1, bytes: Buffer.byteLength(LETTERS[2]!) },
+    ]);
+    // Tanya's contents are one unit: no parts.
+    expect(shelf.works.find((w) => w.id === 'tanya')!.parts).toBeUndefined();
+
+    const second = await size('works=igros:2');
+    expect(second).toMatchObject({ works: 1, objects: 1, slug: 'seforim-igros-2', scope: { label: { he: 'אגרות קודש · חלק ב', en: 'Igros Kodesh · Volume 2' } } });
+    const response = await fetch(`${base}/v1/build?works=igros:2`);
+    const file = path.join(dir, 'igros-2.skpack');
+    await writeFile(file, Buffer.from(await response.arrayBuffer()));
+    const check = await verifyPack(file, { [key.keyId]: key.publicKey });
+    expect(check.problems).toEqual([]);
+    expect(check.manifest!.entries.map((e) => e.itemId)).toEqual(['igros/3']);
+
+    // Both volumes are the whole sefer, its search index with it.
+    const whole = await size('works=igros:1,igros:2');
+    expect(whole).toMatchObject({ slug: 'seforim-igros', objects: (await size('works=igros')).objects });
+    expect(whole.objects).toBeGreaterThan(3);
+    expect((await fetch(`${base}/v1/size?works=igros:7`)).status).toBe(404);
   });
 });

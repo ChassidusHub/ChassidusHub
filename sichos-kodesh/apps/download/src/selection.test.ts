@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { DEFAULT_CUSTOM, axesOf, formatMb, monthTokens, monthsOf, sectionsParam } from './selection';
+import { DEFAULT_CUSTOM, axesOf, collectionInfo, countItems, formatMb, groupName, monthTokens, monthsOf, profileInfo, sectionsParam, yearLabel } from './selection';
 
 describe('the download site', () => {
   it('asks the pack API for exactly the content chosen', () => {
@@ -26,6 +26,20 @@ describe('the download site', () => {
 
   it('offers the axes the app browses by, in its order, and only those a collection has', () => {
     expect(axesOf({ moad: [{}], volume: [{}], parsha: [], unknown: [{}] }).map((a) => a.id)).toEqual(['volume', 'moad']);
+    expect(axesOf({ moad: [{}], volume: [{}] }, 'en').map((a) => a.name)).toEqual(['By volume', 'By moed']);
+  });
+
+  it('says it all in English too', () => {
+    const entry = (hebrewDate: string) => ({ hebrewDate, occasionId: 1, hebrewYear: 5746, occasionLabel: '', audio: [], pdfs: [] }) as CatalogEntry;
+    expect(monthsOf([entry('5746-11-20'), entry('5746-02-01')], 'en').map((m) => m.name)).toEqual(['Cheshvan', 'Menachem Av']);
+    expect(yearLabel(5736, 'en')).toBe('5736');
+    expect(yearLabel(5736)).toBe('תשל״ו');
+    expect(countItems(collectionInfo('likkuteiSichos', 'en'), 1, 'en')).toBe('1 sicha');
+    expect(countItems(collectionInfo('likkuteiSichos', 'en'), 3200, 'en')).toBe('3,200 sichos');
+    expect(countItems(collectionInfo('likkuteiSichos'), 1, 'he')).toBe('שיחה אחת');
+    expect(profileInfo('src', 'en').name).toBe('The original file');
+    expect(groupName('maamorim', 'year', { slug: '5711', name: 'תשי״א' }, 'en')).toBe('5711');
+    expect(groupName('maamorim', 'melukat', { slug: '2', name: 'ב' }, 'he')).toBe('מלוקט ח״ב');
   });
 
   it('writes sizes the way people read them', () => {

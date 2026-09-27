@@ -2,8 +2,8 @@ import { createWriteStream } from 'node:fs';
 import { mkdir, readdir, rename, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
-import type { CatalogWorksIndex } from '@sichos-kodesh/catalog';
-import type { ObjectsIndex, PackEntry, ShelfInput, WorksShelf } from '@sichos-kodesh/pack-format';
+import type { CatalogContentsEntry, CatalogWorkContents, CatalogWorksIndex } from '@sichos-kodesh/catalog';
+import type { ObjectsIndex, PackEntry, ShelfInput, WorkPart, WorksShelf } from '@sichos-kodesh/pack-format';
 import { MANIFEST_ENTRY_NAME, OBJECTS_DIR, OBJECTS_INDEX_SCHEMA_VERSION, PACK_EXTENSION, bundleWorks, parsePackManifest } from '@sichos-kodesh/pack-format';
 import type { YearShard } from '@sichos-kodesh/pack-api';
 import { entryStream, readEntry, readZipDirectory } from './zip.js';
@@ -20,9 +20,36 @@ import { entryStream, readEntry, readZipDirectory } from './zip.js';
 export interface PublishedWorks {
   shelf: WorksShelf;
   entries: Map<string, PackEntry[]>;
+  /** Each sefer with parts: part id -> the item ids of its texts (`works/<id>.parts.json`). */
+  parts: Map<string, Record<string, string[]>>;
   shard: YearShard;
   /** Objects written into the published directory this time. */
   written: number;
+}
+
+/**
+ * A sefer's parts: its contents' top-level sections, when every one of
+ * them is a named section and there are at least two (Igros Kodesh's
+ * volumes, Tanya's parts), each with the item ids, bytes and texts of the
+ * units under it. The whole sefer's search index belongs to none.
+ */
+export function workParts(workId: string, contents: CatalogWorkContents, entries: PackEntry[]): { parts: WorkPart[]; items: Record<string, string[]> } | null {
+  const top = contents.contents;
+  const isNode = (entry: CatalogContentsEntry): entry is Extract<CatalogContentsEntry, { entries: unknown }> => 'entries' in entry;
+  if (top.length < 2 || !top.every(isNode)) return null;
+  const units = (entry: CatalogContentsEntry): string[] => (isNode(entry) ? entry.entries.flatMap(units) : [entry.unitId]);
+  const byItem = new Map(entries.map((entry) => [entry.itemId, entry]));
+  const parts: WorkPart[] = [];
+  const items: Record<string, string[]> = {};
+  top.forEach((node, index) => {
+    const ids = [...new Set(units(node).map((unit) => `${workId}/${unit}`))].filter((id) => byItem.has(id));
+    if (ids.length === 0) return;
+    const refs = new Map(ids.flatMap((id) => byItem.get(id)!.refs.map((ref) => [ref.sha256, ref] as const)));
+    const id = String(index + 1);
+    items[id] = ids;
+    parts.push({ id, label: node.title, bytes: [...refs.values()].reduce((sum, ref) => sum + ref.bytes, 0), texts: [...refs.values()].filter((ref) => ref.kind === 'text').length });
+  });
+  return parts.length > 1 ? { parts, items } : null;
 }
 
 async function exists(file: string): Promise<boolean> {
@@ -36,6 +63,8 @@ export async function publishWorks(options: {
   packsDir: string;
   outDir: string;
   works: CatalogWorksIndex | null;
+  /** A sefer's contents, for its parts; none, and it is offered whole only. */
+  contents?: (workId: string) => Promise<CatalogWorkContents | null>;
   catalogVersion: string;
   builtAt: string;
   crcs: Map<string, number>;
@@ -75,20 +104,26 @@ export async function publishWorks(options: {
   }
   if (entries.size === 0) return null;
 
-  const inputs: ShelfInput[] = [...entries].map(([id, list]) => {
+  const parts = new Map<string, Record<string, string[]>>();
+  const inputs: ShelfInput[] = [];
+  for (const [id, list] of entries) {
     const work = options.works?.works.find((w) => w.id === id);
     const objects = new Map(list.flatMap((entry) => entry.refs.map((ref) => [ref.sha256, ref.bytes] as const)));
-    return {
+    const contents = options.contents ? await options.contents(id) : null;
+    const split = contents ? workParts(id, contents, list) : null;
+    if (split) parts.set(id, split.items);
+    inputs.push({
       id,
       title: work?.title ?? { he: list[0]?.label ?? id, en: id },
       ...(work?.authors?.[0] ? { author: work.authors[0] } : {}),
       bytes: [...objects.values()].reduce((sum, bytes) => sum + bytes, 0),
       texts: list.flatMap((entry) => entry.refs).filter((ref) => ref.kind === 'text').length,
-    };
-  });
+      ...(split ? { parts: split.parts } : {}),
+    });
+  }
   // The catalog's order of works, so a bundle lists them as the app does.
   const order = options.works?.works.map((w) => w.id) ?? [];
   inputs.sort((a, b) => (order.indexOf(a.id) + 1 || 1e9) - (order.indexOf(b.id) + 1 || 1e9));
   const shelf = bundleWorks(inputs, options.works?.authors ?? []);
-  return { shelf, entries, shard: { index, crc32 }, written };
+  return { shelf, entries, parts, shard: { index, crc32 }, written };
 }

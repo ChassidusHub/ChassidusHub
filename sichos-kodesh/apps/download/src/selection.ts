@@ -1,6 +1,7 @@
 import { HDate, gematriya } from '@hebcal/core';
 import { mafteiachMonthToken } from '@sichos-kodesh/catalog';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
+import type { Lang } from './i18n';
 
 /**
  * The site's vocabulary, as the pack API takes it (pack-format's parseScope
@@ -22,20 +23,26 @@ export interface CustomSections {
 }
 
 /** The months as the site offers them, Tishrei first. Adar is one choice: Adar in a plain year, Adar I and II in a leap year. */
-export const MONTHS: Array<{ key: string; name: string }> = [
-  { key: '01', name: 'תשרי' },
-  { key: '02', name: 'חשוון' },
-  { key: '03', name: 'כסלו' },
-  { key: '04', name: 'טבת' },
-  { key: '05', name: 'שבט' },
-  { key: '06', name: 'אדר' },
-  { key: '07', name: 'ניסן' },
-  { key: '08', name: 'אייר' },
-  { key: '09', name: 'סיוון' },
-  { key: '10', name: 'תמוז' },
-  { key: '11', name: 'אב' },
-  { key: '12', name: 'אלול' },
+export const MONTHS: Array<{ key: string; name: string; nameEn: string }> = [
+  { key: '01', name: 'תשרי', nameEn: 'Tishrei' },
+  { key: '02', name: 'חשוון', nameEn: 'Cheshvan' },
+  { key: '03', name: 'כסלו', nameEn: 'Kislev' },
+  { key: '04', name: 'טבת', nameEn: 'Teves' },
+  { key: '05', name: 'שבט', nameEn: 'Shevat' },
+  { key: '06', name: 'אדר', nameEn: 'Adar' },
+  { key: '07', name: 'ניסן', nameEn: 'Nissan' },
+  { key: '08', name: 'אייר', nameEn: 'Iyar' },
+  { key: '09', name: 'סיוון', nameEn: 'Sivan' },
+  { key: '10', name: 'תמוז', nameEn: 'Tammuz' },
+  { key: '11', name: 'אב', nameEn: 'Menachem Av' },
+  { key: '12', name: 'אלול', nameEn: 'Elul' },
 ];
+
+/** A month key's name in a language. */
+export function monthName(key: string, lang: Lang = 'he'): string {
+  const month = MONTHS.find((m) => m.key === key);
+  return month ? (lang === 'he' ? month.name : month.nameEn) : key;
+}
 
 /** A month key's mafteiach tokens in a year: Adar is 06A and 06B in a leap year. */
 export function monthTokens(year: number, key: string): string[] {
@@ -63,17 +70,18 @@ export interface MonthOption {
 }
 
 /** The months of a year that have farbrengens (Adar I and II together, as MONTHS has them), Tishrei first, with how many each has. */
-export function monthsOf(entries: CatalogEntry[]): MonthOption[] {
+export function monthsOf(entries: CatalogEntry[], lang: Lang = 'he'): MonthOption[] {
   const counts = new Map<string, number>();
   for (const entry of entries) {
     const key = mafteiachMonthToken(entry.hebrewDate).slice(0, 2);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
-  return MONTHS.filter((m) => counts.has(m.key)).map((m) => ({ token: m.key, name: m.name, occasions: counts.get(m.key)! }));
+  return MONTHS.filter((m) => counts.has(m.key)).map((m) => ({ token: m.key, name: monthName(m.key, lang), occasions: counts.get(m.key)! }));
 }
 
-export function yearLabel(year: number): string {
-  return gematriya(year);
+/** A Hebrew year as a reader of the language writes it: תשל״ו, or 5736. */
+export function yearLabel(year: number, lang: Lang = 'he'): string {
+  return lang === 'he' ? gematriya(year) : String(year);
 }
 
 /** Each audio quality as the site offers it: its name, what it is for, and whether it is the one to take. */
@@ -84,16 +92,16 @@ export interface ProfileInfo {
 }
 
 // Sizes as measured on the archive's recordings (opus16 came to 49% of the originals, opus24 to 74%).
-export const PROFILE_INFO: Record<string, ProfileInfo> = {
-  opus16: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, בחצי מהגודל', recommended: true },
-  opus24: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, בשלושה רבעים מהגודל' },
-  opus32: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, קצת קטן מהמקור' },
-  src: { name: 'הקובץ המקורי', note: 'ה-MP3 כמו שהוקלט, בגודל המלא' },
-  'mp3-32': { name: 'MP3 מוקטן', note: 'לנגני MP3 פשוטים' },
+const PROFILE_INFO: Record<string, Record<Lang, ProfileInfo>> = {
+  opus16: { he: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, בחצי מהגודל', recommended: true }, en: { name: 'Reduced file', note: 'Sounds the same, at half the size', recommended: true } },
+  opus24: { he: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, בשלושה רבעים מהגודל' }, en: { name: 'Reduced file', note: 'Sounds the same, at three quarters of the size' } },
+  opus32: { he: { name: 'קובץ מוקטן', note: 'נשמע אותו דבר, קצת קטן מהמקור' }, en: { name: 'Reduced file', note: 'Sounds the same, a little smaller than the original' } },
+  src: { he: { name: 'הקובץ המקורי', note: 'ההקלטה כמו שהיא, בגודל המלא' }, en: { name: 'The original file', note: 'The recording as it is, at full size' } },
+  'mp3-32': { he: { name: 'MP3 מוקטן', note: 'לנגני MP3 פשוטים' }, en: { name: 'Reduced MP3', note: 'For simple MP3 players' } },
 };
 
-export function profileInfo(profile: string): ProfileInfo {
-  return PROFILE_INFO[profile] ?? { name: profile, note: '' };
+export function profileInfo(profile: string, lang: Lang = 'he'): ProfileInfo {
+  return PROFILE_INFO[profile]?.[lang] ?? { name: profile, note: '' };
 }
 
 /** The qualities in the order to offer them: the recommended first, the originals last. */
@@ -117,40 +125,65 @@ export function formatMb(bytes: number): string {
 export interface CollectionInfo {
   id: string;
   name: string;
-  /** How one item and many are counted: "שיחה אחת", "12 שיחות". */
+  /** How one item and many are counted: "שיחה אחת", "12 שיחות"; "1 sicha", "12 sichos". */
   one: string;
   many: string;
 }
 
-export const COLLECTIONS: CollectionInfo[] = [
-  { id: 'farbrengens', name: 'התוועדויות', one: 'התוועדות אחת', many: 'התוועדויות' },
-  { id: 'likkuteiSichos', name: 'לקוטי שיחות', one: 'שיחה אחת', many: 'שיחות' },
-  { id: 'maamorim', name: 'מאמרים', one: 'מאמר אחד', many: 'מאמרים' },
-  { id: 'yomanim', name: 'יומנים', one: 'יומן אחד', many: 'יומנים' },
-  { id: 'michtavimKlolim', name: 'מכתבים כלליים', one: 'מכתב אחד', many: 'מכתבים' },
-  { id: 'hadranim', name: 'הדרנים', one: 'הדרן אחד', many: 'הדרנים' },
-  { id: 'reshimos', name: 'רשימות', one: 'רשימה אחת', many: 'רשימות' },
+const COLLECTION_NAMES: Array<{ id: string; he: Omit<CollectionInfo, 'id'>; en: Omit<CollectionInfo, 'id'> }> = [
+  { id: 'farbrengens', he: { name: 'התוועדויות', one: 'התוועדות אחת', many: 'התוועדויות' }, en: { name: 'Farbrengens', one: 'farbrengen', many: 'farbrengens' } },
+  { id: 'likkuteiSichos', he: { name: 'לקוטי שיחות', one: 'שיחה אחת', many: 'שיחות' }, en: { name: 'Likkutei Sichos', one: 'sicha', many: 'sichos' } },
+  { id: 'maamorim', he: { name: 'מאמרים', one: 'מאמר אחד', many: 'מאמרים' }, en: { name: 'Maamorim', one: 'maamar', many: 'maamorim' } },
+  { id: 'yomanim', he: { name: 'יומנים', one: 'יומן אחד', many: 'יומנים' }, en: { name: 'Yomanim', one: 'yoman', many: 'yomanim' } },
+  { id: 'michtavimKlolim', he: { name: 'מכתבים כלליים', one: 'מכתב אחד', many: 'מכתבים' }, en: { name: 'General letters', one: 'letter', many: 'letters' } },
+  { id: 'hadranim', he: { name: 'הדרנים', one: 'הדרן אחד', many: 'הדרנים' }, en: { name: 'Hadranim', one: 'hadran', many: 'hadranim' } },
+  { id: 'reshimos', he: { name: 'רשימות', one: 'רשימה אחת', many: 'רשימות' }, en: { name: 'Reshimos', one: 'reshimah', many: 'reshimos' } },
 ];
 
-export function collectionInfo(id: string): CollectionInfo {
-  return COLLECTIONS.find((c) => c.id === id) ?? { id, name: id, one: 'פריט אחד', many: 'פריטים' };
+/** The collections in the order the site offers them. */
+export const COLLECTION_IDS = COLLECTION_NAMES.map((c) => c.id);
+
+export function collectionInfo(id: string, lang: Lang = 'he'): CollectionInfo {
+  const found = COLLECTION_NAMES.find((c) => c.id === id);
+  if (found) return { id, ...found[lang] };
+  return lang === 'he' ? { id, name: id, one: 'פריט אחד', many: 'פריטים' } : { id, name: id, one: 'item', many: 'items' };
+}
+
+/** "שיחה אחת" / "12 שיחות"; "1 sicha" / "12 sichos". */
+export function countItems(info: CollectionInfo, n: number, lang: Lang): string {
+  if (lang === 'he') return n === 1 ? info.one : `${n.toLocaleString('he-IL')} ${info.many}`;
+  return `${n.toLocaleString('en-US')} ${n === 1 ? info.one : info.many}`;
+}
+
+/** "כל השיחות" / "All the sichos". */
+export function allOf(info: CollectionInfo, lang: Lang): string {
+  return lang === 'he' ? `כל ה${info.many}` : `All the ${info.many}`;
 }
 
 /** The browse axes the app offers, as the site names them, in the order to offer them. */
-export const AXES: Array<{ id: string; name: string }> = [
-  { id: 'volume', name: 'לפי חלק' },
-  { id: 'year', name: 'לפי שנה' },
-  { id: 'melukat', name: 'מלוקט' },
-  { id: 'melukatByMonths', name: 'מלוקט, מהדורה חדשה' },
-  { id: 'masechta', name: 'לפי מסכת' },
-  { id: 'moed', name: 'לפי מועד' },
-  { id: 'moad', name: 'לפי מועד' },
-  { id: 'parsha', name: 'לפי פרשה' },
-  { id: 'month', name: 'לפי חודש' },
-  { id: 'supplement', name: 'מילואים' },
+const AXES: Array<{ id: string; he: string; en: string }> = [
+  { id: 'volume', he: 'לפי חלק', en: 'By volume' },
+  { id: 'year', he: 'לפי שנה', en: 'By year' },
+  { id: 'melukat', he: 'מלוקט', en: 'Melukat' },
+  { id: 'melukatByMonths', he: 'מלוקט, מהדורה חדשה', en: 'Melukat, new edition' },
+  { id: 'masechta', he: 'לפי מסכת', en: 'By masechta' },
+  { id: 'moed', he: 'לפי מועד', en: 'By moed' },
+  { id: 'moad', he: 'לפי מועד', en: 'By moed' },
+  { id: 'parsha', he: 'לפי פרשה', en: 'By parsha' },
+  { id: 'month', he: 'לפי חודש', en: 'By month' },
+  { id: 'supplement', he: 'מילואים', en: 'Supplement' },
 ];
 
 /** A collection's axes that the site knows, in AXES order. */
-export function axesOf(groups: Record<string, unknown>): Array<{ id: string; name: string }> {
-  return AXES.filter((axis) => Array.isArray(groups[axis.id]) && (groups[axis.id] as unknown[]).length > 0);
+export function axesOf(groups: Record<string, unknown>, lang: Lang = 'he'): Array<{ id: string; name: string }> {
+  return AXES.filter((axis) => Array.isArray(groups[axis.id]) && (groups[axis.id] as unknown[]).length > 0).map((axis) => ({ id: axis.id, name: axis[lang] }));
+}
+
+/** A library group's name as the app shows it: a year by the language's numbers, a Likkutei Sichos volume and a Melukat volume by their word. */
+export function groupName(collection: string, axis: string, group: { slug: string; name: string; nameEn?: string }, lang: Lang): string {
+  const number = Number(group.slug);
+  if (axis === 'year' && Number.isInteger(number) && number > 5000) return yearLabel(number, lang);
+  if (axis === 'volume' && collection === 'likkuteiSichos' && Number.isInteger(number) && group.slug !== '40') return lang === 'he' ? `חלק ${group.name}` : `Volume ${number}`;
+  if (axis === 'melukat' && Number.isInteger(number)) return lang === 'he' ? `מלוקט ח״${group.name}` : `Melukat, volume ${number}`;
+  return lang === 'en' ? (group.nameEn ?? group.name) : group.name;
 }

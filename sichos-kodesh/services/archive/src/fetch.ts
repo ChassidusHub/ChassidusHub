@@ -161,6 +161,27 @@ export async function fetchToFile(url: string, dest: string, options: FetchOptio
 }
 
 /**
+ * A JEM recording: the name ccdb gives it ends in .mp3, but every
+ * "AR"-prefixed recording is on the CDN only as .m4a (and .opus) - the
+ * media proxy falls back the same way. So a 404 on the .mp3 tries the
+ * .m4a, then the .opus; the file keeps the catalog's name either way.
+ */
+export async function fetchJemToFile(url: string, dest: string, options: FetchOptions = {}, conditional: { etag?: string | null } = {}): Promise<FetchOutcome> {
+  const first = await fetchToFile(url, dest, options, conditional);
+  if (first.status !== 'unresolved' || first.httpStatus !== 404 || !/\.mp3$/i.test(url)) return first;
+  for (const [ext, mime] of [
+    ['m4a', 'audio/mp4'],
+    ['opus', 'audio/ogg'],
+  ] as const) {
+    await unlink(dest).catch(() => undefined);
+    const alt = await fetchToFile(url.replace(/\.mp3$/i, `.${ext}`), dest, options);
+    if (alt.status === 'ok') return { ...alt, contentType: mime };
+    if (alt.status !== 'unresolved') return alt;
+  }
+  return first;
+}
+
+/**
  * Google Drive: a small public file comes back directly; a large one comes
  * back as an HTML "can't scan for viruses" page with a confirm token to
  * re-request with; a private or deleted one comes back as HTML without a

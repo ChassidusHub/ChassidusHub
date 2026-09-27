@@ -11,7 +11,7 @@ import { parsePublishMeta } from '@sichos-kodesh/pack-api';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildPacks } from '../src/build.js';
 import { indexPacks } from '../src/packIndex.js';
-import { publishArchive } from '../src/publish.js';
+import { publishArchive, publishedFiles } from '../src/publish.js';
 import { parseScope, parseSections } from '../src/scope.js';
 import { servePublished } from '../src/serve.js';
 import { verifyPack } from '../src/verify.js';
@@ -113,6 +113,9 @@ describe('sk-pack publish and serve', () => {
     const meta = parsePublishMeta(JSON.parse(await readFile(path.join(dir, 'published', 'meta.json'), 'utf8')));
     // A collection with nothing archived (reshimos here) is not published.
     expect(meta).toMatchObject({ years: [5736], profiles: ['src'], objects: 4, catalogVersion: '1.1.0', library: ['maamorim'] });
+    // What the site advertises: each file once.
+    const audio = Object.keys(FILES).filter((id) => id.endsWith('.mp3'));
+    expect(meta!.files).toEqual({ audio: audio.length, pdf: 4 - audio.length, text: 0, bytes: Object.values(FILES).reduce((sum, b) => sum + b.length, 0) });
     for (const bytes of Object.values(FILES)) expect((await stat(path.join(dir, 'published', 'objects', sha(bytes)))).size).toBe(bytes.length);
     // A second publish finds everything in place.
     const again = await publishArchive(store, { years: new Map([[5736, ENTRIES]]), library: { maamorim: MAAMORIM }, catalogVersion: '1.1.0', outDir: path.join(dir, 'published') });
@@ -169,5 +172,19 @@ describe('sk-pack publish and serve', () => {
     const pack = await fetch(`${base}/v1/packs/${index.packs[0]!.file}`);
     expect(Number(pack.headers.get('content-length'))).toBe(index.packs[0]!.bytes);
     expect((await fetch(`${base}/v1/packs/..%2F..%2Fmeta.json`)).status).toBe(404);
+  });
+});
+
+describe('publishedFiles', () => {
+  it('counts a recording once whatever its qualities, and sizes everything in the original', () => {
+    const entry = (kind: 'audio' | 'pdf' | 'text', sourceId: string, bytes: number, profile?: 'src' | 'opus16') => ({ kind, sourceId, bytes, collection: 'farbrengens' as const, itemId: '1', ...(profile ? { profile } : {}) });
+    const objects = {
+      a1: entry('audio', 'JEMSK0001A.mp3', 1000, 'src'),
+      a2: entry('audio', 'JEMSK0001A.mp3', 300, 'opus16'),
+      b2: entry('audio', 'AR0000002.mp3', 200, 'opus16'),
+      p1: entry('pdf', 'DRIVE1', 50),
+      t1: entry('text', 'igros:1', 7),
+    };
+    expect(publishedFiles({ schema: 1, version: '1.1.0', builtAt: '2026-09-27T00:00:00Z', objects } as never)).toEqual({ audio: 2, pdf: 1, text: 1, bytes: 1000 + 200 + 50 + 7 });
   });
 });

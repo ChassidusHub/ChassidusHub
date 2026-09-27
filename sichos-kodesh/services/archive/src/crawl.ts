@@ -1,7 +1,7 @@
 import { unlink } from 'node:fs/promises';
 import type { AudioProfile, ObjectKind } from '@sichos-kodesh/pack-format';
 import { nowIso } from './db.js';
-import { fetchDriveToFile, fetchToFile, type FetchOptions } from './fetch.js';
+import { fetchDriveToFile, fetchJemToFile, type FetchOptions } from './fetch.js';
 import { ArchiveStore, hashFile } from './store.js';
 
 /**
@@ -27,6 +27,8 @@ export interface CrawlOptions extends FetchOptions {
   dryRun?: boolean;
   /** Stop retrying a url after this many failed runs. */
   maxRunsPerUrl?: number;
+  /** Also ask again for what upstream said was gone (after the fetcher learned a new way to find it). */
+  retryUnresolved?: boolean;
   log?: (line: string) => void;
 }
 
@@ -61,7 +63,7 @@ FROM (
     AND (:datePrefix = '' OR hebrew_date LIKE :datePrefix || '-%')
 ) w
 LEFT JOIN sources s ON s.source = w.source AND s.url = w.url
-WHERE (s.status IS NULL OR s.status = 'error')
+WHERE (s.status IS NULL OR s.status = 'error' OR (:retryUnresolved = 1 AND s.status = 'unresolved'))
   AND (:source = '' OR w.source = :source)
 ORDER BY w.source, w.url
 LIMIT :limit`;
@@ -107,10 +109,11 @@ export async function crawl(store: ArchiveStore, options: CrawlOptions = {}): Pr
     collection: options.collection ?? '',
     year: scope?.year ?? null,
     datePrefix: scope?.datePrefix ?? '',
+    retryUnresolved: options.retryUnresolved ? 1 : 0,
     limit,
   }) as unknown as WantedUrl[];
   const result: CrawlResult = { attempted: 0, fetched: 0, bytes: 0, unresolved: 0, errors: 0, skippedExisting: 0, commitId: null };
-  const pending = rows.filter((row) => (row.attempts ?? 0) < maxRuns);
+  const pending = rows.filter((row) => (row.status === 'unresolved' && options.retryUnresolved) || (row.attempts ?? 0) < maxRuns);
   if (pending.length === 0 || options.dryRun) {
     if (options.dryRun) log(`dry run: ${pending.length} url(s) would be fetched (${rows.length - pending.length} past the retry cap)`);
     return result;
@@ -131,7 +134,7 @@ export async function crawl(store: ArchiveStore, options: CrawlOptions = {}): Pr
       result.attempted += 1;
       const attempts = (row.attempts ?? 0) + 1;
       const tmp = store.tmpPath();
-      const outcome = row.source === 'drive' ? await fetchDriveToFile(row.source_id, row.resource_key, tmp, options) : await fetchToFile(row.url, tmp, options);
+      const outcome = row.source === 'drive' ? await fetchDriveToFile(row.source_id, row.resource_key, tmp, options) : await fetchJemToFile(row.url, tmp, options);
       if (outcome.status !== 'ok') {
         await unlink(tmp).catch(() => undefined);
         const status = outcome.status === 'unresolved' ? 'unresolved' : 'error';
