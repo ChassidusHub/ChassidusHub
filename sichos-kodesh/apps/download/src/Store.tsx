@@ -28,21 +28,28 @@ const SECTION_KEYS: Array<keyof CustomSections> = ['audio', 'sichosKodesh', 'tor
 
 type Months = { now: string; next: string };
 
-/** Years picked elsewhere (the kvius card's "other months") for the farbrengens shelf to open on. */
-interface FarbrengensPreset {
-  years: number[];
-  nonce: number;
-}
-
-/** This year's kvius: its years - all or some - and the farbrengens of this month, next month or the whole year in one tap. */
-function KviusCard({ kvius, months, cart, onAdd, onRemove, onOtherMonths }: { kvius: Kvius; months: Months; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void; onOtherMonths: (years: number[]) => void }) {
+/**
+ * This year's kvius: all of it in one tap, or part of it - some of its
+ * years, some of its months, or both. This month, next month and the
+ * whole year are one tap each; other months open in the card itself, each
+ * with how many farbrengens the kvius years had in it.
+ */
+function KviusCard({ kvius, months, cart, onAdd, onRemove }: { kvius: Kvius; months: Months; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void }) {
   const { t, lang } = useI18n();
   const [years, setYears] = useState<number[]>(kvius.years);
+  const [choosing, setChoosing] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  // The months of the years picked, counted, once the months are asked for.
+  const catalogs = useLoad<CatalogEntry[][] | null>((signal) => (choosing ? Promise.all(years.map((y) => api.catalogYear(y, signal))) : Promise.resolve(null)), [choosing, years.join(',')]);
+  const monthOptions = catalogs.state === 'ready' && catalogs.value ? monthsOf(catalogs.value.flat(), lang) : MONTHS.map((m) => ({ token: m.key, name: monthName(m.key, lang), occasions: 0 }));
+  const counted = catalogs.state === 'ready' && catalogs.value !== null;
   const offers: Array<{ label: string; item: CartItem }> = [
     { label: t.kviusNow(monthName(months.now, lang)), item: { kind: 'farbrengens', years, months: [months.now], kvius: true } },
     { label: t.kviusNext(monthName(months.next, lang)), item: { kind: 'farbrengens', years, months: [months.next], kvius: true } },
     { label: t.kviusWhole, item: { kind: 'farbrengens', years, months: [], kvius: true } },
   ];
+  const chosen = MONTHS.filter((m) => picked.includes(m.key)).map((m) => m.key);
+  const some: CartItem = { kind: 'farbrengens', years, months: chosen, kvius: true };
   const detail = years.length === 1 ? yearLabel(years[0]!, lang) : t.nYears(years.length);
   return (
     <section className="card kvius" aria-labelledby="kvius-title">
@@ -83,9 +90,35 @@ function KviusCard({ kvius, months, cart, onAdd, onRemove, onOtherMonths }: { kv
           {offers.map((offer) => (
             <AddButton key={offer.label} inCart={hasItem(cart, offer.item)} onAdd={() => onAdd(offer.item)} onRemove={() => onRemove(offer.item)} label={offer.label} detail={detail} />
           ))}
-          <button type="button" className="text-button kvius-other" onClick={() => onOtherMonths(years)}>
-            {t.kviusOther}
+          <button type="button" className="text-button kvius-other" aria-expanded={choosing} aria-controls="kvius-months" onClick={() => setChoosing(!choosing)}>
+            {choosing ? t.kviusCloseMonths : t.kviusChooseMonths}
           </button>
+        </div>
+      )}
+      {kvius.years.length > 0 && choosing && (
+        <div className="kvius-months" id="kvius-months">
+          <Field title={t.months} hint={counted ? t.kviusMonthsHint : undefined}>
+            <div className="chips" role="group" aria-label={t.months}>
+              {monthOptions.map((month) => (
+                <ToggleChip key={month.token} id={`kvius-month-${month.token}`} on={picked.includes(month.token)} mark={month.token === months.now ? 'now' : undefined} onChange={(on) => setPicked(toggled(picked, month.token, on))}>
+                  {month.name}
+                  {month.token === months.now && <span className="chip-flag">{t.flagNow}</span>}
+                  {month.token === months.next && <span className="chip-flag chip-flag-soft">{t.flagNext}</span>}
+                  {counted && <span className="chip-count">{month.occasions}</span>}
+                </ToggleChip>
+              ))}
+            </div>
+            {catalogs.state === 'loading' && <p className="field-hint">{t.loadingMonths}</p>}
+          </Field>
+          <div className="shelf-action">
+            <AddButton
+              inCart={chosen.length > 0 && hasItem(cart, some)}
+              disabled={chosen.length === 0}
+              onAdd={() => onAdd(some)}
+              onRemove={() => onRemove(some)}
+              detail={chosen.length === 0 ? t.pickFirst : `${chosen.map((m) => monthName(m, lang)).join(', ')} · ${detail}`}
+            />
+          </div>
         </div>
       )}
     </section>
@@ -93,16 +126,13 @@ function KviusCard({ kvius, months, cart, onAdd, onRemove, onOtherMonths }: { kv
 }
 
 /** The farbrengens shelf: years (the kvius years, all of them, or a choice), then months - the same months of every year picked. */
-function FarbrengensShelf({ meta, kvius, months: current, preset, cart, onAdd, onRemove }: { meta: Meta; kvius: Kvius; months: Months; preset: FarbrengensPreset | null; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void }) {
+function FarbrengensShelf({ meta, kvius, months: current, cart, onAdd, onRemove }: { meta: Meta; kvius: Kvius; months: Months; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void }) {
   const { t, lang } = useI18n();
   const kviusYears = new Set(kvius.years);
   const latest = meta.years[meta.years.length - 1]!;
-  const [years, setYears] = useState<number[]>(() => preset?.years ?? (kvius.years.length > 0 ? [...kvius.years] : [latest]));
+  const [years, setYears] = useState<number[]>(() => (kvius.years.length > 0 ? [...kvius.years] : [latest]));
   const [months, setMonths] = useState<string[]>([]);
   const [choosing, setChoosing] = useState(false);
-  useEffect(() => {
-    if (preset) setYears(preset.years);
-  }, [preset]);
   const single = years.length === 1 ? years[0]! : null;
   const year = useLoad<CatalogEntry[] | null>((signal) => (single ? api.catalogYear(single, signal) : Promise.resolve(null)), [single]);
   const monthOptions = useMemo(
@@ -277,7 +307,7 @@ function LibraryShelf({ meta, cart, onAdd, onRemove }: { meta: Meta; cart: CartI
 
 type ShelfId = 'farbrengens' | 'library' | 'works';
 
-function Shelves({ meta, shelf, kvius, months, preset, cart, onAdd, onRemove, tab, onTab }: { meta: Meta; shelf: WorksShelf | null; kvius: Kvius; months: Months; preset: FarbrengensPreset | null; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void; tab: ShelfId; onTab: (tab: ShelfId) => void }) {
+function Shelves({ meta, shelf, kvius, months, cart, onAdd, onRemove, tab, onTab }: { meta: Meta; shelf: WorksShelf | null; kvius: Kvius; months: Months; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void; tab: ShelfId; onTab: (tab: ShelfId) => void }) {
   const { t } = useI18n();
   const tabs: Array<{ id: ShelfId; name: string; icon: ReactNode }> = [
     { id: 'farbrengens', name: t.shelfFarbrengens, icon: <HeadphonesIcon size={18} /> },
@@ -295,7 +325,7 @@ function Shelves({ meta, shelf, kvius, months, preset, cart, onAdd, onRemove, ta
         ))}
       </div>
       <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
-        {tab === 'farbrengens' && <FarbrengensShelf meta={meta} kvius={kvius} months={months} preset={preset} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
+        {tab === 'farbrengens' && <FarbrengensShelf meta={meta} kvius={kvius} months={months} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
         {tab === 'library' && <LibraryShelf meta={meta} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
         {tab === 'works' && shelf && <SeforimShelf shelf={shelf} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
       </div>
@@ -537,26 +567,19 @@ export function Store({ meta }: { meta: Meta }) {
     return { ...base, ...stored, profile: stored.profile && meta.profiles.includes(stored.profile) ? stored.profile : base.profile };
   });
   const [tab, setTab] = useState<ShelfId>('farbrengens');
-  const [preset, setPreset] = useState<FarbrengensPreset | null>(null);
   const cartRef = useRef<HTMLDivElement>(null);
   useEffect(() => saveCart(cart, settings), [cart, settings]);
 
   const add = (item: CartItem) => setCart((current) => addItem(current, item));
   const remove = (item: CartItem) => setCart((current) => removeItem(current, itemKey(item)));
-  // The kvius card's "other months": the farbrengens shelf, on the years picked there.
-  const otherMonths = (years: number[]) => {
-    setTab('farbrengens');
-    setPreset({ years, nonce: Date.now() });
-    document.getElementById('shelves')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
 
   return (
     <>
       <div className="store">
         <div className="store-main">
           <StepHeader n={1} title={t.step1Title} lead={t.step1Lead} />
-          <KviusCard kvius={kvius} months={months} cart={cart} onAdd={add} onRemove={remove} onOtherMonths={otherMonths} />
-          <Shelves meta={meta} shelf={shelf} kvius={kvius} months={months} preset={preset} cart={cart} onAdd={add} onRemove={remove} tab={tab} onTab={setTab} />
+          <KviusCard kvius={kvius} months={months} cart={cart} onAdd={add} onRemove={remove} />
+          <Shelves meta={meta} shelf={shelf} kvius={kvius} months={months} cart={cart} onAdd={add} onRemove={remove} tab={tab} onTab={setTab} />
         </div>
         <div className="store-cart" ref={cartRef}>
           <CartPanel

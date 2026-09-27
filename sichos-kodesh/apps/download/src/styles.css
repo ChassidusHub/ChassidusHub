@@ -1519,6 +1519,14 @@ div.error p {
   margin-inline-start: 4px;
 }
 
+/* Part of the kvius by month, opened in the card itself. */
+.kvius-months {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--accent-line);
+}
+
 /* A sefer, and the volumes of one that has them. */
 .sefer-parts-toggle {
   margin: 4px 0 0;

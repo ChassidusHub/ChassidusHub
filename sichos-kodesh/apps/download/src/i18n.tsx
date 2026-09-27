@@ -91,7 +91,9 @@ function strings(lang: Lang) {
     kviusNow: (month: string) => (he ? `${month}, החודש` : `${month}, this month`),
     kviusNext: (month: string) => (he ? `${month}, החודש הבא` : `${month}, next month`),
     kviusWhole: he ? 'השנה כולה' : 'The whole year',
-    kviusOther: he ? 'חודשים אחרים…' : 'Other months…',
+    kviusChooseMonths: he ? 'בחירת חודשים…' : 'Choose months…',
+    kviusCloseMonths: he ? 'סגירת החודשים' : 'Close the months',
+    kviusMonthsHint: he ? 'המספר: כמה התוועדויות היו בחודש בשנות הקביעות שנבחרו.' : 'The number: how many farbrengens the kvius years picked had that month.',
 
     shelvesLabel: he ? 'מדפים' : 'Shelves',
     shelfFarbrengens: he ? 'התוועדויות' : 'Farbrengens',

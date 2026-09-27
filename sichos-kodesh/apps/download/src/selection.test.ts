@@ -29,6 +29,16 @@ describe('the download site', () => {
     expect(axesOf({ moad: [{}], volume: [{}] }, 'en').map((a) => a.name)).toEqual(['By volume', 'By moed']);
   });
 
+  it('counts a month across several years: the kvius years picked', () => {
+    const entry = (hebrewYear: number, hebrewDate: string) => ({ hebrewDate, occasionId: 1, hebrewYear, occasionLabel: '', audio: [], pdfs: [] }) as CatalogEntry;
+    const years = [[entry(5736, '5736-01-13'), entry(5736, '5736-06A-14')], [entry(5764, '5764-01-20'), entry(5764, '5764-06B-14'), entry(5764, '5764-05-10')]];
+    expect(monthsOf(years.flat())).toEqual([
+      { token: '01', name: 'תשרי', occasions: 2 },
+      { token: '05', name: 'שבט', occasions: 1 },
+      { token: '06', name: 'אדר', occasions: 2 },
+    ]);
+  });
+
   it('says it all in English too', () => {
     const entry = (hebrewDate: string) => ({ hebrewDate, occasionId: 1, hebrewYear: 5746, occasionLabel: '', audio: [], pdfs: [] }) as CatalogEntry;
     expect(monthsOf([entry('5746-11-20'), entry('5746-02-01')], 'en').map((m) => m.name)).toEqual(['Cheshvan', 'Menachem Av']);
