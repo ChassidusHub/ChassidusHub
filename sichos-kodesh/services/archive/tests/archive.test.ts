@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { crawl, parseCrawlScope } from '../src/crawl.js';
 import { fetchJemToFile } from '../src/fetch.js';
 import { loadInventory } from '../src/inventory.js';
-import { exportObjectsIndex } from '../src/objectsIndex.js';
+import { exportObjectsIndex, namesByObject } from '../src/objectsIndex.js';
 import { stats, unresolved } from '../src/report.js';
 import { ArchiveStore } from '../src/store.js';
 import { verify } from '../src/verify.js';
@@ -230,6 +230,45 @@ describe('sk-archive end to end', () => {
     expect(await readFile(store.objectPath(missing))).toEqual(AUDIO_B);
     expect((await verify(store, { sample: 1 })).ok).toBe(4);
     expect(stats(store)).toMatchObject({ objects: { count: 4, lost: 0 }, refs: 5, wanted: { fetched: 4, errored: 0 }, commits: 2 });
+  });
+});
+
+describe('objects index aliases', () => {
+  let dir: string;
+  let store: ArchiveStore;
+  beforeAll(async () => {
+    dir = await mkdtemp(path.join(tmpdir(), 'sk-archive-aliases-'));
+    store = await ArchiveStore.open(path.join(dir, 'root'));
+  });
+  afterAll(async () => {
+    store.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it('lists every other name upstream serves the same bytes under, on the object and its encoding, and never a name that is two different objects', () => {
+    const commit = store.beginCommit('test', 'aliases');
+    const object = store.db.prepare("INSERT INTO objects VALUES (?, ?, ?, ?, NULL, ?, 'now')");
+    const ref = store.db.prepare("INSERT INTO refs (collection, item_id, sha256, kind, source_id, role, commit_id) VALUES (?, ?, ?, 'audio', ?, ?, ?)");
+    object.run('a'.repeat(64), 100, 'audio', 'src', commit);
+    object.run('b'.repeat(64), 200, 'audio', 'src', commit);
+    object.run('c'.repeat(64), 300, 'audio', 'src', commit);
+    // One recording JEM lists under two file names, in two farbrengens.
+    ref.run('farbrengens', '500', 'a'.repeat(64), 'AR0018053.mp3', '0', commit);
+    ref.run('farbrengens', '501', 'a'.repeat(64), 'AR0018054.mp3', '0', commit);
+    ref.run('jemEvents', '1', 'a'.repeat(64), 'AR0018053.mp3', '0', commit);
+    // One name that two items resolved to different bytes: an alias of neither.
+    ref.run('jemEvents', '2', 'b'.repeat(64), 'SHARED.mp3', '0', commit);
+    ref.run('jemEvents', '3', 'c'.repeat(64), 'SHARED.mp3', '0', commit);
+    ref.run('jemEvents', '3', 'c'.repeat(64), 'C.mp3', '1', commit);
+    store.db.prepare("INSERT INTO derivations VALUES (?, 'opus16', ?, 40, 'test', 'now')").run('a'.repeat(64), 'd'.repeat(64));
+
+    expect(namesByObject(store).ambiguous).toEqual(['SHARED.mp3']);
+    const index = exportObjectsIndex(store, '1.0.0');
+    expect(parseObjectsIndex(JSON.parse(JSON.stringify(index)))).not.toBeNull();
+    expect(index.objects['a'.repeat(64)]).toMatchObject({ sourceId: 'AR0018053.mp3', aliases: ['AR0018054.mp3'], itemId: '500' });
+    expect(index.objects['d'.repeat(64)]).toMatchObject({ profile: 'opus16', sourceId: 'AR0018053.mp3', aliases: ['AR0018054.mp3'] });
+    expect(index.objects['b'.repeat(64)]).not.toHaveProperty('aliases');
+    expect(index.objects['c'.repeat(64)]).toMatchObject({ aliases: ['C.mp3'] });
   });
 });
 
