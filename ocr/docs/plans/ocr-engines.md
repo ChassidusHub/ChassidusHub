@@ -1,0 +1,502 @@
+# RebbeHub OCR: the plan
+
+Written 2026-09-28. A plan, not a build. The OCR engine behind RebbeHub's
+"machine OCR" text layer (`rebbehub.md` §4, §7, §9) and the Sichos Kodesh
+app. It lives in its own repo for now and plugs into RebbeHub's job queue later
+as the `services/ml` OCR worker (`rebbehub.md` §10).
+
+## 1. The goal, in numbers
+
+"Near-100%" has to be measurable, or it will slide. We measure on **frozen
+test pages from our own sets**, never on generic benchmarks:
+
+| Metric | Target: Kehot print | Target: hanachos (typed/mimeo) |
+| --- | --- | --- |
+| Character error rate (CER), body text | ≤ 0.1% (≈ 2 errors per page) | ≤ 0.5% |
+| CER, footnotes (small type / Rashi script) | ≤ 0.3% | ≤ 1% |
+| Region classification (header, body, footnote…) F1 | ≥ 99.5% | ≥ 98% |
+| Reading order exactly right, per page | ≥ 99% | ≥ 97% |
+| Footnote marker ↔ footnote link accuracy | ≥ 99.5% | ≥ 98% |
+| **Auto-accept precision**: errors in lines the system marks "consensus" | ≤ 1 per 10,000 chars | ≤ 1 per 5,000 chars |
+
+The last row matters most. No model will be perfect on every line of a
+million pages. The system is built to **know which lines it is sure of**.
+Those lines go to checking at low priority. The rest go first to a person,
+so the human time goes where the errors are. Everything stays labelled
+machine text until a person checks it (`rebbehub.md` §9, "machine drafts,
+human truth").
+
+## 2. What we are reading: source families
+
+The catalog is not one problem but a few distinct **families**, each
+with its own fonts, layout and damage. Every model decision below is made
+per family.
+
+| Family | Examples | Text | Typical difficulty |
+| --- | --- | --- | --- |
+| **K1 Kehot letterpress / early offset** (5710s–5750s) | Likkutei Sichos, Sefer HaMaamarim, Igros Kodesh, early Toras Menachem | Hebrew square body; footnotes in smaller square or Rashi script; some Yiddish (early LS volumes) | Broken/filled letters, show-through, page curl, tight footnotes in 2–3 columns |
+| **K2 Kehot phototypeset / modern** (5750s→) | Later Toras Menachem, Sefer HaSichos, reprints | Clean square + Rashi | Easy text; dense apparatus, many abbreviations (ראה לקו"ש ח"ב ע' …) |
+| **H1 Hanachos, typewritten Hebrew** | Sichos Kodesh / hanachos bilti mugah | Hebrew typewriter faces | Mimeo/stencil bleed, faint carbon, overstrikes, hand corrections |
+| **H2 Hanachos, typewritten Yiddish** | Yiddish Sichos Kodesh | Yiddish typewriter (אַ אָ װ ײ …) | As H1, plus Yiddish orthography and mixed loshn-koydesh words |
+| **M Manuscript / handwritten** | Facsimiles of the Rebbe's ksav yad, hagahos on hanachos | Handwriting | Out of scope now: detected and flagged, not read (`rebbehub.md` §9: "handwriting later") |
+| **O Other catalog PDFs** | HebrewBooks scans, kovtzim, yearbooks, teshuros | Everything above plus modern DTP | Onboarded as new families by the recipe in §8 |
+| **D Born-digital PDFs** | Most teshuros, newer kovtzim | Embedded text | Often *not an OCR problem*: extract the text layer. Legacy Hebrew fonts give reversed or mis-encoded text, so repair it and check it against a quick OCR pass |
+
+Phase 0 (§10) checks this table against the real catalog. It samples
+pages from every set and clusters them by font and layout. A cluster that
+fits no family becomes a new one.
+
+## 3. Model choice
+
+### 3.1 The architecture: layout → lines → two independent readers
+
+We do **not** use one end-to-end "page in, text out" model as the source of
+truth. We use a classic two-stage pipeline with a second, different model
+checking it:
+
+```
+page image
+  │
+  ├─ preprocess (deskew, dewarp, crop, contrast; keep grayscale)
+  ├─ LAYOUT: regions (header / body / heading / footnote / …) + text lines
+  │          (baselines + polygons) + reading order
+  ├─ READER A (primary): line recogniser, CTC, trained per family
+  ├─ READER B (checker): fine-tuned vision-language model on the same line crops
+  ├─ CONSENSUS: align A vs B per character; agree → "consensus";
+  │             disagree → "uncertain" with both readings kept
+  ├─ LEXICON FLAGS: words unknown to our Chabad corpus lexicon → flag, never rewrite
+  └─ PAGE QA: page number sequence, running header vs catalog, charset, line counts
+```
+
+Why this shape:
+
+- **Line positions are a contract.** RebbeHub stores every line's position
+  on the page image so search hits light up on the scan (§4). A line-based
+  pipeline produces them natively. Page-level VLMs don't produce them
+  reliably.
+- **No invented text.** A CTC line recogniser can misread a letter, but it
+  cannot write a fluent sentence that isn't on the page. Page-level VLMs
+  sometimes do exactly that: they skip a line, repeat one, or "correct"
+  the Rebbe's wording toward a more common phrase. For the Rebbe's words
+  that is the worst possible failure. VLMs are used only as a checker
+  (Reader B), on single lines, where a hallucination shows up as a
+  disagreement.
+- **Two different model types make different mistakes.** When a CTC model
+  and a transformer VLM give the same reading, that agreement is strong
+  evidence the line is right. This is how the auto-accept precision target
+  in §1 is reached.
+- **Cheap per-family specialisation.** Line recognisers are small (a few
+  million parameters). Fine-tuning one per family takes hours on one GPU,
+  and inference runs on CPU if needed.
+
+### 3.2 Reader A: the primary recogniser
+
+**Choice: Kraken** (Apache-2.0), trained and managed through
+**eScriptorium** (self-hosted).
+
+- Built for right-to-left scripts, with bidi handled correctly. It is
+  widely used for Hebrew in digital-humanities projects, and community
+  Hebrew print models exist to start from (HTR-United / Zenodo).
+- One tool does both baseline and region segmentation (§5) and
+  recognition. Kraken reads and writes PAGE-XML and ALTO.
+- eScriptorium is the annotation tool in the same ecosystem (§4.4).
+  Annotated lines train the next model directly.
+- Model per family: one shared **base Hebrew-print model** trained on
+  everything, then fine-tuned heads for K1, K2, H1, H2. A small font
+  classifier on each region picks the head. The Rashi script inside
+  K1/K2 footnotes gets its own head.
+
+**Challenger, run in the Phase 0 benchmark:** a transformer line
+recogniser (a PARSeq/TrOCR-style encoder-decoder, fine-tuned). If it beats
+Kraken by a clear margin on a family, it becomes Reader A for that family.
+The pipeline treats readers as plug-ins with the same interface.
+
+**Baselines only (to know where we stand):** Tesseract `heb`/`yid`, Surya,
+one commercial API (Google Document AI or Azure) as a reference number, and
+any Hebrew-specific OCR we can get to run (e.g. Dicta's). Commercial
+APIs are not candidates for production. They cost too much at catalog
+scale, give no per-family training and create outside dependency.
+
+### 3.3 Reader B: the checker
+
+**Choice: an open vision-language model in the 3B–8B range** (Qwen-VL
+family or whatever open model leads on Hebrew in the Phase 0 benchmark),
+**LoRA-fine-tuned on our line crops** with the same ground truth as Reader
+A.
+
+- Reader B reads single line crops, never whole pages. It is prompted to
+  transcribe exactly, with no normalisation.
+- It runs on every line during the benchmark and while training (to
+  measure agreement). In production it can run on every line or only on
+  the lines where Reader A is least confident. The choice depends on GPU
+  budget (§6.4).
+- It also serves as a **second opinion on hard lines** in the human
+  review tool. Both readings are shown and the person picks or types.
+
+### 3.4 Language knowledge: flags, not rewrites
+
+We have a large body of digital Chabad text: the Sichos-Kodesh corpus,
+chabadlibrary.org, Sefaria. From it we build:
+
+- a **word/abbreviation lexicon** per language (Hebrew, Yiddish, Aramaic),
+  including Chabad-specific abbreviations (לקו"ש, אדה"ז, כ"ק, מוהרש"ב …);
+- a **character n-gram model** used only to *re-rank* Reader A's beam
+  candidates when the image is truly ambiguous (e.g. ה/ח, ד/ר, ו/ז, ם/ס
+  on broken type).
+
+Rule: the language layer **may flag a word or re-rank the recogniser's own
+candidates; it may never insert a word the recogniser did not propose.**
+The printed page wins, including its typos. Correcting a printer's typo is
+an editorial act for a human, recorded as such.
+
+## 4. Training data pipeline
+
+### 4.1 Collecting scans
+
+- **Inventory**: start from what Sichos-Kodesh and RebbeHub already know:
+  `hebrewbooks-index`, the chabadlibrary.org tree, the archive's `sources`,
+  and our own hanacha scans. Output is one manifest row per scan:
+  sha256, set, volume, publisher/printing, year, source URL, rights state,
+  page count, resolution.
+- **Fetch originals**, never re-encoded copies. Pull the embedded page
+  images with `pdfimages` at native resolution instead of re-rendering.
+  Store by sha256 (same scheme as RebbeHub R2 `objects/<sha256>`).
+- **Rights**: training uses the private, `preserved`-tier copies
+  (`rebbehub.md` §8). They are never served. Trained models are not
+  published until the rights question in §12 is settled.
+- **Stratify, don't just take the first N**: sample pages across set ×
+  decade × printer × scan source × scan quality. Include bad pages on
+  purpose: stains, curl, faint mimeo, crooked scans.
+
+### 4.2 Transcription guidelines (written first, before any labelling)
+
+Consistent ground truth matters more than the choice of model. One short
+document, `gt/guidelines.md`, decides every character question once:
+
+- **Diplomatic transcription**: exactly what is printed. Keep printer
+  typos and the printed spelling. Don't expand abbreviations, and don't
+  add or remove nikkud.
+- **Character table** (with Unicode codepoints): gershayim `״` vs `"`,
+  geresh `׳` vs `'`, maqaf `־`, final letters, Yiddish ligatures `װ ױ ײ`
+  and `ײַ`, pasekh-alef `אַ`, komets-alef `אָ`, rafe, parentheses and
+  brackets in RTL, footnote markers (numbers, Hebrew letters, `*`).
+  The rule is **store what is printed, in normalised Unicode** (NFC, fixed
+  mark order), with one mapping table to RebbeHub's search normalisation
+  (`normalizeSearchText`).
+- **Layout marks**: every line belongs to a region with a type (§5).
+  Footnote markers are tagged as markers.
+- **Hanachos**: typed text vs handwritten corrections are separate layers.
+  Overstrikes record the final reading plus an "overstrike" flag.
+- **Unreadable**: a fixed placeholder (e.g. `⸢…⸣`) with a flag, never a
+  guess.
+- Every tenth page is transcribed twice by different people. Agreement
+  between them is tracked. Pages where they disagree get a ruling that is
+  added to the guidelines.
+
+### 4.3 Silver ground truth: use the text we already have
+
+This is the biggest lever. Digital text already exists for much of the
+catalog, including Likkutei Sichos, Igros Kodesh, Toras Menachem and many
+Sichos Kodesh. Aligning it to the scans gives thousands of labelled lines
+almost for free:
+
+1. Run a baseline model (pretrained Kraken) on the scan to get lines and
+   rough text.
+2. Align the page's rough OCR to the matching stretch of digital text:
+   locate it with anchored fuzzy matching, then align character by
+   character (edlib / Needleman-Wunsch).
+3. Keep a line as **silver** only if every difference is one the baseline
+   OCR plausibly made (low CER, confusable letter pairs). Throw away any
+   line where the digital edition *differs from the printing*. Digital
+   texts are often re-edited, with corrected typos, expanded
+   abbreviations, changed punctuation or moved footnotes. Silver must
+   describe the printed page, not the digital edition.
+4. People spot-check a random 2% of silver lines. If they find errors
+   above 0.2%, the filter is tightened.
+
+Silver trains the models. **Silver never goes into test sets.**
+
+### 4.4 Gold ground truth: people, in eScriptorium
+
+- A self-hosted eScriptorium where the model pre-fills every line and
+  people correct it line by line. They fix the segmentation first, then
+  the text.
+- Budget per family: **~300–500 gold pages** to train (K1 and H1/H2
+  likely need the most) plus a frozen **test set of ~100 pages per
+  family**. Test pages come from whole volumes that are never trained on.
+  Hold out volumes, not random lines, so the score isn't inflated by
+  pages the model has seen.
+- **Active learning** after the first round: the next pages to annotate
+  are the ones the current models find hardest (lowest confidence, most
+  A/B disagreement, most lexicon flags). Pages the model already reads
+  perfectly are not sent to people.
+- Later, every "Fix this line" in RebbeHub (`rebbehub.md` §7) on a
+  machine-OCR line is a new gold line. The feedback loop in §6.5 feeds it
+  back.
+
+### 4.5 Synthetic data (support only)
+
+We render lines from our digital corpus in fonts close to the printed ones
+(Hebrew typefaces similar to Kehot's, typewriter faces). Then we add damage:
+ink spread, broken type, mimeo bleed, blur, skew and noise. The use is
+**rare characters and abbreviations** that real pages have too few
+examples of. Synthetic data is never more than about 30% of any training
+mix and never in test sets.
+
+### 4.6 Data versioning
+
+Every dataset is a manifest of (image sha256, region/line id, text,
+source: silver/gold/synthetic, annotator, guideline version). The manifest
+itself is hashed. Every model records the hash of the dataset manifest it
+was trained on, so any output line can be traced to the model and data
+behind it.
+
+## 5. Layout handling
+
+### 5.1 Region types
+
+| Region | Goes to | Notes |
+| --- | --- | --- |
+| `running-header` | metadata, not text | Set / parsha / volume. Checked against the catalog |
+| `page-number` | metadata | Hebrew-letter or Arabic numerals. Must form a sequence |
+| `heading` / `subheading` | text, marks structure | Sicha/maamar titles, section heads. Proposes unit boundaries |
+| `body` | main text stream | Single or multi-column |
+| `footnote` | footnote stream | Often 2–3 columns, smaller type or Rashi script |
+| `footnote-continuation` | joins the previous page's footnote | Common in Likkutei Sichos |
+| `marginal` / `source-ref` | attached to the nearest body line | Side notes, source references |
+| `toc` / `index` | structured tables | Front and back matter |
+| `figure` / `facsimile` | image, flagged | Ksav yad facsimiles are family M and are not read yet |
+| `handwritten-note` | separate layer | Hagahos on hanachos |
+| `stamp` / `library-mark` / `noise` | dropped | Kept in PAGE-XML, never in text |
+
+### 5.2 How it works
+
+- **Lines**: Kraken's baseline segmenter, fine-tuned on our gold pages.
+  Baselines + polygons per line.
+- **Regions**: a region detector (Kraken region segmentation, or a
+  YOLO/DETR-class detector if the benchmark shows it is clearly better),
+  trained on the region types above.
+- **Page templates per set**: each set's pages are very regular. Running
+  heads sit in the same place, footnotes are divided off by a rule and
+  columns keep the same widths. From the gold pages we learn a template
+  per set and printing, and use it two ways: as a prior (it corrects
+  borderline region calls) and as an **anomaly detector** (a page that
+  doesn't fit its template goes to review).
+- **Reading order**: right-to-left and top-to-bottom, column by column,
+  and body before footnotes. Rules plus the set template handle most
+  pages. Pages that break the template are flagged, not guessed.
+- **Footnotes**: markers in the body text are found (superscripts, Hebrew
+  letters, `*`) and matched to footnote labels by number and sequence.
+  A footnote that continues past the page is joined to the next page's
+  `footnote-continuation`. Numbering must be continuous within a unit, and
+  any gap is flagged.
+- **Across pages**: paragraphs that cross a page break are joined when the
+  unit text is assembled. Running heads and page numbers are removed from
+  the text stream but kept with their positions.
+- **Structure → catalog**: headings plus running heads suggest unit
+  boundaries ("sicha 3 starts on p. 14") and contents-map entries
+  (`rebbehub.md` §4). The OCR bot proposes them as suggestions, never
+  merges them.
+
+## 6. Running the whole catalog
+
+### 6.1 Stages
+
+Each stage is an idempotent job keyed by
+`(scan sha256, page, stage, model version)`, so re-running is safe and
+cheap:
+
+```
+ingest → triage → render → preprocess → classify → layout → read A → read B
+       → consensus + flags → page QA → assemble → export
+```
+
+- **triage**: born-digital or scanned? A born-digital PDF (family D)
+  takes the text-extraction path. That means repairing legacy Hebrew
+  encodings and fixing reversed text, then comparing the result with a
+  quick OCR pass. It falls back to OCR if they disagree.
+- **classify**: set/family (from the catalog when known, otherwise from
+  the font/layout classifier), plus a scan-quality score.
+- **page QA** (automatic, per page): page numbers in sequence; running
+  header matches the catalog's set/volume/parsha; only expected
+  characters; line count within the template's range; footnote numbering
+  continuous. A failed check is a flag shown to reviewers, never a silent
+  fix.
+
+### 6.2 Orchestration
+
+- **Now (own repo):** a Python package (`rebbeocr`) with one CLI command
+  per stage and a SQLite job/manifest database. It runs on a single GPU
+  machine or rented GPUs. No cluster, no framework to maintain.
+- **Later (inside RebbeHub):** the same stage functions run in the Python
+  worker container that takes jobs from RebbeHub's queue
+  (`rebbehub.md` §10). The SQLite manifest is replaced by RebbeHub's
+  `file`/`derivation` tables. Only the adapter changes; the stages don't.
+
+### 6.3 Order of work
+
+Sets are processed in order of value and of how much ground truth exists:
+
+1. **Likkutei Sichos**: the most digital text for silver GT and the most
+   cited set. This proves the K1 pipeline.
+2. **Sichos Kodesh hanachos** (H1/H2): the main need for the Sichos
+   Kodesh app.
+3. Toras Menachem, Sefer HaMaamarim, Igros Kodesh (K1/K2).
+4. Everything else, set by set, onboarding each new family (§8).
+
+### 6.4 Throughput and cost (estimate; Phase 0 measures it)
+
+- Layout + Reader A: well under a second per page on one GPU. Reader A
+  also runs on CPU.
+- Reader B (VLM) is the expensive part. On every line it adds several
+  seconds per page. On only Reader A's lowest-confidence ~15% of lines it
+  adds a fraction of that.
+- About a million pages then takes days to a few weeks on 1–4 rented GPUs.
+  That fits `rebbehub.md` §10's "GPU rented only while a project runs".
+  Phase 0 replaces these guesses with measured numbers and a price.
+
+### 6.5 Model lifecycle
+
+- **Registry**: every model has a name, version, dataset-manifest hash and
+  eval scores. The text layer records exactly which models produced each
+  page (`rebbehub.md` §9: "engine and version stored with each layer").
+- **Deploy gate**: a new model ships only if it is **no worse on any
+  family's frozen test set** and better on at least one. The eval suite
+  runs in CI on a small frozen subset for every PR.
+- **Re-OCR**: when a better model ships, pages are re-run in priority
+  order. Only lines no person has checked are replaced. Human-checked
+  lines are locked (§7). The change is recorded as a diff, so we can see
+  what the new model changed.
+- **Feedback loop**: human corrections from eScriptorium, and later from
+  RebbeHub's "Fix this line", are gathered into gold lines. The models are
+  retrained periodically, and the active-learning queue (§4.4) is
+  refreshed.
+- **Drift watch**: flag rates and A/B disagreement are tracked per set and
+  per scan source. A new scanner or a new printing shows up as a jump, and
+  gets gold pages before its output is trusted.
+
+## 7. Output: meeting RebbeHub's contracts
+
+**Archival format: PAGE-XML** per page, the full record. It holds regions
+with types, line polygons and baselines, reading order, both readers' text,
+per-character confidences and flags. It is lossless, a standard, and
+what Kraken/eScriptorium speak natively. **ALTO** is exported alongside
+for IIIF and library viewers (`rebbehub.md` §8).
+
+**RebbeHub text layer (JSON, per scan page):**
+
+```json
+{
+  "scan": "<sha256>", "page": 14,
+  "layer": "machine-ocr",
+  "engine": { "name": "rebbeocr", "version": "0.3.0",
+              "models": { "layout": "k1-layout@2.1#<hash>",
+                          "readerA": "k1-body@4.0#<hash>",
+                          "readerB": "vlm-lines@1.2#<hash>" } },
+  "regions": [ { "id": "r1", "type": "running-header", "polygon": [...] } ],
+  "lines": [
+    { "id": "p14-l003", "region": "r2", "polygon": [...], "baseline": [...],
+      "text": "…", "confidence": 0.998,
+      "status": "consensus",
+      "flags": [],
+      "alt": null }
+  ],
+  "readingOrder": ["r2", "r3", "r5"],
+  "footnoteLinks": [ { "marker": "p14-l007:23", "footnote": "p14-l031" } ],
+  "qa": { "pageNumber": "יד", "headerMatchesCatalog": true }
+}
+```
+
+| RebbeHub contract | How the OCR satisfies it |
+| --- | --- |
+| Text layer per scan, page by page, each line's position (§4) | `lines[].polygon/baseline` in page-image pixels |
+| Machine OCR records engine + version (§4, §9) | `engine` block with model ids and dataset hashes |
+| Re-OCR without touching human-checked lines (§9) | Stable line ids from geometry. Re-OCR replaces only lines no person has checked |
+| Community text seeded from the best OCR (§4, §7) | Keepers choose the layer. `status` is carried over so reviewers start with the `uncertain` lines |
+| Proofread levels raw → checked once → twice (§4) | Unchanged. `consensus`/`uncertain` are *machine* hints that sort the queue. They never count as a check |
+| Unit texts with stable segment ids, Markdown with anchors (§4, §6) | The `assemble` stage builds the body and footnote streams by unit and exports Markdown with footnotes. RebbeHub assigns the segment ids |
+| Machine text labelled until checked (§9, §14) | `layer: machine-ocr` on every line. Nothing is promoted automatically |
+| Contents maps and unit boundaries (§4, §7 "Map a teshura") | Heading/running-head detection produces *suggestions* from the OCR bot |
+| Python ML workers behind the queue, GPU burst (§10) | §6.2 |
+
+## 8. Onboarding a new family (repeatable recipe)
+
+Used for every new family found in the catalog (HebrewBooks prints,
+kovtzim, yearbooks, teshuros):
+
+1. The family shows up as a cluster in classify (§6.1) or as a spike in
+   flags (§6.5).
+2. Sample about 150 pages across its volumes. Pre-OCR them with the
+   closest existing heads.
+3. Silver GT (§4.3) if digital text exists. Gold for about 100 pages of
+   training and 50 frozen test pages, with active learning choosing them.
+4. Fine-tune a layout template and a recogniser head from the base model.
+5. Check it against §1's targets on the family's test set. Once it passes,
+   add it to the router and run the family.
+
+Target: a new family goes from discovery to production in **1–2 weeks**,
+mostly annotation time.
+
+## 9. Repo layout (when building starts)
+
+```
+rebbeocr/            Python package: stages, readers (plug-in interface), CLI
+  stages/            ingest, triage, render, preprocess, classify, layout,
+                     read, consensus, qa, assemble, export
+  readers/           kraken, vlm, (challengers)
+  formats/           page-xml, alto, rebbehub-json
+gt/guidelines.md     transcription rules + character table
+data/manifests/      dataset manifests (hashed); images live in object storage
+eval/                frozen test-set manifests, metrics, benchmark reports
+models/registry.json model versions, dataset hashes, scores
+deploy/              eScriptorium + worker containers
+```
+
+Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
+
+## 10. Roadmap
+
+| Phase | What it delivers | Exit criterion | Size |
+| --- | --- | --- | --- |
+| **0. Survey & benchmark** | Catalog inventory and family clustering; `gt/guidelines.md`; eScriptorium up; ~100 gold test pages each for K1 and H1/H2; benchmark of every candidate in §3 on them, including speed and cost | A results table and the engine choices confirmed or changed. Nothing is trained on the test pages | 3 weeks |
+| **1. Kehot print (K1/K2)** | Silver GT from Likkutei Sichos alignment; ~400 gold pages; fine-tuned layout + Reader A; page templates; footnote linking | §1 targets met on K1/K2 frozen tests; all of Likkutei Sichos run | 5 weeks |
+| **2. Hanachos (H1/H2)** | As phase 1 for typewritten Hebrew and Yiddish; handwritten-correction layer detected | §1 hanacha targets met; first hanacha sets run | 5 weeks |
+| **3. Second reader & scale** | Reader B fine-tuned; consensus; lexicon flags; page QA; full stage pipeline with idempotent jobs; registry + deploy gate | Auto-accept precision target met; a 10,000-page batch runs unattended with a flag report | 4 weeks |
+| **4. Whole catalog** | Onboarding recipe run for each new family; born-digital path; priority queue across sets | Every scan in the catalog has a machine-OCR layer or a stated reason why not | ongoing |
+| **5. RebbeHub integration** | Queue worker adapter; text-layer JSON into RebbeHub; "Fix this line" corrections feed back into training | Lines corrected in RebbeHub show up in the next training run | with RebbeHub phase 4 |
+
+## 11. Risks
+
+- **VLM invents text**: Reader B only checks single lines. It is never the
+  only source of a line, and disagreements go to a person.
+- **Silver GT copies the digital edition instead of the printing**: strict
+  alignment filter, human spot checks, and silver kept out of every test set.
+- **Inconsistent ground truth**: guidelines written first, 10% double
+  transcription, and rulings recorded.
+- **Overfitting to one scanner or printing**: test sets hold out whole
+  volumes and scan sources, and drift is watched (§6.5).
+- **Yiddish orthography and nikkud**: diplomatic rules and a fixed Unicode
+  table. Search normalisation happens later, in RebbeHub, not in OCR.
+- **Rights for training material**: training uses preserved-tier copies
+  privately. Models and datasets are not published until cleared (§12).
+- **Annotation effort is the real cost**: silver GT, active learning and
+  the RebbeHub feedback loop keep human hours for the hard lines.
+- **One-person project**: everything in open formats (PAGE-XML, ALTO,
+  manifests). Models are reproducible from registry + manifests.
+
+## 12. Open questions
+
+- **Who annotates**: paid typists, volunteers, or both? This decides the
+  pace of phases 1–2. Default: a small paid team for gold test sets, and
+  volunteers for training pages through eScriptorium.
+- **GPU budget**: rent per project (default) or own one machine?
+- **Digital texts for silver GT**: which sources may we align against
+  privately (chabadlibrary.org, Sichos-Kodesh corpus, Otzar HaChassidim),
+  and on what terms?
+- **Publishing models**: can models trained on Kehot / Vaad Hanochos
+  B'Lahak scans be released openly? This follows RebbeHub's rightsholder
+  talks (`rebbehub.md` §11).
+- **Nikkud and editorial marks**: confirm "diplomatic, as printed" as the
+  rule for every set.
+- **Handwriting (family M)**: when it becomes its own project, for the
+  Rebbe's ksav yad and hagahos.

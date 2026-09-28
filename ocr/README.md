@@ -6,4 +6,4 @@ Goal: master our sources completely — layout, headers, text — with near-100%
 
 Own repo for now; connects to RebbeHub later.
 
-Planning in progress: `docs/plans/ocr-engines.md`.
+The plan: `docs/plans/ocr-engines.md` (model choice, training data, layout, catalog pipeline).
