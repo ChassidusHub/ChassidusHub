@@ -1,0 +1,28 @@
+{
+  "name": "@sichos-kodesh/design",
+  "version": "0.1.0",
+  "description": "The design tokens every Sichos Kodesh surface shares: the neutrals for light and dark, the theme color presets people choose from, the type scale, spacing, radii and motion, as CSS variables for the web and pack.sk and as a colors object for the phone.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "~6.0.2",
+    "vitest": "^3.0.0"
+  }
+}

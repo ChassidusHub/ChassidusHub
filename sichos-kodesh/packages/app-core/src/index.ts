@@ -22,5 +22,6 @@ export * from './seforim/readerSettings.js';
 export * from './seforim/readingState.js';
 export * from './seforim/shelf.js';
 export * from './library/libraryModel.js';
+export * from './library/libraryShelf.js';
 export * from './library/librarySearch.js';
 export * from './pdf/pdfLook.js';
