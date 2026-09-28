@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 // as renderPdf.ts's own import of this file) - it does not pull in
 // pdf.js itself, so this stays a cheap import even on a load that never
 // opens a PDF.
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import './polyfills';
 // The colors first (generated from @sichos-kodesh/design), then everything drawn with them.
 import './theme-colors.css';

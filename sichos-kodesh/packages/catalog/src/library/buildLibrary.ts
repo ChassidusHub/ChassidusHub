@@ -401,7 +401,7 @@ function buildJemEvents(jem: DatabaseSync | null, maf: DatabaseSync): LibraryCol
       seenFiles.add(file);
       refs.push(audioRef(recording.url, refs.length, recording.name, recording.duration_ms));
     }
-    const item: JemEventItem = { id: String(event.id), label: event.name, name: event.name, type: event.type.trim(), hasTranscript: event.has_transcript === 1, refs };
+    const item: JemEventItem = { id: String(event.id), label: event.name, name: event.name, type: jemType(event.type), hasTranscript: event.has_transcript === 1, refs };
     if (event.hebrew_year !== null) item.hebrewYear = event.hebrew_year;
     const hebrewDate = jemHebrewDate(event.hebrew_year, event.hebrew_month, event.hebrew_day);
     if (hebrewDate) item.hebrewDate = hebrewDate;
@@ -409,15 +409,13 @@ function buildJemEvents(jem: DatabaseSync | null, maf: DatabaseSync): LibraryCol
     if (occasionId !== undefined) item.occasionId = occasionId;
     items.push(item);
   }
-  const byType = groupBy(items, (item) => item.type);
-  const types = [...byType.keys()].sort((a, b) => byType.get(b)!.length - byType.get(a)!.length || a.localeCompare(b));
-  return {
-    items,
-    groups: {
-      year: yearGroups(items),
-      type: types.map((type) => ({ slug: type, name: type, itemIds: byType.get(type)!.map((item) => item.id) })),
-    },
-  };
+  // By type: src/library/views.ts, with each type's Hebrew name.
+  return { items, groups: { year: yearGroups(items) } };
+}
+
+/** JEM's type as one spelling: trimmed, with a curly apostrophe as a straight one (JEM has both "Ma’amar" and "Ma'amar"). */
+function jemType(type: string): string {
+  return type.trim().replace(/[\u2018\u2019]/g, "'");
 }
 
 export function buildLibrary(maf: DatabaseSync, jem: DatabaseSync | null = null): CatalogLibrary {

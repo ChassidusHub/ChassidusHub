@@ -1,11 +1,11 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import { attachPdfZoom } from './pdfPageZoom';
 import type { ZoomablePage } from './pdfPageZoom';
 // Vite's `?url` import gives the worker script a fetchable URL in the
 // built bundle; pdf.js requires its own worker thread even though it's
 // only used from this one place.
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 
 // pdfjs-dist must stay >=6.2.108: versions >=5.6.83 and <6.2.108 have a
 // high-severity advisory ("Arbitrary JavaScript execution upon opening a
@@ -16,6 +16,13 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 // downgrading within the patched range doesn't avoid the gap.
 // `../polyfills.ts` (imported once, in main.tsx, before anything touches
 // pdf.js) supplies it when missing.
+//
+// It's pdf.js's legacy build, which carries its own polyfills, in the
+// worker too. The modern build's worker calls `Math.sumPrecise` (not in
+// Chrome yet) while it reads a PDF's embedded fonts; without it the font
+// is dropped for a stand-in, and a typeset hanacha in old Hebrew fonts
+// (VTFrank, VTNarksim...) shows as Latin gibberish. A polyfill in the page
+// can't help: the worker is its own global scope.
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 

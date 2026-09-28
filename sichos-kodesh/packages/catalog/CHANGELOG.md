@@ -12,6 +12,18 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.7.2 - 2026-09-28
+
+- JEM's recordings by type: the type groups are built with the other
+  browse views (`src/library/views.ts`), each with `nameHe` from its items'
+  `typeHe`, and the apps show it as the heading in Hebrew. A curly and a
+  straight apostrophe are one type, so "Ma’amar" (4) and "Ma'amar" (3) are
+  one group; the build writes the type with a straight one.
+- All 57 type names checked again by two reviewers; three change:
+  Birchas Hatemimim is ברכת הבנים, Gathering of The Elderly is כינוס זקנים
+  וזקנות, and the Dollar Line is חלוקת דולרים (in the checked list too).
+  `tests/fixtures/jem-types-he.json` holds the checked names.
+
 ## 1.7.1 - 2026-09-28
 
 - The maamorim's JEM recordings get their Hebrew names (`labelHe` on the

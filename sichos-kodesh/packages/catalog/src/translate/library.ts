@@ -19,8 +19,9 @@ export interface LibraryTranslations {
  * interface language that isn't the name's own:
  *
  * - JEM's recordings (English): the item's name (`labelHe`), its type
- *   (`typeHe`) and each recording's chapter name (the ref's `labelHe`) -
- *   the recordings of a maamar too.
+ *   (`typeHe`, which also names its group: src/library/views.ts) and each
+ *   recording's chapter name (the ref's `labelHe`) - the recordings of a
+ *   maamar too.
  * - mafteiach's names (Hebrew), in English: where a maamar was said
  *   (`occasionLabelEn`), a sicha's parsha or moed (`sectionLabelEn`), and
  *   the names of the reshimos, the letters and the hadranim (`labelEn`).

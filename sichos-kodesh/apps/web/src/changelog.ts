@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.15.1';
+export const APP_VERSION = '1.15.2';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,17 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.15.2',
+    en: [
+      'PDFs set in the old Hebrew fonts show their Hebrew again, not Latin letters, in every browser',
+      "JEM's recordings by type have Hebrew headings, and Ma'amar is one group",
+    ],
+    he: [
+      'קובצי PDF שנסדרו בגופנים העבריים הישנים מציגים שוב עברית, ולא אותיות לועזיות, בכל דפדפן',
+      'להקלטות JEM לפי סוג יש כותרות בעברית, ו"מאמר" הוא קבוצה אחת',
+    ],
+  },
   {
     version: '1.15.1',
     en: [

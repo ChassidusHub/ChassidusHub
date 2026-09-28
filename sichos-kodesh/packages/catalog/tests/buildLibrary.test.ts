@@ -168,7 +168,7 @@ describe('buildLibrary', () => {
     ]);
   });
 
-  it('builds JEM events from the top-level events with audio: chapters in order, the occasion mafteiach links, the type trimmed', () => {
+  it('builds JEM events from the top-level events with audio: chapters in order, the occasion mafteiach links, the type trimmed with a straight apostrophe', () => {
     const { items, groups } = library.collections.jemEvents;
     expect(items.map((i) => i.id)).toEqual(['10', '20']);
     expect(items[0]).toMatchObject({ type: 'Farbrengen', hebrewDate: '5711-05-10', occasionId: 100 });
@@ -176,8 +176,8 @@ describe('buildLibrary', () => {
       ['JEMSK0001A.mp3', '0'],
       ['JEMSK0001B.mp3', '1'],
     ]);
-    expect(items[1]).toMatchObject({ type: 'Children’s Rally', hebrewDate: '5748-06-14', hasTranscript: true });
-    expect(groups.type!.map((g) => g.slug)).toEqual(['Children’s Rally', 'Farbrengen']);
+    expect(items[1]).toMatchObject({ hebrewDate: '5748-06-14', hasTranscript: true });
+    expect(items[1]!.type).toBe("Children's Rally");
     expect(groups.year!.map((g) => [g.slug, g.name])).toEqual([
       ['5711', 'תשי״א'],
       ['5748', 'תשמ״ח'],

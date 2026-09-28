@@ -47,6 +47,21 @@ describe('the bundled catalog carries the current translations', () => {
   });
 });
 
+describe("the bundled library names JEM's types in Hebrew", () => {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const jemEvents = JSON.parse(readFileSync(path.join(here, '..', '..', '..', 'apps', 'mobile', 'src', 'catalog', 'data', 'library', 'jemEvents.json'), 'utf8')) as {
+    groups: { type?: Array<{ name: string; nameHe?: string }> };
+  };
+  // Every type, checked by hand (two reviewers, September 2026).
+  const checked = JSON.parse(readFileSync(path.join(here, 'fixtures', 'jem-types-he.json'), 'utf8')) as Record<string, string>;
+
+  it('gives every type group the checked Hebrew name, one group per type', () => {
+    const groups = jemEvents.groups.type ?? [];
+    expect(Object.fromEntries(groups.map((group) => [group.name, group.nameHe]))).toEqual(checked);
+    expect(groups).toHaveLength(Object.keys(checked).length);
+  });
+});
+
 describe("the phone's bundled moadim and parshiyos carry their English names", () => {
   const metaFile = path.join(dataDir, '..', '..', '..', '..', 'mobile', 'src', 'catalog', 'data', 'library', 'meta.json');
   const meta = JSON.parse(readFileSync(metaFile, 'utf8')) as { moadim: OccasionGroup[]; parshiyos: OccasionGroup[] };

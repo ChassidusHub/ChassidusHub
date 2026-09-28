@@ -75,4 +75,23 @@ describe('the library views', () => {
     expect(Object.keys(viewed.collections.reshimos.groups)).toEqual([]);
     expect(Object.keys(library.collections.maamorim.groups)).toEqual(['year']);
   });
+
+  it("groups JEM's recordings by type, the biggest first, named in Hebrew, one group for both apostrophes", () => {
+    const jem = (id: string, type: string, typeHe?: string) => ({ id, label: id, name: id, type, ...(typeHe ? { typeHe } : {}), hasTranscript: false, refs: [] });
+    const withJem = addLibraryViews({
+      ...library,
+      collections: {
+        ...library.collections,
+        jemEvents: {
+          items: [jem('1', 'Ma’amar', 'מאמר'), jem('2', 'Farbrengen', 'התוועדות'), jem('3', "Ma'amar", 'מאמר'), jem('4', 'Ma’amar', 'מאמר'), jem('5', 'Unknown Kind')],
+          groups: { type: [{ slug: 'stale', name: 'stale', itemIds: [] }] },
+        },
+      },
+    } as unknown as CatalogLibrary);
+    expect(withJem.collections.jemEvents.groups.type).toEqual([
+      { slug: "Ma'amar", name: "Ma'amar", nameHe: 'מאמר', itemIds: ['1', '3', '4'] },
+      { slug: 'Farbrengen', name: 'Farbrengen', nameHe: 'התוועדות', itemIds: ['2'] },
+      { slug: 'Unknown Kind', name: 'Unknown Kind', itemIds: ['5'] },
+    ]);
+  });
 });

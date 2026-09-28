@@ -16,6 +16,18 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.7.2',
+    date: '2026-09-28',
+    en: [
+      "JEM's recordings by type: each type's heading has its Hebrew name, and Ma'amar is one group (it was two, by two spellings)",
+      'Three corrected type names, from a second check of all 57: ברכת הבנים, כינוס זקנים וזקנות and חלוקת דולרים',
+    ],
+    he: [
+      'הקלטות JEM לפי סוג: לכל סוג כותרת בעברית, ו"מאמר" הוא קבוצה אחת (היו שתיים, בשני כתיבים)',
+      'שלושה שמות סוג מתוקנים, אחרי בדיקה שנייה של כל ה-57: ברכת הבנים, כינוס זקנים וזקנות וחלוקת דולרים',
+    ],
+  },
+  {
     version: '1.7.1',
     date: '2026-09-28',
     en: [

@@ -1,4 +1,4 @@
-import type { CatalogLibrary, LibraryCollection, LibraryGroup, LibraryItemBase, OccasionGroup } from './types.js';
+import type { CatalogLibrary, JemEventItem, LibraryCollection, LibraryGroup, LibraryItemBase, OccasionGroup } from './types.js';
 
 /**
  * ספר המאמרים מלוקט in its edition by the months of the year: four parts,
@@ -98,6 +98,27 @@ function melukatByMonthsGroups(edition: MelukatByMonthsEdition, known: ReadonlyS
   }));
 }
 
+/**
+ * JEM's recordings by their type, the biggest first, each named in Hebrew
+ * too (the item's `typeHe`). JEM spells some types two ways ("Ma’amar" and
+ * "Ma'amar"): an apostrophe is an apostrophe.
+ */
+function jemTypeGroups(items: JemEventItem[]): LibraryGroup[] {
+  const byType = new Map<string, JemEventItem[]>();
+  for (const item of items) {
+    const type = item.type.replace(/[\u2018\u2019]/g, "'");
+    const list = byType.get(type);
+    if (list) list.push(item);
+    else byType.set(type, [item]);
+  }
+  return [...byType]
+    .sort(([a, x], [b, y]) => y.length - x.length || a.localeCompare(b))
+    .map(([type, list]) => {
+      const nameHe = list.find((item) => item.typeHe)?.typeHe;
+      return { slug: type, name: type, ...(nameHe ? { nameHe } : {}), itemIds: list.map((item) => item.id) };
+    });
+}
+
 function withGroups<T extends LibraryItemBase>(collection: LibraryCollection<T>, groups: Record<string, LibraryGroup[]>): LibraryCollection<T> {
   const kept = Object.fromEntries(Object.entries(groups).filter(([, list]) => list.length > 0));
   return { ...collection, groups: { ...collection.groups, ...kept } };
@@ -106,7 +127,8 @@ function withGroups<T extends LibraryItemBase>(collection: LibraryCollection<T>,
 /**
  * The browse views the index's own pages don't have, derived from what the
  * library already holds: every maamar, reshima and linked JEM recording by
- * month (all years), by moed and by parsha; and the maamorim in ספר המאמרים
+ * month (all years), by moed and by parsha; JEM's recordings by type; and
+ * the maamorim in ספר המאמרים
  * מלוקט's edition by months (`melukatByMonths`), beside the six volumes in
  * their printed order (`melukat`, from mafteiach). A copy is returned.
  */
@@ -127,7 +149,7 @@ export function addLibraryViews(library: CatalogLibrary, editions: LibraryEditio
         ...(editions.melukatByMonths ? { melukatByMonths: melukatByMonthsGroups(editions.melukatByMonths, known) } : {}),
       }),
       reshimos: withGroups(reshimos, occasionViews(reshimos.items)),
-      jemEvents: withGroups(jemEvents, occasionViews(jemEvents.items)),
+      jemEvents: withGroups(jemEvents, { ...occasionViews(jemEvents.items), type: jemTypeGroups(jemEvents.items) }),
     },
   };
 }

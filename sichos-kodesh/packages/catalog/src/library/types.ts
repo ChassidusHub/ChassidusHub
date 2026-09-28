@@ -60,6 +60,8 @@ export interface LibraryGroup {
   name: string;
   /** Its English name, when it has one (the views src/library/views.ts adds: months, moadim, parshiyos, the edition's parts). */
   nameEn?: string;
+  /** Its Hebrew name, when its own is English (JEM's types, added by translateLibrary). */
+  nameHe?: string;
   itemIds: string[];
 }
 

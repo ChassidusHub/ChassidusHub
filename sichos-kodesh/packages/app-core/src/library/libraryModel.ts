@@ -79,13 +79,13 @@ export function groupItems(library: CatalogLibrary, collection: LibraryCollectio
   return group.itemIds.map((id) => findItem(library, collection, id)).filter((item): item is LibraryItemBase => !!item);
 }
 
-/** A group's name as shown: years and volumes follow the interface language, mafteiach's own names stay as they are. */
+/** A group's name as shown: years and volumes follow the interface language; a name in the other language shows its translation when it has one (JEM's types in Hebrew, mafteiach's names in English). */
 export function groupDisplayName(collection: LibraryCollectionId, axis: string, group: LibraryGroup, language: Language): string {
   const number = Number(group.slug);
   if (axis === 'year' && Number.isInteger(number) && number > 5000) return hebrewYearLabel(number, language);
   if (axis === 'volume' && collection === 'likkuteiSichos' && Number.isInteger(number) && group.slug !== '40') return language === 'he' ? `חלק ${group.name}` : `Volume ${number}`;
   if (axis === 'melukat') return language === 'he' ? `מלוקט ח״${group.name}` : `Melukat, volume ${number}`;
-  return language === 'en' ? (group.nameEn ?? group.name) : group.name;
+  return language === 'en' ? (group.nameEn ?? group.name) : (group.nameHe ?? group.name);
 }
 
 function dateLine(item: LibraryItemBase, language: Language): string | null {
