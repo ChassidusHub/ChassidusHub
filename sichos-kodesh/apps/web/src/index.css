@@ -1864,7 +1864,6 @@ html[lang='en'] .home-parsha {
    on a farbrengen's own page (see FarbrengenScreen.tsx) - closed by
    default so the highlighted hanacha stays the visually primary content. */
 
-
 .playlist {
   list-style: none;
   margin: 0;
@@ -2588,68 +2587,6 @@ html[dir='rtl'] .global-player-collapsed-progress-fill {
   outline-offset: -1px;
 }
 
-.search-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.search-filter {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1 1 120px;
-}
-
-.search-filter-label {
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.search-filter select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 9px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card-bg);
-  color: var(--fg);
-  font-size: 0.9375rem;
-  font-family: inherit;
-}
-
-.search-type-label {
-  margin-bottom: 8px;
-}
-
-.search-type-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.search-type-pill {
-  padding: 7px 14px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--card-bg);
-  color: var(--fg);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.search-type-pill-active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-
 .search-clear-link {
   display: inline-block;
   background: none;
@@ -2671,76 +2608,6 @@ html[dir='rtl'] .global-player-collapsed-progress-fill {
   margin-bottom: 8px;
 }
 
-/* The one search: where it looks, and its filters folded behind a toggle. */
-.search-scopes {
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.search-scopes .search-type-pill {
-  padding: 6px 12px;
-}
-
-.search-filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.search-filter-bar .search-clear-link {
-  margin-bottom: 0;
-}
-
-.search-filter-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: none;
-  color: var(--fg);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.search-filter-toggle svg {
-  color: var(--muted);
-}
-
-.search-filter-toggle-on,
-.search-filter-toggle-on svg {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.search-filter-panel {
-  padding: 12px 12px 0;
-  margin-bottom: 16px;
-  border-radius: 14px;
-  background: var(--card-bg);
-}
-
-.search-filter-panel .search-filter select,
-.search-filter-panel .search-type-pill {
-  background: var(--bg);
-}
-
-.search-filter-panel .search-type-pill-active {
-  background: var(--accent);
-}
-
-.search-section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .search-show-all {
   flex-shrink: 0;
   padding: 0;
@@ -2753,9 +2620,7 @@ html[dir='rtl'] .global-player-collapsed-progress-fill {
   cursor: pointer;
 }
 
-.search-filter-toggle:focus-visible,
-.search-show-all:focus-visible,
-.search-type-pill:focus-visible {
+.search-show-all:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -3633,10 +3498,6 @@ body:has(.reader) {
   line-height: 1.5;
 }
 
-.search-in {
-  margin-bottom: 12px;
-}
-
 /* ---- A farbrengen's page (FarbrengenScreen) ---- */
 
 /* The day, the Hebrew date and the parsha, on one line under the name. */
@@ -3868,4 +3729,233 @@ body:has(.reader) {
 .shelf-row-chevron {
   flex-shrink: 0;
   color: var(--muted);
+}
+
+/* ---- Search (SearchScreen): the filters as chips, each opening a short list ---- */
+
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.search-chips .search-clear-link {
+  margin: 0 4px;
+}
+
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--fg);
+}
+
+.search-chip-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.search-chip-open,
+.search-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search-chip-open {
+  padding: 6px 12px;
+}
+
+.search-chip-on .search-chip-open {
+  padding-inline-end: 4px;
+}
+
+.search-chip-clear {
+  padding: 6px 10px 6px 4px;
+}
+
+[dir='rtl'] .search-chip-clear {
+  padding: 6px 4px 6px 10px;
+}
+
+.search-chip-open svg {
+  color: var(--muted);
+}
+
+.search-chip-open:focus-visible,
+.search-chip-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* A filter's choices, in its sheet. */
+.sheet-options {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.sheet-options > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.sheet-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9375rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sheet-option:hover {
+  background: var(--card-hover);
+}
+
+.sheet-option-on {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.sheet-option:focus-visible,
+.sheet-day:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sheet-subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.sheet-days {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sheet-day {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.sheet-day-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+}
+
+/* Before typing: the searches made lately, and what to try. */
+.search-start {
+  margin-bottom: 18px;
+}
+
+.search-start-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.search-start-head .search-clear-link {
+  margin-bottom: 0;
+}
+
+button.text-row {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Each kind's results, under a heading that narrows the search to it. */
+.search-group {
+  margin-bottom: 18px;
+}
+
+.search-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 8px 0 6px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.search-group-name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.search-group-count {
+  flex: 1 1 auto;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.search-group-head svg {
+  color: var(--muted);
+}
+
+.search-group-head:hover .search-group-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.search-group-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.search-group .search-show-all {
+  margin-top: 6px;
+}
+
+.shelf-search {
+  margin-bottom: 4px;
 }

@@ -395,3 +395,14 @@ export function lsParshaSlugs(library: CatalogLibrary, parsha: string[] | null):
   if (!parsha || groups.length !== parshiot.length) return [];
   return parsha.map((name) => groups[parshiot.indexOf(name)]?.slug).filter((slug): slug is string => !!slug);
 }
+
+/**
+ * The same for the farbrengens by parsha (mafteiach's `/all/parshiyos`):
+ * in Torah order too, but without Vezos Haberachah - 53 to hebcal's 54 - so
+ * a parsha is again found by its place.
+ */
+export function occasionParshaSlugs(library: CatalogLibrary, parsha: string[] | null): string[] {
+  const groups = library.parshiyos;
+  if (!parsha || (groups.length !== parshiot.length && groups.length !== parshiot.length - 1)) return [];
+  return parsha.map((name) => groups[parshiot.indexOf(name)]?.slug).filter((slug): slug is string => !!slug);
+}

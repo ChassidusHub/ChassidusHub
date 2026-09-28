@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Mails, MessageSquareText, UserRound } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
@@ -52,13 +54,16 @@ function ShelfRow({ to, icon: Icon, name, blurb, count }: ShelfRowProps) {
  * order pack.sk uses (app-core's `libraryShelf`): the Rebbe's Torah first -
  * Likkutei Sichos, the maamorim, Igros Kodesh, the michtavim, reshimos and
  * hadranim - then the yomanim and JEM's recordings around it, then the
- * seforim of the Rebbeim, by Rebbe. Each place opens its own page.
+ * seforim of the Rebbeim, by Rebbe. Each place opens its own page, and
+ * the box above it searches all of them at once.
  */
 export function LibraryScreen() {
   const library = useLibrary();
   const works = useWorks();
   const scans = useShelf();
   const { t, language } = useTranslation();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
   const shelf = libraryShelf(library, works);
   const torah = shelf.filter((entry) => entry.kind === 'work' || (entry.kind === 'collection' && !AROUND.has(entry.collection)));
   const around = shelf.filter((entry) => entry.kind === 'collection' && AROUND.has(entry.collection));
@@ -83,9 +88,29 @@ export function LibraryScreen() {
     return null;
   };
 
+  // The library's own search: every part of it, and none of the farbrengens (SearchScreen's `in=library`).
+  const search = (event: FormEvent) => {
+    event.preventDefault();
+    const params = new URLSearchParams({ in: 'library' });
+    if (query.trim()) params.set('q', query.trim());
+    navigate(`/search?${params.toString()}`);
+  };
+
   return (
     <div className="screen">
       <ScreenHeader title={t.tabNames.library} />
+      <form role="search" onSubmit={search} className="shelf-search">
+        <input
+          className="search-input"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t.searchLibraryEverythingPlaceholder}
+          aria-label={t.searchLibraryEverythingPlaceholder}
+          dir="auto"
+          enterKeyHint="search"
+        />
+      </form>
       {!library && !works && <LibraryLoading />}
 
       {torah.length > 0 && (

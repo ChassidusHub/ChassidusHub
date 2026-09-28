@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.13.0';
+export const APP_VERSION = '1.14.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.14.0',
+    en: [
+      'Search has its filters as chips under the box - where to look, the year, the month and day, the parsha, the moed, and what a farbrengen has - each opening a short list, and × takes it off',
+      'Before you type: your recent searches, and this week\'s parsha to try',
+      'Results come grouped by kind, each with its count; tap a group\'s heading to see all of it',
+      'The Library tab has its own search box: every part of the library and the seforim, without the farbrengens',
+    ],
+    he: [
+      'בחיפוש, המסננים הם כפתורים מתחת לתיבה - איפה לחפש, השנה, החודש והיום, הפרשה, המועד, ומה יש בהתוועדות - כל אחד פותח רשימה קצרה, ו-× מסיר אותו',
+      'לפני שמקלידים: החיפושים האחרונים שלך, ופרשת השבוע לנסות',
+      'התוצאות מקובצות לפי סוג, כל קבוצה עם מספרה; נגיעה בכותרת קבוצה מציגה את כולה',
+      'ללשונית הספרייה יש תיבת חיפוש משלה: כל חלקי הספרייה והספרים, בלי ההתוועדויות',
+    ],
+  },
   {
     version: '1.13.0',
     en: [
