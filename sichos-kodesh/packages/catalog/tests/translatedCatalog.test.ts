@@ -30,8 +30,10 @@ describe('the bundled catalog carries the current translations', () => {
     expect(stale.map((entry) => entry.occasionLabel)).toEqual([]);
   });
 
-  it('has every chapter name translated exactly as translateChapterName does it', () => {
-    const stale = entries.flatMap((entry) => entry.audio).filter((audio) => audio.chapterNameHe !== ((audio.chapterName && translateChapterName(audio.chapterName)) || undefined));
+  it('has every chapter name translated exactly as the checked list and translateChapterName do it', () => {
+    const checked = JSON.parse(readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'translations', 'library-he.json'), 'utf8')) as Record<string, string>;
+    const expected = (name: string | undefined) => (name ? (checked[name] ?? translateChapterName(name) ?? undefined) : undefined);
+    const stale = entries.flatMap((entry) => entry.audio).filter((audio) => audio.chapterNameHe !== expected(audio.chapterName));
     expect(stale.map((audio) => audio.chapterName)).toEqual([]);
   });
 

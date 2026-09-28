@@ -90,7 +90,7 @@ export const CHAPTER_WORDS: Record<string, string> = {
 const AMOSAI = 'אימתי קאתי מר';
 const ANI_MAAMIN = 'אני מאמין';
 const VEHARIKOSI = 'והריקותי לכם ברכה';
-const NYE_ZHURITZY = 'ניע ז׳וריצי כלאפצי';
+const NYE_ZHURITZY = 'ניע זשוריצי כלאפצי';
 const LEVI_YITZCHOK = 'ניגון הרב לוי יצחק';
 const MAAMAR_NIGUN = 'ניגון המאמר';
 const END_OF_FARBRENGEN = 'סיום ההתוועדות';
@@ -195,7 +195,7 @@ export const CHAPTER_NAMES: Record<string, string> = {
   dollars: 'דולרים',
   'dollars distribution': 'חלוקת דולרים',
   other: 'שונות',
-  'dollars to the mitzvah tankists': 'דולרים לנהגי טנקי המצוות',
+  'dollars to the mitzvah tankists': 'חלוקת דולרים לנהגי טנקי המצוות',
   magbis: 'מגבית',
   'private audience': 'יחידות',
   yechidus: 'יחידות',
@@ -216,9 +216,9 @@ export const CHAPTER_NAMES: Record<string, string> = {
   "l'chaim for the shluchim": 'לחיים לשלוחים',
   "l'chaim for russian immigrants": 'לחיים לעולים מרוסיה',
   "l'chaim for kfar chabad": 'לחיים לכפר חב״ד',
-  parade: 'פאראד',
-  'end of parade': 'סיום הפאראד',
-  'parade opening': 'פתיחת הפאראד',
+  parade: 'תהלוכה',
+  'end of parade': 'סיום התהלוכה',
+  'parade opening': 'פתיחת התהלוכה',
   'tzach report': 'דו״ח צא״ח',
   'chalukas hashas': 'חלוקת הש״ס',
   'daled minim distribution': 'חלוקת ד׳ מינים',
@@ -239,7 +239,7 @@ export const CHAPTER_NAMES: Record<string, string> = {
   "kinus n'shei chabad": 'כינוס נשי חב״ד',
   "children's rally": 'כינוס ילדים',
   'special events': 'אירועים מיוחדים',
-  'visit to nachshon gallery': 'ביקור בתערוכת נחשון',
+  'visit to nachshon gallery': 'ביקור בגלריית נחשון',
   'nichum aveilim by rashag': 'ניחום אבלים אצל הרש״ג',
   'machne israel': 'מחנה ישראל',
   'kfar chabad-nachlas har chabad': 'כפר חב״ד - נחלת הר חב״ד',

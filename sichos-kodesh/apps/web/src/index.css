@@ -3016,13 +3016,6 @@ html[dir='rtl'] .full-player-seconds svg {
   text-wrap: balance;
 }
 
-.library-item-fact {
-  color: var(--muted);
-  font-size: 0.9375rem;
-  line-height: 1.4;
-  margin: 0 0 4px;
-}
-
 /* ---- The seforim reader (WP16) ----
    One set of variables per page, set by ReaderScreen from the reader's
    settings (packages/app-core readerSettings.ts): the paper (--r-bg and
@@ -3051,6 +3044,11 @@ body:has(.reader) {
 
 .reader .back-link {
   color: var(--r-fg);
+}
+
+/* In the reading bar the back link stands level with the titles and the buttons beside it. */
+.reader-bar .back-link {
+  margin-bottom: 0;
 }
 
 .reader-accent {

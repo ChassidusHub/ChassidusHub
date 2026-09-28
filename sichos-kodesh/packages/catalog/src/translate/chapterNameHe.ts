@@ -25,9 +25,11 @@ export function translateChapterName(name: string): string | null {
   if (!text) return null;
   const whole = CHAPTER_NAMES[text];
   if (whole !== undefined) return whole;
+  const parts = splitParts(text);
   let out = '';
-  for (const part of splitParts(text)) {
-    const he = translatePart(part.text);
+  for (const [index, part] of parts.entries()) {
+    // "Dollars, <day>" names the distribution; "Dollars" alone is a chapter of one.
+    const he = index === 0 && parts.length > 1 && part.text === 'dollars' ? 'חלוקת דולרים' : translatePart(part.text);
     if (he === null) return null;
     out += (out ? part.separator : '') + he;
   }
@@ -152,7 +154,7 @@ function translateUnit(text: string): string | null {
 
   // JEM's own date path: 5730/Tishrei/06.
   const path = /^(\d{4})\/([a-z-]+(?: i{1,2})?)\/(\d{1,2})$/.exec(s);
-  if (path && ENGLISH_MONTHS[path[2]!]) return `${gematriya(Number(path[3]))} ${ENGLISH_MONTHS[path[2]!]} ${gematriya(Number(path[1]))}`;
+  if (path && ENGLISH_MONTHS[path[2]!]) return `${hebrewDay(Number(path[3]), ENGLISH_MONTHS[path[2]!]!)} ${ENGLISH_MONTHS[path[2]!]} ${gematriya(Number(path[1]))}`;
 
   // A name followed by a date with no comma between: "General Audience Chof Daled Nissan", "Ta'anis Esther 5748".
   const words = s.split(' ');
@@ -166,7 +168,7 @@ function translateUnit(text: string): string | null {
   return null;
 }
 
-/** "Yud Zayin Tishrei", "18 Elul", "27 Adar II 5746", "Erev Rosh Hashana" -> י״ז תשרי, י״ח אלול, כ״ז אדר ב׳ תשמ״ו, ערב ר״ה. */
+/** "Yud Zayin Tishrei", "18 Elul", "27 Adar II 5746", "Erev Rosh Hashana" -> י״ז תשרי, ח״י אלול, כ״ז אדר ב׳ תשמ״ו, ערב ר״ה. */
 function translateDate(text: string): string | null {
   const named = NAMED_DAYS_HE[text];
   if (named !== undefined) return named;
@@ -176,7 +178,12 @@ function translateDate(text: string): string | null {
   if (month === undefined) return null;
   const day = englishDayValue(m[1]!);
   if (day === null) return null;
-  return `${gematriya(day)} ${month}${m[3] ? ` ${gematriya(Number(m[3]))}` : ''}`;
+  return `${hebrewDay(day, month)} ${month}${m[3] ? ` ${gematriya(Number(m[3]))}` : ''}`;
+}
+
+/** A day of the month in Hebrew numerals - but the 18th of Elul is ח״י אלול, as Chabad writes it. */
+function hebrewDay(day: number, month: string): string {
+  return day === 18 && month === 'אלול' ? 'ח״י' : gematriya(day);
 }
 
 /** "Yud Zayin" -> 17, "Chai" -> 18, "27" -> 27: a day of the month, as JEM spells it. */

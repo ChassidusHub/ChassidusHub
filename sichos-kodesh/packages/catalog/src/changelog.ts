@@ -16,6 +16,18 @@ export interface CatalogChangelogEntry {
  */
 export const CATALOG_CHANGELOG: CatalogChangelogEntry[] = [
   {
+    version: '1.7.1',
+    date: '2026-09-28',
+    en: [
+      'The recordings of the maamorim have their Hebrew names too (374 recordings), and so do two farbrengen chapters that had none',
+      'Corrected Hebrew names for the JEM recordings, all checked again: ח״י אלול, a parade is a תהלוכה, a dollars distribution חלוקת דולרים, and 34 single fixes',
+    ],
+    he: [
+      'גם להקלטות של המאמרים יש שמות בעברית (374 הקלטות), וכן לשני חלקי התוועדות שלא היה להם',
+      'תיקונים בשמות העבריים של הקלטות JEM, שנבדקו כולם מחדש: ח״י אלול, תהלוכה במקום פאראד, חלוקת דולרים, ו-34 תיקונים בודדים',
+    ],
+  },
+  {
     version: '1.7.0',
     date: '2026-09-25',
     en: [

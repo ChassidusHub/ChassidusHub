@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import type { LibraryItemBase } from '@sichos-kodesh/catalog';
-import { itemDescription, itemFacts, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
+import { itemDescription, itemTitle, linkedOccasion, occasionTitle } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../../catalog/catalogStore';
 import { ChapterList } from '../../components/ChapterList';
 import { DownloadAllChapters } from '../../components/DownloadAllChapters';
@@ -38,13 +38,6 @@ export function LibraryItemScreen({ route }: Props) {
   const title = itemTitle(collection, item, language);
   // The whole name a shortened title stands for (a maamar's facts already say where it was said in full).
   const description = collection === 'maamorim' ? undefined : itemDescription(collection, item, language);
-  const facts = itemFacts(collection, item, {
-    saidAt: t.librarySaidAt,
-    printedIn: t.libraryPrintedIn,
-    hemshech: t.libraryHemshech,
-    kuntres: t.libraryKuntres,
-    hasTranscript: t.libraryHasTranscript,
-  }, language);
   const disputed = collection === 'likkuteiSichos' && record.supplement === true;
 
   // An old recordings address lands here on its section (see canonicalLibraryPath).
@@ -59,11 +52,6 @@ export function LibraryItemScreen({ route }: Props) {
       <h1 className="library-item-title">{title}</h1>
       {description && <p className="item-description">{description}</p>}
       {resolved.subtitle && <p className="subtitle">{resolved.subtitle}</p>}
-      {facts.map((fact) => (
-        <p key={fact} className="library-item-fact">
-          {fact}
-        </p>
-      ))}
       {disputed && <p className="tab-help">{t.libraryDisputedNote}</p>}
 
       <OccasionActions entry={entry} showDownload={false} />

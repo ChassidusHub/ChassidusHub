@@ -12,6 +12,19 @@ same bytes in both, and schema 2 adds Likkutei Sichos, maamorim, yomanim,
 hadranim, michtavim klolim, reshimos, JEM events, and mafteiach's moadim
 and parshiyos.
 
+## 1.7.1 - 2026-09-28
+
+- The maamorim's JEM recordings get their Hebrew names (`labelHe` on the
+  audio refs, 374 of them), the same way as the JEM events' chapters; and
+  the farbrengens' chapter names now also read the checked list
+  (`translations/library-he.json`), so the two that no rule knew
+  ("Vayanchem", "Uber A Ma'aleh") have their Hebrew.
+- Every Hebrew JEM name checked again: the checked list now comes before
+  the rules for JEM's names, and it and the rules are corrected - ח״י
+  אלול for the 18th of Elul, תהלוכה for a parade, חלוקת דולרים for a
+  dollars distribution, זשוריצי, and 34 single names (a dropped half of a
+  name, wrong meanings, a year typed as 2723).
+
 ## 1.7.0 - 2026-09-25
 
 - Short titles for the long occasion names. A farbrengen gains

@@ -7,5 +7,5 @@
 export { translateChapterName } from './chapterNameHe.js';
 export { translateOccasionLabel } from './occasionLabelEn.js';
 export { groupNameEn } from './groupNameEn.js';
-export { translateLibrary, type LibraryTranslations } from './library.js';
+export { translateCatalogYear, translateLibrary, type LibraryTranslations } from './library.js';
 export { shortenCatalogYear, shortenLibrary, type ShortTitles } from './shortTitles.js';

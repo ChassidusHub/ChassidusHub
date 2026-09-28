@@ -1,12 +1,13 @@
 import type { CatalogLibrary, CatalogRef, LibraryItemBase } from '../library/types.js';
+import type { CatalogEntry } from '../types.js';
 import { translateChapterName } from './chapterNameHe.js';
 import { translateOccasionLabel } from './occasionLabelEn.js';
 
 /**
- * Names the rules below can't translate, translated once and checked
- * (translations/library-he.json and library-en.json, read by
- * bin/libraryTranslations.ts): English -> Hebrew for JEM's names, Hebrew ->
- * English for mafteiach's.
+ * Names the rules below can't translate, or translate wrong, translated
+ * once and checked (translations/library-he.json and library-en.json, read
+ * by bin/libraryTranslations.ts): English -> Hebrew for JEM's names, Hebrew
+ * -> English for mafteiach's.
  */
 export interface LibraryTranslations {
   he: Readonly<Record<string, string>>;
@@ -18,18 +19,21 @@ export interface LibraryTranslations {
  * interface language that isn't the name's own:
  *
  * - JEM's recordings (English): the item's name (`labelHe`), its type
- *   (`typeHe`) and each recording's chapter name (the ref's `labelHe`).
+ *   (`typeHe`) and each recording's chapter name (the ref's `labelHe`) -
+ *   the recordings of a maamar too.
  * - mafteiach's names (Hebrew), in English: where a maamar was said
  *   (`occasionLabelEn`), a sicha's parsha or moed (`sectionLabelEn`), and
  *   the names of the reshimos, the letters and the hadranim (`labelEn`).
  *
- * The rules translate first (the farbrengens' names go through the same
- * ones, so the two read alike); `extra` fills in what they can't. A name
- * neither knows keeps only its own language, and the apps show it as it is.
- * The library is not changed; a translated copy is returned.
+ * A checked JEM name in `extra` comes first, the rules after it (the
+ * farbrengens' chapter names go through the same two, translateCatalogYear,
+ * so the two read alike); for mafteiach's names the rules come first and
+ * `extra` fills in what they can't. A name neither knows keeps only its
+ * own language, and the apps show it as it is. The library is not
+ * changed; a translated copy is returned.
  */
 export function translateLibrary(library: CatalogLibrary, extra: LibraryTranslations): CatalogLibrary {
-  const he = (text: string | undefined): string | undefined => (text ? (translateChapterName(text) ?? extra.he[text] ?? undefined) : undefined);
+  const he = (text: string | undefined): string | undefined => (text ? (extra.he[text] ?? translateChapterName(text) ?? undefined) : undefined);
   const en = (text: string | undefined): string | undefined => (text ? (translateOccasionLabel(text) ?? extra.en[text] ?? undefined) : undefined);
   // A parsha's or moed's English name as the axes already have it.
   const named = new Map<string, string>();
@@ -58,7 +62,9 @@ export function translateLibrary(library: CatalogLibrary, extra: LibraryTranslat
         ...collections.maamorim,
         items: collections.maamorim.items.map((item) => {
           const occasionLabelEn = en(item.occasionLabel);
-          return occasionLabelEn ? { ...item, occasionLabelEn } : item;
+          // Its recordings are JEM's, named in English; its PDFs keep their Hebrew names.
+          const withAudio = { ...item, refs: item.refs.map((ref) => (ref.kind === 'audio' ? refs([ref], he, 'labelHe')[0]! : ref)) };
+          return occasionLabelEn ? { ...withAudio, occasionLabelEn } : withAudio;
         }),
       },
       likkuteiSichos: {
@@ -73,4 +79,20 @@ export function translateLibrary(library: CatalogLibrary, extra: LibraryTranslat
       hadranim: { ...collections.hadranim, items: collections.hadranim.items.map((item) => withLabel(item, 'labelEn', en(item.label))) },
     },
   };
+}
+
+/**
+ * A year of farbrengens with each recording's chapter name in Hebrew
+ * (`chapterNameHe`), the same way as the library's recordings: the checked
+ * name first, then the rules. The year is not changed; a copy is returned.
+ */
+export function translateCatalogYear(entries: CatalogEntry[], extra: Pick<LibraryTranslations, 'he'>): CatalogEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    audio: entry.audio.map((audio) => {
+      const { chapterNameHe: _old, ...rest } = audio;
+      const chapterNameHe = audio.chapterName ? (extra.he[audio.chapterName] ?? translateChapterName(audio.chapterName)) : null;
+      return chapterNameHe ? { ...rest, chapterNameHe } : rest;
+    }),
+  }));
 }

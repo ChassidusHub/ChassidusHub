@@ -1393,7 +1393,8 @@
       {
         "workerFilename": "AR0019766.mp3",
         "durationMs": 390765,
-        "chapterName": "Vayanchem"
+        "chapterName": "Vayanchem",
+        "chapterNameHe": "וינחם"
       },
       {
         "workerFilename": "AR0019758.mp3",
@@ -2719,7 +2720,7 @@
         "workerFilename": "JEMSK2600.mp3",
         "durationMs": 3494000,
         "chapterName": "Parade",
-        "chapterNameHe": "פאראד"
+        "chapterNameHe": "תהלוכה"
       }
     ],
     "pdfs": [

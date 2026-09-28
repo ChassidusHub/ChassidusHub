@@ -107,7 +107,7 @@ export function LibraryScreen() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t.searchLibraryEverythingPlaceholder}
           aria-label={t.searchLibraryEverythingPlaceholder}
-          dir="auto"
+          dir={query ? 'auto' : undefined}
           enterKeyHint="search"
         />
       </form>

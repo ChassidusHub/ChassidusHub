@@ -45,7 +45,7 @@ describe('translateChapterName', () => {
   it('keeps a nigun by its own name', () => {
     expectTranslations([
       ['Lechatchila Ariber', 'לכתחילה אריבער'],
-      ['Nye Zhuritzy Chloptzy 2 (Wordless Melody)', 'ניע ז׳וריצי כלאפצי ב׳ (ללא מילים)'],
+      ['Nye Zhuritzy Chloptzy 2 (Wordless Melody)', 'ניע זשוריצי כלאפצי ב׳ (ללא מילים)'],
       ['V’harikosi Lachem Bracha (Fast)', 'והריקותי לכם ברכה (מהיר)'],
       ['Nikolaever Nigun (Ro’eh Yisroel)', 'ניגון ניקולייב (רועה ישראל)'],
       ['Daled Bavos', 'ד׳ בבות'],
@@ -57,7 +57,7 @@ describe('translateChapterName', () => {
     expectTranslations([
       ['Nigunim & Sheva Brachos', 'ניגונים ושבע ברכות'],
       ['L’chaims and Conversations', 'לחיים ושיחות עם הקהל'],
-      ['Nigun Hachana, Daled Bavos, Nye Zhuritzy Chloptzi', 'ניגון הכנה, ד׳ בבות, ניע ז׳וריצי כלאפצי'],
+      ['Nigun Hachana, Daled Bavos, Nye Zhuritzy Chloptzi', 'ניגון הכנה, ד׳ בבות, ניע זשוריצי כלאפצי'],
       ['Sicha 4  — Ma’amar K’ein Sicha', 'שיחה ד׳ - מאמר כעין שיחה'],
     ]);
   });
@@ -76,6 +76,25 @@ describe('translateChapterName', () => {
       ['Sicha, 6th Night of Chanuka, 5747', 'שיחה, ליל ו׳ דחנוכה, תשמ״ז'],
       ['Sicha, Rosh Chodesh Teves after Minchah, 5747', 'שיחה, ראש חודש טבת אחרי מנחה, תשמ״ז'],
       ['5730/Tishrei/06', 'ו׳ תשרי תש״ל'],
+    ]);
+  });
+
+  it('writes the 18th of Elul as Chabad does, ח״י אלול', () => {
+    expectTranslations([
+      ['Sicha, Chai Elul, 5748', 'שיחה, ח״י אלול, תשמ״ח'],
+      ['Minchah, Yud Ches Elul, 5748', 'מנחה, ח״י אלול, תשמ״ח'],
+      ['Sicha, 18 Elul', 'שיחה, ח״י אלול'],
+      ['5738/Elul/18', 'ח״י אלול תשל״ח'],
+      ['Sicha, Yud Ches Tishrei, 5751', 'שיחה, י״ח תשרי, תשנ״א'],
+    ]);
+  });
+
+  it('names a dollars distribution as one, and a parade as a תהלוכה', () => {
+    expectTranslations([
+      ['Dollars', 'דולרים'],
+      ['Dollars, Chof Teves, 5750', 'חלוקת דולרים, כ׳ טבת, תש״נ'],
+      ['Parade', 'תהלוכה'],
+      ['End of Parade', 'סיום התהלוכה'],
     ]);
   });
 

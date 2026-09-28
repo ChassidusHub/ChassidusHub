@@ -7,7 +7,7 @@ import { existsSync } from 'node:fs';
 import { MIN_HISTORICAL_YEAR } from '@sichos-kodesh/kvius-engine';
 import { buildCatalog } from '../src/buildCatalog.js';
 import { buildLibrary } from '../src/library/buildLibrary.js';
-import { translateLibrary } from '../src/translate/library.js';
+import { translateCatalogYear, translateLibrary } from '../src/translate/library.js';
 import { shortenCatalogYear, shortenLibrary } from '../src/translate/shortTitles.js';
 import { loadLibraryEditions, loadLibraryTranslations, loadShortTitles } from './libraryTranslations.js';
 import { addLibraryViews } from '../src/library/views.js';
@@ -64,11 +64,13 @@ const years = Object.keys(byYear)
   .sort((a, b) => Number(a) - Number(b));
 
 await mkdir(outDir, { recursive: true });
-// Each long name with its short title beside it (src/translate/shortTitles.ts).
+// Each long name with its short title beside it (src/translate/shortTitles.ts),
+// and each chapter name in Hebrew as the library's recordings have it.
 const shortTitles = await loadShortTitles();
+const translations = await loadLibraryTranslations();
 let totalEntries = 0;
 for (const year of years) {
-  await writeFile(path.join(outDir, `${year}.json`), JSON.stringify(shortenCatalogYear(byYear[Number(year)]!, shortTitles), null, 2), 'utf8');
+  await writeFile(path.join(outDir, `${year}.json`), JSON.stringify(shortenCatalogYear(translateCatalogYear(byYear[Number(year)]!, translations), shortTitles), null, 2), 'utf8');
   totalEntries += byYear[Number(year)]!.length;
 }
 
@@ -96,7 +98,7 @@ console.log(`Wrote ${years.length} year files + index.ts (${totalEntries} occasi
 // read by bin/release.ts, never diffed by hand.
 const jemDb = withJem ? new DatabaseSync(jemDbPath, { readOnly: true }) : null;
 // With each name in the other language beside it (src/translate/library.ts).
-const library = addLibraryViews(shortenLibrary(translateLibrary(buildLibrary(db, jemDb), await loadLibraryTranslations()), shortTitles), await loadLibraryEditions());
+const library = addLibraryViews(shortenLibrary(translateLibrary(buildLibrary(db, jemDb), translations), shortTitles), await loadLibraryEditions());
 const libraryDir = path.join(outDir, 'library');
 await mkdir(libraryDir, { recursive: true });
 await writeFile(path.join(libraryDir, 'meta.json'), JSON.stringify({ moadim: library.moadim, parshiyos: library.parshiyos }), 'utf8');

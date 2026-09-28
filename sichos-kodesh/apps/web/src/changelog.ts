@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.15.0';
+export const APP_VERSION = '1.15.1';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.15.1',
+    en: [
+      'The search boxes: an empty box keeps the page\'s direction, so the Hebrew hint reads right to left; the text you type sets its own',
+      'In the reader and the PDFs, Back stands level with the title',
+      'A library item\'s page no longer repeats its date or adds notes under the name',
+      'Hebrew names for the recordings of the maamorim, and corrected Hebrew names for JEM\'s recordings',
+    ],
+    he: [
+      'תיבות החיפוש: תיבה ריקה שומרת על כיוון העמוד, כך שהרמז בעברית נקרא מימין לשמאל; הטקסט שמקלידים קובע את כיוונו',
+      'בקורא ובקובצי ה-PDF, כפתור החזרה עומד בגובה הכותרת',
+      'עמוד של פריט בספרייה כבר לא חוזר על התאריך ולא מוסיף הערות מתחת לשם',
+      'שמות בעברית להקלטות של המאמרים, ותיקונים בשמות העבריים של הקלטות JEM',
+    ],
+  },
   {
     version: '1.15.0',
     en: [

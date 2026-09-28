@@ -290,7 +290,8 @@ export function SearchScreen() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder={scope === 'library' ? t.searchLibraryEverythingPlaceholder : t.searchEverythingPlaceholder}
           aria-label={t.searchEverythingPlaceholder}
-          dir="auto"
+          // The box follows what is typed; empty, it keeps the page's direction, so a Hebrew placeholder isn't set left to right.
+          dir={query ? 'auto' : undefined}
           autoFocus
           enterKeyHint="search"
         />
