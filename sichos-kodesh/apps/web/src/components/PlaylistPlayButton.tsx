@@ -10,7 +10,7 @@ import { useTranslation } from '../i18n/useLanguage';
 interface Props {
   entry: CatalogEntry;
   progressMap: ProgressStore;
-  /** 'compact' - small icon-only button, e.g. FarbrengenScreen's recordings row. 'large' - Spotify-style big green circular button atop RecordingsScreen's own playlist. */
+  /** 'compact' - small icon-only button, e.g. FarbrengenScreen's recordings row. 'large' - Spotify-style big green circular button atop a page's recordings (a farbrengen's, a library item's). */
   variant: 'compact' | 'large';
 }
 

@@ -3,6 +3,7 @@ import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { AXIS_VARIANTS, COLLECTION_AXES, axisGroups, axisTab, groupDisplayName, isCollectionAxis } from '@sichos-kodesh/app-core';
 import { useLibrary } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { libraryGroupPath } from '../../routes/links';
 import { Segmented } from '../../components/settings/SettingsControls';
 import { useTranslation } from '../../i18n/useLanguage';
 import { LibraryLoading } from './LibraryLoading';
@@ -61,7 +62,7 @@ export function LibraryCollectionScreen({ collection }: Props) {
       <ul className={compact ? 'library-grid' : 'year-list library-list'}>
         {groups.map((group) => (
           <li key={`${axis}:${group.slug}`}>
-            <Link className={compact ? 'library-grid-tile' : 'year-row'} to={`/library/c/${collection}/${axis}/${encodeURIComponent(group.slug)}`}>
+            <Link className={compact ? 'library-grid-tile' : 'year-row'} to={libraryGroupPath(collection, axis, group.slug)}>
               <span className={compact ? 'library-grid-name' : 'year-row-year'}>{groupDisplayName(collection, axis, group, language)}</span>
               <span className={compact ? 'library-grid-count' : 'library-count'}>{group.itemIds.length}</span>
             </Link>

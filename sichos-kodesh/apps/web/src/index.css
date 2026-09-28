@@ -3787,3 +3787,85 @@ body:has(.reader) {
   font-weight: 600;
   line-height: 1.35;
 }
+
+/* The library's one shelf (LibraryScreen): each place a row with its icon, name, a few words and a count. */
+.shelf-section + .shelf-section {
+  margin-top: 8px;
+}
+
+.shelf-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.shelf-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.shelf-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 14px;
+  color: var(--fg);
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.shelf-row:hover {
+  background: var(--card-hover);
+}
+
+.shelf-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.shelf-row-well {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.shelf-row-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shelf-row-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.shelf-row-blurb {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.shelf-row-count {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shelf-row-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+}

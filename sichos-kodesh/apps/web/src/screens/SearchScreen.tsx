@@ -28,8 +28,7 @@ import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 import { LibraryLoading } from './library/LibraryLoading';
-import { readerPath, workPath } from './seforim/seforimPaths';
-import { farbrengenPath } from '../routes/links';
+import { farbrengenPath, libraryItemPath, readerPath, seferPath } from '../routes/links';
 
 const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 /** One scope's results render as plain rows; past this many, the list asks for a narrower search instead of growing (as on the phone). */
@@ -291,7 +290,7 @@ export function SearchScreen() {
                 const subtitle = itemSubtitle(collection, item, language);
                 return (
                   <li key={item.id}>
-                    <Link className="year-row library-item-row" to={`/library/item/${collection}/${encodeURIComponent(item.id)}`}>
+                    <Link className="year-row library-item-row" to={libraryItemPath(collection, item.id)}>
                       <span className="library-item-text">
                         <span className="year-row-year">{itemTitle(collection, item, language)}</span>
                         {subtitle && <span className="library-item-subtitle">{subtitle}</span>}
@@ -312,7 +311,7 @@ export function SearchScreen() {
           <ul className="year-list">
             {nameHits.slice(0, limit).map((hit) => (
               <li key={hit.unit ? `${hit.work.id}/${hit.unit.id}` : hit.work.id}>
-                <Link className="year-row" to={hit.unit ? readerPath(hit.work.id, hit.unit.id) : workPath(hit.work.id)}>
+                <Link className="year-row" to={hit.unit ? readerPath(hit.work.id, hit.unit.id) : seferPath(hit.work.id)}>
                   <span className="year-row-year">
                     {hit.unit ? `${names(hit.work.title, language)} · ${language === 'en' ? (hit.unit.labelEn ?? hit.unit.label) : hit.unit.label}` : names(hit.work.title, language)}
                   </span>

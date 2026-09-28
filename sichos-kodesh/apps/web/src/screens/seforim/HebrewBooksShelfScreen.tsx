@@ -7,7 +7,7 @@ import { useShelf, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { useTranslation } from '../../i18n/useLanguage';
 import { LibraryLoading } from '../library/LibraryLoading';
-import { shelfPath } from './seforimPaths';
+import { rebbePath, scansPath } from '../../routes/links';
 
 /** Only a long list gets a filter. */
 const FILTER_FROM = 12;
@@ -62,7 +62,7 @@ export function HebrewBooksShelfScreen({ authorId, series: seriesIndex }: Props)
   if (!shelf || !works) {
     return (
       <div className="screen">
-        <ScreenHeader to="/seforim" title={t.seforimTitle} />
+        <ScreenHeader to={rebbePath(authorId)} title={t.seforimTitle} />
         <LibraryLoading />
       </div>
     );
@@ -72,7 +72,7 @@ export function HebrewBooksShelfScreen({ authorId, series: seriesIndex }: Props)
     const shared = sharedLabels((one?.scans ?? []).map(scanLabel));
     return (
       <div className="screen">
-        <ScreenHeader to={shelfPath(authorId)} title={one?.title ?? authorName} />
+        <ScreenHeader to={scansPath(authorId)} title={one?.title ?? authorName} />
         {one ? (
           <ul className="year-list">
             {one.scans.map((scan) => (
@@ -89,7 +89,7 @@ export function HebrewBooksShelfScreen({ authorId, series: seriesIndex }: Props)
 
   return (
     <div className="screen">
-      <ScreenHeader to="/seforim" title={authorName} />
+      <ScreenHeader to={rebbePath(authorId)} title={authorName} />
       <p className="tab-help">{t.shelfHelp}</p>
       {all.length >= FILTER_FROM && (
         <input
@@ -111,7 +111,7 @@ export function HebrewBooksShelfScreen({ authorId, series: seriesIndex }: Props)
               <ScanRow key={series.title} scan={series.scans[0]!} label={series.scans[0]!.title} />
             ) : (
               <li key={series.title}>
-                <Link className="year-row" to={shelfPath(authorId, all.findIndex((s) => s.title === series.title))}>
+                <Link className="year-row" to={scansPath(authorId, all.findIndex((s) => s.title === series.title))}>
                   <span className="year-row-year">{series.title}</span>
                   <span className="year-row-distance">{t.shelfBooks(series.scans.length)}</span>
                 </Link>

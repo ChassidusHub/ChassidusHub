@@ -11,7 +11,7 @@ export type AllChaptersDownloadState = 'unavailable' | 'none' | 'downloading' | 
 
 /**
  * The aggregate download state across every chapter of one occasion -
- * RecordingsScreen's own "download all" affordance, independent of the
+ * a library item's "download all" (DownloadAllChapters), independent of the
  * occasion-level state FarbrengenScreen tracks (that one also covers PDFs,
  * gated by the settings' content types; this page is audio, unconditionally
  * - see `downloadAllChapters`). Mirrors the live-state-wins,

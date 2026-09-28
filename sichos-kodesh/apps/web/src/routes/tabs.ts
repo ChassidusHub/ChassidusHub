@@ -40,12 +40,10 @@ export function tabForPath(pathname: string): TabId {
     under(pathname, '/f') ||
     under(pathname, '/years') ||
     under(pathname, '/browse') ||
-    under(pathname, '/occasion-all-years') ||
-    under(pathname, '/library/moadim') ||
-    under(pathname, '/library/parshiyos')
+    under(pathname, '/occasion-all-years')
   )
     return 'farbrengens';
-  if (under(pathname, '/library') || under(pathname, '/seforim')) return 'library';
+  if (under(pathname, '/library') || under(pathname, '/l') || under(pathname, '/s') || under(pathname, '/seforim')) return 'library';
   if (under(pathname, '/search')) return 'search';
   if (under(pathname, '/me') || under(pathname, '/settings') || under(pathname, '/downloaded') || under(pathname, '/about') || under(pathname, '/privacy')) return 'mine';
   return 'week';
@@ -54,7 +52,7 @@ export function tabForPath(pathname: string): TabId {
 /** Whether a page shows the tabs: every page but a PDF and the seforim reader, which take the whole screen. */
 export function showsTabs(pathname: string): boolean {
   if (/\/pdf\//.test(pathname)) return false;
-  if (/^\/seforim\/[^/]+\/read$/.test(pathname)) return false;
+  if (/^\/s\/[^/]+\/read$/.test(pathname)) return false;
   return true;
 }
 

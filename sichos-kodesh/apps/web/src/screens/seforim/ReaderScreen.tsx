@@ -37,7 +37,7 @@ import { EditionPicker } from '../../seforim/EditionPicker';
 import { TextObjectView } from '../../seforim/TextObjectView';
 import { LibraryLoading } from '../library/LibraryLoading';
 import { ReaderSettingsPanel } from './ReaderSettingsPanel';
-import { readerPath, workPath } from './seforimPaths';
+import { readerPath, seferPath } from '../../routes/links';
 
 type Loaded = { state: 'loading' } | { state: 'ready'; text: TextObject } | { state: 'error'; problem: TextProblem };
 
@@ -377,7 +377,7 @@ export function ReaderScreen({ workId }: Props) {
     );
   }
 
-  const back = work && contents && unit ? workPath(workId, pathToUnit(contents, unit.id)) : '/seforim';
+  const back = work && contents && unit ? seferPath(workId, pathToUnit(contents, unit.id)) : '/library';
   if (!work || !unit || !contents) {
     return (
       <div className="screen">

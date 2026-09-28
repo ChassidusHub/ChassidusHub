@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS, currentParsha } from '@sichos-kodesh/catalog';
 import { lsParshaSlugs } from '@sichos-kodesh/app-core';
@@ -12,8 +12,7 @@ import { LibraryLoading } from '../screens/library/LibraryLoading';
 import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { OccasionGroupScreen } from '../screens/library/OccasionGroupScreen';
 import { PdfViewerScreen } from '../screens/PdfViewerScreen';
-import { RecordingsScreen } from '../screens/RecordingsScreen';
-import { farbrengensPath } from './tabs';
+import { canonicalLibraryPath, libraryCollectionPath, libraryGroupPath } from './links';
 import { useLibraryItem } from './useLibraryItem';
 
 function NotFound() {
@@ -35,12 +34,13 @@ function GroupRoute() {
   return isCollection(collection) && axis && slug ? <LibraryGroupScreen collection={collection} axis={axis} slug={slug} /> : <NotFound />;
 }
 
-function OccasionGroupRoute({ axis }: { axis: 'moadim' | 'parshiyos' }) {
+/** The farbrengens of one moed or parsha (`/farbrengens/moed/:slug`, `/farbrengens/parsha/:slug`). */
+export function OccasionGroupRoute({ axis }: { axis: 'moadim' | 'parshiyos' }) {
   const { slug } = useParams<{ slug: string }>();
   return slug ? <OccasionGroupScreen axis={axis} slug={slug} /> : <NotFound />;
 }
 
-function ItemRoute({ view }: { view: 'item' | 'recordings' | 'pdf' }) {
+function ItemRoute({ view }: { view: 'item' | 'pdf' }) {
   const route = useLibraryItem();
   const { driveFileId } = useParams<{ driveFileId: string }>();
   if (route === undefined)
@@ -50,12 +50,11 @@ function ItemRoute({ view }: { view: 'item' | 'recordings' | 'pdf' }) {
       </div>
     );
   if (route === null) return <NotFound />;
-  if (view === 'recordings') return <RecordingsScreen resolved={route.resolved} />;
   if (view === 'pdf') return <PdfViewerScreen key={driveFileId} resolved={route.resolved} />;
   return <LibraryItemScreen route={route} />;
 }
 
-/** This week's parsha in Likkutei Sichos (the home screen's link): its group once the library is here, else the sichos by parsha. */
+/** This week's parsha in Likkutei Sichos (This week's link): its group once the library is here, else the sichos by parsha. */
 function ThisParshaRoute() {
   const library = useLibrary();
   if (!library)
@@ -65,24 +64,35 @@ function ThisParshaRoute() {
       </div>
     );
   const slug = lsParshaSlugs(library, currentParsha(IL).parsha)[0];
-  return <Navigate replace to={slug ? `/library/c/likkuteiSichos/parsha/${slug}` : '/library/c/likkuteiSichos'} />;
+  return <Navigate replace to={slug ? libraryGroupPath('likkuteiSichos', 'parsha', slug) : libraryCollectionPath('likkuteiSichos', 'parsha')} />;
 }
 
-/** Everything under /library: the library, its collections, their groups and items, and the farbrengens by moed and parsha. */
+/** An address from before the library's own (`/library/c/...`, `/library/item/...`, `/seforim/...`): on to its new one (routes/links.ts). */
+export function LegacyLibraryRoute() {
+  const { pathname, search } = useLocation();
+  const next = canonicalLibraryPath(pathname, search);
+  return next ? <Navigate replace to={next} /> : <NotFound />;
+}
+
+/** `/library`: the tab's one shelf, and This week's way into the parsha's sichos; every older address under it leads on. */
 export function LibraryRoutes() {
   return (
     <Routes>
       <Route index element={<LibraryScreen />} />
-      <Route path="moadim" element={<Navigate replace to={farbrengensPath('moed')} />} />
-      <Route path="moadim/:slug" element={<OccasionGroupRoute axis="moadim" />} />
-      <Route path="parshiyos" element={<Navigate replace to={farbrengensPath('parsha')} />} />
-      <Route path="parshiyos/:slug" element={<OccasionGroupRoute axis="parshiyos" />} />
       <Route path="this-parsha" element={<ThisParshaRoute />} />
-      <Route path="c/:collection" element={<CollectionRoute />} />
-      <Route path="c/:collection/:axis/:slug" element={<GroupRoute />} />
-      <Route path="item/:collection/:id" element={<ItemRoute view="item" />} />
-      <Route path="item/:collection/:id/recordings" element={<ItemRoute view="recordings" />} />
-      <Route path="item/:collection/:id/pdf/:driveFileId" element={<ItemRoute view="pdf" />} />
+      <Route path="*" element={<LegacyLibraryRoute />} />
+    </Routes>
+  );
+}
+
+/** `/l/...`: a collection of the library, its groups, one item and the item's PDFs. */
+export function CollectionRoutes() {
+  return (
+    <Routes>
+      <Route path=":collection" element={<CollectionRoute />} />
+      <Route path=":collection/:id" element={<ItemRoute view="item" />} />
+      <Route path=":collection/:axis/:slug" element={<GroupRoute />} />
+      <Route path=":collection/:id/pdf/:driveFileId" element={<ItemRoute view="pdf" />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

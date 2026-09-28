@@ -4,6 +4,7 @@ import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { findGroup, groupDisplayName, groupItems, itemSubtitle, itemTitle, volumeSections } from '@sichos-kodesh/app-core';
 import { useLibrary } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
+import { libraryCollectionPath, libraryGroupPath, libraryItemPath } from '../../routes/links';
 import { useTranslation } from '../../i18n/useLanguage';
 import { LibraryLoading } from './LibraryLoading';
 
@@ -30,8 +31,8 @@ export function LibraryGroupScreen({ collection, axis, slug }: Props) {
   const items = section ? section.items : allItems;
   const groupName = group ? groupDisplayName(collection, axis, group, language) : t.collectionNames[collection];
   const title = section ? section.name[language] : groupName;
-  const groupPath = `/library/c/${collection}/${axis}/${encodeURIComponent(slug)}`;
-  const back = section ? groupPath : `/library/c/${collection}?axis=${encodeURIComponent(axis)}`;
+  const groupPath = libraryGroupPath(collection, axis, slug);
+  const back = section ? groupPath : libraryCollectionPath(collection, axis);
 
   return (
     <div className="screen">
@@ -52,7 +53,7 @@ export function LibraryGroupScreen({ collection, axis, slug }: Props) {
         <ul className="year-list library-list">
           {sections.map((s) => (
             <li key={s.key}>
-              <Link className="year-row" to={`${groupPath}?section=${encodeURIComponent(s.key)}`}>
+              <Link className="year-row" to={libraryGroupPath(collection, axis, slug, s.key)}>
                 <span className="year-row-year">{s.name[language]}</span>
                 <span className="library-count">{s.items.length}</span>
               </Link>
@@ -67,7 +68,7 @@ export function LibraryGroupScreen({ collection, axis, slug }: Props) {
             const subtitle = line === title ? '' : line;
             return (
               <li key={item.id}>
-                <Link className="year-row library-item-row" to={`/library/item/${collection}/${encodeURIComponent(item.id)}`}>
+                <Link className="year-row library-item-row" to={libraryItemPath(collection, item.id)}>
                   <span className="library-item-text">
                     <span className="year-row-year">{itemTitle(collection, item, language)}</span>
                     {subtitle && <span className="library-item-subtitle">{subtitle}</span>}

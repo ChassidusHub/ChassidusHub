@@ -9,7 +9,7 @@ interface Props {
 
 /**
  * Shares the current page's own URL - every occasion/playlist page already
- * has one stable route (FarbrengenScreen/RecordingsScreen), so there's
+ * has one stable route (a farbrengen's `/f/`, a library item's `/l/`), so there's
  * nothing to build here beyond `window.location.href`. Prefers the native
  * OS share sheet (`navigator.share`, mobile Safari/Chrome) where available;
  * falls back to copying the URL to the clipboard with a brief confirmation,

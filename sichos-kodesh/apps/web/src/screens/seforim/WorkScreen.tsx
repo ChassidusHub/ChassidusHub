@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import type { CatalogWork, CatalogWorkSource, LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { LIBRARY_COLLECTION_IDS, catalogUnit } from '@sichos-kodesh/catalog';
-import { contentsAt, mayRead, names, sharedLabels, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
+import { HOME_WORK_IDS, contentsAt, mayRead, names, sharedLabels, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
 import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
 import { useShelf, useWorkContents, useWorks } from '../../catalog/catalogStore';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -11,7 +11,7 @@ import { useTranslation } from '../../i18n/useLanguage';
 import { useReadingState } from '../../seforim/readingState';
 import { LibraryLoading } from '../library/LibraryLoading';
 import { ScanRow } from './HebrewBooksShelfScreen';
-import { readerPath, workPath } from './seforimPaths';
+import { libraryCollectionPath, readerPath, rebbePath, seferPath } from '../../routes/links';
 
 type Translation = ReturnType<typeof useTranslation>['t'];
 
@@ -106,6 +106,8 @@ function Scans({ workId }: { workId: string }) {
 
 interface Props {
   workId: string;
+  /** The part of its contents shown, as indexes into the tree (routes/links.ts's `seferPath`). */
+  path: readonly number[];
 }
 
 /**
@@ -113,17 +115,16 @@ interface Props {
  * at a time, down to the chapters that open in the reader), and its
  * editions with where each may be read.
  */
-export function WorkScreen({ workId }: Props) {
+export function WorkScreen({ workId, path }: Props) {
   const works = useWorks();
   const shelf = useShelf();
   const reading = useReadingState();
   const { t, language } = useTranslation();
-  const [params] = useSearchParams();
-  const path = useMemo(() => (params.get('path') ?? '').split('.').filter((s) => /^\d+$/.test(s)).map(Number), [params]);
   const work = works?.works.find((w) => w.id === workId);
   const contents = useWorkContents(workId, !!work?.units);
   const unitsById = useMemo(() => new Map((contents?.units ?? []).map((unit) => [unit.id, unit])), [contents]);
-  const back = path.length > 0 ? workPath(workId, path.slice(0, -1)) : '/seforim';
+  // Up a part, else to its Rebbe's seforim - or the shelf, for the Rebbe's own seforim that stand on it.
+  const back = path.length > 0 ? seferPath(workId, path.slice(0, -1)) : work && works && !HOME_WORK_IDS.includes(work.id) ? rebbePath(work.authors.find((id) => works.authors.some((author) => author.id === id)) ?? null) : '/library';
 
   if (!works || contents === undefined) {
     return (
@@ -136,7 +137,7 @@ export function WorkScreen({ workId }: Props) {
   if (!work) {
     return (
       <div className="screen">
-        <ScreenHeader to="/seforim" title={t.seforimTitle} />
+        <ScreenHeader to="/library" title={t.seforimTitle} />
         <div className="empty-state">
           <p className="empty-state-text">{t.workNotFound}</p>
         </div>
@@ -175,7 +176,7 @@ export function WorkScreen({ workId }: Props) {
           {kind === 'read' && <p className="tab-help">{work.sources.some((s) => s.source === 'sefaria' && mayRead(s)) ? t.workReadOnline : t.workReadOnlineHosted}</p>}
           {kind === 'links' && <p className="tab-help">{onlyScans ? t.workNoTextScans : t.workNoText}</p>}
           {collection && (
-            <Link className="button" to={`/library/c/${collection}`}>
+            <Link className="button" to={libraryCollectionPath(collection)}>
               {t.workOpenCollection}
             </Link>
           )}
@@ -203,7 +204,7 @@ export function WorkScreen({ workId }: Props) {
                 </li>
               ) : (
                 <li key={`part-${index}`}>
-                  <Link className="year-row" to={workPath(workId, [...path, index])}>
+                  <Link className="year-row" to={seferPath(workId, [...path, index])}>
                     <span className="year-row-year">{names(entry.title, language)}</span>
                     <span className="year-row-distance">{t.workPartOf(unitCount(entry), unitsAreLetters(work))}</span>
                   </Link>

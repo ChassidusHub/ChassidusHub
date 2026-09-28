@@ -13,7 +13,7 @@ import { useDownload } from '../download/useDownload';
 import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useProgressMap } from '../player/useProgressMap';
 import { useReadHanacha } from '../player/useReadHanacha';
-import { farbrengenPath, farbrengenPdfPath } from '../routes/links';
+import { farbrengenPath, farbrengenPdfPath, libraryItemPath } from '../routes/links';
 import { hebrewDayMonthLabel, hebrewYearLabel, parshaLabel } from '../utils/formatHebrewDate';
 import { bestKviusYear, findSpecialAnniversaries } from '../utils/weekYears';
 import { isRtlLanguage, useTranslation } from '../i18n/useLanguage';
@@ -143,7 +143,7 @@ export function HomeScreen({ targetYear }: Props) {
           <ul className="text-list">
             {sichos.slice(0, LS_PREVIEW).map((item) => (
               <li key={item.id}>
-                <Link className="text-row" to={`/library/item/likkuteiSichos/${encodeURIComponent(item.id)}`}>
+                <Link className="text-row" to={libraryItemPath('likkuteiSichos', item.id)}>
                   <FileText size={18} className="text-row-icon" aria-hidden />
                   <span className="text-row-label">{itemTitle('likkuteiSichos', item, language)}</span>
                 </Link>

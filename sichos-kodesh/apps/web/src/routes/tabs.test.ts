@@ -13,12 +13,14 @@ describe('the tabs', () => {
     expect(tabForPath('/f/5736/500')).toBe('farbrengens');
     expect(tabForPath('/browse/5736/month/07')).toBe('farbrengens');
     expect(tabForPath('/occasion-all-years/5736/12')).toBe('farbrengens');
-    expect(tabForPath('/library/moadim/yud_shvat')).toBe('farbrengens');
-    expect(tabForPath('/library/parshiyos')).toBe('farbrengens');
+    expect(tabForPath('/farbrengens/moed/yud_shvat')).toBe('farbrengens');
+    expect(tabForPath('/farbrengens/parsha/bereshit')).toBe('farbrengens');
 
     expect(tabForPath('/library')).toBe('library');
-    expect(tabForPath('/library/c/maamorim')).toBe('library');
-    expect(tabForPath('/seforim/tanya')).toBe('library');
+    expect(tabForPath('/l/maamorim')).toBe('library');
+    expect(tabForPath('/l/maamorim/1234')).toBe('library');
+    expect(tabForPath('/s/tanya/2')).toBe('library');
+    expect(tabForPath('/s/by/the-rebbe')).toBe('library');
 
     expect(tabForPath('/search')).toBe('search');
 
@@ -30,21 +32,23 @@ describe('the tabs', () => {
 
   it('does not take a path that only starts the same for one under it', () => {
     expect(tabForPath('/library-old')).toBe('week');
+    expect(tabForPath('/settings')).toBe('mine');
     expect(tabForPath('/meetings')).toBe('week');
   });
 
   it('hides the tabs on a PDF and in the reader, and nowhere else', () => {
     expect(showsTabs('/f/5736/12/pdf/abc')).toBe(false);
-    expect(showsTabs('/library/c/maamorim/i/12/pdf/abc')).toBe(false);
-    expect(showsTabs('/seforim/tanya/read')).toBe(false);
-    expect(showsTabs('/seforim/tanya')).toBe(true);
+    expect(showsTabs('/l/maamorim/12/pdf/abc')).toBe(false);
+    expect(showsTabs('/s/tanya/read')).toBe(false);
+    expect(showsTabs('/s/tanya')).toBe(true);
     expect(showsTabs('/follow/5736/12')).toBe(true);
   });
 
   it("knows each tab's first page, and the farbrengens' views", () => {
     expect(isTabRoot('/')).toBe(true);
     expect(isTabRoot('/me')).toBe(true);
-    expect(isTabRoot('/library/c/maamorim')).toBe(false);
+    expect(isTabRoot('/library')).toBe(true);
+    expect(isTabRoot('/l/maamorim')).toBe(false);
     expect(farbrengensPath()).toBe('/farbrengens');
     expect(farbrengensPath('moed')).toBe('/farbrengens?by=moed');
   });

@@ -22,9 +22,9 @@ export interface DownloadContextValue {
   downloadOccasion: (entry: CatalogEntry) => void;
   /** `source` (default `'manual'`) decides how this job is tracked in downloadLedger.ts - `'auto'` is only ever passed by useAutoDownloadSync; every UI-triggered bulk button leaves it as `'manual'`, exempting whatever it fetches from pruneAutoDownloads.ts for good. */
   enqueueBulk: (entries: CatalogEntry[], source?: 'auto' | 'manual') => void;
-  /** Downloads exactly one chapter's audio, independent of the occasion-level `contentTypes` settings - RecordingsScreen's own per-row download affordance, for grabbing a single sicha without pulling in the whole farbrengen. */
+  /** Downloads exactly one chapter's audio, independent of the occasion-level `contentTypes` settings - the chapter list's own per-row download affordance, for grabbing a single sicha without pulling in the whole farbrengen. */
   downloadChapter: (entry: CatalogEntry, chapterIndex: number) => void;
-  /** Downloads every chapter's audio for one occasion - RecordingsScreen's own "download all" affordance, same independence from `contentTypes` as `downloadChapter` (this page is audio, unconditionally). */
+  /** Downloads every chapter's audio for one occasion - a library item's "download all" on its recordings' card, same independence from `contentTypes` as `downloadChapter` (audio, unconditionally). */
   downloadAllChapters: (entry: CatalogEntry) => void;
   /**
    * Live in-memory state, keyed `"{hebrewYear}:{occasionId}"` for an

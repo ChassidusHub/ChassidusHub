@@ -39,7 +39,7 @@ import { PrivacyScreen } from './screens/PrivacyScreen';
 import { SearchScreen } from './screens/SearchScreen';
 import { useFarbrengenEntry } from './routes/useResolvedEntry';
 import { canonicalFarbrengenPath } from './routes/links';
-import { LibraryRoutes } from './routes/LibraryRoutes';
+import { CollectionRoutes, LegacyLibraryRoute, LibraryRoutes, OccasionGroupRoute } from './routes/LibraryRoutes';
 import { SeforimRoutes } from './routes/SeforimRoutes';
 
 function ThisWeekRoute() {
@@ -171,8 +171,13 @@ function AppContent() {
         <Route path="/downloaded" element={<DownloadedScreen />} />
         <Route path="/about" element={<AboutScreen />} />
         <Route path="/privacy" element={<PrivacyScreen />} />
+        <Route path="/farbrengens/moed/:slug" element={<OccasionGroupRoute axis="moadim" />} />
+        <Route path="/farbrengens/parsha/:slug" element={<OccasionGroupRoute axis="parshiyos" />} />
         <Route path="/library/*" element={<LibraryRoutes />} />
-        <Route path="/seforim/*" element={<SeforimRoutes />} />
+        <Route path="/l/*" element={<CollectionRoutes />} />
+        <Route path="/s/*" element={<SeforimRoutes />} />
+        {/* The seforim's addresses before the one shelf (routes/links.ts's canonicalLibraryPath). */}
+        <Route path="/seforim/*" element={<LegacyLibraryRoute />} />
 
         <Route path="/f/:hebrewYear/:occasionId" element={<FarbrengenRoute />} />
         <Route path="/f/:hebrewYear/:occasionId/pdf/:driveFileId" element={<FarbrengenPdfRoute />} />

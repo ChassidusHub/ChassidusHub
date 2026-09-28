@@ -20,7 +20,7 @@ export interface DownloadTarget {
   occasionId: number;
   label: string;
   kind: 'audio' | 'pdf';
-  /** Set only for `kind: 'audio'` targets - lets DownloadProvider mirror this target's own real progress into RecordingsScreen's per-chapter state too, whether the job that queued it was `downloadChapter` itself or a whole-occasion/bulk download that happens to include this chapter. */
+  /** Set only for `kind: 'audio'` targets - lets DownloadProvider mirror this target's own real progress into the chapter list's per-chapter state too, whether the job that queued it was `downloadChapter` itself or a whole-occasion/bulk download that happens to include this chapter. */
   chapterIndex?: number;
 }
 

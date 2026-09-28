@@ -10,7 +10,7 @@ import { ShareButton } from './ShareButton';
 
 interface Props {
   entry: CatalogEntry;
-  /** The recordings page keeps its own "download all" icon in the playlist header and shows only the Share pill here. */
+  /** A library item's page keeps its own "download all" icon on its recordings' card and shows only the Share pill here. */
   showDownload?: boolean;
 }
 

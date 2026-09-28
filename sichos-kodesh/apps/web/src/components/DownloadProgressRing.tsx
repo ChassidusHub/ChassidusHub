@@ -7,7 +7,7 @@ interface Props {
 /**
  * The active-download indicator once real byte progress is known - visually
  * the same size/weight as the gray `Loader2` spinner it replaces (see
- * OccasionRowIcon/FarbrengenScreen/RecordingsScreen), but green and static:
+ * OccasionRowIcon/FarbrengenScreen/ChapterList), but green and static:
  * the arc itself fills clockwise with real progress instead of spinning to
  * indicate indeterminate work. Falls back to the spinning gray `Loader2` at
  * its call sites whenever a target's `Content-Length` (and so a real

@@ -5,6 +5,7 @@ import { LIBRARY_COLLECTION_IDS } from '@sichos-kodesh/catalog';
 import { findItem, itemAudio, itemPdfLabel, itemPdfs, itemSubtitle, playlistOccasionId } from '@sichos-kodesh/app-core';
 import { useLibrary } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useLanguage';
+import { libraryCollectionPath, libraryItemPath } from './links';
 import type { ResolvedEntry } from './useResolvedEntry';
 
 export interface LibraryItemRoute {
@@ -13,13 +14,13 @@ export interface LibraryItemRoute {
   /**
    * The item as the occasion screens take one: its recordings and documents
    * under an id no catalog occasion has (playlistOccasionId), so the web's
-   * own recordings list and PDF viewer serve library items too, with their
+   * own chapter list and PDF viewer serve library items too, with their
    * progress kept like a farbrengen's.
    */
   resolved: ResolvedEntry;
 }
 
-/** The library item a `/library/item/:collection/:id` URL names: undefined while the library loads, null when there is no such item. */
+/** The library item a `/l/:collection/:id` address names: undefined while the library loads, null when there is no such item. */
 export function useLibraryItem(): LibraryItemRoute | null | undefined {
   const params = useParams<{ collection: string; id: string }>();
   const library = useLibrary();
@@ -47,7 +48,6 @@ export function useLibraryItem(): LibraryItemRoute | null | undefined {
       audio: itemAudio(item),
       pdfs,
     };
-    const basePath = `/library/item/${collection}/${encodeURIComponent(item.id)}`;
-    return { collection, item, resolved: { entry, subtitle: itemSubtitle(collection, item, language), basePath, backPath: `/library/c/${collection}` } };
+    return { collection, item, resolved: { entry, subtitle: itemSubtitle(collection, item, language), basePath: libraryItemPath(collection, item.id), backPath: libraryCollectionPath(collection) } };
   }, [library, params.collection, params.id, t, language]);
 }

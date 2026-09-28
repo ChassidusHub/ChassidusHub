@@ -68,7 +68,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
         const next = { ...prev };
         for (const k of totalForKey.keys()) next[k] = 'queued';
         // Also set audio chapter keys to 'queued' up front so
-        // RecordingsScreen shows the pending spinner for every chapter
+        // The chapter list shows the pending spinner for every chapter
         // included in this job, not only the one(s) that have already
         // started fetching - fixes the "download icon instead of spinner"
         // for queued chapters during an auto-download or bulk download.
@@ -102,7 +102,7 @@ export function DownloadProvider({ children }: { children: ReactNode }) {
           const total = totalForKey.get(k) ?? 1;
           // Audio targets also get their own chapter-keyed state, distinct
           // from the occasion-wide aggregate above - this is what makes
-          // RecordingsScreen's per-row ring/spinner light up for a chapter
+          // the chapter list's per-row ring/spinner light up for a chapter
           // whether it's downloading because of its own row's button
           // (downloadChapter) or because the whole occasion/a bulk week
           // download happens to include it.

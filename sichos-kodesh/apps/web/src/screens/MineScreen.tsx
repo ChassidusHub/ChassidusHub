@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { contentPreset } from '@sichos-kodesh/app-core';
 import { APP_VERSION } from '../changelog';
 import { ContinueSection } from '../components/ContinueSection';
+import { ReadingPlaces } from '../components/ReadingPlaces';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SettingRow, SettingsGroup } from '../components/settings/SettingsControls';
 import { getDownloadedBytes } from '../download/downloadManager';
@@ -11,9 +12,10 @@ import { presetLabel } from '../settings/presetLabel';
 import { formatBytes } from '../utils/formatBytes';
 
 /**
- * The listener's own tab: where they left off, what is saved on this
- * device and what gets saved on its own, then Settings and About - each
- * row with its state as the value, so it reads without opening anything.
+ * The listener's own tab: where they left off listening and reading, their
+ * bookmarks, what is saved on this device and what gets saved on its own,
+ * then Settings and About - each row with its state as the value, so it
+ * reads without opening anything.
  */
 export function MineScreen() {
   const { t } = useTranslation();
@@ -33,6 +35,7 @@ export function MineScreen() {
       <ScreenHeader title={t.tabNames.mine} />
 
       <ContinueSection />
+      <ReadingPlaces />
 
       <SettingsGroup title={t.offlineGroup}>
         <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} to="/downloaded" />

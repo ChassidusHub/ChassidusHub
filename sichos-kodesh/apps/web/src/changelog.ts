@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.12.0';
+export const APP_VERSION = '1.13.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,23 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.13.0',
+    en: [
+      'The library is one shelf: the Rebbe\'s Torah first - Likkutei Sichos, the maamorim, Igros Kodesh, the michtavim, reshimos and hadranim - then the diaries and JEM\'s recordings, then the Rebbeim\'s seforim, one Rebbe at a time',
+      'Each Rebbe\'s page holds all his seforim: those that open here first, then those read on other sites and his books on HebrewBooks',
+      'A sicha, maamar or yoman is one page: where it comes from, the farbrengen it was said at, its texts, then its recordings with Play and the chapters right under it',
+      'Where you left off reading, and your bookmarks, are now under Mine',
+      'Short addresses for the library (/l/…) and the seforim (/s/…). Every link shared before still opens',
+    ],
+    he: [
+      'הספרייה היא מדף אחד: תורת הרבי תחילה - לקוטי שיחות, המאמרים, אגרות קודש, המכתבים, הרשימות וההדרנים - אחריה היומנים וההקלטות של JEM, ואחר כך ספרי רבותינו נשיאינו, כל רבי בנפרד',
+      'בדף של כל רבי כל ספריו: אלה שנפתחים כאן תחילה, ואחריהם אלה שלומדים באתרים אחרים וספריו ב-HebrewBooks',
+      'שיחה, מאמר או יומן הם דף אחד: מקורם, ההתוועדות שבה נאמרו, הטקסטים, ואחר כך ההקלטות עם השמעה והקטעים ממש מתחתיה',
+      'היכן שעצרת בקריאה, והסימניות, נמצאים עכשיו בשלי',
+      'כתובות קצרות לספרייה (/l/…) ולספרים (/s/…). כל קישור ששותף קודם עדיין נפתח',
+    ],
+  },
   {
     version: '1.12.0',
     en: [

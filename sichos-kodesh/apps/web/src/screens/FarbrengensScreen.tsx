@@ -6,6 +6,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { Segmented } from '../components/settings/SettingsControls';
 import { useTranslation } from '../i18n/useLanguage';
 import type { FarbrengensView } from '../routes/tabs';
+import { occasionGroupPath } from '../routes/links';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { LibraryLoading } from './library/LibraryLoading';
 
@@ -40,7 +41,7 @@ function OccasionGroupList({ axis }: { axis: 'moadim' | 'parshiyos' }) {
     <ul className="year-list library-list">
       {groups.map((group) => (
         <li key={group.slug}>
-          <Link className="year-row" to={`/library/${axis}/${encodeURIComponent(group.slug)}`}>
+          <Link className="year-row" to={occasionGroupPath(axis, group.slug)}>
             <span className="year-row-year">{occasionGroupName(group, language)}</span>
             <span className="library-count">{group.occasionIds.length}</span>
           </Link>

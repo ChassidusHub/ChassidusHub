@@ -15,7 +15,7 @@ export interface ChapterDownloadState {
 }
 
 /**
- * RecordingsScreen's own per-chapter download affordance - independent of
+ * The chapter list's own per-chapter download affordance - independent of
  * the occasion-level `contentTypes` settings (tapping this one chapter's
  * row means "download this chapter," regardless of what the Downloads
  * settings screen happens to have enabled), and keyed distinctly from
