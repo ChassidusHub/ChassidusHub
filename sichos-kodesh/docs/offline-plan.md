@@ -246,6 +246,8 @@ publisher's permission (section 6).
 
 ## 3. The Rebbe Drive and the network
 
+> Superseded by `docs/plans/rebbehub.md`: RebbeHub replaces the Rebbe Drive.
+
 Shmuly's own public archive of all the Rebbe's Torah, at
 `drive.sk.shmuky.dev`, that works like GitHub and Wikipedia at once:
 everyone can browse and download, accounts can propose changes, editors
@@ -666,6 +668,8 @@ Deploying needs:
 M3 is done when a pack downloaded from the public site imports on a phone.
 
 ### WP5b - the Rebbe Drive (`apps/drive`, `services/drive`; after WP5)
+
+> Superseded by `docs/plans/rebbehub.md`.
 
 Section 3: the UI, the API, accounts and roles, the review queue, item
 history and revert, the phone's "הוסף הנחה / הצע תיקון". Shares WP5's
