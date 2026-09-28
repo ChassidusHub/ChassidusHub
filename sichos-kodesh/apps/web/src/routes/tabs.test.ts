@@ -10,6 +10,7 @@ describe('the tabs', () => {
     expect(tabForPath('/library/this-parsha')).toBe('week');
 
     expect(tabForPath('/farbrengens')).toBe('farbrengens');
+    expect(tabForPath('/f/5736/500')).toBe('farbrengens');
     expect(tabForPath('/browse/5736/month/07')).toBe('farbrengens');
     expect(tabForPath('/occasion-all-years/5736/12')).toBe('farbrengens');
     expect(tabForPath('/library/moadim/yud_shvat')).toBe('farbrengens');
@@ -33,7 +34,7 @@ describe('the tabs', () => {
   });
 
   it('hides the tabs on a PDF and in the reader, and nowhere else', () => {
-    expect(showsTabs('/follow/5736/12/pdf/abc')).toBe(false);
+    expect(showsTabs('/f/5736/12/pdf/abc')).toBe(false);
     expect(showsTabs('/library/c/maamorim/i/12/pdf/abc')).toBe(false);
     expect(showsTabs('/seforim/tanya/read')).toBe(false);
     expect(showsTabs('/seforim/tanya')).toBe(true);

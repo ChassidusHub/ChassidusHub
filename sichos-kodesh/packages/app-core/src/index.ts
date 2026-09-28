@@ -13,6 +13,7 @@ export * from './catalog/catalogUpdate.js';
 export * from './appRelease/appRelease.js';
 export * from './catalog/displayNames.js';
 export * from './catalog/formatHebrewDate.js';
+export * from './catalog/farbrengenPage.js';
 export * from './seforim/textObject.js';
 export * from './seforim/seforimModel.js';
 export * from './seforim/searchNames.js';

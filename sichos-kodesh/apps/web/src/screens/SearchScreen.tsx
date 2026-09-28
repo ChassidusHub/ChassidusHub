@@ -29,6 +29,7 @@ import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
 import { LibraryLoading } from './library/LibraryLoading';
 import { readerPath, workPath } from './seforim/seforimPaths';
+import { farbrengenPath } from '../routes/links';
 
 const DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
 /** One scope's results render as plain rows; past this many, the list asks for a narrower search instead of growing (as on the phone). */
@@ -265,7 +266,7 @@ export function SearchScreen() {
           <ul className="year-list">
             {farbrengens.slice(0, limit).map((entry) => (
               <li key={`${entry.hebrewYear}-${entry.occasionId}`}>
-                <Link className="year-row library-item-row" to={`/browse/${entry.hebrewYear}/${entry.occasionId}`}>
+                <Link className="year-row library-item-row" to={farbrengenPath(entry.hebrewYear, entry.occasionId)}>
                   <span className="library-item-text">
                     <span className="year-row-year">{occasionTitle(entry, language)}</span>
                     <span className="library-item-subtitle">{hebrewFullDateLabel(entry.hebrewDate, entry.hebrewYear, language)}</span>

@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.11.0';
+export const APP_VERSION = '1.12.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,19 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.12.0',
+    en: [
+      'This week, on the page: the kvius year\'s farbrengens as cards to play and read, every year\'s farbrengens of the week as a strip of years, the parsha\'s first sichos, where you left off, and the round anniversaries',
+      'A farbrengen is one page: when it was and what it has, Play for every chapter with the chapters right under it, then its texts - the hanachos first, then the mugah, maamorim, hagahos and hosafos - each opening its PDF. The farbrengens before and after it are one tap away',
+      'One address per farbrengen (/f/5736/…), however you reach it. Every link shared before still opens it',
+    ],
+    he: [
+      'השבוע, על הדף: ההתוועדויות של שנת הקביעות בכרטיסים להשמעה ולקריאה, ההתוועדויות של השבוע בכל השנים בפס של שנים, השיחות הראשונות על הפרשה, היכן שעצרת, והאירועים העגולים',
+      'התוועדות היא דף אחד: מתי הייתה ומה יש בה, השמעה של כל הקטעים והקטעים ממש מתחתיה, ואחר כך הטקסטים - ההנחות תחילה, ואחריהן המוגה, המאמרים, ההגהות וההוספות - כל אחד נפתח ב-PDF שלו. ההתוועדויות שלפניה ואחריה במרחק נגיעה',
+      'כתובת אחת לכל התוועדות (/f/5736/…), מכל מקום שמגיעים אליה. כל קישור ששותף קודם עדיין פותח אותה',
+    ],
+  },
   {
     version: '1.11.0',
     en: [

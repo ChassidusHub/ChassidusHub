@@ -18,7 +18,7 @@ import { DownloadProgressBar } from './components/DownloadProgressBar';
 import { AppNav } from './components/AppNav';
 import { showsTabs } from './routes/tabs';
 import { useActiveDownloads } from './download/useActiveDownloads';
-import { YearPickerScreen } from './screens/YearPickerScreen';
+import { HomeScreen } from './screens/HomeScreen';
 import { KviusYearsScreen } from './screens/KviusYearsScreen';
 import { FarbrengensScreen } from './screens/FarbrengensScreen';
 import { MineScreen } from './screens/MineScreen';
@@ -30,8 +30,6 @@ import { FollowMonthOccasionsScreen } from './screens/FollowMonthOccasionsScreen
 import { FarbrengenScreen } from './screens/FarbrengenScreen';
 import { AllYearsThisWeekScreen } from './screens/AllYearsThisWeekScreen';
 import { OccasionAllYearsScreen } from './screens/OccasionAllYearsScreen';
-import { RecordingsScreen } from './screens/RecordingsScreen';
-import { CategoryScreen } from './screens/CategoryScreen';
 import { PdfViewerScreen } from './screens/PdfViewerScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { DownloadSettingsScreen } from './screens/DownloadSettingsScreen';
@@ -39,7 +37,8 @@ import { DownloadedScreen } from './screens/DownloadedScreen';
 import { AboutScreen } from './screens/AboutScreen';
 import { PrivacyScreen } from './screens/PrivacyScreen';
 import { SearchScreen } from './screens/SearchScreen';
-import { useFollowEntry, useBrowseEntry, useThisWeekAllYearsEntry, useOccasionAllYearsEntry } from './routes/useResolvedEntry';
+import { useFarbrengenEntry } from './routes/useResolvedEntry';
+import { canonicalFarbrengenPath } from './routes/links';
 import { LibraryRoutes } from './routes/LibraryRoutes';
 import { SeforimRoutes } from './routes/SeforimRoutes';
 
@@ -68,16 +67,8 @@ function FollowMonthOccasionsRoute() {
   return <FollowMonthOccasionsScreen sourceYear={Number(sourceYear)} monthToken={monthToken ?? ''} />;
 }
 
-function FollowOccasionRoute() {
-  return <FarbrengenScreen resolved={useFollowEntry()} />;
-}
-
-function BrowseOccasionRoute() {
-  return <FarbrengenScreen resolved={useBrowseEntry()} />;
-}
-
-function ThisWeekAllYearsOccasionRoute() {
-  return <FarbrengenScreen resolved={useThisWeekAllYearsEntry()} />;
+function FarbrengenRoute() {
+  return <FarbrengenScreen resolved={useFarbrengenEntry()} />;
 }
 
 function OccasionAllYearsRoute() {
@@ -85,71 +76,26 @@ function OccasionAllYearsRoute() {
   return <OccasionAllYearsScreen sourceHebrewYear={Number(sourceHebrewYear)} sourceOccasionId={Number(sourceOccasionId)} />;
 }
 
-function OccasionAllYearsOccasionRoute() {
-  return <FarbrengenScreen resolved={useOccasionAllYearsEntry()} />;
-}
-
-/** `resolved` can be null (a stale/bad URL) - RecordingsScreen/CategoryScreen/PdfViewerScreen all need a real entry, so fall back to "not found" rather than passing null through. */
+/** `resolved` can be null (a stale/bad URL) - PdfViewerScreen needs a real entry, so fall back to "not found" rather than passing null through. */
 function NotFound() {
   const { t } = useTranslation();
   return <p className="gap-message">{t.pageNotFound}</p>;
 }
 
-function FollowRecordingsRoute() {
-  const resolved = useFollowEntry();
-  return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
-}
-function BrowseRecordingsRoute() {
-  const resolved = useBrowseEntry();
-  return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
-}
-function ThisWeekAllYearsRecordingsRoute() {
-  const resolved = useThisWeekAllYearsEntry();
-  return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
-}
-function OccasionAllYearsRecordingsRoute() {
-  const resolved = useOccasionAllYearsEntry();
-  return resolved ? <RecordingsScreen resolved={resolved} /> : <NotFound />;
-}
-function FollowCategoryRoute() {
-  const resolved = useFollowEntry();
-  return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
-}
-function BrowseCategoryRoute() {
-  const resolved = useBrowseEntry();
-  return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
-}
-function ThisWeekAllYearsCategoryRoute() {
-  const resolved = useThisWeekAllYearsEntry();
-  return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
-}
-function OccasionAllYearsCategoryRoute() {
-  const resolved = useOccasionAllYearsEntry();
-  return resolved ? <CategoryScreen resolved={resolved} /> : <NotFound />;
-}
-function FollowPdfRoute() {
-  const resolved = useFollowEntry();
-  const { driveFileId } = useParams<{ driveFileId: string }>();
-  return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
-}
-function BrowsePdfRoute() {
-  const resolved = useBrowseEntry();
-  const { driveFileId } = useParams<{ driveFileId: string }>();
-  return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
-}
-function ThisWeekAllYearsPdfRoute() {
-  const resolved = useThisWeekAllYearsEntry();
-  const { driveFileId } = useParams<{ driveFileId: string }>();
-  return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
-}
-function OccasionAllYearsPdfRoute() {
-  const resolved = useOccasionAllYearsEntry();
+function FarbrengenPdfRoute() {
+  const resolved = useFarbrengenEntry();
   const { driveFileId } = useParams<{ driveFileId: string }>();
   return resolved ? <PdfViewerScreen key={driveFileId} resolved={resolved} /> : <NotFound />;
 }
 
+/** An address a farbrengen was shared under before (routes/links.ts): its page, its recordings or texts section, or its PDF, at the one address it has now. */
+function LegacyFarbrengenRoute() {
+  const { pathname } = useLocation();
+  return <Navigate to={canonicalFarbrengenPath(pathname) ?? '/'} replace />;
+}
+
 function Home() {
-  return <YearPickerScreen targetYear={currentHebrewYear()} />;
+  return <HomeScreen targetYear={currentHebrewYear()} />;
 }
 
 function KviusYearsRoute() {
@@ -228,41 +174,22 @@ function AppContent() {
         <Route path="/library/*" element={<LibraryRoutes />} />
         <Route path="/seforim/*" element={<SeforimRoutes />} />
 
+        <Route path="/f/:hebrewYear/:occasionId" element={<FarbrengenRoute />} />
+        <Route path="/f/:hebrewYear/:occasionId/pdf/:driveFileId" element={<FarbrengenPdfRoute />} />
+
         <Route path="/follow/:sourceYear" element={<ThisWeekRoute />} />
         <Route path="/follow/:sourceYear/month" element={<FollowMonthListRoute />} />
         <Route path="/follow/:sourceYear/month/:monthToken" element={<FollowMonthOccasionsRoute />} />
-        <Route path="/follow/:sourceYear/:occasionId" element={<FollowOccasionRoute />} />
-        <Route path="/follow/:sourceYear/:occasionId/recordings" element={<FollowRecordingsRoute />} />
-        <Route path="/follow/:sourceYear/:occasionId/category/:section" element={<FollowCategoryRoute />} />
-        <Route path="/follow/:sourceYear/:occasionId/pdf/:driveFileId" element={<FollowPdfRoute />} />
-
         <Route path="/browse/:hebrewYear" element={<YearBrowserRoute />} />
         <Route path="/browse/:hebrewYear/month/:monthToken" element={<MonthOccasionsRoute />} />
-        <Route path="/browse/:hebrewYear/:occasionId" element={<BrowseOccasionRoute />} />
-        <Route path="/browse/:hebrewYear/:occasionId/recordings" element={<BrowseRecordingsRoute />} />
-        <Route path="/browse/:hebrewYear/:occasionId/category/:section" element={<BrowseCategoryRoute />} />
-        <Route path="/browse/:hebrewYear/:occasionId/pdf/:driveFileId" element={<BrowsePdfRoute />} />
-
         <Route path="/this-week-all-years" element={<AllYearsThisWeekScreen />} />
-        <Route path="/this-week-all-years/:hebrewYear/:occasionId" element={<ThisWeekAllYearsOccasionRoute />} />
-        <Route path="/this-week-all-years/:hebrewYear/:occasionId/recordings" element={<ThisWeekAllYearsRecordingsRoute />} />
-        <Route path="/this-week-all-years/:hebrewYear/:occasionId/category/:section" element={<ThisWeekAllYearsCategoryRoute />} />
-        <Route path="/this-week-all-years/:hebrewYear/:occasionId/pdf/:driveFileId" element={<ThisWeekAllYearsPdfRoute />} />
-
         <Route path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId" element={<OccasionAllYearsRoute />} />
-        <Route path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId" element={<OccasionAllYearsOccasionRoute />} />
-        <Route
-          path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId/recordings"
-          element={<OccasionAllYearsRecordingsRoute />}
-        />
-        <Route
-          path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId/category/:section"
-          element={<OccasionAllYearsCategoryRoute />}
-        />
-        <Route
-          path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId/pdf/:driveFileId"
-          element={<OccasionAllYearsPdfRoute />}
-        />
+
+        {/* Every address a farbrengen had before /f/ (routes/links.ts). */}
+        <Route path="/follow/:sourceYear/:occasionId/*" element={<LegacyFarbrengenRoute />} />
+        <Route path="/browse/:hebrewYear/:occasionId/*" element={<LegacyFarbrengenRoute />} />
+        <Route path="/this-week-all-years/:hebrewYear/:occasionId/*" element={<LegacyFarbrengenRoute />} />
+        <Route path="/occasion-all-years/:sourceHebrewYear/:sourceOccasionId/:hebrewYear/:occasionId/*" element={<LegacyFarbrengenRoute />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

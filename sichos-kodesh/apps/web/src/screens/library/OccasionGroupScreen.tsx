@@ -10,6 +10,7 @@ import { useProgressMap } from '../../player/useProgressMap';
 import { hebrewDayMonthLabel, hebrewYearLabel } from '../../utils/formatHebrewDate';
 import { farbrengensPath } from '../../routes/tabs';
 import { LibraryLoading } from './LibraryLoading';
+import { farbrengenPath } from '../../routes/links';
 
 interface Props {
   axis: 'moadim' | 'parshiyos';
@@ -43,7 +44,7 @@ export function OccasionGroupScreen({ axis, slug }: Props) {
           <ul className="year-list library-list">
             {yearEntries.map((entry) => (
               <li key={entry.occasionId}>
-                <Link className="year-row" to={`/browse/${entry.hebrewYear}/${entry.occasionId}`}>
+                <Link className="year-row" to={farbrengenPath(entry.hebrewYear, entry.occasionId)}>
                   <span className="year-row-year">{occasionTitle(entry, language)}</span>
                   <span className="year-row-trailing">
                     <OccasionRowIcon entry={entry} progressMap={progressMap} dateSlot={<span className="year-row-distance">{hebrewDayMonthLabel(entry.hebrewDate, language)}</span>} />

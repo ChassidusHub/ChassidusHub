@@ -37,6 +37,7 @@ export function tabForPath(pathname: string): TabId {
   if (under(pathname, '/library/this-parsha')) return 'week';
   if (
     under(pathname, '/farbrengens') ||
+    under(pathname, '/f') ||
     under(pathname, '/years') ||
     under(pathname, '/browse') ||
     under(pathname, '/occasion-all-years') ||

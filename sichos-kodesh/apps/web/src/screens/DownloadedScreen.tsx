@@ -18,6 +18,7 @@ import { MEDIA_CACHE_NAME } from '../download/cacheName';
 import { clearAutoDownloadLedger } from '../download/downloadLedger';
 import { clearPendingChapterDownloads } from '../download/pendingDownloads';
 import { clearPendingEntryDownloads } from '../download/pendingEntryDownloads';
+import { farbrengenPath } from '../routes/links';
 
 interface YearGroup {
   hebrewYear: number;
@@ -88,7 +89,7 @@ export function DownloadedScreen() {
           <ul className="active-downloads-list">
             {activeRows.map((row) => (
               <li key={row.key} className="active-download-row">
-                <Link className="active-download-row-label active-download-row-link" to={`/browse/${row.hebrewYear}/${row.occasionId}`}>
+                <Link className="active-download-row-label active-download-row-link" to={farbrengenPath(row.hebrewYear, row.occasionId)}>
                   {row.label}
                 </Link>
                 <span className="active-download-row-track" aria-hidden>
@@ -125,7 +126,7 @@ export function DownloadedScreen() {
             {entries.map((entry) => (
               <li key={entry.occasionId}>
                 <SwipeToDelete onDelete={() => void deleteOccasion(entry)}>
-                  <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
+                  <Link className="year-row" to={farbrengenPath(hebrewYear, entry.occasionId)}>
                     <span className="year-row-year">{occasionTitle(entry, language)}</span>
                     <span className="year-row-trailing">
                       <OccasionRowIcon entry={entry} progressMap={progressMap} />

@@ -10,6 +10,7 @@ import { useProgressMap } from '../player/useProgressMap';
 import { useDownload } from '../download/useDownload';
 import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useTranslation } from '../i18n/useLanguage';
+import { farbrengenPath } from '../routes/links';
 
 interface Props {
   sourceYear: number;
@@ -35,7 +36,7 @@ export function FollowMonthOccasionsScreen({ sourceYear, monthToken }: Props) {
       <ul className="year-list">
         {entries.map((entry) => (
           <li key={entry.occasionId}>
-            <Link className="year-row" to={`/follow/${sourceYear}/${entry.occasionId}`}>
+            <Link className="year-row" to={farbrengenPath(entry.hebrewYear, entry.occasionId)}>
               <span className="year-row-year">{occasionTitle(entry, language)}</span>
               <span className="year-row-trailing">
                 <OccasionRowIcon entry={entry} progressMap={progressMap} />

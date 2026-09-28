@@ -15,6 +15,7 @@ import { playlistForEntry } from '../player/playerContext';
 import { usePlayer } from '../player/usePlayer';
 import { useTranslation } from '../i18n/useLanguage';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
+import { farbrengenPath } from '../routes/links';
 
 const MAX_ITEMS = 5;
 
@@ -26,7 +27,7 @@ const MAX_ITEMS = 5;
  * as no audio activity at all and falls back to the plain occasion page.
  */
 function continueDestination(entry: CatalogEntry, progress: OccasionProgress): { path: string; resumeChapterIndex: number | null } {
-  const basePath = `/browse/${entry.hebrewYear}/${entry.occasionId}`;
+  const basePath = farbrengenPath(entry.hebrewYear, entry.occasionId);
   if (progress.lastActivity?.kind === 'pdf' && progress.pdf) {
     return { path: `${basePath}/pdf/${encodeURIComponent(progress.pdf.driveFileId)}`, resumeChapterIndex: null };
   }

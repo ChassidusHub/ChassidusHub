@@ -7,6 +7,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
+import { farbrengenPath } from '../routes/links';
 
 interface Props {
   hebrewYear: number;
@@ -29,7 +30,7 @@ export function MonthOccasionsScreen({ hebrewYear, monthToken }: Props) {
       <ul className="year-list">
         {entries.map((entry) => (
           <li key={entry.occasionId}>
-            <Link className="year-row" to={`/browse/${hebrewYear}/${entry.occasionId}`}>
+            <Link className="year-row" to={farbrengenPath(hebrewYear, entry.occasionId)}>
               <span className="year-row-year">{occasionTitle(entry, language)}</span>
               <span className="year-row-trailing">
                 <OccasionRowIcon entry={entry} progressMap={progressMap} />

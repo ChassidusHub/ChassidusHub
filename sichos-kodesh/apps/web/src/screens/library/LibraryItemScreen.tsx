@@ -10,6 +10,7 @@ import { useTranslation } from '../../i18n/useLanguage';
 import { useProgressMap } from '../../player/useProgressMap';
 import type { LibraryItemRoute } from '../../routes/useLibraryItem';
 import { formatDuration, totalDurationSeconds } from '../../utils/formatDuration';
+import { farbrengenPath } from '../../routes/links';
 
 interface Props {
   route: LibraryItemRoute;
@@ -50,7 +51,7 @@ export function LibraryItemScreen({ route }: Props) {
       {disputed && <p className="tab-help">{t.libraryDisputedNote}</p>}
 
       {occasion && (
-        <Link className="category-row" to={`/browse/${occasion.hebrewYear}/${occasion.occasionId}`}>
+        <Link className="category-row" to={farbrengenPath(occasion.hebrewYear, occasion.occasionId)}>
           <span className="category-row-name">{t.libraryOpenFarbrengen}</span>
           <span className="category-row-count">{occasionTitle(occasion, language)}</span>
         </Link>

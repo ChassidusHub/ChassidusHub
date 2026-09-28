@@ -12,6 +12,7 @@ import { useProgressMap } from '../player/useProgressMap';
 import { useDownload } from '../download/useDownload';
 import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useTranslation } from '../i18n/useLanguage';
+import { farbrengenPath } from '../routes/links';
 
 interface Props {
   sourceYear: number;
@@ -100,7 +101,7 @@ export function ThisWeekScreen({ sourceYear }: Props) {
       <ul className="year-list">
         {occasions.map((occasion) => (
           <li key={occasion.entry.occasionId}>
-            <Link className="year-row" to={`/follow/${sourceYear}/${occasion.entry.occasionId}`}>
+            <Link className="year-row" to={farbrengenPath(occasion.entry.hebrewYear, occasion.entry.occasionId)}>
               <span className="year-row-year">{occasionTitle(occasion.entry, language)}</span>
               <span className="year-row-trailing">
                 <OccasionRowIcon

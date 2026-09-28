@@ -10,6 +10,7 @@ import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewDayMonthLabel, hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
+import { farbrengenPath } from '../routes/links';
 
 interface Props {
   sourceHebrewYear: number;
@@ -47,7 +48,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
 
   return (
     <div className="screen">
-      <ScreenHeader to={`/browse/${sourceHebrewYear}/${sourceOccasionId}`} title={t.thisOccasionAllYearsTitle} />
+      <ScreenHeader to={farbrengenPath(sourceHebrewYear, sourceOccasionId)} title={t.thisOccasionAllYearsTitle} />
       <p className="tab-help">{t.thisOccasionAllYearsHelp(occasionTitle(sourceEntry, language), hebrewDayMonthLabel(sourceEntry.hebrewDate, language))}</p>
 
       {yearGroups.length === 0 && <p className="gap-message">{t.noFarbrengensAnyYear}</p>}
@@ -59,7 +60,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
             <ul className="year-list">
               {matches.map((entry) => (
                 <li key={entry.occasionId}>
-                  <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
+                  <Link className="year-row" to={farbrengenPath(hebrewYear, entry.occasionId)}>
                     <span className="year-row-year">{occasionTitle(entry, language)}</span>
                     <span className="year-row-trailing">
                       <OccasionRowIcon entry={entry} progressMap={progressMap} />
@@ -75,7 +76,7 @@ export function OccasionAllYearsScreen({ sourceHebrewYear, sourceOccasionId }: P
               <ul className="year-list occasion-others-list">
                 {others.map((entry) => (
                   <li key={entry.occasionId}>
-                    <Link className="year-row" to={`/occasion-all-years/${sourceHebrewYear}/${sourceOccasionId}/${hebrewYear}/${entry.occasionId}`}>
+                    <Link className="year-row" to={farbrengenPath(hebrewYear, entry.occasionId)}>
                       <span className="year-row-year">{occasionTitle(entry, language)}</span>
                       <span className="year-row-trailing">
                         <OccasionRowIcon entry={entry} progressMap={progressMap} />

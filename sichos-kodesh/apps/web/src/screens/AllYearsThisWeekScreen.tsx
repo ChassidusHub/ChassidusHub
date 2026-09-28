@@ -8,6 +8,7 @@ import { OccasionRowIcon } from '../components/OccasionRowIcon';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
 import { useProgressMap } from '../player/useProgressMap';
 import { useTranslation } from '../i18n/useLanguage';
+import { farbrengenPath } from '../routes/links';
 
 /** Every occasion indexed on one of this Hebrew week's dates across every catalog year, not just kvius-matched ones (see `resolveThisWeekAllYears`). */
 export function AllYearsThisWeekScreen() {
@@ -29,7 +30,7 @@ export function AllYearsThisWeekScreen() {
           <ul className="year-list">
             {entries.map((entry) => (
               <li key={entry.occasionId}>
-                <Link className="year-row" to={`/this-week-all-years/${hebrewYear}/${entry.occasionId}`}>
+                <Link className="year-row" to={farbrengenPath(hebrewYear, entry.occasionId)}>
                   <span className="year-row-year">{occasionTitle(entry, language)}</span>
                   <span className="year-row-trailing">
                     <OccasionRowIcon entry={entry} progressMap={progressMap} />
