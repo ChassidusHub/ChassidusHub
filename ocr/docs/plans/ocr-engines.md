@@ -5,6 +5,19 @@ Written 2026-09-28. A plan, not a build. The OCR engine behind RebbeHub's
 app. It lives in its own repo for now and plugs into RebbeHub's job queue later
 as the `services/ml` OCR worker (`rebbehub.md` §10).
 
+## 0. Decisions so far
+
+Taken 2026-09-28, after the first draft. The sections below follow them.
+
+| Question | Decision | Where it lands |
+| --- | --- | --- |
+| Who annotates | **RebbeHub.org public review.** Community reviewers correct machine OCR line by line ("Fix this line"). Their reviewed lines are the ground truth. No paid typists | §4.4, §10 |
+| Digital text for Sichos Kodesh hanachos | **None exists.** Ground truth for hanachos comes only from generic OCR that people have really reviewed | §4.3, §4.4 |
+| Digital text for Toras Menachem | Text from **lahak.org** | §4.3 |
+| Digital text for old Kehot printings | Text from **chabadlibrary.org** | §4.3 |
+| Rights, Sichos Kodesh and old Kehot scans | **Fully safe (100%).** We may train on them, and we may publish the models and datasets | §4.1, §11 |
+| Compute | Rent GPUs by the hour. GitHub CI runs tests and evaluation and starts the GPU jobs, but it does not do the heavy work | §6.6 |
+
 ## 1. The goal, in numbers
 
 "Near-100%" has to be measurable, or it will slide. We measure on **frozen
@@ -91,16 +104,16 @@ Why this shape:
 
 ### 3.2 Reader A: the primary recogniser
 
-**Choice: Kraken** (Apache-2.0), trained and managed through
-**eScriptorium** (self-hosted).
+**Choice: Kraken** (Apache-2.0).
 
 - Built for right-to-left scripts, with bidi handled correctly. It is
   widely used for Hebrew in digital-humanities projects, and community
   Hebrew print models exist to start from (HTR-United / Zenodo).
 - One tool does both baseline and region segmentation (§5) and
   recognition. Kraken reads and writes PAGE-XML and ALTO.
-- eScriptorium is the annotation tool in the same ecosystem (§4.4).
-  Annotated lines train the next model directly.
+- Lines reviewed on RebbeHub come out as PAGE-XML, which Kraken trains
+  from directly. The Phase 0 bridge set (§4.4) uses eScriptorium, which
+  belongs to the same ecosystem.
 - Model per family: one shared **base Hebrew-print model** trained on
   everything, then fine-tuned heads for K1, K2, H1, H2. A small font
   classifier on each region picks the head. The Rashi script inside
@@ -161,9 +174,12 @@ an editorial act for a human, recorded as such.
 - **Fetch originals**, never re-encoded copies. Pull the embedded page
   images with `pdfimages` at native resolution instead of re-rendering.
   Store by sha256 (same scheme as RebbeHub R2 `objects/<sha256>`).
-- **Rights**: training uses the private, `preserved`-tier copies
-  (`rebbehub.md` §8). They are never served. Trained models are not
-  published until the rights question in §12 is settled.
+- **Rights**: Sichos Kodesh and old Kehot scans are cleared (§0). We
+  train on them, and their models and datasets can be published. Any
+  other set is trained from private, `preserved`-tier copies
+  (`rebbehub.md` §8) until its rights are settled. Every model records
+  which sets it was trained on, so we always know whether it can be
+  published.
 - **Stratify, don't just take the first N**: sample pages across set ×
   decade × printer × scan source × scan quality. Include bad pages on
   purpose: stains, curl, faint mimeo, crooked scans.
@@ -195,10 +211,17 @@ document, `gt/guidelines.md`, decides every character question once:
 
 ### 4.3 Silver ground truth: use the text we already have
 
-This is the biggest lever. Digital text already exists for much of the
-catalog, including Likkutei Sichos, Igros Kodesh, Toras Menachem and many
-Sichos Kodesh. Aligning it to the scans gives thousands of labelled lines
-almost for free:
+This is the biggest lever for the Kehot printings. Aligning digital text
+we already have to the scans gives thousands of labelled lines almost for
+free. The sources are fixed (§0):
+
+| Scans | Digital text aligned against | Silver? |
+| --- | --- | --- |
+| Old Kehot printings (Likkutei Sichos, Sefer HaMaamarim, Igros Kodesh …) | chabadlibrary.org | Yes |
+| Toras Menachem | lahak.org | Yes |
+| Sichos Kodesh hanachos | none | **No.** Hanachos get only reviewed gold (§4.4) |
+
+The steps:
 
 1. Run a baseline model (pretrained Kraken) on the scan to get lines and
    rough text.
@@ -216,23 +239,61 @@ almost for free:
 
 Silver trains the models. **Silver never goes into test sets.**
 
-### 4.4 Gold ground truth: people, in eScriptorium
+### 4.4 Gold ground truth: RebbeHub.org public review
 
-- A self-hosted eScriptorium where the model pre-fills every line and
-  people correct it line by line. They fix the segmentation first, then
-  the text.
-- Budget per family: **~300–500 gold pages** to train (K1 and H1/H2
-  likely need the most) plus a frozen **test set of ~100 pages per
-  family**. Test pages come from whole volumes that are never trained on.
-  Hold out volumes, not random lines, so the score isn't inflated by
-  pages the model has seen.
-- **Active learning** after the first round: the next pages to annotate
-  are the ones the current models find hardest (lowest confidence, most
-  A/B disagreement, most lexicon flags). Pages the model already reads
-  perfectly are not sent to people.
-- Later, every "Fix this line" in RebbeHub (`rebbehub.md` §7) on a
-  machine-OCR line is a new gold line. The feedback loop in §6.5 feeds it
-  back.
+Annotation happens on RebbeHub.org through its normal review flow. The
+community reviews the text: "Fix this line", proofread levels, and
+Projects (`rebbehub.md` §4, §7). Nobody is paid to type.
+
+- **What counts as gold.** Proofread levels become the ground-truth grade:
+  - a line *checked once* (one reviewer) can be used for **training**;
+  - a line *checked twice* by two different reviewers can be used for
+    **test sets**.
+
+  Where the two reviewers disagree, the disagreement is resolved by a
+  keeper and recorded as a ruling in the guidelines (§4.2). That gives us
+  the double-checking for free.
+- **The rules have to be in the tool.** Reviewers will only transcribe
+  diplomatically if the tool keeps them to it. RebbeHub's line editor
+  shows the rule ("type exactly what is printed, typos included") and
+  offers a palette of the table's characters (gershayim, geresh, maqaf,
+  Yiddish ligatures). It also warns when someone types a look-alike, such
+  as `"` instead of `״`. This is a requirement for RebbeHub, recorded here.
+- **Layout** (region types, missing or merged lines) is harder for the
+  public to fix. Reviewers get a one-tap "layout is wrong here" report,
+  and keepers fix it in a simple region editor. We need about 100–300
+  layout-checked pages per family, so this is keeper work, not crowd work.
+- **Projects, not random pages.** Training needs come in as RebbeHub
+  Projects, such as "Proofread Sichos Kodesh 5722 for the OCR". The
+  **active-learning** queue picks the pages: those the current models find
+  hardest (lowest confidence, most A/B disagreement, most lexicon flags).
+  Pages the model already reads perfectly are not sent to people.
+- **Targets per family**: about 300–500 training pages *checked once* and
+  a frozen **test set of ~100 pages** *checked twice*. Test pages come from
+  whole volumes that are never trained on. Hold out volumes, not random
+  lines, so the score isn't inflated by pages the model has seen.
+
+**Sichos Kodesh hanachos: the flywheel.** No digital text exists, so we
+start from generic OCR and let each round of review make the next round
+easier:
+
+1. **Round 0**: the best off-the-shelf engine from the Phase 0 benchmark
+   (§3.2) OCRs the hanachos. It goes up on RebbeHub labelled as
+   machine text.
+2. Reviewers correct the first ~100 pages chosen by active learning. Those
+   corrections train the first H1/H2 models.
+3. Pages nobody has reviewed yet are re-OCRed with the better model.
+   Reviewed lines are never touched (§6.5). There are fewer errors left to
+   fix, so reviewing goes faster.
+4. Repeat. Each round should need fewer corrections per page, and the
+   corrections-per-page number is tracked as the sign that the flywheel is
+   working.
+
+**Before RebbeHub's text tools exist**: Phase 0 needs test pages before
+RebbeHub phase 4 ships "Fix this line". Keepers produce this first,
+small set (about 100 pages per family) in a self-hosted eScriptorium
+using the same guidelines. It is a bridge only. All later annotation
+happens on RebbeHub.org.
 
 ### 4.5 Synthetic data (support only)
 
@@ -353,7 +414,8 @@ Sets are processed in order of value and of how much ground truth exists:
   adds a fraction of that.
 - About a million pages then takes days to a few weeks on 1–4 rented GPUs.
   That fits `rebbehub.md` §10's "GPU rented only while a project runs".
-  Phase 0 replaces these guesses with measured numbers and a price.
+  Phase 0 replaces these guesses with measured numbers and a price. §6.6
+  gives the costs.
 
 ### 6.5 Model lifecycle
 
@@ -367,13 +429,62 @@ Sets are processed in order of value and of how much ground truth exists:
   order. Only lines no person has checked are replaced. Human-checked
   lines are locked (§7). The change is recorded as a diff, so we can see
   what the new model changed.
-- **Feedback loop**: human corrections from eScriptorium, and later from
-  RebbeHub's "Fix this line", are gathered into gold lines. The models are
+- **Feedback loop**: reviewed lines from RebbeHub.org (and the Phase 0
+  eScriptorium bridge set) are gathered into gold lines. The models are
   retrained periodically, and the active-learning queue (§4.4) is
   refreshed.
 - **Drift watch**: flag rates and A/B disagreement are tracked per set and
   per scan source. A new scanner or a new printing shows up as a jump, and
   gets gold pages before its output is trusted.
+
+### 6.6 Compute: where it runs and what it costs
+
+**Decision: rent GPUs by the hour** (RunPod, Vast.ai, Lambda or similar),
+only while a training run or a catalog batch is going. Nothing sits idle.
+
+Rough market prices, mid-2026. They move often, so check before
+committing:
+
+| GPU | Typical rent | Good for |
+| --- | --- | --- |
+| RTX 4090 / 5090 (24–32 GB) | ~$0.35–0.90 / hour | Kraken training, layout, Reader A, and a small (3B) Reader B |
+| L40S (48 GB) | ~$0.80–1.20 / hour | Reader B at 7–8B, bigger batches |
+| A100 / H100 (80 GB) | ~$1.20–3.00 / hour | Fine-tuning the Reader B VLM |
+
+What each job costs (estimates; Phase 0 measures the real numbers):
+
+| Job | GPU time | Cost |
+| --- | --- | --- |
+| Phase 0 benchmark (every candidate on the test pages) | tens of hours | < $50 |
+| Fine-tune one Kraken head (one family) | 2–6 h on a 4090 | ~$1–5 |
+| Fine-tune the layout model (one family) | 4–12 h on a 4090 | ~$2–10 |
+| LoRA fine-tune of the Reader B VLM (7B, ~50k lines) | 4–10 h on an A100/H100 | ~$10–30 |
+| **OCR 1 million pages**, Reader B on the hardest ~15% of lines | ~150–250 h on 4090-class | **~$60–200** |
+| OCR 1 million pages, Reader B on every line | ~350–450 h | ~$150–400 |
+| **First year in total** (training rounds, re-OCR, benchmarks) | | **~$500–1,500** |
+
+Compute is cheap. People's time reviewing is the real cost, and every
+choice in §4 is aimed at spending less of it.
+
+**Owning a machine instead**: one 24–32 GB GPU workstation costs about
+$2,500–4,000, plus power and upkeep. At the rates above, it pays for
+itself only after several thousand GPU-hours, which is years of our
+expected use. It also cannot scale out for a catalog run. Rent. Look again
+only if retraining becomes a continuous, daily job.
+
+**Can it run on GitHub CI?** Partly:
+
+| Use | GitHub Actions? | Why |
+| --- | --- | --- |
+| Unit tests, format checks (PAGE-XML, ALTO, text-layer JSON) | **Yes** | Standard runners. Free and unlimited for a public repo, and 2,000 free minutes a month for a private one |
+| Evaluation gate on a small frozen test subset (§6.5) | **Yes** | Kraken runs on CPU, so layout + Reader A on ~50 pages fits in a normal job. This makes the no-regression rule automatic on every PR |
+| Starting a training run or a catalog batch | **Yes, as the button** | A `workflow_dispatch` job calls the GPU provider's API with a stored key. The job runs on the rented GPU and writes results to object storage. The workflow waits and posts the scores |
+| Training models | **No** | Standard runners have no GPU and a 6-hour job limit. GitHub's GPU runners (T4) are only for paid Team/Enterprise plans, at about $0.07/minute (~$4/hour). That is several times the price of a rented 4090, on a slower card |
+| Reader B (VLM) | **No** | Needs a GPU |
+| OCR of the whole catalog | **No** | Too slow on CPU, and runners have little disk. GitHub's terms also limit Actions to building, testing and deploying the repo's own software, so running a bulk OCR farm there could get the account suspended |
+
+So GitHub CI is the control panel and the quality gate. The heavy work
+runs on rented GPUs that CI starts and stops.
 
 ## 7. Output: meeting RebbeHub's contracts
 
@@ -458,9 +569,9 @@ Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
 
 | Phase | What it delivers | Exit criterion | Size |
 | --- | --- | --- | --- |
-| **0. Survey & benchmark** | Catalog inventory and family clustering; `gt/guidelines.md`; eScriptorium up; ~100 gold test pages each for K1 and H1/H2; benchmark of every candidate in §3 on them, including speed and cost | A results table and the engine choices confirmed or changed. Nothing is trained on the test pages | 3 weeks |
-| **1. Kehot print (K1/K2)** | Silver GT from Likkutei Sichos alignment; ~400 gold pages; fine-tuned layout + Reader A; page templates; footnote linking | §1 targets met on K1/K2 frozen tests; all of Likkutei Sichos run | 5 weeks |
-| **2. Hanachos (H1/H2)** | As phase 1 for typewritten Hebrew and Yiddish; handwritten-correction layer detected | §1 hanacha targets met; first hanacha sets run | 5 weeks |
+| **0. Survey & benchmark** | Catalog inventory and family clustering; `gt/guidelines.md`; eScriptorium bridge (§4.4) with keepers making ~100 test pages each for K1 and H1/H2; benchmark of every candidate in §3 on them, including speed and cost | A results table and the engine choices confirmed or changed. Nothing is trained on the test pages | 3 weeks |
+| **1. Kehot print (K1/K2)** | Silver GT aligned against chabadlibrary.org (old Kehot) and lahak.org (Toras Menachem); gold from RebbeHub review once it is live; fine-tuned layout + Reader A; page templates; footnote linking | §1 targets met on K1/K2 frozen tests; all of Likkutei Sichos run | 5 weeks |
+| **2. Hanachos (H1/H2)** | Generic OCR up on RebbeHub; flywheel rounds of public review → retrain → re-OCR (§4.4); handwritten-correction layer detected | §1 hanacha targets met; corrections per page falling round on round | 5 weeks of work, then paced by review volume |
 | **3. Second reader & scale** | Reader B fine-tuned; consensus; lexicon flags; page QA; full stage pipeline with idempotent jobs; registry + deploy gate | Auto-accept precision target met; a 10,000-page batch runs unattended with a flag report | 4 weeks |
 | **4. Whole catalog** | Onboarding recipe run for each new family; born-digital path; priority queue across sets | Every scan in the catalog has a machine-OCR layer or a stated reason why not | ongoing |
 | **5. RebbeHub integration** | Queue worker adapter; text-layer JSON into RebbeHub; "Fix this line" corrections feed back into training | Lines corrected in RebbeHub show up in the next training run | with RebbeHub phase 4 |
@@ -477,25 +588,30 @@ Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
   volumes and scan sources, and drift is watched (§6.5).
 - **Yiddish orthography and nikkud**: diplomatic rules and a fixed Unicode
   table. Search normalisation happens later, in RebbeHub, not in OCR.
-- **Rights for training material**: training uses preserved-tier copies
-  privately. Models and datasets are not published until cleared (§12).
-- **Annotation effort is the real cost**: silver GT, active learning and
-  the RebbeHub feedback loop keep human hours for the hard lines.
+- **Rights for training material**: Sichos Kodesh and old Kehot are
+  cleared (§0). Other sets train from private preserved-tier copies, and
+  models trained on them wait for clearance. The registry records the sets
+  behind each model.
+- **Review pace is not in our hands**: hanachos have no silver text, so
+  they move only as fast as public review. Mitigations: Projects with clear
+  goals, active learning so every reviewed line teaches the model
+  something, and the flywheel so each page takes less fixing.
+- **Dependency on RebbeHub**: gold annotation needs RebbeHub's text tools
+  (its phase 4). The eScriptorium bridge covers only the Phase 0 test pages.
+- **Annotation effort is the real cost** (compute is ~$500–1,500 a year,
+  §6.6): silver GT, active learning and the flywheel keep human hours for
+  the hard lines.
 - **One-person project**: everything in open formats (PAGE-XML, ALTO,
   manifests). Models are reproducible from registry + manifests.
 
 ## 12. Open questions
 
-- **Who annotates**: paid typists, volunteers, or both? This decides the
-  pace of phases 1–2. Default: a small paid team for gold test sets, and
-  volunteers for training pages through eScriptorium.
-- **GPU budget**: rent per project (default) or own one machine?
-- **Digital texts for silver GT**: which sources may we align against
-  privately (chabadlibrary.org, Sichos-Kodesh corpus, Otzar HaChassidim),
-  and on what terms?
-- **Publishing models**: can models trained on Kehot / Vaad Hanochos
-  B'Lahak scans be released openly? This follows RebbeHub's rightsholder
-  talks (`rebbehub.md` §11).
+The ones answered on 2026-09-28 are in §0. Still open:
+
+- **Toras Menachem rights**: may models and datasets trained on TM scans and
+  lahak.org text be published, or do they stay internal?
+- **RebbeHub requirements**: the line editor rules and character palette,
+  and the keeper region editor (§4.4). Add them to RebbeHub's phase 4.
 - **Nikkud and editorial marks**: confirm "diplomatic, as printed" as the
   rule for every set.
 - **Handwriting (family M)**: when it becomes its own project, for the
