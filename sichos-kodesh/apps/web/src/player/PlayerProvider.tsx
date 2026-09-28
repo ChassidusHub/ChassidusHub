@@ -9,7 +9,7 @@ import { forMediaSession } from '../utils/hebrewPunctuation';
 import { hebrewFullDateLabel } from '../utils/formatHebrewDate';
 import { useLanguage } from '../i18n/useLanguage';
 import { recordChapterProgress } from './progressStore';
-import { PlayerContext, playlistTitle } from './playerContext';
+import { PlayerContext, playlistTitle, SKIP_SECONDS } from './playerContext';
 import type { Playlist, PlayerContextValue, PlayerState } from './playerContext';
 
 const PERSIST_KEY = 'sichos-kodesh:player-state';
@@ -233,6 +233,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     el.currentTime = fraction * el.duration;
   }, []);
 
+  const seekBy = useCallback((seconds: number) => {
+    const el = audioRef.current;
+    if (!el || !Number.isFinite(el.duration) || el.duration === 0) return;
+    el.currentTime = Math.min(Math.max(el.currentTime + seconds, 0), el.duration);
+  }, []);
+
   // Persisted immediately on a playlist/chapter change (rare, worth never
   // losing) and throttled on plain playback-position ticks (frequent -
   // `onTimeUpdate` fires several times a second) so a reload resumes
@@ -393,18 +399,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     navigator.mediaSession.setActionHandler('seekto', (details) => {
       if (audioRef.current && details.seekTime != null) audioRef.current.currentTime = details.seekTime;
     });
+    navigator.mediaSession.setActionHandler('seekbackward', (details) => seekBy(-(details.seekOffset ?? SKIP_SECONDS)));
+    navigator.mediaSession.setActionHandler('seekforward', (details) => seekBy(details.seekOffset ?? SKIP_SECONDS));
     return () => {
       navigator.mediaSession.setActionHandler('play', null);
       navigator.mediaSession.setActionHandler('pause', null);
       navigator.mediaSession.setActionHandler('previoustrack', null);
       navigator.mediaSession.setActionHandler('nexttrack', null);
       navigator.mediaSession.setActionHandler('seekto', null);
+      navigator.mediaSession.setActionHandler('seekbackward', null);
+      navigator.mediaSession.setActionHandler('seekforward', null);
     };
-  }, [prev, next]);
+  }, [prev, next, seekBy]);
 
   const value = useMemo<PlayerContextValue>(
-    () => ({ ...state, play, togglePlay, pause, playChapter, next, prev, seekToFraction, playbackRate, playbackRateAllowed, setPlaybackRate, audioRef }),
-    [state, play, togglePlay, pause, playChapter, next, prev, seekToFraction, playbackRate, playbackRateAllowed, setPlaybackRate],
+    () => ({ ...state, play, togglePlay, pause, playChapter, next, prev, seekToFraction, seekBy, playbackRate, playbackRateAllowed, setPlaybackRate, audioRef }),
+    [state, play, togglePlay, pause, playChapter, next, prev, seekToFraction, seekBy, playbackRate, playbackRateAllowed, setPlaybackRate],
   );
 
   return (

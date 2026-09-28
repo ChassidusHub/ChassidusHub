@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.14.0';
+export const APP_VERSION = '1.15.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,21 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.15.0',
+    en: [
+      'A new player: a small bar above the tabs with the title, the chapter and how far it has played - tap it for the full player, with the chapter list, 15 seconds back and forward, and the chapters before and after',
+      'The reader and the PDFs share one top bar - back, what is open, the settings - and a tap on the page hides it, or brings it back',
+      'A PDF has a page slider: see which page of how many, and slide to go straight to any other',
+      'Titles in a new face, Frank Ruhl Libre - the same in Hebrew and English',
+    ],
+    he: [
+      'נגן חדש: פס קטן מעל הלשוניות עם השם, הקטע וכמה ממנו הושמע - נגיעה בו פותחת את הנגן המלא, עם רשימת הקטעים, 15 שניות אחורה וקדימה, והקטע הקודם והבא',
+      'לקורא ולקובצי ה-PDF פס עליון אחד - חזרה, מה פתוח, ההגדרות - ונגיעה בדף מסתירה אותו או מחזירה אותו',
+      'ל-PDF יש מחוון עמודים: רואים באיזה עמוד מתוך כמה, ומזיזים כדי לעבור ישר לכל עמוד אחר',
+      'הכותרות בגופן חדש, פרנק רוהל ליברה - אותו גופן בעברית ובאנגלית',
+    ],
+  },
   {
     version: '1.14.0',
     en: [

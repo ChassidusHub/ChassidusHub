@@ -14,6 +14,8 @@
      the side of a wide window (see .app-nav). */
   --tab-bar-height: 64px;
   --rail-width: 88px;
+  /* The display face and what stands in for it before it loads. */
+  --font-display: 'Frank Ruhl Libre', 'FrankRuehlCLM', 'Noto Serif Hebrew', Georgia, serif;
 }
 
 * {
@@ -150,6 +152,28 @@ textarea {
   src: url('/fonts/noto-sans-hebrew-700.woff2') format('woff2');
 }
 
+/* The display face (docs: the UI/UX redo plan, "Visual system"): Frank Ruhl
+   Libre, for the few places a title carries the page - a tab's name, the
+   parsha on This week, a sefer's or an item's own name. It has Hebrew and
+   Latin, so both languages share it. Its licence is in /fonts. */
+@font-face {
+  font-family: 'Frank Ruhl Libre';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/frank-ruhl-libre-hebrew-700.woff2') format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+
+@font-face {
+  font-family: 'Frank Ruhl Libre';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/frank-ruhl-libre-latin-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* Wraps every route's content (see App.tsx's AppContent) - reserves room
    below whatever the actual screen renders so `.bottom-bars` (position:
    fixed, can show on any screen) never covers the bottom of the page's
@@ -168,7 +192,7 @@ textarea {
 }
 
 .app-content.has-player {
-  --player-space: var(--player-bar-height, 96px);
+  --player-space: var(--player-bar-height, 64px);
 }
 
 .app-content.has-download-bar {
@@ -358,7 +382,8 @@ h1 {
 .screen-header-root .screen-header-title {
   margin: 0;
   text-align: start;
-  font-size: 1.625rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
   line-height: 1.25;
 }
 
@@ -375,18 +400,6 @@ h1 {
   .screen-header {
     transition: none;
   }
-}
-
-/* PdfViewerScreen's own container has zero horizontal padding by design
-   (see .pdf-viewer-screen's own comment) so .pdf-pages can go edge-to-edge
-   while zoomed - its header needs its own inset instead of inheriting one
-   from an ambient .screen wrapper the way every other screen's does.
-   The base .screen-header uses negative inline margins to break out of
-   .screen's padding; here there is no such padding, so we reset those
-   margins to zero. */
-.screen-header-inset {
-  margin-inline: 0;
-  margin-bottom: 16px;
 }
 
 .screen-header .back-link {
@@ -1517,7 +1530,7 @@ a.playlist-header-copy {
 /* The parsha, large, in the display face. */
 .home-parsha {
   margin: 2px 0 8px;
-  font-family: 'FrankRuehlCLM', 'Noto Sans Hebrew', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
   line-height: 1.2;
@@ -1525,8 +1538,7 @@ a.playlist-header-copy {
 }
 
 html[lang='en'] .home-parsha {
-  font-family: inherit;
-  font-size: 1.625rem;
+  font-size: 1.75rem;
 }
 
 /* The kvius year's farbrengens this week: each a card to open, play and read. */
@@ -1973,25 +1985,82 @@ html[lang='en'] .home-parsha {
 /* PDF viewer */
 
 .pdf-viewer-screen {
-  /* Horizontal padding lives on the header and page list individually
+  /* Horizontal padding lives on the status and the page list individually
      (below), not here - so `.zoomed` can drop just the page list's out to
-     the screen edges (more room to pan around a zoomed page) while the
-     header (back link, title) stays comfortably inset. */
+     the screen edges (more room to pan around a zoomed page). The top bar
+     (ReadingBar) stands outside, across the whole width. Room at the foot
+     for the page slider. */
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
+  padding: 16px 0 calc(96px + env(safe-area-inset-bottom));
 }
 
 .pdf-viewer-screen.zoomed {
   max-width: none;
 }
 
-/* Same inline padding as .screen-header-inset (see ScreenHeader.tsx) -
-   `.pdf-viewer-screen` itself is deliberately unpadded (see its own
-   comment) so `.pdf-pages` can go edge-to-edge when zoomed, which left the
-   loading/error/not-found text sitting flush against the screen edge with
-   no inset - clipped by the spinner in RTL, since it had nothing between
-   it and the edge at all. */
+/* The reader's top bar over a PDF (ReadingBar.tsx) draws with the
+   reader's colour names; a PDF gives it the app's own, which follow the
+   page's colours (PdfViewerScreen's scheme override). */
+.app-content:has(.pdf-viewer-screen) {
+  --r-bg: var(--bg);
+  --r-fg: var(--fg);
+  --r-muted: var(--muted);
+  --r-rule: var(--border);
+  --r-accent: var(--accent);
+}
+
+/* The page slider: which page of how many, and a slider to go to any
+   other - floating above the bars at the bottom, stepping aside with the
+   top bar. */
+.pdf-slider {
+  position: fixed;
+  inset-inline: 16px;
+  bottom: calc(var(--tabs-space, 0px) + var(--player-space, 0px) + var(--download-space, 0px) + env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 520px;
+  margin-inline: auto;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.pdf-slider-hidden {
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+}
+
+.pdf-slider-label {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pdf-slider-range {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-slider {
+    transition: none;
+  }
+}
+
+/* `.pdf-viewer-screen` itself is deliberately unpadded (see its own
+   comment) so `.pdf-pages` can go edge-to-edge when zoomed; the
+   loading/error/not-found text keeps its own inset from the screen edge. */
 .pdf-viewer-status {
   padding: 0 20px;
 }
@@ -2197,18 +2266,13 @@ html:has(.pdf-viewer-screen.pdf-paged:not(.zoomed)) {
   }
 }
 
-/* Global player bar - a single instance mounted at the app root (see
-   App.tsx/PlayerProvider), always visible once anything has played this
-   session, regardless of which screen is showing above it - the behavior
-   that makes it "Spotify-like" rather than a per-screen widget. */
+/* The player (GlobalPlayerBar.tsx) - one instance at the app root, shown
+   once anything has played this session, whichever page is open: the mini
+   player above the tabs, and the full player opened from it. */
 
 .global-player {
   background: var(--bg-elevated);
   border-top: 1px solid var(--border);
-}
-
-.global-player-collapsed .global-player-chapters {
-  display: none;
 }
 
 /* Put away: nothing but a pull-up handle at the bottom edge - swipe up on
@@ -2273,53 +2337,6 @@ html:has(.pdf-viewer-screen.pdf-paged:not(.zoomed)) {
   gap: 6px;
 }
 
-.global-player-controls {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 12px 16px;
-}
-
-.global-player-collapsed .global-player-controls {
-  padding-block: 8px;
-}
-
-.global-player-collapsed-summary {
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0;
-  border: none;
-  background: none;
-  text-align: start;
-  color: inherit;
-  cursor: pointer;
-}
-
-.global-player-collapsed-progress {
-  display: block;
-  position: relative;
-  width: 100%;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--border);
-  overflow: hidden;
-}
-
-.global-player-collapsed-progress-fill {
-  display: block;
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: 0;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
 .global-player-toggle {
   display: flex;
   align-items: center;
@@ -2365,11 +2382,6 @@ html:has(.pdf-viewer-screen.pdf-paged:not(.zoomed)) {
   cursor: default;
 }
 
-.global-player-scrub {
-  flex: 1;
-  min-width: 0;
-}
-
 .global-player-error {
   margin: 0;
   color: var(--danger);
@@ -2401,32 +2413,6 @@ html:has(.pdf-viewer-screen.pdf-paged:not(.zoomed)) {
 .global-player-rate:hover {
   color: var(--fg);
   background: var(--card-bg);
-}
-
-.global-player-transport {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-shrink: 0;
-  /* Pinned to LTR regardless of the page's own direction - prev/play-pause/next
-     are a fixed physical control cluster (their glyphs point a fixed way and
-     never mirror for RTL locales, matching every real media player), not text
-     that should follow reading direction. `direction: rtl`'s flex-order
-     reversal would otherwise swap which side each icon sits on while leaving
-     its glyph pointing the same way, so the left-pointing "back" icon would
-     end up on the right. */
-  direction: ltr;
-}
-
-.global-player-title {
-  display: block;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
-  margin-bottom: 4px;
-  text-align: start;
-  cursor: pointer;
 }
 
 .global-player-title-main {
@@ -2475,11 +2461,6 @@ html[dir='rtl'] .global-player-range::-webkit-slider-runnable-track {
   background: linear-gradient(to left, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
 }
 
-html[dir='rtl'] .global-player-collapsed-progress-fill {
-  inset-inline-start: auto;
-  inset-inline-end: 0;
-}
-
 .global-player-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 12px;
@@ -2520,21 +2501,6 @@ html[dir='rtl'] .global-player-collapsed-progress-fill {
   margin-top: 2px;
 }
 
-.global-player-chapters {
-  max-height: 40vh;
-  overflow-y: auto;
-  border-bottom: 1px solid var(--border);
-}
-
-.global-player-chapters-title {
-  padding: 12px 16px 4px;
-  color: var(--muted);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
 .global-player-chapter {
   display: flex;
   justify-content: space-between;
@@ -2564,6 +2530,323 @@ html[dir='rtl'] .global-player-collapsed-progress-fill {
   font-size: 0.75rem;
   flex-shrink: 0;
   margin-inline-start: 12px;
+}
+
+/* The mini player: the title and chapter, play/pause, and a thin line
+   along its top edge for how far the chapter has played. */
+.mini-player {
+  position: relative;
+}
+
+.mini-player-progress {
+  position: absolute;
+  inset-inline: 0;
+  top: -1px;
+  height: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.mini-player-progress-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  background: var(--accent);
+}
+
+.mini-player-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  min-height: 60px;
+  margin: 0 auto;
+  padding: 6px 16px;
+}
+
+.mini-player-open {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.mini-player .global-player-toggle {
+  width: 44px;
+  height: 44px;
+}
+
+/* The full player: a sheet up from the bottom on a phone-sized window, a
+   panel along the end of a wide one. The page behind stays still. */
+html.full-player-open body {
+  overflow: hidden;
+}
+
+.full-player-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
+  background: rgb(0 0 0 / 0.45);
+  animation: full-player-fade 0.18s ease;
+}
+
+.full-player {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-radius: 20px 20px 0 0;
+  background: var(--bg-elevated);
+  color: var(--fg);
+  animation: full-player-rise 0.2s ease;
+}
+
+@media (min-width: 900px) {
+  .full-player-scrim {
+    align-items: stretch;
+    justify-content: flex-end;
+    padding-top: 0;
+  }
+
+  .full-player {
+    width: 420px;
+    max-height: none;
+    padding-top: env(safe-area-inset-top, 0px);
+    border-radius: 0;
+    border-inline-start: 1px solid var(--border);
+    animation-name: full-player-slide;
+  }
+
+  html[dir='rtl'] .full-player {
+    animation-name: full-player-slide-rtl;
+  }
+
+  /* A panel beside the page is closed with its button, not swiped. */
+  .full-player-grip {
+    visibility: hidden;
+  }
+}
+
+@keyframes full-player-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes full-player-rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes full-player-slide {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes full-player-slide-rtl {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .full-player-scrim,
+  .full-player {
+    animation: none;
+  }
+}
+
+/* Its top: a grip to swipe it down by, and the button that closes it. */
+.full-player-top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  margin-inline: -20px;
+  background: var(--bg-elevated);
+  touch-action: none;
+}
+
+.full-player-grip {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.5;
+}
+
+.full-player-close {
+  position: absolute;
+  inset-inline-start: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.full-player-now {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.full-player-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.full-player-date,
+.full-player-chapter {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.full-player-chapter {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.full-player-error {
+  text-align: center;
+}
+
+.full-player-scrub .global-player-range {
+  height: 6px;
+}
+
+.full-player-scrub .global-player-times {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.full-player-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.full-player-transport .global-player-skip {
+  width: 48px;
+  height: 48px;
+}
+
+.global-player-toggle.full-player-toggle {
+  width: 68px;
+  height: 68px;
+}
+
+/* 15 seconds back or forward: the number sits inside the circular arrow. */
+.full-player-seconds {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.full-player-seconds:hover {
+  background: var(--card-hover);
+}
+
+/* In Hebrew the position runs right to left (the range above), so the
+   skips point that way too: back towards the right, forward to the left.
+   Play keeps its one shape; the number stays readable. */
+html[dir='rtl'] .full-player-transport .global-player-skip svg,
+html[dir='rtl'] .full-player-seconds svg {
+  transform: scaleX(-1);
+}
+
+.full-player-seconds-number {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-top: 1px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.full-player-seconds:focus-visible,
+.full-player-transport .global-player-skip:focus-visible,
+.global-player-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.full-player-extras {
+  display: flex;
+  justify-content: center;
+}
+
+.full-player-extras .global-player-rate {
+  height: 32px;
+  min-width: 56px;
+  font-size: 0.8125rem;
+}
+
+.full-player-chapters {
+  margin-inline: -20px;
+  border-top: 1px solid var(--border);
+}
+
+.full-player-chapters-title {
+  margin: 0;
+  padding: 14px 20px 6px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.full-player-chapter-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.full-player-chapter-list .global-player-chapter {
+  min-height: 48px;
+  padding-inline: 20px;
 }
 
 /* Search */
@@ -2726,6 +3009,7 @@ html[dir='rtl'] .global-player-collapsed-progress-fill {
 }
 
 .library-item-title {
+  font-family: var(--font-display);
   font-size: 1.375rem;
   line-height: 1.35;
   margin: 0 0 6px;

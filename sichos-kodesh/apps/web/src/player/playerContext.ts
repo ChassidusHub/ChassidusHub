@@ -47,6 +47,9 @@ export function playlistNames(playlist: Playlist): Pick<CatalogEntry, 'occasionL
   return { occasionLabel: playlist.title, occasionLabelEn: playlist.titleEn, occasionLabelShort: playlist.titleShort, occasionLabelShortEn: playlist.titleShortEn };
 }
 
+/** How far the full player's skip buttons (and the lock screen's) move, back or forward. */
+export const SKIP_SECONDS = 15;
+
 export interface PlayerState {
   playlist: Playlist | null;
   currentIndex: number;
@@ -69,6 +72,8 @@ export interface PlayerContextValue extends PlayerState {
   next: () => void;
   prev: () => void;
   seekToFraction: (fraction: number) => void;
+  /** Moves the position by this many seconds, back when negative - the full player's 15 seconds each way (`SKIP_SECONDS`), and the lock screen's. */
+  seekBy: (seconds: number) => void;
   /** The rate audio actually plays at right now - always 1 for the Rebbe's own recordings, whatever the listener chose (see packages/catalog's playbackPolicy). */
   playbackRate: PlaybackRate;
   /** Whether the current chapter is one a listener may speed up or slow down (a shiur or a chazara) - the bar shows its speed control only then. */

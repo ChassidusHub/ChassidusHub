@@ -29,6 +29,8 @@ import {
 import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
 import { useWorkContents, useWorks } from '../../catalog/catalogStore';
 import { BackLink } from '../../components/BackLink';
+import { ReadingBar } from '../../components/ReadingBar';
+import { useReadingChrome } from '../../components/useReadingChrome';
 import { useTranslation } from '../../i18n/useLanguage';
 import { useOnlineStatus } from '../../network/useOnlineStatus';
 import { fontStack, readerPalette } from '../../seforim/readerPalette';
@@ -111,7 +113,8 @@ export function ReaderScreen({ workId }: Props) {
   const [sections, setSections] = useState<Section[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [currentId, setCurrentId] = useState<string | null>(null);
-  const [barHidden, setBarHidden] = useState(false);
+  const chrome = useReadingChrome();
+  const { settle } = chrome;
   const [panel, setPanel] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [copied, setCopied] = useState(false);
@@ -123,7 +126,6 @@ export function ReaderScreen({ workId }: Props) {
   const backFailed = useRef<string | null>(null);
   /** The chapter on screen and where it stood, while a chapter is put above it. */
   const anchor = useRef<{ id: string; top: number } | null>(null);
-  const lastY = useRef(0);
   const restoreTo = useRef<number | null>(null);
   const here = useRef<{ unitId: string; source: number; offset: number } | null>(null);
 
@@ -236,8 +238,8 @@ export function ReaderScreen({ workId }: Props) {
     const node = nodes.current.get(held.id);
     if (!node) return;
     window.scrollBy({ top: node.getBoundingClientRect().top - held.top, behavior: 'instant' as ScrollBehavior });
-    lastY.current = window.scrollY;
-  }, [sections]);
+    settle();
+  }, [sections, settle]);
 
   const retrySection = (index: number) => {
     const section = sections[index];
@@ -254,16 +256,12 @@ export function ReaderScreen({ workId }: Props) {
     );
   };
 
-  // Scrolling: the bar steps aside on the way down, the chapter under the upper part of the screen is the one being read, the next chapter comes when the end is near and the one before when the top is.
+  // Scrolling: the chapter under the upper part of the screen is the one being read, the next chapter comes when the end is near and the one before when the top is. (The bar steps aside on the way down: useReadingChrome.)
   const restTimer = useRef<number | undefined>(undefined);
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       const height = window.innerHeight;
-      const dy = y - lastY.current;
-      lastY.current = y;
-      if (y < 80 || dy < -6) setBarHidden(false);
-      else if (dy > 6) setBarHidden(true);
 
       const probe = y + height * 0.25;
       let index = 0;
@@ -417,23 +415,16 @@ export function ReaderScreen({ workId }: Props) {
 
   return (
     <div className="reader" style={style} data-paper={settings.theme}>
-      <header className={barHidden && !panel ? 'reader-bar reader-bar-hidden' : 'reader-bar'}>
-        <div className="reader-bar-row">
-          <BackLink to={back} />
-          <div className="reader-bar-titles">
-            <span className="reader-bar-work">{names(work.title, language)}</span>
-            <span className="reader-bar-unit">{label(shownUnit)}</span>
-          </div>
-          <button type="button" className="icon-button" onClick={() => toggleBookmark(workId, shownUnit.id)} aria-label={marked ? t.readerRemoveBookmark : t.readerBookmark} aria-pressed={marked}>
-            {marked ? <BookmarkCheck size={22} className="reader-accent" aria-hidden /> : <Bookmark size={22} aria-hidden />}
-          </button>
-          <button type="button" className="icon-button" onClick={() => setPanel(true)} aria-label={t.readerSettings} aria-haspopup="dialog">
-            <ALargeSmall size={24} aria-hidden />
-          </button>
-        </div>
-      </header>
+      <ReadingBar back={back} context={names(work.title, language)} title={label(shownUnit)} hidden={chrome.hidden && !panel}>
+        <button type="button" className="icon-button" onClick={() => toggleBookmark(workId, shownUnit.id)} aria-label={marked ? t.readerRemoveBookmark : t.readerBookmark} aria-pressed={marked}>
+          {marked ? <BookmarkCheck size={22} className="reader-accent" aria-hidden /> : <Bookmark size={22} aria-hidden />}
+        </button>
+        <button type="button" className="icon-button" onClick={() => setPanel(true)} aria-label={t.readerSettings} aria-haspopup="dialog">
+          <ALargeSmall size={24} aria-hidden />
+        </button>
+      </ReadingBar>
 
-      <main className="reader-page">
+      <main className="reader-page" onClick={chrome.onTap}>
         {/* Read chapter by chapter: the one before is a step away. Read on continuously, it comes in above as the top is neared. */}
         {!settings.continuous && previous && (
           <Link className="reader-next reader-before" to={readerPath(workId, previous.id, edition?.source)}>

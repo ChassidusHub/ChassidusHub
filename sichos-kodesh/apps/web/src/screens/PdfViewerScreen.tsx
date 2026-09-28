@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Loader2, SlidersHorizontal, WifiOff } from 'lucide-react';
-import { pdfCssFilter } from '@sichos-kodesh/app-core';
+import { occasionTitle, pdfCssFilter } from '@sichos-kodesh/app-core';
 import type { PdfColors } from '@sichos-kodesh/app-core';
 import type { PDFDocumentLoadingTask } from 'pdfjs-dist';
 import type { ResolvedEntry } from '../routes/useResolvedEntry';
@@ -18,7 +18,9 @@ import { useBaseScheme } from '../settings/useResolvedScheme';
 import { applySchemeOverride } from '../settings/useTheme';
 import { useTranslation } from '../i18n/useLanguage';
 import { BackLink } from '../components/BackLink';
-import { ScreenHeader } from '../components/ScreenHeader';
+import { PdfPageSlider } from '../components/PdfPageSlider';
+import { ReadingBar } from '../components/ReadingBar';
+import { useReadingChrome } from '../components/useReadingChrome';
 
 /** Document scroll position as a fraction (0-1) of how far it's possible to scroll - 0 when the page is too short to scroll at all. */
 function currentScrollFraction(): number {
@@ -47,12 +49,14 @@ type LoadState = { status: 'loading'; percent: number | null } | { status: 'read
  * that column.
  */
 export function PdfViewerScreen({ resolved }: Props) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { driveFileId } = useParams<{ driveFileId: string }>();
   const pdf = resolved.entry.pdfs.find((p) => p.driveFileId === driveFileId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null });
   const [zoomed, setZoomed] = useState(false);
+  const [pageCount, setPageCount] = useState(0);
+  const chrome = useReadingChrome();
   // Dark pages (white on black) are chosen for the user's own theme and
   // remembered per theme (see useInvertPdfInDarkMode.ts) - so night reading
   // stays dark while a daytime choice doesn't change the night default.
@@ -140,6 +144,7 @@ export function PdfViewerScreen({ resolved }: Props) {
           if (!cancelled) setZoomed(nowZoomed);
         });
         if (cancelled) return;
+        setPageCount(doc.numPages);
         // Page wrappers already have their final height once
         // renderPdfPages resolves (only their canvases still render
         // lazily while scrolling - see renderPdf.ts), so the document's
@@ -219,54 +224,52 @@ export function PdfViewerScreen({ resolved }: Props) {
   }
 
   return (
-    <div
-      className={['pdf-viewer-screen', zoomed && 'zoomed', inverted && 'pdf-inverted', look.paging === 'pages' && 'pdf-paged'].filter(Boolean).join(' ')}
-      style={{ '--pdf-filter': pdfCssFilter(pageColors, look.contrast) } as CSSProperties}
-    >
-      <ScreenHeader
-        to={resolved.basePath}
-        title={pdf.label}
-        className="screen-header-inset"
-        action={
-          <button type="button" className="icon-button" onClick={() => setSheetOpen(true)} aria-label={t.pdfSettings} title={t.pdfSettings}>
-            <SlidersHorizontal size={20} aria-hidden />
-          </button>
-        }
-      />
+    <>
+      <ReadingBar back={resolved.basePath} context={occasionTitle(resolved.entry, language)} title={pdf.label} hidden={chrome.hidden && !sheetOpen}>
+        <button type="button" className="icon-button" onClick={() => setSheetOpen(true)} aria-label={t.pdfSettings} title={t.pdfSettings} aria-haspopup="dialog">
+          <SlidersHorizontal size={20} aria-hidden />
+        </button>
+      </ReadingBar>
+      <div
+        className={['pdf-viewer-screen', zoomed && 'zoomed', inverted && 'pdf-inverted', look.paging === 'pages' && 'pdf-paged'].filter(Boolean).join(' ')}
+        style={{ '--pdf-filter': pdfCssFilter(pageColors, look.contrast) } as CSSProperties}
+      >
+        <div className="pdf-viewer-status">
+          {state.status === 'loading' && (
+            <p className="subtitle pdf-loading">
+              <Loader2 className="pdf-loading-spinner" size={16} aria-hidden />
+              <span>{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</span>
+            </p>
+          )}
+          {state.status === 'error' && state.offline && (
+            <>
+              <div className="offline-note">
+                <WifiOff size={16} aria-hidden />
+                <span>{t.pdfOfflineNotDownloaded}</span>
+              </div>
+              <Link className="button" to="/downloaded">
+                {t.viewDownloadedLabel}
+              </Link>
+            </>
+          )}
+          {state.status === 'error' && !state.offline && (
+            <>
+              <p className="gap-message">{t.pdfLoadError(state.message)}</p>
+              {/* The file is still fetchable directly even when pdf.js can't
+                  render it in-app, so link out to it as a fallback - except
+                  while offline, where the direct fetch would fail too. */}
+              <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
+                {t.openPdfExternally}
+              </a>
+            </>
+          )}
+        </div>
 
-      <div className="pdf-viewer-status">
-        {state.status === 'loading' && (
-          <p className="subtitle pdf-loading">
-            <Loader2 className="pdf-loading-spinner" size={16} aria-hidden />
-            <span>{state.percent != null ? t.openingPdfPercent(state.percent) : t.openingPdf}</span>
-          </p>
-        )}
-        {state.status === 'error' && state.offline && (
-          <>
-            <div className="offline-note">
-              <WifiOff size={16} aria-hidden />
-              <span>{t.pdfOfflineNotDownloaded}</span>
-            </div>
-            <Link className="button" to="/downloaded">
-              {t.viewDownloadedLabel}
-            </Link>
-          </>
-        )}
-        {state.status === 'error' && !state.offline && (
-          <>
-            <p className="gap-message">{t.pdfLoadError(state.message)}</p>
-            {/* The file is still fetchable directly even when pdf.js can't
-                render it in-app, so link out to it as a fallback - except
-                while offline, where the direct fetch would fail too. */}
-            <a className="button" href={pdfUrl(pdf.driveFileId, pdf.resourceKey)} target="_blank" rel="noreferrer">
-              {t.openPdfExternally}
-            </a>
-          </>
-        )}
+        {/* A tap on the pages hides the bar and the page slider, or brings them back. */}
+        <div ref={containerRef} className="pdf-pages" onClick={chrome.onTap} />
+        {state.status === 'ready' && <PdfPageSlider pages={containerRef} count={pageCount} hidden={chrome.hidden && !sheetOpen} onJump={chrome.settle} />}
+        {sheetOpen && <PdfSettingsPanel look={look} colors={pageColors} onColors={chooseColors} onClose={() => setSheetOpen(false)} />}
       </div>
-
-      <div ref={containerRef} className="pdf-pages" />
-      {sheetOpen && <PdfSettingsPanel look={look} colors={pageColors} onColors={chooseColors} onClose={() => setSheetOpen(false)} />}
-    </div>
+    </>
   );
 }
