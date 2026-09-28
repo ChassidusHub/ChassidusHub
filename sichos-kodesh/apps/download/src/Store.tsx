@@ -6,12 +6,14 @@ import { api, isNotArchived } from './api';
 import type { CartItem, CartSettings } from './cart';
 import { addItem, cartQuery, hasItem, itemHasAudio, itemKey, itemLabel, loadCart, removeItem, saveCart, yearsText } from './cart';
 import { useI18n } from './i18n';
-import { BookIcon, CalendarIcon, CartIcon, CloseIcon, HeadphonesIcon, LibraryIcon, ShieldIcon } from './icons';
+import { CalendarIcon, CartIcon, CloseIcon, HeadphonesIcon, LibraryIcon, ShieldIcon } from './icons';
 import type { Kvius } from './kvius';
 import { currentMonths, kviusOf } from './kvius';
 import type { CustomSections, Preset } from './selection';
 import { COLLECTION_IDS, DEFAULT_CUSTOM, MONTHS, allOf, axesOf, collectionInfo, countItems, formatMb, groupName, ltr, monthName, monthsOf, orderProfiles, profileInfo, yearLabel } from './selection';
-import { SeforimShelf } from './Seforim';
+import type { LibraryEntry } from './library';
+import { entryKey, libraryEntries } from './library';
+import { Sefer, SeforimShelf } from './Seforim';
 import { AddButton, DownloadButton, Field, Segmented, StepHeader, ToggleChip, toggled, useLoad } from './ui';
 
 /**
@@ -214,12 +216,55 @@ function FarbrengensShelf({ meta, kvius, months: current, cart, onAdd, onRemove 
   );
 }
 
-/** A library collection, browsed as the app browses it: an axis, then any of its groups - or all of it. */
-function LibraryShelf({ meta, cart, onAdd, onRemove }: { meta: Meta; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void }) {
+/** An entry's name on the library's list: a collection's, a sefer's own title, or the Rebbeim's seforim. */
+function entryName(entry: LibraryEntry, lang: 'he' | 'en', seforim: string): string {
+  if (entry.kind === 'collection') return collectionInfo(entry.id, lang).name;
+  if (entry.kind === 'work') return entry.work.title[lang];
+  return seforim;
+}
+
+/**
+ * The library: one shelf for everything that is not a farbrengen. Its list
+ * names what is on it - the Rebbe's collections with his own seforim among
+ * them (Igros Kodesh by volume), then the seforim of the Rebbeim - and the
+ * panel under it browses the one picked.
+ */
+function LibraryShelf({ meta, shelf, cart, onAdd, onRemove }: { meta: Meta; shelf: WorksShelf | null; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void }) {
   const { t, lang } = useI18n();
-  const offered = COLLECTION_IDS.filter((id) => id !== 'farbrengens' && meta.library?.includes(id));
-  const [collection, setCollection] = useState(offered[0] ?? '');
-  const data = useLoad<LibraryCollection<LibraryItemBase> | null>((signal) => (collection ? api.library(collection, signal) : Promise.resolve(null)), [collection]);
+  const entries = useMemo(() => libraryEntries(COLLECTION_IDS.filter((id) => id !== 'farbrengens' && meta.library?.includes(id)), shelf), [meta.library, shelf]);
+  const [picked, setPicked] = useState<string | null>(null);
+  const current = entries.find((e) => entryKey(e) === picked) ?? entries[0];
+  if (!current) return <p className="shelf-empty">{t.libraryEmpty}</p>;
+  const key = entryKey(current);
+
+  return (
+    <div className="shelf-body">
+      <div className="subtabs" role="radiogroup" aria-label={t.shelfLibrary}>
+        {entries.map((entry) => (
+          <label key={entryKey(entry)} className={entryKey(entry) === key ? 'subtab subtab-on' : 'subtab'}>
+            <input type="radio" className="visually-hidden" name="library-entry" id={`entry-${entryKey(entry).replace(':', '-')}`} checked={entryKey(entry) === key} onChange={() => setPicked(entryKey(entry))} />
+            {entryName(entry, lang, t.rebbeimSeforim)}
+          </label>
+        ))}
+      </div>
+      {current.kind === 'collection' && <CollectionPanel key={key} collection={current.id} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
+      {current.kind === 'work' && (
+        <>
+          <p className="field-hint">{t.workLead}</p>
+          <div className="bundles">
+            <Sefer key={key} work={current.work} cart={cart} onAdd={onAdd} onRemove={onRemove} defaultOpen />
+          </div>
+        </>
+      )}
+      {current.kind === 'seforim' && <SeforimShelf shelf={current.shelf} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
+    </div>
+  );
+}
+
+/** A library collection, browsed as the app browses it: an axis, then any of its groups - or all of it. */
+function CollectionPanel({ collection, cart, onAdd, onRemove }: { collection: string; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void }) {
+  const { t, lang } = useI18n();
+  const data = useLoad<LibraryCollection<LibraryItemBase> | null>((signal) => api.library(collection, signal), [collection]);
   const axes = useMemo(() => (data.state === 'ready' && data.value ? axesOf(data.value.groups, lang) : []), [data, lang]);
   const firstAxis = axes[0]?.id ?? null;
   const [axis, setAxis] = useState<string | null>(null);
@@ -228,9 +273,8 @@ function LibraryShelf({ meta, cart, onAdd, onRemove }: { meta: Meta; cart: CartI
   useEffect(() => {
     setAxis(firstAxis);
     setPicked([]);
-  }, [firstAxis, collection]);
+  }, [firstAxis]);
 
-  if (offered.length === 0) return <p className="shelf-empty">{t.libraryEmpty}</p>;
   const info = collectionInfo(collection, lang);
   const groups = data.state === 'ready' && data.value && axis ? (data.value.groups[axis] ?? []) : [];
   const chosen = groups.filter((g) => picked.includes(g.slug));
@@ -240,15 +284,7 @@ function LibraryShelf({ meta, cart, onAdd, onRemove }: { meta: Meta; cart: CartI
   const names = chosen.map((g) => groupName(collection, axis ?? '', g, lang));
 
   return (
-    <div className="shelf-body">
-      <div className="subtabs" role="radiogroup" aria-label={t.shelfLibrary}>
-        {offered.map((id) => (
-          <label key={id} className={collection === id ? 'subtab subtab-on' : 'subtab'}>
-            <input type="radio" className="visually-hidden" name="collection" id={`collection-${id}`} checked={collection === id} onChange={() => setCollection(id)} />
-            {collectionInfo(id, lang).name}
-          </label>
-        ))}
-      </div>
+    <>
       {data.state === 'loading' && (
         <div className="loading">
           <span className="spinner" aria-hidden="true" />
@@ -301,18 +337,17 @@ function LibraryShelf({ meta, cart, onAdd, onRemove }: { meta: Meta; cart: CartI
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }
 
-type ShelfId = 'farbrengens' | 'library' | 'works';
+type ShelfId = 'farbrengens' | 'library';
 
 function Shelves({ meta, shelf, kvius, months, cart, onAdd, onRemove, tab, onTab }: { meta: Meta; shelf: WorksShelf | null; kvius: Kvius; months: Months; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void; tab: ShelfId; onTab: (tab: ShelfId) => void }) {
   const { t } = useI18n();
   const tabs: Array<{ id: ShelfId; name: string; icon: ReactNode }> = [
     { id: 'farbrengens', name: t.shelfFarbrengens, icon: <HeadphonesIcon size={18} /> },
-    ...((meta.library?.length ?? 0) > 0 ? [{ id: 'library' as const, name: t.shelfLibrary, icon: <LibraryIcon size={18} /> }] : []),
-    ...(shelf ? [{ id: 'works' as const, name: t.shelfSeforim, icon: <BookIcon size={18} /> }] : []),
+    ...((meta.library?.length ?? 0) > 0 || shelf ? [{ id: 'library' as const, name: t.shelfLibrary, icon: <LibraryIcon size={18} /> }] : []),
   ];
   return (
     <section className="card shelves" id="shelves" aria-label={t.shelvesLabel}>
@@ -326,8 +361,7 @@ function Shelves({ meta, shelf, kvius, months, cart, onAdd, onRemove, tab, onTab
       </div>
       <div role="tabpanel" aria-labelledby={`tab-${tab}`}>
         {tab === 'farbrengens' && <FarbrengensShelf meta={meta} kvius={kvius} months={months} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
-        {tab === 'library' && <LibraryShelf meta={meta} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
-        {tab === 'works' && shelf && <SeforimShelf shelf={shelf} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
+        {tab === 'library' && <LibraryShelf meta={meta} shelf={shelf} cart={cart} onAdd={onAdd} onRemove={onRemove} />}
       </div>
     </section>
   );

@@ -5,13 +5,14 @@ import { hasItem } from './cart';
 import { useI18n } from './i18n';
 import { BookIcon } from './icons';
 import { formatMb, ltr } from './selection';
-import { AddButton, ToggleChip, toggled } from './ui';
+import { AddButton, Field, ToggleChip, toggled } from './ui';
 
 /**
- * The seforim as an archive by Rebbe: pick a Rebbe, see his seforim, add
- * one whole - or, for a sefer in volumes (Igros Kodesh), just the volumes
- * wanted. Everything here comes from the pack API's shelf: a Rebbe whose
- * seforim are published appears without a change to the site.
+ * The seforim, inside the library: one sefer by itself (Igros Kodesh has
+ * an entry of its own), or the seforim of the Rebbeim by Rebbe - add one
+ * whole, or, for a sefer in volumes, just the volumes wanted. Everything
+ * here comes from the pack API's shelf: a Rebbe whose seforim are
+ * published appears without a change to the site.
  */
 
 interface Shelf {
@@ -30,9 +31,10 @@ export function shelvesByAuthor(shelf: WorksShelf, other: Names): Shelf[] {
   return shelves;
 }
 
-function Sefer({ work, cart, onAdd, onRemove }: { work: ShelfWork; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void }) {
+/** A sefer: add it whole, or open its volumes and add some. `defaultOpen` shows the volumes at once (a sefer that is a library entry of its own). */
+export function Sefer({ work, cart, onAdd, onRemove, defaultOpen = false }: { work: ShelfWork; cart: CartItem[]; onAdd: (item: CartItem) => void; onRemove: (item: CartItem) => void; defaultOpen?: boolean }) {
   const { t, lang } = useI18n();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [picked, setPicked] = useState<string[]>([]);
   const whole: CartItem = { kind: 'works', tokens: [work.id], name: work.title };
   const parts = work.parts ?? [];
@@ -99,16 +101,18 @@ export function SeforimShelf({ shelf, cart, onAdd, onRemove }: { shelf: WorksShe
   const bytes = current.works.reduce((sum, w) => sum + w.bytes, 0);
 
   return (
-    <div className="shelf-body">
+    <>
       <p className="field-hint">{t.seforimLead}</p>
-      <div className="subtabs" role="radiogroup" aria-label={t.rebbeLabel}>
-        {shelves.map((s) => (
-          <label key={s.id || 'other'} className={s.id === current.id ? 'subtab subtab-on' : 'subtab'}>
-            <input type="radio" className="visually-hidden" name="rebbe" id={`rebbe-${s.id || 'other'}`} checked={s.id === current.id} onChange={() => setPicked(s.id)} />
-            {s.name[lang]}
-          </label>
-        ))}
-      </div>
+      <Field title={t.rebbeLabel}>
+        <div className="chips" role="radiogroup" aria-label={t.rebbeLabel}>
+          {shelves.map((s) => (
+            <label key={s.id || 'other'} className={s.id === current.id ? 'chip chip-on' : 'chip'}>
+              <input type="radio" className="visually-hidden" name="rebbe" id={`rebbe-${s.id || 'other'}`} checked={s.id === current.id} onChange={() => setPicked(s.id)} />
+              {s.name[lang]}
+            </label>
+          ))}
+        </div>
+      </Field>
       <div className="bundles">
         {current.works.map((work) => (
           <Sefer key={work.id} work={work} cart={cart} onAdd={onAdd} onRemove={onRemove} />
@@ -119,6 +123,6 @@ export function SeforimShelf({ shelf, cart, onAdd, onRemove }: { shelf: WorksShe
           <AddButton inCart={hasItem(cart, all)} onAdd={() => onAdd(all)} onRemove={() => onRemove(all)} label={current.id ? t.allOf(current.name[lang]) : t.allOfOther} detail={ltr(formatMb(bytes))} />
         </div>
       )}
-    </div>
+    </>
   );
 }

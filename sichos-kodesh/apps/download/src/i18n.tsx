@@ -98,7 +98,6 @@ function strings(lang: Lang) {
     shelvesLabel: he ? 'מדפים' : 'Shelves',
     shelfFarbrengens: he ? 'התוועדויות' : 'Farbrengens',
     shelfLibrary: he ? 'הספרייה' : 'Library',
-    shelfSeforim: he ? 'ספרים' : 'Seforim',
 
     years: he ? 'שנים' : 'Years',
     yearsHint: he ? 'אפשר כמה שנים: אותם חודשים מכל אחת.' : 'Several years take the same months of each.',
@@ -130,6 +129,8 @@ function strings(lang: Lang) {
     pickFirst: he ? 'בוחרים קודם' : 'Pick first',
     nGroups: (n: number) => (he ? `${n} קבוצות` : `${n} groups`),
 
+    rebbeimSeforim: he ? 'ספרי רבותינו נשיאינו' : 'Seforim of the Rebbeim',
+    workLead: he ? 'הטקסט המלא, לקריאה ולחיפוש בלי אינטרנט. בוחרים חלקים, או לוקחים את הספר כולו.' : 'The full text, to read and search offline. Pick parts, or take the whole sefer.',
     seforimLead: he ? 'כל ספר עם הטקסט המלא והחיפוש, לקריאה בלי אינטרנט. הם נכנסים לאותה חבילה עם כל השאר.' : 'Each sefer with its full text and search, to read offline. They go into the same pack as everything else.',
     rebbeLabel: he ? 'לפי רבי' : 'By Rebbe',
     otherSeforim: he ? 'עוד ספרים' : 'More seforim',
@@ -146,7 +147,7 @@ function strings(lang: Lang) {
 
     cart: he ? 'הסל' : 'Cart',
     emptyCart: he ? 'ריקון' : 'Empty',
-    cartEmpty: he ? 'הסל ריק. מוסיפים מהמדפים - שנים וחודשים, חלקים ושנים מהספרייה, ספרים - והכל יורד בחבילה אחת.' : 'The cart is empty. Add from the shelves - years and months, the library, seforim - and it all comes down as one pack.',
+    cartEmpty: he ? 'הסל ריק. מוסיפים מהמדפים - התוועדויות לפי שנים וחודשים, ומהספרייה - והכל יורד בחבילה אחת.' : 'The cart is empty. Add from the shelves - farbrengens by year and month, and the library - and it all comes down as one pack.',
     removeFromCart: (title: string) => (he ? `להוציא מהסל: ${title}` : `Remove from the cart: ${title}`),
     notArchived: he ? 'עוד לא בארכיון' : 'Not archived yet',
     retry: he ? 'שוב' : 'Retry',
