@@ -17,6 +17,11 @@ Taken 2026-09-28, after the first draft. The sections below follow them.
 | Digital text for old Kehot printings | Text from **chabadlibrary.org** | §4.3 |
 | Rights, Sichos Kodesh and old Kehot scans | **Fully safe (100%).** We may train on them, and we may publish the models and datasets | §4.1, §11 |
 | Compute | Rent GPUs by the hour. GitHub CI runs tests and evaluation and starts the GPU jobs, but it does not do the heavy work | §6.6 |
+| Where scans come from | **Only the Sichos Kodesh catalog** (api.sk.shmuky.dev, catalog 1.7.0). No other source | §4.1, §13 |
+| Phase 0 sample | Two sets of 100 PDFs each, pinned in `data/samples/phase0-sample.tsv`: Sichos Kodesh hanachos, and old Kehot (Likkutei Sichos) | §13 |
+| Storage | A **separate R2 bucket, `rebbehub-ocr`**, apart from the media-lake bucket | §15 |
+| Uploads | **None until the R2 credentials exist.** Everything up to the upload is prepared | §14, §16 |
+| GPU | **Runpod** (Community Cloud for the cleared sets). Phase 0 budget **up to $200**, capped by prepaid credit | §6.6, §16 |
 
 ## 1. The goal, in numbers
 
@@ -166,11 +171,11 @@ an editorial act for a human, recorded as such.
 
 ### 4.1 Collecting scans
 
-- **Inventory**: start from what Sichos-Kodesh and RebbeHub already know:
-  `hebrewbooks-index`, the chabadlibrary.org tree, the archive's `sources`,
-  and our own hanacha scans. Output is one manifest row per scan:
-  sha256, set, volume, publisher/printing, year, source URL, rights state,
-  page count, resolution.
+- **Inventory**: scans come **only from the Sichos Kodesh catalog**
+  (§0, §13). Each catalog PDF entry has a `driveFileId`, which is fetched
+  through the catalog's media proxy. Output is one manifest row per scan
+  (§14): sha256, set, catalog reference, source URL, rights state, page
+  count and image details.
 - **Fetch originals**, never re-encoded copies. Pull the embedded page
   images with `pdfimages` at native resolution instead of re-rendering.
   Store by sha256 (same scheme as RebbeHub R2 `objects/<sha256>`).
@@ -439,23 +444,63 @@ Sets are processed in order of value and of how much ground truth exists:
 
 ### 6.6 Compute: where it runs and what it costs
 
-**Decision: rent GPUs by the hour** (RunPod, Vast.ai, Lambda or similar),
-only while a training run or a catalog batch is going. Nothing sits idle.
+**Decision: Runpod, rented by the hour**, only while a training run or a
+catalog batch is going. Nothing sits idle.
 
-Rough market prices, mid-2026. They move often, so check before
-committing:
+**Runpod on-demand prices** (runpod.io/pricing, checked 2026-09-28):
 
-| GPU | Typical rent | Good for |
-| --- | --- | --- |
-| RTX 4090 / 5090 (24–32 GB) | ~$0.35–0.90 / hour | Kraken training, layout, Reader A, and a small (3B) Reader B |
-| L40S (48 GB) | ~$0.80–1.20 / hour | Reader B at 7–8B, bigger batches |
-| A100 / H100 (80 GB) | ~$1.20–3.00 / hour | Fine-tuning the Reader B VLM |
+| GPU | Community Cloud | Secure Cloud | Good for |
+| --- | --- | --- | --- |
+| RTX 4090 (24 GB) | $0.34 / h | $0.74 / h | Kraken training, layout, Reader A, benchmarks |
+| RTX 5090 (32 GB) | $0.69 / h | $0.99 / h | The same, faster; a small (3B) Reader B |
+| L40S (48 GB) | $0.79 / h | $1.09 / h | Running Reader B at 7–8B, bigger batches |
+| A100 80 GB PCIe | $1.19 / h | $1.59 / h | **Fine-tuning Reader B**, 30B-class models zero-shot |
+| A100 80 GB SXM | $1.39 / h | $1.59 / h | The same, faster between GPUs |
+| H100 PCIe / SXM (80 GB) | $1.99 / $2.69 per h | $2.89 / $3.49 per h | The largest models, short runs |
 
-What each job costs (estimates; Phase 0 measures the real numbers):
+Storage: network volume $0.07/GB-month, container disk $0.10/GB-month.
+
+**Why Runpod.** Vast.ai is a marketplace and can be cheaper: a 4090 is
+typically about $0.39/h and can go as low as $0.14/h, an A100 80 GB is
+from about $1.09/h, and interruptible instances are 30–50% cheaper still.
+But hosts vary in quality and reliability. Runpod has fixed prices, an
+API, an official MCP server and agent tooling, and prepaid credit that
+works as a hard spending cap. Nothing in the research argues for a
+different primary provider.
+
+**How it is used:**
+- **Community Cloud** for the cleared sets (Sichos Kodesh, old Kehot).
+  **Secure Cloud** for anything not yet cleared.
+- Data lives in R2 (§15). A small network volume (~100 GB, ~$7/month)
+  holds only model weights and caches, so pods can be thrown away.
+- Every pod is stopped when its job ends. Jobs write their results and
+  checkpoints to R2 before exiting.
+
+**Phase 0 budget: up to $200.** This is enough to test heavy models, not
+just small ones:
+
+| Phase 0 work | GPU | Hours | Cost |
+| --- | --- | --- | --- |
+| Engine benchmark (Kraken, Surya, docTR-class, Tesseract as a baseline) on the test pages | RTX 4090, Community | ~20 | ~$7 |
+| Zero-shot open VLMs (7–8B and 30B-class) as Reader B candidates | A100 80 GB PCIe, Community | ~25 | ~$30 |
+| Kraken line and layout fine-tune pilots (K1, H1) | RTX 4090 | ~30 | ~$10 |
+| **LoRA fine-tune pilots for Reader B** (several model sizes and configs; the heavy part) | A100 80 GB | ~60 | ~$72–84 |
+| One large-model check (a 70B-class VLM zero-shot on the hardest lines) | H100 SXM, Community | ~10 | ~$27 |
+| Network volume, 2 months | — | — | ~$14 |
+| Reserve for reruns | | | ~$30–40 |
+| **Total** | | | **≈ $200** |
+
+**Bigger runs later:** Runpod stays the default.
+- Fine-tuning runs on A100 or H100 SXM pods.
+- If a run needs more than one GPU, it uses Runpod Instant Clusters.
+- Bulk catalog OCR can resume after interruption, so it can move to
+  Vast.ai interruptible 4090s if a measured run shows it is clearly
+  cheaper.
+
+What each job costs later (estimates; Phase 0 measures the real numbers):
 
 | Job | GPU time | Cost |
 | --- | --- | --- |
-| Phase 0 benchmark (every candidate on the test pages) | tens of hours | < $50 |
 | Fine-tune one Kraken head (one family) | 2–6 h on a 4090 | ~$1–5 |
 | Fine-tune the layout model (one family) | 4–12 h on a 4090 | ~$2–10 |
 | LoRA fine-tune of the Reader B VLM (7B, ~50k lines) | 4–10 h on an A100/H100 | ~$10–30 |
@@ -478,7 +523,7 @@ only if retraining becomes a continuous, daily job.
 | --- | --- | --- |
 | Unit tests, format checks (PAGE-XML, ALTO, text-layer JSON) | **Yes** | Standard runners. Free and unlimited for a public repo, and 2,000 free minutes a month for a private one |
 | Evaluation gate on a small frozen test subset (§6.5) | **Yes** | Kraken runs on CPU, so layout + Reader A on ~50 pages fits in a normal job. This makes the no-regression rule automatic on every PR |
-| Starting a training run or a catalog batch | **Yes, as the button** | A `workflow_dispatch` job calls the GPU provider's API with a stored key. The job runs on the rented GPU and writes results to object storage. The workflow waits and posts the scores |
+| Starting a training run or a catalog batch | **Yes, as the button** | A `workflow_dispatch` job calls the Runpod API with the `RUNPOD_API_KEY` secret (§16). The job runs on the rented GPU and writes results to object storage. The workflow waits and posts the scores |
 | Training models | **No** | Standard runners have no GPU and a 6-hour job limit. GitHub's GPU runners (T4) are only for paid Team/Enterprise plans, at about $0.07/minute (~$4/hour). That is several times the price of a rented 4090, on a slower card |
 | Reader B (VLM) | **No** | Needs a GPU |
 | OCR of the whole catalog | **No** | Too slow on CPU, and runners have little disk. GitHub's terms also limit Actions to building, testing and deploying the repo's own software, so running a bulk OCR farm there could get the account suspended |
@@ -601,12 +646,27 @@ Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
 - **Annotation effort is the real cost** (compute is ~$500–1,500 a year,
   §6.6): silver GT, active learning and the flywheel keep human hours for
   the hard lines.
+- **Lossy JBIG2 compression in the scans**: the catalog PDFs are bitonal
+  JBIG2, and some were compressed with CVISION PdfCompressor. Its lossy
+  mode can swap look-alike glyphs (for example ה/ח or ו/ז) inside the image
+  itself. Ground truth always follows the image. Where the image itself is
+  ambiguous, it is marked `⸢…⸣`, never guessed. Affected files are
+  reported to the catalog owners so a better scan can be found.
+- **The catalog holds excerpts, not whole volumes**: each PDF is the few
+  pages of one occasion. That is fine for test pages. Learning a per-set
+  page template (§5.2) may need more consecutive pages later.
 - **One-person project**: everything in open formats (PAGE-XML, ALTO,
   manifests). Models are reproducible from registry + manifests.
 
 ## 12. Open questions
 
 The ones answered on 2026-09-28 are in §0. Still open:
+
+- **R2 jurisdiction**: is the `rebbehub-ocr` bucket in the default
+  location or in the EU jurisdiction? This decides whether `R2_ENDPOINT`
+  is needed (§16).
+- **Runpod key permissions**: confirm that the key can create and stop
+  pods and nothing wider (§16).
 
 - **Toras Menachem rights**: may models and datasets trained on TM scans and
   lahak.org text be published, or do they stay internal?
@@ -616,3 +676,165 @@ The ones answered on 2026-09-28 are in §0. Still open:
   rule for every set.
 - **Handwriting (family M)**: when it becomes its own project, for the
   Rebbe's ksav yad and hagahos.
+
+## 13. Phase 0 sample sets (pinned)
+
+Scans come only from the Sichos Kodesh catalog (§0).
+
+**The catalog**
+
+| What | Where |
+| --- | --- |
+| API index | `https://api.sk.shmuky.dev/`. Source: `shmuky/Sichos-Kodesh/services/catalog-api` |
+| Release manifest | `GET https://api.sk.shmuky.dev/v3/catalog/manifest.json` |
+| **Pinned catalog** | `GET https://api.sk.shmuky.dev/v3/catalog/1.7.0/catalog.json`: 11,484,299 bytes, sha256 `9818f542dfd18fc76433901cb51b2e5d7300fae4f5eac33bbe246720815a96e8` |
+| PDF entries | `byYear[<year>][i].pdfs[j]` = `{section, label, driveFileId, resourceKey?}`. `section` is one of `mugah`, `biltiMugah`, `maamorim`, `hagahos`, `hosofos` (`packages/catalog/src/types.ts`) |
+| How a PDF is fetched | The catalog's own media proxy: `https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/<driveFileId>[?resourcekey=<resourceKey>]`. It wraps `https://drive.google.com/uc?export=download&id=<driveFileId>[&resourcekey=…]` and handles Drive's confirm step for large files (`services/media-proxy/src/index.ts`) |
+
+**The two sets**
+
+| Set | Rule on catalog 1.7.0 | Size in the catalog | Sample |
+| --- | --- | --- | --- |
+| **A: Sichos Kodesh hanachos** (`A-sk-hanachos`) | `section == "biltiMugah"`, the label matches `שיחו"ק` or `שיחות קודש`, and the label does not contain `תו"מ` (Toras Menachem is a different family) | 2,413 entries, 2,380 unique files, years 5710–5752 | 100 |
+| **B: old Kehot, Likkutei Sichos pages** (`B-old-kehot-ls`) | `section == "mugah"`, and the label names a Likkutei Sichos volume (`^ח"<vol> ע'` or `לקו"ש`) | 830 entries, 554 unique files, years 5710–5750. Mostly volumes 1–10, some 20 and 30 | 100 |
+
+**Selection** (deterministic, and the same TSV comes out every time):
+
+1. Take every PDF entry on catalog 1.7.0 that matches the set's rule.
+2. Remove duplicates by `driveFileId`, keeping the earliest occasion.
+3. Group the files: Set A by `hebrewYear` (43 years), Set B by Likkutei
+   Sichos volume, read from the label.
+4. Within each group, sort the files by `sha256(driveFileId)` in hex.
+5. Pick 100 files:
+   - **Set A**: go round the years in order, taking the next file from
+     each, until there are 100 (2–3 per year).
+   - **Set B**: split 100 between the volumes in proportion to their size.
+     Every volume gets at least 3 files, or all its files if it has fewer.
+     The largest volumes are trimmed or topped up until the total is
+     exactly 100.
+6. Write the result to **`data/samples/phase0-sample.tsv`**: 200 rows,
+   with no duplicate `driveFileId`.
+
+Columns: `set, stratum, occasionId, hebrewYear, hebrewDate, section,
+label, driveFileId, resourceKey, proxyUrl, driveUrl`.
+
+**What the files look like.** One file from each set was checked, and six
+more URLs were spot-checked; all returned `200 application/pdf`. They are
+real scans: bitonal JBIG2 page images, a few pages per occasion.
+- Sichos Kodesh: 2560×3300 px (300 dpi, letter size). Compressed with
+  CVISION PdfCompressor, and it appears to carry a hidden text layer. That
+  text layer is a candidate "generic OCR" baseline for §4.4's round 0.
+- Likkutei Sichos: about 1736×2674 px (about 250 dpi).
+
+Two consequences:
+- The scans have no grayscale to keep, so preprocessing works on
+  bitonal images.
+- Lossy JBIG2 can swap look-alike glyphs. This is added to the risks
+  (§11).
+
+## 14. Download-and-manifest workflow (specified, not yet run)
+
+1. **Read** `data/samples/phase0-sample.tsv`.
+2. **Fetch** each `proxyUrl` with a plain GET.
+   - At most 2 downloads at a time, about 1 request per second.
+   - Exponential backoff on 429 and 5xx responses.
+   - Fall back to `driveUrl` only if the proxy keeps failing. It is the
+     same catalog file, not a new source.
+3. **Check** that the response starts with `%PDF` and is not empty.
+   Anything else is logged as a failure and not retried with guesses.
+4. **Store** the file as `work/raw/pdf/<sha256>.pdf`. If two catalog
+   entries turn out to be the same file (same sha256), they share one copy
+   and the manifest records both references.
+5. **Inspect** each PDF:
+   - page count and producer;
+   - for every page image: width, height, filter (JBIG2, CCITT, JPEG…)
+     and bits per pixel;
+   - whether a text layer exists. If it does, extract it as a candidate
+     baseline.
+6. **Write one manifest row per PDF** to
+   `work/manifests/scans/<date>-phase0.jsonl`:
+   ```json
+   { "sha256": "…", "bytes": 59944, "set": "A-sk-hanachos",
+     "catalog": { "version": "1.7.0", "sha256": "9818f542…", "occasionId": 11113350,
+                  "hebrewDate": "5720-10-28", "section": "biltiMugah", "label": "שיחו\"ק" },
+     "source":  { "driveFileId": "…", "resourceKey": null, "proxyUrl": "…", "driveUrl": "…",
+                  "fetchedAt": "…", "etag": "…" },
+     "pdf":     { "pages": 3, "producer": "CVISION …", "textLayer": true,
+                  "images": [ { "page": 1, "w": 2560, "h": 3300, "filter": "JBIG2Decode", "bpc": 1 } ] },
+     "rights":  "cleared 2026-09-28 (Sichos Kodesh / old Kehot)" }
+   ```
+7. **Upload gate.** The upload runs only when the R2 secrets in §16 are
+   present. Without them the workflow stops after step 6 and says so.
+   - Files are uploaded to the layout in §15 with `If-None-Match: *`, so
+     a raw file is never overwritten.
+   - The sha256 is stored as object metadata (`x-amz-meta-sha256`).
+   - Each upload is checked with a HEAD request against the local sha256
+     and size.
+   - The manifest and the TSV are uploaded last, so a manifest never
+     points at a missing object.
+
+## 15. R2 bucket `rebbehub-ocr`
+
+This is a separate bucket for training data, apart from the media-lake
+bucket that RebbeHub serves from. It is private, with no public access.
+
+```
+rebbehub-ocr/
+  raw/pdf/<sha256>.pdf                              original PDFs, byte-identical, write-once
+  raw/pages/<sha256>/<page:04d>.<ext>               page images extracted at native resolution (pdfimages)
+  manifests/scans/<YYYY-MM-DD>-<name>.jsonl         scan manifests (§14)
+  manifests/samples/phase0-sample.tsv               the pinned sample list (copy of the repo file)
+  manifests/datasets/<dataset-id>.jsonl             training/test datasets (§4.6)
+  manifests/datasets/<dataset-id>.sha256            the hash every model records
+  annotations/gold/<guideline-ver>/<sha256>/<page:04d>.xml       reviewed ground truth (PAGE-XML)
+  annotations/silver/<guideline-ver>/<sha256>/<page:04d>.xml     aligned silver lines
+  annotations/synthetic/<batch-id>/…                rendered training lines
+  checkpoints/<model>/<version>/…                   model weights
+  checkpoints/<model>/<version>/card.json           dataset hash, training sets, scores, rights
+  eval/<run-id>/                                    benchmark and evaluation reports
+  tmp/                                              scratch space, deleted after 7 days by a lifecycle rule
+```
+
+Rules:
+- `raw/` is write-once.
+- `annotations/` is versioned by guideline version, so a change to the
+  rules never silently rewrites old ground truth.
+- A checkpoint is complete only once its `card.json` exists.
+
+## 16. Access needed (one-step handover)
+
+All secrets go into **this cloud environment's settings** as environment
+variables: the environment menu in the session title bar → Edit. They are
+never pasted into chat. A new session picks them up. The same names are
+used for GitHub Actions secrets later.
+
+**R2 (needed before any upload)**
+1. Confirm the bucket name: **`rebbehub-ocr`**.
+2. In Cloudflare, create an R2 API token with the permission **Object
+   Read & Write**, applied **to the `rebbehub-ocr` bucket only**. That
+   gives an Access Key ID and a Secret Access Key.
+3. Set these variables:
+
+| Variable | Value | Required |
+| --- | --- | --- |
+| `R2_ACCOUNT_ID` | Cloudflare account ID | yes |
+| `R2_ACCESS_KEY_ID` | the token's Access Key ID | yes |
+| `R2_SECRET_ACCESS_KEY` | the token's Secret Access Key | yes |
+| `R2_BUCKET` | `rebbehub-ocr` | no (this is the default) |
+| `R2_ENDPOINT` | full S3 endpoint URL | only if the bucket uses the EU jurisdiction |
+
+The workflow uses the S3-compatible API with endpoint
+`https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`, or `R2_ENDPOINT` if it
+is set, and region `auto`.
+
+**Runpod**
+- **The Runpod MCP** (installed 2026-09-28 as the `runpod@runpod` plugin)
+  signs in with OAuth through `/mcp` → runpod → "Sign in with Runpod". It
+  needs no key.
+- **Scripts and GitHub CI** need an API key:
+  - create it in the Runpod console under Settings → API Keys;
+  - give it the narrowest permission that can create and stop pods;
+  - store it as **`RUNPOD_API_KEY`**.
+- **Spending cap**: load up to **$200 of prepaid credit** and turn
+  auto-reload off. The balance is then a hard cap. No job can spend past
+  it.
