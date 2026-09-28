@@ -1,59 +1,19 @@
 /*
- * Light tokens live bare on :root (the default). A manual Dark/Light
- * choice (see settings/useTheme.ts) stamps `data-theme="dark"` or
- * `data-theme="light"` on <html>; "System" (the default, no attribute)
- * falls through to `prefers-color-scheme`. The dark block below is
- * guarded with `:not([data-theme="light"])` so an explicit Light choice
- * always wins over a dark OS theme, and the `[data-theme="dark"]` block
- * after it repeats the same values unconditionally so an explicit Dark
- * choice wins even on a light OS theme.
+ * The colors come from @sichos-kodesh/design, in theme-colors.css (imported
+ * first, in main.tsx): light on the bare :root, dark by the system's
+ * preference unless `data-theme="light"`, or by `data-theme="dark"` (see
+ * settings/useTheme.ts), and the theme color by `data-accent` (see
+ * settings/useAccent.ts). Everything here draws with those variables.
  */
 :root {
   color-scheme: light dark;
   /* Kept in sync at runtime by ConnectivityBanner.tsx - this default only
      covers the instant before its own layout effect first runs. */
   --connectivity-banner-height: 0px;
-  --bg: #fafafa;
-  --bg-elevated: #ffffff;
-  --fg: #121212;
-  --muted: #6a6a6a;
-  --border: #e2e2e2;
-  --card-bg: #f0f0f0;
-  --card-hover: #e6e6e6;
-  --accent: #1a8a4a;
-  --accent-fg: #ffffff;
-  --danger: #b3261e;
-  --danger-fg: #ffffff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #0a0a0a;
-    --bg-elevated: #121212;
-    --fg: #f5f5f5;
-    --muted: #a7a7a7;
-    --border: #282828;
-    --card-bg: #181818;
-    --card-hover: #282828;
-    --accent: #1ed760;
-    --accent-fg: #0a0a0a;
-    --danger: #f28b82;
-    --danger-fg: #1a1a1a;
-  }
-}
-
-:root[data-theme='dark'] {
-  --bg: #0a0a0a;
-  --bg-elevated: #121212;
-  --fg: #f5f5f5;
-  --muted: #a7a7a7;
-  --border: #282828;
-  --card-bg: #181818;
-  --card-hover: #282828;
-  --accent: #1ed760;
-  --accent-fg: #0a0a0a;
-  --danger: #f28b82;
-  --danger-fg: #1a1a1a;
+  /* The tabs: a bar this tall along the bottom, or a rail this wide down
+     the side of a wide window (see .app-nav). */
+  --tab-bar-height: 64px;
+  --rail-width: 88px;
 }
 
 * {
@@ -196,16 +156,23 @@ textarea {
    real content or blocks clicks on it. Each bar contributes its own
    estimated height; the combined-class rule covers both showing at once
    so the two don't just overlap each other's reserved space. */
+.app-content {
+  --tabs-space: 0px;
+  --player-space: 0px;
+  --download-space: 0px;
+  padding-bottom: calc(var(--tabs-space) + var(--player-space) + var(--download-space));
+}
+
+.app-shell-tabs .app-content {
+  --tabs-space: var(--tab-bar-height);
+}
+
 .app-content.has-player {
-  padding-bottom: var(--player-bar-height, 96px);
+  --player-space: var(--player-bar-height, 96px);
 }
 
 .app-content.has-download-bar {
-  padding-bottom: 56px;
-}
-
-.app-content.has-player.has-download-bar {
-  padding-bottom: calc(var(--player-bar-height, 96px) + 56px);
+  --download-space: 56px;
 }
 
 .screen {
@@ -380,6 +347,24 @@ h1 {
   padding-inline: 20px;
   margin: -24px -20px 4px;
   transition: transform 0.18s ease;
+}
+
+/* A tab's own first page: its name, large, at the start - no way back,
+   the tabs are the way around. */
+.screen-header-root {
+  justify-content: space-between;
+}
+
+.screen-header-root .screen-header-title {
+  margin: 0;
+  text-align: start;
+  font-size: 1.625rem;
+  line-height: 1.25;
+}
+
+.screen-header-root-action {
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .screen-header-hidden {
@@ -730,6 +715,40 @@ h1 {
 .segmented-option:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+/* The switch between a tab's views (the farbrengens by year, moed, parsha). */
+.tab-switch {
+  margin: 4px 0 16px;
+}
+
+/* The theme colors in Settings - a wrapping row of swatches, the chosen
+   one ringed in the text color and checked. */
+.accent-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+
+.accent-swatch {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.accent-swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 3px var(--card-bg), 0 0 0 5px var(--fg);
+}
+
+.accent-swatch:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 6px;
 }
 
 .chips {
@@ -1487,12 +1506,6 @@ a.playlist-header-copy {
   border-radius: 14px;
 }
 
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 /* ---- The home page (YearPickerScreen; the phone's ui/HomeTiles.tsx) ---- */
 
 .home-date {
@@ -1652,28 +1665,6 @@ a.playlist-header-copy {
 .home-tile:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-
-.header-row-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.settings-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--muted);
-  padding: 4px;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.settings-link:hover {
-  color: var(--fg);
 }
 
 .year-row-selected {
@@ -2034,13 +2025,127 @@ html:has(.pdf-viewer-screen.pdf-paged:not(.zoomed)) {
    The safe-area inset lives here once, not duplicated on each bar. */
 .bottom-bars {
   position: fixed;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   bottom: 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* The five tabs (see AppNav.tsx) - the last of the bottom bars, so the
+   player and the download strip stand above them and the safe-area inset
+   falls below them. The tab showing is its icon in a tint of the theme
+   color; the rest are muted. */
+.app-nav {
+  display: flex;
+  height: var(--tab-bar-height);
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+}
+
+.app-nav-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 30px;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-nav-tab[aria-current] {
+  color: var(--fg);
+}
+
+.app-nav-tab[aria-current] .app-nav-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.app-nav-tab:not([aria-current]):hover .app-nav-icon {
+  background: var(--card-hover);
+}
+
+.app-nav-tab:focus-visible {
+  outline: none;
+}
+
+.app-nav-tab:focus-visible .app-nav-icon {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-nav-icon {
+    transition: none;
+  }
+}
+
+/* The put-away player's handle keeps the safe-area inset for itself only
+   when nothing is below it. */
+.app-shell-tabs .global-player-handle {
+  padding-bottom: 6px;
+}
+
+/* A wide window: the tabs stand down the side as a rail, the page and the
+   bars at the bottom move over to make room. */
+@media (min-width: 900px) {
+  .app-shell-tabs {
+    padding-inline-start: var(--rail-width);
+  }
+
+  .app-shell-tabs .app-content {
+    --tabs-space: 0px;
+  }
+
+  .app-shell-tabs .bottom-bars {
+    inset-inline-start: var(--rail-width);
+  }
+
+  .app-shell-tabs .global-player-handle {
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-nav {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--rail-width);
+    height: auto;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    border-top: none;
+    border-inline-end: 1px solid var(--border);
+  }
+
+  .app-nav-tab {
+    flex: 0 0 auto;
+    padding-block: 6px;
+  }
 }
 
 /* Global player bar - a single instance mounted at the app root (see
@@ -3444,8 +3549,8 @@ body:has(.reader) {
 }
 
 .reader-swatch-app {
-  background: linear-gradient(90deg, #fafafa 50%, #0a0a0a 50%) !important;
-  color: #1ed760 !important;
+  background: linear-gradient(90deg, #faf8f4 50%, #0e1110 50%) !important;
+  color: var(--accent) !important;
 }
 
 .reader-theme-active .reader-swatch {

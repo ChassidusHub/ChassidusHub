@@ -103,8 +103,8 @@ export default defineConfig({
         name: 'Sichos Kodesh',
         short_name: 'Sichos Kodesh',
         description: 'Kvius-matched Sichos Kodesh and Farbrengens, downloaded and played fully offline.',
-        theme_color: '#1a8a4a',
-        background_color: '#ffffff',
+        theme_color: '#faf8f4',
+        background_color: '#faf8f4',
         display: 'standalone',
         start_url: '/',
         icons: [

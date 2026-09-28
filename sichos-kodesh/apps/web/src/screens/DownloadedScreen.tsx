@@ -79,7 +79,7 @@ export function DownloadedScreen() {
 
   return (
     <div className="screen">
-      <ScreenHeader to="/" title={t.downloadedContentTitle} />
+      <ScreenHeader to="/me" title={t.downloadedContentTitle} />
       <p className="tab-help">{t.downloadedContentHelp}</p>
 
       {activeRows.length > 0 && (

@@ -15,10 +15,13 @@ import { useTranslation } from './i18n/useLanguage';
 import { GlobalPlayerBar } from './components/GlobalPlayerBar';
 import { ConnectivityBanner } from './components/ConnectivityBanner';
 import { DownloadProgressBar } from './components/DownloadProgressBar';
+import { AppNav } from './components/AppNav';
+import { showsTabs } from './routes/tabs';
 import { useActiveDownloads } from './download/useActiveDownloads';
 import { YearPickerScreen } from './screens/YearPickerScreen';
 import { KviusYearsScreen } from './screens/KviusYearsScreen';
-import { BrowseYearsScreen } from './screens/BrowseYearsScreen';
+import { FarbrengensScreen } from './screens/FarbrengensScreen';
+import { MineScreen } from './screens/MineScreen';
 import { ThisWeekScreen } from './screens/ThisWeekScreen';
 import { YearBrowserScreen } from './screens/YearBrowserScreen';
 import { MonthOccasionsScreen } from './screens/MonthOccasionsScreen';
@@ -213,7 +216,9 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/kvius" element={<KviusYearsRoute />} />
-        <Route path="/years" element={<BrowseYearsScreen />} />
+        <Route path="/farbrengens" element={<FarbrengensScreen />} />
+        <Route path="/years" element={<Navigate to="/farbrengens" replace />} />
+        <Route path="/me" element={<MineScreen />} />
         <Route path="/search" element={<SearchScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="/settings/downloads" element={<DownloadSettingsScreen />} />
@@ -265,6 +270,33 @@ function AppContent() {
   );
 }
 
+/**
+ * The frame around every page: the connectivity strip, the page, and the
+ * bars fixed to the bottom - the tabs among them (on a wide window they
+ * stand down the side instead; `.app-shell-tabs` makes room for them).
+ * A PDF and the seforim reader take the whole screen, without the tabs.
+ */
+function Shell() {
+  const { pathname } = useLocation();
+  const tabs = showsTabs(pathname);
+  return (
+    <div className={tabs ? 'app-shell app-shell-tabs' : 'app-shell'}>
+      <ConnectivityBanner />
+      <AppContent />
+      {/* One fixed-position container, not three - DownloadProgressBar
+          and GlobalPlayerBar each hide themselves independently, so this
+          stacks whichever is showing via normal flex flow, above the tabs,
+          instead of each fixing itself to the viewport edge and needing to
+          know the others' heights. */}
+      <div className="bottom-bars">
+        <DownloadProgressBar />
+        <GlobalPlayerBar />
+        {tabs && <AppNav />}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -272,17 +304,7 @@ function App() {
         <DownloadProvider>
           <PlayerProvider>
             <Analytics />
-            <ConnectivityBanner />
-            <AppContent />
-            {/* One fixed-position container, not two - DownloadProgressBar
-                and GlobalPlayerBar each hide themselves independently, so
-                this stacks whichever is showing via normal flex flow
-                instead of each fixing itself to the viewport edge and
-                needing to know the other's height. */}
-            <div className="bottom-bars">
-              <DownloadProgressBar />
-              <GlobalPlayerBar />
-            </div>
+            <Shell />
           </PlayerProvider>
         </DownloadProvider>
       </LanguageProvider>

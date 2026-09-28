@@ -18,7 +18,7 @@ export function LibraryScreen() {
 
   return (
     <div className="screen">
-      <ScreenHeader to="/" title={t.libraryTitle} />
+      <ScreenHeader title={t.tabNames.library} />
       <p className="tab-help">{t.libraryHelp}</p>
 
       <div className="category">
@@ -36,18 +36,6 @@ export function LibraryScreen() {
         <LibraryLoading />
       ) : (
         <>
-          <div className="category">
-            <h2 className="category-header">{t.libraryFarbrengensSection}</h2>
-            <Link className="category-row" to="/library/moadim">
-              <span className="category-row-name">{t.libraryByMoed}</span>
-              <span className="category-row-count">{library.moadim.length}</span>
-            </Link>
-            <Link className="category-row" to="/library/parshiyos">
-              <span className="category-row-name">{t.libraryByParsha}</span>
-              <span className="category-row-count">{library.parshiyos.length}</span>
-            </Link>
-          </div>
-
           <div className="category">
             <h2 className="category-header">{t.libraryCollectionsSection}</h2>
             {LIBRARY_ORDER.map((collection) => {

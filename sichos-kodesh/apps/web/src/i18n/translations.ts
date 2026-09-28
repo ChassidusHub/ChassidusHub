@@ -1,6 +1,7 @@
 import { gematriya } from '@hebcal/core';
 import type { LibraryCollectionId, PdfSection } from '@sichos-kodesh/catalog';
 import type { PdfColors, PdfPaging } from '@sichos-kodesh/app-core';
+import type { TabId } from '../routes/tabs';
 
 export type Language = 'en' | 'he';
 
@@ -99,6 +100,9 @@ const en = {
   connectivityBackOnline: "You're back online",
   downloadingCount: (n: number) => `Downloading ${n} item${n === 1 ? '' : 's'}`,
   downloadsInProgressTitle: 'In progress',
+  /** The five tabs (AppNav.tsx). */
+  tabNames: { week: 'This week', farbrengens: 'Farbrengens', library: 'Library', search: 'Search', mine: 'Mine' } satisfies Record<TabId, string>,
+  tabBarLabel: 'Main',
   settingsTitle: 'Settings',
   appearanceSection: 'Appearance',
   themeDark: 'Dark',
@@ -112,6 +116,7 @@ const en = {
   languageHebrew: 'Hebrew',
   playbackSection: 'Playback',
   themeLabel: 'Theme',
+  accentLabel: 'Theme color',
   showPlayer: 'Show the player',
   playbackSpeed: 'Playback speed',
   /** The PDF reader's settings sheet: the reader's, without the text's own options. */
@@ -507,6 +512,8 @@ const he: typeof en = {
   connectivityBackOnline: 'חזרתם למצב מקוון',
   downloadingCount: (n: number) => (n === 1 ? 'מוריד פריט אחד' : `מוריד ${n} פריטים`),
   downloadsInProgressTitle: 'בתהליך הורדה',
+  tabNames: { week: 'השבוע', farbrengens: 'התוועדויות', library: 'הספרייה', search: 'חיפוש', mine: 'שלי' } satisfies Record<TabId, string>,
+  tabBarLabel: 'ראשי',
   settingsTitle: 'הגדרות',
   appearanceSection: 'מראה',
   themeDark: 'כהה',
@@ -520,6 +527,7 @@ const he: typeof en = {
   languageHebrew: 'עברית',
   playbackSection: 'השמעה',
   themeLabel: 'ערכת נושא',
+  accentLabel: 'צבע',
   showPlayer: 'הצגת הנגן',
   playbackSpeed: 'מהירות ניגון',
   pdfSettings: 'הגדרות תצוגה',

@@ -8,6 +8,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { useTranslation } from '../../i18n/useLanguage';
 import { useProgressMap } from '../../player/useProgressMap';
 import { hebrewDayMonthLabel, hebrewYearLabel } from '../../utils/formatHebrewDate';
+import { farbrengensPath } from '../../routes/tabs';
 import { LibraryLoading } from './LibraryLoading';
 
 interface Props {
@@ -33,7 +34,7 @@ export function OccasionGroupScreen({ axis, slug }: Props) {
 
   return (
     <div className="screen">
-      <ScreenHeader to={`/library/${axis}`} title={group ? occasionGroupName(group, language) : ''} />
+      <ScreenHeader to={farbrengensPath(axis === 'moadim' ? 'moed' : 'parsha')} title={group ? occasionGroupName(group, language) : ''} />
       {!library && <LibraryLoading />}
       {group && <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>}
       {byYear.map(({ year, entries: yearEntries }) => (

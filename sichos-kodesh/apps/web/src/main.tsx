@@ -6,6 +6,8 @@ import { createRoot } from 'react-dom/client';
 // opens a PDF.
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import './polyfills';
+// The colors first (generated from @sichos-kodesh/design), then everything drawn with them.
+import './theme-colors.css';
 import './index.css';
 // Registers the service worker (see the module itself) - imported here for
 // that side effect alone, same as polyfills.ts above; AboutScreen imports
@@ -13,6 +15,7 @@ import './index.css';
 import './pwa/appUpdate';
 import App from './App';
 import { applyTheme } from './settings/useTheme';
+import { applyAccent, readStoredAccent } from './settings/useAccent';
 import { PDF_RUNTIME_CACHE_NAME } from './download/cacheName';
 import { loadStoredCatalog } from './catalog/catalogUpdater';
 
@@ -50,6 +53,8 @@ try {
 } catch {
   // Best-effort only - falls back to the OS theme via prefers-color-scheme.
 }
+// The theme color too, for the same first paint.
+applyAccent(readStoredAccent());
 
 // Same reasoning, for language/direction - index.html already hardcodes
 // the English/LTR default, so only the Hebrew case needs handling here.

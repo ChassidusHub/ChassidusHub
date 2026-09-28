@@ -4,7 +4,8 @@ import { BackLink } from './BackLink';
 import { useTranslation } from '../i18n/useLanguage';
 
 interface Props {
-  to: string;
+  /** Where back goes when there is no history to pop; none on a tab's own first page, which has no back - the tabs are the way around. */
+  to?: string;
   title: ReactNode;
   /** Extra class for a screen whose own container doesn't already provide horizontal padding (see PdfViewerScreen's `screen-header-inset`). */
   className?: string;
@@ -61,6 +62,15 @@ export function ScreenHeader({ to, title, className, action }: Props) {
   const { t, language } = useTranslation();
   const hidden = useHiddenOnScroll();
   const Chevron = language === 'he' ? ChevronRight : ChevronLeft;
+
+  if (to === undefined) {
+    return (
+      <div className={['screen-header', 'screen-header-root', hidden && 'screen-header-hidden', className].filter(Boolean).join(' ')}>
+        <h1 className="screen-header-title">{title}</h1>
+        {action && <span className="screen-header-root-action">{action}</span>}
+      </div>
+    );
+  }
 
   return (
     <div className={['screen-header', hidden && 'screen-header-hidden', className].filter(Boolean).join(' ')}>

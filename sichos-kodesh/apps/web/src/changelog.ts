@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.10.0';
+export const APP_VERSION = '1.11.0';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,23 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.11.0',
+    en: [
+      'Five tabs along the bottom - This week, Farbrengens, Library, Search and Mine - and down the side on a wide screen. The player sits just above them',
+      'Farbrengens: every farbrengen by year, by moed or by parsha, one switch at the top',
+      'Mine: where you left off, what is downloaded and what downloads on its own, Settings and About, together',
+      'Choose the app\'s color in Settings: green, blue, burgundy, teal, gold or purple, in light and dark alike',
+      'Warmer, calmer colors throughout, easier to read in light and in dark',
+    ],
+    he: [
+      'חמש לשוניות בתחתית - השבוע, התוועדויות, הספרייה, חיפוש ושלי - ובצד במסך רחב. הנגן יושב ממש מעליהן',
+      'התוועדויות: כל ההתוועדויות לפי שנה, לפי מועד או לפי פרשה, במתג אחד למעלה',
+      'שלי: היכן שעצרת, מה שהורד ומה שיורד מעצמו, הגדרות ואודות, יחד',
+      'בחירת צבע האפליקציה בהגדרות: ירוק, כחול, בורדו, טורקיז, זהב או סגול, בבהיר ובכהה כאחד',
+      'צבעים חמים ורגועים יותר בכל מקום, נוחים יותר לקריאה בבהיר ובכהה',
+    ],
+  },
   {
     version: '1.10.0',
     en: [

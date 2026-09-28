@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { contentPreset } from '@sichos-kodesh/app-core';
+import { accentPreset } from '@sichos-kodesh/design';
 import { useCatalogInfo } from '../catalog/catalogStore';
 import { APP_VERSION } from '../changelog';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { AccentPicker } from '../components/settings/AccentPicker';
 import { Segmented, SettingRow, SettingsGroup, Toggle } from '../components/settings/SettingsControls';
 import { getDownloadedBytes } from '../download/downloadManager';
 import { useDownload } from '../download/useDownload';
 import { useLanguage, useTranslation } from '../i18n/useLanguage';
 import type { Language } from '../i18n/translations';
 import { presetLabel } from '../settings/presetLabel';
+import { useAccent } from '../settings/useAccent';
 import { useAutoplayOnHanacha } from '../settings/useAutoplayOnHanacha';
 import { useInvertPdfInDarkMode } from '../settings/useInvertPdfInDarkMode';
 import { useTheme } from '../settings/useTheme';
@@ -29,6 +32,7 @@ export function SettingsScreen() {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
   const [theme, setTheme] = useTheme();
+  const [accent, setAccent] = useAccent();
   const [autoplay, setAutoplay] = useAutoplayOnHanacha();
   const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
   const { settings } = useDownload();
@@ -51,11 +55,14 @@ export function SettingsScreen() {
 
   return (
     <div className="screen">
-      <ScreenHeader to="/" title={t.settingsTitle} />
+      <ScreenHeader to="/me" title={t.settingsTitle} />
 
       <SettingsGroup title={t.appearanceSection}>
         <SettingRow label={t.themeLabel} stack>
           <Segmented options={themeOptions} value={theme} onChange={setTheme} label={t.themeLabel} />
+        </SettingRow>
+        <SettingRow label={t.accentLabel} help={accentPreset(accent).name[language]} stack>
+          <AccentPicker value={accent} onChange={setAccent} label={t.accentLabel} />
         </SettingRow>
         <SettingRow label={t.invertPdfDarkModeLabel} onClick={() => setInvertPdf(!invertPdf)}>
           <Toggle checked={invertPdf} label={t.invertPdfDarkModeLabel} decorative />

@@ -186,7 +186,7 @@ export function SearchScreen() {
 
   return (
     <div className="screen">
-      <ScreenHeader to="/" title={t.searchTitle} />
+      <ScreenHeader title={t.searchTitle} />
       <input
         className="search-input"
         type="search"

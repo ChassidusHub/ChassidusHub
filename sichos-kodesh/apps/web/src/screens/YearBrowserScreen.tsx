@@ -26,7 +26,7 @@ export function YearBrowserScreen({ hebrewYear }: Props) {
 
   return (
     <div className="screen">
-      <ScreenHeader to="/" title={t.hebrewYearTitle(hebrewYear)} />
+      <ScreenHeader to="/farbrengens" title={t.hebrewYearTitle(hebrewYear)} />
       <p className="subtitle">{t.occasionsIndexed(entries.length)}</p>
       <ul className="year-list">
         {monthGroups.map((group) => (

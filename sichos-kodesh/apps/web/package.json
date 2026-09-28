@@ -1,13 +1,13 @@
 {
   "name": "@sichos-kodesh/web",
   "private": true,
-  "version": "1.10.0",
+  "version": "1.11.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/sefaria-index",
+    "prebuild": "npm run build -w @sichos-kodesh/design -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/sefaria-index",
     "build": "tsc -b && vite build",
-    "pretypecheck": "npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/sefaria-index",
+    "pretypecheck": "npm run build -w @sichos-kodesh/design -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/sefaria-index",
     "typecheck": "tsc -b --noEmit",
     "lint": "oxlint",
     "preview": "vite preview",
@@ -24,7 +24,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-router-dom": "^7.18.3",
-    "@sichos-kodesh/app-core": "^0.1.0"
+    "@sichos-kodesh/app-core": "^0.1.0",
+    "@sichos-kodesh/design": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

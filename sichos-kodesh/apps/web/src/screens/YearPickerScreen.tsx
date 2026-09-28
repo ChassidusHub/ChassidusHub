@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookText, CalendarRange, ChevronLeft, ChevronRight, Library, Mails, MessageSquareText, Search, Settings, Sparkles, WifiOff } from 'lucide-react';
+import { BookText, CalendarRange, ChevronLeft, ChevronRight, Library, Mails, MessageSquareText, Sparkles, WifiOff } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import { currentParsha, todayHebrewDateLabel } from '@sichos-kodesh/catalog';
@@ -9,6 +9,8 @@ import { IL } from '../config';
 import { useWorks } from '../catalog/catalogStore';
 import { COLLECTION_ICONS } from '../components/collectionIcons';
 import { ContinueSection } from '../components/ContinueSection';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { farbrengensPath } from '../routes/tabs';
 import { parshaLabel } from '../utils/formatHebrewDate';
 import { useOnlineStatus } from '../network/useOnlineStatus';
 import { useTranslation } from '../i18n/useLanguage';
@@ -59,17 +61,7 @@ export function YearPickerScreen({ targetYear }: Props) {
 
   return (
     <div className="screen">
-      <div className="header-row">
-        <h1>{t.appTitle}</h1>
-        <div className="header-row-actions">
-          <Link className="settings-link" to="/search" aria-label={t.searchLink}>
-            <Search size={22} strokeWidth={2} />
-          </Link>
-          <Link className="settings-link" to="/settings" aria-label={t.settingsLabel}>
-            <Settings size={22} strokeWidth={2} />
-          </Link>
-        </div>
-      </div>
+      <ScreenHeader title={t.appTitle} />
       <p className="subtitle home-date">{hebrewDate}</p>
 
       {/* Browsing/search read from the bundled catalog with no network
@@ -116,15 +108,15 @@ export function YearPickerScreen({ targetYear }: Props) {
 
       <h2 className="category-header">{t.homeFarbrengensSection}</h2>
       <div className="home-chips">
-        <Link className="home-chip" to="/years">
+        <Link className="home-chip" to={farbrengensPath()}>
           <CalendarRange size={17} aria-hidden />
           <span>{t.homeByYear}</span>
         </Link>
-        <Link className="home-chip" to="/library/moadim">
+        <Link className="home-chip" to={farbrengensPath('moed')}>
           <Sparkles size={17} aria-hidden />
           <span>{t.homeByMoed}</span>
         </Link>
-        <Link className="home-chip" to="/library/parshiyos">
+        <Link className="home-chip" to={farbrengensPath('parsha')}>
           <BookText size={17} aria-hidden />
           <span>{t.homeByParsha}</span>
         </Link>

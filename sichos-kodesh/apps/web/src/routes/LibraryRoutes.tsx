@@ -11,9 +11,9 @@ import { LibraryItemScreen } from '../screens/library/LibraryItemScreen';
 import { LibraryLoading } from '../screens/library/LibraryLoading';
 import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { OccasionGroupScreen } from '../screens/library/OccasionGroupScreen';
-import { OccasionGroupsScreen } from '../screens/library/OccasionGroupsScreen';
 import { PdfViewerScreen } from '../screens/PdfViewerScreen';
 import { RecordingsScreen } from '../screens/RecordingsScreen';
+import { farbrengensPath } from './tabs';
 import { useLibraryItem } from './useLibraryItem';
 
 function NotFound() {
@@ -73,9 +73,9 @@ export function LibraryRoutes() {
   return (
     <Routes>
       <Route index element={<LibraryScreen />} />
-      <Route path="moadim" element={<OccasionGroupsScreen axis="moadim" />} />
+      <Route path="moadim" element={<Navigate replace to={farbrengensPath('moed')} />} />
       <Route path="moadim/:slug" element={<OccasionGroupRoute axis="moadim" />} />
-      <Route path="parshiyos" element={<OccasionGroupsScreen axis="parshiyos" />} />
+      <Route path="parshiyos" element={<Navigate replace to={farbrengensPath('parsha')} />} />
       <Route path="parshiyos/:slug" element={<OccasionGroupRoute axis="parshiyos" />} />
       <Route path="this-parsha" element={<ThisParshaRoute />} />
       <Route path="c/:collection" element={<CollectionRoute />} />
