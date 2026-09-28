@@ -1,6 +1,10 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { LibraryCollectionId, PdfSection } from '@sichos-kodesh/catalog';
+import type { LibraryCollectionId } from '@sichos-kodesh/catalog';
 import type { SearchScope } from '@sichos-kodesh/app-core';
+import type { FarbrengensView } from './tabs';
+
+/** Where a search looks: everything, one part, or the library - every part but the farbrengens. */
+export type SearchWhere = SearchScope | 'library';
 
 /** Which list an occasion was reached from - decides the fallback "back" destination (see routes/catalogRoutes.ts), mirroring the web's distinct /follow, /browse, /this-week-all-years and /occasion-all-years URL families. */
 export type OccasionRouteParams =
@@ -25,8 +29,8 @@ export type RootStackParamList = {
   /** Kvius-matched years for the "follow along" flow (web: `/kvius`) */
   KviusYears: { targetYear: number };
 
-  /** All indexed years for free browsing (web: `/years`) */
-  BrowseYears: undefined;
+  /** The farbrengens tab: by year, moed or parsha (web: `/farbrengens?by=`) */
+  Farbrengens: { view?: FarbrengensView } | undefined;
 
   /** "This week" resolved occasions for one kvius-matched source year (web: `/follow/:sourceYear`) */
   ThisWeek: { sourceYear: number };
@@ -45,12 +49,6 @@ export type RootStackParamList = {
 
   /** An occasion's own page */
   Farbrengen: OccasionRouteParams;
-
-  /** An occasion's recordings playlist */
-  Recordings: OccasionRouteParams;
-
-  /** One PDF section of an occasion */
-  Category: OccasionRouteParams & { categoryId: PdfSection };
 
   /** In-app PDF reader */
   PdfViewer: {
@@ -76,9 +74,8 @@ export type RootStackParamList = {
   /** One item: its facts, files and recordings. */
   LibraryItem: { collection: LibraryCollectionId; id: string };
 
-  /** The seforim of the Rebbeim (catalog schema 3; docs/chabad-library-plan.md WP13). */
-  /** `shelf`: open on the external links (the web's `?shelf=links`); the text and PDFs otherwise. */
-  Seforim: { shelf?: 'links' } | undefined;
+  /** One Rebbe's seforim (catalog schema 3; the library shelf's last part); `null`: the seforim of many hands. */
+  Rebbe: { authorId: string | null };
 
   /** One sefer: its editions and contents; `path` drills into a part (indexes into the contents). */
   Work: { workId: string; path?: number[] };
@@ -91,14 +88,16 @@ export type RootStackParamList = {
   /** An author's books on HebrewBooks that no sefer here holds (`authorId` null: the other Chabad books); `series` opens one series. */
   HebrewBooksShelf: { authorId: string | null; series?: number };
 
-  /** Farbrengens by mafteiach's moadim or parshiyos. */
-  OccasionGroups: { axis: 'moadim' | 'parshiyos' };
 
   /** The farbrengens of one moed or parsha, every year. */
   OccasionGroup: { axis: 'moadim' | 'parshiyos'; slug: string };
 
   /** `scope`: where the search starts looking (the seforim's own search link opens it on the seforim). */
-  Search: { scope?: SearchScope } | undefined;
+  /** `scope`: where to look - one part, or `library` (every part but the farbrengens: the Library tab's own search); `query`: the words to start with. */
+  Search: { scope?: SearchWhere; query?: string } | undefined;
+
+  /** The listener's own tab: continue, downloads, Settings, About (web: `/me`) */
+  Mine: undefined;
 
   /** Downloaded content manager (web: `/downloaded`) */
   Downloaded: undefined;
@@ -128,15 +127,14 @@ export type RootStackParamList = {
 /** Convenience type helpers for individual screens. */
 export type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
 export type KviusYearsScreenProps = NativeStackScreenProps<RootStackParamList, 'KviusYears'>;
-export type BrowseYearsScreenProps = NativeStackScreenProps<RootStackParamList, 'BrowseYears'>;
+export type FarbrengensScreenProps = NativeStackScreenProps<RootStackParamList, 'Farbrengens'>;
+export type MineScreenProps = NativeStackScreenProps<RootStackParamList, 'Mine'>;
 export type ThisWeekScreenProps = NativeStackScreenProps<RootStackParamList, 'ThisWeek'>;
 export type YearBrowserScreenProps = NativeStackScreenProps<RootStackParamList, 'YearBrowser'>;
 export type MonthOccasionsScreenProps = NativeStackScreenProps<RootStackParamList, 'MonthOccasions'>;
 export type FollowMonthListScreenProps = NativeStackScreenProps<RootStackParamList, 'FollowMonthList'>;
 export type FollowMonthOccasionsScreenProps = NativeStackScreenProps<RootStackParamList, 'FollowMonthOccasions'>;
 export type FarbrengenScreenProps = NativeStackScreenProps<RootStackParamList, 'Farbrengen'>;
-export type RecordingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Recordings'>;
-export type CategoryScreenProps = NativeStackScreenProps<RootStackParamList, 'Category'>;
 export type PdfViewerScreenProps = NativeStackScreenProps<RootStackParamList, 'PdfViewer'>;
 export type SearchScreenProps = NativeStackScreenProps<RootStackParamList, 'Search'>;
 export type DownloadedScreenProps = NativeStackScreenProps<RootStackParamList, 'Downloaded'>;
@@ -147,8 +145,7 @@ export type LibraryScreenProps = NativeStackScreenProps<RootStackParamList, 'Lib
 export type LibraryCollectionScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryCollection'>;
 export type LibraryGroupScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryGroup'>;
 export type LibraryItemScreenProps = NativeStackScreenProps<RootStackParamList, 'LibraryItem'>;
-export type OccasionGroupsScreenProps = NativeStackScreenProps<RootStackParamList, 'OccasionGroups'>;
-export type SeforimScreenProps = NativeStackScreenProps<RootStackParamList, 'Seforim'>;
+export type RebbeScreenProps = NativeStackScreenProps<RootStackParamList, 'Rebbe'>;
 export type WorkScreenProps = NativeStackScreenProps<RootStackParamList, 'Work'>;
 export type ReaderScreenProps = NativeStackScreenProps<RootStackParamList, 'Reader'>;
 export type HebrewBooksShelfScreenProps = NativeStackScreenProps<RootStackParamList, 'HebrewBooksShelf'>;

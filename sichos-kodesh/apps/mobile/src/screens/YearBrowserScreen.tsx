@@ -17,7 +17,7 @@ export function YearBrowserScreen({ navigation, route }: YearBrowserScreenProps)
   const monthGroups = useMemo(() => groupEntriesByMonth(entries, language), [entries, language]);
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'BrowseYears', params: undefined }} title={t.hebrewYearTitle(hebrewYear)} />}>
+    <Screen header={<ScreenHeader back={{ name: 'Farbrengens', params: undefined }} title={t.hebrewYearTitle(hebrewYear)} />}>
       <Subtitle>{t.occasionsIndexed(entries.length)}</Subtitle>
       {monthGroups.map((group) => (
         <Row

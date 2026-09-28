@@ -25,9 +25,9 @@ export interface DownloadContextValue {
   downloadOccasion: (entry: CatalogEntry) => Promise<void>;
   /** "Download this week/month" and the auto-download sync - `mode: 'auto'` marks the files as auto-managed for retention. */
   enqueueBulk: (entries: CatalogEntry[], mode?: EnqueueMode) => Promise<void>;
-  /** RecordingsScreen's per-chapter download icon - one recording, regardless of the content-type settings. */
+  /** The farbrengen page's per-chapter download icon (ChapterList) - one recording, regardless of the content-type settings. */
   downloadChapter: (entry: CatalogEntry, chapterIndex: number) => Promise<void>;
-  /** RecordingsScreen's header action - every recording of one occasion, unconditionally. */
+  /** Every recording of one occasion, unconditionally. */
   downloadAllChapters: (entry: CatalogEntry) => Promise<void>;
   enqueueTargets: (targets: DownloadTarget[], mode?: EnqueueMode) => Promise<void>;
   cancelDownload: (targetKey: string) => Promise<void>;

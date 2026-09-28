@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { SlidersHorizontal } from 'lucide-react-native';
 import Pdf from 'react-native-pdf';
-import { pdfFilters } from '@sichos-kodesh/app-core';
+import { occasionTitle, pdfFilters } from '@sichos-kodesh/app-core';
 import type { PdfColors } from '@sichos-kodesh/app-core';
 import { useCatalog } from '../catalog/catalogStore';
+import { PdfPageSlider } from '../components/PdfPageSlider';
 import { downloadPdf, localPdfPathIfExists, pdfUrl } from '../download/download';
 import { useTranslation } from '../i18n/useTranslation';
 import type { PdfViewerScreenProps } from '../navigation/types';
@@ -15,6 +16,7 @@ import { setPdfLook, usePdfLook } from '../settings/pdfLook';
 import type { BackTarget } from '../ui/BackLink';
 import { Button } from '../ui/Button';
 import { OfflineNote } from '../ui/OfflineNote';
+import { ReadingBar } from '../ui/ReadingBar';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { Spinner } from '../ui/Spinner';
@@ -38,13 +40,18 @@ type LoadState = { status: 'loading'; percent: number | null; path: string | nul
 export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const catalog = useCatalog();
   const { driveFileId, resourceKey, label, hebrewYear, occasionId, library } = route.params;
-  const { t, isRtl } = useTranslation();
+  const { t, isRtl, language } = useTranslation();
   const { colors, baseScheme, setSchemeOverride } = useTheme();
   const [invertInDarkMode, setInvertInDarkMode] = useInvertPdfInDarkMode();
   const [invertInLightMode, setInvertInLightMode] = useInvertPdfInLightMode();
   const [state, setState] = useState<LoadState>({ status: 'loading', percent: null, path: null });
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPageRef = useRef<{ page: number; total: number | null } | null>(null);
+  const pdfRef = useRef<React.ComponentRef<typeof Pdf>>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageCount, setPageCount] = useState(0);
+  // A tap on a page hides the bar and the page slider, or brings them back.
+  const [chromeHidden, setChromeHidden] = useState(false);
 
   const entry = useMemo(() => catalog[hebrewYear]?.find((item) => item.occasionId === occasionId) ?? null, [catalog, hebrewYear, occasionId]);
   // A library item's PDF has no farbrengen behind it: the route carries all the viewer needs, and there is no reading position to keep.
@@ -155,7 +162,20 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
   const path = state.status === 'error' ? null : state.path;
 
   return (
-    <Screen scroll={false} header={<ScreenHeader back={backTarget} title={pdf.label} inset action={settingsButton} />}>
+    <Screen
+      scroll={false}
+      header={
+        <ReadingBar
+          back={backTarget}
+          context={entry ? occasionTitle(entry, language) : undefined}
+          title={pdf.label}
+          hidden={chromeHidden && !sheetOpen}
+          palette={{ background: colors.bg, rule: colors.border, text: colors.fg, muted: colors.muted }}
+        >
+          {settingsButton}
+        </ReadingBar>
+      }
+    >
       <View style={styles.status}>
         {state.status === 'loading' && !path && (
           <View style={[styles.loading, { flexDirection: row(isRtl) }]}>
@@ -187,6 +207,7 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
         <View style={[styles.pdfWrap, filter.length > 0 && { filter }]}>
           {/* Inverted along with the pages, so the gap between pages matches them: the light theme's card colour flips to the dark theme's (the chrome is dark whenever the pages are - see the override above). */}
           <Pdf
+            ref={pdfRef}
             key={driveFileId}
             source={{ uri: `file://${path}` }}
             page={savedPage ?? 1}
@@ -201,12 +222,29 @@ export function PdfViewerScreen({ navigation, route }: PdfViewerScreenProps) {
             )}
             onLoadComplete={(pages) => {
               setState({ status: 'ready', path });
+              setPageCount(pages);
+              setCurrentPage(savedPage ?? 1);
               lastPageRef.current = { page: savedPage ?? 1, total: pages };
             }}
-            onPageChanged={(page, pages) => schedulePersist(page, pages)}
+            onPageChanged={(at, pages) => {
+              setCurrentPage(at);
+              schedulePersist(at, pages);
+            }}
+            onPageSingleTap={() => setChromeHidden((was) => !was)}
             onError={(error) => setState({ status: 'error', message: String(error), offline: false })}
           />
         </View>
+      )}
+      {state.status === 'ready' && (
+        <PdfPageSlider
+          page={currentPage}
+          count={pageCount}
+          hidden={chromeHidden && !sheetOpen}
+          onGo={(to) => {
+            setCurrentPage(to);
+            pdfRef.current?.setPage(to);
+          }}
+        />
       )}
       <PdfSettingsSheet visible={sheetOpen} look={look} colors={pageColors} onColors={chooseColors} onClose={() => setSheetOpen(false)} />
     </Screen>

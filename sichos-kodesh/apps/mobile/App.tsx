@@ -31,7 +31,9 @@ import { ModeChooser } from './src/components/ModeChooser';
 import { loadAppMode, useAppMode } from './src/appMode/appMode';
 import { OfflineActivityBar } from './src/components/OfflineActivityBar';
 import { GlobalPlayerBar } from './src/components/GlobalPlayerBar';
-import { navigationRef } from './src/navigation/navigationRef';
+import { navigationRef, publishNavigationState, useStackNames } from './src/navigation/navigationRef';
+import { showsTabs } from './src/navigation/tabs';
+import { AppNav } from './src/components/AppNav';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import type { RootStackParamList } from './src/navigation/types';
 
@@ -61,6 +63,9 @@ function AppShell() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const bannerVisible = useConnectivityBannerVisible();
+  const stack = useStackNames();
+  // Under the tabs the safe-area strip takes the tab bar's surface, so the bar reaches the screen's edge.
+  const tabsShown = stack.length > 0 && showsTabs(stack[stack.length - 1]);
   useAutoCatalogUpdate();
   useAutoDownloadSync();
   useDownloadRetention();
@@ -114,16 +119,26 @@ function AppShell() {
       <ConnectivityBanner visible={bannerVisible} topInset={insets.top} />
       <SafeAreaInsetsContext.Provider value={screenInsets}>
         <View style={styles.content}>
-          <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking} onStateChange={onNavigationStateChange}>
+          <NavigationContainer
+            ref={navigationRef}
+            theme={navigationTheme}
+            linking={linking}
+            onReady={publishNavigationState}
+            onStateChange={() => {
+              onNavigationStateChange();
+              publishNavigationState();
+            }}
+          >
             <RootNavigator />
           </NavigationContainer>
         </View>
       </SafeAreaInsetsContext.Provider>
-      {/* One bottom container, not two - OfflineActivityBar, DownloadProgressBar and GlobalPlayerBar each hide themselves independently and stack here. The safe-area inset lives here once. */}
-      <View style={{ paddingBottom: insets.bottom }}>
+      {/* One bottom container - OfflineActivityBar, DownloadProgressBar and GlobalPlayerBar each hide themselves independently and stack here, above the tabs. The safe-area inset lives here once, under the tabs. */}
+      <View style={{ paddingBottom: insets.bottom, backgroundColor: tabsShown ? colors.bgElevated : undefined }}>
         <OfflineActivityBar />
         <DownloadProgressBar />
         <GlobalPlayerBar />
+        <AppNav />
       </View>
       <NotificationInvite visible={invite.visible} online={mode === 'online'} onAllow={invite.allow} onLater={invite.later} />
       <UpdateInvite visible={appUpdate.visible && !invite.visible} release={appUpdate.release} file={appUpdate.file} onUpdate={appUpdate.update} onLater={appUpdate.later} />

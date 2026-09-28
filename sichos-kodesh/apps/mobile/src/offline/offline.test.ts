@@ -127,6 +127,18 @@ describe('planPackImport', () => {
     expect(plan.refs).toHaveLength(6);
   });
 
+  it('writes bytes upstream lists under two names once, and points the second name at that file', () => {
+    const manifest = manifestFor(realEntry());
+    const [a, b] = manifest.entries[0]!.refs;
+    manifest.entries[0]!.refs[1] = { ...b!, sha256: a!.sha256, bytes: a!.bytes };
+    const plan = packImport.planPackImport(manifest, emptyPhone());
+    expect(plan.write.map((o) => o.file)).toEqual([a!.sourceId, `${manifest.entries[0]!.refs[2]!.sourceId}.pdf`]);
+    expect(plan.refs.slice(0, 2).map((o) => [o.sourceId, o.file])).toEqual([
+      [a!.sourceId, a!.sourceId],
+      [b!.sourceId, a!.sourceId],
+    ]);
+  });
+
   it('skips a file already held or downloaded at the same size, and replaces an unverified one', () => {
     const manifest = manifestFor(realEntry());
     const [a, b, pdf] = manifest.entries[0]!.refs;

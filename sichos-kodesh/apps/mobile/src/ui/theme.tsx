@@ -2,65 +2,21 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import type { ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { AccentPresetId, Colors } from '@sichos-kodesh/design';
+import { DEFAULT_ACCENT, accentPreset, themeColors } from '@sichos-kodesh/design';
 
 /**
- * Design tokens - one-to-one with apps/web/src/index.css's `:root` custom
- * properties (light) and its `prefers-color-scheme: dark` block (dark).
- * Keep the two files in sync; every screen reads these through `useColors`
- * so a theme switch re-renders the whole app in the other palette.
+ * Design tokens - the colors every surface shares, from @sichos-kodesh/design
+ * (the web reads the same values as CSS variables, apps/web/src/theme-colors.css):
+ * warm neutrals per scheme, and the theme color the person chose in
+ * Settings among its presets. Every screen reads them through `useColors`,
+ * so a theme or color switch re-renders the whole app in the new palette.
  */
-export interface Colors {
-  /** Web: --bg */
-  bg: string;
-  /** Web: --bg-elevated */
-  bgElevated: string;
-  /** Web: --fg */
-  fg: string;
-  /** Web: --muted */
-  muted: string;
-  /** Web: --border */
-  border: string;
-  /** Web: --card-bg */
-  cardBg: string;
-  /** Web: --card-hover */
-  cardHover: string;
-  /** Web: --accent */
-  accent: string;
-  /** Web: --accent-fg */
-  accentFg: string;
-  /** Web: --danger */
-  danger: string;
-  /** Web: --danger-fg */
-  dangerFg: string;
-}
+export type { Colors } from '@sichos-kodesh/design';
 
-export const lightColors: Colors = {
-  bg: '#fafafa',
-  bgElevated: '#ffffff',
-  fg: '#121212',
-  muted: '#6a6a6a',
-  border: '#e2e2e2',
-  cardBg: '#f0f0f0',
-  cardHover: '#e6e6e6',
-  accent: '#1a8a4a',
-  accentFg: '#ffffff',
-  danger: '#b3261e',
-  dangerFg: '#ffffff',
-};
-
-export const darkColors: Colors = {
-  bg: '#0a0a0a',
-  bgElevated: '#121212',
-  fg: '#f5f5f5',
-  muted: '#a7a7a7',
-  border: '#282828',
-  cardBg: '#181818',
-  cardHover: '#282828',
-  accent: '#1ed760',
-  accentFg: '#0a0a0a',
-  danger: '#f28b82',
-  dangerFg: '#1a1a1a',
-};
+/** The palettes with the default theme color - for the few places that draw one scheme on purpose (the reader's "app" swatch, the PDF page in light). */
+export const lightColors: Colors = themeColors('light', DEFAULT_ACCENT);
+export const darkColors: Colors = themeColors('dark', DEFAULT_ACCENT);
 
 /**
  * The bundled UI face - android/app/src/main/assets/fonts/NotoSans.ttf and
@@ -71,9 +27,20 @@ export const darkColors: Colors = {
  */
 export const FONT_FAMILY = 'NotoSans';
 
+/**
+ * The display face (docs: the UI/UX redo plan, "Visual system"; web:
+ * `--font-display`): Frank Ruhl Libre Bold, for the few titles that carry
+ * a page - a tab's name, the parsha on This week, a sefer's or an item's
+ * own name, the full player's title. Only its bold is bundled
+ * (FrankRuhlLibre_bold.ttf, Hebrew and Latin in one file), so it is always
+ * set with `fontWeight: '700'`.
+ */
+export const DISPLAY_FONT = 'FrankRuhlLibre';
+
 export type ThemeMode = 'dark' | 'light' | 'system';
 
 const STORAGE_KEY = 'sichos-kodesh:theme';
+const ACCENT_KEY = 'sichos-kodesh:accent';
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -83,6 +50,9 @@ interface ThemeContextValue {
   /** The user's own choice resolved against the OS - what `scheme` is when nothing overrides it. */
   baseScheme: 'light' | 'dark';
   colors: Colors;
+  /** The theme color chosen in Settings (web: `data-accent`). */
+  accent: AccentPresetId;
+  setAccent: (next: AccentPresetId) => void;
   /**
    * A temporary scheme for one screen (the PDF reader, whose chrome follows
    * the page colours while reading) - nothing is persisted, `mode` is
@@ -102,12 +72,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemScheme = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>('system');
   const [override, setSchemeOverride] = useState<'light' | 'dark' | null>(null);
+  const [accent, setAccentState] = useState<AccentPresetId>(DEFAULT_ACCENT);
 
   useEffect(() => {
     let cancelled = false;
     AsyncStorage.getItem(STORAGE_KEY)
       .then((stored) => {
         if (!cancelled && isThemeMode(stored)) setModeState(stored);
+      })
+      .catch(() => {
+        // Best-effort persistence only.
+      });
+    AsyncStorage.getItem(ACCENT_KEY)
+      .then((stored) => {
+        // An unknown color (saved by a later version) is the default.
+        if (!cancelled && stored) setAccentState(accentPreset(stored).id);
       })
       .catch(() => {
         // Best-effort persistence only.
@@ -124,7 +103,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       mode,
       scheme,
       baseScheme,
-      colors: scheme === 'dark' ? darkColors : lightColors,
+      colors: themeColors(scheme, accent),
+      accent,
+      setAccent(next: AccentPresetId) {
+        setAccentState(next);
+        AsyncStorage.setItem(ACCENT_KEY, next).catch(() => {
+          // Best-effort persistence only.
+        });
+      },
       setMode(next: ThemeMode) {
         setModeState(next);
         AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {
@@ -133,7 +119,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       },
       setSchemeOverride,
     };
-  }, [mode, override, systemScheme]);
+  }, [mode, override, systemScheme, accent]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

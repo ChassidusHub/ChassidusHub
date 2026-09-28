@@ -52,6 +52,9 @@ export interface PlayerError {
   message: string;
 }
 
+/** How far the full player's skip buttons (and the notification's) move, back or forward (web: the same). */
+export const SKIP_SECONDS = 15;
+
 export interface PlayerContextValue {
   /** Null until something has been played this session (or restored from the last one) - the bar renders nothing until then. */
   playlist: PlayerPlaylist | null;
@@ -73,6 +76,8 @@ export interface PlayerContextValue {
   /** Jumps to one chapter of the current playlist, resuming wherever it was left off. */
   playChapter: (index: number) => void;
   seekToFraction: (fraction: number) => void;
+  /** Moves the position by this many seconds, back when negative - the full player's 15 seconds each way (`SKIP_SECONDS`), and the lock screen's. */
+  seekBy: (seconds: number) => void;
   /** The rate audio actually plays at right now - always 1 for the Rebbe's own recordings, whatever the listener chose (see packages/catalog's playbackPolicy). */
   playbackRate: PlaybackRate;
   /** Whether the current chapter is one a listener may speed up or slow down (a shiur or a chazara) - the bar shows its speed control only then. */

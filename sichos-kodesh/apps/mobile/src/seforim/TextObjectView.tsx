@@ -11,6 +11,8 @@ interface Props {
   palette: ReaderPalette;
   /** A long press on a paragraph: its words, to share with their source. */
   onShare?: (paragraph: string) => void;
+  /** A tap on the text (not on a note's number): the reader hides its bar, or brings it back. */
+  onTap?: () => void;
 }
 
 interface RunContext {
@@ -125,7 +127,7 @@ const INDENT = '\u2003\u2002';
  * letter) follow the text unnumbered, wherever the notes go. The credit
  * line closes the unit.
  */
-export function TextObjectView({ text, settings, palette, onShare }: Props) {
+export function TextObjectView({ text, settings, palette, onShare, onTap }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState<Footnote | null>(null);
   const [pressed, setPressed] = useState<number | null>(null);
@@ -161,13 +163,14 @@ export function TextObjectView({ text, settings, palette, onShare }: Props) {
     <View>
       {text.blocks.map((block, i) =>
         block.kind === 'heading' ? (
-          <Text key={i} style={[body, styles.heading, { fontSize: Math.round(size * (block.level === 2 ? 1.12 : 1.02)), lineHeight: Math.round(lineHeight * 1.05) }]}>
+          <Text key={i} onPress={onTap} suppressHighlighting style={[body, styles.heading, { fontSize: Math.round(size * (block.level === 2 ? 1.12 : 1.02)), lineHeight: Math.round(lineHeight * 1.05) }]}>
             {mark}
             <Runs inlines={block.inlines} context={context} />
           </Text>
         ) : (
           <Text
             key={i}
+            onPress={onTap}
             onLongPress={onShare ? () => share(i, block.inlines) : undefined}
             suppressHighlighting
             // The addressee's lines broken evenly, so a short word (וכו') never stands alone on the last one.

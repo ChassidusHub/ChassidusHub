@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ALargeSmall, Bookmark, BookmarkCheck, ChevronLeft, ChevronRight } from 'lucide-react-native';
@@ -35,7 +35,7 @@ import { isBookmarked, recordPlace, toggleBookmark, useReadingState } from '../.
 import { TextLoadError, loadUnitText, type TextFrom, type TextProblem } from '../../seforim/seforimText';
 import { EditionPicker } from '../../seforim/EditionPicker';
 import { TextObjectView } from '../../seforim/TextObjectView';
-import { BackLink } from '../../ui/BackLink';
+import { ReadingBar, READING_BAR_HEIGHT } from '../../ui/ReadingBar';
 import { Button } from '../../ui/Button';
 import { EmptyState } from '../../ui/EmptyState';
 import { Screen } from '../../ui/Screen';
@@ -56,9 +56,6 @@ interface Section {
   edition: CatalogEdition;
   loaded: Loaded;
 }
-
-/** The reader's bar under the status bar; it slides away while reading down and comes back on the way up. */
-const BAR_HEIGHT = 56;
 
 function textLanguage(work: CatalogWork, edition: CatalogEdition): 'he' | 'en' {
   return work.sources[edition.source]?.language === 'en' ? 'en' : 'he';
@@ -115,7 +112,8 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
   const onlineNow = useRef(online);
   onlineNow.current = online;
   const here = useRef<{ unitId: string; source: number; offset: number } | null>(null);
-  const bar = useRef(new Animated.Value(0)).current;
+  // The bar (and the status strip under it) step aside on a scroll down and come back on a small scroll up; a tap on the text hides them or brings them back.
+  const [barHidden, setBarHidden] = useState(false);
   const barShown = useRef(true);
 
   // The chapter opened: loaded afresh when it or its edition changes; anything read on into is dropped.
@@ -231,14 +229,12 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
     if (openedReady && restoreTo.current === null) readBack();
   }, [openedReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const showBar = useCallback(
-    (shown: boolean) => {
-      if (barShown.current === shown) return;
-      barShown.current = shown;
-      Animated.timing(bar, { toValue: shown ? 0 : 1, duration: 180, useNativeDriver: true }).start();
-    },
-    [bar],
-  );
+  const showBar = useCallback((shown: boolean) => {
+    if (barShown.current === shown) return;
+    barShown.current = shown;
+    setBarHidden(!shown);
+  }, []);
+  const toggleBar = useCallback(() => showBar(!barShown.current), [showBar]);
 
   const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
@@ -247,7 +243,7 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
     const dy = y - lastY.current;
     lastY.current = y;
     viewport.current = height;
-    if (y < BAR_HEIGHT || dy < -8) showBar(true);
+    if (y < READING_BAR_HEIGHT || dy < -8) showBar(true);
     else if (dy > 8) showBar(false);
 
     // The chapter under the upper part of the screen is the one being read.
@@ -282,7 +278,7 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
   // A new screen in this one's place, so the chapter opens at its top and "back" still leads to the contents.
   const open = useCallback((nextUnitId: string) => navigation.replace('Reader', { workId, unitId: nextUnitId, source: edition?.source }), [navigation, workId, edition?.source]);
 
-  const back = work && contents && unit ? ({ name: 'Work', params: { workId, path: pathToUnit(contents, unit.id) } } as const) : ({ name: 'Seforim', params: undefined } as const);
+  const back = work && contents && unit ? ({ name: 'Work', params: { workId, path: pathToUnit(contents, unit.id) } } as const) : ({ name: 'Library', params: undefined } as const);
   if (!work || !unit || !contents) {
     return (
       <Screen header={<ScreenHeader back={back} title={work ? names(work.title, language) : t.seforimTitle} />}>
@@ -297,7 +293,6 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
   const marked = isBookmarked(reading, workId, shownUnit.id);
   const margin = MARGIN_POINTS[settings.margins];
   const barTop = insets.top;
-  const translateY = bar.interpolate({ inputRange: [0, 1], outputRange: [0, -(BAR_HEIGHT + 2)] });
   const last = sections[sections.length - 1];
   const after = last ? neighbours(contents, last.unit.id).next : null;
   const afterReadable = after ? chooseEdition(work, after, last?.edition.source) !== null : false;
@@ -317,7 +312,7 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
       <ScrollView
         ref={scroll}
         style={styles.fill}
-        contentContainerStyle={{ paddingTop: barTop + BAR_HEIGHT + 12, paddingBottom: insets.bottom + 48, paddingHorizontal: margin }}
+        contentContainerStyle={{ paddingTop: barTop + READING_BAR_HEIGHT + 12, paddingBottom: insets.bottom + 48, paddingHorizontal: margin }}
         onScroll={onScroll}
         scrollEventThrottle={32}
         onMomentumScrollEnd={remember}
@@ -362,7 +357,7 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
             {section.loaded.state === 'ready' && (
               <>
                 {section.loaded.from === 'sefaria' && section.unit.id === unit.id && <AppText style={[styles.from, { color: palette.muted }]}>{t.readerFromSefaria}</AppText>}
-                <TextObjectView text={section.loaded.text} settings={settings} palette={palette} onShare={share(section)} />
+                <TextObjectView text={section.loaded.text} settings={settings} palette={palette} onShare={share(section)} onTap={toggleBar} />
               </>
             )}
           </View>
@@ -396,25 +391,21 @@ export function ReaderScreen({ navigation, route }: ReaderScreenProps) {
         )}
       </ScrollView>
 
-      <Animated.View style={[styles.bar, { top: barTop, backgroundColor: palette.background, borderBottomColor: palette.rule, transform: [{ translateY }] }]}>
-        <View style={[styles.barRow, { flexDirection: row(isRtl) }]}>
-          <BackLink fallback={back} />
-          <View style={styles.titles}>
-            <AppText numberOfLines={1} style={[styles.workTitle, { color: palette.muted }]}>
-              {names(work.title, language)}
-            </AppText>
-            <AppText numberOfLines={1} style={[styles.unitTitle, { color: palette.text }]}>
-              {label(shownUnit)}
-            </AppText>
-          </View>
-          <Pressable accessibilityRole="button" accessibilityLabel={marked ? t.readerRemoveBookmark : t.readerBookmark} onPress={() => toggleBookmark(workId, shownUnit.id)} style={styles.iconButton}>
-            {marked ? <BookmarkCheck size={22} color={palette.accent} /> : <Bookmark size={22} color={palette.text} />}
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={t.readerSettings} onPress={() => setSheet(true)} style={styles.iconButton}>
-            <ALargeSmall size={24} color={palette.text} />
-          </Pressable>
-        </View>
-      </Animated.View>
+      <ReadingBar
+        back={back}
+        context={names(work.title, language)}
+        title={label(shownUnit)}
+        hidden={barHidden && !sheet}
+        palette={{ background: palette.background, rule: palette.rule, text: palette.text, muted: palette.muted }}
+        overlay={{ top: barTop }}
+      >
+        <Pressable accessibilityRole="button" accessibilityLabel={marked ? t.readerRemoveBookmark : t.readerBookmark} onPress={() => toggleBookmark(workId, shownUnit.id)} style={styles.iconButton}>
+          {marked ? <BookmarkCheck size={22} color={palette.accent} /> : <Bookmark size={22} color={palette.text} />}
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t.readerSettings} onPress={() => setSheet(true)} style={styles.iconButton}>
+          <ALargeSmall size={24} color={palette.text} />
+        </Pressable>
+      </ReadingBar>
       {/* The status bar's strip keeps the page's colour while the bar is away. */}
       <View style={[styles.statusStrip, { height: insets.top, backgroundColor: palette.background }]} />
 
@@ -479,11 +470,6 @@ function SectionHead({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  bar: { position: 'absolute', left: 0, right: 0, height: BAR_HEIGHT, borderBottomWidth: StyleSheet.hairlineWidth, zIndex: 1 },
-  barRow: { flex: 1, alignItems: 'center', paddingHorizontal: 12, gap: 4 },
-  titles: { flex: 1, minWidth: 0, alignItems: 'center', paddingHorizontal: 4 },
-  workTitle: { fontSize: 12, fontWeight: '600' },
-  unitTitle: { fontSize: 15, fontWeight: '700' },
   iconButton: { padding: 8 },
   statusStrip: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2 },
   before: { marginBottom: 28 },

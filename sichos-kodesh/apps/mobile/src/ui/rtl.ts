@@ -15,6 +15,17 @@ export function textAlign(isRtl: boolean): TextStyle['textAlign'] {
   return isRtl ? 'right' : 'left';
 }
 
+/**
+ * Which way typed text runs, by its first letter - Hebrew right to left,
+ * Latin left to right, like the web's `dir="auto"`. A box with no letters
+ * in it yet keeps the interface's direction, so a Hebrew placeholder
+ * isn't set left to right.
+ */
+export function typedIsRtl(text: string, isRtl: boolean): boolean {
+  const first = /[\u0590-\u05FF\uFB1D-\uFB4FA-Za-z\u00C0-\u024F]/.exec(text);
+  return first ? /[\u0590-\u05FF\uFB1D-\uFB4F]/.test(first[0]) : isRtl;
+}
+
 export function marginStart(isRtl: boolean, value: number): ViewStyle {
   return isRtl ? { marginRight: value } : { marginLeft: value };
 }

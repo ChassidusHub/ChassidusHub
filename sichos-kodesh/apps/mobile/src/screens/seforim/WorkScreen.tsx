@@ -7,7 +7,7 @@ import { editionUrl } from '@sichos-kodesh/sefaria-index/reader';
 import { getWorkContents, useShelf, useWorks } from '../../catalog/catalogStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { WorkScreenProps } from '../../navigation/types';
-import { contentsAt, names, sharedLabels, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
+import { HOME_WORK_IDS, contentsAt, names, sharedLabels, unitCount, unitsAreLetters, workKind, workScans } from '@sichos-kodesh/app-core';
 import { useReadingState } from '../../seforim/readingState';
 import { Button } from '../../ui/Button';
 import { CategoryRow } from '../../ui/CategoryRow';
@@ -19,7 +19,7 @@ import { ScanRow } from './HebrewBooksShelfScreen';
 import { ScreenHeader } from '../../ui/ScreenHeader';
 import { AppText } from '../../ui/Text';
 import { CategoryHeader, Subtitle, TabHelp } from '../../ui/Typography';
-import { useColors } from '../../ui/theme';
+import { DISPLAY_FONT, useColors } from '../../ui/theme';
 
 type Translation = ReturnType<typeof useTranslation>['t'];
 
@@ -60,10 +60,17 @@ export function WorkScreen({ navigation, route }: WorkScreenProps) {
   const unitsById = useMemo(() => new Map((contents?.units ?? []).map((unit) => [unit.id, unit])), [contents]);
   const scanSeries = useMemo(() => workScans(shelf, workId), [shelf, workId]);
 
-  const back = path.length > 0 ? ({ name: 'Work', params: { workId, path: path.slice(0, -1) } } as const) : ({ name: 'Seforim', params: undefined } as const);
+  // Up a part, else to its Rebbe's seforim - or the shelf, for the Rebbe's own seforim that stand on it.
+  const rebbe = work && !HOME_WORK_IDS.includes(work.id) ? (work.authors.find((id) => works.authors.some((author) => author.id === id)) ?? null) : undefined;
+  const back =
+    path.length > 0
+      ? ({ name: 'Work', params: { workId, path: path.slice(0, -1) } } as const)
+      : rebbe !== undefined
+        ? ({ name: 'Rebbe', params: { authorId: rebbe } } as const)
+        : ({ name: 'Library', params: undefined } as const);
   if (!work) {
     return (
-      <Screen header={<ScreenHeader back={{ name: 'Seforim', params: undefined }} title={t.seforimTitle} />}>
+      <Screen header={<ScreenHeader back={{ name: 'Library', params: undefined }} title={t.seforimTitle} />}>
         <EmptyState text={t.workNotFound} />
       </Screen>
     );
@@ -192,7 +199,7 @@ function unitDisplay(unit: CatalogUnit | undefined, unitId: string, language: 'h
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', lineHeight: 32, marginBottom: 4 },
+  title: { fontFamily: DISPLAY_FONT, fontSize: 24, fontWeight: '700', lineHeight: 32, marginBottom: 4 },
   block: { marginTop: 10 },
   sourceLine: { fontSize: 13, lineHeight: 18, marginTop: 2 },
 });

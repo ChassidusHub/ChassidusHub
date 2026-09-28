@@ -60,7 +60,7 @@ export interface PackImportPlan {
   /** Refs whose id is not a safe file name; never written. */
   unplaceable: number;
   bytesToWrite: number;
-  /** Every placeable ref, per entry, for the download records (an object can serve several items). */
+  /** Every placeable ref, per entry, for the download records (an object can serve several items). A ref to bytes already placed under another name (upstream lists one recording twice) points at that file. */
   refs: PlannedObject[];
 }
 
@@ -78,6 +78,7 @@ export interface PhoneState {
 export function planPackImport(manifest: PackManifest, phone: PhoneState): PackImportPlan {
   const plan: PackImportPlan = { write: [], present: [], unsupported: 0, unplaceable: 0, bytesToWrite: 0, refs: [] };
   const decided = new Set<string>();
+  const placedAt = new Map<string, string>();
   const claimedFiles = new Set<string>();
   for (const entry of manifest.entries) {
     for (const ref of entry.refs) {
@@ -91,12 +92,13 @@ export function planPackImport(manifest: PackManifest, phone: PhoneState): PackI
         }
         continue;
       }
-      const object: PlannedObject = { sha256: ref.sha256, bytes: ref.bytes, kind: ref.kind, sourceId: ref.sourceId, file, collection: entry.collection, itemId: entry.itemId };
+      const object: PlannedObject = { sha256: ref.sha256, bytes: ref.bytes, kind: ref.kind, sourceId: ref.sourceId, file: placedAt.get(ref.sha256) ?? file, collection: entry.collection, itemId: entry.itemId };
       if (profile) object.profile = profile;
       if (entry.hebrewYear !== undefined) object.hebrewYear = entry.hebrewYear;
       plan.refs.push(object);
       if (decided.has(ref.sha256)) continue;
       decided.add(ref.sha256);
+      placedAt.set(ref.sha256, file);
       const size = phone.fileSizes.get(file);
       const heldAt = phone.held.get(ref.sha256);
       const onPhone = (heldAt === file && size !== undefined) || (size === ref.bytes && !phone.unverifiedFiles.has(file));

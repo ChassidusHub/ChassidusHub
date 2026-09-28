@@ -88,7 +88,7 @@ export function DownloadedScreen({ navigation }: DownloadedScreenProps) {
   }
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title={t.downloadedContentTitle} />}>
+    <Screen header={<ScreenHeader back={{ name: 'Mine', params: undefined }} title={t.downloadedContentTitle} />}>
       <TabHelp>{t.downloadedContentHelp}</TabHelp>
 
       {activeRows.length > 0 && (

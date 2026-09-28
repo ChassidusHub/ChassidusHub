@@ -16,7 +16,7 @@ interface Props {
 
 /**
  * Shares a link to this occasion's page on the web app - the one canonical,
- * kind-independent URL every occasion has there (`/browse/:year/:id`).
+ * kind-independent URL every occasion has there (`/f/:year/:id`; web: routes/links.ts).
  * Mirrors the web's ShareButton, using the OS share sheet instead of the Web
  * Share API. Rendered as one of the matching pills in OccasionActions -
  * never on its own - so Share and Download always sit side by side in the
@@ -25,7 +25,7 @@ interface Props {
 export function ShareButton({ title, hebrewYear, occasionId }: Props) {
   const { t, isRtl } = useTranslation();
   const colors = useColors();
-  const url = `${WEB_APP_BASE_URL}/browse/${hebrewYear}/${occasionId}`;
+  const url = `${WEB_APP_BASE_URL}/f/${hebrewYear}/${occasionId}`;
 
   function handleShare(): void {
     Share.share({ message: `${title}\n${url}`, url, title }).catch(() => undefined);

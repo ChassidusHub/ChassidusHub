@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react-native';
+import { accentPreset } from '@sichos-kodesh/design';
 import { contentPreset } from '@sichos-kodesh/app-core';
 import type { ContentPreset } from '@sichos-kodesh/app-core';
 import { isBackgroundSyncAvailable, requestNotificationPermission } from '../background/backgroundNative';
@@ -25,6 +26,7 @@ import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { Spinner } from '../ui/Spinner';
 import { Segmented, SettingRow, SettingsGroup, Toggle } from '../ui/settings/SettingsControls';
+import { AccentPicker } from '../ui/settings/AccentPicker';
 import { useColors, useTheme } from '../ui/theme';
 import type { ThemeMode } from '../ui/theme';
 import { formatBytes } from '../utils/formatBytes';
@@ -71,7 +73,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const colors = useColors();
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
-  const { mode: theme, setMode: setTheme } = useTheme();
+  const { mode: theme, setMode: setTheme, accent, setAccent } = useTheme();
   const [autoplay, setAutoplay] = useAutoplayOnHanacha();
   const [invertPdf, setInvertPdf] = useInvertPdfInDarkMode();
   const [notifications, setNotifications] = useNotificationSettings();
@@ -123,10 +125,13 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   const offlineSummary = settings.autoDownloadEnabled ? t.autoDownloadSummaryOn(presetLabel(t, contentPreset(settings.contentTypes)), settings.wifiOnly) : t.autoDownloadSummaryOff;
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title={t.settingsTitle} />}>
+    <Screen header={<ScreenHeader back={{ name: 'Mine', params: undefined }} title={t.settingsTitle} />}>
       <SettingsGroup title={t.appearanceSection} first>
         <SettingRow label={t.themeLabel} stack first>
           <Segmented options={themeOptions} value={theme} onChange={setTheme} label={t.themeLabel} />
+        </SettingRow>
+        <SettingRow label={t.accentLabel} help={accentPreset(accent).name[language]} stack>
+          <AccentPicker value={accent} onChange={setAccent} label={t.accentLabel} />
         </SettingRow>
         <SettingRow label={t.invertPdfDarkModeLabel} onPress={() => setInvertPdf(!invertPdf)}>
           <Toggle checked={invertPdf} label={t.invertPdfDarkModeLabel} decorative />

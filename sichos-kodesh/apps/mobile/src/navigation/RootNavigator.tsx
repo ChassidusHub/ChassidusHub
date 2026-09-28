@@ -4,7 +4,8 @@ import type { RootStackParamList } from './types';
 import { useColors } from '../ui/theme';
 import { YearPickerScreen } from '../screens/YearPickerScreen';
 import { KviusYearsScreen } from '../screens/KviusYearsScreen';
-import { BrowseYearsScreen } from '../screens/BrowseYearsScreen';
+import { FarbrengensScreen } from '../screens/FarbrengensScreen';
+import { MineScreen } from '../screens/MineScreen';
 import { ThisWeekScreen } from '../screens/ThisWeekScreen';
 import { YearBrowserScreen } from '../screens/YearBrowserScreen';
 import { PdfViewerScreen } from '../screens/PdfViewerScreen';
@@ -19,9 +20,8 @@ import { LibraryScreen } from '../screens/library/LibraryScreen';
 import { LibraryCollectionScreen } from '../screens/library/LibraryCollectionScreen';
 import { LibraryGroupScreen } from '../screens/library/LibraryGroupScreen';
 import { LibraryItemScreen } from '../screens/library/LibraryItemScreen';
-import { OccasionGroupsScreen } from '../screens/library/OccasionGroupsScreen';
 import { OccasionGroupScreen } from '../screens/library/OccasionGroupScreen';
-import { SeforimScreen } from '../screens/seforim/SeforimScreen';
+import { RebbeScreen } from '../screens/seforim/RebbeScreen';
 import { WorkScreen } from '../screens/seforim/WorkScreen';
 import { ReaderScreen } from '../screens/seforim/ReaderScreen';
 import { HebrewBooksShelfScreen } from '../screens/seforim/HebrewBooksShelfScreen';
@@ -29,8 +29,6 @@ import { MonthOccasionsScreen } from '../screens/MonthOccasionsScreen';
 import { FollowMonthListScreen } from '../screens/FollowMonthListScreen';
 import { FollowMonthOccasionsScreen } from '../screens/FollowMonthOccasionsScreen';
 import { FarbrengenScreen } from '../screens/FarbrengenScreen';
-import { RecordingsScreen } from '../screens/RecordingsScreen';
-import { CategoryScreen } from '../screens/CategoryScreen';
 import { AllYearsThisWeekScreen } from '../screens/AllYearsThisWeekScreen';
 import { OccasionAllYearsScreen } from '../screens/OccasionAllYearsScreen';
 
@@ -42,7 +40,7 @@ export function RootNavigator() {
     <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="Home" component={YearPickerScreen} />
       <Stack.Screen name="KviusYears" component={KviusYearsScreen} />
-      <Stack.Screen name="BrowseYears" component={BrowseYearsScreen} />
+      <Stack.Screen name="Farbrengens" component={FarbrengensScreen} />
       <Stack.Screen name="ThisWeek" component={ThisWeekScreen} />
       <Stack.Screen name="YearBrowser" component={YearBrowserScreen} />
       <Stack.Screen name="PdfViewer" component={PdfViewerScreen} />
@@ -51,9 +49,8 @@ export function RootNavigator() {
       <Stack.Screen name="FollowMonthList" component={FollowMonthListScreen} />
       <Stack.Screen name="FollowMonthOccasions" component={FollowMonthOccasionsScreen} />
       <Stack.Screen name="Farbrengen" component={FarbrengenScreen} />
-      <Stack.Screen name="Recordings" component={RecordingsScreen} />
-      <Stack.Screen name="Category" component={CategoryScreen} />
       <Stack.Screen name="Search" component={SearchScreen} />
+      <Stack.Screen name="Mine" component={MineScreen} />
       <Stack.Screen name="Downloaded" component={DownloadedScreen} />
       <Stack.Screen name="DownloadSettings" component={DownloadSettingsScreen} />
       <Stack.Screen name="Offline" component={OfflineScreen} />
@@ -61,9 +58,8 @@ export function RootNavigator() {
       <Stack.Screen name="LibraryCollection" component={LibraryCollectionScreen} />
       <Stack.Screen name="LibraryGroup" component={LibraryGroupScreen} />
       <Stack.Screen name="LibraryItem" component={LibraryItemScreen} />
-      <Stack.Screen name="OccasionGroups" component={OccasionGroupsScreen} />
       <Stack.Screen name="OccasionGroup" component={OccasionGroupScreen} />
-      <Stack.Screen name="Seforim" component={SeforimScreen} />
+      <Stack.Screen name="Rebbe" component={RebbeScreen} />
       <Stack.Screen name="Work" component={WorkScreen} />
       <Stack.Screen name="Reader" component={ReaderScreen} />
       <Stack.Screen name="HebrewBooksShelf" component={HebrewBooksShelfScreen} />

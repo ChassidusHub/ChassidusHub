@@ -1,27 +1,20 @@
 import {
-  isHighlightedFarbrengenHanacha,
   mafteiachMonthName,
   mafteiachMonthNameHebrew,
   mafteiachMonthToken,
   resolveOccasionAllYears,
   resolveThisWeek,
   resolveThisWeekAllYears,
-  sortPdfsByEditionPreference,
 } from '@sichos-kodesh/catalog';
 import type {
   CatalogByYear,
   CatalogEntry,
-  CatalogPdf,
-  PdfEdition,
-  PdfSection,
   YearOccasionMatches,
   YearWeekOccasions,
 } from '@sichos-kodesh/catalog';
 import type { Language } from '../i18n/translations';
 import type { OccasionRouteParams, RootStackParamList } from '../navigation/types';
 import { hebrewDayMonthLabel } from '../utils/formatHebrewDate';
-
-const SECONDARY_SECTIONS = ['mugah', 'maamorim', 'hagahos', 'hosofos'] as const;
 
 export interface MonthGroup {
   monthToken: string;
@@ -42,17 +35,6 @@ export interface ResolvedOccasionRoute {
   entry: CatalogEntry;
   subtitle: string;
   backRoute: FarbrengenBackRoute;
-}
-
-export interface FarbrengenCategoryLink {
-  section: PdfSection;
-  count: number;
-}
-
-export interface SplitFarbrengenContent {
-  hanachaPdfs: CatalogPdf[];
-  otherPdfs: CatalogPdf[];
-  categoryLinks: FarbrengenCategoryLink[];
 }
 
 export function entriesWithContentForYear(catalog: CatalogByYear, hebrewYear: number): CatalogEntry[] {
@@ -167,29 +149,6 @@ export function resolveOccasionRoute(
   }
 
   return null;
-}
-
-export function splitFarbrengenContent(entry: CatalogEntry): SplitFarbrengenContent {
-  const hanachaPdfs = entry.pdfs.filter(isHighlightedFarbrengenHanacha);
-  const otherPdfs = entry.pdfs.filter(
-    (pdf) => pdf.section === 'biltiMugah' && !isHighlightedFarbrengenHanacha(pdf),
-  );
-  const categoryLinks = SECONDARY_SECTIONS.map((section) => ({
-    section,
-    count: entry.pdfs.filter((pdf) => pdf.section === section).length,
-  })).filter((item) => item.count > 0);
-  return { hanachaPdfs, otherPdfs, categoryLinks };
-}
-
-export function selectCategoryPdfs(
-  entry: CatalogEntry,
-  categoryId: PdfSection,
-  editionPreference: PdfEdition | null,
-): CatalogPdf[] {
-  return sortPdfsByEditionPreference(
-    entry.pdfs.filter((pdf) => pdf.section === categoryId),
-    editionPreference,
-  );
 }
 
 export function resolveMonthOccasions(

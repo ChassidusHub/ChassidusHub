@@ -5,11 +5,12 @@ import { useTranslation } from '../i18n/useTranslation';
 import { BackLink } from './BackLink';
 import type { BackTarget } from './BackLink';
 import { AppText } from './Text';
-import { useColors } from './theme';
-import { row } from './rtl';
+import { DISPLAY_FONT, useColors } from './theme';
+import { row, textAlign } from './rtl';
 
 interface Props {
-  back: BackTarget;
+  /** Where Back goes when there is nothing to pop; none on a tab's own first screen, which has no Back - the tabs are the way around (web: the same). */
+  back?: BackTarget;
   title: string;
   /** For a screen whose own container has no horizontal padding (the PDF viewer) - see the web's `.screen-header-inset`. */
   inset?: boolean;
@@ -33,6 +34,17 @@ const LONG_TITLE = 26;
 export function ScreenHeader({ back, title, inset = false, action }: Props) {
   const colors = useColors();
   const { isRtl } = useTranslation();
+
+  if (!back) {
+    return (
+      <View style={[styles.header, { backgroundColor: colors.bg, flexDirection: row(isRtl) }, inset && styles.inset]}>
+        <AppText accessibilityRole="header" numberOfLines={1} style={[styles.rootTitle, { textAlign: textAlign(isRtl) }]}>
+          {title}
+        </AppText>
+        {action}
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.header, { backgroundColor: colors.bg, flexDirection: row(isRtl) }, inset && styles.inset]}>
@@ -60,6 +72,8 @@ const styles = StyleSheet.create({
   inset: { marginBottom: 16 },
   /** Web: `.screen-header-title` - flex 1, centered, 18px/700, up to two lines. */
   title: { flex: 1, minWidth: 0, textAlign: 'center', fontSize: 18, lineHeight: 23, fontWeight: '700' },
+  /** Web: `.screen-header-root .screen-header-title` - a tab's first screen: its name, large, at the start. */
+  rootTitle: { flex: 1, minWidth: 0, fontFamily: DISPLAY_FONT, fontSize: 28, lineHeight: 36, fontWeight: '700' },
   /** Web: `.screen-header-title-long` - a long title a size smaller. */
   titleLong: { fontSize: 16, lineHeight: 21 },
   /** Web: `.screen-header-side` - the spacer's box, with the action absolutely positioned at its outer edge. */

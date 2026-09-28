@@ -72,9 +72,9 @@ find_node() {
   node_center "$1"
 }
 
-# Top edge of the global player bar in the last dump - its skip/seek
-# controls give it away; the bar's title sits a little above them, hence the
-# margin - or the screen height when no bar is showing.
+# Top edge of the mini player in the last dump - its "Open the player"
+# button gives it away, with a little margin - or the screen height when
+# no player is showing.
 player_bar_top() {
   printf '%s' "$UI_XML" | python3 -c '
 import re, sys
@@ -85,7 +85,8 @@ def attr(node, name):
     return (m.group(1) or m.group(2) or "") if m else ""
 for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
     node = m.group(0)
-    if attr(node, "content-desc") in ("Previous chapter", "Next chapter", "Seek"):
+    desc = attr(node, "content-desc")
+    if desc.startswith("Open the player") or desc == "Show the player":
         b = re.search(r"\[(\d+),(\d+)\]", attr(node, "bounds"))
         if b:
             top = min(top, int(b.group(2)) - int(sys.argv[2]))
@@ -123,7 +124,7 @@ tap_text() {
     xy="$(node_center "$needle")"
     if [ -n "$xy" ]; then
       case "$(printf '%s' "$needle" | tr '[:upper:]' '[:lower:]')" in
-        play|pause|"previous chapter"|"next chapter"|seek) break ;;
+        play|pause|"previous chapter"|"next chapter"|seek|"open the player"|"close the player"|"forward 15 seconds"|"back 15 seconds") break ;;
       esac
       if [ "${xy#* }" -ge "$(player_bar_top)" ]; then
         scroll_down
@@ -141,6 +142,45 @@ tap_text() {
     return 1
   fi
   log "tap '$needle' @ $xy"
+  adb shell input tap $xy
+}
+
+# Taps the tab named $1 in the tab bar: the lowest node on screen whose text
+# or content-desc is exactly $1, so a link on the page that merely contains
+# the word ("All farbrengens this week, every year") isn't taken for the tab.
+tap_tab() {
+  local xy="" _
+  for _ in $(seq 1 10); do
+    refresh_ui
+    xy="$(printf '%s' "$UI_XML" | python3 -c '
+import re, sys
+needle = sys.argv[1].lower()
+xml = sys.stdin.read()
+def attr(node, name):
+    m = re.search(name + r"=(?:\"([^\"]*)\"|\x27([^\x27]*)\x27)", node)
+    return (m.group(1) or m.group(2) or "") if m else ""
+best = None
+for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
+    node = m.group(0)
+    if needle not in (attr(node, "text").strip().lower(), attr(node, "content-desc").strip().lower()):
+        continue
+    b = re.search(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", attr(node, "bounds"))
+    if b:
+        x1, y1, x2, y2 = map(int, b.groups())
+        if x2 > x1 and y2 > y1 and (best is None or y1 > best[1]):
+            best = ((x1 + x2) // 2, (y1 + y2) // 2)
+if best:
+    print(best[0], best[1])
+' "$1")"
+    [ -n "$xy" ] && break
+    sleep 2
+  done
+  if [ -z "$xy" ]; then
+    fail "could not find the '$1' tab"
+    adb exec-out screencap -p > "$OUT/missing-tab-$(echo "$1" | tr -cs 'A-Za-z0-9' '-').png" 2>/dev/null
+    return 1
+  fi
+  log "tab '$1' @ $xy"
   adb shell input tap $xy
 }
 
@@ -202,110 +242,74 @@ adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 ||
 # Always from a cold start on the home screen, even if the app was already open.
 adb shell am force-stop $PKG >/dev/null 2>&1
 adb shell monkey -p $PKG -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
-wait_text "Browse any year" && shot 01-home 3
-
-# --- Follow flow: kvius years -> this week -> occasion -> recordings -> player
-tap_text "Kvius Farbrengens" && wait_text "This week only" ; shot 02-kvius-years
-tap_text "5736" || tap_text "57"
-wait_text "All of" && shot 03-this-week
-# Pick an occasion that has a recording, so the recordings/player steps below
-# have something to exercise: the row's own "Has a recording" icon gives the
-# row's vertical position; the label side of that same row is tapped.
-xy="$(find_node "Has a recording")"
-if [ -n "$xy" ]; then
-  y="${xy#* }"
-  log "tap first occasion with a recording @ 200 $y"
-  adb shell input tap 200 "$y"
-else
-  # No recordings this week - fall back to the first occasion row.
-  xy="$(dump_ui | python3 -c '
-import re, sys
-xml = sys.stdin.read()
-def attr(node, name):
-    m = re.search(name + r"=(?:\"([^\"]*)\"|\x27([^\x27]*)\x27)", node)
-    return (m.group(1) or m.group(2) or "") if m else ""
-for m in re.finditer(r"<node [^>]*?(?:/>|>)", xml):
-    node = m.group(0)
-    if "Button" in attr(node, "class") and re.search(r"[֐-׿]", attr(node, "content-desc")):
-        b = re.search(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", attr(node, "bounds"))
-        if b:
-            x1, y1, x2, y2 = map(int, b.groups())
-            if y1 > 400:
-                print((x1 + x2) // 2, (y1 + y2) // 2); break
-')"
-  if [ -n "$xy" ]; then log "tap first occasion @ $xy"; adb shell input tap $xy; else fail "no occasion row found"; fi
-fi
-wait_text "This occasion, every year" && shot 04-occasion
-if tap_text "Recordings"; then
-  wait_text "Share" && shot 05-recordings
-  # The big playlist play button; then wait for it to flip to Pause (playing) and screenshot the global player bar.
-  tap_text "Play" && wait_text "Pause" && shot 06-player-playing 5
-  # Second chapter, if there is one, via the player's next button.
-  tap_text "Next chapter" && sleep 8 && shot 07-player-next 3
-  back
-fi
-# A hanacha card's own Read button; an occasion with no hanacha keeps its PDFs behind a section row instead.
-if ! tap_text "Read"; then
-  tap_text "Mugah" || tap_text "Maamorim" || tap_text "Hagahos" || tap_text "Hosofos"
-  tap_text "Read"
-fi
-# The file is fetched to local storage first, then rendered natively - on a
-# software-emulated device that fetch alone can take a minute or two.
-wait_gone "Opening file" 40 && shot 08-pdf 6
-back; sleep 2
-tap_text "This occasion, every year" && wait_text "across every year" && shot 09-occasion-all-years
-back; back; back; back
-wait_text "Browse any year"
-
-# --- Cross-year list, browse flow
-tap_text "All farbrengens this week" && wait_text "across every year" && shot 10-all-years-this-week
-back
-tap_text "Browse any year" && wait_text "Every year with something" && shot 11-browse-years
-tap_text "5711" && wait_text "occasion" && shot 12-year-browser
-back; back
-
-# --- Search (the box needs focus first; neither the web nor the app autofocuses it)
-tap_text "Search" && wait_text "Search occasions" && shot 13-search
-# One character at a time: a whole word injected at once loses letters on a
-# slow (software-emulated) device.
-tap_text "Search occasions" && type_text "Tishrei" && sleep 4 && shot 14-search-results
-# The screen's own Back link, not the hardware key - with the keyboard up that key only dismisses the keyboard.
-tap_text "Back"
-wait_text "Browse any year"
-
-# --- Settings, dark mode (incl. the PDF), Hebrew
-tap_text "Settings" && wait_text "Appearance" && shot 15-settings
-# The phone-only Notifications section sits below the fold.
-scroll_down && shot 15-settings-notifications
-scroll_to_top
-tap_text "Dark" && sleep 2 && shot 16-settings-dark
-back; shot 17-home-dark
-# The PDF read earlier, now in dark mode - inverted like the web's, and local by now so it opens at once.
-if tap_text 'מוצאי י"ג תשרי'; then
-  wait_text "This occasion, every year"
-  if tap_text "Read"; then
-    wait_gone "Opening file" 20 && shot 17-pdf-dark 6
-    back
+# The first start asks how the app will be used (the mode chooser); online.
+for _ in $(seq 1 30); do
+  refresh_ui
+  if [ -n "$(node_center "How will you use the app?")" ]; then
+    shot 00-mode-chooser 2
+    tap_text "Online"
+    break
   fi
-  back
-fi
-tap_text "Settings" && tap_text "Light" && sleep 1
-tap_text "Downloads" && wait_text "Auto-download" && shot 18-download-settings
-# Toggle the automatic sync (on the phone that one switch also covers
-# running while the app is closed) and kick one run off: the sync task
-# posts the new-week notice within seconds and queues this week's files,
-# whose progress shows in the notification shade.
-tap_text "Auto-download automatically" && sleep 1 && shot 18-download-settings-auto
-tap_text "Download this week now" && sleep 20
-adb shell cmd statusbar expand-notifications && shot 19-notifications 3
-adb shell cmd statusbar collapse; sleep 1
+  [ -n "$(node_center "Farbrengens")" ] && break
+  sleep 3
+done
+
+# This week: the tab the app opens on.
+wait_text "This week" && shot 01-this-week 4
+scroll_down && shot 02-this-week-more
+scroll_to_top
+
+# Farbrengens tab: by year, a year's months, a month's farbrengens, one farbrengen's page.
+tap_tab "Farbrengens" && sleep 2 && shot 03-farbrengens
+tap_text "5736" && wait_text "Tishrei" && shot 04-year
+tap_text "Tishrei" && wait_text "6 Tishrei" && shot 05-month
+tap_text "6 Tishrei" && wait_text "This occasion, every year" && shot 06-farbrengen 3
+
+# Play: the mini player above the tabs, then the full player with its chapters and 15-second skips.
+tap_text "Play" && wait_text "Open the player" && shot 07-mini-player 8
+tap_text "Open the player" && wait_text "Chapters" && shot 08-full-player 3
+tap_text "Forward 15 seconds" && sleep 3 && shot 09-full-player-skipped 2
+tap_text "Close the player" && sleep 2
+
+# A text: the PDF with its top bar and page slider; a tap on the page hides both, a second brings them back.
+tap_text "שיחו"
+wait_gone "Opening" 40 && shot 10-pdf 6
+wait_text "Page 1 of" || true
+adb shell input tap "$((SCREEN_W / 2))" "$((SCREEN_H / 2))" && shot 11-pdf-chrome-hidden 3
+[ -n "$(find_node "Page 1 of")" ] && fail "the page slider stayed after a tap on the page"
+adb shell input tap "$((SCREEN_W / 2))" "$((SCREEN_H / 2))" && sleep 2
 back
-tap_text "About" && wait_text "Powered by" && shot 19-about
-tap_text "Privacy Policy" && wait_text "Last updated" && shot 20-privacy
+
+tap_text "This occasion, every year" && wait_text "across every year" && shot 12-occasion-all-years
+back
+
+# Library tab: the shelf, then Igros Kodesh.
+tap_tab "Library" && wait_text "The Rebbe's Torah" && shot 13-library
+tap_text "Igros Kodesh" && sleep 3 && shot 14-igros
+back
+
+# Search tab: before typing, then results grouped by kind.
+tap_tab "Search" && sleep 2 && shot 15-search
+tap_text "A name, a date" && type_text "Tishrei" && adb shell input keyevent KEYCODE_ENTER && sleep 5 && shot 16-search-results
+back
+
+# Mine tab: Settings (dark and back), About and the privacy policy, and Hebrew.
+tap_tab "Mine" && wait_text "Settings" && shot 17-mine
+tap_text "Settings" && wait_text "Appearance" && shot 18-settings
+tap_text "Dark" && sleep 2 && shot 19-settings-dark
+back; shot 20-mine-dark
+tap_text "Settings" && tap_text "Light" && sleep 1
+back
+tap_text "About" && wait_text "Powered by" && shot 21-about
+tap_text "Privacy Policy" && wait_text "Last updated" && shot 22-privacy
 back; back
-tap_text "Hebrew" && sleep 2 && shot 21-settings-hebrew
-back; shot 22-home-hebrew
-tap_text "הגדרות" && tap_text "English" && back
+# The language switch names each language in its own: English, עברית.
+tap_text "Settings" && tap_text "עברית" && sleep 2 && shot 23-settings-hebrew
+back; shot 24-mine-hebrew
+tap_tab "השבוע" && sleep 3 && shot 25-this-week-hebrew
+# The search box before typing: the Hebrew hint set right to left.
+tap_tab "חיפוש" && sleep 2 && shot 26-search-hebrew
+tap_tab "שלי" && tap_text "הגדרות" && tap_text "English" && back
 
 log "crash / JS error lines in logcat:"
 adb logcat -d | grep -E "FATAL EXCEPTION|AndroidRuntime: .*Exception|ReactNativeJS: .*Error|JavascriptException|ANR in $PKG" | head -20 | tee "$OUT/logcat-errors.txt"

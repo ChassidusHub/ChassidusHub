@@ -13,7 +13,7 @@ import { ScreenHeader } from '../../ui/ScreenHeader';
 import { AppText } from '../../ui/Text';
 import { TabHelp } from '../../ui/Typography';
 import { FONT_FAMILY, useColors } from '../../ui/theme';
-import { textAlign } from '../../ui/rtl';
+import { textAlign, typedIsRtl } from '../../ui/rtl';
 
 /** Only a long list gets a filter. */
 const FILTER_FROM = 12;
@@ -50,7 +50,7 @@ export function HebrewBooksShelfScreen({ navigation, route }: HebrewBooksShelfSc
   }
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'Seforim', params: { shelf: 'links' } }} title={authorName} />}>
+    <Screen header={<ScreenHeader back={{ name: 'Rebbe', params: { authorId } }} title={authorName} />}>
       <TabHelp>{t.shelfHelp}</TabHelp>
       {all.length >= FILTER_FROM && (
         <TextInput
@@ -60,7 +60,7 @@ export function HebrewBooksShelfScreen({ navigation, route }: HebrewBooksShelfSc
           placeholderTextColor={colors.muted}
           accessibilityLabel={t.shelfFilter}
           returnKeyType="search"
-          style={[styles.input, { borderColor: colors.border, backgroundColor: colors.cardBg, color: colors.fg, textAlign: textAlign(isRtl) }]}
+          style={[styles.input, { borderColor: colors.border, backgroundColor: colors.cardBg, color: colors.fg, textAlign: textAlign(typedIsRtl(query, isRtl)) }]}
         />
       )}
       {shown.map((series) =>

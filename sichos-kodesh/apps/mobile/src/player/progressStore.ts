@@ -263,7 +263,7 @@ export function isOccasionFinished(progress: OccasionProgress | undefined, entry
   });
 }
 
-/** Same threshold as `isOccasionFinished`, for one chapter - drives RecordingsScreen's per-row finished marker. */
+/** Same threshold as `isOccasionFinished`, for one chapter - drives ChapterList's per-row finished marker. */
 export function isChapterFinished(progress: OccasionProgress | undefined, chapterIndex: number, chapter: { durationMs: number }): boolean {
   const recorded = progress?.chapters[chapterIndex];
   if (!recorded) return false;
@@ -271,7 +271,7 @@ export function isChapterFinished(progress: OccasionProgress | undefined, chapte
   return chapterDuration > 0 && recorded.position / chapterDuration >= FINISHED_FRACTION;
 }
 
-/** How far into one chapter the listener has gotten, 0-1 - drives RecordingsScreen's per-row in-progress fill for a chapter that isn't finished yet. */
+/** How far into one chapter the listener has gotten, 0-1 - drives ChapterList's per-row in-progress fill for a chapter that isn't finished yet. */
 export function chapterProgressFraction(progress: OccasionProgress | undefined, chapterIndex: number, chapter: { durationMs: number }): number {
   const recorded = progress?.chapters[chapterIndex];
   if (!recorded) return 0;

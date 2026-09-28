@@ -29,7 +29,7 @@ export function OccasionGroupScreen({ navigation, route }: OccasionGroupScreenPr
   }
 
   return (
-    <Screen header={<ScreenHeader back={{ name: 'OccasionGroups', params: { axis } }} title={group ? occasionGroupName(group, language) : ''} />}>
+    <Screen header={<ScreenHeader back={{ name: 'Farbrengens', params: { view: axis === 'moadim' ? 'moed' : 'parsha' } }} title={group ? occasionGroupName(group, language) : ''} />}>
       <Subtitle>{t.occasionsIndexed(entries.length)}</Subtitle>
       {byYear.map(({ year, entries: yearEntries }, index) => (
         <React.Fragment key={year}>

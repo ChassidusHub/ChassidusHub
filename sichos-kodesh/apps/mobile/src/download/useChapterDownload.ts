@@ -14,7 +14,7 @@ export interface ChapterDownloadState {
   download: () => void;
 }
 
-/** RecordingsScreen's own per-chapter download affordance - independent of the occasion-level `contentTypes` settings: tapping this one chapter's row means "download this chapter." */
+/** The farbrengen page's per-chapter download affordance (ChapterList) - independent of the occasion-level `contentTypes` settings: tapping this one chapter's row means "download this chapter." */
 export function useChapterDownload(entry: CatalogEntry, chapterIndex: number): ChapterDownloadState {
   const { targetStates, downloadChapter } = useDownload();
   const online = useOnlineStatus();

@@ -13,7 +13,7 @@ import { useColors } from '../ui/theme';
 interface Props {
   entry: CatalogEntry;
   progressMap: ProgressStore;
-  /** 'compact' - small icon-only button on FarbrengenScreen's recordings row. 'large' - Spotify-style big green circle atop RecordingsScreen's own playlist. */
+  /** 'compact' - small icon-only button on This week's cards. 'large' - Spotify-style big green circle atop the farbrengen page's recordings. */
   variant: 'compact' | 'large';
 }
 

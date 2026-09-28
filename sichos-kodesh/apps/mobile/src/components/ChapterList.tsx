@@ -1,45 +1,34 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { CheckCircle2, Download, Pause, Play } from 'lucide-react-native';
 import type { CatalogEntry } from '@sichos-kodesh/catalog';
-import { chapterTitle, occasionFullName, occasionTitle } from '@sichos-kodesh/app-core';
-import { useCatalog } from '../catalog/catalogStore';
-import { DownloadProgressRing } from '../components/DownloadProgressRing';
-import { OccasionActions } from '../components/OccasionActions';
-import { PlaylistPlayButton } from '../components/PlaylistPlayButton';
-import { useAllChaptersDownloadState } from '../download/useAllChaptersDownloadState';
+import { chapterTitle } from '@sichos-kodesh/app-core';
 import { useChapterDownload } from '../download/useChapterDownload';
-import { useDownload } from '../download/useDownload';
 import { useOnlineMode } from '../appMode/appMode';
 import { useTranslation } from '../i18n/useTranslation';
-import type { RecordingsScreenProps } from '../navigation/types';
 import { playlistForEntry } from '../player/playerContext';
-import { usePlayer } from '../player/usePlayer';
 import type { PlayerContextValue } from '../player/playerContext';
 import { chapterProgressFraction, getOccasionProgress, isChapterFinished } from '../player/progressStore';
-import type { OccasionProgress } from '../player/progressStore';
-import { useProgressMap } from '../player/useProgressMap';
-import { resolveOccasionRoute } from '../routes/catalogRoutes';
-import { formatDuration, formatTime, totalDurationSeconds } from '../utils/formatDuration';
-import { Screen } from '../ui/Screen';
-import { ScreenHeader } from '../ui/ScreenHeader';
+import type { OccasionProgress, ProgressStore } from '../player/progressStore';
+import { usePlayer } from '../player/usePlayer';
+import { formatTime } from '../utils/formatDuration';
 import { Spinner } from '../ui/Spinner';
 import { AppText } from '../ui/Text';
-import { GapMessage } from '../ui/Typography';
 import { useColors } from '../ui/theme';
-import { hexWithAlpha } from '../ui/color';
 import { row } from '../ui/rtl';
+import { DownloadProgressRing } from './DownloadProgressRing';
 
 interface PlaylistRowProps {
   entry: CatalogEntry;
   index: number;
+  downloads: boolean;
   isActive: boolean;
   player: PlayerContextValue;
   progress: OccasionProgress | undefined;
 }
 
 /** Its own component because it calls `useChapterDownload` - one hook instance per row. */
-function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowProps) {
+function PlaylistRow({ entry, index, downloads, isActive, player, progress }: PlaylistRowProps) {
   const { t, language, isRtl } = useTranslation();
   const colors = useColors();
   const chapter = entry.audio[index]!;
@@ -51,8 +40,8 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
   const tint = isActive ? colors.accent : colors.muted;
 
   let downloadIcon = null;
-  if (!onlineMode) {
-    // Offline pack mode: no download icons at all.
+  if (!onlineMode || !downloads) {
+    // Offline pack mode, or a list whose page saves its files another way: no download icons at all.
     downloadIcon = null;
   } else if (download.state === 'loading') {
     downloadIcon = <View style={[styles.loadingDot, { backgroundColor: colors.border }]} />;
@@ -109,97 +98,26 @@ function PlaylistRow({ entry, index, isActive, player, progress }: PlaylistRowPr
   );
 }
 
-/** An occasion's recordings playlist (web: `.../recordings`). */
-export function RecordingsScreen({ route }: RecordingsScreenProps) {
-  const catalog = useCatalog();
-  const { t, language, isRtl } = useTranslation();
-  const colors = useColors();
+/**
+ * A farbrengen's chapters, in playing order (web: components/ChapterList.tsx):
+ * each plays (or pauses) where it was left, with its progress and its own
+ * download mark - left out with `downloads: false`, for a library item's
+ * page, which saves its files with its own pill.
+ */
+export function ChapterList({ entry, progressMap, downloads = true }: { entry: CatalogEntry; progressMap: ProgressStore; downloads?: boolean }) {
   const player = usePlayer();
-  const progressMap = useProgressMap();
-  const { downloadAllChapters } = useDownload();
-  const resolved = useMemo(() => resolveOccasionRoute(catalog, route.params, language), [catalog, language, route.params]);
-  const entry = resolved?.entry ?? null;
-  const allChaptersState = useAllChaptersDownloadState(entry ?? { hebrewYear: 0, occasionId: 0, hebrewDate: '', occasionLabel: '', audio: [], pdfs: [] });
-  const onlineMode = useOnlineMode();
-
-  if (!entry) {
-    return (
-      <Screen header={<ScreenHeader back={{ name: 'Home', params: undefined }} title="" />}>
-        <GapMessage>{t.pageNotFound}</GapMessage>
-      </Screen>
-    );
-  }
-
   const isThisPlaylistActive = player.playlist?.hebrewYear === entry.hebrewYear && player.playlist?.occasionId === entry.occasionId;
   const progress = getOccasionProgress(progressMap, entry.hebrewYear, entry.occasionId);
-  const totalDuration = formatDuration(totalDurationSeconds(entry.audio));
-
-  // The playlist's own "download all" stays an icon in the header card, next
-  // to the play button (web: `.playlist-header-action`); only Share sits
-  // below as a pill.
-  let headerDownload = null;
-  if (!onlineMode) {
-    headerDownload = null;
-  } else if (allChaptersState === 'downloaded') {
-    headerDownload = (
-      <View style={styles.headerStatus} accessibilityLabel={t.downloadedLabel}>
-        <CheckCircle2 size={18} color={colors.accent} />
-      </View>
-    );
-  } else if (allChaptersState === 'downloading') {
-    headerDownload = (
-      <View style={styles.headerStatus} accessibilityLabel={t.downloadingLabel}>
-        <Spinner size={18} color={colors.muted} />
-      </View>
-    );
-  } else if (allChaptersState === 'none') {
-    headerDownload = (
-      <Pressable
-        onPress={() => {
-          downloadAllChapters(entry).catch(() => undefined);
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={t.downloadAllRecordingsLabel}
-        style={({ pressed }) => [styles.headerAction, { backgroundColor: hexWithAlpha(colors.accent, 0.14) }, pressed && styles.pressed]}
-      >
-        <Download size={18} color={colors.accent} />
-      </Pressable>
-    );
-  }
-
   return (
-    <Screen header={<ScreenHeader back={{ name: 'Farbrengen', params: route.params }} title={occasionTitle(entry, language)} />}>
-      <View style={[styles.playlistHeader, { backgroundColor: colors.cardBg, flexDirection: row(isRtl) }]}>
-        <View style={[styles.playlistHeaderMain, { flexDirection: row(isRtl) }]}>
-          <PlaylistPlayButton entry={entry} progressMap={progressMap} variant="large" />
-          <View style={styles.playlistHeaderCopy}>
-            <AppText style={styles.playlistTitle}>{occasionFullName(entry, language)}</AppText>
-            <AppText style={[styles.playlistSubtitle, { color: colors.muted }]}>{totalDuration}</AppText>
-          </View>
-        </View>
-        {headerDownload && <View style={styles.playlistHeaderSide}>{headerDownload}</View>}
-      </View>
-
-      <OccasionActions entry={entry} showDownload={false} />
-
+    <View>
       {entry.audio.map((chapter, index) => (
-        <PlaylistRow key={chapter.workerFilename} entry={entry} index={index} isActive={isThisPlaylistActive && player.currentIndex === index} player={player} progress={progress} />
+        <PlaylistRow key={chapter.workerFilename} entry={entry} index={index} downloads={downloads} isActive={isThisPlaylistActive && player.currentIndex === index} player={player} progress={progress} />
       ))}
-    </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  /** Web: `.playlist-header` - space-between, gap 16, margin-bottom 16, padding 16, radius 16. */
-  playlistHeader: { alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 16, padding: 16, borderRadius: 16 },
-  playlistHeaderMain: { alignItems: 'center', gap: 16, minWidth: 0, flex: 1 },
-  playlistHeaderCopy: { minWidth: 0, flexShrink: 1, gap: 4 },
-  playlistTitle: { fontSize: 18, fontWeight: '700' },
-  playlistSubtitle: { fontSize: 14 },
-  playlistHeaderSide: { alignItems: 'center', justifyContent: 'center', minHeight: 44, flexShrink: 0 },
-  headerStatus: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  /** Web: `.playlist-header-action` - 36px tinted circle. */
-  headerAction: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   /** Web: `.playlist-row-item` - gap 10, radius 8, padding 10, margin-inline -10. */
   rowItem: { alignItems: 'center', gap: 10, borderRadius: 8, padding: 10, marginHorizontal: -10 },
   rowButton: { flex: 1, minWidth: 0, alignItems: 'center', gap: 14, borderRadius: 8 },

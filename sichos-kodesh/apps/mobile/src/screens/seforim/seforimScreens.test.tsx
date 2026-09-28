@@ -36,7 +36,8 @@ const { LanguageProvider } = require('../../i18n/LanguageProvider') as typeof im
 const { DownloadProvider } = require('../../download/DownloadProvider') as typeof import('../../download/DownloadProvider');
 const { PlayerProvider } = require('../../player/PlayerProvider') as typeof import('../../player/PlayerProvider');
 const screens = {
-  ...(require('./SeforimScreen') as typeof import('./SeforimScreen')),
+  ...(require('./RebbeScreen') as typeof import('./RebbeScreen')),
+  ...(require('../library/LibraryScreen') as typeof import('../library/LibraryScreen')),
   ...(require('./WorkScreen') as typeof import('./WorkScreen')),
   ...(require('./ReaderScreen') as typeof import('./ReaderScreen')),
   ...(require('../SearchScreen') as typeof import('../SearchScreen')),
@@ -74,8 +75,11 @@ describe('seforim screens', () => {
     globalThis.fetch = realFetch;
   });
 
-  it('lists the Rebbeim with their seforim', async () => {
-    const shown = await render(<screens.SeforimScreen {...props(undefined)} />);
+  it('lists the Rebbeim on the shelf, each with his seforim', async () => {
+    const shelf = await render(<screens.LibraryScreen {...props(undefined)} />);
+    expect(shelf).toContain('The Alter Rebbe');
+    expect(shelf).toContain('Chassidim and collections');
+    const shown = await render(<screens.RebbeScreen {...props({ authorId: 'alter-rebbe' })} />);
     expect(shown).toContain('Tanya');
     expect(shown).toContain('Likkutei Torah');
   });
@@ -190,11 +194,10 @@ describe('seforim screens', () => {
 
   describe('the HebrewBooks shelf', () => {
     it('gives each Rebbe his other books on HebrewBooks, and the other Chabad books a row of their own', async () => {
-      // They are on the external links shelf; the text and PDFs are the first one.
-      expect(await render(<screens.SeforimScreen {...props(undefined)} />)).not.toContain('More on HebrewBooks');
-      const shown = await render(<screens.SeforimScreen {...props({ shelf: 'links' })} />);
+      // On the Rebbe's own page, after his seforim: no shelf of external links of their own.
+      const shown = await render(<screens.RebbeScreen {...props({ authorId: 'the-rebbe' })} />);
       expect(shown).toContain('More on HebrewBooks');
-      expect(shown).toContain('Chabad books on HebrewBooks');
+      expect(await render(<screens.RebbeScreen {...props({ authorId: null })} />)).toContain('Chabad books on HebrewBooks');
       // Sichos Kodesh has no text anywhere yet: it is its scans.
       expect(shown).toContain('Sichos Kodesh');
       expect(shown).toMatch(/\d+ scans/);
@@ -203,10 +206,10 @@ describe('seforim screens', () => {
     it('never shows the external links in offline mode', async () => {
       appMode.setAppMode('offline');
       try {
-        const shown = await render(<screens.SeforimScreen {...props({ shelf: 'links' })} />);
-        expect(shown).not.toContain('External links');
+        const shown = await render(<screens.RebbeScreen {...props({ authorId: 'the-rebbe' })} />);
         expect(shown).not.toContain('More on HebrewBooks');
-        expect(shown).toContain('Tanya');
+        expect(shown).not.toContain('Sichos Kodesh');
+        expect(await render(<screens.RebbeScreen {...props({ authorId: 'alter-rebbe' })} />)).toContain('Tanya');
       } finally {
         appMode.setAppMode('online');
       }
@@ -243,7 +246,8 @@ describe('seforim screens', () => {
   it("opens the one search on the seforim, from the seforim's own link", async () => {
     const page = await render(<screens.SearchScreen {...props({ scope: 'seforim' })} />);
     expect(page).toContain('Search');
-    expect(page).toContain('Everything');
-    expect(page).toContain('Seforim');
+    // Narrowed to the seforim: their chip is set, with a way back to everything.
+    expect(page).toContain('"Seforim"');
+    expect(page).toContain('Clear filters');
   });
 });

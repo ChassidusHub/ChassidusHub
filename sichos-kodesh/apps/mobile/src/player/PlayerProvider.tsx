@@ -11,7 +11,7 @@ import type { Language } from '../i18n/translations';
 import { getOnlineSnapshot, looksLikeNetworkError, reportFetchFailure } from '../network/connectivity';
 import { catalogAudioToTracks, trackMetadata } from './playlist';
 import type { PlayerContextValue, PlayerError, PlayerPlaylist } from './playerContext';
-import { PlayerContext, playlistForEntry, playlistNames } from './playerContext';
+import { PlayerContext, playlistForEntry, playlistNames, SKIP_SECONDS } from './playerContext';
 import {
   flushProgressStore,
   getLastPlaylist,
@@ -44,8 +44,11 @@ async function doSetup(): Promise<void> {
   await TrackPlayer.setupPlayer({ autoHandleInterruptions: true });
   await TrackPlayer.updateOptions({
     android: { appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback },
-    capabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SkipToNext, Capability.SkipToPrevious, Capability.SeekTo],
+    capabilities: [Capability.Play, Capability.Pause, Capability.Stop, Capability.SkipToNext, Capability.SkipToPrevious, Capability.SeekTo, Capability.JumpBackward, Capability.JumpForward],
     compactCapabilities: [Capability.Play, Capability.Pause, Capability.SkipToNext, Capability.SkipToPrevious],
+    // The notification's 15 seconds back and forward, as in the full player (trackPlayerService.ts).
+    backwardJumpInterval: SKIP_SECONDS,
+    forwardJumpInterval: SKIP_SECONDS,
     progressUpdateEventInterval: 1,
   });
 }
@@ -305,6 +308,10 @@ export function PlayerProvider({ children }: Props) {
     [progress.duration],
   );
 
+  const seekBy = useCallback((seconds: number) => {
+    TrackPlayer.seekBy(seconds).catch(() => undefined);
+  }, []);
+
   // useProgress polls every 500 ms while useActiveTrack updates on the
   // track-changed event, so for a poll or two after a skip the sample still
   // describes the *previous* chapter - and would credit its position to the
@@ -359,11 +366,12 @@ export function PlayerProvider({ children }: Props) {
       prev,
       playChapter,
       seekToFraction,
+      seekBy,
       playbackRate,
       playbackRateAllowed,
       setPlaybackRate,
     }),
-    [currentIndex, error, loading, next, pause, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekToFraction, togglePlay, playbackRate, playbackRateAllowed, setPlaybackRate],
+    [currentIndex, error, loading, next, pause, play, playChapter, playing, playlist, prev, progress.duration, progress.position, requestedIndex, seekBy, seekToFraction, togglePlay, playbackRate, playbackRateAllowed, setPlaybackRate],
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;

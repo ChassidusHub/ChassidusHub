@@ -4,8 +4,6 @@ import {
   resolveOccasionRoute,
   resolveMonthOccasions,
   resolveOccasionAllYearsGroups,
-  selectCategoryPdfs,
-  splitFarbrengenContent,
 } from './catalogRoutes';
 
 function entry(overrides: Partial<CatalogEntry> & Pick<CatalogEntry, 'hebrewYear' | 'occasionId' | 'hebrewDate'>): CatalogEntry {
@@ -72,44 +70,6 @@ describe('catalogRoutes', () => {
   it('filters month occasions by month token', () => {
     expect(resolveMonthOccasions(catalog, 5711, '05').map((item) => item.occasionId)).toEqual([1, 2]);
     expect(resolveMonthOccasions(catalog, 5711, '06A').map((item) => item.occasionId)).toEqual([3, 4]);
-  });
-
-  it('sorts category PDFs using edition preference', () => {
-    const pdfEntry = entry({
-      hebrewYear: 5713,
-      occasionId: 10,
-      hebrewDate: '5713-05-10',
-      pdfs: [
-        { section: 'biltiMugah', label: 'Random booklet', driveFileId: 'z' },
-        { section: 'biltiMugah', label: 'תו"מ התוועדויות', driveFileId: 'tm' },
-        { section: 'biltiMugah', label: 'שיחו"ק חלק א', driveFileId: 'sk' },
-      ],
-    });
-
-    expect(selectCategoryPdfs(pdfEntry, 'biltiMugah', 'sichosKodesh').map((pdf) => pdf.driveFileId)).toEqual([
-      'sk',
-      'z',
-      'tm',
-    ]);
-  });
-
-  it('splits highlighted hanacha PDFs from secondary categories', () => {
-    const result = splitFarbrengenContent(
-      entry({
-        hebrewYear: 5714,
-        occasionId: 11,
-        hebrewDate: '5714-05-10',
-        pdfs: [
-          { section: 'biltiMugah', label: 'תו"מ התוועדויות', driveFileId: 'h1' },
-          { section: 'biltiMugah', label: 'Letter', driveFileId: 'h2' },
-          { section: 'hagahos', label: 'Glosses', driveFileId: 'h3' },
-        ],
-      }),
-    );
-
-    expect(result.hanachaPdfs.map((pdf) => pdf.driveFileId)).toEqual(['h1']);
-    expect(result.otherPdfs.map((pdf) => pdf.driveFileId)).toEqual(['h2']);
-    expect(result.categoryLinks).toEqual([{ section: 'hagahos', count: 1 }]);
   });
 
   it('derives the same occasion across years from a source occasion', () => {

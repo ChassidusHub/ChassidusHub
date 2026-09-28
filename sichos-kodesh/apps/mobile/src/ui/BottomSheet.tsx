@@ -9,9 +9,12 @@ import { useColors } from './theme';
 
 interface Props {
   visible: boolean;
-  title: string;
+  /** Its heading beside the handle; none for a sheet that sets its own (the full player). */
+  title?: string;
   onClose: () => void;
   children: ReactNode;
+  /** Up to nearly the whole screen, for a sheet that is a screen of its own (the full player); else up to about three quarters. */
+  tall?: boolean;
 }
 
 /** How far down (pt), or how fast, a drag has to go to close the sheet rather than spring back. */
@@ -26,7 +29,7 @@ const CLOSE_VELOCITY = 0.9;
  * contents are scrolled to the top - and springs back otherwise. A tap
  * on the page above closes it too (web: `.reader-panel`).
  */
-export function BottomSheet({ visible, title, onClose, children }: Props) {
+export function BottomSheet({ visible, title, onClose, children, tall = false }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { t, isRtl } = useTranslation();
@@ -67,11 +70,11 @@ export function BottomSheet({ visible, title, onClose, children }: Props) {
       <Pressable style={styles.backdrop} onPress={close} accessibilityLabel={t.readerClose} />
       <Animated.View
         {...pan.panHandlers}
-        style={[styles.sheet, { backgroundColor: colors.bgElevated, borderColor: colors.border, paddingBottom: insets.bottom + 12, transform: [{ translateY: drag }] }]}
+        style={[styles.sheet, tall && styles.tall, { backgroundColor: colors.bgElevated, borderColor: colors.border, paddingBottom: insets.bottom + 12, transform: [{ translateY: drag }] }]}
       >
         <View style={styles.handleArea}>
           <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-          <AppText style={[styles.title, { textAlign: isRtl ? 'right' : 'left' }]}>{title}</AppText>
+          {title ? <AppText style={[styles.title, { textAlign: isRtl ? 'right' : 'left' }]}>{title}</AppText> : null}
         </View>
         <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16} bounces={false} overScrollMode="never">
           {children}
@@ -85,6 +88,7 @@ const styles = StyleSheet.create({
   backdropShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.25)' },
   backdrop: { flex: 1 },
   sheet: { maxHeight: '72%', borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: StyleSheet.hairlineWidth, paddingTop: 8 },
+  tall: { maxHeight: '92%' },
   /** Tall enough to catch a thumb: the handle and the title together. */
   handleArea: { paddingBottom: 6 },
   grabber: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, marginBottom: 10 },

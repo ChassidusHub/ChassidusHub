@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 ROOT="$(cd ../.. && pwd)"
 
 echo "▶ workspace packages"
-(cd "$ROOT" && npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/pack-format -w @sichos-kodesh/works -w @sichos-kodesh/sefaria-index >/dev/null)
+(cd "$ROOT" && npm run build -w @sichos-kodesh/design -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog -w @sichos-kodesh/app-core -w @sichos-kodesh/pack-format -w @sichos-kodesh/works -w @sichos-kodesh/sefaria-index >/dev/null)
 
 echo "▶ react-native-track-player patch"
 (cd "$ROOT" && node scripts/patch-react-native-track-player.mjs)

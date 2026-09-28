@@ -1,37 +1,16 @@
 import React, { useMemo } from 'react';
-import { resolveThisWeek, thisWeekDays } from '@sichos-kodesh/catalog';
-import type { CatalogByYear } from '@sichos-kodesh/catalog';
-import { SPECIAL_ANNIVERSARY_YEARS, findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
-import type { MatchingYearResult } from '@sichos-kodesh/kvius-engine';
+import { thisWeekDays } from '@sichos-kodesh/catalog';
+import { findMatchingYears, findPartialWeekMatches } from '@sichos-kodesh/kvius-engine';
 import { IL } from '../config';
 import { useCatalog } from '../catalog/catalogStore';
 import { useTranslation } from '../i18n/useTranslation';
 import type { KviusYearsScreenProps } from '../navigation/types';
 import { hebrewYearLabel } from '../utils/formatHebrewDate';
+import { filterAndSortForDisplay, findSpecialAnniversaries } from '../utils/weekYears';
 import { Row, RowDistance } from '../ui/Row';
 import { Screen } from '../ui/Screen';
 import { ScreenHeader } from '../ui/ScreenHeader';
 import { CategoryHeader, TabHelp } from '../ui/Typography';
-
-/** Drops a candidate year with nothing indexed for the current week, then sorts chronologically (oldest first) - `findMatchingYears`/`findPartialWeekMatches` return nearest-first, which is right for finding the best match but wrong for reading a list top to bottom. */
-function filterAndSortForDisplay(results: MatchingYearResult[], catalog: CatalogByYear, today: Date): MatchingYearResult[] {
-  return results
-    .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
-    .slice()
-    .sort((a, b) => a.hebrewYear - b.hebrewYear);
-}
-
-interface SpecialAnniversaryMatch {
-  hebrewYear: number;
-  anniversaryNumber: number;
-}
-
-/** Years hitting a round-number anniversary this calendar year - independent of kvius matching, so a separate section. Same "must have something for this week, oldest first" filtering as the other two. */
-function findSpecialAnniversaries(targetYear: number, catalog: CatalogByYear, today: Date): SpecialAnniversaryMatch[] {
-  return SPECIAL_ANNIVERSARY_YEARS.map((anniversaryNumber) => ({ hebrewYear: targetYear - anniversaryNumber, anniversaryNumber }))
-    .filter((item) => resolveThisWeek(item.hebrewYear, catalog, today).length > 0)
-    .sort((a, b) => a.hebrewYear - b.hebrewYear);
-}
 
 /** Every kvius-matched year with something indexed for the current week, oldest first; below it, partial (this-week-only) matches and special anniversaries (web: `/kvius`). */
 export function KviusYearsScreen({ navigation, route }: KviusYearsScreenProps) {

@@ -17,3 +17,8 @@ NotoSerifHebrew.ttf, NotoSerifHebrew_bold.ttf  Noto Serif Hebrew Regular and Bol
 
 NotoSans.ttf and NotoSans_bold.ttf, the app's own face, are Noto Sans and
 Noto Sans Hebrew merged (SIL Open Font License 1.1).
+
+FrankRuhlLibre_bold.ttf, the display face for titles, is Frank Ruhl Libre
+Bold, its Hebrew and Latin subsets (from @fontsource/frank-ruhl-libre 5.3.0)
+merged into one file. SIL Open Font License 1.1: FrankRuhlLibre-OFL.txt.
+https://github.com/fontef/frankruhllibre

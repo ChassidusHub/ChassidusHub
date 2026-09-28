@@ -9,6 +9,31 @@ interface ChangelogEntry {
 /** Most recent first. Kept short and user-facing - not a commit log. Same shape as apps/web/src/changelog.ts. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.0.0',
+    en: [
+      'A new app, top to bottom: five tabs along the bottom - This week, Farbrengens, Library, Search and Mine - and the app\'s own color, picked in Settings from six',
+      'This week opens the app: the parsha, the kvius year\'s farbrengens with Play and the hanacha, every year\'s farbrengens of the week, the parsha\'s Likkutei Sichos, and where you left off',
+      'One page for each farbrengen: Play with the chapters right under it, its texts with the hanachos first, the same occasion in every year, and the farbrengens before and after it',
+      'The library is one shelf: the Rebbe\'s Torah with Igros Kodesh among it, then the diaries and JEM\'s recordings, then a page for each Rebbe\'s seforim. Where you left off reading, and your bookmarks, are under Mine',
+      'Search has its filters as chips under the box - where to look, the year, the month and day, the parsha, the moed - with your recent searches before you type, results grouped by kind, and the library\'s own search box on its shelf',
+      'A new player: a small bar above the tabs, and the full player from it, with the chapter list, 15 seconds back and forward (on the lock screen too), and the chapters before and after',
+      'The reader and the PDFs share one top bar, and a tap on the page hides it or brings it back. A PDF has a page slider: see which page of how many, and slide to go straight to any other',
+      'Titles in a new face, Frank Ruhl Libre - the same in Hebrew and English',
+      'A file a pack holds under two names now shows as downloaded under both',
+    ],
+    he: [
+      'אפליקציה חדשה מקצה לקצה: חמש לשוניות בתחתית - השבוע, התוועדויות, הספרייה, חיפוש ושלי - וצבע משלכם, לבחירה בהגדרות מתוך שישה',
+      'האפליקציה נפתחת על השבוע: הפרשה, ההתוועדויות של שנת הקביעות עם ניגון וההנחה, ההתוועדויות של השבוע בכל השנים, לקוטי השיחות של הפרשה, והמקום שבו הפסקתם',
+      'דף אחד לכל התוועדות: ניגון והקטעים ממש מתחתיו, הטקסטים עם ההנחות תחילה, אותו אירוע בכל השנים, וההתוועדויות שלפניה ושאחריה',
+      'הספרייה היא מדף אחד: תורת הרבי ואגרות קודש בתוכה, אחריה היומנים וההקלטות של JEM, ואחר כך דף לספרי כל רבי. המקום שבו הפסקתם לקרוא והסימניות נמצאים ב״שלי״',
+      'בחיפוש, המסננים הם כפתורים מתחת לתיבה - איפה לחפש, השנה, החודש והיום, הפרשה, המועד - עם החיפושים האחרונים לפני שמקלידים, תוצאות מקובצות לפי סוג, ותיבת חיפוש משלה לספרייה על המדף',
+      'נגן חדש: פס קטן מעל הלשוניות, והנגן המלא ממנו, עם רשימת הקטעים, 15 שניות אחורה וקדימה (גם במסך הנעילה), והקטע הקודם והבא',
+      'לקורא ולקובצי ה-PDF פס עליון אחד, ונגיעה בדף מסתירה אותו או מחזירה אותו. ל-PDF יש מחוון עמודים: רואים באיזה עמוד מתוך כמה, ומזיזים כדי לעבור ישר לכל עמוד אחר',
+      'הכותרות בגופן חדש, פרנק רוהל ליברה - אותו גופן בעברית ובאנגלית',
+      'קובץ שחבילה מחזיקה בשני שמות מוצג עכשיו כמורד בשניהם',
+    ],
+  },
+  {
     version: '1.13.0',
     en: [
       'The app tells you when a new version is out, and asks whether to update: which version it is and what is new in it. Update downloads this phone\'s own file and installs it over this one, with every download and setting kept; Later asks again in a few days. About shows the newest version too, and checks on a tap',
