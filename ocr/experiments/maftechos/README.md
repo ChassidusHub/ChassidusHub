@@ -18,7 +18,13 @@ them; the plan should say so before this grows past an experiment.
 | `ocr_index.py` | Page layout (deskew, rules, column split, lines via Tesseract) and the index parser (topics, volumes, page ranges, footers) |
 | `build_pairs.py` | Silver line pairs: each scanned line with its stretch of the typed copy, kept only when the two nearly agree (plan §4.3) |
 | `train_round.sh` | Fine-tunes Kraken on those pairs |
-| `eval_volume.py` | Reads a whole index with Tesseract or a Kraken model and scores topics and page references against the typed copy |
+| `eval_volume.py` | Reads a whole index with Tesseract or a Kraken model and scores topics and page references against the typed copy. Kraken reads; Tesseract's reading of the same line fills in a volume letter or bracket Kraken missed |
+| `run_index.py` | Reads every index page of a book with a model and writes its lines and parsed entries |
+| `try_page.py` | Prints Kraken and Tesseract side by side, line by line, for a few pages |
+| `export_lines.py`, `add_labels.py` | Cut hard lines (bracketed pages, raised-hyphen ranges) from the vols 1–9 index for a person to label; labels stay in `label1_9/`, never committed |
+| `short_pairs.py` | Training pairs for headings and number-only lines, which the silver pairs lacked |
+| `fetch_anchors.py` | Fetches each sicha's first page and PDF link from mafteiach.app, one request a second |
+| `link.py` | Links each page reference to its sicha and the page within that sicha's PDF, or flags it for a person |
 
 `ocr_index.py` expects `tessbest/` beside it, holding the `heb` and `eng`
 models from tessdata_best.
@@ -59,5 +65,26 @@ Going through round 1's errors one by one showed where they were:
 What is left on vol 34: one heading the layout step never found as a line
 (יחידות), one heading misread (יריחו as יךיחן), and one page "1" in the
 typed copy that looks like the library's own error.
+
+## The vols 1–9 index and linking (2026-09-29)
+
+The combined index of vols 1–9 prints marks the typed pairs never had:
+bracketed pages ("[857]"), raised-hyphen ranges, footnote marks. 314 of
+its lines were labelled by hand and added to training (round 4). Rounds
+are chosen by vol 34 page references, not line scores: round 3 scored
+better on lines and fell to 493 of 615 references.
+
+| Reader | vols 1–9 hard lines | vols 1–9 random lines | vol 34 page refs |
+| --- | --- | --- | --- |
+| Kraken, round 1 | 88.1% | 97.97% | 612 of 615 |
+| Kraken, round 4 | 97.96% | 98.73% | 610 of 615 |
+
+Linking the vols 1–9 read (4,859 references) to mafteiach.app's 2,229
+sicha starts: 4,694 link, 165 (3.4%) are flagged for a person. Most of the
+earlier flags came from the column split giving the left column's volume
+letters to the right column; it now cuts in the middle of the widest
+gutter, and flags fell from 421 to 165. What is left: numbers run together
+(for example 44444), a volume letter lost or misread, and vols 5+ whose
+end page is a guess (last sicha start + 40).
 
 All output is machine output, labelled as such until a person checks it.

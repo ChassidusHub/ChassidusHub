@@ -13,12 +13,12 @@ that starts a line (125 comes out as 5). So every stretch of ink that no
 word box covers, and every number it did read, is read again with a
 digits-only pass, and the line is rebuilt right to left.
 """
-import csv, io, json, os, re, subprocess, sys
+import csv, io, json, re, subprocess, sys
 import numpy as np
 import pymupdf
 from PIL import Image
 
-TESSDATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tessbest')  # tessdata_best heb + eng
+TESSDATA = __import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)), 'tessbest')
 HEB_LETTERS = 'אבגדהוזחטיכלמנסעפצקרשת'
 
 
@@ -57,8 +57,21 @@ def split_columns(a, top, bottom):
     ink = np.convolve(ink, np.ones(7) / 7, mode='same')
     w = a.shape[1]
     lo, hi = int(w * 0.35), int(w * 0.65)
-    x = lo + int(np.argmin(ink[lo:hi]))
-    return x if ink[x] <= 0.01 * (bottom - top) else None
+    # Cut in the middle of the widest empty band. The left column's volume letters
+    # stand in a narrow strip of their own beside the gutter; cutting at the first
+    # empty spot put them in the right column, and the left column lost them.
+    empty = ink[lo:hi] <= 0.01 * (bottom - top)
+    runs, start = [], None
+    for i, e in enumerate(list(empty) + [False]):
+        if e and start is None:
+            start = i
+        elif not e and start is not None:
+            runs.append((start, i))
+            start = None
+    if not runs:
+        return None
+    s, e = max(runs, key=lambda r: r[1] - r[0])
+    return lo + (s + e) // 2
 
 
 def tesseract(img, args):
@@ -207,7 +220,9 @@ def parse(columns, first=1, last=9):
             short_heading = (not re.search(r'[\d()]', line) and not line.startswith('ע"ע') and re.match(r'\d', nxt)
                              and (len(line.split()) <= 2 or (l.get('width', 999) < 0.5 * l.get('column', 1) and len(line.split()) <= 4)))
             # A heading may carry a short gloss in parentheses: כפר חב"ד (ישוב):
-            if re.fullmatch(r'\(?[^\d()]{2,40}\)?(\s*\([^\d()]{1,20}\))?\s*:', line) or short_heading:
+            # Inside an open note a line can end in a colon too ("ג' עניני':"); it is not a heading.
+            in_note = segment is not None and segment['text'].count('(') > segment['text'].count(')')
+            if not in_note and (re.fullmatch(r'\(?[^\d()]{2,40}\)?(\s*\([^\d()]{1,20}\))?\s*:', line) or short_heading):
                 entries.append({'topic': line.rstrip(': ').strip(), 'segments': []})
                 segment = None
                 continue

@@ -8,3 +8,10 @@ round*/
 tessbest/
 *.txt
 diffs*.json
+__pycache__/
+label1_9/
+short/
+*.pdf
+idx*.json
+linked*.json
+ls_anchors.json

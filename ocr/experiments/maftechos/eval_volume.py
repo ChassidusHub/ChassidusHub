@@ -38,9 +38,45 @@ def kraken_reader(model_path):
                           text_direction='horizontal-rl') for i, l in enumerate(lines)]
         seg = Segmentation(type='bbox', imagename='page', text_direction='horizontal-rl', script_detection=False, lines=boxes)
         for l, rec in zip(lines, net.predict(im, seg, config)):
-            l['text'] = rec.prediction
+            l['text'] = with_volume_letter(rec.prediction.strip(), l['text'])
         return lines
     return read
+
+
+def with_volume_letter(kraken, tesseract):
+    """The bold volume letter that opens a line in the multi-volume indexes
+    stands apart from the text, and Kraken, trained on single-volume indexes,
+    sometimes leaves it out. Tesseract's line keeps it; take it from there."""
+    kraken = re.sub(r'^([\u05d0-\u05ea]{1,2})(\d)', r'\1 \2', kraken.strip())
+    m = re.match(r'\s*([\u05d0-\u05ea]{1,2}|\?)\s+\d', tesseract)
+    if m and re.match(r'\d', kraken):
+        kraken = m.group(1) + ' ' + kraken
+    return with_brackets(kraken, tesseract)
+
+
+def with_brackets(kraken, tesseract):
+    """A page inside a note, where the note runs on ("[857]"), is printed in square
+    brackets. The vol 30-33 lines had none, so Kraken reads [857] as נ857), (1857,
+    8571) and the like, while Tesseract keeps the brackets (or at least the number)
+    but misreads digits more often. Where Tesseract has the number, bracketed or
+    not, and Kraken shows one of those marks round it, put brackets round Kraken's
+    digits."""
+    near = lambda a, b: len(a) == len(b) and sum(x != y for x, y in zip(a, b)) <= 1
+    bracketed = re.findall(r'\[(\d{1,4})\]', tesseract)
+    plain = re.findall(r'(?<!\d)\d{1,4}(?!\d)', tesseract)
+    mark = r'(?<!\d)(?P<open>נ|\(1|\[|1(?=\d{3}\)))?(?P<n>\d{2,4}?)(?P<close>1\)|\(\)|\]|\))'
+    out, pos = [], 0
+    for k in re.finditer(mark, kraken):
+        n = k.group('n')
+        odd = (k.group('open') or '') + k.group('close')
+        is_bracket = any(near(n, t) for t in bracketed) or (odd not in (')',) and any(near(n, t) for t in plain) and not any(t == n + '1' for t in plain))
+        if is_bracket and odd != ')' or (k.group('close') == ')' and k.group('open') and any(near(n, t) for t in bracketed)):
+            # "(1860)" was "([860])" and "נ195()" was "[195])": keep the note's own bracket.
+            fixed = '[' + n + ']'
+            fixed = '(' + fixed + ')' if k.group('open') == '(1' else fixed + ')' if k.group('close') == '()' else fixed
+            out.append(kraken[pos:k.start()] + fixed)
+            pos = k.end()
+    return ''.join(out) + kraken[pos:]
 
 
 def ocr_volume(pdf, pages, read=None):
