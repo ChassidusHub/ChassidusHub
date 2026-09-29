@@ -24,6 +24,7 @@ them; the plan should say so before this grows past an experiment.
 | `export_lines.py`, `add_labels.py` | Cut hard lines (bracketed pages, raised-hyphen ranges) from the vols 1–9 index for a person to label; labels stay in `label1_9/`, never committed |
 | `short_pairs.py` | Training pairs for headings and number-only lines, which the silver pairs lacked |
 | `fetch_anchors.py` | Fetches each sicha's first page and PDF link from mafteiach.app, one request a second |
+| `link_typed.py` | Links a volume's index as typed by the Chabad Library (vols 30–39), with no OCR needed |
 | `link.py` | Links each page reference to its sicha and the page within that sicha's PDF, or flags it for a person |
 
 `ocr_index.py` expects `tessbest/` beside it, holding the `heb` and `eng`
@@ -86,5 +87,12 @@ letters to the right column; it now cuts in the middle of the widest
 gutter, and flags fell from 421 to 165. What is left: numbers run together
 (for example 44444), a volume letter lost or misread, and vols 5+ whose
 end page is a guess (last sicha start + 40).
+
+Vols 30–39 (not 37, which has no typed index yet) come typed from the
+Chabad Library, so they link with no OCR: all 6,650 references link. From
+vol 35 the library also names its own sicha for each page; 192 references
+are marked where it splits finer than mafteiach.app, almost all in the
+additions (הוספות), where one PDF holds several talks and letters. The PDF
+page is still right there.
 
 All output is machine output, labelled as such until a person checks it.
