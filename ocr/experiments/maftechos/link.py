@@ -4,8 +4,9 @@ A sicha starts on the page mafteiach.app gives for it and runs until the next
 sicha starts, so a page belongs to the last sicha starting on or before it,
 and its page inside that sicha's PDF is the distance from the start plus one.
 Vols 1-4 are numbered straight through (vol 2 starts at 293), which also
-tells us each of them ends where the next begins. The last sicha of a later
-volume has no known end; pages far past its start are flagged.
+tells us each of them ends where the next begins. A later volume ends where
+its own indexes (מפתחות) begin, when mafteiach.app lists them; otherwise its
+last sicha has no known end and pages far past its start are flagged.
 
     python3 link.py <index.json from run_index> <ls_anchors.json> <out.json>"""
 import bisect, collections, json, sys
@@ -19,12 +20,13 @@ def numeral(s):
 
 
 def build(anchors):
-    by = collections.defaultdict(list)
+    by, indexes = collections.defaultdict(list), collections.defaultdict(list)
     for a in anchors:
-        by[a['volume']].append(a)
+        (indexes if a['section'] == 'מפתחות' else by)[a['volume']].append(a)
     for v in by:
         by[v].sort(key=lambda a: a['page'])
-    end = {v: (by[v + 1][0]['page'] - 1 if v < 4 else by[v][-1]['page'] + TAIL) for v in by}
+    end = {v: (by[v + 1][0]['page'] - 1 if v < 4 and v + 1 in by else
+               min(a['page'] for a in indexes[v]) - 1 if indexes[v] else by[v][-1]['page'] + TAIL) for v in by}
     return by, end
 
 
