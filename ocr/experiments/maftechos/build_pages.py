@@ -19,10 +19,11 @@ bad = lambda r: not r['sicha'] or r['flag'] in UNLINKED
 
 
 def href(s, page):
-    q = {'src': s['pdf'], 'title': f"לקוטי שיחות {s['label']}"}
-    if s['pdf_page'] > 1:
-        q['page'] = str(s['pdf_page'])
-    return '/read?' + urllib.parse.urlencode(q)
+    # Short on purpose: 33,000 of these fill the pages. The title stays readable Hebrew
+    # (spaces as +), and src goes last, unencoded, since a Drive link holds no & of its own.
+    title = ''.join({'&': '%26', '#': '%23', '%': '%25', '+': '%2B', '?': '%3F'}.get(c, c) for c in s['label']).replace(' ', '+')
+    page = f"page={s['pdf_page']}&" if s['pdf_page'] > 1 else ''
+    return f"/read?{page}title={title}&src={s['pdf']}"
 
 
 def runs_for(refs):

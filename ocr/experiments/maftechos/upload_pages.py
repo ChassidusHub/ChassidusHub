@@ -11,7 +11,7 @@ LS = 'rh-t3aehxx4'  # לקוטי שיחות, for its sets and authors
 
 def call(method, path, body=None):
     req = urllib.request.Request(API + path, method=method, data=None if body is None else json.dumps(body).encode(),
-                                 headers={'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json', 'Accept': 'application/json'})
+                                 headers={'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'rebbehub-maftechos-upload/1'})
     with urllib.request.urlopen(req, timeout=120) as r:
         return json.load(r)
 
