@@ -25,6 +25,9 @@ them; the plan should say so before this grows past an experiment.
 | `short_pairs.py` | Training pairs for headings and number-only lines, which the silver pairs lacked |
 | `fetch_anchors.py` | Fetches each sicha's first page and PDF link from mafteiach.app, one request a second |
 | `link_typed.py` | Links a volume's index as typed by the Chabad Library (vols 30–39), with no OCR needed |
+| `heads.py` | Prints each page's running head, to find where a book's subject index starts and ends |
+| `build_pages.py` | Turns the linked indexes into RebbeHub pages, one per volume, each page number a link to the sicha's PDF page |
+| `upload_pages.py` | Sends those pages to RebbeHub as one suggestion for review (a personal token in `REBBEHUB_TOKEN`) |
 | `link.py` | Links each page reference to its sicha and the page within that sicha's PDF, or flags it for a person |
 
 `ocr_index.py` expects `tessbest/` beside it, holding the `heb` and `eng`
@@ -94,5 +97,10 @@ vol 35 the library also names its own sicha for each page; 192 references
 are marked where it splits finer than mafteiach.app, almost all in the
 additions (הוספות), where one PDF holds several talks and letters. The PDF
 page is still right there.
+
+Vols 10–25 and 37 come from the index books (י-טו, טו-יט, כ-כד, כה, לז)
+read with round 4: of about 23,000 references, 1.5% are flagged. No
+subject index for vols 26–29 has been found. In all, 33,421 references
+across 35 volumes, 250 of them left unlinked for a person.
 
 All output is machine output, labelled as such until a person checks it.
