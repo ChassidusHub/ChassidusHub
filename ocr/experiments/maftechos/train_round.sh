@@ -1,6 +1,5 @@
 #!/bin/bash
-# Fine-tune Kraken on the silver line pairs, from the BiblIA Hebrew model
-# or from an earlier round's weights.
+# Fine-tune Kraken from the BiblIA Hebrew model on the silver line pairs.
 #   train_round.sh <name> <train list> [epochs] [start model]
 set -e
 cd "$(dirname "$0")"
