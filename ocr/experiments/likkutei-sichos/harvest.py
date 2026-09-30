@@ -59,7 +59,10 @@ def groups(band):
 
 def harvest(net, a, store):
     lay = page_layout(a)
-    lines = [l for col in lay['body'] for l in col]
+    # Body lines, then footnote lines (their letters kept apart, as 'n:' + letter, being
+    # smaller: the font takes its digits from them, scaled to the body's size). Never the
+    # running head: its page number may be set in another face.
+    lines = [dict(l, prefix='') for col in lay['body'] for l in col] + [dict(l, prefix='n:') for col in lay['notes'] for l in col]
     if not lines:
         return 0
     h, w = a.shape
@@ -74,22 +77,35 @@ def harvest(net, a, store):
         y0, y1 = max(0, l['y0'] - 4), min(h, l['y1'] + 4)
         band = a[y0:y1, max(0, l['x0'] - 4):min(w, l['x1'] + 4)] < 128
         gs, marks, info = groups(band)
-        if len(gs) != len(chars):
-            continue
-        lab, base, xh = info
-        # The gaps between letters of one word, for the font's spacing.
+        lab, base, xh = info if info else (None, None, None)
         words = visual(text).split()
-        k = 0
-        for word in words:
-            for j in range(len(word)):
-                g = gs[k + j]
-                glyph = np.isin(lab[g['y0']:g['y1'], g['x0']:g['x1']], g['ids'])
-                store.setdefault(word[j], []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh})
-                if j + 1 < len(word):
-                    store.setdefault('_gap', []).append(g['x0'] - gs[k + j + 1]['x1'])
-            k += len(word)
-        for m in marks:
-            store.setdefault('_marks', []).append(1)
+        if len(gs) == len(chars):
+            pairs = [(words, gs)]
+        else:
+            # The letters counted don't match the line: try word by word, splitting the
+            # ink at its widest gaps into as many words as were read.
+            pairs = []
+            if len(gs) > len(words) > 1:
+                gaps = [gs[i]['x0'] - gs[i + 1]['x1'] for i in range(len(gs) - 1)]
+                cut = sorted(range(len(gaps)), key=lambda i: -gaps[i])[:len(words) - 1]
+                if min(gaps[i] for i in cut) > 2 * max(1, np.median(gaps)):
+                    bounds = [0] + sorted(i + 1 for i in cut) + [len(gs)]
+                    for wd, (a0, a1) in zip(words, zip(bounds, bounds[1:])):
+                        if a1 - a0 == len(wd):
+                            pairs.append(([wd], gs[a0:a1]))
+        for ws, g_all in pairs:
+            k = 0
+            for word in ws:
+                for j in range(len(word)):
+                    g = g_all[k + j]
+                    glyph = np.isin(lab[g['y0']:g['y1'], g['x0']:g['x1']], g['ids'])
+                    store.setdefault(l['prefix'] + word[j], []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh})
+                    if j + 1 < len(word) and not l['prefix']:
+                        # The gaps between letters of one word, for the font's spacing.
+                        store.setdefault('_gap', []).append(g['x0'] - g_all[k + j + 1]['x1'])
+                k += len(word)
+        if not pairs:
+            continue
         kept += 1
     return kept
 
@@ -109,7 +125,7 @@ if __name__ == '__main__':
             if not imgs:
                 continue
             a = deskew(np.array(Image.open(io.BytesIO(d.extract_image(imgs[0][0])['image'])).convert('L')))
-            if a.shape[1] > 2200:
+            if a.shape[1] > 2200 or a.shape[0] < 1000:  # not a body page
                 continue
             n = harvest(net, a, store)
             print(os.path.basename(f), p, n, 'lines', sum(len(v) for k, v in store.items() if not k.startswith('_')), 'letters', flush=True)
