@@ -94,6 +94,7 @@ def assemble(pages):
                 else:
                     cur['parts'].append(text)
                 merge_box(cur['boxes'], box(line, shape, pdf_page))
+                line['_in'] = cur
                 prev_short = short
         for col in lay['notes']:
             for line in col:
@@ -108,6 +109,7 @@ def assemble(pages):
                 else:
                     note['text'] = join(note['text'], text)
                 merge_box(note['boxes'], box(line, shape, pdf_page))
+                line['_in'] = note
     # Each ois is a section: the paragraph that opens with its letter, and the paragraphs
     # after it up to the next ois. What comes before the first stays outside any.
     segments, section = [], None
@@ -116,6 +118,7 @@ def assemble(pages):
         for part in p['parts']:
             text += [part] if isinstance(part, dict) else runs(part)
         seg = {'id': f'p{k}', 'kind': 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
+        p['id'] = seg['id']
         first = next((r['text'] for r in text if 'text' in r), '')
         m = OIS.match(first)
         if m and all(c in LETTERS for c in m.group(1)):
@@ -133,13 +136,35 @@ def assemble(pages):
         if nid in seen:
             nid = f'{nid}-{len(note_segs)}'
         seen.add(nid)
+        n['id'] = nid
         seg = {'id': nid, 'kind': 'note', 'text': [{'text': n['text']}], 'origin': ORIGIN, 'printed': n['boxes']}
         if n['label'].lstrip('*').isdigit():
             seg['n'] = int(n['label'].lstrip('*'))
             if n['label'].startswith('*'):
                 seg['label'] = n['label']
         note_segs.append(seg)
-    return {'profile': 'sichos-kodesh', 'versions': [{'id': 'he', 'language': 'he', 'segments': segments, 'notes': note_segs, 'origin': ORIGIN}]}
+    return pt_with_layout({'profile': 'sichos-kodesh', 'versions': [{'id': 'he', 'language': 'he', 'segments': segments, 'notes': note_segs, 'origin': ORIGIN}]}, pages)
+
+
+def pt_with_layout(pt, pages):
+    """The page text, and beside it where everything is on the scans: each page's
+    printed number and size, its running head, and every line (body or note, its
+    column, its box) with the paragraph or note it belongs to and each word's place
+    and the model's confidence. Boxes are fractions of the page, as in pageText.ts."""
+    layout = []
+    for printed, pdf_page, lay in pages:
+        h, w = lay['shape']
+        fx = lambda x: round(x / w, 4)
+        page = {'pdf_page': pdf_page, 'printed_page': printed, 'size': [w, h],
+                'head': [fx(lay['head']['x0']), round(lay['head']['y0'] / h, 4), fx(lay['head']['x1'] - lay['head']['x0']), round((lay['head']['y1'] - lay['head']['y0']) / h, 4)], 'lines': []}
+        for kind in ('body', 'notes'):
+            for c, col in enumerate(lay[kind]):
+                for line in col:
+                    page['lines'].append({'kind': 'note' if kind == 'notes' else 'body', 'column': c, 'text': line.get('text', ''),
+                                          'box': box(line, (h, w), pdf_page)['box'], 'in': line.get('_in', {}).get('id'),
+                                          'words': [{'text': x['text'], 'x0': fx(x['x0']), 'x1': fx(x['x1']), 'conf': x['conf']} for x in line.get('words', [])]})
+        layout.append(page)
+    return pt, layout
 
 
 def plain(pt):
@@ -161,7 +186,8 @@ if __name__ == '__main__':
     start = int(stem.split('_')[1])
     files = sorted(glob.glob(f'ocr/{stem}_[0-9][0-9].json'))
     pages = [(start + int(f[-7:-5]), int(f[-7:-5]) + 1, json.load(open(f))) for f in files]
-    pt = assemble(pages)
+    pt, layout = assemble(pages)
     json.dump(pt, open(f'out/{stem}.json', 'w'), ensure_ascii=False)
+    json.dump({'volume': int(stem.split('_')[0]), 'first_page': start, 'model': ORIGIN['by'], 'pages': layout}, open(f'out/{stem}.layout.json', 'w'), ensure_ascii=False)
     open(f'out/{stem}.txt', 'w').write(plain(pt))
     print(len(pt['versions'][0]['segments']), 'paragraphs', len(pt['versions'][0]['notes']), 'notes')

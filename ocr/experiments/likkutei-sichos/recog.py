@@ -29,7 +29,31 @@ def read_page(net, a):
                               for i, l in enumerate(lines)])
     for l, rec in zip(lines, net.predict(Image.fromarray(a), seg, CONFIG)):
         l['text'] = rec.prediction.strip()
+        l['words'] = words(rec, l)
     return lay
+
+
+def words(rec, line):
+    """Each word of a read line with its place on the page (x0, x1 across the line's
+    height) and how sure the model was of it (its least sure letter), for showing a word
+    on the scan, highlighting a search hit, and sending doubtful words to be checked."""
+    pred, cuts, conf = rec.prediction, rec.cuts, rec.confidences
+    if not pred or len(cuts) != len(pred):
+        return []
+    xs = [sum(p[0] for p in c) / len(c) for c in cuts]
+    half = (line['x1'] - line['x0']) / max(1, len(pred)) / 2
+    out, cur = [], []
+    for i, ch in enumerate(pred + ' '):
+        if ch == ' ' or i == len(pred):
+            if cur:
+                out.append({'text': ''.join(pred[j] for j in cur),
+                            'x0': int(max(line['x0'], min(xs[j] for j in cur) - half)),
+                            'x1': int(min(line['x1'], max(xs[j] for j in cur) + half)),
+                            'conf': round(float(min(conf[j] for j in cur)), 3)})
+            cur = []
+        else:
+            cur.append(i)
+    return out
 
 
 if __name__ == '__main__':
