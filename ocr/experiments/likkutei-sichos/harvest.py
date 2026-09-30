@@ -98,8 +98,11 @@ if __name__ == '__main__':
     import pickle, torch
     torch.set_num_threads(1)
     net = load(sys.argv[1])
-    store = {}
+    # Carry on from an earlier run: the pdfs already read are listed in the store.
+    store = pickle.load(open(sys.argv[3], 'rb')) if os.path.exists(sys.argv[3]) else {}
     for f in sorted(glob.glob(f'{sys.argv[2]}/*.pdf')):
+        if f in store.get('_done', []):
+            continue
         d = pymupdf.open(f)
         for p in range(1, len(d)):
             imgs = d[p].get_images()
@@ -110,4 +113,6 @@ if __name__ == '__main__':
                 continue
             n = harvest(net, a, store)
             print(os.path.basename(f), p, n, 'lines', sum(len(v) for k, v in store.items() if not k.startswith('_')), 'letters', flush=True)
-        pickle.dump(store, open(sys.argv[3], 'wb'))
+        store.setdefault('_done', []).append(f)
+        pickle.dump(store, open(sys.argv[3] + '.tmp', 'wb'))
+        os.replace(sys.argv[3] + '.tmp', sys.argv[3])
