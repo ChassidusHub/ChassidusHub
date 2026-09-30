@@ -155,7 +155,7 @@ def pt_with_layout(pt, pages):
     for printed, pdf_page, lay in pages:
         h, w = lay['shape']
         fx = lambda x: round(x / w, 4)
-        page = {'pdf_page': pdf_page, 'printed_page': printed, 'size': [w, h],
+        page = {'pdf_page': pdf_page, 'printed_page': printed, 'size': [w, h], 'head_text': lay['head'].get('text', ''),
                 'head': [fx(lay['head']['x0']), round(lay['head']['y0'] / h, 4), fx(lay['head']['x1'] - lay['head']['x0']), round((lay['head']['y1'] - lay['head']['y0']) / h, 4)], 'lines': []}
         for kind in ('body', 'notes'):
             for c, col in enumerate(lay[kind]):
