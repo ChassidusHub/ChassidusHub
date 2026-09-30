@@ -13,6 +13,9 @@ import glob, json, re, sys
 ORIGIN = {'by': 'ocr:kraken-rebbehub-ls'}
 MARK = re.compile(r'(?<=\S)(\*?\d{1,3})\)')
 NOTE_START = re.compile(r'^(\*?\d{1,3})\)\s*')
+# An ois: a paragraph opening with its letter and a period, א. ב. … יא.
+OIS = re.compile(r'^([א-ת]{1,2})\.\s')
+LETTERS = dict(zip('אבגדהוזחטיכלמנסעפצקרשת', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400]))
 
 
 def note_id(label):
@@ -105,12 +108,25 @@ def assemble(pages):
                 else:
                     note['text'] = join(note['text'], text)
                 merge_box(note['boxes'], box(line, shape, pdf_page))
-    segments = []
+    # Each ois is a section: the paragraph that opens with its letter, and the paragraphs
+    # after it up to the next ois. What comes before the first stays outside any.
+    segments, section = [], None
     for k, p in enumerate(paras, 1):
         text = []
         for part in p['parts']:
             text += [part] if isinstance(part, dict) else runs(part)
-        segments.append({'id': f'p{k}', 'kind': 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']})
+        seg = {'id': f'p{k}', 'kind': 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
+        first = next((r['text'] for r in text if 'text' in r), '')
+        m = OIS.match(first)
+        if m and all(c in LETTERS for c in m.group(1)):
+            seg['kind'] = 'paragraph'  # a short opening line, not a heading
+            n = sum(LETTERS[c] for c in m.group(1))
+            section = {'id': f'ois{n}' if not any(x['id'] == f'ois{n}' for x in segments) else f'ois{n}-{k}',
+                       'kind': 'section', 'n': n, 'label': m.group(1), 'origin': ORIGIN, 'children': []}
+            segments.append(section)
+        elif p['heading']:
+            section = None  # a heading (a new sicha's title) closes the ois before it
+        (section['children'] if section else segments).append(seg)
     note_segs, seen = [], set()
     for n in notes:
         nid = note_id(n['label']) if n['label'] != '?' else f'nx{len(note_segs)}'
@@ -130,7 +146,14 @@ def plain(pt):
     """The page text as readable lines, for checking by eye: [n] a mark, {238} a page."""
     v = pt['versions'][0]
     show = lambda runs: ''.join(r.get('text') or (f"[{r['note'][1:].replace('s', '*')}]" if 'note' in r else f"{{{r['marker']}}}") for r in runs)
-    return '\n\n'.join(('## ' if s['kind'] == 'heading' else '') + show(s['text']) for s in v['segments']) + '\n\n---\n' + '\n'.join(f"{n.get('label', n.get('n', '?'))}) {show(n['text'])}" for n in v['notes'])
+    def lines(segs):
+        for s in segs:
+            if s['kind'] == 'section':
+                yield f"### אות {s['label']}"
+                yield from lines(s['children'])
+            else:
+                yield ('## ' if s['kind'] == 'heading' else '') + show(s['text'])
+    return '\n\n'.join(lines(v['segments'])) + '\n\n---\n' + '\n'.join(f"{n.get('label', n.get('n', '?'))}) {show(n['text'])}" for n in v['notes'])
 
 
 if __name__ == '__main__':
