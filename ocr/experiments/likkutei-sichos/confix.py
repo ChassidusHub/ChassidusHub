@@ -13,7 +13,7 @@ word and the phrase. So, for each word the model read:
 Nothing else is touched, so unlike a full word-model decode this cannot
 wander off into inserting words.
 
-    confix.py <reading.npz> <vocab counts.txt> [--lm words.bin --margin 2
+    confix.py <reading.npz> <vocab counts.txt> [--lm words.bin --margin 1.5
         --min-prob 1e-3 --min-count 3 --out changes.txt]
 
 counts.txt: "word count" per line, logical order, NFD; a word keeps its
@@ -49,7 +49,7 @@ def read_frames(p, labels):
 
 
 class Fixer:
-    def __init__(self, vocab, idx, lm=None, margin=2.0, min_prob=1e-3, min_count=3, phrase_min_prob=3e-3):
+    def __init__(self, vocab, idx, lm=None, margin=1.5, min_prob=1e-3, min_count=3, phrase_min_prob=3e-3):
         self.vocab, self.idx, self.lm, self.margin, self.min_prob, self.min_count = vocab, idx, lm, margin, min_prob, min_count
         # a swap between two real words needs more of the network's weight, since
         # the word model is mostly Hebrew and would turn Yiddish ביים into ביום
@@ -111,7 +111,7 @@ class Fixer:
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('npz'); ap.add_argument('vocab')
-    ap.add_argument('--lm'); ap.add_argument('--margin', type=float, default=2.0)
+    ap.add_argument('--lm'); ap.add_argument('--margin', type=float, default=1.5)
     ap.add_argument('--min-prob', type=float, default=1e-3)
     ap.add_argument('--min-count', type=int, default=3)
     ap.add_argument('--phrase-min-prob', type=float, default=3e-3)

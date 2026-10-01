@@ -97,6 +97,7 @@ if __name__ == '__main__':
                 opt.zero_grad(); loss.backward(); opt.step(); sched.step(); loss_sum += loss.item() * len(idx)
             acc, conf = evaluate(net, xte, yte)
             print(f'epoch {ep + 1}: loss {loss_sum / len(xtr):.4f}, held-out {100 * acc:.3f}%  ({round(time.time() - t0)} s)', flush=True)
+            torch.save(net.state_dict(), a.model)  # each epoch, so a cut-off run still leaves a judge
         torch.save(net.state_dict(), a.model)
     print(f'held-out accuracy {100 * acc:.3f}%'); print('   ' + '  '.join(LETTERS))
     for k, ch in enumerate(LETTERS):
