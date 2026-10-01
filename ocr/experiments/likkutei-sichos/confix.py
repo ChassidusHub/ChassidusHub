@@ -32,9 +32,13 @@ EDGE = re.compile(r'^[^א-ת]+|[^א-ת]+$')
 WORD = re.compile(r'[א-ת"\'׳״]+')
 
 
+KEEP_GERESH = False  # keep a trailing geresh, so an abbreviation (שכ') is its own word, not the word שכ
+EDGE_G = re.compile(r"^[^א-ת]+|(?<=['׳\"״])[^א-ת]+$|(?<=[א-ת])[^א-ת'׳\"״]+$")
+
+
 def key(w):
     """The word as the vocabulary knows it: letters with their inner gershayim."""
-    w = EDGE.sub('', w)
+    w = EDGE_G.sub('', w) if KEEP_GERESH else EDGE.sub('', w)
     return w if WORD.fullmatch(w) else ''
 
 
@@ -115,8 +119,9 @@ if __name__ == '__main__':
     ap.add_argument('--min-prob', type=float, default=1e-3)
     ap.add_argument('--min-count', type=int, default=3)
     ap.add_argument('--phrase-min-prob', type=float, default=3e-3)
-    ap.add_argument('--out')
+    ap.add_argument('--out'); ap.add_argument('--keep-geresh', action='store_true')
     a = ap.parse_args()
+    KEEP_GERESH = a.keep_geresh
     vocab = {}
     for l in open(a.vocab, encoding='utf-8'):
         w, n = l.rsplit(' ', 1); vocab[w] = int(n)
