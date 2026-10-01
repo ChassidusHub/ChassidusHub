@@ -13,7 +13,12 @@ D=${S2DIR:-/root/s2}; cd $D; mkdir -p out; exec >> out/run.log 2>&1
 url() { python3 -c "import json,sys; print(json.load(open(sys.argv[2] + '/urls.json'))[sys.argv[1]])" "$1" "$D"; }
 put() { curl -sSf --retry 3 -X PUT -T "$1" "$(url "$2")" > /dev/null; }
 get() { curl -sSfL --retry 3 -o "$2" "$(url "get:$1")"; }
-( trap - ERR; set +eE; while sleep ${LOG_EVERY:-60}; do put out/run.log run.log; done ) & S0=$!
+( trap - ERR; set +eE; while sleep ${LOG_EVERY:-60}; do
+    put out/run.log run.log
+    [ -f out/relabel.log ] && put out/relabel.log relabel:log
+    [ -f out/ink_unclear.txt ] && put out/ink_unclear.txt ink:unclear
+    [ -f out/compile.log ] && put out/compile.log compile
+  done ) & S0=$!
 fail() { echo "failed: $1"; put out/run.log run.log; echo > out/FAILED; put out/FAILED FAILED; sleep ${HOLD:-3600}; }
 trap 'fail "line $LINENO"' ERR
 set -eEuo pipefail
@@ -82,8 +87,13 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # differences, where it is sure; the old labels stay as .gt.orig.txt. Done
 # once per pod (out/RELABELED_v3), before the lines are compiled.
 relabel() {
-  curl -sSfL -o out/reader.ckpt "$(url get:ppm:ckpt)" || { echo "relabel: no saved model, skipped"; return 0; }
-  ketos convert -o out/reader.safetensors out/reader.ckpt > /dev/null
+  # The reader is this run's newest save, or, on a fresh run, the base model
+  # itself (from run 3 on, the base is the previous run's best model).
+  if curl -sSfL -o out/reader.ckpt "$(url get:ppm:ckpt)"; then
+    ketos convert -o out/reader.safetensors out/reader.ckpt > /dev/null
+  else
+    echo "relabel: no saved model, the base model reads"; cp ppm.safetensors out/reader.safetensors; cp ppm.safetensors out/reader.ckpt
+  fi
   { grep '^pairs/' s2_train.txt; cat dev39.txt test39.txt; } | sort -u > out/real.txt
   local k=$(( WORK / 2 )); if (( k > 8 )); then k=8; fi; if (( k < 1 )); then k=1; fi
   echo "relabel: $k readers over $(wc -l < out/real.txt) real lines"
@@ -185,7 +195,7 @@ reporter() {  # each new save of the first lane: its error report on 300 dev lin
       (cd out && python3 ../relabel/errlog.py rep.npz "$name" --dir errors) >> out/rep.log 2>&1 &&
       put out/errors/$name.txt errors && put out/errors/history.jsonl history && echo "report $name: $(tail -1 out/errors/history.jsonl | cut -c1-150)"
     # every scored save is kept in R2 under its own number (out/kept.txt says which)
-    k=$(wc -l < out/kept.txt 2>/dev/null || echo 0)
+    local k=0; [ -f out/kept.txt ] && k=$(wc -l < out/kept.txt)
     if [ -f out/rep.safetensors ] && url keep:$k > /dev/null 2>&1 && put out/rep.safetensors keep:$k; then
       echo "$k $name" >> out/kept.txt; put out/kept.txt kept
     fi
@@ -328,22 +338,6 @@ focus() {
     gzip -kf out/ink.jsonl; put out/ink.jsonl.gz ink || true
   fi
   { grep -vxFf out/ink_unclear.txt focus_real.txt 2>/dev/null || cat focus_real.txt; ls focus/fk/*.png; } > focus_train.txt
-  # Every save still on the pod reads the 4,500 scoring lines, four at a time
-  # (save names repeat across restarts, so each is named by its file time and
-  # listed in out/saves.txt), so the keeper is picked on 4,500 lines, not 300.
-  if [ ! -f out/SAVES_DONE ]; then
-    mkdir -p out/saves; : > out/saves.txt; local j=0 sp=()
-    for c in $(ls -tr out/ppm/checkpoint_*.ckpt 2>/dev/null) out/ppm_best.safetensors; do
-      url save:$j > /dev/null 2>&1 || break
-      local m=out/saves/$j.safetensors
-      if [[ $c == *.ckpt ]]; then ketos convert -o $m "$c" > /dev/null 2>&1 || continue; else cp "$c" $m; fi
-      echo "$j $(basename $c) $(date -u -r $c +%H:%M) $(md5sum < $m | cut -c1-8)" >> out/saves.txt
-      ( python3 evalx.py $m out/full.txt out/saves/$j.npz --device cuda:0 > out/saves/$j.log 2>&1 && put out/saves/$j.npz save:$j ) & sp+=($!)
-      j=$((j + 1)); if (( ${#sp[@]} >= 4 )); then wait "${sp[@]}" || true; sp=(); fi
-    done
-    wait "${sp[@]}" 2>/dev/null || true
-    put out/saves.txt saves; touch out/SAVES_DONE
-  fi
   echo "focus: $(wc -l < focus_train.txt) lines, $(ls focus/fk/*.png | wc -l) of them fake"
   ketos --workers $WORK compile -f path -o focus.arrow -F focus_train.txt > out/focus_compile.log 2>&1
   echo focus.arrow > focus_list.txt; mkdir -p out/focus; touch out/focus.started
@@ -358,6 +352,27 @@ focus() {
   touch out/FOCUS_DONE; echo "focus: done"
 }
 ( trap - ERR; set +eE +o pipefail; focus ) || echo "focus failed"
+test_saves() {
+  trap - ERR; set +eE +o pipefail
+  # Every save still on the pod reads the 4,500 scoring lines, four at a time
+  # (save names repeat across restarts, so each is named by its file time and
+  # listed in out/saves.txt), so the keeper is picked on 4,500 lines, not 300.
+  cat dev39.txt test39.txt > out/full.txt
+  if [ ! -f out/SAVES_DONE ]; then
+    mkdir -p out/saves; : > out/saves.txt; local j=0 sp=()
+    for c in $(ls -tr out/ppm/checkpoint_*.ckpt 2>/dev/null) out/ppm_best.safetensors; do
+      url save:$j > /dev/null 2>&1 || break
+      local m=out/saves/$j.safetensors
+      if [[ $c == *.ckpt ]]; then ketos convert -o $m "$c" > /dev/null 2>&1 || continue; else cp "$c" $m; fi
+      echo "$j $(basename $c) $(date -u -r $c +%H:%M) $(md5sum < $m | cut -c1-8)" >> out/saves.txt
+      ( python3 evalx.py $m out/full.txt out/saves/$j.npz --device cuda:0 > out/saves/$j.log 2>&1 && put out/saves/$j.npz save:$j ) & sp+=($!)
+      j=$((j + 1)); if (( ${#sp[@]} >= 4 )); then wait "${sp[@]}" || true; sp=(); fi
+    done
+    wait "${sp[@]}" 2>/dev/null || true
+    put out/saves.txt saves; touch out/SAVES_DONE
+  fi
+}
+( test_saves ) || echo "testing the saves failed"
 rm -f out/RESUME_MODE
 ls out/*_best.safetensors > /dev/null 2>&1 || fail 'no model'
 echo done; put out/run.log run.log

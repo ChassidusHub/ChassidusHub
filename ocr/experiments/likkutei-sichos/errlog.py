@@ -35,13 +35,17 @@ lines.sort(key=lambda l: -l['errors'])
 
 out = {'save': a.name, 'when': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()),
        'score': report(a.name, gts, preds, paths), 'mistakes': confusions(gts, preds, top=40), 'wrong_lines': lines}
+# the look-alike letters we drill, counted on their own
+HARD = {('ב', 'כ'), ('כ', 'ב'), ('ת', 'ח'), ('ח', 'ת'), ('ז', 'ן'), ('ן', 'ז'), ('ן', 'ו'), ('ו', 'ן'), ('ז', 'ו'), ('ו', 'ז')}
+hard = sum(1 for l in lines for c in l['changes'] if (c['was'], c['read']) in HARD)
+out['score']['hard_letters'] = hard
 json.dump(out, open(f'{a.dir}/{a.name}.json', 'w'), ensure_ascii=False, indent=1)
 with open(f'{a.dir}/{a.name}.txt', 'w') as f:
     f.write(json.dumps(out['score'], ensure_ascii=False) + '\n' + json.dumps(out['mistakes'], ensure_ascii=False) + '\n\n')
     for l in lines:
         f.write(f"{l['line']}  ({l['errors']})\nTRUTH {l['truth']}\nREAD  {l['read']}\n"
                 + '  '.join(f"{c['was']}→{c['read']}" for c in l['changes']) + '\n\n')
-row = {'save': a.name, 'when': out['when'], **{k: out['score'][k] for k in ('lines', 'char_acc', 'word_acc', 'lines_perfect')},
+row = {'save': a.name, 'when': out['when'], **{k: out['score'][k] for k in ('lines', 'char_acc', 'word_acc', 'lines_perfect', 'hard_letters')},
        'by_kind': out['mistakes']['by_kind'], 'top': out['mistakes']['top'][:15]}
 with open(f'{a.dir}/history.jsonl', 'a') as f:
     f.write(json.dumps(row, ensure_ascii=False) + '\n')
