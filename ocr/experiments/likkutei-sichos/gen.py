@@ -38,7 +38,12 @@ def stress(text, rng):
         cand = [i for i, w in enumerate(words) if re.fullmatch(r'[„"]?[א-ת]{2,}[",.:;]?', w)]
         if cand:
             i = cand[rng.integers(len(cand))]
-            marked.update(range(i, min(len(words), i + 1 + int(rng.integers(0, 3)))))
+            # Only plain words: the scans gave no Miram copies of pointed letters
+            # (אַ אָ פּ), and a Frank copy in a Miram word stands out (Shmuly, 2026-10-01).
+            for j in range(i, min(len(words), i + 1 + int(rng.integers(0, 3)))):
+                if not re.fullmatch(r'[„"]?[א-ת]{2,}[",.:;]?', words[j]):
+                    break
+                marked.add(j)
     runs = []
     for i, w in enumerate(words):
         piece = (' ' if i else '') + w
@@ -248,7 +253,7 @@ def from_copies(runs, cp, rng, gap=3, width=None):
                 if ch == ' ':
                     glyphs.append(None); continue
                 # A pointed letter is taken whole from the scans (אַ, אָ, פּ), point and all.
-                g = cp.pick('F:' + ch + pts, rng, src, at, xh) if pts else None
+                g = cp.pick('F:' + ch + pts, rng, src, at, xh) if pts and not m else None
                 if g is not None:
                     glyphs.append([g[0], g[1], []])
                     continue

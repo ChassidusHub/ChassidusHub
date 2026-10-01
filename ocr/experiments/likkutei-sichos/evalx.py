@@ -39,7 +39,7 @@ def capture(outputs, olens):
 
 net = RecognitionTaskModel.load_model(args.model)
 cfg = RecognitionInferenceConfig(text_direction='horizontal-rl', num_line_workers=0, decoder=capture,
-                                 device=args.device, accelerator='gpu' if args.device.startswith('cuda') else 'cpu')
+                                 accelerator='gpu' if args.device.startswith('cuda') else 'cpu')
 codec = net.net.codec
 labels = [''] * (max(l for ls in codec.c2l.values() for l in ls) + 1)
 for ch, ls in codec.c2l.items():
