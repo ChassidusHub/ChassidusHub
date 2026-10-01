@@ -20,13 +20,14 @@ SHY = '­'
 
 
 def printed(word):
-    word = re.sub(r'\[\[(\*{0,3}\d*)\]\]', r'\1)', word)
+    word = re.sub(r'\[\[(\*{0,3}\d*)\]\]', r'\1)', word).replace('-', '־')
     return re.sub(r'(^|(?<=[(\[—]))"(?=\S)', '„', word)
 
 
 def pieces(text):
     """The words of a text in order; a word the print may break is split at
-    its soft hyphen into pieces, the first marked as ending a line with '-'."""
+    its soft hyphen into pieces, the first marked as ending a line with a makaf
+    (־), as the print sets it; a hyphen inside the text is a makaf in print too."""
     out = []
     for word in text.split():
         parts = word.split(SHY)
@@ -40,7 +41,7 @@ def label(ps):
     """The printed line for a run of pieces, or None if a break falls inside it."""
     if any(h for _, h in ps[:-1]):
         return None
-    return ' '.join(p for p, _ in ps) + ('-' if ps[-1][1] else '')
+    return ' '.join(p for p, _ in ps) + ('־' if ps[-1][1] else '')
 
 
 def norm(s):
@@ -84,7 +85,7 @@ def align(lines, ps):
             cursor = s + n
     split_words(out, ps)
     for o in out:
-        lab = ' '.join(o['words']) + ('-' if o['hyph'] else '')
+        lab = ' '.join(o['words']) + ('־' if o['hyph'] else '')
         yield o['line'], lab, fuzz.ratio(norm(o['line']['text']), norm(lab))
 
 
@@ -99,7 +100,7 @@ def split_words(out, ps):
         ta, tb = a['line']['text'].split(), b['line']['text'].split()
         if not ta or not tb:
             continue
-        x, y = norm(ta[-1]).rstrip('-'), norm(tb[0])
+        x, y = norm(ta[-1]).rstrip('-־'), norm(tb[0])
         for j in {a['s'] + a['n'] - 1, b['s']}:
             if j >= len(ps) or ps[j][1]:
                 continue

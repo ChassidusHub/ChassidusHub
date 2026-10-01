@@ -30,11 +30,11 @@ MIRAM = {f'{HERE}/fonts/RebbeHubFrankLS.otf': f'{HERE}/fonts/RebbeHubMiramLS.otf
 
 
 def stress(text, rng):
-    """[(text, is_miram)] runs: in about a third of lines, one to three words
+    """[(text, is_miram)] runs: in about one line in five (as printed), one to three words
     set in Miram, sometimes without their leading ה or ו."""
     words = text.split(' ')
     marked = set()
-    if rng.random() < 0.35:
+    if rng.random() < 0.2:
         cand = [i for i, w in enumerate(words) if re.fullmatch(r'[„"]?[א-ת]{2,}[",.:;]?', w)]
         if cand:
             i = cand[rng.integers(len(cand))]
@@ -53,7 +53,8 @@ def stress(text, rng):
     return runs
 
 
-POINTS = re.compile('[\u05b0-\u05c7]')
+PT = '\u05b0-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7'  # points; not the makaf (05BE) or sof pasuq
+POINTS = re.compile(f'[{PT}]')
 BELOW = set(chr(c) for c in range(0x5b0, 0x5bc)) - {'\u05b9', '\u05ba'} | {'\u05c7'}
 
 
@@ -77,7 +78,7 @@ def draw_pointed(im, x, base, text, font):
     Returns the width used."""
     d = ImageDraw.Draw(im)
     x0, size = x, font.size
-    for m in re.finditer('([^\u05b0-\u05c7])([\u05b0-\u05c7]*)', text):
+    for m in re.finditer(f'([^{PT}])([{PT}]*)', text):
         ch, marks = m.group(1), m.group(2)
         w = font.getlength(ch)
         d.text((x, base), ch, font=font, fill=0, anchor='rs')
@@ -147,23 +148,65 @@ def render_runs(runs, frank, px, width=None):
 
 class Copies:
     """Real letter copies by face and size: 'F:' Frank and 'L:' Miram body
-    letters, 'nF:' footnote-size Frank for raised marks."""
+    letters, 'nF:' footnote-size Frank for raised marks. Each copy knows the
+    sicha scan it was cut from (e.g. 30_0001), so one line can take all its
+    letters from one scan and its ink and weight look the same across the line."""
     def __init__(self):
         self.s = {}
-        for f in (f'{HERE}/frank/letters.pkl', f'{HERE}/miram/letters_ok.pkl', f'{HERE}/frank/points.pkl'):
+        for f in (f'{HERE}/frank2/letters.pkl', f'{HERE}/miram2/letters_ok.pkl', f'{HERE}/frank2/points.pkl'):
             st = pickle.load(open(f, 'rb'))
-            self.s.update({k: v for k, v in st.items() if ':' in k})
-        self.t = {}
+            for k, v in st.items():
+                if ':' in k:
+                    self.s.setdefault(k, []).extend(v)
+        self.t, self.by = {}, {}
         self.xh = float(np.median([r['xh'] for r in self.s['F:ב'][:500]]))
+        self.places = {}  # scan -> places on it where letters were cut (and the x-height there), to anchor a line
+        for r in self.s['F:ו']:
+            if r.get('src') and 'pos' in r:
+                self.places.setdefault(r['src'], []).append((r['pos'], r['xh']))
+        self.scans = sorted(self.places)
 
-    def pick(self, key, rng):
+    def pick(self, key, rng, src=None, at=None, xh=None):
+        """A random copy from the sicha scan src, among those cut nearest the place
+        at (page, x, baseline) on it; if that scan has too few of the letter, from
+        another scan of the same volume, and only then any. Set at the letter's
+        usual height: each copy's own height came from the line it was cut from,
+        and using it makes the baseline dance."""
         if key not in self.t:
             if len(self.s.get(key, [])) < 50:
                 return None
             self.t[key] = typical(self.s[key])
-        keep = self.t[key][0]
-        r = keep[rng.integers(len(keep))]
-        return unpack(r), r['top']
+            self.by[key] = {}
+            for r in self.t[key][0]:
+                if r.get('src'):
+                    self.by[key].setdefault(r['src'], []).append(r)
+                    self.by[key].setdefault(r['src'].split('_')[0], []).append(r)
+        keep, mh, mw, mt = self.t[key]
+        pool = self.by[key].get(src, []) if src else []
+        if len(pool) >= 3 and at is not None and all('pos' in r for r in pool):
+            # Nearest first: same page, then the same column (x within a third of
+            # the page), then the closest lines; one of the few nearest.
+            far = lambda r: (r['pos'][0] != at[0]) * 1e6 + abs(r['pos'][0] - at[0]) * 1e4 + (abs(r['pos'][1] - at[1]) > 700) * 3000 + abs(r['pos'][2] - at[2])
+            pool = sorted(pool, key=far)[:4]
+        if len(pool) < 3 and src:
+            pool = self.by[key].get(src.split('_')[0], [])
+        if len(pool) < 3:
+            pool = keep
+        r = pool[rng.integers(len(pool))]
+        g = unpack(r)
+        f = 1.0
+        if xh and key[0] in 'FL' and r.get('xh') and abs(xh / r['xh'] - 1) > 0.02:
+            # A copy from another place (Miram most often, having few copies on a page)
+            # is brought to the line's letter size, or its letters stand out by size.
+            f = xh / r['xh']
+            im = Image.fromarray((g * 255).astype(np.uint8))
+            g = np.asarray(im.resize((max(1, round(g.shape[1] * f)), max(1, round(g.shape[0] * f))), Image.LANCZOS), np.float32) / 255
+        ch = key.split(':', 1)[1][:1]
+        if '\u05d0' <= ch <= '\u05ea' and abs(mt + mh) <= 1:
+            return g, -g.shape[0]  # a letter whose foot is usually on the line stands exactly on it
+        # else (ע and the long letters ק ן ך ף ץ go below it, י hangs high) the copy's
+        # foot on the letter's usual foot line, as measured on the scans
+        return g, round((mt + mh) * f) - g.shape[0]
 
 
 def raster(ch, font, xh):
@@ -186,33 +229,44 @@ def from_copies(runs, cp, rng, gap=3, width=None):
     over it for the shin and sin dots and holam); spaces are widened to justify
     the line to a width, as printed."""
     glyphs = []  # [image, top against the baseline, [(point image, point)]] or None for a space
+    # The whole line from one sicha's scan, its letters from the lines nearest one
+    # place on one of its pages, so ink and weight match across the line.
+    src = cp.scans[rng.integers(len(cp.scans))] if cp.scans else None
+    at, xh = cp.places[src][rng.integers(len(cp.places[src]))] if src else (None, None)
     for t, m in runs:
         for p in MARK.split(t):
             if not p:
                 continue
             mark = bool(MARK.fullmatch(p))
             raised = mark and bool(glyphs)
-            # Glyphs are laid right to left. A mark "14)" shows "(14", so from the right:
-            # 4, 1, (. Hebrew is already in that order, a point just after its letter.
-            chars = ('(' + p[:-1])[::-1] if mark else visual(p)
-            for ch, pts in re.findall('([^\u05b0-\u05c7])([\u05b0-\u05c7]*)', chars):
+            # Glyphs are laid right to left. A note's own number at the start of its line
+            # shows "(14", so from the right: 4, 1, (; a mark in the text is the raised
+            # number alone, 14 (the "(" is only in vols 1-4). Hebrew is already in that
+            # order, a point just after its letter.
+            chars = (p[:-1] if raised else '(' + p[:-1])[::-1] if mark else visual(p)
+            for ch, pts in re.findall(f'([^{PT}])([{PT}]*)', chars):
                 if ch == ' ':
                     glyphs.append(None); continue
                 # A pointed letter is taken whole from the scans (אַ, אָ, פּ), point and all.
-                g = cp.pick('F:' + ch + pts, rng) if pts else None
+                g = cp.pick('F:' + ch + pts, rng, src, at, xh) if pts else None
                 if g is not None:
-                    glyphs.append([g[0], g[1] + int(round(rng.normal(0, 0.4))), []])
+                    glyphs.append([g[0], g[1], []])
                     continue
                 key = ('nF:' if raised else ('L:' if m and '\u05d0' <= ch <= '\u05ea' else 'F:')) + ch
-                g = cp.pick(key, rng)
+                g = cp.pick(key, rng, src, at, xh)
                 if g is None and m:
-                    g = cp.pick('F:' + ch, rng)
+                    g = cp.pick('F:' + ch, rng, src, at, xh)
                 if g is None:
                     g = raster(ch, f'{HERE}/fonts/RebbeHub{"Miram" if m else "Frank"}LS.otf', cp.xh * (0.75 if raised else 1))
                 if g is None:
                     return None
                 img, top = g
-                glyphs.append([img, top - (14 if raised else 0) + int(round(rng.normal(0, 0.4))), []])
+                if raised and key.startswith('nF:'):
+                    # A mark in the text is set smaller than footnote text: about three quarters.
+                    small = Image.fromarray((img * 255).astype(np.uint8))
+                    img = np.asarray(small.resize((max(1, round(img.shape[1] * 0.75)), max(1, round(img.shape[0] * 0.75))), Image.LANCZOS), np.float32) / 255
+                    top = round(top * 0.75)
+                glyphs.append([img, top - (14 if raised else 0), []])
                 for k in pts:  # points the scans gave too few of: drawn from the font
                     pg = raster(k, f'{HERE}/fonts/RebbeHub{"Miram" if m else "Frank"}LS.otf', cp.xh)
                     if pg is not None:
@@ -268,6 +322,31 @@ def light_age(a, rng):
 COLUMN = 578  # a column's text width in the scans, in pixels at 300 dpi
 
 
+# Margins above and below the ink in the real line crops of vols 30-38 (pixels, how
+# often each), so a fake's letters fill the same share of its image as a real one's.
+TOP = [1468, 504, 256, 174, 491, 830, 276]
+BOTTOM = [69, 297, 594, 707, 1070, 985, 275]
+
+
+def finish(a, rng):
+    """A fake line cut and padded like the real line crops: the same margins
+    (6 px left and right, top and bottom as measured), and in about half of
+    them the grey edges the real crops get from being straightened (a turn by
+    a fraction of a degree, as much as straightening leaves)."""
+    ink = a < 128
+    rows, cols = np.where(ink.any(1))[0], np.where(ink.any(0))[0]
+    if not len(rows):
+        return a
+    a = a[rows[0]:rows[-1] + 1, cols[0]:cols[-1] + 1]
+    t = rng.choice(len(TOP), p=np.array(TOP) / sum(TOP))
+    b = rng.choice(len(BOTTOM), p=np.array(BOTTOM) / sum(BOTTOM))
+    a = np.pad(a, ((t, b), (6, 6)), constant_values=255)
+    if rng.random() < 0.5:
+        th = rng.uniform(0.1, 0.4) * rng.choice([-1, 1])
+        a = np.array(Image.fromarray(a).rotate(th, fillcolor=255, resample=Image.BICUBIC))
+    return a
+
+
 def make(kind, text, rng, cp=None, note=False, width=None):
     """One fake line. Footnote lines are set smaller, as printed (about 0.83 of
     the body's size). The line is justified to the width the same text has in
@@ -280,12 +359,12 @@ def make(kind, text, rng, cp=None, note=False, width=None):
         if a is not None and note:
             a = np.array(Image.fromarray(a).resize((int(a.shape[1] * scale), int(a.shape[0] * scale)), Image.LANCZOS))
             a = np.where(a < 128, 0, 255).astype(np.uint8)
-        return a
+        return None if a is None else finish(a, rng)
     frank = FRANK[0][0] if rng.random() < FRANK[0][1] else FRANK[1][0]
     # Sized to the scans' letters (x-height about 26 px at 300 dpi); Shmuly's Frank
     # sets a little larger for the same size.
     a = render_runs(runs, frank, rng.uniform(24, 27) * (1.0 if frank == FRANK[0][0] else 0.94) * scale, width)
-    return age(a, rng) if kind == 'varied' else light_age(a, rng)
+    return finish(age(a, rng) if kind == 'varied' else light_age(a, rng), rng)
 
 
 if __name__ == '__main__':

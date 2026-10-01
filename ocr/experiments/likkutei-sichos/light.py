@@ -6,7 +6,7 @@ Reads the first-pass OCR (ocr/*.json) for the lines and, given pairs.py's
 output, the typed text for their letters; a word is kept only
 where its ink splits into as many letters as were read.
 
-    python3 light.py <pdf dir> <ocr dir> <out.pkl> [pairs dir] [--regular]"""
+    python3 light.py <pdf dir> <ocr dir> <out.pkl> [pairs dir] [--regular] [--vols=30,31]"""
 import glob, io, json, os, pickle, re, sys
 import numpy as np
 import pymupdf
@@ -106,11 +106,11 @@ def labels(pairs_dir):
     return out
 
 
-CAP = 3000  # copies kept per regular letter: plenty for an average, and the store stays small
+CAP = 8  # copies kept per regular letter and page: enough near any line, and the store stays small
 DIGITS = re.compile(r'^[()\[\]*]*\d+[.,;:()\[\]]*$')  # a number, maybe in brackets or before a stop
 
 
-def page(a, lay, store, stats, texts=None, regular=False):
+def page(a, lay, store, stats, texts=None, regular=False, src=None, pg=0):
     """Light (Miram) letters from one page: body lines as 'L:', footnote lines
     as 'nL:' (smaller; starred notes are set wholly in Miram). Each letter's
     stroke is measured against the median of the same letter in the same
@@ -146,23 +146,28 @@ def page(a, lay, store, stats, texts=None, regular=False):
             if regular and DIGITS.match(wd):
                 for ch, (glyph, area, sk, g) in zip(wd, gl):
                     if ch.isdigit():
-                        store.setdefault(prefix + ch, []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh})
+                        store.setdefault(prefix + ch, []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh, 'src': src, 'pos': (pg, int(g['x0']), int(base))})
                 continue
             if not all(ch in med for ch in wd):
                 continue
             ratios = [x[1] / x[2] / med[ch] for ch, x in zip(wd, gl)]
             stats.extend(ratios)
             if regular:
-                if all(0.88 <= r <= 1.15 for r in ratios) and any(len(store.get(prefix + ch, [])) < CAP for ch in wd):
+                # Each copy keeps its scan (src) and place on it (pos: page, x, baseline),
+                # so a fake line can take its letters from the lines nearest one place
+                # on one page, whose ink and weight are alike.
+                count = store.setdefault('_count', {})
+                if all(0.88 <= r <= 1.15 for r in ratios) and any(count.get((prefix + ch, src, pg), 0) < CAP for ch in wd):
                     for ch, (glyph, area, sk, g) in zip(wd, gl):
-                        if len(store.get(prefix + ch, [])) < CAP:
-                            store.setdefault(prefix + ch, []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh})
+                        if count.get((prefix + ch, src, pg), 0) < CAP:
+                            count[prefix + ch, src, pg] = count.get((prefix + ch, src, pg), 0) + 1
+                            store.setdefault(prefix + ch, []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh, 'src': src, 'pos': (pg, int(g['x0']), int(base))})
                 continue
             for i, j in thin_runs(wd, ratios):
                 n += 1
                 store.setdefault('_words', []).append((prefix, wd, i, j))
                 for ch, (glyph, area, sk, g) in zip(wd[i:j], gl[i:j]):
-                    store.setdefault(prefix + ch, []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh})
+                    store.setdefault(prefix + ch, []).append({'img': np.packbits(glyph), 'shape': glyph.shape, 'top': g['y0'] - base, 'xh': base - xh, 'src': src, 'pos': (pg, int(g['x0']), int(base))})
     return n
 
 
@@ -201,7 +206,8 @@ def looks_miram(ch, sample, miram, frank, floor=0.5):
 
 if __name__ == '__main__':
     regular = '--regular' in sys.argv
-    args = [x for x in sys.argv[1:] if x != '--regular']
+    vols = next((x[7:].split(',') for x in sys.argv if x.startswith('--vols=')), None)
+    args = [x for x in sys.argv[1:] if not x.startswith('--')]
     pdfs, ocr, out = args[:3]
     typed = labels(args[3]) if len(args) > 3 else None
     store = pickle.load(open(out, 'rb')) if os.path.exists(out) else {}
@@ -212,13 +218,15 @@ if __name__ == '__main__':
             continue
         if stem.startswith('39_'):  # vol 39 is the test set: no letters from it in the fonts
             continue
+        if vols and stem.split('_')[0] not in vols:
+            continue
         d = pymupdf.open(f)
         for p in range(len(d)):
             j = f'{ocr}/{stem}_{p:02d}.json'
             if not os.path.exists(j) or (typed is not None and (stem, p, 'b') not in typed):
                 continue
             a = deskew(scan(d, p))
-            page(a, json.load(open(j)), store, stats, {k: typed.get((stem, p, k), []) for k in 'bn'} if typed is not None else None, regular)
+            page(a, json.load(open(j)), store, stats, {k: typed.get((stem, p, k), []) for k in 'bn'} if typed is not None else None, regular, stem, p)
         store.setdefault('_done', []).append(f)
         print(stem, len(store.get('_words', [])), 'light runs', sum(len(v) for k, v in store.items() if not k.startswith('_')), 'letters', flush=True)
         pickle.dump(store, open(out + '.tmp', 'wb'))

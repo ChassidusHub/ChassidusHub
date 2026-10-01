@@ -9,7 +9,8 @@ from PIL import Image
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from harvest import groups, visual
 
-POINT = re.compile('[ְ-ׇ]')
+PT = '\u05b0-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7'
+POINT = re.compile('[\u05b0-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7]')  # not the makaf (05BE)
 
 if __name__ == '__main__':
     store = {}
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     for f in files:
         label = open(f).read().strip()
         a = np.array(Image.open(f[:-7] + '.png').convert('L'))
-        letters = re.findall('([^\\sְ-ׇ])([ְ-ׇ]*)', visual(label))
+        letters = re.findall('([^\\s' + PT + '])([' + PT + ']*)', visual(label))
         gs, marks, info = groups(a < 128)
         if not info or len(gs) != len(letters):
             continue
@@ -33,6 +34,6 @@ if __name__ == '__main__':
             if 'ּ' not in pts and len(ids) == len(g['ids']):
                 continue  # a point under the letter was looked for and not found
             img = np.isin(lab[y0:y1, x0:x1], ids)
-            store.setdefault('F:' + ch + pts, []).append({'img': np.packbits(img), 'shape': img.shape, 'top': y0 - base, 'xh': base - xh})
+            store.setdefault('F:' + ch + pts, []).append({'img': np.packbits(img), 'shape': img.shape, 'top': y0 - base, 'xh': base - xh, 'src': '_'.join(f.rsplit('/', 1)[1].split('_')[:2])})
     pickle.dump(store, open(sys.argv[2], 'wb'))
     print(len(files), 'lines;', {k: len(v) for k, v in store.items()})

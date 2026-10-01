@@ -1,6 +1,6 @@
 """First pass over every downloaded sicha: each page's layout and the
 current model's reading of each line, to ocr/<vol>_<start>_<pdf page>.json.
-Run as N workers: python3 ocr_all.py <model> <worker> <of>."""
+Run as N workers: python3 ocr_all.py <model> <worker> <of> [pdf glob, default pdf/*.pdf]."""
 import glob, io, json, os, sys
 import numpy as np
 import pymupdf
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     import torch; torch.set_num_threads(1)
     net = load(model)
     os.makedirs('ocr', exist_ok=True)
-    for k, f in enumerate(sorted(glob.glob('pdf/*.pdf'))):
+    for k, f in enumerate(sorted(glob.glob(sys.argv[4] if len(sys.argv) > 4 else 'pdf/*.pdf'))):
         if k % of != worker:
             continue
         stem = os.path.basename(f)[:-4]
