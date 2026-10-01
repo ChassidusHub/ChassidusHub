@@ -107,10 +107,14 @@ def read_main(a):
                 im = Image.open(p).convert('L'); w, h = im.size
                 seg = Segmentation(type='bbox', imagename=p, text_direction='horizontal-rl', script_detection=False,
                                    lines=[BBoxLine(id='0', bbox=(0, 0, w, h), text_direction='horizontal-rl')])
-                next(iter(net.predict(im, seg, cfg)))
+                rec = next(iter(net.predict(im, seg, cfg)))
                 gt = typed(p)
-                new, act = decide(gt, blobs(im, emitted_x(kept['p'], w)), w, h)
-                f.write(json.dumps({'p': p, 'a': act, 'old': gt, 'new': new if act.startswith('fixed') else None}, ensure_ascii=False) + '\n')
+                bl = blobs(im, emitted_x(kept['p'], w))
+                new, act = decide(gt, bl, w, h)
+                row = {'p': p, 'a': act, 'old': gt, 'new': new if act.startswith('fixed') else None}
+                if act == 'unclear':  # what the ink was and what the model read, for a person to decide the line
+                    row['read'] = nfd(rec.prediction); row['blobs'] = [[int(b[0]), int(b[1]), shape(b, h)] for b in bl]; row['w'] = w
+                f.write(json.dumps(row, ensure_ascii=False) + '\n')
             except Exception as e:
                 print('skip', p, repr(e)[:200], flush=True)
             if k % 1000 == 0:

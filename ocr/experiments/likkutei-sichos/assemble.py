@@ -41,11 +41,29 @@ def runs(text):
     return out
 
 
+VOCAB = None  # word counts from the library (lm/vocab_big.txt), when given: tells a broken word from a compound
+
+
+def known(w):
+    w = re.sub(r'^[^א-ת]+|[^א-ת]+$', '', w)
+    return bool(VOCAB) and VOCAB.get(w, 0) >= 3
+
+
 def join(a, b):
-    """Two printed lines as one run of words: a word broken with - joined again."""
+    """Two printed lines as one run of words. A line ending in a makaf is either a
+    word the print broke (להבר־ + אות), joined again, or a compound whose makaf
+    stays (תומכי־ + תמימים); the two look alike, so the library's vocabulary
+    decides: joined when the joined word is a known word, else kept with its makaf."""
     if not a:
         return b
-    return a[:-1] + b if a.endswith('-') else a + ' ' + b
+    if a.endswith(('-', '־')):
+        head, first = a[:-1], b.split(' ', 1)[0]
+        last = head.split(' ')[-1]
+        # a compound only when both halves are words and the joined form is not
+        if VOCAB and known(last) and known(first) and not known(last + first):
+            return a + b
+        return head + b
+    return a + ' ' + b
 
 
 def box(line, shape, page):
@@ -134,6 +152,20 @@ def assemble(pages):
         elif p['heading']:
             section = None  # a heading (a new sicha's title) closes the ois before it
         (section['children'] if section else segments).append(seg)
+    # A note printed with a bare star "*)" whose mark in the text carries a number
+    # too ("*33)", a note added later under 33): the note takes the mark's label,
+    # found by order: the mark with the same stars between its neighbours' numbers.
+    marks_in_order = [m.group(1) for p in paras for part in p['parts'] if isinstance(part, str) for m in MARK.finditer(part)]
+    for i, n in enumerate(notes):
+        if n['label'].strip('*') or not n['label'].startswith('*'):
+            continue
+        prev_n = next((int(x['label'].lstrip('*')) for x in reversed(notes[:i]) if x['label'].lstrip('*').isdigit()), 0)
+        next_n = next((int(x['label'].lstrip('*')) for x in notes[i + 1:] if x['label'].lstrip('*').isdigit()), 10 ** 6)
+        taken = {x['label'] for x in notes}
+        for m in marks_in_order:
+            if m.startswith(n['label']) and m[len(n['label']):].isdigit() and prev_n <= int(m[len(n['label']):]) <= next_n and m not in taken:
+                n['label'] = m
+                break
     note_segs, seen = [], set()
     for n in notes:
         nid = note_id(n['label']) if n['label'] != '?' else f'nx{len(note_segs)}'
