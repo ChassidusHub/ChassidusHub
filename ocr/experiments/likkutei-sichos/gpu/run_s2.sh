@@ -62,12 +62,16 @@ if (( WORK < 2 )); then WORK=2; fi
 # what fits, and gradients are summed over steps to an effective 32 lines,
 # so every card trains the same way at the base model's learning rate.
 B=$(( GMEM / 1800 / 4 * 4 )); if (( B < 4 )); then B=4; fi; if (( B > 32 )); then B=32; fi
+# A taller line (the base model's own height, 96 or 128 px) needs that much
+# more memory per line, so the batch shrinks with it.
+HEIGHT=$(python3 -c "import json,sys; from safetensors import safe_open; m=json.loads(safe_open('ppm.safetensors','pt').metadata()['kraken_meta']); print(list(m.values())[0].get('height', 96))" 2>/dev/null || echo 96)
+B=$(( B * 96 / HEIGHT / 4 * 4 )); if (( B < 4 )); then B=4; fi
 ACC=$(( (32 + B - 1) / B ))
-LR=3e-4
-echo "machine: $NCPU cpus, $MEM GB memory, $GMEM MiB GPU -> $WORK loaders, batch $B x $ACC steps, lr $LR"
+LR=${LR:-2e-4}; ROUNDS=${ROUNDS:-2}
+echo "machine: $NCPU cpus, $MEM GB memory, $GMEM MiB GPU -> $WORK loaders, line height $HEIGHT, batch $B x $ACC steps, lr $LR, $ROUNDS rounds"
 # One lane with the whole GPU: the new PP-OCRv6 medium base model fine-tuned.
 cat > lanes.txt <<L
-ppm|--precision bf16-mixed --threads 4 --workers $WORK train --arch ppocrv6 -i ppm.safetensors --resize new -u NFD --max-width 4080 --optimizer AdamW+Muon -r $LR --warmup 300 --schedule cosine --cos-max 3 --cos-min-lr 1e-6 -q fixed -N 3 -F 0.25 -B $B --accumulate-grad-batches $ACC --augment
+ppm|--precision bf16-mixed --threads 4 --workers $WORK train --arch ppocrv6 -i ppm.safetensors --resize new -u NFD --max-width 4080 --optimizer AdamW+Muon -r $LR --warmup 300 --schedule cosine --cos-max $ROUNDS --cos-min-lr 1e-6 -q fixed -N $ROUNDS -F 0.25 -B $B --accumulate-grad-batches $ACC --augment
 L
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # The typed text of the real lines was matched to the printed lines by text
@@ -76,7 +80,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # doesn't print. Once a model is good enough (99.5% on dev), it reads every
 # real line and relabel.py takes from its reading only those kinds of
 # differences, where it is sure; the old labels stay as .gt.orig.txt. Done
-# once per pod (out/RELABELED_v2), before the lines are compiled.
+# once per pod (out/RELABELED_v3), before the lines are compiled.
 relabel() {
   curl -sSfL -o out/reader.ckpt "$(url get:ppm:ckpt)" || { echo "relabel: no saved model, skipped"; return 0; }
   ketos convert -o out/reader.safetensors out/reader.ckpt > /dev/null
@@ -97,7 +101,25 @@ relabel() {
   (( got * 100 >= $(wc -l < out/real.txt) * 99 )) || { echo "relabel: only $got lines read, labels left as they are"; return 1; }
   python3 relabel/relabel.py 'out/read_*.jsonl' out/relabel.tsv --write | tee -a out/relabel.log
   gzip -kf out/relabel.tsv; put out/relabel.tsv.gz relabel
-  rm -f train.arrow dev.arrow; touch out/RELABELED_v2
+  # Marks the typed text left out (a line-start dash, ". . ."), found as ink no
+  # read letter accounts for: added to every real line's label; lines with
+  # other unexplained ink are listed and kept out of training.
+  if [ -f relabel/inkfix.py ]; then
+    local ip=()
+    for i in $(seq 0 $((k - 1))); do
+      python3 relabel/inkfix.py out/reader.safetensors out/real.txt out/ink_$i.jsonl --shard $i/$k --device ${RELABEL_DEVICE:-cuda:0} > out/ink_$i.log 2>&1 & ip+=($!)
+    done
+    wait "${ip[@]}" || true
+    cat out/ink_*.jsonl > out/ink.jsonl
+    python3 relabel/inkfix.py --apply out/ink.jsonl --write --unclear out/ink_unclear.txt | tee -a out/relabel.log
+    gzip -kf out/ink.jsonl; put out/ink.jsonl.gz ink || true
+  fi
+  # Real lines the model was unsure of a look-alike letter in go in three times.
+  if [ -f relabel/mine.py ]; then
+    python3 relabel/mine.py 'out/read_*.jsonl' s2_train.txt out/train_mined.txt --times ${MINE_TIMES:-3} | tee -a out/relabel.log
+    [ -s out/ink_unclear.txt ] && { grep -vxFf out/ink_unclear.txt out/train_mined.txt > out/train_list.txt || cp out/train_mined.txt out/train_list.txt; } || cp out/train_mined.txt out/train_list.txt
+  fi
+  rm -f train.arrow dev.arrow; touch out/RELABELED_v3
 }
 # The label fixer and the error report code (relabel/: relabel.py,
 # relabel_read.py, errlog.py, score.py, dev300.txt).
@@ -138,7 +160,7 @@ progress() {  # every 2 minutes: each lane's progress bar and saves, and the GPU
   trap - ERR; set +eE +o pipefail
   while sleep ${PROG_EVERY:-120}; do
     { date -u +%FT%TZ; nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader
-      ls out/read_*.log > /dev/null 2>&1 && [ ! -f out/RELABELED_v2 ] && tail -qn1 out/read_*.log
+      ls out/read_*.log > /dev/null 2>&1 && [ ! -f out/RELABELED_v3 ] && tail -qn1 out/read_*.log out/ink_*.log 2>/dev/null
       for n in $LANES; do
         echo "== $n"; [ -f out/$n.log ] && tr '\r' '\n' < out/$n.log | sed 's/\x1b\[[0-9;]*[A-Za-z]//g' | grep -a "stage" | tail -1 | cut -c1-200
         ls out/$n 2>/dev/null | grep -E "ckpt|safetensors" | sort | tail -6 | tr '\n' ' '; echo
@@ -179,7 +201,7 @@ lane() {  # name, args; a lane's failure is reported, not fatal to the others
     # The saved checkpoint is bad: start again from the newest model the error
     # reporter scored (out/rep.safetensors), kept in R2 first, on a fresh 2-round schedule.
     cp out/rep.safetensors out/$n/start.safetensors; put out/$n/start.safetensors "$n:model"
-    args=${args/-i ppm.safetensors/-i out/$n/start.safetensors}; args=${args/--cos-max 3/--cos-max 2}; args=${args/-N 3/-N 2}
+    args=${args/-i ppm.safetensors/-i out/$n/start.safetensors}; args=${args/--cos-max $ROUNDS/--cos-max 2}; args=${args/-N $ROUNDS/-N 2}
     echo "$n recovers from the last scored model ($(tail -1 out/errors/history.jsonl | cut -c1-60))"
   elif curl -sSfL -o out/$n/resume.ckpt "$(url "get:$n:ckpt")" 2>/dev/null; then
     if [ "$(cat out/RESUME_MODE 2>/dev/null)" = weights ]; then
@@ -253,11 +275,12 @@ watcher() {
 saver & S1=$!; progress & S2=$!; watcher & S3=$!; reporter & S4=$!
 # Long steps come after the helpers, so the run is never blind or deaf to remote control.
 # A failed relabel never stops the run: training goes on with the labels as they are.
-if [ ! -f out/RELABELED_v2 ] && [ -f relabel/relabel.py ]; then
+if [ ! -f out/RELABELED_v3 ] && [ -f relabel/relabel.py ]; then
   ( trap - ERR; set +eE +o pipefail; relabel ) || echo "relabel failed; training on the old labels"
 fi
 # Lines compiled once into arrow files, so the loaders keep the GPU fed.
-[ -f train.arrow ] || ketos --workers $WORK compile -f path -o train.arrow -F s2_train.txt > out/compile.log 2>&1
+[ -f out/train_list.txt ] || cp s2_train.txt out/train_list.txt
+[ -f train.arrow ] || ketos --workers $WORK compile -f path -o train.arrow -F out/train_list.txt > out/compile.log 2>&1
 [ -f dev.arrow ] || ketos --workers $WORK compile -f path -o dev.arrow -F dev39.txt >> out/compile.log 2>&1
 [ -s out/compile.log ] && put out/compile.log compile
 echo train.arrow > tr_list.txt; echo dev.arrow > dev_list.txt

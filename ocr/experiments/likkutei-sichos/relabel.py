@@ -109,6 +109,11 @@ def fix(gt, text, cs, prev='', nxt='', conf=0.9, low=0.5, sure_add=0.8, prev_gt=
         start, end = i1 == 0 and j1 == 0, i2 == len(G) and j2 == len(R)
         if len(g) == len(r) and all(MARK.sub('', a) == b and a != b for a, b in zip(g, rw)) and lo >= conf:
             out += rw; rules.append('note-mark')  # a mark typed but not printed
+        elif start and len(g) == len(r) == 1 and g[0].startswith(')') and re.fullmatch(r'\*{0,3}\d+\)' + re.escape(g[0][1:]), rw[0]) and lo >= low:
+            # a footnote's own number, printed "40)" but missing from the typed text
+            # (1,058 such labels in vols 30-39); a model trained on those labels
+            # reads the number with little confidence, so the bar is low here
+            out += rw; rules.append('note-number')
         elif (start or end) and rw and len(rw) <= 2 and lo >= low and (not g or (
                 bare(g) and bare(rw) != bare(g) and (bare(rw).endswith(bare(g)) if start else bare(rw).startswith(bare(g))))) and (
                 lo >= sure_add or confirmed(bare(rw), bare(g), start, prev, nxt, prev_gt, next_gt)):
