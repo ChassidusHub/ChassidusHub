@@ -12,7 +12,23 @@ D=${S2DIR:-/root/s2}; cd $D; mkdir -p out; exec >> out/run.log 2>&1
 # @URLS@ (a script sent by remote control may carry a fresh urls.json here)
 url() { python3 -c "import json,sys; print(json.load(open(sys.argv[2] + '/urls.json'))[sys.argv[1]])" "$1" "$D"; }
 put() { curl -sSf --retry 3 -X PUT -T "$1" "$(url "$2")" > /dev/null; }
-get() { curl -sSfL --retry 3 -o "$2" "$(url "get:$1")"; }
+# A download that breaks off midway (curl 18, "transfer closed", on a 900 MB
+# bundle 2026-10-01) is picked up where it stopped, up to eight times; a file
+# counts as complete only when its size is the size the server states.
+get() {
+  local tries=0 rc u want have
+  u=$(url "get:$1")
+  until curl -sSfL --retry 3 -C - -o "$2" "$u"; do
+    rc=$?
+    # the size from a one-byte range request (a HEAD is not allowed on a signed GET link)
+    want=$(curl -sSL -r 0-0 -o /dev/null -D - "$u" 2>/dev/null | tr -d '\r' | awk 'tolower($1)=="content-range:" {split($2, a, "/"); n=a[2]} END {print n}')
+    have=$(stat -c %s "$2" 2>/dev/null || echo 0)
+    [ -n "$want" ] && [ "$have" = "$want" ] && return 0
+    tries=$((tries + 1)); (( tries >= 8 )) && { echo "get $1: gave up after $tries tries (curl $rc, $have of $want bytes)"; return 1; }
+    [ $rc = 33 ] && rm -f "$2"  # the server will not resume: start this one afresh
+    echo "get $1: curl $rc at $have of $want bytes, trying again ($tries)"; sleep 10
+  done
+}
 ( trap - ERR; set +eE; while sleep ${LOG_EVERY:-60}; do
     put out/run.log run.log
     [ -f out/relabel.log ] && put out/relabel.log relabel:log
