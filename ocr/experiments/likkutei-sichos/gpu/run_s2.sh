@@ -106,14 +106,31 @@ LANES=$(cut -d'|' -f1 lanes.txt)
 
 # The helpers below run beside the training and must never stop the run: a
 # check that finds nothing yet (no save, no progress line) is not an error.
+# The copy in R2 is what every restart continues from, so a worse save never
+# replaces it: a scored save must be within 0.2 points of the best one sent,
+# and a stop-time save goes up only from a run that started from the learned
+# weights (2026-10-01 one that had fallen back to the base model replaced it).
+safe_put() {  # file lane
+  local f=$1 n=$2 sc best
+  sc=$(basename "$f" .ckpt | sed -nE 's/^checkpoint_[0-9]+-([0-9.]+)$/\1/p')
+  best=$(cat out/$n.bestsent 2>/dev/null || echo 0)
+  if [ -n "$sc" ]; then
+    python3 -c "import sys; sys.exit(0 if float('$sc') >= float('$best') - 0.002 else 1)" || { echo "kept the better save in R2 (not $(basename $f))"; return 1; }
+  elif [ "$(cat out/$n.from 2>/dev/null)" = base ]; then
+    echo "kept the save in R2 (this run started from the base model)"; return 1
+  fi
+  put "$f" "$n:ckpt" && echo "saved $n $(basename $f)" || return 1
+  [ -n "$sc" ] && python3 -c "import sys; sys.exit(0 if float('$sc') > float('$best') else 1)" && echo "$sc" > out/$n.bestsent
+  return 0
+}
 saver() {  # every 10 minutes: each lane's newest save to R2, for resuming
   trap - ERR; set +eE +o pipefail
   local sent=""
   while sleep ${SAVE_EVERY:-600}; do
     for n in $LANES; do
-      last=$(ls -t out/$n/*.ckpt 2>/dev/null | head -1)
+      last=$(ls -t out/$n/*.ckpt 2>/dev/null | grep -v resume.ckpt | head -1)
       [ -n "$last" ] && [[ " $sent " != *" $last "* ]] || continue  # each save goes up once
-      put "$last" "$n:ckpt" && echo "saved $n $(basename $last)" && sent="$sent $last"
+      safe_put "$last" $n && sent="$sent $last"
     done
   done
 }
@@ -132,13 +149,14 @@ progress() {  # every 2 minutes: each lane's progress bar and saves, and the GPU
 reporter() {  # each new save of the first lane: its error report on 300 dev lines, to R2 at once
   trap - ERR; set +eE +o pipefail
   [ -f relabel/errlog.py ] || return 0
-  local n=${LANES%% *} done=""
+  local n done=""
   mkdir -p out/errors
   while sleep ${REPORT_EVERY:-30}; do
+    n=${LANES%% *}; [ -f out/focus.started ] && n=focus
     last=$(ls -t out/$n/checkpoint_*.ckpt 2>/dev/null | head -1)
     [ -n "$last" ] && [ "$last" != "$done" ] && [ "$last" -nt out/$n.started ] || continue
     sleep 5  # let the save finish writing
-    name=$(basename "$last" .ckpt | sed 's/^checkpoint_/s2-/')
+    name=$(basename "$last" .ckpt | sed "s/^checkpoint_/$([ $n = focus ] && echo focus || echo s2)-/")
     ketos convert -o out/rep.safetensors "$last" > /dev/null 2>&1 &&
       python3 evalx.py out/rep.safetensors relabel/dev300.txt out/rep.npz --device ${REPORT_DEVICE:-cuda:0} > out/rep.log 2>&1 &&
       (cd out && python3 ../relabel/errlog.py rep.npz "$name" --dir errors) >> out/rep.log 2>&1 &&
@@ -151,17 +169,27 @@ lane() {  # name, args; a lane's failure is reported, not fatal to the others
   local n=$1 args=$2 res=""
   [ -f out/RESTARTING ] && return  # a switch-over came before training began
   mkdir -p out/$n
-  if curl -sSfL -o out/$n/resume.ckpt "$(url "get:$n:ckpt")" 2>/dev/null; then
+  if [ "$(cat out/RESUME_MODE 2>/dev/null)" = recover ] && [ -f out/rep.safetensors ]; then
+    # The saved checkpoint is bad: start again from the newest model the error
+    # reporter scored (out/rep.safetensors), kept in R2 first, on a fresh 2-round schedule.
+    cp out/rep.safetensors out/$n/start.safetensors; put out/$n/start.safetensors "$n:model"
+    args=${args/-i ppm.safetensors/-i out/$n/start.safetensors}; args=${args/--cos-max 3/--cos-max 2}; args=${args/-N 3/-N 2}
+    echo "$n recovers from the last scored model ($(tail -1 out/errors/history.jsonl | cut -c1-60))"
+  elif curl -sSfL -o out/$n/resume.ckpt "$(url "get:$n:ckpt")" 2>/dev/null; then
     if [ "$(cat out/RESUME_MODE 2>/dev/null)" = weights ]; then
       # A changed recipe keeps the learned weights but starts its own schedule.
       local st=out/$n/start.safetensors
       ketos convert -o $st out/$n/resume.ckpt && args=${args/-i ppm.safetensors/-i $st}
       echo "$n starts from the saved weights with the new recipe"
-    else res="--resume out/$n/resume.ckpt"; echo "$n resumes"; fi
+    else
+      # Kraken takes either a start model (-i) or a checkpoint to resume, not both.
+      res="--resume out/$n/resume.ckpt"; args=$(sed -E 's/ -i [^ ]+ / /' <<< " $args "); echo "$n resumes"
+    fi
   fi
   local env="KRAKEN_WIDTH_GROUPS=1" b=$B acc=$ACC
   for try in 1 2 3 4 5 6 7 8 9; do
     touch out/$n.started
+    if [ -n "$res" ]; then echo resume; elif [[ "$args" == *"-i ppm.safetensors"* ]]; then echo base; else echo weights; fi > out/$n.from
     script -qfec "echo \$\$ > out/$n.pid; exec env $env ketos -d cuda:0 $args -t tr_list.txt -e dev_list.txt -f binary --base-dir R -o out/$n $res" out/$n.log > /dev/null 2>&1
     rc=$?; echo "$n try $try ended with $rc"; put out/$n.log "$n:log"
     [ $rc = 0 ] && break
@@ -180,7 +208,9 @@ lane() {  # name, args; a lane's failure is reported, not fatal to the others
     elif [[ "$env" == *KRAKEN_WIDTH_GROUPS=1* ]]; then
       echo "$n: failed again, retrying without width groups"; env="KRAKEN_WIDTH_GROUPS=0 TORCHDYNAMO_DISABLE=1"
     else break; fi
-    res=""; rm -f out/$n/*.ckpt
+    # A retry starts over only when this lane was not resuming: dropping the
+    # checkpoint would silently restart from the base model (2026-10-01).
+    if [ -n "$res" ]; then rm -f $(ls out/$n/*.ckpt 2>/dev/null | grep -v resume.ckpt); else rm -f out/$n/*.ckpt; fi
   done
   best=$(ls -t out/$n/best_*.safetensors 2>/dev/null | head -1)
   if [ -n "$best" ]; then
@@ -209,7 +239,7 @@ watcher() {
       pid=$(cat out/$n.pid 2>/dev/null); [ -n "$pid" ] && kill -INT "$pid"
       for i in $(seq 1 180); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
       last=$(ls -t out/$n/*.ckpt 2>/dev/null | head -1)
-      [ -n "$last" ] && put "$last" "$n:ckpt" && echo "saved $n $(basename $last) for the switch-over"
+      [ -n "$last" ] && safe_put "$last" $n && echo "(for the switch-over)"
     done
     touch out/SWITCH_READY
   done
@@ -225,17 +255,71 @@ fi
 [ -f dev.arrow ] || ketos --workers $WORK compile -f path -o dev.arrow -F dev39.txt >> out/compile.log 2>&1
 [ -s out/compile.log ] && put out/compile.log compile
 echo train.arrow > tr_list.txt; echo dev.arrow > dev_list.txt
+# A run that already finished is not trained again when a new script takes
+# over (remote control after DONE, to change only the focus session).
+if [ -f out/DONE ]; then echo "training already done; going on to the focus session"; else
 pids=()
 while IFS='|' read -r n args; do lane "$n" "$args" & pids+=($!); done < lanes.txt
 wait "${pids[@]}" || true
-if [ -f out/RESTARTING ]; then
+fi
+switch_over() {
+  [ -f out/RESTARTING ] || return 0
   for i in $(seq 1 300); do [ -f out/SWITCH_READY ] && break; sleep 1; done  # the save must reach R2 first
   rm -f out/SWITCH_READY
   kill $S0 $S1 $S2 $S3 $S4 2>/dev/null; rm -f out/RESTARTING out/$(echo $LANES | cut -d' ' -f1)/resume.ckpt
   echo "switching to the new script"; trap - ERR; exec bash run_s2.sh.new
-fi
+}
+switch_over
+# A short focused session after the main run, when control.json asks for it
+# ("focus": 1): the best model trained a little more, at a low learning rate,
+# on fake lines packed with the letters it still confuses (focus/fk: ת/ח, ב/כ,
+# ז/ו/ן) mixed into real lines (a random 60k, plus the real lines richest in
+# those letters), so it drills them without forgetting the rest. Both models
+# then read all 4,500 dev and test lines, and the better one is chosen off the pod.
+focus() {
+  python3 -c "import json,sys; sys.exit(0 if json.load(open('out/control.json')).get('focus') else 1)" 2>/dev/null || return 0
+  [ -f out/FOCUS_DONE ] && return 0
+  get focus focus.tar && tar -xf focus.tar || { echo "focus: no data"; return 0; }
+  { grep '^pairs/' s2_train.txt | shuf -n 60000 --random-source=<(yes); cat focus/hard_real.txt; } | sort -u > focus_real.txt
+  cat dev39.txt test39.txt > out/full.txt
+  # Marks the typed text left out (a dash or ". . ." at the start of a printed
+  # line): ink no read letter accounts for (focus/inkfix.py). Clear cases get
+  # the mark added to the label, here and in the 4,500 scoring lines (their
+  # old labels are kept in out/ink.jsonl, so both scores can be given); lines
+  # with other unexplained ink stay out of the drill.
+  if [ -f focus/inkfix.py ] && [ ! -f out/INKED ]; then
+    cat focus_real.txt out/full.txt > ink_list.txt
+    local k=$(( WORK / 2 )); (( k > 8 )) && k=8; (( k < 1 )) && k=1; local ip=()
+    for i in $(seq 0 $((k - 1))); do
+      python3 focus/inkfix.py out/ppm_best.safetensors ink_list.txt out/ink_$i.jsonl --shard $i/$k --device cuda:0 > out/ink_$i.log 2>&1 & ip+=($!)
+    done
+    wait "${ip[@]}" || true
+    cat out/ink_*.jsonl > out/ink.jsonl
+    python3 focus/inkfix.py --apply out/ink.jsonl --write --unclear out/ink_unclear.txt && touch out/INKED
+    gzip -kf out/ink.jsonl; put out/ink.jsonl.gz ink || true
+  fi
+  { grep -vxFf out/ink_unclear.txt focus_real.txt 2>/dev/null || cat focus_real.txt; ls focus/fk/*.png; } > focus_train.txt
+  echo "focus: $(wc -l < focus_train.txt) lines, $(ls focus/fk/*.png | wc -l) of them fake"
+  ketos --workers $WORK compile -f path -o focus.arrow -F focus_train.txt > out/focus_compile.log 2>&1
+  echo focus.arrow > focus_list.txt; mkdir -p out/focus; touch out/focus.started
+  script -qfec "exec env KRAKEN_WIDTH_GROUPS=1 ketos -d cuda:0 --precision bf16-mixed --threads 4 --workers $WORK train --arch ppocrv6 -i out/ppm_best.safetensors --resize new -u NFD --max-width 4080 --optimizer AdamW+Muon -r 1e-4 --warmup 100 --schedule cosine --cos-max 1 --cos-min-lr 1e-6 -q fixed -N 1 -F 0.5 -B $B --accumulate-grad-batches $ACC --augment -t focus_list.txt -e dev_list.txt -f binary --base-dir R -o out/focus" out/focus.log > /dev/null 2>&1
+  put out/focus.log focus:log
+  local fb; fb=$(ls -t out/focus/best_*.safetensors 2>/dev/null | head -1)
+  python3 evalx.py out/ppm_best.safetensors out/full.txt out/ppm_full.npz --device ${REPORT_DEVICE:-cuda:0} > out/full_eval.log 2>&1 && put out/ppm_full.npz ppm:full
+  if [ -n "$fb" ]; then
+    cp "$fb" out/focus_best.safetensors; put out/focus_best.safetensors focus:model
+    python3 evalx.py out/focus_best.safetensors out/full.txt out/focus_full.npz --device ${REPORT_DEVICE:-cuda:0} >> out/full_eval.log 2>&1 && put out/focus_full.npz focus:test
+  fi
+  touch out/FOCUS_DONE; echo "focus: done"
+}
+( trap - ERR; set +eE +o pipefail; focus ) || echo "focus failed"
 rm -f out/RESUME_MODE
 ls out/*_best.safetensors > /dev/null 2>&1 || fail 'no model'
 echo done; put out/run.log run.log
 echo > out/DONE; put out/DONE DONE
-sleep ${HOLD:-3600}
+# Kept up for an hour in case remote control sends more work (the focus session).
+# The focus session can also be asked for here, after looking at the final report.
+for i in $(seq 1 $(( ${HOLD:-3600} / 5 ))); do
+  sleep 5; switch_over
+  if [ ! -f out/FOCUS_DONE ] && [ $((i % 12)) = 0 ]; then ( trap - ERR; set +eE +o pipefail; focus ) || true; fi
+done

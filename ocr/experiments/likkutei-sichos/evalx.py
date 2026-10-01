@@ -26,6 +26,10 @@ ap.add_argument('--threads', type=int, default=4)
 ap.add_argument('--device', default='cpu')
 args = ap.parse_args()
 torch.set_num_threads(args.threads)
+# Full float32 on the GPU too (cuDNN otherwise uses TF32 for convolutions), so a
+# score here matches what the same model reads on a CPU.
+torch.backends.cudnn.allow_tf32 = False
+torch.backends.cuda.matmul.allow_tf32 = False
 
 kept = {}
 
