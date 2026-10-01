@@ -11,8 +11,8 @@ the note before it, even over a column or a page."""
 import glob, json, re, sys
 
 ORIGIN = {'by': 'ocr:kraken-rebbehub-ls'}
-MARK = re.compile(r'(?<=\S)(\*?\d{1,3})\)')
-NOTE_START = re.compile(r'^(\*?\d{1,3})\)\s*')
+MARK = re.compile(r'(?<=\S)(\*{1,3}\d{0,3}|\d{1,3})\)')
+NOTE_START = re.compile(r'^(\*{1,3}\d{0,3}|\d{1,3})\)\s*')
 # An ois: a paragraph opening with its letter and a period, א. ב. … יא.
 OIS = re.compile(r'^([א-ת]{1,2})\.\s')
 LETTERS = dict(zip('אבגדהוזחטיכלמנסעפצקרשת', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400]))
@@ -104,7 +104,11 @@ def assemble(pages):
                 m = NOTE_START.match(text)
                 if m or note is None:
                     label = m.group(1) if m else '?'
-                    note = {'label': label, 'text': text[m.end():] if m else text, 'boxes': []}
+                    # Three levels of notes: numbered (set in Frank; *14 is a note added
+                    # later under an existing number, still the first level), stars alone
+                    # *, **, *** (called from inside a note; set in Miram, stressed words
+                    # in Frank), and, very rarely, a third in Hadassah.
+                    note = {'label': label, 'level': 2 if label.strip('*') == '' and label != '?' else 1, 'text': text[m.end():] if m else text, 'boxes': []}
                     notes.append(note)
                 else:
                     note['text'] = join(note['text'], text)
@@ -140,8 +144,8 @@ def assemble(pages):
         seg = {'id': nid, 'kind': 'note', 'text': [{'text': n['text']}], 'origin': ORIGIN, 'printed': n['boxes']}
         if n['label'].lstrip('*').isdigit():
             seg['n'] = int(n['label'].lstrip('*'))
-            if n['label'].startswith('*'):
-                seg['label'] = n['label']
+        if n['label'].startswith('*'):
+            seg['label'] = n['label']
         note_segs.append(seg)
     return pt_with_layout({'profile': 'sichos-kodesh', 'versions': [{'id': 'he', 'language': 'he', 'segments': segments, 'notes': note_segs, 'origin': ORIGIN}]}, pages)
 

@@ -124,9 +124,10 @@ if __name__ == '__main__':
             imgs = d[p].get_images()
             if not imgs:
                 continue
-            a = deskew(np.array(Image.open(io.BytesIO(d.extract_image(imgs[0][0])['image'])).convert('L')))
+            a = np.array(Image.open(io.BytesIO(d.extract_image(imgs[0][0])['image'])).convert('L'))
             if a.shape[1] > 2200 or a.shape[0] < 1000:  # not a body page
                 continue
+            a = deskew(a)
             n = harvest(net, a, store)
             print(os.path.basename(f), p, n, 'lines', sum(len(v) for k, v in store.items() if not k.startswith('_')), 'letters', flush=True)
         store.setdefault('_done', []).append(f)

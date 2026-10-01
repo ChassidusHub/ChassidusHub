@@ -13,14 +13,14 @@ import pymupdf
 from PIL import Image
 from rapidfuzz import fuzz
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
-from layout import deskew
+from layout import deskew, scan
 
 MIN_SCORE = 90
 SHY = '­'
 
 
 def printed(word):
-    word = re.sub(r'\[\[(\*?\d+)\]\]', r'\1)', word)
+    word = re.sub(r'\[\[(\*{0,3}\d*)\]\]', r'\1)', word)
     return re.sub(r'(^|(?<=[(\[—]))"(?=\S)', '„', word)
 
 
@@ -129,7 +129,7 @@ def keep(ocr, lab, score):
     pass reads badly, being small and raised), agreement in the letters."""
     if score >= MIN_SCORE:
         return True
-    return bool(re.search(r'\d\)', lab)) and fuzz.ratio(letters(re.sub(r'\*?\d+\)', '', lab)), letters(ocr)) >= 95
+    return bool(re.search(r'[\d*]\)', lab)) and fuzz.ratio(letters(re.sub(r'\*{0,3}\d*\)', '', lab)), letters(ocr)) >= 95
 
 
 def truth_streams(vol, page):
@@ -149,7 +149,7 @@ def page_score(lay, streams):
 
 
 def page_image(pdf, p):
-    return deskew(np.array(Image.open(io.BytesIO(pdf.extract_image(pdf[p].get_images()[0][0])['image'])).convert('L')))
+    return deskew(scan(pdf, p))
 
 
 if __name__ == '__main__':

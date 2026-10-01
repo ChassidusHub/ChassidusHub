@@ -1,6 +1,7 @@
 """Lines of a Likkutei Sichos body page, found by ink profiles: the running
 head, two columns of body text, then (under a short rule) the footnotes,
 also in two columns. Clean typeset scans need no learned segmenter."""
+import io
 import numpy as np
 from PIL import Image
 
@@ -107,3 +108,21 @@ def page_layout(a):
         out['body'].append(text_lines(a[top:bottom, x0:x1], top, x0))
         out['notes'].append(text_lines(a[rule[1] + 3:h, x0:x1], rule[1] + 3, x0) if rule else [])
     return out
+
+
+def scan(doc, p):
+    """Page p's scan as a grey array, or None. Most volumes embed the page
+    itself; vol 39 embeds a 2560x2560 square of the scanner bed at the same
+    resolution, which the pdf crops to the page, so a scan wider than any
+    page is cut to what the pdf shows. (Narrower scans are left whole, as the
+    first-pass OCR of vols 30-38 was read that way.)"""
+    imgs = doc[p].get_images(full=True)
+    if not imgs:
+        return None
+    a = np.array(Image.open(io.BytesIO(doc.extract_image(imgs[0][0])['image'])).convert('L'))
+    if a.shape[1] > 2200:
+        box, page = doc[p].get_image_bbox(imgs[0]), doc[p].rect
+        sx, sy = a.shape[1] / box.width, a.shape[0] / box.height
+        x0, y0 = int((page.x0 - box.x0) * sx), int((page.y0 - box.y0) * sy)
+        a = a[max(0, y0):int(y0 + page.height * sy), max(0, x0):int(x0 + page.width * sx)]
+    return a

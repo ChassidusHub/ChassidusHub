@@ -3,6 +3,7 @@ printed page: truth/<vol>_<page>.json {'body': str, 'notes': {marker: str}}.
 The body keeps its paragraphs (one per line) and a footnote's place as
 [[marker]]; soft hyphens stay, since they mark where the print broke a word."""
 import html, json, os, re, sys
+sys.path.insert(0, '/home/user/RebbeHub/packages')  # (nothing needed from it; hebrew numerals below)
 
 LIB = '/mnt/project-files/chabadlibrary'
 LETTERS = {c: v for c, v in zip('אבגדהוזחטיכלמנסעפצקרשת', [1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400])}
@@ -14,7 +15,7 @@ def numeral(s):
 
 
 def clean(text):
-    text = re.sub(r'\[ftnref_\d+_(\*?\d+)\]', r'[[\1]]', text)
+    text = re.sub(r'\[ftnref_\d+_(\*{0,3}\d*)\]', r'[[\1]]', text)
     text = re.sub(r'<h\d[^>]*>(.*?)</h\d>', r'\1\n', text, flags=re.S)
     text = re.sub(r'<br\s*/?>', '\n', text)
     text = re.sub(r'<[^>]+>', '', html.unescape(text))
@@ -23,7 +24,7 @@ def clean(text):
 
 def notes(haoros):
     out = {}
-    for m in re.finditer(r'\[ftn_\d+_(\*?\d+)\]\)?\s*(.*?)(?=\[ftn_\d+_|\Z)', html.unescape(haoros or ''), re.S):
+    for m in re.finditer(r'\[ftn_\d+_(\*{0,3}\d*)\]\s*\)?\s*(.*?)(?=\[ftn_\d+_|\Z)', html.unescape(haoros or ''), re.S):
         out[m.group(1)] = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', m.group(2))).strip()
     return out
 

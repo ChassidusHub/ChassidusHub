@@ -7,17 +7,15 @@ import pymupdf
 from PIL import Image
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from recog import load, read_page
-from layout import deskew
+from layout import deskew, scan
 
 
 def pages(pdf_path):
     d = pymupdf.open(pdf_path)
     for p in range(len(d)):
-        imgs = d[p].get_images()
-        if not imgs:
-            continue
-        im = Image.open(io.BytesIO(d.extract_image(imgs[0][0])['image'])).convert('L')
-        yield p, np.array(im)
+        a = scan(d, p)
+        if a is not None:
+            yield p, a
 
 
 if __name__ == '__main__':
