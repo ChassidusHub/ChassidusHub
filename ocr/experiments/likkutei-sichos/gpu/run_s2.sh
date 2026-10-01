@@ -8,6 +8,9 @@
 # restarted pod resumes from it. At the end each lane's best model reads the
 # 3,000 test39 lines and the reading (with the letter probabilities, for the
 # word model) goes back to R2 to be scored.
+# Only the pod this run was started on may run the script: a pod left over
+# from a failed start that RunPod restarts must not write into the same out/.
+[ -z "${RUNPOD_POD_ID:-}" ] || [ "$RUNPOD_POD_ID" = "${RUN_POD:-o06ja630srj9ll}" ] || { echo "pod $RUNPOD_POD_ID is not this run's pod, nothing to do"; exit 0; }
 D=${S2DIR:-/root/s2}; cd $D; mkdir -p out; exec >> out/run.log 2>&1
 # @URLS@ (a script sent by remote control may carry a fresh urls.json here)
 url() { python3 -c "import json,sys; print(json.load(open(sys.argv[2] + '/urls.json'))[sys.argv[1]])" "$1" "$D"; }
