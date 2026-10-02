@@ -436,6 +436,18 @@ test_saves() {
   fi
 }
 ( test_saves ) || echo "testing the saves failed"
+# Each lane's best reads both tests again keeping the five likeliest letters per
+# frame, which the word check (confix.py) and the two-reader vote need.
+top5() {
+  trap - ERR; set +eE +o pipefail
+  cat dev39.txt test39.txt yid/dev.txt > out/test_mix.txt
+  for n in $LANES; do
+    [ -f out/${n}_best.safetensors ] && [ ! -f out/$n.top5 ] || continue
+    python3 evalx.py out/${n}_best.safetensors out/test_mix.txt out/${n}_top5.npz --device cuda:0 --probs top5 > out/${n}_top5.log 2>&1 &&
+      put out/${n}_top5.npz "$n:test" && touch out/$n.top5 && echo "$n: top-5 readings sent"
+  done
+}
+( top5 ) || echo "top-5 readings failed"
 rm -f out/RESUME_MODE
 ls out/*_best.safetensors > /dev/null 2>&1 || fail 'no model'
 echo done; put out/run.log run.log

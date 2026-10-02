@@ -135,7 +135,12 @@ if __name__ == '__main__':
     fx = Fixer(vocab, idx, lm, a.margin, a.min_prob, a.min_count, a.phrase_min_prob)
     gts = [nfd(g) for g in d['gts']]; paths = [str(p) for p in d['paths']]
     old, new, fixed, broke, rows = [], [], 0, 0, []
+    top5 = 'probs_kind' in d.files and str(d['probs_kind']) == 'top5'
     for g, p, path in zip(gts, d['probs'], paths):
+        if top5:  # evalx --probs top5: (T, 5, 2) letter index and float16 bits, back to a frame-by-letter matrix
+            dense = np.zeros((p.shape[0], len(labels)), np.float32)
+            np.put_along_axis(dense, p[:, :, 0].astype(np.int64), p[:, :, 1].view(np.float16).astype(np.float32), axis=1)
+            p = dense
         o, n, ch = fx.line(p, labels)
         old.append(o); new.append(n)
         if ch:
