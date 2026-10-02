@@ -24,6 +24,7 @@ ap.add_argument('out')
 ap.add_argument('--limit', type=int, default=0)
 ap.add_argument('--threads', type=int, default=4)
 ap.add_argument('--device', default='cpu')
+ap.add_argument('--probs', default='full', choices=['full', 'top5', 'none'], help='full probability matrix (gigabytes on 4,500 lines), the five likeliest letters per frame, or none')
 args = ap.parse_args()
 torch.set_num_threads(args.threads)
 # Full float32 on the GPU too (cuDNN otherwise uses TF32 for convolutions), so a
@@ -64,10 +65,16 @@ for i, p in enumerate(paths):
     gt = p[:-4] + '.gt.txt'
     gts.append(open(gt, encoding='utf-8').read().strip() if os.path.exists(gt) else '')
     preds.append(rec.prediction.strip())
-    probs.append(kept['probs'])
+    pr = kept['probs']
+    if args.probs == 'top5':  # the five likeliest letters per frame: what the word check needs, 1/300 of the size
+        idx = np.argsort(-pr, axis=1)[:, :5].astype(np.uint16)
+        pr = np.stack([idx, np.take_along_axis(pr, idx.astype(np.int64), axis=1).view(np.uint16)], axis=2)  # (T, 5, 2): index, float16 bits
+    elif args.probs == 'none':
+        pr = np.zeros((0, 0), np.float16)
+    probs.append(pr)
     if i % 200 == 0:
         print(i, len(paths), round(time.time() - t), 's', flush=True)
 arr = np.empty(len(probs), dtype=object)
 arr[:] = probs
-np.savez(args.out, paths=np.array(paths), gts=np.array(gts), preds=np.array(preds), probs=arr, labels=np.array(labels))
+np.savez(args.out, paths=np.array(paths), gts=np.array(gts), preds=np.array(preds), probs=arr, labels=np.array(labels), probs_kind=np.array(args.probs))
 print('saved', args.out, len(paths), 'lines', round(time.time() - t), 's')
