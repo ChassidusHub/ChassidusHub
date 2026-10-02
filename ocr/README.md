@@ -17,4 +17,4 @@ The plan: `docs/plans/ocr-engines.md` (model choice, training data, layout, cata
 | RebbeHub-facenet-V2 | which words are set in Miram (bold) | 1,832 / 1,832 words on five checked pages | in use |
 
 Details and every score: `experiments/likkutei-sichos/README.md` and RebbeHub's docs/models.md.
-Models are kept in R2 under `models/<name>/`, not in git.
+Models are kept in R2 under `models/<name>/`, not in git. They are not released: all rights reserved (Shmuly, 2026-10-02).
