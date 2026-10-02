@@ -41,24 +41,39 @@ MARK = re.compile(r'(\*{1,3}\d{0,3}|\d{1,3})\)')
 def marks(rec, line):
     """Each note mark the model read in the line (the raised 14) after a word, or
     the 14) opening a note), with the place of its own letters on the page."""
-    pred, cuts = rec.prediction, rec.cuts
-    if not pred or len(cuts) != len(pred):
+    pred = rec.prediction
+    xs, half = letter_xs(rec, line)
+    if xs is None:
         return []
-    xs = [sum(p[0] for p in c) / len(c) for c in cuts]
-    half = (line['x1'] - line['x0']) / max(1, len(pred)) / 2
     return [{'label': m.group(1), 'x0': int(max(line['x0'], min(xs[m.start():m.end()]) - half)),
              'x1': int(min(line['x1'], max(xs[m.start():m.end()]) + half))} for m in MARK.finditer(pred)]
+
+
+def letter_xs(rec, line):
+    """The centre of each read letter on the page. The network emits a letter about
+    a letter and a half after seeing it, so the frames lag leftwards at the line's
+    start (28 px on vol 39) and sit at the ink at its end: the frame positions are
+    stretched so the first letter's centre is half a letter in from the right edge
+    and the last half a letter in from the left."""
+    pred, cuts = rec.prediction, rec.cuts
+    if not pred or len(cuts) != len(pred):
+        return None, 0
+    xs = np.array([sum(p[0] for p in c) / len(c) for c in cuts], float)
+    half = (line['x1'] - line['x0']) / max(1, len(pred)) / 2
+    lo, hi = xs.min(), xs.max()
+    if hi - lo > 2 * half:
+        xs = (line['x1'] - half) - (hi - xs) * (line['x1'] - line['x0'] - 2 * half) / (hi - lo)
+    return xs, half
 
 
 def words(rec, line):
     """Each word of a read line with its place on the page (x0, x1 across the line's
     height) and how sure the model was of it (its least sure letter), for showing a word
     on the scan, highlighting a search hit, and sending doubtful words to be checked."""
-    pred, cuts, conf = rec.prediction, rec.cuts, rec.confidences
-    if not pred or len(cuts) != len(pred):
+    pred, conf = rec.prediction, rec.confidences
+    xs, half = letter_xs(rec, line)
+    if xs is None:
         return []
-    xs = [sum(p[0] for p in c) / len(c) for c in cuts]
-    half = (line['x1'] - line['x0']) / max(1, len(pred)) / 2
     out, cur = [], []
     for i, ch in enumerate(pred + ' '):
         if ch == ' ' or i == len(pred):
