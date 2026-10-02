@@ -4,8 +4,8 @@ word as 'face_net': [[first, after last]] (letters in the word's own order), wit
 the net's P(Miram) per letter in 'face_p'. It stands beside recog.faces (the
 thickness method) so the two can be compared on pages marked by eye.
 
-The letters are cut from the line's ink alone (line_letters), never from the
-reader's letter positions, which drift when a line's box is off."""
+The letters come from letters.cut_line, which aligns the line's ink pieces with
+what the reader read, so words with quotes and brackets are judged too."""
 import os, re
 import numpy as np
 from facenet import Net, canvas, LETTERS, XH
@@ -23,106 +23,84 @@ def _visual(t):
     return visual(t)
 
 
-def line_letters(a, l, words):
-    """Each word's letters cut from the line's ink, by the ink alone: the line's ink
-    pieces (letters, right to left) are split into words at the widest gaps, then
-    each word's pieces are brought to its letter count, joining the closest pair
-    when the ink broke a letter in two, cutting the widest piece at its thinnest
-    column when two letters touch. Returns per word a list of (glyph, top, xh) per
-    letter or None when the ink did not come out as the words say, plus the pieces
-    for the record."""
-    from harvest import groups
-    band = a[l['y0']:l['y1'], l['x0']:l['x1']] < 128
-    gs, marks, info = groups(band)
-    if not info or not words:
-        return [None] * len(words)
-    lab, base, xh = info
-    hs = [g['y1'] - g['y0'] for g in gs]
-    mh = float(np.median(hs))
-    # specks and hairline bits are not letters (a raised note digit is about half a letter tall)
-    gs = [g for g in gs if g['y1'] - g['y0'] >= 0.3 * mh]
-    counts = [len(_visual(w['text'])) for w in words]
-    if len(gs) < sum(counts) - len(gs) // 2 or len(words) > len(gs):
-        return [None] * len(words)
-    gaps = [gs[i]['x0'] - gs[i + 1]['x1'] for i in range(len(gs) - 1)]
-    cut_at = sorted(sorted(range(len(gaps)), key=lambda i: -gaps[i])[:len(words) - 1])
-    bounds = [0] + [i + 1 for i in cut_at] + [len(gs)]
-    out = []
-    for w, n, (b0, b1) in zip(words, counts, zip(bounds, bounds[1:])):
-        pieces = [dict(g) for g in gs[b0:b1]]
-        if not HEB.match(w['text']):
-            out.append(None); continue
-        tries = 0
-        while len(pieces) != n and tries < 6:
-            tries += 1
-            if len(pieces) > n:
-                # join the two closest pieces (a letter broken by light ink)
-                g = [pieces[i]['x0'] - pieces[i + 1]['x1'] for i in range(len(pieces) - 1)]
-                i = int(np.argmin(g)); p, q = pieces[i], pieces[i + 1]
-                pieces[i:i + 2] = [dict(x0=q['x0'], x1=p['x1'], y0=min(p['y0'], q['y0']), y1=max(p['y1'], q['y1']), ids=p['ids'] + q['ids'])]
-            else:
-                # cut the widest piece at its thinnest column away from its edges
-                i = int(np.argmax([p['x1'] - p['x0'] for p in pieces])); p = pieces[i]
-                sub = np.isin(lab[p['y0']:p['y1'], p['x0']:p['x1']], p['ids'])
-                col = sub.sum(0); m = max(2, (p['x1'] - p['x0']) // 4)
-                if len(col) <= 2 * m:
-                    break
-                c = m + int(np.argmin(col[m:len(col) - m]))
-                left = dict(p, x1=p['x0'] + c, split=True); right = dict(p, x0=p['x0'] + c, split=True)
-                pieces[i:i + 1] = [right, left]
-        if len(pieces) != n:
-            out.append(None); continue
-        letters = []
-        for p in pieces:
-            sub = np.isin(lab[p['y0']:p['y1'], p['x0']:p['x1']], p['ids']) if not p.get('split') else (band[p['y0']:p['y1'], p['x0']:p['x1']] & np.isin(lab[p['y0']:p['y1'], p['x0']:p['x1']], p['ids']))
-            ys, xs = np.nonzero(sub)
-            if not len(ys):
-                letters = None; break
-            letters.append((sub[ys.min():ys.max() + 1, xs.min():xs.max() + 1].astype(np.float32), p['y0'] + ys.min() - base, max(1, base - xh)))
-        out.append(letters)
-    return out
+PREFIX = set('והבלכמש')
+
+
+def word_runs(ps, text, cut=0.5):
+    """The Miram stretch of a word from its letters' P(Miram): Miram covers a whole
+    word, or all of it but a leading prefix letter (ו, ה, ב, ל...), so the answer is
+    one of: nothing, the whole word, the word after its first letter. The stretch
+    with the better mean wins, and needs most of its letters over the cut."""
+    n = len(text)
+    known = [(i, p) for i, p in enumerate(ps) if p is not None]
+    if len(known) < max(1, n // 2):
+        return []
+    best, score = [], 0.0
+    for k in (0, 1) if n > 1 else (0,):
+        if k == 1 and text[0] not in PREFIX:
+            continue
+        sel = [p for i, p in known if i >= k]
+        if not sel or (k == 1 and n - k < 2 and n > 1):
+            continue
+        mean = sum(sel) / len(sel); over = sum(p > cut for p in sel) / len(sel)
+        # a lone letter (ו, ע') is marked only when the net is very sure: one letter is easy to misjudge
+        if mean > (0.9 if len(sel) == 1 else 0.5) and over >= 0.6 and mean > score:
+            best, score = [[k, n]], mean
+    if best and best[0][0] == 1 and ps[0] is not None and ps[0] > 0.8:
+        best = [[0, n]]
+    return best
 
 
 def net_faces(a, lay, fnet, cut=0.5):
+    import letters
     todo = []  # (word dict, letter index in word, canvas, letter id)
     for key in ('body', 'notes'):
-        for col in lay[key]:
-            for l in col:
-                words = l.get('words', [])
-                if not any(HEB.match(w['text']) for w in words):
+        lines = [l for col in lay[key] for l in col if l.get('words')]
+        hs = [l['y1'] - l['y0'] for l in lines]
+        med = float(np.median(hs)) if hs else 0
+        for l in lines:
+            if l['y1'] - l['y0'] < 0.85 * med:
+                continue  # a smaller face (a date or source line) prints thinner all over; not Miram
+            try:
+                c = letters.cut_line(a, l, key)
+            except Exception:
+                c = None
+            if c is None:
+                continue
+            # the line's visual chars, token by token, matched to the reader's words
+            text = re.sub('[\ue000\ue001]', '', l['text'])
+            vis = _visual(text)
+            pos = 0
+            for word in l['words']:
+                wv = _visual(word['text']); n = len(wv)
+                k = vis.find(wv, pos)
+                if k < 0:
                     continue
-                try:
-                    cuts = line_letters(a, l, words)
-                except Exception:
-                    cuts = [None] * len(words)
-                for word, letters in zip(words, cuts):
-                    if not HEB.match(word['text']):
+                pos = k + n
+                boxes = c['chars'][k:k + n]
+                # a letter's index in the word's own order: visual order is the word's
+                # order for its letters (digits run the other way, but they are not judged)
+                got = 0
+                for i, (ch, box) in enumerate(zip(wv, boxes)):
+                    if box is None or not ('א' <= ch <= 'ת'):
                         continue
-                    n = len(word['text'])
-                    if letters is not None:
-                        for i, (glyph, top, xh) in enumerate(letters):
-                            todo.append((word, i, canvas(glyph, top, xh), LETTERS.index(word['text'][i])))
-                        word['face_cut'] = 'ink'
-                    else:
-                        word['face_cut'] = 'none'
+                    g, top = letters.glyph(c, box)
+                    if g is None:
+                        continue
+                    todo.append((word, i, canvas(g, top, c['xh']), LETTERS.index(ch))); got += 1
+                if got:
+                    word['face_cut'] = 'ink'
     if not todo:
         return
     X = np.stack([t[2] for t in todo]); L = np.array([t[3] for t in todo], np.int64)
     p = fnet.predict(X, L)
     for (word, i, _, _), pi in zip(todo, p):
-        word.setdefault('face_p', [None] * len(word['text']))[i] = round(float(pi), 3)
+        word.setdefault('face_p', [None] * len(_visual(word['text'])))[i] = round(float(pi), 3)
     for word, *_ in todo:
         if 'face_net' in word:
             continue
-        ps = word['face_p']; runs = []; i = 0
-        while i < len(ps):
-            if ps[i] is not None and ps[i] > cut:
-                j = i
-                while j < len(ps) and ps[j] is not None and ps[j] > cut:
-                    j += 1
-                if j - i >= 2 or (j - i == 1 and len(ps) == 1 and ps[i] > 0.9):
-                    runs.append([i, j])
-                i = j
-            else:
-                i += 1
-        word['face_net'] = runs
+        wv = _visual(word['text'])
+        # only the letters count; marks around them (quotes, a bracket) are not judged
+        idx = [i for i, ch in enumerate(wv) if 'א' <= ch <= 'ת']
+        runs = word_runs([word['face_p'][i] for i in idx], ''.join(wv[i] for i in idx), cut)
+        word['face_net'] = [[idx[i], idx[j - 1] + 1] for i, j in runs]
