@@ -33,7 +33,11 @@ set -eEuo pipefail
 nvidia-smi
 echo "pod ${RUNPOD_POD_ID:-?} start $(date -u +%FT%TZ)"
 pip show kraken 2>/dev/null | grep -q "^Version: 7.1.1$" || pip install -q "kraken==7.1.1"
-pip show scikit-image > /dev/null 2>&1 || pip install -q scikit-image pymupdf scipy
+# each module on its own: the image ships scikit-image but not pymupdf (2026-10-02 a pod
+# failed on that: one "pip show" for the three skipped them all)
+for m in skimage:scikit-image pymupdf:pymupdf scipy:scipy; do
+  python3 -c "import ${m%%:*}" 2>/dev/null || pip install -q "${m##*:}"
+done
 python3 -c "import torch, kraken, pymupdf, skimage; print('torch', torch.__version__, 'cuda', torch.cuda.is_available()); assert torch.cuda.is_available() or __import__('os').environ.get('DRY')"
 mkdir -p models read
 get code code.tar && mkdir -p code && tar -xf code.tar -C code && rm code.tar
