@@ -1,6 +1,6 @@
 """Read a page's lines with a Kraken model: the first pass that silver
 pairs are built from, and later the trained model's output."""
-import sys
+import re, sys
 import numpy as np
 from PIL import Image
 from kraken.configs import RecognitionInferenceConfig
@@ -31,7 +31,23 @@ def read_page(net, a):
     for l, rec in zip(lines, net.predict(Image.fromarray(a), seg, CONFIG)):
         l['text'] = rec.prediction.strip()
         l['words'] = words(rec, l)
+        l['marks'] = marks(rec, l)
     return lay
+
+
+MARK = re.compile(r'(\*{1,3}\d{0,3}|\d{1,3})\)')
+
+
+def marks(rec, line):
+    """Each note mark the model read in the line (the raised 14) after a word, or
+    the 14) opening a note), with the place of its own letters on the page."""
+    pred, cuts = rec.prediction, rec.cuts
+    if not pred or len(cuts) != len(pred):
+        return []
+    xs = [sum(p[0] for p in c) / len(c) for c in cuts]
+    half = (line['x1'] - line['x0']) / max(1, len(pred)) / 2
+    return [{'label': m.group(1), 'x0': int(max(line['x0'], min(xs[m.start():m.end()]) - half)),
+             'x1': int(min(line['x1'], max(xs[m.start():m.end()]) + half))} for m in MARK.finditer(pred)]
 
 
 def words(rec, line):

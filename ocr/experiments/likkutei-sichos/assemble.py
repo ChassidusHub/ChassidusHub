@@ -202,6 +202,17 @@ def assemble(pages):
     return pt_with_layout({'profile': 'sichos-kodesh', 'versions': [{'id': 'he', 'language': 'he', 'segments': segments, 'notes': note_segs, 'origin': ORIGIN}]}, pages)
 
 
+def head_parts(head):
+    """The running head's parts by their place: the page number at the outer edge,
+    the set's title (לקוטי שיחות) and, between its two words, the sicha's name."""
+    words = sorted(head.get('words', []), key=lambda x: -x['x0'])  # right to left
+    number = next((int(x['text']) for x in words if x['text'].isdigit()), None)
+    title = [x for x in words if x['text'] in ('לקוטי', 'שיחות', 'לקוטישיחות')]
+    sicha = [x['text'] for x in words if not x['text'].isdigit() and x not in title
+             and (len(title) < 2 or title[1]['x0'] < x['x0'] < title[0]['x0'])]
+    return {'page_number': number, 'head_title': ' '.join(x['text'] for x in title), 'head_sicha': ' '.join(sicha)}
+
+
 def pt_with_layout(pt, pages):
     """The page text, and beside it where everything is on the scans: each page's
     printed number and size, its running head, and every line (body or note, its
@@ -211,13 +222,14 @@ def pt_with_layout(pt, pages):
     for printed, pdf_page, lay in pages:
         h, w = lay['shape']
         fx = lambda x: round(x / w, 4)
-        page = {'pdf_page': pdf_page, 'printed_page': printed, 'size': [w, h], 'head_text': lay['head'].get('text', ''),
+        page = {'pdf_page': pdf_page, 'printed_page': printed, 'size': [w, h], 'head_text': lay['head'].get('text', ''), **head_parts(lay['head']),
                 'head': [fx(lay['head']['x0']), round(lay['head']['y0'] / h, 4), fx(lay['head']['x1'] - lay['head']['x0']), round((lay['head']['y1'] - lay['head']['y0']) / h, 4)], 'lines': []}
         for kind in ('headings', 'body', 'notes'):
             for c, col in enumerate([lay.get('headings', [])] if kind == 'headings' else lay[kind]):
                 for line in col:
                     page['lines'].append({'kind': 'note' if kind == 'notes' else 'heading' if kind == 'headings' else 'body', 'column': c, 'text': line.get('text', ''),
                                           'box': box(line, (h, w), pdf_page)['box'], 'in': line.get('_in', {}).get('id'),
+                                          'marks': [{'label': x['label'], 'x0': fx(x['x0']), 'x1': fx(x['x1'])} for x in line.get('marks', [])],
                                           'words': [{'text': x['text'], 'x0': fx(x['x0']), 'x1': fx(x['x1']), 'conf': x['conf']} for x in line.get('words', [])]})
         layout.append(page)
     return pt, layout
