@@ -11,7 +11,9 @@ the note before it, even over a column or a page."""
 import glob, json, re, sys
 
 ORIGIN = {'by': 'ocr:kraken-rebbehub-ls'}
-MARK = re.compile(r'(?<=\S)(\*{1,3}\d{0,3}|\d{1,3})\)')
+# A mark stands right after a word's last letter or quote, never after a digit:
+# "הערה 29)" is a reference to another note, not the word "2" and the mark 9.
+MARK = re.compile(r'(?<=[^\s\d])(\*{1,3}\d{0,3}|\d{1,3})\)')
 NOTE_START = re.compile(r'^(\*{1,3}\d{0,3}|\d{1,3})\)\s*')
 # An ois: a paragraph opening with its letter and a period, א. ב. … יא.
 OIS = re.compile(r'^([א-ת]{1,2})\.\s')
@@ -36,8 +38,16 @@ def runs(text):
     light face, which is this print's stress, what bold is elsewhere; Shmuly
     2026-10-02) carrying the mark 'b'."""
     out = []
-    # Two Miram words with only a space between them are one bold stretch, as in print.
-    text = re.sub(f'{FACE_OFF}( +){FACE_ON}', r'\1', text)
+    # Two Miram words with only a space between them are one bold stretch, as in
+    # print; so are the two halves of a word the print broke over a line (ה־ + בהמית).
+    text = re.sub(f'{FACE_OFF}( *){FACE_ON}', r'\1', text)
+    # A single letter judged Miram at the head of a word whose other letters are
+    # Frank is noise, not a face (the כ of כראוי, broken over a line as „כ־ + ראוי):
+    # the real pattern is the reverse, a Frank prefix on a Miram word (הבהמית).
+    text = re.sub(f'(?<![א-ת]){FACE_ON}([א-ת]){FACE_OFF}(?=[א-ת])', r'\1', text)
+    # A closing quote or apostrophe glued to a Miram word is set with it (בו ית'; Shmuly
+    # 2026-10-02); the opening „ before a word is not.
+    text = re.sub(f'{FACE_OFF}(["\'\u05f3\u05f4]+)', r'\1' + FACE_OFF, text)
     for k, piece in enumerate(re.split(f'[{FACE_ON}{FACE_OFF}]', text)):
         marks = ['b'] if k % 2 else None
         pos = 0
@@ -85,6 +95,45 @@ def join(a, b):
     return a + ' ' + b
 
 
+def fix_dots(text):
+    """The print's omission mark ". ." stands apart from the word before it
+    (ביין . . אבל); the reader glues the first dot to the word."""
+    return re.sub(r'(?<=[א-ת\'"\u05f3\u05f4\ue001])\. \.', ' . .', text)
+
+
+# A star the ink stage (recog.stars) put inside a word: שלמ*) ים. The stage inserts
+# "*) " before the first letter left of the blob, so a blob over a word's middle
+# (a speck, a serif) splits it. Dropped when the halves cannot be two words.
+STAR_SPLIT = re.compile(r'([א-ת][א-ת"\'\ue000\ue001]*)(\*{1,3})\) ([\ue000\ue001]*[א-ת]+)')
+
+
+def unsplit_stars(text):
+    def fix(m):
+        left, right = unfaced(m.group(1)), unfaced(m.group(3))
+        # a word cannot begin with a final letter nor end with a letter that has a
+        # final form; else the library's vocabulary decides (שלמ + ים = שלמים)
+        if right[0] in 'ךםןףץ' or left[-1] in 'כמנפצ' or (not known(left) and known(left + right)):
+            return m.group(1) + m.group(3)
+        return m.group(0)
+    return STAR_SPLIT.sub(fix, text)
+
+
+def flip_faces(text):
+    """A second-level note is set in Miram, its stressed words in Frank, so the
+    marks flip: a stretch the face stage left in Frank carries the mark 'b', a
+    Miram one none (Shmuly 2026-10-02: in such a note the Frank words are the
+    stressed ones, and the Miram face itself need not be marked). Only stretches
+    with letters flip; a bracket or a comma between them is set alike in both."""
+    out = []
+    for k, piece in enumerate(re.split(f'[{FACE_ON}{FACE_OFF}]', text)):
+        if k % 2 == 0 and re.search('[א-ת]', piece):
+            m = re.match(r'^([^א-ת]*)(.*[א-ת])([^א-ת"\'\u05f3\u05f4]*)$', piece, re.S)
+            out.append(m.group(1) + FACE_ON + m.group(2) + FACE_OFF + m.group(3))
+        else:
+            out.append(piece)
+    return ''.join(out)
+
+
 def box(line, shape, page):
     h, w = shape
     return {'page': page, 'box': [round(line['x0'] / w, 4), round(line['y0'] / h, 4), round((line['x1'] - line['x0']) / w, 4), round((line['y1'] - line['y0']) / h, 4)]}
@@ -125,7 +174,7 @@ def assemble(pages):
             left, right = edges(col)
             prev_short = False
             for i, line in enumerate(col):
-                text = line.get('text', '').strip()
+                text = fix_dots(line.get('text', '').strip())
                 if not text:
                     continue
                 indented = line['x1'] < right - 25
@@ -148,12 +197,19 @@ def assemble(pages):
                 prev_short = short
         for col in lay['notes']:
             for line in col:
-                text = line.get('text', '').strip()
+                text = fix_dots(line.get('text', '').strip())
                 if not text:
                     continue
                 m = NOTE_START.match(text)
-                if m or note is None:
-                    label = m.group(1) if m else '?'
+                lost = None
+                if not m and note is not None and text.startswith(')') and note['label'].isdigit():
+                    # The reader lost the number of a note's opening "3)" and kept the
+                    # bracket: a line opening with ")" after note k is note k+1, not
+                    # more of note k (page 62 of vol 33 lost three this way).
+                    lost = str(int(note['label']) + 1)
+                    text = text[1:].lstrip()
+                if m or lost or note is None:
+                    label = m.group(1) if m else lost or '?'
                     # Three levels of notes: numbered (set in Frank; *14 is a note added
                     # later under an existing number, still the first level), stars alone
                     # *, **, *** (called from inside a note; set in Miram, stressed words
@@ -164,6 +220,10 @@ def assemble(pages):
                     note['text'] = join(note['text'], text)
                 merge_box(note['boxes'], box(line, shape, pdf_page))
                 line['_in'] = note
+    for p in paras:
+        p['parts'] = [unsplit_stars(part) if isinstance(part, str) else part for part in p['parts']]
+    for n in notes:
+        n['text'] = unsplit_stars(n['text'])
     # Each ois is a section: the paragraph that opens with its letter, and the paragraphs
     # after it up to the next ois. What comes before the first stays outside any.
     segments, section = [], None
@@ -248,14 +308,37 @@ def assemble(pages):
         # Second level only when a bare-star note is called from inside another note
         # (Shmuly 2026-10-02): a star note on the sicha's title or body is the first level.
         n['level'] = 2 if n['label'] != '?' and n['label'].strip('*') == '' and n['called_from'] == 'note' else 1
-        # a second-level note is set wholly in Miram (its stressed words flip to Frank)
-        text = FACE_ON + unfaced(n['text']) + FACE_OFF if n['level'] == 2 else n['text']
+        # a second-level note is set in Miram; its Frank words are the stressed ones
+        text = flip_faces(n['text']) if n['level'] == 2 else n['text']
         seg = {'id': nid, 'kind': 'note', 'level': n['level'], 'text': runs(text), 'origin': ORIGIN, 'printed': n['boxes']}
         if n['label'].lstrip('*').isdigit():
             seg['n'] = int(n['label'].lstrip('*'))
         if n['label'].startswith('*'):
             seg['label'] = n['label']
         note_segs.append(seg)
+    # Every bare-star mark reads "*)" alike, so runs() linked each to the id of the
+    # first star note; the k-th such mark on the sicha, headings and body first,
+    # then the notes, is the k-th star note with those stars (as called_from above).
+    star_ids, used = {}, {}
+    for seg in note_segs:
+        if seg.get('label') and seg['label'].strip('*') == '':
+            star_ids.setdefault(seg['label'], []).append(seg['id'])
+    def rebind(text):
+        for r in text:
+            label = r.get('note', '')[1:].replace('s', '*') if 'note' in r else ''
+            if label and label.strip('*') == '' and label in star_ids:
+                k = used.get(label, 0)
+                r['note'] = star_ids[label][min(k, len(star_ids[label]) - 1)]
+                used[label] = k + 1
+    def walk(segs):
+        for seg in segs:
+            if seg['kind'] == 'section':
+                walk(seg['children'])
+            else:
+                rebind(seg['text'])
+    walk(segments)
+    for seg in note_segs:
+        rebind(seg['text'])
     return pt_with_layout({'profile': 'sichos-kodesh', 'versions': [{'id': 'he', 'language': 'he', 'segments': segments, 'notes': note_segs, 'origin': ORIGIN}]}, pages)
 
 

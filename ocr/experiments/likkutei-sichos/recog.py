@@ -171,6 +171,9 @@ def star_blobs(a, line):
     return groups
 
 
+HEB = re.compile('[א-ת]')
+
+
 def add_stars(a, line, rec, groups):
     """Put the stars the ink shows into the line's text and marks where the model
     left them out: a note's own opening *) or **), or a raised mark after a word.
@@ -187,6 +190,11 @@ def add_stars(a, line, rec, groups):
             i = 0  # the stars open the line: a note's own *)
         else:
             i = next((j for j in range(len(pred)) if xs[j] < gc), len(pred))  # before the first letter left of the stars
+            if 0 < i < len(pred) and HEB.match(pred[i - 1]) and HEB.match(pred[i]):
+                # the blob sits over a word's middle (a speck, a serif): a raised star
+                # always follows a word's last letter, so this is no star (it split
+                # שלמים and אין on vol 33 p. 64 and 68, Shmuly 2026-10-02)
+                continue
         inserts.append((i, '*' * k, int(gx0), int(gx1)))
     if not inserts:
         return
