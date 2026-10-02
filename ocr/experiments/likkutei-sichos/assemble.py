@@ -242,6 +242,13 @@ def assemble(pages):
                 else:
                     merged.append({**r, 'marks': ['small']} if 'text' in r else r)
             text = merged
+        if p['heading'] and text and 'text' in text[-1]:
+            # A sicha's title ends with its letter, בהעלותך ב; the reader gives a lone
+            # letter after the parsha as a digit and bracket ("בהעלותך 2)"), which
+            # runs() would take for a footnote mark. The letter comes back.
+            m = re.search(r' (\d)\)$', text[-1]['text'])
+            if m and int(m.group(1)) >= 1:
+                text[-1] = {**text[-1], 'text': text[-1]['text'][:m.start()] + ' ' + 'אבגדהוזחט'[int(m.group(1)) - 1]}
         seg = {'id': f'p{k}', 'kind': 'date' if p.get('date') else 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
         p['id'] = seg['id']
         first = next((r['text'] for r in text if 'text' in r), '')
