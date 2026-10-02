@@ -48,10 +48,18 @@ def runs(text):
     # A closing quote or apostrophe glued to a Miram word is set with it (בו ית'; Shmuly
     # 2026-10-02); the opening „ before a word is not.
     text = re.sub(f'{FACE_OFF}(["\'\u05f3\u05f4]+)', r'\1' + FACE_OFF, text)
+    prev = ''
     for k, piece in enumerate(re.split(f'[{FACE_ON}{FACE_OFF}]', text)):
         marks = ['b'] if k % 2 else None
         pos = 0
-        for m in MARK.finditer(piece):
+        # A mark right after a word in the other face (ד'17) after a Miram ד') opens
+        # this piece, where the look-behind has nothing to see.
+        lead = NOTE_START.match(piece) if prev and not prev[-1].isspace() and not prev[-1].isdigit() else None
+        if lead:
+            out.append({'note': note_id(lead.group(1))})
+            pos = lead.end(1) + 1
+        prev = piece or prev
+        for m in MARK.finditer(piece, pos):
             if m.start() > pos:
                 out.append({'text': piece[pos:m.start()], **({'marks': marks} if marks else {})})
             out.append({'note': note_id(m.group(1))})
@@ -204,7 +212,15 @@ def assemble(pages):
                     continue
                 m = NOTE_START.match(text)
                 lost = None
-                if not m and note is not None and text.startswith(')') and note['label'].isdigit():
+                if not m and note is None and text.startswith(')'):
+                    # The page's first note lost its number: it is the first mark in the
+                    # body that no note has taken yet.
+                    seen = [int(x) for p in paras for part in p['parts'] if isinstance(part, str) for x in re.findall(r'(\d{1,3})\)', part)]
+                    taken = {int(x['label']) for x in notes if x['label'].isdigit()}
+                    free = [x for x in seen if x not in taken]
+                    if free:
+                        lost = str(min(free)); text = text[1:].lstrip()
+                if not m and not lost and note is not None and text.startswith(')') and note['label'].isdigit():
                     # The reader lost the number of a note's opening "3)" and kept the
                     # bracket: a line opening with ")" after note k is note k+1, not
                     # more of note k (page 62 of vol 33 lost three this way).
@@ -226,6 +242,12 @@ def assemble(pages):
         p['parts'] = [unsplit_stars(part) if isinstance(part, str) else part for part in p['parts']]
     for n in notes:
         n['text'] = unsplit_stars(n['text'])
+    # Some volumes' marks are read with a space before them ("חז"ל 2)", vols 15-25):
+    # a number with a bracket after a space is a mark when a note carries that number.
+    labels = {n['label'] for n in notes if n['label'].isdigit()}
+    spaced = re.compile(r'(?<=[^\s\d]) (\d{1,3})\)(?=[\s,.:;\ue000\ue001]|$)')
+    for p in paras:
+        p['parts'] = [spaced.sub(lambda m: m.group(1) + ')' if m.group(1) in labels else m.group(0), part) if isinstance(part, str) and not p['heading'] else part for part in p['parts']]
     # Each ois is a section: the paragraph that opens with its letter, and the paragraphs
     # after it up to the next ois. What comes before the first stays outside any.
     segments, section = [], None
