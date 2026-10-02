@@ -35,6 +35,8 @@ def read_page(net, a):
                        lines=[BBoxLine(id=str(i), bbox=(max(0, l['x0'] - PAD), max(0, l['y0'] - PAD), min(w, l['x1'] + PAD), min(h, l['y1'] + PAD)), text_direction='horizontal-rl')
                               for i, l in enumerate(lines)])
     recs = list(net.predict(Image.fromarray(a), seg, CONFIG))
+    if SECOND:
+        recs = vote_lines(a, seg, lines, recs, len([l for col in lay['body'] for l in col]))
     for l, rec in zip(lines, recs):
         l['text'] = rec.prediction.strip()
         l['words'] = words(rec, l)
@@ -52,6 +54,40 @@ def read_page(net, a):
     except Exception as e:
         print('font stage skipped:', e, file=sys.stderr)
     return lay
+
+
+# A second reader (round 3, 2026-10-02) reads every line again and the word check
+# picks between the two (vote.Chooser). Which one goes first matters, since a tie keeps
+# it: the round 3 reader on the body of a Yiddish page (63 mistakes in 2,500 Yiddish
+# test lines against the keeper's 215), the keeper everywhere else (Hebrew, and the
+# notes of a Yiddish sicha, where the round 3 reader drops dashes and points).
+SECOND, CHOOSER = None, None
+YIDDISH = {'איז', 'דער', 'ניט', 'אויף', 'וואס', 'זיך', 'דאס', 'אויך', 'נישט', 'מען', 'זיין', 'פון', 'מיט', 'ווי', 'אז', 'האט', 'ווערט', 'וועגן'}
+
+
+def use_second(path, vocab, lm=None):
+    global SECOND, CHOOSER
+    import vote
+    SECOND, CHOOSER = load(path), vote.Chooser(vocab, lm)
+
+
+def vote_lines(a, seg, lines, recs, nbody):
+    """Each line's reading after the vote; a line the two read differently keeps the
+    other reading in 'alt' (and 'reader': 2 when the round 3 reader's was taken)."""
+    recs2 = list(SECOND.predict(Image.fromarray(a), seg, CONFIG))
+    words = [w for r in recs[:nbody] for w in r.prediction.split()]
+    yiddish = len(words) > 0 and sum(w in YIDDISH for w in words) / len(words) > 0.08
+    out = []
+    for i, (l, r1, r2) in enumerate(zip(lines, recs, recs2)):
+        first, second = (r2, r1) if yiddish and i < nbody else (r1, r2)
+        which, _ = CHOOSER.pick(first.prediction.strip(), second.prediction.strip())
+        took, other = (second, first) if which else (first, second)
+        if took.prediction.strip() != other.prediction.strip():
+            l['alt'] = other.prediction.strip()
+            if took is r2:
+                l['reader'] = 2
+        out.append(took)
+    return out
 
 
 def note_label(net, a, line):

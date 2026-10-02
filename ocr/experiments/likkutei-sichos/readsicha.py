@@ -4,7 +4,11 @@ the chunk's start page plus the index), the pages assembled into one PageText
 with its layout record. Writes <out>/<vol>_<start>.json {pageText, layout, pages:
 [{pdf_page, printed, head}]}, and the per-page layouts under <out>/lay/.
 
-    readsicha.py <model> <pdf>... --out DIR [--device cuda:0] [--threads N]"""
+    readsicha.py <model> <pdf>... --out DIR [--device cuda:0] [--threads N]
+                 [--second <model> --vocab counts.txt [--lm words.bin]]
+
+--second reads every line with a second reader too and keeps, line by line, the
+reading the word check prefers (recog.vote_lines)."""
 import json, os, re, sys, time
 import numpy as np
 import pymupdf
@@ -47,19 +51,23 @@ def read_sicha(net, pdf, out):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    out = 'read'; device = None; threads = None
-    for flag in ('--out', '--device', '--threads'):
+    out = 'read'; device = None; threads = None; opt = {}
+    for flag in ('--out', '--device', '--threads', '--second', '--vocab', '--lm'):
         if flag in args:
             k = args.index(flag); v = args[k + 1]; del args[k:k + 2]
             if flag == '--out': out = v
             elif flag == '--device': device = v
-            else: threads = int(v)
+            elif flag == '--threads': threads = int(v)
+            else: opt[flag[2:]] = v
     import torch
     if threads: torch.set_num_threads(threads)
     if device:
         os.environ['READ_DEVICE'] = device  # recog.CONFIG reads it when imported
     from recog import load
     net = load(args[0])
+    if 'second' in opt:
+        import recog
+        recog.use_second(opt['second'], opt['vocab'], opt.get('lm'))
     os.makedirs(out, exist_ok=True)
     for pdf in args[1:]:
         t0 = time.time()

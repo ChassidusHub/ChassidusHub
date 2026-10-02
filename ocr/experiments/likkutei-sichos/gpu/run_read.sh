@@ -44,6 +44,18 @@ get code code.tar && mkdir -p code && tar -xf code.tar -C code && rm code.tar
 get reader models/reader.safetensors
 get facenet2 models/facenet2.pt
 get pdfs pdfs.tar && mkdir -p pdf && tar -xf pdfs.tar -C pdf && rm pdfs.tar
+# Two readers (round 3): a second reader and the word check's vocabulary and phrase
+# model, when urls.json has them; kenlm is built here, and if that fails the vote
+# goes on without the phrase score.
+two=()
+if python3 -c "import json,sys; sys.exit('get:second' not in json.load(open('urls.json')))"; then
+  get second models/second.safetensors
+  get vocab models/vocab.txt
+  get lm models/lm.bin
+  python3 -c "import kenlm" 2>/dev/null || pip install -q https://github.com/kpu/kenlm/archive/master.zip || echo "kenlm not built: voting without the phrase score"
+  two=(--second models/second.safetensors --vocab models/vocab.txt --lm models/lm.bin)
+  echo "two readers"
+fi
 ls pdf | wc -l | xargs echo "sicha pdfs:"
 export FACENET2=$D/models/facenet2.pt
 # workers share the GPU: the reader is small (64 MB), the page work is CPU; one worker per 2 CPUs
@@ -53,7 +65,7 @@ ls pdf/*.pdf | sort > out/all.txt
 pids=()
 for w in $(seq 0 $((W - 1))); do
   ( trap - ERR; set +eE +o pipefail
-    awk -v w=$w -v W=$W 'NR % W == w' out/all.txt | xargs -r python3 code/readsicha.py models/reader.safetensors --out read ${READ_FLAGS:---device cuda:0 --threads 2} > out/w$w.log 2>&1
+    awk -v w=$w -v W=$W 'NR % W == w' out/all.txt | xargs -r python3 code/readsicha.py models/reader.safetensors --out read ${READ_FLAGS:---device cuda:0 --threads 2} "${two[@]}" > out/w$w.log 2>&1
     echo "worker $w: exit $?" >> out/w$w.log ) &
   pids+=($!)
 done
