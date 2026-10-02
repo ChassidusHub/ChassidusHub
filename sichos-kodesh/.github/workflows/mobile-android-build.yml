@@ -1,15 +1,9 @@
 name: Mobile Android Build
 
+# Once per pull request, not again for every push to its branch: an Android build is about fifteen minutes, and
+# Actions minutes are limited while the repository is private (2 October 2026).
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "apps/mobile/**"
-      - "packages/**"
-      - "scripts/**"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/mobile-android-build.yml"
   pull_request:
     paths:
       - "apps/mobile/**"
