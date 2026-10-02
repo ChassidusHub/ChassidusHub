@@ -8,14 +8,42 @@ most for the same letters across the read volumes (five times the next, at
 least ten times). A line is kept only when every word is one the read volumes
 have, so the fakes never teach a spelling the print does not use.
 
-python3 yidtext.py READDIR OUT.txt CLIPS.jsonl [CLIPS.jsonl ...] --vols 15 16 17
+The Chabad Library's Yiddish is a second source (Shmuly 2026-10-02, "the
+Rebbe's own Yiddish"): the pages of its crawl (/mnt/project-files/chabadlibrary/
+texts/<book>.jsonl) written mostly in Yiddish, the Rebbe's letters and the
+Rebbe Rayatz's Sefer HaSichos, about 700,000 words in the same Chassidic
+spelling as LS. Each page's paragraphs are a source's clips.
+
+python3 yidtext.py READDIR OUT.txt CLIPS.jsonl [CLIPS.jsonl | LIBRARY.jsonl ...] --vols 15 16 17
 OUT.txt is gen.py's lines file: b <tab> width in the scan <tab> text."""
-import collections, glob, json, re, sys
+import collections, glob, html, json, re, sys
 import numpy as np
 from weakspots import core
 
 POINTS = '[ְ-ׂ]'
 YID = re.compile('[ַָֿ]|(^| )(און|איז|ניט|דער|דאָס|וואָס|אַז|נישט|זיך)( |$)')
+
+
+COMMON = {'איז', 'דער', 'ניט', 'אויף', 'וואס', 'זיך', 'דאס', 'אויך', 'נישט', 'מען', 'זיין', 'פון', 'מיט', 'ווי', 'אז', 'האט', 'ווערט', 'וועגן'}
+
+
+def texts(fn):
+    """A source's paragraphs: a clip's text, or a Yiddish library page's paragraphs
+    (a page counts as Yiddish when more than 8% of its words are common Yiddish
+    words; its footnotes and markup left out)."""
+    for line in open(fn, encoding='utf-8'):
+        d = json.loads(line)
+        if 'heading' not in d:
+            yield d['text']; continue
+        page = re.sub(r'<div class="pagenumber">.*?</div>|<a [^>]*>[^<]*</a>|\[/?[a-z_0-9]+\]', ' ', d.get('text', ''), flags=re.S)
+        page = html.unescape(page)
+        words = re.findall('[א-ת]+', re.sub('<[^>]+>', ' ', page))
+        if not words or sum(w in COMMON for w in words) < 0.08 * len(words):
+            continue
+        for para in re.split(r'</p>|<br\s*/?>', page):
+            para = re.sub(r'\s+', ' ', re.sub('<[^>]+>', ' ', para)).strip()
+            if len(para) > 20:
+                yield para
 
 
 def main():
@@ -47,8 +75,8 @@ def main():
     print(f'{len(spell)} spellings, full line {full} px, {per_px:.4f} chars a px')
     seen, words = set(), []
     for cf in clips:
-        for line in open(cf, encoding='utf-8'):
-            t = json.loads(line)['text'].strip()
+        for t in texts(cf):
+            t = t.strip()
             if t in seen:
                 continue
             seen.add(t)
