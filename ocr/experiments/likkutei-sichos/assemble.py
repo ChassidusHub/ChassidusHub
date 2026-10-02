@@ -175,7 +175,13 @@ def assemble(pages):
             # A date-said line (the sicha's ending, "(משיחת ... תש"מ)") is set small in Miram;
             # it is its own kind of line, not stressed text, so it is marked small, never bold
             # (Shmuly 2026-10-02).
-            text = [{**r, 'marks': ['small']} if 'text' in r else r for r in text]
+            merged = []
+            for r in text:
+                if 'text' in r and merged and 'text' in merged[-1]:
+                    merged[-1] = {'text': merged[-1]['text'] + r['text'], 'marks': ['small']}
+                else:
+                    merged.append({**r, 'marks': ['small']} if 'text' in r else r)
+            text = merged
         seg = {'id': f'p{k}', 'kind': 'date' if p.get('date') else 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
         p['id'] = seg['id']
         first = next((r['text'] for r in text if 'text' in r), '')
