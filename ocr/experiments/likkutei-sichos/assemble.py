@@ -171,12 +171,22 @@ def assemble(pages):
         text = []
         for part in p['parts']:
             text += [part] if isinstance(part, dict) else runs(part)
+        if p.get('date'):
+            # A date-said line (the sicha's ending, "(משיחת ... תש"מ)") is set small in Miram;
+            # it is its own kind of line, not stressed text, so it is marked small, never bold
+            # (Shmuly 2026-10-02).
+            text = [{**r, 'marks': ['small']} if 'text' in r else r for r in text]
         seg = {'id': f'p{k}', 'kind': 'date' if p.get('date') else 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
         p['id'] = seg['id']
         first = next((r['text'] for r in text if 'text' in r), '')
         m = OIS.match(unfaced(first))
         if m and all(c in LETTERS for c in m.group(1)):
             seg['kind'] = 'paragraph'  # a short opening line, not a heading
+            # The ois letter itself carries its formatting (Shmuly 2026-10-02): its own
+            # run, bold, as the print sets it heavier than the text after it.
+            k0 = next(i for i, r in enumerate(text) if 'text' in r)
+            head, rest = text[k0]['text'][:m.end()].rstrip(), text[k0]['text'][m.end():]
+            text[k0:k0 + 1] = [{'text': head, 'marks': ['b']}] + ([{'text': ' ' + rest, **({'marks': text[k0]['marks']} if text[k0].get('marks') else {})}] if rest else [])
             n = sum(LETTERS[c] for c in m.group(1))
             section = {'id': f'ois{n}' if not any(x['id'] == f'ois{n}' for x in segments) else f'ois{n}-{k}',
                        'kind': 'section', 'n': n, 'label': m.group(1), 'origin': ORIGIN, 'children': []}
@@ -286,7 +296,7 @@ def pt_with_layout(pt, pages):
 def plain(pt):
     """The page text as readable lines, for checking by eye: [n] a mark, {238} a page."""
     v = pt['versions'][0]
-    show = lambda runs: ''.join((f"⟨{r['text']}⟩" if r.get('marks') else r['text']) if 'text' in r else (f"[{r['note'][1:].replace('s', '*')}]" if 'note' in r else f"{{{r['marker']}}}") for r in runs)
+    show = lambda runs: ''.join((f"⟪{r['text']}⟫" if 'small' in (r.get('marks') or []) else f"⟨{r['text']}⟩" if r.get('marks') else r['text']) if 'text' in r else (f"[{r['note'][1:].replace('s', '*')}]" if 'note' in r else f"{{{r['marker']}}}") for r in runs)
     def lines(segs):
         for s in segs:
             if s['kind'] == 'section':
