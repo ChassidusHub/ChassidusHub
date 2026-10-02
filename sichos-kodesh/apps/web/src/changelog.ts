@@ -1,7 +1,7 @@
 /** Bumped by hand alongside a real user-facing entry below - this app isn't
  * published anywhere version numbers matter on their own, so the only thing
  * that makes a version real is having something worth telling the user. */
-export const APP_VERSION = '1.15.2';
+export const APP_VERSION = '1.15.3';
 
 interface ChangelogEntry {
   version: string;
@@ -11,6 +11,11 @@ interface ChangelogEntry {
 
 /** Most recent first. Kept short and user-facing - not a commit log. */
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '1.15.3',
+    en: ['The app is private for now: it opens only with the password'],
+    he: ['האפליקציה פרטית לעת עתה: היא נפתחת רק עם הסיסמה'],
+  },
   {
     version: '1.15.2',
     en: [
