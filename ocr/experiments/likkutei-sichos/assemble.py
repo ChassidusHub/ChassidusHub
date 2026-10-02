@@ -127,7 +127,9 @@ def flip_faces(text):
     out = []
     for k, piece in enumerate(re.split(f'[{FACE_ON}{FACE_OFF}]', text)):
         if k % 2 == 0 and re.search('[א-ת]', piece):
-            m = re.match(r'^([^א-ת]*)(.*[א-ת])([^א-ת"\'\u05f3\u05f4]*)$', piece, re.S)
+            # the stretch from its first letter to its last (with a closing quote), the
+            # marks around it outside
+            m = re.match(r'^([^א-ת]*)(.*[א-ת]["\'\u05f3\u05f4]*)(.*)$', piece, re.S)
             out.append(m.group(1) + FACE_ON + m.group(2) + FACE_OFF + m.group(3))
         else:
             out.append(piece)
