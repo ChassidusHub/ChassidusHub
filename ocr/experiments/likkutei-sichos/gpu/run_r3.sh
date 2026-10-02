@@ -41,6 +41,10 @@ put() { curl -sSf --retry 3 -X PUT -T "$1" "$(url "$2")" > /dev/null; }
 get() {
   local tries=0 rc u want have
   u=$(url "get:$1")
+  # A file already there is another copy, not a broken-off download of this one:
+  # resuming into it (curl -C -) spliced the bundle's old evalx.py with the new one,
+  # and every final test of rounds 1-3 failed on the garbled file (2026-10-02).
+  rm -f "$2"
   until curl -sSfL --retry 3 -C - -o "$2" "$u"; do
     rc=$?
     # the size from a one-byte range request (a HEAD is not allowed on a signed GET link)
@@ -421,7 +425,7 @@ test_saves() {
   # (save names repeat across restarts, so each is named by its file time and
   # listed in out/saves.txt), so the keeper is picked on 4,500 lines, not 300.
   cat dev39.txt test39.txt yid/dev.txt > out/full.txt
-  if [ ! -f out/SAVES_DONE ]; then
+  if [ ! -f out/SAVES_DONE2 ]; then
     mkdir -p out/saves; : > out/saves.txt; local j=0 sp=()
     for c in $(ls -tr out/ppm/checkpoint_*.ckpt out/h128/checkpoint_*.ckpt 2>/dev/null) out/*_best.safetensors; do
       url save:$j > /dev/null 2>&1 || break
@@ -432,7 +436,7 @@ test_saves() {
       j=$((j + 1)); if (( ${#sp[@]} >= 4 )); then wait "${sp[@]}" || true; sp=(); fi
     done
     wait "${sp[@]}" 2>/dev/null || true
-    put out/saves.txt saves; touch out/SAVES_DONE
+    put out/saves.txt saves; touch out/SAVES_DONE2
   fi
 }
 ( test_saves ) || echo "testing the saves failed"
