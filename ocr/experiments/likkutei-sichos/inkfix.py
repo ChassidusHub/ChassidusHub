@@ -55,10 +55,15 @@ def shape(b, h):
     return 'other'
 
 
-def decide(label, bl, W, h, edge=0.15):
+def decide(label, bl, W, h, edge=0.15, read=None):
     """(new label, action): action is 'ok', 'fixed:<what>' or 'unclear'."""
     if not bl:
         return label, 'ok'
+    # specks: when the model reads exactly the label and every blob is smaller than
+    # a letter (under a fifth of the line height), the ink is dirt, not text
+    # (964 of the 1,406 lines set aside in run 3 were this)
+    if read is not None and nfd(read) == nfd(label) and all(b[1] - b[0] <= max(12, 0.2 * h) for b in bl):
+        return label, 'ok:speck'
     kinds = [shape(b, h) for b in bl]
     if 'other' in kinds:
         return label, 'unclear'
@@ -110,10 +115,10 @@ def read_main(a):
                 rec = next(iter(net.predict(im, seg, cfg)))
                 gt = typed(p)
                 bl = blobs(im, emitted_x(kept['p'], w))
-                new, act = decide(gt, bl, w, h)
+                new, act = decide(gt, bl, w, h, read=rec.prediction)
                 row = {'p': p, 'a': act, 'old': gt, 'new': new if act.startswith('fixed') else None}
                 if act == 'unclear':  # what the ink was and what the model read, for a person to decide the line
-                    row['read'] = nfd(rec.prediction); row['blobs'] = [[int(b[0]), int(b[1]), shape(b, h)] for b in bl]; row['w'] = w
+                    row['read'] = nfd(rec.prediction); row['blobs'] = [[int(b[0]), int(b[1]), shape(b, h)] for b in bl]; row['w'] = w; row['h'] = h
                 f.write(json.dumps(row, ensure_ascii=False) + '\n')
             except Exception as e:
                 print('skip', p, repr(e)[:200], flush=True)
