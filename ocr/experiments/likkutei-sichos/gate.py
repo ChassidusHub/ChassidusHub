@@ -66,9 +66,11 @@ def hebrew_rows(ref_fn, fn):
 
 
 def yiddish_rows(ref_fn, fn):
+    # the same line under another folder (read here or on a pod): matched by its last two parts
+    tail = lambda p: '/'.join(p.split('/')[-2:])
     _, gts = load(ref_fn)
-    preds, _ = load(fn)
-    return [(p, g, preds.get(p, '')) for p, g in gts.items() if '/yid' in p]
+    preds = {tail(p): h for p, h in load(fn)[0].items() if 'yid' in p}
+    return [(p, g, preds.get(tail(p), '')) for p, g in gts.items() if 'yid' in p]
 
 
 def main():
