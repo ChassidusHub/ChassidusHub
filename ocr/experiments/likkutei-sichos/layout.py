@@ -88,7 +88,8 @@ def column_rule(a, x0, x1, top):
         # The longest unbroken stroke in the band, so a speck beside it doesn't count.
         strokes = runs(col[s:e].any(0), 1)
         span = max(b - a for a, b in strokes)
-        if 0.12 * w < span < 0.8 * w:
+        # (0.08: on a one-column hosofos page the rule over two star notes is a ninth of the page)
+        if 0.08 * w < span < 0.8 * w:
             return s, e
     return None
 

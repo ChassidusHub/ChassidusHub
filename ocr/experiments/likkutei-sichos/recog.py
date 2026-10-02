@@ -3,13 +3,15 @@ pairs are built from, and later the trained model's output."""
 import re, sys
 import numpy as np
 from PIL import Image
+from scipy import ndimage
 from kraken.configs import RecognitionInferenceConfig
 from kraken.containers import Segmentation, BBoxLine
 from kraken.tasks import RecognitionTaskModel
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
-from layout import deskew, page_layout
+from layout import deskew, page_layout, runs
 
 PAD = 6
+FACE_ON, FACE_OFF = '\ue000', '\ue001'  # around letters set in Miram, in a line's text (assemble.runs reads them)
 
 
 CONFIG = RecognitionInferenceConfig(text_direction='horizontal-rl', num_line_workers=0)
@@ -28,11 +30,245 @@ def read_page(net, a):
     seg = Segmentation(type='bbox', imagename='page', text_direction='horizontal-rl', script_detection=False,
                        lines=[BBoxLine(id=str(i), bbox=(max(0, l['x0'] - PAD), max(0, l['y0'] - PAD), min(w, l['x1'] + PAD), min(h, l['y1'] + PAD)), text_direction='horizontal-rl')
                               for i, l in enumerate(lines)])
-    for l, rec in zip(lines, net.predict(Image.fromarray(a), seg, CONFIG)):
+    recs = list(net.predict(Image.fromarray(a), seg, CONFIG))
+    for l, rec in zip(lines, recs):
         l['text'] = rec.prediction.strip()
         l['words'] = words(rec, l)
         l['marks'] = marks(rec, l)
+    stars(net, a, lines, recs)
+    for col in lay['notes']:
+        for l in col:
+            note_label(net, a, l)
+    faces(a, lay)
     return lay
+
+
+def note_label(net, a, line):
+    """A note line read as opening with a bare ")" lost its number (the model drops
+    small raised digits now and then: 1,058 typed notes had the same gap): the
+    line's first stretch, two line heights wide, is read by itself, where the
+    short crop usually gives the number, and the label is taken from it."""
+    text = line.get('text', '')
+    if not text.startswith(')'):
+        return
+    h = line['y1'] - line['y0']
+    crop = a[max(0, line['y0'] - PAD):line['y1'] + PAD, max(0, int(line['x1'] - 2.2 * h)):line['x1'] + PAD]
+    m = re.match(r'^(\*{0,3}\d{1,3})\)', read_crop(net, crop).strip())
+    if m:
+        line['text'] = m.group(1) + text
+        line['label_from_crop'] = m.group(1)
+        line['marks'] = sorted(line.get('marks', []) + [{'label': m.group(1), 'x0': int(line['x1'] - 1.2 * h), 'x1': int(line['x1'])}], key=lambda x: -x['x1'])
+
+
+def keeps(base, new):
+    """True when the reading without the blob lost nothing of the reading with it:
+    taking a yod or a quote away loses it; taking a star away loses nothing (and may
+    even let the model read the bracket after it)."""
+    import difflib
+    return all(op[0] in ('equal', 'insert') for op in difflib.SequenceMatcher(None, base, new).get_opcodes())
+
+
+def read_crop(net, crop):
+    h, w = crop.shape
+    seg = Segmentation(type='bbox', imagename='line', text_direction='horizontal-rl', script_detection=False,
+                       lines=[BBoxLine(id='0', bbox=(0, 0, w, h), text_direction='horizontal-rl')])
+    return next(iter(net.predict(Image.fromarray(crop), seg, CONFIG))).prediction
+
+
+def stars(net, a, lines, recs):
+    """Raised stars the model left out, confirmed by reading again without them:
+    the candidate blobs are whitened and the lines read once more, all in one
+    pass; a line whose reading lost nothing had no letter in those blobs (a yod
+    is as small and as high as a star, but whitening it loses it from the
+    reading), so they are stars the model dropped, and go into the text. A line
+    that did lose something has its blobs tried one at a time."""
+    cands = [(l, rec, star_blobs(a, l)) for l, rec in zip(lines, recs)]
+    cands = [c for c in cands if c[2]]
+    if not cands:
+        return
+    h, w = a.shape
+    white = a.copy()
+    for l, rec, groups in cands:
+        for g in groups:
+            for ys, xs in g[3]:
+                white[ys, xs] = 255
+    seg = Segmentation(type='bbox', imagename='page', text_direction='horizontal-rl', script_detection=False,
+                       lines=[BBoxLine(id=str(i), bbox=(max(0, l['x0'] - PAD), max(0, l['y0'] - PAD), min(w, l['x1'] + PAD), min(h, l['y1'] + PAD)), text_direction='horizontal-rl')
+                              for i, (l, rec, groups) in enumerate(cands)])
+    again = [r.prediction for r in net.predict(Image.fromarray(white), seg, CONFIG)]
+    for (l, rec, groups), new in zip(cands, again):
+        if keeps(rec.prediction, new):
+            sure = groups
+        else:
+            y0, y1, x0, x1 = max(0, l['y0'] - PAD), min(h, l['y1'] + PAD), max(0, l['x0'] - PAD), min(w, l['x1'] + PAD)
+            crop = a[y0:y1, x0:x1]
+            base = read_crop(net, crop)
+            sure = []
+            for g in groups:
+                c = crop.copy()
+                for ys, xs in g[3]:
+                    c[ys - y0, xs - x0] = 255
+                if keeps(base, read_crop(net, c)):
+                    sure.append(g)
+        if sure:
+            add_stars(a, l, rec, sure)
+
+
+def star_blobs(a, line):
+    """Raised stars in a line, by their ink: small round blobs in the top half
+    of the line, clear of the letters, grouped when side by side (** is two).
+    [x0, x1, count, pixels] right to left, in page coordinates. (The model drops a
+    bare star more often than not: only 95 of 35,397 training note lines held
+    one, so the mark is taken from the ink, not from the reading.)"""
+    y0, y1, x0, x1 = line['y0'], line['y1'], line['x0'], line['x1']
+    h = y1 - y0
+    band = a[max(0, y0 - 2):y1 + 2, max(0, x0 - 2):x1 + 2] < 128
+    lab, n = ndimage.label(band)
+    found = []
+    for i, sl in enumerate(ndimage.find_objects(lab), 1):
+        bh, bw = sl[0].stop - sl[0].start, sl[1].stop - sl[1].start
+        area = int((lab[sl] == i).sum())
+        top, bottom = sl[0].start - 2, sl[0].stop - 2  # relative to the line's y0
+        if not (8 <= area and 0.12 * h <= bw <= 0.6 * h and bh <= 0.6 * h and 0.75 <= bw / max(1, bh) <= 1.35):  # round: a geresh is a short upright stroke
+            continue
+        if top > 0.3 * h or bottom > 0.62 * h:  # a star hangs from the letters' top, above their middle
+            continue
+        # a star stands in a gap: no other ink in its columns (a piece broken off the
+        # top of a ש, or of a thin bracket, has the rest of its letter under it)
+        cols = band[:, sl[1]].sum() - area
+        if cols > 2:
+            continue
+        # a mark follows a word: a word gap (0.3 h of white) lies just left of it,
+        # at most a thin bracket between; a yod inside a word (a Miram yod is as
+        # small as a star, and the model reads it from the word even when it is
+        # whitened) has only letter gaps around it
+        gl = sl[1].start
+        left = band[:, max(0, gl - int(0.8 * h)):gl].any(0)
+        at_edge = sl[1].stop >= band.shape[1] - 0.5 * h - 2 or gl <= 0.5 * h + 2
+        if not at_edge and not runs(~left, int(0.3 * h)):
+            continue
+        ys, xs = np.nonzero(lab[sl] == i)
+        pix = (ys + sl[0].start + max(0, y0 - 2), xs + sl[1].start + max(0, x0 - 2))  # on the page
+        found.append((x0 - 2 + sl[1].start, x0 - 2 + sl[1].stop, pix))
+    found.sort(key=lambda b: -b[1])
+    groups = []  # [x0, x1, count, [pixels of each star]]
+    for b in found:
+        if groups and groups[-1][0] - b[1] < 0.5 * h:
+            groups[-1] = [b[0], groups[-1][1], groups[-1][2] + 1, groups[-1][3] + [b[2]]]
+        else:
+            groups.append([b[0], b[1], 1, [b[2]]])
+    return groups
+
+
+def add_stars(a, line, rec, groups):
+    """Put the stars the ink shows into the line's text and marks where the model
+    left them out: a note's own opening *) or **), or a raised mark after a word.
+    groups: the star blobs confirmed by stars()."""
+    pred = rec.prediction
+    xs, half = letter_xs(rec, line)
+    if xs is None or not pred:
+        return
+    inserts = []  # (index into pred, stars, x0, x1)
+    for gx0, gx1, k, _ in groups:
+        gc = (gx0 + gx1) / 2
+        h = line['y1'] - line['y0']
+        if gx1 >= line['x1'] - 0.5 * h:
+            i = 0  # the stars open the line: a note's own *)
+        else:
+            i = next((j for j in range(len(pred)) if xs[j] < gc), len(pred))  # before the first letter left of the stars
+        inserts.append((i, '*' * k, int(gx0), int(gx1)))
+    if not inserts:
+        return
+    out, pos, added = [], 0, []
+    for i, stars, gx0, gx1 in sorted(inserts):
+        out.append(pred[pos:i])
+        m = re.match(r'(\d{0,3})\)', pred[i:])
+        if m:  # the note's own label, *) or *14): the number and bracket are read
+            out.append(stars)
+            label = stars + m.group(1)
+        else:  # a raised mark after a word: word*) and a space
+            out.append(stars + ')' + ('' if pred[i:i + 1] in ('', ' ') else ' '))
+            label = stars
+        added.append({'label': label, 'x0': gx0, 'x1': gx1})
+        pos = i
+    out.append(pred[pos:])
+    line['text'] = ''.join(out).strip()
+    line['stars_from_ink'] = [m['label'] for m in added]
+    line['marks'] = sorted(line.get('marks', []) + added, key=lambda m: -m['x1'])
+
+
+def faces(a, lay):
+    """Miram, the light face, on each word: each letter's stroke measured against
+    the same letter's median on the page (body and notes apart, the notes being
+    smaller), and a run of two or more thin letters marked as Miram on the word,
+    as 'face': [[first letter, after last]] in the word's own letters. (A single
+    thin letter is not trusted: a worn letter prints thin too.)"""
+    try:
+        from light import line_words, thin_runs, HEB
+    except Exception:
+        return
+    for key in ('body', 'notes'):
+        lines = [l for col in lay[key] for l in col if l.get('text')]
+        per_line, per = [], {}
+        for l in lines:
+            try:
+                ws = line_words(a, l)
+            except Exception:
+                ws = []
+            per_line.append(ws)
+            for wd, gl, base, xh in ws:
+                if HEB.match(wd):
+                    for ch, x in zip(wd, gl):
+                        per.setdefault(ch, []).append(x[1] / x[2])
+        med = {ch: float(np.median(v)) for ch, v in per.items() if len(v) >= 5}
+        wt = [word_thick(a, l, w) for l in lines for w in l.get('words', []) if re.fullmatch(r'[א-ת]{2,}', w['text'])]
+        word_med = float(np.median(wt)) if len(wt) >= 20 else None
+        hs = [l['y1'] - l['y0'] for l in lines]
+        for l, ws in zip(lines, per_line):
+            if l['y1'] - l['y0'] < 0.85 * np.median(hs):
+                continue  # a smaller face (a date line) prints thinner all over; not Miram
+            if len(ws) != len(l.get('words', [])):
+                # line_words keeps only the words whose ink split into their letters: match by text
+                by_text = {}
+                for w in ws:
+                    by_text.setdefault(w[0], []).append(w)
+                ws = [by_text[visual_word(w['text'])].pop(0) if by_text.get(visual_word(w['text'])) else None for w in l.get('words', [])]
+            tokens, t = l['text'].split(' '), 0
+            for word, w in zip(l.get('words', []), ws):
+                if w is None or not HEB.match(w[0]) or not all(ch in med for ch in w[0]):
+                    # the ink did not split into the word's letters (letters touching):
+                    # the whole word's stroke against the page's words
+                    if word_med and re.fullmatch(r'[א-ת]{2,}', word['text']) and word_thick(a, l, word) < 0.82 * word_med:
+                        word['face'] = [[0, len(word['text'])]]
+                        runs = word['face']
+                    else:
+                        continue
+                else:
+                    ratios = [x[1] / x[2] / med[ch] for ch, x in zip(w[0], w[1])]
+                    runs = thin_runs(w[0], ratios)
+                if not runs:
+                    continue
+                word['face'] = [[i, j] for i, j in runs]
+                # the same stretches marked in the line's text, for the page text (assemble.runs)
+                k = next((k for k in range(t, len(tokens)) if tokens[k] == word['text']), None)
+                if k is not None:
+                    tok = tokens[k]
+                    for i, j in reversed(runs):
+                        tok = tok[:i] + FACE_ON + tok[i:j] + FACE_OFF + tok[j:]
+                    tokens[k] = tok; t = k + 1
+            l['text'] = ' '.join(tokens)
+
+
+def word_thick(a, l, w):
+    """Stroke thickness (ink / skeleton length) of a word's place in its line."""
+    from skimage.morphology import skeletonize
+    band = a[l['y0']:l['y1'], max(0, w['x0']):w['x1']] < 128
+    return band.sum() / max(1, skeletonize(band).sum())
+
+
+def visual_word(t):
+    from harvest import visual
+    return visual(t)
 
 
 MARK = re.compile(r'(\*{1,3}\d{0,3}|\d{1,3})\)')

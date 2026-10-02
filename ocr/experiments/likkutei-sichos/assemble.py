@@ -28,17 +28,29 @@ def edges(lines):
     return xs0[len(xs0) // 10] if xs0 else 0, xs1[len(xs1) * 9 // 10] if xs1 else 0
 
 
+FACE_ON, FACE_OFF = '\ue000', '\ue001'  # around letters set in Miram (recog.faces), until runs() turns them into a mark
+
+
 def runs(text):
-    """Words with footnote marks as links."""
-    out, pos = [], 0
-    for m in MARK.finditer(text):
-        if m.start() > pos:
-            out.append({'text': text[pos:m.start()]})
-        out.append({'note': note_id(m.group(1))})
-        pos = m.end()
-    if pos < len(text):
-        out.append({'text': text[pos:]})
+    """Words with footnote marks as links, and the stretches set in Miram (the
+    light face, which is this print's stress, what bold is elsewhere; Shmuly
+    2026-10-02) carrying the mark 'b'."""
+    out = []
+    for k, piece in enumerate(re.split(f'[{FACE_ON}{FACE_OFF}]', text)):
+        marks = ['b'] if k % 2 else None
+        pos = 0
+        for m in MARK.finditer(piece):
+            if m.start() > pos:
+                out.append({'text': piece[pos:m.start()], **({'marks': marks} if marks else {})})
+            out.append({'note': note_id(m.group(1))})
+            pos = m.end()
+        if pos < len(piece):
+            out.append({'text': piece[pos:], **({'marks': marks} if marks else {})})
     return out
+
+
+def unfaced(text):
+    return text.replace(FACE_ON, '').replace(FACE_OFF, '')
 
 
 VOCAB = None  # word counts from the library (lm/vocab_big.txt), when given
@@ -117,8 +129,8 @@ def assemble(pages):
                 indented = line['x1'] < right - 25
                 short = line['x0'] > left + 40
                 if cur is None or indented or (i > 0 and prev_short):
-                    cur = {'parts': [], 'boxes': [], 'heading': indented and short and len(text) < 40,
-                           'date': indented and short and bool(re.fullmatch(r'\(.{3,60}\)', text))}  # (משיחת ש"פ תשא תשמ"ט)
+                    cur = {'parts': [], 'boxes': [], 'heading': indented and short and len(unfaced(text)) < 40,
+                           'date': indented and bool(re.fullmatch(r'\(.{3,60}\)', unfaced(text)))}  # (משיחת ש"פ תשא תשמ"ט), set at the column's far end
                     paras.append(cur)
                     if cur['date']:
                         cur['heading'] = False
@@ -160,7 +172,7 @@ def assemble(pages):
         seg = {'id': f'p{k}', 'kind': 'date' if p.get('date') else 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
         p['id'] = seg['id']
         first = next((r['text'] for r in text if 'text' in r), '')
-        m = OIS.match(first)
+        m = OIS.match(unfaced(first))
         if m and all(c in LETTERS for c in m.group(1)):
             seg['kind'] = 'paragraph'  # a short opening line, not a heading
             n = sum(LETTERS[c] for c in m.group(1))
@@ -186,6 +198,27 @@ def assemble(pages):
             if m.startswith(n['label']) and m[len(n['label']):].isdigit() and prev_n <= int(m[len(n['label']):]) <= next_n and m not in taken:
                 n['label'] = m
                 break
+    # A note's level and where it is called from, by the page's structure: a note
+    # with a bare-star label (*, **, read from the ink of the star, recog.stars) whose
+    # mark stands inside another note is the second level, wherever it is printed;
+    # a star note called from the title or the body, and every numbered note (even
+    # one printed with a star, *14), is the first level.
+    # Every mark in reading order (headings and body first, then the notes), so
+    # that two star notes on one page each get their own mark: the i-th bare-star
+    # note with a label is called from the i-th mark with that label.
+    calls = []
+    for p in paras:
+        for part in p['parts']:
+            if isinstance(part, str):
+                calls += [(m.group(1), 'heading' if p['heading'] else 'body') for m in MARK.finditer(unfaced(part))]
+    for n in notes:
+        calls += [(m.group(1), 'note') for m in MARK.finditer(unfaced(n['text']))]
+    used = {}
+    for n in notes:
+        k = used.get(n['label'], 0)
+        hits = [c for c in calls if c[0] == n['label']]
+        n['called_from'] = hits[k][1] if k < len(hits) else (hits[-1][1] if hits else None)
+        used[n['label']] = k + 1
     note_segs, seen = [], set()
     for n in notes:
         nid = note_id(n['label']) if n['label'] != '?' else f'nx{len(note_segs)}'
@@ -193,7 +226,12 @@ def assemble(pages):
             nid = f'{nid}-{len(note_segs)}'
         seen.add(nid)
         n['id'] = nid
-        seg = {'id': nid, 'kind': 'note', 'text': [{'text': n['text']}], 'origin': ORIGIN, 'printed': n['boxes']}
+        # Second level only when a bare-star note is called from inside another note
+        # (Shmuly 2026-10-02): a star note on the sicha's title or body is the first level.
+        n['level'] = 2 if n['label'] != '?' and n['label'].strip('*') == '' and n['called_from'] == 'note' else 1
+        # a second-level note is set wholly in Miram (its stressed words flip to Frank)
+        text = FACE_ON + unfaced(n['text']) + FACE_OFF if n['level'] == 2 else n['text']
+        seg = {'id': nid, 'kind': 'note', 'level': n['level'], 'text': runs(text), 'origin': ORIGIN, 'printed': n['boxes']}
         if n['label'].lstrip('*').isdigit():
             seg['n'] = int(n['label'].lstrip('*'))
         if n['label'].startswith('*'):
@@ -227,10 +265,18 @@ def pt_with_layout(pt, pages):
         for kind in ('headings', 'body', 'notes'):
             for c, col in enumerate([lay.get('headings', [])] if kind == 'headings' else lay[kind]):
                 for line in col:
-                    page['lines'].append({'kind': 'note' if kind == 'notes' else 'heading' if kind == 'headings' else 'body', 'column': c, 'text': line.get('text', ''),
+                    page['lines'].append({'kind': 'note' if kind == 'notes' else 'heading' if kind == 'headings' else 'body', 'column': c, 'text': unfaced(line.get('text', '')),
                                           'box': box(line, (h, w), pdf_page)['box'], 'in': line.get('_in', {}).get('id'),
                                           'marks': [{'label': x['label'], 'x0': fx(x['x0']), 'x1': fx(x['x1'])} for x in line.get('marks', [])],
-                                          'words': [{'text': x['text'], 'x0': fx(x['x0']), 'x1': fx(x['x1']), 'conf': x['conf']} for x in line.get('words', [])]})
+                                          'words': [{'text': x['text'], 'x0': fx(x['x0']), 'x1': fx(x['x1']), 'conf': x['conf'], **({'face': x['face']} if x.get('face') else {})} for x in line.get('words', [])]})
+        # the notes that open on this page: their level and where each is called from
+        starts = {}
+        for col in lay['notes']:
+            for line in col:
+                n = line.get('_in')
+                if n and 'label' in n and n['id'] not in starts:
+                    starts[n['id']] = n
+        page['notes'] = [{'id': n['id'], 'label': n['label'], 'level': n['level'], 'called_from': n.get('called_from')} for n in starts.values()]
         layout.append(page)
     return pt, layout
 
@@ -238,7 +284,7 @@ def pt_with_layout(pt, pages):
 def plain(pt):
     """The page text as readable lines, for checking by eye: [n] a mark, {238} a page."""
     v = pt['versions'][0]
-    show = lambda runs: ''.join(r.get('text') or (f"[{r['note'][1:].replace('s', '*')}]" if 'note' in r else f"{{{r['marker']}}}") for r in runs)
+    show = lambda runs: ''.join((f"⟨{r['text']}⟩" if r.get('marks') else r['text']) if 'text' in r else (f"[{r['note'][1:].replace('s', '*')}]" if 'note' in r else f"{{{r['marker']}}}") for r in runs)
     def lines(segs):
         for s in segs:
             if s['kind'] == 'section':
@@ -246,7 +292,7 @@ def plain(pt):
                 yield from lines(s['children'])
             else:
                 yield ('## ' if s['kind'] == 'heading' else '') + show(s['text'])
-    return '\n\n'.join(lines(v['segments'])) + '\n\n---\n' + '\n'.join(f"{n.get('label', n.get('n', '?'))}) {show(n['text'])}" for n in v['notes'])
+    return '\n\n'.join(lines(v['segments'])) + '\n\n---\n' + '\n'.join(f"{n.get('label', n.get('n', '?'))}){' [level 2]' if n.get('level') == 2 else ''} {show(n['text'])}" for n in v['notes'])
 
 
 if __name__ == '__main__':
