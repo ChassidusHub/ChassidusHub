@@ -71,7 +71,10 @@ def main():
                         why['star from ink'] += 1; continue
                     if not YID.search(text):
                         why['not yiddish'] += 1; continue
-                    if any(w.get('conf', 1) < 0.99 for w in l['words']):
+                    # a line-opening dash or note number is read less surely than words, but
+                    # leaving out every line that has one taught the reader to drop them (yid1)
+                    edge = lambda k, w: k == 0 and (w['text'] == '—' or re.fullmatch(r'\d{1,3}\)', w['text'])) and w.get('conf', 1) >= 0.5
+                    if any(w.get('conf', 1) < 0.99 and not edge(k, w) for k, w in enumerate(l['words'])):
                         why['a word below 0.99'] += 1; continue
                     ws = [core(w['text']) for w in l['words']]
                     if any(len(re.sub('[^א-ת]', '', w)) >= 2 and not is_known(w, vocab) for w in ws):

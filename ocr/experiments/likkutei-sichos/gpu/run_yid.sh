@@ -56,8 +56,9 @@ python3 -c "import rapidfuzz" 2>/dev/null || pip install -q rapidfuzz  # for the
 [ -f s2_train.txt ] || { get s2.tar s2.tar; tar -xf s2.tar; rm s2.tar; }
 [ -f yid/train.txt ] || { get yid.tar yid.tar; tar -xf yid.tar; rm yid.tar; }
 echo "yiddish lines: $(wc -l < yid/train.txt) to train, $(wc -l < yid/dev.txt) to score"
-# the mix: HEB real Hebrew lines (a random share), then every Yiddish line
-[ -f out/train_list.txt ] || { grep '^pairs/' s2_train.txt | shuf -n ${HEB:-60000} --random-source=<(yes); cat yid/train.txt; } | shuf --random-source=<(yes) > out/train_list.txt
+# the mix: HEB real Hebrew lines (all by default: with only 60k of them, round 1
+# lost line-opening dashes and note numbers on Hebrew), then every Yiddish line
+[ -f out/train_list.txt ] || { grep '^pairs/' s2_train.txt | shuf -n ${HEB:-200000} --random-source=<(yes); cat yid/train.txt; } | shuf --random-source=<(yes) > out/train_list.txt
 [ -f dev_mix.txt ] || cat dev39.txt yid/dev.txt > dev_mix.txt
 [ -f ppm.safetensors ] || get ppm ppm.safetensors
 get evalx evalx.py  # newer than the copy in the bundle
@@ -105,7 +106,7 @@ B=$(( GMEM / 1800 / 4 * 4 )); if (( B < 4 )); then B=4; fi; if (( B > 32 )); the
 HEIGHT=$(python3 -c "import json,sys; from safetensors import safe_open; m=json.loads(safe_open('ppm.safetensors','pt').metadata()['kraken_meta']); print(list(m.values())[0].get('height', 96))" 2>/dev/null || echo 96)
 B=$(( B * 96 / HEIGHT / 4 * 4 )); if (( B < 4 )); then B=4; fi
 ACC=$(( (32 + B - 1) / B ))
-LR=${LR:-1e-4}; ROUNDS=${ROUNDS:-3}
+LR=${LR:-5e-5}; ROUNDS=${ROUNDS:-2}
 echo "machine: $NCPU cpus, $MEM GB memory, $GMEM MiB GPU -> $WORK loaders, line height $HEIGHT, batch $B x $ACC steps, lr $LR, $ROUNDS rounds"
 # One lane with the whole GPU: the new PP-OCRv6 medium base model fine-tuned.
 cat > lanes.txt <<L
