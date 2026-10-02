@@ -40,6 +40,13 @@ def read_page(net, a):
         for l in col:
             note_label(net, a, l)
     faces(a, lay)
+    # The font stage proper (facepage: a net over each word's letters, matched to
+    # Shmuly's eye on five pages) replaces the thickness reading when its model is here.
+    try:
+        import facepage
+        facepage.run(a, lay)
+    except Exception as e:
+        print('font stage skipped:', e, file=sys.stderr)
     return lay
 
 

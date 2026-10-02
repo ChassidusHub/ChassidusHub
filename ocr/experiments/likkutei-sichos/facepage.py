@@ -14,8 +14,38 @@ HEB = re.compile(r'^[א-ת]+$')
 
 
 def load(path=None):
+    """The font net: v2 (facenet2, words with stroke widths) when its model is at hand
+    or named by FACENET2, else v1 (facenet, one letter at a time)."""
+    p2 = os.environ.get('FACENET2', '/home/user/lsdata/models/facenet2.pt')
+    if path is None and os.path.exists(p2):
+        import facenet2
+        return facenet2.Net().load(p2)
     path = path or os.environ.get('FACENET', '/home/user/lsdata/models/facenet.pt')
     return Net().load(path)
+
+
+def stroke(g):
+    from skimage.morphology import skeletonize
+    b = g > 0.5
+    return b.sum() / max(1, skeletonize(b).sum())
+
+
+def judge(fnet, todo):
+    """P(Miram) for each (word, i, canvas, letter id, stroke/xh, line median) in todo."""
+    X = np.stack([t[2] for t in todo]); L = np.array([t[3] for t in todo], np.int64)
+    if not hasattr(fnet, 'predict_words'):
+        return fnet.predict(X, L)
+    # v2 wants the letters of a word together, in order, with their stroke widths
+    F = np.array([(t[4], t[5]) for t in todo], np.float32)
+    order = sorted(range(len(todo)), key=lambda k: (id(todo[k][0]), todo[k][1]))
+    Xo, Lo, Fo = np.packbits(X[order] > 0.5, axis=-1), L[order], F[order]
+    words, s = [], 0
+    for k in range(1, len(order) + 1):
+        if k == len(order) or todo[order[k]][0] is not todo[order[s]][0]:
+            words.append((s, k)); s = k
+    po = fnet.predict_words(Xo, Lo, Fo, words)
+    p = np.zeros(len(todo), np.float32); p[order] = po
+    return p
 
 
 def _visual(t):
@@ -70,6 +100,7 @@ def net_faces(a, lay, fnet, cut=0.5):
             text = re.sub('[\ue000\ue001]', '', l['text'])
             vis = _visual(text)
             pos = 0
+            here = []
             for word in l['words']:
                 wv = _visual(word['text']); n = len(wv)
                 k = vis.find(wv, pos)
@@ -86,14 +117,18 @@ def net_faces(a, lay, fnet, cut=0.5):
                     g, top = letters.glyph(c, box)
                     if g is None:
                         continue
-                    todo.append((word, i, canvas(g, top, c['xh']), LETTERS.index(ch))); got += 1
+                    here.append([word, i, canvas(g, top, c['xh']), LETTERS.index(ch), stroke(g) / c['xh'], 0.0]); got += 1
                 if got:
                     word['face_cut'] = 'ink'
+            if here:
+                med = float(np.median([t[4] for t in here]))
+                for t in here:
+                    t[5] = med
+                todo.extend(tuple(t) for t in here)
     if not todo:
         return
-    X = np.stack([t[2] for t in todo]); L = np.array([t[3] for t in todo], np.int64)
-    p = fnet.predict(X, L)
-    for (word, i, _, _), pi in zip(todo, p):
+    p = judge(fnet, todo)
+    for (word, i, *_), pi in zip(todo, p):
         word.setdefault('face_p', [None] * len(_visual(word['text'])))[i] = round(float(pi), 3)
     for word, *_ in todo:
         if 'face_net' in word:
@@ -103,3 +138,49 @@ def net_faces(a, lay, fnet, cut=0.5):
         idx = [i for i, ch in enumerate(wv) if 'א' <= ch <= 'ת']
         runs = word_runs([word['face_p'][i] for i in idx], ''.join(wv[i] for i in idx), cut)
         word['face_net'] = [[idx[i], idx[j - 1] + 1] for i, j in runs]
+
+
+FACE_ON, FACE_OFF = '\ue000', '\ue001'
+_net = None
+
+
+def apply(lay):
+    """Write each word's net reading into its line: word['face'] becomes the net's
+    stretch, and the line's text carries the face marks (assemble.runs turns them
+    into the bold mark). What the thickness method wrote is replaced."""
+    for key in ('body', 'notes', 'headings'):
+        for col in lay.get(key, []):
+            lines = col if isinstance(col, list) else [col]
+            for l in lines:
+                if not isinstance(l, dict) or not l.get('words'):
+                    continue
+                tokens = re.sub('[\ue000\ue001]', '', l.get('text', '')).split(' ')
+                t = 0
+                for w in l['words']:
+                    if 'face_net' not in w:
+                        continue
+                    w['face'] = w['face_net']
+                    k = next((k for k in range(t, len(tokens)) if tokens[k] == w['text']), None)
+                    if k is None:
+                        continue
+                    tok = tokens[k]
+                    for i, j in reversed(w['face_net']):
+                        tok = tok[:i] + FACE_ON + tok[i:j] + FACE_OFF + tok[j:]
+                    tokens[k] = tok; t = k + 1
+                l['text'] = ' '.join(tokens)
+
+
+def run(a, lay):
+    """The font stage on a read page, when a model is at hand: judge, then write.
+    Returns False (and leaves the thickness reading) when no model file exists."""
+    global _net
+    if _net is None:
+        try:
+            _net = load()
+        except Exception:
+            _net = False
+    if not _net:
+        return False
+    net_faces(a, lay, _net)
+    apply(lay)
+    return True
