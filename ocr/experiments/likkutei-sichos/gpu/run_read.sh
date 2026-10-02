@@ -23,7 +23,7 @@ get() {
 exec > >(tee -a out/run.log) 2>&1
 ( trap - ERR; set +eE; while sleep ${LOG_EVERY:-60}; do
     { date -u +%FT%TZ; nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader 2>/dev/null
-      echo "sichos done: $(cat out/w*.log 2>/dev/null | grep -c ' pages ') failed: $(cat out/w*.log 2>/dev/null | grep -c FAILED)"
+      echo "sichos done: $(cat out/w*.log 2>/dev/null | grep -c ' pages ' || true) failed: $(cat out/w*.log 2>/dev/null | grep -c FAILED || true)"
       tail -q -n 1 out/w*.log 2>/dev/null; } > out/progress 2>/dev/null
     put out/progress progress; put out/run.log run.log
   done ) &
@@ -34,7 +34,8 @@ nvidia-smi
 echo "pod ${RUNPOD_POD_ID:-?} start $(date -u +%FT%TZ)"
 pip show kraken 2>/dev/null | grep -q "^Version: 7.1.1$" || pip install -q "kraken==7.1.1"
 pip show scikit-image > /dev/null 2>&1 || pip install -q scikit-image pymupdf scipy
-python3 -c "import torch, kraken, pymupdf, skimage; print('torch', torch.__version__, 'cuda', torch.cuda.is_available()); assert torch.cuda.is_available()"
+python3 -c "import torch, kraken, pymupdf, skimage; print('torch', torch.__version__, 'cuda', torch.cuda.is_available()); assert torch.cuda.is_available() or __import__('os').environ.get('DRY')"
+mkdir -p models read
 get code code.tar && mkdir -p code && tar -xf code.tar -C code && rm code.tar
 get reader models/reader.safetensors
 get facenet2 models/facenet2.pt
@@ -48,30 +49,32 @@ ls pdf/*.pdf | sort > out/all.txt
 pids=()
 for w in $(seq 0 $((W - 1))); do
   ( trap - ERR; set +eE +o pipefail
-    awk -v w=$w -v W=$W 'NR % W == w' out/all.txt | xargs -r python3 code/readsicha.py models/reader.safetensors --out read --device cuda:0 --threads 2 > out/w$w.log 2>&1
+    awk -v w=$w -v W=$W 'NR % W == w' out/all.txt | xargs -r python3 code/readsicha.py models/reader.safetensors --out read ${READ_FLAGS:---device cuda:0 --threads 2} > out/w$w.log 2>&1
     echo "worker $w: exit $?" >> out/w$w.log ) &
   pids+=($!)
 done
 # a volume's tar goes up as soon as all its sichos are read (or failed)
+send_pass() {
+  for v in $(ls pdf | cut -d_ -f1 | sort -u); do
+    [ -f out/.sent_$v ] && continue
+    n=$(ls pdf/${v}_*.pdf | wc -l); d=$(cat out/w*.log 2>/dev/null | grep -E "^${v}_[0-9]+\.pdf .*(pages|FAILED)" | wc -l)
+    if [ "$d" -ge "$n" ]; then
+      (cd read && tar -cf ../out/read_$v.tar ${v}_*.json lay/${v}_*.json) 2>/dev/null
+      put out/read_$v.tar "read:$v" && touch out/.sent_$v && echo "volume $v: $d sichos put to R2 $(date -u +%H:%M)"
+    fi
+  done
+}
 ( trap - ERR; set +eE +o pipefail
-  for v in $(ls pdf | cut -d_ -f1 | sort -u); do :; done
   while true; do
-    for v in $(ls pdf | cut -d_ -f1 | sort -u); do
-      [ -f out/.sent_$v ] && continue
-      n=$(ls pdf/${v}_*.pdf | wc -l); d=$(cat out/w*.log 2>/dev/null | grep -E "^${v}_[0-9]+\.pdf .*(pages|FAILED)" | wc -l)
-      if [ "$d" -ge "$n" ]; then
-        tar -cf out/read_$v.tar -C read $(cd read && ls ${v}_*.json 2>/dev/null) $(cd read && ls lay/${v}_*.json 2>/dev/null | sed 's#^#./#') 2>/dev/null
-        put out/read_$v.tar "read:$v" && touch out/.sent_$v && echo "volume $v: $d sichos put to R2 $(date -u +%H:%M)"
-      fi
-    done
+    send_pass
+    [ -f out/.workers_done ] && { send_pass; break; }
     sleep 30
-    [ -f out/.workers_done ] && break
   done ) &
 sender=$!
 wait "${pids[@]}" || true
 touch out/.workers_done
 wait $sender || true
 cat out/w*.log > out/workers.log; put out/workers.log workers
-echo "done $(date -u +%FT%TZ): $(grep -c ' pages ' out/workers.log) sichos, $(grep -c FAILED out/workers.log) failed"
+echo "done $(date -u +%FT%TZ): $(grep -c ' pages ' out/workers.log || true) sichos, $(grep -c FAILED out/workers.log || true) failed"
 put out/run.log run.log; echo > out/DONE; put out/DONE DONE
 sleep ${HOLD:-300}
