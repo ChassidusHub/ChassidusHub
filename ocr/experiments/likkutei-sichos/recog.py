@@ -14,7 +14,11 @@ PAD = 6
 FACE_ON, FACE_OFF = '\ue000', '\ue001'  # around letters set in Miram, in a line's text (assemble.runs reads them)
 
 
-CONFIG = RecognitionInferenceConfig(text_direction='horizontal-rl', num_line_workers=0)
+# READ_DEVICE=cuda puts the reading on the GPU (a pod); the page's own work (layout,
+# stars, faces) stays on the CPU either way.
+import os
+CONFIG = RecognitionInferenceConfig(text_direction='horizontal-rl', num_line_workers=0,
+                                    accelerator='gpu' if os.environ.get('READ_DEVICE', '').startswith('cuda') else 'cpu')
 
 
 def load(path):

@@ -36,6 +36,8 @@ def runs(text):
     light face, which is this print's stress, what bold is elsewhere; Shmuly
     2026-10-02) carrying the mark 'b'."""
     out = []
+    # Two Miram words with only a space between them are one bold stretch, as in print.
+    text = re.sub(f'{FACE_OFF}( +){FACE_ON}', r'\1', text)
     for k, piece in enumerate(re.split(f'[{FACE_ON}{FACE_OFF}]', text)):
         marks = ['b'] if k % 2 else None
         pos = 0
