@@ -187,7 +187,7 @@ relabel() {
 # The label fixer and the error report code (relabel/: relabel.py,
 # relabel_read.py, errlog.py, score.py, dev300.txt).
 url get:relabel > /dev/null 2>&1 && get relabel relabel.tar && tar -xf relabel.tar || true
-LANES=$(cut -d'|' -f1 lanes.txt)
+LANES=$(cut -d'|' -f1 lanes.txt | tr '\n' ' ')  # on one line: the reporter takes the first word as the lead lane
 
 # The helpers below run beside the training and must never stop the run: a
 # check that finds nothing yet (no save, no progress line) is not an error.
