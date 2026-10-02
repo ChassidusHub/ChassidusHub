@@ -41,7 +41,8 @@ def runs(text):
     return out
 
 
-VOCAB = None  # word counts from the library (lm/vocab_big.txt), when given: tells a broken word from a compound
+VOCAB = None  # word counts from the library (lm/vocab_big.txt), when given
+COMPOUNDS = set()  # compounds the library writes with a makaf (lm/compounds.txt): the only ones kept at a line end
 
 
 def known(w):
@@ -59,8 +60,12 @@ def join(a, b):
     if a.endswith(('-', '־')):
         head, first = a[:-1], b.split(' ', 1)[0]
         last = head.split(' ')[-1]
-        # a compound only when both halves are words and the joined form is not
-        if VOCAB and known(last) and known(first) and not known(last + first):
+        # On vol 39, 932 of 933 line-end makafs were broken words, so the makaf
+        # stays only for a compound the library itself writes with one.
+        strip = lambda w: re.sub(r'^[^א-ת]+|[^א-ת"\']+$', '', w)
+        if first.startswith('־'):  # the print carries the makaf over: בשבת־ / ־קודש
+            return head + b
+        if strip(last) + '־' + strip(first) in COMPOUNDS:
             return a + b
         return head + b
     return a + ' ' + b
@@ -90,6 +95,16 @@ def assemble(pages):
     for printed, pdf_page, lay in pages:
         shape = lay['shape']
         first_on_page = True
+        for line in lay.get('headings', []):  # a sicha's heading, set across the page
+            text = line.get('text', '').strip()
+            if not text:
+                continue
+            cur = {'parts': [], 'boxes': [], 'heading': True, 'date': False}
+            paras.append(cur)
+            if first_on_page:
+                cur['parts'].append({'marker': str(printed)}); first_on_page = False
+            cur['parts'].append(text); merge_box(cur['boxes'], box(line, shape, pdf_page)); line['_in'] = cur
+            cur = None  # the body after it starts a paragraph of its own
         for col in lay['body']:
             if not col:
                 continue
@@ -102,8 +117,11 @@ def assemble(pages):
                 indented = line['x1'] < right - 25
                 short = line['x0'] > left + 40
                 if cur is None or indented or (i > 0 and prev_short):
-                    cur = {'parts': [], 'boxes': [], 'heading': indented and short and len(text) < 40}
+                    cur = {'parts': [], 'boxes': [], 'heading': indented and short and len(text) < 40,
+                           'date': indented and short and bool(re.fullmatch(r'\(.{3,60}\)', text))}  # (משיחת ש"פ תשא תשמ"ט)
                     paras.append(cur)
+                    if cur['date']:
+                        cur['heading'] = False
                 if first_on_page:
                     cur['parts'].append({'marker': str(printed)})
                     first_on_page = False
@@ -139,7 +157,7 @@ def assemble(pages):
         text = []
         for part in p['parts']:
             text += [part] if isinstance(part, dict) else runs(part)
-        seg = {'id': f'p{k}', 'kind': 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
+        seg = {'id': f'p{k}', 'kind': 'date' if p.get('date') else 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
         p['id'] = seg['id']
         first = next((r['text'] for r in text if 'text' in r), '')
         m = OIS.match(first)
@@ -151,6 +169,8 @@ def assemble(pages):
             segments.append(section)
         elif p['heading']:
             section = None  # a heading (a new sicha's title) closes the ois before it
+        elif p.get('date'):
+            section = None  # a date-said line ends the sicha's part before it
         (section['children'] if section else segments).append(seg)
     # A note printed with a bare star "*)" whose mark in the text carries a number
     # too ("*33)", a note added later under 33): the note takes the mark's label,
@@ -193,10 +213,10 @@ def pt_with_layout(pt, pages):
         fx = lambda x: round(x / w, 4)
         page = {'pdf_page': pdf_page, 'printed_page': printed, 'size': [w, h], 'head_text': lay['head'].get('text', ''),
                 'head': [fx(lay['head']['x0']), round(lay['head']['y0'] / h, 4), fx(lay['head']['x1'] - lay['head']['x0']), round((lay['head']['y1'] - lay['head']['y0']) / h, 4)], 'lines': []}
-        for kind in ('body', 'notes'):
-            for c, col in enumerate(lay[kind]):
+        for kind in ('headings', 'body', 'notes'):
+            for c, col in enumerate([lay.get('headings', [])] if kind == 'headings' else lay[kind]):
                 for line in col:
-                    page['lines'].append({'kind': 'note' if kind == 'notes' else 'body', 'column': c, 'text': line.get('text', ''),
+                    page['lines'].append({'kind': 'note' if kind == 'notes' else 'heading' if kind == 'headings' else 'body', 'column': c, 'text': line.get('text', ''),
                                           'box': box(line, (h, w), pdf_page)['box'], 'in': line.get('_in', {}).get('id'),
                                           'words': [{'text': x['text'], 'x0': fx(x['x0']), 'x1': fx(x['x1']), 'conf': x['conf']} for x in line.get('words', [])]})
         layout.append(page)

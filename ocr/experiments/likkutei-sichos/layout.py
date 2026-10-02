@@ -101,7 +101,21 @@ def page_layout(a):
     top = head[1] + 5
     g = gutter(a, top, h)
     halves = [(g, w), (0, g)] if g else [(0, w)]
-    out = {'head': {'y0': head[0], 'y1': head[1], 'x0': 0, 'x1': w}, 'body': [], 'notes': []}
+    out = {'head': {'y0': head[0], 'y1': head[1], 'x0': 0, 'x1': w}, 'headings': [], 'body': [], 'notes': []}
+    # A sicha's heading is set across the page, centred over the gutter (תצא, with
+    # the year under it): the lines at the top that cross the gutter, or sit short and
+    # centred, are headings; the columns start under them.
+    if g:
+        for line in text_lines(a[top:, :], top, 0):
+            # ink all the way across the gutter window (no white gap of 8 px), where
+            # two column lines leave the gutter itself white
+            prof = (a[line['y0']:line['y1'], g - 40:g + 40] < 128).sum(0)
+            crosses = not runs(prof == 0, 8)
+            centred = line['x1'] - line['x0'] < 0.5 * w and abs((line['x0'] + line['x1']) / 2 - w / 2) < 0.1 * w
+            if not (crosses or centred) or line['y0'] > top + 0.25 * h:
+                break
+            out['headings'].append(line)
+            top = line['y1'] + 3
     for x0, x1 in halves:
         rule = column_rule(a, x0, x1, top)
         bottom = rule[0] - 3 if rule else h

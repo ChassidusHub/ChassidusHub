@@ -33,9 +33,11 @@ def truth_page(vol, page):
     if not os.path.exists(f):
         return None
     t = json.load(open(f))
-    paras = [same(norm(' '.join(printed(w) for w in l.replace(SHY, '').split()))) for l in t['body'].split('\n') if l.strip()]
+    body = re.sub(r'\[/?quotation\]', '', t['body'])  # the typed text sets a date-said line as a quotation
+    paras = [same(norm(' '.join(printed(w) for w in l.replace(SHY, '').split()))) for l in body.split('\n') if l.strip()]
+    dates = [same(norm(' '.join(printed(w) for w in m.group(1).replace(SHY, '').split()))) for m in re.finditer(r'\[quotation\](.*?)\[/quotation\]', t['body'])]
     notes = {k: same(norm(' '.join(printed(w) for w in v.replace(SHY, '').split()))) for k, v in t['notes'].items()}
-    return paras, notes
+    return paras, notes, dates
 
 
 def out_page(pt):
@@ -104,38 +106,62 @@ def find_page(vol, page):
     return doc, page - start
 
 
-def score_page(net, vol, page, truth):
+CACHE = {}  # printed page -> (lay, pdf page, chunk start): each page is read once
+
+
+def read_lay(net, vol, page, truth):
+    """The page read, found among the pdf's pages by its truth (a chunk's first page may be off by one)."""
+    if page in CACHE:
+        return CACHE[page]
     doc, idx = find_page(vol, page)
-    if doc is None or idx >= len(doc):
-        return {'page': page, 'error': 'no pdf page'}
-    tparas, tnotes = truth
     best = None
-    for d in (0, -1, 1):  # the chunk's first page may be off by one
-        if not 0 <= idx + d < len(doc):
-            continue
-        a = scan(doc, idx + d)
-        if a is None or a.shape[1] > 2200:
-            continue
-        a = deskew(a)
-        lay = read_page(net, a); lay['shape'] = a.shape
-        pt, layout = assemble.assemble([(page, idx + d + 1, lay)])
-        oparas, kinds, onotes = out_page(pt)
-        onotes.pop('?', None)  # a note column opening mid-note continues the page before: not this page's
-        r = fuzz.ratio(' '.join(oparas)[:400], ' '.join(tparas)[:400])
-        if best is None or r > best[0]:
-            best = (r, d, oparas, kinds, onotes, layout)
-        if r >= 80:
-            break
-    r, d, oparas, kinds, onotes, layout = best
-    if r < 50:
-        return {'page': page, 'error': f'no page matches the truth ({r})'}
+    if doc is not None:
+        for d in (0, -1, 1):
+            if not 0 <= idx + d < len(doc):
+                continue
+            a = scan(doc, idx + d)
+            if a is None or a.shape[1] > 2200:
+                continue
+            a = deskew(a)
+            lay = read_page(net, a); lay['shape'] = a.shape
+            pt, _ = assemble.assemble([(page, idx + d + 1, lay)])
+            oparas, _, _ = out_page(pt)
+            r = fuzz.ratio(' '.join(oparas)[:400], ' '.join(truth[0])[:400]) if truth else 100
+            if best is None or r > best[0]:
+                best = (r, lay, idx + d + 1)
+            if r >= 80:
+                break
+    CACHE[page] = None if best is None or best[0] < 50 else (best[1], best[2])
+    return CACHE[page]
+
+
+def score_page(net, vol, page, truth):
+    tparas, tnotes, tdates = truth
+    got = read_lay(net, vol, page, truth)
+    if got is None:
+        return {'page': page, 'error': 'no pdf page matches the truth'}
+    lay, pdf_page = got
+    pt, layout = assemble.assemble([(page, pdf_page, lay)])
+    oparas, kinds, onotes = out_page(pt)
+    # A note that runs on to the next page: the typed page holds all of it, so the
+    # next page is read too and the notes that start on this page are taken whole.
+    nxt = read_lay(net, vol, page + 1, truth_page(vol, page + 1)) if find_page(vol, page + 1)[0] is not None else None
+    if nxt and nxt[1] == pdf_page + 1:
+        pt2, _ = assemble.assemble([(page, pdf_page, lay), (page + 1, pdf_page + 1, nxt[0])])
+        v = pt2['versions'][0]
+        onotes = {}
+        for n in v['notes']:
+            if n['printed'] and n['printed'][0]['page'] == pdf_page:
+                onotes[n.get('label', str(n.get('n', '?')))] = same(norm(''.join(r.get('text', '') or (r['note'][1:].replace('s', '*') + ')' if 'note' in r else '') for r in n['text'])))
+    onotes.pop('?', None)  # a note column opening mid-note continues the page before: not this page's
     pairs = align(tparas, oparas)
     tb, ob = nfd('\n'.join(tparas)), nfd('\n'.join(oparas))
     dist = Levenshtein.distance(tb, ob)
     tm, om = marks(tparas), marks(oparas)
     found = sum(1 for x in tm if x in om)
-    row = {'page': page, 'pdf_off': d, 'truth_paras': len(tparas), 'read_paras': len(oparas), 'matched_paras': len(pairs),
-           'headings': kinds.count('heading'), 'body_letters': len(tb), 'body_errors': dist,
+    odates = [p for p, k in zip(oparas, kinds) if k == 'date']
+    row = {'page': page, 'pdf_page': pdf_page, 'truth_paras': len(tparas), 'read_paras': len(oparas), 'matched_paras': len(pairs),
+           'headings': kinds.count('heading'), 'dates_truth': len(tdates), 'dates_found': sum(1 for d in tdates if d in odates), 'dates_extra': [d for d in odates if d not in tdates], 'body_letters': len(tb), 'body_errors': dist,
            'marks_truth': len(tm), 'marks_found': found, 'marks_missed': [f'{l}:{w}' for l, w in tm if (l, w) not in om],
            'marks_extra': [f'{l}:{w}' for l, w in om if (l, w) not in tm],
            'notes_truth': len(tnotes), 'notes_found': sum(1 for k in tnotes if k in onotes),
@@ -158,6 +184,9 @@ if __name__ == '__main__':
         assemble.VOCAB = {}
         for l in open(a.vocab, encoding='utf-8'):
             w, n = l.rsplit(' ', 1); assemble.VOCAB[w] = int(n)
+        comp = os.path.join(os.path.dirname(a.vocab), 'compounds.txt')
+        if os.path.exists(comp):
+            assemble.COMPOUNDS = {l.split(' ')[0] for l in open(comp, encoding='utf-8')}
     pages = []
     for part in a.pages.split(','):
         lo, _, hi = part.partition('-'); pages += list(range(int(lo), int(hi or lo) + 1))
@@ -180,6 +209,6 @@ if __name__ == '__main__':
                   f"marks {row['marks_found']}/{row['marks_truth']}", f"notes {row['notes_found']}/{row['notes_truth']}",
                   f"note letters {100 * (1 - row['note_errors'] / max(1, row['note_letters'])):.2f}%", flush=True)
     if tot:
-        print('TOTAL', json.dumps({**{k: tot[k] for k in ('truth_paras', 'read_paras', 'matched_paras', 'marks_truth', 'marks_found', 'notes_truth', 'notes_found')},
+        print('TOTAL', json.dumps({**{k: tot.get(k, 0) for k in ('truth_paras', 'read_paras', 'matched_paras', 'marks_truth', 'marks_found', 'notes_truth', 'notes_found', 'dates_truth', 'dates_found')},
                                    'body_acc': round(100 * (1 - tot['body_errors'] / max(1, tot['body_letters'])), 2),
                                    'note_acc': round(100 * (1 - tot['note_errors'] / max(1, tot['note_letters'])), 2)}))

@@ -23,7 +23,7 @@ def read_page(net, a):
     """The page's layout with 'text' filled in on every line."""
     lay = page_layout(a)
     # The running head too, read on every page: it can change within a sicha.
-    lines = [l for key in ('body', 'notes') for col in lay[key] for l in col] + [lay['head']]
+    lines = [l for key in ('body', 'notes') for col in lay[key] for l in col] + [lay['head']] + lay.get('headings', [])
     h, w = a.shape
     seg = Segmentation(type='bbox', imagename='page', text_direction='horizontal-rl', script_detection=False,
                        lines=[BBoxLine(id=str(i), bbox=(max(0, l['x0'] - PAD), max(0, l['y0'] - PAD), min(w, l['x1'] + PAD), min(h, l['y1'] + PAD)), text_direction='horizontal-rl')

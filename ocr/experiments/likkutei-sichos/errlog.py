@@ -14,11 +14,15 @@ ap = argparse.ArgumentParser()
 ap.add_argument('npz')
 ap.add_argument('name')
 ap.add_argument('--dir', default='errors')
+ap.add_argument('--checked', help='json {path: label}: labels checked by hand replace the npz labels')
 a = ap.parse_args()
 os.makedirs(a.dir, exist_ok=True)
 d = np.load(a.npz, allow_pickle=True)
 nfd = lambda t: unicodedata.normalize('NFD', str(t))
 gts, preds, paths = [nfd(g) for g in d['gts']], [nfd(p) for p in d['preds']], [str(p) for p in d['paths']]
+if a.checked:
+    chk = json.load(open(a.checked, encoding='utf-8'))
+    gts = [nfd(chk.get(p, g)) for g, p in zip(gts, paths)]
 show = lambda c: '∅' if c == '' else ('␣' if c == ' ' else c)
 
 lines = []
