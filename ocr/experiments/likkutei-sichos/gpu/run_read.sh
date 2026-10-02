@@ -35,7 +35,7 @@ echo "pod ${RUNPOD_POD_ID:-?} start $(date -u +%FT%TZ)"
 pip show kraken 2>/dev/null | grep -q "^Version: 7.1.1$" || pip install -q "kraken==7.1.1"
 # each module on its own: the image ships scikit-image but not pymupdf (2026-10-02 a pod
 # failed on that: one "pip show" for the three skipped them all)
-for m in skimage:scikit-image pymupdf:pymupdf scipy:scipy; do
+for m in skimage:scikit-image pymupdf:pymupdf scipy:scipy rapidfuzz:rapidfuzz; do
   python3 -c "import ${m%%:*}" 2>/dev/null || pip install -q "${m##*:}"
 done
 python3 -c "import torch, kraken, pymupdf, skimage; print('torch', torch.__version__, 'cuda', torch.cuda.is_available()); assert torch.cuda.is_available() or __import__('os').environ.get('DRY')"
@@ -54,6 +54,8 @@ if python3 -c "import json,sys; sys.exit('get:second' not in json.load(open('url
   get lm models/lm.bin
   python3 -c "import kenlm" 2>/dev/null || pip install -q https://github.com/kpu/kenlm/archive/master.zip || echo "kenlm not built: voting without the phrase score"
   two=(--second models/second.safetensors --vocab models/vocab.txt --lm models/lm.bin)
+  # the vote's imports, checked once here: a missing module fails the run, not 12 workers silently
+  python3 -c "import sys; sys.path.insert(0, 'code'); import vote"
   echo "two readers"
 fi
 ls pdf | wc -l | xargs echo "sicha pdfs:"
