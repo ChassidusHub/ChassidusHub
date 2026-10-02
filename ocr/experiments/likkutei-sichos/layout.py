@@ -30,6 +30,9 @@ def runs(mask, min_len=1):
 
 
 def gutter(a, top, bottom):
+    # A sicha's heading sits centred across the gutter at the top (page 37's תבא
+    # filled it), so the gutter is looked for below the top fifth of the text.
+    top = top + (bottom - top) // 5
     ink = (a[top:bottom] < 128).sum(0).astype(float)
     ink = np.convolve(ink, np.ones(9) / 9, mode='same')
     w = a.shape[1]
