@@ -59,9 +59,11 @@ def text_lines(col, y0, x0):
             merged.append(b)
     out = []
     for s, e in merged:
-        # The line's words: ink joined across word gaps; a speck far off to one side is left out.
+        # The line's words: ink joined across word gaps; a speck far off to one side is left
+        # out, and so is a hairline (a crease or a dotted fold mark across the page, 1-2 rows
+        # of ink): a column counts only with a stroke's worth of ink in it.
         groups = []
-        for a, b in runs((col[s:e] < 128).any(0), 1):
+        for a, b in runs((col[s:e] < 128).sum(0) >= 3, 1):
             if groups and a - groups[-1][1] < 60:
                 groups[-1][1] = b
             else:

@@ -352,11 +352,17 @@ def finish(a, rng):
     return a
 
 
-def make(kind, text, rng, cp=None, note=False, width=None):
+def make(kind, text, rng, cp=None, note=False, width=None, want_runs=False):
     """One fake line. Footnote lines are set smaller, as printed (about 0.83 of
     the body's size). The line is justified to the width the same text has in
-    the scan (a paragraph's last line is short there, and stays short)."""
+    the scan (a paragraph's last line is short there, and stays short).
+    With want_runs the Miram runs come back too, for a label that carries the face."""
     runs = stress(text, rng)
+    a = _draw(kind, runs, rng, cp, note, width)
+    return (a, runs) if want_runs else a
+
+
+def _draw(kind, runs, rng, cp, note, width):
     width = (width or COLUMN) + rng.normal(0, 3)
     scale = 0.83 if note else 1.0
     if kind == 'realcopy':
@@ -373,6 +379,9 @@ def make(kind, text, rng, cp=None, note=False, width=None):
 
 
 if __name__ == '__main__':
+    # --face: the label carries each letter's face (face.py), Miram letters as their own symbols
+    FACE = '--face' in sys.argv
+    sys.argv = [x for x in sys.argv if x != '--face']
     kind, texts, out, count = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
     rng = np.random.default_rng(int(sys.argv[5]) if len(sys.argv) > 5 else 0)
     # texts: one printed line per row, a footnote line marked by a leading tab.
@@ -384,9 +393,12 @@ if __name__ == '__main__':
     i = 0
     while i < count:
         t, note, w = lines[rng.integers(len(lines))]
-        a = make(kind, t, rng, cp, note, w)
+        a, runs = make(kind, t, rng, cp, note, w, want_runs=True)
         if a is None:
             continue
         Image.fromarray(a).save(f'{out}/{i:06d}.png')
+        if FACE:
+            import face
+            t = face.to_face(runs)
         open(f'{out}/{i:06d}.gt.txt', 'w').write(t + '\n')
         i += 1

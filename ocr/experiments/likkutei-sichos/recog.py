@@ -317,7 +317,9 @@ def words(rec, line):
                 out.append({'text': ''.join(pred[j] for j in cur),
                             'x0': int(max(line['x0'], min(xs[j] for j in cur) - half)),
                             'x1': int(min(line['x1'], max(xs[j] for j in cur) + half)),
-                            'conf': round(float(min(conf[j] for j in cur)), 3)})
+                            'conf': round(float(min(conf[j] for j in cur)), 3),
+                            # each letter's centre, for cutting the word's letters apart (facepage)
+                            'xs': [int(xs[j]) for j in cur]})
             cur = []
         else:
             cur.append(i)
