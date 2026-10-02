@@ -24,6 +24,21 @@ def note_id(label):
     return 'n' + label.replace('*', 's')
 
 
+# Every printed line end is kept (Shmuly 2026-10-02: "so if we want to make a revised
+# version of the print it will be very simple"), as RebbeHub's run {eol, split, page,
+# box}: which end it is (line, column, page), whether the print broke a word there,
+# and the line's place on the scan. While lines are joined into paragraphs a line end
+# is a token in the text, EOL_ON + its number + EOL_OFF, that runs() turns into the run.
+EOL_ON, EOL_OFF = '\ue002', '\ue003'
+EOL_TOKEN = re.compile(f'{EOL_ON}(\\d+){EOL_OFF}')
+EOLS = []  # the line ends of the sicha being assembled, by number
+
+
+def eol(kind, b):
+    EOLS.append({'eol': kind, 'page': b['page'], 'box': b['box']})
+    return f'{EOL_ON}{len(EOLS) - 1}{EOL_OFF}'
+
+
 def edges(lines):
     xs1 = sorted(l['x1'] for l in lines)
     xs0 = sorted(l['x0'] for l in lines)
@@ -40,7 +55,7 @@ def runs(text):
     out = []
     # Two Miram words with only a space between them are one bold stretch, as in
     # print; so are the two halves of a word the print broke over a line (ה־ + בהמית).
-    text = re.sub(f'{FACE_OFF}( *){FACE_ON}', r'\1', text)
+    text = re.sub(f'{FACE_OFF}((?:{EOL_ON}\\d+{EOL_OFF})? *){FACE_ON}', r'\1', text)
     # A single letter judged Miram at the head of a word whose other letters are
     # Frank is noise, not a face (the כ of כראוי, broken over a line as „כ־ + ראוי):
     # the real pattern is the reverse, a Frank prefix on a Miram word (הבהמית).
@@ -66,11 +81,24 @@ def runs(text):
             pos = m.end()
         if pos < len(piece):
             out.append({'text': piece[pos:], **({'marks': marks} if marks else {})})
-    return out
+    # the line ends out of the words, as runs of their own
+    done = []
+    for r in out:
+        if 'text' not in r or EOL_ON not in r['text']:
+            done.append(r); continue
+        pos = 0
+        for m in EOL_TOKEN.finditer(r['text']):
+            if m.start() > pos:
+                done.append({**r, 'text': r['text'][pos:m.start()]})
+            done.append(dict(EOLS[int(m.group(1))]))
+            pos = m.end()
+        if pos < len(r['text']):
+            done.append({**r, 'text': r['text'][pos:]})
+    return done
 
 
 def unfaced(text):
-    return text.replace(FACE_ON, '').replace(FACE_OFF, '')
+    return EOL_TOKEN.sub('', text.replace(FACE_ON, '').replace(FACE_OFF, ''))
 
 
 VOCAB = None  # word counts from the library (lm/vocab_big.txt), when given
@@ -89,6 +117,12 @@ def join(a, b):
     decides: joined when the joined word is a known word, else kept with its makaf."""
     if not a:
         return b
+    tail = re.search(f'{EOL_ON}\\d+{EOL_OFF}$', a)
+    token = tail.group(0) if tail else ''
+    if token:
+        a = a[:tail.start()]
+        if not a:  # a note whose first line held only its number
+            return token + b
     if a.endswith(('-', '־')):
         head, first = a[:-1], b.split(' ', 1)[0]
         last = head.split(' ')[-1]
@@ -96,11 +130,13 @@ def join(a, b):
         # stays only for a compound the library itself writes with one.
         strip = lambda w: re.sub(r'^[^א-ת]+|[^א-ת"\']+$', '', w)
         if first.startswith('־'):  # the print carries the makaf over: בשבת־ / ־קודש
-            return head + b
+            return head + token + b
         if strip(last) + '־' + strip(first) in COMPOUNDS:
-            return a + b
-        return head + b
-    return a + ' ' + b
+            return a + token + b
+        if token:
+            EOLS[int(EOL_TOKEN.match(token).group(1))]['split'] = True
+        return head + token + b
+    return a + token + ' ' + b
 
 
 def fix_dots(text):
@@ -163,6 +199,7 @@ def merge_box(boxes, b):
 def assemble(pages):
     """pages: [(printed page, pdf page from 1, layout with read lines)] in order -> PageText."""
     paras, notes = [], []
+    EOLS.clear()
     cur = None  # the paragraph being built: {'parts': [str | marker], 'boxes': []}
     note = None
     for printed, pdf_page, lay in pages:
@@ -176,8 +213,14 @@ def assemble(pages):
             paras.append(cur)
             if first_on_page:
                 cur['parts'].append({'marker': str(printed)}); first_on_page = False
-            cur['parts'].append(text); merge_box(cur['boxes'], box(line, shape, pdf_page)); line['_in'] = cur
+            b = box(line, shape, pdf_page)
+            cur['parts'].append(text + eol('line', b)); merge_box(cur['boxes'], b); line['_in'] = cur
             cur = None  # the body after it starts a paragraph of its own
+        # Which printed line ends a column, and which the page: the last line with words.
+        ends = lambda cols: {id(c[-1]): 'column' for c in [[l for l in col if l.get('text', '').strip()] for col in cols] if c}
+        body_end = ends(lay['body'])
+        if body_end:
+            body_end[list(body_end)[-1]] = 'page'
         for col in lay['body']:
             if not col:
                 continue
@@ -187,6 +230,8 @@ def assemble(pages):
                 text = fix_dots(line.get('text', '').strip())
                 if not text:
                     continue
+                b = box(line, shape, pdf_page)
+                end = eol(body_end.get(id(line), 'line'), b)
                 indented = line['x1'] < right - 25
                 short = line['x0'] > left + 40
                 if cur is None or indented or (i > 0 and prev_short):
@@ -199,17 +244,22 @@ def assemble(pages):
                     cur['parts'].append({'marker': str(printed)})
                     first_on_page = False
                 if cur['parts'] and isinstance(cur['parts'][-1], str):
-                    cur['parts'][-1] = join(cur['parts'][-1], text)
+                    cur['parts'][-1] = join(cur['parts'][-1], text) + end
                 else:
-                    cur['parts'].append(text)
-                merge_box(cur['boxes'], box(line, shape, pdf_page))
+                    cur['parts'].append(text + end)
+                merge_box(cur['boxes'], b)
                 line['_in'] = cur
                 prev_short = short
+        note_end = ends(lay['notes'])
+        if note_end:
+            note_end[list(note_end)[-1]] = 'page'
         for col in lay['notes']:
             for line in col:
                 text = fix_dots(line.get('text', '').strip())
                 if not text:
                     continue
+                b = box(line, shape, pdf_page)
+                end = eol(note_end.get(id(line), 'line'), b)
                 m = NOTE_START.match(text)
                 lost = None
                 if not m and note is None and text.startswith(')'):
@@ -232,11 +282,11 @@ def assemble(pages):
                     # later under an existing number, still the first level), stars alone
                     # *, **, *** (called from inside a note; set in Miram, stressed words
                     # in Frank), and, very rarely, a third in Hadassah.
-                    note = {'label': label, 'level': 2 if label.strip('*') == '' and label != '?' else 1, 'text': text[m.end():] if m else text, 'boxes': []}
+                    note = {'label': label, 'level': 2 if label.strip('*') == '' and label != '?' else 1, 'text': (text[m.end():] if m else text) + end, 'boxes': []}
                     notes.append(note)
                 else:
-                    note['text'] = join(note['text'], text)
-                merge_box(note['boxes'], box(line, shape, pdf_page))
+                    note['text'] = join(note['text'], text) + end
+                merge_box(note['boxes'], b)
                 line['_in'] = note
     for p in paras:
         p['parts'] = [unsplit_stars(part) if isinstance(part, str) else part for part in p['parts']]
@@ -245,7 +295,7 @@ def assemble(pages):
     # Some volumes' marks are read with a space before them ("חז"ל 2)", vols 15-25):
     # a number with a bracket after a space is a mark when a note carries that number.
     labels = {n['label'] for n in notes if n['label'].isdigit()}
-    spaced = re.compile(r'(?<=[^\s\d]) (\d{1,3})\)(?=[\s,.:;\ue000\ue001]|$)')
+    spaced = re.compile(r'(?<=[^\s\d]) (\d{1,3})\)(?=[\s,.:;\ue000\ue001\ue002]|$)')
     for p in paras:
         p['parts'] = [spaced.sub(lambda m: m.group(1) + ')' if m.group(1) in labels else m.group(0), part) if isinstance(part, str) and not p['heading'] else part for part in p['parts']]
     # Each ois is a section: the paragraph that opens with its letter, and the paragraphs
@@ -266,13 +316,14 @@ def assemble(pages):
                 else:
                     merged.append({**r, 'marks': ['small']} if 'text' in r else r)
             text = merged
-        if p['heading'] and text and 'text' in text[-1]:
+        last = next((i for i in range(len(text) - 1, -1, -1) if 'text' in text[i]), None)
+        if p['heading'] and last is not None:
             # A sicha's title ends with its letter, בהעלותך ב; the reader gives a lone
             # letter after the parsha as a digit and bracket ("בהעלותך 2)"), which
             # runs() would take for a footnote mark. The letter comes back.
-            m = re.search(r' (\d)\)$', text[-1]['text'])
+            m = re.search(r' (\d)\)$', text[last]['text'])
             if m and int(m.group(1)) >= 1:
-                text[-1] = {**text[-1], 'text': text[-1]['text'][:m.start()] + ' ' + 'אבגדהוזחט'[int(m.group(1)) - 1]}
+                text[last] = {**text[last], 'text': text[last]['text'][:m.start()] + ' ' + 'אבגדהוזחט'[int(m.group(1)) - 1]}
         seg = {'id': f'p{k}', 'kind': 'date' if p.get('date') else 'heading' if p['heading'] else 'paragraph', 'text': text, 'origin': ORIGIN, 'printed': p['boxes']}
         p['id'] = seg['id']
         first = next((r['text'] for r in text if 'text' in r), '')
@@ -417,7 +468,7 @@ def pt_with_layout(pt, pages):
 def plain(pt):
     """The page text as readable lines, for checking by eye: [n] a mark, {238} a page."""
     v = pt['versions'][0]
-    show = lambda runs: ''.join((f"⟪{r['text']}⟫" if 'small' in (r.get('marks') or []) else f"⦃{r['text']}⦄" if 'ois' in (r.get('marks') or []) else f"⟨{r['text']}⟩" if r.get('marks') else r['text']) if 'text' in r else (f"[{r['note'][1:].replace('s', '*')}]" if 'note' in r else f"{{{r['marker']}}}") for r in runs)
+    show = lambda runs: ''.join('' if 'eol' in r else (f"⟪{r['text']}⟫" if 'small' in (r.get('marks') or []) else f"⦃{r['text']}⦄" if 'ois' in (r.get('marks') or []) else f"⟨{r['text']}⟩" if r.get('marks') else r['text']) if 'text' in r else (f"[{r['note'][1:].replace('s', '*')}]" if 'note' in r else f"{{{r['marker']}}}") for r in runs)
     def lines(segs):
         for s in segs:
             if s['kind'] == 'section':
