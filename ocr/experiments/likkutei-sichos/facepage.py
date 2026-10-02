@@ -56,11 +56,10 @@ def net_faces(a, lay, fnet, cut=0.5):
     todo = []  # (word dict, letter index in word, canvas, letter id)
     for key in ('body', 'notes'):
         lines = [l for col in lay[key] for l in col if l.get('words')]
-        hs = [l['y1'] - l['y0'] for l in lines]
-        med = float(np.median(hs)) if hs else 0
+        # Every line is judged, short ones too: a line with no descender is shorter than
+        # its neighbours, and skipping short lines lost the last line of star notes and a
+        # sicha's closing source line, both Miram (Shmuly's check, 2026-10-02).
         for l in lines:
-            if l['y1'] - l['y0'] < 0.85 * med:
-                continue  # a smaller face (a date or source line) prints thinner all over; not Miram
             try:
                 c = letters.cut_line(a, l, key)
             except Exception:

@@ -34,7 +34,12 @@ def stress(text, rng):
     set in Miram, sometimes without their leading ה or ו."""
     words = text.split(' ')
     marked = set()
-    if rng.random() < 0.2:
+    # GEN_STRESS raises the share of Miram lines for the font stage's training (the
+    # print's own share is about a fifth); GEN_WHOLE sets whole lines in Miram, as a
+    # star note's text is.
+    if rng.random() < float(os.environ.get('GEN_WHOLE', 0)):
+        marked = {i for i, w in enumerate(words) if re.fullmatch(r'[„"(]?[א-ת]{2,}[",.:;)]?', w)}
+    elif rng.random() < float(os.environ.get('GEN_STRESS', 0.2)):
         cand = [i for i, w in enumerate(words) if re.fullmatch(r'[„"]?[א-ת]{2,}[",.:;]?', w)]
         if cand:
             i = cand[rng.integers(len(cand))]
