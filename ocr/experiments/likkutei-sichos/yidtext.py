@@ -70,7 +70,7 @@ def main():
     # drop the point under an alef and the dagesh in פּ far too often to teach from.
     known = {bare for bare, c in forms.items() if sum(c.values()) >= 3}
     full = int(np.percentile(widths, 75)); per_px = float(np.median(ratio))
-    print(f'{len(spell)} spellings, full line {full} px, {per_px:.4f} chars a px')
+    print(f'{len(known)} known words, full line {full} px, {per_px:.4f} chars a px')
     seen, words = set(), []
     for cf in clips:
         for t in texts(cf):
