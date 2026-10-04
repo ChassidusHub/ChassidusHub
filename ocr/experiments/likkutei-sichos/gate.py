@@ -9,11 +9,14 @@ test (ev/final/focus_full.npz, as cmp4500.py). Yiddish: the vol 25 lines and fak
 lines (yid/dev.txt). A reading is an evalx npz holding both tests, or two joined
 with + (heb.npz+yid.npz).
 
-    gate.py <keeper hebrew npz> <keeper yiddish npz> <candidate npz>...
+    gate.py <keeper hebrew npz> <keeper yiddish npz> <candidate npz>... [--fixes test4500_fixes.json]
+
+--fixes: Hebrew test labels corrected by eye against the scans ({"fixes": {path: text}});
+on 2026-10-04, 73 of the 116 lines the two-reader vote got "wrong" were wrong labels.
 
 A candidate passes when no kind has more mistakes than the keeper's, allowing
 5% or 2 mistakes, whichever is more, for chance."""
-import re, sys, unicodedata
+import json, re, sys, unicodedata
 import numpy as np
 from rapidfuzz.distance import Levenshtein
 
@@ -61,6 +64,7 @@ def hebrew_rows(ref_fn, fn):
     for p, g in ref_g.items():  # the keeper's checked labels: edge marks it read that the typed text lacked
         h = ref_p[p]
         gts[p] = h if g != h and EDGE.sub('', h) == EDGE.sub('', g) and len(h) > len(g) else g
+        gts[p] = nfd(FIXES.get(p, gts[p]))
     preds, _ = load(fn)
     return [(p, g, preds.get(p, '')) for p, g in gts.items()]
 
@@ -73,7 +77,13 @@ def yiddish_rows(ref_fn, fn):
     return [(p, g, preds.get(tail(p), '')) for p, g in gts.items() if 'yid' in p]
 
 
+FIXES = {}
+
+
 def main():
+    global FIXES
+    if '--fixes' in sys.argv:
+        k = sys.argv.index('--fixes'); FIXES = json.load(open(sys.argv[k + 1]))['fixes']; del sys.argv[k:k + 2]
     heb_ref, yid_ref, cands = sys.argv[1], sys.argv[2], sys.argv[3:]
     tests = [('Hebrew', lambda fn: hebrew_rows(heb_ref, fn), heb_ref), ('Yiddish', lambda fn: yiddish_rows(yid_ref, fn), yid_ref)]
     verdict = {c: True for c in cands}
