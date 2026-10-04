@@ -12,6 +12,7 @@ import collections, glob, json, os, re, sys
 import numpy as np, pymupdf
 from PIL import Image
 from layout import deskew, scan
+import pointing
 from weakspots import core, is_known, load_vocab
 
 YID = re.compile('[ַָֿ]|(^| )(און|איז|ניט|דער|דאָס|וואָס|אַז|נישט|זיך|זיין|מיט|פון|אויף|ווי|אויך)( |$)')
@@ -37,19 +38,11 @@ def main():
                     if w.get('conf', 1) >= 0.97:
                         seen[core(w['text'])] += 1
     vocab.update({w: n for w, n in seen.items() if n >= 5})
-    # The reader drops or swaps the point under a Yiddish alef now and then (אבער
-    # 55 times for אָבער 521 on vol 15), and a training line must not teach it to.
-    # Each spelling is checked against the other pointings of the same letters:
-    # one five times rarer than the most common is rewritten to it; one that is
-    # rarer but not by that much (אן / אַן / אָן, different words) drops the line.
-    by_letters = collections.defaultdict(list)
-    for w, n in seen.items():
-        by_letters[re.sub('[\u05b0-\u05c2]', '', w)].append((n, w))
-    best = {}
-    for k, forms in by_letters.items():
-        forms.sort(reverse=True)
-        for n, w in forms[1:]:
-            best[w] = forms[0][1] if forms[0][0] >= 5 * max(n, 1) else None
+    # The reader drops the point under a Yiddish alef, and the dagesh in פּ, far more
+    # than it makes one up (נאך 1,856 times for נאָך 448 on vols 15-25, where the print
+    # has the kamatz). Choosing the reader's commonest spelling (as until 2026-10-04)
+    # wrote נאך into every label and taught the next reader the same; now the
+    # pointing is the typed text's (pointing.py), and the reader's own points stay.
     total = kept = 0
     why = collections.Counter()
     for v in vols:
@@ -79,17 +72,7 @@ def main():
                     ws = [core(w['text']) for w in l['words']]
                     if any(len(re.sub('[^א-ת]', '', w)) >= 2 and not is_known(w, vocab) for w in ws):
                         why['an unknown word'] += 1; continue
-                    fixed, unsure = [], False
-                    for tok in text.split(' '):
-                        c = core(tok)
-                        if c in best:
-                            if best[c] is None:
-                                unsure = True; break
-                            tok = tok.replace(c, best[c])
-                        fixed.append(tok)
-                    if unsure:
-                        why['an unsure pointing'] += 1; continue
-                    text = ' '.join(fixed)
+                    text = pointing.fix(text)
                     if len(text) < 8:
                         why['too short'] += 1; continue
                     todo.append(text and (l, text))

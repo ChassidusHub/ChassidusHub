@@ -18,6 +18,7 @@ python3 yidtext.py READDIR OUT.txt CLIPS.jsonl [CLIPS.jsonl | LIBRARY.jsonl ...]
 OUT.txt is gen.py's lines file: b <tab> width in the scan <tab> text."""
 import collections, glob, html, json, re, sys
 import numpy as np
+import pointing
 from weakspots import core
 
 POINTS = '[ְ-ׂ]'
@@ -65,12 +66,9 @@ def main():
                             c = core(w['text'])
                             forms[re.sub(POINTS, '', c)][c] += 1
                     widths.append(l['x1'] - l['x0']); ratio.append(len(text) / max(1, l['x1'] - l['x0']))
-    spell = {}
-    for bare, c in forms.items():
-        (top, n), *rest = c.most_common()
-        if n >= 10 and (not rest or n >= 5 * rest[0][1]):
-            spell[bare] = top
-    known = {w for c in forms.values() for w, n in c.items() if n >= 3}
+    # The pointing is the typed text's (pointing.py), not the readers': the readers
+    # drop the point under an alef and the dagesh in פּ far too often to teach from.
+    known = {bare for bare, c in forms.items() if sum(c.values()) >= 3}
     full = int(np.percentile(widths, 75)); per_px = float(np.median(ratio))
     print(f'{len(spell)} spellings, full line {full} px, {per_px:.4f} chars a px')
     seen, words = set(), []
@@ -89,7 +87,7 @@ def main():
         if not cur:
             return
         text = ' '.join(cur)
-        ok = all(core(w) in known or len(re.sub('[^א-ת]', '', core(w))) < 2 for w in cur)
+        ok = all(re.sub(POINTS, '', core(w)) in known or len(re.sub('[^א-ת]', '', core(w))) < 2 for w in cur)
         if ok:
             lines.append(f'b\t{int(len(text) / per_px) if short else full}\t{text}')
         else:
@@ -98,9 +96,7 @@ def main():
     for w in words:
         if w == '¶':
             flush(short=True); continue
-        c = core(w); bare = re.sub(POINTS, '', c)
-        if bare in spell and c != spell[bare]:
-            w = w.replace(c, spell[bare])
+        w = pointing.fix(w)
         if cur and len(' '.join(cur + [w])) > target:
             flush()
         cur.append(w)
