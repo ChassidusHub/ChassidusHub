@@ -9,6 +9,7 @@ from kraken.containers import Segmentation, BBoxLine
 from kraken.tasks import RecognitionTaskModel
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from layout import deskew, page_layout, runs
+from postfix import tidy
 
 PAD = 6
 FACE_ON, FACE_OFF = '\ue000', '\ue001'  # around letters set in Miram, in a line's text (assemble.runs reads them)
@@ -53,6 +54,8 @@ def read_page(net, a):
         facepage.run(a, lay)
     except Exception as e:
         print('font stage skipped:', e, file=sys.stderr)
+    for l in lines:  # marks the print sets one way (". . .", "word* next", no space before ":")
+        l['text'] = tidy(l['text'])
     return lay
 
 
