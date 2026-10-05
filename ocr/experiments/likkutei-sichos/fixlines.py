@@ -21,6 +21,8 @@ def main():
     vols = sys.argv[4:] or sorted(os.listdir(read))
     n = kinds = 0
     count = {}
+    os.makedirs(out, exist_ok=True)
+    index = open(f'{out}/index.jsonl', 'w', encoding='utf-8')  # each pair, why it was fixed, and the reading it replaced
     for vol in vols:
         for f in sorted(glob.glob(f'{read}/{vol}/*.json')):
             d = json.load(open(f))
@@ -42,6 +44,7 @@ def main():
                     name = f'{out}/{vol}/{stem}_{pg:02d}_f{i:02d}'
                     Image.fromarray(crop).save(name + '.png')
                     open(name + '.gt.txt', 'w', encoding='utf-8').write(assemble.unfaced(l['fixed']) + '\n')
+                    index.write(json.dumps({'png': name + '.png', 'fix': l['fix'], 'read': l.get('text', ''), 'fixed': l['fixed']}, ensure_ascii=False) + '\n')
                     count[l['fix']] = count.get(l['fix'], 0) + 1
                     n += 1
     print(n, 'fixed lines written to', out, count)

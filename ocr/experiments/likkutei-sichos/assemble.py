@@ -9,6 +9,8 @@ short; a word broken at a line end with - is joined again. A note starts
 at a line opening with its number, N) or *N); a line without one goes on
 the note before it, even over a column or a page."""
 import glob, json, re, sys
+sys.path.insert(0, __file__.rsplit('/', 1)[0])
+from postfix import tidy  # reads made before the rules after reading went into recog get them here
 
 ORIGIN = {'by': 'ocr:kraken-rebbehub-ls'}
 # A mark stands right after a word's last letter or quote, never after a digit:
@@ -117,6 +119,18 @@ def runs(text):
 UNLINKED = '\ue004'  # the bracket of a mark reconcile() found no note for, so runs() leaves it as text
 
 
+def spaced_marks(paras, notes):
+    """Some volumes' marks are read with a space before them ("חז"ל 2)", vols 15-25):
+    a number with a bracket after a space is a mark when a note carries that number
+    (and the bracket read twice, "מבול 7))", or before "?", vol 15 p. 83 had 12
+    such). Run after the notes' labels are settled, or a note numbered wrong as
+    read leaves its mark unlinked (vol 15 p. 83's note 12)."""
+    labels = {n['label'] for n in notes if n['label'].isdigit()}
+    spaced = re.compile(r'(?<=[^\s\d]) (\d{1,3})\)(?![א-ת\d])')
+    for p in paras:
+        p['parts'] = [spaced.sub(lambda m: m.group(1) + ')' if m.group(1) in labels else m.group(0), part) if isinstance(part, str) and not p['heading'] else part for part in p['parts']]
+
+
 def reconcile(paras, notes):
     """The notes and their marks checked against each other over the whole sicha
     (Shmuly 2026-10-05: see from the references whether a number was skipped, and
@@ -156,7 +170,17 @@ def reconcile(paras, notes):
         if nxt == want + 1 or (nxt is None and n['label'] == '?') or (n['label'] == '?' and nxt is not None and nxt > want):
             if not any(number(x) == want for x in numbered):
                 n['label'] = str(want); fixed += 1
+    spaced_marks(paras, notes)
     labels = [n['label'] for n in notes]
+    # A mark read with stars before its number ("עמיתך"*43)") where no note carries
+    # the stars but note 43 has no mark of its own: the stars are a speck or the
+    # quote's tail, and the mark is 43 (vol 15 p. 83).
+    called = {m.group(1) for p in paras if not p['heading'] for part in p['parts'] if isinstance(part, str) for m in MARK.finditer(part)}
+    for p in paras:
+        if p['heading']:
+            continue
+        p['parts'] = [re.sub(r'(?<=[^\s\d])\*{1,3}(\d{1,3})\)', lambda m: m.group(1) + ')' if m.group(0)[:-1] not in labels and m.group(1) in labels and m.group(1) not in called else m.group(0), part)
+                      if isinstance(part, str) else part for part in p['parts']]
     # every mark in reading order, with where it stands: (paragraph, part, match)
     found = [(p, k, m) for p in paras if not p['heading'] for k, part in enumerate(p['parts']) if isinstance(part, str) for m in list(MARK.finditer(part))]
     have_mark = {m.group(1) for _, _, m in found}
@@ -176,6 +200,26 @@ def reconcile(paras, notes):
             fix_line(p['parts'][k], m.start(), m.group(0), str(fits[0]) + ')', 'mark from the gap')
         else:
             edits.append((p, k, m, lab + UNLINKED))
+    # A mark read as another note's number, one digit off (5 read as 3: "[n34]" between
+    # the marks of 53 and 55 while note 54 has no mark, 2026-10-05): when its neighbours'
+    # marks are in order and exactly one uncalled note fits between them, it is that note.
+    done = {id(m) for _, _, m, _ in edits}
+    nums = [(j, int(m.group(1))) for j, (_, _, m) in enumerate(found) if m.group(1).isdigit() and m.group(1) in labels and id(m) not in done]
+    for x, (j, v) in enumerate(nums):
+        before = nums[x - 1][1] if x > 0 else 0
+        after = nums[x + 1][1] if x + 1 < len(nums) else None
+        if after is None or not before < after or before < v < after:
+            continue
+        fits = [n for n in uncalled if before < n < after]
+        # and note v is called from elsewhere too, so taking this mark leaves it its own
+        # (one of 12 checked broke this: a true 45) between 43 and 46 taken for 44)
+        if sum(1 for _, w in nums if w == v) < 2:
+            continue
+        if len(fits) == 1 and len(str(fits[0])) == len(str(v)) and sum(a != b for a, b in zip(str(fits[0]), str(v))) == 1:
+            p, k, m = found[j]
+            edits.append((p, k, m, str(fits[0]) + ')')); uncalled.remove(fits[0]); fixed += 1
+            fix_line(p['parts'][k], m.start(), m.group(0), str(fits[0]) + ')', 'mark digit from the sequence')
+    edits.sort(key=lambda e: (id(e[0]), e[1], e[2].start()))
     for p, k, m, new in reversed(edits):  # from the end, so earlier spans keep their places
         p['parts'][k] = p['parts'][k][:m.start()] + new + p['parts'][k][m.end():]
     # a note whose label the sequence settled: its first line as the print has it
@@ -183,7 +227,7 @@ def reconcile(paras, notes):
         line = n.get('line')
         if not line or n['label'] == '?':
             continue
-        text = fix_dots(line.get('text', '').strip())
+        text = fix_dots(tidy(line.get('text', '').strip()))
         m = re.match(r'^(\*{0,3}\d{0,3}|\?)\)\s*', text)
         if m and m.group(1) != n['label']:
             line['fixed'] = n['label'] + ') ' + text[m.end():]
@@ -321,7 +365,7 @@ def assemble(pages):
             left, right = edges(col)
             prev_short = False
             for i, line in enumerate(col):
-                text = fix_dots(line.get('text', '').strip())
+                text = fix_dots(tidy(line.get('text', '').strip()))
                 if not text:
                     continue
                 b = box(line, shape, pdf_page)
@@ -349,7 +393,7 @@ def assemble(pages):
             note_end[list(note_end)[-1]] = 'page'
         for col in lay['notes']:
             for line in col:
-                text = fix_dots(line.get('text', '').strip())
+                text = fix_dots(tidy(line.get('text', '').strip()))
                 if not text:
                     continue
                 b = box(line, shape, pdf_page)
@@ -389,13 +433,6 @@ def assemble(pages):
         p['parts'] = [unsplit_stars(part) if isinstance(part, str) else part for part in p['parts']]
     for n in notes:
         n['text'] = unsplit_stars(n['text'])
-    # Some volumes' marks are read with a space before them ("חז"ל 2)", vols 15-25):
-    # a number with a bracket after a space is a mark when a note carries that number.
-    labels = {n['label'] for n in notes if n['label'].isdigit()}
-    # (and the bracket read twice, "מבול 7))", or as "]": vol 15 p. 83 had 12 such)
-    spaced = re.compile(r'(?<=[^\s\d]) (\d{1,3})\)(?![א-ת\d])')
-    for p in paras:
-        p['parts'] = [spaced.sub(lambda m: m.group(1) + ')' if m.group(1) in labels else m.group(0), part) if isinstance(part, str) and not p['heading'] else part for part in p['parts']]
     reconcile(paras, notes)
     # Each ois is a section: the paragraph that opens with its letter, and the paragraphs
     # after it up to the next ois. What comes before the first stays outside any.
