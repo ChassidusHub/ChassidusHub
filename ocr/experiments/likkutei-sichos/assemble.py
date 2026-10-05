@@ -32,11 +32,25 @@ def note_id(label):
 EOL_ON, EOL_OFF = '\ue002', '\ue003'
 EOL_TOKEN = re.compile(f'{EOL_ON}(\\d+){EOL_OFF}')
 EOLS = []  # the line ends of the sicha being assembled, by number
+EOL_LINES = []  # and the read line each one ends, for a fix to find its line
 
 
-def eol(kind, b):
+def eol(kind, b, line=None):
     EOLS.append({'eol': kind, 'page': b['page'], 'box': b['box']})
+    EOL_LINES.append(line)
     return f'{EOL_ON}{len(EOLS) - 1}{EOL_OFF}'
+
+
+def fix_line(part, pos, old, new, why):
+    """A fix reconcile() is sure of, written on the read line it belongs to as
+    'fixed' (the line's text as the print has it) so the line goes back into the
+    training data (Shmuly 2026-10-05): the line is the one whose end token comes
+    next in the part, and the old text must stand once in it."""
+    m = EOL_TOKEN.search(part, pos)
+    line = EOL_LINES[int(m.group(1))] if m else None
+    if line and line.get('text', '').count(old) == 1:
+        line['fixed'] = line['text'].replace(old, new)
+        line['fix'] = why
 
 
 def edges(lines):
@@ -159,10 +173,21 @@ def reconcile(paras, notes):
         fits = [n for n in uncalled if before < n and (after is None or n < after)]
         if len(fits) == 1 and lab.isdigit() and abs(len(lab) - len(str(fits[0]))) <= 1:
             edits.append((p, k, m, str(fits[0]) + ')')); uncalled.remove(fits[0]); fixed += 1
+            fix_line(p['parts'][k], m.start(), m.group(0), str(fits[0]) + ')', 'mark from the gap')
         else:
             edits.append((p, k, m, lab + UNLINKED))
     for p, k, m, new in reversed(edits):  # from the end, so earlier spans keep their places
         p['parts'][k] = p['parts'][k][:m.start()] + new + p['parts'][k][m.end():]
+    # a note whose label the sequence settled: its first line as the print has it
+    for n in notes:
+        line = n.get('line')
+        if not line or n['label'] == '?':
+            continue
+        text = fix_dots(line.get('text', '').strip())
+        m = re.match(r'^(\*{0,3}\d{0,3}|\?)\)\s*', text)
+        if m and m.group(1) != n['label']:
+            line['fixed'] = n['label'] + ') ' + text[m.end():]
+            line['fix'] = 'label from the sequence'
     return fixed
 
 
@@ -268,7 +293,7 @@ def merge_box(boxes, b):
 def assemble(pages):
     """pages: [(printed page, pdf page from 1, layout with read lines)] in order -> PageText."""
     paras, notes = [], []
-    EOLS.clear()
+    EOLS.clear(); EOL_LINES.clear()
     cur = None  # the paragraph being built: {'parts': [str | marker], 'boxes': []}
     note = None
     for printed, pdf_page, lay in pages:
@@ -283,7 +308,7 @@ def assemble(pages):
             if first_on_page:
                 cur['parts'].append({'marker': str(printed)}); first_on_page = False
             b = box(line, shape, pdf_page)
-            cur['parts'].append(text + eol('line', b)); merge_box(cur['boxes'], b); line['_in'] = cur
+            cur['parts'].append(text + eol('line', b, line)); merge_box(cur['boxes'], b); line['_in'] = cur
             cur = None  # the body after it starts a paragraph of its own
         # Which printed line ends a column, and which the page: the last line with words.
         ends = lambda cols: {id(c[-1]): 'column' for c in [[l for l in col if l.get('text', '').strip()] for col in cols] if c}
@@ -300,7 +325,7 @@ def assemble(pages):
                 if not text:
                     continue
                 b = box(line, shape, pdf_page)
-                end = eol(body_end.get(id(line), 'line'), b)
+                end = eol(body_end.get(id(line), 'line'), b, line)
                 indented = line['x1'] < right - 25
                 short = line['x0'] > left + 40
                 if cur is None or indented or (i > 0 and prev_short):
@@ -328,7 +353,7 @@ def assemble(pages):
                 if not text:
                     continue
                 b = box(line, shape, pdf_page)
-                end = eol(note_end.get(id(line), 'line'), b)
+                end = eol(note_end.get(id(line), 'line'), b, line)
                 m = NOTE_START.match(text)
                 lost = None
                 if not m and note is None and text.startswith(')'):
@@ -354,6 +379,7 @@ def assemble(pages):
                     # *, **, *** (called from inside a note; set in Miram, stressed words
                     # in Frank), and, very rarely, a third in Hadassah.
                     note = {'label': label, 'level': 2 if label.strip('*') == '' and label != '?' else 1, 'text': (text[m.end():] if m else text) + end, 'boxes': []}
+                    note['line'] = line  # its first printed line, for a label fix to go back to
                     notes.append(note)
                 else:
                     note['text'] = join(note['text'], text) + end
@@ -524,6 +550,7 @@ def pt_with_layout(pt, pages):
                 for line in col:
                     page['lines'].append({'kind': 'note' if kind == 'notes' else 'heading' if kind == 'headings' else 'body', 'column': c, 'text': unfaced(line.get('text', '')),
                                           'box': box(line, (h, w), pdf_page)['box'], 'in': owner(line).get('id'),
+                                          **({'fixed': line['fixed'], 'fix': line['fix']} if line.get('fixed') else {}),
                                           'marks': [{'label': x['label'], 'x0': fx(x['x0']), 'x1': fx(x['x1'])} for x in line.get('marks', [])],
                                           'words': [{'text': x['text'], 'x0': fx(x['x0']), 'x1': fx(x['x1']), 'conf': x['conf'], **({'face': x['face']} if x.get('face') else {})} for x in line.get('words', [])]})
         # the notes that open on this page: their level and where each is called from
