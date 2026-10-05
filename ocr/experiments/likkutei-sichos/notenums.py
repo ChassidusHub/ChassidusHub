@@ -7,9 +7,10 @@ the note after minus one) and the reader's reading of the label alone
 (recog.note_label, five widths). A star note ("*42)") or a disagreement is left
 for a person.
 
-python3 notenums.py MODEL PAIRS_DIR [--write]
+python3 notenums.py MODEL PAIRS_DIR [--write] [--left]
 Prints counts; --write rewrites the .gt.txt files and lists them in
-PAIRS_DIR/notenums.jsonl (old label, new label, both witnesses)."""
+PAIRS_DIR/notenums.jsonl (old label, new label, both witnesses); --left lists the rest in
+PAIRS_DIR/notenums_left.jsonl."""
 import collections, glob, json, re, sys
 import numpy as np
 from PIL import Image
@@ -47,7 +48,8 @@ def main():
     write = '--write' in sys.argv
     cand = candidates(sys.argv[2])
     n = collections.Counter()
-    log = open(f'{sys.argv[2]}/notenums.jsonl', 'w') if write else None
+    log = open(f'{sys.argv[2]}/notenums.jsonl', 'a') if write else None
+    dump = open(f'{sys.argv[2]}/notenums_left.jsonl', 'w') if '--left' in sys.argv else None
     for f, seq in sorted(cand.items()):
         text = open(f, encoding='utf-8').read().strip()
         a = np.array(Image.open(f[:-7] + '.png').convert('L'))
@@ -60,7 +62,10 @@ def main():
                 open(f, 'w', encoding='utf-8').write(read + text + '\n')
                 log.write(json.dumps({'gt': f, 'old': text, 'new': read + text, 'seq': seq, 'read': read}, ensure_ascii=False) + '\n')
         else:
-            n['star' if read and '*' in read else 'disagree' if read and seq else 'one witness'] += 1
+            kind = 'star' if read and '*' in read else 'disagree' if read and seq else 'one witness'
+            n[kind] += 1
+            if dump:
+                dump.write(json.dumps({'gt': f, 'text': text, 'seq': seq, 'read': read, 'kind': kind}, ensure_ascii=False) + '\n')
     print(dict(n))
 
 

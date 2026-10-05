@@ -32,6 +32,9 @@ YID = re.compile('[ַָֿ]|(^| )(און|איז|ניט|דער|דאָס|וואָס
 HERE = os.path.dirname(os.path.abspath(__file__))
 RULE = HERE + '/../../../lsdata/pointing.json' if os.path.isdir(HERE + '/../../../lsdata') else '/home/user/lsdata/pointing.json'
 _rule = None
+# bare words that are Hebrew as often as Yiddish: האב is "the father" in "על האב"
+# (4 of the 27 bare words on Shmuly's alef sheet, 2026-10-05)
+HEBREW_TOO = {'האב'}
 
 
 def core(w):
@@ -68,7 +71,7 @@ def build(sources):
 def load():
     global _rule
     if _rule is None:
-        _rule = {k: v for k, v in json.load(open(RULE, encoding='utf-8')).items() if POINTS.sub('', v) == k}
+        _rule = {k: v for k, v in json.load(open(RULE, encoding='utf-8')).items() if POINTS.sub('', v) == k and k not in HEBREW_TOO}
     return _rule
 
 

@@ -28,6 +28,7 @@ def read_sicha(net, pdf, out):
     from recog import read_page  # after READ_DEVICE is set
     stem = os.path.basename(pdf)[:-4]
     vol, start = stem.split('_'); start = int(start)
+    assemble.POINT_YIDDISH = 15 <= int(vol) <= 25
     doc = pymupdf.open(pdf)
     pages = []
     os.makedirs(f'{out}/lay', exist_ok=True)

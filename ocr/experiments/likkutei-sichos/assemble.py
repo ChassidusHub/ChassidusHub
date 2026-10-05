@@ -11,6 +11,17 @@ the note before it, even over a column or a page."""
 import glob, json, re, sys
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from postfix import tidy  # reads made before the rules after reading went into recog get them here
+import pointing
+
+# Yiddish words the reader reads bare get the print's point (pointing.py) in the
+# volumes that point them: on Shmuly's alef sheet (2026-10-05) 223 of 250 such
+# words in vols 15-25 had the point in the scan. Not vol 39, whose Igros print
+# א bare. readsicha.py sets it by volume.
+POINT_YIDDISH = False
+
+
+def pointed(text):
+    return pointing.fix(text) if POINT_YIDDISH and pointing.YID.search(text) else text
 
 ORIGIN = {'by': 'ocr:kraken-rebbehub-ls'}
 # A mark stands right after a word's last letter or quote, never after a digit:
@@ -227,7 +238,7 @@ def reconcile(paras, notes):
         line = n.get('line')
         if not line or n['label'] == '?':
             continue
-        text = fix_dots(tidy(line.get('text', '').strip()))
+        text = pointed(fix_dots(tidy(line.get('text', '').strip())))
         m = re.match(r'^(\*{0,3}\d{0,3}|\?)\)\s*', text)
         if m and m.group(1) != n['label']:
             line['fixed'] = n['label'] + ') ' + text[m.end():]
@@ -365,7 +376,7 @@ def assemble(pages):
             left, right = edges(col)
             prev_short = False
             for i, line in enumerate(col):
-                text = fix_dots(tidy(line.get('text', '').strip()))
+                text = pointed(fix_dots(tidy(line.get('text', '').strip())))
                 if not text:
                     continue
                 b = box(line, shape, pdf_page)
@@ -393,7 +404,7 @@ def assemble(pages):
             note_end[list(note_end)[-1]] = 'page'
         for col in lay['notes']:
             for line in col:
-                text = fix_dots(tidy(line.get('text', '').strip()))
+                text = pointed(fix_dots(tidy(line.get('text', '').strip())))
                 if not text:
                     continue
                 b = box(line, shape, pdf_page)
