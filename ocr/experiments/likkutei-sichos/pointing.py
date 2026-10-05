@@ -15,8 +15,8 @@ pointed form at least three times as often (ten times or more in all).
 
 A one-letter word keeps its spelling when punctuation is attached ("א." is a
 section letter, not the article אַ), and so does a two-letter one before a
-bracket ("בא):" numbers a section). Words the typed text points two ways
-(אַן / אָן) are left as read, and so is the dagesh in a Hebrew word (פסוק): vol 39
+bracket ("בא):" numbers a section). אַן or אָן is told by the word after it
+(an_form), and the dagesh in a Hebrew word (פסוק) is left as read: vol 39
 prints פּסוק, vols 15-25 mostly פסוק (scans checked 2026-10-04), and the readers
 read the dagesh in Yiddish words (אָפּ, אַראָפּ) well.
 
@@ -78,7 +78,7 @@ def load():
 def fix(text):
     """The line with each bare word the print points written pointed."""
     rule = load()
-    out = []
+    out, inside = [], []
     quoted = False
     for w in text.split(' '):
         if w.startswith('„') or re.match(r'^[^א-ת]*„', w):
@@ -90,7 +90,36 @@ def fix(text):
         if quoted and re.search(r'[א-ת\u0591-\u05c7\']"[^א-ת]*$', w):
             quoted = False
         out.append(w)
+        inside.append(quoted)
+    for i, w in enumerate(out):
+        c = core(w)
+        if not inside[i] and POINTS.sub('', c) == 'אן' and (f := an_form(out, i)):
+            out[i] = w.replace(c, f, 1)
     return ' '.join(out)
+
+
+# Words that start with alef or ayin but are not the noun the article stands before.
+NOT_NOUN = {'אין', 'איז', 'און', 'אויף', 'אים', 'איר', 'אונז', 'אלע', 'א', 'אויס', 'אהין', 'אהער', 'אזוי', 'אויך',
+            'אלץ', 'אז', 'אן', 'אט', 'איצט', 'אליין', 'איינער', 'איינע', 'אנדערע', 'אנדערש', 'אבער', 'ארויס', 'אריין',
+            'אראפ', 'ארויף', 'ארום', 'אפ', 'איבער', 'אונטער', 'אנטקעגן', 'אפילו', 'אויב', 'איינס'}
+
+
+def an_form(words, i):
+    """אַן (the article, before a noun that starts with a vowel letter) or אָן (the
+    prefix, or 'without') for the bare or pointed אן at i, from the word after it.
+    None at the end of a line, where the next word is not known: left as read.
+    On Shmuly's 200 checked אן words (2026-10-05) the rule was right 160 of the 163
+    it decides; the reader alone was right 115 of 195. The three misses are idioms
+    the print sets with kamatz: ניט אָן ענין, צינדט מען אָן אַכט, זייענדיק אָן עבד."""
+    if re.search(r'[.,;:!?)\]—]$', words[i]):
+        return 'אָן'
+    if i + 1 >= len(words):
+        return None
+    nx = words[i + 1]
+    if nx.startswith('—'):
+        return 'אָן'
+    n = POINTS.sub('', core(nx.replace('\ue000', '').replace('\ue001', '')))
+    return 'אַן' if n and n[0] in 'אע' and n not in NOT_NOUN else 'אָן'
 
 
 if __name__ == '__main__':
