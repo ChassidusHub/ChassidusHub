@@ -66,7 +66,10 @@ def main():
                         why['not yiddish'] += 1; continue
                     # a line-opening dash or note number is read less surely than words, but
                     # leaving out every line that has one taught the reader to drop them (yid1)
-                    edge = lambda k, w: k == 0 and (w['text'] == '—' or re.fullmatch(r'\d{1,3}\)', w['text'])) and w.get('conf', 1) >= 0.5
+                    # (and a line-ending dash the same: no kept Yiddish line ended with one before
+                    # 2026-10-05, though 1,490 of them are printed so; edgedash.py found them)
+                    last = len(l['words']) - 1
+                    edge = lambda k, w: ((k == 0 and (w['text'] == '—' or re.fullmatch(r'\d{1,3}\)', w['text']))) or (k == last and w['text'] == '—')) and w.get('conf', 1) >= 0.5
                     if any(w.get('conf', 1) < 0.99 and not edge(k, w) for k, w in enumerate(l['words'])):
                         why['a word below 0.99'] += 1; continue
                     ws = [core(w['text']) for w in l['words']]
