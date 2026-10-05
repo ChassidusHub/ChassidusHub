@@ -14,10 +14,17 @@ pointed form at least three times as often (ten times or more in all).
     from pointing import fix; fix('נאך איז דאך א פסוק') -> 'נאָך איז דאָך אַ פסוק'
 
 A one-letter word keeps its spelling when punctuation is attached ("א." is a
-section letter, not the article אַ). Words the typed text points two ways
+section letter, not the article אַ), and so does a two-letter one before a
+bracket ("בא):" numbers a section). Words the typed text points two ways
 (אַן / אָן) are left as read, and so is the dagesh in a Hebrew word (פסוק): vol 39
 prints פּסוק, vols 15-25 mostly פסוק (scans checked 2026-10-04), and the readers
-read the dagesh in Yiddish words (אָפּ, אַראָפּ) well."""
+read the dagesh in Yiddish words (אָפּ, אַראָפּ) well.
+
+A quote („...") is Hebrew or Aramaic more often than not ("רשע בא לעולם", "דא
+בדא"), so words inside one keep the reader's spelling. A rule entry that would
+add anything but points is dropped: the rule built before the maqaf fix had
+גע -> גע־, which doubled the maqaf at the end of 777 Yiddish labels
+(Shmuly's 922 checks, 2026-10-05)."""
 import collections, glob, json, os, re, sys
 
 POINTS = re.compile('[\u0591-\u05bd\u05bf-\u05c7]')  # the points, not the maqaf (U+05BE) between them
@@ -61,7 +68,7 @@ def build(sources):
 def load():
     global _rule
     if _rule is None:
-        _rule = json.load(open(RULE, encoding='utf-8'))
+        _rule = {k: v for k, v in json.load(open(RULE, encoding='utf-8')).items() if POINTS.sub('', v) == k}
     return _rule
 
 
@@ -69,11 +76,16 @@ def fix(text):
     """The line with each bare word the print points written pointed."""
     rule = load()
     out = []
+    quoted = False
     for w in text.split(' '):
+        if w.startswith('„') or re.match(r'^[^א-ת]*„', w):
+            quoted = True
         c = core(w)
         bare = POINTS.sub('', c)
-        if c and bare in rule and c != rule[bare] and not (len(bare) == 1 and c != w):
+        if not quoted and c and bare in rule and c != rule[bare] and not (len(bare) == 1 and c != w) and not (len(bare) <= 2 and re.search(r'\)[:.,;]?$', w)):
             w = w.replace(c, rule[bare], 1)
+        if quoted and re.search(r'[א-ת\u0591-\u05c7\']"[^א-ת]*$', w):
+            quoted = False
         out.append(w)
     return ' '.join(out)
 
