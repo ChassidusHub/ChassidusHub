@@ -94,7 +94,76 @@ def runs(text):
             pos = m.end()
         if pos < len(r['text']):
             done.append({**r, 'text': r['text'][pos:]})
+    for r in done:
+        if 'text' in r and UNLINKED in r['text']:
+            r['text'] = r['text'].replace(UNLINKED, ')')
     return done
+
+
+UNLINKED = '\ue004'  # the bracket of a mark reconcile() found no note for, so runs() leaves it as text
+
+
+def reconcile(paras, notes):
+    """The notes and their marks checked against each other over the whole sicha
+    (Shmuly 2026-10-05: see from the references whether a number was skipped, and
+    throw the unused ones). The print numbers a sicha's notes 1, 2, 3 … and calls
+    each once from the body, so a label out of sequence between its neighbours
+    (35, 3, 37, or a lost "?") is the number the sequence wants; a mark no note
+    carries, standing between the marks of n-1 and n+1 where note n has no mark,
+    is n read wrong; a mark with no note anywhere is noise and is left as text."""
+    number = lambda n: int(n['label']) if n['label'].isdigit() else None
+    fixed = 0
+    # A line opening with a number and a bracket inside a note, "1) למה נתעכב … 2) למה
+    # לא", or "48) וכדמוכח" citing note 48, was taken for a note of its own: when the
+    # note after it carries the number the sequence wanted here, the line goes back
+    # into the note before it, number and all.
+    i = 1
+    while i < len(notes):
+        n = notes[i]
+        prev = next((number(x) for x in reversed(notes[:i]) if number(x) is not None), 0)
+        nxt = next((number(x) for x in notes[i + 1:] if number(x) is not None), None)
+        if number(n) is not None and number(n) != prev + 1 and nxt == prev + 1:
+            notes[i - 1]['text'] = join(notes[i - 1]['text'], n['label'] + ') ' + n['text'])
+            for b in n['boxes']:
+                merge_box(notes[i - 1]['boxes'], b)
+            n['_into'] = notes[i - 1]  # the page layout's lines still point at it
+            del notes[i]; fixed += 1
+        else:
+            i += 1
+    numbered = [n for n in notes if number(n) is not None or n['label'] == '?']
+    for i, n in enumerate(numbered):
+        prev = next((number(x) for x in reversed(numbered[:i]) if number(x) is not None), 0)
+        nxt = next((number(x) for x in numbered[i + 1:] if number(x) is not None), None)
+        want = prev + 1
+        if number(n) == want:
+            continue
+        # the neighbours agree on this note's number: the next note is want+1, or this
+        # is the sicha's last note and its label is lost; a run of lost labels counts up
+        if nxt == want + 1 or (nxt is None and n['label'] == '?') or (n['label'] == '?' and nxt is not None and nxt > want):
+            if not any(number(x) == want for x in numbered):
+                n['label'] = str(want); fixed += 1
+    labels = [n['label'] for n in notes]
+    # every mark in reading order, with where it stands: (paragraph, part, match)
+    found = [(p, k, m) for p in paras if not p['heading'] for k, part in enumerate(p['parts']) if isinstance(part, str) for m in list(MARK.finditer(part))]
+    have_mark = {m.group(1) for _, _, m in found}
+    uncalled = sorted(int(l) for l in labels if l.isdigit() and l not in have_mark)
+    # a mark no note carries: n when it stands between the marks of n-1 and n+1 (or
+    # at the sicha's end after n-1) and note n has no mark; else noise
+    edits = []
+    for j, (p, k, m) in enumerate(found):
+        lab = m.group(1)
+        if lab in labels:
+            continue
+        before = next((int(x.group(1)) for _, _, x in reversed(found[:j]) if x.group(1).isdigit() and x.group(1) in labels), 0)
+        after = next((int(x.group(1)) for _, _, x in found[j + 1:] if x.group(1).isdigit() and x.group(1) in labels), None)
+        fits = [n for n in uncalled if before < n and (after is None or n < after)]
+        if len(fits) == 1 and lab.isdigit() and abs(len(lab) - len(str(fits[0]))) <= 1:
+            edits.append((p, k, m, str(fits[0]) + ')')); uncalled.remove(fits[0]); fixed += 1
+        else:
+            edits.append((p, k, m, lab + UNLINKED))
+    for p, k, m, new in reversed(edits):  # from the end, so earlier spans keep their places
+        p['parts'][k] = p['parts'][k][:m.start()] + new + p['parts'][k][m.end():]
+    return fixed
 
 
 def unfaced(text):
@@ -270,11 +339,13 @@ def assemble(pages):
                     free = [x for x in seen if x not in taken]
                     if free:
                         lost = str(min(free)); text = text[1:].lstrip()
-                if not m and not lost and note is not None and text.startswith(')') and note['label'].isdigit():
+                last_num = next((x['label'] for x in reversed(notes) if x['label'].isdigit()), None)
+                if not m and not lost and note is not None and text.startswith(')') and last_num:
                     # The reader lost the number of a note's opening "3)" and kept the
                     # bracket: a line opening with ")" after note k is note k+1, not
-                    # more of note k (page 62 of vol 33 lost three this way).
-                    lost = str(int(note['label']) + 1)
+                    # more of note k (page 62 of vol 33 lost three this way), even
+                    # when a star note stands between (notes 8 and 9 of vol 15 p. 7).
+                    lost = str(int(last_num) + 1)
                     text = text[1:].lstrip()
                 if m or lost or note is None:
                     label = m.group(1) if m else lost or '?'
@@ -295,9 +366,11 @@ def assemble(pages):
     # Some volumes' marks are read with a space before them ("חז"ל 2)", vols 15-25):
     # a number with a bracket after a space is a mark when a note carries that number.
     labels = {n['label'] for n in notes if n['label'].isdigit()}
-    spaced = re.compile(r'(?<=[^\s\d]) (\d{1,3})\)(?=[\s,.:;\ue000\ue001\ue002]|$)')
+    # (and the bracket read twice, "מבול 7))", or as "]": vol 15 p. 83 had 12 such)
+    spaced = re.compile(r'(?<=[^\s\d]) (\d{1,3})\)(?![א-ת\d])')
     for p in paras:
         p['parts'] = [spaced.sub(lambda m: m.group(1) + ')' if m.group(1) in labels else m.group(0), part) if isinstance(part, str) and not p['heading'] else part for part in p['parts']]
+    reconcile(paras, notes)
     # Each ois is a section: the paragraph that opens with its letter, and the paragraphs
     # after it up to the next ois. What comes before the first stays outside any.
     segments, section = [], None
@@ -450,19 +523,27 @@ def pt_with_layout(pt, pages):
             for c, col in enumerate([lay.get('headings', [])] if kind == 'headings' else lay[kind]):
                 for line in col:
                     page['lines'].append({'kind': 'note' if kind == 'notes' else 'heading' if kind == 'headings' else 'body', 'column': c, 'text': unfaced(line.get('text', '')),
-                                          'box': box(line, (h, w), pdf_page)['box'], 'in': line.get('_in', {}).get('id'),
+                                          'box': box(line, (h, w), pdf_page)['box'], 'in': owner(line).get('id'),
                                           'marks': [{'label': x['label'], 'x0': fx(x['x0']), 'x1': fx(x['x1'])} for x in line.get('marks', [])],
                                           'words': [{'text': x['text'], 'x0': fx(x['x0']), 'x1': fx(x['x1']), 'conf': x['conf'], **({'face': x['face']} if x.get('face') else {})} for x in line.get('words', [])]})
         # the notes that open on this page: their level and where each is called from
         starts = {}
         for col in lay['notes']:
             for line in col:
-                n = line.get('_in')
+                n = owner(line)
                 if n and 'label' in n and n['id'] not in starts:
                     starts[n['id']] = n
         page['notes'] = [{'id': n['id'], 'label': n['label'], 'level': n['level'], 'called_from': n.get('called_from')} for n in starts.values()]
         layout.append(page)
     return pt, layout
+
+
+def owner(line):
+    """The paragraph or note a read line went into (through a note reconcile() folded back)."""
+    n = line.get('_in', {})
+    while '_into' in n:
+        n = n['_into']
+    return n
 
 
 def plain(pt):
