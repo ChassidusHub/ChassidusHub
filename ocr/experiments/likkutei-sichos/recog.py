@@ -96,18 +96,27 @@ def vote_lines(a, seg, lines, recs, nbody):
 def note_label(net, a, line):
     """A note line read as opening with a bare ")" lost its number (the model drops
     small raised digits now and then: 1,058 typed notes had the same gap): the
-    line's first stretch, two line heights wide, is read by itself, where the
-    short crop usually gives the number, and the label is taken from it."""
+    line's first stretch is read by itself, where a short crop usually gives the
+    number. One width is not enough (2026-10-04: the same label read "(8", "(",
+    "8) צע" at 1.6, 2.2 and 4 line heights), so five widths are read and the
+    label most of them give is taken. A lone label often comes out mirrored
+    ("(1" for 1), as the net has seen a bracket before a digit only in "(ח, טו)"."""
+    import collections
     text = line.get('text', '')
-    if not text.startswith(')'):
+    if not re.match(r'^\*{0,3}\)', text):
         return
     h = line['y1'] - line['y0']
-    crop = a[max(0, line['y0'] - PAD):line['y1'] + PAD, max(0, int(line['x1'] - 2.2 * h)):line['x1'] + PAD]
-    m = re.match(r'^(\*{0,3}\d{1,3})\)', read_crop(net, crop).strip())
-    if m:
-        line['text'] = m.group(1) + text
-        line['label_from_crop'] = m.group(1)
-        line['marks'] = sorted(line.get('marks', []) + [{'label': m.group(1), 'x0': int(line['x1'] - 1.2 * h), 'x1': int(line['x1'])}], key=lambda x: -x['x1'])
+    seen = collections.Counter()
+    for k in (1.2, 1.6, 2.2, 3, 4):
+        crop = a[max(0, line['y0'] - PAD):line['y1'] + PAD, max(0, int(line['x1'] - k * h)):line['x1'] + PAD]
+        m = re.match(r'^\(?(\*{0,3})(\d{1,3})[()]?(\*{0,3})', read_crop(net, crop).strip())
+        if m:
+            seen[(m.group(1) or m.group(3)) + m.group(2)] += 1
+    if seen:
+        label = seen.most_common(1)[0][0]
+        line['text'] = label + text.lstrip('*')
+        line['label_from_crop'] = label
+        line['marks'] = sorted(line.get('marks', []) + [{'label': label, 'x0': int(line['x1'] - 1.2 * h), 'x1': int(line['x1'])}], key=lambda x: -x['x1'])
 
 
 def keeps(base, new):
