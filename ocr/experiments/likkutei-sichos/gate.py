@@ -22,7 +22,7 @@ from rapidfuzz.distance import Levenshtein
 
 nfd = lambda t: unicodedata.normalize('NFD', str(t))
 HARD = {frozenset('בכ'), frozenset('תח'), frozenset('זן'), frozenset('זו'), frozenset('ןו')}
-POINT = re.compile('[֑-ׇ]')
+POINT = re.compile('[\u0591-\u05bd\u05bf-\u05c7]')  # the points, not the maqaf (U+05BE) between them
 MARK = re.compile(r'\*{0,3}\d{1,3}\)|\*{1,3}\)')
 EDGE = re.compile(r'^(— |\. \. \. )|( —)$')
 

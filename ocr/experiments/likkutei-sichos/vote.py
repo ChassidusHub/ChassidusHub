@@ -13,7 +13,7 @@ import numpy as np
 import confix
 
 nfd = lambda t: unicodedata.normalize('NFD', str(t)).strip()
-POINTS = re.compile('[֑-ׇ]')
+POINTS = re.compile('[\u0591-\u05bd\u05bf-\u05c7]')  # the points, not the maqaf (U+05BE) between them
 
 
 class Chooser:

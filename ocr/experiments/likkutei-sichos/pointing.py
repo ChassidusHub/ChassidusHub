@@ -20,7 +20,7 @@ prints פּסוק, vols 15-25 mostly פסוק (scans checked 2026-10-04), and th
 read the dagesh in Yiddish words (אָפּ, אַראָפּ) well."""
 import collections, glob, json, os, re, sys
 
-POINTS = re.compile('[֑-ׇ]')
+POINTS = re.compile('[\u0591-\u05bd\u05bf-\u05c7]')  # the points, not the maqaf (U+05BE) between them
 YID = re.compile('[ַָֿ]|(^| )(און|איז|ניט|דער|דאָס|וואָס|אַז|נישט|זיך|זיין|מיט|פון|אויף|ווי|אויך)( |$)')
 HERE = os.path.dirname(os.path.abspath(__file__))
 RULE = HERE + '/../../../lsdata/pointing.json' if os.path.isdir(HERE + '/../../../lsdata') else '/home/user/lsdata/pointing.json'
@@ -29,7 +29,7 @@ _rule = None
 
 def core(w):
     """The word without the punctuation around it (geresh and gershayim stay)."""
-    return re.sub(r'^[^א-ת]+|[^א-ת֑-ׇ\'"]+$', '', w)
+    return re.sub(r'^[^א-ת]+|[^א-ת\u0591-\u05bd\u05bf-\u05c7\'"]+$', '', w)
 
 
 def build(sources):
