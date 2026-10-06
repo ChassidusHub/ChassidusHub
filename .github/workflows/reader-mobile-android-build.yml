@@ -18,6 +18,7 @@ jobs:
 
     steps:
       - name: Free up disk space
+        working-directory: .
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
             /usr/local/share/powershell /usr/share/swift

@@ -58,7 +58,9 @@ jobs:
     outputs:
       version: ${{ steps.resolve.outputs.version }}
     steps:
+      # Before any checkout, reader/ does not exist yet.
       - id: resolve
+        working-directory: .
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
@@ -133,6 +135,7 @@ jobs:
 
     steps:
       - name: Free up disk space
+        working-directory: .
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
             /usr/local/share/powershell /usr/share/swift
