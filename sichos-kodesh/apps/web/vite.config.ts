@@ -124,6 +124,9 @@ export default defineConfig({
         // while offline (or on a flaky connection) fails even though the PDF's
         // own bytes are already cached.
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,wasm,bcmap,pfb,ttf,woff2}'],
+        // The download site is its own page under /get on the same origin (apps/site): a link there must
+        // reach it, not this app's shell.
+        navigateFallbackDenylist: [/^\/get(\/|$)/],
         // Bundled catalog data (all years, inlined into the JS chunk) has grown
         // past workbox's 2 MiB default as more PDF links/resourceKeys were
         // recovered from the real dataset - raise the cap rather than drop

@@ -188,6 +188,79 @@ main {
 
 /* ---- The opening ---- */
 
+/* The phone app comes first: one big button, the other files and the web app under it. */
+.app-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 0 8px;
+  text-align: center;
+}
+
+.app-hero-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 14px;
+  border-radius: 22px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.app-hero-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 8vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.app-hero .hero-lead {
+  margin-inline: auto;
+}
+
+.app-hero-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.app-hero-meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-hero .app-alt {
+  margin-top: 12px;
+}
+
+.app-hero-note {
+  max-width: 30rem;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* The packs follow, under a line. */
+.hero-packs {
+  margin-top: 36px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.hero-packs .hero-title {
+  font-size: clamp(1.7rem, 5.5vw, 2.4rem);
+}
+
 .hero {
   max-width: 760px;
   padding-top: 20px;
@@ -430,6 +503,13 @@ main {
   font-weight: 700;
   text-decoration: none;
   transition: transform 0.08s ease, filter 0.1s ease;
+}
+
+.download-button-big {
+  gap: 10px;
+  padding: 15px 30px;
+  font-size: 1.125rem;
+  box-shadow: var(--shadow);
 }
 
 .download-button:hover {
@@ -1191,44 +1271,7 @@ div.error p {
   align-items: center;
 }
 
-/* The phone app itself, above the steps that put a pack on it. */
-.app-card {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 12px;
-  padding: 16px 18px;
-}
-
-.app-well {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.app-text {
-  flex: 1 1 260px;
-  min-width: 0;
-}
-
-.app-title {
-  margin: 0;
-  font-size: 1.0625rem;
-}
-
-.app-note {
-  margin: 2px 0 0;
-  color: var(--muted);
-  font-size: 0.9375rem;
-}
-
+/* The other files and the web app, under the big button. */
 .app-alt {
   margin: 4px 0 0;
   font-size: 0.8125rem;

@@ -1,7 +1,7 @@
 {
   "name": "@sichos-kodesh/download",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "The download site (Hebrew or English): prebuilt packs in one click, or any year, month, content and audio quality as signed packs from the pack API.",
   "type": "module",
   "scripts": {

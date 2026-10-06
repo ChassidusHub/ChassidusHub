@@ -69,11 +69,11 @@ export function Field({ title, hint, children }: { title: string; hint?: string;
   );
 }
 
-export function DownloadButton({ href, file, label }: { href: string; file?: string; label?: string }) {
+export function DownloadButton({ href, file, label, big }: { href: string; file?: string; label?: string; big?: boolean }) {
   const { t } = useI18n();
   return (
-    <a className="download-button" href={href} download={file ?? true}>
-      <DownloadIcon size={18} />
+    <a className={big ? 'download-button download-button-big' : 'download-button'} href={href} download={file ?? true}>
+      <DownloadIcon size={big ? 22 : 18} />
       {label ?? t.download}
     </a>
   );

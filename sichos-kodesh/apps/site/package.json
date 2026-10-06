@@ -1,0 +1,16 @@
+{
+  "name": "@sichos-kodesh/site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "app.chassidushub.org - one Cloudflare Worker serving the web app at / and the download site at /get, both as static files.",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build -w @sichos-kodesh/web && npm run build -w @sichos-kodesh/download && node scripts/assemble.mjs",
+    "assemble": "node scripts/assemble.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.131.0"
+  }
+}

@@ -1,0 +1,17 @@
+# app.chassidushub.org: the web app at / and the download site at /get, as one
+# Worker of static files on the chassidushub.org account. `npm run build` builds
+# both and puts them together in dist/ (scripts/assemble.mjs).
+name = "sichos-kodesh-site"
+compatibility_date = "2026-09-01"
+workers_dev = true
+routes = [{ pattern = "app.chassidushub.org", custom_domain = true }]
+
+[build]
+command = "npm run build"
+
+[assets]
+directory = "./dist"
+# The web app routes in the browser (BrowserRouter): any path that is not a file
+# gets its index.html. /get and /get/ are the download site's own index.html.
+not_found_handling = "single-page-application"
+html_handling = "auto-trailing-slash"

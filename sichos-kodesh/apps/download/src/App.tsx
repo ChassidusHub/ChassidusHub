@@ -37,9 +37,9 @@ function Hero({ meta }: { meta: Load<Meta> }) {
   ];
   const years = meta.state === 'ready' ? meta.value.years : [];
   return (
-    <section className="hero">
+    <section className="hero hero-packs">
       <p className="eyebrow">{t.heroEyebrow}</p>
-      <h1 className="hero-title">{t.heroTitle}</h1>
+      <h2 className="hero-title">{t.heroTitle}</h2>
       <p className="hero-lead">{t.heroLead}</p>
       <ol className="flow">
         {flow.map((step, index) => (
@@ -125,28 +125,34 @@ function appHref(release: Load<AppRelease>, abi: string): string {
   return release.state === 'error' ? GITHUB_RELEASES_URL : api.appDownloadUrl(abi);
 }
 
-/** The phone app itself, from the app server - the newest release, whichever it is. */
-function AppDownload({ release }: { release: Load<AppRelease> }) {
+/**
+ * The page opens with the phone app itself: the newest release from the app server, one big button for
+ * the file nearly every phone takes, the other two files under it, and the web app for those without Android.
+ */
+function AppHero({ release }: { release: Load<AppRelease> }) {
   const { t } = useI18n();
   const file = (abi: string) => (release.state === 'ready' ? release.value.files.find((f) => f.abi === abi) : undefined);
   const main = file('arm64-v8a');
   return (
-    <div className="card app-card">
-      <span className="app-well" aria-hidden="true">
-        <PhoneIcon size={24} />
+    <section className="app-hero" id="app" aria-labelledby="app-hero-title">
+      <span className="app-hero-well" aria-hidden="true">
+        <PhoneIcon size={34} />
       </span>
-      <div className="app-text">
-        <h3 className="app-title">{t.appTitle}</h3>
-        <p className="app-note">
+      <p className="eyebrow">{t.appEyebrow}</p>
+      <h1 id="app-hero-title" className="app-hero-title">{t.appHeroTitle}</h1>
+      <p className="hero-lead">{t.appHeroLead}</p>
+      <div className="app-hero-action">
+        <DownloadButton href={appHref(release, 'arm64-v8a')} label={t.appDownload} big />
+        <span className="app-hero-meta">
           {release.state === 'ready' ? t.appVersion(release.value.version) : t.appNewest}
-          {main && <> · {ltr(formatMb(main.bytes))}</>}. {t.appNote}
-        </p>
-        <p className="app-alt">
-          <a href={appHref(release, 'armeabi-v7a')}>{t.app32}</a> · <a href={appHref(release, 'universal')}>{t.appUniversal}</a>
-        </p>
+          {main && <> · {ltr(formatMb(main.bytes))}</>}
+        </span>
       </div>
-      <DownloadButton href={appHref(release, 'arm64-v8a')} label={t.appDownload} />
-    </div>
+      <p className="app-alt">
+        <a href={appHref(release, 'armeabi-v7a')}>{t.app32}</a> · <a href={appHref(release, 'universal')}>{t.appUniversal}</a> · <a href={WEB_APP_URL}>{t.appWeb}</a>
+      </p>
+      <p className="app-hero-note">{t.appNote} {t.appInstallNote}</p>
+    </section>
   );
 }
 
@@ -181,7 +187,7 @@ export function App() {
   return (
     <div className="page">
       <header className="top">
-        <a className="brand" href="/">
+        <a className="brand" href={import.meta.env.BASE_URL}>
           <span className="brand-mark">
             <PackageIcon size={18} />
           </span>
@@ -200,6 +206,8 @@ export function App() {
       </header>
 
       <main>
+        <AppHero release={release} />
+
         <Hero meta={meta} />
 
         {meta.state === 'loading' && (
@@ -225,9 +233,8 @@ export function App() {
           </section>
         )}
 
-        <section className="section" aria-labelledby="import-title" id="app">
+        <section className="section" aria-labelledby="import-title" id="import">
           <h2 id="import-title">{t.importTitle}</h2>
-          <AppDownload release={release} />
           <ImportSteps />
         </section>
       </main>

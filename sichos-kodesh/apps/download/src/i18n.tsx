@@ -203,6 +203,13 @@ function strings(lang: Lang) {
     app32: he ? 'לטלפון ישן (32 ביט)' : 'For an older phone (32-bit)',
     appUniversal: he ? 'קובץ אחד לכל טלפון' : 'One file for any phone',
     appDownload: he ? 'הורדת האפליקציה' : 'Download the app',
+    appEyebrow: he ? 'לאנדרואיד' : 'For Android',
+    appHeroTitle: he ? 'שיחות קודש בטלפון' : 'Sichos Kodesh on your phone',
+    appHeroLead: he
+      ? 'ההתוועדויות לפי הקביעות, ההקלטות, הכתבים והספרים, גם בלי אינטרנט.'
+      : 'The farbrengens by kvius, the recordings, the hanachos and the seforim, even offline.',
+    appWeb: he ? 'או באתר, בלי התקנה' : 'Or on the web, nothing to install',
+    appInstallNote: he ? 'אם הטלפון שואל אם להתיר התקנה מהדפדפן, מתירים פעם אחת.' : 'If the phone asks whether to allow installing from the browser, allow it once.',
     importSteps: [
       { title: he ? 'בוחרים תיקייה באפליקציה' : 'Choose a folder in the app', body: he ? 'הגדרות ← חבילות לא מקוונות ← בוחרים תיקייה. מומלץ Documents/SichosKodesh.' : 'Settings → Offline packs → Choose a folder. Documents/SichosKodesh is a good one.' },
       { title: he ? 'מעתיקים את החבילה' : 'Copy the pack', body: he ? 'את קובץ ה-‎.skpack לתיקיית import שבתוכה: בכבל, מכרטיס זיכרון או מכל מקום אחר.' : 'Put the .skpack file in its import folder: by cable, from a memory card, or any other way.' },
