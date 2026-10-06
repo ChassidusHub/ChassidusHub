@@ -15,7 +15,7 @@ ChassidusHub elsewhere changes these, and nothing else:
 
 | Value | Where | Is |
 | --- | --- | --- |
-| Hyperdrive id | `services/api/wrangler.toml`, `[[hyperdrive]] id` | which Hyperdrive config (pooling the Neon Postgres) the API uses; not a secret, the connection string stays in Cloudflare |
+| Hyperdrive id | `services/api/wrangler.toml`, `[[hyperdrive]] id` | which Hyperdrive config (pooling the Postgres at DigitalOcean) the API uses; not a secret, the connection string stays in Cloudflare |
 | Bucket names `chassidushub-public`, `chassidushub-preservation`, `sichos-kodesh-archive` | `services/api/wrangler.toml`, `[[r2_buckets]]` | the R2 buckets for servable files, private uploads, and Sichos-Kodesh's archive (read only) |
 | Rate limit namespaces `1001`, `1002` | `services/api/wrangler.toml`, `[[ratelimits]]` | tell the two counters apart within the Cloudflare account |
 | `SITE_URL` | both `wrangler.toml` files, `[vars]` | the site's address: passkeys are bound to its domain, canonical links and sitemaps use it |

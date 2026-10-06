@@ -9,7 +9,7 @@ workers_dev = true
 [observability]
 enabled = true
 
-# Runs near the API and the database (Neon, Virginia) rather than near the reader: a page is
+# Runs near the API and the database (DigitalOcean, New York) rather than near the reader: a page is
 # made from many API reads one after the other, each a round trip. Built files (assets) and
 # pages already at the edge are still served from near the reader (docs/operations.md).
 [placement]
@@ -37,10 +37,10 @@ service = "sichos-kodesh-media-proxy"
 
 # A page's own reads are answered in this Worker by the API itself, over one connection to Postgres the page
 # opens and closes (server/worker.ts; `readerFor` in services/api/src/reads.ts), so a page is one Worker
-# invocation, not one and a dozen. Postgres on Neon through Hyperdrive: the same config as the API's.
+# invocation, not one and a dozen. Postgres at DigitalOcean through Hyperdrive: the same config as the API's.
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "a06ec525cf9442f484f60ce9d38f0d39"
+id = "6cb8c1e512574ef9a9872eb5d6dece3b"
 
 # The public bucket, for the status page's report and the texts of seforim (GET /v1/texts/<sha256>), and
 # Sichos-Kodesh's published archive a sefer's text is first copied from: the API Worker's, read here too.
