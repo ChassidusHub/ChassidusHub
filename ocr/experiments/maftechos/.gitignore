@@ -1,0 +1,17 @@
+# Scans, typed texts, line images and models stay out of git.
+vols/
+pairs/
+round*/
+*.safetensors
+*.mlmodel
+*.log
+tessbest/
+*.txt
+diffs*.json
+__pycache__/
+label1_9/
+short/
+*.pdf
+idx*.json
+linked*.json
+ls_anchors.json
