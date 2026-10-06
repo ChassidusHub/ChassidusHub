@@ -1,11 +1,11 @@
-"""Uploads the index pages as one suggestion through RebbeHub's API (the same
+"""Uploads the index pages as one suggestion through ChassidusHub's API (the same
 routes the MCP's suggest_items calls) and sends it for review; a person
 approves it on the site. Few, large requests, to spare the database.
-    REBBEHUB_TOKEN=rhp_... python3 upload_pages.py pages.json [--dry-run]"""
+    CHASSIDUSHUB_TOKEN=rhp_... python3 upload_pages.py pages.json [--dry-run]"""
 import json, os, sys, time, urllib.request
 
-API = 'https://api.rebbehub.org'
-TOKEN = os.environ.get('REBBEHUB_TOKEN', '')
+API = os.environ.get('CHASSIDUSHUB_API_URL', 'https://api.chassidushub.org')
+TOKEN = os.environ.get('CHASSIDUSHUB_TOKEN', '')
 LS = 'rh-t3aehxx4'  # לקוטי שיחות, for its sets and authors
 
 
@@ -33,4 +33,4 @@ for u in pages:
     time.sleep(1)
 sent = call('POST', f'/v1/suggestions/{s}/submit')
 print('submitted', sent.get('status'), [c for c in sent.get('checks', []) if c.get('status') == 'fail'])
-print(f'https://rebbehub.org/review?s={s}')
+print(f'https://chassidushub.org/review?s={s}')

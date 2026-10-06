@@ -8,7 +8,7 @@ one request at a time, half a second apart.
 import json,subprocess,time,sys
 def get(i):
     for a in range(4):
-        r=subprocess.run(['curl','-sS','--compressed','-m','30','-A','RebbeHubIndex/0.1',f'https://chabadlibrary.org/books/api/main?path=/{i}'],capture_output=True)
+        r=subprocess.run(['curl','-sS','--compressed','-m','30','-A','ChassidusHubIndex/0.1',f'https://chabadlibrary.org/books/api/main?path=/{i}'],capture_output=True)
         time.sleep(0.5)
         try: return json.loads(r.stdout.decode('utf-8','replace'))['content']
         except Exception: time.sleep(2)

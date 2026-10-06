@@ -1,4 +1,4 @@
-"""A sicha's read lines put back together as RebbeHub page text
+"""A sicha's read lines put back together as ChassidusHub page text
 (packages/model/src/pageText.ts): paragraphs, not printed lines; each
 footnote mark a link to its note; the printed page numbers kept as
 markers where each page begins; every paragraph's place on the scan kept
@@ -38,7 +38,7 @@ def note_id(label):
 
 
 # Every printed line end is kept (Shmuly 2026-10-02: "so if we want to make a revised
-# version of the print it will be very simple"), as RebbeHub's run {eol, split, page,
+# version of the print it will be very simple"), as ChassidusHub's run {eol, split, page,
 # box}: which end it is (line, column, page), whether the print broke a word there,
 # and the line's place on the scan. While lines are joined into paragraphs a line end
 # is a token in the text, EOL_ON + its number + EOL_OFF, that runs() turns into the run.

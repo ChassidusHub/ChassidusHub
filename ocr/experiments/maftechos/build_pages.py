@@ -1,4 +1,4 @@
-"""Turns the linked subject indexes into RebbeHub pages: one unit per volume
+"""Turns the linked subject indexes into ChassidusHub pages: one unit per volume
 of a work "מפתח ענינים ללקוטי שיחות", each page's words its index, every page
 number a link that opens that sicha's PDF at the page. Refs a person must
 check (flagged) stay as plain numbers.

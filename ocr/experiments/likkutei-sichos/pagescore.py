@@ -1,5 +1,5 @@
 """Score the page stage against the typed truth: a vol 39 page is laid out,
-read with a model and put together as RebbeHub page text (assemble.py); then
+read with a model and put together as ChassidusHub page text (assemble.py); then
 its paragraphs, note marks and notes are compared with the Chabad Library's
 typed page (truth/<vol>_<page>.json, which keeps paragraphs and marks).
 
@@ -12,7 +12,7 @@ import argparse, glob, json, os, re, sys, unicodedata
 import numpy as np, pymupdf
 from rapidfuzz import fuzz
 from rapidfuzz.distance import Levenshtein
-EXP = '/home/user/RebbeHub-OCR/experiments/likkutei-sichos'
+EXP = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, EXP)
 import assemble
 from recog import load, read_page

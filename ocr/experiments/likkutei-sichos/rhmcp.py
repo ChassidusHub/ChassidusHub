@@ -1,12 +1,12 @@
-"""RebbeHub's MCP over HTTP from a script: call(tool, args) -> result. A personal
-token (REBBEHUB_TOKEN, write scope) is needed for suggestions; reads go without."""
+"""ChassidusHub's MCP over HTTP from a script: call(tool, args) -> result. A personal
+token (CHASSIDUSHUB_TOKEN, write scope) is needed for suggestions; reads go without."""
 import json, os, sys, urllib.request
 
-URL = os.environ.get('REBBEHUB_MCP', 'https://api.rebbehub.org/mcp')
+URL = os.environ.get('CHASSIDUSHUB_MCP', 'https://api.chassidushub.org/mcp')
 
 
 def _post(body, token=None):
-    hdr = {'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream', 'User-Agent': 'rebbehub-ocr/1.0 (rhmcp)'}
+    hdr = {'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream', 'User-Agent': 'chassidushub-ocr/1.0 (rhmcp)'}
     if token: hdr['Authorization'] = f'Bearer {token}'
     req = urllib.request.Request(URL, data=json.dumps(body).encode(), headers=hdr)
     with urllib.request.urlopen(req, timeout=120) as r:
@@ -20,7 +20,7 @@ def _post(body, token=None):
 
 def call(tool, args, token=None):
     body = {'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call', 'params': {'name': tool, 'arguments': args}}
-    r = _post(body, token or os.environ.get('REBBEHUB_TOKEN'))
+    r = _post(body, token or os.environ.get('CHASSIDUSHUB_TOKEN'))
     if 'error' in r:
         raise RuntimeError(r['error'])
     res = r['result']

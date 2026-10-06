@@ -1,9 +1,10 @@
-# RebbeHub OCR: the plan
+# ChassidusHub OCR: the plan
 
-Written 2026-09-28. A plan, not a build. The OCR engine behind RebbeHub's
-"machine OCR" text layer (`rebbehub.md` §4, §7, §9) and the Sichos Kodesh
-app. It lives in its own repo for now and plugs into RebbeHub's job queue later
-as the `services/ml` OCR worker (`rebbehub.md` §10).
+Written 2026-09-28. A plan, not a build. The OCR engine behind ChassidusHub's
+"machine OCR" text layer (`docs/plans/chassidushub.md` §4, §7, §9) and the Sichos Kodesh
+app. It lives in ChassidusHub's repository under `ocr/` (moved from
+shmuky/RebbeHub-OCR on 2026-10-06) and plugs into ChassidusHub's job queue
+later as the `services/ml` OCR worker (`docs/plans/chassidushub.md` §10).
 
 ## 0. Decisions so far
 
@@ -11,7 +12,7 @@ Taken 2026-09-28, after the first draft. The sections below follow them.
 
 | Question | Decision | Where it lands |
 | --- | --- | --- |
-| Who annotates | **RebbeHub.org public review.** Community reviewers correct machine OCR line by line ("Fix this line"). Their reviewed lines are the ground truth. No paid typists | §4.4, §10 |
+| Who annotates | **ChassidusHub.org public review.** Community reviewers correct machine OCR line by line ("Fix this line"). Their reviewed lines are the ground truth. No paid typists | §4.4, §10 |
 | Digital text for Sichos Kodesh hanachos | **None exists.** Ground truth for hanachos comes only from generic OCR that people have really reviewed | §4.3, §4.4 |
 | Digital text for Toras Menachem | Text from **lahak.org** | §4.3 |
 | Digital text for old Kehot printings | Text from **chabadlibrary.org** | §4.3 |
@@ -19,7 +20,7 @@ Taken 2026-09-28, after the first draft. The sections below follow them.
 | Compute | Rent GPUs by the hour. GitHub CI runs tests and evaluation and starts the GPU jobs, but it does not do the heavy work | §6.6 |
 | Where scans come from | **Only the Sichos Kodesh catalog** (api.sk.shmuky.dev, catalog 1.7.0). No other source | §4.1, §13 |
 | Phase 0 sample | Two sets of 100 PDFs each, pinned in `data/samples/phase0-sample.tsv`: Sichos Kodesh hanachos, and old Kehot (Likkutei Sichos) | §13 |
-| Storage | A **separate R2 bucket, `rebbehub-ocr`**, apart from the media-lake bucket | §15 |
+| Storage | A **separate R2 bucket, `ocr-training`**, apart from the media-lake bucket | §15 |
 | Uploads | **None until the R2 credentials exist.** Everything up to the upload is prepared | §14, §16 |
 | GPU | **Runpod** (Community Cloud for the cleared sets). Phase 0 budget **up to $200**, capped by prepaid credit | §6.6, §16 |
 
@@ -41,7 +42,7 @@ The last row matters most. No model will be perfect on every line of a
 million pages. The system is built to **know which lines it is sure of**.
 Those lines go to checking at low priority. The rest go first to a person,
 so the human time goes where the errors are. Everything stays labelled
-machine text until a person checks it (`rebbehub.md` §9, "machine drafts,
+machine text until a person checks it (`docs/plans/chassidushub.md` §9, "machine drafts,
 human truth").
 
 ## 2. What we are reading: source families
@@ -56,7 +57,7 @@ per family.
 | **K2 Kehot phototypeset / modern** (5750s→) | Later Toras Menachem, Sefer HaSichos, reprints | Clean square + Rashi | Easy text; dense apparatus, many abbreviations (ראה לקו"ש ח"ב ע' …) |
 | **H1 Hanachos, typewritten Hebrew** | Sichos Kodesh / hanachos bilti mugah | Hebrew typewriter faces | Mimeo/stencil bleed, faint carbon, overstrikes, hand corrections |
 | **H2 Hanachos, typewritten Yiddish** | Yiddish Sichos Kodesh | Yiddish typewriter (אַ אָ װ ײ …) | As H1, plus Yiddish orthography and mixed loshn-koydesh words |
-| **M Manuscript / handwritten** | Facsimiles of the Rebbe's ksav yad, hagahos on hanachos | Handwriting | Out of scope now: detected and flagged, not read (`rebbehub.md` §9: "handwriting later") |
+| **M Manuscript / handwritten** | Facsimiles of the Rebbe's ksav yad, hagahos on hanachos | Handwriting | Out of scope now: detected and flagged, not read (`docs/plans/chassidushub.md` §9: "handwriting later") |
 | **O Other catalog PDFs** | HebrewBooks scans, kovtzim, yearbooks, teshuros | Everything above plus modern DTP | Onboarded as new families by the recipe in §8 |
 | **D Born-digital PDFs** | Most teshuros, newer kovtzim | Embedded text | Often *not an OCR problem*: extract the text layer. Legacy Hebrew fonts give reversed or mis-encoded text, so repair it and check it against a quick OCR pass |
 
@@ -88,7 +89,7 @@ page image
 
 Why this shape:
 
-- **Line positions are a contract.** RebbeHub stores every line's position
+- **Line positions are a contract.** ChassidusHub stores every line's position
   on the page image so search hits light up on the scan (§4). A line-based
   pipeline produces them natively. Page-level VLMs don't produce them
   reliably.
@@ -116,7 +117,7 @@ Why this shape:
   Hebrew print models exist to start from (HTR-United / Zenodo).
 - One tool does both baseline and region segmentation (§5) and
   recognition. Kraken reads and writes PAGE-XML and ALTO.
-- Lines reviewed on RebbeHub come out as PAGE-XML, which Kraken trains
+- Lines reviewed on ChassidusHub come out as PAGE-XML, which Kraken trains
   from directly. The Phase 0 bridge set (§4.4) uses eScriptorium, which
   belongs to the same ecosystem.
 - Model per family: one shared **base Hebrew-print model** trained on
@@ -178,11 +179,11 @@ an editorial act for a human, recorded as such.
   count and image details.
 - **Fetch originals**, never re-encoded copies. Pull the embedded page
   images with `pdfimages` at native resolution instead of re-rendering.
-  Store by sha256 (same scheme as RebbeHub R2 `objects/<sha256>`).
+  Store by sha256 (same scheme as ChassidusHub R2 `objects/<sha256>`).
 - **Rights**: Sichos Kodesh and old Kehot scans are cleared (§0). We
   train on them, and their models and datasets can be published. Any
   other set is trained from private, `preserved`-tier copies
-  (`rebbehub.md` §8) until its rights are settled. Every model records
+  (`docs/plans/chassidushub.md` §8) until its rights are settled. Every model records
   which sets it was trained on, so we always know whether it can be
   published.
 - **Stratify, don't just take the first N**: sample pages across set ×
@@ -202,7 +203,7 @@ document, `gt/guidelines.md`, decides every character question once:
   and `ײַ`, pasekh-alef `אַ`, komets-alef `אָ`, rafe, parentheses and
   brackets in RTL, footnote markers (numbers, Hebrew letters, `*`).
   The rule is **store what is printed, in normalised Unicode** (NFC, fixed
-  mark order), with one mapping table to RebbeHub's search normalisation
+  mark order), with one mapping table to ChassidusHub's search normalisation
   (`normalizeSearchText`).
 - **Layout marks**: every line belongs to a region with a type (§5).
   Footnote markers are tagged as markers.
@@ -244,11 +245,11 @@ The steps:
 
 Silver trains the models. **Silver never goes into test sets.**
 
-### 4.4 Gold ground truth: RebbeHub.org public review
+### 4.4 Gold ground truth: ChassidusHub.org public review
 
-Annotation happens on RebbeHub.org through its normal review flow. The
+Annotation happens on ChassidusHub.org through its normal review flow. The
 community reviews the text: "Fix this line", proofread levels, and
-Projects (`rebbehub.md` §4, §7). Nobody is paid to type.
+Projects (`docs/plans/chassidushub.md` §4, §7). Nobody is paid to type.
 
 - **What counts as gold.** Proofread levels become the ground-truth grade:
   - a line *checked once* (one reviewer) can be used for **training**;
@@ -259,16 +260,16 @@ Projects (`rebbehub.md` §4, §7). Nobody is paid to type.
   keeper and recorded as a ruling in the guidelines (§4.2). That gives us
   the double-checking for free.
 - **The rules have to be in the tool.** Reviewers will only transcribe
-  diplomatically if the tool keeps them to it. RebbeHub's line editor
+  diplomatically if the tool keeps them to it. ChassidusHub's line editor
   shows the rule ("type exactly what is printed, typos included") and
   offers a palette of the table's characters (gershayim, geresh, maqaf,
   Yiddish ligatures). It also warns when someone types a look-alike, such
-  as `"` instead of `״`. This is a requirement for RebbeHub, recorded here.
+  as `"` instead of `״`. This is a requirement for ChassidusHub, recorded here.
 - **Layout** (region types, missing or merged lines) is harder for the
   public to fix. Reviewers get a one-tap "layout is wrong here" report,
   and keepers fix it in a simple region editor. We need about 100–300
   layout-checked pages per family, so this is keeper work, not crowd work.
-- **Projects, not random pages.** Training needs come in as RebbeHub
+- **Projects, not random pages.** Training needs come in as ChassidusHub
   Projects, such as "Proofread Sichos Kodesh 5722 for the OCR". The
   **active-learning** queue picks the pages: those the current models find
   hardest (lowest confidence, most A/B disagreement, most lexicon flags).
@@ -283,7 +284,7 @@ start from generic OCR and let each round of review make the next round
 easier:
 
 1. **Round 0**: the best off-the-shelf engine from the Phase 0 benchmark
-   (§3.2) OCRs the hanachos. It goes up on RebbeHub labelled as
+   (§3.2) OCRs the hanachos. It goes up on ChassidusHub labelled as
    machine text.
 2. Reviewers correct the first ~100 pages chosen by active learning. Those
    corrections train the first H1/H2 models.
@@ -294,11 +295,11 @@ easier:
    corrections-per-page number is tracked as the sign that the flywheel is
    working.
 
-**Before RebbeHub's text tools exist**: Phase 0 needs test pages before
-RebbeHub phase 4 ships "Fix this line". Keepers produce this first,
+**Before ChassidusHub's text tools exist**: Phase 0 needs test pages before
+ChassidusHub phase 4 ships "Fix this line". Keepers produce this first,
 small set (about 100 pages per family) in a self-hosted eScriptorium
 using the same guidelines. It is a bridge only. All later annotation
-happens on RebbeHub.org.
+happens on ChassidusHub.org.
 
 ### 4.5 Synthetic data (support only)
 
@@ -361,7 +362,7 @@ behind it.
   the text stream but kept with their positions.
 - **Structure → catalog**: headings plus running heads suggest unit
   boundaries ("sicha 3 starts on p. 14") and contents-map entries
-  (`rebbehub.md` §4). The OCR bot proposes them as suggestions, never
+  (`docs/plans/chassidushub.md` §4). The OCR bot proposes them as suggestions, never
   merges them.
 
 ## 6. Running the whole catalog
@@ -394,9 +395,9 @@ ingest → triage → render → preprocess → classify → layout → read A �
 - **Now (own repo):** a Python package (`rebbeocr`) with one CLI command
   per stage and a SQLite job/manifest database. It runs on a single GPU
   machine or rented GPUs. No cluster, no framework to maintain.
-- **Later (inside RebbeHub):** the same stage functions run in the Python
-  worker container that takes jobs from RebbeHub's queue
-  (`rebbehub.md` §10). The SQLite manifest is replaced by RebbeHub's
+- **Later (inside ChassidusHub):** the same stage functions run in the Python
+  worker container that takes jobs from ChassidusHub's queue
+  (`docs/plans/chassidushub.md` §10). The SQLite manifest is replaced by ChassidusHub's
   `file`/`derivation` tables. Only the adapter changes; the stages don't.
 
 ### 6.3 Order of work
@@ -418,7 +419,7 @@ Sets are processed in order of value and of how much ground truth exists:
   seconds per page. On only Reader A's lowest-confidence ~15% of lines it
   adds a fraction of that.
 - About a million pages then takes days to a few weeks on 1–4 rented GPUs.
-  That fits `rebbehub.md` §10's "GPU rented only while a project runs".
+  That fits `docs/plans/chassidushub.md` §10's "GPU rented only while a project runs".
   Phase 0 replaces these guesses with measured numbers and a price. §6.6
   gives the costs.
 
@@ -426,7 +427,7 @@ Sets are processed in order of value and of how much ground truth exists:
 
 - **Registry**: every model has a name, version, dataset-manifest hash and
   eval scores. The text layer records exactly which models produced each
-  page (`rebbehub.md` §9: "engine and version stored with each layer").
+  page (`docs/plans/chassidushub.md` §9: "engine and version stored with each layer").
 - **Deploy gate**: a new model ships only if it is **no worse on any
   family's frozen test set** and better on at least one. The eval suite
   runs in CI on a small frozen subset for every PR.
@@ -434,7 +435,7 @@ Sets are processed in order of value and of how much ground truth exists:
   order. Only lines no person has checked are replaced. Human-checked
   lines are locked (§7). The change is recorded as a diff, so we can see
   what the new model changed.
-- **Feedback loop**: reviewed lines from RebbeHub.org (and the Phase 0
+- **Feedback loop**: reviewed lines from ChassidusHub.org (and the Phase 0
   eScriptorium bridge set) are gathered into gold lines. The models are
   retrained periodically, and the active-learning queue (§4.4) is
   refreshed.
@@ -531,15 +532,15 @@ only if retraining becomes a continuous, daily job.
 So GitHub CI is the control panel and the quality gate. The heavy work
 runs on rented GPUs that CI starts and stops.
 
-## 7. Output: meeting RebbeHub's contracts
+## 7. Output: meeting ChassidusHub's contracts
 
 **Archival format: PAGE-XML** per page, the full record. It holds regions
 with types, line polygons and baselines, reading order, both readers' text,
 per-character confidences and flags. It is lossless, a standard, and
 what Kraken/eScriptorium speak natively. **ALTO** is exported alongside
-for IIIF and library viewers (`rebbehub.md` §8).
+for IIIF and library viewers (`docs/plans/chassidushub.md` §8).
 
-**RebbeHub text layer (JSON, per scan page):**
+**ChassidusHub text layer (JSON, per scan page):**
 
 ```json
 {
@@ -563,14 +564,14 @@ for IIIF and library viewers (`rebbehub.md` §8).
 }
 ```
 
-| RebbeHub contract | How the OCR satisfies it |
+| ChassidusHub contract | How the OCR satisfies it |
 | --- | --- |
 | Text layer per scan, page by page, each line's position (§4) | `lines[].polygon/baseline` in page-image pixels |
 | Machine OCR records engine + version (§4, §9) | `engine` block with model ids and dataset hashes |
 | Re-OCR without touching human-checked lines (§9) | Stable line ids from geometry. Re-OCR replaces only lines no person has checked |
 | Community text seeded from the best OCR (§4, §7) | Keepers choose the layer. `status` is carried over so reviewers start with the `uncertain` lines |
 | Proofread levels raw → checked once → twice (§4) | Unchanged. `consensus`/`uncertain` are *machine* hints that sort the queue. They never count as a check |
-| Unit texts with stable segment ids, Markdown with anchors (§4, §6) | The `assemble` stage builds the body and footnote streams by unit and exports Markdown with footnotes. RebbeHub assigns the segment ids |
+| Unit texts with stable segment ids, Markdown with anchors (§4, §6) | The `assemble` stage builds the body and footnote streams by unit and exports Markdown with footnotes. ChassidusHub assigns the segment ids |
 | Machine text labelled until checked (§9, §14) | `layer: machine-ocr` on every line. Nothing is promoted automatically |
 | Contents maps and unit boundaries (§4, §7 "Map a teshura") | Heading/running-head detection produces *suggestions* from the OCR bot |
 | Python ML workers behind the queue, GPU burst (§10) | §6.2 |
@@ -615,11 +616,11 @@ Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
 | Phase | What it delivers | Exit criterion | Size |
 | --- | --- | --- | --- |
 | **0. Survey & benchmark** | Catalog inventory and family clustering; `gt/guidelines.md`; eScriptorium bridge (§4.4) with keepers making ~100 test pages each for K1 and H1/H2; benchmark of every candidate in §3 on them, including speed and cost | A results table and the engine choices confirmed or changed. Nothing is trained on the test pages | 3 weeks |
-| **1. Kehot print (K1/K2)** | Silver GT aligned against chabadlibrary.org (old Kehot) and lahak.org (Toras Menachem); gold from RebbeHub review once it is live; fine-tuned layout + Reader A; page templates; footnote linking | §1 targets met on K1/K2 frozen tests; all of Likkutei Sichos run | 5 weeks |
-| **2. Hanachos (H1/H2)** | Generic OCR up on RebbeHub; flywheel rounds of public review → retrain → re-OCR (§4.4); handwritten-correction layer detected | §1 hanacha targets met; corrections per page falling round on round | 5 weeks of work, then paced by review volume |
+| **1. Kehot print (K1/K2)** | Silver GT aligned against chabadlibrary.org (old Kehot) and lahak.org (Toras Menachem); gold from ChassidusHub review once it is live; fine-tuned layout + Reader A; page templates; footnote linking | §1 targets met on K1/K2 frozen tests; all of Likkutei Sichos run | 5 weeks |
+| **2. Hanachos (H1/H2)** | Generic OCR up on ChassidusHub; flywheel rounds of public review → retrain → re-OCR (§4.4); handwritten-correction layer detected | §1 hanacha targets met; corrections per page falling round on round | 5 weeks of work, then paced by review volume |
 | **3. Second reader & scale** | Reader B fine-tuned; consensus; lexicon flags; page QA; full stage pipeline with idempotent jobs; registry + deploy gate | Auto-accept precision target met; a 10,000-page batch runs unattended with a flag report | 4 weeks |
 | **4. Whole catalog** | Onboarding recipe run for each new family; born-digital path; priority queue across sets | Every scan in the catalog has a machine-OCR layer or a stated reason why not | ongoing |
-| **5. RebbeHub integration** | Queue worker adapter; text-layer JSON into RebbeHub; "Fix this line" corrections feed back into training | Lines corrected in RebbeHub show up in the next training run | with RebbeHub phase 4 |
+| **5. ChassidusHub integration** | Queue worker adapter; text-layer JSON into ChassidusHub; "Fix this line" corrections feed back into training | Lines corrected in ChassidusHub show up in the next training run | with ChassidusHub phase 4 |
 
 ## 11. Risks
 
@@ -632,7 +633,7 @@ Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
 - **Overfitting to one scanner or printing**: test sets hold out whole
   volumes and scan sources, and drift is watched (§6.5).
 - **Yiddish orthography and nikkud**: diplomatic rules and a fixed Unicode
-  table. Search normalisation happens later, in RebbeHub, not in OCR.
+  table. Search normalisation happens later, in ChassidusHub, not in OCR.
 - **Rights for training material**: Sichos Kodesh and old Kehot are
   cleared (§0). Other sets train from private preserved-tier copies, and
   models trained on them wait for clearance. The registry records the sets
@@ -641,7 +642,7 @@ Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
   they move only as fast as public review. Mitigations: Projects with clear
   goals, active learning so every reviewed line teaches the model
   something, and the flywheel so each page takes less fixing.
-- **Dependency on RebbeHub**: gold annotation needs RebbeHub's text tools
+- **Dependency on ChassidusHub**: gold annotation needs ChassidusHub's text tools
   (its phase 4). The eScriptorium bridge covers only the Phase 0 test pages.
 - **Annotation effort is the real cost** (compute is ~$500–1,500 a year,
   §6.6): silver GT, active learning and the flywheel keep human hours for
@@ -662,7 +663,7 @@ Python managed with `uv`, tested with `pytest`. The eval suite runs in CI.
 
 The ones answered on 2026-09-28 are in §0. Still open:
 
-- **R2 jurisdiction**: is the `rebbehub-ocr` bucket in the default
+- **R2 jurisdiction**: is the `ocr-training` bucket in the default
   location or in the EU jurisdiction? This decides whether `R2_ENDPOINT`
   is needed (§16).
 - **Runpod key permissions**: confirm that the key can create and stop
@@ -670,8 +671,8 @@ The ones answered on 2026-09-28 are in §0. Still open:
 
 - **Toras Menachem rights**: may models and datasets trained on TM scans and
   lahak.org text be published, or do they stay internal?
-- **RebbeHub requirements**: the line editor rules and character palette,
-  and the keeper region editor (§4.4). Add them to RebbeHub's phase 4.
+- **ChassidusHub requirements**: the line editor rules and character palette,
+  and the keeper region editor (§4.4). Add them to ChassidusHub's phase 4.
 - **Nikkud and editorial marks**: confirm "diplomatic, as printed" as the
   rule for every set.
 - **Handwriting (family M)**: when it becomes its own project, for the
@@ -689,7 +690,7 @@ Scans come only from the Sichos Kodesh catalog (§0).
 | Release manifest | `GET https://api.sk.shmuky.dev/v3/catalog/manifest.json` |
 | **Pinned catalog** | `GET https://api.sk.shmuky.dev/v3/catalog/1.7.0/catalog.json`: 11,484,299 bytes, sha256 `9818f542dfd18fc76433901cb51b2e5d7300fae4f5eac33bbe246720815a96e8` |
 | PDF entries | `byYear[<year>][i].pdfs[j]` = `{section, label, driveFileId, resourceKey?}`. `section` is one of `mugah`, `biltiMugah`, `maamorim`, `hagahos`, `hosofos` (`packages/catalog/src/types.ts`) |
-| How a PDF is fetched | The catalog's own media proxy: `https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/<driveFileId>[?resourcekey=<resourceKey>]`. It wraps `https://drive.google.com/uc?export=download&id=<driveFileId>[&resourcekey=…]` and handles Drive's confirm step for large files (`services/media-proxy/src/index.ts`) |
+| How a PDF is fetched | The catalog's own media proxy: `https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/<driveFileId>[?resourcekey=<resourceKey>]`. It wraps `https://drive.google.com/uc?export=download&id=<driveFileId>[&resourcekey=…]` and handles Drive's confirm step for large files (`services/media-proxy/src/index.ts`) |
 
 **The two sets**
 
@@ -773,13 +774,13 @@ Two consequences:
    - The manifest and the TSV are uploaded last, so a manifest never
      points at a missing object.
 
-## 15. R2 bucket `rebbehub-ocr`
+## 15. R2 bucket `ocr-training`
 
 This is a separate bucket for training data, apart from the media-lake
-bucket that RebbeHub serves from. It is private, with no public access.
+bucket that ChassidusHub serves from. It is private, with no public access.
 
 ```
-rebbehub-ocr/
+ocr-training/
   raw/pdf/<sha256>.pdf                              original PDFs, byte-identical, write-once
   raw/pages/<sha256>/<page:04d>.<ext>               page images extracted at native resolution (pdfimages)
   manifests/scans/<YYYY-MM-DD>-<name>.jsonl         scan manifests (§14)
@@ -809,18 +810,18 @@ never pasted into chat. A new session picks them up. The same names are
 used for GitHub Actions secrets later.
 
 **R2 (needed before any upload)**
-1. Confirm the bucket name: **`rebbehub-ocr`**.
+1. Confirm the bucket name: **`ocr-training`**.
 2. In Cloudflare, create an R2 API token with the permission **Object
-   Read & Write**, applied **to the `rebbehub-ocr` bucket only**. That
+   Read & Write**, applied **to the `ocr-training` bucket only**. That
    gives an Access Key ID and a Secret Access Key.
 3. Set these variables:
 
 | Variable | Value | Required |
 | --- | --- | --- |
-| `R2_ACCOUNT_ID` | Cloudflare account ID | yes |
+| `R2_ACCOUNT_ID` | Cloudflare account ID: `80969862080309509e95c4e7fae5ffe3` (chassidushub.org) | yes |
 | `R2_ACCESS_KEY_ID` | the token's Access Key ID | yes |
 | `R2_SECRET_ACCESS_KEY` | the token's Secret Access Key | yes |
-| `R2_BUCKET` | `rebbehub-ocr` | no (this is the default) |
+| `R2_BUCKET` | `ocr-training` | no (this is the default) |
 | `R2_ENDPOINT` | full S3 endpoint URL | only if the bucket uses the EU jurisdiction |
 
 The workflow uses the S3-compatible API with endpoint

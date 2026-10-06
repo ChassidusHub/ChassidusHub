@@ -14,7 +14,7 @@ import os, re, sys
 import numpy as np
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, '/home/user/RebbeHub-OCR/experiments/likkutei-sichos')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import face, letters
 from facenet import canvas, LETTERS, H, W
 from harvest import visual

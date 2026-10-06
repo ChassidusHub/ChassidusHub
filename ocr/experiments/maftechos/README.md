@@ -26,8 +26,8 @@ them; the plan should say so before this grows past an experiment.
 | `fetch_anchors.py` | Fetches each sicha's first page and PDF link from mafteiach.app, one request a second |
 | `link_typed.py` | Links a volume's index as typed by the Chabad Library (vols 30–39), with no OCR needed |
 | `heads.py` | Prints each page's running head, to find where a book's subject index starts and ends |
-| `build_pages.py` | Turns the linked indexes into RebbeHub pages, one per volume, each page number a link to the sicha's PDF page |
-| `upload_pages.py` | Sends those pages to RebbeHub as one suggestion for review (a personal token in `REBBEHUB_TOKEN`) |
+| `build_pages.py` | Turns the linked indexes into ChassidusHub pages, one per volume, each page number a link to the sicha's PDF page |
+| `upload_pages.py` | Sends those pages to ChassidusHub as one suggestion for review (a personal token in `CHASSIDUSHUB_TOKEN`) |
 | `link.py` | Links each page reference to its sicha and the page within that sicha's PDF, or flags it for a person |
 
 `ocr_index.py` expects `tessbest/` beside it, holding the `heb` and `eng`

@@ -2,7 +2,7 @@
 
 Reading the body of Likkutei Sichos (the sichos and their footnotes, not
 the indexes) into paragraphs with linked footnotes and the printed page
-numbers kept, as RebbeHub page text. Machine output stays labelled until a
+numbers kept, as ChassidusHub page text. Machine output stays labelled until a
 person checks it.
 
 Typed text to learn from exists only for vols 30–39 (the Chabad Library,
@@ -32,7 +32,7 @@ Steps, run from a working folder outside git (scans and texts never go in git):
 
 Scored on 4,500 lines of vol 39 that no model trained on. "Lines perfect" means the
 whole line was read with no mistake at all. The full tables, every save of every run,
-are in RebbeHub's docs/models.md.
+are in ChassidusHub's docs/models.md.
 
 | Model | Letters right | Words right | Lines perfect | State |
 |---|---|---|---|---|

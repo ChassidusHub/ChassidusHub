@@ -3,7 +3,7 @@ printed page: truth/<vol>_<page>.json {'body': str, 'notes': {marker: str}}.
 The body keeps its paragraphs (one per line) and a footnote's place as
 [[marker]]; soft hyphens stay, since they mark where the print broke a word."""
 import html, json, os, re, sys
-sys.path.insert(0, '/home/user/RebbeHub/packages')  # (nothing needed from it; hebrew numerals below)
+sys.path.insert(0, '/home/user/ChassidusHub/packages')  # (nothing needed from it; hebrew numerals below)
 
 LIB = '/mnt/project-files/chabadlibrary'
 LETTERS = {c: v for c, v in zip('אבגדהוזחטיכלמנסעפצקרשת', [1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400])}

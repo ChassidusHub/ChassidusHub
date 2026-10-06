@@ -1,7 +1,7 @@
-"""A read sicha onto RebbeHub: the unit at /likkutei-sichos/<vol>/<start page>
+"""A read sicha onto ChassidusHub: the unit at /likkutei-sichos/<vol>/<start page>
 gets the page text as its words, every segment and note marked as the
 machine's (origin), so the site labels it until a person checks it. Sent as
-one suggestion over the REST API with a personal token (REBBEHUB_TOKEN, write
+one suggestion over the REST API with a personal token (CHASSIDUSHUB_TOKEN, write
 scope), the same calls the MCP's suggest_items makes.
 
     readupload.py <sicha.json>... [--dry] [--batch N] [--title T]
@@ -9,13 +9,13 @@ scope), the same calls the MCP's suggest_items makes.
 --dry writes <sicha>.item.json beside each file and sends nothing."""
 import json, os, re, sys, urllib.request
 
-API = os.environ.get('REBBEHUB_API', 'https://api.rebbehub.org')
+API = os.environ.get('CHASSIDUSHUB_API_URL', 'https://api.chassidushub.org')
 BY = os.environ.get('READ_BY', 'ocr:rebbehub-ls-focus-1217+facenet2-v2')
 KINDS = {'section', 'heading', 'paragraph', 'verse', 'item', 'note'}
 
 
 def req(method, path, body=None, token=None):
-    hdr = {'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'rebbehub-ocr/1.0 (readupload)'}
+    hdr = {'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'chassidushub-ocr/1.0 (readupload)'}
     if token: hdr['Authorization'] = f'Bearer {token}'
     r = urllib.request.Request(API + path, data=json.dumps(body).encode() if body is not None else None, headers=hdr, method=method)
     try:
@@ -27,7 +27,7 @@ def req(method, path, body=None, token=None):
 
 def machine(seg):
     """The segment with the machine's origin on it and on its children; a dateline
-    (assemble's 'date') is a paragraph set to the line's end, as RebbeHub prints dates."""
+    (assemble's 'date') is a paragraph set to the line's end, as ChassidusHub prints dates."""
     seg = dict(seg)
     if seg.get('kind') == 'date':
         seg['kind'] = 'paragraph'; seg['end'] = True
@@ -68,9 +68,9 @@ if __name__ == '__main__':
         k = args.index('--batch'); batch = int(args[k + 1]); del args[k:k + 2]
     if '--title' in args:
         k = args.index('--title'); title = args[k + 1]; del args[k:k + 2]
-    token = os.environ.get('REBBEHUB_TOKEN')
+    token = os.environ.get('CHASSIDUSHUB_TOKEN')
     if not dry and not token:
-        sys.exit('REBBEHUB_TOKEN (write scope) is needed to send; --dry to only build')
+        sys.exit('CHASSIDUSHUB_TOKEN (write scope) is needed to send; --dry to only build')
     items = []
     for f in args:
         read = json.load(open(f, encoding='utf-8'))
