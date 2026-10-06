@@ -79,22 +79,33 @@ const get = async (path: string, headers: Record<string, string> = {}) => {
 };
 
 describe('the public site', () => {
-  it("renders the home page in Hebrew, right to left, with the day, its learning and the tabs", async () => {
+  it('renders the home page in English first: what the site is, a search box, the ways in, the day and its learning', async () => {
     const page = await get('/');
     expect(page.status).toBe(200);
-    expect(page.html).toContain('<html lang="he" dir="rtl">');
+    expect(page.html).toContain('<html lang="en" dir="ltr">');
+    expect(page.html).toContain('The open library of Chabad Torah');
+    expect(page.html).toMatch(/<form class="hm-search"[^>]*action="\/search"/);
+    expect(page.html).toContain('class="hm-doors"'); // the library, the day's learning, listening
     expect(page.html).toContain('class="hm-day"'); // the day, its chag or the coming parsha
     expect(page.html).toContain('class="hm-shiurim"'); // the day's learning, each with a tick
-    expect(page.html).toContain('לימוד יומי'); // the daily learning tab
+    expect(page.html).toContain('href="/sets?shelf=the-rebbe"'); // each Rebbe to his shelf
     expect(page.html).toContain('href="/help"');
   });
 
-  it('renders the same pages in English at ?lang=en, with both languages linked for search engines', async () => {
-    const page = await get('/sample?lang=en');
+  it('renders the home page in Hebrew, right to left, at ?lang=he', async () => {
+    const page = await get('/?lang=he');
+    expect(page.html).toContain('<html lang="he" dir="rtl">');
+    expect(page.html).toContain('לימוד יומי');
+    expect(page.html).toContain('href="/help?lang=he"');
+    expect(page.html).toContain('<input type="hidden" name="lang" value="he"/>');
+  });
+
+  it('renders the same pages in English at the bare address, with both languages linked for search engines', async () => {
+    const page = await get('/sample');
     expect(page.html).toContain('<html lang="en" dir="ltr">');
     expect(page.html).toContain('Sample Sefer');
-    expect(page.html).toContain(`<link rel="canonical" href="${SITE}/sample?lang=en"/>`);
-    expect(page.html).toContain(`hrefLang="he" href="${SITE}/sample"`);
+    expect(page.html).toContain(`<link rel="canonical" href="${SITE}/sample"/>`);
+    expect(page.html).toContain(`hrefLang="he" href="${SITE}/sample?lang=he"`);
     expect(page.html).toContain('"@type":"Book"');
   });
 
@@ -108,13 +119,13 @@ describe('the public site', () => {
   });
 
   it('shows a unit with its text, anchored paragraphs, machine labels, and withholds closed words', async () => {
-    const page = await get('/sample/1/1');
+    const page = await get('/sample/1/1?lang=he');
     expect(page.html).toContain(`id="${ids.seg1}"`);
     expect(page.html).toContain('פסקה ראשונה לדוגמה');
     expect(page.html).toContain('טקסט ממוחשב שטרם נבדק');
     expect(page.html).not.toContain('מילים סגורות');
     expect(page.html).toContain('אינן מוצגות כאן');
-    expect(page.html).toContain('href="/teshuros/5784-cohen-levi"'); // printed in
+    expect(page.html).toContain('href="/teshuros/5784-cohen-levi?lang=he"'); // printed in
     expect(page.html).toContain('י׳ שבט תשמ״ב');
   });
 
@@ -132,7 +143,7 @@ describe('the public site', () => {
   });
 
   it('shows a teshura with its simcha, its scan and what it reproduces', async () => {
-    const page = await get('/teshuros/5784-cohen-levi');
+    const page = await get('/teshuros/5784-cohen-levi?lang=he');
     expect(page.html).toContain('כהן – לוי');
     // Read in the site's own reader; the file itself one tap away.
     expect(page.html).toContain(`href="https://files.chassidushub.test/objects/${'b'.repeat(64)}"`);
@@ -145,21 +156,21 @@ describe('the public site', () => {
 
   it('keeps every link working: permanent ids and old paths redirect to the current path', async () => {
     expect(await get(`/${ids.teshura}`)).toMatchObject({ status: 301, location: '/teshuros/5784-cohen-levi' });
-    expect(await get(`/${ids.teshura!.toUpperCase()}?lang=en`)).toMatchObject({ status: 301, location: '/teshuros/5784-cohen-levi?lang=en' });
+    expect(await get(`/${ids.teshura!.toUpperCase()}?lang=he`)).toMatchObject({ status: 301, location: '/teshuros/5784-cohen-levi?lang=he' });
     expect(await get('/teshuros/sample')).toMatchObject({ status: 301, location: '/teshuros/5784-cohen-levi' });
     expect((await get('/no/such/page')).status).toBe(404);
     expect((await get('/rh-zzzzzzzz')).status).toBe(404);
   });
 
   it('shows the calendar by year and month, Adar II and all', async () => {
-    const year = await get('/calendar/5742');
+    const year = await get('/calendar/5742?lang=he');
     expect(year.html).toContain('שבט');
-    expect(year.html).toContain('href="/events/5742-05-10"');
+    expect(year.html).toContain('href="/events/5742-05-10?lang=he"');
     // A leap year has Adar II; a year lists the months it has farbrengens in.
-    const leap = await get('/calendar/5741/06B');
+    const leap = await get('/calendar/5741/06B?lang=he');
     expect(leap.status).toBe(200);
     expect(leap.html).toContain('אדר ב׳');
-    expect((await get('/calendar/5742/05')).html).toContain('התוועדות לדוגמה');
+    expect((await get('/calendar/5742/05?lang=he')).html).toContain('התוועדות לדוגמה');
     expect((await get('/calendar/5742/06B')).status).toBe(404); // 5742 is not a leap year
     expect((await get('/calendar/99999')).status).toBe(404);
   });
@@ -173,7 +184,7 @@ describe('the public site', () => {
   });
 
   it('keeps a history of every item', async () => {
-    const page = await get(`/history/${ids.teshura}`);
+    const page = await get(`/history/${ids.teshura}?lang=he`);
     expect(page.html).toContain('Better path');
     expect(page.html).toContain('mendy');
     // As design/ draws it (4c): the versions down one line, the one shown now marked, the last change open on top.
@@ -185,7 +196,7 @@ describe('the public site', () => {
 
   it('takes a report with no account, without JavaScript', async () => {
     const body = new URLSearchParams({ intent: 'report', entityId: ids.event!, reason: 'wrong-fact', note: 'the date' });
-    const response = await handle(new Request(`${SITE}/events/5742-05-10`, { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-forwarded-for': '10.0.0.1' } }));
+    const response = await handle(new Request(`${SITE}/events/5742-05-10?lang=he`, { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-forwarded-for': '10.0.0.1' } }));
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('תודה! הדיווח נשלח');
   });
@@ -217,8 +228,8 @@ describe('the public site', () => {
     expect(index.html).not.toContain('schema-1.xml');
 
     const works = await get('/sitemaps/work-1.xml');
-    expect(works.html).toMatch(new RegExp(`<url><loc>${SITE}/sample</loc><lastmod>[^<]+</lastmod><xhtml:link rel="alternate" hreflang="he" href="${SITE}/sample"/><xhtml:link rel="alternate" hreflang="en" href="${SITE}/sample\\?lang=en"/><xhtml:link rel="alternate" hreflang="x-default" href="${SITE}/sample"/></url>`));
-    expect(works.html).toContain(`<url><loc>${SITE}/sample?lang=en</loc>`);
+    expect(works.html).toMatch(new RegExp(`<url><loc>${SITE}/sample</loc><lastmod>[^<]+</lastmod><xhtml:link rel="alternate" hreflang="en" href="${SITE}/sample"/><xhtml:link rel="alternate" hreflang="he" href="${SITE}/sample\\?lang=he"/><xhtml:link rel="alternate" hreflang="x-default" href="${SITE}/sample"/></url>`));
+    expect(works.html).toContain(`<url><loc>${SITE}/sample?lang=he</loc>`);
     const pages = await get('/sitemaps/pages.xml');
     for (const path of ['/', '/sets', '/calendar', '/developers', '/developers/reference']) expect(pages.html).toContain(`<loc>${SITE}${path}</loc>`);
     // The first sitemaps' addresses still lead to their first page; what is not there is not found.
@@ -229,15 +240,15 @@ describe('the public site', () => {
   });
 
   it("gives every item's page its title, description, canonical address, languages, preview and structured data", async () => {
-    const page = await get('/sample');
+    const page = await get('/sample?lang=he');
     expect(page.html).toContain('<title>ספר לדוגמה · ChassidusHub</title>');
     expect(page.html).toMatch(/<meta name="description" content="[^"]*ספר לדוגמה/);
-    expect(page.html).toContain(`<link rel="canonical" href="${SITE}/sample"/>`);
-    expect(page.html).toContain(`hrefLang="he" href="${SITE}/sample"`);
-    expect(page.html).toContain(`hrefLang="en" href="${SITE}/sample?lang=en"`);
+    expect(page.html).toContain(`<link rel="canonical" href="${SITE}/sample?lang=he"/>`);
+    expect(page.html).toContain(`hrefLang="he" href="${SITE}/sample?lang=he"`);
+    expect(page.html).toContain(`hrefLang="en" href="${SITE}/sample"`);
     expect(page.html).toContain(`hrefLang="x-default" href="${SITE}/sample"`);
     expect(page.html).toContain('<meta property="og:type" content="book"/>');
-    expect(page.html).toContain(`<meta property="og:url" content="${SITE}/sample"/>`);
+    expect(page.html).toContain(`<meta property="og:url" content="${SITE}/sample?lang=he"/>`);
     // Without a shaar drawn yet, the site's own picture.
     expect(page.html).toContain(`<meta property="og:image" content="${SITE}/icon-512.png"/>`);
     expect(page.html).toContain('<meta name="twitter:card" content="summary"/>');
@@ -249,7 +260,7 @@ describe('the public site', () => {
     expect(crumbs.itemListElement.map((c: { item: string }) => c.item)).toEqual([`${SITE}/sets`, `${SITE}/farbrengens`, `${SITE}/sample`]);
 
     // A farbrengen is an Event, its recordings the AudioObjects heard there, each with its file and length.
-    const event = await get('/events/5742-05-10?lang=en');
+    const event = await get('/events/5742-05-10');
     const eventData = JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/s.exec(event.html)![1]!)['@graph'] as Array<Record<string, any>>;
     expect(eventData[0]).toMatchObject({
       '@type': 'Event',
@@ -258,7 +269,7 @@ describe('the public site', () => {
     });
     expect(eventData[0]!.startDate).toMatch(/^19\d\d-\d\d-\d\d$/);
     expect(eventData[1]!.itemListElement[0]).toMatchObject({ name: 'Farbrengens', item: `${SITE}/calendar` });
-    expect(event.html).toContain(`<link rel="canonical" href="${SITE}/events/5742-05-10?lang=en"/>`);
+    expect(event.html).toContain(`<link rel="canonical" href="${SITE}/events/5742-05-10"/>`);
     expect(event.html).toContain('<meta property="og:locale" content="en_US"/>');
 
     // The home page says what the site is, and how to search it.
@@ -352,8 +363,8 @@ describe('the public site', () => {
     }
     // One address per page: a permanent id and a trailing slash lead to it in one permanent redirect.
     expect(await get(`/${ids.work}`)).toMatchObject({ status: 301, location: '/sample' });
-    expect(await get('/sample/?lang=en')).toMatchObject({ status: 301, location: '/sample?lang=en' });
-    const missing = await get('/no/such/sefer');
+    expect(await get('/sample/?lang=he')).toMatchObject({ status: 301, location: '/sample?lang=he' });
+    const missing = await get('/no/such/sefer?lang=he');
     expect(missing.status).toBe(404);
     expect(missing.html).toContain('<html lang="he" dir="rtl">');
   });
@@ -412,14 +423,14 @@ describe('the public site', () => {
   });
 
   it('lists reports by their title, as GitHub lists issues, and keeps their words for each report\'s own page', async () => {
-    const list = await get('/issues?lang=en');
+    const list = await get('/issues');
     expect(list.status).toBe(200);
     expect(list.html).toContain('A page is missing in the sample sicha');
     // Not in the list, and not in what the page carries to the browser either.
     expect(list.html).not.toContain('a whole page of the printing was skipped');
-    const number = list.html.match(/href="\/issues\/(\d+)\?lang=en"[^>]*>A page is missing in the sample sicha</)?.[1];
+    const number = list.html.match(/href="\/issues\/(\d+)"[^>]*>A page is missing in the sample sicha</)?.[1];
     expect(number).toBeDefined();
-    const own = await get(`/issues/${number}?lang=en`);
+    const own = await get(`/issues/${number}`);
     expect(own.status).toBe(200);
     expect(own.html).toContain('a whole page of the printing was skipped');
   });
@@ -455,7 +466,7 @@ describe("the reader app's fix and report links", () => {
   it("sends a fix to the item's edit page and a report to a new report about it, found by the app's ids", async () => {
     expect((await get('/_/app/edit?farbrengen=1234')).location).toBe(`/edit/${ids.event}`);
     expect((await get('/_/app/report?farbrengen=1234&v=3.0.0&on=android')).location).toBe(`/issues/new?item=${ids.event}`);
-    expect((await get('/_/app/edit?farbrengen=1234&lang=en')).location).toBe(`/edit/${ids.event}?lang=en`);
+    expect((await get('/_/app/edit?farbrengen=1234&lang=he')).location).toBe(`/edit/${ids.event}?lang=he`);
   });
 
   it('opens a new report when the item is not found, or the report is about the app', async () => {

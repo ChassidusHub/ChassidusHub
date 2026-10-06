@@ -57,7 +57,7 @@ const get = async (path: string) => {
 
 describe("every item's own page", () => {
   it("shows a sefer's title page as its cover, where it came from, and lets a keeper choose another", async () => {
-    const page = await get('/shaar-sample');
+    const page = await get('/shaar-sample?lang=he');
     expect(page.status).toBe(200);
     expect(page.html).toContain(`https://files.chassidushub.test/objects/${sha('b')}`);
     expect(page.html).toContain('class="shaar-img"');
@@ -71,36 +71,36 @@ describe("every item's own page", () => {
   });
 
   it("lists a sefer's additions on its page, not on its shelf, and leads from an addition back to its sefer", async () => {
-    const sefer = (await get('/shaar-sample')).html;
+    const sefer = (await get('/shaar-sample?lang=he')).html;
     expect(sefer).toContain('הוספות');
-    expect(sefer).toMatch(/ביאורים.*?href="\/biur-sample".*?ביאור לספר השער/s);
+    expect(sefer).toMatch(/ביאורים.*?href="\/biur-sample\?lang=he".*?ביאור לספר השער/s);
     const moved = await handle(new Request(`${SITE}/${ids.set}`));
-    const shelf = (await get(new URL(moved.headers.get('location') ?? `/${ids.set}`, SITE).pathname)).html;
+    const shelf = (await get(`${new URL(moved.headers.get('location') ?? `/${ids.set}`, SITE).pathname}?lang=he`)).html;
     expect(shelf).not.toContain('ביאור לספר השער');
     // The addition that belongs to no sefer is apart, closed, after the sefarim.
     expect(shelf).toMatch(/<details[^>]*><summary[^>]*>הוספות \(1\)<\/summary>.*?ליקוט לדוגמה/s);
     // The library lists it only inside its sefer's open card, with the other editions.
-    const library = (await get('/sets')).html;
+    const library = (await get('/sets?lang=he')).html;
     expect(library).toMatch(/class="lb-with".*?ביאור לספר השער/s);
-    const biur = (await get('/biur-sample')).html;
-    expect(biur).toMatch(/הוספה ל.*?href="\/shaar-sample"/s);
+    const biur = (await get('/biur-sample?lang=he')).html;
+    expect(biur).toMatch(/הוספה ל.*?href="\/shaar-sample\?lang=he"/s);
   });
 
   it('finds a sefer by its title even where the title reads as a date, before its additions, which say what they are', async () => {
     // `תניא` is also the year 5461, and names the sefer: the sefer is found first, and its index after it, labelled an addition to it.
-    const found = (await get(`/search?q=${encodeURIComponent('תניא')}`)).html;
-    expect(found).toMatch(/href="\/tanya-sample".*?href="\/tanya-index-sample"/s);
+    const found = (await get(`/search?q=${encodeURIComponent('תניא')}&lang=he`)).html;
+    expect(found).toMatch(/href="\/tanya-sample\?lang=he".*?href="\/tanya-index-sample\?lang=he"/s);
     // Above its name, where it is from: what it is, and that it is an addition to the sefer.
-    expect(found).toMatch(/href="\/tanya-index-sample".*?class="row-kicker">.*?הוספה ל: תניא/s);
+    expect(found).toMatch(/href="\/tanya-index-sample\?lang=he".*?class="row-kicker">.*?הוספה ל: תניא/s);
   });
 
   it("goes back and forth between a sefer's sichos, above the text and below it", async () => {
-    const around = (await get(`/${ids.unit2}`)).html;
+    const around = (await get(`/${ids.unit2}?lang=he`)).html;
     // Hebrew first: "previous" at the line's start, the right, its chevron pointing there.
     expect(around.match(/class="chapter-nav chapter-nav-(top|bottom)"/g)).toEqual(['class="chapter-nav chapter-nav-top"', 'class="chapter-nav chapter-nav-bottom"']);
-    expect(around).toMatch(new RegExp(`rel="prev" href="/${ids.unit1}".*?הקודם.*?שיחה 1`));
-    expect(around).toMatch(new RegExp(`rel="next" href="/${ids.unit3}".*?הבא.*?שיחה 3`));
-    const english = (await get(`/${ids.unit2}?lang=en`)).html;
+    expect(around).toMatch(new RegExp(`rel="prev" href="/${ids.unit1}\\?lang=he".*?הקודם.*?שיחה 1`));
+    expect(around).toMatch(new RegExp(`rel="next" href="/${ids.unit3}\\?lang=he".*?הבא.*?שיחה 3`));
+    const english = (await get(`/${ids.unit2}`)).html;
     expect(english).toMatch(/rel="prev"[^>]*>.*?Previous/);
     expect(english).toMatch(/rel="next"[^>]*>.*?Next/);
     // The first has no previous, the last no next.
@@ -109,10 +109,10 @@ describe("every item's own page", () => {
   });
 
   it('counts all that belongs to an item, and lists it a page at a time', async () => {
-    const page = await get('/shaar-sample');
+    const page = await get('/shaar-sample?lang=he');
     expect(page.html).toContain('כל מה ששייך לכאן');
     expect(page.html).toContain(`/all/${ids.work}?field=work&amp;type=unit`);
-    const all = await get(`/all/${ids.work}?field=work&type=unit`);
+    const all = await get(`/all/${ids.work}?field=work&type=unit&lang=he`);
     expect(all.status).toBe(200);
     expect(all.html).toContain('1–3 מתוך 3');
     expect(all.html).toContain('שיחה 3');
@@ -145,7 +145,7 @@ describe("every item's own page", () => {
     expect(page.html).toContain(`https://files.chassidushub.test/objects/${sha('a')}`);
     expect(page.html).toContain('cover/2');
     expect(page.html).toContain('ספר השער');
-    const kept = await get(`/files/${sha('d')}`);
+    const kept = await get(`/files/${sha('d')}?lang=he`);
     expect(kept.html).toContain('אינו מוצג');
     expect((await get(`/files/${sha('0')}`)).status).toBe(404);
   });
@@ -153,7 +153,7 @@ describe("every item's own page", () => {
   it('offers "Add a hanacha" on a farbrengen, leading to the guided flow', async () => {
     const page = await get('/events/5742-05-10');
     expect(page.html).toContain(`/add?what=hanacha&amp;for=${ids.event}`);
-    const add = await get(`/add?what=hanacha&for=${ids.event}`);
+    const add = await get(`/add?what=hanacha&for=${ids.event}&lang=he`);
     expect(add.status).toBe(200);
     expect(add.html).toContain('הוספת חומר חדש');
   });

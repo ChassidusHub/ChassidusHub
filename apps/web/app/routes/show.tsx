@@ -7,7 +7,7 @@ import type { Route } from './+types/show';
 import type { Entity, Mafteach } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';
 import { dateLabel } from '../lib/dates.js';
-import { dir, type Lang } from '../lib/i18n.js';
+import { dir, langOfUrl, type Lang } from '../lib/i18n.js';
 import { num } from '../lib/i18nUi.js';
 import { labelOf } from '../lib/labels.js';
 import { chipLabel, topicLines } from '../lib/mafteach.js';
@@ -71,7 +71,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { token, extras } = showcase;
   const url = new URL(request.url);
   // In English, for the people the steward meets; a Hebrew reader can switch.
-  const lang: Lang = url.searchParams.get('lang') === 'he' ? 'he' : 'en';
+  const lang: Lang = langOfUrl(url);
   const q = url.searchParams.get('q')?.trim().slice(0, 100) ?? '';
   const ids = [...showcase.farbrengens, ...showcase.sichos];
   const [picked, recordingsOf, stats, day, mafteach, toCheck] = await Promise.all([

@@ -64,11 +64,11 @@ const get = async (path: string, handler = () => handle) => {
 
 describe('phase 6 on the site', () => {
   it('finds words inside the texts and opens each at its moment, marked as machine output', async () => {
-    const page = await get(`/search?q=${encodeURIComponent('ניגון')}`);
+    const page = await get(`/search?q=${encodeURIComponent('ניגון')}&lang=he`);
     expect(page.status).toBe(200);
     expect(page.html).toContain('בתוך הטקסטים');
-    expect(page.html).toContain(`href="/text/${ids.scan}?page=4&amp;line=l2#line-l2"`);
-    expect(page.html).toContain(`href="/events/5742-05-10?at=${ids.para}#p-${ids.para}"`);
+    expect(page.html).toContain(`href="/text/${ids.scan}?page=4&amp;line=l2&amp;lang=he#line-l2"`);
+    expect(page.html).toContain(`href="/events/5742-05-10?at=${ids.para}&amp;lang=he#p-${ids.para}"`);
     expect(page.html).toContain('<mark>ניגון</mark>');
     expect(page.html).toContain('נשמע ב־2:05');
     expect(page.html).toContain('תמלול מכונה, לא נבדק');
@@ -83,18 +83,18 @@ describe('phase 6 on the site', () => {
   });
 
   it('searches by idea where it is set up, and says the machine chose', async () => {
-    const page = await get(`/search?by=meaning&q=${encodeURIComponent('ניגון שמח')}`, () => withMeaning);
+    const page = await get(`/search?by=meaning&q=${encodeURIComponent('ניגון שמח')}&lang=he`, () => withMeaning);
     expect(page.html).toContain('לפי רעיון');
     expect(page.html).toContain('נבחרו במכונה');
     expect(page.html).toContain('נמצא במכונה');
   });
 
   it('shows an item’s links both ways, marked when a machine found them', async () => {
-    const page = await get('/events/5742-05-10');
+    const page = await get('/events/5742-05-10?lang=he');
     expect(page.html).toContain('מה שמיוסד על זה');
-    expect(page.html).toContain('href="/events/5743-05-10"');
+    expect(page.html).toContain('href="/events/5743-05-10?lang=he"');
     expect(page.html).toContain('נמצא במכונה');
-    const other = await get('/events/5743-05-10?lang=en');
+    const other = await get('/events/5743-05-10');
     expect(other.html).toContain('Based on this farbrengen');
   });
 

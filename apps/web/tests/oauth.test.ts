@@ -60,9 +60,9 @@ describe('the consent page', () => {
   });
 
   it('explains a request it cannot show, in both languages', async () => {
-    const en = await (await handle(new Request(`${SITE}/oauth/consent?error=invalid_redirect&lang=en`))).text();
+    const en = await (await handle(new Request(`${SITE}/oauth/consent?error=invalid_redirect`))).text();
     expect(en).toContain('is not one it registered');
-    const he = await (await handle(new Request(`${SITE}/oauth/consent?error=invalid_client`))).text();
+    const he = await (await handle(new Request(`${SITE}/oauth/consent?error=invalid_client&lang=he`))).text();
     expect(he).toContain('האפליקציה לא מוכרת כאן');
   });
 
@@ -95,13 +95,13 @@ describe("an agent's work, on the site", () => {
     expect(sent.status).toBe(201);
     const { number } = (await sent.json()) as { number: number };
 
-    const en = await (await handle(new Request(`${SITE}/suggestions/${number}?lang=en`))).text();
+    const en = await (await handle(new Request(`${SITE}/suggestions/${number}`))).text();
     expect(en).toContain('agent-mark');
     expect(en).toContain('No person has reviewed it yet');
-    const he = await (await handle(new Request(`${SITE}/suggestions/${number}`))).text();
+    const he = await (await handle(new Request(`${SITE}/suggestions/${number}?lang=he`))).text();
     expect(he).toContain('agent-mark');
     expect(he).toContain('בשביל');
-    const list = await (await handle(new Request(`${SITE}/suggestions?lang=en`))).text();
+    const list = await (await handle(new Request(`${SITE}/suggestions`))).text();
     expect(list).toContain('agent-mark');
   });
 });

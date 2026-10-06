@@ -24,7 +24,7 @@ const site = (answer: (path: string) => Promise<Response>) =>
   createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: 'https://chassidushub.test', fetch: (input) => answer(new URL(String(input)).pathname) });
 
 const page = async (handler: (request: Request) => Promise<Response>, lang = 'en') => {
-  const response = await handler(new Request(`https://chassidushub.test/status${lang === 'en' ? '?lang=en' : ''}`, { headers: { 'Accept-Language': lang } }));
+  const response = await handler(new Request(`https://chassidushub.test/status${lang === 'he' ? '?lang=he' : ''}`, { headers: { 'Accept-Language': lang } }));
   return { status: response.status, html: await response.text(), cache: response.headers.get('Cache-Control') };
 };
 

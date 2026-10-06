@@ -157,7 +157,7 @@ export function CommandPalette({ lang, account, open, onClose, initial = '' }: {
     const other = lang === 'he' ? 'en' : 'he';
     const langHref = (() => {
       const p = new URLSearchParams(location.search);
-      if (other === 'en') p.set('lang', 'en');
+      if (other === 'he') p.set('lang', 'he');
       else p.delete('lang');
       const s = p.toString();
       return `${location.pathname}${s ? `?${s}` : ''}`;

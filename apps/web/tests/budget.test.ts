@@ -244,12 +244,12 @@ describe("each page's statements and API calls stay within its ceiling", () => {
     within(await page(await pathOf(ids.recording)), 'a recording', { statements: 40, calls: 20, kB: 45 });
   });
   it('draws search as the design does (3g): chips for the kinds, each result under where it is from', async () => {
-    const html = await (await handle(new Request(`${SITE}/search?q=${encodeURIComponent('שיחה')}`))).text();
+    const html = await (await handle(new Request(`${SITE}/search?q=${encodeURIComponent('שיחה')}&lang=he`))).text();
     expect(html).toMatch(/class="search-chips".*?class="chip" aria-current="page"[^>]*>הכול/s);
     expect(html).toMatch(/class="row-kicker">.*?<\/span><span class="row-title torah">/s);
   });
   it('lists suggestions as the design does (3h): a dot in the colour of where each stands, and that in words', async () => {
-    const html = await (await handle(new Request(`${SITE}/suggestions`))).text();
+    const html = await (await handle(new Request(`${SITE}/suggestions?lang=he`))).text();
     expect(html).toMatch(/class="row issue-row sg-open"><span class="sg-dot"/);
     expect(html).toContain('<div class="sg-where">ממתינה לבדיקה</div>');
   });
@@ -261,10 +261,10 @@ describe("each page's statements and API calls stay within its ceiling", () => {
     expect(html.indexOf('class="sg-review"')).toBeLessThan(html.indexOf('id="description"'));
   });
   it('draws the menu as the design does (4b): its name, then its parts under small headings', async () => {
-    const html = await (await handle(new Request(`${SITE}/`))).text();
+    const html = await (await handle(new Request(`${SITE}/?lang=he`))).text();
     expect(html).toContain('<h2 class="sheet-title">תפריט</h2>');
     expect(html).toMatch(/<section class="menu-group"><h3>קריאה<\/h3>/);
-    expect(html).toMatch(/class="menu-row" href="\/help"/);
+    expect(html).toMatch(/class="menu-row" href="\/help\?lang=he"/);
   });
   it('search, suggestions and review', async () => {
     within(await page(`/search?q=${encodeURIComponent('שיחה')}`), 'search', { statements: 15, calls: 6, kB: 110 });
@@ -279,7 +279,7 @@ describe("each page's statements and API calls stay within its ceiling", () => {
   it("the day's learning is one read", async () => within(await page('/daily/2026-09-30'), '/daily', { statements: 10, calls: 1, kB: 62 }));
   it("the day's shiurim, their words on one page, are one read", async () => within(await page('/shiurim/2026-09-30'), '/shiurim', { statements: 11, calls: 1, kB: 60 }));
   it('draws the day as the design does (3e): the date between its arrows, and its shiurim to tick, the first one next', async () => {
-    const html = await (await handle(new Request(`${SITE}/daily/2026-09-30`))).text();
+    const html = await (await handle(new Request(`${SITE}/daily/2026-09-30?lang=he`))).text();
     expect(html).toContain('class="dl-date"');
     expect(html).toMatch(/class="dl-hebrew">[^<]*תשרי</);
     // 30.9.2026 is י״ט תשרי, in Sukkos: the line under the date says so.

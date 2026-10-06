@@ -99,7 +99,7 @@ export function readHref(doc: { url: string; title: string; sub?: string; page?:
   const q = new URLSearchParams({ src: doc.url, title: doc.title });
   if (doc.sub) q.set('sub', doc.sub);
   if (doc.page && doc.page > 1) q.set('page', String(doc.page));
-  if (lang === 'en') q.set('lang', 'en');
+  if (lang === 'he') q.set('lang', 'he');
   return `/read?${q}`;
 }
 

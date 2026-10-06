@@ -80,12 +80,12 @@ describe('the organizing page', () => {
   }, 120_000);
 
   it('shows the top sets, a set\'s sets and sefarim, and a sefer\'s units as rows to pick', async () => {
-    const top = await handle(new Request(`${SITE}/organize`));
+    const top = await handle(new Request(`${SITE}/organize?lang=he`));
     expect(top.status).toBe(200);
     const topHtml = await top.text();
     expect(topHtml).toContain('סידור הקטלוג');
     expect(topHtml).toContain('התוועדויות');
-    const page = await handle(new Request(`${SITE}/organize?root=${ids.set}&lang=en`));
+    const page = await handle(new Request(`${SITE}/organize?root=${ids.set}`));
     const html = await page.text();
     expect(html).toContain('Organize: Farbrengens');
     expect(html).toContain('A subset');

@@ -161,12 +161,12 @@ describe("a page's words", () => {
   });
 
   it("draws the Chabad Library's texts with their notes, old pages, and the library's credit linking back to the page", async () => {
-    const page = await html('/sample/2');
+    const page = await html('/sample/2?lang=he');
     expect(page).toContain('class="words words-chabad-library"');
     expect(page).toContain('<span class="words-marker">עמ&#x27; לח</span>');
     expect(page).toContain('id="n-he-n1"');
     expect(page).toMatch(/<a href="https:\/\/chabadlibrary\.org\/books\/11"[^>]*>ספריית ליובאוויטש · chabadlibrary\.org<\/a>/);
-    expect(await html('/sample/2?lang=en')).toMatch(/>The Lubavitch Library · chabadlibrary\.org<\/a>/);
+    expect(await html('/sample/2')).toMatch(/>The Lubavitch Library · chabadlibrary\.org<\/a>/);
   });
 
   it("draws a sicha as the OCR writes it: its ois, Miram as bold, page numbers, notes beside the words and a second-level note under the note that calls it", async () => {

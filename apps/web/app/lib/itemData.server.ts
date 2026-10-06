@@ -5,6 +5,7 @@ import { eventView, type EventView } from './eventView.server.js';
 import { eventRow } from '../components/EventRow.js';
 import type { Backlink, Cover, Entity, FileInfo, LinkGroup, ChassidusHubApi, RelationLink, ScanPages, WorkCover } from './api.js';
 import { workVolumes } from './volumes.js';
+import { langOfUrl } from './i18n.js';
 
 /**
  * What an item's page needs beyond the item itself, by type: a work's
@@ -163,7 +164,7 @@ export async function loadItemView(api: ChassidusHubApi, entity: Entity, url: UR
         view.next = page.items.length === 200 ? page.next : null;
       }
       if (view.lists.units?.length) {
-        view.toc = await workToc(api, view.lists.units, view.lists.publications, view.scanCounts ?? {}, { part: openPart ?? null, printing: url.searchParams.get('printing'), lang: url.searchParams.get('lang') === 'en' ? 'en' : 'he' });
+        view.toc = await workToc(api, view.lists.units, view.lists.publications, view.scanCounts ?? {}, { part: openPart ?? null, printing: url.searchParams.get('printing'), lang: langOfUrl(url) });
         view.lists.units.forEach((u) => aboutIds.add(u.id));
       }
       break;
@@ -178,7 +179,7 @@ export async function loadItemView(api: ChassidusHubApi, entity: Entity, url: UR
         typeof d.work === 'string' && typeof volume === 'string' ? orNone(api.workPart(d.work, volume), []) : [],
       ]);
       view.neighbours = neighbours;
-      view.volume = volumeLines(siblings, entity, url.searchParams.get('lang') === 'en' ? 'en' : 'he');
+      view.volume = volumeLines(siblings, entity, langOfUrl(url));
       view.lists.texts = texts;
       const segments = await Promise.all(texts.map((text) => allSegments(api, text.id)));
       texts.forEach((text, i) => (view.segments[text.id] = segments[i]!));
@@ -195,7 +196,7 @@ export async function loadItemView(api: ChassidusHubApi, entity: Entity, url: UR
       // Each part's file, all in one request (a farbrengen may have forty parts).
       const files = await api.files(recordings.map((r) => String((r.data as { file?: string }).file ?? '')).filter(Boolean));
       recordings.forEach((r) => (view.files[r.id] = files.get(String((r.data as { file?: string }).file ?? '')) ?? null));
-      view.event = await orNone(eventView(api, view.lists.units, recordings, url.searchParams.get('lang') === 'en' ? 'en' : 'he'), { said: [], texts: [] });
+      view.event = await orNone(eventView(api, view.lists.units, recordings, langOfUrl(url)), { said: [], texts: [] });
       const date = typeof d.date === 'string' ? d.date : '';
       const day = /^\d{4}-(\w{2,3}-\d{2})$/.exec(date)?.[1];
       const [otherYears, sameYear] = await Promise.all([day ? api.events({ day, limit: 50, brief: true }) : [], date ? api.events({ within: date.slice(0, 4), limit: 2000, brief: true }) : []]);
@@ -264,7 +265,7 @@ export async function loadItemView(api: ChassidusHubApi, entity: Entity, url: UR
   if (['work', 'unit', 'event', 'publication', 'set'].includes(entity.type)) {
     if (entity.type === 'unit') (view.lists.texts ?? []).forEach((x) => aboutIds.add(x.id));
     if (entity.type === 'event') (view.lists.units ?? []).forEach((x) => aboutIds.add(x.id));
-    const [about, talk] = await Promise.all([orNone(threadsAbout(api, aboutIds, url.searchParams.get('lang') === 'en' ? 'en' : 'he', { set: entity.type === 'set' ? entity.id : null }), []), orNone(api.talk(entity.id), { talk: [] })]);
+    const [about, talk] = await Promise.all([orNone(threadsAbout(api, aboutIds, langOfUrl(url), { set: entity.type === 'set' ? entity.id : null }), []), orNone(api.talk(entity.id), { talk: [] })]);
     view.about = about;
     view.talk = talk.talk.length;
   }

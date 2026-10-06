@@ -464,7 +464,7 @@ export function authRoutes(app: Hono, catalog: Catalog, auth: AuthOptions): void
   // Email: a link sent to the address signs its person in, or (asked for while signed in) adds the address to the account.
   const mailer = auth.mailer;
   const emailOff = (c: Context) => refuse(c, 400, 'signing in by email is not switched on here');
-  const langOf = (value: unknown): 'he' | 'en' => (value === 'en' ? 'en' : 'he');
+  const langOf = (value: unknown): 'he' | 'en' => (value === 'he' ? 'he' : 'en');
 
   app.post('/v1/auth/email/start', async (c) => {
     if (!mailer) return emailOff(c);

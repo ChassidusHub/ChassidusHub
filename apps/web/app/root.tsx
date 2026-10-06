@@ -40,10 +40,7 @@ export const links: LinksFunction = () => [
 ];
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const url = new URL(request.url);
-  // A showcase opens in English for the steward's guests (routes/show.tsx).
-  const lang: Lang = url.pathname.startsWith('/show/') ? (url.searchParams.get('lang') === 'he' ? 'he' : 'en') : langFrom(request);
-  return { lang, siteUrl: siteOf(context).siteUrl };
+  return { lang: langFrom(request), siteUrl: siteOf(context).siteUrl };
 }
 
 export function headers() {
@@ -55,7 +52,7 @@ export function headers() {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData('root') as { lang?: Lang } | undefined;
-  const lang = data?.lang ?? 'he';
+  const lang = data?.lang ?? 'en';
   // An embed is the item alone, in another site's frame: no menus, no player bar.
   const { pathname } = useLocation();
   const embedded = pathname.startsWith('/embed/');

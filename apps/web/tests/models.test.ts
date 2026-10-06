@@ -42,7 +42,7 @@ describe('the models page', () => {
   });
 
   it('is in Hebrew first', async () => {
-    const page = await get('/models');
+    const page = await get('/models?lang=he');
     expect(page.status).toBe(200);
     expect(page.html).toContain('המודלים ומדדי הביצוע');
     expect(page.html).toContain('המודלים עצמם אינם משוחררים');

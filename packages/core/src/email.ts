@@ -123,7 +123,7 @@ const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
 export function signInMessage(input: { to: string; siteUrl: string; token: string; lang: 'he' | 'en'; adding?: boolean; returnTo?: string }): EmailMessage {
   const params = new URLSearchParams({ 'email-token': input.token });
   if (input.returnTo) params.set('return', input.returnTo);
-  if (input.lang === 'en') params.set('lang', 'en');
+  if (input.lang === 'he') params.set('lang', 'he');
   const link = `${input.siteUrl}/signin?${params.toString()}`;
   const he = input.lang === 'he';
   const subject = input.adding ? (he ? 'ChassidusHub: אישור כתובת המייל' : 'ChassidusHub: confirm your email address') : he ? 'ChassidusHub: קישור כניסה' : 'ChassidusHub: your sign-in link';
