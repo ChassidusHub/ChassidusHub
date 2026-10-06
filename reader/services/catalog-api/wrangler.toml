@@ -1,0 +1,14 @@
+# The reader app's own catalog (src/worker.ts), on the chassidushub.org account. It has no address of
+# its own: ChassidusHub's API (services/api, binding READER_CATALOG) passes the app's catalog requests
+# here while its own release lacks a part. `npm run build` bakes this commit's catalog into
+# generated/release.ts first, so a deploy is "what is on the deployed commit". Deploy it before the API.
+name = "chassidushub-reader-catalog"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+[build]
+command = "npm run build"
+
+[observability]
+enabled = true

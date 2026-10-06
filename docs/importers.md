@@ -176,7 +176,7 @@ app's files, which are the steward's and in no repository, so it runs only
 where they are given:
 
 ```sh
-npm run build-igros -w @sichos-kodesh/igros-index -- --data <Igros app files> --out ../igros
+npm run build-igros -w @chassidushub-reader/igros-index -- --data <Igros app files> --out ../igros
 IGROS_DATA=../igros chassidushub import igros --from ../Sichos-Kodesh --approve-as steward
 ```
 

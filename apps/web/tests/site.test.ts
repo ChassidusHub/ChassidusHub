@@ -32,7 +32,7 @@ beforeAll(async () => {
   ids.set = set;
   ids.author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, sets: [set] }, '/authors/the-rebbe');
   ids.work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר לדוגמה', en: 'Sample Sefer' }, slug: 'sample', authors: [ids.author], genre: 'sichos', levels: ['volume', 'sicha'], sets: [set], sourceCopies: [{ source: 'sefaria', sourceId: 'Sample', kind: 'text', licence: 'cc-by-nc', language: 'he' }] }, '/sample');
-  ids.event = await add(catalog, 'mendy', 'keeper', 'event', { kind: 'farbrengen', title: { he: 'התוועדות לדוגמה', en: 'Sample farbrengen' }, date: '5742-05-10', sets: [set] }, '/events/5742-05-10');
+  ids.event = await add(catalog, 'mendy', 'keeper', 'event', { kind: 'farbrengen', title: { he: 'התוועדות לדוגמה', en: 'Sample farbrengen' }, date: '5742-05-10', sets: [set], externalIds: { mafteiach: '1234' } }, '/events/5742-05-10');
   ids.unit = await add(catalog, 'mendy', 'keeper', 'unit', {
     work: ids.work,
     position: [{ level: 'volume', value: '1', label: { he: 'חלק א', en: 'Volume 1' } }, { level: 'sicha', value: '1' }],
@@ -448,5 +448,19 @@ describe('the public site', () => {
     expect(JSON.parse(people.html).people.map((p: { username: string }) => p.username)).toContain('levi-y');
     expect((await get('/_/threads/issues/templates')).status).toBe(200);
     expect((await get('/_/threads/admin/people')).status).toBe(404);
+  });
+});
+
+describe("the reader app's fix and report links", () => {
+  it("sends a fix to the item's edit page and a report to a new report about it, found by the app's ids", async () => {
+    expect((await get('/_/app/edit?farbrengen=1234')).location).toBe(`/edit/${ids.event}`);
+    expect((await get('/_/app/report?farbrengen=1234&v=3.0.0&on=android')).location).toBe(`/issues/new?item=${ids.event}`);
+    expect((await get('/_/app/edit?farbrengen=1234&lang=en')).location).toBe(`/edit/${ids.event}?lang=en`);
+  });
+
+  it('opens a new report when the item is not found, or the report is about the app', async () => {
+    expect((await get('/_/app/edit?farbrengen=999')).location).toBe('/issues/new');
+    expect((await get('/_/app/report?v=3.0.0&on=android')).location).toBe('/issues/new');
+    expect((await get('/_/app/other')).status).toBe(404);
   });
 });

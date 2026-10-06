@@ -1,0 +1,38 @@
+{
+  "name": "@chassidushub-reader/app-core",
+  "version": "0.1.0",
+  "description": "Shared platform-neutral app logic for the ChassidusHub reader apps.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "npm run build -w @chassidushub-reader/sefaria-index",
+    "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build -w @chassidushub-reader/sefaria-index",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "pretypecheck": "npm run build -w @chassidushub-reader/sefaria-index",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@hebcal/core": "^6.9.2",
+    "@chassidushub-reader/catalog": "^0.1.0",
+    "@chassidushub-reader/sefaria-index": "^0.1.0",
+    "fuse.js": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "~6.0.2",
+    "vitest": "^3.0.0"
+  }
+}

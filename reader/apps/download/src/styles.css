@@ -1,0 +1,1594 @@
+/* ChassidusHub's "sefer" palette (design/README.md), light first, dark by the OS. */
+:root {
+  color-scheme: light dark;
+  --bg: #f7f3ea;
+  --bg-elevated: #fffdf8;
+  --fg: #1f1a13;
+  --muted: #776d5e;
+  --border: #dcd2bf;
+  --card-bg: #ece5d6;
+  --card-hover: #e4dbc8;
+  --accent: #8a2c1e;
+  --accent-fg: #ffffff;
+  --danger: #b3261e;
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 24%, transparent);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.05);
+  --display: 'FrankRuehlCLM', 'Noto Sans Hebrew', serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16130e;
+    --bg-elevated: #1f1b15;
+    --fg: #ede5d5;
+    --muted: #a89f8f;
+    --border: #3a342a;
+    --card-bg: #24201a;
+    --card-hover: #2e2921;
+    --accent: #e2957f;
+    --accent-fg: #16130e;
+    --danger: #f28b82;
+    --shadow: none;
+  }
+}
+
+/* The app's faces, self-hosted (fonts/licences). */
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'FrankRuehlCLM';
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/FrankRuehlCLM_bold.otf') format('opentype');
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Noto Sans Hebrew', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 0 calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .page {
+    padding-inline: 24px;
+  }
+}
+
+main {
+  display: grid;
+  gap: 44px;
+}
+
+/* ---- The bar at the top ---- */
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block: calc(14px + env(safe-area-inset-top, 0px)) 14px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.brand-name {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.top-links {
+  display: flex;
+  gap: 4px;
+}
+
+.top-links a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.top-links a:hover {
+  background: var(--card-bg);
+  color: var(--fg);
+}
+
+/* ---- The opening ---- */
+
+/* The phone app comes first: one big button, the other files and the web app under it. */
+.app-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 0 8px;
+  text-align: center;
+}
+
+.app-hero-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 14px;
+  border-radius: 22px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.app-hero-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 8vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.app-hero .hero-lead {
+  margin-inline: auto;
+}
+
+.app-hero-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.app-hero-meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-hero .app-alt {
+  margin-top: 12px;
+}
+
+.app-hero-note {
+  max-width: 30rem;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* The packs follow, under a line. */
+.hero-packs {
+  margin-top: 36px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.hero-packs .hero-title {
+  font-size: clamp(1.7rem, 5.5vw, 2.4rem);
+}
+
+.hero {
+  max-width: 760px;
+  padding-top: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.hero-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(2.1rem, 7vw, 3.1rem);
+  font-weight: 700;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.hero-lead {
+  max-width: 34rem;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border: 1px solid var(--accent-line);
+  border-radius: 16px;
+  background: var(--accent-soft);
+  text-align: center;
+}
+
+.flow-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--accent);
+}
+
+.flow-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Between two steps, a small arrow the way the page reads. */
+.flow-onward {
+  position: absolute;
+  inset-inline-end: -13px;
+  top: 50%;
+  z-index: 1;
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--accent);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts li {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Sections and cards ---- */
+
+.section h2 {
+  margin: 0;
+  font-size: 1.375rem;
+  line-height: 1.3;
+}
+
+.section-lead {
+  margin: 4px 0 16px;
+  color: var(--muted);
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow);
+}
+
+.empty,
+.tip {
+  margin: 0;
+  color: var(--muted);
+}
+
+.tip {
+  margin-top: 12px;
+  font-size: 0.9375rem;
+}
+
+.loading,
+.result-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.loading {
+  padding: 20px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+}
+
+.card.error {
+  padding: 16px 20px;
+}
+
+.note {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.badge {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+
+/* ---- Rows with a download button (the ready packs, the parts of a built pack) ---- */
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.row-title {
+  font-weight: 700;
+}
+
+.row-part {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.row-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.download-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.08s ease, filter 0.1s ease;
+}
+
+.download-button-big {
+  gap: 10px;
+  padding: 15px 30px;
+  font-size: 1.125rem;
+  box-shadow: var(--shadow);
+}
+
+.download-button:hover {
+  filter: brightness(1.08);
+}
+
+.download-button:active {
+  transform: scale(0.97);
+}
+
+/* ---- The ready packs ---- */
+
+/* One card to a month: a lone card takes the whole row, more share it. */
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+}
+
+.pack-card {
+  padding: 16px 18px 6px;
+}
+
+.pack-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pack-well {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pack-card-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.chip:hover {
+  background: var(--card-hover);
+}
+
+.chip-on,
+.chip-on:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.chip:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.chip-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip-on .chip-count {
+  background: color-mix(in srgb, var(--accent-fg) 22%, transparent);
+  color: var(--accent-fg);
+}
+
+/* A checkbox chip: a tick that shows when it is on. */
+.chip-tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+  color: transparent;
+}
+
+.chip-on .chip-tick {
+  border-color: var(--accent-fg);
+  color: var(--accent-fg);
+}
+
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+}
+
+.segmented-option {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 6px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.segmented-on {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* Five sizes in one row still fit a narrow phone. */
+@media (max-width: 420px) {
+  .segmented-option {
+    padding-inline: 2px;
+    font-size: 0.8125rem;
+  }
+}
+
+.segmented-option:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.result-loading {
+  padding-bottom: 14px;
+}
+
+.result-head {
+  margin-bottom: 12px;
+}
+
+.result-size {
+  margin: 6px 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-counts {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.signed {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.signed svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---- The store: shelves beside the cart (above it on a phone) ---- */
+
+.store {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.store-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 980px) {
+  .store {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .store-cart {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    border-radius: 18px;
+  }
+}
+
+/* This year's kvius: tinted with the accent, like the app's week card. */
+.kvius {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-color: var(--accent-line);
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
+}
+
+.kvius-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.kvius-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.kvius-text {
+  min-width: 0;
+}
+
+.kvius-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.kvius-lead {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.kvius-offers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Add to the cart: filled; once there, the accent's tint with a tick. */
+.add-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+  transition: transform 0.08s ease, filter 0.1s ease, background-color 0.1s ease;
+}
+
+.add-button:hover {
+  filter: brightness(1.06);
+}
+
+.add-button:active {
+  transform: scale(0.98);
+}
+
+.add-button-in {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.add-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.add-button svg {
+  flex-shrink: 0;
+}
+
+.add-button-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.add-button-detail {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* The shelves: underlined tabs over one panel. */
+.shelves {
+  overflow: hidden;
+}
+
+.shelf-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.shelf-tab {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 10px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shelf-tab:hover {
+  color: var(--fg);
+}
+
+.shelf-tab-on {
+  border-bottom-color: var(--accent);
+  color: var(--fg);
+}
+
+.shelf-body {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.shelf-empty {
+  margin: 0;
+  padding: 18px;
+  color: var(--muted);
+}
+
+.shelf-action {
+  display: flex;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.field {
+  min-width: 0;
+}
+
+.field-title {
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.field-hint {
+  margin: -4px 0 10px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.segmented + .field-hint {
+  margin: 8px 0 0;
+}
+
+.segmented + .field-hint + .chips {
+  margin-top: 12px;
+}
+
+/* A long run of groups scrolls inside its own box. */
+.chips-scroll {
+  max-height: 264px;
+  padding: 3px;
+  overflow-y: auto;
+}
+
+/* A kvius year: a dot after its name. This month: a small flag. */
+.chip-kvius {
+  border-color: var(--accent-line);
+}
+
+.chip-kvius::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.chip-on.chip-kvius::after {
+  background: var(--accent-fg);
+}
+
+.chip-now {
+  border-color: var(--accent-line);
+}
+
+.chip-flag {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 17px;
+}
+
+.chip-flag-soft {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.chip-on .chip-flag {
+  background: var(--accent-fg);
+  color: var(--accent);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.legend-kvius {
+  background: var(--accent);
+}
+
+/* The library's collections: dark pills, so the green stays the choices' own. */
+.subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subtab {
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.subtab:hover {
+  background: var(--card-hover);
+}
+
+.subtab-on,
+.subtab-on:hover {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.subtab:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The seforim bundles: one to a row, the name in the display face. */
+.bundles {
+  display: grid;
+  gap: 10px;
+}
+
+.bundle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.bundle-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.bundle-text {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.bundle-name {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.bundle-works {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.bundle-size {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The cart: what goes into the pack, its settings, and the pack itself. */
+.cart {
+  padding: 16px 18px 6px;
+  border-color: var(--accent-line);
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-elevated));
+}
+
+.cart-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--accent);
+}
+
+.cart-title {
+  margin: 0;
+  color: var(--fg);
+  font-size: 1.25rem;
+}
+
+.cart-count {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-button {
+  margin-inline-start: auto;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.cart-empty {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.cart-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cart-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cart-line-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cart-line-title {
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.cart-line-detail {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.line-size {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.line-size-missing {
+  color: var(--danger);
+}
+
+.line-size-retry {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--danger);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+div.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+div.error p {
+  margin: 0;
+}
+
+.icon-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: var(--card-hover);
+  color: var(--fg);
+}
+
+.cart-settings {
+  display: grid;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cart-total {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.cart-total > .error {
+  margin-bottom: 12px;
+}
+
+/* On a phone: a bar at the bottom, leading to the cart below the shelves. */
+.cart-bar {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+}
+
+.cart-bar-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  cursor: pointer;
+}
+
+.cart-bar-go {
+  margin-inline-start: auto;
+  opacity: 0.75;
+}
+
+@media (max-width: 979px) {
+  .page {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 980px) {
+  .cart-bar {
+    display: none;
+  }
+}
+
+.top-links .top-cart {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The other files and the web app, under the big button. */
+.app-alt {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+}
+
+.app-alt a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---- Putting it on the phone: a real sequence, so numbered ---- */
+
+.import-steps {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .import-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.import-step {
+  position: relative;
+  padding: 18px;
+}
+
+.import-number {
+  position: absolute;
+  top: 14px;
+  inset-inline-end: 16px;
+  color: var(--border);
+  font-family: var(--display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.import-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.import-title {
+  margin: 12px 0 4px;
+  font-size: 1rem;
+}
+
+.import-body {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+/* ---- The foot of the page ---- */
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.footer-brand {
+  color: var(--fg);
+  font-family: var(--display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+.footer-links a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-version {
+  font-size: 0.75rem;
+}
+
+/* On a phone the header keeps the brand, the language and the cart: the site link waits in the footer. */
+@media (max-width: 520px) {
+  .top-links .top-site {
+    display: none;
+  }
+
+  .brand-name {
+    font-size: 1rem;
+  }
+}
+
+.top-links {
+  align-items: center;
+  min-width: 0;
+}
+
+/* In the narrow cart a longer name wraps inside its pill rather than being cut. */
+.cart .segmented {
+  border-radius: 16px;
+}
+
+.cart .segmented-option {
+  padding-inline: 8px;
+  white-space: normal;
+  line-height: 1.25;
+  border-radius: 13px;
+}
+
+/* The language switch: the other language, in its own script. */
+.lang-toggle {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lang-toggle:hover {
+  background: var(--card-bg);
+}
+
+/* In English the page runs left to right: the arrows turn with it. */
+[dir='ltr'] .flow-onward svg {
+  transform: scaleX(-1);
+}
+
+/* The three steps: a number, a name, a line under it. */
+.step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.step-number {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-text {
+  min-width: 0;
+}
+
+.step-title {
+  margin: 2px 0 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.step-lead {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.cart-step {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.cart-step .cart-settings,
+.cart-step .cart-total {
+  padding: 0;
+  border-top: 0;
+}
+
+.cart-step-waiting .step-number {
+  background: var(--card-bg);
+  color: var(--muted);
+}
+
+/* A setting as one line until it is opened. */
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.setting-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.setting-title {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.setting-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.setting-change {
+  flex-shrink: 0;
+}
+
+.setting-open {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: 12px;
+}
+
+.setting-done {
+  justify-self: end;
+}
+
+/* Years: two quick choices, and the full list only when asked for. */
+.chip-more {
+  border-style: dashed;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.picked-line {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.chips-years {
+  margin-top: 12px;
+}
+
+.kvius .field {
+  margin-top: 4px;
+}
+
+.kvius-other {
+  align-self: center;
+  margin-inline-start: 4px;
+}
+
+/* Part of the kvius by month, opened in the card itself. */
+.kvius-months {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--accent-line);
+}
+
+/* A sefer, and the volumes of one that has them. */
+.sefer-parts-toggle {
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.sefer-parts {
+  display: grid;
+  flex-basis: 100%;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+  }
+}

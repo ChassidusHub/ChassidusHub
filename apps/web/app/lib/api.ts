@@ -659,6 +659,11 @@ export class ChassidusHubApi {
     return (await this.get<{ history: HistoryEntry[] }>(`/v1/entities/${encodeURIComponent(id)}/history`)).history;
   }
 
+  /** The item a reader app's fix or report link is about, by the app's own ids (/v1/app/item); null when there is none. */
+  appItem(ids: { farbrengen?: string; work?: string; unit?: string }) {
+    return this.maybe(this.get<{ id: string; path: string | null }>('/v1/app/item', ids));
+  }
+
   resolve(path: string) {
     return this.maybe(this.get<{ id: string; redirected: boolean; path: string | null }>('/v1/resolve', { path }));
   }

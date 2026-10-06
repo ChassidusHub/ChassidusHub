@@ -24,8 +24,8 @@ PR #12). Nothing here changes what the site or the editing side does.
 | Catalog | `api.sk.chassidushub.org` (its own Worker) | `api.chassidushub.org/v1/app` (ChassidusHub's API) |
 | Texts | the same, passed on | `api.chassidushub.org/v1/app/v3/texts/…` |
 | App updates | `api.sk…/v1/app/android/…` | `api.chassidushub.org/v1/app/android/…` |
-| Packs and APK files | `pack-api.sk.chassidushub.org` | `packs.chassidushub.org` |
-| Recordings | `media.sk.chassidushub.org` | `media.chassidushub.org` |
+| Packs and APK files | `packs.chassidushub.org` | `packs.chassidushub.org` |
+| Recordings | `media.chassidushub.org` | `media.chassidushub.org` |
 | Web app, download page | `app.chassidushub.org`, `/get` | the same |
 | Fix or report | nothing | links to chassidushub.org on every page |
 
@@ -75,16 +75,20 @@ now), so its storage keys rename freely too.
   instead of the 307 to api.sk it gives today.
 - The library: ChassidusHub does not hold it yet, so today its releases
   are numbered `0.x` and no phone takes them. Until it does, the API
-  fills the library from the reader's own catalog release (the file
-  `reader-catalog.yml` builds, kept in R2), so phones keep getting new
-  farbrengens and sefarim. Importing the library natively is its own
-  step after this one.
+  passes the app's catalog requests on to the reader's own catalog Worker
+  (`chassidushub-reader-catalog`, no address of its own, a service
+  binding), so phones keep the catalog they always had. Once ChassidusHub's
+  release is whole it serves its own, numbered `2.x`, and phones switch
+  on their own. Importing the library is its own step after this one.
 - Before the app ships on this address, a check compares ChassidusHub's
   release with the catalog the app bundles: every farbrengen, recording,
   sefer and unit the app shows today must be there. Whatever is missing
   is imported first.
-- The `api.sk` catalog Worker is then only for phones on Sichos Kodesh,
-  and is retired with them (step 5).
+- The Workers keep their names where data already points at them: the
+  media proxy's workers.dev address is in ChassidusHub's links, so it
+  stays `sichos-kodesh-media-proxy` (now also at media.chassidushub.org),
+  and the packs Worker stays `sichos-kodesh-pack-api` (at
+  packs.chassidushub.org). Only addresses people see change.
 
 ## Step 3: suggest a fix, report a problem
 

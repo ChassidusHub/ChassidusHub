@@ -1,0 +1,4261 @@
+/*
+ * The colors come from @chassidushub-reader/design, in theme-colors.css (imported
+ * first, in main.tsx): light on the bare :root, dark by the system's
+ * preference unless `data-theme="light"`, or by `data-theme="dark"` (see
+ * settings/useTheme.ts), and the theme color by `data-accent` (see
+ * settings/useAccent.ts). Everything here draws with those variables.
+ */
+:root {
+  color-scheme: light dark;
+  /* Kept in sync at runtime by ConnectivityBanner.tsx - this default only
+     covers the instant before its own layout effect first runs. */
+  --connectivity-banner-height: 0px;
+  /* The tabs: a bar this tall along the bottom, or a rail this wide down
+     the side of a wide window (see .app-nav). */
+  --tab-bar-height: 64px;
+  --rail-width: 88px;
+  /* The display face and what stands in for it before it loads. */
+  --font-display: 'Frank Ruhl Libre', 'FrankRuehlCLM', 'Noto Serif Hebrew', Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  /* 'Noto Sans Hebrew' is included here too, not only in the `html[lang='he']`
+     override below - plenty of Hebrew-script text renders while the app's
+     own UI language is English (today's real Hebrew date on the home page,
+     a catalog PDF's own Hebrew label, special-anniversary numbers spelled
+     as Hebrew words), and 'Noto Sans' alone carries zero Hebrew glyphs. Left
+     out, every one of those would fall through per-character past this
+     entire self-hosted stack to whatever Hebrew-capable system font the OS
+     happens to ship, reading as a jarring font switch mid-string against
+     the surrounding Latin text set in Noto Sans. */
+  font-family: 'Noto Sans', 'Noto Sans Hebrew', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hebrew mode's own UI face - just the same two fonts in the other priority
+   order, so Latin/digits embedded inside Hebrew text (a date, a percent)
+   still come from the same pair rather than falling through to a system
+   font in this direction either. */
+html[lang='he'] body {
+  font-family: 'Noto Sans Hebrew', 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Browsers don't let form controls inherit font-family from body by
+   default - left alone, every button/select/input renders in the OS's
+   own UI font (San Francisco, Roboto, Segoe UI...) instead of Noto Sans,
+   even though everything else on the page correctly does. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Self-hosted (not linked from Google Fonts) so every screen title still
+   renders offline from first load, same as the rest of the app shell -
+   already covered by the service worker's precache glob (vite.config.ts). */
+/* The reader's fonts (packages/app-core READER_FONTS), served unchanged with
+   their licences in /fonts/reader/licences. A browser fetches a face only
+   when the reader uses it. */
+@font-face {
+  font-family: 'FrankRuehlCLM';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/reader/FrankRuehlCLM.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'FrankRuehlCLM';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/reader/FrankRuehlCLM_bold.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'DavidCLM';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/reader/DavidCLM.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'DavidCLM';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/reader/DavidCLM_bold.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'SBLHebrew';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/reader/SBLHebrew.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'NotoSerifHebrew';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/reader/NotoSerifHebrew.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'NotoSerifHebrew';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/reader/NotoSerifHebrew_bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Hebrew';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-sans-hebrew-700.woff2') format('woff2');
+}
+
+/* The display face (docs: the UI/UX redo plan, "Visual system"): Frank Ruhl
+   Libre, for the few places a title carries the page - a tab's name, the
+   parsha on This week, a sefer's or an item's own name. It has Hebrew and
+   Latin, so both languages share it. Its licence is in /fonts. */
+@font-face {
+  font-family: 'Frank Ruhl Libre';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/frank-ruhl-libre-hebrew-700.woff2') format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+
+@font-face {
+  font-family: 'Frank Ruhl Libre';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/frank-ruhl-libre-latin-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Wraps every route's content (see App.tsx's AppContent) - reserves room
+   below whatever the actual screen renders so `.bottom-bars` (position:
+   fixed, can show on any screen) never covers the bottom of the page's
+   real content or blocks clicks on it. Each bar contributes its own
+   estimated height; the combined-class rule covers both showing at once
+   so the two don't just overlap each other's reserved space. */
+.app-content {
+  --tabs-space: 0px;
+  --player-space: 0px;
+  --download-space: 0px;
+  padding-bottom: calc(var(--tabs-space) + var(--player-space) + var(--download-space));
+}
+
+.app-shell-tabs .app-content {
+  --tabs-space: var(--tab-bar-height);
+}
+
+.app-content.has-player {
+  --player-space: var(--player-bar-height, 64px);
+}
+
+.app-content.has-download-bar {
+  --download-space: 56px;
+}
+
+.screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+}
+
+/* font-family isn't set here - it inherits Noto Sans (or, in Hebrew mode,
+   Noto Sans Hebrew) straight from `body`, same as every other element.
+   No 800 cut of either is bundled (only 400/700), so headings use 700 -
+   the browser's own synthetic bold from 700 is indistinguishable from a
+   real 800 at this size, not worth a third font file per family. */
+h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  margin: 0 0 20px;
+}
+
+/* The whole name above a page's date line, where the header shows it shortened. */
+.item-description {
+  color: var(--fg);
+  font-size: 1rem;
+  line-height: 1.45;
+  margin: 0 0 6px;
+}
+
+.category-header {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 8px;
+}
+
+.category:first-of-type .category-header {
+  margin-top: 0;
+}
+
+.gap-message {
+  color: var(--danger);
+  margin-top: 16px;
+}
+
+/* Centered empty-state placeholder for pages with no content yet. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-state-icon {
+  opacity: 0.4;
+}
+
+.empty-state-text {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* A plain heads-up, not an error - deliberately not .gap-message's danger
+   color, which would read as something having gone wrong rather than just
+   describing the current (perfectly normal) offline state. */
+.offline-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--card-hover);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.offline-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* App-wide connectivity strip (see ConnectivityBanner.tsx) - `position:
+   sticky`, not `fixed`: it takes up real space in the document flow when
+   present, so unlike the bottom-bars container, no matching content
+   padding needs to be managed elsewhere - it just occupies its own row at
+   the top and sticks there once scrolled past. */
+.connectivity-banner {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Gray, not danger-colored, matching .offline-note's own reasoning below -
+   this is a plain heads-up describing a normal state, not an error. */
+.connectivity-banner-offline {
+  background: var(--card-hover);
+  color: var(--muted);
+}
+
+.connectivity-banner-online {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.connectivity-banner-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 0;
+  margin-bottom: 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  text-transform: capitalize;
+}
+
+.back-link:hover {
+  color: var(--fg);
+}
+
+/* Replaces a screen's own inline BackLink+<h1> (see ScreenHeader.tsx) -
+   a bar at the very top of the page (the negative top margin takes it
+   over .screen's own top padding), pinned below ConnectivityBanner (see
+   its own `--connectivity-banner-height` variable). It slides away while
+   scrolling down and comes back on a small scroll up
+   (`.screen-header-hidden`, set by ScreenHeader), as the phone's does. An
+   opaque background (matching the page's own, since nothing else on this
+   page sets a different one) is what actually hides scrolled-past content
+   sliding underneath, not just the sticky positioning alone. */
+.screen-header {
+  position: sticky;
+  top: var(--connectivity-banner-height);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  background: var(--bg);
+  padding-block: 12px;
+  padding-inline: 20px;
+  margin: -24px -20px 4px;
+  transition: transform 0.18s ease;
+}
+
+/* A tab's own first page: its name, large, at the start - no way back,
+   the tabs are the way around. */
+.screen-header-root {
+  justify-content: space-between;
+}
+
+.screen-header-root .screen-header-title {
+  margin: 0;
+  text-align: start;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  line-height: 1.25;
+}
+
+.screen-header-root-action {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.screen-header-hidden {
+  transform: translateY(calc(-100% - var(--connectivity-banner-height)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-header {
+    transition: none;
+  }
+}
+
+.screen-header .back-link {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  /* The chevron and the word on the bar's middle line, level with the title's. */
+  align-self: center;
+  line-height: 1.3;
+}
+
+.screen-header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  text-wrap: balance;
+  text-align: center;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.screen-header-title-long {
+  font-size: 1rem;
+}
+
+/* An invisible, non-interactive mirror of the real BackLink (see
+   ScreenHeader.tsx) - its only job is to occupy exactly the same width as
+   the real one so `.screen-header-title`'s flex box sits centered between
+   two equal edges instead of only being pushed away from the back button
+   on one side. */
+.screen-header-spacer {
+  flex-shrink: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* The spacer's box, with an optional control drawn over it (the PDF
+   reader's colours button) - positioned absolutely so it never widens the
+   trailing side and shifts the centred title. */
+.screen-header-side {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.screen-header-action {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+}
+
+/* A bare icon in a 36px circle - the header's own small controls. */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.icon-button:hover {
+  background: var(--card-bg);
+  color: var(--fg);
+}
+
+.icon-button[aria-pressed='true'] {
+  color: var(--accent);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  padding: 8px 4px 12px;
+  margin-right: 20px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab-active {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
+.tab-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin: 0 0 16px;
+}
+
+/* "This occasion, every year": the other farbrengens that merely share the
+   matched one's date sit under a small label, in the muted colour, so the
+   real match reads first. */
+.occasion-others-label {
+  margin: 4px 0 8px;
+}
+
+.occasion-others-list .year-row-year {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Settings pages (SettingsControls.tsx): eyebrow-titled groups, each one
+   card of rows; a row is label + help on the leading side and its control
+   on the trailing side. Switch rows are whole-row buttons. */
+.settings-group {
+  margin: 0 0 4px;
+}
+
+.settings-group-title {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 8px;
+}
+
+.settings-group:first-of-type .settings-group-title {
+  margin-top: 0;
+}
+
+.settings-group-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  margin: 8px 2px 0;
+}
+
+.settings-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 0 14px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 0;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.setting-row:first-child {
+  border-top: none;
+}
+
+.setting-row-clickable {
+  cursor: pointer;
+}
+
+.setting-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.setting-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.setting-row-label {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.setting-row-help {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.setting-row-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.setting-row-stack .setting-row-control {
+  width: 100%;
+}
+
+.setting-row-value {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: end;
+}
+
+.settings-danger .setting-row-label {
+  color: var(--danger);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0 12px;
+}
+
+.settings-actions .button {
+  margin: 0;
+}
+
+.button-secondary {
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+.button-danger {
+  background: var(--danger);
+  color: var(--danger-fg);
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.toggle[aria-checked='true'] {
+  background: var(--accent);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.toggle[aria-checked='true'] .toggle-knob {
+  transform: translateX(18px);
+}
+
+[dir='rtl'] .toggle[aria-checked='true'] .toggle-knob {
+  transform: translateX(-18px);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.segmented {
+  display: flex;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.segmented-option {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 7px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.segmented-option[aria-checked='true'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.segmented-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The switch between a tab's views (the farbrengens by year, moed, parsha). */
+.tab-switch {
+  margin: 4px 0 16px;
+}
+
+/* The theme colors in Settings - a wrapping row of swatches, the chosen
+   one ringed in the text color and checked. */
+.accent-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+
+.accent-swatch {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.accent-swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 3px var(--card-bg), 0 0 0 5px var(--fg);
+}
+
+.accent-swatch:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 6px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 0 12px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+.year-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* A collection's groups with short names - years, months, parshiyos - as a grid of tiles, each with its count. */
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 560px) {
+  .library-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.library-grid-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--fg);
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.library-grid-tile:hover {
+  background: var(--card-hover);
+}
+
+.library-grid-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.library-grid-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.library-grid-count {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A list of long names or of items: a hairline between rows, the count in a small pill. */
+.library-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.library-count {
+  flex-shrink: 0;
+  margin-inline-start: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.active-downloads-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.active-download-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.active-download-row-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.active-download-row-track {
+  display: block;
+  flex-shrink: 0;
+  width: 64px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.active-download-row-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.active-download-row-percent {
+  flex-shrink: 0;
+  width: 34px;
+  text-align: end;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Makes the in-progress download label a clickable link while keeping the
+   existing flex layout intact - inherits color/font so it reads the same
+   as the plain text label it replaces. */
+.active-download-row-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.active-download-row-link:hover {
+  text-decoration: underline;
+}
+
+/* Small "Delete" button sitting in the trailing slot of a downloaded-occasion
+   row - styled as muted text so it's present but not visually loud. */
+/* Swipe-to-delete container - clips the row so the slide never bleeds
+   outside its list item, and positions the red backing behind it. */
+.swipe-to-delete-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+/* Red "Delete" backing revealed as the row slides. Fills the full height
+   of the wrapper. The --left / --right variants pin the icon to the side
+   that was exposed by the swipe. */
+.swipe-to-delete-backing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 8px;
+  pointer-events: none;
+  user-select: none;
+  /* Direction classes use physical left/right, so force LTR flex axis
+     regardless of the document's writing direction. */
+  direction: ltr;
+}
+/* User swiped left → row slides left → icon appears on the right */
+.swipe-to-delete-backing--left {
+  justify-content: flex-end;
+  padding-right: 20px;
+}
+/* User swiped right → row slides right → icon appears on the left */
+.swipe-to-delete-backing--right {
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+/* The sliding row itself - sits on top of the backing and slides on touch. */
+.swipe-to-delete-row {
+  position: relative;
+  background: var(--bg);
+  will-change: transform;
+  touch-action: pan-y;
+}
+
+/* No explicit `width` - a flex container's default `width: auto` already
+   stretches it to fill its `<li>` while subtracting the margins below on
+   both sides symmetrically (the same reasoning `.playlist-row-item`'s own
+   comment explains). An explicit `width: 100%` here used to fill the `<li>`
+   *before* those negative margins were subtracted, so the row only bled
+   past its list on the start side and fell 10px short of the true trailing
+   edge on the other - the row's own trailing content (icons) never quite
+   reached the edge of the screen's content area the way every other
+   element on the page does. */
+.year-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 10px;
+  margin: 0 -10px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+  text-align: start;
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.settings-option-item {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+}
+
+.settings-option-row {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.year-row:hover {
+  background: var(--card-hover);
+}
+
+.year-row-distance {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-inline-start: 12px;
+}
+
+.settings-option-row .year-row-distance {
+  margin-inline-start: 0;
+}
+
+.settings-option-end-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 18px;
+  min-width: 18px;
+  margin-inline-start: 12px;
+}
+
+/* Groups a row's trailing date with its download/audio/finished icon(s) -
+   the "other side" of the row from the title, not clustered with it, so a
+   row reads as [title  ......  date  icons] the same way ScreenHeader's own
+   title sits opposite its back button. The date comes before the icon(s),
+   not after, so the icon(s) - not the date, whose presence varies row to
+   row - are what sits flush against the row's true trailing edge, keeping
+   every row's icon(s) starting at the same on-screen position regardless of
+   whether that row happens to show a date. `.year-row-distance` nested in
+   here drops its own margin (below) since this wrapper's own margin
+   already provides the gap from the title. */
+.year-row-trailing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-inline-start: 12px;
+}
+
+.year-row-trailing .year-row-distance {
+  margin-inline-start: 0;
+}
+
+.year-row-audio-icon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.finished-icon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+/* The download-state slot alongside the finished/has-recording icon (see
+   OccasionRowIcon) - a separate fact ("is this offline") from either of
+   those, so it's shown as its own icon rather than folded into them. */
+.row-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.row-download-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.playlist-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--card-bg);
+}
+
+.playlist-header-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.playlist-header-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: start;
+}
+
+/* On a library item the header opens its recordings: a link, not dressed as one. */
+a.playlist-header-copy {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The playlist's own "download all" - an icon beside the play button in
+   the header card (see RecordingsScreen), not a pill in the action bar. */
+.playlist-header-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.playlist-header-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.playlist-header-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.playlist-header-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reserved status-icon width for a row that also shows a `dateSlot` (see
+   OccasionRowIcon) - blank when this occasion has no recording, rather than
+   collapsing to nothing, so the date after it always starts at the same
+   position whether or not this particular row happens to have one. */
+.row-status-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.download-state-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.download-state-button:hover {
+  color: var(--fg);
+}
+
+/* A quiet placeholder for the brief window before the real Cache Storage
+   check resolves (see useDownloadState/OccasionRowIcon) - reserves the
+   same footprint a real icon would take so one doesn't visibly pop in a
+   moment later, without implying an active process the way a spinner
+   would for what's really just a lookup. */
+.download-state-loading {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.download-state-spinner {
+  flex-shrink: 0;
+  color: var(--muted);
+  animation: download-spin 1s linear infinite;
+}
+
+.download-state-done {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.playlist-header-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  cursor: pointer;
+  transition: filter 0.12s ease, background-color 0.12s ease;
+}
+
+.playlist-header-action:hover {
+  filter: brightness(0.92);
+}
+
+@keyframes download-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The player's own buffering indicator (GlobalPlayerBar, RecordingsScreen)
+   - reuses download-spin's rotation but not its color, so it inherits
+   whichever color its own context already sets (accent-fg inside the
+   green toggle circle, accent inside an active playlist row) instead of
+   always reading as muted/grey. */
+.player-loading-spinner {
+  animation: download-spin 1s linear infinite;
+}
+
+/* Spotify-style playlist play/pause button (see PlaylistPlayButton.tsx) -
+   `.playlist-play-button-large` (RecordingsScreen's own header) overrides
+   size/shadow, both variants otherwise share this same filled green
+   circle. */
+.playlist-play-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.playlist-play-button:hover {
+  filter: brightness(0.92);
+}
+
+.playlist-play-button-large {
+  width: 44px;
+  height: 44px;
+}
+
+.playlist-play-button-spinner {
+  animation: download-spin 1s linear infinite;
+}
+
+/* PdfViewerScreen's loading line: an icon instead of bare text, matching
+   the player's own loading treatment, and tabular-nums so the percent
+   climbing from a single digit to "100%" doesn't reflow the surrounding
+   text on every tick. */
+.settings-link-list {
+  margin-top: 8px;
+}
+
+.settings-link-row {
+  margin-bottom: 8px;
+}
+
+.settings-link-row:last-child {
+  margin-bottom: 0;
+}
+
+.pdf-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdf-loading-spinner {
+  animation: download-spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+.about-update-spinner {
+  animation: download-spin 1s linear infinite;
+}
+
+/* The green, non-spinning ring shown once a download's real byte progress is
+   known (see DownloadProgressRing.tsx) - same footprint as .download-state-spinner
+   above so swapping between the two mid-download doesn't shift the row. */
+.download-progress-ring {
+  flex-shrink: 0;
+}
+
+.download-progress-ring-track {
+  stroke: var(--muted);
+  opacity: 0.3;
+}
+
+.download-progress-ring-fill {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 150ms linear;
+}
+
+/* Share + Download as one matching pair of pills on every occasion page
+   and recordings page (see OccasionActions.tsx) - the same shape whether
+   it is a button (start a download, share), a live status (downloading,
+   with the progress ring) or a done state, so the two never look like
+   they came from different screens. */
+.action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter 0.12s ease, background-color 0.12s ease;
+}
+
+.action-pill svg {
+  flex-shrink: 0;
+}
+
+.action-pill:hover {
+  background: var(--card-bg);
+}
+
+/* The download pill - the primary action of the pair, tinted like the
+   playlist play button's quieter cousin rather than filled solid, so it
+   reads as a real action without shouting over the content. */
+.action-pill-primary,
+.action-pill-primary:hover {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.action-pill-primary:not(.action-pill-static):hover {
+  filter: brightness(0.92);
+}
+
+/* A status, not a button: "Downloading" and "Downloaded" keep the pill's shape but nothing happens on hover. */
+.action-pill-static {
+  cursor: default;
+}
+
+/* The brief Cache Storage lookup before the real state is known - same footprint, dimmed and inert, so nothing pops in a moment later. */
+.action-pill-pending {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Continue section (home page) - a Spotify-style "pick up where you left
+   off" row: the label row stays exactly like every other occasion row,
+   with a thin progress track added below it rather than beside it, so
+   `.year-row`'s own `flex-direction: row`/`justify-content: space-between`
+   are overridden here rather than reused. */
+.continue-row {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+/* This row's own title + icon(s) line - unlike the other occasion-row
+   screens, there's no separate trailing date on the same line here (see
+   .continue-row-date below), so the icon(s) sit at the end of the title
+   line itself rather than grouped with a sibling. */
+.year-row-title-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.continue-row-date {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.continue-progress-track {
+  display: block;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.continue-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+/* A long occasion label (some run to a full descriptive sentence) stays on
+   one line with an ellipsis rather than wrapping - keeps every row the
+   same height and, combined with `text-align: start` above, is what
+   actually keeps a Hebrew name flush against the row's real reading edge
+   instead of wrapping unpredictably. */
+.year-row-year {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.settings-option-label {
+  flex: 1 1 auto;
+  display: block;
+  text-overflow: clip;
+  min-width: 0;
+}
+
+.overflow-marquee-content {
+  display: inline-block;
+  min-width: 100%;
+  white-space: nowrap;
+  transition-property: transform;
+  transition-timing-function: linear;
+  will-change: transform;
+}
+
+.card {
+  margin-bottom: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--card-bg);
+}
+
+.pdf-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+
+.button {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: none;
+  border-radius: 999px;
+  padding: 11px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: transform 0.08s ease, filter 0.1s ease;
+}
+
+.button:hover {
+  filter: brightness(1.08);
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
+/* A PDF card's own "Read" button (CategoryScreen, FarbrengenScreen) is the
+   card's last element - its own margin-bottom is then pure excess on top
+   of the card's own padding, leaving a visibly oversized gap between the
+   button and the rounded card's bottom edge. */
+.card .button:last-child {
+  margin-bottom: 0;
+}
+
+.hero-button {
+  display: block;
+  padding: 18px;
+  margin: 20px 0 24px;
+  font-size: 1.125rem;
+  border-radius: 14px;
+}
+
+/* ---- This week (HomeScreen) ---- */
+
+.home-date {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+/* The parsha, large, in the display face. */
+.home-parsha {
+  margin: 2px 0 8px;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+html[lang='en'] .home-parsha {
+  font-size: 1.75rem;
+}
+
+/* The kvius year's farbrengens this week: each a card to open, play and read. */
+.week-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.week-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+}
+
+[dir='rtl'] .week-card {
+  padding: 12px 16px 12px 12px;
+}
+
+.week-card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.week-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.week-card-date {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.week-card-main:hover .week-card-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.week-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.week-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--fg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.week-card-action svg {
+  color: var(--accent);
+}
+
+.week-card-action:hover {
+  background: var(--card-hover);
+}
+
+/* "All" under a section: a quiet link to the whole list. */
+.home-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-more:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* A strip of years across the page, scrolling sideways on its own. */
+.year-strip {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  margin: 0 -20px;
+  padding: 2px 20px 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.year-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.year-strip > li {
+  flex-shrink: 0;
+}
+
+.year-strip-year {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 72px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.year-strip-year:hover {
+  background: var(--card-hover);
+}
+
+.year-strip-label {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.year-strip-count {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.home-tile:hover {
+  background: var(--card-hover);
+}
+
+.home-more:focus-visible,
+.week-card-main:focus-visible,
+.week-card-action:focus-visible,
+.year-strip-year:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* A door into each part of the library, two to a row (three on a wide screen). */
+/* The seforim browser's two shelves: text & PDFs, external links. */
+.seforim-shelves {
+  margin: 14px 0 4px;
+}
+
+.home-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+@media (min-width: 720px) {
+  .home-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.home-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 118px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--card-bg);
+  color: var(--fg);
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.home-tile-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.home-tile-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.home-tile-blurb {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.home-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.year-row-selected {
+  color: var(--accent);
+}
+
+/* ThisWeekScreen's previous/next-week stepper. `space-between` (not
+   `center`) so the always-present center content (the week's parsha - see
+   `.week-nav-center`) keeps the two buttons pushed apart to the row's
+   edges instead of sitting flush against each other, which read badly on
+   the default (un-shifted) week when there was nothing between them. */
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.week-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--card-bg);
+  border: none;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.week-nav-button:hover {
+  background: var(--card-hover);
+}
+
+.week-nav-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.week-nav-parsha {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.week-nav-reset {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Category buttons (an occasion's own page) and the recordings playlist */
+
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--fg);
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.category-row:hover {
+  background: var(--card-hover);
+}
+
+.category-row-count {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.category-row-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Groups the recordings count with its play button (see FarbrengenScreen) -
+   same trailing-group shape as `.year-row-trailing`. */
+.category-row-trailing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* "More from this occasion" - a de-emphasized, collapsed section for
+   mugah/maamorim/hagahos/hosofos and any non-highlighted biltiMugah PDFs
+   on a farbrengen's own page (see FarbrengenScreen.tsx) - closed by
+   default so the highlighted hanacha stays the visually primary content. */
+
+.playlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* The card/hover box now lives here, not on `.playlist-row` - `.row-icons`
+   (this row's own download button) is a sibling of that inner button, not
+   a descendant of it (a `<button>` can't nest another `<button>`, which a
+   single per-chapter download action needs to be, independent of the
+   row's own play action), so putting the shared background/padding on the
+   outer `<li>` is what actually pulls the download icon inside the same
+   visual container as the rest of the row instead of looking like a
+   separate element stuck on the side of it. */
+.playlist-row-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 10px;
+  /* Bleeds past the list's own edge symmetrically - a nicer, bigger hover
+     rectangle, safe on both sides now that the download button sits
+     inside this same box rather than immediately after it. */
+  margin-inline: -10px;
+  transition: background-color 0.1s ease;
+}
+
+.playlist-row-item:hover {
+  background: var(--card-hover);
+}
+
+.playlist-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--fg);
+  text-align: start;
+  cursor: pointer;
+}
+
+.playlist-row-icon {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.playlist-row-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-row-duration {
+  flex-shrink: 0;
+  /* Fixed width, not shrink-to-content: this sits at the row's own outer
+     edge with the progress bar right next to it, so a shorter duration
+     string (e.g. "4:47" vs "48:55") would make the whole row narrower on
+     that side, shifting the progress bar's position between rows. 6ch fits
+     the longest real duration in this catalog (some farbrengens run past
+     3 hours - "181:06" is 6 characters). tabular-nums keeps each digit the
+     same width too, so the fill amount inside a single row's own bar
+     doesn't jitter as the seconds tick over either. */
+  width: 6ch;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.playlist-row-active .playlist-row-name,
+.playlist-row-active .playlist-row-icon {
+  color: var(--accent);
+}
+
+/* A chapter's own in-progress fill (RecordingsScreen) - a fixed-width
+   sliver rather than `.continue-progress-track`'s full-width bar, since it
+   sits inline between the chapter name and its duration in a horizontal
+   row instead of underneath a label in its own row. */
+.playlist-row-progress-track {
+  display: block;
+  flex-shrink: 0;
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.playlist-row-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+/* PDF viewer */
+
+.pdf-viewer-screen {
+  /* Horizontal padding lives on the status and the page list individually
+     (below), not here - so `.zoomed` can drop just the page list's out to
+     the screen edges (more room to pan around a zoomed page). The top bar
+     (ReadingBar) stands outside, across the whole width. Room at the foot
+     for the page slider. */
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 0 calc(96px + env(safe-area-inset-bottom));
+}
+
+.pdf-viewer-screen.zoomed {
+  max-width: none;
+}
+
+/* The reader's top bar over a PDF (ReadingBar.tsx) draws with the
+   reader's colour names; a PDF gives it the app's own, which follow the
+   page's colours (PdfViewerScreen's scheme override). */
+.app-content:has(.pdf-viewer-screen) {
+  --r-bg: var(--bg);
+  --r-fg: var(--fg);
+  --r-muted: var(--muted);
+  --r-rule: var(--border);
+  --r-accent: var(--accent);
+}
+
+/* The page slider: which page of how many, and a slider to go to any
+   other - floating above the bars at the bottom, stepping aside with the
+   top bar. */
+.pdf-slider {
+  position: fixed;
+  inset-inline: 16px;
+  bottom: calc(var(--tabs-space, 0px) + var(--player-space, 0px) + var(--download-space, 0px) + env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 520px;
+  margin-inline: auto;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.pdf-slider-hidden {
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+}
+
+.pdf-slider-label {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pdf-slider-range {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-slider {
+    transition: none;
+  }
+}
+
+/* `.pdf-viewer-screen` itself is deliberately unpadded (see its own
+   comment) so `.pdf-pages` can go edge-to-edge when zoomed; the
+   loading/error/not-found text keeps its own inset from the screen edge. */
+.pdf-viewer-status {
+  padding: 0 20px;
+}
+
+.pdf-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  overflow-x: hidden;
+  padding: 0 20px;
+}
+
+.pdf-viewer-screen.zoomed .pdf-pages {
+  padding: 0;
+}
+
+.pdf-page {
+  /* Width/height are set inline (renderPdf.ts) rather than capped here at
+     100% - a zoomed page is deliberately wider than its container, and
+     the parent's `overflow-x: hidden` (above) is what keeps that
+     contained instead of a `max-width` that would just cancel the zoom
+     out again. */
+  flex-shrink: 0;
+  border-radius: 0;
+  border: none;
+  overflow: hidden;
+  background: var(--card-bg);
+  /* Native touch handling on this element only ever pans vertically - a
+     pinch or a deliberate sideways drag (see pdfPageZoom.ts) is always
+     left for our own JS to interpret, never raced against the browser's
+     own gesture recognizer. */
+  touch-action: pan-y;
+}
+
+.pdf-page canvas {
+  display: block;
+}
+
+/* The pages' colours (app-core's pdfCssFilter, set by the reader as
+   --pdf-filter): dark pages from the per-theme flags in
+   useInvertPdfInDarkMode.ts (on by default in dark mode, off in light
+   mode), else the tint and contrast of the settings sheet. For dark
+   pages `hue-rotate(180deg)` alongside `invert(1)` un-inverts hue while
+   keeping the inverted lightness - a plain `invert(1)` alone would also
+   flip every color (red text would render blue), not just light-vs-dark. */
+.pdf-viewer-screen .pdf-page canvas {
+  filter: var(--pdf-filter, none);
+}
+
+/* A page at a time (the settings sheet's "Pages"): the document snaps to
+   each page's top, below the sticky header; not while zoomed in, where
+   panning a page needs the free scroll. */
+html:has(.pdf-viewer-screen.pdf-paged:not(.zoomed)) {
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 64px;
+}
+
+.pdf-viewer-screen.pdf-paged .pdf-page {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* The PDF colours drawn as small pages, taller than wide. */
+.reader-swatch.pdf-swatch {
+  width: 46px;
+  height: 58px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.pdf-settings-note {
+  margin: 0 4px;
+}
+
+/* The single fixed-position container at the bottom of the viewport - both
+   DownloadProgressBar and GlobalPlayerBar live here (see App.tsx) and hide
+   themselves independently, stacking via normal flex flow instead of each
+   fixing itself to the screen edge and needing to know the other's height.
+   The safe-area inset lives here once, not duplicated on each bar. */
+.bottom-bars {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* The five tabs (see AppNav.tsx) - the last of the bottom bars, so the
+   player and the download strip stand above them and the safe-area inset
+   falls below them. The tab showing is its icon in a tint of the theme
+   color; the rest are muted. */
+.app-nav {
+  display: flex;
+  height: var(--tab-bar-height);
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+}
+
+.app-nav-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 30px;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-nav-tab[aria-current] {
+  color: var(--fg);
+}
+
+.app-nav-tab[aria-current] .app-nav-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.app-nav-tab:not([aria-current]):hover .app-nav-icon {
+  background: var(--card-hover);
+}
+
+.app-nav-tab:focus-visible {
+  outline: none;
+}
+
+.app-nav-tab:focus-visible .app-nav-icon {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-nav-icon {
+    transition: none;
+  }
+}
+
+/* The put-away player's handle keeps the safe-area inset for itself only
+   when nothing is below it. */
+.app-shell-tabs .global-player-handle {
+  padding-bottom: 6px;
+}
+
+/* A wide window: the tabs stand down the side as a rail, the page and the
+   bars at the bottom move over to make room. */
+@media (min-width: 900px) {
+  .app-shell-tabs {
+    padding-inline-start: var(--rail-width);
+  }
+
+  .app-shell-tabs .app-content {
+    --tabs-space: 0px;
+  }
+
+  .app-shell-tabs .bottom-bars {
+    inset-inline-start: var(--rail-width);
+  }
+
+  .app-shell-tabs .global-player-handle {
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-nav {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--rail-width);
+    height: auto;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    border-top: none;
+    border-inline-end: 1px solid var(--border);
+  }
+
+  .app-nav-tab {
+    flex: 0 0 auto;
+    padding-block: 6px;
+  }
+}
+
+/* The player (GlobalPlayerBar.tsx) - one instance at the app root, shown
+   once anything has played this session, whichever page is open: the mini
+   player above the tabs, and the full player opened from it. */
+
+.global-player {
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+}
+
+/* Put away: nothing but a pull-up handle at the bottom edge - swipe up on
+   it, or tap it, and the bar is back. */
+.global-player-hidden {
+  display: flex;
+  justify-content: center;
+}
+
+.global-player-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 640px;
+  min-height: 22px;
+  padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px));
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.global-player-handle-pill {
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.6;
+}
+
+.global-player-handle:hover .global-player-handle-pill {
+  opacity: 1;
+}
+
+.download-progress-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.download-progress-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+  opacity: 0.18;
+  transition: width 0.2s ease;
+}
+
+.download-progress-bar-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.global-player-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.global-player-toggle:hover {
+  filter: brightness(0.92);
+}
+
+.global-player-skip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.global-player-skip:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.global-player-skip:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.global-player-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+/* The speed control - a small text pill ("1.5×") after the transport
+   buttons, shown only for a shiur or a chazara (see GlobalPlayerBar); the
+   Rebbe's own recordings never get one. One tap cycles to the next speed. */
+.global-player-rate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 40px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.global-player-rate:hover {
+  color: var(--fg);
+  background: var(--card-bg);
+}
+
+.global-player-title-main {
+  display: block;
+  color: var(--fg);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.global-player-title-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.global-player-range {
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  outline: none;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
+  cursor: pointer;
+}
+
+html[dir='rtl'] .global-player-range {
+  background: linear-gradient(to left, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
+}
+
+.global-player-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
+}
+
+html[dir='rtl'] .global-player-range::-webkit-slider-runnable-track {
+  background: linear-gradient(to left, var(--accent) 0, var(--accent) var(--global-player-progress, 0%), var(--border) var(--global-player-progress, 0%), var(--border) 100%);
+}
+
+.global-player-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: calc((4px - 12px) / 2);
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.global-player-range::-moz-range-track {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.global-player-range::-moz-range-progress {
+  height: 4px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.global-player-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.global-player-times {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  margin-top: 2px;
+}
+
+.global-player-chapter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px 16px;
+  color: var(--fg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+}
+
+.global-player-chapter:hover {
+  background: var(--card-hover);
+}
+
+.global-player-chapter-active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.global-player-chapter-duration {
+  color: var(--muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  margin-inline-start: 12px;
+}
+
+/* The mini player: the title and chapter, play/pause, and a thin line
+   along its top edge for how far the chapter has played. */
+.mini-player {
+  position: relative;
+}
+
+.mini-player-progress {
+  position: absolute;
+  inset-inline: 0;
+  top: -1px;
+  height: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.mini-player-progress-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  background: var(--accent);
+}
+
+.mini-player-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 640px;
+  min-height: 60px;
+  margin: 0 auto;
+  padding: 6px 16px;
+}
+
+.mini-player-open {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.mini-player .global-player-toggle {
+  width: 44px;
+  height: 44px;
+}
+
+/* The full player: a sheet up from the bottom on a phone-sized window, a
+   panel along the end of a wide one. The page behind stays still. */
+html.full-player-open body {
+  overflow: hidden;
+}
+
+.full-player-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
+  background: rgb(0 0 0 / 0.45);
+  animation: full-player-fade 0.18s ease;
+}
+
+.full-player {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-radius: 20px 20px 0 0;
+  background: var(--bg-elevated);
+  color: var(--fg);
+  animation: full-player-rise 0.2s ease;
+}
+
+@media (min-width: 900px) {
+  .full-player-scrim {
+    align-items: stretch;
+    justify-content: flex-end;
+    padding-top: 0;
+  }
+
+  .full-player {
+    width: 420px;
+    max-height: none;
+    padding-top: env(safe-area-inset-top, 0px);
+    border-radius: 0;
+    border-inline-start: 1px solid var(--border);
+    animation-name: full-player-slide;
+  }
+
+  html[dir='rtl'] .full-player {
+    animation-name: full-player-slide-rtl;
+  }
+
+  /* A panel beside the page is closed with its button, not swiped. */
+  .full-player-grip {
+    visibility: hidden;
+  }
+}
+
+@keyframes full-player-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes full-player-rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes full-player-slide {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes full-player-slide-rtl {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .full-player-scrim,
+  .full-player {
+    animation: none;
+  }
+}
+
+/* Its top: a grip to swipe it down by, and the button that closes it. */
+.full-player-top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  margin-inline: -20px;
+  background: var(--bg-elevated);
+  touch-action: none;
+}
+
+.full-player-grip {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.5;
+}
+
+.full-player-close {
+  position: absolute;
+  inset-inline-start: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.full-player-now {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.full-player-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.full-player-date,
+.full-player-chapter {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.full-player-chapter {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.full-player-error {
+  text-align: center;
+}
+
+.full-player-scrub .global-player-range {
+  height: 6px;
+}
+
+.full-player-scrub .global-player-times {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.full-player-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.full-player-transport .global-player-skip {
+  width: 48px;
+  height: 48px;
+}
+
+.global-player-toggle.full-player-toggle {
+  width: 68px;
+  height: 68px;
+}
+
+/* 15 seconds back or forward: the number sits inside the circular arrow. */
+.full-player-seconds {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.full-player-seconds:hover {
+  background: var(--card-hover);
+}
+
+/* In Hebrew the position runs right to left (the range above), so the
+   skips point that way too: back towards the right, forward to the left.
+   Play keeps its one shape; the number stays readable. */
+html[dir='rtl'] .full-player-transport .global-player-skip svg,
+html[dir='rtl'] .full-player-seconds svg {
+  transform: scaleX(-1);
+}
+
+.full-player-seconds-number {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-top: 1px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.full-player-seconds:focus-visible,
+.full-player-transport .global-player-skip:focus-visible,
+.global-player-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.full-player-extras {
+  display: flex;
+  justify-content: center;
+}
+
+.full-player-extras .global-player-rate {
+  height: 32px;
+  min-width: 56px;
+  font-size: 0.8125rem;
+}
+
+.full-player-chapters {
+  margin-inline: -20px;
+  border-top: 1px solid var(--border);
+}
+
+.full-player-chapters-title {
+  margin: 0;
+  padding: 14px 20px 6px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.full-player-chapter-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.full-player-chapter-list .global-player-chapter {
+  min-height: 48px;
+  padding-inline: 20px;
+}
+
+/* Search */
+
+.search-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--fg);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.search-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.search-clear-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.search-clear-link:hover {
+  color: var(--fg);
+}
+
+.search-results-count {
+  margin-bottom: 8px;
+}
+
+.search-show-all {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.search-show-all:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Styled after a "Get it on Google Play" badge: a small fixed-dark chip
+   that reads as an external service's own mark rather than part of this
+   app's theme, so it stays the same in light and dark mode alike, the
+   same way a real store badge never re-themes itself either. */
+.about-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.about-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  text-decoration: none;
+  border: none;
+  transition: filter 0.15s ease;
+}
+
+.about-badge:hover {
+  filter: brightness(1.08);
+}
+
+.about-badge-icon {
+  display: flex;
+  color: var(--accent-fg);
+}
+
+.about-badge-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.about-badge-eyebrow {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-fg);
+  opacity: 0.75;
+}
+
+.about-badge-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.about-whats-new-title {
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.about-changelog {
+  margin: 0;
+  padding-inline-start: 20px;
+  color: var(--muted);
+}
+
+.about-changelog li {
+  margin-bottom: 6px;
+}
+
+/* ---- The library (WP16) ---- */
+
+.library-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  padding-block: 20px;
+}
+
+.library-tabs {
+  margin-bottom: 12px;
+}
+
+.library-item-row {
+  align-items: flex-start;
+}
+
+.library-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.library-item-subtitle {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.library-item-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  line-height: 1.35;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+
+/* ---- The seforim reader (WP16) ----
+   One set of variables per page, set by ReaderScreen from the reader's
+   settings (packages/app-core readerSettings.ts): the paper (--r-bg and
+   friends), the font, size, line height, line length and side gutter.
+   Everything that is text reads in em, so it scales with the size; the
+   chrome around it (bar, chips, eyebrows) stays in rem. */
+
+body:has(.reader) {
+  background: var(--r-bg-page, var(--bg));
+}
+
+.reader {
+  --r-bg-page: var(--r-bg);
+  min-height: 100vh;
+  background: var(--r-bg);
+  color: var(--r-fg);
+}
+
+.reader .icon-button {
+  color: var(--r-fg);
+}
+
+.reader .icon-button:hover {
+  background: color-mix(in srgb, var(--r-fg) 8%, transparent);
+}
+
+.reader .back-link {
+  color: var(--r-fg);
+}
+
+/* In the reading bar the back link stands level with the titles and the buttons beside it. */
+.reader-bar .back-link {
+  margin-bottom: 0;
+}
+
+.reader-accent {
+  color: var(--r-accent);
+}
+
+.reader-bar {
+  position: sticky;
+  top: var(--connectivity-banner-height);
+  z-index: 20;
+  background: color-mix(in srgb, var(--r-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--r-rule);
+  transition: transform 0.22s ease;
+}
+
+.reader-bar-hidden {
+  transform: translateY(calc(-100% - var(--connectivity-banner-height)));
+}
+
+.reader-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 12px;
+}
+
+.reader-bar-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.3;
+}
+
+.reader-bar-work {
+  color: var(--r-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.reader-bar-unit {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-page {
+  box-sizing: content-box;
+  max-width: var(--r-measure);
+  margin: 0 auto;
+  padding: 28px var(--r-gutter) 120px;
+  font-family: var(--r-font);
+  font-size: var(--r-size);
+  line-height: var(--r-line);
+  /* A chapter put above the one on screen: the reader keeps the place itself (ReaderScreen), the browser must not as well. */
+  overflow-anchor: none;
+}
+
+.reader-eyebrow {
+  display: block;
+  color: var(--r-muted);
+  font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+}
+
+/* The chapter before, read chapter by chapter: the same card as the next one's, above the text. */
+.reader-before {
+  margin-bottom: 2em;
+  font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  font-size: 1rem;
+}
+
+.reader-section + .reader-section {
+  margin-top: 3.2em;
+  padding-top: 2.4em;
+  border-top: 1px solid var(--r-rule);
+}
+
+.reader-head {
+  margin-bottom: 1.3em;
+  text-align: center;
+}
+
+.reader-heading {
+  margin: 0.15em 0 0;
+  font-size: 1.3em;
+  font-weight: 700;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.reader-ornament {
+  display: block;
+  width: 40px;
+  height: 2px;
+  margin: 14px auto 0;
+  border-radius: 1px;
+  background: var(--r-accent);
+  opacity: 0.85;
+}
+
+/* The chapter's edition: one quiet control under the heading, opening a menu of the others. */
+.edition-picker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.edition-picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid var(--r-rule);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--r-fg);
+  font: 600 0.875rem/1.3 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  cursor: pointer;
+}
+
+.edition-picker-button svg {
+  flex: none;
+  color: var(--r-muted);
+}
+
+.edition-picker-button:hover,
+.edition-picker-button[aria-expanded='true'] {
+  background: var(--r-rule);
+}
+
+.edition-picker-button:focus-visible,
+.edition-picker-option:focus-visible {
+  outline: 2px solid var(--r-accent);
+  outline-offset: 2px;
+}
+
+.edition-picker-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 5;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 8px 0;
+  border: 1px solid var(--r-rule);
+  border-radius: 12px;
+  background: var(--r-bg);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  text-align: start;
+  transform: translateX(-50%);
+}
+
+.edition-picker-menu ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edition-picker-title {
+  margin: 0;
+  padding: 4px 16px 6px;
+  color: var(--r-muted);
+  font: 700 0.6875rem/1.4 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.edition-picker-links {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--r-rule);
+}
+
+.edition-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--r-fg);
+  font: 400 0.9375rem/1.35 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.edition-picker-option:hover {
+  background: var(--r-rule);
+}
+
+.edition-picker-option svg {
+  flex: none;
+  color: var(--r-muted);
+}
+
+.edition-picker-selected {
+  color: var(--r-accent);
+  font-weight: 700;
+}
+
+.edition-picker-selected svg {
+  color: var(--r-accent);
+}
+
+.reader-from,
+.reader-source {
+  color: var(--r-muted);
+  font: 0.75rem/1.5 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  text-align: center;
+}
+
+.reader-from {
+  margin: 0 0 1.2rem;
+}
+
+.reader-source {
+  margin: 2.2em 0 0;
+}
+
+.reader-paragraph {
+  margin: 0 0 0.7em;
+  text-align: var(--r-align);
+  hyphens: auto;
+}
+
+/* A line set to the end side, as a letter's date line and signature are printed. */
+.reader-paragraph-end {
+  text-align: end;
+}
+
+/* A letter as the printed volumes set it (app-core's layoutLetter): the
+   date line at the start side, the city under it indented, the addressee
+   in a block indented further, the greeting back at the start side, the
+   body's paragraphs with their first lines indented, the signature at the
+   end side. */
+.reader-letter-dateline,
+.reader-letter-place,
+.reader-letter-addressee,
+.reader-letter-greeting {
+  text-align: start;
+  hyphens: none;
+}
+
+.reader-letter-dateline {
+  margin-bottom: 0.1em;
+}
+
+.reader-letter-place {
+  margin-inline-start: 2em;
+  margin-bottom: 1em;
+}
+
+.reader-letter-addressee {
+  margin-inline-start: 16%;
+  margin-bottom: 0;
+  /* Its lines broken evenly, so a short word (וכו') never stands alone on the last one. */
+  text-wrap: balance;
+}
+
+.reader-letter-greeting {
+  margin-top: 1em;
+  margin-bottom: 0.6em;
+}
+
+.reader-letter-signature {
+  margin-top: 1em;
+  margin-bottom: 0.15em;
+}
+
+.reader-paragraph-indent {
+  text-indent: 1.5em;
+}
+
+.reader-subheading {
+  margin: 1.2em 0 0.6em;
+  font-size: 1.04em;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.reader-subheading-major {
+  font-size: 1.12em;
+}
+
+.reader-mark {
+  margin-inline: 0.2em;
+  color: var(--r-muted);
+  font-size: 0.68em;
+  white-space: nowrap;
+}
+
+.reader-note-ref {
+  padding: 0 0.15em;
+  border: 0;
+  background: none;
+  color: var(--r-accent);
+  font: inherit;
+  font-size: 0.68em;
+  font-weight: 700;
+  line-height: 0;
+  vertical-align: super;
+  cursor: pointer;
+}
+
+.reader-note-inline {
+  color: var(--r-muted);
+  font-size: 0.8em;
+}
+
+.reader-notes {
+  margin-top: 1.6em;
+  padding-top: 1em;
+  border-top: 1px solid var(--r-rule);
+  font-size: 0.82em;
+  line-height: 1.55;
+}
+
+.reader-notes-title {
+  margin: 0 0 0.6em;
+  color: var(--r-muted);
+  font: 700 0.75rem/1.4 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+.reader-note {
+  margin: 0 0 0.6em;
+}
+
+.reader-note-marker {
+  color: var(--r-accent);
+  font-weight: 700;
+}
+
+.reader-note-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.reader-note-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 70vh;
+  margin-bottom: 24px;
+  padding: 20px;
+  overflow: auto;
+  border: 1px solid var(--r-rule);
+  border-radius: 14px;
+  background: var(--r-bg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  color: var(--r-fg);
+  font-size: 0.92em;
+}
+
+.reader-note-sheet p {
+  margin: 0;
+}
+
+.reader-note-sheet .button {
+  align-self: center;
+}
+
+.reader-error {
+  margin-top: 8px;
+  font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  font-size: 1rem;
+}
+
+.reader-end {
+  margin-top: 2.6em;
+  font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  font-size: 1rem;
+}
+
+.reader-next {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--r-rule);
+  border-radius: 14px;
+  color: var(--r-fg);
+  text-decoration: none;
+}
+
+.reader-next:hover {
+  border-color: var(--r-accent);
+}
+
+.reader-next svg {
+  color: var(--r-accent);
+  flex-shrink: 0;
+}
+
+.reader-next-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reader-next-label {
+  font-weight: 600;
+}
+
+.reader-fin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.reader-selection {
+  position: absolute;
+  z-index: 40;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--r-fg);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  color: var(--r-bg);
+  transform: translate(-50%, calc(-100% - 10px));
+}
+
+.reader-selection button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  font: 600 0.75rem/1 'Noto Sans', 'Noto Sans Hebrew', sans-serif;
+  cursor: pointer;
+}
+
+.reader-selection button:hover {
+  background: color-mix(in srgb, var(--r-bg) 18%, transparent);
+}
+
+/* The settings panel: a sheet from the bottom on a phone, a card beside the text on a wide screen. */
+.reader-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* Lightens as the sheet is dragged down (SettingsSheet sets the shade). */
+  background: rgba(0, 0, 0, calc(0.25 * var(--sheet-shade, 1)));
+}
+
+.reader-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  max-height: 82vh;
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  overflow: auto;
+  border-radius: 20px 20px 0 0;
+  background: var(--bg-elevated);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+  color: var(--fg);
+  outline: none;
+  /* Follows the finger down (SettingsSheet), springs back or slides away. */
+  overscroll-behavior: contain;
+  transform: translateY(var(--sheet-offset, 0px));
+  transition: transform 0.18s ease-out;
+  animation: reader-panel-in 0.22s ease-out;
+}
+
+.reader-panel-dragging {
+  transition: none;
+}
+
+@keyframes reader-panel-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* The handle a thumb pulls the sheet down by (a phone only). */
+.reader-panel-grabber {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 40px;
+  height: 4px;
+  margin-left: -20px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-panel {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .reader-panel-backdrop {
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 76px 24px 24px;
+    background: rgba(0, 0, 0, 0.12);
+  }
+
+  .reader-panel {
+    max-height: calc(100vh - 100px);
+    border-radius: 16px;
+    transform: none;
+    animation: none;
+  }
+
+  .reader-panel-grabber {
+    display: none;
+  }
+}
+
+/* The panel scrolls as a whole; nothing in it gives up height to fit (the font row, a scroller itself, would collapse). */
+.reader-panel > * {
+  flex-shrink: 0;
+}
+
+.reader-panel .reader-eyebrow {
+  color: var(--muted);
+  margin: 4px 4px 0;
+}
+
+.reader-panel-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  /* The whole head is the handle: no scrolling starts here. */
+  touch-action: none;
+}
+
+.reader-panel-head h2 {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
+.reader-panel .icon-button {
+  color: var(--fg);
+}
+
+.reader-size {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 14px;
+  background: var(--card-bg);
+}
+
+.reader-size .icon-button {
+  width: 44px;
+  height: 44px;
+}
+
+.reader-size .icon-button:disabled {
+  color: var(--border);
+  cursor: default;
+}
+
+.reader-size-value {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reader-size-value .reader-eyebrow {
+  margin: 0;
+}
+
+.reader-size-percent {
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.reader-fonts {
+  display: flex;
+  gap: 10px;
+  padding: 2px 2px 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+/* At least 104px, and as wide as its sample: a wide font or a larger text
+   size never breaks the word (the ת used to fall to a second line). */
+.reader-font {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 104px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: var(--card-bg);
+  color: var(--fg);
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.reader-font-active {
+  border-color: var(--accent);
+}
+
+.reader-font-sample {
+  font-size: 1.6rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.reader-font-name {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.reader-font-active .reader-font-name {
+  color: var(--accent);
+}
+
+.reader-themes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.reader-theme {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reader-theme-active {
+  color: var(--fg);
+}
+
+.reader-swatch {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-family: 'FrankRuehlCLM', serif;
+  font-size: 1.35rem;
+}
+
+.reader-swatch-app {
+  background: linear-gradient(90deg, #faf8f4 50%, #0e1110 50%) !important;
+  color: var(--accent) !important;
+}
+
+.reader-theme-active .reader-swatch {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.reader-reset {
+  align-self: center;
+  padding: 8px 16px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seforim-row-muted .year-row-year {
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-bar {
+    transition: none;
+  }
+}
+
+.about-font-name {
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+/* ---- A farbrengen's page (FarbrengenScreen) ---- */
+
+/* The day, the Hebrew date and the parsha, on one line under the name. */
+.farbrengen-date {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  margin: 0 0 10px;
+}
+
+/* What it has, at a glance: the recording's length, a hanacha, a mugah. */
+.farbrengen-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+.farbrengen-marks li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Recordings, texts, and what is around it. An old recordings or texts address lands on its section below the sticky header. */
+.farbrengen-section {
+  margin-top: 22px;
+  scroll-margin-top: 72px;
+}
+
+/* A text: one row that opens its PDF, in a card with the others of its kind. */
+.text-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.text-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.text-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  min-height: 48px;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.text-row:hover {
+  background: var(--card-hover);
+}
+
+.text-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.text-row-icon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.text-row-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.text-group {
+  margin-top: 14px;
+}
+
+.text-group-title {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+/* The farbrengens before and after it, side by side. */
+.farbrengen-neighbors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.farbrengen-neighbor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.farbrengen-neighbor:hover {
+  background: var(--card-hover);
+}
+
+.farbrengen-neighbor-next {
+  justify-content: flex-end;
+  text-align: end;
+}
+
+.farbrengen-neighbor svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.farbrengen-neighbor-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.farbrengen-neighbor-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.farbrengen-neighbor-title {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* The library's one shelf (LibraryScreen): each place a row with its icon, name, a few words and a count. */
+.shelf-section + .shelf-section {
+  margin-top: 8px;
+}
+
+.shelf-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.shelf-list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.shelf-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 14px;
+  color: var(--fg);
+  text-decoration: none;
+  transition: background-color 0.1s ease;
+}
+
+.shelf-row:hover {
+  background: var(--card-hover);
+}
+
+.shelf-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.shelf-row-well {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.shelf-row-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shelf-row-name {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.shelf-row-blurb {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.shelf-row-count {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shelf-row-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+/* ---- Search (SearchScreen): the filters as chips, each opening a short list ---- */
+
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.search-chips .search-clear-link {
+  margin: 0 4px;
+}
+
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--fg);
+}
+
+.search-chip-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.search-chip-open,
+.search-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.search-chip-open {
+  padding: 6px 12px;
+}
+
+.search-chip-on .search-chip-open {
+  padding-inline-end: 4px;
+}
+
+.search-chip-clear {
+  padding: 6px 10px 6px 4px;
+}
+
+[dir='rtl'] .search-chip-clear {
+  padding: 6px 4px 6px 10px;
+}
+
+.search-chip-open svg {
+  color: var(--muted);
+}
+
+.search-chip-open:focus-visible,
+.search-chip-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* A filter's choices, in its sheet. */
+.sheet-options {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.sheet-options > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.sheet-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9375rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sheet-option:hover {
+  background: var(--card-hover);
+}
+
+.sheet-option-on {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.sheet-option:focus-visible,
+.sheet-day:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sheet-subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.sheet-days {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sheet-day {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.sheet-day-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+}
+
+/* Before typing: the searches made lately, and what to try. */
+.search-start {
+  margin-bottom: 18px;
+}
+
+.search-start-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.search-start-head .search-clear-link {
+  margin-bottom: 0;
+}
+
+button.text-row {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Each kind's results, under a heading that narrows the search to it. */
+.search-group {
+  margin-bottom: 18px;
+}
+
+.search-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 8px 0 6px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.search-group-name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.search-group-count {
+  flex: 1 1 auto;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.search-group-head svg {
+  color: var(--muted);
+}
+
+.search-group-head:hover .search-group-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.search-group-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.search-group .search-show-all {
+  margin-top: 6px;
+}
+
+.shelf-search {
+  margin-bottom: 4px;
+}
+
+/* "Suggest a fix" and "Report a problem" at the foot of a farbrengen or a sefer (components/FixLinks.tsx). */
+.fix-links {
+  margin-top: 24px;
+}
+
+.fix-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fix-links-help {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+}

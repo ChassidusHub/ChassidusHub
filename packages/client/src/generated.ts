@@ -583,14 +583,14 @@ export interface Operations {
     };
     output: Record<string, unknown>;
   };
-  /** The phone app's APK: redirects to Sichos-Kodesh's app server */
+  /** The phone app's APK: redirects to the reader's packs Worker */
   appAndroidDownload: {
     input: {
       abi: "arm64-v8a" | "armeabi-v7a" | "universal";
     };
     output: Response;
   };
-  /** The phone app's newest release: redirects to Sichos-Kodesh's app server */
+  /** The phone app's newest release: redirects to the reader's packs Worker */
   appAndroidLatest: {
     input: Record<string, never>;
     output: Response;
@@ -628,6 +628,18 @@ export interface Operations {
       version: string;
     };
     output: Record<string, unknown>;
+  };
+  /** The item an app's fix or report link is about, by the app's own ids */
+  appItem: {
+    input: {
+      farbrengen?: string;
+      work?: string;
+      unit?: string;
+    };
+    output: {
+      id: string;
+      path?: string;
+    };
   };
   /** Approve and merge (keepers of its sets, stewards) */
   approveSuggestion: {
@@ -2774,6 +2786,7 @@ export const OPERATIONS = {
   appCatalogLatest: {"method":"GET","path":"/v1/app/{schema}/catalog/latest/catalog.json","pathParams":["schema"],"query":[],"body":null,"answer":"raw"},
   appCatalogManifest: {"method":"GET","path":"/v1/app/{schema}/catalog/manifest.json","pathParams":["schema"],"query":[],"body":null,"answer":"json"},
   appCatalogRelease: {"method":"GET","path":"/v1/app/{schema}/catalog/{version}/catalog.json","pathParams":["schema","version"],"query":[],"body":null,"answer":"json"},
+  appItem: {"method":"GET","path":"/v1/app/item","pathParams":[],"query":["farbrengen","work","unit"],"body":null,"answer":"json"},
   approveSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/approve","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   appSourceText: {"method":"GET","path":"/v1/app/v3/texts/{sha256}","pathParams":["sha256"],"query":[],"body":null,"answer":"text"},
   authorizationServer: {"method":"GET","path":"/.well-known/oauth-authorization-server","pathParams":[],"query":[],"body":null,"answer":"json"},
@@ -2969,12 +2982,12 @@ export abstract class GeneratedMethods {
     return this.call('anchorSync', input ?? {} as Operations['anchorSync']['input']);
   }
 
-  /** The phone app's APK: redirects to Sichos-Kodesh's app server (GET /v1/app/v1/app/android/download/{abi}) */
+  /** The phone app's APK: redirects to the reader's packs Worker (GET /v1/app/v1/app/android/download/{abi}) */
   appAndroidDownload(input: Operations['appAndroidDownload']['input']): Promise<Operations['appAndroidDownload']['output']> {
     return this.call('appAndroidDownload', input ?? {} as Operations['appAndroidDownload']['input']);
   }
 
-  /** The phone app's newest release: redirects to Sichos-Kodesh's app server (GET /v1/app/v1/app/android/latest.json) */
+  /** The phone app's newest release: redirects to the reader's packs Worker (GET /v1/app/v1/app/android/latest.json) */
   appAndroidLatest(): Promise<Operations['appAndroidLatest']['output']> {
     return this.call('appAndroidLatest', {} as Operations['appAndroidLatest']['input']);
   }
@@ -2997,6 +3010,11 @@ export abstract class GeneratedMethods {
   /** The apps' catalog: the farbrengens by year (v1), with the library (v2) and the works (v3) (GET /v1/app/{schema}/catalog/{version}/catalog.json) */
   appCatalogRelease(input: Operations['appCatalogRelease']['input']): Promise<Operations['appCatalogRelease']['output']> {
     return this.call('appCatalogRelease', input ?? {} as Operations['appCatalogRelease']['input']);
+  }
+
+  /** The item an app's fix or report link is about, by the app's own ids (GET /v1/app/item) */
+  appItem(input?: Operations['appItem']['input']): Promise<Operations['appItem']['output']> {
+    return this.call('appItem', input ?? {} as Operations['appItem']['input']);
   }
 
   /** Approve and merge (keepers of its sets, stewards) (POST /v1/suggestions/{id}/approve) */

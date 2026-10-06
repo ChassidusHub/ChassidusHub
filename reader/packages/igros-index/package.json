@@ -1,0 +1,32 @@
+{
+  "name": "@chassidushub-reader/igros-index",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reads the Igros Kodesh letters and the Maanos from the data files of an existing Igros app into plain JSON, and makes the Igros a readable sefer. The Igros ship (cleared 2026-09-24); the Maanos stay local (see README).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "build-igros": "tsx bin/build.ts",
+    "import-igros": "tsx bin/import.ts"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  }
+}
