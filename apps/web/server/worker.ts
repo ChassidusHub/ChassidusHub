@@ -115,6 +115,17 @@ async function asGuest(request: Request, env: Env, ctx: Ctx): Promise<Response |
   return privately(await page(env, ctx, request));
 }
 
+/** A recording through Sichos-Kodesh's media proxy; its range and caching headers go through as they are. */
+async function media(request: Request, proxy: NonNullable<Env['MEDIA']>): Promise<Response> {
+  const url = new URL(request.url);
+  const headers = new Headers();
+  for (const name of ['range', 'if-none-match', 'if-modified-since', 'accept']) {
+    const value = request.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  return proxy.fetch(new Request(`https://media${url.pathname.slice('/_/media'.length)}${url.search}`, { method: request.method, headers }));
+}
+
 /** Search asks the database (and, by meaning, a model) something new each time: an address may search a limited number of times a minute. */
 const SEARCHING = /^\/(search|_\/find|_\/lookup)$/;
 
@@ -136,17 +147,12 @@ export default {
     let key: string | undefined;
     const shut = await door(request, env, (opened) => (key = opened));
     if (shut) return shut;
+    // The recording's bytes, through the proxy's service binding, whether the site is locked or open (lib/media.ts).
+    if (env.MEDIA && new URL(request.url).pathname.startsWith('/_/media/')) {
+      const recording = await media(request, env.MEDIA);
+      return key ? privately(recording) : recording;
+    }
     if (key) {
-      const url = new URL(request.url);
-      if (env.MEDIA && url.pathname.startsWith('/_/media/')) {
-        // The recording's bytes, through the proxy's service binding; its range and caching headers go through as they are.
-        const headers = new Headers();
-        for (const name of ['range', 'if-none-match', 'if-modified-since', 'accept']) {
-          const value = request.headers.get(name);
-          if (value) headers.set(name, value);
-        }
-        return privately(await env.MEDIA.fetch(new Request(`https://media${url.pathname.slice('/_/media'.length)}${url.search}`, { method: request.method, headers })));
-      }
       if (env.ASSETS && mayBeFile(request)) {
         const file = await env.ASSETS.fetch(request);
         if (file.status !== 404) return privately(file);

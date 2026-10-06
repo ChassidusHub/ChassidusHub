@@ -29,8 +29,8 @@ run_worker_first = true
 binding = "API"
 service = "chassidushub-api"
 
-# Sichos-Kodesh's media proxy (JEM's audio): its public address is off while ChassidusHub is private, so the site plays
-# those recordings through /_/media/…, behind its lock (server/worker.ts).
+# Sichos-Kodesh's media proxy (JEM's audio): the site plays those recordings through /_/media/… (server/worker.ts),
+# behind its lock when it is locked, whatever address the catalog holds for them (app/lib/media.ts).
 [[services]]
 binding = "MEDIA"
 service = "sichos-kodesh-media-proxy"
