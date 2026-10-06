@@ -60,6 +60,10 @@ describe('recordings through the site', () => {
   it("plays the media proxy's recordings through /_/media, and leaves other addresses alone", async () => {
     const { playable } = await import('../app/lib/media.js');
     expect(playable('https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/a%20b.mp3')).toBe('/_/media/jem-audio/a%20b.mp3');
+    // The catalog still holds the proxy's address from before the move.
+    expect(playable('https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/AR0015852.mp3')).toBe('/_/media/jem-audio/AR0015852.mp3');
+    expect(playable('https://media.sk.chassidushub.org/jem-audio/a.mp3')).toBe('/_/media/jem-audio/a.mp3');
+    expect(playable('https://evil.workers.dev/jem-audio/a.mp3')).toBe('https://evil.workers.dev/jem-audio/a.mp3');
     expect(playable('https://api.chassidushub.org/objects/abc')).toBe('https://api.chassidushub.org/objects/abc');
     expect(playable('not a url')).toBe('not a url');
   });
