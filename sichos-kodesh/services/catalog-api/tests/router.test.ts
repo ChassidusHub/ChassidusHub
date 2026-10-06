@@ -46,8 +46,8 @@ describe('manifest', () => {
   it("points `url` at this same origin's catalog.json, whatever host the request came in on", () => {
     const manifest = parseCatalogManifest(bodyJson(get(MANIFEST_PATH)))!;
     expect(manifest.url).toBe(`${ORIGIN}${catalogPath()}`);
-    const other = parseCatalogManifest(bodyJson(handleRequest('GET', MANIFEST_PATH, 'https://api.sk.shmuky.dev')))!;
-    expect(other.url).toBe(`https://api.sk.shmuky.dev${catalogPath()}`);
+    const other = parseCatalogManifest(bodyJson(handleRequest('GET', MANIFEST_PATH, 'https://api.sk.chassidushub.org')))!;
+    expect(other.url).toBe(`https://api.sk.chassidushub.org${catalogPath()}`);
   });
 
   it('is what an app on an older catalog would apply, and what an app on this one would not', () => {

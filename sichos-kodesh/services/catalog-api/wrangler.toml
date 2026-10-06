@@ -1,0 +1,24 @@
+# api.sk.chassidushub.org: the catalog the Sichos Kodesh apps fetch (src/worker.ts),
+# on the chassidushub.org account. `npm run build` bakes this commit's catalog into
+# generated/release.ts first, so a deploy is "what is on the deployed commit".
+name = "sichos-kodesh-catalog-api"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+workers_dev = true
+routes = [{ pattern = "api.sk.chassidushub.org", custom_domain = true }]
+
+[build]
+command = "npm run build"
+
+[observability]
+enabled = true
+
+# The texts are ChassidusHub's (its API, /v1/app/v3/texts/<sha256>).
+[[services]]
+binding = "CHASSIDUSHUB_API"
+service = "chassidushub-api"
+
+# The phone's own updates are the app server's (services/pack-api).
+[[services]]
+binding = "PACK_API"
+service = "sichos-kodesh-pack-api"

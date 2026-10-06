@@ -81,10 +81,11 @@ npm run build-catalog-works -w @sichos-kodesh/works -- \
   volumes (`חלק א`...), each a list of letters; each letter is a unit (id
   `3275`, `141a`; label `אגרת ג'ערה`, `Letter 3275`) with one Hebrew
   edition naming its text object's sha256 and size.
-- `services/catalog-api/texts/igros-kodesh-rebbe/vol-NN.json` (committed):
-  each volume's text objects. The catalog API's build writes each one to
-  `public/v3/texts/<sha256>`, so the apps read a letter at
-  `https://api.sk.shmuky.dev/v3/texts/<sha256>` and check its size.
+- `services/catalog-api/texts/igros-kodesh-rebbe/vol-NN.json` (git-ignored:
+  this repository, inside ChassidusHub, keeps no texts): each volume's text
+  objects. They go to the archive (`sk-archive ... --collection igros`);
+  ChassidusHub serves them, and the apps read a letter at
+  `https://api.sk.chassidushub.org/v3/texts/<sha256>` and check its size.
 
 A text object (`src/textObjects.ts`) is in the reader's own form: the date
 line and city as lines set to the end side, the addressee, body and

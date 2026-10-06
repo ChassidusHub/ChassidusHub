@@ -2,8 +2,8 @@ import { byYearJson, catalogHead, libraryHead, libraryJson, libraryManifestJson,
 
 /**
  * The whole API as one pure function of (method, path, origin) -> response,
- * so it can be unit-tested without a server and adapted to Vercel's Node
- * function signature in api/index.ts. What it serves is the contract in
+ * so it can be unit-tested without a server and adapted to a Worker's
+ * fetch in src/worker.ts. What it serves is the contract in
  * packages/catalog/src/release.ts; the client is
  * packages/app-core/src/catalog/catalogUpdate.ts.
  *
@@ -19,7 +19,7 @@ import { byYearJson, catalogHead, libraryHead, libraryJson, libraryManifestJson,
  * services/media-proxy's CORS headers).
  */
 
-/** Where the hosted texts are, each at its sha256: static files Vercel serves before this function (vercel.json). */
+/** Where the texts are, each at its sha256: passed on from ChassidusHub by the Worker (src/worker.ts). */
 export const TEXTS_PATH = '/v3/texts/<sha256>';
 
 export interface RouteResponse {
@@ -36,7 +36,7 @@ const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Max-Age': '86400',
 };
 
-/** The manifest is re-read by the apps once a day; a short shared cache keeps a burst of phones off the function. `s-maxage` is what Vercel's CDN honours for function responses. */
+/** The manifest is re-read by the apps once a day; a short shared cache keeps a burst of phones off the Worker. */
 const MANIFEST_CACHE = 'public, max-age=300, s-maxage=300';
 /** A release's data never changes once published (its URL carries the version), so it can live in every cache for a year. */
 const CATALOG_CACHE = 'public, max-age=31536000, s-maxage=31536000, immutable';
@@ -106,7 +106,7 @@ function notFound(path: string): RouteResponse {
   return json(404, { error: 'not_found', path, hint: `Try ${MANIFEST_PATH}` }, NOT_FOUND_CACHE);
 }
 
-/** `origin` is the scheme + host the request arrived on (https://api.sk.shmuky.dev, or a preview deployment) - the manifest's `url` always points back into the same deployment, so what an app fetches next is the file this very API serves. */
+/** `origin` is the scheme + host the request arrived on (https://api.sk.chassidushub.org, or a preview) - the manifest's `url` always points back into the same deployment, so what an app fetches next is the file this very API serves. */
 export function handleRequest(method: string, path: string, origin: string): RouteResponse {
   const upper = method.toUpperCase();
   if (upper === 'OPTIONS') {
@@ -156,11 +156,11 @@ export function handleRequest(method: string, path: string, origin: string): Rou
         catalog: SERVED_VERSION,
         schemas: SERVED_SCHEMAS,
         endpoints: SERVED.flatMap((s) => [manifestPath(s.schema), catalogPath(s.manifest.version, s.schema), changelogPath(s.schema), latestPath(s.schema)]),
-        // Static files beside the function (scripts/build.mjs): each hosted text at its sha256, as the works name it.
+        // Each text at its sha256, as the works name it: ChassidusHub's, passed on by the Worker (src/worker.ts).
         texts: TEXTS_PATH,
-        // The phone app's newest release, passed through from the app server (vercel.json).
+        // The phone app's newest release, passed through from the app server (src/worker.ts).
         app: { android: '/v1/app/android/latest.json', download: '/v1/app/android/download/<arm64-v8a|armeabi-v7a|universal>' },
-        source: 'https://github.com/shmuky/Sichos-Kodesh/tree/main/services/catalog-api',
+        source: 'https://github.com/ChassidusHub/ChassidusHub/tree/main/sichos-kodesh/services/catalog-api',
       },
       MANIFEST_CACHE,
     );
