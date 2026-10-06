@@ -104,11 +104,11 @@ Sichos-Kodesh keeps building its farbrengens and library as it does now.
 ## 6. The apps' catalog address
 
 The apps fetch their catalog from one address, app-core's
-`CATALOG_API_BASE_URL` (today `https://api.sk.chassidushub.org`). ChassidusHub
-answers the same paths under `https://api.chassidushub.org/v1/app`, in the
-same shapes (its `packages/catalog/src/release.ts`), built from the
-catalog on main (`services/api/src/appCatalog.ts`). Switching an app is
-changing that one address to `https://api.chassidushub.org/v1/app`:
+`CATALOG_API_BASE_URL`: since the reader app's 3.0.0 (it lives in
+`reader/`, docs/plans/reader-app.md), `https://api.chassidushub.org/v1/app`.
+ChassidusHub answers the app's paths there, in the same shapes (its
+`packages/catalog/src/release.ts`), built from the catalog on main
+(`services/api/src/appCatalog.ts`):
 
 | The app asks (after the base) | ChassidusHub answers | What it is |
 | --- | --- | --- |
@@ -118,7 +118,21 @@ changing that one address to `https://api.chassidushub.org/v1/app`:
 | `/v<n>/catalog/<version>/catalog.json` | `/v1/app/v<n>/catalog/<version>/catalog.json` | the release the manifest names (its `url`), byte for byte its `sha256` |
 | `/v<n>/catalog/changelog.json`, `/v<n>/catalog/latest/catalog.json` | the same under `/v1/app` | |
 | `/v3/texts/<sha256>` | `/v1/app/v3/texts/<sha256>` | a sefer's text, as `/v1/texts/<sha256>` |
-| `/v1/app/android/latest.json`, `/v1/app/android/download/<abi>` | `/v1/app/v1/app/android/...` | the phone's own updates: sent on (307) to `api.sk.chassidushub.org` |
+| `/v1/app/android/latest.json`, `/v1/app/android/download/<abi>` | `/v1/app/v1/app/android/...` | the phone's own updates: sent on (307) to the packs Worker, `packs.chassidushub.org` |
+
+While a release here lacks a part its app shows (the library, today), the
+catalog paths are passed on to the reader's own catalog Worker
+(`reader/services/catalog-api`, the `READER_CATALOG` service binding),
+with the addresses in its answers moved back under `/v1/app`. Phones so
+keep the catalog they always had, and switch to ChassidusHub's own on
+their own once it is whole: its `2.x` is newer than every `1.x` the reader
+made.
+
+The app's "Suggest a fix" and "Report a problem" (its app-core
+`fixLinks.ts`) open the site's `/_/app/edit` and `/_/app/report`, which
+find the item by the app's ids through `/v1/app/item` (`?farbrengen=` a
+mafteiach number, `?work=` and `&unit=` the phone's ids) and send the
+reader on to its edit page or a new report.
 
 What goes in:
 

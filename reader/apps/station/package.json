@@ -1,0 +1,44 @@
+{
+  "name": "@chassidushub-reader/station",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The yeshiva station (docs/offline-plan.md WP6): keeps a mirror of signed packs from the pack API, reads a plugged-in phone's state/have.json and device.json, and copies only the packs that bring it something new - or writes plain MP3 folders for a player with no app.",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "bin": {
+    "sk-station": "./dist/bin/sk-station.js"
+  },
+  "scripts": {
+    "prebuild": "npm run build -w @chassidushub-reader/pack-builder",
+    "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build -w @chassidushub-reader/pack-builder",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "pretypecheck": "npm run build -w @chassidushub-reader/pack-builder",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "station": "tsx bin/sk-station.ts"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@hebcal/core": "^6.9.2",
+    "@chassidushub-reader/app-core": "^0.1.0",
+    "@chassidushub-reader/catalog": "^0.1.0",
+    "@chassidushub-reader/pack-builder": "^0.1.0",
+    "@chassidushub-reader/pack-format": "^0.1.0",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@chassidushub-reader/pack-api": "^0.1.0",
+    "@types/node": "^24.13.3",
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.2",
+    "vitest": "^3.0.0"
+  }
+}

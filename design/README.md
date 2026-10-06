@@ -12,7 +12,7 @@ Design mockups for the ChassidusHub web app (repo: ChassidusHub/ChassidusHub, ap
 - `assets/` — favicon / logo mark
 
 ## Logo (final)
-- Mark: a tall book in the accent colour (`--accent`, #8a2c1e light / #e2957f dark), width:height 4:5, corner radius ~20% of width on the left and ~33% on the right (the rounder side faces outward in RTL). A centred Latin **R** in Frank Ruhl Libre 700, colour `--bg`.
+- Mark: a tall book in the accent colour (`--accent`, #8a2c1e light / #e2957f dark), width:height 4:5, corner radius ~20% of width on the left and ~33% on the right (the rounder side faces outward in RTL). A centred Latin **C** in Frank Ruhl Libre 700, colour `--bg`.
 - Wordmark: "ChassidusHub" in **Newsreader 600** (Google Fonts), letter-spacing -0.015em, nudged down ~0.21em to sit optically centred against the book.
 - In RTL headers the book comes first (on the right), then the name. Full rules (construction, direction, clear space, minimum sizes, placement, colour, misuse): `ChassidusHub Logo Guidelines.dc.html`. The **English (left-to-right) lockup is the primary logo**; Hebrew pages use the mirrored version (book on the right).
 - `github.md` — map from each screen to the repo files it relates to

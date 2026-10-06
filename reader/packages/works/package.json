@@ -1,0 +1,37 @@
+{
+  "name": "@chassidushub-reader/works",
+  "version": "0.1.0",
+  "description": "The library as works (docs/chabad-library-plan.md, WP9): authors, works, units and editions, the curated registry of every Chabad work the sources list, and the per-edition rights gate. The seven collections the phone browses map in with their item ids kept.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "npm run build -w @chassidushub-reader/catalog && npm run build -w @chassidushub-reader/hebrewbooks-index",
+    "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build -w @chassidushub-reader/catalog && npm run build -w @chassidushub-reader/hebrewbooks-index",
+    "test": "vitest run",
+    "pretypecheck": "npm run build -w @chassidushub-reader/catalog && npm run build -w @chassidushub-reader/hebrewbooks-index",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "build-catalog-works": "tsx bin/build-catalog-works.ts"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@chassidushub-reader/catalog": "^0.1.0",
+    "@chassidushub-reader/hebrewbooks-index": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.2",
+    "vitest": "^3.0.0"
+  }
+}

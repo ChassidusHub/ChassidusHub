@@ -278,12 +278,54 @@ describe("the apps' catalog.json", () => {
     expect((await get(`/v1/app/v3/texts/${'0'.repeat(64)}`)).status).toBe(404);
   });
 
-  it("sends the phone's own updates on to Sichos-Kodesh's app server", async () => {
+  it("sends the phone's own updates on to the reader's packs Worker", async () => {
     const latest = await app.request('https://api.chassidushub.test/v1/app/v1/app/android/latest.json');
     expect(latest.status).toBe(307);
-    expect(latest.headers.get('Location')).toBe('https://api.sk.chassidushub.org/v1/app/android/latest.json');
+    expect(latest.headers.get('Location')).toBe('https://packs.chassidushub.org/v1/app/android/latest.json');
     const apk = await app.request('https://api.chassidushub.test/v1/app/v1/app/android/download/universal');
-    expect(apk.headers.get('Location')).toBe('https://api.sk.chassidushub.org/v1/app/android/download/universal');
+    expect(apk.headers.get('Location')).toBe('https://packs.chassidushub.org/v1/app/android/download/universal');
+  });
+});
+
+describe("the item a fix or report link is about", () => {
+  it("finds a farbrengen, a sefer and a page of it by the app's own ids", async () => {
+    const occasion = farbrengens()[0]!.occasionId;
+    const farbrengen = await get(`/v1/app/item?farbrengen=${occasion}`);
+    expect(farbrengen.status).toBe(200);
+    expect((await catalog.get(farbrengen.body.id))?.type).toBe('event');
+    const tanya = await get('/v1/app/item?work=tanya');
+    expect((await catalog.get(tanya.body.id))?.type).toBe('work');
+    const unitId = works().contents.find((c) => c.workId === 'tanya')!.units[0]!.id;
+    const page = await get(`/v1/app/item?work=tanya&unit=${unitId}`);
+    expect((await catalog.get(page.body.id))?.type).toBe('unit');
+    // A page it does not know is its sefer; nothing at all is not found.
+    expect((await get('/v1/app/item?work=tanya&unit=no-such-page')).body.id).toBe(tanya.body.id);
+    expect((await get('/v1/app/item?work=no-such-sefer')).status).toBe(404);
+    expect((await get('/v1/app/item')).status).toBe(400);
+  });
+});
+
+describe("the reader's own catalog, while ChassidusHub's lacks a part", () => {
+  it('passes the app on to it, under this address, and serves its own once whole', async () => {
+    const asked: string[] = [];
+    const reader = async (path: string) => {
+      asked.push(path);
+      if (path === '/v3/catalog/manifest.json') return Response.json({ schemaVersion: 3, version: '1.7.2', url: 'https://reader-catalog/v3/catalog/1.7.2/catalog.json' }, { headers: { 'Cache-Control': 'public, max-age=300' } });
+      if (path === '/v3/catalog/latest/catalog.json') return new Response(null, { status: 302, headers: { Location: 'https://reader-catalog/v3/catalog/1.7.2/catalog.json' } });
+      if (path === '/v3/catalog/1.7.2/catalog.json') return new Response('{"version":"1.7.2"}', { headers: { 'Content-Type': 'application/json' } });
+      return new Response('not found', { status: 404 });
+    };
+    app = createApp({ catalog, readerCatalog: reader });
+    const manifest = await get('/v1/app/v3/catalog/manifest.json');
+    expect(manifest.body).toEqual({ schemaVersion: 3, version: '1.7.2', url: 'https://api.chassidushub.test/v1/app/v3/catalog/1.7.2/catalog.json' });
+    expect(manifest.headers.get('Cache-Control')).toBe('public, max-age=300');
+    expect((await get('/v1/app/v3/catalog/1.7.2/catalog.json')).body).toEqual({ version: '1.7.2' });
+    const latest = await app.request('https://api.chassidushub.test/v1/app/v3/catalog/latest/catalog.json');
+    expect(latest.headers.get('Location')).toBe('https://api.chassidushub.test/v1/app/v3/catalog/1.7.2/catalog.json');
+    expect(asked).toEqual(['/v3/catalog/manifest.json', '/v3/catalog/1.7.2/catalog.json', '/v3/catalog/latest/catalog.json']);
+    // The farbrengens alone (the web app's schema) are whole here: ChassidusHub serves them itself.
+    expect((await get('/v1/app/v1/catalog/manifest.json')).body.version).toMatch(/^2\./);
+    expect(asked).toHaveLength(3);
   });
 });
 

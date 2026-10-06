@@ -22,7 +22,7 @@ import { pageRoutes } from './pages.js';
 import { driveRoutes, type DriveOptions } from './drive.js';
 import { threadRoutes } from './threads.js';
 import { organizeRoutes } from './organize.js';
-import { appCatalogRoutes, type AppReleases } from './appCatalog.js';
+import { appCatalogRoutes, type AppReleases, type ReaderCatalog } from './appCatalog.js';
 import { machineRoutes, type MachineDispatch } from './machine.js';
 import { mafteachRoutes } from './mafteach.js';
 import { ownersOnly } from './private.js';
@@ -48,6 +48,8 @@ export interface ApiOptions {
   auth?: AuthOptions;
   /** The Sichos Kodesh apps' catalog as last built (appCatalog.ts): a Worker keeps one for its isolate's life, across its requests. */
   appReleases?: AppReleases;
+  /** The reader app's own catalog, for the parts ChassidusHub's does not hold yet (appCatalog.ts). */
+  readerCatalog?: ReaderCatalog;
   /** Salt for hashing reporters' addresses (only the hash is kept, for rate limits). */
   reportSalt?: string;
   /** Verifies a report's captcha token (Cloudflare Turnstile); unset, reports need none. */
@@ -219,7 +221,7 @@ export function createApp(options: ApiOptions): Hono {
   mirrorRoutes(app, catalog, { mirrors: options.mirrors, files: options.files });
   threadRoutes(app, catalog, signedIn, authenticate);
   organizeRoutes(app, catalog, signedIn);
-  appCatalogRoutes(app, catalog, options.appReleases);
+  appCatalogRoutes(app, catalog, options.appReleases, options.readerCatalog);
   mafteachRoutes(app, catalog);
   machineRoutes(app, catalog, signedIn, { dispatch: options.machineDispatch, waitUntil: options.waitUntil ? (_c, work) => options.waitUntil!(work) : undefined });
   scanRoutes(app, catalog, {

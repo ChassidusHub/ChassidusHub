@@ -4,9 +4,10 @@ import { parseDateKey } from '@chassidushub/hebrew';
 import { defaultRightsState, decisionFromRightsState, type CatalogSourceId, type EditionData, type EventData, type Licence, type LocalName, type RecordingData, type RightsState, type UnitData, type WorkData } from '@chassidushub/model';
 
 /**
- * The Sichos Kodesh apps' catalog, served from ChassidusHub (docs/sichos-kodesh.md,
- * "The apps' catalog address"). The apps fetch their catalog from one
- * address (app-core's `CATALOG_API_BASE_URL`, today api.sk.chassidushub.org):
+ * The reader apps' catalog (the ChassidusHub app in reader/, formerly Sichos
+ * Kodesh), served from ChassidusHub (docs/sichos-kodesh.md, "The apps' catalog
+ * address"). The apps fetch their catalog from one address (app-core's
+ * `CATALOG_API_BASE_URL`, api.chassidushub.org/v1/app since the app's 3.0.0):
  * a small manifest under `/v<schema>/catalog/manifest.json` once a day,
  * and the `catalog.json` it points at when it names a newer version. Here
  * the same paths sit under `/v1/app`, in the same shapes, built from
@@ -17,7 +18,8 @@ import { defaultRightsState, decisionFromRightsState, type CatalogSourceId, type
  *   /v1/app/v2/catalog/...   schema 2: the same, plus the library
  *   /v1/app/v3/catalog/...   schema 3: the same, plus the works (the phone)
  *   /v1/app/v3/texts/<sha256>              a sefer's text, as /v1/texts gives it
- *   /v1/app/v1/app/android/...             the phone's own updates, sent on to Sichos-Kodesh
+ *   /v1/app/v1/app/android/...             the phone's own updates, sent on to the packs Worker
+ *   /v1/app/item?...                       the item a fix or report link is about
  *
  * The shapes are Sichos-Kodesh's (its packages/catalog/src/release.ts,
  * types.ts, library/types.ts and works/types.ts), checked there by
@@ -157,8 +159,18 @@ export type AppSchema = (typeof APP_SCHEMAS)[number];
 /** A complete release's major version: newer than every catalog Sichos-Kodesh numbered itself (1.x). */
 export const APP_CATALOG_MAJOR = 2;
 
-/** Where the phone's own updates (the APKs) are, until ChassidusHub serves them. */
-export const SICHOS_KODESH_APP_SERVER = 'https://api.sk.chassidushub.org';
+/** Where the phone's own updates (latest.json and the APKs) are: the reader app's packs Worker (reader/services/pack-api). */
+export const READER_APP_SERVER = 'https://packs.chassidushub.org';
+
+/**
+ * The reader app's own catalog (reader/services/catalog-api, over a service
+ * binding): asked a path as the app asks it (`/v3/catalog/manifest.json`).
+ * While a release here lacks a part the app shows (`missing`), the app's
+ * catalog requests are passed on to it, so phones keep getting the catalog
+ * they always had, and switch to ChassidusHub's own on their own once it is
+ * whole: its `2.x` is newer than every `1.x` the reader made.
+ */
+export type ReaderCatalog = (path: string) => Promise<Response>;
 
 // ------------------------------------------------------------------ from ChassidusHub's items
 
@@ -227,7 +239,12 @@ function audioOf(data: RecordingData): AppAudio | null {
 /** The farbrengens by Hebrew year, in date order: every event mafteiach numbers, with its recordings and its hanachos on Drive. */
 export function farbrengensByYear(events: Array<Row<EventData>>, recordings: Array<Row<RecordingData>>): Record<number, AppEntry[]> {
   const parts = new Map<string, Array<Row<RecordingData>>>();
-  for (const r of recordings) if (r.data.event) parts.set(r.data.event, [...(parts.get(r.data.event) ?? []), r]);
+  for (const r of recordings) {
+    if (!r.data.event) continue;
+    const list = parts.get(r.data.event);
+    if (list) list.push(r);
+    else parts.set(r.data.event, [r]);
+  }
   const byYear: Record<number, AppEntry[]> = {};
   const seen = new Set<number>();
   for (const e of events) {
@@ -273,7 +290,11 @@ interface AuthorRow {
 export function appWorks(authors: Array<Row<AuthorRow>>, works: Array<Row<WorkData>>, units: Array<Row<UnitData>>): AppWorks {
   const authorIds = new Map(authors.map((a) => [a.id, a.data.slug ?? a.data.externalIds?.['sichos-kodesh-author'] ?? a.id]));
   const byWork = new Map<string, Array<Row<UnitData>>>();
-  for (const u of units) byWork.set(u.data.work, [...(byWork.get(u.data.work) ?? []), u]);
+  for (const u of units) {
+    const list = byWork.get(u.data.work);
+    if (list) list.push(u);
+    else byWork.set(u.data.work, [u]);
+  }
 
   const out: AppWorks = { authors: [], works: [], contents: {} };
   const used = new Set<string>();
@@ -384,6 +405,9 @@ function contentsOf(workId: string, list: Array<Row<UnitData>>, sources: AppWork
   return { workId, contents: strip(root.entries), units };
 }
 
+/** Whether ChassidusHub holds the library; until it does, `emptyLibrary` stands in for it. */
+export const HOLDS_LIBRARY = false;
+
 /** The library, which ChassidusHub does not hold yet: every collection, empty. */
 export function emptyLibrary(): AppLibrary {
   return { moadim: [], parshiyos: [], collections: Object.fromEntries(LIBRARY_COLLECTION_IDS.map((id) => [id, { items: [], groups: {} }])) as unknown as AppLibrary['collections'] };
@@ -465,9 +489,9 @@ async function lastChange(catalog: Catalog): Promise<{ seq: number; at: string }
   return { seq: Number(row?.seq ?? 0), at: row?.at ? new Date(row.at).toISOString() : new Date(0).toISOString() };
 }
 
-async function rows<T>(catalog: Catalog, where: string, params: unknown[] = []): Promise<Array<Row<T>>> {
+async function rows<T>(catalog: Catalog, where: string, params: unknown[] = [], data = 'r.data'): Promise<Array<Row<T>>> {
   const { rows } = await catalog.db.query<{ id: string; path: string | null; data: T }>(
-    `SELECT e.id, e.path, r.data FROM entity e JOIN revision r ON r.id = e.main_rev
+    `SELECT e.id, e.path, ${data} AS data FROM entity e JOIN revision r ON r.id = e.main_rev
      WHERE e.main_rev IS NOT NULL AND NOT e.deleted AND r.data IS NOT NULL AND ${where}
      ORDER BY e.id`,
     params,
@@ -475,13 +499,26 @@ async function rows<T>(catalog: Catalog, where: string, params: unknown[] = []):
   return rows;
 }
 
+/**
+ * Of a unit, only what the apps are given: a unit also holds its words
+ * (`body`), and tens of thousands of them read whole do not fit in a
+ * Worker's memory.
+ */
+const UNIT_FIELDS = `jsonb_strip_nulls(jsonb_build_object(
+  'work', r.data->'work', 'order', r.data->'order', 'label', r.data->'label', 'position', r.data->'position',
+  'externalIds', jsonb_build_object('sichos-kodesh-unit', r.data->'externalIds'->'sichos-kodesh-unit'),
+  'editions', (SELECT jsonb_agg(jsonb_build_object('source', x->'source', 'sourceId', x->'sourceId', 'language', x->'language', 'version', x->'version'))
+               FROM jsonb_array_elements(CASE WHEN jsonb_typeof(r.data->'editions') = 'array' THEN r.data->'editions' ELSE '[]'::jsonb END) x),
+  'bodySource', jsonb_build_object('source', r.data->'bodySource'->'source', 'rights', r.data->'bodySource'->'rights', 'copy', r.data->'bodySource'->'copy')
+))`;
+
 /** Everything the three schemas are made of, read from main. */
 export async function readParts(catalog: Catalog): Promise<Parts> {
   const { seq, at } = await lastChange(catalog);
   const events = await rows<EventData>(catalog, `e.type = 'event' AND r.data->'externalIds'->>'mafteiach' IS NOT NULL`);
   const recordings = await rows<RecordingData>(catalog, `e.type = 'recording' AND r.data->>'event' IS NOT NULL`);
   const works = await rows<WorkData>(catalog, `e.type = 'work' AND r.data->'externalIds'->>'sichos-kodesh-work' IS NOT NULL`);
-  const units = works.length ? await rows<UnitData>(catalog, `e.type = 'unit' AND r.data->>'work' = ANY($1)`, [works.map((w) => w.id)]) : [];
+  const units = works.length ? await rows<UnitData>(catalog, `e.type = 'unit' AND r.data->>'work' = ANY($1)`, [works.map((w) => w.id)], UNIT_FIELDS) : [];
   const authors = await rows<AuthorRow>(catalog, `e.type = 'author'`);
   return { seq, releasedAt: at, byYear: farbrengensByYear(events, recordings), library: emptyLibrary(), works: appWorks(authors, works, units) };
 }
@@ -526,26 +563,47 @@ const SCHEMA = ':schema{v[123]}';
 const schemaOf = (c: Context): AppSchema => Number(c.req.param('schema')!.slice(1)) as AppSchema;
 const catalogPath = (schema: AppSchema, version: string) => `/v1/app/v${schema}/catalog/${version}/catalog.json`;
 
-export function appCatalogRoutes(app: Hono, catalog: Catalog, releases: AppReleases = new AppReleases()): void {
+export function appCatalogRoutes(app: Hono, catalog: Catalog, releases: AppReleases = new AppReleases(), readerCatalog?: ReaderCatalog): void {
   const origin = (c: Context) => new URL(c.req.url).origin;
+  // The reader's catalog when this release is not whole yet; null when this one is served.
+  const passOn = async (c: Context, manifest: { missing?: string[] }): Promise<Response | null> =>
+    manifest.missing?.length && readerCatalog ? fromReader(c, readerCatalog, `${origin(c)}/v1/app`) : null;
+  // Schemas 2 and 3 show the library, which ChassidusHub does not hold yet: passed on before anything is built.
+  const ahead = (c: Context): Promise<Response> | null =>
+    readerCatalog && schemaOf(c) >= 2 && !HOLDS_LIBRARY ? fromReader(c, readerCatalog, `${origin(c)}/v1/app`) : null;
 
   app.get(`/v1/app/${SCHEMA}/catalog/manifest.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
     const schema = schemaOf(c);
     const { manifest } = await releases.get(catalog, schema);
+    const passed = await passOn(c, manifest);
+    if (passed) return passed;
     // `url` points back into this same API, whatever address it was asked at.
     return c.json({ ...manifest, url: `${origin(c)}${catalogPath(schema, manifest.version)}` } satisfies AppManifest, 200, { 'Cache-Control': MANIFEST_CACHE });
   });
 
-  app.get(`/v1/app/${SCHEMA}/catalog/changelog.json`, async (c) => c.json((await releases.get(catalog, schemaOf(c))).manifest.changelog, 200, { 'Cache-Control': MANIFEST_CACHE }));
+  app.get(`/v1/app/${SCHEMA}/catalog/changelog.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
+    const { manifest } = await releases.get(catalog, schemaOf(c));
+    return (await passOn(c, manifest)) ?? c.json(manifest.changelog, 200, { 'Cache-Control': MANIFEST_CACHE });
+  });
 
   app.get(`/v1/app/${SCHEMA}/catalog/latest/catalog.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
     const schema = schemaOf(c);
     const { manifest } = await releases.get(catalog, schema);
-    return c.redirect(`${origin(c)}${catalogPath(schema, manifest.version)}`, 302);
+    return (await passOn(c, manifest)) ?? c.redirect(`${origin(c)}${catalogPath(schema, manifest.version)}`, 302);
   });
 
   app.get(`/v1/app/${SCHEMA}/catalog/:version{\\d+\\.\\d+\\.\\d+}/catalog.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
     const { manifest, body } = await releases.get(catalog, schemaOf(c));
+    const passed = await passOn(c, manifest);
+    if (passed) return passed;
     // Only the release being served: an older one is gone, as on Sichos-Kodesh's API.
     if (c.req.param('version') !== manifest.version) throw new CatalogError('not-found', `catalog ${c.req.param('version')} is not served; the manifest names the one that is`);
     return c.body(body, 200, {
@@ -556,7 +614,47 @@ export function appCatalogRoutes(app: Hono, catalog: Catalog, releases: AppRelea
     });
   });
 
-  // The phone asks the same address for its own updates (app-core's appRelease.ts); those stay with Sichos-Kodesh.
-  app.get('/v1/app/v1/app/android/latest.json', (c) => c.redirect(`${SICHOS_KODESH_APP_SERVER}/v1/app/android/latest.json`, 307));
-  app.get('/v1/app/v1/app/android/download/:abi{arm64-v8a|armeabi-v7a|universal}', (c) => c.redirect(`${SICHOS_KODESH_APP_SERVER}/v1/app/android/download/${c.req.param('abi')}`, 307));
+  // The item an app's "Suggest a fix" or "Report a problem" is about, found by the app's own ids (app-core's
+  // fixLinks.ts; the site's /_/app/<action> asks this): a farbrengen by its mafteiach number, a sefer by its id,
+  // a page of it by the sefer's and the page's. A page not found is its sefer, so the reader still lands near it.
+  app.get('/v1/app/item', async (c) => {
+    const farbrengen = c.req.query('farbrengen');
+    const work = c.req.query('work');
+    const unit = c.req.query('unit');
+    let found: Row<unknown> | undefined;
+    if (farbrengen) found = (await rows(catalog, `e.type = 'event' AND r.data->'externalIds'->>'mafteiach' = $1`, [farbrengen]))[0];
+    else if (work) {
+      const sefer = (await rows(catalog, `e.type = 'work' AND r.data->'externalIds'->>'sichos-kodesh-work' = $1`, [work]))[0];
+      const page = sefer && unit ? (await rows(catalog, `e.type = 'unit' AND r.data->>'work' = $1 AND r.data->'externalIds'->>'sichos-kodesh-unit' = $2`, [sefer.id, unit]))[0] : undefined;
+      found = page ?? sefer;
+    } else return c.json({ error: 'bad_request', message: 'give farbrengen, or work (and unit)' }, 400);
+    if (!found) throw new CatalogError('not-found', 'nothing in the catalog has those ids');
+    return c.json({ id: found.id, path: found.path }, 200, { 'Cache-Control': MANIFEST_CACHE });
+  });
+
+  // The phone asks the same address for its own updates (app-core's appRelease.ts): the packs Worker keeps them.
+  app.get('/v1/app/v1/app/android/latest.json', (c) => c.redirect(`${READER_APP_SERVER}/v1/app/android/latest.json`, 307));
+  app.get('/v1/app/v1/app/android/download/:abi{arm64-v8a|armeabi-v7a|universal}', (c) => c.redirect(`${READER_APP_SERVER}/v1/app/android/download/${c.req.param('abi')}`, 307));
+}
+
+/**
+ * One of the app's catalog requests, answered by the reader's catalog: the
+ * same path without `/v1/app`, and every address in the answer (the
+ * manifest's `url`, a redirect) moved back under `base`, so the app's next
+ * request comes here again.
+ */
+async function fromReader(c: Context, readerCatalog: ReaderCatalog, base: string): Promise<Response> {
+  const path = new URL(c.req.url).pathname.slice('/v1/app'.length);
+  const answer = await readerCatalog(path);
+  const under = (address: string) => `${base}${new URL(address, 'https://reader.invalid').pathname}`;
+  const headers = new Headers(answer.headers);
+  const location = headers.get('Location');
+  if (location) headers.set('Location', under(location));
+  if (answer.ok && path.endsWith('/manifest.json')) {
+    const manifest = (await answer.json()) as { url?: string };
+    if (manifest.url) manifest.url = under(manifest.url);
+    headers.delete('Content-Length');
+    return new Response(JSON.stringify(manifest), { status: answer.status, headers });
+  }
+  return new Response(answer.body, { status: answer.status, headers });
 }

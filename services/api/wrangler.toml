@@ -27,6 +27,12 @@ id = "6cb8c1e512574ef9a9872eb5d6dece3b"
 binding = "SITE"
 service = "chassidushub-web"
 
+# The reader app's own catalog (reader/services/catalog-api), for the app's catalog requests while ChassidusHub's
+# release lacks a part the app shows (src/appCatalog.ts). Deploy that Worker first.
+[[services]]
+binding = "READER_CATALOG"
+service = "chassidushub-reader-catalog"
+
 # File bytes that may be served (and status/report.json, the status checks' last report).
 [[r2_buckets]]
 binding = "FILES_PUBLIC"

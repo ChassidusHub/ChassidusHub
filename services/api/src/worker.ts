@@ -47,6 +47,8 @@ interface Env extends LockEnv {
   HYPERDRIVE: { connectionString: string };
   /** The site's Worker (a service binding), for the status checks; without it they ask SITE_URL over the internet. */
   SITE?: { fetch(request: Request): Promise<Response> };
+  /** The reader app's own catalog (reader/services/catalog-api), passed the app's catalog requests while ChassidusHub's lacks a part (appCatalog.ts). */
+  READER_CATALOG?: { fetch(request: Request): Promise<Response> };
   /** The Hyperdrive config's id (wrangler.toml), for counting its queries today. */
   HYPERDRIVE_ID?: string;
   /** Its daily allowance of queries (default 100000, the free plan's); 0 on a plan without one. */
@@ -234,6 +236,7 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
     auth: env.SITE_URL ? authFor(env.SITE_URL, { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }) : undefined,
     mailer: mailerOf(env),
     appReleases,
+    readerCatalog: env.READER_CATALOG ? (path) => env.READER_CATALOG!.fetch(new Request(`https://reader-catalog${path}`)) : undefined,
     machineDispatch: env.GITHUB_DISPATCH_TOKEN ? githubDispatch({ token: env.GITHUB_DISPATCH_TOKEN, repo: env.GITHUB_REPO }) : undefined,
     waitUntil: (work) => ctx.waitUntil(work),
     privateTo: locked ? { owners: ownersFrom(env.OWNER_ACCOUNTS) } : undefined,

@@ -1,0 +1,57 @@
+name: ChassidusHub app - mobile Android build
+
+# By hand only (Actions -> Run workflow): an Android build is about fifteen minutes, Actions minutes are limited while
+# the repository is private, and the reader app's rule is that no Android build runs unless asked (reader/CLAUDE.md).
+on:
+  workflow_dispatch:
+
+# The reader app is its own npm workspace in reader/, with its own lockfile.
+defaults:
+  run:
+    working-directory: reader
+
+jobs:
+  android-build:
+    name: Android debug build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/powershell /usr/share/swift
+          df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+          cache-dependency-path: reader/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Run build-only smoke (lint + typecheck + assembleDebug)
+        run: npm run android:smoke:buildonly -w @chassidushub-reader/mobile
+
+      - name: Upload debug APK and Gradle reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-android-build-artifacts
+          path: |
+            reader/apps/mobile/smoke-artifacts/**
+            reader/apps/mobile/android/app/build/outputs/apk/**
+            reader/apps/mobile/android/app/build/reports/**
+            reader/apps/mobile/android/build/reports/**

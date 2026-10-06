@@ -38,6 +38,8 @@ export default [
   route('all/:id', 'routes/all.tsx'),
   route('files/:sha256', 'routes/file.tsx'),
   route('_/lookup', 'routes/lookup.ts'),
+  // The reader app's "Suggest a fix" and "Report a problem", by the app's own ids, sent on to the item's edit page or a new report.
+  route('_/app/:action', 'routes/from-app.ts'),
   // What the command palette finds as one types.
   route('_/find', 'routes/find.ts'),
   route('_/steward/*', 'routes/admin-pass.ts'),

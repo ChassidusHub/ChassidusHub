@@ -9,3 +9,13 @@ The API follows [semantic versioning](https://semver.org): nothing under
 any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
+
+- The reader app (formerly Sichos Kodesh, now the ChassidusHub app in
+  `reader/`) reads `/v1/app`. New: `GET /v1/app/item` finds the item an
+  app's "Suggest a fix" or "Report a problem" is about, by the app's own ids
+  (`farbrengen`, or `work` and `unit`); the site sends those links on from
+  `/_/app/edit` and `/_/app/report`. The app's update routes
+  (`/v1/app/v1/app/android/…`) now redirect to `packs.chassidushub.org`.
+  While ChassidusHub's app release lacks the library, `/v1/app/v<n>/catalog/…`
+  answers with the reader's own catalog, its addresses under `/v1/app`.
+- The logo's book carries a C.
