@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { getDerivations, getFile, getPageFix, setRights } from '@rebbehub/core';
+import { getDerivations, getFile, getPageFix, setRights } from '@chassidushub/core';
 import { catalogIsRebuildable } from '../src/commands.js';
 import { archivePdfs, collectManifest, makeReadingCopies, registerReadingCopies, sichosKodeshScans, type ObjectStore } from '../src/readingCopies.js';
 import { freshCatalog } from '../../../packages/core/tests/helpers.js';
@@ -106,7 +106,7 @@ describe('the Sichos Kodesh reading copies', () => {
     expect(rows[0]!.n).toBe(1);
 
     // A takedown of the scan takes its reading copy down with it.
-    await setRights(catalog.db, 'shmuly', sha256(original), 'preserved', 'takedown');
+    await setRights(catalog.db, 'steward', sha256(original), 'preserved', 'takedown');
     expect(await getFile(catalog.db, done!.readingCopy!.sha256)).toMatchObject({ rights_state: 'preserved', storage_tier: 'preservation' });
   });
 
@@ -115,11 +115,11 @@ describe('the Sichos Kodesh reading copies', () => {
     await db.exec('DROP SCHEMA IF EXISTS auth CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
     await catalog.init();
     const original = await scannedPdf(0.8);
-    await registerReadingCopies(db, { format: 'rebbehub-reading-copies', formatVersion: 1, encoder: 'pdf-fix@1', madeAt: '', files: [{ driveFileId: 'd', label: 'שיחו"ק', where: '5736/1', sha256: sha256(original), bytes: original.length }] });
+    await registerReadingCopies(db, { format: 'chassidushub-reading-copies', formatVersion: 1, encoder: 'pdf-fix@1', madeAt: '', files: [{ driveFileId: 'd', label: 'שיחו"ק', where: '5736/1', sha256: sha256(original), bytes: original.length }] });
     expect(await catalogIsRebuildable(db)).toBe(true);
-    await catalog.createAccount({ id: 'shmuly', displayName: 'Shmuly' });
-    await db.query("UPDATE account SET is_steward = TRUE WHERE id = 'shmuly'");
-    await setRights(db, 'shmuly', sha256(original), 'preserved', 'takedown');
+    await catalog.createAccount({ id: 'steward', displayName: 'Steward' });
+    await db.query("UPDATE account SET is_steward = TRUE WHERE id = 'steward'");
+    await setRights(db, 'steward', sha256(original), 'preserved', 'takedown');
     expect(await catalogIsRebuildable(db)).toBe(false);
   });
 });

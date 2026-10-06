@@ -1,4 +1,4 @@
-import { mayServe, type EntityId, type LocalName } from '@rebbehub/model';
+import { mayServe, type EntityId, type LocalName } from '@chassidushub/model';
 import { getFile } from './files.js';
 import type { Catalog } from './catalog.js';
 import { invalid, notFound } from './errors.js';

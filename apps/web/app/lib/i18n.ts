@@ -1,4 +1,4 @@
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 
 /**
  * Hebrew first, English in full. The language is part of the address -
@@ -26,7 +26,7 @@ export function nameOf(name: LocalName | undefined | null, lang: Lang): string {
 const untagged = (text: string) => (text.includes('<') ? text.replace(/<\/?[a-z][a-z0-9]*(\s[^<>]*)?>/gi, '').trim() : text);
 
 const STRINGS = {
-  siteName: { he: 'RebbeHub', en: 'RebbeHub' },
+  siteName: { he: 'ChassidusHub', en: 'ChassidusHub' },
   tabWeek: { he: 'השבוע', en: 'This week' },
   tabFarbrengens: { he: 'התוועדויות', en: 'Farbrengens' },
   tabLibrary: { he: 'ספרייה', en: 'Library' },
@@ -93,7 +93,7 @@ const STRINGS = {
   changes: { he: 'שינויים', en: 'changes' },
   recordingParts: { he: 'הקלטות', en: 'recordings' },
   tabHelp: { he: 'לעזור', en: 'Help' },
-  helpIntro: { he: 'RebbeHub נבנה על ידי כולם. כל תיקון, מקור או הקלטה שמוסיפים נפתחים לכל הלומדים.', en: 'RebbeHub is built by everyone. Every fix, source or recording added is open to every learner.' },
+  helpIntro: { he: 'ChassidusHub נבנה על ידי כולם. כל תיקון, מקור או הקלטה שמוסיפים נפתחים לכל הלומדים.', en: 'ChassidusHub is built by everyone. Every fix, source or recording added is open to every learner.' },
   helpReportTitle: { he: 'מצאתם טעות? דווחו עליה', en: 'Found a mistake? Report it' },
   helpReportText: { he: 'בתחתית כל דף יש ״דיווח על בעיה״: משפט אחד מספיק, בלי חשבון. שומרי האוסף בודקים כל דיווח.', en: 'Every page ends with "Report a problem": one sentence is enough, no account needed. The set keepers check every report.' },
   helpRecordingsTitle: { he: 'השבוע: התוועדויות בלי הקלטה', en: 'This week: farbrengens with no recording' },
@@ -112,7 +112,7 @@ const STRINGS = {
   signOut: { he: 'יציאה', en: 'Sign out' },
   signInIntro: { he: 'בלי סיסמה: נכנסים עם מפתח גישה (passkey) שנשמר בטלפון או במחשב, ונפתח בטביעת אצבע, בפנים או בנעילת המסך.', en: 'No password: sign in with a passkey kept on your phone or computer, opened with your fingerprint, face or screen lock.' },
   haveAccount: { he: 'יש לי חשבון', en: 'I have an account' },
-  haveAccountText: { he: 'המכשיר יציע את מפתח הגישה שלכם ל-RebbeHub.', en: 'Your device will offer your RebbeHub passkey.' },
+  haveAccountText: { he: 'המכשיר יציע את מפתח הגישה שלכם ל-ChassidusHub.', en: 'Your device will offer your ChassidusHub passkey.' },
   signInWithPasskey: { he: 'כניסה עם מפתח גישה', en: 'Sign in with a passkey' },
   newAccount: { he: 'חשבון חדש', en: 'New account' },
   nameToShow: { he: 'השם שיוצג', en: 'The name to show' },
@@ -123,7 +123,7 @@ const STRINGS = {
   noPasskeys: { he: 'הדפדפן הזה אינו תומך במפתחות גישה. נסו דפדפן עדכני בטלפון או במחשב.', en: 'This browser does not support passkeys. Try an up-to-date browser on your phone or computer.' },
   alreadySignedIn: { he: 'אתם כבר מחוברים בתור', en: 'You are signed in as' },
   whatIsPasskey: { he: 'מהו מפתח גישה?', en: 'What is a passkey?' },
-  whatIsPasskeyText: { he: 'מפתח שהמכשיר שלכם יוצר עבור RebbeHub בלבד. אין סיסמה שאפשר לגנוב או לשכוח, והוא אינו עובד באתר אחר.', en: 'A key your device makes for RebbeHub alone. There is no password to steal or forget, and it does not work on any other site.' },
+  whatIsPasskeyText: { he: 'מפתח שהמכשיר שלכם יוצר עבור ChassidusHub בלבד. אין סיסמה שאפשר לגנוב או לשכוח, והוא אינו עובד באתר אחר.', en: 'A key your device makes for ChassidusHub alone. There is no password to steal or forget, and it does not work on any other site.' },
   signInWithGoogle: { he: 'כניסה עם Google', en: 'Sign in with Google' },
   orGoogle: { he: 'או עם חשבון Google', en: 'Or with a Google account' },
   orGoogleText: { he: 'בפעם הראשונה ייפתח חשבון חדש בשם שלכם ב-Google.', en: 'The first time, a new account is made with your name on Google.' },
@@ -180,7 +180,7 @@ const STRINGS = {
   newAccountHint: { he: 'כבר יש לכם חשבון (למשל עם Google)? היכנסו איתו, ובדף החשבון הוסיפו מפתח גישה.', en: 'Already have an account (with Google, say)? Sign in with it, and add a passkey on your account page.' },
   accountNumber: { he: 'מספר חשבון:', en: 'Account number:' },
   steward: { he: 'מנהל/ת קטלוג', en: 'steward' },
-  googleTaken: { he: 'חשבון ה-Google הזה כבר מחובר לחשבון אחר ב-RebbeHub, ולכן לא חובר לכאן. אם שניהם שלכם, כתבו לנו ונאחד אותם.', en: 'That Google account already belongs to another RebbeHub account, so it was not linked here. If both are yours, tell us and we will merge them.' },
+  googleTaken: { he: 'חשבון ה-Google הזה כבר מחובר לחשבון אחר ב-ChassidusHub, ולכן לא חובר לכאן. אם שניהם שלכם, כתבו לנו ונאחד אותם.', en: 'That Google account already belongs to another ChassidusHub account, so it was not linked here. If both are yours, tell us and we will merge them.' },
   follow: { he: 'מעקב', en: 'Follow' },
   unfollow: { he: 'הפסקת מעקב', en: 'Unfollow' },
   following: { he: 'במעקב', en: 'Following' },
@@ -308,12 +308,12 @@ const STRINGS = {
   unclearWords: { he: 'לא ברור מה נאמר כאן: זה מה שהשומע חשב ששמע', en: 'Unclear: what the listener thinks was said' },
   machineTranscript: { he: 'תמלול מכונה, מסונכרן להקלטה: הקטע שנשמע מסומן, ולחיצה על קטע מנגנת ממנו. קטעים שטרם נבדקו מסומנים; אין לצטט אותם כדברי הרבי.', en: "Machine transcript, synced to the recording: the part being heard is marked, and tapping a part plays from there. Parts not yet checked are marked; do not quote them as the Rebbe's words." },
   fixTranscriptSignIn: { he: 'שומעים אחרת? כדי לתקן צריך להיכנס.', en: 'Hear it differently? To fix it, sign in.' },
-  onRebbeHub: { he: 'ב-RebbeHub ←', en: 'On RebbeHub →' },
+  onChassidusHub: { he: 'ב-ChassidusHub ←', en: 'On ChassidusHub →' },
   embedOnSite: { he: 'הטמעה באתר אחר', en: 'Embed on another site' },
   copyCode: { he: 'העתקת הקוד', en: 'Copy the code' },
   copied: { he: 'הועתק', en: 'Copied' },
   webhooks: { he: 'למפתחים: Webhooks', en: 'For developers: webhooks' },
-  webhooksIntro: { he: 'כל שינוי שמתקבל בקטלוג נשלח (POST) לכתובת שתוסיפו, חתום ב-HMAC-SHA256 בכותרת X-RebbeHub-Signature.', en: 'Every change merged into the catalog is posted to the address you add, signed with HMAC-SHA256 in the X-RebbeHub-Signature header.' },
+  webhooksIntro: { he: 'כל שינוי שמתקבל בקטלוג נשלח (POST) לכתובת שתוסיפו, חתום ב-HMAC-SHA256 בכותרת X-ChassidusHub-Signature.', en: 'Every change merged into the catalog is posted to the address you add, signed with HMAC-SHA256 in the X-ChassidusHub-Signature header.' },
   webhookUrl: { he: 'כתובת (https)', en: 'Address (https)' },
   webhookSecret: { he: 'הסוד לבדיקת החתימה (מוצג פעם אחת בלבד):', en: 'The secret for checking signatures (shown this once):' },
   webhookOk: { he: 'פעיל', en: 'active' },
@@ -333,7 +333,7 @@ const STRINGS = {
   tabEdit: { he: 'עריכה', en: 'Edit' },
   importedFrom: { he: 'יובא מ:', en: 'Imported from' },
   atTheSource: { he: 'במקור', en: 'at the source' },
-  keptCopy: { he: 'העותק השמור ב־RebbeHub', en: 'the copy kept on RebbeHub' },
+  keptCopy: { he: 'העותק השמור ב־ChassidusHub', en: 'the copy kept on ChassidusHub' },
   talkIntro: { he: 'כאן מדברים על הדף: שאלות, מקורות, מה צריך לתקן. כל אחד קורא; כדי לכתוב צריך להיכנס.', en: 'This is where the page is talked about: questions, sources, what needs fixing. Anyone reads; to write, sign in.' },
   talkEmpty: { he: 'עוד אין כאן שיחה.', en: 'No conversation here yet.' },
   talkNew: { he: 'נושא חדש', en: 'New topic' },

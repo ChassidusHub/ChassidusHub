@@ -1,4 +1,4 @@
-import type { Entity, RebbeHubApi } from './api.js';
+import type { Entity, ChassidusHubApi } from './api.js';
 import type { Lang } from './i18n.js';
 import { REPORT_LABEL, typeLabels } from './suggestions.js';
 import { describeTargets } from './targets.server.js';
@@ -32,7 +32,7 @@ export interface AboutThread {
 
 const SUGGESTIONS_READ = 15;
 
-export async function threadsAbout(api: RebbeHubApi, ids: ReadonlySet<string>, lang: Lang, options: { set?: string | null } = {}): Promise<AboutThread[]> {
+export async function threadsAbout(api: ChassidusHubApi, ids: ReadonlySet<string>, lang: Lang, options: { set?: string | null } = {}): Promise<AboutThread[]> {
   const [list, issues] = await Promise.all([
     ids.size ? api.conversations({ state: 'all', about: [...ids].slice(0, 500), limit: SUGGESTIONS_READ }).catch(() => null) : null,
     api.issues({ state: 'all', limit: 50, ...(options.set ? { set: options.set } : {}) }).catch(() => null),

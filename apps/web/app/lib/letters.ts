@@ -1,4 +1,4 @@
-import type { PageSegment, PageText } from '@rebbehub/model';
+import type { PageSegment, PageText } from '@chassidushub/model';
 
 /**
  * What a letter's own opening lines say: the date (after ב״ה), the place,

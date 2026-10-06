@@ -8,7 +8,7 @@ import { renderMarkdown } from './markdown.js';
 
 const FILES = import.meta.glob('../../../../docs/**/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
-export const REPOSITORY = 'https://github.com/shmuky/RebbeHub';
+export const REPOSITORY = 'https://github.com/ChassidusHub/ChassidusHub';
 
 export interface DocPage {
   slug: string;
@@ -34,7 +34,7 @@ export const DOC_PAGES: readonly DocPage[] = [
   { slug: 'dumps', file: 'docs/mirrors.md', title: 'Dumps and mirrors', summary: 'The whole catalog: signed editions, the git mirror, running a mirror' },
   { slug: 'oai-pmh', file: 'docs/developers/oai-pmh.md', title: 'OAI-PMH and IIIF', summary: 'For libraries: Dublin Core records, and IIIF manifests of scans' },
   { slug: 'agents', file: 'docs/developers/agents.md', title: 'AI agents', summary: 'llms.txt and the MCP server: search, read and suggest' },
-  { slug: 'client', file: 'docs/developers/client.md', title: 'TypeScript client', summary: '@rebbehub/client, generated from the OpenAPI document' },
+  { slug: 'client', file: 'docs/developers/client.md', title: 'TypeScript client', summary: '@chassidushub/client, generated from the OpenAPI document' },
 ];
 
 /** A file's text, by its path from the repository's root. */

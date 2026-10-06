@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasUnclear, markUnclear, unclearRanges } from '@rebbehub/model';
+import { hasUnclear, markUnclear, unclearRanges } from '@chassidushub/model';
 
 describe('words marked unclear', () => {
   it('finds `[words?]` marks, and marks words once', () => {

@@ -6,8 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for helping. Tell us what is wrong in your own words - you do not need to know anything about how RebbeHub works.
-        (Once the RebbeHub site is live, the "Report a problem" button on every page does the same without a GitHub account.)
+        Thank you for helping. Tell us what is wrong in your own words - you do not need to know anything about how ChassidusHub works.
+        (Once the ChassidusHub site is live, the "Report a problem" button on every page does the same without a GitHub account.)
   - type: input
     id: where
     attributes:

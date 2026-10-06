@@ -1,16 +1,16 @@
 import type { Context, Hono } from 'hono';
-import { CatalogError, type Catalog } from '@rebbehub/core';
-import { parseDateKey } from '@rebbehub/hebrew';
-import { defaultRightsState, decisionFromRightsState, type CatalogSourceId, type EditionData, type EventData, type Licence, type LocalName, type RecordingData, type RightsState, type UnitData, type WorkData } from '@rebbehub/model';
+import { CatalogError, type Catalog } from '@chassidushub/core';
+import { parseDateKey } from '@chassidushub/hebrew';
+import { defaultRightsState, decisionFromRightsState, type CatalogSourceId, type EditionData, type EventData, type Licence, type LocalName, type RecordingData, type RightsState, type UnitData, type WorkData } from '@chassidushub/model';
 
 /**
- * The Sichos Kodesh apps' catalog, served from RebbeHub (docs/sichos-kodesh.md,
+ * The Sichos Kodesh apps' catalog, served from ChassidusHub (docs/sichos-kodesh.md,
  * "The apps' catalog address"). The apps fetch their catalog from one
- * address (app-core's `CATALOG_API_BASE_URL`, today api.sk.shmuky.dev):
+ * address (app-core's `CATALOG_API_BASE_URL`, today api.sk.chassidushub.org):
  * a small manifest under `/v<schema>/catalog/manifest.json` once a day,
  * and the `catalog.json` it points at when it names a newer version. Here
  * the same paths sit under `/v1/app`, in the same shapes, built from
- * RebbeHub's own items, so switching the apps over is changing that one
+ * ChassidusHub's own items, so switching the apps over is changing that one
  * address:
  *
  *   /v1/app/v1/catalog/...   schema 1: the farbrengens by year (the web app)
@@ -25,11 +25,11 @@ import { defaultRightsState, decisionFromRightsState, type CatalogSourceId, type
  * and the app keeps what it has, so every field here is what those checks
  * ask for.
  *
- * The version is RebbeHub's: `2.<commit>.0`, the last commit that changed
+ * The version is ChassidusHub's: `2.<commit>.0`, the last commit that changed
  * a farbrengen, recording, sefer, unit or author, so the apps download a
  * new catalog only when something they show has changed, and every one is
  * newer than any catalog Sichos-Kodesh made itself (1.x). A part the app
- * needs that RebbeHub does not hold yet - the library, today - is served
+ * needs that ChassidusHub does not hold yet - the library, today - is served
  * empty, and the release is then numbered `0.<commit>.0`: older than what
  * every app already has, so no app ever swaps its own library for an
  * empty one. The manifest says which parts are missing (`missing`).
@@ -95,7 +95,7 @@ export interface AppWork {
   sources: AppWorkSource[];
   units?: number;
   /**
-   * RebbeHub's own (the apps ignore fields they do not know): set on a work
+   * ChassidusHub's own (the apps ignore fields they do not know): set on a work
    * that is an addition, not one of the official sefarim the tree is built
    * of, with the app id of the official sefer it belongs to when the apps
    * have that sefer. Official works come first, additions after them.
@@ -119,7 +119,7 @@ export interface AppWorks {
   contents: Record<string, { workId: string; contents: AppContentsEntry[]; units: AppUnit[] }>;
 }
 
-/** The library's collections (its `LIBRARY_COLLECTION_IDS`), which RebbeHub does not hold yet. */
+/** The library's collections (its `LIBRARY_COLLECTION_IDS`), which ChassidusHub does not hold yet. */
 export const LIBRARY_COLLECTION_IDS = ['likkuteiSichos', 'maamorim', 'yomanim', 'hadranim', 'michtavimKlolim', 'reshimos', 'jemEvents'] as const;
 
 export interface AppLibrary {
@@ -147,7 +147,7 @@ export interface AppManifest {
   changelog: AppChangelogEntry[];
   collections?: Record<string, number>;
   works?: { works: number; units: number };
-  /** RebbeHub's own: the parts this release lacks, which keep it from being offered to the apps (see the top). */
+  /** ChassidusHub's own: the parts this release lacks, which keep it from being offered to the apps (see the top). */
   missing?: string[];
 }
 
@@ -157,10 +157,10 @@ export type AppSchema = (typeof APP_SCHEMAS)[number];
 /** A complete release's major version: newer than every catalog Sichos-Kodesh numbered itself (1.x). */
 export const APP_CATALOG_MAJOR = 2;
 
-/** Where the phone's own updates (the APKs) are, until RebbeHub serves them. */
-export const SICHOS_KODESH_APP_SERVER = 'https://api.sk.shmuky.dev';
+/** Where the phone's own updates (the APKs) are, until ChassidusHub serves them. */
+export const SICHOS_KODESH_APP_SERVER = 'https://api.sk.chassidushub.org';
 
-// ------------------------------------------------------------------ from RebbeHub's items
+// ------------------------------------------------------------------ from ChassidusHub's items
 
 interface Row<T> {
   id: string;
@@ -320,7 +320,7 @@ export function appWorks(authors: Array<Row<AuthorRow>>, works: Array<Row<WorkDa
   return out;
 }
 
-/** What may be done with a source's copies: as its units' words were imported (Sichos-Kodesh's own decision), else RebbeHub's default for it. */
+/** What may be done with a source's copies: as its units' words were imported (Sichos-Kodesh's own decision), else ChassidusHub's default for it. */
 function rightsOf(source: CatalogSourceId, licence: Licence, units: Array<Row<UnitData>>): RightsState {
   const decided = units.find((u) => u.data.bodySource?.source === source && u.data.bodySource.rights)?.data.bodySource?.rights;
   return decided ?? defaultRightsState({ source, licence });
@@ -353,7 +353,7 @@ function contentsOf(workId: string, list: Array<Row<UnitData>>, sources: AppWork
     if (data.label.en) unit.labelEn = data.label.en;
     const ref = data.editions?.find((e) => e.sourceId && e.sourceId !== unitId)?.sourceId;
     if (ref) unit.ref = ref;
-    // RebbeHub keeps the text of the unit's first shippable edition (its Hebrew one), at /v1/texts/<sha256>.
+    // ChassidusHub keeps the text of the unit's first shippable edition (its Hebrew one), at /v1/texts/<sha256>.
     const copy = data.bodySource?.copy ? TEXT_COPY.exec(data.bodySource.copy)?.[1] : undefined;
     const shipped = data.bodySource?.rights === 'open' || data.bodySource?.rights === 'credit';
     let copyAt = -1;
@@ -384,7 +384,7 @@ function contentsOf(workId: string, list: Array<Row<UnitData>>, sources: AppWork
   return { workId, contents: strip(root.entries), units };
 }
 
-/** The library, which RebbeHub does not hold yet: every collection, empty. */
+/** The library, which ChassidusHub does not hold yet: every collection, empty. */
 export function emptyLibrary(): AppLibrary {
   return { moadim: [], parshiyos: [], collections: Object.fromEntries(LIBRARY_COLLECTION_IDS.map((id) => [id, { items: [], groups: {} }])) as unknown as AppLibrary['collections'] };
 }
@@ -442,8 +442,8 @@ export async function releaseOf(parts: Parts, schema: AppSchema): Promise<AppRel
       {
         version,
         date: parts.releasedAt.slice(0, 10),
-        en: [`The catalog as RebbeHub has it, as of its commit ${parts.seq}`],
-        he: [`הקטלוג כפי שהוא ב-RebbeHub, נכון לשינוי ${parts.seq}`],
+        en: [`The catalog as ChassidusHub has it, as of its commit ${parts.seq}`],
+        he: [`הקטלוג כפי שהוא ב-ChassidusHub, נכון לשינוי ${parts.seq}`],
       },
     ],
   };

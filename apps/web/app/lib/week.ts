@@ -1,5 +1,5 @@
 import { HDate, HebrewCalendar, Locale, getSedra, months } from '@hebcal/core';
-import { dateKeyFromHDate, dateKeyToHDate } from '@rebbehub/hebrew';
+import { dateKeyFromHDate, dateKeyToHDate } from '@chassidushub/hebrew';
 import type { Lang } from './i18n.js';
 
 /**

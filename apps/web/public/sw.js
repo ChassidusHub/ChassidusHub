@@ -1,5 +1,5 @@
 /*
- * RebbeHub's service worker: the site installs as an app (the plan,
+ * ChassidusHub's service worker: the site installs as an app (the plan,
  * section 10: "PWA") and opens without a connection.
  *
  * - The app's own files (/assets/*, named by their content) are kept for
@@ -14,8 +14,8 @@
  * Change VERSION when this file's rules change; old caches are dropped.
  */
 const VERSION = 'v2';
-const SHELL = `rebbehub-shell-${VERSION}`;
-const PAGES = `rebbehub-pages-${VERSION}`;
+const SHELL = `chassidushub-shell-${VERSION}`;
+const PAGES = `chassidushub-pages-${VERSION}`;
 const MAX_PAGES = 80;
 const PRECACHE = ['/offline.html', '/favicon.svg', '/icon-192.png', '/manifest.webmanifest'];
 
@@ -37,7 +37,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      for (const name of await caches.keys()) if (name.startsWith('rebbehub-') && name !== SHELL && name !== PAGES) await caches.delete(name);
+      for (const name of await caches.keys()) if (name.startsWith('chassidushub-') && name !== SHELL && name !== PAGES) await caches.delete(name);
       await self.clients.claim();
     })(),
   );

@@ -1,16 +1,16 @@
 {
-  "name": "@rebbehub/api",
+  "name": "@chassidushub/api",
   "version": "0.1.0",
   "private": true,
-  "description": "RebbeHub's API (Hono, OpenAPI): the public read API over the catalog, anonymous reports, suggestions and review for signed-in people and their API tokens, and an MCP server for AI agents. Runs on Cloudflare Workers (Hyperdrive to Postgres) or Node.",
+  "description": "ChassidusHub's API (Hono, OpenAPI): the public read API over the catalog, anonymous reports, suggestions and review for signed-in people and their API tokens, and an MCP server for AI agents. Runs on Cloudflare Workers (Hyperdrive to Postgres) or Node.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shmuky/RebbeHub.git",
+    "url": "git+https://github.com/ChassidusHub/ChassidusHub.git",
     "directory": "services/api"
   },
-  "homepage": "https://github.com/shmuky/RebbeHub/tree/main/services/api",
+  "homepage": "https://github.com/ChassidusHub/ChassidusHub/tree/main/services/api",
   "bugs": {
-    "url": "https://github.com/shmuky/RebbeHub/issues"
+    "url": "https://github.com/ChassidusHub/ChassidusHub/issues"
   },
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -22,10 +22,10 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
-    "@rebbehub/core": "^0.1.0",
-    "@rebbehub/db": "^0.1.0",
-    "@rebbehub/hebrew": "^0.1.0",
-    "@rebbehub/model": "^0.1.0",
+    "@chassidushub/core": "^0.1.0",
+    "@chassidushub/db": "^0.1.0",
+    "@chassidushub/hebrew": "^0.1.0",
+    "@chassidushub/model": "^0.1.0",
     "@simplewebauthn/server": "^14.0.3",
     "hono": "^4.9.0"
   }

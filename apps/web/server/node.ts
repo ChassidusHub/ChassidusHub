@@ -6,9 +6,9 @@ import { memoryShowcases } from '../app/lib/showcase.js';
 import { createSiteHandler } from './handler.js';
 
 /**
- * The site on Node: `npm run build -w @rebbehub/web && npm start -w @rebbehub/web`.
+ * The site on Node: `npm run build -w @chassidushub/web && npm start -w @chassidushub/web`.
  *
- *   REBBEHUB_API_URL   the API (default http://127.0.0.1:8787)
+ *   CHASSIDUSHUB_API_URL   the API (default http://127.0.0.1:8787)
  *   SITE_URL           this site's public address (default http://localhost:3000)
  *   PORT               default 3000
  */
@@ -16,7 +16,7 @@ import { createSiteHandler } from './handler.js';
 const build = (await import('../build/server/index.js')) as ServerBuild;
 const port = Number(process.env.PORT ?? 3000);
 const handler = createSiteHandler(build, {
-  apiUrl: process.env.REBBEHUB_API_URL ?? 'http://127.0.0.1:8787',
+  apiUrl: process.env.CHASSIDUSHUB_API_URL ?? 'http://127.0.0.1:8787',
   siteUrl: process.env.SITE_URL ?? `http://localhost:${port}`,
   // Showcases are kept in memory here, and anyone may make one: this is the site for local work.
   showcases: memoryShowcases(),
@@ -31,4 +31,4 @@ app.use('*', serveStatic({ root: './build/client' }));
 app.all('*', (c) => handler(c.req.raw));
 
 serve({ fetch: app.fetch, port, hostname: process.env.HOST ?? '127.0.0.1' });
-console.log(`RebbeHub site on http://127.0.0.1:${port}`);
+console.log(`ChassidusHub site on http://127.0.0.1:${port}`);

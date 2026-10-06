@@ -1,4 +1,4 @@
-import { ADDITION_KINDS, isEntityId, isEntityPath, isOrderKey, newId, orderBetween, slugify, type AdditionKind, type EntityId, type EntityType, type LocalName } from '@rebbehub/model';
+import { ADDITION_KINDS, isEntityId, isEntityPath, isOrderKey, newId, orderBetween, slugify, type AdditionKind, type EntityId, type EntityType, type LocalName } from '@chassidushub/model';
 import type { Catalog, ChangesetRow, EntityView } from './catalog.js';
 import { invalid, notFound } from './errors.js';
 import { diffData, type FieldChange, type Json } from './merge.js';

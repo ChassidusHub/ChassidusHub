@@ -12,7 +12,7 @@ type D = { kind?: string; title?: { he: string; en?: string }; publisher?: strin
 /**
  * A sefer's printings (the plan, section 4: "every printing of every
  * book"): each one's publisher and place, its year, which printing, and
- * how many scans of it RebbeHub has (or its PDF copy on Drive, to read),
+ * how many scans of it ChassidusHub has (or its PDF copy on Drive, to read),
  * in the order they came out.
  */
 export function Printings({ publications, scanCounts, lang }: { publications: Entity[]; scanCounts?: Record<string, number>; lang: Lang }) {

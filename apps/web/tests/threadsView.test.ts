@@ -50,7 +50,7 @@ describe("the reports' search line", () => {
     expect(line).toBe('מצב:פתוח תווית:סריקה');
     const q = queryOf('state:closed label:scan assignee:@levi author:@me פסוק', keys);
     expect(q).toMatchObject({ state: 'closed', label: ['scan'], assignee: 'levi', author: '@me', text: 'פסוק', sort: 'new' });
-    expect(apiParams(q, 'shmuly')).toEqual({ state: 'closed', label: 'scan', assignee: 'levi', author: 'shmuly', q: 'פסוק' });
+    expect(apiParams(q, 'steward')).toEqual({ state: 'closed', label: 'scan', assignee: 'levi', author: 'steward', q: 'פסוק' });
     // Someone with no handle asks without "mine".
     expect(apiParams(queryOf('author:@me', keys), null)).toEqual({ state: 'open' });
   });

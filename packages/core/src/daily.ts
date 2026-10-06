@@ -1,6 +1,6 @@
 import { HDate } from '@hebcal/core';
-import { DAILY_WORKS, TANYA_YOMI, chitasChumash, dailyTehillim, dateKeyFromGregorian, dayOfLabel, monthOfLabel } from '@rebbehub/hebrew';
-import { isPageText, slugify, type EntityId, type PageInline, type PageSegment, type PageText } from '@rebbehub/model';
+import { DAILY_WORKS, TANYA_YOMI, chitasChumash, dailyTehillim, dateKeyFromGregorian, dayOfLabel, monthOfLabel } from '@chassidushub/hebrew';
+import { isPageText, slugify, type EntityId, type PageInline, type PageSegment, type PageText } from '@chassidushub/model';
 import type { Catalog, EntityView } from './catalog.js';
 import { dailyRambam, type DailyRambam } from './rambam.js';
 
@@ -38,18 +38,18 @@ export interface DailyLearning {
   hebrew: string;
   tanya: DailyTanyaPart[];
   hayomYom: EntityView[];
-  /** The day's Chumash with Rashi: `בא, ראשון עם פירש״י` and `Exodus 10:1-11`; where it starts on RebbeHub, and its Rashi, once the catalog has them. */
+  /** The day's Chumash with Rashi: `בא, ראשון עם פירש״י` and `Exodus 10:1-11`; where it starts on ChassidusHub, and its Rashi, once the catalog has them. */
   chumash: { label: string; ref: string; path: string | null; rashi: string | null } | null;
-  /** The day's Tehillim, each range with its reference, and its first chapter on RebbeHub once the catalog has it. */
+  /** The day's Tehillim, each range with its reference, and its first chapter on ChassidusHub once the catalog has it. */
   tehillim: Array<{ text: string; ref: string | null; path: string | null }>;
-  /** The Rambam's three tracks; each chapter's page on RebbeHub (`paths`, in order) once the catalog has it. */
+  /** The Rambam's three tracks; each chapter's page on ChassidusHub (`paths`, in order) once the catalog has it. */
   rambam: { three: DailyShiur; one: DailyShiur; mitzvos: DailyShiur | null };
 }
 
 export type DailyShiur = DailyRambam['three'] & { paths: Array<string | null> };
 
 /**
- * Where a Sefaria reference is on RebbeHub, by the paths the Sefaria
+ * Where a Sefaria reference is on ChassidusHub, by the paths the Sefaria
  * importer gives Chitas and the Rambam (importers' sefaria.ts, the daily
  * books): `Exodus 10:1-11` is `/chumash/exodus/10#s-1`, `Psalms 119:97-176`
  * `/tehillim/119#s-97`, `Mishneh Torah, Divorce 9` `/rambam/divorce/9`.
@@ -176,7 +176,7 @@ export async function dailyLearning(catalog: Catalog, date: string): Promise<Dai
   const chumash = chitasChumash(day);
   const tehillim = dailyTehillim(hebrew.slice(5, hebrew.lastIndexOf('-')), day.getDate(), HDate.daysInMonth(day.getMonth(), day.getFullYear()));
   const rambam = dailyRambam(date);
-  // Their pages on RebbeHub, the ones the catalog has (one read for all).
+  // Their pages on ChassidusHub, the ones the catalog has (one read for all).
   const places = (ref: string | null, rashi = false) => (ref ? dailyPathOf(ref, { rashi }) : null);
   const bare = (page: string) => page.replace(/#.*$/, '');
   const wanted = [places(chumash?.ref ?? null), places(chumash?.ref ?? null, true), ...tehillim.map((t) => places(t.ref)), ...[...rambam.three.refs, ...rambam.one.refs].map((r) => places(r))];
@@ -208,11 +208,11 @@ export interface ShiurSpan {
   rashi?: boolean;
 }
 
-/** Sefer HaMitzvot's parts on RebbeHub, by how the Sefaria importer numbers them. */
+/** Sefer HaMitzvot's parts on ChassidusHub, by how the Sefaria importer numbers them. */
 const MITZVOS: Record<string, string> = { Shorashim: '/sefer-hamitzvos/2', 'Positive Commandments': '/sefer-hamitzvos/4', 'Negative Commandments': '/sefer-hamitzvos/6' };
 
 /**
- * The pages and verses a Sefaria reference learns on RebbeHub: `Genesis
+ * The pages and verses a Sefaria reference learns on ChassidusHub: `Genesis
  * 1:1-2:3` is chapter 1 from its first verse and chapter 2 up to verse 3,
  * `Psalms 104-105` two whole chapters, `Mishneh Torah, Divorce 11` a whole
  * chapter, `Sefer HaMitzvot, Positive Commandments 109` one mitzvah. With

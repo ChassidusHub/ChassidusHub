@@ -1,5 +1,5 @@
 /*
- * RebbeHub's design tokens: every colour, font, size and radius the site
+ * ChassidusHub's design tokens: every colour, font, size and radius the site
  * uses, named for what it is for. Light is the default; dark follows the
  * device, or the reader's own choice (`data-theme` on <html>, set from the
  * menu and kept in this browser). Components use these names only, never a
@@ -94,7 +94,7 @@
    */
   --ui: 'Noto Sans Hebrew', 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
   --display: 'Frank Ruhl Libre', 'FrankRuehlCLM', 'Noto Serif Hebrew', Georgia, serif;
-  /* The name in the logo, and only there (design/RebbeHub Logo Guidelines.dc.html). */
+  /* The name in the logo, and only there (design/ChassidusHub Logo Guidelines.dc.html). */
   --brand: 'Newsreader', 'Frank Ruhl Libre', Georgia, serif;
   --torah: 'FrankRuehlCLM', 'Frank Ruhl Libre', 'Noto Serif Hebrew', Georgia, serif;
   --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;

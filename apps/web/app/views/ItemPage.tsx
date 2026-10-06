@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { isPageText, type LocalName } from '@rebbehub/model';
+import { isPageText, type LocalName } from '@chassidushub/model';
 import { AudioPlayer } from '../components/AudioPlayer.js';
 import { ChapterNav } from '../components/ChapterNav.js';
 import { EventPage } from './EventPage.js';
@@ -103,7 +103,7 @@ function Refs({ ids, view }: { ids: unknown; view: ItemView }) {
   );
 }
 
-/** Where a copy is, as a link to it when RebbeHub knows the address. */
+/** Where a copy is, as a link to it when ChassidusHub knows the address. */
 function Copies({ copies, lang }: { copies: Array<{ source: string; sourceId: string; kind: string; licence: string; language?: string; credit?: string; url?: string }>; lang: Lang }) {
   if (!copies.length) return null;
   return (
@@ -153,7 +153,7 @@ function TextSize({ lang }: { lang: Lang }) {
   const [size, setSize] = useState<string>('m');
   useEffect(() => {
     try {
-      const kept = localStorage.getItem('rebbehub.textSize');
+      const kept = localStorage.getItem('chassidushub.textSize');
       if (kept && (TEXT_SIZES as readonly string[]).includes(kept)) setSize(kept);
     } catch {
       // No storage (a private window): the size is for this visit only.
@@ -173,7 +173,7 @@ function TextSize({ lang }: { lang: Lang }) {
         const next = TEXT_SIZES[(TEXT_SIZES.indexOf(size as (typeof TEXT_SIZES)[number]) + 1) % TEXT_SIZES.length]!;
         setSize(next);
         try {
-          localStorage.setItem('rebbehub.textSize', next);
+          localStorage.setItem('chassidushub.textSize', next);
         } catch {
           // As above.
         }

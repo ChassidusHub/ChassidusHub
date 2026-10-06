@@ -3,7 +3,7 @@ import { fieldName, foldChanges, foldedName, valueText } from '../app/components
 
 /**
  * A sync bot's change moves every word of a recording: two thousand word
- * timings, which a page of rows stopped phones on (Shmuly, 30 Tishrei).
+ * timings, which a page of rows stopped phones on (The steward, 30 Tishrei).
  * Timings and machine details are counted, not shown; other alike changes
  * are one row, with how many and by how much; a long value shows its start.
  */

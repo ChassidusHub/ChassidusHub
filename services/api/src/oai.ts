@@ -1,7 +1,7 @@
 import type { Context, Hono } from 'hono';
-import { ExportGate, type Catalog, type EntityView } from '@rebbehub/core';
-import { dateKeyToGregorian, describeDateKey } from '@rebbehub/hebrew';
-import type { EntityId, EntityType } from '@rebbehub/model';
+import { ExportGate, type Catalog, type EntityView } from '@chassidushub/core';
+import { dateKeyToGregorian, describeDateKey } from '@chassidushub/hebrew';
+import type { EntityId, EntityType } from '@chassidushub/model';
 
 /**
  * OAI-PMH 2.0 for libraries (the plan, section 10: "later OAI-PMH for
@@ -18,7 +18,7 @@ import type { EntityId, EntityType } from '@rebbehub/model';
 export interface OaiOptions {
   /** The repository administrators' address, which Identify must name. */
   adminEmail: string;
-  /** The site's address, for each record's link and the identifiers' namespace (`oai:rebbehub.org:rh-…`). */
+  /** The site's address, for each record's link and the identifiers' namespace (`oai:chassidushub.org:rh-…`). */
   siteUrl?: string;
   /** Records per page before a resumption token. */
   pageSize?: number;
@@ -103,7 +103,7 @@ interface Row {
 }
 
 export function oaiRoutes(app: Hono, catalog: Catalog, options: OaiOptions): void {
-  const site = (options.siteUrl ?? 'https://rebbehub.org').replace(/\/$/, '');
+  const site = (options.siteUrl ?? 'https://chassidushub.org').replace(/\/$/, '');
   const namespace = new URL(site).host;
   const pageSize = Math.min(Math.max(options.pageSize ?? 100, 1), 500);
   const oaiId = (id: string) => `oai:${namespace}:${id}`;
@@ -227,7 +227,7 @@ export function oaiRoutes(app: Hono, catalog: Catalog, options: OaiOptions): voi
         case 'Identify': {
           const first = await catalog.db.query<{ at: string }>('SELECT min(at) AS at FROM commit');
           return wrap(
-            `<Identify><repositoryName>RebbeHub</repositoryName><baseURL>${xml(base)}</baseURL><protocolVersion>2.0</protocolVersion><adminEmail>${xml(options.adminEmail)}</adminEmail><earliestDatestamp>${stamp(first.rows[0]?.at ?? new Date(0))}</earliestDatestamp><deletedRecord>persistent</deletedRecord><granularity>YYYY-MM-DDThh:mm:ssZ</granularity><description><oai-identifier xmlns="http://www.openarchives.org/OAI/2.0/oai-identifier" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai-identifier http://www.openarchives.org/OAI/2.0/oai-identifier.xsd"><scheme>oai</scheme><repositoryIdentifier>${xml(namespace)}</repositoryIdentifier><delimiter>:</delimiter><sampleIdentifier>oai:${xml(namespace)}:rh-7k2m9q4d</sampleIdentifier></oai-identifier></description></Identify>`,
+            `<Identify><repositoryName>ChassidusHub</repositoryName><baseURL>${xml(base)}</baseURL><protocolVersion>2.0</protocolVersion><adminEmail>${xml(options.adminEmail)}</adminEmail><earliestDatestamp>${stamp(first.rows[0]?.at ?? new Date(0))}</earliestDatestamp><deletedRecord>persistent</deletedRecord><granularity>YYYY-MM-DDThh:mm:ssZ</granularity><description><oai-identifier xmlns="http://www.openarchives.org/OAI/2.0/oai-identifier" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai-identifier http://www.openarchives.org/OAI/2.0/oai-identifier.xsd"><scheme>oai</scheme><repositoryIdentifier>${xml(namespace)}</repositoryIdentifier><delimiter>:</delimiter><sampleIdentifier>oai:${xml(namespace)}:rh-7k2m9q4d</sampleIdentifier></oai-identifier></description></Identify>`,
           );
         }
         case 'ListMetadataFormats': {

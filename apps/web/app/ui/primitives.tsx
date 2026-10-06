@@ -71,7 +71,7 @@ const AGENT_WORDS = {
 
 /**
  * Work an agent sent for a person, shown as the agent's, never as the
- * person typing: "Claude · for @shmuly", with the agent mark, in the
+ * person typing: "Claude · for @steward", with the agent mark, in the
  * machine's amber (like machine output, it reads as the agent's until a
  * person reviews it). `children` is the person. Without `via`, the person
  * alone.

@@ -4,17 +4,17 @@ import { siteOf } from '../lib/context.server.js';
 import { DOC_PAGES, docSource } from '../lib/developerDocs.js';
 
 /**
- * For AI agents (llmstxt.org): /llms.txt says in a page what RebbeHub is
+ * For AI agents (llmstxt.org): /llms.txt says in a page what ChassidusHub is
  * and where everything is; /llms-full.txt is every developer page and the
  * API's routes in one file, to hand an agent as context. Both are made
  * from the same docs and OpenAPI document as /developers.
  */
 
-const API_FALLBACK = 'https://api.rebbehub.org';
+const API_FALLBACK = 'https://api.chassidushub.org';
 
 export function llmsTxt(site: string, api: string): string {
   const pages = DOC_PAGES.map((p) => `- [${p.title}](${site}/developers${p.slug ? `/${p.slug}` : ''}): ${p.summary}`).join('\n');
-  return `# RebbeHub
+  return `# ChassidusHub
 
 > The open, community-edited index of Chabad Torah and media: every sefer and printing, every sicha and letter, every farbrengen and recording, with scans and texts, from the Baal Shem Tov to today. Everything is readable without an account through a public API, and every change is a suggestion that people review, like a pull request (comments, reviews, #12 numbers). Problems are reported as issues (labels, assignees; public except reports of rights or of something offensive), and people have handles (@mendy) to mention and an inbox.
 
@@ -24,7 +24,7 @@ Ids (rh-7k2m9q4d) are permanent; paths (/likkutei-sichos/12/3, /events/5742-05-1
 
 - [OpenAPI 3.1](${api}/openapi.json): every route
 - [Interactive reference](${site}/developers/reference)
-- [MCP server](${api}/mcp): Streamable HTTP, tools search, get_item, list_children, list_printings (every printing of a sefer, with its volume and sources), get_text, suggest_fix, list_issues, open_issue, ask_machine (OCR a scan, transcribe a recording), machine_queue, and tools to organize the catalog. Reading needs no account; suggesting, opening issues and asking the machines need the person's account with the write scope: the server answers 401 with WWW-Authenticate so clients connect with OAuth (the person approves on rebbehub.org), or send a personal token (Authorization: Bearer rhp_…)
+- [MCP server](${api}/mcp): Streamable HTTP, tools search, get_item, list_children, list_printings (every printing of a sefer, with its volume and sources), get_text, suggest_fix, list_issues, open_issue, ask_machine (OCR a scan, transcribe a recording), machine_queue, and tools to organize the catalog. Reading needs no account; suggesting, opening issues and asking the machines need the person's account with the write scope: the server answers 401 with WWW-Authenticate so clients connect with OAuth (the person approves on chassidushub.org), or send a personal token (Authorization: Bearer rhp_…)
 - [Everything in one file](${site}/llms-full.txt)
 
 ## Docs
@@ -34,8 +34,8 @@ ${pages}
 ## Optional
 
 - [Download and mirror](${site}/mirrors): the whole catalog as signed dumps
-- [Models](${site}/models): RebbeHub's OCR, bold and speech models and their benchmark scores (the models are not released)
-- [Source code](https://github.com/shmuky/RebbeHub) (AGPL-3.0)
+- [Models](${site}/models): ChassidusHub's OCR, bold and speech models and their benchmark scores (the models are not released)
+- [Source code](https://github.com/ChassidusHub/ChassidusHub) (AGPL-3.0)
 `;
 }
 

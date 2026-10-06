@@ -1,7 +1,7 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { ExportGate, type Catalog, type EntityView } from '@rebbehub/core';
-import { writeShaar, type AlignmentData, type EntityId, type LocalName, type SegmentData, type TextData, type WorkData } from '@rebbehub/model';
+import { ExportGate, type Catalog, type EntityView } from '@chassidushub/core';
+import { writeShaar, type AlignmentData, type EntityId, type LocalName, type SegmentData, type TextData, type WorkData } from '@chassidushub/model';
 import { EMBEDDED_TYPES, entityFile, shaarFile, syncFile, textFile } from './layout.js';
 import { renderAlignment, renderEntity, renderText, stableJson } from './render.js';
 
@@ -45,9 +45,9 @@ export interface ExportStats {
   withheld: number;
 }
 
-const MIRROR_README = `# RebbeHub catalog
+const MIRROR_README = `# ChassidusHub catalog
 
-The whole RebbeHub catalog, exported from https://rebbehub.org after every
+The whole ChassidusHub catalog, exported from https://chassidushub.org after every
 merge. Clone it, diff it, fork it: it belongs to the community.
 
 - \`entities/<type>/<shard>/<id>.json\` - one item per file: its permanent
@@ -56,9 +56,9 @@ merge. Clone it, diff it, fork it: it belongs to the community.
   anchored by its permanent id (\`#rh-…\`), so citations never break.
 - \`sync/<shard>/<id>.vtt\` - a recording synced to a text, as WebVTT.
 - \`shaars/<shard>/<id>.md\` - a sefer's shaar, its README, written the same
-  way for every sefer (https://github.com/shmuky/RebbeHub/blob/main/docs/shaar.md).
+  way for every sefer (https://github.com/ChassidusHub/ChassidusHub/blob/main/docs/shaar.md).
   One the catalog made from its data says so in its item's \`shaar.origin\`.
-- \`COMMIT\` - the last RebbeHub commit this export includes.
+- \`COMMIT\` - the last ChassidusHub commit this export includes.
 
 Machine-made text and sync are labelled (\`machine=…\`) until a person has
 checked them. Never quote them as the Rebbe's words before that.
@@ -179,7 +179,7 @@ export interface ExportedCommit {
 
 /**
  * Applies the commits after `since` one at a time, calling `afterEach` once
- * each is written, so the mirror can record one git commit per RebbeHub
+ * each is written, so the mirror can record one git commit per ChassidusHub
  * commit with its author, date and message.
  */
 export async function exportCommits(catalog: Catalog, sink: FileSink, since: number, afterEach?: (commit: ExportedCommit) => Promise<void>, limit = 1000): Promise<number> {

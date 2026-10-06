@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import type { EntityType } from '@rebbehub/model';
+import type { EntityType } from '@chassidushub/model';
 import type { ImportRecord, Importer } from './importer.js';
 
 /**
@@ -10,13 +10,13 @@ import type { ImportRecord, Importer } from './importer.js';
  * server, so this reads a copy of that index given at run time
  * (SK_ARCHIVE_DB).
  *
- * Its history becomes RebbeHub's: each of the archive's commits is one
+ * Its history becomes ChassidusHub's: each of the archive's commits is one
  * suggestion by this bot, adding to each item it touched the record of
  * the file the archive keeps for it - where it was fetched from, when, its
  * sha256 and size - so an item's page and history say which exact file
  * is its recording or its hanacha. Its `wanted` list (what every item
  * should have) names the files upstream would not give; those feed the
- * Missing board (`archiveGaps`, loaded by `rebbehub archive-gaps`).
+ * Missing board (`archiveGaps`, loaded by `chassidushub archive-gaps`).
  *
  * The Maanos are in the archive, kept but not cleared: nothing of them is
  * read here.
@@ -138,10 +138,10 @@ export async function readArchiveIndex(file: string): Promise<ArchiveIndex> {
 }
 
 /**
- * The RebbeHub item an archive item is, by the key its own importer gave
+ * The ChassidusHub item an archive item is, by the key its own importer gave
  * it: a farbrengen's hanacha is on its event, its recording is its part,
  * a JEM recording is the JEM importer's, a sefer's text is its unit's.
- * Items RebbeHub has no page for (the Likkutei Sichos pages, the yomanim)
+ * Items ChassidusHub has no page for (the Likkutei Sichos pages, the yomanim)
  * have none.
  */
 export function archiveTarget(item: { collection: string; itemId: string; kind: string; sourceId: string; role: string }):{ key: string; type: EntityType } | null {

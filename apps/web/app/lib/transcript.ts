@@ -88,7 +88,7 @@ export interface TranscriptCommit {
   changes: TranscriptChange[];
 }
 
-/** Reads from the API through the site (the steward pass keeps the visitor's session). */
+/** Reads from the API through the site (The steward pass keeps the visitor's session). */
 export async function get<T>(path: string): Promise<T> {
   const response = await fetch(`/_/steward/${path}`, { credentials: 'same-origin', headers: { accept: 'application/json' } });
   const json = (await response.json().catch(() => ({}))) as T & { message?: string };
@@ -103,7 +103,7 @@ export async function get<T>(path: string): Promise<T> {
  * counted, so for an hour after a check this browser asks for its own
  * copy, named by when it last checked.
  */
-const CHECKED_AT = 'rebbehub.review.checkedAt';
+const CHECKED_AT = 'chassidushub.review.checkedAt';
 
 /** Marks that this browser just sent a fix or a check. */
 export function noteChecked() {

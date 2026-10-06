@@ -1,5 +1,5 @@
 import type { Context, Hono } from 'hono';
-import { knownDriveFile, type Catalog } from '@rebbehub/core';
+import { knownDriveFile, type Catalog } from '@chassidushub/core';
 import { callerAddress, type RateLimiter } from './platform.js';
 
 /**
@@ -11,7 +11,7 @@ import { callerAddress, type RateLimiter } from './platform.js';
  * The catalog stores each PDF's own address on Drive (the mafteiach's and
  * Otzros HaRebbe's link); pdf.js and the audio player need the bytes from
  * an address that allows other sites' pages (CORS) and answers a part of
- * a file (Range), which Drive does not. This is RebbeHub's own way there,
+ * a file (Range), which Drive does not. This is ChassidusHub's own way there,
  * as Sichos-Kodesh's media proxy was for its app, so the site depends on
  * no one else's server.
  *
@@ -71,7 +71,7 @@ function capped(body: ReadableStream<Uint8Array>, max: number): ReadableStream<U
     new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
         seen += chunk.byteLength;
-        if (seen > max) controller.error(new Error('the file is larger than RebbeHub passes on'));
+        if (seen > max) controller.error(new Error('the file is larger than ChassidusHub passes on'));
         else controller.enqueue(chunk);
       },
     }),
@@ -136,7 +136,7 @@ export function driveRoutes(app: Hono, catalog: Catalog, options: DriveOptions =
     const size = totalSize(upstream);
     if (size !== null && size > maxBytes) {
       await upstream.body?.cancel();
-      return fail(c, 413, 'too-large', `the file is ${Math.round(size / 1048576)} MB; RebbeHub passes on files up to ${Math.round(maxBytes / 1048576)} MB`);
+      return fail(c, 413, 'too-large', `the file is ${Math.round(size / 1048576)} MB; ChassidusHub passes on files up to ${Math.round(maxBytes / 1048576)} MB`);
     }
 
     const headers = new Headers({ 'Cache-Control': CACHE, 'Accept-Ranges': 'bytes', 'Content-Disposition': 'inline' });

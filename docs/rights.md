@@ -1,6 +1,6 @@
 # Rights
 
-Rights are RebbeHub's biggest risk, so every file carries a rights state
+Rights are ChassidusHub's biggest risk, so every file carries a rights state
 and every export passes a gate. Code: `packages/model/src/rights.ts`,
 `packages/core/src/files.ts`, `packages/mirror/src/gate.ts`.
 
@@ -10,7 +10,7 @@ and every export passes a gate. Code: `packages/model/src/rights.ts`,
 | --- | --- | --- |
 | `open` | yes | the public bucket |
 | `credit` | yes, with its credit shown | the public bucket |
-| `link` | no - RebbeHub points at the source | the preservation bucket if a copy was uploaded, else nowhere |
+| `link` | no - ChassidusHub points at the source | the preservation bucket if a copy was uploaded, else nowhere |
 | `preserved` | no, until cleared | the preservation bucket |
 
 ## Where a file starts

@@ -1,22 +1,22 @@
-# Running RebbeHub
+# Running ChassidusHub
 
-Everything below uses the `rebbehub` command (`services/jobs`). From the
-repository: `npm run rebbehub -- <command>`. Every command takes
+Everything below uses the `chassidushub` command (`services/jobs`). From the
+repository: `npm run chassidushub -- <command>`. Every command takes
 `--database <postgres URL | PGlite folder>`; the default is
 `$DATABASE_URL`, else `.data/pglite`.
 
 ## Database
 
 ```sh
-rebbehub migrate                     # create or update the schema; seeds the built-in schemas as commit 1
-rebbehub account --id shmuly --name "Shmuly" --steward
+chassidushub migrate                     # create or update the schema; seeds the built-in schemas as commit 1
+chassidushub account --id steward --name "Steward" --steward
 ```
 
 Once, after deploying built-in schemas version 5 (a page's words as
 structure, no longer wiki markup; [data model](data-model.md#a-pages-words)):
 
 ```sh
-rebbehub convert-bodies [--chunk 500]   # every page whose words are still markup, as structured words
+chassidushub convert-bodies [--chunk 500]   # every page whose words are still markup, as structured words
 ```
 
 It works in reviewed system changes of `--chunk` pages, and can be
@@ -32,7 +32,7 @@ catalog makes from its data, labelled as the catalog's until a person
 reads it:
 
 ```sh
-rebbehub shaars [--chunk 500] [--dry-run]   # system changes of --chunk sefarim; --dry-run only counts
+chassidushub shaars [--chunk 500] [--dry-run]   # system changes of --chunk sefarim; --dry-run only counts
 ```
 
 It can be stopped and run again, and takes up only the sefarim still
@@ -44,26 +44,26 @@ catalog (below).
 An import of a catalog people have added to copies the live catalog next
 to itself, imports there and copies the result back
 (`scripts/import-catalog.sh`), so it must not change meanwhile. For those
-minutes the import holds the catalog (`rebbehub hold-catalog`,
+minutes the import holds the catalog (`chassidushub hold-catalog`,
 `packages/db/src/hold.ts`): every write to a table in `public` checks an
 advisory lock first (`auth.catalog_write_check`, migration 0028). Reads go
 on as always. The API answers a write `503 busy` with `Retry-After`, so the
 site and the MCP tools say to try again in a few minutes and nothing is
-half written; the jobs (`rebbehub transcribe` and the rest) wait and save
+half written; the jobs (`chassidushub transcribe` and the rest) wait and save
 when it is done; the API's cron skips its round. Nobody needs to pause for
 an import any more. The hold ends when the copy back ends, when the import
 fails or is cancelled (its connection closes), and after two hours at the
 most.
 
 Production is Postgres on Neon. The revision table is partitioned by time;
-`ensureRevisionPartitions(db, [2026, 2027])` (in `@rebbehub/db`) adds
+`ensureRevisionPartitions(db, [2026, 2027])` (in `@chassidushub/db`) adds
 yearly partitions ahead of time.
 
 ### Backups
 
 Neon keeps one day of history, so the Backup workflow
 (`.github/workflows/backup.yml`) copies the whole database every night at
-06:17 UTC into the private bucket `rebbehub-preservation`, under
+06:17 UTC into the private bucket `chassidushub-preservation`, under
 `backups/db/<yyyy-mm-dd>/`: pg_dump's custom format in parts of 90 MB
 (`dump.part00`, `dump.part01`…, what Cloudflare's REST API takes in one
 request) and `SHA256SUMS`. Each night's copy is kept 35 days and the one
@@ -75,7 +75,7 @@ workflow), for example just before a big import.
 It writes the bucket through Cloudflare's REST API when the repository has
 `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (R2 edit rights), else
 through `R2_ENDPOINT`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`, whose
-R2 token then needs Object Read & Write on `rebbehub-preservation` (the
+R2 token then needs Object Read & Write on `chassidushub-preservation` (the
 first runs, 2026-10-01, found the key read-only and the token unset).
 
 To restore, never over the live database first: make a Neon branch (or an
@@ -92,9 +92,9 @@ pg_restore --no-owner --no-privileges --dbname "$BRANCH_URL" dump
 ## Seeding
 
 ```sh
-rebbehub import sichos-kodesh-works --from ../Sichos-Kodesh --dry-run
-rebbehub import sichos-kodesh-works --from ../Sichos-Kodesh --approve-as shmuly
-rebbehub import sichos-kodesh-occasions --from ../Sichos-Kodesh --approve-as shmuly   # farbrengens, recordings, hanachos
+chassidushub import sichos-kodesh-works --from ../Sichos-Kodesh --dry-run
+chassidushub import sichos-kodesh-works --from ../Sichos-Kodesh --approve-as steward
+chassidushub import sichos-kodesh-occasions --from ../Sichos-Kodesh --approve-as steward   # farbrengens, recordings, hanachos
 ```
 
 The other importers (HebrewBooks, JEM, Sefaria, the Igros letters' dates,
@@ -107,24 +107,24 @@ overwrites what people have fixed.
 ## The git mirror
 
 ```sh
-rebbehub mirror --dir ../catalog --git
+chassidushub mirror --dir ../catalog --git
 ```
 
 The first run writes the whole catalog; later runs add one git commit per
-RebbeHub commit since the one in the mirror's `COMMIT` file, authored as
+ChassidusHub commit since the one in the mirror's `COMMIT` file, authored as
 the suggestion's author. `--full` rewrites it from scratch. Push the
-result to the public `rebbehub/catalog` repository.
+result to the public `chassidushub/catalog` repository.
 
 ## Editions and dumps
 
 ```sh
-rebbehub keygen --out release-key.json        # once; keep it secret, publish the public key
-rebbehub edition --by shmuly                  # tags main as e.g. 2026.40
-rebbehub dump --tag 2026.40 --out dumps/2026.40 --key release-key.json --upload
+chassidushub keygen --out release-key.json        # once; keep it secret, publish the public key
+chassidushub edition --by steward                  # tags main as e.g. 2026.40
+chassidushub dump --tag 2026.40 --out dumps/2026.40 --key release-key.json --upload
 ```
 
 The dump folder holds the SQLite database, the JSON Lines file, the
-same table as Parquet (`rebbehub-<tag>.parquet`: `id`, `type`, `path`,
+same table as Parquet (`chassidushub-<tag>.parquet`: `id`, `type`, `path`,
 `rev`, and `data` as JSON, for DuckDB, pandas or Spark), the
 Sichos-Kodesh release and a signed `manifest.json`; `--upload` puts them
 in the public bucket at `dumps/<tag>/`, where the API serves them at
@@ -134,10 +134,10 @@ in the public bucket at `dumps/<tag>/`, where the API serves them at
 ## Links, search by meaning and citations
 
 ```sh
-rebbehub check-links --limit 2000     # whether the catalog's links answer (the health page's dead links)
-rebbehub embed --limit 2000           # vectors for search by meaning (Workers AI keys needed)
-rebbehub citations                    # citations in the texts, proposed as links for review
-rebbehub citations --approve-as shmuly  # ... approved at once, as an import is
+chassidushub check-links --limit 2000     # whether the catalog's links answer (the health page's dead links)
+chassidushub embed --limit 2000           # vectors for search by meaning (Workers AI keys needed)
+chassidushub citations                    # citations in the texts, proposed as links for review
+chassidushub citations --approve-as steward  # ... approved at once, as an import is
 ```
 
 Each does only what earlier runs have not: `check-links` checks the
@@ -173,8 +173,8 @@ Workers AI secrets are set; `citations` only when started.
 Sichos-Kodesh's archive holds every hanacha scan its catalog links to, in
 its own R2 bucket (`sichos-kodesh-archive`, by sha256). The old
 typewritten Sichos Kodesh hanachos are open ([rights](rights.md)), so
-RebbeHub keeps and serves them, each with a **reading copy** made by
-`@rebbehub/pdf-fix`: every page turned level, its text centred with even
+ChassidusHub keeps and serves them, each with a **reading copy** made by
+`@chassidushub/pdf-fix`: every page turned level, its text centred with even
 margins and the same enlargement on every page, cut free of the
 scanner's black edges. The scan itself is untouched - only where it sits
 on the page changes - so the copy is lossless and the same size. Each
@@ -187,20 +187,20 @@ and stays out.
 
 ```sh
 export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=…   # R2 edit rights on both buckets
-rebbehub reading-copies make --from ../Sichos-Kodesh --work .data/reading-copies --shard 0/4   # and 1/4, 2/4, 3/4 side by side
-rebbehub reading-copies publish --from ../Sichos-Kodesh --work .data/reading-copies
+chassidushub reading-copies make --from ../Sichos-Kodesh --work .data/reading-copies --shard 0/4   # and 1/4, 2/4, 3/4 side by side
+chassidushub reading-copies publish --from ../Sichos-Kodesh --work .data/reading-copies
 ```
 
 `make` reads the archive's list of what it holds (`objects.json` in the
 archive's own bucket; `--archive` names another), copies each scan from
-the archive into `rebbehub-public`
+the archive into `chassidushub-public`
 (`objects/<sha256>`) and puts its reading copy next to it; a run that
 stops goes on where it left off. `publish` writes the manifest -
 `manifests/reading-copies/sichos-kodesh.json`, served at
-`https://api.rebbehub.org/manifests/reading-copies/sichos-kodesh.json` -
+`https://api.chassidushub.org/manifests/reading-copies/sichos-kodesh.json` -
 listing every scan, its copy and each page's tilt, text box and transform
 (original page → copy, in PDF points), so OCR can reuse the measurements
-and show its lines on the copy. Every import then runs `rebbehub
+and show its lines on the copy. Every import then runs `chassidushub
 reading-copies register`, which records the scans as files (class
 `sichos-kodesh-hanacha`, open) and the copies as their `reading-copy`
 derivations, with each page's measurements as the scan's **page fix**;
@@ -210,7 +210,7 @@ down with it. When pdf-fix improves, its encoder version goes up and
 
 ## Page fixes for linked PDFs
 
-Most PDFs RebbeHub knows it only links to - Otzros HaRebbe's library of
+Most PDFs ChassidusHub knows it only links to - Otzros HaRebbe's library of
 Lubavitch seforim, some 5,400 files on Google Drive, first - so it makes
 no copies of them. What it keeps is each file's **page fix**: which pages
 lean, and the turn that levels each (a PDF matrix per page). The site's
@@ -218,7 +218,7 @@ reader draws the linked file through it; "Show as scanned" shows the file
 as it is.
 
 Most files need nothing, and are told apart cheaply
-(`services/jobs/src/pageFixes.ts`, `@rebbehub/pdf-fix`'s `inspect.ts` and
+(`services/jobs/src/pageFixes.ts`, `@chassidushub/pdf-fix`'s `inspect.ts` and
 `level.ts`):
 
 - a book set in type is passed over from a glance at six pages, without
@@ -238,9 +238,9 @@ against well over an hour). Without it pdf.js draws them, correctly but
 slowly.
 
 ```sh
-rebbehub page-fixes make --work .data/page-fixes --shard 0/4   # and 1/4, 2/4, 3/4 side by side
-export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=…         # R2 edit rights on rebbehub-public
-rebbehub page-fixes publish --work .data/page-fixes
+chassidushub page-fixes make --work .data/page-fixes --shard 0/4   # and 1/4, 2/4, 3/4 side by side
+export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=…         # R2 edit rights on chassidushub-public
+chassidushub page-fixes publish --work .data/page-fixes
 ```
 
 `make` lists the library from Drive as the importer does (kept in the work
@@ -249,11 +249,11 @@ Drive, measures it and lets it go; each file is read once. A run skips
 what an earlier run finished at the current encoder (`pdf-level@1`), so
 after an import adds files the next run reads only the new ones, and a
 file Drive would not give is tried again. `publish` writes
-`manifests/page-fixes/otzros.json`. Every import runs `rebbehub
-page-fixes register`, which records each PDF as a file RebbeHub knows but
+`manifests/page-fixes/otzros.json`. Every import runs `chassidushub
+page-fixes register`, which records each PDF as a file ChassidusHub knows but
 does not hold (a publisher's scan: link only, stored nowhere) with its
 page fix. `GET /v1/page-fixes/drive/<Drive id>` answers the reader: the
-turns, or the reading copy to open instead when RebbeHub serves one.
+turns, or the reading copy to open instead when ChassidusHub serves one.
 
 ## Drive links
 
@@ -277,14 +277,14 @@ Sichos-Kodesh's media proxy:
   error with the link to the file on Drive.
 
 Imports before this stored Drive PDFs on the media proxy
-(`https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/<id>?…`): a
+(`https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/<id>?…`): a
 farbrengen's hanachos, and an Otzros page's reading copy beside its Drive
 copy. The reader still opens those through the API, and one job turns
 them into Drive links:
 
 ```sh
-rebbehub relink-drive --dry-run      # counts what it would change, by type
-rebbehub relink-drive [--chunk 500]  # one bot Suggestion per 500 items, for review
+chassidushub relink-drive --dry-run      # counts what it would change, by type
+chassidushub relink-drive [--chunk 500]  # one bot Suggestion per 500 items, for review
 ```
 
 or the **Upkeep (manual)** workflow's `relink-drive-dry-run` and
@@ -301,7 +301,7 @@ on Drive and stay on the proxy.
 Each JEM recording also links to itself in the public Ashreinu app, which
 the site shows beside the play button (`https://ashreinu.app/#/player/parentEvent~…_event~…`,
 the app's own share link). Imports before stored the older form
-(`https://ashreinu.app/player?parentEvent=…&event=…`); `rebbehub relink-jem`
+(`https://ashreinu.app/player?parentEvent=…&event=…`); `chassidushub relink-jem`
 (or the workflow's `relink-jem-dry-run` and `relink-jem`) turns those into
 the app's link, as the relink bot `bot:relink-jem`, a Suggestion per 500
 items for review. The audio itself stays on the proxy.
@@ -313,7 +313,7 @@ Suggestions. The dry run says the real numbers.
 
 ## Text and sync
 
-- `rebbehub ocr --reread` reads again the scans an older version of the
+- `chassidushub ocr --reread` reads again the scans an older version of the
   engine read. The machine layer takes the new reading (its engine and
   version with it); community pages seeded from it take the new lines,
   except every line a person checked, which stays as they left it.
@@ -325,7 +325,7 @@ Suggestions. The dry run says the real numbers.
 - Pages are proofread once when every line on them is checked, twice when
   a second person reads the page through ("This page is right"); the
   strip of pages on `/text/<scan>` shows each page's level.
-- `rebbehub align --approve-as <steward>` hears recordings again with
+- `chassidushub align --approve-as <steward>` hears recordings again with
   Whisper for word times (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_AI_TOKEN) and
   aligns them to the transcripts as they now stand; spans a person locked
   ("Said now" on a farbrengen page) are never moved, and the rest are
@@ -336,7 +336,7 @@ Suggestions. The dry run says the real numbers.
 - A fix of a paragraph's words keeps the word timings of the words it
   left, and times the words it changed between them (model/timing.ts);
   the span is marked `edited` until `align` times it from the audio again.
-  Fixes made before that let the timings go; `rebbehub restore-word-times
+  Fixes made before that let the timings go; `chassidushub restore-word-times
   --approve-as <steward>` (the Upkeep workflow's `restore-word-times`,
   with a dry run) gives them back from each span's history, one
   suggestion of the alignment bot per recording. It reads no audio.
@@ -356,16 +356,16 @@ stop being served with it. Rendering a page also gives its page hash, so
 `page-images` measures the file for the upload check as it goes.
 
 ```sh
-export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=…   # R2 edit rights on rebbehub-public
-rebbehub page-images --limit 200                         # or --scan <id>
-rebbehub fingerprints --limit 500                        # needs ffmpeg for recordings
+export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=…   # R2 edit rights on chassidushub-public
+chassidushub page-images --limit 200                         # or --scan <id>
+chassidushub fingerprints --limit 500                        # needs ffmpeg for recordings
 ```
 
 `fingerprints` measures held files nobody has measured yet: a PDF's page
 hashes (`dhash-256@1`, one per page) and a recording's fingerprint
 (`rh-audio@1`, decoded with ffmpeg on the jobs machine only). It reads
 served files from the files host; with `--preservation-bucket
-rebbehub-preservation` (and the R2 keys above) it measures kept files
+chassidushub-preservation` (and the R2 keys above) it measures kept files
 too. The upload check (`POST /v1/uploads/check`) and the review queue
 use them to say "we already have this" or "another scan of this
 printing". A rebuild import clears them with the rest of the database;
@@ -375,7 +375,7 @@ ever shown as a guess.
 ## Covers from the shaar
 
 A sefer's cover on the site is its **title page** (the shaar), from one
-of its PDFs: `rebbehub covers` samples the first ten pages of the best
+of its PDFs: `chassidushub covers` samples the first ten pages of the best
 one (a PDF the site serves before one it only links to; within each, a
 preferred, complete scan of its printings first, then a sicha's PDF on
 Drive, then a printing's scan on HebrewBooks), reads their ink and their
@@ -393,15 +393,15 @@ another page as the title page"), a suggestion that sets the work's
 and keeps it as the person's choice. A cover the machine chose says so.
 
 ```sh
-export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=…   # R2 edit rights on rebbehub-public and rebbehub-preservation
-rebbehub covers --limit 200                              # or --work <id>; --again after the tool changes
+export CLOUDFLARE_ACCOUNT_ID=… CLOUDFLARE_API_TOKEN=…   # R2 edit rights on chassidushub-public and chassidushub-preservation
+chassidushub covers --limit 200                              # or --work <id>; --again after the tool changes
 ```
 
 A sefer whose PDFs are only linked (`link`: the Otzros library on Drive,
 a printing's scan on HebrewBooks) gets its cover too. The job fetches
 the PDF from its link (Drive as it gives files to anyone with the link;
 HebrewBooks from `download.hebrewbooks.org`), checks it against the
-sha256 the catalog has, and keeps it in `rebbehub-preservation`, never
+sha256 the catalog has, and keeps it in `chassidushub-preservation`, never
 served, as the file's copy (a HebrewBooks scan becomes a file of its
 own, from its publication's HebrewBooks id, credited to HebrewBooks.org).
 The cover goes into the public bucket and is served; the sefer's page
@@ -451,7 +451,7 @@ ninety days of it and the latest incidents.
   UTC, the page says so before the site goes down.
 - The Workers' load comes from the same analytics
   (`workersInvocationsAdaptive`): for each of `STATUS_WORKERS` (default
-  `rebbehub-web,rebbehub-api`), today's requests, how many the runtime
+  `chassidushub-web,chassidushub-api`), today's requests, how many the runtime
   stopped for going over the CPU allowance (error 1102, "exceeded
   resources": a page nobody got), and the CPU a request takes at the
   median and at the slowest hundredth. Any request stopped today is
@@ -469,7 +469,7 @@ The Watch workflow (`.github/workflows/watch.yml`) looks every ten
 minutes from outside Cloudflare: the site's /about, and the report at
 /v1/status (any check `down`, or a report over twenty minutes old). When
 something is still wrong a minute later, it opens one GitHub issue
-labelled `outage` that mentions @shmuky, so GitHub emails him. It adds to
+labelled `outage` that mentions @ChassidusHub, so GitHub emails the account. It adds to
 the issue only when what is wrong changes, and closes it once all is up.
 Nothing needs configuring; to tell someone else, change `NOTIFY` there.
 
@@ -478,8 +478,8 @@ Nothing needs configuring; to tell someone else, change `NOTIFY` there.
 `apps/web` reads the catalog only through the API, like any other client.
 
 - Local: `npm run dev:web` (Vite, http://localhost:5173) with the API
-  running; `REBBEHUB_API_URL` and `SITE_URL` override the defaults.
-- Node: `npm run build:web`, then `npm start -w @rebbehub/web` (port 3000).
+  running; `CHASSIDUSHUB_API_URL` and `SITE_URL` override the defaults.
+- Node: `npm run build:web`, then `npm start -w @chassidushub/web` (port 3000).
 - Cloudflare Workers: deployed with the API on every merge to `main`; see
   [deploy.md](deploy.md).
 
@@ -682,9 +682,9 @@ the edge near the reader.
 
 Every answer says what it cost, in production too, in a `Server-Timing`
 header (the Timing tab of a browser's DevTools shows it; so does
-`curl -sI https://rebbehub.org/ | grep -i server-timing`). The API's
+`curl -sI https://chassidushub.org/ | grep -i server-timing`). The API's
 says `db;dur=<ms>;desc="<n> statements"` (its request's own connection,
-counted: `measured` in `@rebbehub/db`) and `total`; a page's says `api`
+counted: `measured` in `@chassidushub/db`) and `total`; a page's says `api`
 (how many times it asked the API and how long it waited, summed, so side
 by side asks can exceed the whole), `db` (the statements and time those
 answers report, an answer the edge already had counted as from the edge)
@@ -717,7 +717,7 @@ making the page.
   page's address; what is not there is a real 404.
 - Search engines are sent the whole page at once (`isbot`), rendered on
   the server; nothing on an item's page needs JavaScript to be read.
-- `/llms.txt` and `/llms-full.txt` are for AI agents: what RebbeHub is,
+- `/llms.txt` and `/llms-full.txt` are for AI agents: what ChassidusHub is,
   the OpenAPI document, the MCP server and every developer page.
 - **A budget for crawlers.** A page no one has asked for lately costs the
   database one to two dozen reads, and a crawler asks for tens of
@@ -754,8 +754,8 @@ making the page.
 - **Neon.** Autoscaling with a minimum of at least 0.5 CU, so the first
   reader after a quiet night does not wait for the database to wake;
   suspend-after-idle off for the production branch once traffic is steady.
-- **Search Console and Bing Webmaster Tools.** Verify `rebbehub.org`
-  (a DNS TXT record in Cloudflare) and submit `https://rebbehub.org/sitemap.xml`.
+- **Search Console and Bing Webmaster Tools.** Verify `chassidushub.org`
+  (a DNS TXT record in Cloudflare) and submit `https://chassidushub.org/sitemap.xml`.
 - **Cloudflare dashboard.** Leave Bot Fight Mode off, or it may challenge
   good crawlers; if AI crawlers should be kept out after all, say so in
   robots.txt rather than blocking them in the dashboard.

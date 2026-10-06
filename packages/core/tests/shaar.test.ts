@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CatalogError, fillShaars, shaarFile, suggestShaar, type Catalog } from '@rebbehub/core';
-import type { EntityId, WorkData } from '@rebbehub/model';
+import { CatalogError, fillShaars, shaarFile, suggestShaar, type Catalog } from '@chassidushub/core';
+import type { EntityId, WorkData } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
 /** A sefer's shaar through the catalog: the file, a person's shaar for review, and one made from the catalog for every sefer. */
@@ -12,8 +12,8 @@ describe('a sefer’s shaar', () => {
 
   beforeEach(async () => {
     ({ catalog, set } = await freshCatalog());
-    rebbe = await add(catalog, 'shmuly', 'shmuly', 'author', { name: { he: 'כ"ק אדמו"ר', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7 });
-    sefer = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'ליקוטי שיחות', en: 'Likkutei Sichos' }, slug: 'likkutei-sichos', authors: [rebbe], genre: 'sichos', levels: ['volume', 'sicha'], description: { he: 'שיחות מוגהות' }, sets: [set] });
+    rebbe = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'כ"ק אדמו"ר', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7 });
+    sefer = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'ליקוטי שיחות', en: 'Likkutei Sichos' }, slug: 'likkutei-sichos', authors: [rebbe], genre: 'sichos', levels: ['volume', 'sicha'], description: { he: 'שיחות מוגהות' }, sets: [set] });
   });
 
   const work = async (id: EntityId) => (await catalog.get(id))!.data as unknown as WorkData;
@@ -48,7 +48,7 @@ describe('a sefer’s shaar', () => {
   });
 
   it('gives every sefer without one a shaar made from the catalog, once', async () => {
-    const recordings = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'הקלטות' }, slug: 'recordings', authors: [], genre: 'recordings', levels: [], sets: [set] });
+    const recordings = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'הקלטות' }, slug: 'recordings', authors: [], genre: 'recordings', levels: [], sets: [set] });
     expect(await fillShaars(catalog, { dryRun: true })).toBe(1);
     expect((await work(sefer)).shaar).toBeUndefined();
     expect(await fillShaars(catalog, { batch: 1 })).toBe(1);

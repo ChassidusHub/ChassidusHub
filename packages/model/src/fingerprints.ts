@@ -1,6 +1,6 @@
 /**
  * Fingerprints, so the same scan or recording is not taken twice
- * (docs/plans/rebbehub.md, sections 7 and 9: "perceptual page hashes and
+ * (docs/plans/chassidushub.md, sections 7 and 9: "perceptual page hashes and
  * audio fingerprints catch the same scan or recording uploaded twice").
  *
  * A file's sha256 catches the very same bytes. These catch the same pages

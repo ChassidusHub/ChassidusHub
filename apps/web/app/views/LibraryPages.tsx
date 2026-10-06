@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { Form, Link, useSearchParams } from 'react-router';
-import { hasShaar, type LocalName, type WorkData } from '@rebbehub/model';
+import { hasShaar, type LocalName, type WorkData } from '@chassidushub/model';
 import { CoverChoice } from '../components/CoverChoice.js';
 import { EditActions, RowEdit } from '../components/EditSheet.js';
 import { ItemList } from '../components/ItemLink.js';

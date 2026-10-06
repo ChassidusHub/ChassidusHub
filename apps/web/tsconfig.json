@@ -15,8 +15,8 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "paths": {
-      "@rebbehub/hebrew": ["../../packages/hebrew/src/index.ts"],
-      "@rebbehub/model": ["../../packages/model/src/index.ts"]
+      "@chassidushub/hebrew": ["../../packages/hebrew/src/index.ts"],
+      "@chassidushub/model": ["../../packages/model/src/index.ts"]
     }
   }
 }

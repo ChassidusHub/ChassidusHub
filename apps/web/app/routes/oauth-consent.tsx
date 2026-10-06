@@ -44,7 +44,7 @@ const WORDS = {
   he: {
     pageTitle: 'חיבור אפליקציה',
     title: (app: string) => `לחבר את ${app} לחשבון שלכם?`,
-    lede: 'אפליקציה מבקשת לפעול בשמכם ב-RebbeHub. אשרו רק אם אתם מכירים אותה ופתחתם את החיבור בעצמכם.',
+    lede: 'אפליקציה מבקשת לפעול בשמכם ב-ChassidusHub. אשרו רק אם אתם מכירים אותה ופתחתם את החיבור בעצמכם.',
     signedInAs: 'מחוברים בתור',
     notYou: 'לא אתם?',
     says: 'כך האפליקציה קוראת לעצמה',
@@ -76,7 +76,7 @@ const WORDS = {
   en: {
     pageTitle: 'Connect an app',
     title: (app: string) => `Connect ${app} to your account?`,
-    lede: 'An app asks to act as you on RebbeHub. Allow it only if you know it and started connecting it yourself.',
+    lede: 'An app asks to act as you on ChassidusHub. Allow it only if you know it and started connecting it yourself.',
     signedInAs: 'Signed in as',
     notYou: 'Not you?',
     says: 'What the app calls itself',
@@ -145,7 +145,7 @@ function ScopeRow({ icon, title, hint, checked, locked, onChange }: { icon: Icon
 function Head({ lang, title, lede }: { lang: Lang; title: string; lede?: string }) {
   return (
     <div className="auth-head">
-      <Link to={href('/', lang)} className="mark auth-mark" aria-label="RebbeHub">
+      <Link to={href('/', lang)} className="mark auth-mark" aria-label="ChassidusHub">
         ר
       </Link>
       <h1 className="auth-title">{title}</h1>

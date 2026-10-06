@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { Catalog, convertLegacyBodies, fillShaars } from '@rebbehub/core';
-import { connectPostgres, holdCatalog, one, waitingWhileHeld, type Db } from '@rebbehub/db';
-import { openPGlite } from '@rebbehub/db/pglite';
+import { Catalog, convertLegacyBodies, fillShaars } from '@chassidushub/core';
+import { connectPostgres, holdCatalog, one, waitingWhileHeld, type Db } from '@chassidushub/db';
+import { openPGlite } from '@chassidushub/db/pglite';
 import {
   OTZROS_FOLDER,
   archiveImporter,
@@ -31,7 +31,7 @@ import {
   readSefariaCrawl,
   readSichosKodeshOccasions,
   readSichosKodeshWorks,
-  rebbehubSetsImporter,
+  chassidushubSetsImporter,
   runImport,
   sefariaClient,
   sefariaImporter,
@@ -42,9 +42,9 @@ import {
   type Importer,
   type LibraryTree,
   type SefariaCrawl,
-} from '@rebbehub/importers';
-import { clearMirror, directorySink, exportCommits, exportSnapshot, generateKeyPair, writeDump, type KeyPair } from '@rebbehub/mirror';
-import { BUILTIN_SCHEMAS, SchemaRegistry } from '@rebbehub/model';
+} from '@chassidushub/importers';
+import { clearMirror, directorySink, exportCommits, exportSnapshot, generateKeyPair, writeDump, type KeyPair } from '@chassidushub/mirror';
+import { BUILTIN_SCHEMAS, SchemaRegistry } from '@chassidushub/model';
 import { commitAll, git } from './git.js';
 import { pullMirror } from './mirrorPull.js';
 import { relinkDriveLinks, relinkJemLinks } from './relinkDrive.js';
@@ -318,22 +318,22 @@ export async function accountCommand(ctx: Context, input: { id: string; name: st
   });
 }
 
-/** The importers `rebbehub import` runs, each reading a Sichos-Kodesh checkout. */
+/** The importers `chassidushub import` runs, each reading a Sichos-Kodesh checkout. */
 export const IMPORTERS: Record<string, (from: string) => Importer> = {
   // With the words of every unit whose rights let it ship, from Sichos-Kodesh's published archive through
-  // RebbeHub's API (REBBEHUB_API_URL, default the live one; REBBEHUB_NO_TEXTS=1 leaves them out).
+  // ChassidusHub's API (CHASSIDUSHUB_API_URL, default the live one; CHASSIDUSHUB_NO_TEXTS=1 leaves them out).
   'sichos-kodesh-works': (from) =>
-    sichosKodeshWorksImporter(() => readSichosKodeshWorks(from, { texts: !process.env.REBBEHUB_NO_TEXTS, api: process.env.REBBEHUB_API_URL, log: (line) => console.log(line) })),
+    sichosKodeshWorksImporter(() => readSichosKodeshWorks(from, { texts: !process.env.CHASSIDUSHUB_NO_TEXTS, api: process.env.CHASSIDUSHUB_API_URL, log: (line) => console.log(line) })),
   // With MAFTEIACH_DATA (a crawl of mafteiach.app by Sichos-Kodesh's packages/mafteiach-index), every link and content outline the index has.
-  // The sets RebbeHub keeps itself (the Teshuros set); `--from` is not used.
-  'rebbehub-sets': () => rebbehubSetsImporter(),
+  // The sets ChassidusHub keeps itself (the Teshuros set); `--from` is not used.
+  'chassidushub-sets': () => chassidushubSetsImporter(),
   // Otzros HaRebbe's Drive library of seforim, listed from Drive at run time (`--from` is not used).
   otzros: () => driveLibraryImporter(() => listDriveFolder(OTZROS_FOLDER, { log: (line) => console.log(line) })),
-  // With CHABADLIBRARY_TREE (the contents `rebbehub crawl-library` gathered), a page for every chapter in the library,
+  // With CHABADLIBRARY_TREE (the contents `chassidushub crawl-library` gathered), a page for every chapter in the library,
   // with its words where the crawl kept them (`--texts`).
   chabadlibrary: (from) => {
-    if (!process.env.CHABADLIBRARY_TREE) throw new Error('CHABADLIBRARY_TREE is not set: run rebbehub crawl-library first');
-    return chabadLibraryImporter(() => readChabadLibrary(from, process.env.CHABADLIBRARY_TREE!, { api: process.env.REBBEHUB_API_URL }));
+    if (!process.env.CHABADLIBRARY_TREE) throw new Error('CHABADLIBRARY_TREE is not set: run chassidushub crawl-library first');
+    return chabadLibraryImporter(() => readChabadLibrary(from, process.env.CHABADLIBRARY_TREE!, { api: process.env.CHASSIDUSHUB_API_URL }));
   },
   // Every Likkutei Sichos sicha the Chabad Library has not typed, a page each with its PDF, from Sichos-Kodesh's library list.
   'likkutei-sichos': (from) => likkuteiSichosImporter(() => readLikkuteiSichos(from)),
@@ -347,11 +347,11 @@ export const IMPORTERS: Record<string, (from: string) => Importer> = {
     const db = need('JEM_DB', 'a crawl of JEM by Sichos-Kodesh\'s packages/jem-index (jem.db)');
     return jemImporter(async () => ({ jem: await readJemIndex(db), occasions: await farbrengens(from) }));
   },
-  // With SEFARIA_DATA (what `rebbehub crawl-sefaria` read), Sefaria's Chabad books that Sichos-Kodesh does not publish,
+  // With SEFARIA_DATA (what `chassidushub crawl-sefaria` read), Sefaria's Chabad books that Sichos-Kodesh does not publish,
   // and with a crawl made `--daily`, the texts of Chitas and the Rambam in their own Set.
   sefaria: (from) => {
-    const dir = need('SEFARIA_DATA', 'the folder `rebbehub crawl-sefaria` wrote');
-    return sefariaImporter(async () => ({ ...(await readSefariaCrawl(dir)), authors: await skAuthors(from), api: process.env.REBBEHUB_API_URL }));
+    const dir = need('SEFARIA_DATA', 'the folder `chassidushub crawl-sefaria` wrote');
+    return sefariaImporter(async () => ({ ...(await readSefariaCrawl(dir)), authors: await skAuthors(from), api: process.env.CHASSIDUSHUB_API_URL }));
   },
   // With IGROS_DATA (Sichos-Kodesh's build-igros output, from the Igros app's files), each letter's date.
   igros: () => {
@@ -393,8 +393,8 @@ async function farbrengens(from: string) {
  * Reads Sefaria's Chabad books that Sichos-Kodesh does not publish into
  * `out`, asking Sefaria only for what `cache` does not have; with `daily`
  * (or SEFARIA_DAILY=1), the texts of Chitas and the Rambam too; with
- * `keep`, puts each text with a licence that lets it be kept on RebbeHub's
- * own storage (`texts/<sha256>` in rebbehub-public), once.
+ * `keep`, puts each text with a licence that lets it be kept on ChassidusHub's
+ * own storage (`texts/<sha256>` in chassidushub-public), once.
  */
 export async function crawlSefariaCommand(ctx: Context, input: { from: string; out: string; cache?: string; keep?: boolean; only?: string[]; daily?: boolean; bucket?: string }): Promise<void> {
   const exclude = await sichosKodeshSefariaTitles(input.from);
@@ -402,7 +402,7 @@ export async function crawlSefariaCommand(ctx: Context, input: { from: string; o
   const daily = input.daily || process.env.SEFARIA_DAILY === '1' || process.env.SEFARIA_DAILY === 'true';
   const crawl = await crawlSefaria({ out: input.out, exclude, client, only: input.only, daily, log: ctx.log });
   if (!input.keep) return;
-  const kept = await keepSefariaTexts(crawl, input.out, r2(input.bucket ?? 'rebbehub-public'), ctx.log);
+  const kept = await keepSefariaTexts(crawl, input.out, r2(input.bucket ?? 'chassidushub-public'), ctx.log);
   await writeFile(join(input.out, 'crawl.json'), JSON.stringify(crawl));
   ctx.log(`${kept.stored} texts stored, ${kept.already} already there`);
 }
@@ -436,7 +436,7 @@ export async function keepSefariaTexts(crawl: SefariaCrawl, dir: string, store: 
 
 /**
  * Loads the files Sichos-Kodesh's archive wants and could not get (from a
- * copy of its index) into the Missing board, each with the RebbeHub item
+ * copy of its index) into the Missing board, each with the ChassidusHub item
  * it belongs to.
  */
 export async function archiveGapsCommand(ctx: Context, input: { db: string }): Promise<void> {
@@ -473,8 +473,8 @@ export async function archiveGapsCommand(ctx: Context, input: { db: string }): P
  * registry in the library, into `out`, continuing an earlier crawl there,
  * for `minutes` at most (the importer takes what is known so far). With
  * `texts`, each page's text too, as `texts/<sha256>.html` beside `out`;
- * with `keep`, each of those is put on RebbeHub's own storage
- * (`texts/<sha256>` in rebbehub-public), once.
+ * with `keep`, each of those is put on ChassidusHub's own storage
+ * (`texts/<sha256>` in chassidushub-public), once.
  */
 export async function crawlLibraryCommand(ctx: Context, input: { from: string; out: string; minutes?: number; texts?: boolean; keep?: boolean; bucket?: string }): Promise<void> {
   const dir = input.from.endsWith('works') ? input.from : join(input.from, 'apps/mobile/src/catalog/data/works');
@@ -490,7 +490,7 @@ export async function crawlLibraryCommand(ctx: Context, input: { from: string; o
   const texts = input.texts ? (sha256: string, html: string) => writeFile(join(textsDir, `${sha256}.html`), html) : undefined;
   await crawlChabadLibrary(roots, tree, { deadline, log: ctx.log, save, texts });
   if (!input.keep) return;
-  const kept = await keepLibraryTexts(tree, textsDir, r2(input.bucket ?? 'rebbehub-public'), ctx.log);
+  const kept = await keepLibraryTexts(tree, textsDir, r2(input.bucket ?? 'chassidushub-public'), ctx.log);
   await save(tree);
   ctx.log(`${kept.stored} texts stored, ${kept.already} already there`);
 }
@@ -541,7 +541,7 @@ export async function mirrorCommand(ctx: Context, input: { dir: string; full?: b
       await clearMirror(input.dir);
       const head = await catalog.head();
       const stats = await exportSnapshot(catalog, sink, head);
-      if (input.git) await commitAll(input.dir, { message: `Catalog as of commit ${head}`, author: 'rebbehub', mergedBy: 'rebbehub', at: new Date().toISOString(), seq: head });
+      if (input.git) await commitAll(input.dir, { message: `Catalog as of commit ${head}`, author: 'chassidushub', mergedBy: 'chassidushub', at: new Date().toISOString(), seq: head });
       ctx.log(`wrote the catalog at commit ${head}: ${stats.entities} items, ${stats.texts} texts, ${stats.alignments} alignments, ${stats.withheld} withheld`);
       return;
     }
@@ -569,7 +569,7 @@ export async function editionCommand(ctx: Context, input: { by: string; tag?: st
 
 export async function dumpCommand(ctx: Context, input: { tag: string; out: string; keyFile?: string; upload?: boolean; bucket?: string }): Promise<void> {
   // Checked first, so a long dump never ends in "cannot upload".
-  const store = input.upload ? r2(input.bucket ?? 'rebbehub-public') : null;
+  const store = input.upload ? r2(input.bucket ?? 'chassidushub-public') : null;
   await withCatalog(ctx, async (catalog) => {
     const edition = (await catalog.editions()).find((e) => e.tag === input.tag);
     if (!edition) throw new Error(`no catalog edition ${input.tag}; tag one first`);
@@ -590,7 +590,7 @@ export async function dumpCommand(ctx: Context, input: { tag: string; out: strin
 
 /** Keeps a mirror's copy of every edition's dumps, checked (mirrorPull.ts; docs/mirrors.md). */
 export async function mirrorPullCommand(ctx: Context, input: { api?: string; out: string; keys?: string[]; tag?: string; allowUnsigned?: boolean }): Promise<void> {
-  const result = await pullMirror({ api: input.api ?? 'https://api.rebbehub.org', out: input.out, keys: input.keys, tag: input.tag, allowUnsigned: input.allowUnsigned, log: ctx.log });
+  const result = await pullMirror({ api: input.api ?? 'https://api.chassidushub.org', out: input.out, keys: input.keys, tag: input.tag, allowUnsigned: input.allowUnsigned, log: ctx.log });
   ctx.log(`pulled ${result.pulled.length}, already here ${result.kept.length}, failed ${result.failed.length}`);
   if (result.failed.length) throw new Error(`not kept: ${result.failed.map((f) => `${f.tag} (${f.reason})`).join('; ')}`);
 }
@@ -624,7 +624,7 @@ export async function readingCopiesMakeCommand(
     // The archive's index from its own bucket, unless another is named.
     archive: await archivePdfs(input.archive ?? source),
     source,
-    target: r2(input.bucket ?? 'rebbehub-public'),
+    target: r2(input.bucket ?? 'chassidushub-public'),
     work: input.work,
     ...(shard ? { shard } : {}),
     ...(input.limit !== undefined ? { limit: input.limit } : {}),
@@ -638,7 +638,7 @@ export async function readingCopiesPublishCommand(ctx: Context, input: { from: s
   const manifest = await collectManifest(input.work, await sichosKodeshScans(input.from));
   const text = JSON.stringify(manifest);
   await writeFile(join(input.work, 'manifest.json'), text);
-  await r2(input.bucket ?? 'rebbehub-public').put(MANIFEST_KEY, new TextEncoder().encode(text), 'application/json');
+  await r2(input.bucket ?? 'chassidushub-public').put(MANIFEST_KEY, new TextEncoder().encode(text), 'application/json');
   const copies = manifest.files.filter((entry) => entry.readingCopy).length;
   ctx.log(`published ${MANIFEST_KEY}: ${manifest.files.length} scans, ${copies} reading copies, ${manifest.files.length - copies} left as they are`);
 }
@@ -691,7 +691,7 @@ export async function pageFixesPublishCommand(ctx: Context, input: { work: strin
   const manifest = await collectPageFixes(input.work, OTZROS_COLLECTION, await otzrosList(ctx, input.work));
   const text = JSON.stringify(manifest);
   await writeFile(join(input.work, 'manifest.json'), text);
-  await r2(input.bucket ?? 'rebbehub-public').put(pageFixesKey(OTZROS_COLLECTION), new TextEncoder().encode(text), 'application/json');
+  await r2(input.bucket ?? 'chassidushub-public').put(pageFixesKey(OTZROS_COLLECTION), new TextEncoder().encode(text), 'application/json');
   const count = (verdict: string) => manifest.files.filter((entry) => entry.verdict === verdict).length;
   ctx.log(`published ${pageFixesKey(OTZROS_COLLECTION)}: ${manifest.files.length} PDFs, ${count('fixed')} with pages to turn, ${count('as-is')} as they are, ${count('failed')} failed`);
 }

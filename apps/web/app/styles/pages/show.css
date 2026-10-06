@@ -1,8 +1,8 @@
 /*
  * A showcase (routes/show.tsx): an information page about the agents that
- * build RebbeHub, in the site's own colours and type. Plain text, a table,
+ * build ChassidusHub, in the site's own colours and type. Plain text, a table,
  * and the examples (scans, Torah text, the lyrics) as the site draws them.
- * And the page where Shmuly makes them (routes/showcase.tsx), in the
+ * And the page where the steward makes them (routes/showcase.tsx), in the
  * site's usual forms.
  */
 .show {
@@ -388,7 +388,7 @@
   font-family: 'Miram Lubavitch', 'FrankRuehlCLM', serif;
   font-weight: 700;
 }
-/* The ois letter is the body's own Frank, not Miram (Shmuly). */
+/* The ois letter is the body's own Frank, not Miram (The steward). */
 .pr-ois {
   font-weight: 400;
 }

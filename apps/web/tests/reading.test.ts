@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import type { EntityId } from '@rebbehub/model';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -18,7 +18,7 @@ import { parsePdfLook, pdfCssFilter, resolvedColors } from '../app/reader/look.j
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 let handle: (request: Request) => Promise<Response>;
 const ids: Record<string, EntityId> = {};
 
@@ -30,11 +30,11 @@ beforeAll(async () => {
   ids.unit = await add(catalog, 'mendy', 'keeper', 'unit', { work: ids.work, position: [{ level: 'sicha', value: '1' }], order: 'V', label: { he: 'שיחה לדוגמה', en: 'Sample sicha' } }, '/sample/1');
   ids.text = await add(catalog, 'mendy', 'keeper', 'text', { kind: 'edition', unit: ids.unit, language: 'he' });
   await add(catalog, 'mendy', 'keeper', 'segment', { text: ids.text, order: 'V', kind: 'paragraph', content: 'פסקה במקור', proofread: 1 });
-  ids.translation = await add(catalog, 'mendy', 'shmuly', 'text', { kind: 'translation', unit: ids.unit, language: 'en', translationOf: ids.text, credit: 'Translated by a test' });
-  await add(catalog, 'mendy', 'shmuly', 'segment', { text: ids.translation, order: 'V', kind: 'paragraph', content: 'A paragraph in English', proofread: 0, origin: { by: 'mt:test@1', checked: false } });
-  const { tag, commit } = await catalog.tagEdition('shmuly', { tag: '2026.40' });
-  await catalog.setEditionManifest(tag, { tag, commit, createdAt: '2026-09-28T12:00:00.000Z', files: [{ name: 'rebbehub-2026.40.sqlite', bytes: 2048, sha256: 'c'.repeat(64) }], signature: { alg: 'ed25519', keyId: '0123456789abcdef', sig: 'x' } });
-  const api = createApp({ catalog, mirrors: { gitUrls: ['https://github.com/rebbehub/catalog.git'] } });
+  ids.translation = await add(catalog, 'mendy', 'steward', 'text', { kind: 'translation', unit: ids.unit, language: 'en', translationOf: ids.text, credit: 'Translated by a test' });
+  await add(catalog, 'mendy', 'steward', 'segment', { text: ids.translation, order: 'V', kind: 'paragraph', content: 'A paragraph in English', proofread: 0, origin: { by: 'mt:test@1', checked: false } });
+  const { tag, commit } = await catalog.tagEdition('steward', { tag: '2026.40' });
+  await catalog.setEditionManifest(tag, { tag, commit, createdAt: '2026-09-28T12:00:00.000Z', files: [{ name: 'chassidushub-2026.40.sqlite', bytes: 2048, sha256: 'c'.repeat(64) }], signature: { alg: 'ed25519', keyId: '0123456789abcdef', sig: 'x' } });
+  const api = createApp({ catalog, mirrors: { gitUrls: ['https://github.com/ChassidusHub/catalog.git'] } });
   handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(api.request(input, init)) });
 }, 120_000);
 
@@ -73,8 +73,8 @@ describe('download and mirror', () => {
   it('lists the git mirror and every edition with its files, sizes, checksums and key', async () => {
     const page = await get('/mirrors?lang=en');
     expect(page.status).toBe(200);
-    expect(page.html).toContain('git clone https://github.com/rebbehub/catalog.git');
-    expect(page.html).toContain('rebbehub-2026.40.sqlite');
+    expect(page.html).toContain('git clone https://github.com/ChassidusHub/catalog.git');
+    expect(page.html).toContain('chassidushub-2026.40.sqlite');
     expect(page.html).toContain(`sha256 ${'c'.repeat(64)}`);
     expect(page.html).toContain('signed with key 0123456789abcdef');
     expect(page.html).toContain('http://api.test/v1/editions/2026.40/SHA256SUMS');

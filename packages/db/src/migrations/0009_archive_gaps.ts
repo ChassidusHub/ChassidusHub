@@ -3,8 +3,8 @@
  * (its `wanted` list, less what it holds): a hanacha whose Drive link is
  * gone, a recording JEM's CDN no longer answers for. They feed the Missing
  * board, where someone who has the file can add it. The list is the
- * archive's, loaded whole each time (`rebbehub archive-gaps`); `entity_id`
- * is the RebbeHub item the file belongs to, when there is one.
+ * archive's, loaded whole each time (`chassidushub archive-gaps`); `entity_id`
+ * is the ChassidusHub item the file belongs to, when there is one.
  */
 export const up = `
 CREATE TABLE archive_gap (

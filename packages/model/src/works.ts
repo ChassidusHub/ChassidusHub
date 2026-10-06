@@ -1,10 +1,10 @@
 /**
  * The works contract of Sichos-Kodesh (its packages/works/src/types.ts),
- * which RebbeHub's model grew from and which the Sichos-Kodesh apps build
+ * which ChassidusHub's model grew from and which the Sichos-Kodesh apps build
  * their library from. These types are kept exactly as that package states
- * them, so Sichos-Kodesh can import them from here and a RebbeHub release
+ * them, so Sichos-Kodesh can import them from here and a ChassidusHub release
  * converts to them without loss (release/sichosKodesh.ts in
- * @rebbehub/mirror). Change them only together with Sichos-Kodesh.
+ * @chassidushub/mirror). Change them only together with Sichos-Kodesh.
  *
  * One deliberate difference: `Work.collection` is a plain string here,
  * since the phone's library collection ids belong to Sichos-Kodesh's own

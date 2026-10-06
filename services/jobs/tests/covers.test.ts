@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { coversOf, getDerivations, getFile, hebrewBooksPdfUrl, registerFile } from '@rebbehub/core';
+import { coversOf, getDerivations, getFile, hebrewBooksPdfUrl, registerFile } from '@chassidushub/core';
 import { makeCovers } from '../src/covers.js';
 import type { ObjectStore } from '../src/readingCopies.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
@@ -36,7 +36,7 @@ function memoryStore(): ObjectStore & { objects: Map<string, Uint8Array> } {
   return { objects, get: async (key) => objects.get(key) ?? null, has: async (key) => objects.has(key), put: async (key, bytes) => void objects.set(key, bytes) };
 }
 
-describe('rebbehub covers', () => {
+describe('chassidushub covers', () => {
   it("draws a sefer's title page past a blank first page, then a page a keeper chose", async () => {
     const { catalog, set } = await freshCatalog();
     const pdf = await bookPdf([[], title, body, body]);

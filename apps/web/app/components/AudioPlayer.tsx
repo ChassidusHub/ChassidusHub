@@ -36,7 +36,7 @@ function videoAt(url: string, startMs?: number): string {
 
 /**
  * Recordings, part by part, played in the site's own player (it keeps
- * playing from page to page): audio RebbeHub may serve (`src` resolved
+ * playing from page to page): audio ChassidusHub may serve (`src` resolved
  * from the file's rights) or heard where it is kept, and video links.
  */
 /** `queue`, when given, is what plays on after these recordings (a recording's page plays its whole farbrengen). */

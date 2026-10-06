@@ -7,9 +7,9 @@ const src = (dir: string) => fileURLToPath(new URL(`./${dir}/src/index.ts`, impo
 export default defineConfig({
   resolve: {
     alias: [
-      { find: /^@rebbehub\/db\/pglite$/, replacement: fileURLToPath(new URL('./packages/db/src/pglite.ts', import.meta.url)) },
-      ...['hebrew', 'model', 'db', 'core', 'mirror', 'importers', 'pdf-fix', 'client'].map((name) => ({ find: new RegExp(`^@rebbehub/${name}$`), replacement: src(`packages/${name}`) })),
-      { find: /^@rebbehub\/api$/, replacement: src('services/api') },
+      { find: /^@chassidushub\/db\/pglite$/, replacement: fileURLToPath(new URL('./packages/db/src/pglite.ts', import.meta.url)) },
+      ...['hebrew', 'model', 'db', 'core', 'mirror', 'importers', 'pdf-fix', 'client'].map((name) => ({ find: new RegExp(`^@chassidushub/${name}$`), replacement: src(`packages/${name}`) })),
+      { find: /^@chassidushub\/api$/, replacement: src('services/api') },
     ],
   },
   test: {

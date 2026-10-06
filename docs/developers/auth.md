@@ -10,7 +10,7 @@ OAuth**, which you approve on the site.
 On your [account page](/account), under *API tokens*: give it a name
 (what will use it: "my sync script", "Claude"), pick its scopes, and
 optionally when it expires. The token (`rhp_` and 43 letters) is shown
-**once**; RebbeHub keeps only its sha256, so it cannot show it again.
+**once**; ChassidusHub keeps only its sha256, so it cannot show it again.
 Lost it? Revoke it and make another.
 
 | Scope | May |
@@ -21,11 +21,11 @@ Lost it? Revoke it and make another.
 Send it on every request:
 
 ```sh
-curl -H "Authorization: Bearer $REBBEHUB_TOKEN" https://api.rebbehub.org/v1/follows
+curl -H "Authorization: Bearer $CHASSIDUSHUB_TOKEN" https://api.chassidushub.org/v1/follows
 ```
 
 ```ts
-const rh = new RebbeHub({ token: process.env.REBBEHUB_TOKEN });
+const rh = new ChassidusHub({ token: process.env.CHASSIDUSHUB_TOKEN });
 ```
 
 ## What a token is
@@ -53,27 +53,27 @@ signed in with a passkey, Google or an email link ([accounts](../accounts.md)).
 Apps that act for you - Claude on claude.ai, Claude Code, other MCP
 clients - need not be handed a token. They connect with OAuth 2.1, the
 way the [MCP authorization spec](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
-says, and you say yes or no on rebbehub.org's own page. How to connect
+says, and you say yes or no on chassidushub.org's own page. How to connect
 Claude step by step is in [AI agents](agents.md).
 
 What happens:
 
-1. The app calls a tool that writes at `https://api.rebbehub.org/mcp`
-   with no token (reading needs none) and gets `401` with `WWW-Authenticate: Bearer resource_metadata="https://api.rebbehub.org/.well-known/oauth-protected-resource/mcp", scope="read write"`.
+1. The app calls a tool that writes at `https://api.chassidushub.org/mcp`
+   with no token (reading needs none) and gets `401` with `WWW-Authenticate: Bearer resource_metadata="https://api.chassidushub.org/.well-known/oauth-protected-resource/mcp", scope="read write"`.
 2. That document ([RFC 9728](https://www.rfc-editor.org/rfc/rfc9728))
-   names the authorization server, `https://api.rebbehub.org`, whose
+   names the authorization server, `https://api.chassidushub.org`, whose
    metadata is at `/.well-known/oauth-authorization-server`
    ([RFC 8414](https://www.rfc-editor.org/rfc/rfc8414)).
 3. The app uses the https address of its own description as its
    `client_id` (a Client ID Metadata Document, which is what Claude does
-   by default), which RebbeHub reads, checks the redirect against, and
+   by default), which ChassidusHub reads, checks the redirect against, and
    keeps for a day; or it registers at `/oauth/register`
    ([RFC 7591](https://www.rfc-editor.org/rfc/rfc7591), no account
    needed).
 4. It sends you to `/oauth/authorize` with PKCE (`S256` only) and
-   `resource=https://api.rebbehub.org/mcp`
+   `resource=https://api.chassidushub.org/mcp`
    ([RFC 8707](https://www.rfc-editor.org/rfc/rfc8707)). You land on
-   `rebbehub.org/oauth/consent`: signed in, you see the app's name (as it
+   `chassidushub.org/oauth/consent`: signed in, you see the app's name (as it
    calls itself), **the address it will send you back to**, and what it
    may do. Allow or Cancel. An address the app never registered is never
    redirected to.
@@ -88,9 +88,9 @@ What happens:
 | `read` | always given: the catalog, and what is yours |
 | `write` | send suggestions, fixes, issues and comments as you; you may untick it on the consent page |
 
-A token given for `https://api.rebbehub.org/mcp` works only at the MCP
+A token given for `https://api.chassidushub.org/mcp` works only at the MCP
 server (and the calls its tools make); one given for
-`https://api.rebbehub.org` works on the whole API like a personal token.
+`https://api.chassidushub.org` works on the whole API like a personal token.
 Like a personal token, a connection **is you**, no more, and never opens
 sign-in, tokens or stewards' tools, nor answers another app's request to
 connect.
@@ -118,11 +118,11 @@ agent mark, never as your own hands ([AI agents](agents.md)).
   it sends you back: `claude.ai` for claude.ai, `localhost` for Claude
   Code on your computer.
 - Revoke it on the account page the moment you think it leaked. Report a
-  leak affecting others through [SECURITY.md](https://github.com/shmuky/RebbeHub/blob/main/SECURITY.md).
+  leak affecting others through [SECURITY.md](https://github.com/ChassidusHub/ChassidusHub/blob/main/SECURITY.md).
 
 ## The site's session
 
 The site itself signs in with a session cookie (HttpOnly, `SameSite=Lax`)
-that works only from rebbehub.org's own pages: another site's page cannot
+that works only from chassidushub.org's own pages: another site's page cannot
 act for a signed-in reader, and the API never allows cookies across
 sites (CORS without credentials). Scripts and other sites use tokens.

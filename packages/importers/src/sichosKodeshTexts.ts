@@ -3,7 +3,7 @@
  * letter's text is an HTML file in its published archive (the R2 bucket
  * `sichos-kodesh-archive`, `objects/<sha256>`), and its works catalog says
  * which file each unit's edition is. Only texts its rights gate lets ship
- * are published. RebbeHub keeps its own copy of each on its own storage:
+ * are published. ChassidusHub keeps its own copy of each on its own storage:
  * its API (`/v1/texts/<sha256>`, services/api) copies a text from that
  * archive the first time it is asked for, and serves its copy after. The
  * importer reads them there; the repository keeps none.
@@ -13,10 +13,10 @@
  * limits and fails more often than not.)
  */
 
-export const REBBEHUB_API = 'https://api.rebbehub.org';
+export const CHASSIDUSHUB_API = 'https://api.chassidushub.org';
 
-/** Where RebbeHub keeps a text: the address its page links to as "the copy kept on RebbeHub". */
-export function textUrl(sha256: string, base = REBBEHUB_API): string {
+/** Where ChassidusHub keeps a text: the address its page links to as "the copy kept on ChassidusHub". */
+export function textUrl(sha256: string, base = CHASSIDUSHUB_API): string {
   return `${base.replace(/\/$/, '')}/v1/texts/${sha256}`;
 }
 
@@ -29,7 +29,7 @@ export async function fetchTexts(
   hashes: Iterable<string>,
   options: { base?: string; fetch?: typeof fetch; log?: (line: string) => void; concurrency?: number; pauseMs?: number } = {},
 ): Promise<Map<string, string>> {
-  const base = options.base ?? REBBEHUB_API;
+  const base = options.base ?? CHASSIDUSHUB_API;
   const get = options.fetch ?? fetch;
   const queue = [...new Set(hashes)].filter((h) => /^[0-9a-f]{64}$/.test(h));
   const texts = new Map<string, string>();

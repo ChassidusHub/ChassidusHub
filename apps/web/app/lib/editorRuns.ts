@@ -1,4 +1,4 @@
-import { tidyInline, type PageInline, type PageMark } from '@rebbehub/model';
+import { tidyInline, type PageInline, type PageMark } from '@chassidushub/model';
 
 /**
  * The in-place editor's content (components/SegmentEditor.tsx) and a

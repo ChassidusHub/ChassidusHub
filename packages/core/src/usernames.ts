@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import { badState, invalid } from './errors.js';
 
 /**
@@ -26,7 +26,7 @@ const SHAPE = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){1,38}$/;
 export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
   'about', 'account', 'admin', 'api', 'auth', 'bot', 'calendar', 'compare', 'edit', 'embed', 'health', 'help', 'history',
   'inbox', 'issues', 'keeper', 'keepers', 'mirrors', 'missing', 'new', 'notifications', 'people', 'projects', 'read',
-  'rebbehub', 'review', 'search', 'sets', 'settings', 'signin', 'signout', 'steward', 'stewards', 'suggestions', 'system',
+  'chassidushub', 'review', 'search', 'sets', 'settings', 'signin', 'signout', 'steward', 'stewards', 'suggestions', 'system',
   'takedown', 'talk', 'text', 'u', 'user', 'users',
   // and the ones people would take to look official
   'moderator', 'moderators', 'support', 'staff', 'team', 'official', 'root', 'null', 'undefined', 'anonymous', 'ghost',

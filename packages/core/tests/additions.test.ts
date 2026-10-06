@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { additionOf, additionsByKind, additionsOf, applyOrganize, catalogTree, isOfficial, linkedPage, previewOrganize, seferOf, type Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { additionOf, additionsByKind, additionsOf, applyOrganize, catalogTree, isOfficial, linkedPage, previewOrganize, seferOf, type Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
 /**
@@ -24,7 +24,7 @@ const work = (he: string, slug: string, extra: Record<string, unknown> = {}) => 
 beforeEach(async () => {
   const fresh = await freshCatalog();
   catalog = fresh.catalog;
-  shelf = await add(catalog, 'shmuly', 'shmuly', 'set', { name: { he: 'אדמו״ר הזקן' }, slug: 'alter-rebbe', policy: 'moderated', keepers: ['keeper'] }, '/sets/alter-rebbe');
+  shelf = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'אדמו״ר הזקן' }, slug: 'alter-rebbe', policy: 'moderated', keepers: ['keeper'] }, '/sets/alter-rebbe');
   // The title as printed, with its niqqud: the search finds it by its plain letters.
   tanya = await add(catalog, 'mendy', 'keeper', 'work', work('תַּנְיָא', 'tanya', { title: { he: 'תַּנְיָא', en: 'Tanya' } }), '/tanya');
   kadisha = await add(catalog, 'mendy', 'keeper', 'work', work('תניא קדישא', 'tanya-kadisha'), '/tanya-kadisha');
@@ -91,7 +91,7 @@ describe('organizing additions', () => {
     const { suggestion, preview } = await applyOrganize(catalog, 'mendy', { operations: [{ op: 'addition', item: kadisha, to: tanya, kind: 'commentary' }] });
     expect(preview.summary).toEqual(['Mark תניא קדישא / tanya-kadisha as an addition (commentary) to תַּנְיָא / Tanya']);
     expect(preview.items.map((i) => i.changes.map((c) => c.path).join())).toEqual(['/addition']);
-    await catalog.merge(suggestion.id, 'shmuly');
+    await catalog.merge(suggestion.id, 'steward');
     expect((await catalog.get(kadisha))!.data).toMatchObject({ addition: { kind: 'commentary', to: tanya } });
 
     const back = await previewOrganize(catalog, { operations: [{ op: 'official', item: kadisha }] });

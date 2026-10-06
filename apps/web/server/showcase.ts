@@ -111,10 +111,10 @@ async function jemAudio(file: string, range: string | null, send: typeof fetch):
 
 /**
  * One of a showcase's files, by its place in the list: a recording or a
- * scan, from where it is kept. Files RebbeHub serves and Drive files go
+ * scan, from where it is kept. Files ChassidusHub serves and Drive files go
  * through the API answering in this Worker (`reader`), so their rights and
  * takedowns hold here as everywhere. A Drive file no catalog item links
- * to yet (a farbrengen's written transcript Shmuly set beside it) is
+ * to yet (a farbrengen's written transcript the steward set beside it) is
  * fetched from Drive itself: the owner named it when saving, and only he
  * saves showcases.
  */

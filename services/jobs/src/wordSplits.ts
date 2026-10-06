@@ -1,5 +1,5 @@
-import { recordingTranscript, type Catalog, type Json, type WordTiming } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { recordingTranscript, type Catalog, type Json, type WordTiming } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { TRANSCRIBE_BOT } from './transcribe.js';
 
 /**
@@ -12,7 +12,7 @@ import { TRANSCRIBE_BOT } from './transcribe.js';
  * strong: a wrong join makes a word nobody said, which is worse than
  * leaving a cut a person will see and fix.
  *
- * On a sample of 243 transcripts on rebbehub.org (3,403 paragraph
+ * On a sample of 243 transcripts on chassidushub.org (3,403 paragraph
  * breaks), this mends 3 (`י|וד`, `ער|וואקסענע`, `ו|אויך`) and nothing
  * else; looser rules (any lone letter, or a gap of 0 ms, which almost
  * every break has) joined many more, most of them wrongly.

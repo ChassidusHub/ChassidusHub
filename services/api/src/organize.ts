@@ -1,6 +1,6 @@
 import type { Context, Hono } from 'hono';
-import { applyOrganize, catalogTree, previewOrganize, type Catalog, type OrganizePlan, type OrganizePreview } from '@rebbehub/core';
-import { isEntityId, type EntityId } from '@rebbehub/model';
+import { applyOrganize, catalogTree, previewOrganize, type Catalog, type OrganizePlan, type OrganizePreview } from '@chassidushub/core';
+import { isEntityId, type EntityId } from '@chassidushub/model';
 import { HttpError } from './app.js';
 
 /**

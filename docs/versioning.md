@@ -1,13 +1,13 @@
 # Version control for the catalog
 
-Section 6 of [the plan](plans/rebbehub.md) as built: GitHub's model, over
+Section 6 of [the plan](plans/chassidushub.md) as built: GitHub's model, over
 Postgres, in words non-technical people understand. Code:
 `packages/db/src/migrations/0001_catalog.ts` (tables) and
 `packages/core/src/catalog.ts` (behaviour).
 
 ## The pieces
 
-| GitHub | RebbeHub | Table |
+| GitHub | ChassidusHub | Table |
 | --- | --- | --- |
 | a file's versions | an item's **revisions** - append-only, never changed in place | `entity`, `revision` |
 | a pull request | a **suggestion** - revisions proposed together | `changeset` |
@@ -85,5 +85,5 @@ last time, so a field a person fixed stays fixed.
 ## Exports
 
 After every merge the git mirror gets one git commit, authored as the
-suggestion's author and dated when it merged (`rebbehub mirror --git`); see
+suggestion's author and dated when it merged (`chassidushub mirror --git`); see
 [operations](operations.md).

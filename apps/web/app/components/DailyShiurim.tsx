@@ -44,7 +44,7 @@ export interface ShiurRow {
   pieces: Array<{ text: string; to: string | null; external: boolean }>;
 }
 
-const STORE = 'rebbehub:daily-learned';
+const STORE = 'chassidushub:daily-learned';
 type Store = Record<string, string[]>;
 const read = (): Store => {
   try {
@@ -119,7 +119,7 @@ export function useLearned(date: string, rows: ShiurRow[]) {
 
 type Track = 'three' | 'one' | 'mitzvos';
 const TRACKS: Track[] = ['three', 'one', 'mitzvos'];
-const TRACK_STORE = 'rebbehub:rambam-track';
+const TRACK_STORE = 'chassidushub:rambam-track';
 
 /** The Rambam track this reader follows, kept in this browser (three chapters until they choose). */
 function useTrack(): [Track, (t: Track) => void] {

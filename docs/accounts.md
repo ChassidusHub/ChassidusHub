@@ -2,7 +2,7 @@
 
 ## The password lock (open now)
 
-From 2 to 5 October 2026 RebbeHub was closed to everyone but Shmuly; since
+From 2 to 5 October 2026 ChassidusHub was closed to everyone but the steward; since
 5 October it is open again (`LOCK_KEY_HASH` is empty in both wrangler.toml
 files). The lock stays in the code, `services/api/src/lock.ts` and
 `apps/web/server/lock.ts`, for closing it again. While it is closed, the
@@ -10,7 +10,7 @@ site, the API, the MCP server and the files all answer a lock page (the
 site) or 401 (the API) until the password is given:
 
 - **The site**: the password, given once at the lock page, leaves its key
-  (never the password) in a cookie on rebbehub.org and its subdomains for
+  (never the password) in a cookie on chassidushub.org and its subdomains for
   a year, so the API's files open in the same browser. Phones that
   installed the site get a service worker that forgets the pages it kept.
 - **The API and the MCP server**: the key, or a token of an owner's (a
@@ -19,11 +19,11 @@ site) or 401 (the API) until the password is given:
   again goes through the site, behind the lock.
 - **GitHub's jobs** (OCR, transcription, upkeep, imports, the watch and the
   smoke test) send the key, made from the repository secret
-  `REBBEHUB_PASSWORD`.
-- **Changing the password**: in Cloudflare, Workers, `rebbehub-web` and
-  `rebbehub-api`, Settings, Variables and Secrets, set the secret
+  `CHASSIDUSHUB_PASSWORD`.
+- **Changing the password**: in Cloudflare, Workers, `chassidushub-web` and
+  `chassidushub-api`, Settings, Variables and Secrets, set the secret
   `LOCK_PASSWORD` on both (it wins over `LOCK_KEY_HASH` in wrangler.toml),
-  and the repository secret `REBBEHUB_PASSWORD` to the same. Every browser
+  and the repository secret `CHASSIDUSHUB_PASSWORD` to the same. Every browser
   then asks again.
 - **Showcases**: one page to show guests, at a secret address of its own
   (`/show/<token>`), made at `/showcase` by whoever opened the lock. A
@@ -32,7 +32,7 @@ site) or 401 (the API) until the password is given:
   `apps/web/server/showcase.ts`). They are kept in the public bucket under
   `showcases/`; deleting one closes its address.
 - **Closing it again**: put the sha256 of the password's key
-  (sha256 of `rebbehub-lock:` + the password, then sha256 of that) in
+  (sha256 of `chassidushub-lock:` + the password, then sha256 of that) in
   `LOCK_KEY_HASH` in both wrangler.toml files and deploy; or set the
   secret `LOCK_PASSWORD` on both Workers. Making showcases needs the lock's
   key, so while it is open nobody makes new ones; links already made keep
@@ -46,8 +46,8 @@ three are built; email links and Google show once their keys are set.
 ## Passkeys
 
 No password to choose, forget or steal. A person's phone or computer makes
-a passkey for RebbeHub alone and opens it with their fingerprint, face or
-screen lock; RebbeHub keeps only its public key.
+a passkey for ChassidusHub alone and opens it with their fingerprint, face or
+screen lock; ChassidusHub keeps only its public key.
 
 - **New account** (`/signin`): a name to be known by and a handle
   (suggested from the name, see [Handles](#handles-and-mentions)), then
@@ -58,7 +58,7 @@ screen lock; RebbeHub keeps only its public key.
 
 The ceremonies are WebAuthn, verified with SimpleWebAuthn
 (`services/api/src/auth.ts`). The relying party is the site's domain,
-from `SITE_URL` in `services/api/wrangler.toml` (`rebbehub.org`); a
+from `SITE_URL` in `services/api/wrangler.toml` (`chassidushub.org`); a
 passkey made there works only there.
 
 ## Google
@@ -82,10 +82,10 @@ sign-in is by passkey alone.
 
 1. In Google Cloud Console, APIs & Services, Credentials: create an OAuth
    client ID of type "Web application". Authorised JavaScript origin
-   `https://rebbehub.org`; authorised redirect URI
-   `https://rebbehub.org/_/auth/google/callback`. On the consent screen,
-   the app name RebbeHub and the scopes `openid`, `email`, `profile`.
-2. In Cloudflare, Workers, `rebbehub-api`, Settings, Variables and
+   `https://chassidushub.org`; authorised redirect URI
+   `https://chassidushub.org/_/auth/google/callback`. On the consent screen,
+   the app name ChassidusHub and the scopes `openid`, `email`, `profile`.
+2. In Cloudflare, Workers, `chassidushub-api`, Settings, Variables and
    Secrets: add the secrets `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
    from that client. The button appears on the next request.
 
@@ -130,11 +130,11 @@ Kept in `auth.notification_setting` (migration 0011).
 **Switching email on** (once):
 
 1. At [Resend](https://resend.com), add and verify the domain
-   `rebbehub.org` (its DNS records in Cloudflare), and make an API key
+   `chassidushub.org` (its DNS records in Cloudflare), and make an API key
    with sending access.
-2. In Cloudflare, Workers, `rebbehub-api`, Settings, Variables and
+2. In Cloudflare, Workers, `chassidushub-api`, Settings, Variables and
    Secrets: add the secret `RESEND_API_KEY`. Optionally the variable
-   `EMAIL_FROM` (default `RebbeHub <no-reply@rebbehub.org>`), an address
+   `EMAIL_FROM` (default `ChassidusHub <no-reply@chassidushub.org>`), an address
    on the verified domain. Email sign-in appears on the next request.
 
 Locally, `DEV_EMAIL=1 npm run dev:api` prints each email (with its link)
@@ -269,7 +269,7 @@ writes in English.
 
 **Switching it on**: add the secrets `CLOUDFLARE_ACCOUNT_ID` and
 `CLOUDFLARE_AI_TOKEN` (an API token with *Workers AI: Read* and *Edit*)
-to `rebbehub-api`. Without them no advice is written and nothing shows.
+to `chassidushub-api`. Without them no advice is written and nothing shows.
 - **Platform admins** are stewards who also appoint and remove stewards
   and admins, and see the Google email of each account. No steward can
   suspend or demote an admin, and an admin never removes their own admin
@@ -278,7 +278,7 @@ to `rebbehub-api`. Without them no advice is written and nothing shows.
 ## Sessions
 
 - The site passes `/_/auth/*` through to the API's `/v1/auth/*`, so the
-  browser talks to rebbehub.org alone and the session cookie is the
+  browser talks to chassidushub.org alone and the session cookie is the
   site's own: `__Host-rh_session`, HttpOnly, Secure, SameSite=Lax, 60 days
   from last use.
 - Only a hash of the cookie's token is kept (`auth.session`).

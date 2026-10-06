@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { createPerson, finishMachineWork, registerFile, takeMachineRequests, type Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { createPerson, finishMachineWork, registerFile, takeMachineRequests, type Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { githubDispatch } from '../src/machine.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
@@ -30,7 +30,7 @@ beforeEach(async () => {
   app = createApp({
     catalog,
     authenticate: (c) => c.req.header('X-Test-Account') ?? null,
-    siteUrl: 'https://rebbehub.test',
+    siteUrl: 'https://chassidushub.test',
     machineDispatch: async (kind) => {
       dispatched.push(kind);
       return true;
@@ -132,6 +132,6 @@ describe('starting the job on GitHub', () => {
       }) as unknown as typeof fetch,
     });
     expect(await dispatch('transcript')).toBe(true);
-    expect(sent).toEqual([{ url: 'https://api.github.com/repos/shmuky/RebbeHub/actions/workflows/transcribe.yml/dispatches', body: { ref: 'main', inputs: { requested: 'true' } }, auth: 'Bearer t0ken' }]);
+    expect(sent).toEqual([{ url: 'https://api.github.com/repos/ChassidusHub/ChassidusHub/actions/workflows/transcribe.yml/dispatches', body: { ref: 'main', inputs: { requested: 'true' } }, auth: 'Bearer t0ken' }]);
   });
 });

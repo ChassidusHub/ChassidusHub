@@ -1,5 +1,5 @@
 import type { Context, Hono, MiddlewareHandler } from 'hono';
-import { actingVia, createApiToken, listApiTokens, looksLikeToken, revokeApiToken, tokenGrant, type Catalog, type TokenGrant, type Via } from '@rebbehub/core';
+import { actingVia, createApiToken, listApiTokens, looksLikeToken, revokeApiToken, tokenGrant, type Catalog, type TokenGrant, type Via } from '@chassidushub/core';
 import { HttpError } from './app.js';
 import { SEARCH_PATHS, callerAddress, type RateLimits } from './platform.js';
 import { mcpChallenge, mcpResource } from './oauth.js';

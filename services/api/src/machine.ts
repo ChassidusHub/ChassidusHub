@@ -1,6 +1,6 @@
 import type { Context, Hono } from 'hono';
-import { machineRequests, machineSummary, machineToCheck, requestMachineWork, summariseTraining, trainingClips, trainingGoal, type Catalog, type MachineKind, type MachineRequestStatus } from '@rebbehub/core';
-import { readId, type EntityId } from '@rebbehub/model';
+import { machineRequests, machineSummary, machineToCheck, requestMachineWork, summariseTraining, trainingClips, trainingGoal, type Catalog, type MachineKind, type MachineRequestStatus } from '@chassidushub/core';
+import { readId, type EntityId } from '@chassidushub/model';
 import { HttpError } from './app.js';
 
 /**
@@ -118,12 +118,12 @@ export function machineRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context
  * asked for: the requested-only run on the runner's CPU.
  */
 export function githubDispatch(input: { token: string; repo?: string; ref?: string; fetch?: typeof fetch }): MachineDispatch {
-  const repo = input.repo || 'shmuky/RebbeHub';
+  const repo = input.repo || 'ChassidusHub/ChassidusHub';
   return async (kind) => {
     const workflow = kind === 'ocr' ? 'ocr.yml' : 'transcribe.yml';
     const response = await (input.fetch ?? fetch)(`https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${input.token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'rebbehub-api', 'X-GitHub-Api-Version': '2022-11-28' },
+      headers: { Authorization: `Bearer ${input.token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'chassidushub-api', 'X-GitHub-Api-Version': '2022-11-28' },
       body: JSON.stringify({ ref: input.ref || 'main', inputs: { requested: 'true' } }),
     });
     if (!response.ok) throw new Error(`GitHub: ${response.status} ${await response.text().catch(() => '')}`);

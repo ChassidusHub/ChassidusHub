@@ -1,5 +1,5 @@
-import { one } from '@rebbehub/db';
-import type { EntityId, ProofreadLevel, TextLine } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import type { EntityId, ProofreadLevel, TextLine } from '@chassidushub/model';
 import type { Catalog, ChangesetRow } from './catalog.js';
 import { forbidden, invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';

@@ -47,12 +47,12 @@ import {
   startSession,
   takeChallenge,
   type Catalog,
-} from '@rebbehub/core';
+} from '@chassidushub/core';
 
 /**
- * Signing in with a passkey (docs/plans/rebbehub.md, section 7: a
+ * Signing in with a passkey (docs/plans/chassidushub.md, section 7: a
  * Contributor signs in with a passkey, an email link or Google). The site
- * (rebbehub.org) passes /_/auth/* through to these routes, so the browser
+ * (chassidushub.org) passes /_/auth/* through to these routes, so the browser
  * talks to one address and the session cookie is the site's own:
  * HttpOnly, Secure, SameSite=Lax, holding a token of which only the hash
  * is kept. A request that changes anything must come from the site's own
@@ -60,10 +60,10 @@ import {
  */
 
 export interface AuthOptions {
-  /** The relying party: the site's domain (`rebbehub.org`), which passkeys are bound to. */
+  /** The relying party: the site's domain (`chassidushub.org`), which passkeys are bound to. */
   rpId: string;
   rpName: string;
-  /** The site's own addresses (`https://rebbehub.org`), where ceremonies may happen and changes may come from. */
+  /** The site's own addresses (`https://chassidushub.org`), where ceremonies may happen and changes may come from. */
   origins: string[];
   /** Signing in with Google, once the site has a Google sign-in client (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET); without it, only passkeys. */
   google?: GoogleOptions;
@@ -94,7 +94,7 @@ const GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token';
 export function authFor(siteUrl: string, google?: { clientId?: string; clientSecret?: string }, mailer?: Mailer): AuthOptions {
   const url = new URL(siteUrl);
   const withGoogle = google?.clientId && google.clientSecret ? { google: { clientId: google.clientId, clientSecret: google.clientSecret } } : {};
-  return { rpId: url.hostname, rpName: 'RebbeHub', origins: [url.origin], ...withGoogle, ...(mailer ? { mailer } : {}) };
+  return { rpId: url.hostname, rpName: 'ChassidusHub', origins: [url.origin], ...withGoogle, ...(mailer ? { mailer } : {}) };
 }
 
 /** Plain `http://localhost` cannot keep a `__Host-` (Secure) cookie in every browser; local development uses a plain name. */

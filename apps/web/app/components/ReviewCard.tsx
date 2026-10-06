@@ -298,7 +298,7 @@ function Advice({ advice, lang }: { advice: NonNullable<ReviewDetail['advice']>;
   );
 }
 
-/** At most this many kinds of change, and fields in each, on the card: a phone draws a few lines, not a bot's every field (Shmuly, 30 Tishrei). */
+/** At most this many kinds of change, and fields in each, on the card: a phone draws a few lines, not a bot's every field (The steward, 30 Tishrei). */
 const SUMMARY_GROUPS = 5;
 const SUMMARY_FIELDS = 3;
 

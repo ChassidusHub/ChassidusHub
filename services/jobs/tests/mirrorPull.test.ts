@@ -3,12 +3,12 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { generateKeyPair, writeDump } from '@rebbehub/mirror';
+import { generateKeyPair, writeDump } from '@chassidushub/mirror';
 import { createApp, type FileStore } from '../../api/src/app.js';
 import { pullMirror } from '../src/mirrorPull.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
-/** The public bucket as a folder: dumps/<tag>/<name> are the files `rebbehub dump --upload` puts there. */
+/** The public bucket as a folder: dumps/<tag>/<name> are the files `chassidushub dump --upload` puts there. */
 function folderStore(dir: string): FileStore {
   return {
     async get(key) {
@@ -24,20 +24,20 @@ describe('mirrors', () => {
   it('list every edition with its dumps, and a mirror pulls them, checking signature and sha256', async () => {
     const { catalog, set } = await freshCatalog();
     await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set));
-    const { tag, commit } = await catalog.tagEdition('shmuly', { tag: '2026.40' });
+    const { tag, commit } = await catalog.tagEdition('steward', { tag: '2026.40' });
     const key = generateKeyPair(new Uint8Array(32).fill(7));
     const dumps = await mkdtemp(join(tmpdir(), 'rh-dumps-'));
     const manifest = await writeDump(catalog, dumps, { tag, at: commit, key });
     await catalog.setEditionManifest(tag, manifest);
 
-    const app = createApp({ catalog, files: folderStore(dumps), mirrors: { gitUrls: ['https://github.com/rebbehub/catalog.git'], publicKeys: [key.publicKey] } });
+    const app = createApp({ catalog, files: folderStore(dumps), mirrors: { gitUrls: ['https://github.com/ChassidusHub/catalog.git'], publicKeys: [key.publicKey] } });
     const fetcher = ((input: string | URL | Request) => app.request(String(input))) as typeof fetch;
 
     const index = (await (await app.request('https://api.test/v1/mirrors')).json()) as any;
-    expect(index.git).toEqual(['https://github.com/rebbehub/catalog.git']);
+    expect(index.git).toEqual(['https://github.com/ChassidusHub/catalog.git']);
     expect(index.keys).toEqual([{ alg: 'ed25519', keyId: key.keyId, publicKey: key.publicKey }]);
     expect(index.editions[0].dumps.signature).toEqual({ alg: 'ed25519', keyId: key.keyId });
-    expect(index.editions[0].dumps.files.map((f: { url: string }) => f.url)).toContain(`https://api.test/dumps/2026.40/rebbehub-2026.40.sqlite`);
+    expect(index.editions[0].dumps.files.map((f: { url: string }) => f.url)).toContain(`https://api.test/dumps/2026.40/chassidushub-2026.40.sqlite`);
     const sums = await (await app.request('https://api.test/v1/editions/2026.40/SHA256SUMS')).text();
     expect(sums).toContain(`${manifest.files[0]!.sha256}  ${manifest.files[0]!.name}\n`);
     expect((await app.request('https://api.test/dumps/2026.40/not-listed.txt')).status).toBe(404);

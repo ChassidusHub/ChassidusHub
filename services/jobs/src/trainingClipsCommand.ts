@@ -1,9 +1,9 @@
 import { writeFile } from 'node:fs/promises';
-import { summariseTraining, trainingClips } from '@rebbehub/core';
+import { summariseTraining, trainingClips } from '@chassidushub/core';
 import { withCatalog, type Context } from './commands.js';
 
 /**
- * `rebbehub training-clips`: the next Rebbe Whisper's training data, read
+ * `chassidushub training-clips`: the next Rebbe Whisper's training data, read
  * straight from the catalog (core/trainingClips.ts). Every transcript
  * paragraph a person checked, as clips in the training script's format,
  * one JSON object a line; the training run takes the file with its other

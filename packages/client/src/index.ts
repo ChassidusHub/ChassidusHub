@@ -1,2 +1,2 @@
-export { RebbeHub, RebbeHubError, type ItemOf, type RebbeHubOptions } from './client.js';
+export { ChassidusHub, ChassidusHubError, type ItemOf, type ChassidusHubOptions } from './client.js';
 export * from './generated.js';

@@ -51,7 +51,7 @@ const HEBREW: ReadonlyArray<[string, string]> = [
 const RESERVED = [
   'about', 'account', 'admin', 'api', 'auth', 'bot', 'calendar', 'compare', 'edit', 'embed', 'health', 'help', 'history',
   'inbox', 'issues', 'keeper', 'keepers', 'mirrors', 'missing', 'new', 'notifications', 'people', 'projects', 'read',
-  'rebbehub', 'review', 'search', 'sets', 'settings', 'signin', 'signout', 'steward', 'stewards', 'suggestions', 'system',
+  'chassidushub', 'review', 'search', 'sets', 'settings', 'signin', 'signout', 'steward', 'stewards', 'suggestions', 'system',
   'takedown', 'talk', 'text', 'u', 'user', 'users',
 ];
 
@@ -148,7 +148,7 @@ CREATE TABLE label (
   description TEXT,
   -- a hex colour, drawn as a thin rule beside the label
   color TEXT NOT NULL DEFAULT '6b6557' CHECK (color ~ '^[0-9a-f]{6}$'),
-  -- null: one RebbeHub starts with
+  -- null: one ChassidusHub starts with
   created_by TEXT REFERENCES account (id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -1,4 +1,4 @@
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import type { Lang } from './i18n.js';
 
 /**

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { Catalog, createPerson } from '@rebbehub/core';
-import { measured } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { Catalog, createPerson } from '@chassidushub/core';
+import { measured } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { cursor, etagMatches, mayUseEdgeCache, memoryRateLimiter } from '../src/platform.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
@@ -116,7 +116,7 @@ describe('errors, CORS and caching', () => {
     // What someone signed in reads never is.
     expect((await call('GET', `/v1/entities/${event}`, { as: 'mendy', headers: { Cookie: 'rh_session=x' } })).headers.get('Cache-Control')).toBe('private, no-cache');
     // The edge answers only reads from nobody in particular, and never sign-in, the MCP server or a part of a file.
-    const request = (path: string, init: RequestInit = {}) => new Request(`https://api.rebbehub.test${path}`, init);
+    const request = (path: string, init: RequestInit = {}) => new Request(`https://api.chassidushub.test${path}`, init);
     expect(mayUseEdgeCache(request('/v1/entities/rh-7k2m9q4d'))).toBe(true);
     expect(mayUseEdgeCache(request('/v1/search?q=x', { method: 'HEAD' }))).toBe(true);
     expect(mayUseEdgeCache(request('/objects/abc'))).toBe(true);

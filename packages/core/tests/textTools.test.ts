@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { alignAroundLocks, alignParagraphs, alignWords, diffWords, heardWords, matchWords, parseAlto, parseHocr, parsePlainText, pdfPagesOf, remapper, reseedLines, sniffOcrFormat, wordKey } from '@rebbehub/core';
+import { alignAroundLocks, alignParagraphs, alignWords, diffWords, heardWords, matchWords, parseAlto, parseHocr, parsePlainText, pdfPagesOf, remapper, reseedLines, sniffOcrFormat, wordKey } from '@chassidushub/core';
 
 describe('words, compared the Hebrew way', () => {
   it('treats niqqud, geresh, gershayim and final letters typed plain as the same word', () => {

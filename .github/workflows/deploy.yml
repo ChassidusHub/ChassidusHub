@@ -57,7 +57,7 @@ jobs:
 
       - name: Migrate the database
         if: steps.configured.outputs.ready == 'true'
-        run: npm run rebbehub -- migrate
+        run: npm run chassidushub -- migrate
 
       - name: Make sure the R2 buckets exist
         if: steps.configured.outputs.ready == 'true'

@@ -10,7 +10,7 @@ import { useAccount } from '../lib/useAccount.js';
  * A sefer's cover as its page says it: which page of which PDF it is, and
  * whether a machine or a person chose it; and "Choose another page as the
  * title page", a Suggestion that sets the sefer's `cover` for its keepers
- * to approve. The jobs draw the page a person chose (`rebbehub covers`).
+ * to approve. The jobs draw the page a person chose (`chassidushub covers`).
  */
 export function CoverChoice({ work, cover, lang }: { work: Pick<Entity, 'id' | 'path' | 'data'>; cover: WorkCover; lang: Lang }) {
   const account = useAccount();

@@ -1,12 +1,12 @@
-import { one, type Db } from '@rebbehub/db';
-import { defaultRightsState, keepsPreservationCopy, mayServe, type CatalogSourceId, type FileClass, type Licence, type RightsState, type SetPolicy } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import { defaultRightsState, keepsPreservationCopy, mayServe, type CatalogSourceId, type FileClass, type Licence, type RightsState, type SetPolicy } from '@chassidushub/model';
 import { forbidden, invalid, notFound } from './errors.js';
 
 /**
  * Files, stored once by sha256, each with a rights state
- * (docs/plans/rebbehub.md, section 8). A file's bytes live in the public
+ * (docs/plans/chassidushub.md, section 8). A file's bytes live in the public
  * bucket when they may be served, in the preservation bucket when they are
- * kept but not served, and nowhere when RebbeHub only links to them.
+ * kept but not served, and nowhere when ChassidusHub only links to them.
  */
 
 export interface FileRow {
@@ -33,7 +33,7 @@ export interface NewFile {
   /** The rights statement the uploader ticked. */
   attestation?: string;
   credit?: string;
-  /** Whether RebbeHub holds the bytes (an upload) or only knows of them (a link). */
+  /** Whether ChassidusHub holds the bytes (an upload) or only knows of them (a link). */
   held: boolean;
 }
 
@@ -109,12 +109,12 @@ export interface NewDerivation {
   encoder: string;
 }
 
-/** A cover's pictures (`cover/<n>`, `cover-thumb/<n>`): a sefer's title page, drawn by RebbeHub. */
+/** A cover's pictures (`cover/<n>`, `cover-thumb/<n>`): a sefer's title page, drawn by ChassidusHub. */
 export const isCoverProfile = (profile: string): boolean => /^cover(-thumb)?\//.test(profile);
 
 /**
  * The rights of something made from a file: the file's own, with one
- * exception. A cover drawn from a PDF RebbeHub only links to is RebbeHub's
+ * exception. A cover drawn from a PDF ChassidusHub only links to is ChassidusHub's
  * own picture and is served (with the PDF's credit, when it has one),
  * while the PDF itself stays linked, never served (the owner's decision,
  * 2026-09-29: "we store everything; link in public"). A takedown still

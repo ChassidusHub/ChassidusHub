@@ -5,8 +5,8 @@ import {
   fixParagraph,
   type Catalog,
   type Json,
-} from "@rebbehub/core";
-import type { EntityId } from "@rebbehub/model";
+} from "@chassidushub/core";
+import type { EntityId } from "@chassidushub/model";
 import { createApp } from "../src/app.js";
 import {
   add,
@@ -85,11 +85,11 @@ beforeEach(async () => {
     });
   }
   await catalog.submit(cs.id, "bot:transcribe");
-  await catalog.merge(cs.id, "shmuly");
+  await catalog.merge(cs.id, "steward");
   app = createApp({
     catalog,
     authenticate: (c) => c.req.header("X-Test-Account") ?? null,
-    siteUrl: "https://rebbehub.test",
+    siteUrl: "https://chassidushub.test",
   });
 });
 

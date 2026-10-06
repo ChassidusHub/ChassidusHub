@@ -1,14 +1,14 @@
 import { createHash } from 'node:crypto';
-import { orderKeys, type Genre } from '@rebbehub/model';
+import { orderKeys, type Genre } from '@chassidushub/model';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { GENRE_NAMES } from './sichosKodeshWorks.js';
 
 /**
  * Otzros HaRebbe's library of Lubavitch seforim (ספרי ליובאוויטש): a
  * public Google Drive folder of PDFs, a folder per sefer. Each folder that
- * holds PDFs becomes a sefer on RebbeHub and each PDF a page of it, linking
+ * holds PDFs becomes a sefer on ChassidusHub and each PDF a page of it, linking
  * to its exact file on Drive, which the site's reader opens through
- * RebbeHub's API. Each folder that holds other folders of PDFs becomes a
+ * ChassidusHub's API. Each folder that holds other folders of PDFs becomes a
  * Set, in the Set of the folder it is in, under the library's own Set: the
  * Drive library's tree, a first sorting that people then sort on into the
  * catalog's own sefarim. Nothing is copied: the folders are listed at
@@ -20,7 +20,7 @@ import { GENRE_NAMES } from './sichosKodeshWorks.js';
 
 export const OTZROS_FOLDER: DriveEntry = { title: 'ספרי ליובאוויטש', id: '0B_WSU737WJ1ffjFrTGFlMjBDdW44eU1yNkpLOHJHY0JRTWh3dU5BcFhZMV81Zmphc1J6VDQ', resourceKey: '0-OGquHQDd2VMz957qpqEEGA' };
 
-export const OTZROS_SET = { key: 'rebbehub-set:otzros', path: '/sets/otzros', name: { he: 'ספרי ליובאוויטש (אוצרות הרבי)', en: 'Lubavitch seforim (Otzros HaRebbe)' } } as const;
+export const OTZROS_SET = { key: 'chassidushub-set:otzros', path: '/sets/otzros', name: { he: 'ספרי ליובאוויטש (אוצרות הרבי)', en: 'Lubavitch seforim (Otzros HaRebbe)' } } as const;
 
 export interface DriveEntry {
   id: string;
@@ -176,7 +176,7 @@ export function driveLibraryImporter(input: DriveFolder | (() => Promise<DriveFo
               genre,
               levels: ['volume'],
               // Its genre, the library, and the Set of the folder it is in.
-              sets: [...new Set([`rebbehub-set:${genre}`, OTZROS_SET.key, inSet])].map(ref),
+              sets: [...new Set([`chassidushub-set:${genre}`, OTZROS_SET.key, inSet])].map(ref),
               ...(trail.length ? { description: { he: clip(trail.join(' / ')) } } : {}),
               externalIds: { 'drive-folder': folder.id },
               // The folder on Drive, as the copy's id: a link is its own address.
@@ -195,7 +195,7 @@ export function driveLibraryImporter(input: DriveFolder | (() => Promise<DriveFo
                 order: orders[i]!,
                 label: { he: clip(pdfs.length === 1 ? folder.title : nameOf(file.title)) },
                 externalIds: { 'drive-file': file.id },
-                // The exact file on Drive; the site's reader opens it through RebbeHub's API (GET /v1/drive/<id>).
+                // The exact file on Drive; the site's reader opens it through ChassidusHub's API (GET /v1/drive/<id>).
                 editions: [{ source: 'other', sourceId: file.id, kind: 'pdf', licence: 'free-to-read', credit: 'אוצרות הרבי', label: 'drive', url: driveViewUrl(file) }],
               },
             });
@@ -205,7 +205,7 @@ export function driveLibraryImporter(input: DriveFolder | (() => Promise<DriveFo
       };
       for (const top of root.folders.filter(holdsPdfs)) walk(top, [], genreOf(top.title), OTZROS_SET.key);
       // The genre sets, as the works importer makes them (the same records: nothing changes if they are there).
-      for (const genre of genres) yield { key: `rebbehub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre], slug: genre, policy: 'moderated', keepers: [] } };
+      for (const genre of genres) yield { key: `chassidushub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre], slug: genre, policy: 'moderated', keepers: [] } };
       // A folder's Set comes before the Sets and sefarim in it.
       yield* sets;
       yield* works;

@@ -1,4 +1,4 @@
-import { applyShaar, hasShaar, isEntityId, shaarFromCatalog, writeShaar, type EntityId, type LocalName, type WorkData } from '@rebbehub/model';
+import { applyShaar, hasShaar, isEntityId, shaarFromCatalog, writeShaar, type EntityId, type LocalName, type WorkData } from '@chassidushub/model';
 import type { Catalog, ChangesetRow } from './catalog.js';
 import { CatalogError, badState, invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';

@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { basename, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { alignAroundLocks, alignParagraphs, alignWords, hanachaOf, heardWords, notRecentlyFailedSql, recordingTranscript, type Catalog, type HeardWord, type Json } from '@rebbehub/core';
-import { orderKeys, type EntityId, type Language } from '@rebbehub/model';
+import { alignAroundLocks, alignParagraphs, alignWords, hanachaOf, heardWords, notRecentlyFailedSql, recordingTranscript, type Catalog, type HeardWord, type Json } from '@chassidushub/core';
+import { orderKeys, type EntityId, type Language } from '@chassidushub/model';
 import { failIfAny, machineRun } from './machineQueue.js';
 
 /**
@@ -232,7 +232,7 @@ export async function transcribeRecordings(
   return done;
 
   async function transcribeOne(rec: { id: EntityId; file: string | null; url: string | null; language: Language }): Promise<void | { skipped: string }> {
-    const dir = await mkdtemp(join(tmpdir(), 'rebbehub-transcribe-'));
+    const dir = await mkdtemp(join(tmpdir(), 'chassidushub-transcribe-'));
     try {
       const audio = join(dir, 'audio');
       await writeFile(audio, await input.fetchAudio(rec));
@@ -333,7 +333,7 @@ export async function alignRecordings(
   const origin = { by: `align:${input.transcriber.name}@${input.transcriber.version}` };
   const done: Array<{ recording: EntityId; words: number; hanacha: number }> = [];
   for (const rec of await recordingsToAlign(catalog, input)) {
-    const dir = await mkdtemp(join(tmpdir(), 'rebbehub-align-'));
+    const dir = await mkdtemp(join(tmpdir(), 'chassidushub-align-'));
     try {
       const audio = join(dir, 'audio');
       await writeFile(audio, await input.fetchAudio(rec));

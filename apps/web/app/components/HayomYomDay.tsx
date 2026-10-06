@@ -1,5 +1,5 @@
-import type { HayomYomShiurim } from '@rebbehub/hebrew';
-import { inlineText, isPageText, type PageSegment, type PageText } from '@rebbehub/model';
+import type { HayomYomShiurim } from '@chassidushub/hebrew';
+import { inlineText, isPageText, type PageSegment, type PageText } from '@chassidushub/model';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { Lang } from '../lib/i18n.js';
@@ -14,7 +14,7 @@ import '../styles/pages/hayom-yom.css';
  * under "שיעורים.", each a link to its words; the notices it puts right after them; then its words,
  * justified, each paragraph's first line indented. Notices are in italics. The weekday, the year, the
  * shiurim and which of the day's first paragraphs are notices are worked
- * out from the calendar of 5703 and the scan of the book (@rebbehub/hebrew's
+ * out from the calendar of 5703 and the scan of the book (@chassidushub/hebrew's
  * hayomYom.ts).
  *
  * What the book prints that the day's text source lacks is kept in the day's

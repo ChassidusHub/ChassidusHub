@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import type { EntityId } from '@rebbehub/model';
-import { MAX_PLACES, paragraphsOf } from '@rebbehub/core';
+import type { EntityId } from '@chassidushub/model';
+import { MAX_PLACES, paragraphsOf } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
@@ -24,7 +24,7 @@ const call = async (method: string, path: string, options: { as?: string; body?:
 };
 
 describe('where a person stopped', () => {
-  const reading = { kind: 'read', key: 'https://api.rebbehub.org/objects/abc', title: 'לקוטי שיחות חלק יב', sub: 'בראשית', href: '/read?src=x', place: { page: 14 } };
+  const reading = { kind: 'read', key: 'https://api.chassidushub.org/objects/abc', title: 'לקוטי שיחות חלק יב', sub: 'בראשית', href: '/read?src=x', place: { page: 14 } };
 
   it('keeps the latest place per thing, for its person only, newest first', async () => {
     expect((await call('GET', '/v1/places')).status).toBe(401);
@@ -59,7 +59,7 @@ describe('translations', () => {
   beforeEach(async () => {
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'חיבור' }, slug: 'w', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] });
     unit = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '1' }], order: 'V', label: { he: 'א' } });
-    original = await add(catalog, 'mendy', 'shmuly', 'text', { kind: 'edition', unit, language: 'he' });
+    original = await add(catalog, 'mendy', 'steward', 'text', { kind: 'edition', unit, language: 'he' });
   });
 
   it('come in as a suggestion: a text of their own with language, credit and rights, paragraph by paragraph', async () => {
@@ -69,7 +69,7 @@ describe('translations', () => {
     });
     expect(made.status).toBe(201);
     expect(made.body).toMatchObject({ status: 'open', author: 'chaim' });
-    await catalog.merge(made.body.id, 'shmuly');
+    await catalog.merge(made.body.id, 'steward');
 
     const texts = (await call('GET', `/v1/entities/${unit}/backlinks?field=unit&type=text`)).body.backlinks as Array<{ from: string }>;
     expect(texts).toHaveLength(2);
@@ -81,13 +81,13 @@ describe('translations', () => {
     // A fix to one paragraph is its own suggestion, and marks it checked.
     const fix = await call('POST', '/v1/translations/fix', { as: 'mendy', body: { segment: segments[1].id, content: 'And the second line.' } });
     expect(fix.status).toBe(201);
-    await catalog.merge(fix.body.id, 'shmuly');
+    await catalog.merge(fix.body.id, 'steward');
     expect((await call('GET', `/v1/entities/${segments[1].id}`)).body.data).toMatchObject({ content: 'And the second line.', proofread: 1 });
   });
 
   it('label a machine translation until each paragraph is checked', async () => {
     const made = await call('POST', `/v1/units/${unit}/translations`, { as: 'chaim', body: { language: 'en', credit: 'Machine translation, unchecked', content: 'One.\n\nTwo.', machine: 'mt:example@1' } });
-    await catalog.merge(made.body.id, 'shmuly');
+    await catalog.merge(made.body.id, 'steward');
     const text = (await catalog.db.query<{ id: string }>("SELECT e.id FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'text' AND r.data->>'kind' = 'translation'")).rows[0]!.id;
     const segments = (await call('GET', `/v1/entities/${text}/children?field=text&type=segment`)).body.items;
     expect(segments.map((s: { data: { origin: unknown } }) => s.data.origin)).toEqual([
@@ -95,7 +95,7 @@ describe('translations', () => {
       { by: 'mt:example@1', checked: false },
     ]);
     const fix = await call('POST', '/v1/translations/fix', { as: 'mendy', body: { segment: segments[0].id, content: 'One, checked.' } });
-    await catalog.merge(fix.body.id, 'shmuly');
+    await catalog.merge(fix.body.id, 'steward');
     expect((await call('GET', `/v1/entities/${segments[0].id}`)).body.data.origin).toEqual({ by: 'mt:example@1', checked: true });
   });
 
@@ -107,7 +107,7 @@ describe('translations', () => {
     expect((await post({ content: '\n\n' })).status).toBe(422);
     expect((await post({ licence: 'cc-by-nc' })).status).toBe(201);
     expect((await call('POST', `/v1/units/${unit}/translations`, { body: { language: 'en', credit: 'X', content: 'Words.' } })).status).toBe(401);
-    const segment = await add(catalog, 'mendy', 'shmuly', 'segment', { text: original, order: 'V', kind: 'paragraph', content: 'מילים', proofread: 0 });
+    const segment = await add(catalog, 'mendy', 'steward', 'segment', { text: original, order: 'V', kind: 'paragraph', content: 'מילים', proofread: 0 });
     expect((await call('POST', '/v1/translations/fix', { as: 'mendy', body: { segment, content: 'x' } })).status).toBe(404);
   });
 

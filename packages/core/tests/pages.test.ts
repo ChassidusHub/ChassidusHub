@@ -23,8 +23,8 @@ import {
   suggestRecording,
   titlePageScore,
   type GreyPage,
-} from '@rebbehub/core';
-import { orderKeys, type EntityId } from '@rebbehub/model';
+} from '@chassidushub/core';
+import { orderKeys, type EntityId } from '@chassidushub/model';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 /**
@@ -129,14 +129,14 @@ describe("a sefer's cover from its title page", () => {
     await registerFile(catalog.db, { sha256: sha('b'), bytes: 10, mime: 'application/pdf', source: 'contribution', licence: 'unknown', held: true });
     const scanB = await add(catalog, 'mendy', 'keeper', 'scan', { publication: pub, file: sha('b'), completeness: 'complete' });
     const scan = await add(catalog, 'mendy', 'keeper', 'scan', { publication: pub, file: sha('a'), completeness: 'complete' });
-    // A unit's PDF on Drive that RebbeHub holds and serves (the old Sichos Kodesh scans).
+    // A unit's PDF on Drive that ChassidusHub holds and serves (the old Sichos Kodesh scans).
     await registerFile(catalog.db, { sha256: sha('c'), bytes: 10, mime: 'application/pdf', source: 'mafteiach', licence: 'unknown', fileClass: 'sichos-kodesh-hanacha', url: 'https://drive.google.com/file/d/1AbCdEfGhIjKlMn/view', held: true });
     await add(catalog, 'mendy', 'keeper', 'unit', {
       work: other,
       position: [{ level: 'volume', value: '1' }],
       order: 'a0',
       label: { he: 'א' },
-      editions: [{ source: 'mafteiach', sourceId: '1AbCdEfGhIjKlMn', kind: 'pdf', licence: 'facts-and-links', url: 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/1AbCdEfGhIjKlMn?filename=x.pdf' }],
+      editions: [{ source: 'mafteiach', sourceId: '1AbCdEfGhIjKlMn', kind: 'pdf', licence: 'facts-and-links', url: 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/1AbCdEfGhIjKlMn?filename=x.pdf' }],
     });
 
     // The served scan first; the one kept privately (its uploader was not sure: linked) after it.
@@ -165,7 +165,7 @@ describe("a sefer's cover from its title page", () => {
     expect((await coversOf(catalog.db, [work]))[work]).toMatchObject({ page: 2, machine: false });
 
     // A takedown of the PDF takes its cover down.
-    await setRights(catalog.db, 'shmuly', sha('a'), 'preserved', 'takedown');
+    await setRights(catalog.db, 'steward', sha('a'), 'preserved', 'takedown');
     expect(await coversOf(catalog.db, [work])).toEqual({});
     const about = await fileAbout(catalog.db, sha('a'));
     expect(about?.covers).toEqual([{ entity: work, page: 2, machine: false }]);
@@ -173,7 +173,7 @@ describe("a sefer's cover from its title page", () => {
     expect(about?.derivations.map((d) => d.profile)).toEqual(expect.arrayContaining(['cover/2', 'cover-thumb/2']));
   });
 
-  it("draws from a PDF RebbeHub only links to: the cover is served, the PDF never, and a takedown still hides it", async () => {
+  it("draws from a PDF ChassidusHub only links to: the cover is served, the PDF never, and a takedown still hides it", async () => {
     const { catalog, set } = await freshCatalog();
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר' }, slug: 'sefer', authors: [], genre: 'sichos', levels: ['volume'], sets: [set] });
     const hb = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר בהיברו בוקס' }, slug: 'hb', authors: [], genre: 'sichos', levels: ['volume'], sets: [set] });
@@ -204,10 +204,10 @@ describe("a sefer's cover from its title page", () => {
     expect(await getFile(catalog.db, sha('a'))).toMatchObject({ rights_state: 'link', storage_tier: 'none' });
 
     // A takedown hides it, and clearing the PDF back to linked shows it again.
-    await setRights(catalog.db, 'shmuly', sha('a'), 'preserved', 'takedown');
+    await setRights(catalog.db, 'steward', sha('a'), 'preserved', 'takedown');
     expect(await coversOf(catalog.db, [work])).toEqual({});
     expect(await getFile(catalog.db, sha('e'))).toMatchObject({ rights_state: 'preserved' });
-    await setRights(catalog.db, 'shmuly', sha('a'), 'link', 'cleared');
+    await setRights(catalog.db, 'steward', sha('a'), 'link', 'cleared');
     expect(await getFile(catalog.db, sha('e'))).toMatchObject({ rights_state: 'credit', storage_tier: 'public' });
     expect(Object.keys(await coversOf(catalog.db, [work]))).toEqual([work]);
   });
@@ -267,13 +267,13 @@ describe('adding what the catalog does not have yet', () => {
     const { catalog } = await freshCatalog();
     await registerFile(catalog.db, { sha256: sha('a'), bytes: 10, mime: 'audio/mpeg', source: 'contribution', licence: 'cc0', held: true });
     const rec = await suggestRecording(catalog, 'chaim', { file: sha('a'), place: { newEvent: { title: 'ש"פ בא תשמ"ב', date: '5742-05-06' } }, title: 'שיחה א' });
-    await catalog.merge(rec.suggestion.id, 'shmuly');
+    await catalog.merge(rec.suggestion.id, 'steward');
     expect((await catalog.get(rec.event))!.data).toMatchObject({ kind: 'farbrengen', date: '5742-05-06' });
     expect((await catalog.get(rec.recording))!.data).toMatchObject({ event: rec.event, part: 1, file: sha('a') });
 
     await registerFile(catalog.db, { sha256: sha('b'), bytes: 10, mime: 'application/pdf', source: 'contribution', licence: 'cc0', held: true });
     const doc = await suggestDocument(catalog, 'chaim', { file: sha('b'), as: 'sefer', title: 'ספר הזכרונות', genre: 'history', year: { date: '5745' } });
-    await catalog.merge(doc.suggestion.id, 'shmuly');
+    await catalog.merge(doc.suggestion.id, 'steward');
     expect((await catalog.get(doc.work as EntityId))!.data).toMatchObject({ title: { he: 'ספר הזכרונות' }, genre: 'history', levels: ['volume'] });
     expect((await catalog.get(doc.publication))!.data).toMatchObject({ kind: 'book-volume', work: doc.work, date: '5745' });
     await expect(suggestDocument(catalog, 'chaim', { file: sha('b'), as: 'sefer', title: '' })).rejects.toThrow();

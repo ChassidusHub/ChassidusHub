@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SchemaRegistry } from '@rebbehub/model';
-import { legacyProfile, readLegacyBody, withStructuredBody } from '@rebbehub/core';
+import { SchemaRegistry } from '@chassidushub/model';
+import { legacyProfile, readLegacyBody, withStructuredBody } from '@chassidushub/core';
 
 /** Page bodies as the importers wrote them before words had structure, read into it. */
 describe('bodies kept as wiki markup before words had structure', () => {

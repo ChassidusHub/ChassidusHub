@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { data, Link } from 'react-router';
-import { SHAAR_SECTIONS, readShaar } from '@rebbehub/model';
+import { SHAAR_SECTIONS, readShaar } from '@chassidushub/model';
 import type { Route } from './+types/shaar';
 import { SentNote, type SentSuggestion } from '../components/SegmentEditor.js';
 import { siteOf } from '../lib/context.server.js';
@@ -130,7 +130,7 @@ export default function Shaar({ loaderData }: Route.ComponentProps) {
                 </li>
               ))}
             </ol>
-            <a className="side-link" href="https://github.com/shmuky/RebbeHub/blob/main/docs/shaar.md" rel="noopener" target="_blank">
+            <a className="side-link" href="https://github.com/ChassidusHub/ChassidusHub/blob/main/docs/shaar.md" rel="noopener" target="_blank">
               <Icon name="file" />
               {WORDS.rules[lang]}
             </a>

@@ -3,10 +3,10 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import { registerFile, type Catalog, type Json } from '@rebbehub/core';
-import { toHebrewNumeral } from '@rebbehub/hebrew';
-import type { Db } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { registerFile, type Catalog, type Json } from '@chassidushub/core';
+import { toHebrewNumeral } from '@chassidushub/hebrew';
+import type { Db } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -32,7 +32,7 @@ import { createSiteHandler } from '../server/handler.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 const sha = (c: string) => c.repeat(64);
 
 let catalog: Catalog;
@@ -101,11 +101,11 @@ beforeAll(async () => {
   // gives it (four links with their labels, a kilobyte): a calendar year and a farbrengen's other years show a row of
   // each, so a page that carried the links would be a kilobyte an event.
   const printed = (n: number) => ['bilti-mugah', 'bilti-mugah', 'mugah', 'maamar'].map((kind, i) => ({ url: `https://drive.google.com/file/d/${sha(String(i)).slice(0, 30)}${n}/view`, kind, label: { he: 'תו"מ התוועדויות חכ"ט ע\' 189 (וילך)' }, origin: `https://drive.google.com/file/d/${sha(String(i)).slice(0, 30)}${n}/view`, source: 'mafteiach' }));
-  const year = await catalog.createChangeset('shmuly', { title: 'The year' });
-  for (let n = 1; n <= 40; n++) await catalog.putRevision(year.id, 'shmuly', { type: 'event', data: { kind: 'farbrengen', title: { he: `התוועדות ${n}`, en: `Farbrengen ${n}` }, date: `5742-${String(1 + (n % 12)).padStart(2, '0')}-${String(1 + (n % 28)).padStart(2, '0')}`, links: printed(n) } });
-  for (let y = 5720; y < 5730; y++) await catalog.putRevision(year.id, 'shmuly', { type: 'event', data: { kind: 'farbrengen', title: { he: `יו״ד שבט ${y}` }, date: `${y}-05-10`, links: printed(y) } });
-  await catalog.submit(year.id, 'shmuly');
-  await catalog.merge(year.id, 'shmuly');
+  const year = await catalog.createChangeset('steward', { title: 'The year' });
+  for (let n = 1; n <= 40; n++) await catalog.putRevision(year.id, 'steward', { type: 'event', data: { kind: 'farbrengen', title: { he: `התוועדות ${n}`, en: `Farbrengen ${n}` }, date: `5742-${String(1 + (n % 12)).padStart(2, '0')}-${String(1 + (n % 28)).padStart(2, '0')}`, links: printed(n) } });
+  for (let y = 5720; y < 5730; y++) await catalog.putRevision(year.id, 'steward', { type: 'event', data: { kind: 'farbrengen', title: { he: `יו״ד שבט ${y}` }, date: `${y}-05-10`, links: printed(y) } });
+  await catalog.submit(year.id, 'steward');
+  await catalog.merge(year.id, 'steward');
   const text = await add(catalog, 'mendy', 'keeper', 'text', { kind: 'hanacha', recording: ids.recording, language: 'he' });
   const alignment = await add(catalog, 'mendy', 'keeper', 'alignment', { recording: ids.recording, text, granularity: 'paragraph' });
   for (let i = 0; i < 5; i++) {
@@ -141,7 +141,7 @@ beforeAll(async () => {
     return query(sql, params);
   }) as Db['query'];
 
-  api = createApp({ catalog, reportSalt: 'test', filesBaseUrl: 'https://files.rebbehub.test', siteUrl: SITE });
+  api = createApp({ catalog, reportSalt: 'test', filesBaseUrl: 'https://files.chassidushub.test', siteUrl: SITE });
   handle = createSiteHandler(build, {
     apiUrl: 'http://api.test',
     siteUrl: SITE,

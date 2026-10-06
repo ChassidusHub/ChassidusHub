@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { Catalog, summarizeChanges, type ChangeEntry, type Json } from '@rebbehub/core';
-import { measured, type Db } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { Catalog, summarizeChanges, type ChangeEntry, type Json } from '@chassidushub/core';
+import { measured, type Db } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import { freshCatalog } from './helpers.js';
 
 /**
@@ -11,7 +11,7 @@ import { freshCatalog } from './helpers.js';
  * the items summed up by how they change.
  */
 
-const PROXY = 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/';
+const PROXY = 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/';
 const N = 500;
 
 let catalog: Catalog;
@@ -95,7 +95,7 @@ describe("a bot's Suggestion of 500 items", () => {
         type: 'event',
         kind: 'changed',
         count: N,
-        fields: [{ path: '/links', before: 'link:sichos-kodesh-media-proxy.shmuky.workers.dev', after: 'link:drive.google.com' }],
+        fields: [{ path: '/links', before: 'link:sichos-kodesh-media-proxy.chassidushub-org.workers.dev', after: 'link:drive.google.com' }],
         examples: view.summary![0]!.examples,
       },
     ]);
@@ -109,7 +109,7 @@ describe("a bot's Suggestion of 500 items", () => {
   });
 
   it("asks whether a steward may approve it without reading its items at all", async () => {
-    const { result, queries } = await counting(catalog.db, () => catalog.mayApprove(bulk, 'shmuly'));
+    const { result, queries } = await counting(catalog.db, () => catalog.mayApprove(bulk, 'steward'));
     expect(result).toEqual({ ok: true });
     expect(queries).toBeLessThanOrEqual(2);
   });

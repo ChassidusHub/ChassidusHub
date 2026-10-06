@@ -1,6 +1,6 @@
 # The shaar: a sefer's README
 
-A repository on GitHub has a README; a sefer in RebbeHub has a **shaar**.
+A repository on GitHub has a README; a sefer in ChassidusHub has a **shaar**.
 It is one file per sefer, written the same way for every sefer, that the
 catalog reads, checks and shows. Where a README says what a project is
 and how it is laid out, a shaar says what a sefer is: its name and its
@@ -125,7 +125,7 @@ version 11), diffed field by field in review, like every other item.
 
 ## A shaar made from the catalog
 
-`rebbehub shaars` (and **Actions → Upkeep → shaars**) gives every sefer
+`chassidushub shaars` (and **Actions → Upkeep → shaars**) gives every sefer
 that has no shaar the one the catalog makes from its data: its
 description under About, and how it is divided under Structure (from its
 levels: `הספר מחולק לכרכים, וכל כרך לשיחות.`). It is kept with

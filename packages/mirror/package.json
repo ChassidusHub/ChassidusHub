@@ -1,15 +1,15 @@
 {
-  "name": "@rebbehub/mirror",
+  "name": "@chassidushub/mirror",
   "version": "0.1.0",
-  "description": "RebbeHub's open exports: the git mirror (one JSON file per item, texts as Markdown with segment anchors, sync as WebVTT), signed catalog-edition dumps (SQLite, JSON Lines and Parquet), and the Sichos-Kodesh works release built from them.",
+  "description": "ChassidusHub's open exports: the git mirror (one JSON file per item, texts as Markdown with segment anchors, sync as WebVTT), signed catalog-edition dumps (SQLite, JSON Lines and Parquet), and the Sichos-Kodesh works release built from them.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shmuky/RebbeHub.git",
+    "url": "git+https://github.com/ChassidusHub/ChassidusHub.git",
     "directory": "packages/mirror"
   },
-  "homepage": "https://github.com/shmuky/RebbeHub/tree/main/packages/mirror",
+  "homepage": "https://github.com/ChassidusHub/ChassidusHub/tree/main/packages/mirror",
   "bugs": {
-    "url": "https://github.com/shmuky/RebbeHub/issues"
+    "url": "https://github.com/ChassidusHub/ChassidusHub/issues"
   },
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -28,10 +28,10 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@rebbehub/core": "^0.1.0",
-    "@rebbehub/db": "^0.1.0",
-    "@rebbehub/hebrew": "^0.1.0",
-    "@rebbehub/model": "^0.1.0",
+    "@chassidushub/core": "^0.1.0",
+    "@chassidushub/db": "^0.1.0",
+    "@chassidushub/hebrew": "^0.1.0",
+    "@chassidushub/model": "^0.1.0",
     "hyparquet-writer": "^0.16.10",
     "tweetnacl": "^1.0.3"
   },

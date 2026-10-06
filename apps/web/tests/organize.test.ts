@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import type { EntityId } from '@rebbehub/model';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -61,7 +61,7 @@ describe('picking and ordering rows', () => {
 });
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 
 describe('the organizing page', () => {
   let handle: (request: Request) => Promise<Response>;
@@ -72,7 +72,7 @@ describe('the organizing page', () => {
     const build = (await import(`${webRoot}/build/server/index.js`)) as ServerBuild;
     const { catalog, set } = await freshCatalog();
     ids.set = set;
-    ids.child = await add(catalog, 'shmuly', 'shmuly', 'set', { name: { he: 'תת סט', en: 'A subset' }, slug: 'sub', parent: set, policy: 'moderated', keepers: [] }, '/sets/sub');
+    ids.child = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'תת סט', en: 'A subset' }, slug: 'sub', parent: set, policy: 'moderated', keepers: [] }, '/sets/sub');
     ids.work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר לסידור', en: 'A sefer' }, slug: 'org-sample', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] }, '/org-sample');
     await add(catalog, 'mendy', 'keeper', 'unit', { work: ids.work, position: [{ level: 'sicha', value: '1' }], order: 'V', label: { he: 'שיחה א' } }, '/org-sample/1');
     const api = createApp({ catalog, reportSalt: 'test', siteUrl: SITE });

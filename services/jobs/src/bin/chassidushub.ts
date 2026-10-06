@@ -35,120 +35,120 @@ import {
   type Context,
 } from '../commands.js';
 
-const HELP = `rebbehub - RebbeHub's command line
+const HELP = `chassidushub - ChassidusHub's command line
 
-  rebbehub migrate                              create or update the database
-  rebbehub schema-check                         check the built-in schemas
-  rebbehub convert-bodies [--chunk <n>]         pages whose words are still wiki markup, as structured
+  chassidushub migrate                              create or update the database
+  chassidushub schema-check                         check the built-in schemas
+  chassidushub convert-bodies [--chunk <n>]         pages whose words are still wiki markup, as structured
                                                 words (system changes of <n> pages; run once after
                                                 deploying built-in schemas version 5)
-  rebbehub shaars [--chunk <n>] [--dry-run]     every sefer without a shaar gets the one the catalog
+  chassidushub shaars [--chunk <n>] [--dry-run]     every sefer without a shaar gets the one the catalog
                                                 makes from its data (docs/shaar.md), as system
                                                 changes of <n> sefarim; --dry-run only counts them
-  rebbehub hold-catalog [--minutes <n>]         refuses writes to the catalog until stopped (an
+  chassidushub hold-catalog [--minutes <n>]         refuses writes to the catalog until stopped (an
                                                 import's copy back); prints held once it does
-  rebbehub rebuildable [--guard]                prints rebuildable when importers made everything;
+  chassidushub rebuildable [--guard]                prints rebuildable when importers made everything;
                                                 --guard prints SQL that fails otherwise
-  rebbehub rebuildable --mark | --guard-mark <mark>
+  chassidushub rebuildable --mark | --guard-mark <mark>
                                                 the catalog's mark; SQL that fails unless it still has it
-  rebbehub relink-drive [--chunk <n>] [--dry-run]
+  chassidushub relink-drive [--chunk <n>] [--dry-run]
                                                 links on Sichos-Kodesh's media proxy as the files' own
                                                 Google Drive links: one reviewed bot suggestion per <n>
                                                 items (500); --dry-run only counts them
-  rebbehub relink-jem [--chunk <n>] [--dry-run]
+  chassidushub relink-jem [--chunk <n>] [--dry-run]
                                                 links to JEM's player in the older form as the
                                                 Ashreinu app's own, the same way
-  rebbehub account --id <id> --name <name> [--steward] [--bot]
-  rebbehub import <importer> --from <Sichos-Kodesh checkout> [--approve-as <steward>] [--dry-run] [--chunk <n>]
+  chassidushub account --id <id> --name <name> [--steward] [--bot]
+  chassidushub import <importer> --from <Sichos-Kodesh checkout> [--approve-as <steward>] [--dry-run] [--chunk <n>]
                                                 sichos-kodesh-works, sichos-kodesh-occasions, otzros, hebrewbooks;
                                                 chabadlibrary (CHABADLIBRARY_TREE), jem (JEM_DB), sefaria (SEFARIA_DATA),
                                                 igros (IGROS_DATA), archive (SK_ARCHIVE_DB): see docs/importers.md
-  rebbehub crawl-library --from <Sichos-Kodesh checkout> --out <tree.json> [--minutes <n>] [--texts] [--keep]
+  chassidushub crawl-library --from <Sichos-Kodesh checkout> --out <tree.json> [--minutes <n>] [--texts] [--keep]
                                                 chabadlibrary.org's contents, continuing an earlier crawl; --texts
                                                 keeps each page's text beside the tree, --keep stores them in R2
                                                 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
-  rebbehub crawl-sefaria --from <Sichos-Kodesh checkout> --out <folder> [--cache <folder>] [--keep] [--only <title>] [--daily]
+  chassidushub crawl-sefaria --from <Sichos-Kodesh checkout> --out <folder> [--cache <folder>] [--keep] [--only <title>] [--daily]
                                                 Sefaria's Chabad books Sichos-Kodesh does not publish; --daily (or
                                                 SEFARIA_DAILY=1) also Chitas and the Rambam; --keep stores
                                                 their texts in R2 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
-  rebbehub archive-gaps --db <index.sqlite>     the files Sichos-Kodesh's archive could not get, onto the Missing board
-  rebbehub mirror --dir <folder> [--git] [--full] [--limit <n>]
-  rebbehub edition --by <steward> [--tag 2026.40] [--notes <text>]
-  rebbehub dump --tag <tag> --out <folder> [--key <key.json>] [--upload] [--bucket rebbehub-public]
+  chassidushub archive-gaps --db <index.sqlite>     the files Sichos-Kodesh's archive could not get, onto the Missing board
+  chassidushub mirror --dir <folder> [--git] [--full] [--limit <n>]
+  chassidushub edition --by <steward> [--tag 2026.40] [--notes <text>]
+  chassidushub dump --tag <tag> --out <folder> [--key <key.json>] [--upload] [--bucket chassidushub-public]
                                                 SQLite, JSON Lines and Parquet, signed;
                                                 --upload puts them in R2 at dumps/<tag>/, served at /dumps
                                                 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
-  rebbehub mirror-pull --out <folder> [--api https://api.rebbehub.org] [--key <public key>]...
+  chassidushub mirror-pull --out <folder> [--api https://api.chassidushub.org] [--key <public key>]...
                   [--tag <tag>|latest] [--allow-unsigned]
                                                 a mirror's copy of every edition's dumps, each signature
                                                 and sha256 checked (docs/mirrors.md)
-  rebbehub keygen --out <key.json>
-  rebbehub ocr --approve-as <steward> [--scan <id>] [--limit <n>] [--files <url>] [--reread] [--requested-only]
+  chassidushub keygen --out <key.json>
+  chassidushub ocr --approve-as <steward> [--scan <id>] [--limit <n>] [--files <url>] [--reread] [--requested-only]
                                                 machine OCR: the scans people asked for first, then the
                                                 newest served scans that have none yet (--requested-only:
                                                 only those asked for);
                                                 files from <url>/objects/<sha256> (default the live API);
                                                 --reread: scans read by an older engine, read again
                                                 (lines people checked are kept)
-  rebbehub transcribe --approve-as <steward> [--recording <id>] [--limit <n>] [--linked] [--files <url>]
+  chassidushub transcribe --approve-as <steward> [--recording <id>] [--limit <n>] [--linked] [--files <url>]
                   [--engine workers-ai|local] [--requested-only] [--shard <i>/<n>]
                                                 machine transcripts, with sync: the recordings people asked
                                                 for first, then the newest that have none (Whisper on Workers AI: CLOUDFLARE_ACCOUNT_ID and
                                                 CLOUDFLARE_AI_TOKEN; local: ivrit.ai's Yiddish Whisper
                                                 here, pip install faster-whisper); --linked also those
                                                 heard elsewhere
-  rebbehub machine [list [--kind ocr|transcript] [--status <status>] | ask --kind <kind> --item <id> --as <account>]
+  chassidushub machine [list [--kind ocr|transcript] [--status <status>] | ask --kind <kind> --item <id> --as <account>]
                                                 the machines' queue: what waits, what is left, and asking
                                                 for a scan to be read or a recording transcribed
-  rebbehub training-clips [--out <clips.jsonl>] [--since <date>]
+  chassidushub training-clips [--out <clips.jsonl>] [--since <date>]
                                                 the next Rebbe Whisper's training data: every transcript
                                                 paragraph a person checked, as clips (docs/transcription.md)
-  rebbehub embed [--limit <n>]                  vectors for search by meaning, of items not embedded yet
+  chassidushub embed [--limit <n>]                  vectors for search by meaning, of items not embedded yet
                                                 (BGE-M3 on Workers AI: CLOUDFLARE_ACCOUNT_ID and
                                                 CLOUDFLARE_AI_TOKEN)
-  rebbehub citations [--approve-as <steward>] [--limit <n>]
+  chassidushub citations [--approve-as <steward>] [--limit <n>]
                                                 citations found in texts, proposed as links for review
-  rebbehub check-links [--limit <n>]            whether the catalog's links still answer, for /health
-  rebbehub align --approve-as <steward> [--recording <id>] [--limit <n>] [--linked] [--files <url>]
+  chassidushub check-links [--limit <n>]            whether the catalog's links still answer, for /health
+  chassidushub align --approve-as <steward> [--recording <id>] [--limit <n>] [--linked] [--files <url>]
                   [--engine workers-ai|local]
                                                 word timings for transcripts that have none, and the
                                                 farbrengen's hanacha synced paragraph by paragraph
-  rebbehub mend-splits --approve-as <steward> [--recording <id>] [--limit <n>] [--dry-run]
+  chassidushub mend-splits --approve-as <steward> [--recording <id>] [--limit <n>] [--dry-run]
                                                 words older machine transcripts cut in two between
                                                 paragraphs, joined again: one bot suggestion per
                                                 recording, only paragraphs no person checked or fixed;
                                                 --dry-run only lists them
-  rebbehub restore-word-times --approve-as <steward> [--recording <id>] [--limit <n>] [--dry-run]
+  chassidushub restore-word-times --approve-as <steward> [--recording <id>] [--limit <n>] [--dry-run]
                                                 word timings back for paragraphs fixed before fixes
                                                 kept them, from their history: one bot suggestion
                                                 per recording; --dry-run only lists them
-  rebbehub page-images [--scan <id>] [--limit <n>] [--files <url>] [--bucket rebbehub-public]
+  chassidushub page-images [--scan <id>] [--limit <n>] [--files <url>] [--bucket chassidushub-public]
                                                 page images and thumbnails of served scans that have
                                                 none (the IIIF manifests and the site's viewer show them),
                                                 into R2 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
-  rebbehub covers [--work <id>] [--limit <n>] [--again] [--files <url>] [--bucket rebbehub-public]
-                  [--preservation-bucket rebbehub-preservation]
+  chassidushub covers [--work <id>] [--limit <n>] [--again] [--files <url>] [--bucket chassidushub-public]
+                  [--preservation-bucket chassidushub-preservation]
                                                 each sefer's cover from the title page of its best PDF
                                                 (or the page a keeper chose), into R2; a PDF only linked
                                                 (Drive, HebrewBooks) is fetched and kept in the
                                                 preservation bucket (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
-  rebbehub fingerprints [--limit <n>] [--files <url>] [--preservation-bucket rebbehub-preservation]
+  chassidushub fingerprints [--limit <n>] [--files <url>] [--preservation-bucket chassidushub-preservation]
                                                 page hashes and audio fingerprints of held files not
                                                 measured yet (recordings need ffmpeg), so the same scan
                                                 or recording uploaded again is found
-  rebbehub reading-copies make --from <Sichos-Kodesh checkout> --work <folder> [--shard 0/4] [--limit <n>]
-                  [--archive <objects.json>] [--source-bucket sichos-kodesh-archive] [--bucket rebbehub-public]
-  rebbehub reading-copies publish --from <Sichos-Kodesh checkout> --work <folder> [--bucket rebbehub-public]
+  chassidushub reading-copies make --from <Sichos-Kodesh checkout> --work <folder> [--shard 0/4] [--limit <n>]
+                  [--archive <objects.json>] [--source-bucket sichos-kodesh-archive] [--bucket chassidushub-public]
+  chassidushub reading-copies publish --from <Sichos-Kodesh checkout> --work <folder> [--bucket chassidushub-public]
                                                 the Sichos Kodesh scans' reading copies, into R2
                                                 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
-  rebbehub reading-copies register [--manifest <url or file>]
+  chassidushub reading-copies register [--manifest <url or file>]
                                                 records the published ones in the catalog
-  rebbehub page-fixes make --work <folder> [--shard 0/4] [--limit <n>]
+  chassidushub page-fixes make --work <folder> [--shard 0/4] [--limit <n>]
                                                 measures the Otzros library's PDFs (read from Drive, not
                                                 kept): which pages lean, and the turn that levels each
-  rebbehub page-fixes publish --work <folder> [--bucket rebbehub-public]
+  chassidushub page-fixes publish --work <folder> [--bucket chassidushub-public]
                                                 the manifest, into R2 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
-  rebbehub page-fixes register [--manifest <url or file>]
+  chassidushub page-fixes register [--manifest <url or file>]
                                                 records the published ones in the catalog
 
   --database <url or folder>   Postgres URL, or a PGlite folder
@@ -347,6 +347,6 @@ try {
       if (command && command !== 'help') process.exitCode = 1;
   }
 } catch (error) {
-  console.error(`rebbehub: ${(error as Error).message}`);
+  console.error(`chassidushub: ${(error as Error).message}`);
   process.exitCode = 1;
 }

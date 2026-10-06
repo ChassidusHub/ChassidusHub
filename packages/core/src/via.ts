@@ -5,7 +5,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * their personal API tokens (a script) or an app they connected with OAuth
  * (Claude, another agent). Kept on each suggestion, comment, issue and
  * review (migration 0021, `via`), so the site shows it as the agent's work
- * for the person - "Claude · for @shmuly" - the way machine output is
+ * for the person - "Claude · for @steward" - the way machine output is
  * labelled until a person checks it.
  *
  * The API says which token a request came with once (services/api/src/tokens.ts,

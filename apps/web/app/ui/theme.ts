@@ -10,8 +10,8 @@ import { useSyncExternalStore } from 'react';
 export type Theme = 'light' | 'dark' | 'auto';
 export type TextFont = 'frank' | 'david' | 'noto';
 
-const THEME_KEY = 'rebbehub.theme';
-const FONT_KEY = 'rebbehub.text-font';
+const THEME_KEY = 'chassidushub.theme';
+const FONT_KEY = 'chassidushub.text-font';
 
 /** Runs in <head> before anything is drawn. Kept tiny and free of imports. */
 export const THEME_SCRIPT = `(function(){try{var d=document.documentElement,t=localStorage.getItem('${THEME_KEY}');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);var f=localStorage.getItem('${FONT_KEY}');if(f==='david'||f==='noto')d.setAttribute('data-text-font',f)}catch(e){}})();`;

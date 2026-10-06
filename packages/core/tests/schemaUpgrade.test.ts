@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BUILTIN_SCHEMA_VERSION } from '@rebbehub/model';
+import { BUILTIN_SCHEMA_VERSION } from '@chassidushub/model';
 import { freshCatalog } from './helpers.js';
 
 describe('built-in schema upgrades', () => {

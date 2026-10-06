@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import type { EntityId } from '@rebbehub/model';
-import { recordDerivation, recordPageFix, registerFile, setRights } from '@rebbehub/core';
+import type { EntityId } from '@chassidushub/model';
+import { recordDerivation, recordPageFix, registerFile, setRights } from '@chassidushub/core';
 import { createApp, parseRange } from '../src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -29,7 +29,7 @@ const call = async (method: string, path: string, options: { as?: string; body?:
 
 describe('reading', () => {
   it('serves items, paths, history, search and the schemas', async () => {
-    expect((await call('GET', '/v1')).body).toMatchObject({ name: 'RebbeHub', docs: '/openapi.json' });
+    expect((await call('GET', '/v1')).body).toMatchObject({ name: 'ChassidusHub', docs: '/openapi.json' });
     expect((await call('GET', `/v1/entities/${event}`)).body).toMatchObject({ id: event, type: 'event', data: { date: '5742-05-10' } });
     expect((await call('GET', `/v1/entities/${event.toUpperCase()}`)).status).toBe(200); // ids are read forgivingly
     expect((await call('GET', '/v1/resolve?path=/events/5742-05-10')).body).toMatchObject({ id: event });
@@ -124,7 +124,7 @@ describe('browsing', () => {
     const community = (await call('GET', '/v1/community')).body;
     expect(community.recent[0]).toMatchObject({ authorName: 'Mendy', mergedBy: 'keeper', mergedByName: 'Set keeper', changes: 1, authorIsBot: false });
     expect(community.openReports).toBe(1);
-    expect(community.people).toBeGreaterThanOrEqual(2); // mendy, and shmuly who set up the set
+    expect(community.people).toBeGreaterThanOrEqual(2); // mendy, and steward who set up the set
     expect(community.gaps).toEqual({ events: 1, eventsWithoutRecordings: 1, eventsWithoutTexts: 1 });
   });
 });
@@ -164,7 +164,7 @@ describe('the media proxy', () => {
     expect(await batch.json()).toEqual({ items: [await (await proxy.request(`http://api.test/v1/files/${sha256}`)).json()] });
     expect((await proxy.request('http://api.test/v1/files/batch?ids=not-a-sha256')).status).toBe(400);
 
-    await setRights(catalog.db, 'shmuly', sha256, 'preserved', 'takedown');
+    await setRights(catalog.db, 'steward', sha256, 'preserved', 'takedown');
     expect((await proxy.request(`http://api.test/objects/${sha256}`)).status).toBe(404);
     expect((await proxy.request(`http://api.test/objects/${copy}`)).status).toBe(404);
     expect(await (await proxy.request(`http://api.test/v1/files/${sha256}`)).json()).toMatchObject({ url: null });
@@ -173,7 +173,7 @@ describe('the media proxy', () => {
   it("tells the reader what a PDF on Drive needs, by its Drive id, and where its reading copy is", async () => {
     const files = { async get() { return null; } };
     const proxy = createApp({ catalog, files });
-    // A publisher's scan RebbeHub only links to: its turns, no copy.
+    // A publisher's scan ChassidusHub only links to: its turns, no copy.
     const linked = 'e'.repeat(64);
     await registerFile(catalog.db, { sha256: linked, bytes: 100, mime: 'application/pdf', source: 'other', licence: 'free-to-read', fileClass: 'publisher-scan', url: 'https://drive.google.com/file/d/1LinkedDriveFile_x/view?resourcekey=0-abc', held: false });
     const turn = { page: 2, angle: 0.6, transform: [1, 0.01, -0.01, 1, 2, -1.5] };
@@ -183,7 +183,7 @@ describe('the media proxy', () => {
     expect(await fixed.json()).toEqual({ sha256: linked, encoder: 'pdf-level@1', verdict: 'fixed', reason: null, pages: [turn], readingCopy: null });
     expect(await (await proxy.request(`http://api.test/v1/files/${linked}`)).json()).toMatchObject({ url: null, pageFix: { verdict: 'fixed', pages: [turn] } });
 
-    // An open scan RebbeHub serves, with its reading copy: the reader opens the copy.
+    // An open scan ChassidusHub serves, with its reading copy: the reader opens the copy.
     const open = 'f'.repeat(64);
     await registerFile(catalog.db, { sha256: open, bytes: 100, mime: 'application/pdf', source: 'mafteiach', licence: 'unknown', fileClass: 'sichos-kodesh-hanacha', url: 'https://drive.google.com/file/d/1OpenSichosKodesh/view', held: true });
     await recordDerivation(catalog.db, { src: open, profile: 'reading-copy', sha256: '9'.repeat(64), bytes: 90, mime: 'application/pdf', encoder: 'pdf-fix@1' });
@@ -196,7 +196,7 @@ describe('the media proxy', () => {
   });
 
   it('serves the published manifests, and nothing else from the bucket', async () => {
-    const manifest = JSON.stringify({ format: 'rebbehub-reading-copies', files: [] });
+    const manifest = JSON.stringify({ format: 'chassidushub-reading-copies', files: [] });
     const files = {
       async get(key: string) {
         return key === 'manifests/reading-copies/sichos-kodesh.json' ? { body: new Blob([manifest]).stream(), size: manifest.length } : null;
@@ -205,7 +205,7 @@ describe('the media proxy', () => {
     const proxy = createApp({ catalog, files });
     const found = await proxy.request('http://api.test/manifests/reading-copies/sichos-kodesh.json');
     expect(found.status).toBe(200);
-    expect(await found.json()).toEqual({ format: 'rebbehub-reading-copies', files: [] });
+    expect(await found.json()).toEqual({ format: 'chassidushub-reading-copies', files: [] });
     expect((await proxy.request('http://api.test/manifests/reading-copies/other.json')).status).toBe(404);
     expect((await proxy.request('http://api.test/manifests/..%2Fobjects/x.json')).status).toBe(404);
   });
@@ -341,7 +341,7 @@ describe('the Missing board and projects', () => {
     expect((await call('GET', '/v1/missing?kind=scans')).body.total).toBe(0);
     expect((await call('GET', '/v1/missing?kind=spaceships')).status).toBe(400);
 
-    // The files Sichos-Kodesh's archive could not get, each with its item when RebbeHub has it.
+    // The files Sichos-Kodesh's archive could not get, each with its item when ChassidusHub has it.
     await catalog.loadArchiveGaps([
       { collection: 'farbrengens', item_id: '1', kind: 'pdf', source_id: 'd1', role: 'mugah', entity_id: event, source: 'drive', url: 'https://drive.google.com/file/d/d1/view', label: 'לקו"ש', hebrew_date: '5742-05-10', status: 'unresolved', http_status: 404, error: null, attempts: 2, checked_at: '2026-09-01T00:00:00Z' },
       { collection: 'yomanim', item_id: 'y', kind: 'pdf', source_id: 'd2', role: '', entity_id: null, source: 'drive', url: 'https://drive.google.com/file/d/d2/view', label: 'יומן', hebrew_date: null, status: 'error', http_status: 500, error: 'server error', attempts: 5, checked_at: null },
@@ -372,7 +372,7 @@ describe('the Missing board and projects', () => {
 });
 
 describe('the wiki model', () => {
-  it('keeps its own copy of each text: copied once from Sichos-Kodesh, checked by hash, then served from RebbeHub', async () => {
+  it('keeps its own copy of each text: copied once from Sichos-Kodesh, checked by hash, then served from ChassidusHub', async () => {
     const { createHash } = await import('node:crypto');
     const article = '<article><h1>א</h1><p>טקסט</p></article>';
     const sha = createHash('sha256').update(article).digest('hex');
@@ -391,7 +391,7 @@ describe('the wiki model', () => {
     expect(await first.text()).toBe(article);
     expect(own.has(`texts/${sha}`)).toBe(true);
     archive.clear();
-    expect(await (await withTexts.request(`/v1/texts/${sha}`)).text()).toBe(article); // RebbeHub's own copy now
+    expect(await (await withTexts.request(`/v1/texts/${sha}`)).text()).toBe(article); // ChassidusHub's own copy now
     expect((await withTexts.request(`/v1/texts/${'b'.repeat(64)}`)).status).toBe(404); // bytes that are not their name
     expect((await withTexts.request('/v1/texts/nope')).status).toBe(404);
     expect((await app.request(`/v1/texts/${sha}`)).status).toBe(404);
@@ -474,7 +474,7 @@ describe('the wiki model', () => {
   });
 
   it('shows a page body kept as wiki markup before words had structure as structured words, and turns the catalog over', async () => {
-    const { convertLegacyBodies } = await import('@rebbehub/core');
+    const { convertLegacyBodies } = await import('@chassidushub/core');
     const other = await add(catalog, 'mendy', 'keeper', 'event', { ...yudShvat(set), date: '5742-05-11' });
     // A body as the catalog kept it before (straight into the store, as an old revision would be).
     await catalog.db.query(`UPDATE revision SET data = jsonb_set(data, '{body}', to_jsonb($1::text)) WHERE id = (SELECT main_rev FROM entity WHERE id = $2)`, ["== תוכן ענינים ==\n\n1. '''שיחה''' א<ref>הערה</ref>", other]);

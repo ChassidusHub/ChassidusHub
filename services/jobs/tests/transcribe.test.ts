@@ -2,8 +2,8 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { EntityId } from '@rebbehub/model';
-import { registerFile } from '@rebbehub/core';
+import type { EntityId } from '@chassidushub/model';
+import { registerFile } from '@chassidushub/core';
 import { localWhisper, paragraphs, recordingsToTranscribe, transcribeRecordings, type Transcriber } from '../src/transcribe.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -80,7 +80,7 @@ describe('machine transcription and sync', () => {
     ]);
     expect(await readFile(join(dir, 'args'), 'utf8')).toBe('a.mp3 --language yi --model ivrit-ai/yi-whisper-large-v3-turbo-ct2');
     expect(localWhisper().version).toBe('ivrit-ai/yi-whisper-large-v3-turbo');
-    expect(localWhisper({ model: '/home/runner/models/rebbehub-whisper-v2' }).version).toBe('rebbehub-whisper-v2');
+    expect(localWhisper({ model: '/home/runner/models/chassidushub-whisper-v2' }).version).toBe('chassidushub-whisper-v2');
   });
 
   it("adds a served recording's transcript and its sync, once, as the bot, approved by a steward", async () => {
@@ -106,7 +106,7 @@ describe('machine transcription and sync', () => {
         ];
       },
     };
-    const done = await transcribeRecordings(catalog, { approveAs: 'shmuly', transcriber, fetchAudio: async () => new Uint8Array([1]) });
+    const done = await transcribeRecordings(catalog, { approveAs: 'steward', transcriber, fetchAudio: async () => new Uint8Array([1]) });
     expect(done).toEqual([{ recording: served, paragraphs: 2 }]);
 
     const [text] = await catalog.list({ type: 'text' });
@@ -119,10 +119,10 @@ describe('machine transcription and sync', () => {
     const spans = await catalog.list({ type: 'alignment-span' });
     expect(spans.map((s) => (s.data as { startMs: number }).startMs).sort((a, b) => a - b)).toEqual([0, 9000]);
     expect(await recordingsToTranscribe(catalog)).toEqual([]);
-    expect((await catalog.history(text!.id as EntityId))[0]).toMatchObject({ author: 'bot:transcribe', mergedBy: 'shmuly' });
+    expect((await catalog.history(text!.id as EntityId))[0]).toMatchObject({ author: 'bot:transcribe', mergedBy: 'steward' });
 
     // Read with its sync, and a paragraph fixed by a person is marked checked.
-    const { fixParagraph, recordingTranscript } = await import('@rebbehub/core');
+    const { fixParagraph, recordingTranscript } = await import('@chassidushub/core');
     const view = (await recordingTranscript(catalog, served))!;
     expect(view.paragraphs).toMatchObject([
       { content: 'לחיים', startMs: 0, endMs: 5000, checked: false, by: 'transcribe:fake@1' },
@@ -137,7 +137,7 @@ describe('machine transcription and sync', () => {
 describe('word-level sync', () => {
   it('keeps the word times Whisper gives, and aligns a corrected transcript and the hanacha afresh', async () => {
     const { alignRecordings, recordingsToAlign } = await import('../src/transcribe.js');
-    const { fixParagraph, recordingTranscript, anchorSync, hanachaSync } = await import('@rebbehub/core');
+    const { fixParagraph, recordingTranscript, anchorSync, hanachaSync } = await import('@chassidushub/core');
     const { catalog, set } = await freshCatalog();
     const event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set));
     await registerFile(catalog.db, { sha256: 'd'.repeat(64), bytes: 10, mime: 'audio/mpeg', source: 'contribution', licence: 'cc0', held: true });
@@ -147,7 +147,7 @@ describe('word-level sync', () => {
       { startMs: 5000, endMs: 7000, text: 'שטייט אין', words: [{ text: 'שטייט', startMs: 5000, endMs: 6000 }, { text: 'אין', startMs: 6000, endMs: 7000 }] },
     ];
     const transcriber: Transcriber = { name: 'fake', version: '2', transcribe: async () => heard };
-    await transcribeRecordings(catalog, { approveAs: 'shmuly', transcriber, fetchAudio: async () => new Uint8Array([1]) });
+    await transcribeRecordings(catalog, { approveAs: 'steward', transcriber, fetchAudio: async () => new Uint8Array([1]) });
     let view = (await recordingTranscript(catalog, recording))!;
     expect(view.granularity).toBe('word');
     expect(view.paragraphs.map((p) => p.words?.map((w) => w.startMs))).toEqual([[0, 1000], [5000, 6000]]);
@@ -166,7 +166,7 @@ describe('word-level sync', () => {
     await add(catalog, 'mendy', 'keeper', 'segment', { text: hanacha, order: 'a', kind: 'paragraph', content: 'לחיים', proofread: 1 });
     await add(catalog, 'mendy', 'keeper', 'segment', { text: hanacha, order: 'b', kind: 'paragraph', content: 'כמו שכתוב אין', proofread: 1 });
 
-    const done = await alignRecordings(catalog, { approveAs: 'shmuly', transcriber, fetchAudio: async () => new Uint8Array([1]) });
+    const done = await alignRecordings(catalog, { approveAs: 'steward', transcriber, fetchAudio: async () => new Uint8Array([1]) });
     expect(done).toEqual([{ recording, words: 3, hanacha: 2 }]);
     view = (await recordingTranscript(catalog, recording))!;
     // The locked paragraph is left as the person set it; the corrected one is timed word by word, "דאך" between its neighbours.
@@ -175,7 +175,7 @@ describe('word-level sync', () => {
     expect(view.paragraphs[1]).toMatchObject({ syncChecked: false });
     const synced = (await hanachaSync(catalog, recording))!;
     expect(synced.paragraphs.map((p) => p.startMs !== null)).toEqual([true, true]);
-    expect((await catalog.history(synced.alignment))[0]).toMatchObject({ author: 'bot:align', mergedBy: 'shmuly' });
+    expect((await catalog.history(synced.alignment))[0]).toMatchObject({ author: 'bot:align', mergedBy: 'steward' });
   });
 });
 

@@ -1,5 +1,5 @@
-import { normalizeSearchText } from '@rebbehub/hebrew';
-import type { EntityId, RightsState, TextData, TextLine } from '@rebbehub/model';
+import { normalizeSearchText } from '@chassidushub/hebrew';
+import type { EntityId, RightsState, TextData, TextLine } from '@chassidushub/model';
 import type { Catalog, EntityView } from './catalog.js';
 import { ExportGate } from './gate.js';
 import { toTsQuery } from './searchText.js';

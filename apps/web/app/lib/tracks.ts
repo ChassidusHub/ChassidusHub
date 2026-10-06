@@ -1,4 +1,4 @@
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import type { Track } from '../player/PlayerProvider.js';
 import type { Entity } from './api.js';
 import { dateLabel } from './dates.js';

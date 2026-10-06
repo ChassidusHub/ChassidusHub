@@ -16,7 +16,7 @@ import '../styles/pages/developers.css';
  * language. The overview adds the pages as a map, and where agents read.
  */
 
-const API_FALLBACK = 'https://api.rebbehub.org';
+const API_FALLBACK = 'https://api.chassidushub.org';
 
 export function loader({ params, request, context }: Route.LoaderArgs) {
   const { siteUrl, api } = siteOf(context);

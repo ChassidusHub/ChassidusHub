@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
-import { isValidDateKey, toHebrewNumeral } from '@rebbehub/hebrew';
-import type { EventKind, LocalName } from '@rebbehub/model';
+import { isValidDateKey, toHebrewNumeral } from '@chassidushub/hebrew';
+import type { EventKind, LocalName } from '@chassidushub/model';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { audioUrl, FARBRENGENS_SET, occasionDate, SICHOS_KODESH_MEDIA_PROXY, type CatalogEntry } from './sichosKodeshOccasions.js';
 
@@ -12,17 +12,17 @@ import { audioUrl, FARBRENGENS_SET, occasionDate, SICHOS_KODESH_MEDIA_PROXY, typ
  * catalog is wider than the farbrengens: davening, rallies, yechidus,
  * sichos on their own.
  *
- * Each JEM event that is a farbrengen RebbeHub already has (from
+ * Each JEM event that is a farbrengen ChassidusHub already has (from
  * Sichos-Kodesh's catalog) gives that farbrengen whatever recordings it
  * still lacks; one that shares a recording with it is the same farbrengen
  * for certain, and otherwise a JEM farbrengen is the one on its date when
  * each has one. Every other JEM event gets a page of its own. Each
  * recording links to the recording in the Ashreinu app, and is heard
  * through Sichos-Kodesh's media proxy as its app hears them. The crawl is made at
- * import time (.github/workflows/import.yml); RebbeHub keeps no copy.
+ * import time (.github/workflows/import.yml); ChassidusHub keeps no copy.
  */
 
-export const JEM_SET = { key: 'rebbehub-set:jem', path: '/sets/jem', name: { he: 'הקלטות JEM', en: 'JEM recordings' } } as const;
+export const JEM_SET = { key: 'chassidushub-set:jem', path: '/sets/jem', name: { he: 'הקלטות JEM', en: 'JEM recordings' } } as const;
 export const ASHREINU = 'https://ashreinu.app';
 
 export interface JemNode {
@@ -122,7 +122,7 @@ export function partName(name: string): LocalName {
 
 export interface JemInput {
   jem: JemIndex;
-  /** The farbrengens RebbeHub has from Sichos-Kodesh's catalog (sichosKodeshOccasions.ts). */
+  /** The farbrengens ChassidusHub has from Sichos-Kodesh's catalog (sichosKodeshOccasions.ts). */
   occasions: Array<Pick<CatalogEntry, 'occasionId' | 'hebrewDate' | 'audio'>>;
 }
 
@@ -294,7 +294,7 @@ type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
  * An item's data with every link to JEM's player in the older form
  * replaced by the Ashreinu app's own; everything else (the audio, still
  * heard through the media proxy) as it was. Null when nothing in it needs
- * it. `rebbehub relink-jem` (services/jobs) sends these.
+ * it. `chassidushub relink-jem` (services/jobs) sends these.
  */
 export function relinkJem(data: Json): { data: Json; links: number } | null {
   let links = 0;

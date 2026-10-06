@@ -1,10 +1,10 @@
 import type { Context, Hono } from 'hono';
-import { CatalogError, type Catalog } from '@rebbehub/core';
+import { CatalogError, type Catalog } from '@chassidushub/core';
 import type { FileStore } from './app.js';
 
 /**
  * Mirrors (the plan, section 12, phase 6; docs/mirrors.md): everything
- * anyone needs to keep a full copy of RebbeHub's catalog, at addresses
+ * anyone needs to keep a full copy of ChassidusHub's catalog, at addresses
  * that do not change.
  *
  *   GET /v1/mirrors                          the git mirror, the release keys, every edition's dumps
@@ -15,7 +15,7 @@ import type { FileStore } from './app.js';
  *
  * A mirror checks the manifest's Ed25519 signature against a key it
  * pinned (never only the key this API names), then every file's sha256
- * against the manifest; `rebbehub mirror-pull` does both.
+ * against the manifest; `chassidushub mirror-pull` does both.
  */
 
 export interface MirrorOptions {
@@ -106,7 +106,7 @@ export function mirrorRoutes(app: Hono, catalog: Catalog, options: { mirrors?: M
         others: mirrors.others ?? [],
         editions: await editions(c),
         licences: { facts: 'CC0-1.0', community: 'CC-BY-SA-4.0', sources: 'each text keeps the licence in its `licence` field' },
-        docs: 'https://github.com/shmuky/RebbeHub/blob/main/docs/mirrors.md',
+        docs: 'https://github.com/ChassidusHub/ChassidusHub/blob/main/docs/mirrors.md',
       },
       200,
       { 'Cache-Control': 'public, max-age=300' },

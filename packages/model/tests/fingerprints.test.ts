@@ -12,7 +12,7 @@ import {
   samplePages,
   sharesPages,
   type GreyImage,
-} from '@rebbehub/model';
+} from '@chassidushub/model';
 
 /** A made-up page of "type": rows of dark blocks placed by `seed`, at any size. */
 function page(seed: number, width = 340, height = 480, noise = 0): GreyImage {

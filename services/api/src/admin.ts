@@ -1,6 +1,6 @@
 import type { Context, Hono } from 'hono';
-import { listPeople, revokeAllApiTokens, setPersonRole, takeDownFile, takedowns, type Catalog } from '@rebbehub/core';
-import { one } from '@rebbehub/db';
+import { listPeople, revokeAllApiTokens, setPersonRole, takeDownFile, takedowns, type Catalog } from '@chassidushub/core';
+import { one } from '@chassidushub/db';
 import { HttpError } from './app.js';
 
 /**

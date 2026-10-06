@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { parseDateText } from '@rebbehub/hebrew';
+import { parseDateText } from '@chassidushub/hebrew';
 import type { Entity } from '../lib/api.js';
 import { dateLabel } from '../lib/dates.js';
 import { t, type Lang } from '../lib/i18n.js';

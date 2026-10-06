@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { data, Link, useNavigate } from 'react-router';
 import type { Route } from './+types/shiurim';
-import { isPageText } from '@rebbehub/model';
+import { isPageText } from '@chassidushub/model';
 import { PageWords } from '../components/PageWords.js';
 import type { ShiurPart } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';

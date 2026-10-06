@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { parseDateKey } from '@rebbehub/hebrew';
+import { parseDateKey } from '@chassidushub/hebrew';
 import type { Route } from './+types/search';
 import { EventRows, eventData, type EventItem } from '../components/EventRow.js';
 import { Marked, MomentRows, momentHref, momentRefs } from '../components/Moments.js';

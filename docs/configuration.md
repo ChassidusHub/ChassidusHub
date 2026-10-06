@@ -1,27 +1,27 @@
 # Configuration
 
-Every setting RebbeHub reads, where it is set, and whether it is a
+Every setting ChassidusHub reads, where it is set, and whether it is a
 secret. Secrets are never in the repository: they live in Cloudflare
 (Workers → Settings → Variables and Secrets), in GitHub (repository
 secrets, for the workflows), or in your shell. Everything optional is off
 until it is set, and nothing on the site shows it before.
-[Deploying](deploy.md) says how to set up rebbehub.org from nothing.
+[Deploying](deploy.md) says how to set up chassidushub.org from nothing.
 
 ## Values that belong to one deployment
 
-The repository deploys rebbehub.org as it is (Cloudflare Workers Builds
+The repository deploys chassidushub.org as it is (Cloudflare Workers Builds
 reads the `wrangler.toml` files on every push to main). A copy of
-RebbeHub elsewhere changes these, and nothing else:
+ChassidusHub elsewhere changes these, and nothing else:
 
 | Value | Where | Is |
 | --- | --- | --- |
 | Hyperdrive id | `services/api/wrangler.toml`, `[[hyperdrive]] id` | which Hyperdrive config (pooling the Neon Postgres) the API uses; not a secret, the connection string stays in Cloudflare |
-| Bucket names `rebbehub-public`, `rebbehub-preservation`, `sichos-kodesh-archive` | `services/api/wrangler.toml`, `[[r2_buckets]]` | the R2 buckets for servable files, private uploads, and Sichos-Kodesh's archive (read only) |
+| Bucket names `chassidushub-public`, `chassidushub-preservation`, `sichos-kodesh-archive` | `services/api/wrangler.toml`, `[[r2_buckets]]` | the R2 buckets for servable files, private uploads, and Sichos-Kodesh's archive (read only) |
 | Rate limit namespaces `1001`, `1002` | `services/api/wrangler.toml`, `[[ratelimits]]` | tell the two counters apart within the Cloudflare account |
 | `SITE_URL` | both `wrangler.toml` files, `[vars]` | the site's address: passkeys are bound to its domain, canonical links and sitemaps use it |
 | `API_URL` | `apps/web/wrangler.toml`, `[vars]` | the API's public address; the site reaches it through the `API` service binding when there is one |
 | `SITE_URL` | GitHub repository variable | for the workflows' links |
-| The domains `rebbehub.org`, `api.rebbehub.org` | Cloudflare, custom domains on the two Workers | - |
+| The domains `chassidushub.org`, `api.chassidushub.org` | Cloudflare, custom domains on the two Workers | - |
 
 ## The API (services/api)
 
@@ -57,7 +57,7 @@ email instead of sending it), `RATE_LIMIT=1` (counts requests in memory).
 
 | Name | Does |
 | --- | --- |
-| `API_URL` (Workers) or `REBBEHUB_API_URL` (Node) | the API |
+| `API_URL` (Workers) or `CHASSIDUSHUB_API_URL` (Node) | the API |
 | `API` (service binding) | the API inside Cloudflare, without a public round trip |
 | `SITE_URL` | the site's address |
 
@@ -71,9 +71,9 @@ email instead of sending it), `RATE_LIMIT=1` (counts requests in memory).
 | `SICHOS_KODESH_DIR` | no | a checkout of Sichos-Kodesh, which importers read at run time |
 | `SICHOS_KODESH_TOKEN` | yes | GitHub token the import workflow checks Sichos-Kodesh out with |
 | `JEM_DB`, `IGROS_DATA`, `SK_ARCHIVE_DB`, `SEFARIA_DATA`, `HEBREWBOOKS_SHELF`, `CHABADLIBRARY_TREE`, `MAFTEIACH_DATA` | no | where each importer's input is ([importers](importers.md)) |
-| `REBBEHUB_TEST_DATABASE_URL` | yes | tests on a Postgres server as well as PGlite; an empty database, its schemas are dropped |
+| `CHASSIDUSHUB_TEST_DATABASE_URL` | yes | tests on a Postgres server as well as PGlite; an empty database, its schemas are dropped |
 
-Signing keys for editions are passed to `rebbehub dump --key <key.json>`
+Signing keys for editions are passed to `chassidushub dump --key <key.json>`
 from a file outside the repository, never set as a variable here
 ([mirrors](mirrors.md)).
 
@@ -88,15 +88,15 @@ A few public addresses belong to others, not to a deployment:
   player (`GET /v1/drive/<id>`, `services/api/src/drive.ts`): only files an
   item links to, with CORS and Range, a whole file kept at Cloudflare's
   edge for a week, up to `DRIVE_MAX_MB`, counted by `RATE_LIMIT_DRIVE`.
-- `https://sichos-kodesh-media-proxy.shmuky.workers.dev`: Sichos-Kodesh's
+- `https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev`: Sichos-Kodesh's
   media proxy. JEM's recordings still play through it (`/jem-audio/<file>`,
   `SICHOS_KODESH_MEDIA_PROXY` in `packages/importers`): they are JEM's, on
   its own servers, not on Drive. Imports before stored Drive PDFs on it
-  too; `rebbehub relink-drive` ([operations](operations.md#drive-links))
+  too; `chassidushub relink-drive` ([operations](operations.md#drive-links))
   suggests their Drive links instead, and until then the site reads those
   through `GET /v1/drive/<id>` as well.
 - The `sichos-kodesh-archive` R2 bucket: Sichos-Kodesh's archive, which
-  `rebbehub reading-copies make` copies scans from, and whose own
+  `chassidushub reading-copies make` copies scans from, and whose own
   `objects.json` lists them (`--archive` names another list).
 
 Should the proxy or the archive move, they change together with Sichos-Kodesh

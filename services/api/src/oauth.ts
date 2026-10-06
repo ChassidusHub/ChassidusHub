@@ -14,7 +14,7 @@ import {
   type Catalog,
   type MetadataFetch,
   type OAuthClient,
-} from '@rebbehub/core';
+} from '@chassidushub/core';
 import { HttpError } from './app.js';
 
 /**
@@ -67,7 +67,7 @@ const resourcesOf = (c: Context) => ({ allowed: [mcpResource(c), apiOrigin(c)], 
 
 function oauthFailure(c: Context, error: OAuthError): Response {
   const status = error.error === 'invalid_client' ? 401 : 400;
-  if (status === 401 && /^basic\s/i.test(c.req.header('Authorization') ?? '')) c.header('WWW-Authenticate', 'Basic realm="RebbeHub"');
+  if (status === 401 && /^basic\s/i.test(c.req.header('Authorization') ?? '')) c.header('WWW-Authenticate', 'Basic realm="ChassidusHub"');
   return c.json({ error: error.error, error_description: error.message }, status, NO_STORE);
 }
 
@@ -109,7 +109,7 @@ export function oauthRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context) 
         authorization_servers: [apiOrigin(c)],
         scopes_supported: OAUTH_SCOPES,
         bearer_methods_supported: ['header'],
-        resource_name: 'RebbeHub',
+        resource_name: 'ChassidusHub',
         resource_documentation: `${site}/developers/agents`,
       },
       200,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { data, Link } from 'react-router';
-import { isPageText, type PageSegment, type PageText, type PrintedPlace } from '@rebbehub/model';
+import { isPageText, type PageSegment, type PageText, type PrintedPlace } from '@chassidushub/model';
 import type { Route } from './+types/edit';
 import { PageWords, segmentAnchor } from '../components/PageWords.js';
 import { ScanBeside } from '../components/ScanBeside.js';
@@ -50,7 +50,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { api, siteUrl } = siteOf(context);
   const entity = await api.entity(params.id);
   if (!entity) throw data('not found', { status: 404 });
-  // Words a machine read from a scan open beside the scan, read through RebbeHub's API.
+  // Words a machine read from a scan open beside the scan, read through ChassidusHub's API.
   const body = (entity.data as { body?: unknown }).body;
   const scanned = isPageText(body) ? scannedVersion(body) : null;
   const scanFile = scanned ? driveReadUrl(scanned.url, api.baseUrl) : null;

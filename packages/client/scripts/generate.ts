@@ -4,7 +4,7 @@
  * operation a people and scripts may call (not the site's own sign-in and
  * stewards' tools) its input, its answer and a typed method.
  *
- *   npm run generate -w @rebbehub/client
+ *   npm run generate -w @chassidushub/client
  *
  * A test fails when the file is not what this writes now
  * (packages/client/tests/client.test.ts), so the client never drifts from
@@ -95,8 +95,8 @@ const forClients = (op: OperationObject) => op['x-access'] !== 'site' && !Object
 
 export function generate(): string {
   const out: string[] = [];
-  out.push('// Generated from the RebbeHub OpenAPI document by packages/client/scripts/generate.ts.');
-  out.push('// Do not edit by hand: run `npm run generate -w @rebbehub/client`.');
+  out.push('// Generated from the ChassidusHub OpenAPI document by packages/client/scripts/generate.ts.');
+  out.push('// Do not edit by hand: run `npm run generate -w @chassidushub/client`.');
   out.push('/* eslint-disable */');
   out.push('');
   out.push(`/** The API version this client was generated from. */`);

@@ -1,5 +1,5 @@
-import { recordingTranscript, type Catalog, type Json } from '@rebbehub/core';
-import { carryWordTimes, type EntityId, type WordTime } from '@rebbehub/model';
+import { recordingTranscript, type Catalog, type Json } from '@chassidushub/core';
+import { carryWordTimes, type EntityId, type WordTime } from '@chassidushub/model';
 import { ALIGN_BOT } from './transcribe.js';
 
 /**

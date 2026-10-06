@@ -1,6 +1,6 @@
 import { HDate, months as HMONTHS } from '@hebcal/core';
-import type { LocalName } from '@rebbehub/model';
-import { MONTHS, dateKeyFromHDate, dateKeyToGregorian, isMonthToken, monthByToken, toHebrewNumeral } from '@rebbehub/hebrew';
+import type { LocalName } from '@chassidushub/model';
+import { MONTHS, dateKeyFromHDate, dateKeyToGregorian, isMonthToken, monthByToken, toHebrewNumeral } from '@chassidushub/hebrew';
 import { Fragment, useEffect, useRef } from 'react';
 import { data, Link, redirect } from 'react-router';
 import type { Route } from './+types/calendar';

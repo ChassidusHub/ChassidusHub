@@ -1,8 +1,8 @@
-import type { EntityDataByType, EntityType } from '@rebbehub/model';
+import type { EntityDataByType, EntityType } from '@chassidushub/model';
 
 /** One valid example of every entity type, typed by entities.ts and checked against the JSON Schemas. */
 export const EXAMPLES: { [T in EntityType]: EntityDataByType[T] } = {
-  set: { name: { he: 'לקוטי שיחות', en: 'Likkutei Sichos' }, slug: 'likkutei-sichos', policy: 'moderated', keepers: ['u-shmuly'] },
+  set: { name: { he: 'לקוטי שיחות', en: 'Likkutei Sichos' }, slug: 'likkutei-sichos', policy: 'moderated', keepers: ['u-steward'] },
   author: { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, slug: 'the-rebbe', born: '5662-01-11', passed: '5754-10-03' },
   work: {
     title: { he: 'לקוטי שיחות', en: 'Likkutei Sichos' },

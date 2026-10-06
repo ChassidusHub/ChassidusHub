@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import type { Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import type { Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
@@ -17,7 +17,7 @@ beforeEach(async () => {
   const fresh = await freshCatalog();
   catalog = fresh.catalog;
   set = fresh.set;
-  sichos = await add(catalog, 'shmuly', 'shmuly', 'set', { name: { he: 'שיחות', en: 'Sichos' }, slug: 'sichos', policy: 'moderated', keepers: ['keeper'] }, '/sets/sichos');
+  sichos = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'שיחות', en: 'Sichos' }, slug: 'sichos', policy: 'moderated', keepers: ['keeper'] }, '/sets/sichos');
   work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'חיבור', en: 'A work' }, slug: 'w', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] }, '/w');
   await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '1' }], order: 'V', label: { he: 'א' } }, '/w/1');
   app = createApp({ catalog, authenticate: (c) => c.req.header('X-Test-Account') ?? null });
@@ -63,7 +63,7 @@ describe('organizing over the API', () => {
 
   it('applies at once for a steward who asks, and answers a merged item with where it went', async () => {
     const dup = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'חיבור' }, slug: 'dup', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] }, '/dup');
-    const made = await call('POST', '/v1/organize', { as: 'shmuly', body: { operations: [{ op: 'merge', from: dup, into: work }], apply: true } });
+    const made = await call('POST', '/v1/organize', { as: 'steward', body: { operations: [{ op: 'merge', from: dup, into: work }], apply: true } });
     expect(made.body).toMatchObject({ merged: true, suggestion: { status: 'merged' }, preview: { forwards: [{ from: dup, to: work }] } });
     const gone = await call('GET', `/v1/entities/${dup}`);
     expect(gone).toMatchObject({ status: 404, body: { detail: { mergedInto: work } } });

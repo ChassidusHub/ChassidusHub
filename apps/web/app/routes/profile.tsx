@@ -14,7 +14,7 @@ import { AgentBy, Avatar, Box, EmptyState, Label, RelativeTime, StateIcon } from
 import '../styles/pages/people.css';
 
 /**
- * A person's page, by their handle (/u/mendy): who they are on RebbeHub
+ * A person's page, by their handle (/u/mendy): who they are on ChassidusHub
  * (steward, trusted), how much they have done (suggestions and how many
  * were approved, reviews, issues, comments), and what they did lately, all
  * of it public. An old handle leads here for good (301), as GitHub's

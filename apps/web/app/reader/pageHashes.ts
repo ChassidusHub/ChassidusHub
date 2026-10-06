@@ -1,11 +1,11 @@
-import { pageHash, samplePages } from '@rebbehub/model';
+import { pageHash, samplePages } from '@chassidushub/model';
 import { loadPdfDocument } from './renderPdf.js';
 
 /**
  * What the browser measures of a file before it is sent, so the person
  * hears "we already have this — here" before waiting for an upload: its
  * sha256, and for a PDF the perceptual hashes of a dozen pages spread
- * through it (@rebbehub/model's `pageHash`, the same the jobs compute for
+ * through it (@chassidushub/model's `pageHash`, the same the jobs compute for
  * every held scan). Only these small numbers go to the server; the file
  * goes only when sent.
  */

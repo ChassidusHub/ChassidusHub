@@ -1,4 +1,4 @@
-import type { EntityId } from '@rebbehub/model';
+import type { EntityId } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 import { badState, forbidden, invalid, notFound } from './errors.js';
 
@@ -82,8 +82,8 @@ export async function checkMachineWork(catalog: Catalog, kind: MachineKind, item
     ? (await catalog.db.query("SELECT 1 FROM file WHERE sha256 = $1 AND storage_tier = 'public' AND rights_state IN ('open', 'credit')", [d.file])).rows.length > 0
     : false;
   if (kind === 'ocr') {
-    // The machine reads only what RebbeHub serves and may copy; a linked scan is read where it is kept.
-    if (!served) throw invalid('this scan is not served by RebbeHub (or its rights do not allow copies), so the machine cannot read it');
+    // The machine reads only what ChassidusHub serves and may copy; a linked scan is read where it is kept.
+    if (!served) throw invalid('this scan is not served by ChassidusHub (or its rights do not allow copies), so the machine cannot read it');
     const { rows } = await catalog.db.query(
       `SELECT 1 FROM entity_ref x JOIN entity l ON l.id = x.from_id AND l.type = 'text-layer' AND NOT l.deleted
        JOIN revision lr ON lr.id = l.main_rev

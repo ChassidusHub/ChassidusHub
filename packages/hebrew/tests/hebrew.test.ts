@@ -10,7 +10,7 @@ import {
   parseHebrewYear,
   toHebrewNumeral,
   validateDateKey,
-} from '@rebbehub/hebrew';
+} from '@chassidushub/hebrew';
 
 describe('Hebrew numerals', () => {
   it('writes years and days as they are printed', () => {

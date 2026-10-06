@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { EntityId } from '@rebbehub/model';
-import { registerFile } from '@rebbehub/core';
+import type { EntityId } from '@chassidushub/model';
+import { registerFile } from '@chassidushub/core';
 import { linesFromTsv, readScans, scansToRead, type OcrEngine } from '../src/ocr.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
@@ -38,7 +38,7 @@ describe('machine OCR', () => {
       pages: async () => ['p1.png', 'p2.png'],
       lines: async (image) => [{ id: 'l1', text: `שורה ${image}`, box: [0, 0, 1, 0.1] }],
     };
-    const done = await readScans(catalog, { approveAs: 'shmuly', engine, fetchFile: async () => new Uint8Array([37, 80, 68, 70]) });
+    const done = await readScans(catalog, { approveAs: 'steward', engine, fetchFile: async () => new Uint8Array([37, 80, 68, 70]) });
     expect(done).toEqual([{ scan: served, pages: 2, lines: 2 }]);
 
     const layers = await catalog.list({ type: 'text-layer' });
@@ -50,14 +50,14 @@ describe('machine OCR', () => {
     expect(pages.map((p) => (p.data as { page: number; proofread: number }).page).sort()).toEqual([1, 2]);
     expect(pages.every((p) => (p.data as { proofread: number }).proofread === 0)).toBe(true);
     expect(await scansToRead(catalog)).toEqual([]);
-    expect((await catalog.history(machine.id as EntityId))[0]).toMatchObject({ author: 'bot:ocr', mergedBy: 'shmuly', authorIsBot: true });
+    expect((await catalog.history(machine.id as EntityId))[0]).toMatchObject({ author: 'bot:ocr', mergedBy: 'steward', authorIsBot: true });
   });
 });
 
 describe('fix this line', () => {
   it('shows the machine page, and a fix makes the community page with that line checked', async () => {
     const { catalog, set } = await freshCatalog();
-    const { fixLine, scanText } = await import('@rebbehub/core');
+    const { fixLine, scanText } = await import('@chassidushub/core');
     await registerFile(catalog.db, { sha256: 'c'.repeat(64), bytes: 10, mime: 'application/pdf', source: 'contribution', licence: 'cc0', held: true });
     const publication = await add(catalog, 'mendy', 'keeper', 'publication', { kind: 'book-volume', title: { he: 'כרך' }, sets: [set] });
     const scan = await add(catalog, 'mendy', 'keeper', 'scan', { publication, file: 'c'.repeat(64), completeness: 'complete', sets: [set] });
@@ -70,7 +70,7 @@ describe('fix this line', () => {
         { id: 'l2', text: 'שיחח א', box: [0, 0.1, 1, 0.1] },
       ],
     };
-    await readScans(catalog, { approveAs: 'shmuly', engine, fetchFile: async () => new Uint8Array([1]) });
+    await readScans(catalog, { approveAs: 'steward', engine, fetchFile: async () => new Uint8Array([1]) });
 
     const before = (await scanText(catalog, scan, 1))!;
     expect(before).toMatchObject({ pages: 1, machine: true, engine: { name: 'fake' } });
@@ -102,8 +102,8 @@ describe('fix this line', () => {
         { id: 'l3', text: 'שורה חדשה', box: [0, 0.3, 1, 0.1] },
       ],
     };
-    expect(await readScans(catalog, { approveAs: 'shmuly', engine: better, fetchFile: async () => new Uint8Array([1]) })).toEqual([]);
-    expect(await readScans(catalog, { approveAs: 'shmuly', engine: better, reread: true, fetchFile: async () => new Uint8Array([1]) })).toEqual([{ scan, pages: 1, lines: 3 }]);
+    expect(await readScans(catalog, { approveAs: 'steward', engine: better, fetchFile: async () => new Uint8Array([1]) })).toEqual([]);
+    expect(await readScans(catalog, { approveAs: 'steward', engine: better, reread: true, fetchFile: async () => new Uint8Array([1]) })).toEqual([{ scan, pages: 1, lines: 3 }]);
     const reread = (await scanText(catalog, scan, 1))!;
     expect(reread.engine).toEqual({ name: 'fake', version: '2.0' });
     expect(reread.lines.map((l) => [l.text, l.level])).toEqual([
@@ -112,6 +112,6 @@ describe('fix this line', () => {
       ['שורה חדשה', 0],
     ]);
     expect((await catalog.list({ type: 'text-layer' })).length).toBe(2);
-    expect(await readScans(catalog, { approveAs: 'shmuly', engine: better, reread: true, fetchFile: async () => new Uint8Array([1]) })).toEqual([]);
+    expect(await readScans(catalog, { approveAs: 'steward', engine: better, reread: true, fetchFile: async () => new Uint8Array([1]) })).toEqual([]);
   });
 });

@@ -1,5 +1,5 @@
-import type { LocalName } from '@rebbehub/model';
-import type { Entity, HanachaSync, RebbeHubApi } from './api.js';
+import type { LocalName } from '@chassidushub/model';
+import type { Entity, HanachaSync, ChassidusHubApi } from './api.js';
 import { nameOf, type Lang } from './i18n.js';
 import { labelOf } from './labels.js';
 import { itemPath } from './links.js';
@@ -58,7 +58,7 @@ type D = Record<string, unknown>;
 /** Paragraphs shown on the farbrengen's page; the unit's own page has them all. */
 const MAX_PARAGRAPHS = 200;
 
-export async function eventView(api: RebbeHubApi, units: Entity[], recordings: Entity[], lang: Lang): Promise<EventView> {
+export async function eventView(api: ChassidusHubApi, units: Entity[], recordings: Entity[], lang: Lang): Promise<EventView> {
   const list = units.slice(0, 12);
   // Each unit's work (and volume), where it is printed, and its texts.
   const works = await api.entities([...new Set(list.map((u) => String((u.data as D).work ?? '')).filter(Boolean))]).catch(() => new Map<string, Entity>());

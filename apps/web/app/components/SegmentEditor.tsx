@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import type { PageSegment, PageSegmentKind } from '@rebbehub/model';
+import type { PageSegment, PageSegmentKind } from '@chassidushub/model';
 import { fill, readRuns } from '../lib/editorRuns.js';
 import { t, type Lang } from '../lib/i18n.js';
 import { href } from '../lib/links.js';

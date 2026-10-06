@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { createPerson, type Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { createPerson, type Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -11,7 +11,7 @@ import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helper
  * or through an app they connected carries `via`, everywhere its author is
  * shown - the suggestion, the list, the conversation, the issue, the
  * item's history, the commits and the person's page - so the site can say
- * "my script · for @shmuly" and never read it as the person's own hands.
+ * "my script · for @owner" and never read it as the person's own hands.
  */
 
 let app: Hono;
@@ -27,7 +27,7 @@ beforeEach(async () => {
   set = fresh.set;
   event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(fresh.set), '/events/5742-05-10');
   app = createApp({ catalog, authenticate: (c) => c.req.header('X-Test-Account') ?? null });
-  me = (await createPerson(catalog.db, 'Shmuly', 'shmuly')).id;
+  me = (await createPerson(catalog.db, 'Owner', 'owner')).id;
   token = (await call('POST', '/v1/tokens', { as: me, body: { name: 'my script', scopes: ['read', 'write'] } })).body.token;
 });
 
@@ -69,7 +69,7 @@ describe("an agent's work for a person", () => {
     const commits = (await call('GET', '/v1/commits?since=0&limit=100')).body.commits;
     expect(commits[commits.length - 1]).toMatchObject({ author: me, via });
 
-    const profile = (await call('GET', '/v1/people/shmuly')).body;
+    const profile = (await call('GET', '/v1/people/owner')).body;
     expect(profile.activity.find((a: any) => a.kind === 'suggestion')).toMatchObject({ via });
     expect(profile.activity.find((a: any) => a.kind === 'comment' && !a.via)).toBeTruthy();
   });

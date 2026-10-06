@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes sure the R2 buckets RebbeHub keeps files in exist, creating any
+# Makes sure the R2 buckets ChassidusHub keeps files in exist, creating any
 # that are missing. Safe to run again and again: the manual deploy
 # workflow runs it every time.
 #
@@ -7,8 +7,8 @@
 #   CLOUDFLARE_ACCOUNT_ID  the account's id
 #
 # Resources:
-#   R2 bucket  rebbehub-public        files that may be served
-#   R2 bucket  rebbehub-preservation  files kept but never served (no Worker binds it)
+#   R2 bucket  chassidushub-public        files that may be served
+#   R2 bucket  chassidushub-preservation  files kept but never served (no Worker binds it)
 set -euo pipefail
 
 : "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN}"
@@ -31,7 +31,7 @@ cf() {
   printf '%s' "$response"
 }
 
-for bucket in rebbehub-public rebbehub-preservation; do
+for bucket in chassidushub-public chassidushub-preservation; do
   if cf GET "/r2/buckets?name_contains=${bucket}" | jq -e --arg b "$bucket" '.result.buckets[] | select(.name == $b)' >/dev/null; then
     echo "R2 bucket ${bucket}: exists" >&2
   else

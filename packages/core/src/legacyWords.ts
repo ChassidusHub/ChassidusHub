@@ -1,4 +1,4 @@
-import { tidyInline, type Language, type PageInline, type PageMark, type PageSegment, type PageText, type PageVersion, type TextProfile } from '@rebbehub/model';
+import { tidyInline, type Language, type PageInline, type PageMark, type PageSegment, type PageText, type PageVersion, type TextProfile } from '@chassidushub/model';
 
 /**
  * Reading page bodies kept before words had structure (built-in schemas

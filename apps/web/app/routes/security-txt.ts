@@ -11,9 +11,9 @@ export function securityTxt(siteUrl: string, now = new Date()): string {
   const expires = new Date(now.getTime() + 182 * 86_400_000);
   expires.setUTCHours(0, 0, 0, 0);
   return [
-    'Contact: https://github.com/shmuky/RebbeHub/security/advisories/new',
+    'Contact: https://github.com/ChassidusHub/ChassidusHub/security/advisories/new',
     `Expires: ${expires.toISOString()}`,
-    'Policy: https://github.com/shmuky/RebbeHub/blob/main/SECURITY.md',
+    'Policy: https://github.com/ChassidusHub/ChassidusHub/blob/main/SECURITY.md',
     'Preferred-Languages: en, he',
     `Canonical: ${base}/.well-known/security.txt`,
     '',

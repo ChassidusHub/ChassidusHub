@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import { base64url } from './auth.js';
 import type { Catalog } from './catalog.js';
 import { emailsOf } from './email.js';
@@ -84,8 +84,8 @@ const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
 
 const WORDS = {
   he: {
-    subject: (n: number) => (n === 1 ? 'RebbeHub: שינוי אחד במה שאתם עוקבים אחריו' : `RebbeHub: ${n} שינויים במה שאתם עוקבים אחריו`),
-    inboxSubject: (n: number) => (n === 1 ? 'RebbeHub: הודעה אחת חדשה' : `RebbeHub: ${n} הודעות חדשות`),
+    subject: (n: number) => (n === 1 ? 'ChassidusHub: שינוי אחד במה שאתם עוקבים אחריו' : `ChassidusHub: ${n} שינויים במה שאתם עוקבים אחריו`),
+    inboxSubject: (n: number) => (n === 1 ? 'ChassidusHub: הודעה אחת חדשה' : `ChassidusHub: ${n} הודעות חדשות`),
     inboxIntro: 'מה שמחכה לכם בתיבת ההודעות:',
     inbox: 'לתיבת ההודעות',
     reasons: {
@@ -105,8 +105,8 @@ const WORDS = {
     stop: 'להפסקת המיילים האלה',
   },
   en: {
-    subject: (n: number) => (n === 1 ? 'RebbeHub: one change in what you follow' : `RebbeHub: ${n} changes in what you follow`),
-    inboxSubject: (n: number) => (n === 1 ? 'RebbeHub: one new notification' : `RebbeHub: ${n} new notifications`),
+    subject: (n: number) => (n === 1 ? 'ChassidusHub: one change in what you follow' : `ChassidusHub: ${n} changes in what you follow`),
+    inboxSubject: (n: number) => (n === 1 ? 'ChassidusHub: one new notification' : `ChassidusHub: ${n} new notifications`),
     inboxIntro: 'Waiting in your inbox:',
     inbox: 'Open your inbox',
     reasons: {
@@ -139,7 +139,7 @@ export function inboxHref(line: Pick<InboxLine, 'subject'>): string {
 /** An inbox line in words: who, what they did, and to which conversation. */
 export function inboxText(line: InboxLine, lang: 'he' | 'en'): string {
   const w = WORDS[lang];
-  const who = line.actorUsername ? `@${line.actorUsername}` : (line.actorName ?? 'RebbeHub');
+  const who = line.actorUsername ? `@${line.actorUsername}` : (line.actorName ?? 'ChassidusHub');
   const what = line.subject.number !== null ? `#${line.subject.number}${line.subject.title ? ` ${line.subject.title}` : ''}` : (line.subject.title ?? line.subject.path ?? line.subject.id);
   const times = line.count > 1 ? ` (×${line.count})` : '';
   return line.reason === 'followed' ? `${w.reasons.followed} ${what}${times}` : `${who} ${w.reasons[line.reason] ?? w.reasons.state} ${what}${times}`;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { machineRequests, registerFile, requestMachineWork } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { machineRequests, registerFile, requestMachineWork } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { readScans, type OcrEngine } from '../src/ocr.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
@@ -32,12 +32,12 @@ describe('the machine queue in the jobs', () => {
   it('reads what was asked for, and only that when told to', async () => {
     const { catalog, ids } = await scans(3);
     await requestMachineWork(catalog, 'chaim', { kind: 'ocr', item: ids[1]! });
-    const done = await readScans(catalog, { approveAs: 'shmuly', engine: engine(), requestedOnly: true, fetchFile: async () => new Uint8Array([1]) });
+    const done = await readScans(catalog, { approveAs: 'steward', engine: engine(), requestedOnly: true, fetchFile: async () => new Uint8Array([1]) });
     expect(done.map((d) => d.scan)).toEqual([ids[1]]);
     expect((await machineRequests(catalog, { item: ids[1]! }))[0]).toMatchObject({ status: 'done' });
 
     // Nothing asked: the nightly run goes on to the newest scans not read yet.
-    const nightly = await readScans(catalog, { approveAs: 'shmuly', engine: engine(), limit: 5, fetchFile: async () => new Uint8Array([1]) });
+    const nightly = await readScans(catalog, { approveAs: 'steward', engine: engine(), limit: 5, fetchFile: async () => new Uint8Array([1]) });
     expect(nightly.map((d) => d.scan).sort()).toEqual([ids[0], ids[2]].sort());
   });
 
@@ -46,7 +46,7 @@ describe('the machine queue in the jobs', () => {
     await requestMachineWork(catalog, 'chaim', { kind: 'ocr', item: ids[0]! });
     let calls = 0;
     const flaky: OcrEngine = { ...engine(), pages: async () => (calls++ === 0 ? Promise.reject(new Error('cannot render')) : ['p1.png']) };
-    await expect(readScans(catalog, { approveAs: 'shmuly', engine: flaky, limit: 5, fetchFile: async () => new Uint8Array([1]) })).rejects.toThrow(/1 failed: .*cannot render/);
+    await expect(readScans(catalog, { approveAs: 'steward', engine: flaky, limit: 5, fetchFile: async () => new Uint8Array([1]) })).rejects.toThrow(/1 failed: .*cannot render/);
     expect((await machineRequests(catalog, { item: ids[0]! }))[0]).toMatchObject({ status: 'failed', note: 'cannot render' });
     const text = await catalog.list({ type: 'text-layer' });
     expect(text.some((l) => (l.data as { scan: string }).scan === ids[1])).toBe(true);
@@ -57,14 +57,14 @@ describe('the machine queue in the jobs', () => {
     const fetchFile = async () => new Uint8Array([1]);
     const failing: OcrEngine = { ...engine(), pages: async () => Promise.reject(new Error('cannot render')) };
     // The newest scan cannot be read: the sweep keeps that, as the system's own request.
-    await expect(readScans(catalog, { approveAs: 'shmuly', engine: failing, limit: 1, fetchFile })).rejects.toThrow(/cannot render/);
+    await expect(readScans(catalog, { approveAs: 'steward', engine: failing, limit: 1, fetchFile })).rejects.toThrow(/cannot render/);
     expect((await machineRequests(catalog, { item: ids[1]! }))[0]).toMatchObject({ status: 'failed', requestedBy: 'system', note: 'cannot render' });
     // The next night goes on to the one after it, instead of failing on the same scan again.
-    const next = await readScans(catalog, { approveAs: 'shmuly', engine: engine(), limit: 1, fetchFile });
+    const next = await readScans(catalog, { approveAs: 'steward', engine: engine(), limit: 1, fetchFile });
     expect(next.map((d) => d.scan)).toEqual([ids[0]]);
     // Asked for by name, it is tried again at once.
     await requestMachineWork(catalog, 'chaim', { kind: 'ocr', item: ids[1]! });
-    const asked = await readScans(catalog, { approveAs: 'shmuly', engine: engine(), requestedOnly: true, fetchFile });
+    const asked = await readScans(catalog, { approveAs: 'steward', engine: engine(), requestedOnly: true, fetchFile });
     expect(asked.map((d) => d.scan)).toEqual([ids[1]]);
   });
 });

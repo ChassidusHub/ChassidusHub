@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import type { NotificationReason, SubjectKind } from './threads.js';
 
 /**

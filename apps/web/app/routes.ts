@@ -64,7 +64,7 @@ export default [
   route('projects', 'routes/projects.tsx'),
   // How to keep a full copy of the catalog: the git mirror, every edition's dumps with their checksums.
   route('mirrors', 'routes/mirrors.tsx'),
-  // RebbeHub's own models (OCR, the Miram detector, Whisper) and their scores; the models themselves are not released.
+  // ChassidusHub's own models (OCR, the Miram detector, Whisper) and their scores; the models themselves are not released.
   route('models', 'routes/models.tsx'),
   route('projects/:slug', 'routes/project.tsx'),
   route('signin', 'routes/signin.tsx'),
@@ -82,7 +82,7 @@ export default [
   route('inbox', 'routes/inbox.tsx'),
   // Your settings, a page for each part (profile, signing in, email, following, AI apps, developers), as GitHub's are.
   route('account/:section?', 'routes/account.tsx'),
-  // Connecting Claude, ChatGPT or another AI app to RebbeHub, for anyone: copy one address, say yes.
+  // Connecting Claude, ChatGPT or another AI app to ChassidusHub, for anyone: copy one address, say yes.
   route('connect', 'routes/connect.tsx'),
   // For developers and AI agents: the docs, the interactive API reference, and llms.txt.
   route('developers/reference', 'routes/developers-reference.tsx'),
@@ -96,7 +96,7 @@ export default [
   route('sitemap.xml', 'routes/sitemap-index.ts'),
   // Sitemaps: the site's own pages, and each kind of item a page at a time (`/sitemaps/unit-3.xml`).
   route('sitemaps/:name.xml', 'routes/sitemap.ts'),
-  // A page to show the people Shmuly meets, at a secret address of its own, open while the rest is private (lib/showcase.ts):
+  // A page to show the people the steward meets, at a secret address of its own, open while the rest is private (lib/showcase.ts):
   // made at /showcase, seen at /show/<token>, its transcripts read through it. Its files are passed on by server/worker.ts.
   route('showcase', 'routes/showcase.tsx'),
   route('show/:token', 'routes/show.tsx'),

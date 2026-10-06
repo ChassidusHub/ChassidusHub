@@ -1,5 +1,5 @@
-import { one } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 import type { Json } from './merge.js';
 import { embeddingCoverage } from './semantic.js';
@@ -9,7 +9,7 @@ import { embeddingCoverage } from './semantic.js';
  * coverage per set and year, dead links, unchecked pages, unsynced
  * recordings, oldest open suggestions"). Counts from main as it is now,
  * for the keepers and anyone who wants to know where help is needed.
- * Dead links come from the last run of `rebbehub check-links`.
+ * Dead links come from the last run of `chassidushub check-links`.
  */
 
 export interface CatalogHealth {

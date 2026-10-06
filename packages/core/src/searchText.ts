@@ -1,4 +1,4 @@
-import { describeDateKey, normalizeSearchText, parseDateKey } from '@rebbehub/hebrew';
+import { describeDateKey, normalizeSearchText, parseDateKey } from '@chassidushub/hebrew';
 
 const TEXT_FIELDS = new Set(['he', 'en', 'yi', 'aliases', 'content', 'body', 'text', 'occasion', 'families', 'publisher', 'volume', 'placePrinted', 'label', 'slug']);
 const DATE_FIELDS = new Set(['date', 'dateEnd', 'born', 'passed']);

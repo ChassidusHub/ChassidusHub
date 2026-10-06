@@ -1,10 +1,10 @@
-import type { EntityId } from '@rebbehub/model';
+import type { EntityId } from '@chassidushub/model';
 import { withCatalog, type Context } from './commands.js';
 import { readScans } from './ocr.js';
 
-/** `rebbehub ocr`: machine OCR of the served scans that have none yet; see ocr.ts. */
+/** `chassidushub ocr`: machine OCR of the served scans that have none yet; see ocr.ts. */
 export async function ocrCommand(ctx: Context, input: { approveAs: string; scan?: string; limit?: number; files?: string; reread?: boolean; requestedOnly?: boolean }): Promise<void> {
-  const base = (input.files ?? 'https://api.rebbehub.org').replace(/\/$/, '');
+  const base = (input.files ?? 'https://api.chassidushub.org').replace(/\/$/, '');
   await withCatalog(ctx, async (catalog) => {
     const done = await readScans(catalog, {
       approveAs: input.approveAs,

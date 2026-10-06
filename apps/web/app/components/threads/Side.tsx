@@ -44,7 +44,7 @@ export function useReadOnOpen(kind: 'changeset' | 'report', id: number | null, s
   useEffect(() => {
     if (!signedIn || id === null) return;
     void threads('inbox/read', { body: { subject: { kind, id: String(id) } } })
-      .then(() => window.dispatchEvent(new Event('rebbehub:inbox')))
+      .then(() => window.dispatchEvent(new Event('chassidushub:inbox')))
       .catch(() => undefined);
   }, [kind, id, signedIn]);
 }

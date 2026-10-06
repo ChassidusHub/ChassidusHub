@@ -1,4 +1,4 @@
-import type { EntityId } from "@rebbehub/model";
+import type { EntityId } from "@chassidushub/model";
 import type { Catalog } from "./catalog.js";
 import type { Json } from "./merge.js";
 

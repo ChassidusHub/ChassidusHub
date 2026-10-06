@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import type { EntityId, PageText } from '@rebbehub/model';
+import type { EntityId, PageText } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -15,7 +15,7 @@ import { createSiteHandler } from '../server/handler.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 let handle: (request: Request) => Promise<Response>;
 const ids: Record<string, EntityId> = {};
 
@@ -70,7 +70,7 @@ const LIBRARY: PageText = {
   ],
 };
 
-/** A sicha as the Likkutei Sichos OCR writes it (RebbeHub-OCR assemble.py, readupload.py), every piece machine-read. */
+/** A sicha as the Likkutei Sichos OCR writes it (ChassidusHub-OCR assemble.py, readupload.py), every piece machine-read. */
 const BY = { by: 'ocr:test' };
 const OCR: PageText = {
   profile: 'sichos-kodesh',
@@ -108,7 +108,7 @@ beforeAll(async () => {
   if (!existsSync(`${webRoot}/build/server/index.js`)) execFileSync('npx', ['react-router', 'build'], { cwd: webRoot, stdio: 'ignore' });
   const build = (await import(`${webRoot}/build/server/index.js`)) as ServerBuild;
   const { catalog, set } = await freshCatalog();
-  const author = await add(catalog, 'shmuly', 'shmuly', 'author', { name: { he: 'הרבי' }, kind: 'rebbe', sets: [set] });
+  const author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'הרבי' }, kind: 'rebbe', sets: [set] });
   const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר לדוגמה', en: 'Sample' }, slug: 'sample', authors: [author], genre: 'chassidus', levels: ['chapter'], sets: [set] }, '/sample');
   ids.unit = await add(
     catalog,

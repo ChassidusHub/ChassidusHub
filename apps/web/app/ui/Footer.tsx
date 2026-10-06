@@ -17,7 +17,7 @@ const F = {
 } as const;
 
 /**
- * The foot of every page: what RebbeHub is, and its pages in three short
+ * The foot of every page: what ChassidusHub is, and its pages in three short
  * columns (reading, taking part, the site itself), as a site's foot lists
  * them; under them one quiet line with the source code. On a phone the
  * columns sit two to a row.
@@ -80,8 +80,8 @@ export function Footer({ lang }: { lang: Lang }) {
       </div>
       <div className="wrap">
         <div className="foot-base">
-          <span>RebbeHub</span>
-          <a href="https://github.com/shmuky/RebbeHub">
+          <span>ChassidusHub</span>
+          <a href="https://github.com/ChassidusHub/ChassidusHub">
             <Icon name="code" size={14} />
             {tu(lang, 'code')}
           </a>

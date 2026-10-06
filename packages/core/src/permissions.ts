@@ -1,7 +1,7 @@
-import type { EntityType, SetPolicy } from '@rebbehub/model';
+import type { EntityType, SetPolicy } from '@chassidushub/model';
 
 /**
- * Who may do what (docs/plans/rebbehub.md, section 7, "Trust levels").
+ * Who may do what (docs/plans/chassidushub.md, section 7, "Trust levels").
  *
  *   Visitor      read, download, report            (no account)
  *   Contributor  suggest, upload, fix lines         (signed in)

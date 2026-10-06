@@ -1,6 +1,6 @@
 # The public site on Cloudflare Workers, built and deployed by Cloudflare
 # (Workers Builds) on every push to main; see docs/deploy.md.
-name = "rebbehub-web"
+name = "chassidushub-web"
 main = "server/worker.ts"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
@@ -15,7 +15,7 @@ enabled = true
 [placement]
 mode = "smart"
 
-# build/client: the site's built files. While RebbeHub is private the Worker runs first, so its lock covers them too
+# build/client: the site's built files. While ChassidusHub is private the Worker runs first, so its lock covers them too
 # (server/lock.ts), and hands them out through the ASSETS binding.
 [assets]
 directory = "build/client"
@@ -27,9 +27,9 @@ run_worker_first = true
 # everything signed in.
 [[services]]
 binding = "API"
-service = "rebbehub-api"
+service = "chassidushub-api"
 
-# Sichos-Kodesh's media proxy (JEM's audio): its public address is off while RebbeHub is private, so the site plays
+# Sichos-Kodesh's media proxy (JEM's audio): its public address is off while ChassidusHub is private, so the site plays
 # those recordings through /_/media/…, behind its lock (server/worker.ts).
 [[services]]
 binding = "MEDIA"
@@ -46,7 +46,7 @@ id = "a06ec525cf9442f484f60ce9d38f0d39"
 # Sichos-Kodesh's published archive a sefer's text is first copied from: the API Worker's, read here too.
 [[r2_buckets]]
 binding = "FILES_PUBLIC"
-bucket_name = "rebbehub-public"
+bucket_name = "chassidushub-public"
 
 [[r2_buckets]]
 binding = "SK_ARCHIVE"
@@ -96,9 +96,9 @@ type = "worker"
 enabled = true
 
 [vars]
-API_URL = "https://api.rebbehub.org"
+API_URL = "https://api.chassidushub.org"
 # The site's public address, for canonical links and sitemaps.
-SITE_URL = "https://rebbehub.org"
+SITE_URL = "https://chassidushub.org"
 # The password lock (server/lock.ts, services/api/src/lock.ts), open since 5 October 2026: empty is open. To lock
-# again, put the sha256 of the password's key here and on rebbehub-api (docs/accounts.md).
+# again, put the sha256 of the password's key here and on chassidushub-api (docs/accounts.md).
 LOCK_KEY_HASH = ""

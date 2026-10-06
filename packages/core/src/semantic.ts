@@ -1,5 +1,5 @@
-import { one, type Db } from '@rebbehub/db';
-import { pageTextPlain, type EntityId, type EntityType } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import { pageTextPlain, type EntityId, type EntityType } from '@chassidushub/model';
 import type { Catalog, EntityView, RevisionRow } from './catalog.js';
 import { ExportGate } from './gate.js';
 import { momentOf, type Moment } from './moments.js';

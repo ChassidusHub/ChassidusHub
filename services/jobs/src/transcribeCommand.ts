@@ -1,11 +1,11 @@
-import type { EntityId } from '@rebbehub/model';
+import type { EntityId } from '@chassidushub/model';
 import { withCatalog, type Context } from './commands.js';
 import { alignRecordings, localWhisper, transcribeRecordings, workersAiWhisper, type Transcriber } from './transcribe.js';
 import { restoreWordTimes } from './restoreWordTimes.js';
 import { mendTranscriptSplits } from './wordSplits.js';
 
 /**
- * `rebbehub transcribe`: machine transcripts, with their sync, of
+ * `chassidushub transcribe`: machine transcripts, with their sync, of
  * recordings that have none (see transcribe.ts). Whisper runs on
  * Cloudflare Workers AI: CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN (a
  * token allowed only Workers AI), or with `--engine local` on this machine
@@ -16,7 +16,7 @@ export async function transcribeCommand(ctx: Context, input: { approveAs: string
   const shard = input.shard?.split('/').map(Number) as [number, number] | undefined;
   if (shard && !(shard.length === 2 && Number.isInteger(shard[0]) && shard[0]! >= 0 && shard[0]! < shard[1]!)) throw new Error('--shard is i/n, as 0/4');
   const transcriber = engine(input.engine);
-  const base = (input.files ?? 'https://api.rebbehub.org').replace(/\/$/, '');
+  const base = (input.files ?? 'https://api.chassidushub.org').replace(/\/$/, '');
   await withCatalog(ctx, async (catalog) => {
     const done = await transcribeRecordings(catalog, {
       approveAs: input.approveAs,
@@ -34,13 +34,13 @@ export async function transcribeCommand(ctx: Context, input: { approveAs: string
 }
 
 /**
- * `rebbehub align`: word timings for transcripts that have none (people's
+ * `chassidushub align`: word timings for transcripts that have none (people's
  * corrections included), and hanachos synced paragraph by paragraph (see
  * alignRecordings). The same engines as `transcribe`.
  */
 export async function alignCommand(ctx: Context, input: { approveAs: string; recording?: string; limit?: number; linked?: boolean; files?: string; engine?: string }): Promise<void> {
   const transcriber = engine(input.engine);
-  const base = (input.files ?? 'https://api.rebbehub.org').replace(/\/$/, '');
+  const base = (input.files ?? 'https://api.chassidushub.org').replace(/\/$/, '');
   await withCatalog(ctx, async (catalog) => {
     const done = await alignRecordings(catalog, {
       approveAs: input.approveAs,
@@ -56,7 +56,7 @@ export async function alignCommand(ctx: Context, input: { approveAs: string; rec
 }
 
 /**
- * `rebbehub mend-splits`: words that machine transcripts made before the
+ * `chassidushub mend-splits`: words that machine transcripts made before the
  * fix cut in two between paragraphs ("... פון דעם י" | "וד, און ..."),
  * joined again, one suggestion by the transcription bot per recording (see
  * wordSplits.ts). Paragraphs a person checked or fixed are left as they are.
@@ -76,7 +76,7 @@ export async function mendSplitsCommand(ctx: Context, input: { approveAs?: strin
 }
 
 /**
- * `rebbehub restore-word-times`: word timings back for paragraphs fixed
+ * `chassidushub restore-word-times`: word timings back for paragraphs fixed
  * before fixes kept them, from each span's history (see
  * restoreWordTimes.ts). Reads no audio.
  */

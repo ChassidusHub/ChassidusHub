@@ -1,5 +1,5 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
-import { readerFor, type ReadsEnv } from '@rebbehub/api';
+import { readerFor, type ReadsEnv } from '@chassidushub/api';
 import type { ServerBuild } from 'react-router';
 import { crawlBudget, crawlLater, edgeCacheable, forEdge } from './cachePolicy.js';
 import { createSiteHandler } from './handler.js';
@@ -12,7 +12,7 @@ import * as build from '../build/server/index.js';
  * The site on Cloudflare Workers. Static assets (build/client) are served
  * by the Workers assets binding before this runs. A page's reads of the
  * API are answered in this Worker, by the API itself over one connection
- * to Postgres the page opens and closes (`readerFor` in @rebbehub/api:
+ * to Postgres the page opens and closes (`readerFor` in @chassidushub/api:
  * the HYPERDRIVE and R2 bindings in wrangler.toml, the same as the API
  * Worker's); what the page cannot answer itself, and everything signed
  * in, goes through the API service binding when there is one, else over
@@ -33,7 +33,7 @@ import * as build from '../build/server/index.js';
 interface Env extends ReadsEnv, DoorEnv {
   API_URL: string;
   SITE_URL: string;
-  /** Sichos-Kodesh's media proxy (JEM's audio), reached only from here while RebbeHub is private (wrangler.toml). */
+  /** Sichos-Kodesh's media proxy (JEM's audio), reached only from here while ChassidusHub is private (wrangler.toml). */
   MEDIA?: { fetch(request: Request): Promise<Response> };
   /** The site's built files (build/client); the Worker runs first, so the lock covers them too (wrangler.toml). */
   ASSETS?: { fetch(request: Request): Promise<Response> };
@@ -132,7 +132,7 @@ export default {
     // A showcase's guest is let in to that page alone, before the lock (showcase.ts).
     const guest = await asGuest(request, env, ctx);
     if (guest) return guest;
-    // While RebbeHub is private (lock.ts), the door comes first, for the built files too, and nothing is served from the edge cache.
+    // While ChassidusHub is private (lock.ts), the door comes first, for the built files too, and nothing is served from the edge cache.
     let key: string | undefined;
     const shut = await door(request, env, (opened) => (key = opened));
     if (shut) return shut;

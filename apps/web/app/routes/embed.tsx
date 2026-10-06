@@ -1,5 +1,5 @@
 import { data } from 'react-router';
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import type { Route } from './+types/embed';
 import { siteOf } from '../lib/context.server.js';
 import { dateLabel } from '../lib/dates.js';
@@ -16,10 +16,10 @@ import { playable } from '../lib/media.js';
 /**
  * An item as other sites embed it (the plan, section 12, phase 6:
  * "embeds"): its name, what it is, a farbrengen's recordings to play in
- * place, and a link to it on RebbeHub. No menus, no sign-in; the only page
+ * place, and a link to it on ChassidusHub. No menus, no sign-in; the only page
  * other sites may frame.
  *
- *   <iframe src="https://rebbehub.org/embed/rh-…" width="100%" height="320"></iframe>
+ *   <iframe src="https://chassidushub.org/embed/rh-…" width="100%" height="320"></iframe>
  */
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { api, siteUrl } = siteOf(context);
@@ -37,7 +37,7 @@ export function headers() {
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [];
-  return [{ title: `${labelOf(loaderData.entity, loaderData.lang)} · RebbeHub` }, { name: 'robots', content: 'noindex' }];
+  return [{ title: `${labelOf(loaderData.entity, loaderData.lang)} · ChassidusHub` }, { name: 'robots', content: 'noindex' }];
 }
 
 export default function Embed({ loaderData }: Route.ComponentProps) {
@@ -72,7 +72,7 @@ export default function Embed({ loaderData }: Route.ComponentProps) {
       <p className="embed-foot">
         <Logo size={16} name={false} />
         <a href={link} target="_blank" rel="noreferrer">
-          {t(lang, 'onRebbeHub')}
+          {t(lang, 'onChassidusHub')}
         </a>
       </p>
     </article>

@@ -4,10 +4,10 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { recordAudioFingerprint, recordDerivation, recordPdfPages, similarFiles, type Catalog, type PageRecord } from '@rebbehub/core';
-import type { Db } from '@rebbehub/db';
-import { AUDIO_FINGERPRINT_ENCODER, AUDIO_RATE, PAGE_HASH_ENCODER, audioFingerprint, pageHash, type EntityId } from '@rebbehub/model';
-import { PAGE_IMAGES_ENCODER, renderPageImages, renderPages, type PageImage } from '@rebbehub/pdf-fix';
+import { recordAudioFingerprint, recordDerivation, recordPdfPages, similarFiles, type Catalog, type PageRecord } from '@chassidushub/core';
+import type { Db } from '@chassidushub/db';
+import { AUDIO_FINGERPRINT_ENCODER, AUDIO_RATE, PAGE_HASH_ENCODER, audioFingerprint, pageHash, type EntityId } from '@chassidushub/model';
+import { PAGE_IMAGES_ENCODER, renderPageImages, renderPages, type PageImage } from '@chassidushub/pdf-fix';
 import type { ObjectStore } from './readingCopies.js';
 
 /**
@@ -139,13 +139,13 @@ export function decodeWav(bytes: Uint8Array): { samples: Float32Array; rate: num
   return null;
 }
 
-/** Any audio RebbeHub takes, decoded by ffmpeg (on the jobs' machine, never in the Worker) to mono at the fingerprint's rate. */
+/** Any audio ChassidusHub takes, decoded by ffmpeg (on the jobs' machine, never in the Worker) to mono at the fingerprint's rate. */
 export const ffmpegDecoder: AudioDecoder = async (bytes, mime) => {
   if (mime === 'audio/wav' || mime === 'audio/x-wav') {
     const wav = decodeWav(bytes);
     if (wav) return wav;
   }
-  const dir = await mkdtemp(join(tmpdir(), 'rebbehub-audio-'));
+  const dir = await mkdtemp(join(tmpdir(), 'chassidushub-audio-'));
   try {
     const file = join(dir, 'in');
     await writeFile(file, bytes);

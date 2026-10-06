@@ -1,14 +1,14 @@
 {
-  "name": "rebbehub",
+  "name": "chassidushub",
   "private": true,
-  "description": "RebbeHub: the open, community-edited index of Chabad Torah and media.",
+  "description": "ChassidusHub: the open, community-edited index of Chabad Torah and media.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shmuky/RebbeHub.git"
+    "url": "git+https://github.com/ChassidusHub/ChassidusHub.git"
   },
-  "homepage": "https://rebbehub.org",
+  "homepage": "https://chassidushub.org",
   "bugs": {
-    "url": "https://github.com/shmuky/RebbeHub/issues"
+    "url": "https://github.com/ChassidusHub/ChassidusHub/issues"
   },
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -22,16 +22,16 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && npm run typecheck -w @rebbehub/web",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && npm run typecheck -w @chassidushub/web",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run build:web && npm test && npm run catalog:check",
-    "catalog:check": "tsx services/jobs/src/bin/rebbehub.ts schema-check",
-    "db:migrate": "tsx services/jobs/src/bin/rebbehub.ts migrate",
+    "catalog:check": "tsx services/jobs/src/bin/chassidushub.ts schema-check",
+    "db:migrate": "tsx services/jobs/src/bin/chassidushub.ts migrate",
     "dev:api": "tsx services/api/src/node.ts",
-    "rebbehub": "tsx services/jobs/src/bin/rebbehub.ts",
-    "dev:web": "npm run dev -w @rebbehub/web",
-    "build:web": "npm run build -w @rebbehub/web",
+    "chassidushub": "tsx services/jobs/src/bin/chassidushub.ts",
+    "dev:web": "npm run dev -w @chassidushub/web",
+    "build:web": "npm run build -w @chassidushub/web",
     "cloudflare:setup": "scripts/cloudflare-setup.sh"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 import { Maximize2, Minimize2, Pause, PenLine, Play, SkipBack, SkipForward, Undo2, LocateFixed, Loader2 } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { unclearRanges } from '@rebbehub/model';
+import { unclearRanges } from '@chassidushub/model';
 import { t, type Lang } from '../lib/i18n.js';
 import { clockOf, tn } from '../lib/i18nNetwork.js';
 import { href } from '../lib/links.js';
@@ -18,7 +18,7 @@ import { TranscriptEditor } from './TranscriptEditor.js';
  * plan: "the player highlights the words as they are spoken"). The
  * paragraph being heard is marked and kept in view, and within it the word
  * being said; tapping a paragraph plays from there. The sync is the
- * model's and listeners do not move it here: Shmuly had the "Timing"
+ * model's and listeners do not move it here: the steward had the "Timing"
  * button taken out, as it is already synced well. Paragraphs and sync the
  * machine made and nobody checked are marked as such; a signed-in listener
  * fixes a paragraph's words as they hear them. (A hanacha synced to the
@@ -33,7 +33,7 @@ import { TranscriptEditor } from './TranscriptEditor.js';
  * recording plays. The words to read and check have a tab of their own
  * on the page (`?tab=text`, and `?review=1` as older links say): one
  * view, the same for everyone, with the tools to fix and check for those
- * signed in (Shmuly: one editor, not two modes; editing on its own tab).
+ * signed in (The steward: one editor, not two modes; editing on its own tab).
  * Edit on the player goes there, so a listener is not asked to judge
  * every line.
  */

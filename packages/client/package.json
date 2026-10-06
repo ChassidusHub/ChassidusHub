@@ -1,20 +1,20 @@
 {
-  "name": "@rebbehub/client",
+  "name": "@chassidushub/client",
   "version": "1.0.0",
-  "description": "A small typed TypeScript client for the RebbeHub API, generated from its OpenAPI document: search, items, texts, suggestions, with API tokens and cursor paging.",
+  "description": "A small typed TypeScript client for the ChassidusHub API, generated from its OpenAPI document: search, items, texts, suggestions, with API tokens and cursor paging.",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "homepage": "https://rebbehub.org/developers/client",
+  "homepage": "https://chassidushub.org/developers/client",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shmuky/RebbeHub.git",
+    "url": "git+https://github.com/ChassidusHub/ChassidusHub.git",
     "directory": "packages/client"
   },
   "bugs": {
-    "url": "https://github.com/shmuky/RebbeHub/issues"
+    "url": "https://github.com/ChassidusHub/ChassidusHub/issues"
   },
   "keywords": [
-    "rebbehub",
+    "chassidushub",
     "chabad",
     "torah",
     "api",

@@ -29,7 +29,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [];
   const { lang, siteUrl } = loaderData;
-  return pageMeta({ title: `${words(lang).reference} · ${words(lang).developers}`, description: 'Every route of the RebbeHub API, with examples in curl and TypeScript, tried from the page.', path: '/developers/reference', lang, siteUrl });
+  return pageMeta({ title: `${words(lang).reference} · ${words(lang).developers}`, description: 'Every route of the ChassidusHub API, with examples in curl and TypeScript, tried from the page.', path: '/developers/reference', lang, siteUrl });
 }
 
 function schemaText(schema: unknown): string {
@@ -225,7 +225,7 @@ export default function Reference({ loaderData }: Route.ComponentProps) {
   const ops = operationsOf(doc);
   const tags = (doc.tags ?? []).filter((t) => ops.some((o) => o.tag === t.name));
   const base = apiBase.replace(/\/+$/, '');
-  const shownBase = /^https?:\/\//.test(base) ? base : 'https://api.rebbehub.org';
+  const shownBase = /^https?:\/\//.test(base) ? base : 'https://api.chassidushub.org';
 
   const toc = (
     <nav className="dv-toc-in" aria-label="Groups">

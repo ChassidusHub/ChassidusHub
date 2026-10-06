@@ -1,4 +1,4 @@
-import type { TextLine } from '@rebbehub/model';
+import type { TextLine } from '@chassidushub/model';
 
 /**
  * OCR people bring (the plan, section 7: "anyone can also upload their own

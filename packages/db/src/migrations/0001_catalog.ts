@@ -1,5 +1,5 @@
 /**
- * The versioned catalog (docs/plans/rebbehub.md, section 6).
+ * The versioned catalog (docs/plans/chassidushub.md, section 6).
  *
  * Nothing is updated in place except pointers: an entity's `main_rev`, a
  * changeset's status, a project's overlay. Every version of every item is
@@ -285,5 +285,5 @@ CREATE TABLE path_redirect (
 );
 
 -- The system account that seeds the schema registry, and the author of machine merges.
-INSERT INTO account (id, display_name, is_steward) VALUES ('system', 'RebbeHub', TRUE);
+INSERT INTO account (id, display_name, is_steward) VALUES ('system', 'ChassidusHub', TRUE);
 `;

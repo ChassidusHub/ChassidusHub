@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Catalog } from '@rebbehub/core';
+import type { Catalog } from '@chassidushub/core';
 import {
   archiveImporter,
   archiveTarget,
@@ -27,7 +27,7 @@ import {
   type HebrewBooksShelf,
   type Importer,
   type SichosKodeshWorksInput,
-} from '@rebbehub/importers';
+} from '@chassidushub/importers';
 import { freshCatalog } from '../../core/tests/helpers.js';
 
 // Every fixture here is made up for the test: no text, title list or recording of any source is in the repository.
@@ -36,7 +36,7 @@ let catalog: Catalog;
 let dir: string;
 beforeEach(async () => {
   ({ catalog } = await freshCatalog());
-  dir = mkdtempSync(join(tmpdir(), 'rebbehub-importers-'));
+  dir = mkdtempSync(join(tmpdir(), 'chassidushub-importers-'));
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -64,7 +64,7 @@ const works = (): SichosKodeshWorksInput => ({
   ],
 });
 
-const run = (importer: Importer) => runImport(catalog, importer, { approveAs: 'shmuly' });
+const run = (importer: Importer) => runImport(catalog, importer, { approveAs: 'steward' });
 
 describe('patches on items another importer made', () => {
   it('puts a letter\'s date on the works importer\'s letter, keeps a person\'s fix, and skips what is not there yet', async () => {
@@ -92,7 +92,7 @@ describe('patches on items another importer made', () => {
     const fix = await catalog.createChangeset('mendy', { title: 'The date is the 16th' });
     await catalog.putRevision(fix.id, 'mendy', { id: letter!.id, type: 'unit', data: { ...(letter!.data as object), date: '5715-05-16' }, path: letter!.path! });
     await catalog.submit(fix.id, 'mendy');
-    await catalog.merge(fix.id, 'shmuly');
+    await catalog.merge(fix.id, 'steward');
     expect(await run(igrosImporter(letters))).toMatchObject({ updated: 0, unchanged: 2 });
     expect((await catalog.get(letter!.id))?.data).toMatchObject({ date: '5715-05-16' });
   });

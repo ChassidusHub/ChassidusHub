@@ -18,11 +18,11 @@ let handle: (request: Request) => Promise<Response>;
 beforeAll(async () => {
   if (!existsSync(`${webRoot}/build/server/index.js`)) execFileSync('npx', ['react-router', 'build'], { cwd: webRoot, stdio: 'ignore' });
   const build = (await import(`${webRoot}/build/server/index.js`)) as ServerBuild;
-  handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: 'https://rebbehub.test', fetch: () => Promise.resolve(new Response('{}', { status: 404 })) });
+  handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: 'https://chassidushub.test', fetch: () => Promise.resolve(new Response('{}', { status: 404 })) });
 }, 120_000);
 
 const get = async (path: string) => {
-  const response = await handle(new Request(`https://rebbehub.test${path}`));
+  const response = await handle(new Request(`https://chassidushub.test${path}`));
   return { status: response.status, html: await response.text() };
 };
 

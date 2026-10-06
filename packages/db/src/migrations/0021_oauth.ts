@@ -1,7 +1,7 @@
 /**
  * Connecting an app with OAuth (docs/developers/auth.md): how Claude and
  * other agents act as a person without the person copying a token by
- * hand. The app sends the person to RebbeHub; they see which app it is and
+ * hand. The app sends the person to ChassidusHub; they see which app it is and
  * where it will send them back, and say yes or no on the site's own page;
  * the app gets tokens that act as them, under the same review rules as a
  * personal API token (migration 0018).
@@ -28,7 +28,7 @@
  * (packages/core/src/via.ts): `via` on each suggestion, comment, issue and
  * review says which token or connected app sent it. The person is still
  * its author; `via` says it was not their own hands, so the site shows it
- * as the agent's, "Claude · for @shmuly". Null for what a person did on
+ * as the agent's, "Claude · for @steward". Null for what a person did on
  * the site's own pages, and for the importers' bots.
  *
  *   via  { "kind": "token" | "oauth", "id": "tok-…" | "oac-…", "name": …, "client"?: … }

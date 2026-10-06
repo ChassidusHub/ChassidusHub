@@ -1,4 +1,4 @@
-import { hasUnclear, type EntityId } from '@rebbehub/model';
+import { hasUnclear, type EntityId } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 
 /**
@@ -51,7 +51,7 @@ export const HELD_OUT_AUDIO: readonly string[] = [
 
 export type ClipQuality = 'gold' | 'silver';
 
-/** One clip, as the training script reads it (clips.jsonl), plus where on RebbeHub it came from. */
+/** One clip, as the training script reads it (clips.jsonl), plus where on ChassidusHub it came from. */
 export interface TrainingClip {
   /** The recording's audio: its JEM file name when JEM's, else its full address. */
   audio: string[];
@@ -170,7 +170,7 @@ export async function trainingClips(catalog: Catalog, options: { since?: string;
   const clips: TrainingClip[] = [];
   const skipped: TrainingSkip[] = [];
   for (const row of await checkedParagraphs(catalog, options.since)) {
-    const audio = audioOf(row, options.filesBaseUrl ?? 'https://api.rebbehub.org');
+    const audio = audioOf(row, options.filesBaseUrl ?? 'https://api.chassidushub.org');
     if (!audio) {
       skipped.push({ segment: row.segment, reason: 'no audio' });
       continue;

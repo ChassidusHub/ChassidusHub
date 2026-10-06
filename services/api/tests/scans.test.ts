@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { getFile, recordDerivation, recordPdfPages, registerFile, teshurosSetId, TESHUROS_SET } from '@rebbehub/core';
-import { PAGE_HASH_ENCODER, type EntityId } from '@rebbehub/model';
+import { getFile, recordDerivation, recordPdfPages, registerFile, teshurosSetId, TESHUROS_SET } from '@chassidushub/core';
+import { PAGE_HASH_ENCODER, type EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { familiesOf, yearFields } from '../src/uploads.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
@@ -42,11 +42,11 @@ beforeEach(async () => {
     pages.push({ page, widthPt: 300, heightPt: 400, hash: hash(page), image: { sha256: image, width: 1200, height: 1600 }, thumb: { sha256: thumb, width: 240, height: 320 } });
   }
   await recordPdfPages(catalog.db, { sha256: pdf, encoder: PAGE_HASH_ENCODER, pageCount: 2, pages });
-  // The Teshuros set, as the rebbehub-sets importer makes it.
-  const cs = await catalog.createChangeset('shmuly', { title: 'Teshuros' });
-  teshuros = await catalog.putRevision(cs.id, 'shmuly', { id: await teshurosSetId(), type: 'set', path: TESHUROS_SET.path, data: { name: TESHUROS_SET.name, slug: 'teshuros', policy: 'moderated', keepers: ['keeper'] } });
-  await catalog.submit(cs.id, 'shmuly');
-  await catalog.merge(cs.id, 'shmuly');
+  // The Teshuros set, as the chassidushub-sets importer makes it.
+  const cs = await catalog.createChangeset('steward', { title: 'Teshuros' });
+  teshuros = await catalog.putRevision(cs.id, 'steward', { id: await teshurosSetId(), type: 'set', path: TESHUROS_SET.path, data: { name: TESHUROS_SET.name, slug: 'teshuros', policy: 'moderated', keepers: ['keeper'] } });
+  await catalog.submit(cs.id, 'steward');
+  await catalog.merge(cs.id, 'steward');
 
   buckets = { public: new Map(), preservation: new Map() };
   const writer = (bucket: Map<string, number>) => ({ put: async (key: string, bytes: ArrayBuffer) => void bucket.set(key, bytes.byteLength) });
@@ -54,7 +54,7 @@ beforeEach(async () => {
     catalog,
     authenticate: (c) => c.req.header('X-Test-Account') ?? null,
     filesBaseUrl: 'https://files.test',
-    siteUrl: 'https://rebbehub.test',
+    siteUrl: 'https://chassidushub.test',
     reportSalt: 'test',
     reportsPerHour: 3,
     uploads: { public: writer(buckets.public), preservation: writer(buckets.preservation), maxBytes: 1000 },
@@ -87,7 +87,7 @@ describe('IIIF and page images', () => {
       viewingDirection: 'right-to-left',
       requiredStatement: { value: { none: ['Kehot'] } },
       rendering: [{ id: `https://files.test/objects/${pdf}`, format: 'application/pdf' }],
-      homepage: [{ id: 'https://rebbehub.test/likkutei-sichos/4/kehot-5742' }],
+      homepage: [{ id: 'https://chassidushub.test/likkutei-sichos/4/kehot-5742' }],
     });
     expect(body.items).toHaveLength(2);
     const [first, second] = body.items;
@@ -111,9 +111,9 @@ describe('IIIF and page images', () => {
   });
 
   it('serves nothing of a scan whose rights keep it private, and follows a takedown', async () => {
-    await catalog.db.query("UPDATE account SET is_steward = TRUE WHERE id = 'shmuly'");
-    const { setRights } = await import('@rebbehub/core');
-    await setRights(catalog.db, 'shmuly', pdf, 'preserved', 'test takedown');
+    await catalog.db.query("UPDATE account SET is_steward = TRUE WHERE id = 'steward'");
+    const { setRights } = await import('@chassidushub/core');
+    await setRights(catalog.db, 'steward', pdf, 'preserved', 'test takedown');
     expect((await get(`/manifests/iiif/${scan}.json`)).status).toBe(404);
     expect((await get(`/v1/scans/${scan}/pages`)).status).toBe(404);
   });

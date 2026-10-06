@@ -1,4 +1,4 @@
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import { useCallback, useEffect, useState } from 'react';
 import { data, Link, redirect } from 'react-router';
 import type { Route } from './+types/issue';

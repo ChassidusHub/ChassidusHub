@@ -1,37 +1,37 @@
 # AI agents
 
-RebbeHub is ready for AI agents two ways: plain text to read
+ChassidusHub is ready for AI agents two ways: plain text to read
 ([`/llms.txt`](/llms.txt), [`/llms-full.txt`](/llms-full.txt)), and an
 MCP server with tools to search, read and suggest.
 
 ## llms.txt
 
-`https://rebbehub.org/llms.txt` says in a page what RebbeHub is and where
+`https://chassidushub.org/llms.txt` says in a page what ChassidusHub is and where
 everything is ([llmstxt.org](https://llmstxt.org)); `/llms-full.txt` is
 every developer page and the list of API routes in one file, to give an
-agent as context. The API has its own short `https://api.rebbehub.org/llms.txt`.
+agent as context. The API has its own short `https://api.chassidushub.org/llms.txt`.
 
 ## The MCP server
 
-The easy way in: [rebbehub.org/connect](/connect) walks anyone through
+The easy way in: [chassidushub.org/connect](/connect) walks anyone through
 adding it to Claude, ChatGPT, Claude Code, Cursor or VS Code (one copied
 address, or one button), and signing in there.
 
 The [Model Context Protocol](https://modelcontextprotocol.io) server
 speaks Streamable HTTP (versions 2024-11-05 to 2025-11-25): POST a
 JSON-RPC message, get JSON back. It keeps no sessions and opens no event
-stream. It has one address, `https://api.rebbehub.org/mcp`:
+stream. It has one address, `https://api.chassidushub.org/mcp`:
 
 - **Reading needs no account.** `search`, `get_item`, `list_children`,
   `get_text`, `get_shaar`, `list_issues`, `list_suggestions` and `get_suggestion` answer anyone.
 - **Writing asks for you when it is needed.** A tool that writes
   (`suggest_fix`, `open_issue`, `ask_machine`…) called without sign-in answers HTTP
-  `401` with `WWW-Authenticate: Bearer resource_metadata="https://api.rebbehub.org/.well-known/oauth-protected-resource/mcp", scope="read write"`,
+  `401` with `WWW-Authenticate: Bearer resource_metadata="https://api.chassidushub.org/.well-known/oauth-protected-resource/mcp", scope="read write"`,
   the MCP authorization spec's step-up, so the client asks you to sign
   in and tries again. Connected for reading only, it answers `403` with
   `error="insufficient_scope"` and the scope it needs. A token that has
   ended or was revoked answers `401` with `error="invalid_token"`.
-- **Sign-in is OAuth 2.1** (you approve the app on rebbehub.org), or a
+- **Sign-in is OAuth 2.1** (you approve the app on chassidushub.org), or a
   personal token sent as `Authorization: Bearer rhp_…`.
 
 | Tool | Does |
@@ -104,8 +104,8 @@ The recommended settings in claude.ai's connector form:
 
 | Field | Choose |
 | --- | --- |
-| Name | RebbeHub |
-| Remote MCP server URL | `https://api.rebbehub.org/mcp` |
+| Name | ChassidusHub |
+| Remote MCP server URL | `https://api.chassidushub.org/mcp` |
 | Authentication | **Sign in when needed** (reading works at once; you sign in the first time Claude suggests a fix). **Sign in now** works too. **No sign-in** reads only. |
 | OAuth client | **Use Claude's published identity (CIMD)**, recommended. **Register automatically (DCR)** works as a fallback. No client id or secret of your own is needed. |
 
@@ -113,13 +113,13 @@ The recommended settings in claude.ai's connector form:
    connector**, with the settings above.
 2. Choose **Add** (and **Connect**, with *Sign in now*; with *Sign in
    when needed*, Claude asks the first time a tool writes).
-3. When asked to sign in, Claude opens rebbehub.org: sign in (with your
+3. When asked to sign in, Claude opens chassidushub.org: sign in (with your
    passkey, Google or an email link) if you are not already, check that
    the app is Claude and that it sends you back to `claude.ai`, and
    choose **Allow**. Untick *Send suggestions as you* to let it only read.
-4. In a chat, turn RebbeHub on from the tools menu. Ask it to find
+4. In a chat, turn ChassidusHub on from the tools menu. Ask it to find
    something, then to suggest a fix; the suggestion appears at
-   `rebbehub.org/review` as Claude's, for you, for a keeper to approve.
+   `chassidushub.org/review` as Claude's, for you, for a keeper to approve.
 
 The connection shows on your [account page](/account) under *Developers*,
 with Claude's name; **Disconnect** there ends it at once. Claude Desktop
@@ -128,12 +128,12 @@ and the mobile apps use the same connectors.
 ### Connecting from Claude Code
 
 ```sh
-claude mcp add --transport http rebbehub https://api.rebbehub.org/mcp
+claude mcp add --transport http chassidushub https://api.chassidushub.org/mcp
 ```
 
 Reading works at once. To write, run `/mcp` in Claude Code, pick
-rebbehub and **Authenticate** (or let it ask when a tool writes): your
-browser opens rebbehub.org to approve it, as above (it comes back to
+chassidushub and **Authenticate** (or let it ask when a tool writes): your
+browser opens chassidushub.org to approve it, as above (it comes back to
 `localhost`, which the page points out). Claude Code keeps and refreshes
 the tokens itself.
 
@@ -142,7 +142,7 @@ OAuth): make one with `write` on the account page, named for the agent,
 and send it as a header:
 
 ```sh
-claude mcp add --transport http rebbehub https://api.rebbehub.org/mcp --header "Authorization: Bearer $REBBEHUB_TOKEN"
+claude mcp add --transport http chassidushub https://api.chassidushub.org/mcp --header "Authorization: Bearer $CHASSIDUSHUB_TOKEN"
 ```
 
 ### Other clients
@@ -157,9 +157,9 @@ no OAuth send a token:
 ```json
 {
   "mcpServers": {
-    "rebbehub": {
+    "chassidushub": {
       "type": "http",
-      "url": "https://api.rebbehub.org/mcp",
+      "url": "https://api.chassidushub.org/mcp",
       "headers": { "Authorization": "Bearer rhp_…" }
     }
   }
@@ -169,7 +169,7 @@ no OAuth send a token:
 ### By hand
 
 ```sh
-curl -s https://api.rebbehub.org/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
+curl -s https://api.chassidushub.org/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search","arguments":{"query":"יו\"ד שבט תשי\"א"}}}'
 ```
 

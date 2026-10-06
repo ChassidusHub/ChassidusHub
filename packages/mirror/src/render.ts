@@ -1,5 +1,5 @@
-import type { EntityView, Json } from '@rebbehub/core';
-import type { AlignmentSpanData, EntityId, SegmentData, TextData } from '@rebbehub/model';
+import type { EntityView, Json } from '@chassidushub/core';
+import type { AlignmentSpanData, EntityId, SegmentData, TextData } from '@chassidushub/model';
 
 /** JSON with keys sorted and two-space indents: the same item always writes the same bytes, so git diffs show only real changes. */
 export function stableJson(value: unknown): string {
@@ -84,7 +84,7 @@ function timestamp(ms: number): string {
  */
 export function renderAlignment(alignment: EntityView, spans: EntityView[], segments: ReadonlyMap<string, EntityView>): string {
   const a = alignment.data as { recording: string; text: string; granularity: string };
-  const lines = ['WEBVTT', '', `NOTE rebbehub alignment=${alignment.id} rev=${alignment.rev} recording=${a.recording} text=${a.text} granularity=${a.granularity}`, ''];
+  const lines = ['WEBVTT', '', `NOTE chassidushub alignment=${alignment.id} rev=${alignment.rev} recording=${a.recording} text=${a.text} granularity=${a.granularity}`, ''];
   for (const span of spans) {
     const s = span.data as unknown as AlignmentSpanData;
     const content = ((segments.get(s.segment)?.data as unknown as SegmentData | undefined)?.content ?? '').replace(/-->/g, '→').replace(/\n+/g, ' ');

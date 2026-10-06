@@ -3,8 +3,8 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import { EMBEDDING_DIMENSIONS, embedItems, registerFile, type Embedder } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { EMBEDDING_DIMENSIONS, embedItems, registerFile, type Embedder } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -16,7 +16,7 @@ import { createSiteHandler } from '../server/handler.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 const ids: Record<string, EntityId> = {};
 let handle: (request: Request) => Promise<Response>;
 let withMeaning: (request: Request) => Promise<Response>;

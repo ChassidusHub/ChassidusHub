@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pageTextPlain, plainPage } from '@rebbehub/model';
+import { pageTextPlain, plainPage } from '@chassidushub/model';
 import {
   EMBEDDING_DIMENSIONS,
   bestLine,
@@ -14,8 +14,8 @@ import {
   searchSimilar,
   snippetOf,
   type Embedder,
-} from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+} from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 /** Plain words as a page's body, as the catalog takes data. */
@@ -46,7 +46,7 @@ describe('citations in text', () => {
 
   it('proposes the links it finds as a suggestion by the bot, once, and each page shows them', async () => {
     const { catalog, set } = await freshCatalog();
-    const author = await add(catalog, 'shmuly', 'shmuly', 'author', { name: { he: 'הרבי' }, kind: 'rebbe', rebbe: 7, sets: [set] });
+    const author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'הרבי' }, kind: 'rebbe', rebbe: 7, sets: [set] });
     const ls = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'לקוטי שיחות' }, slug: 'likkutei-sichos', authors: [author], genre: 'sichos', levels: ['volume', 'sicha'], sets: [set] });
     const volume12 = await add(catalog, 'mendy', 'keeper', 'publication', { kind: 'book-volume', title: { he: 'לקוטי שיחות חלק יב' }, work: ls, volume: 'יב', sets: [set] });
     const event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set));
@@ -151,7 +151,7 @@ describe('search by meaning', () => {
 
   it('embeds what has not been, and finds the nearest, labelled as the machine choosing', async () => {
     const { catalog, set } = await freshCatalog();
-    const author = await add(catalog, 'shmuly', 'shmuly', 'author', { name: { he: 'הרבי' }, kind: 'rebbe', sets: [set] });
+    const author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'הרבי' }, kind: 'rebbe', sets: [set] });
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'שיחות' }, slug: 'sichos', authors: [author], genre: 'sichos', levels: ['sicha'], sets: [set] });
     const unit = (label: string, order: string, body: string) => add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: label }], order, label: { he: label }, body: page(body), sets: [set] });
     const love = await unit('א', 'V', 'אהבת ישראל ואחדות');

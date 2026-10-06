@@ -1,10 +1,10 @@
 import type { Catalog, EntityView } from './catalog.js';
 import { getFile } from './files.js';
 import { withStructuredBody } from './legacyWords.js';
-import { RIGHTS_BY_LICENCE, mayExport, type EntityId, type Licence, type RightsState, type ScanData, type TextData, type TextLayerData } from '@rebbehub/model';
+import { RIGHTS_BY_LICENCE, mayExport, type EntityId, type Licence, type RightsState, type ScanData, type TextData, type TextLayerData } from '@chassidushub/model';
 
 /**
- * What may leave RebbeHub - served by the API or put in the open exports. Catalog facts always do
+ * What may leave ChassidusHub - served by the API or put in the open exports. Catalog facts always do
  * (CC0). Words do when their rights allow: a text copied from a source
  * keeps that source's licence (site-terms and commercial texts stay home),
  * community text is CC-BY-SA, and a scan's OCR pages follow the scan's

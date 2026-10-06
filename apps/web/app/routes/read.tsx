@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { data, Link, useNavigate } from 'react-router';
 import type { Route } from './+types/read';
-import type { PageFixInfo, RebbeHubApi } from '../lib/api.js';
+import type { PageFixInfo, ChassidusHubApi } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';
 import { langFrom, t } from '../lib/i18n.js';
 import { driveFileId, driveReadUrl } from '../lib/drive.js';
@@ -25,14 +25,14 @@ import '../styles/pages/reader.css';
  *
  *   /read?src=<pdf address>&title=<name>&sub=<event · date>&page=<n>
  *
- * Only files RebbeHub serves, and files on Google Drive the catalog links
+ * Only files ChassidusHub serves, and files on Google Drive the catalog links
  * to, are opened here. A Drive file is named by its own Drive address (the
- * "File" button goes there) and its bytes are read through RebbeHub's API
+ * "File" button goes there) and its bytes are read through ChassidusHub's API
  * (lib/drive.ts); an address on Sichos-Kodesh's media proxy, which older
  * imports stored, is read the same way.
  *
- * A scan RebbeHub has measured opens straightened (its page fix): its
- * reading copy when RebbeHub serves one, otherwise the file itself with its
+ * A scan ChassidusHub has measured opens straightened (its page fix): its
+ * reading copy when ChassidusHub serves one, otherwise the file itself with its
  * leaning pages drawn turned level. "As scanned" shows it as it is.
  *
  * As in Sichos-Kodesh's reader, the pages can be shown dark (white on
@@ -42,7 +42,7 @@ import '../styles/pages/reader.css';
  * of a signed-in reader, so the phone opens where the computer left off.
  */
 
-const ALLOWED_HOSTS = ['api.rebbehub.org', 'files.rebbehub.org'];
+const ALLOWED_HOSTS = ['api.chassidushub.org', 'files.chassidushub.org'];
 
 function allowed(src: string, apiBase: string): boolean {
   if (driveFileId(src)) return true;
@@ -56,7 +56,7 @@ function allowed(src: string, apiBase: string): boolean {
 }
 
 /** What a PDF on Drive needs to read straight; reading goes on without it if the API cannot say. */
-async function pageFixFor(api: RebbeHubApi, src: string): Promise<{ readingCopy: string | null; pages: PageFixInfo['pages'] } | null> {
+async function pageFixFor(api: ChassidusHubApi, src: string): Promise<{ readingCopy: string | null; pages: PageFixInfo['pages'] } | null> {
   const id = driveFileId(src);
   if (!id) return null;
   try {
@@ -364,7 +364,7 @@ export default function Read({ loaderData }: Route.ComponentProps) {
           <a href={src} target="_blank" rel="noreferrer">
             {t(lang, 'openOriginal')}
           </a>{' '}
-          · <Link to="/">RebbeHub</Link>
+          · <Link to="/">ChassidusHub</Link>
         </p>
       ) : null}
     </div>

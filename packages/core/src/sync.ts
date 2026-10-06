@@ -1,5 +1,5 @@
-import { one } from '@rebbehub/db';
-import { carryWordTimes, type EntityId } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import { carryWordTimes, type EntityId } from '@chassidushub/model';
 import type { Catalog, ChangesetRow, NewRevision } from './catalog.js';
 import { invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';

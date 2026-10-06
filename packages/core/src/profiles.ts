@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import { personByUsername } from './usernames.js';
 import type { Via } from './via.js';
 

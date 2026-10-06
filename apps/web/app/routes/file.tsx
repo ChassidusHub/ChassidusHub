@@ -67,7 +67,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: 'RebbeHub' }];
+  if (!loaderData) return [{ title: 'ChassidusHub' }];
   const { file, lang, siteUrl } = loaderData;
   return pageMeta({ title: `${ps(lang, 'filePage')} ${file.sha256.slice(0, 12)}`, path: `/files/${file.sha256}`, lang, siteUrl, noindex: true });
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PageVersion } from '@rebbehub/model';
+import type { PageVersion } from '@chassidushub/model';
 import { noteLabels, printPagesOf } from '../app/lib/printLines.js';
 import { readingOfJson } from '../app/lib/reading.js';
 

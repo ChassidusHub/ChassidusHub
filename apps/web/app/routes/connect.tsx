@@ -10,12 +10,12 @@ import { Box } from '../ui/primitives.js';
 import '../styles/pages/people.css';
 
 /**
- * "Use RebbeHub in Claude": connecting an AI app to the MCP server in a
+ * "Use ChassidusHub in Claude": connecting an AI app to the MCP server in a
  * minute, for anyone. The same steps are in the account's AI apps
  * section; this page is the one to share, and needs no account. Nothing
  * is read from the catalog: the loader only says where the API is.
  */
-const API_FALLBACK = 'https://api.rebbehub.org';
+const API_FALLBACK = 'https://api.chassidushub.org';
 
 export function loader({ request, context }: Route.LoaderArgs) {
   const { siteUrl, api } = siteOf(context);
@@ -24,14 +24,14 @@ export function loader({ request, context }: Route.LoaderArgs) {
 }
 
 const W = {
-  title: { he: 'RebbeHub בתוך Claude ו-ChatGPT', en: 'Use RebbeHub in Claude and ChatGPT' },
+  title: { he: 'ChassidusHub בתוך Claude ו-ChatGPT', en: 'Use ChassidusHub in Claude and ChatGPT' },
   lede: {
-    he: 'חברו את RebbeHub לאפליקציית ה-AI שלכם, ושאלו אותה על כל שיחה, מאמר, התוועדות והקלטה של הרבי. היא תחפש, תקרא ותביא קישורים מהקטלוג. לוקח דקה, ולא צריך לדעת שום דבר טכני.',
-    en: "Connect RebbeHub to your AI app and ask it about any of the Rebbe's sichos, maamarim, farbrengens and recordings. It searches, reads and links to the catalog. It takes a minute, and nothing technical is needed.",
+    he: 'חברו את ChassidusHub לאפליקציית ה-AI שלכם, ושאלו אותה על כל שיחה, מאמר, התוועדות והקלטה של הרבי. היא תחפש, תקרא ותביא קישורים מהקטלוג. לוקח דקה, ולא צריך לדעת שום דבר טכני.',
+    en: "Connect ChassidusHub to your AI app and ask it about any of the Rebbe's sichos, maamarim, farbrengens and recordings. It searches, reads and links to the catalog. It takes a minute, and nothing technical is needed.",
   },
   description: {
-    he: 'איך מחברים את RebbeHub ל-Claude, ל-ChatGPT, ל-Cursor ול-VS Code: מעתיקים כתובת אחת ומאשרים.',
-    en: 'How to connect RebbeHub to Claude, ChatGPT, Cursor and VS Code: copy one address and say yes.',
+    he: 'איך מחברים את ChassidusHub ל-Claude, ל-ChatGPT, ל-Cursor ול-VS Code: מעתיקים כתובת אחת ומאשרים.',
+    en: 'How to connect ChassidusHub to Claude, ChatGPT, Cursor and VS Code: copy one address and say yes.',
   },
   what: { he: 'מה אפשר לעשות כך', en: 'What it can do' },
   can: {

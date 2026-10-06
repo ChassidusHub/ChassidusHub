@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { EntityId } from '@rebbehub/model';
+import type { EntityId } from '@chassidushub/model';
 import {
   anchorSync,
   chooseSeed,
@@ -22,7 +22,7 @@ import {
   uploadOcr,
   type Catalog,
   type Json,
-} from '@rebbehub/core';
+} from '@chassidushub/core';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 async function scanWithMachineText(catalog: Catalog, set: EntityId, pages: string[][]) {
@@ -37,7 +37,7 @@ async function scanWithMachineText(catalog: Catalog, set: EntityId, pages: strin
     await catalog.putRevision(cs.id, 'bot:ocr', { type: 'text-page', data: { layer, page: i + 1, lines: lines.map((text, k) => ({ id: `l${k + 1}`, text })), proofread: 0 } as unknown as Json });
   }
   await catalog.submit(cs.id, 'bot:ocr');
-  await catalog.merge(cs.id, 'shmuly');
+  await catalog.merge(cs.id, 'steward');
   return { scan, publication, layer };
 }
 
@@ -81,7 +81,7 @@ describe('uploaded OCR', () => {
     // Only keepers pick.
     await expect(chooseSeed(catalog, 'chaim', { scan, layer: uploaded.id })).rejects.toThrow(/keepers/);
     const pick = await chooseSeed(catalog, 'keeper', { scan, layer: uploaded.id });
-    await catalog.merge(pick.id, 'shmuly');
+    await catalog.merge(pick.id, 'steward');
     view = (await scanText(catalog, scan, 1))!;
     expect(view.engine).toMatchObject({ name: 'ABBYY FineReader' });
     // The line Chaim checked stays; the rest comes from the upload.
@@ -109,11 +109,11 @@ describe('proofreading and sync projects', () => {
     // Asking again gives him the same page; Mendy gets the next.
     expect((await claimNext(catalog, 'proofread-vol', 'chaim'))!.item).toBe('page:2');
     expect((await claimNext(catalog, 'proofread-vol', 'mendy'))!.item).toBe('page:3');
-    expect(await claimNext(catalog, 'shmuly', 'shmuly').catch((e) => e.message)).toMatch(/not found/);
-    expect(await claimNext(catalog, 'proofread-vol', 'shmuly')).toBeNull();
+    expect(await claimNext(catalog, 'steward', 'steward').catch((e) => e.message)).toMatch(/not found/);
+    expect(await claimNext(catalog, 'proofread-vol', 'steward')).toBeNull();
     // A lapsed claim goes back to the pile.
     await catalog.db.query("UPDATE project_claim SET claimed_at = now() - interval '4 hours' WHERE item = 'page:3'");
-    expect((await claimNext(catalog, 'proofread-vol', 'shmuly'))!.item).toBe('page:3');
+    expect((await claimNext(catalog, 'proofread-vol', 'steward'))!.item).toBe('page:3');
   });
 
   it("hands out recordings to sync, done when all of a recording's sync is checked", async () => {
@@ -148,7 +148,7 @@ async function transcribed(catalog: Catalog, set: EntityId) {
     await catalog.putRevision(cs.id, 'bot:transcribe', { type: 'alignment-span', data: { alignment, segment, startMs: p.startMs, endMs: p.endMs, ...(p.words ? { words: p.words } : {}), origin } as unknown as Json });
   }
   await catalog.submit(cs.id, 'bot:transcribe');
-  await catalog.merge(cs.id, 'shmuly');
+  await catalog.merge(cs.id, 'steward');
   return { event, recording, segments };
 }
 

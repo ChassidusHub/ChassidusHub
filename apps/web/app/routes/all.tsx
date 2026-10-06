@@ -42,7 +42,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: 'RebbeHub' }];
+  if (!loaderData) return [{ title: 'ChassidusHub' }];
   const { entity, lang, siteUrl, field, type } = loaderData;
   const what = field ? groupName(type ?? '', field, lang) : ps(lang, 'belongsHere');
   return pageMeta({ title: `${what} · ${labelOf(entity as Entity, lang)}`, path: `/all/${entity.id}`, lang, siteUrl, noindex: Boolean(loaderData.page?.items.length === 0) });

@@ -1,6 +1,6 @@
-import { one } from '@rebbehub/db';
-import { parseDateText, parseHebrewNumeral, type DateKey } from '@rebbehub/hebrew';
-import { pageTextPlain, type EntityId, type RelationData, type RelationKind } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import { parseDateText, parseHebrewNumeral, type DateKey } from '@chassidushub/hebrew';
+import { pageTextPlain, type EntityId, type RelationData, type RelationKind } from '@chassidushub/model';
 import type { Catalog, RevisionRow } from './catalog.js';
 import type { Json } from './merge.js';
 import { withStructuredBody } from './legacyWords.js';

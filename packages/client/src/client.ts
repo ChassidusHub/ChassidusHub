@@ -1,17 +1,17 @@
 import { GeneratedMethods, OPERATIONS, type OperationId, type Operations, type PagedOperationId } from './generated.js';
 
 /**
- * The RebbeHub API from TypeScript (docs/developers/client.md). Every
+ * The ChassidusHub API from TypeScript (docs/developers/client.md). Every
  * method is generated from the API's OpenAPI document; this file only
  * makes the calls: the address, the token, errors, and walking pages.
  *
- *   const rh = new RebbeHub({ token: process.env.REBBEHUB_TOKEN });
+ *   const rh = new ChassidusHub({ token: process.env.CHASSIDUSHUB_TOKEN });
  *   const { results } = await rh.search({ q: 'יו"ד שבט תשי"א' });
  *   for await (const unit of rh.all('listChildren', { id, field: 'work', type: 'unit' })) …
  */
 
-export interface RebbeHubOptions {
-  /** The API's address. Default https://api.rebbehub.org. */
+export interface ChassidusHubOptions {
+  /** The API's address. Default https://api.chassidushub.org. */
   baseUrl?: string;
   /** A personal API token (rhp_…) from the account page; reading needs none. */
   token?: string;
@@ -22,7 +22,7 @@ export interface RebbeHubOptions {
 }
 
 /** An error the API answered: its status, its code (`not-found`, `rate-limited`…), and its message. */
-export class RebbeHubError extends Error {
+export class ChassidusHubError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
@@ -32,7 +32,7 @@ export class RebbeHubError extends Error {
     readonly retryAfter?: number,
   ) {
     super(message);
-    this.name = 'RebbeHubError';
+    this.name = 'ChassidusHubError';
   }
 }
 
@@ -46,15 +46,15 @@ interface Meta {
   items?: string;
 }
 
-export class RebbeHub extends GeneratedMethods {
+export class ChassidusHub extends GeneratedMethods {
   readonly baseUrl: string;
   private readonly token?: string;
-  private readonly fetcher: NonNullable<RebbeHubOptions['fetch']>;
+  private readonly fetcher: NonNullable<ChassidusHubOptions['fetch']>;
   private readonly userAgent?: string;
 
-  constructor(options: RebbeHubOptions = {}) {
+  constructor(options: ChassidusHubOptions = {}) {
     super();
-    this.baseUrl = (options.baseUrl ?? 'https://api.rebbehub.org').replace(/\/+$/, '');
+    this.baseUrl = (options.baseUrl ?? 'https://api.chassidushub.org').replace(/\/+$/, '');
     this.token = options.token;
     this.fetcher = options.fetch ?? ((input, init) => fetch(input, init));
     this.userAgent = options.userAgent;
@@ -77,7 +77,7 @@ export class RebbeHub extends GeneratedMethods {
     }
     const headers: Record<string, string> = { accept: meta.answer === 'json' ? 'application/json' : '*/*' };
     if (this.token) headers.authorization = `Bearer ${this.token}`;
-    if (this.userAgent) headers['user-agent'] = `${this.userAgent} rebbehub-client`;
+    if (this.userAgent) headers['user-agent'] = `${this.userAgent} chassidushub-client`;
     let body: BodyInit | undefined;
     if (meta.body && values.body !== undefined) {
       if (meta.body === 'json') {
@@ -93,7 +93,7 @@ export class RebbeHub extends GeneratedMethods {
     if (!response.ok && response.status !== 304) {
       const error = (await response.json().catch(() => ({}))) as { error?: string; message?: string; detail?: unknown };
       const wait = Number(response.headers.get('retry-after'));
-      throw new RebbeHubError(response.status, error.error ?? 'error', error.message ?? response.statusText, error.detail, Number.isFinite(wait) && wait > 0 ? wait : undefined);
+      throw new ChassidusHubError(response.status, error.error ?? 'error', error.message ?? response.statusText, error.detail, Number.isFinite(wait) && wait > 0 ? wait : undefined);
     }
     if (meta.answer === 'raw') return response as Operations[K]['output'];
     if (meta.answer === 'text') return (await response.text()) as Operations[K]['output'];

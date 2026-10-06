@@ -22,28 +22,28 @@ steward_name=$3
 : "${DATABASE_URL:?DATABASE_URL is not set}"
 live=$DATABASE_URL
 
-rebbehub() { npm run --silent rebbehub -- "$@"; }
+chassidushub() { npm run --silent chassidushub -- "$@"; }
 import_into() {
-  DATABASE_URL=$1 rebbehub account --id "$steward" --name "$steward_name" --steward
-  importers="rebbehub-sets sichos-kodesh-works likkutei-sichos sichos-kodesh-occasions otzros hebrewbooks"
+  DATABASE_URL=$1 chassidushub account --id "$steward" --name "$steward_name" --steward
+  importers="chassidushub-sets sichos-kodesh-works likkutei-sichos sichos-kodesh-occasions otzros hebrewbooks"
   # A page per chapter of the Chabad Library, once its contents are crawled (import.yml).
   if [ -n "${CHABADLIBRARY_TREE:-}" ] && [ -f "$CHABADLIBRARY_TREE" ]; then importers="$importers chabadlibrary"; fi
   # JEM's recordings, once its catalog is crawled (import.yml), after the farbrengens they join.
   if [ -n "${JEM_DB:-}" ] && [ -f "$JEM_DB" ]; then importers="$importers jem"; fi
-  # Sefaria's Chabad books Sichos-Kodesh does not publish, once `rebbehub crawl-sefaria` has read them.
+  # Sefaria's Chabad books Sichos-Kodesh does not publish, once `chassidushub crawl-sefaria` has read them.
   if [ -n "${SEFARIA_DATA:-}" ] && [ -f "$SEFARIA_DATA/crawl.json" ]; then importers="$importers sefaria"; fi
-  # The letters' dates, where a build of the Igros app's files is given (never in CI: the files are Shmuly's).
+  # The letters' dates, where a build of the Igros app's files is given (never in CI: the files are the steward's).
   if [ -n "${IGROS_DATA:-}" ] && [ -d "$IGROS_DATA/igros" ]; then importers="$importers igros"; fi
   # Sichos-Kodesh's archive history, last: it adds to the items the others made. Given a copy of its index.
   if [ -n "${SK_ARCHIVE_DB:-}" ] && [ -f "$SK_ARCHIVE_DB" ]; then importers="$importers archive"; fi
   for importer in $importers; do
-    DATABASE_URL=$1 rebbehub import "$importer" --from "$from" --approve-as "$steward"
+    DATABASE_URL=$1 chassidushub import "$importer" --from "$from" --approve-as "$steward"
   done
   # The files the archive could not get, onto the Missing board.
-  if [ -n "${SK_ARCHIVE_DB:-}" ] && [ -f "$SK_ARCHIVE_DB" ]; then DATABASE_URL=$1 rebbehub archive-gaps --db "$SK_ARCHIVE_DB"; fi
+  if [ -n "${SK_ARCHIVE_DB:-}" ] && [ -f "$SK_ARCHIVE_DB" ]; then DATABASE_URL=$1 chassidushub archive-gaps --db "$SK_ARCHIVE_DB"; fi
   # The Sichos Kodesh scans and their reading copies (docs/operations.md), from the published manifest.
-  DATABASE_URL=$1 rebbehub reading-copies register
-  DATABASE_URL=$1 rebbehub page-fixes register
+  DATABASE_URL=$1 chassidushub reading-copies register
+  DATABASE_URL=$1 chassidushub page-fixes register
 }
 
 # Postgres's own tools, as new as the live server (Neon runs a newer Postgres than
@@ -58,7 +58,7 @@ pgtool() {
 copy_build_to_live() {
   {
     # The copy itself is let through while the catalog is held (packages/db/src/hold.ts).
-    printf '%s\n' "SET LOCAL rebbehub.import = 'on';" "$1"
+    printf '%s\n' "SET LOCAL chassidushub.import = 'on';" "$1"
     cat <<'SQL'
 SET client_min_messages = warning;
 DO $$ DECLARE t text; BEGIN
@@ -84,7 +84,7 @@ hold_log=$(mktemp)
 hold_live() {
   # Its own process group (job control), so letting go reaches npm and node together.
   set -m
-  DATABASE_URL=$live npm run --silent rebbehub -- hold-catalog --minutes 120 >"$hold_log" 2>&1 &
+  DATABASE_URL=$live npm run --silent chassidushub -- hold-catalog --minutes 120 >"$hold_log" 2>&1 &
   holder=$!
   set +m
   trap let_go EXIT
@@ -103,27 +103,27 @@ let_go() {
   holder=""
   echo "Let go of the live catalog."
 }
-DATABASE_URL=$live rebbehub migrate
-if [ "$(DATABASE_URL=$live rebbehub rebuildable | tail -n 1)" != "rebuildable" ]; then
+DATABASE_URL=$live chassidushub migrate
+if [ "$(DATABASE_URL=$live chassidushub rebuildable | tail -n 1)" != "rebuildable" ]; then
   # Item by item across the internet an import takes hours. So the catalog as it is,
   # people's work and all, is copied here; the import runs next to it; and the result
   # is copied back in one transaction, only if the live catalog still has the mark it
   # had when it was copied: anything anyone did meanwhile stops the copy, never lost.
   echo "People have added to the live catalog: importing next to a copy of it, then copying it back."
   hold_live
-  mark=$(DATABASE_URL=$live rebbehub rebuildable --mark | tail -n 1)
+  mark=$(DATABASE_URL=$live chassidushub rebuildable --mark | tail -n 1)
   # The auth schema comes along empty: the catalog's triggers call its functions
   # (auth.number_thread numbers Suggestions and Reports), but nobody's account leaves.
   pgtool pg_dump --no-owner --no-privileges --exclude-table-data='auth.*' "$live" | pgtool psql "$BUILD_DATABASE_URL" --quiet --no-psqlrc -v ON_ERROR_STOP=1 --single-transaction --output /dev/null
   import_into "$BUILD_DATABASE_URL"
-  copy_build_to_live "$(DATABASE_URL=$live rebbehub rebuildable --guard-mark "$mark")"
+  copy_build_to_live "$(DATABASE_URL=$live chassidushub rebuildable --guard-mark "$mark")"
   let_go
   echo "Copied: the live catalog is the import's result, with everything people had made."
   exit 0
 fi
 
 echo "Everything in the live catalog came from importers: rebuilding it here, then copying it in whole."
-DATABASE_URL=$BUILD_DATABASE_URL rebbehub migrate
+DATABASE_URL=$BUILD_DATABASE_URL chassidushub migrate
 import_into "$BUILD_DATABASE_URL"
-copy_build_to_live "$(rebbehub rebuildable --guard)"
+copy_build_to_live "$(chassidushub rebuildable --guard)"
 echo "Copied: the live catalog is the new build."

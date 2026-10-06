@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PageText } from '@rebbehub/model';
+import type { PageText } from '@chassidushub/model';
 import { scanPages, scanPlaces, scannedVersion } from '../app/lib/scanPages.js';
 
 /**

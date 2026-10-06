@@ -1,6 +1,6 @@
 # The data model
 
-`@rebbehub/model` defines every kind of item, twice: as TypeScript types
+`@chassidushub/model` defines every kind of item, twice: as TypeScript types
 (`packages/model/src/entities.ts`) for code, and as JSON Schema
 (`packages/model/src/schemas/builtin.ts`) for the catalog, which checks
 every suggestion against them. A test keeps the two in step.
@@ -113,7 +113,7 @@ the `pageText` schema):
   farbrengen's contents from the Mafteiach, numbered items under titles.
   `plain`: what people write here.
 - `bodySource` records where the words were imported from, with the copy
-  RebbeHub keeps and the rights that decide whether they are shown.
+  ChassidusHub keeps and the rights that decide whether they are shown.
 
 Because segments are keyed lists, a change is diffed and merged segment
 by segment: the reviewer sees `Words › he › 14.3` before and after, and
@@ -123,7 +123,7 @@ person clicks a segment, fixes it in place and sends it for review
 `/sefaria/…/14#s-14.3` links to one verse.
 
 Bodies were a string of wiki markup until built-in schemas version 5.
-`rebbehub convert-bodies` turns the catalog's over as reviewed system
+`chassidushub convert-bodies` turns the catalog's over as reviewed system
 changes (docs/operations.md); until it has run, the API reads any it
 meets into structure on the way out, and a suggestion sent with one has
 it read on the way in.
@@ -144,7 +144,7 @@ A date key is how an item is filed by Hebrew date - `5742` (a year),
 `5742-05` (Shevat 5742), `5742-05-10` (10 Shevat 5742), `5741-06B-14`
 (Purim in a leap year). Months count from Tishrei, with a leap year's Adar
 as `06A`/`06B` - the numbering Sichos-Kodesh's catalog uses, so keys match
-across both. `@rebbehub/hebrew` validates them against the calendar, sorts
+across both. `@chassidushub/hebrew` validates them against the calendar, sorts
 them, converts them to civil dates, and reads dates as people write them
 (`יו"ד שבט תשכ"ב`, `10 Shvat 5722`).
 

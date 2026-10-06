@@ -15,7 +15,7 @@ import { Box, EmptyState } from '../ui/primitives.js';
 import '../styles/pages/info.css';
 
 /**
- * How anyone helps build RebbeHub, and what needs help now: the ways in
+ * How anyone helps build ChassidusHub, and what needs help now: the ways in
  * (report a mistake from any page, no account needed; suggest a fix,
  * signed in, and review what waits; check what the machines wrote, the
  * transcripts they heard and the pages they read from scans; add what is
@@ -124,7 +124,7 @@ export default function Help({ loaderData }: Route.ComponentProps) {
               <Way icon="upload" title={W.addTitle[lang]} action={<Link className="btn sm primary" to={href('/add', lang)}><Icon name="plus" />{W.add[lang]}</Link>}>
                 {W.addText[lang]}
               </Way>
-              <Way icon="code" title={t(lang, 'helpCodeTitle')} action={<a className="btn sm" href="https://github.com/shmuky/RebbeHub/blob/main/CONTRIBUTING.md"><Icon name="external" />{W.code[lang]}</a>}>
+              <Way icon="code" title={t(lang, 'helpCodeTitle')} action={<a className="btn sm" href="https://github.com/ChassidusHub/ChassidusHub/blob/main/CONTRIBUTING.md"><Icon name="external" />{W.code[lang]}</a>}>
                 {t(lang, 'helpCodeText')}
               </Way>
             </Box>

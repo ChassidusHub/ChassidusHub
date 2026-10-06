@@ -1,7 +1,7 @@
 # Deploying to Cloudflare
 
-RebbeHub runs as two Cloudflare Workers - `rebbehub-api` (the API and the
-media proxy) and `rebbehub-web` (the site) - on a Postgres database at
+ChassidusHub runs as two Cloudflare Workers - `chassidushub-api` (the API and the
+media proxy) and `chassidushub-web` (the site) - on a Postgres database at
 Neon, reached through Cloudflare Hyperdrive, with files in R2.
 
 Cloudflare builds and deploys both from this repository on every push to
@@ -10,8 +10,8 @@ the repository through its GitHub app.
 
 | Worker | Build command | Deploy command |
 | --- | --- | --- |
-| `rebbehub-api` | `npm run build && npm run rebbehub -- migrate` | `npx wrangler deploy -c services/api/wrangler.toml` |
-| `rebbehub-web` | `npm run build && npm run build:web` | `npx wrangler deploy -c apps/web/wrangler.toml` |
+| `chassidushub-api` | `npm run build && npm run chassidushub -- migrate` | `npx wrangler deploy -c services/api/wrangler.toml` |
+| `chassidushub-web` | `npm run build && npm run build:web` | `npx wrangler deploy -c apps/web/wrangler.toml` |
 
 Both Workers bind the same Hyperdrive config and the public and archive
 buckets (`[[hyperdrive]]`, `[[r2_buckets]]` in each `wrangler.toml`): the
@@ -35,8 +35,8 @@ of your Worker"
 
 | Worker | Preview command |
 | --- | --- |
-| `rebbehub-api` | `env -u WRANGLER_CI_MATCH_TAG npx wrangler versions upload -c services/api/wrangler.toml` |
-| `rebbehub-web` | `env -u WRANGLER_CI_MATCH_TAG npx wrangler versions upload -c apps/web/wrangler.toml` |
+| `chassidushub-api` | `env -u WRANGLER_CI_MATCH_TAG npx wrangler versions upload -c services/api/wrangler.toml` |
+| `chassidushub-web` | `env -u WRANGLER_CI_MATCH_TAG npx wrangler versions upload -c apps/web/wrangler.toml` |
 
 (Not `wrangler preview`: it needs a separate `[previews]` configuration.)
 
@@ -50,35 +50,35 @@ the pooling.
 
 ### 2. Storage and the connection (Cloudflare dashboard)
 
-- **R2 → Create bucket**: `rebbehub-public`, then `rebbehub-preservation`.
-- **Hyperdrive → Create → public database**: name `rebbehub`, the
+- **R2 → Create bucket**: `chassidushub-public`, then `chassidushub-preservation`.
+- **Hyperdrive → Create → public database**: name `chassidushub`, the
   connection string from step 1. Its id is in `services/api/wrangler.toml`
   (`a06ec525…`); if you ever make a new one, put its id there.
 
 ### 3. The two Workers (Workers & Pages → Create → Import a repository)
 
-Create `rebbehub-api` first: the site binds to it. For each, pick
-`shmuky/RebbeHub`, leave the root directory at the repository root, and set:
+Create `chassidushub-api` first: the site binds to it. For each, pick
+`ChassidusHub/ChassidusHub`, leave the root directory at the repository root, and set:
 
-- **Project name**: exactly `rebbehub-api` / `rebbehub-web` (it must match
+- **Project name**: exactly `chassidushub-api` / `chassidushub-web` (it must match
   the `name` in its `wrangler.toml`);
 - **Build command** and **Deploy command**: from the table above;
 - **Build variables**:
   - `NODE_VERSION` = `22` (both);
   - `DATABASE_URL` = the connection string from step 1, as a **secret**
-    (`rebbehub-api` only - its build migrates the database).
+    (`chassidushub-api` only - its build migrates the database).
 
 ### 4. The site's address
 
-The site is at **https://rebbehub.org** and the API at
-**https://api.rebbehub.org/v1** (custom domains on the two Workers).
+The site is at **https://chassidushub.org** and the API at
+**https://api.chassidushub.org/v1** (custom domains on the two Workers).
 `SITE_URL` in `apps/web/wrangler.toml` is the site's address, which
 canonical links and sitemaps are made from; change it there if the
 domain ever changes.
 
 ### 5. Optional secrets for the API
 
-In **rebbehub-api → Settings → Variables and Secrets**:
+In **chassidushub-api → Settings → Variables and Secrets**:
 
 - `REPORT_SALT` - any long random string (`openssl rand -hex 32`); hashes
   reporters' addresses for rate limits;
@@ -112,10 +112,10 @@ database address but cannot read the private Sichos-Kodesh repository.
 1. In **GitHub → Settings → Secrets and variables → Actions**, add two
    repository secrets:
    - `DATABASE_URL`: the direct connection string from step 1 (the same
-     one the `rebbehub-api` build has);
+     one the `chassidushub-api` build has);
    - `SICHOS_KODESH_TOKEN`: a
      [fine-grained token](https://github.com/settings/personal-access-tokens/new)
-     with access to `shmuky/Sichos-Kodesh` only and **Contents: Read-only**.
+     with access to `ChassidusHub/Sichos-Kodesh` only and **Contents: Read-only**.
 2. **Actions → Import the catalog (manual) → Run workflow** (never
    **Re-run** an old run: it runs the code of its day). It takes about five
    minutes: the works, and every farbrengen with its recordings and
@@ -134,7 +134,7 @@ database address but cannot read the private Sichos-Kodesh repository.
    read: the mafteiach index, chabadlibrary.org's contents and texts, JEM's
    catalog, HebrewBooks' shelf and Sefaria's Chabad books
    ([importers](importers.md)). To keep Sefaria's and the Chabad Library's
-   texts on RebbeHub's own storage, add `CLOUDFLARE_ACCOUNT_ID` and
+   texts on ChassidusHub's own storage, add `CLOUDFLARE_ACCOUNT_ID` and
    `CLOUDFLARE_API_TOKEN` (a token with **Workers R2 Storage: Edit**);
    without them the pages link to Sefaria, and the Chabad Library's pages
    carry their words with no copy of their own to link to.
@@ -143,9 +143,9 @@ Or, from a computer with this repository and a Sichos-Kodesh checkout:
 
 ```sh
 export DATABASE_URL='postgresql://…'   # the direct connection string
-npm run rebbehub -- account --id shmuly --name "Shmuly" --steward
-npm run rebbehub -- import sichos-kodesh-works --from ../Sichos-Kodesh --approve-as shmuly
-npm run rebbehub -- import sichos-kodesh-occasions --from ../Sichos-Kodesh --approve-as shmuly
+npm run chassidushub -- account --id steward --name "Steward" --steward
+npm run chassidushub -- import sichos-kodesh-works --from ../Sichos-Kodesh --approve-as steward
+npm run chassidushub -- import sichos-kodesh-occasions --from ../Sichos-Kodesh --approve-as steward
 ```
 
 ### 7. Machine OCR and transcription
@@ -159,7 +159,7 @@ npm run rebbehub -- import sichos-kodesh-occasions --from ../Sichos-Kodesh --app
   transcript, `TRANSCRIBE_NIGHTLY` for each worker (a repository
   *variable*, 1 when unset, 0 to turn the nightly run off), always with
   the free local engine, then times the words people corrected
-  (`rebbehub align`) so they become training clips. `TRANSCRIBE_WORKERS`
+  (`chassidushub align`) so they become training clips. `TRANSCRIBE_WORKERS`
   (1, 2, 4, 8 or 16; 1 when unset) splits the nightly run into workers
   side by side, each with its own recordings. Started by hand, it takes
   any engine, limit and number of **workers**; the limit is per worker,
@@ -176,8 +176,8 @@ npm run rebbehub -- import sichos-kodesh-occasions --from ../Sichos-Kodesh --app
     Read** and **Workers AI: Edit** only.
 
   The local engine hears best with the models fine-tuned on the Rebbe's
-  voice, kept private in `rebbehub-preservation` under
-  `models/rebbehub-whisper-v1/`, `-v2/` and on; the workflow picks the
+  voice, kept private in `chassidushub-preservation` under
+  `models/chassidushub-whisper-v1/`, `-v2/` and on; the workflow picks the
   highest version there. To let the workflow fetch it, add the
   bucket's S3 endpoint as `R2_ENDPOINT` (`https://<account>.r2.cloudflarestorage.com`)
   and an R2 API token that can only read that bucket, as `R2_ACCESS_KEY_ID`
@@ -185,7 +185,7 @@ npm run rebbehub -- import sichos-kodesh-occasions --from ../Sichos-Kodesh --app
   transcribe with ivrit.ai's far weaker model (a transcript is made once),
   unless started by hand with **base_model** ticked.
 
-  Its **align** box then runs `rebbehub align` too, with the same keys:
+  Its **align** box then runs `chassidushub align` too, with the same keys:
   word timings for transcripts that have none (made before word timings,
   or corrected since) and the farbrengen's hanacha synced paragraph by
   paragraph where the catalog has its text. Without the two secrets
@@ -197,11 +197,11 @@ people check it.
 - **Asking the machines.** Anyone signed in can ask for a scan to be read
   or a recording transcribed: the button on a scan's text page and under
   a farbrengen's parts, `POST /v1/machine/requests`, the `ask_machine` MCP
-  tool, or `rebbehub machine ask`. The nightly runs take requests first.
+  tool, or `chassidushub machine ask`. The nightly runs take requests first.
   To start the free job at once instead, give the API a GitHub token as
   the secret `GITHUB_DISPATCH_TOKEN`: a fine-grained token for this
   repository with **Actions: Read and write** only (and `GITHUB_REPO` in
-  `[vars]` if the repository is not `shmuky/RebbeHub`). A request then
+  `[vars]` if the repository is not `ChassidusHub/ChassidusHub`). A request then
   starts the workflow with `requested: true`, which reads or transcribes
   only what was asked, on the runner's CPU. Nothing a request starts
   costs money beyond the repository's Actions minutes (free once it is
@@ -227,10 +227,10 @@ the second waits):
 2. Then **`covers`** and **`page-images`**, as often as wanted, each for
    `limit` sefarim or scans a run (empty: the command's own default):
    `covers` draws sefarim's covers from their title pages - from a PDF
-   only linked too, which it fetches and keeps in `rebbehub-preservation`,
+   only linked too, which it fetches and keeps in `chassidushub-preservation`,
    never served ([operations](operations.md#covers-from-the-shaar)) - and
    `page-images` draws served scans' pages for the viewer. Both put their
-   pictures in `rebbehub-public`, so they need `CLOUDFLARE_ACCOUNT_ID`
+   pictures in `chassidushub-public`, so they need `CLOUDFLARE_ACCOUNT_ID`
    and `CLOUDFLARE_API_TOKEN` (a token with **Workers R2 Storage: Edit**,
    as for the import's stored texts) besides `DATABASE_URL`; without them
    the run stops at once and says which secret to add.
@@ -241,16 +241,16 @@ the second waits):
 
 ## A domain of your own
 
-**Workers & Pages → rebbehub-web → Settings → Domains & Routes → Add →
-Custom domain** (e.g. `rebbehub.org`), and the same for `rebbehub-api`
-(e.g. `api.rebbehub.org`). Then update `SITE_URL` and merge.
+**Workers & Pages → chassidushub-web → Settings → Domains & Routes → Add →
+Custom domain** (e.g. `chassidushub.org`), and the same for `chassidushub-api`
+(e.g. `api.chassidushub.org`). Then update `SITE_URL` and merge.
 
 ## Files
 
-Files that may be served live in `rebbehub-public` under
+Files that may be served live in `chassidushub-public` under
 `objects/<sha256>`. The API serves them at `/objects/<sha256>` only while
 their rights allow, so a takedown stops serving a file at once. Nothing
-binds `rebbehub-preservation`: what is kept there is never served. The
+binds `chassidushub-preservation`: what is kept there is never served. The
 jobs write to it (a linked PDF a cover is drawn from) and read it back
 with their own token.
 
@@ -269,7 +269,7 @@ and `TURNSTILE_SECRET`.
 ```sh
 # the API, in the Workers runtime, against a local Postgres
 cd services/api
-CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgres://localhost/rebbehub \
+CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=postgres://localhost/chassidushub \
   npx wrangler dev --port 8788
 
 # the site, bound to it (after npm run build:web)

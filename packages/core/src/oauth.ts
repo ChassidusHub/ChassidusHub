@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import { base64url, hashToken } from './auth.js';
 import type { ApiTokenView, TokenGrant, TokenScope } from './tokens.js';
 
@@ -245,7 +245,7 @@ export async function authenticateClient(db: Db, client: OAuthClient, secret: st
   if (!row?.ok) throw new OAuthError('invalid_client', "the app's secret is missing or wrong");
 }
 
-/** Scopes as asked (`read write`): the ones RebbeHub has; unknown ones (openid…) are passed over; none asked, both. */
+/** Scopes as asked (`read write`): the ones ChassidusHub has; unknown ones (openid…) are passed over; none asked, both. */
 export function parseScopes(value: unknown): TokenScope[] {
   const asked = typeof value === 'string' ? value.split(/\s+/).filter(Boolean) : [];
   const known = (['read', 'write'] as const).filter((s) => asked.includes(s));

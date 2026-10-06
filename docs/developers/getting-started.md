@@ -14,13 +14,13 @@ that type's JSON Schema, which `GET /v1/types` serves.
 ## Search
 
 ```sh
-curl 'https://api.rebbehub.org/v1/search?q=%D7%99%D7%95%22%D7%93+%D7%A9%D7%91%D7%98+%D7%AA%D7%A9%D7%9E%22%D7%91'
+curl 'https://api.chassidushub.org/v1/search?q=%D7%99%D7%95%22%D7%93+%D7%A9%D7%91%D7%98+%D7%AA%D7%A9%D7%9E%22%D7%91'
 ```
 
 ```ts
-import { RebbeHub } from '@rebbehub/client';
+import { ChassidusHub } from '@chassidushub/client';
 
-const rh = new RebbeHub();
+const rh = new ChassidusHub();
 const { results, date } = await rh.search({ q: 'יו"ד שבט תשמ"ב' });
 // date: { key: '5742-05-10', he: 'י׳ שבט תשמ״ב', en: '10 Shevat 5742' }
 ```
@@ -34,8 +34,8 @@ where it is switched on.
 ## One item, by id or by path
 
 ```sh
-curl https://api.rebbehub.org/v1/entities/rh-7k2m9q4d
-curl 'https://api.rebbehub.org/v1/resolve?path=/events/5742-05-10'
+curl https://api.chassidushub.org/v1/entities/rh-7k2m9q4d
+curl 'https://api.chassidushub.org/v1/resolve?path=/events/5742-05-10'
 ```
 
 ```ts
@@ -52,7 +52,7 @@ change, who made it and what changed.
 A sefer's sichos, a text's paragraphs, a farbrengen's recordings:
 
 ```sh
-curl 'https://api.rebbehub.org/v1/entities/rh-…/children?field=work&type=unit&limit=100'
+curl 'https://api.chassidushub.org/v1/entities/rh-…/children?field=work&type=unit&limit=100'
 ```
 
 ```ts
@@ -67,8 +67,8 @@ Long lists come a page at a time: the answer's `next`, passed back as
 ## Events by date
 
 ```sh
-curl 'https://api.rebbehub.org/v1/events?within=5742-05'      # Shevat 5742
-curl 'https://api.rebbehub.org/v1/events?day=05-10'           # 10 Shevat, every year
+curl 'https://api.chassidushub.org/v1/events?within=5742-05'      # Shevat 5742
+curl 'https://api.chassidushub.org/v1/events?day=05-10'           # 10 Shevat, every year
 ```
 
 Dates are keys (`5742-05-10`: months count from Tishrei, a leap year's

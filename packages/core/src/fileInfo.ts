@@ -1,11 +1,11 @@
-import { one, type Db } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import { getFile, type FileRow } from './files.js';
 
 /**
  * A file's own page (the plan: "one permanent page per item"): a file is
  * stored once by its sha256, so its page says what it is, what its rights
- * let RebbeHub do with it, where it came from, what was made from it (a
+ * let ChassidusHub do with it, where it came from, what was made from it (a
  * reading copy, page images, a cover), what the jobs measured in it, and
  * every catalog item that uses it. Who uploaded it is not said: an
  * uploader's account is theirs.

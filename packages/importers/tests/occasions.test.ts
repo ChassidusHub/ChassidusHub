@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Catalog } from '@rebbehub/core';
-import { audioUrl, idForKey, occasionDate, pdfUrl, runImport, sichosKodeshOccasionsImporter, type CatalogEntry, type MafteiachRecord } from '@rebbehub/importers';
+import type { Catalog } from '@chassidushub/core';
+import { audioUrl, idForKey, occasionDate, pdfUrl, runImport, sichosKodeshOccasionsImporter, type CatalogEntry, type MafteiachRecord } from '@chassidushub/importers';
 import { freshCatalog } from '../../core/tests/helpers.js';
 
 /** Two occasions in Sichos-Kodesh's catalog format: a farbrengen with two parts and two hanachos, and a second one the same day. */
@@ -41,7 +41,7 @@ describe('occasion dates', () => {
 
 describe('the Sichos-Kodesh occasions importer', () => {
   it('makes a farbrengen with its hanachos first and a recording per part', async () => {
-    const result = await runImport(catalog, sichosKodeshOccasionsImporter(entries()), { approveAs: 'shmuly' });
+    const result = await runImport(catalog, sichosKodeshOccasionsImporter(entries()), { approveAs: 'steward' });
     expect(result.created).toBe(1 + 2 + 2); // the set, two events, two recordings
 
     const event = await catalog.get(await idForKey('mafteiach-occasion:11113014'));
@@ -61,8 +61,8 @@ describe('the Sichos-Kodesh occasions importer', () => {
   });
 
   it('changes nothing when run again on the same catalog', async () => {
-    await runImport(catalog, sichosKodeshOccasionsImporter(entries()), { approveAs: 'shmuly' });
-    const again = await runImport(catalog, sichosKodeshOccasionsImporter(entries()), { approveAs: 'shmuly' });
+    await runImport(catalog, sichosKodeshOccasionsImporter(entries()), { approveAs: 'steward' });
+    const again = await runImport(catalog, sichosKodeshOccasionsImporter(entries()), { approveAs: 'steward' });
     expect(again).toMatchObject({ created: 0, updated: 0, unchanged: 5 });
   });
 
@@ -88,7 +88,7 @@ describe('the Sichos-Kodesh occasions importer', () => {
       }),
       record(11119999, '5714-03-20', { tochenInyanim: { text: 'שיחה', links: [] } }),
     ];
-    await runImport(catalog, sichosKodeshOccasionsImporter(entries(), { mafteiach: index }), { approveAs: 'shmuly' });
+    await runImport(catalog, sichosKodeshOccasionsImporter(entries(), { mafteiach: index }), { approveAs: 'steward' });
     const event = await catalog.get(await idForKey('mafteiach-occasion:11113014'));
     const data = event!.data as { links: Array<{ kind: string; url: string; label: { he: string } }>; body: unknown; bodySource: object };
     expect(data.links.map((l) => [l.kind, l.url])).toEqual([

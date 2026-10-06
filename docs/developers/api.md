@@ -1,7 +1,7 @@
 # Conventions
 
-What every route of `https://api.rebbehub.org` shares. The
-[OpenAPI document](https://api.rebbehub.org/openapi.json) describes each
+What every route of `https://api.chassidushub.org` shares. The
+[OpenAPI document](https://api.chassidushub.org/openapi.json) describes each
 route; a test in the repository fails when a route is not in it.
 
 ## Stability
@@ -13,9 +13,9 @@ route; a test in the repository fails when a route is not in it.
 - Should something in /v1 have to go, it is marked first: the route is
   `deprecated` in the OpenAPI document and answers with `Deprecation` and
   `Sunset` headers for at least six months, and the change is in the
-  [changelog](https://github.com/shmuky/RebbeHub/blob/main/CHANGELOG.md).
+  [changelog](https://github.com/ChassidusHub/ChassidusHub/blob/main/CHANGELOG.md).
   A change that cannot be made by adding becomes `/v2`, beside /v1.
-- `GET /v1` says the API's version; `@rebbehub/client` says the version
+- `GET /v1` says the API's version; `@chassidushub/client` says the version
   it was generated from (`API_VERSION`).
 - Routes outside /v1 (`/objects`, `/dumps`, `/manifests`, `/oai`, `/mcp`)
   follow their own standards and keep their addresses.
@@ -55,8 +55,8 @@ the next page; it is `null` on the last. A `Link: <…>; rel="next"` header
 says the same.
 
 ```sh
-curl 'https://api.rebbehub.org/v1/entities?type=work&limit=100'
-curl 'https://api.rebbehub.org/v1/entities?type=work&limit=100&cursor=c1.WyIvbGlra3V0ZWktc2ljaG9zcmgtN2sybTlxNGQiXQ'
+curl 'https://api.chassidushub.org/v1/entities?type=work&limit=100'
+curl 'https://api.chassidushub.org/v1/entities?type=work&limit=100&cursor=c1.WyIvbGlra3V0ZWktc2ljaG9zcmgtN2sybTlxNGQiXQ'
 ```
 
 Cursors are opaque: do not build or change them. They do not expire. A

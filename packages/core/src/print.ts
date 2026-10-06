@@ -1,6 +1,6 @@
-import { one } from '@rebbehub/db';
-import { isValidDateKey, parseHebrewYear } from '@rebbehub/hebrew';
-import { idFromSeed, isEntityId, mayServe, orderBetween, type EntityId, type LocalName, type RightsState } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import { isValidDateKey, parseHebrewYear } from '@chassidushub/hebrew';
+import { idFromSeed, isEntityId, mayServe, orderBetween, type EntityId, type LocalName, type RightsState } from '@chassidushub/model';
 import type { Catalog, EntityView } from './catalog.js';
 import { invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';
@@ -8,15 +8,15 @@ import type { SimilarFile } from './scans.js';
 
 /**
  * The print side, as people add to it (the plan, sections 4 and 7):
- * what an upload is (a new scan of a publication RebbeHub has, a new
+ * what an upload is (a new scan of a publication ChassidusHub has, a new
  * printing, or a new teshura), the contents map of a publication ("pp.
  * 3–8 are a letter from 5718"), and the Teshuros set with its families'
  * requests.
  */
 
-/** The Teshuros set: the thousands of booklets printed for weddings and simchos. Made by the `rebbehub-sets` importer. */
+/** The Teshuros set: the thousands of booklets printed for weddings and simchos. Made by the `chassidushub-sets` importer. */
 export const TESHUROS_SET = {
-  key: 'rebbehub-set:teshuros',
+  key: 'chassidushub-set:teshuros',
   path: '/teshuros',
   name: { he: 'תשורות', en: 'Teshuros' },
   description: {
@@ -26,7 +26,7 @@ export const TESHUROS_SET = {
 } as const;
 
 /** The Teshuros set's permanent id (the same as the importer's, from its key). */
-export const teshurosSetId = (): Promise<EntityId> => idFromSeed('rebbehub-set', 'teshuros');
+export const teshurosSetId = (): Promise<EntityId> => idFromSeed('chassidushub-set', 'teshuros');
 
 /**
  * The rights a teshura's scan starts in: `credit`, crediting the families

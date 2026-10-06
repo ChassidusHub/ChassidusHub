@@ -1,5 +1,5 @@
 """
-Whisper on this machine's own CPU (or GPU), for `rebbehub transcribe
+Whisper on this machine's own CPU (or GPU), for `chassidushub transcribe
 --engine local` (services/jobs/src/transcribe.ts, localWhisper). Prints one
 JSON line per piece heard: {"start", "end", "text", "words": [[word, start,
 end], ...]}, times in seconds from the recording's start.

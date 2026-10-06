@@ -37,17 +37,17 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: rebbehub
-          POSTGRES_PASSWORD: rebbehub
-          POSTGRES_DB: rebbehub_test
+          POSTGRES_USER: chassidushub
+          POSTGRES_PASSWORD: chassidushub
+          POSTGRES_DB: chassidushub_test
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U rebbehub"
+          --health-cmd "pg_isready -U chassidushub"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      REBBEHUB_TEST_DATABASE_URL: postgres://rebbehub:rebbehub@localhost:5432/rebbehub_test
+      CHASSIDUSHUB_TEST_DATABASE_URL: postgres://chassidushub:chassidushub@localhost:5432/chassidushub_test
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

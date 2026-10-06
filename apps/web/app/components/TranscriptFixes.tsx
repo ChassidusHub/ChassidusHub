@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { LocalName } from "@rebbehub/model";
+import type { LocalName } from "@chassidushub/model";
 import { Link } from "react-router";
 import { dateLabel } from "../lib/dates.js";
 import { nameOf, type Lang } from "../lib/i18n.js";

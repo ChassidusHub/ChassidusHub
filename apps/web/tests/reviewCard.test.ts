@@ -32,9 +32,9 @@ const row: ReviewRow = {
 const entry = (i: number) => ({
   entityId: `rh-e${i}`,
   type: 'event',
-  before: { kind: 'farbrengen', title: { he: `התוועדות ${i}` }, links: [{ url: `https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/f${i}` }] },
+  before: { kind: 'farbrengen', title: { he: `התוועדות ${i}` }, links: [{ url: `https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/f${i}` }] },
   after: { kind: 'farbrengen', title: { he: `התוועדות ${i}` }, links: [{ url: `https://drive.google.com/file/d/f${i}/view` }] },
-  changes: [{ path: '/links', before: [{ url: `https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/f${i}` }], after: [{ url: `https://drive.google.com/file/d/f${i}/view` }] }],
+  changes: [{ path: '/links', before: [{ url: `https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/f${i}` }], after: [{ url: `https://drive.google.com/file/d/f${i}/view` }] }],
   conflicts: [],
 });
 
@@ -43,7 +43,7 @@ const detail: ReviewDetail = {
   entries: Array.from({ length: 10 }, (_, i) => entry(i)),
   total: 500,
   next: 10,
-  summary: [{ type: 'event', kind: 'changed', count: 500, fields: [{ path: '/links', before: 'link:sichos-kodesh-media-proxy.shmuky.workers.dev', after: 'link:drive.google.com' }], examples: ['rh-e0', 'rh-e1', 'rh-e2'] }],
+  summary: [{ type: 'event', kind: 'changed', count: 500, fields: [{ path: '/links', before: 'link:sichos-kodesh-media-proxy.chassidushub-org.workers.dev', after: 'link:drive.google.com' }], examples: ['rh-e0', 'rh-e1', 'rh-e2'] }],
   reviews: [],
   names: { 'bot:relink-drive': 'Drive links (relink bot)' },
   files: {},
@@ -80,7 +80,7 @@ describe("a bot's Suggestion of 500 items in the review queue", () => {
   it('then sums the 500 up, shows the first 10, offers the rest, and approves all of it', () => {
     const html = render(detail);
     expect(html).toContain('What changes');
-    expect(html).toContain('links to sichos-kodesh-media-proxy.shmuky.workers.dev');
+    expect(html).toContain('links to sichos-kodesh-media-proxy.chassidushub-org.workers.dev');
     expect(html).toContain('links to drive.google.com');
     expect(html).toContain('href="/rh-e0?lang=en"');
     // Each example shows the address it had and the one it gets, not just "(changed)".

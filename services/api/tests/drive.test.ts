@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import type { Catalog } from '@rebbehub/core';
+import type { Catalog } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { sniffType } from '../src/drive.js';
 import { memoryRateLimiter, mayUseEdgeCache } from '../src/platform.js';
@@ -28,7 +28,7 @@ beforeEach(async () => {
     ...yudShvat(fresh.set),
     links: [
       { kind: 'bilti-mugah', label: { he: 'הנחה' }, url: `https://drive.google.com/file/d/${KEYED}/view?resourcekey=0-Xqz7bN0vTC1CZxMnwXcPeg`, source: 'mafteiach' },
-      { kind: 'mugah', label: { he: 'לקו"ש' }, url: `https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/${OLD}?filename=${OLD}.pdf`, source: 'mafteiach' },
+      { kind: 'mugah', label: { he: 'לקו"ש' }, url: `https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/${OLD}?filename=${OLD}.pdf`, source: 'mafteiach' },
     ],
   }, '/events/5742-05-10');
   asked = [];
@@ -103,7 +103,7 @@ describe('GET /v1/drive/<id>', () => {
   });
 
   it('keeps whole files at the edge, not parts', () => {
-    const request = (headers: Record<string, string> = {}) => new Request(`https://api.rebbehub.org/v1/drive/${KEYED}`, { headers });
+    const request = (headers: Record<string, string> = {}) => new Request(`https://api.chassidushub.org/v1/drive/${KEYED}`, { headers });
     expect(mayUseEdgeCache(request())).toBe(true);
     expect(mayUseEdgeCache(request({ Range: 'bytes=0-99' }))).toBe(false);
   });

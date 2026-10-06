@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { EntityId } from '@rebbehub/model';
-import { fixParagraph, recordingTranscript, registerFile } from '@rebbehub/core';
+import type { EntityId } from '@chassidushub/model';
+import { fixParagraph, recordingTranscript, registerFile } from '@chassidushub/core';
 import { transcribeRecordings, type Transcriber } from '../src/transcribe.js';
 import { mendTranscriptSplits, mendWordSplits, splitKey, vocabulary, type SplitParagraph } from '../src/wordSplits.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
@@ -79,22 +79,22 @@ describe('words cut in two between paragraphs', () => {
     // Heard before the fix: pieces cut mid-word, with pauses between, so each is a paragraph of its own.
     const heard = ['יראה פון דעם י', "וד, און ס'איז ניט סתם א יראה.", 'גרייטן זיך ביז ער', 'וואקסענע און דער יו"ד, און נאך א יו"ד, ערוואקסענע און ערוואקסענע.'];
     const transcriber: Transcriber = { name: 'fake', version: '1', transcribe: async () => heard.map((text, i) => ({ startMs: i * 10_000, endMs: i * 10_000 + 5000, text })) };
-    await transcribeRecordings(catalog, { approveAs: 'shmuly', transcriber, fetchAudio: async () => new Uint8Array([1]) });
+    await transcribeRecordings(catalog, { approveAs: 'steward', transcriber, fetchAudio: async () => new Uint8Array([1]) });
     let view = (await recordingTranscript(catalog, recording))!;
     // A person checked the third paragraph as it is: the cut after it stays for them to fix.
     await catalog.merge((await fixParagraph(catalog, 'chaim', { segment: view.paragraphs[2]!.id, content: 'גרייטן זיך ביז ער' })).id, 'keeper');
 
-    const dry = await mendTranscriptSplits(catalog, { approveAs: 'shmuly', dryRun: true });
+    const dry = await mendTranscriptSplits(catalog, { approveAs: 'steward', dryRun: true });
     expect(dry).toEqual([{ recording, mended: [{ at: 0, word: 'יוד,' }] }]);
     expect((await recordingTranscript(catalog, recording))!.paragraphs[0]!.content).toBe('יראה פון דעם י');
 
-    expect(await mendTranscriptSplits(catalog, { approveAs: 'shmuly' })).toEqual(dry);
+    expect(await mendTranscriptSplits(catalog, { approveAs: 'steward' })).toEqual(dry);
     view = (await recordingTranscript(catalog, recording))!;
     expect(view.paragraphs.map((p) => p.content)).toEqual(['יראה פון דעם יוד,', "און ס'איז ניט סתם א יראה.", 'גרייטן זיך ביז ער', heard[3]]);
     expect(view.paragraphs[0]).toMatchObject({ checked: false, by: 'transcribe:fake@1' });
-    expect((await catalog.history(view.paragraphs[0]!.id as EntityId))[0]).toMatchObject({ author: 'bot:transcribe', mergedBy: 'shmuly' });
+    expect((await catalog.history(view.paragraphs[0]!.id as EntityId))[0]).toMatchObject({ author: 'bot:transcribe', mergedBy: 'steward' });
     expect((await catalog.history(view.paragraphs[1]!.id as EntityId))[0]!.changeset).toBe((await catalog.history(view.paragraphs[0]!.id as EntityId))[0]!.changeset);
     // Mended once: a second run finds nothing.
-    expect(await mendTranscriptSplits(catalog, { approveAs: 'shmuly' })).toEqual([]);
+    expect(await mendTranscriptSplits(catalog, { approveAs: 'steward' })).toEqual([]);
   });
 });

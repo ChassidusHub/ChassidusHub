@@ -1,6 +1,6 @@
 import type { Hono } from 'hono';
-import { mafteach, type Catalog } from '@rebbehub/core';
-import { readId } from '@rebbehub/model';
+import { mafteach, type Catalog } from '@chassidushub/core';
+import { readId } from '@chassidushub/model';
 import { HttpError } from './app.js';
 import { edgeCached } from './machine.js';
 

@@ -1,4 +1,4 @@
-import type { EntityId, EntityType } from '@rebbehub/model';
+import type { EntityId, EntityType } from '@chassidushub/model';
 import type { ChangeEntry } from './catalog.js';
 import type { Json } from './merge.js';
 

@@ -1,5 +1,5 @@
-import { isValidDateKey, normalizeSearchText, parseDateText } from '@rebbehub/hebrew';
-import { EVENT_LINK_KINDS, GENRES, LANGUAGES, isEntityId, newId, orderKeys, type EntityId, type EventLinkKind, type Genre, type Language, type Licence, type LocalName } from '@rebbehub/model';
+import { isValidDateKey, normalizeSearchText, parseDateText } from '@chassidushub/hebrew';
+import { EVENT_LINK_KINDS, GENRES, LANGUAGES, isEntityId, newId, orderKeys, type EntityId, type EventLinkKind, type Genre, type Language, type Licence, type LocalName } from '@chassidushub/model';
 import type { Catalog, ChangesetRow, EntityView } from './catalog.js';
 import { invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';
@@ -172,7 +172,7 @@ export type Place = { target: EntityId } | { newEvent: NewEvent };
 
 export interface NewHanachaPdf {
   file: string;
-  /** Where RebbeHub serves it, when its rights let it be served; unset, it is kept privately and listed only. */
+  /** Where ChassidusHub serves it, when its rights let it be served; unset, it is kept privately and listed only. */
   servedUrl?: string;
   place: Place;
   /** Which kind of text it is: `bilti-mugah` (unedited, the usual), `mugah`, a maamar, glosses, additions. */
@@ -243,7 +243,7 @@ const nameOf = (view: EntityView | null, fallback: string) => ((view?.data as { 
 /**
  * A hanacha's PDF for a farbrengen or a sicha: a printing of its own (a
  * booklet) with the scan, "based on" the farbrengen or sicha; and, where
- * RebbeHub serves the file, a link to it on the farbrengen's page (or a
+ * ChassidusHub serves the file, a link to it on the farbrengen's page (or a
  * copy on the sicha's), so it opens in the site's reader like the rest.
  */
 export async function suggestHanachaPdf(catalog: Catalog, by: string, input: NewHanachaPdf): Promise<{ suggestion: ChangesetRow; publication: EntityId; scan: EntityId; event: EntityId | null }> {

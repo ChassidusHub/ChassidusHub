@@ -56,14 +56,14 @@ interface PlayerApi extends PlayerState {
   /** How fast it plays (1 as recorded). Only the transcript editor offers another speed, and puts it back when it closes. */
   rate: number;
   setRate: (rate: number) => void;
-  /** The transcript editor open: the bar offers another speed and "hear again" while it is (Shmuly: for checking text only). Closed, the speed is back to 1. */
+  /** The transcript editor open: the bar offers another speed and "hear again" while it is (The steward: for checking text only). Closed, the speed is back to 1. */
   speedOffered: boolean;
   offerSpeed: (on: boolean) => void;
 }
 
 const PlayerContext = createContext<PlayerApi | null>(null);
 
-const STORE = 'rebbehub.player';
+const STORE = 'chassidushub.player';
 
 interface Saved {
   queue: Track[];
@@ -198,7 +198,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // The phone's lock screen and headphone buttons.
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('mediaSession' in navigator) || !current) return;
-    navigator.mediaSession.metadata = new MediaMetadata({ title: current.title, artist: current.subtitle, album: 'RebbeHub' });
+    navigator.mediaSession.metadata = new MediaMetadata({ title: current.title, artist: current.subtitle, album: 'ChassidusHub' });
     const handlers: Array<[MediaSessionAction, MediaSessionActionHandler | null]> = [
       ['play', () => void audio.current?.play()],
       ['pause', () => audio.current?.pause()],

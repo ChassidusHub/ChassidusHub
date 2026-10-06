@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Catalog, CatalogError, TRUST_THRESHOLD, UnresolvedConflictError, getFile, registerFile, setRights } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { Catalog, CatalogError, TRUST_THRESHOLD, UnresolvedConflictError, getFile, registerFile, setRights } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 let catalog: Catalog;
@@ -62,7 +62,7 @@ describe('a suggestion', () => {
     expect(await codeOf(catalog.merge(cs.id, 'mendy'))).toBe('forbidden');
     expect(await codeOf(catalog.merge(cs.id, 'chaim'))).toBe('forbidden');
     expect(await codeOf(catalog.merge(cs.id, 'bot:mafteiach'))).toBe('forbidden');
-    expect(await codeOf(catalog.merge(cs.id, 'shmuly'))).toBe('ok');
+    expect(await codeOf(catalog.merge(cs.id, 'steward'))).toBe('ok');
   });
 
   it('cannot be edited once sent, but can after being sent back', async () => {
@@ -84,7 +84,7 @@ describe('a suggestion', () => {
     const submitted = await catalog.submit(cs.id, 'mendy');
     const failed = submitted.checks.filter((c) => c.status === 'fail').map((c) => c.check);
     expect(failed).toEqual(expect.arrayContaining(['dates', 'references']));
-    expect(await codeOf(catalog.merge(cs.id, 'shmuly'))).toBe('invalid');
+    expect(await codeOf(catalog.merge(cs.id, 'steward'))).toBe('invalid');
   });
 
   it('warns the reviewer about a likely duplicate', async () => {
@@ -266,7 +266,7 @@ describe('reports', () => {
 
 describe('trust', () => {
   it(`makes a contributor trusted after ${TRUST_THRESHOLD} approved suggestions, whose line fixes in open sets then go live`, async () => {
-    const open = await add(catalog, 'shmuly', 'shmuly', 'set', { name: { he: 'לקוטי שיחות' }, slug: 'ls', policy: 'open', keepers: ['keeper'] });
+    const open = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'לקוטי שיחות' }, slug: 'ls', policy: 'open', keepers: ['keeper'] });
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'לקוטי שיחות' }, slug: 'likkutei-sichos', authors: [], genre: 'sichos', levels: ['volume', 'sicha'], sets: [open] });
     const unit = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'volume', value: '1' }, { level: 'sicha', value: '1' }], order: 'V', label: { he: 'חלק א, שיחה א' } });
     const text = await add(catalog, 'mendy', 'keeper', 'text', { kind: 'edition', unit, language: 'he' });
@@ -300,8 +300,8 @@ describe('schema as data', () => {
     await catalog.putRevision(cs.id, 'mendy', { type: 'schema', data: { entityType: 'maaneh', label: { he: 'מענה', en: 'Maaneh' }, jsonSchema: maaneh, version: 1 } });
     await catalog.submit(cs.id, 'mendy');
     expect(await codeOf(catalog.merge(cs.id, 'keeper'))).toBe('forbidden');
-    await catalog.merge(cs.id, 'shmuly');
-    const id = await add(catalog, 'mendy', 'shmuly', 'maaneh' as never, { text: 'נת׳ ות״ח' });
+    await catalog.merge(cs.id, 'steward');
+    const id = await add(catalog, 'mendy', 'steward', 'maaneh' as never, { text: 'נת׳ ות״ח' });
     expect((await catalog.get(id))!.type).toBe('maaneh');
   });
 });
@@ -309,8 +309,8 @@ describe('schema as data', () => {
 describe('editions, snapshots and files', () => {
   it('tags weekly editions and reads the catalog as of each', async () => {
     const id = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set));
-    expect(await catalog.tagEdition('shmuly')).toEqual({ tag: '2026.40', commit: await catalog.head() });
-    expect((await catalog.tagEdition('shmuly')).tag).toBe('2026.40.1');
+    expect(await catalog.tagEdition('steward')).toEqual({ tag: '2026.40', commit: await catalog.head() });
+    expect((await catalog.tagEdition('steward')).tag).toBe('2026.40.1');
     expect(await codeOf(catalog.tagEdition('keeper'))).toBe('forbidden');
     const snapshot = await catalog.snapshot(await catalog.head(), { limit: 10_000 });
     expect(snapshot.map((e) => e.id)).toContain(id);
@@ -325,7 +325,7 @@ describe('editions, snapshots and files', () => {
     expect(first).toMatchObject({ existed: false, file: { rights_state: 'credit', storage_tier: 'public' } });
     expect((await registerFile(catalog.db, { sha256, bytes: 1000, mime: 'application/pdf', source: 'contribution', licence: 'unknown', held: true })).existed).toBe(true);
     await expect(setRights(catalog.db, 'keeper', sha256, 'preserved', 'family request')).rejects.toThrow(CatalogError);
-    await setRights(catalog.db, 'shmuly', sha256, 'preserved', 'family request');
+    await setRights(catalog.db, 'steward', sha256, 'preserved', 'family request');
     expect(await getFile(catalog.db, sha256)).toMatchObject({ rights_state: 'preserved', storage_tier: 'preservation' });
     await expect(registerFile(catalog.db, { sha256: 'd'.repeat(64), bytes: 1, mime: 'application/x-msdownload', source: 'contribution', licence: 'unknown', held: true })).rejects.toThrow('not accepted');
   });

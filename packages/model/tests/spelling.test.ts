@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { spellingHints, toHouseSpelling } from '@rebbehub/model';
+import { spellingHints, toHouseSpelling } from '@chassidushub/model';
 
 describe('the house spelling', () => {
   it('points out words written other than the booklets do, once each', () => {

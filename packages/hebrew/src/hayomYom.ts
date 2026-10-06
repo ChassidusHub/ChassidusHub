@@ -42,7 +42,7 @@ export interface HayomYomShiurim {
   tehillim: string;
   /** The same line in pieces, each range with its Sefaria reference (`Psalms 23-28`), to go to its words. */
   tehillimParts: Array<{ text: string; ref: string | null }>;
-  /** Where the day's Tanya starts (the unit by its Sefaria reference, its page on RebbeHub, and the segment), and where the next day starts. */
+  /** Where the day's Tanya starts (the unit by its Sefaria reference, its page on ChassidusHub, and the segment), and where the next day starts. */
   tanya: { unit: string; path: string | null; segment: string; next: { unit: string; segment: string } | null; label: string } | null;
   /** How many of the day's first paragraphs the print sets above the shiurim (a Shabbos Mevarchim's "מברכים", a fast's "תענית"). */
   before: number;
@@ -226,7 +226,7 @@ function nextKey(month: string, day: number, length: number): string | null {
 }
 
 /**
- * A Tanya chapter's page on RebbeHub (DAILY_WORKS.tanya), by its Sefaria
+ * A Tanya chapter's page on ChassidusHub (DAILY_WORKS.tanya), by its Sefaria
  * reference without "Tanya, ": each part is a volume; Likkutei Amarim's
  * chapters follow its title page, approbations and foreword, Shaar
  * HaYichud's its Chinuch Katan.

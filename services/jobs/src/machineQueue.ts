@@ -1,5 +1,5 @@
-import { CatalogError, checkMachineWork, finishMachineWork, settleMachineWork, takeMachineRequests, type Catalog, type MachineKind } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { CatalogError, checkMachineWork, finishMachineWork, settleMachineWork, takeMachineRequests, type Catalog, type MachineKind } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 
 /**
  * What a machine job works on in one run: first what people asked for

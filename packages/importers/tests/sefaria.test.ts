@@ -3,8 +3,8 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Catalog } from '@rebbehub/core';
-import { chabadTitles, chooseVersion, cleanSegment, crawlSefaria, dailyBooks, idForKey, readSefariaCrawl, runImport, sefariaAuthor, sefariaClient, sefariaImporter, sefariaLicence, type SefariaIndex, type SefariaVersionInfo } from '@rebbehub/importers';
+import type { Catalog } from '@chassidushub/core';
+import { chabadTitles, chooseVersion, cleanSegment, crawlSefaria, dailyBooks, idForKey, readSefariaCrawl, runImport, sefariaAuthor, sefariaClient, sefariaImporter, sefariaLicence, type SefariaIndex, type SefariaVersionInfo } from '@chassidushub/importers';
 import { freshCatalog } from '../../core/tests/helpers.js';
 
 /**
@@ -68,7 +68,7 @@ let catalog: Catalog;
 let dir: string;
 beforeEach(async () => {
   ({ catalog } = await freshCatalog());
-  dir = mkdtempSync(join(tmpdir(), 'rebbehub-sefaria-'));
+  dir = mkdtempSync(join(tmpdir(), 'chassidushub-sefaria-'));
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -125,8 +125,8 @@ describe("Sefaria's Chabad books", () => {
     const crawl = await crawlSefaria({ out: join(dir, 'out'), exclude: new Set(['Tanya']), client });
     crawl.books[0]!.units[1]!.texts[0]!.kept = true;
     const { text } = await readSefariaCrawl(join(dir, 'out'));
-    // The rebbehub-set and the genre sets need no works importer; the author does.
-    const result = await runImport(catalog, sefariaImporter({ crawl, text, authors: new Set() }), { approveAs: 'shmuly' });
+    // The chassidushub-set and the genre sets need no works importer; the author does.
+    const result = await runImport(catalog, sefariaImporter({ crawl, text, authors: new Set() }), { approveAs: 'steward' });
     expect(result.created).toBe(1 + 1 + 1 + 3); // the Sefaria set, a genre set, the book, three chapters
     const work = await catalog.get(await idForKey('sefaria-work:Made Up Discourses'));
     expect(work?.path).toBe('/sefaria/made-up-discourses');
@@ -161,8 +161,8 @@ describe("Sefaria's Chabad books", () => {
       ],
     });
     expect(JSON.stringify((chapter!.data as { body: unknown }).body)).not.toContain('First');
-    expect((chapter!.data as { bodySource: { copy: string } }).bodySource.copy).toMatch(/^https:\/\/api\.rebbehub\.org\/v1\/texts\/[0-9a-f]{64}$/);
-    // A text not yet on RebbeHub's storage is not linked as a copy there.
+    expect((chapter!.data as { bodySource: { copy: string } }).bodySource.copy).toMatch(/^https:\/\/api\.chassidushub\.org\/v1\/texts\/[0-9a-f]{64}$/);
+    // A text not yet on ChassidusHub's storage is not linked as a copy there.
     expect((await catalog.get(await idForKey('sefaria-unit:Made Up Discourses/2/2')))?.data).not.toHaveProperty('bodySource.copy');
   });
 });
@@ -277,16 +277,16 @@ describe('Chitas and the Rambam from Sefaria', () => {
     ]);
 
     const { text } = await readSefariaCrawl(join(dir, 'out'));
-    const result = await runImport(catalog, sefariaImporter({ crawl, text, authors: new Set() }), { approveAs: 'shmuly' });
+    const result = await runImport(catalog, sefariaImporter({ crawl, text, authors: new Set() }), { approveAs: 'steward' });
     expect(result.created).toBe(1 + 1 + 2 + 3); // the Sefaria set, the daily set, two books, three chapters
-    const set = await catalog.get(await idForKey('rebbehub-set:chitas-rambam'));
+    const set = await catalog.get(await idForKey('chassidushub-set:chitas-rambam'));
     expect(set?.path).toBe('/sets/chitas-rambam');
     expect(set?.data).toMatchObject({ name: { he: 'חת״ת ורמב״ם', en: 'Chitas and Rambam' } });
     // No Chabad kind's Set: the daily books are not Chabad books.
-    expect(await catalog.get(await idForKey('rebbehub-set:chassidus'))).toBeNull();
+    expect(await catalog.get(await idForKey('chassidushub-set:chassidus'))).toBeNull();
     const genesis = await catalog.get(await idForKey('sefaria-daily-work:Genesis'));
     expect(genesis?.path).toBe('/chumash/genesis');
-    expect(genesis?.data).toMatchObject({ title: { he: 'בראשית', en: 'Genesis' }, slug: 'chumash-genesis', sets: [await idForKey('rebbehub-set:chitas-rambam')] });
+    expect(genesis?.data).toMatchObject({ title: { he: 'בראשית', en: 'Genesis' }, slug: 'chumash-genesis', sets: [await idForKey('chassidushub-set:chitas-rambam')] });
     const verses = await catalog.get(await idForKey('sefaria-daily-unit:Genesis/1'));
     expect(verses?.path).toBe('/chumash/genesis/1');
     expect(verses?.data).toMatchObject({ bodySource: { licence: 'public-domain', credit: `Sefaria: ${TANACH_PD}`, rights: 'open' } });

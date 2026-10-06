@@ -1,4 +1,4 @@
-import { allSegments, type PageInline, type PageSegment, type PageVersion } from '@rebbehub/model';
+import { allSegments, type PageInline, type PageSegment, type PageVersion } from '@chassidushub/model';
 
 /**
  * A sicha set again as it was printed, line for line, from the line ends

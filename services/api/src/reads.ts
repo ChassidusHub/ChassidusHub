@@ -1,5 +1,5 @@
-import { Catalog } from '@rebbehub/core';
-import { connectPostgres, measured, type DbCost } from '@rebbehub/db';
+import { Catalog } from '@chassidushub/core';
+import { connectPostgres, measured, type DbCost } from '@chassidushub/db';
 import { createApp } from './app.js';
 import { r2Store, r2Writer, statusStore, type R2Bucket } from './r2.js';
 

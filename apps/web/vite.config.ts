@@ -40,6 +40,6 @@ function copyPdfAssets(): Plugin {
 export default defineConfig({
   plugins: [copyPdfAssets(), reactRouter()],
   // The shared packages are used from source, so nothing needs building first.
-  resolve: { alias: { '@rebbehub/hebrew': src('hebrew'), '@rebbehub/model': src('model') } },
+  resolve: { alias: { '@chassidushub/hebrew': src('hebrew'), '@chassidushub/model': src('model') } },
   server: { port: 5173 },
 });

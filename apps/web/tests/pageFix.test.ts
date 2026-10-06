@@ -1,6 +1,6 @@
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { levelPdf } from '@rebbehub/pdf-fix';
+import { levelPdf } from '@chassidushub/pdf-fix';
 import { canvasClip, canvasTransform, compose, fixesByPage, invert, type Matrix } from '../app/reader/pageFix.js';
 import { drawPage } from '../../../packages/pdf-fix/tests/page.js';
 

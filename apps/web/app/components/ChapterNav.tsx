@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import type { Entity } from '../lib/api.js';
 import { nameOf, type Lang } from '../lib/i18n.js';
 import { labelOf } from '../lib/labels.js';

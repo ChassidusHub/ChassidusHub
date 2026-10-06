@@ -9,12 +9,12 @@ On your [account page](/account) (*For developers: webhooks*), or with a
 [token](auth.md) that may write:
 
 ```sh
-curl -X POST https://api.rebbehub.org/v1/webhooks -H "Authorization: Bearer $REBBEHUB_TOKEN" \
-  -H 'Content-Type: application/json' -d '{ "url": "https://example.org/rebbehub-hook" }'
+curl -X POST https://api.chassidushub.org/v1/webhooks -H "Authorization: Bearer $CHASSIDUSHUB_TOKEN" \
+  -H 'Content-Type: application/json' -d '{ "url": "https://example.org/chassidushub-hook" }'
 ```
 
 ```json
-{ "id": 3, "url": "https://example.org/rebbehub-hook", "secret": "…" }
+{ "id": 3, "url": "https://example.org/chassidushub-hook", "secret": "…" }
 ```
 
 The `secret` is shown this once: keep it to check signatures. Up to five
@@ -28,7 +28,7 @@ Every merge from then on, in order and at least once, every few minutes:
 ```http
 POST <your address>
 Content-Type: application/json
-X-RebbeHub-Signature: sha256=<HMAC-SHA256 of the body, keyed with the hook's secret>
+X-ChassidusHub-Signature: sha256=<HMAC-SHA256 of the body, keyed with the hook's secret>
 
 { "commits": [ { "seq": 9, "at": "…", "message": "…", "author": "…", "mergedBy": "…",
                  "changes": [ { "id": "rh-…", "type": "event", "path": "/events/…", "rev": 22993, "data": { … } } ] } ] }

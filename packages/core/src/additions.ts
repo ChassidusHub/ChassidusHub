@@ -1,4 +1,4 @@
-import { isAddition, type AdditionKind, type EntityId, type WorkAddition } from '@rebbehub/model';
+import { isAddition, type AdditionKind, type EntityId, type WorkAddition } from '@chassidushub/model';
 import type { Catalog, EntityView } from './catalog.js';
 import { linkedPage } from './linked.js';
 

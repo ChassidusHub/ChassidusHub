@@ -14,8 +14,8 @@ import {
   type EntityView,
   type FilePageRow,
   type SimilarFile,
-} from '@rebbehub/core';
-import { isEntityId, mayServe, readId, sha256Hex, type EntityId, type LocalName } from '@rebbehub/model';
+} from '@chassidushub/core';
+import { isEntityId, mayServe, readId, sha256Hex, type EntityId, type LocalName } from '@chassidushub/model';
 import { HttpError } from './app.js';
 
 /**
@@ -83,7 +83,7 @@ export function iiifManifest(input: ManifestInput): Record<string, unknown> {
   fact('שנה', 'Year', [pub.date, pub.gregorianYear].filter(Boolean).join(' · ') || undefined);
   fact('דפוס', 'Printing', pub.printing);
   fact('משפחות', 'Families', pub.simcha?.families?.join(' – '));
-  fact('מזהה', 'RebbeHub id', input.scan.id);
+  fact('מזהה', 'ChassidusHub id', input.scan.id);
   const pages = input.pages.filter((p) => p.image_sha256 && p.image_width && p.image_height);
   const thumb = (p: FilePageRow) => (p.thumb_sha256 ? [{ id: image(p.thumb_sha256), type: 'Image', format: 'image/jpeg', width: p.thumb_width, height: p.thumb_height }] : undefined);
   return {
@@ -93,7 +93,7 @@ export function iiifManifest(input: ManifestInput): Record<string, unknown> {
     label: title,
     metadata,
     ...(input.credit ? { requiredStatement: { label: { he: ['קרדיט'], en: ['Credit'] }, value: { none: [input.credit] } } } : {}),
-    provider: [{ id: input.siteUrl, type: 'Agent', label: { he: ['רביהאב'], en: ['RebbeHub'] }, homepage: [{ id: input.siteUrl, type: 'Text', label: { en: ['RebbeHub'] }, format: 'text/html' }] }],
+    provider: [{ id: input.siteUrl, type: 'Agent', label: { he: ['רביהאב'], en: ['ChassidusHub'] }, homepage: [{ id: input.siteUrl, type: 'Text', label: { en: ['ChassidusHub'] }, format: 'text/html' }] }],
     homepage: [{ id: home, type: 'Text', label: title, format: 'text/html' }],
     rendering: [{ id: input.pdfUrl, type: 'Text', label: { he: ['PDF'], en: ['PDF'] }, format: 'application/pdf' }],
     viewingDirection: 'right-to-left',
@@ -122,7 +122,7 @@ export function iiifManifest(input: ManifestInput): Record<string, unknown> {
 }
 
 export function scanRoutes(app: Hono, catalog: Catalog, options: ScanRouteOptions): void {
-  /** A scan whose file RebbeHub serves, with the file and its base address; else not found. */
+  /** A scan whose file ChassidusHub serves, with the file and its base address; else not found. */
   const servedScan = async (c: Context, raw: string) => {
     const id = readId(raw);
     const scan = id ? await catalog.get(id) : null;
@@ -234,7 +234,7 @@ export function scanRoutes(app: Hono, catalog: Catalog, options: ScanRouteOption
     const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For')?.split(',')[0]?.trim();
     const account = (await options.authenticate?.(c)) ?? null;
     if (!account && options.verifyCaptcha && !(await options.verifyCaptcha(input.captcha, ip))) throw new HttpError(403, 'the captcha was not solved');
-    const reporterHash = ip ? await sha256Hex(`${options.reportSalt ?? 'rebbehub'}\u0000${ip}`) : undefined;
+    const reporterHash = ip ? await sha256Hex(`${options.reportSalt ?? 'chassidushub'}\u0000${ip}`) : undefined;
     if (reporterHash && !account) {
       const { rows } = await catalog.db.query<{ n: number }>("SELECT count(*)::int AS n FROM report WHERE reporter_hash = $1 AND created_at > now() - interval '1 hour'", [reporterHash]);
       if ((rows[0]?.n ?? 0) >= (options.reportsPerHour ?? 10)) throw new HttpError(429, 'too many requests from here in the last hour; please try again later');

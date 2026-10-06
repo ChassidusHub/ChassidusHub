@@ -8,31 +8,31 @@
     "jsx": "react-jsx",
     "rootDir": ".",
     "paths": {
-      "@rebbehub/hebrew": [
+      "@chassidushub/hebrew": [
         "./packages/hebrew/src/index.ts"
       ],
-      "@rebbehub/model": [
+      "@chassidushub/model": [
         "./packages/model/src/index.ts"
       ],
-      "@rebbehub/db": [
+      "@chassidushub/db": [
         "./packages/db/src/index.ts"
       ],
-      "@rebbehub/core": [
+      "@chassidushub/core": [
         "./packages/core/src/index.ts"
       ],
-      "@rebbehub/mirror": [
+      "@chassidushub/mirror": [
         "./packages/mirror/src/index.ts"
       ],
-      "@rebbehub/importers": [
+      "@chassidushub/importers": [
         "./packages/importers/src/index.ts"
       ],
-      "@rebbehub/pdf-fix": [
+      "@chassidushub/pdf-fix": [
         "./packages/pdf-fix/src/index.ts"
       ],
-      "@rebbehub/client": [
+      "@chassidushub/client": [
         "./packages/client/src/index.ts"
       ],
-      "@rebbehub/db/pglite": [
+      "@chassidushub/db/pglite": [
         "./packages/db/src/pglite.ts"
       ]
     },

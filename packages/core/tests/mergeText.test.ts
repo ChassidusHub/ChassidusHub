@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeText, threeWayMerge, type Json } from '@rebbehub/core';
+import { mergeText, threeWayMerge, type Json } from '@chassidushub/core';
 
 /** Two fixes of one text, merged word by word (merge.ts): only a change of the same words is a clash. */
 

@@ -1002,7 +1002,7 @@ dl.facts dd {
 
 /* ------------------------------------------------------------ footer */
 
-/* The foot of every page (ui/Footer.tsx): what RebbeHub is beside three short columns of its pages, then one quiet line. */
+/* The foot of every page (ui/Footer.tsx): what ChassidusHub is beside three short columns of its pages, then one quiet line. */
 .site-footer {
   margin-top: 48px;
   border-top: 1px solid var(--border);

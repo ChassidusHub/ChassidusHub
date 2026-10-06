@@ -1,12 +1,12 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import { one } from '@rebbehub/db';
-import type { Catalog } from '@rebbehub/core';
+import { one } from '@chassidushub/db';
+import type { Catalog } from '@chassidushub/core';
 import { HttpError } from './app.js';
 import { unlocked } from './lock.js';
 import { mcpChallenge } from './oauth.js';
 
 /**
- * While RebbeHub is private (lock.ts), what the API answers someone who did
+ * While ChassidusHub is private (lock.ts), what the API answers someone who did
  * not bring the key: only an owner's own token, from his MCP connector or
  * his scripts. An owner is a platform admin, or an account named in
  * OWNER_ACCOUNTS.
@@ -29,9 +29,9 @@ export function ownersOnly(catalog: Catalog, owners: string[], authenticate: (c:
     const id = await authenticate(c);
     if (!id) {
       if (c.req.path === '/mcp') c.header('WWW-Authenticate', mcpChallenge(c));
-      throw new HttpError(401, 'RebbeHub is private for now');
+      throw new HttpError(401, 'ChassidusHub is private for now');
     }
-    if (!(await isOwner(id))) throw new HttpError(403, 'RebbeHub is private for now');
+    if (!(await isOwner(id))) throw new HttpError(403, 'ChassidusHub is private for now');
     return next();
   };
 }

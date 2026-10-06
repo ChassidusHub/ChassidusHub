@@ -15,7 +15,7 @@ import {
   type PageSegmentKind,
   type PageText,
   type RightsState,
-} from '@rebbehub/model';
+} from '@chassidushub/model';
 import type { Catalog, ChangesetRow } from './catalog.js';
 import { CatalogError, badState, forbidden, invalid, notFound } from './errors.js';
 import { withStructuredBody } from './legacyWords.js';

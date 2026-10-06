@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { recordPageFix, registerFile } from '@rebbehub/core';
-import type { Db } from '@rebbehub/db';
-import { driveViewUrl, type DriveFolder } from '@rebbehub/importers';
-import { inspectPdf, levelPdf, measureAngles, PDF_LEVEL_ENCODER, spread, type PageTurn } from '@rebbehub/pdf-fix';
+import { recordPageFix, registerFile } from '@chassidushub/core';
+import type { Db } from '@chassidushub/db';
+import { driveViewUrl, type DriveFolder } from '@chassidushub/importers';
+import { inspectPdf, levelPdf, measureAngles, PDF_LEVEL_ENCODER, spread, type PageTurn } from '@chassidushub/pdf-fix';
 
 /**
- * Page fixes for the PDFs RebbeHub links to but does not hold
+ * Page fixes for the PDFs ChassidusHub links to but does not hold
  * (docs/operations.md): Otzros HaRebbe's library of Lubavitch seforim
  * first, some 5,400 files on Google Drive. Nothing is copied: each file
  * is read once, measured, and let go, and what it needs is kept.
@@ -18,7 +18,7 @@ import { inspectPdf, levelPdf, measureAngles, PDF_LEVEL_ENCODER, spread, type Pa
  * - a scanned book is drawn at eight pages spread through it, and if none
  *   leans it is left as it is;
  * - only a scan with a leaning page is measured page by page, and only its
- *   leaning pages are turned, each about its middle (@rebbehub/pdf-fix's
+ *   leaning pages are turned, each about its middle (@chassidushub/pdf-fix's
  *   level.ts): no centring, enlarging or cutting, since a printed book's
  *   layout is its publisher's. Each turn is tried and read back level
  *   before it is kept.
@@ -34,7 +34,7 @@ export const SAMPLE_LEAN = 0.4;
 export const OTZROS_COLLECTION = 'otzros';
 /** Where a collection's manifest is published in the public bucket, and served by the API. */
 export const pageFixesKey = (collection: string) => `manifests/page-fixes/${collection}.json`;
-export const pageFixesUrl = (collection: string) => `https://api.rebbehub.org/${pageFixesKey(collection)}`;
+export const pageFixesUrl = (collection: string) => `https://api.chassidushub.org/${pageFixesKey(collection)}`;
 
 export interface LinkedPdf {
   driveFileId: string;
@@ -72,7 +72,7 @@ export interface PageFixEntry extends LinkedPdf {
 }
 
 export interface PageFixesManifest {
-  format: 'rebbehub-page-fixes';
+  format: 'chassidushub-page-fixes';
   formatVersion: 1;
   collection: string;
   encoder: string;
@@ -199,7 +199,7 @@ export async function collectPageFixes(work: string, collection: string, pdfs: L
     if (part.encoder === PDF_LEVEL_ENCODER) Object.assign(files, part.files);
   }
   return {
-    format: 'rebbehub-page-fixes',
+    format: 'chassidushub-page-fixes',
     formatVersion: 1,
     collection,
     encoder: PDF_LEVEL_ENCODER,
@@ -210,7 +210,7 @@ export async function collectPageFixes(work: string, collection: string, pdfs: L
 
 export function parsePageFixes(value: unknown): PageFixesManifest {
   const manifest = value as PageFixesManifest;
-  if (manifest?.format !== 'rebbehub-page-fixes' || manifest.formatVersion !== 1 || !Array.isArray(manifest.files)) throw new Error('not a page-fixes manifest');
+  if (manifest?.format !== 'chassidushub-page-fixes' || manifest.formatVersion !== 1 || !Array.isArray(manifest.files)) throw new Error('not a page-fixes manifest');
   return manifest;
 }
 
@@ -226,7 +226,7 @@ export async function loadPageFixes(from: string): Promise<PageFixesManifest | n
 }
 
 /**
- * Records a manifest in the catalog: each PDF a file RebbeHub knows but
+ * Records a manifest in the catalog: each PDF a file ChassidusHub knows but
  * does not hold (a publisher's scan on Drive: link only), with its page
  * fix. Run again, it changes nothing that is already so.
  */

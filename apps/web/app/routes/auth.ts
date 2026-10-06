@@ -3,7 +3,7 @@ import { siteOf } from '../lib/context.server.js';
 
 /**
  * Sign-in's own address on the site: /_/auth/* passes through to the API's
- * /v1/auth/*, so the browser talks only to rebbehub.org and the session
+ * /v1/auth/*, so the browser talks only to chassidushub.org and the session
  * cookie the API sets is the site's own. Its redirects (to Google and
  * back) go to the browser as they are. Never cached.
  */

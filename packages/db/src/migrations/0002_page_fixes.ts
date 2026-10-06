@@ -4,7 +4,7 @@
  * file `fixed` has a turn (and, for a reading copy, a placing and a cut)
  * for each page it changes; one `as-is` needs nothing (set in type, or
  * already level); one `failed` could not be fixed safely. The pages are
- * kept whether or not RebbeHub holds the file: a reader draws a linked
+ * kept whether or not ChassidusHub holds the file: a reader draws a linked
  * file through them, OCR draws its lines through them, and nothing is
  * measured twice. A file with a reading copy also has its `reading-copy`
  * derivation.

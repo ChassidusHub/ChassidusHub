@@ -1,4 +1,4 @@
-import { inlineText, isEntityId, isPageText, pageTextPlain, type PageInline } from '@rebbehub/model';
+import { inlineText, isEntityId, isPageText, pageTextPlain, type PageInline } from '@chassidushub/model';
 import type { Entity } from '../lib/api.js';
 import { dateLabel } from '../lib/dates.js';
 import { t, type Lang } from '../lib/i18n.js';
@@ -69,7 +69,7 @@ export function valueText(path: string, value: unknown, lang: Lang, items?: Poin
  * only by their place in a list are one row, with how many there are, the
  * first of them as the example, and by how much they all moved when they all
  * moved alike. A page of every one of them said nothing more and stopped
- * phones (Shmuly, 30 Tishrei). At most `limit` rows; the rest are counted.
+ * phones (The steward, 30 Tishrei). At most `limit` rows; the rest are counted.
  */
 export interface FoldedChange {
   path: string;
@@ -87,7 +87,7 @@ const FOLD_AT = 4;
  * Details that are not the words or the file: where each word is heard (a
  * sync's timings), which machine wrote it and how sure it was, whether a
  * span is locked. They change by the thousand with every sync run, and a
- * reviewer reads nothing in them (Shmuly: "not real text or file change,
+ * reviewer reads nothing in them (The steward: "not real text or file change,
  * just info change"), so they are counted in one line, not shown as changes.
  */
 export const isInfoOnly = (path: string) =>

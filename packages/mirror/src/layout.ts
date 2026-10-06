@@ -1,7 +1,7 @@
-import type { EntityId, EntityType } from '@rebbehub/model';
+import type { EntityId, EntityType } from '@chassidushub/model';
 
 /**
- * Where each thing lives in the git mirror (the public `rebbehub/catalog`
+ * Where each thing lives in the git mirror (the public `chassidushub/catalog`
  * repository). Sharded by the first two letters of the id, so no folder
  * grows past about a thousand files.
  *
@@ -9,7 +9,7 @@ import type { EntityId, EntityType } from '@rebbehub/model';
  *   texts/<shard>/<id>.md               a text with its segments, anchored
  *   sync/<shard>/<id>.vtt               an alignment's spans as WebVTT
  *   shaars/<shard>/<id>.md              a sefer's shaar file (docs/shaar.md)
- *   COMMIT                              the last RebbeHub commit exported
+ *   COMMIT                              the last ChassidusHub commit exported
  */
 
 export const shardOf = (id: EntityId): string => id.slice(3, 5);

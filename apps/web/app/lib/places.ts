@@ -43,7 +43,7 @@ export function resumeFrom(queue: QueuedPart[], saved: { place: Record<string, u
   return { index, time };
 }
 
-const STORE = 'rebbehub.places';
+const STORE = 'chassidushub.places';
 const MAX = 60;
 const SYNC_EVERY_MS = 15_000;
 

@@ -3,12 +3,12 @@ import type { CatalogSourceId } from './entities.js';
 import type { Licence, RightsDecision } from './works.js';
 
 /**
- * The rights gate on every file (docs/plans/rebbehub.md, section 8). Each
- * file RebbeHub stores has one rights state:
+ * The rights gate on every file (docs/plans/chassidushub.md, section 8). Each
+ * file ChassidusHub stores has one rights state:
  *
  *   open       served
  *   credit     served, with its credit shown
- *   link       not served: RebbeHub points at the source only
+ *   link       not served: ChassidusHub points at the source only
  *   preserved  a private copy is kept and never served until cleared
  *
  * A file's state is decided when it arrives (the defaults below) and
@@ -28,7 +28,7 @@ export function stricterRights(a: RightsState, b: RightsState): RightsState {
   return ORDER.indexOf(a) >= ORDER.indexOf(b) ? a : b;
 }
 
-/** Whether RebbeHub may serve the bytes of a file in this state. */
+/** Whether ChassidusHub may serve the bytes of a file in this state. */
 export function mayServe(state: RightsState): boolean {
   return state === 'open' || state === 'credit';
 }

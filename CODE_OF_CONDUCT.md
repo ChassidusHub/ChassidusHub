@@ -1,6 +1,6 @@
 # Community and content policy
 
-RebbeHub gathers the Torah of the Rebbeim and the works of chassidim. The
+ChassidusHub gathers the Torah of the Rebbeim and the works of chassidim. The
 way we work together should be worthy of that.
 
 ## How we treat each other

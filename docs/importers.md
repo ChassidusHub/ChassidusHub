@@ -5,12 +5,12 @@ bot account, approved with `--approve-as <steward>` or left in the review
 queue. Running one again changes only what its source changed, and never
 overwrites what people have fixed: a field people changed since the bot
 last said it stays theirs, an item people moved to a new path stays there,
-and one people deleted (merged into another, say) is not made again. RebbeHub keeps no copy of
+and one people deleted (merged into another, say) is not made again. ChassidusHub keeps no copy of
 Sichos-Kodesh's content: each importer reads a Sichos-Kodesh checkout
 (`--from`) or a folder made from one, at run time.
 
 ```sh
-rebbehub import <importer> --from ../Sichos-Kodesh [--approve-as shmuly] [--dry-run]
+chassidushub import <importer> --from ../Sichos-Kodesh [--approve-as steward] [--dry-run]
 ```
 
 `scripts/import-catalog.sh` runs them in order, and runs each optional
@@ -59,7 +59,7 @@ in the checkout). `HEBREWBOOKS_SHELF` names a fresher one; the workflow
 reads it from the latest Otzaria release. Each scan becomes a publication
 with its HebrewBooks id, place and year printed, and a link to
 hebrewbooks.org. The importer copies nothing: HebrewBooks is link-only
-([rights](rights.md)); `rebbehub covers` later keeps a private copy of a
+([rights](rights.md)); `chassidushub covers` later keeps a private copy of a
 scan it draws a sefer's cover from ([operations](operations.md#covers-from-the-shaar)). A series Sichos-Kodesh places in a work joins that
 work; the rest become works of their own, in the HebrewBooks Set.
 
@@ -87,7 +87,7 @@ Reads a crawl of JEM's catalog by Sichos-Kodesh's `packages/jem-index`:
 
 ```sh
 cd ../Sichos-Kodesh/packages/jem-index && npx tsx bin/crawl.ts --db ../../../jem.db
-JEM_DB=../jem.db rebbehub import jem --from ../Sichos-Kodesh --approve-as shmuly
+JEM_DB=../jem.db chassidushub import jem --from ../Sichos-Kodesh --approve-as steward
 ```
 
 Run it after `sichos-kodesh-occasions`. A JEM event that is a farbrengen
@@ -107,8 +107,8 @@ and writes each chapter's texts to `<out>/texts/<sha256>.html` with a
 and keeps every answer in `--cache`, so a second run asks nothing twice.
 
 ```sh
-rebbehub crawl-sefaria --from ../Sichos-Kodesh --out ../sefaria --cache ../sefaria-cache [--only "Book Title"] [--daily]
-SEFARIA_DATA=../sefaria rebbehub import sefaria --from ../Sichos-Kodesh --approve-as shmuly
+chassidushub crawl-sefaria --from ../Sichos-Kodesh --out ../sefaria --cache ../sefaria-cache [--only "Book Title"] [--daily]
+SEFARIA_DATA=../sefaria chassidushub import sefaria --from ../Sichos-Kodesh --approve-as steward
 ```
 
 With `--daily` (or `SEFARIA_DAILY=1`), as the catalog import runs it,
@@ -156,12 +156,12 @@ Segments are counted from the kept documents, where Sefaria's empty
 segments are left out, so a chapter with an empty segment numbers the
 ones after it one lower until the crawl keeps their numbers.
 
-With `--keep`, each kept text is also stored on RebbeHub's own storage,
-`rebbehub-public` at `texts/<sha256>`, checked against its hash first, and
+With `--keep`, each kept text is also stored on ChassidusHub's own storage,
+`chassidushub-public` at `texts/<sha256>`, checked against its hash first, and
 the page then links to that copy. This needs two secrets, set in the
 environment (and as repository secrets for the workflow):
 
-- `CLOUDFLARE_ACCOUNT_ID`: the account `rebbehub-public` is in;
+- `CLOUDFLARE_ACCOUNT_ID`: the account `chassidushub-public` is in;
 - `CLOUDFLARE_API_TOKEN`: a Cloudflare API token with **Workers R2
   Storage: Edit**.
 
@@ -172,12 +172,12 @@ Without them the crawl still runs and the pages link to Sefaria only.
 The letters and their texts come in with `sichos-kodesh-works` (the
 `igros-kodesh-rebbe` work). This importer adds each letter's date. It
 reads the folder Sichos-Kodesh's `build-igros` writes from the Igros
-app's files, which are Shmuly's and in no repository, so it runs only
+app's files, which are the steward's and in no repository, so it runs only
 where they are given:
 
 ```sh
 npm run build-igros -w @sichos-kodesh/igros-index -- --data <Igros app files> --out ../igros
-IGROS_DATA=../igros rebbehub import igros --from ../Sichos-Kodesh --approve-as shmuly
+IGROS_DATA=../igros chassidushub import igros --from ../Sichos-Kodesh --approve-as steward
 ```
 
 It reads `igros/vol-NN.json` only. The Maanos next to them are not cleared
@@ -190,8 +190,8 @@ Reads a copy of Sichos-Kodesh's `services/archive` index
 (`raw/index.sqlite`):
 
 ```sh
-SK_ARCHIVE_DB=../index.sqlite rebbehub import archive --from ../Sichos-Kodesh --approve-as shmuly
-SK_ARCHIVE_DB=../index.sqlite rebbehub archive-gaps --db ../index.sqlite
+SK_ARCHIVE_DB=../index.sqlite chassidushub import archive --from ../Sichos-Kodesh --approve-as steward
+SK_ARCHIVE_DB=../index.sqlite chassidushub archive-gaps --db ../index.sqlite
 ```
 
 Each commit on the archive's main line becomes one Suggestion by

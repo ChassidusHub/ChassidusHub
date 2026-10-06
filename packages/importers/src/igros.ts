@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { MONTHS, normalizeSearchText, parseDateText, parseHebrewNumeral, parseHebrewYear } from '@rebbehub/hebrew';
+import { MONTHS, normalizeSearchText, parseDateText, parseHebrewNumeral, parseHebrewYear } from '@chassidushub/hebrew';
 import type { ImportRecord, Importer } from './importer.js';
 
 const MONTH_WORDS = new Set(MONTHS.flatMap((m) => [m.he, ...m.aliases].flatMap((name) => normalizeSearchText(name).split(' '))));
@@ -17,7 +17,7 @@ const MONTH_WORDS = new Set(MONTHS.flatMap((m) => [m.he, ...m.aliases].flatMap((
  * file per volume. This importer reads that output and puts each letter's
  * date on its page, so a letter is found by its day like a farbrengen.
  *
- * The app's files are Shmuly's and are never in a repository: the import
+ * The app's files are the steward's and are never in a repository: the import
  * runs where a build of them is given (IGROS_DATA). The Maanos, which the
  * same build reads, are not imported: their rights are not cleared.
  */

@@ -1,4 +1,4 @@
-import { isPageText } from '@rebbehub/model';
+import { isPageText } from '@chassidushub/model';
 import type { Entity } from '../lib/api.js';
 import { t, type Lang } from '../lib/i18n.js';
 import { PageWords } from './PageWords.js';
@@ -16,7 +16,7 @@ interface BodySource {
 /**
  * The page's own words, drawn by the display rules of where they came
  * from (PageWords), and, when an importer brought them, the record of
- * where from, with the copy RebbeHub keeps.
+ * where from, with the copy ChassidusHub keeps.
  */
 export function PageBody({ entity, lang }: { entity: Pick<Entity, 'data'>; lang: Lang }) {
   const d = entity.data as { body?: unknown; bodySource?: BodySource };

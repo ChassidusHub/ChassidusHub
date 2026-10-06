@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import type { Cover, Entity } from '../lib/api.js';
 import { nameOf, type Lang } from '../lib/i18n.js';
 import { href, itemPath } from '../lib/links.js';

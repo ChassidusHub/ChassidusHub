@@ -1,12 +1,12 @@
-# RebbeHub and Sichos-Kodesh
+# ChassidusHub and Sichos-Kodesh
 
 Sichos-Kodesh (the Sichos Kodesh apps, a separate repository) is
-RebbeHub's first consumer and its origin. RebbeHub keeps no copy of its
+ChassidusHub's first consumer and its origin. ChassidusHub keeps no copy of its
 content; the two meet at the contracts below.
 
 ## 1. The works model
 
-`@rebbehub/model` exports Sichos-Kodesh's works contract
+`@chassidushub/model` exports Sichos-Kodesh's works contract
 (`packages/works/src/types.ts` there) unchanged, in
 `packages/model/src/works.ts`: `Names`, `Author`, `Genre`, `SourceId`,
 `Licence`, `EditionKind`, `WorkSource`, `Work`, `TextObjectRef`,
@@ -14,8 +14,8 @@ content; the two meet at the contracts below.
 `ImportedWork`. The one difference: `Work.collection` is a plain string,
 since the phone's collection ids belong to Sichos-Kodesh's catalog.
 
-Sichos-Kodesh can import these from `@rebbehub/model` in place of its own.
-They change only together with Sichos-Kodesh. RebbeHub's own item types
+Sichos-Kodesh can import these from `@chassidushub/model` in place of its own.
+They change only together with Sichos-Kodesh. ChassidusHub's own item types
 (`entities.ts`) grow from them and widen them - more sources, more
 languages, English names optional - without changing them.
 
@@ -25,13 +25,13 @@ Shared behaviour kept to the same contract:
   `toMafteiachHebrewDateKey` in its `packages/catalog`;
 - `normalizeSearchText` = its `packages/app-core/src/search`;
 - canonical JSON and Ed25519 manifest signatures = its `packages/pack-format`;
-- rights: RebbeHub's four states map one to one onto its `RightsDecision`s.
+- rights: ChassidusHub's four states map one to one onto its `RightsDecision`s.
 
-## 2. RebbeHub reads Sichos-Kodesh (importers)
+## 2. ChassidusHub reads Sichos-Kodesh (importers)
 
-`rebbehub import sichos-kodesh-works --from <checkout>` reads the works
+`chassidushub import sichos-kodesh-works --from <checkout>` reads the works
 Sichos-Kodesh builds (`apps/mobile/src/catalog/data/works`, catalog schema
-3) and suggests them as RebbeHub items, keeping the phone's ids in
+3) and suggests them as ChassidusHub items, keeping the phone's ids in
 `externalIds` (`sichos-kodesh-work`, `sichos-kodesh-unit`,
 `sichos-kodesh-author`, `sichos-kodesh-collection`). The other Sichos-Kodesh
 indexers are importers the same way: its HebrewBooks shelf, JEM's catalog
@@ -39,13 +39,13 @@ indexers are importers the same way: its HebrewBooks shelf, JEM's catalog
 history and lost files (services/archive) ([importers](importers.md)).
 Each reads the checkout or what its indexer wrote, and never changes it.
 
-## 3. Sichos-Kodesh builds from RebbeHub (releases)
+## 3. Sichos-Kodesh builds from ChassidusHub (releases)
 
 Every catalog edition's dumps include `sichos-kodesh-<tag>.json`:
 
 ```ts
 interface SichosKodeshRelease {
-  format: 'rebbehub-sichos-kodesh-works';
+  format: 'chassidushub-sichos-kodesh-works';
   formatVersion: 1;
   tag: string;          // the catalog edition, e.g. "2026.40"
   commit: number;
@@ -56,21 +56,21 @@ interface SichosKodeshRelease {
 ```
 
 These are exactly the inputs of its `buildCatalogWorks`, so
-`packages/catalog/bin/build.ts` there can take a RebbeHub release in place
+`packages/catalog/bin/build.ts` there can take a ChassidusHub release in place
 of its hand-kept registry and importer output. The release's
 `manifest.json` is signed like its packs, so it verifies with
-`pack-format`'s `verifyManifest` against RebbeHub's published key.
+`pack-format`'s `verifyManifest` against ChassidusHub's published key.
 
 When that switch is made, Sichos-Kodesh stops curating its own catalog,
-and fixes flow the other way: through RebbeHub suggestions.
+and fixes flow the other way: through ChassidusHub suggestions.
 
 ## 4. Scans and their reading copies
 
-The Sichos Kodesh hanachos Sichos-Kodesh's archive holds are RebbeHub
+The Sichos Kodesh hanachos Sichos-Kodesh's archive holds are ChassidusHub
 files, each with a reading copy ([operations](operations.md)). The
 published manifest (`/manifests/reading-copies/sichos-kodesh.json`) keys
 them by the catalog's `driveFileId`, so Sichos-Kodesh's apps can open a
-PDF's reading copy from `https://api.rebbehub.org/objects/<sha256>` and
+PDF's reading copy from `https://api.chassidushub.org/objects/<sha256>` and
 keep the original one tap away.
 
 ## 5. What Sichos-Kodesh still needs from a release
@@ -81,12 +81,12 @@ A release carries works only (section 3). The apps' own
 
 - **the farbrengens by year** (`<year>.json`, catalog schema 1): events
   with their occasion ids, the parts of each, and the PDFs and
-  recordings of each part. RebbeHub has these as events, recordings and
+  recordings of each part. ChassidusHub has these as events, recordings and
   scans once the `mafteiach` and `jem` importers are written;
 - **the library** (catalog schema 2): the collections the phone browses,
   their units and their PDF editions, and the JEM collection.
 
-For the apps to build wholly from RebbeHub, a release would add, beside
+For the apps to build wholly from ChassidusHub, a release would add, beside
 `works`:
 
 - `events` keyed by the phone's event ids, with dates as date keys;
@@ -104,13 +104,13 @@ Sichos-Kodesh keeps building its farbrengens and library as it does now.
 ## 6. The apps' catalog address
 
 The apps fetch their catalog from one address, app-core's
-`CATALOG_API_BASE_URL` (today `https://api.sk.shmuky.dev`). RebbeHub
-answers the same paths under `https://api.rebbehub.org/v1/app`, in the
+`CATALOG_API_BASE_URL` (today `https://api.sk.chassidushub.org`). ChassidusHub
+answers the same paths under `https://api.chassidushub.org/v1/app`, in the
 same shapes (its `packages/catalog/src/release.ts`), built from the
 catalog on main (`services/api/src/appCatalog.ts`). Switching an app is
-changing that one address to `https://api.rebbehub.org/v1/app`:
+changing that one address to `https://api.chassidushub.org/v1/app`:
 
-| The app asks (after the base) | RebbeHub answers | What it is |
+| The app asks (after the base) | ChassidusHub answers | What it is |
 | --- | --- | --- |
 | `/v1/catalog/manifest.json` | `/v1/app/v1/catalog/manifest.json` | schema 1 (the web app): the farbrengens |
 | `/v2/catalog/manifest.json` | `/v1/app/v2/catalog/manifest.json` | schema 2 (phones to 1.4.0): with the library |
@@ -118,7 +118,7 @@ changing that one address to `https://api.rebbehub.org/v1/app`:
 | `/v<n>/catalog/<version>/catalog.json` | `/v1/app/v<n>/catalog/<version>/catalog.json` | the release the manifest names (its `url`), byte for byte its `sha256` |
 | `/v<n>/catalog/changelog.json`, `/v<n>/catalog/latest/catalog.json` | the same under `/v1/app` | |
 | `/v3/texts/<sha256>` | `/v1/app/v3/texts/<sha256>` | a sefer's text, as `/v1/texts/<sha256>` |
-| `/v1/app/android/latest.json`, `/v1/app/android/download/<abi>` | `/v1/app/v1/app/android/...` | the phone's own updates: sent on (307) to `api.sk.shmuky.dev` |
+| `/v1/app/android/latest.json`, `/v1/app/android/download/<abi>` | `/v1/app/v1/app/android/...` | the phone's own updates: sent on (307) to `api.sk.chassidushub.org` |
 
 What goes in:
 
@@ -128,10 +128,10 @@ What goes in:
   a shiur or chazara kept as such), and its hanachos that are on Drive;
 - **the works**: the sefarim with a Sichos-Kodesh id, their authors, and
   the units of each (the phone's unit ids, their place as contents, each
-  edition's source, and the sha256 of the text RebbeHub keeps). What may
+  edition's source, and the sha256 of the text ChassidusHub keeps). What may
   be done with each source is what Sichos-Kodesh decided when its texts
-  came in, else RebbeHub's default for the source and licence;
-- **the library**: empty. RebbeHub does not hold it yet (section 5).
+  came in, else ChassidusHub's default for the source and licence;
+- **the library**: empty. ChassidusHub does not hold it yet (section 5).
 
 A release is numbered `2.<commit>.0`, the last commit that changed a
 farbrengen, recording, sefer, unit or author: newer than every catalog
@@ -140,9 +140,9 @@ has changed. A release that lacks a part its app shows (today, the
 library in `v2` and `v3`) is numbered `0.<commit>.0` and its manifest
 says `missing`: the apps take only a newer version, so none swaps its
 own library for an empty one. The web app (`v1`) can switch now; the
-phone once RebbeHub holds the library.
+phone once ChassidusHub holds the library.
 
-Not kept by RebbeHub, so not in these releases yet: the farbrengens'
+Not kept by ChassidusHub, so not in these releases yet: the farbrengens'
 short titles (`occasionLabelShort`, `occasionLabelShortEn`), the size of
 each text (`bytes`) and of a sefer's texts (`textBytes`), the sha256 of a
 unit's second text (an English one beside the Hebrew), the HebrewBooks
