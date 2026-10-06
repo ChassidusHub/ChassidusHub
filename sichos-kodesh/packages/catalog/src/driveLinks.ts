@@ -1,0 +1,63 @@
+/**
+ * mafteiach-index's mugah/biltiMugah/maamorim/hagahos/hosofos links use two
+ * drive.google.com URL shapes, both of which must be handled: `/file/d/
+ * {fileId}/view`, and `open?id={fileId}` (or the equivalent `uc?...&id=
+ * {fileId}` download-link shape) - the second shape accounts for the
+ * majority of links, not a rare variant. Other hosts (chabad.org, sie.org,
+ * YouTube, ...) are excluded.
+ */
+export function extractDriveFileId(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.hostname !== 'drive.google.com') return null;
+
+  const pathMatch = /\/file\/d\/([a-zA-Z0-9_-]+)/.exec(parsed.pathname);
+  if (pathMatch) return pathMatch[1]!;
+
+  const id = parsed.searchParams.get('id');
+  return id && /^[a-zA-Z0-9_-]+$/.test(id) ? id : null;
+}
+
+/**
+ * A `resourcekey=` query param on a Drive share URL, present on links
+ * shared before Google's 2021 resource-key security change. It must be
+ * forwarded as the `resourcekey` param on services/media-proxy's
+ * `/drive/:fileId`, or the file 404s/redirects to a Google sign-in page
+ * even though it's genuinely public.
+ */
+export function extractDriveResourceKey(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.hostname !== 'drive.google.com') return null;
+
+  const key = parsed.searchParams.get('resourcekey');
+  return key && /^[a-zA-Z0-9_-]+$/.test(key) ? key : null;
+}
+
+/**
+ * A "reshima" (רשימה) is the Rebbe's own private notes/jottings on a
+ * sicha or maamar, or a reference to the separately published "Reshimos"
+ * series of his early writings - a different genre from the farbrengen
+ * sichos/maamarim this app is scoped to, even though mafteiach-index mixes
+ * individual reshima-labeled PDF links into otherwise legitimate
+ * farbrengen occasions (e.g. "רשימת כ"ק אד"ש", "רשימות חוברת יג", "רשימת
+ * ההגהות" - editorial notes and a distinct published series, not sicha
+ * transcripts). Filters PDF link labels only, not occasion labels: the
+ * Hebrew root also means the mundane "list" (e.g. an occasion titled "..
+ * at the time of submitting רשימות [lists] of names.."), which only shows
+ * up at the occasion level, not in an individual PDF section link's own
+ * label.
+ */
+const RESHIMOS_LABEL_PATTERN = /רשימ/;
+
+export function isReshimosLabel(label: string): boolean {
+  return RESHIMOS_LABEL_PATTERN.test(label);
+}

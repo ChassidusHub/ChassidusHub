@@ -1,0 +1,34 @@
+{
+  "name": "@sichos-kodesh/kvius-engine",
+  "version": "0.1.0",
+  "description": "Kvius-matching and gap-resolution engine: maps each week/date of the current Hebrew year to the matching recording from a chosen historical kvius-matched year.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "example": "tsx examples/basicUsage.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@hebcal/core": "^6.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  }
+}

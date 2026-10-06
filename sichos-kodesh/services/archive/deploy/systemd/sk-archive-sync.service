@@ -1,0 +1,16 @@
+[Unit]
+Description=Sichos Kodesh archive: nightly inventory + crawl, weekly 2% verify on Sundays
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/sk/ChassidusHub/sichos-kodesh
+Environment=SK_ARCHIVE_ROOT=/srv/sk/archive
+Environment=NODE_OPTIONS=--no-warnings=ExperimentalWarning
+ExecStart=/usr/bin/node services/archive/dist/bin/sk-archive.js sync
+ExecStart=/bin/sh -c 'if [ "$(date +%%u)" = 7 ]; then /usr/bin/node services/archive/dist/bin/sk-archive.js verify --sample 0.02; fi'
+ExecStart=/bin/sh -c 'if [ -x /usr/bin/rclone ]; then /usr/bin/rclone sync /srv/sk/archive/derived r2:sk-archive/derived --transfers 8 && /usr/bin/rclone sync /srv/sk/archive/packs r2:sk-archive/packs --transfers 4; fi'
+ExecStart=/bin/sh -c 'if [ -x /usr/bin/restic ] && [ -f /etc/sk-archive/restic.env ]; then . /etc/sk-archive/restic.env && /usr/bin/restic backup /srv/sk/archive/raw --tag nightly && /usr/bin/restic forget --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --prune; fi'
+Nice=10
+IOSchedulingClass=idle

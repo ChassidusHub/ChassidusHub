@@ -1,0 +1,43 @@
+{
+  "name": "@sichos-kodesh/sefaria-index",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Imports Sefaria's Chabad texts (docs/chabad-library-plan.md, WP11) as units and editions of the works in packages/works, each edition with its licence. Only editions the rights gate lets ship keep their text; the rest stay links to Sefaria.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./reader": {
+      "types": "./dist/reader.d.ts",
+      "default": "./dist/reader.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "npm run build -w @sichos-kodesh/works",
+    "build": "tsc -p tsconfig.json",
+    "pretest": "npm run build -w @sichos-kodesh/works",
+    "test": "vitest run",
+    "pretypecheck": "npm run build -w @sichos-kodesh/works",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "sefaria-index": "tsx bin/sefaria-index.ts"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@hebcal/core": "^6.9.2",
+    "@sichos-kodesh/works": "^0.1.0",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "tsx": "^4.19.2",
+    "typescript": "~6.0.2",
+    "vitest": "^3.0.0"
+  }
+}

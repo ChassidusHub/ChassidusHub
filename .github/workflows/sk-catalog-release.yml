@@ -1,0 +1,68 @@
+name: Sichos Kodesh - catalog release
+
+# An `sk-catalog-v<version>` tag ships one catalog release: the two files
+# api.sk.chassidushub.org serves (packages/catalog/src/release.ts) are built from
+# the year files the apps bundle at that commit and attached to a GitHub
+# release of the tag. See sichos-kodesh/packages/catalog/README.md, "Catalog releases".
+on:
+  push:
+    tags:
+      - 'sk-catalog-v*'
+
+permissions:
+  contents: write
+
+# Sichos-Kodesh is its own npm workspace in sichos-kodesh/, with its own lockfile.
+defaults:
+  run:
+    working-directory: sichos-kodesh
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sichos-kodesh/package-lock.json
+
+      - run: npm ci
+
+      - name: Build the catalog package
+        run: npm run build -w @sichos-kodesh/kvius-engine -w @sichos-kodesh/catalog
+
+      - name: Check the tag matches CATALOG_VERSION and the changelog
+        run: |
+          set -euo pipefail
+          npm run release-files -w @sichos-kodesh/catalog -- --check
+          version=$(node -e "import('./packages/catalog/dist/version.js').then(m => console.log(m.CATALOG_VERSION))")
+          if [ "sk-catalog-v$version" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match CATALOG_VERSION ($version)" >&2
+            exit 1
+          fi
+
+      - name: Write catalog.json and manifest.json (schema 1, schema 2 with the library, schema 3 with the works)
+        run: |
+          set -euo pipefail
+          npm run release-files -w @sichos-kodesh/catalog
+          # A release's assets share one namespace: the phone's schema-2 and schema-3 files get their own names.
+          cp packages/catalog/dist-release/v2/catalog.json packages/catalog/dist-release/catalog-v2.json
+          cp packages/catalog/dist-release/v2/manifest.json packages/catalog/dist-release/manifest-v2.json
+          cp packages/catalog/dist-release/v3/catalog.json packages/catalog/dist-release/catalog-v3.json
+          cp packages/catalog/dist-release/v3/manifest.json packages/catalog/dist-release/manifest-v3.json
+
+      - name: Publish the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: sichos-kodesh/packages/catalog/CHANGELOG.md
+          files: |
+            sichos-kodesh/packages/catalog/dist-release/catalog.json
+            sichos-kodesh/packages/catalog/dist-release/manifest.json
+            sichos-kodesh/packages/catalog/dist-release/catalog-v2.json
+            sichos-kodesh/packages/catalog/dist-release/manifest-v2.json
+            sichos-kodesh/packages/catalog/dist-release/catalog-v3.json
+            sichos-kodesh/packages/catalog/dist-release/manifest-v3.json

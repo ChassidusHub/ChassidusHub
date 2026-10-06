@@ -1,0 +1,67 @@
+name: Sichos Kodesh - Android signed release bundle
+
+# Manual only - this produces a real signed upload artifact (Play Console
+# Internal testing track), unlike sk-mobile-android-build.yml's debug-signed
+# assembleDebug that runs on every push/PR.
+on:
+  workflow_dispatch: {}
+
+# Sichos-Kodesh is its own npm workspace in sichos-kodesh/, with its own lockfile.
+defaults:
+  run:
+    working-directory: sichos-kodesh
+
+jobs:
+  android-aab:
+    name: Signed release AAB
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/powershell /usr/share/swift
+          df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+          cache-dependency-path: sichos-kodesh/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Decode upload keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+
+      - name: Build release AAB
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          npm run prebuild:check -w @sichos-kodesh/mobile
+          cd apps/mobile/android && ./gradlew bundleRelease --stacktrace
+
+      - name: Upload signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: sichos-kodesh-release-aab
+          path: sichos-kodesh/apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error

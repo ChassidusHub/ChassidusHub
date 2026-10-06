@@ -1,0 +1,1914 @@
+[
+  {
+    "occasionId": 11113051,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-01-02",
+    "occasionLabel": "יום ב' דר\"ה",
+    "occasionLabelEn": "Rosh Hashanah, day 2",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1TQNaQBEvljfHibUy9tITn3uqH78sP_Hd"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1gdsSb27aR3saGEQlqKY333YRZLU5xFbK"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (ראש השנה)",
+        "driveFileId": "1WuYGrDLYEFK3bV2U-UT2E_HhGyziV1Cq"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1gjpnhSt1JT0sUV_4GDjxkMfYnaHdmfV0"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113052,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-01-09",
+    "occasionLabel": "ערב יו\"כ, אחרי מנחה",
+    "occasionLabelEn": "Erev Yom Kippur, after Mincha",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1tE_i79EHxyPDWHUVQ81XvJjsxnpxr57U"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1e4LkBlwnk0kddmRfRU10NA5BQn5gHHKr"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113053,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-01-09b",
+    "occasionLabel": "ערב יו\"כ, ברכת הבנים",
+    "occasionLabelEn": "Erev Yom Kippur, Birkas Habanim",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1tE_i79EHxyPDWHUVQ81XvJjsxnpxr57U"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1B-4XAeGF3eEnpQk8fNCQd8IBLHX6ltmT"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113054,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-01-17",
+    "occasionLabel": "ליל ד' דחה\"ס, ב' דחוהמה\"ס, שמב\"ה",
+    "occasionLabelEn": "Sukkos, night 4, Chol Hamoed Sukkos, day 2, Simchas Beis Hashoevah",
+    "occasionLabelShortEn": "Sukkos, night 4",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1mSHSk_rVwjcfiCDRfDIQrAgGZG1hzX6U"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1hqIIQcGFGoqpia-nqJhMk3EK5H45e7Ia"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 425 (חה\"ס)",
+        "driveFileId": "1Zov0_WVkvb2j15C6eaqkJw3XG_5yR58c"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1DQge40EC8SNm7AIyeXiQVtJqSMgDnhzQ"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113055,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-01-22",
+    "occasionLabel": "ליל שמח\"ת, לפני הקפות",
+    "occasionLabelEn": "Simchas Torah night, before hakafos",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1cZgM1grGcLFMjs_qMXyttiB8w632zd9o"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1_DIKsuZNV4IrRCZ9arjzvQF9aAhEY7Mt"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113056,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-01-23",
+    "occasionLabel": "יום שמח\"ת",
+    "occasionLabelEn": "Simchas Torah day",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1c_IaJptWTL_qlCHFGCxqe1yxV7FlLOyL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1FH6yjQ-pIcZ0NjjUpcTEZ9NxrBYfzqRl"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"א ע' 155 (משפטים)",
+        "driveFileId": "1-d63HIAMpBdmw1uhFi0QddeG3Dg6C0vS"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ג ע' 789 (ויצא)",
+        "driveFileId": "1OhtaDbnH8sUxTxONmjXl1jlZ1WsJ7xIX"
+      },
+      {
+        "section": "mugah",
+        "label": "בטא\"ח מס' ז ע' ד",
+        "driveFileId": "1LuR3t9TYdHESLUsdBBS9ElV9yB_iW3S6"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ",
+        "driveFileId": "1HUuJkYdBHjBrHPwglXAMaeJvDhmtioio"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1ITthVaFz3wPzr-jNYyOdjsD516NDv56j"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "11o1Z2lXLRuvxuIqdSbv31fRLpY3D1Rkf"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113057,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-01-26",
+    "occasionLabel": "בראשית, מבה\"ח מ\"ח",
+    "occasionLabelEn": "Bereishis, Shabbos Mevarchim Cheshvan",
+    "occasionLabelShortEn": "Bereishis, Mevarchim Cheshvan",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1HDgMUKS69Ptuq-ze7lnnxLJLPgh4XOd1"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "140GQDwNN1x9T4JHoiG-9NpdRnpaYeE-L"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"א ע' 155 (משפטים)",
+        "driveFileId": "1-d63HIAMpBdmw1uhFi0QddeG3Dg6C0vS"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (בראשית א)",
+        "driveFileId": "1Yaalwp-7RHTwfllTLt9ngsij69BP9zgA"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "17LtXogBogAvJHHg2NDEQJmU94GWt1Rlw"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "11o1Z2lXLRuvxuIqdSbv31fRLpY3D1Rkf"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113058,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-02-24",
+    "occasionLabel": "חיי שרה, מבה\"ח כסלו",
+    "occasionLabelEn": "Chayei Sarah, Shabbos Mevarchim Kislev",
+    "occasionLabelShortEn": "Chayei Sarah, Mevarchim Kislev",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1JznpEM66p4N-9x0O4qZzVuBbLCY0AErG"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1u3TR_56f4PAyfY1Yy-1dSz8GNGyO9iGl"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (בראשית א)",
+        "driveFileId": "1g5kvRKD4TPsO_qRJiEk6kz84KOm1Ines"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1zhcytaYPfO6ihAo_qYHGYTwnCMqIT0Ir"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113059,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-03-19",
+    "occasionLabel": "י\"ט כסלו",
+    "occasionLabelEn": "19 Kislev",
+    "audio": [
+      {
+        "workerFilename": "JEMSK4818.mp3",
+        "durationMs": 652000,
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
+      },
+      {
+        "workerFilename": "JEMSK4819.mp3",
+        "durationMs": 155000,
+        "chapterName": "Nigun 1",
+        "chapterNameHe": "ניגון א׳"
+      },
+      {
+        "workerFilename": "JEMSK4820.mp3",
+        "durationMs": 882000,
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
+      },
+      {
+        "workerFilename": "JEMSK4821.mp3",
+        "durationMs": 332000,
+        "chapterName": "Nigun 2",
+        "chapterNameHe": "ניגון ב׳"
+      },
+      {
+        "workerFilename": "JEMSK4822.mp3",
+        "durationMs": 488000,
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
+      },
+      {
+        "workerFilename": "JEMSK4823.mp3",
+        "durationMs": 542000,
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
+      },
+      {
+        "workerFilename": "JEMSK4824.mp3",
+        "durationMs": 335000,
+        "chapterName": "Nigun 3",
+        "chapterNameHe": "ניגון ג׳"
+      },
+      {
+        "workerFilename": "JEMSK4825.mp3",
+        "durationMs": 137000,
+        "chapterName": "Ma’amar Nigun",
+        "chapterNameHe": "ניגון המאמר"
+      },
+      {
+        "workerFilename": "JEMSK4826.mp3",
+        "durationMs": 1674000,
+        "chapterName": "Ma’amar",
+        "chapterNameHe": "מאמר"
+      },
+      {
+        "workerFilename": "JEMSK4827.mp3",
+        "durationMs": 285000,
+        "chapterName": "Nigun 4",
+        "chapterNameHe": "ניגון ד׳"
+      },
+      {
+        "workerFilename": "JEMSK4828.mp3",
+        "durationMs": 911000,
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
+      },
+      {
+        "workerFilename": "JEMSK4829.mp3",
+        "durationMs": 150000,
+        "chapterName": "Nigun 5",
+        "chapterNameHe": "ניגון ה׳"
+      },
+      {
+        "workerFilename": "JEMSK4830.mp3",
+        "durationMs": 984000,
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
+      },
+      {
+        "workerFilename": "JEMSK4831.mp3",
+        "durationMs": 172000,
+        "chapterName": "Nigun 6",
+        "chapterNameHe": "ניגון ו׳"
+      },
+      {
+        "workerFilename": "JEMSK4832.mp3",
+        "durationMs": 243000,
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
+      },
+      {
+        "workerFilename": "JEMSK4833.mp3",
+        "durationMs": 226000,
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
+      },
+      {
+        "workerFilename": "JEMSK4834.mp3",
+        "durationMs": 1006000,
+        "chapterName": "Nigun 7",
+        "chapterNameHe": "ניגון ז׳"
+      },
+      {
+        "workerFilename": "JEMSK4835.mp3",
+        "durationMs": 1525000,
+        "chapterName": "Sicha 9",
+        "chapterNameHe": "שיחה ט׳"
+      },
+      {
+        "workerFilename": "JEMSK4836.mp3",
+        "durationMs": 836000,
+        "chapterName": "Nigun 8",
+        "chapterNameHe": "ניגון ח׳"
+      },
+      {
+        "workerFilename": "JEMSK4837.mp3",
+        "durationMs": 771000,
+        "chapterName": "Sicha 10",
+        "chapterNameHe": "שיחה י׳"
+      },
+      {
+        "workerFilename": "JEMSK4838.mp3",
+        "durationMs": 423000,
+        "chapterName": "Nigun 9",
+        "chapterNameHe": "ניגון ט׳"
+      },
+      {
+        "workerFilename": "JEMSK4839.mp3",
+        "durationMs": 691000,
+        "chapterName": "Sicha 11",
+        "chapterNameHe": "שיחה י״א"
+      },
+      {
+        "workerFilename": "JEMSK4840.mp3",
+        "durationMs": 104000,
+        "chapterName": "Sicha 12",
+        "chapterNameHe": "שיחה י״ב"
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1q4GS-a4YimldSraSwgkPMEN9RfeoAmim"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1-wO9wj8XOPphqMtZqAxY93FDGTLo51-N"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ג ע' 983 (מצורע)",
+        "driveFileId": "1S9oVF9trfcoHsWY1arOFBYOcdbE8bZz0"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ד ע' 1119 הע' 34",
+        "driveFileId": "12nFGzwMpZsyTJyrWXyDGK5yYpFJ9aASF"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ד ע' 1120 הע' 36",
+        "driveFileId": "12nFGzwMpZsyTJyrWXyDGK5yYpFJ9aASF"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ה",
+        "driveFileId": "1jQS8agNdJokPjujYBbpNcWwCjTc3YirA"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ / בהוס' לסה\"מ (יו\"ד-י\"ט כסלו)",
+        "driveFileId": "1OPJ9CkfbVWX3C7Cu4VOWgJRqD5Z_EF_g"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1z8O_e8iUEqME9A7MVgs1Uv2dq3y0znx_"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113060,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-03-23",
+    "occasionLabel": "וישב, מבה\"ח טבת",
+    "occasionLabelEn": "Vayeishev, Shabbos Mevarchim Teves",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "141xYKcjAsF-ueMIZOi_iJslm5Z3qZbKA"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1_qbihc6BeNLMfjaVCgYndmTgWPaTjP3J"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ו ע' 331 (וישב ד)",
+        "driveFileId": "1AjL2fd-N_kbOlCQbvVBf2KsWlnP7V0yl"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"ה ע' 204 (וישב א)",
+        "driveFileId": "17cgO_d_dfnvxBbBu9UAs_dCkRuAseDVI"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"כ ע' 598 (י\"ט כסלו)",
+        "driveFileId": "1onN645TlneMl0PPmZLMm1nyrq8Fv6y9W"
+      },
+      {
+        "section": "mugah",
+        "label": "הנחה מוגה - י\"ל ע\"י מזכירות בשעתו",
+        "driveFileId": "1VJPlirR4x1aWJPYT_ta-A1jlqP0V3whn"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ל ע' 291 (י\"ט כסלו)/ בטא\"ח מס' ח ע' ד",
+        "driveFileId": "1HKihnmXLjmddOWlMt_MKWiXgSERfBLk4"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ מלוקט ח\"ה",
+        "driveFileId": "1rQTY4pi63YGUxCEIJ-taGnVryy7G2SXc"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ בהוס' לסה\"מ (חנוכה)",
+        "driveFileId": "12OwxEjc2-LigoayJ4hqmnlQGUjrpdOQs"
+      },
+      {
+        "section": "hosofos",
+        "label": "הנחה מוגה - י\"ל ע\"י מזכירות בשעתו",
+        "driveFileId": "1VJPlirR4x1aWJPYT_ta-A1jlqP0V3whn"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113061,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-03-28",
+    "occasionLabel": "ליל כ\"ט כסלו, ליל ה' דחנוכה, שיחה להת' שי' - בעת מסירת דמי חנוכה",
+    "occasionLabelEn": "Night of 29 Kislev, Chanukah, night 5, sicha to the students - while giving out Chanukah gelt",
+    "occasionLabelShort": "ליל כ\"ט כסלו, מסירת דמי חנוכה",
+    "occasionLabelShortEn": "Night of 29 Kislev, Chanukah gelt",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "10PlO66QsnxQTPPU3VtVl_wEmbSrONiuN"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1Dy0xGnrQkGOtkBjhCwOhZDpxtwBatyI2"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113062,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-04-23",
+    "occasionLabel": "ליל כ\"ד טבת, אחרי מעריב",
+    "occasionLabelEn": "Night of 24 Teves, after Maariv",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1fR7HoOHXnY3Q_uOi8GY-N5nXiyhk7APe"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113063,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-04-28",
+    "occasionLabel": "וארא, מבה\"ח שבט",
+    "occasionLabelEn": "Va'eira, Shabbos Mevarchim Shevat",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1Rv9XjsMMs61m1cWoacGMyLnUp54oBx_z"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1psVfOK1FkIxqTbkV3NAVT0T4OlpEQJ4E"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ז ע' 69 (וארא ג)",
+        "driveFileId": "1fHQiD4hxqWOIpLWnckswHzYMV80Qlqxy"
+      },
+      {
+        "section": "mugah",
+        "label": "חכ\"א ע' 62 (בא ב)",
+        "driveFileId": "1KCILGqJvJRX_caqTbPkjF6kI_Z0eLrUR"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (שמות א)",
+        "driveFileId": "1KrhY5zeXIeiYevyRAh4-xmmmYXqmYelQ"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "15F92yIgpja5pJUB8XPQWuLi0eDvnoS6D"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113064,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-05-10",
+    "occasionLabel": "יו\"ד שבט",
+    "occasionLabelEn": "10 Shevat",
+    "audio": [
+      {
+        "workerFilename": "JEMSK0121.mp3",
+        "durationMs": 767000,
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
+      },
+      {
+        "workerFilename": "JEMSK0122A.mp3",
+        "durationMs": 2382000,
+        "chapterName": "Ma’amar",
+        "chapterNameHe": "מאמר"
+      },
+      {
+        "workerFilename": "JEMSK0122B.mp3",
+        "durationMs": 392000,
+        "chapterName": "Nigun 1",
+        "chapterNameHe": "ניגון א׳"
+      },
+      {
+        "workerFilename": "JEMSK0123.mp3",
+        "durationMs": 1079000,
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
+      },
+      {
+        "workerFilename": "JEMSK0124A.mp3",
+        "durationMs": 2349000,
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
+      },
+      {
+        "workerFilename": "JEMSK0124B.mp3",
+        "durationMs": 161000,
+        "chapterName": "Nigun 2",
+        "chapterNameHe": "ניגון ב׳"
+      },
+      {
+        "workerFilename": "JEMSK0125.mp3",
+        "durationMs": 866000,
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
+      },
+      {
+        "workerFilename": "JEMSK0126.mp3",
+        "durationMs": 1494000,
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
+      },
+      {
+        "workerFilename": "JEMSK0127.mp3",
+        "durationMs": 80000,
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
+      },
+      {
+        "workerFilename": "JEMSK0128.mp3",
+        "durationMs": 143000,
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1M0pK95mNHQEvjGFpCT9XKYr2FPEf5HQj"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1qQlwiCJRW8VELWiy_5UblFH8U5PIBqy2"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "בטא\"ח מס' יו\"ד ע' ג",
+        "driveFileId": "1XI-lnYmR7bxX9N46iEoz5PsCCdptmUut"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ",
+        "driveFileId": "1FSYcaqdK-tbslP9cXGLK0D9cFQnlRFJz"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ/ תו\"מ סה\"מ באתי לגני ח\"א",
+        "driveFileId": "1xNk6EBR22g_H73oI14nD3AKzJLCIlEyA"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "0B_UwzYOTIwDTSFZoQldYRDJiZzQ",
+        "resourceKey": "0-_42XzgIIhc2Z-FL3guNlcQ"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1d8cvZhGrfpAknR_zkzrPeSIrMDnvvZsk"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113065,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-05-13",
+    "occasionLabel": "בשלח, י\"ג שבט",
+    "occasionLabelEn": "Beshalach, 13 Shevat",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "19rPRRHL472VejQOHJ8xImFfI20fimsXL"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1wKQVYjCDPGmeMutoTDrbreRF8-DWGXJB"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113066,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-05-27",
+    "occasionLabel": "משפטים, פ' שקלים, מבה\"ח אדר",
+    "occasionLabelEn": "Mishpatim, Parshas Shekalim, Shabbos Mevarchim Adar",
+    "occasionLabelShortEn": "Mishpatim, Parshas Shekalim",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1PGKopl3wNiXEj_6x9kV6yfBNld9s20-B"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1In_y_Gh_TFG-u0JunGMrh6Uc27u9bARO"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"א ע' 162 (תרומה)",
+        "driveFileId": "1_S1GkfMN1BfSxNDEPTggkkOh4_fSo_22"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ג ע' 923 (תשא)",
+        "driveFileId": "1wjz9jLDAlMslWKAgTvNxGJRZEVHykYoo"
+      },
+      {
+        "section": "mugah",
+        "label": "חט\"ז ע' 269 (משפטים ד)",
+        "driveFileId": "1M_ixul_x5WL0jwC7X5RnpK9jVMJ1DZ1y"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (ד' פרשיות א)",
+        "driveFileId": "1qVwaXIcHes6Bfvqc6oSfJyPdNW4PVEAr"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1uhWv352hYx9eZqQoFjw2l4LR1Mt75VK0"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1t_nQ_zkja8yter7Yuo5TXmSSTpZkLIYu"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113067,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-06-05",
+    "occasionLabel": "ה' אדר, שיחה למנדבים לישיבות ליובאוויטש",
+    "occasionLabelEn": "5 Adar, sicha to the donors to the Lubavitch yeshivos",
+    "occasionLabelShort": "ה' אדר, שיחה למנדבים לישיבות",
+    "occasionLabelShortEn": "5 Adar, Lubavitch yeshivos donors",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1yZ4ClzR0tPSKRAmhfVxMuFW7-ZX-LiA1"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "11ExOEULLoAVbt9dir8dHF_4Q0_NjjMC_"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"א ע' 171 (תצוה)",
+        "driveFileId": "1zPF7JVJGuwf1ylyMEGXYU8SmeLJX_2_1"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1wb9N8RqrYiy6pRkHJKi4IVAYRlByF0CA"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113068,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-06-14",
+    "occasionLabel": "פורים",
+    "occasionLabelEn": "Purim",
+    "audio": [
+      {
+        "workerFilename": "AR0016789.mp3",
+        "durationMs": 509074,
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
+      },
+      {
+        "workerFilename": "AR0016834.mp3",
+        "durationMs": 792032,
+        "chapterName": "Three Nigunim",
+        "chapterNameHe": "שלושה ניגונים"
+      },
+      {
+        "workerFilename": "AR0016791.mp3",
+        "durationMs": 2669426,
+        "chapterName": "Ma'amar",
+        "chapterNameHe": "מאמר"
+      },
+      {
+        "workerFilename": "AR0016792.mp3",
+        "durationMs": 1667996,
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
+      },
+      {
+        "workerFilename": "AR0016793.mp3",
+        "durationMs": 110393,
+        "chapterName": "Nigun of after a Ma'amar",
+        "chapterNameHe": "ניגון שלאחרי מאמר"
+      },
+      {
+        "workerFilename": "AR0016794.mp3",
+        "durationMs": 951640,
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
+      },
+      {
+        "workerFilename": "AR0016795.mp3",
+        "durationMs": 155088,
+        "chapterName": "Nye Zhuritzi Chloptzi",
+        "chapterNameHe": "ניע זשוריצי כלאפצי"
+      },
+      {
+        "workerFilename": "AR0016796.mp3",
+        "durationMs": 1755872,
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
+      },
+      {
+        "workerFilename": "AR0016797.mp3",
+        "durationMs": 298866,
+        "chapterName": "Vechol Karnei",
+        "chapterNameHe": "וכל קרני"
+      },
+      {
+        "workerFilename": "AR0016798.mp3",
+        "durationMs": 1060336,
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
+      },
+      {
+        "workerFilename": "AR0016799.mp3",
+        "durationMs": 302785,
+        "chapterName": "R’ Zalman Zlatopolsky’s Nigun",
+        "chapterNameHe": "ניגון ר׳ זלמן זלאטופולסקי"
+      },
+      {
+        "workerFilename": "AR0016800.mp3",
+        "durationMs": 197825,
+        "chapterName": "Magbis",
+        "chapterNameHe": "מגבית"
+      },
+      {
+        "workerFilename": "AR0016835.mp3",
+        "durationMs": 357093,
+        "chapterName": "Three Nigunim",
+        "chapterNameHe": "שלושה ניגונים"
+      },
+      {
+        "workerFilename": "AR0016803.mp3",
+        "durationMs": 704104,
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
+      },
+      {
+        "workerFilename": "AR0016804.mp3",
+        "durationMs": 78628,
+        "chapterName": "Two Nigunim",
+        "chapterNameHe": "שני ניגונים"
+      },
+      {
+        "workerFilename": "AR0016805.mp3",
+        "durationMs": 948688,
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
+      },
+      {
+        "workerFilename": "AR0016806.mp3",
+        "durationMs": 56842,
+        "chapterName": "Ani Ma’amin",
+        "chapterNameHe": "אני מאמין"
+      },
+      {
+        "workerFilename": "AR0016836.mp3",
+        "durationMs": 83983,
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1pGmFC4FsAFYvIophjKkcC5x6Feq9f5X3"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1oq2gpPPNhk-Nu-MiWlkCQEgMi4anMqr0"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (פורים)",
+        "driveFileId": "1QHniejECQLFWwKC0ESYO6FSttPUUulR8"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1qyjbG6L4seGFusBXIFcTJlv45m6rBwRz"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113069,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-06-25",
+    "occasionLabel": "ויק\"פ, פ' החודש, מבה\"ח ניסן",
+    "occasionLabelEn": "Vayakhel-Pekudei, Parshas Hachodesh, Shabbos Mevarchim Nisan",
+    "occasionLabelShortEn": "Vayakhel-Pekudei, Parshas Hachodesh",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1tVQBAvASxltsoHPSWm2vLaR6JRNRmxbl"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "178kQSba_WquzjLQ-Gws0odSuBAMKNuo2"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (ד' פרשיות ב)",
+        "driveFileId": "1050W_MLdfXCMo7XLxBR6K_J3JKaHUSVg"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1pQTnLxb20sBwMKn1o4DqwVK-Splh1I1s"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113070,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-07-15",
+    "occasionLabel": "ליל ב' דחה\"פ",
+    "occasionLabelEn": "Pesach, night 2",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1jpe5QAqwv3MDvUQXtgOyxcsJpHbQ2IJ9"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1MwSP6oggw449TNA8TOn0NMVUHJlraqdV"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 539 (חה\"פ)",
+        "driveFileId": "1IkEfSQY7-9PI9qwsd4-OLwnlh_wIK9Xd"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 543 (חה\"פ)",
+        "driveFileId": "1yCgopyH1j_sLueJqx_RI3D5zlTMasXzj"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יב ע' 8",
+        "driveFileId": "150ymbmSGf6Ngmo7dMc5SHM9HTJTlePoL"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1JGtk61_FfYR2Prt3NqJGSGNUX4akJmXC"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113071,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-07-18",
+    "occasionLabel": "ח\"י ניסן, אחרי מוסף",
+    "occasionLabelEn": "18 Nisan, after Musaf",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1FN6TxDEiRsBUw5K1bOKxWHl3EHn0rdsB"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113072,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-07-22",
+    "occasionLabel": "אחש\"פ",
+    "occasionLabelEn": "Acharon shel Pesach",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1fePDKWL_mDgtrU42Ynd_fOR5SxCaNXHc"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1N21QzSS5XKXaAaR-iYxDGmNZ21QSJt7A"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 544 (חה\"פ)",
+        "driveFileId": "1Og0wNbHZJTyBt84RmH1F_hO5KmdrzPMG"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"כ ע' 591 (י\"ט כסלו)",
+        "driveFileId": "1TXezu2NLQ5P7kA7tOWNpCRUd3pBmohr5"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יב ע' 10",
+        "driveFileId": "1ftUN29jnL21cQJnwB3baGbhhXvW_OWsm"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (פסח ב)",
+        "driveFileId": "1FV_AcskzNFMizdf7UjhrcgaYYF3LQbc5"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1ybkpkX_6gVcEEjItVzaa5uL7sSCekyGD"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1cAVg0C2B1eqOKteDV31RqFzR3bXNeSxL"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1Ak8KcvFXWlwFUrRGlSYOaubzZb6nPKHa"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113073,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-07-24",
+    "occasionLabel": "שמיני, מבה\"ח אייר",
+    "occasionLabelEn": "Shemini, Shabbos Mevarchim Iyar",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1SQOyYq18-VzGxXZw66UwEYNq9Z2bGofD"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1HeNBP-vgyTS-0oun9FfZ_Mr3zW1RNLV8"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"א ע' 228 (שמיני)",
+        "driveFileId": "1e86OLw-s7JD0nTt6_fE8yKMLvub5Aw00"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 547 (חה\"פ)",
+        "driveFileId": "1xDEa_dsv-ML-4IpH6SvT7WVtA3K1PfYB"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"כ ע' 606 (י\"ט כסלו)",
+        "driveFileId": "1VtUBEwog2GLFOfqg_8PfxmX8MQ2DLB33"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יב ע' 12",
+        "driveFileId": "1sZV1vLdkQ81-Y63Kz7xxb75u4sb95zXj"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (ויקרא)",
+        "driveFileId": "18z7RNsjmueLZBApMm0rvdHYbffRDWSrg"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1lEcM1aSSIErHRwMsJL-O1v3yKHoP_Qzm"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "0B_UwzYOTIwDTTkZkZzRZYTJ0UHc",
+        "resourceKey": "0-9YHS3hoDsR1Eo9Fde9nGug"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1pzoZox3bfPvqkZJXHx1RWnj06NPp68g1"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113074,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-08-18",
+    "occasionLabel": "ל\"ג בעומר, בעת אפשערעניש",
+    "occasionLabelEn": "Lag BaOmer, at an upsherenish",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1F7WfOrsXedxTD0BvMuc-IlxLFPV5U3JB"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "17A4_2LDSJO3_Vb0TZK8LhMEHsOrNOtEH"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113075,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-08-29",
+    "occasionLabel": "במדבר, מבה\"ח וער\"ח סיון",
+    "occasionLabelEn": "Bamidbar, Shabbos Mevarchim and Erev Rosh Chodesh Sivan",
+    "occasionLabelShortEn": "Bamidbar, Mevarchim Sivan",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "14vJ-RjNI2S3Q2YXRGlhZuC-0yau38Hcg"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1gJNSYtj4ctaY9N6MIJbI5kYvHl5zxJGL"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (במדבר א)",
+        "driveFileId": "1vbk1wNLNQB0LXBlONrn3AbSPqLouqupm"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "10E26u6oq8_2LYF6KV8C67Jo9aFXlUy-_"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "0B_UwzYOTIwDTOV9CZjZzVk1oNU0",
+        "resourceKey": "0-WPoi-shyul-qCxEuLAB7zA"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113076,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-09-04",
+    "occasionLabel": "ליל ערב חה\"ש",
+    "occasionLabelEn": "Erev Shavuos night",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1Zk7GbNU-j4E0smpy4UyEUoLAneBeZTjv"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "14gsL047U1G87CYd4dHL2keuJFu6hOmlT"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113077,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-09-05",
+    "occasionLabel": "ליל א' דחה\"ש, לפנות בוקר",
+    "occasionLabelEn": "Shavuos, night 1, before dawn",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (שבועות)",
+        "driveFileId": "1lenMAhYqkcACvcfN7ariNhwgHgrD_akj"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1LtbvmOoxFecpoF2YXw3kgnuwT0w69P91"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113078,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-09-07",
+    "occasionLabel": "יום ב' דחה\"ש",
+    "occasionLabelEn": "Shavuos, day 2",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1mT6N2Xuk0Mu4yWEa2cUW8zcSHvF7lN4K"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1hccTKESJbVCcOE5qdFqPpwZmudsguIu-"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "בטא\"ח מס' יא ע' ו",
+        "driveFileId": "1cNWoG8OVruUe1lmUsRP8sSlyYh2fk0fk"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"א ע' 280 (בהר)",
+        "driveFileId": "1QcN-4uP4pnGP_Ref9jtv-3zgFpzvRy7l"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 560 (חה\"ש)",
+        "driveFileId": "1m4Fplx1bTM0L-3YNgp608Kr2FI9-AOy1"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 575 (חה\"ש)",
+        "driveFileId": "1aSGViYlxjwGM0_ZIMQkfQ7j_66imN_ns"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יב ע' 14",
+        "driveFileId": "1GxMOuyzHffu4Lthrz7_hoJzXyDkpicPd"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (שבועות)",
+        "driveFileId": "15H4Y7b0X5N6UjCRELeW4c-Wq_aInMOZj"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "12FwYn3ZlAIeneITjGUjQCDCBz2Z4Z1Fp"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1KpOmr5Trq88vMl4oRPTA7pPi7kRiPLaP"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1pgPnlbqhDunb6cRG9rwwiT9IfpSY-RGn"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113079,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-09-08",
+    "occasionLabel": "אסרו חה\"ש, שיחה להרי\"ם ומנהלי הישיבות שבערי השדה",
+    "occasionLabelEn": "Isru Chag Shavuos, sicha to the roshei yeshivah and the principals of the out-of-town yeshivos",
+    "occasionLabelShort": "אסרו חה\"ש, שיחה להרי\"ם שבערי השדה",
+    "occasionLabelShortEn": "Isru Chag Shavuos, roshei yeshivah",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1GjZ2oZ_C3YuoCLWLqm_rfVl6tOzUcRj8"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1BBSwHHlUHXxydB2Cu7Bwr5DuRorSfT0S"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113080,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-09-28",
+    "occasionLabel": "שלח, מבה\"ח תמוז",
+    "occasionLabelEn": "Shelach, Shabbos Mevarchim Tamuz",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1mYIaUkeWkkqzZMePmjwr-s5UKLtB9Epd"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1f9Gg2gIR5XO0CZR2MRrmD40iMWXu_KWE"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 320 (שלח)",
+        "driveFileId": "15LP1PIuGymEukyIEymK-kVJkzKxmaaST"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יב ע' 18",
+        "driveFileId": "13rOhMuV3KnaGteksyKTt6UxTB3tHMAQz"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (במדבר א)",
+        "driveFileId": "1sucleA28LhA-h9cM1LM0MfFY2mWK7C-a"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1QW1MrR-VdeIvZdqULWQo7oNP95nVMrXt"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1zdpmNvRPoueU1hbaC8UKDh5KTpfr9HIK"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "19XiWh040eHyPgsjaeRpTd0rUFM8zNNaj"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 3",
+        "driveFileId": "1uRN2CkGoVJTC4uVZZKI8izf7yyOumJdF"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113081,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-10-12",
+    "occasionLabel": "חו\"ב, י\"ב תמוז",
+    "occasionLabelEn": "Chukas-Balak, 12 Tamuz",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1YJ7UnVQh6q46inIfnnR7ImWG4zSLVFza"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1PrGm7hgmrcSaJOSITyGQmK-xkBK-2mdz"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113082,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-10-13",
+    "occasionLabel": "מוצאי י\"ג תמוז",
+    "occasionLabelEn": "Motzei 13 Tamuz",
+    "audio": [
+      {
+        "workerFilename": "AR0016930.mp3",
+        "durationMs": 187533,
+        "chapterName": "Two Nigunim",
+        "chapterNameHe": "שני ניגונים"
+      },
+      {
+        "workerFilename": "AR0016931.mp3",
+        "durationMs": 504946,
+        "chapterName": "Sicha 1",
+        "chapterNameHe": "שיחה א׳"
+      },
+      {
+        "workerFilename": "AR0016932.mp3",
+        "durationMs": 33880,
+        "chapterName": "Nigun Rikud",
+        "chapterNameHe": "ניגון ריקוד"
+      },
+      {
+        "workerFilename": "AR0016933.mp3",
+        "durationMs": 99631,
+        "chapterName": "Ma’amar Nigun",
+        "chapterNameHe": "ניגון המאמר"
+      },
+      {
+        "workerFilename": "AR0016934.mp3",
+        "durationMs": 1975040,
+        "chapterName": "Ma’amar",
+        "chapterNameHe": "מאמר"
+      },
+      {
+        "workerFilename": "AR0016935.mp3",
+        "durationMs": 492382,
+        "chapterName": "Padah Beshalom",
+        "chapterNameHe": "פדה בשלום"
+      },
+      {
+        "workerFilename": "AR0016936.mp3",
+        "durationMs": 1468656,
+        "chapterName": "Sicha 2",
+        "chapterNameHe": "שיחה ב׳"
+      },
+      {
+        "workerFilename": "AR0016937.mp3",
+        "durationMs": 83539,
+        "chapterName": "Nigun Simcha",
+        "chapterNameHe": "ניגון שמחה"
+      },
+      {
+        "workerFilename": "AR0016938.mp3",
+        "durationMs": 451813,
+        "chapterName": "Sicha 3",
+        "chapterNameHe": "שיחה ג׳"
+      },
+      {
+        "workerFilename": "AR0016939.mp3",
+        "durationMs": 192653,
+        "chapterName": "L’chaim & Conversation",
+        "chapterNameHe": "לחיים ושיחה עם הקהל"
+      },
+      {
+        "workerFilename": "AR0016940.mp3",
+        "durationMs": 219245,
+        "chapterName": "Magbis",
+        "chapterNameHe": "מגבית"
+      },
+      {
+        "workerFilename": "AR0016941.mp3",
+        "durationMs": 90462,
+        "chapterName": "Nigun Mimitzrayim",
+        "chapterNameHe": "ניגון ממצרים"
+      },
+      {
+        "workerFilename": "AR0016942.mp3",
+        "durationMs": 400979,
+        "chapterName": "Sicha 4",
+        "chapterNameHe": "שיחה ד׳"
+      },
+      {
+        "workerFilename": "AR0016943.mp3",
+        "durationMs": 932571,
+        "chapterName": "Two Nigunim",
+        "chapterNameHe": "שני ניגונים"
+      },
+      {
+        "workerFilename": "AR0016944.mp3",
+        "durationMs": 1262027,
+        "chapterName": "Sicha 5",
+        "chapterNameHe": "שיחה ה׳"
+      },
+      {
+        "workerFilename": "AR0016945.mp3",
+        "durationMs": 379715,
+        "chapterName": "Sicha 6",
+        "chapterNameHe": "שיחה ו׳"
+      },
+      {
+        "workerFilename": "AR0016946.mp3",
+        "durationMs": 26383,
+        "chapterName": "Ani Ma’amin",
+        "chapterNameHe": "אני מאמין"
+      },
+      {
+        "workerFilename": "AR0016947.mp3",
+        "durationMs": 728607,
+        "chapterName": "Sicha 7",
+        "chapterNameHe": "שיחה ז׳"
+      },
+      {
+        "workerFilename": "AR0016948.mp3",
+        "durationMs": 272013,
+        "chapterName": "Two Nigunim",
+        "chapterNameHe": "שני ניגונים"
+      },
+      {
+        "workerFilename": "AR0016949.mp3",
+        "durationMs": 251951,
+        "chapterName": "Sicha 8",
+        "chapterNameHe": "שיחה ח׳"
+      },
+      {
+        "workerFilename": "AR0016950.mp3",
+        "durationMs": 560587,
+        "chapterName": "Avinu Malkeinu",
+        "chapterNameHe": "אבינו מלכנו"
+      },
+      {
+        "workerFilename": "AR0016951.mp3",
+        "durationMs": 369319,
+        "chapterName": "Daled Bavos",
+        "chapterNameHe": "ד׳ בבות"
+      },
+      {
+        "workerFilename": "AR0016952.mp3",
+        "durationMs": 313208,
+        "chapterName": "End of Farbrengen",
+        "chapterNameHe": "סיום ההתוועדות"
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1TATf0h5yzB-xc6Dy-TaMTlzDwO5DFUmK"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1got192o7Qikcdj5nwiezNuTySvnLjtJB"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "הנחה פרטית - הר' יצחק דובער אושפאל",
+        "driveFileId": "1Vl62iq_LpsFsgdUja0zlZW9LsP2UDRy4"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 589 (י\"ב-י\"ג תמוז)",
+        "driveFileId": "1zvH-okay0yF6b0lqbGjtg_5ry2qe--AU"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 610 (פנחס)",
+        "driveFileId": "1ACExQmohcE8R9MYdT64RwAiuyAnCEK4P"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 619 (ראה)",
+        "driveFileId": "1cx9dW0zXohlFB-lbvc7QdVd-qm8Kp4Je"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יב ע' 21",
+        "driveFileId": "1TiYIrWKq1Vt4AFN18ovP7QcfkKbAMzI2"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (י\"ב-י\"ג תמוז)/ סה\"מ באתי לגני ח\"א",
+        "driveFileId": "1khlR7XFIUNq5xRtt3VKOEAo9c2a4NQGL"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1AFgP1Q97_O6mS38O0WiasJkeiy2P2NT_"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113083,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-10-14",
+    "occasionLabel": "ליל ט\"ו תמוז, שיחה להתלמידים שי' הנוסעים בשליחות המל\"ח",
+    "occasionLabelEn": "Night of 15 Tamuz, sicha to the students traveling on Merkos shlichus",
+    "occasionLabelShort": "ליל ט\"ו תמוז, שיחה להנוסעים בשליחות",
+    "occasionLabelShortEn": "Night of 15 Tamuz, Merkos shlichus",
+    "audio": [
+      {
+        "workerFilename": "JEMSK0149.mp3",
+        "durationMs": 302000,
+        "chapterName": "Sicha",
+        "chapterNameHe": "שיחה"
+      }
+    ],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1zcrB1PleZ-2uQcH-65W2YoVGKvdI1JAF"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1G2K3JavkevCOrmnc2hr9KkuoUFc6pCfM"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113084,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-10-26",
+    "occasionLabel": "מטו\"מ, מבה\"ח מנ\"א",
+    "occasionLabelEn": "Matos-Masei, Shabbos Mevarchim Menachem Av",
+    "occasionLabelShortEn": "Matos-Masei, Mevarchim Menachem Av",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1r-kR-XCkDAfwRZ6OnkgQSAMd3Mfzh6XU"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "19biULQGHlv_rW6Lnz5rWMYVkSg16RbpG"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 348 (מטו\"מ)",
+        "driveFileId": "1pOulN8xiPxjBLVatxGp0_GcqpwEW61O6"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 358 (דברים)",
+        "driveFileId": "1vX3DKU8v3ZEYvMX_JyGP08lqKcCMo_Tl"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (במדבר ב)",
+        "driveFileId": "1Ac3iK36VDGdTXISbACZk62HPR1t9O9Xc"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1IdRzuD7bMHCxCqXDrwklT844HWOQQ0IT"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1edh3PYRjJKCics2YJYwDMXX60phXeiWS"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1InEFRerv5Rl54C3o_cUDKLwutgLWEKAu"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113085,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-11-04",
+    "occasionLabel": "דברים, חזון",
+    "occasionLabelEn": "Devarim, Shabbos Chazon",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1Ua7EkJqj5ggU3KY9Ky41Y43ffRZTDGEg"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1zrzyfNH2B2-DKAMIGnPiodjlRNxVWJKK"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 357 (דברים)",
+        "driveFileId": "1vX3DKU8v3ZEYvMX_JyGP08lqKcCMo_Tl"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יג ע' 66",
+        "driveFileId": "1OKMeLl5XF3BqecBnFcyDww6cBj1zugyy"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (דברים א)",
+        "driveFileId": "1Z6cIcQyo4wt00y5GGC-GfgIFQkOFZPyl"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1AQAl4xCd4BfOf3dViZKNRPfvTLRVX74P"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "17Lnrpz2wjQ3eTbhokcasmK1540RBAjmX"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113086,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-11-20",
+    "occasionLabel": "כ' מנ\"א",
+    "occasionLabelEn": "20 Menachem Av",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1wlENUFIHrB8Ef57agvX433nvuZH4KpTt"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "16F_GPcWnqSGAvwb0VGC6VKDLgDfCbdg5"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 617 (ראה)",
+        "driveFileId": "1MWdAXEswfmCYGyB9nQMDduGfXuPDnArd"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יג ע' 67",
+        "driveFileId": "1JhuPrtxiRnWMTb8F70NUN4eEmhGny956"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "14SIcHifSZtimnHTZhUwVeQvod9J-Qlmn"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113087,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-11-25",
+    "occasionLabel": "ראה, מבה\"ח אלול",
+    "occasionLabelEn": "Re'eh, Shabbos Mevarchim Elul",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "120XY0mC0ds1acrgs2hzGh1FtCtqIq1Zq"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1MlzuqRj6UEvM8x28VqwM48OEfbJFoAnZ"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "בטא\"ח מס' יב ע' ה",
+        "driveFileId": "1-_nKlBxd2ucxFhc6-dcfr2TZTKL4SSiM"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יג ע' 69",
+        "driveFileId": "1FMBC1jxF51n0kAC_cfPce0fMLOWCdpPh"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (אב-אלול)",
+        "driveFileId": "1bi1bZ-VSkvOMhhkEDN2E4EKq9Y5M-hcX"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "18zarcGs6osDONmSekoLGob59jjhDslVb"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "1GlA8LAC_6MYNkQi7IhxZTyQyWghZ8g6E"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "0B_UwzYOTIwDTYnNnM0p4X20xU2c",
+        "resourceKey": "0-g5vpFt9H91Ic4A9gTGLsbg"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 3",
+        "driveFileId": "1IKpDL1x8QACUH4LCukR7lyAlVWhbaG89"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 4",
+        "driveFileId": "1xEr1EPpqhvExkU6yF-Zkj9-1BXa74Lri"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113088,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-12-23",
+    "occasionLabel": "נצו\"י, כ\"ג אלול",
+    "occasionLabelEn": "Nitzavim-Vayeilech, 23 Elul",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1u9ZgfWaoFFE6BO4dSTlxaWXRc1Dz7Qj8"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1z-gQ-AJliq0sLSvIShMpj6p_JsW3DBll"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ב ע' 395 (תבא)",
+        "driveFileId": "1pQaHHnVA-7sjVesCLDhsBsoCNybItHCO"
+      },
+      {
+        "section": "mugah",
+        "label": "ח\"ד ע' 1148 (וילך)",
+        "driveFileId": "1-JExPVrOKC57GA3EH6TBOv0CsovQFaOI"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יג ע' 70",
+        "driveFileId": "1L5VaxoEHyVnfKe_5b_meqKx3_F4ceEPM"
+      },
+      {
+        "section": "maamorim",
+        "label": "סה\"מ/ סה\"מ (אב-אלול)",
+        "driveFileId": "1aYGW6KvgRI5CTM_f18NQ12hOoFm0lWXQ"
+      },
+      {
+        "section": "maamorim",
+        "label": "תו\"מ התוועדויות/ תו\"מ סה\"מ",
+        "driveFileId": "1kp8UFsQaGyUj6vvuNk4Wtz_2N15J8tAk"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 1",
+        "driveFileId": "0B_UwzYOTIwDTVjRaNnB3cWIzRkE",
+        "resourceKey": "0-P04wv0qibox3TlTnMezi3A"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 2",
+        "driveFileId": "1O7htOCaqAoNf2HWBo4NQzcbj3g813-qB"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 3",
+        "driveFileId": "1EVwN1n8GsGo_mjZA6rw4ynKK8s-iwuBq"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 4",
+        "driveFileId": "1N5mVvWcCJtmt-S-bSaBJKnxgp6Pn17IE"
+      },
+      {
+        "section": "hagahos",
+        "label": "צילום 5",
+        "driveFileId": "1Vw4jV5cc6I_PezWU059HwD7AvvSOZKeF"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113089,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-12-26",
+    "occasionLabel": "ג' דסליחות, שיחה להרי\"ם דישיבות תות\"ל",
+    "occasionLabelEn": "Selichos, day 3, sicha to the roshei yeshivah of the Tomchei Temimim yeshivos",
+    "occasionLabelShort": "ג' דסליחות, שיחה להרי\"ם דתות\"ל",
+    "occasionLabelShortEn": "Selichos, day 3, to roshei yeshivah",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "biltiMugah",
+        "label": "שיחו\"ק",
+        "driveFileId": "1sW08TZ2DaR__fA6b18vRl72dPR8DN-XE"
+      },
+      {
+        "section": "biltiMugah",
+        "label": "תו\"מ התוועדויות",
+        "driveFileId": "1i8Z20bQ2Q0ulXcd5fTEfynhl1bPk7S9u"
+      }
+    ]
+  },
+  {
+    "occasionId": 11113090,
+    "hebrewYear": 5715,
+    "hebrewDate": "5715-12-29",
+    "occasionLabel": "ערב ר\"ה, ברכה",
+    "occasionLabelEn": "Erev Rosh Hashanah, bracha",
+    "audio": [],
+    "pdfs": [
+      {
+        "section": "mugah",
+        "label": "שיחו\"ק תשט\"ז/ חי\"ט ע' 536",
+        "driveFileId": "1WoIZuFDt_zzEapyDoGgnyRZAhkg-vxTY"
+      },
+      {
+        "section": "mugah",
+        "label": "קובץ ליובאוויטש מס' יג ע' 57",
+        "driveFileId": "10c25Y_6hXb5TVeU6Mxkg5B9W_pvEyP3x"
+      },
+      {
+        "section": "mugah",
+        "label": "[תרגום - תו\"מ התוועדויות תשט\"ו]",
+        "driveFileId": "1_076yWEucszFQ9dmt743tU-cjktJArHI"
+      }
+    ]
+  }
+]
