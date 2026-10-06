@@ -1,0 +1,352 @@
+#!/usr/bin/env node
+import '../privateKey.js';
+import { parseArgs } from 'node:util';
+import { checkLinksCommand, citationsCommand, embedCommand } from '../networkCommands.js';
+import { machineCommand } from '../machineCommand.js';
+import { trainingClipsCommand } from '../trainingClipsCommand.js';
+import { ocrCommand } from '../ocrCommand.js';
+import { alignCommand, mendSplitsCommand, restoreWordTimesCommand, transcribeCommand } from '../transcribeCommand.js';
+import { coversCommand, fingerprintsCommand, pageImagesCommand } from '../scanPagesCommand.js';
+import {
+  accountCommand,
+  convertBodiesCommand,
+  shaarsCommand,
+  archiveGapsCommand,
+  crawlLibraryCommand,
+  crawlSefariaCommand,
+  dumpCommand,
+  editionCommand,
+  importCommand,
+  keygenCommand,
+  migrateCommand,
+  mirrorCommand,
+  mirrorPullCommand,
+  pageFixesMakeCommand,
+  pageFixesPublishCommand,
+  pageFixesRegisterCommand,
+  readingCopiesMakeCommand,
+  readingCopiesPublishCommand,
+  readingCopiesRegisterCommand,
+  holdCatalogCommand,
+  rebuildableCommand,
+  relinkDriveCommand,
+  relinkJemCommand,
+  schemaCheckCommand,
+  type Context,
+} from '../commands.js';
+
+const HELP = `rebbehub - RebbeHub's command line
+
+  rebbehub migrate                              create or update the database
+  rebbehub schema-check                         check the built-in schemas
+  rebbehub convert-bodies [--chunk <n>]         pages whose words are still wiki markup, as structured
+                                                words (system changes of <n> pages; run once after
+                                                deploying built-in schemas version 5)
+  rebbehub shaars [--chunk <n>] [--dry-run]     every sefer without a shaar gets the one the catalog
+                                                makes from its data (docs/shaar.md), as system
+                                                changes of <n> sefarim; --dry-run only counts them
+  rebbehub hold-catalog [--minutes <n>]         refuses writes to the catalog until stopped (an
+                                                import's copy back); prints held once it does
+  rebbehub rebuildable [--guard]                prints rebuildable when importers made everything;
+                                                --guard prints SQL that fails otherwise
+  rebbehub rebuildable --mark | --guard-mark <mark>
+                                                the catalog's mark; SQL that fails unless it still has it
+  rebbehub relink-drive [--chunk <n>] [--dry-run]
+                                                links on Sichos-Kodesh's media proxy as the files' own
+                                                Google Drive links: one reviewed bot suggestion per <n>
+                                                items (500); --dry-run only counts them
+  rebbehub relink-jem [--chunk <n>] [--dry-run]
+                                                links to JEM's player in the older form as the
+                                                Ashreinu app's own, the same way
+  rebbehub account --id <id> --name <name> [--steward] [--bot]
+  rebbehub import <importer> --from <Sichos-Kodesh checkout> [--approve-as <steward>] [--dry-run] [--chunk <n>]
+                                                sichos-kodesh-works, sichos-kodesh-occasions, otzros, hebrewbooks;
+                                                chabadlibrary (CHABADLIBRARY_TREE), jem (JEM_DB), sefaria (SEFARIA_DATA),
+                                                igros (IGROS_DATA), archive (SK_ARCHIVE_DB): see docs/importers.md
+  rebbehub crawl-library --from <Sichos-Kodesh checkout> --out <tree.json> [--minutes <n>] [--texts] [--keep]
+                                                chabadlibrary.org's contents, continuing an earlier crawl; --texts
+                                                keeps each page's text beside the tree, --keep stores them in R2
+                                                (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
+  rebbehub crawl-sefaria --from <Sichos-Kodesh checkout> --out <folder> [--cache <folder>] [--keep] [--only <title>] [--daily]
+                                                Sefaria's Chabad books Sichos-Kodesh does not publish; --daily (or
+                                                SEFARIA_DAILY=1) also Chitas and the Rambam; --keep stores
+                                                their texts in R2 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
+  rebbehub archive-gaps --db <index.sqlite>     the files Sichos-Kodesh's archive could not get, onto the Missing board
+  rebbehub mirror --dir <folder> [--git] [--full] [--limit <n>]
+  rebbehub edition --by <steward> [--tag 2026.40] [--notes <text>]
+  rebbehub dump --tag <tag> --out <folder> [--key <key.json>] [--upload] [--bucket rebbehub-public]
+                                                SQLite, JSON Lines and Parquet, signed;
+                                                --upload puts them in R2 at dumps/<tag>/, served at /dumps
+                                                (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
+  rebbehub mirror-pull --out <folder> [--api https://api.rebbehub.org] [--key <public key>]...
+                  [--tag <tag>|latest] [--allow-unsigned]
+                                                a mirror's copy of every edition's dumps, each signature
+                                                and sha256 checked (docs/mirrors.md)
+  rebbehub keygen --out <key.json>
+  rebbehub ocr --approve-as <steward> [--scan <id>] [--limit <n>] [--files <url>] [--reread] [--requested-only]
+                                                machine OCR: the scans people asked for first, then the
+                                                newest served scans that have none yet (--requested-only:
+                                                only those asked for);
+                                                files from <url>/objects/<sha256> (default the live API);
+                                                --reread: scans read by an older engine, read again
+                                                (lines people checked are kept)
+  rebbehub transcribe --approve-as <steward> [--recording <id>] [--limit <n>] [--linked] [--files <url>]
+                  [--engine workers-ai|local] [--requested-only] [--shard <i>/<n>]
+                                                machine transcripts, with sync: the recordings people asked
+                                                for first, then the newest that have none (Whisper on Workers AI: CLOUDFLARE_ACCOUNT_ID and
+                                                CLOUDFLARE_AI_TOKEN; local: ivrit.ai's Yiddish Whisper
+                                                here, pip install faster-whisper); --linked also those
+                                                heard elsewhere
+  rebbehub machine [list [--kind ocr|transcript] [--status <status>] | ask --kind <kind> --item <id> --as <account>]
+                                                the machines' queue: what waits, what is left, and asking
+                                                for a scan to be read or a recording transcribed
+  rebbehub training-clips [--out <clips.jsonl>] [--since <date>]
+                                                the next Rebbe Whisper's training data: every transcript
+                                                paragraph a person checked, as clips (docs/transcription.md)
+  rebbehub embed [--limit <n>]                  vectors for search by meaning, of items not embedded yet
+                                                (BGE-M3 on Workers AI: CLOUDFLARE_ACCOUNT_ID and
+                                                CLOUDFLARE_AI_TOKEN)
+  rebbehub citations [--approve-as <steward>] [--limit <n>]
+                                                citations found in texts, proposed as links for review
+  rebbehub check-links [--limit <n>]            whether the catalog's links still answer, for /health
+  rebbehub align --approve-as <steward> [--recording <id>] [--limit <n>] [--linked] [--files <url>]
+                  [--engine workers-ai|local]
+                                                word timings for transcripts that have none, and the
+                                                farbrengen's hanacha synced paragraph by paragraph
+  rebbehub mend-splits --approve-as <steward> [--recording <id>] [--limit <n>] [--dry-run]
+                                                words older machine transcripts cut in two between
+                                                paragraphs, joined again: one bot suggestion per
+                                                recording, only paragraphs no person checked or fixed;
+                                                --dry-run only lists them
+  rebbehub restore-word-times --approve-as <steward> [--recording <id>] [--limit <n>] [--dry-run]
+                                                word timings back for paragraphs fixed before fixes
+                                                kept them, from their history: one bot suggestion
+                                                per recording; --dry-run only lists them
+  rebbehub page-images [--scan <id>] [--limit <n>] [--files <url>] [--bucket rebbehub-public]
+                                                page images and thumbnails of served scans that have
+                                                none (the IIIF manifests and the site's viewer show them),
+                                                into R2 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
+  rebbehub covers [--work <id>] [--limit <n>] [--again] [--files <url>] [--bucket rebbehub-public]
+                  [--preservation-bucket rebbehub-preservation]
+                                                each sefer's cover from the title page of its best PDF
+                                                (or the page a keeper chose), into R2; a PDF only linked
+                                                (Drive, HebrewBooks) is fetched and kept in the
+                                                preservation bucket (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
+  rebbehub fingerprints [--limit <n>] [--files <url>] [--preservation-bucket rebbehub-preservation]
+                                                page hashes and audio fingerprints of held files not
+                                                measured yet (recordings need ffmpeg), so the same scan
+                                                or recording uploaded again is found
+  rebbehub reading-copies make --from <Sichos-Kodesh checkout> --work <folder> [--shard 0/4] [--limit <n>]
+                  [--archive <objects.json>] [--source-bucket sichos-kodesh-archive] [--bucket rebbehub-public]
+  rebbehub reading-copies publish --from <Sichos-Kodesh checkout> --work <folder> [--bucket rebbehub-public]
+                                                the Sichos Kodesh scans' reading copies, into R2
+                                                (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
+  rebbehub reading-copies register [--manifest <url or file>]
+                                                records the published ones in the catalog
+  rebbehub page-fixes make --work <folder> [--shard 0/4] [--limit <n>]
+                                                measures the Otzros library's PDFs (read from Drive, not
+                                                kept): which pages lean, and the turn that levels each
+  rebbehub page-fixes publish --work <folder> [--bucket rebbehub-public]
+                                                the manifest, into R2 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN)
+  rebbehub page-fixes register [--manifest <url or file>]
+                                                records the published ones in the catalog
+
+  --database <url or folder>   Postgres URL, or a PGlite folder
+                               (default: $DATABASE_URL, else .data/pglite)
+`;
+
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: {
+    engine: { type: 'string' },
+    database: { type: 'string' },
+    id: { type: 'string' },
+    name: { type: 'string' },
+    steward: { type: 'boolean' },
+    bot: { type: 'boolean' },
+    from: { type: 'string' },
+    'approve-as': { type: 'string' },
+    'dry-run': { type: 'boolean' },
+    chunk: { type: 'string' },
+    dir: { type: 'string' },
+    git: { type: 'boolean' },
+    full: { type: 'boolean' },
+    limit: { type: 'string' },
+    by: { type: 'string' },
+    tag: { type: 'string' },
+    notes: { type: 'string' },
+    out: { type: 'string' },
+    key: { type: 'string', multiple: true },
+    upload: { type: 'boolean' },
+    api: { type: 'string' },
+    'allow-unsigned': { type: 'boolean' },
+    guard: { type: 'boolean' },
+    work: { type: 'string' },
+    shard: { type: 'string' },
+    archive: { type: 'string' },
+    'source-bucket': { type: 'string' },
+    bucket: { type: 'string' },
+    manifest: { type: 'string' },
+    scan: { type: 'string' },
+    recording: { type: 'string' },
+    linked: { type: 'boolean' },
+    reread: { type: 'boolean' },
+    'requested-only': { type: 'boolean' },
+    kind: { type: 'string' },
+    item: { type: 'string' },
+    as: { type: 'string' },
+    status: { type: 'string' },
+    again: { type: 'boolean' },
+    files: { type: 'string' },
+    since: { type: 'string' },
+    minutes: { type: 'string' },
+    mark: { type: 'boolean' },
+    'guard-mark': { type: 'string' },
+    cache: { type: 'string' },
+    keep: { type: 'boolean' },
+    texts: { type: 'boolean' },
+    only: { type: 'string', multiple: true },
+    daily: { type: 'boolean' },
+    db: { type: 'string' },
+    'preservation-bucket': { type: 'string' },
+    help: { type: 'boolean', short: 'h' },
+  },
+});
+
+const need = (value: string | undefined, flag: string): string => {
+  if (!value) throw new Error(`--${flag} is needed`);
+  return value;
+};
+const number = (value: string | undefined): number | undefined => (value === undefined ? undefined : Number(value));
+
+const ctx: Context = { log: (line) => console.log(line), database: values.database };
+const [command, ...rest] = positionals;
+
+try {
+  switch (values.help ? 'help' : command) {
+    case 'migrate':
+      await migrateCommand(ctx);
+      break;
+    case 'hold-catalog':
+      await holdCatalogCommand(ctx, { minutes: number(values.minutes) });
+      break;
+    case 'rebuildable':
+      await rebuildableCommand(ctx, { guard: values.guard, mark: values.mark, guardMark: values['guard-mark'] });
+      break;
+    case 'schema-check':
+      await schemaCheckCommand(ctx);
+      break;
+    case 'convert-bodies':
+      await convertBodiesCommand(ctx, { chunk: number(values.chunk) });
+      break;
+    case 'shaars':
+      await shaarsCommand(ctx, { chunk: number(values.chunk), dryRun: values['dry-run'] });
+      break;
+    case 'relink-drive':
+      await relinkDriveCommand(ctx, { chunk: number(values.chunk), dryRun: values['dry-run'] });
+      break;
+    case 'relink-jem':
+      await relinkJemCommand(ctx, { chunk: number(values.chunk), dryRun: values['dry-run'] });
+      break;
+    case 'account':
+      await accountCommand(ctx, { id: need(values.id, 'id'), name: need(values.name, 'name'), steward: values.steward, bot: values.bot });
+      break;
+    case 'import':
+      await importCommand(ctx, { source: need(rest[0], 'source'), from: need(values.from, 'from'), approveAs: values['approve-as'], dryRun: values['dry-run'], chunkSize: number(values.chunk) });
+      break;
+    case 'crawl-library':
+      await crawlLibraryCommand(ctx, { from: need(values.from, 'from'), out: need(values.out, 'out'), minutes: number(values.minutes), texts: values.texts, keep: values.keep, bucket: values.bucket });
+      break;
+    case 'crawl-sefaria':
+      await crawlSefariaCommand(ctx, { from: need(values.from, 'from'), out: need(values.out, 'out'), cache: values.cache, keep: values.keep, only: values.only, daily: values.daily, bucket: values.bucket });
+      break;
+    case 'archive-gaps':
+      await archiveGapsCommand(ctx, { db: need(values.db, 'db') });
+      break;
+    case 'ocr':
+      await ocrCommand(ctx, { approveAs: need(values['approve-as'], 'approve-as'), scan: values.scan, limit: number(values.limit), files: values.files, reread: values.reread, requestedOnly: values['requested-only'] });
+      break;
+    case 'align':
+      await alignCommand(ctx, { approveAs: need(values['approve-as'], 'approve-as'), recording: values.recording, limit: number(values.limit), linked: values.linked, files: values.files, engine: values.engine });
+      break;
+    case 'mend-splits':
+      await mendSplitsCommand(ctx, { approveAs: values['approve-as'], recording: values.recording, limit: number(values.limit), dryRun: values['dry-run'] });
+      break;
+    case 'restore-word-times':
+      await restoreWordTimesCommand(ctx, { approveAs: values['approve-as'], recording: values.recording, limit: number(values.limit), dryRun: values['dry-run'] });
+      break;
+    case 'transcribe':
+      await transcribeCommand(ctx, { approveAs: need(values['approve-as'], 'approve-as'), recording: values.recording, limit: number(values.limit), linked: values.linked, files: values.files, engine: values.engine, requestedOnly: values['requested-only'], shard: values.shard });
+      break;
+    case 'training-clips':
+      await trainingClipsCommand(ctx, { out: values.out, since: values.since, files: values.files });
+      break;
+    case 'machine':
+      await machineCommand(ctx, { action: rest[0], kind: values.kind, item: values.item, as: values.as, status: values.status, limit: number(values.limit) });
+      break;
+    case 'embed':
+      await embedCommand(ctx, { limit: number(values.limit) });
+      break;
+    case 'citations':
+      await citationsCommand(ctx, { approveAs: values['approve-as'], limit: number(values.limit) });
+      break;
+    case 'check-links':
+      await checkLinksCommand(ctx, { limit: number(values.limit) });
+      break;
+    case 'page-images':
+      await pageImagesCommand(ctx, { scan: values.scan, limit: number(values.limit), files: values.files, bucket: values.bucket });
+      break;
+    case 'covers':
+      await coversCommand(ctx, { work: values.work, limit: number(values.limit), again: values.again, files: values.files, bucket: values.bucket, preservationBucket: values['preservation-bucket'] });
+      break;
+    case 'fingerprints':
+      await fingerprintsCommand(ctx, { limit: number(values.limit), files: values.files, preservationBucket: values['preservation-bucket'] });
+      break;
+    case 'mirror':
+      await mirrorCommand(ctx, { dir: need(values.dir, 'dir'), git: values.git, full: values.full, limit: number(values.limit) });
+      break;
+    case 'edition':
+      await editionCommand(ctx, { by: need(values.by, 'by'), tag: values.tag, notes: values.notes });
+      break;
+    case 'dump':
+      await dumpCommand(ctx, { tag: need(values.tag, 'tag'), out: need(values.out, 'out'), keyFile: values.key?.[0], upload: values.upload, bucket: values.bucket });
+      break;
+    case 'mirror-pull':
+      await mirrorPullCommand(ctx, { api: values.api, out: need(values.out, 'out'), keys: values.key, tag: values.tag, allowUnsigned: values['allow-unsigned'] });
+      break;
+    case 'keygen':
+      await keygenCommand(ctx, { out: need(values.out, 'out') });
+      break;
+    case 'reading-copies':
+      if (rest[0] === 'make') {
+        await readingCopiesMakeCommand(ctx, {
+          from: need(values.from, 'from'),
+          work: need(values.work, 'work'),
+          shard: values.shard,
+          limit: number(values.limit),
+          archive: values.archive,
+          sourceBucket: values['source-bucket'],
+          bucket: values.bucket,
+        });
+      } else if (rest[0] === 'publish') {
+        await readingCopiesPublishCommand(ctx, { from: need(values.from, 'from'), work: need(values.work, 'work'), bucket: values.bucket });
+      } else if (rest[0] === 'register') {
+        await readingCopiesRegisterCommand(ctx, { manifest: values.manifest });
+      } else {
+        throw new Error('reading-copies make|publish|register');
+      }
+      break;
+    case 'page-fixes':
+      if (rest[0] === 'make') await pageFixesMakeCommand(ctx, { work: need(values.work, 'work'), shard: values.shard, limit: number(values.limit) });
+      else if (rest[0] === 'publish') await pageFixesPublishCommand(ctx, { work: need(values.work, 'work'), bucket: values.bucket });
+      else if (rest[0] === 'register') await pageFixesRegisterCommand(ctx, { manifest: values.manifest });
+      else throw new Error('page-fixes make|publish|register');
+      break;
+    default:
+      console.log(HELP);
+      if (command && command !== 'help') process.exitCode = 1;
+  }
+} catch (error) {
+  console.error(`rebbehub: ${(error as Error).message}`);
+  process.exitCode = 1;
+}

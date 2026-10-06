@@ -1,0 +1,209 @@
+name: Import the catalog (manual)
+
+# Fills the live catalog from Sichos-Kodesh and the mafteiach index, and
+# brings it up to date when run again: the importer changes only what the source changed and never
+# overwrites what people have fixed. RebbeHub keeps no copy of
+# Sichos-Kodesh's content, so this reads a fresh checkout of it each run.
+#
+# Needs two repository secrets (Settings -> Secrets and variables ->
+# Actions): DATABASE_URL, the same direct Neon connection string the
+# rebbehub-api build has, and SICHOS_KODESH_TOKEN, a fine-grained token
+# that can only read shmuky/Sichos-Kodesh's contents. See docs/deploy.md.
+on:
+  workflow_dispatch:
+    inputs:
+      steward:
+        description: The steward who approves the import (created if missing)
+        default: shmuly
+        required: true
+      steward_name:
+        description: The steward's display name
+        default: Shmuly
+        required: true
+      dry_run:
+        description: Only report what would change
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Every workflow that writes the live catalog (import, upkeep, network, ocr)
+# shares one group, so they wait for each other: an import copies the catalog
+# back only if nothing else changed it meanwhile (scripts/import-catalog.sh).
+# GitHub keeps one waiting run per group; a newer one replaces it.
+concurrency:
+  group: catalog-production
+  cancel-in-progress: false
+
+jobs:
+  import:
+    name: Import from Sichos-Kodesh
+    runs-on: ubuntu-latest
+    environment: production
+    # An empty live catalog is built in this database, next to the import, then copied in whole
+    # (scripts/import-catalog.sh): item by item across the internet it takes hours.
+    services:
+      postgres:
+        # As new as the live server (Neon), so its catalog can be copied here and back, and with
+        # pgvector like it: the copy brings the live catalog's vector extension along.
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: rebbehub
+          POSTGRES_PASSWORD: rebbehub
+          POSTGRES_DB: build
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rebbehub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # While RebbeHub is private, the jobs read the site with its key (services/jobs/src/privateKey.ts).
+      REBBEHUB_PASSWORD: ${{ secrets.REBBEHUB_PASSWORD }}
+      SICHOS_KODESH_TOKEN: ${{ secrets.SICHOS_KODESH_TOKEN }}
+    steps:
+      - name: Check the import is configured
+        run: |
+          missing=""
+          for name in DATABASE_URL SICHOS_KODESH_TOKEN; do
+            if [ -z "${!name}" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Add the repository secrets$missing (see docs/deploy.md)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: shmuky/Sichos-Kodesh
+          token: ${{ secrets.SICHOS_KODESH_TOKEN }}
+          path: .sichos-kodesh
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+
+      # Every link and content outline mafteiach.app's index has, beyond what Sichos-Kodesh's app keeps
+      # (packages/importers/src/mafteiachIndex.ts): crawled with Sichos-Kodesh's own polite crawler, which
+      # caches every page, so a run in the same month reads the cache (about 45 minutes the first time).
+      - name: Month
+        id: month
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: .mafteiach/.cache
+          key: mafteiach-${{ steps.month.outputs.month }}
+      - name: Crawl the mafteiach index
+        continue-on-error: true
+        run: |
+          cp -r .sichos-kodesh/packages/mafteiach-index .mafteiach-crawler
+          cd .mafteiach-crawler
+          npm install --no-save --no-package-lock --no-audit --no-fund cheerio@^1.2.0 tsx@^4
+          npx tsx bin/crawl.ts --out ../.mafteiach/data --cache ../.mafteiach/.cache --delay-ms 700
+
+      # chabadlibrary.org's contents and each page's text, a page per chapter with its words, credited to
+      # the library (packages/importers/src/chabadLibrary.ts). The whole library takes hours to read
+      # politely, so each run reads for up to 90 minutes and continues from where the last one stopped.
+      # With CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN, each text is stored on RebbeHub's own storage.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .chabadlibrary
+          key: chabadlibrary-${{ github.run_id }}
+          restore-keys: chabadlibrary-
+      - name: Crawl the Chabad Library
+        continue-on-error: true
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          mkdir -p .chabadlibrary
+          keep=""
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$CLOUDFLARE_API_TOKEN" ] && [ "${{ inputs.dry_run }}" != "true" ]; then keep="--keep"; fi
+          npm run --silent rebbehub -- crawl-library --from .sichos-kodesh --out .chabadlibrary/tree.json --minutes 90 --texts $keep
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .chabadlibrary
+          key: chabadlibrary-${{ github.run_id }}
+
+      # JEM's own catalog of the Rebbe's recordings (packages/importers/src/jem.ts), crawled with
+      # Sichos-Kodesh's packages/jem-index, which caches every answer: a run in the same month reads the cache.
+      - uses: actions/cache@v4
+        with:
+          path: .jem/.cache
+          key: jem-${{ steps.month.outputs.month }}
+      - name: Crawl JEM's catalog
+        continue-on-error: true
+        run: |
+          cp -r .sichos-kodesh/packages/jem-index .jem-crawler
+          cd .jem-crawler
+          npm install --no-save --no-package-lock --no-audit --no-fund tsx@^4
+          npx tsx bin/crawl.ts --db ../.jem/jem.db --cache ../.jem/.cache --delay-ms 400
+
+      # The Chabad shelf of HebrewBooks, read afresh from the latest Otzaria catalog by Sichos-Kodesh's
+      # packages/hebrewbooks-index (packages/importers/src/hebrewBooks.ts). Without it, the shelf the
+      # Sichos-Kodesh checkout carries is imported.
+      - name: Read the HebrewBooks shelf
+        continue-on-error: true
+        run: |
+          mkdir -p .hebrewbooks
+          curl -fsSL -o .hebrewbooks/otzar-HB_catalog.db.zst https://github.com/Otzaria/otzar-HB_catalog/releases/latest/download/otzar-HB_catalog.db.zst
+          cp -r .sichos-kodesh/packages/hebrewbooks-index .hebrewbooks-reader
+          cd .hebrewbooks-reader
+          npm install --no-save --no-package-lock --no-audit --no-fund tsx@^4
+          npx tsx bin/import.ts --catalog ../.hebrewbooks/otzar-HB_catalog.db.zst --out ../.hebrewbooks/shelf.json
+
+      # Sefaria's Chabad books Sichos-Kodesh does not publish (packages/importers/src/sefaria.ts), and with
+      # --daily the texts of Chitas and the Rambam in their own Set, read politely and cached between runs.
+      # With CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN (R2 edit on rebbehub-public), each text that
+      # may be kept is stored on RebbeHub's own storage by its sha256.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .sefaria/cache
+          key: sefaria-${{ github.run_id }}
+          restore-keys: sefaria-
+      - name: Read Sefaria's Chabad books, Chitas and the Rambam
+        continue-on-error: true
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          keep=""
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$CLOUDFLARE_API_TOKEN" ] && [ "${{ inputs.dry_run }}" != "true" ]; then keep="--keep"; fi
+          npm run --silent rebbehub -- crawl-sefaria --from .sichos-kodesh --out .sefaria/data --cache .sefaria/cache --daily $keep
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .sefaria/cache
+          key: sefaria-${{ github.run_id }}
+
+      - name: Import
+        env:
+          STEWARD: ${{ inputs.steward }}
+          STEWARD_NAME: ${{ inputs.steward_name }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          BUILD_DATABASE_URL: postgres://rebbehub:rebbehub@localhost:5432/build
+          # pg_dump and psql as new as the live server (scripts/import-catalog.sh).
+          PG_TOOLS_IMAGE: postgres:18
+          MAFTEIACH_DATA: .mafteiach/data
+          CHABADLIBRARY_TREE: .chabadlibrary/tree.json
+          JEM_DB: .jem/jem.db
+          HEBREWBOOKS_SHELF: .hebrewbooks/shelf.json
+          SEFARIA_DATA: .sefaria/data
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            npm run rebbehub -- migrate
+            for importer in rebbehub-sets sichos-kodesh-works likkutei-sichos sichos-kodesh-occasions otzros hebrewbooks chabadlibrary jem sefaria; do
+              npm run rebbehub -- import "$importer" --from .sichos-kodesh --dry-run || echo "::warning::$importer could not run"
+            done
+          else
+            scripts/import-catalog.sh .sichos-kodesh "$STEWARD" "$STEWARD_NAME"
+          fi

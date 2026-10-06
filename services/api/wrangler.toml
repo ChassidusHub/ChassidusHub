@@ -1,0 +1,118 @@
+# The API on Cloudflare Workers, built and deployed by Cloudflare (Workers
+# Builds) on every push to main; see docs/deploy.md.
+name = "rebbehub-api"
+main = "src/worker.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+# Runs near the database (Neon, Virginia) rather than near the reader: an API request is
+# several statements one after the other, and each is a round trip to Postgres, so the
+# round trips are short from there. Reads anyone may have are still answered from the
+# cache near the reader (docs/operations.md, "Traffic and crawlers").
+[placement]
+mode = "smart"
+
+# Postgres on Neon, pooled by Hyperdrive. The id names the config; it is not a secret
+# (the connection string lives only in Cloudflare).
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "a06ec525cf9442f484f60ce9d38f0d39"
+
+# The site's Worker, for the status checks: a Worker reaches another on the same zone surely only this way.
+[[services]]
+binding = "SITE"
+service = "rebbehub-web"
+
+# File bytes that may be served (and status/report.json, the status checks' last report).
+[[r2_buckets]]
+binding = "FILES_PUBLIC"
+bucket_name = "rebbehub-public"
+
+# Uploaded bytes whose rights do not let them be served (docs/rights.md). The API only
+# writes here (src/uploads.ts); no route reads from it, so nothing in it is ever served.
+[[r2_buckets]]
+binding = "FILES_PRESERVATION"
+bucket_name = "rebbehub-preservation"
+
+# Sichos-Kodesh's published archive, read only: each sefer text is copied from it once,
+# checked against its hash, and kept in rebbehub-public (GET /v1/texts/<sha256>).
+[[r2_buckets]]
+binding = "SK_ARCHIVE"
+bucket_name = "sichos-kodesh-archive"
+
+# Every five minutes (src/worker.ts, scheduled): the status checks (src/status.ts, the site's /status), then
+# webhooks, email updates (once RESEND_API_KEY is set) and the reviewer's advice on suggestions (once
+# CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are set).
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Rate limits (docs/developers/rate-limits.md): per caller's address, and per API token. The namespace ids
+# only tell the two counters apart within this account; they are not secrets. Keep the per-minute vars below
+# equal to the limits, for the RateLimit-Policy header.
+[[ratelimits]]
+name = "RATE_LIMIT_ADDRESS"
+namespace_id = "1001"
+simple = { limit = 300, period = 60 }
+
+[[ratelimits]]
+name = "RATE_LIMIT_TOKEN"
+namespace_id = "1002"
+simple = { limit = 1200, period = 60 }
+
+# Searches per address a minute (/v1/search, /v1/search/moments, /v1/search/similar), counted on top of the above:
+# a search is dearer than reading an item. Keep RATE_LIMIT_SEARCH_PER_MINUTE below equal to it.
+[[ratelimits]]
+name = "RATE_LIMIT_SEARCH"
+namespace_id = "1003"
+simple = { limit = 60, period = 60 }
+
+# Google Drive files read for the site's reader and player (GET /v1/drive/<id>, src/drive.ts) per address a
+# minute, counted on top of the address's allowance; a file read whole is kept at the edge and not counted again.
+[[ratelimits]]
+name = "RATE_LIMIT_DRIVE"
+namespace_id = "1005"
+simple = { limit = 120, period = 60 }
+
+# Cloudflare's Workers cache (docs/operations.md, "Traffic and crawlers"). The default entrypoint runs on
+# every request and is never cached: it sends reads from nobody in particular (no token, no session) on to
+# CachedApi, which the cache sits in front of and which keeps each answer as long as its Cache-Control says.
+[exports.default]
+type = "worker"
+
+[exports.default.cache]
+enabled = false
+
+[exports.CachedApi]
+type = "worker"
+
+[exports.CachedApi.cache]
+enabled = true
+
+[vars]
+# The site people sign in on: passkeys are bound to its domain, and changes are taken only from its pages.
+SITE_URL = "https://rebbehub.org"
+RATE_LIMIT_ADDRESS_PER_MINUTE = "300"
+# The status page counts today's queries through this Hyperdrive config (keep it equal to [[hyperdrive]]'s id),
+# against its daily allowance: 100000 on the free plan; "0" on a plan without one. Counting needs the secret
+# CLOUDFLARE_ANALYTICS_TOKEN (Account Analytics: Read) and CLOUDFLARE_ACCOUNT_ID. The same token gives the page each
+# Worker's load today (STATUS_WORKERS, default "rebbehub-web,rebbehub-api") against the plan's CPU allowance for one
+# request (WORKERS_CPU_MS, default "10", the free plan's; "0" on a plan whose allowance does not matter).
+HYPERDRIVE_ID = "a06ec525cf9442f484f60ce9d38f0d39"
+# The account the Workers and Hyperdrive live in (Shmuly's personal account, not the one named "RebbeHub").
+# Kept here, not only in the dashboard, because a deploy replaces the vars with this file's.
+CLOUDFLARE_ACCOUNT_ID = "536c9c83f0b93f5963de4fb85d8edec8"
+# The account is on Workers Paid since 29 Elul 5786 (29 September 2026): Hyperdrive counts no daily allowance, and a
+# request may use 30 seconds of CPU (30000 ms) before it is stopped, not the free plan's 10 ms.
+HYPERDRIVE_DAILY_QUERIES = "0"
+WORKERS_CPU_MS = "30000"
+RATE_LIMIT_TOKEN_PER_MINUTE = "1200"
+RATE_LIMIT_SEARCH_PER_MINUTE = "60"
+# The password lock (src/lock.ts), open since 5 October 2026: empty is open. To lock again, put the sha256 of the
+# password's key here and on rebbehub-web (docs/accounts.md). Accounts let in by token besides platform admins while
+# locked (comma separated), for the owner's MCP connector and scripts.
+LOCK_KEY_HASH = ""
+OWNER_ACCOUNTS = ""

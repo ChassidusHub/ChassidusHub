@@ -1,0 +1,221 @@
+import { one, type Db } from '@rebbehub/db';
+import { invalid } from './errors.js';
+import { checkUsername, suggestUsername, usernameMessage } from './usernames.js';
+
+/**
+ * People and their sign-in (the `auth` schema, migration 0003): a person,
+ * their passkeys, their signed-in sessions, and the one-time challenges of
+ * the passkey ceremonies. The ceremonies themselves (WebAuthn) run in the
+ * API; this keeps what they need, and nothing that is not needed: a
+ * session is kept by its token's hash, a passkey by its public key.
+ */
+
+export interface Person {
+  id: string;
+  displayName: string;
+  /** Their handle (`@mendy`), unique whatever its case (usernames.ts, migration 0016). */
+  username?: string;
+  /** Kept here as well as on the catalog account, which a rebuild of the catalog replaces (migration 0005). */
+  steward?: boolean;
+  /** A platform admin: a steward who also appoints stewards and admins (migration 0006). */
+  admin?: boolean;
+}
+
+export interface StoredPasskey {
+  credentialId: string;
+  personId: string;
+  /** COSE public key, base64url. */
+  publicKey: string;
+  counter: number;
+  transports: string[];
+}
+
+/** How long a sign-in lasts without being used, and how long a challenge may be answered. */
+export const SESSION_DAYS = 60;
+export const CHALLENGE_MINUTES = 5;
+
+const CROCKFORD = '0123456789abcdefghjkmnpqrstvwxyz';
+
+function randomBytes(n: number): Uint8Array {
+  const bytes = new Uint8Array(n);
+  crypto.getRandomValues(bytes);
+  return bytes;
+}
+
+export function base64url(bytes: Uint8Array): string {
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** A new person's id: `u-` and ten letters and digits, never reused. */
+export function newPersonId(): string {
+  return `u-${[...randomBytes(10)].map((b) => CROCKFORD[b % 32]).join('')}`;
+}
+
+/** A session token (what the cookie holds) and the hash kept of it. */
+export async function newSessionToken(): Promise<{ token: string; hash: string }> {
+  const token = base64url(randomBytes(32));
+  return { token, hash: await hashToken(token) };
+}
+
+export async function hashToken(token: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** A name as people will see it: trimmed, spaces collapsed, 1 to 60 characters. */
+export function cleanDisplayName(name: unknown): string | null {
+  if (typeof name !== 'string') return null;
+  const clean = name.replace(/\s+/g, ' ').trim();
+  return clean.length >= 1 && clean.length <= 60 ? clean : null;
+}
+
+/**
+ * A new person, with the handle they chose, or else one suggested from
+ * their name. A chosen handle someone else has is refused, never changed
+ * behind their back.
+ */
+export async function createPerson(db: Db, displayName: string, username?: string): Promise<Person> {
+  const id = newPersonId();
+  if (username !== undefined) {
+    const refusal = await checkUsername(db, username);
+    if (refusal) throw invalid(usernameMessage(refusal));
+  }
+  const handle = username ?? (await suggestUsername(db, displayName));
+  // The first change after signing up waits for nobody (username_changed_at stays empty).
+  await db.query('INSERT INTO auth.person (id, display_name, username) VALUES ($1, $2, $3)', [id, displayName, handle]);
+  return { id, displayName, username: handle };
+}
+
+/** A person's new name; their catalog account takes it the next time they are signed in. */
+export async function renamePerson(db: Db, id: string, displayName: string): Promise<void> {
+  await db.query('UPDATE auth.person SET display_name = $2 WHERE id = $1', [id, displayName]);
+}
+
+export async function getPerson(db: Db, id: string): Promise<Person | null> {
+  const row = await one<{ id: string; display_name: string; username: string }>(db, 'SELECT id, display_name, username FROM auth.person WHERE id = $1', [id]);
+  return row ? { id: row.id, displayName: row.display_name, username: row.username } : null;
+}
+
+/** Keeps a challenge for one ceremony; it is answered once, within a few minutes. */
+export type ChallengePurpose = 'register' | 'sign-in' | 'google';
+
+export async function saveChallenge(db: Db, challenge: string, purpose: ChallengePurpose): Promise<string> {
+  const id = base64url(randomBytes(16));
+  await db.query(`INSERT INTO auth.challenge (id, challenge, purpose, expires_at) VALUES ($1, $2, $3, now() + interval '${CHALLENGE_MINUTES} minutes')`, [id, challenge, purpose]);
+  // Old ones go as new ones come.
+  await db.query('DELETE FROM auth.challenge WHERE expires_at < now()');
+  return id;
+}
+
+/** Takes a challenge back, once: it is deleted whether or not it is still valid. */
+export async function takeChallenge(db: Db, id: string, purpose: ChallengePurpose): Promise<string | null> {
+  const row = await one<{ challenge: string; fresh: boolean }>(db, 'DELETE FROM auth.challenge WHERE id = $1 AND purpose = $2 RETURNING challenge, expires_at > now() AS fresh', [id, purpose]);
+  return row?.fresh ? row.challenge : null;
+}
+
+export async function addPasskey(db: Db, passkey: StoredPasskey & { deviceType?: string; backedUp?: boolean }): Promise<void> {
+  await db.query(
+    `INSERT INTO auth.passkey (credential_id, person_id, public_key, counter, transports, device_type, backed_up)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [passkey.credentialId, passkey.personId, passkey.publicKey, passkey.counter, passkey.transports, passkey.deviceType ?? null, passkey.backedUp ?? false],
+  );
+}
+
+export async function findPasskey(db: Db, credentialId: string): Promise<StoredPasskey | null> {
+  const row = await one<{ credential_id: string; person_id: string; public_key: string; counter: string | number; transports: string[] }>(
+    db,
+    'SELECT credential_id, person_id, public_key, counter, transports FROM auth.passkey WHERE credential_id = $1',
+    [credentialId],
+  );
+  return row ? { credentialId: row.credential_id, personId: row.person_id, publicKey: row.public_key, counter: Number(row.counter), transports: row.transports ?? [] } : null;
+}
+
+export async function passkeyUsed(db: Db, credentialId: string, counter: number): Promise<void> {
+  await db.query('UPDATE auth.passkey SET counter = $2, last_used_at = now() WHERE credential_id = $1', [credentialId, counter]);
+}
+
+export async function passkeysOf(db: Db, personId: string): Promise<Array<{ credentialId: string; deviceType: string | null; backedUp: boolean; createdAt: string; lastUsedAt: string | null }>> {
+  const { rows } = await db.query<{ credential_id: string; device_type: string | null; backed_up: boolean; created_at: Date | string; last_used_at: Date | string | null }>(
+    'SELECT credential_id, device_type, backed_up, created_at, last_used_at FROM auth.passkey WHERE person_id = $1 ORDER BY created_at',
+    [personId],
+  );
+  return rows.map((r) => ({
+    credentialId: r.credential_id,
+    deviceType: r.device_type,
+    backedUp: r.backed_up,
+    createdAt: new Date(r.created_at).toISOString(),
+    lastUsedAt: r.last_used_at ? new Date(r.last_used_at).toISOString() : null,
+  }));
+}
+
+/** The person a Google account (by Google's `sub`) belongs to; each sign-in notes when, and the email as it is now. */
+export async function googleSignedIn(db: Db, sub: string, email: string | null): Promise<Person | null> {
+  const row = await one<{ id: string; display_name: string; username: string }>(
+    db,
+    `UPDATE auth.google_account g SET last_used_at = now(), email = $2
+     FROM auth.person p WHERE g.sub = $1 AND p.id = g.person_id
+     RETURNING p.id, p.display_name, p.username`,
+    [sub, email],
+  );
+  return row ? { id: row.id, displayName: row.display_name, username: row.username } : null;
+}
+
+export async function linkGoogle(db: Db, sub: string, personId: string, email: string | null): Promise<void> {
+  await db.query('INSERT INTO auth.google_account (sub, person_id, email, last_used_at) VALUES ($1, $2, $3, now())', [sub, personId, email]);
+}
+
+export async function googleAccountsOf(db: Db, personId: string): Promise<Array<{ email: string | null; createdAt: string }>> {
+  const { rows } = await db.query<{ email: string | null; created_at: Date | string }>('SELECT email, created_at FROM auth.google_account WHERE person_id = $1 ORDER BY created_at', [personId]);
+  return rows.map((r) => ({ email: r.email, createdAt: new Date(r.created_at).toISOString() }));
+}
+
+/** Everyone with an account, for the stewards' people page: newest first, or those whose name or number matches `q`. */
+export async function listPeople(db: Db, options: { q?: string; limit?: number } = {}): Promise<
+  Array<{ id: string; displayName: string; username: string; steward: boolean; admin: boolean; createdAt: string; passkeys: number; google: string | null; suspended: boolean; suggestions: number }>
+> {
+  const params: unknown[] = [];
+  const where = options.q ? `WHERE p.display_name ILIKE $${params.push(`%${options.q}%`)} OR p.id = $${params.push(options.q.trim())} OR lower(p.username) = lower($${params.push(options.q.trim().replace(/^@/, ''))})` : '';
+  const { rows } = await db.query<{ id: string; display_name: string; username: string; steward: boolean; admin: boolean; created_at: Date | string; passkeys: number; google: string | null; suspended: boolean; suggestions: number }>(
+    `SELECT p.id, p.display_name, p.username, p.steward, p.admin, p.created_at,
+            (SELECT count(*)::int FROM auth.passkey k WHERE k.person_id = p.id) AS passkeys,
+            (SELECT min(g.email) FROM auth.google_account g WHERE g.person_id = p.id) AS google,
+            coalesce(a.suspended_at IS NOT NULL, FALSE) AS suspended,
+            (SELECT count(*)::int FROM changeset c WHERE c.author = p.id) AS suggestions
+     FROM auth.person p LEFT JOIN account a ON a.id = p.id ${where}
+     ORDER BY p.created_at DESC LIMIT ${Math.min(options.limit ?? 50, 200)}`,
+    params,
+  );
+  return rows.map((r) => ({ id: r.id, displayName: r.display_name, username: r.username, steward: r.steward || r.admin, admin: r.admin, createdAt: new Date(r.created_at).toISOString(), passkeys: r.passkeys, google: r.google, suspended: r.suspended, suggestions: r.suggestions }));
+}
+
+/** Marks a person a steward (or an admin, who is always a steward), or takes it away; the catalog account follows when they are next signed in. */
+export async function setPersonRole(db: Db, id: string, role: { steward?: boolean; admin?: boolean }): Promise<void> {
+  if (role.admin !== undefined) await db.query('UPDATE auth.person SET admin = $2, steward = steward OR $2 WHERE id = $1', [id, role.admin]);
+  if (role.steward !== undefined) await db.query('UPDATE auth.person SET steward = $2 WHERE id = $1', [id, role.steward]);
+}
+
+/** Signs a person in: a new session, whose token the caller hands to the browser. */
+export async function startSession(db: Db, personId: string, userAgent?: string): Promise<string> {
+  const { token, hash } = await newSessionToken();
+  await db.query(`INSERT INTO auth.session (token_hash, person_id, expires_at, user_agent) VALUES ($1, $2, now() + interval '${SESSION_DAYS} days', $3)`, [hash, personId, userAgent?.slice(0, 300) ?? null]);
+  return token;
+}
+
+/** The person a session token signs in, while it lasts; each use extends it. */
+export async function sessionPerson(db: Db, token: string): Promise<Person | null> {
+  const hash = await hashToken(token);
+  const row = await one<{ id: string; display_name: string; username: string; steward: boolean; admin: boolean }>(
+    db,
+    `UPDATE auth.session s SET last_seen_at = now(), expires_at = now() + interval '${SESSION_DAYS} days'
+     FROM auth.person p WHERE s.token_hash = $1 AND s.expires_at > now() AND p.id = s.person_id
+     RETURNING p.id, p.display_name, p.username, p.steward, p.admin`,
+    [hash],
+  );
+  return row ? { id: row.id, displayName: row.display_name, username: row.username, ...(row.steward || row.admin ? { steward: true } : {}), ...(row.admin ? { admin: true } : {}) } : null;
+}
+
+export async function endSession(db: Db, token: string): Promise<void> {
+  await db.query('DELETE FROM auth.session WHERE token_hash = $1', [await hashToken(token)]);
+}

@@ -1,0 +1,50 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "rootDir": ".",
+    "paths": {
+      "@rebbehub/hebrew": [
+        "./packages/hebrew/src/index.ts"
+      ],
+      "@rebbehub/model": [
+        "./packages/model/src/index.ts"
+      ],
+      "@rebbehub/db": [
+        "./packages/db/src/index.ts"
+      ],
+      "@rebbehub/core": [
+        "./packages/core/src/index.ts"
+      ],
+      "@rebbehub/mirror": [
+        "./packages/mirror/src/index.ts"
+      ],
+      "@rebbehub/importers": [
+        "./packages/importers/src/index.ts"
+      ],
+      "@rebbehub/pdf-fix": [
+        "./packages/pdf-fix/src/index.ts"
+      ],
+      "@rebbehub/client": [
+        "./packages/client/src/index.ts"
+      ],
+      "@rebbehub/db/pglite": [
+        "./packages/db/src/pglite.ts"
+      ]
+    },
+    "lib": [
+      "ES2022",
+      "DOM"
+    ]
+  },
+  "include": [
+    "packages/*/tests",
+    "services/*/tests",
+    "apps/*/tests",
+    "vitest.config.ts"
+  ]
+}

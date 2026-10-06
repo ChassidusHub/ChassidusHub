@@ -1,0 +1,1426 @@
+/* A farbrengen's page (views/EventPage.tsx): the player card, what was
+   said, its hanachos as pages, its words synced to the recording. */
+
+.event-page > * + * {
+  margin-top: 28px;
+}
+
+.event-page > .see-all {
+  margin-top: 8px;
+}
+
+.ev-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.ev-h .end {
+  margin-inline-start: auto;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------ the player */
+
+.listen {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.listen-top {
+  padding: 14px 16px 10px;
+}
+
+.listen-now {
+  font-size: 12px;
+  color: var(--subtle);
+}
+
+.listen-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 2px;
+}
+
+.wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 44px;
+  margin-top: 12px;
+  direction: ltr;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+
+.wave:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.wave i {
+  flex: 1;
+  min-width: 1px;
+  background: var(--border-strong);
+  border-radius: 1px;
+}
+
+.wave i.p {
+  background: var(--text);
+}
+
+.listen-times {
+  display: flex;
+  justify-content: space-between;
+  font: 12px var(--mono);
+  color: var(--subtle);
+  margin-top: 6px;
+  direction: ltr;
+}
+
+.listen-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 4px 0 14px;
+}
+
+.listen-ctrl button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.listen-ctrl .pp {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+}
+
+.listen-ctrl .pp svg {
+  width: 20px;
+  height: 20px;
+}
+
+.listen-ctrl .pp:hover {
+  opacity: 0.88;
+}
+
+.listen-ctrl .sk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font: 10px var(--mono);
+  color: var(--muted);
+  padding: 4px;
+  border-radius: var(--r);
+}
+
+.listen-ctrl .sk svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text);
+}
+
+.listen-ctrl .sk:hover {
+  background: var(--canvas);
+}
+
+/* In a right-to-left page the skips read the way the time runs: back on the right. */
+[dir='rtl'] .listen-ctrl {
+  flex-direction: row-reverse;
+}
+
+.part-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.part-list > li + li {
+  border-top: 1px solid var(--border-muted);
+}
+
+.part {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 11px 16px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+}
+
+button.part:hover {
+  background: var(--canvas);
+}
+
+.part .n {
+  font: 12px var(--mono);
+  color: var(--subtle);
+  text-align: center;
+  display: grid;
+  place-items: center;
+}
+
+.part.on {
+  background: var(--accent-soft);
+}
+
+button.part.on:hover {
+  background: var(--accent-soft);
+}
+
+.part.on .n {
+  color: var(--accent);
+}
+
+.part.on .part-title {
+  font-weight: 600;
+}
+
+.part .d {
+  font: 12px var(--mono);
+  color: var(--subtle);
+}
+
+.part.missing {
+  cursor: default;
+}
+
+.part .miss {
+  font-size: 12px;
+  color: var(--subtle);
+}
+
+.listen-videos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--border-muted);
+}
+
+/* ------------------------------------------------------------ what was said */
+
+.said {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.said-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 12px 16px;
+}
+
+.said-row + .said-row {
+  border-top: 1px solid var(--border-muted);
+}
+
+.said-row .t {
+  font-family: var(--torah);
+  font-size: 17.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.said-row .t:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.said-row .tm {
+  align-self: center;
+  font: 12px var(--mono);
+  color: var(--muted);
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  border-radius: var(--r-sm);
+}
+
+.said-row button.tm {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.said-row button.tm:hover {
+  background: var(--accent-soft);
+}
+
+.said-row .s {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--subtle);
+}
+
+/* ------------------------------------------------------------ hanachos as pages */
+
+.thumbs {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 4px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.thumbs.all {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.th {
+  flex: none;
+  width: 104px;
+}
+
+.th > a {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.th .page-thumb {
+  width: 104px;
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.th > a:hover .page-thumb {
+  border-color: var(--paper-rule);
+  box-shadow: var(--shadow-paper);
+}
+
+.th .c {
+  display: grid;
+  gap: 1px;
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.th .c .torah-sm {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text);
+}
+
+.th-origin {
+  font-size: 11px;
+}
+
+/* ------------------------------------------------------------ its words */
+
+#text .chips-row {
+  margin-bottom: 10px;
+}
+
+.text-modes {
+  max-width: 440px;
+}
+
+.ev-text {
+  padding-top: 14px;
+}
+
+.ev-text .src {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.segs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.seg .n {
+  font: 11.5px var(--mono);
+  color: var(--subtle);
+  padding-top: 9px;
+}
+
+.seg-body[role='button'] {
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+
+.seg-body[role='button']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.seg .he {
+  font-family: var(--torah);
+  font-size: 19px;
+  line-height: 1.85;
+}
+
+.seg .he.unchecked {
+  color: var(--muted);
+}
+
+.seg .en {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.seg.play .seg-body {
+  box-shadow: inset -2px 0 0 var(--accent);
+  padding-inline-start: 12px;
+  margin-inline-start: -14px;
+  background: linear-gradient(to left, var(--accent-soft), transparent 60%);
+}
+
+[dir='ltr'] .seg.play .seg-body {
+  box-shadow: inset 2px 0 0 var(--accent);
+  background: linear-gradient(to right, var(--accent-soft), transparent 60%);
+}
+
+.seg .ts {
+  display: block;
+  margin-top: 2px;
+  font: 11px var(--mono);
+  color: var(--accent);
+}
+
+.segs.both .seg-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.segs.both .seg-body .ts {
+  grid-column: 1 / -1;
+}
+
+/* ------------------------------------------------------------ verbatim transcripts */
+
+.transcripts h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* ------------------------------------------------------------ side and foot */
+
+.year-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.year-chips .chip {
+  height: 26px;
+  font-size: 12.5px;
+}
+
+.side-list.neighbors > a,
+.side-list.elsewhere > a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.side-list.neighbors > a .subtle,
+.side-list.elsewhere > a .subtle {
+  font-size: 12px;
+}
+
+.ev-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .said {
+    border-radius: 0;
+    border-inline: 0;
+    margin-inline: calc(var(--gutter) * -1);
+  }
+  .segs.both .seg-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .ev-foot .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .text-modes {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .th .page-thumb {
+    transition: none;
+  }
+}
+
+/* The house spelling, under the editor: a hint, never a change. */
+.tx-edit .spelling-hints {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.85em;
+}
+
+/* The next model's goal, above the paragraphs people check. */
+.training-goal {
+  margin: 0.5rem 0 1rem;
+}
+.training-goal progress {
+  width: 100%;
+  height: 6px;
+}
+
+/* ------------------------------------------------------------ listening: the words as lyrics */
+
+/*
+ * Always deep blue, in light and dark alike, as a music app colours its
+ * lyrics by the song: the words are white on it, lit as they are said.
+ */
+.lyrics {
+  --ly-bg: linear-gradient(170deg, #2c4378 0%, #1c2a52 48%, #121a35 100%);
+  --ly-now: #ffffff;
+  --ly-past: rgba(255, 255, 255, 0.6);
+  --ly-next: rgba(255, 255, 255, 0.36);
+  --ly-soft: rgba(255, 255, 255, 0.12);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--ly-bg);
+  color: var(--ly-now);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(12, 18, 40, 0.25);
+}
+
+.lyrics.full {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:root.lyrics-full,
+:root.lyrics-full body {
+  overflow: hidden;
+}
+
+.lyrics-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px 6px;
+}
+
+.lyrics-titles {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.lyrics-kicker {
+  font: 600 12px var(--ui);
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.lyrics-title {
+  font: 600 15px var(--ui);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lyrics .machine-label {
+  background: rgba(255, 214, 102, 0.16);
+  color: #ffd98a;
+  border-color: rgba(255, 214, 102, 0.35);
+}
+
+.lyrics-ib {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+}
+
+.lyrics-ib:hover {
+  background: var(--ly-soft);
+  color: #fff;
+}
+
+.lyrics-ib:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+}
+
+.lyrics-edit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font: 600 14px var(--ui);
+  cursor: pointer;
+}
+
+.lyrics-edit:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.lyrics-parts {
+  display: flex;
+  gap: 6px;
+  padding: 4px 18px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.lyrics-parts button {
+  min-width: 32px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--ly-soft);
+  color: rgba(255, 255, 255, 0.8);
+  font: 600 13px var(--ui);
+  cursor: pointer;
+}
+
+.lyrics-parts button.on {
+  background: #fff;
+  color: #1c2a52;
+}
+
+.lyrics-scroll {
+  height: min(62vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px 22px 40%;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px, #000 calc(100% - 72px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px, #000 calc(100% - 72px), transparent 100%);
+}
+
+.lyrics-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.lyrics-scroll:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -4px;
+}
+
+.lyrics.full .lyrics-scroll {
+  flex: 1;
+  height: auto;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.lyrics-line {
+  display: block;
+  width: 100%;
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: start;
+  font-family: var(--torah);
+  font-weight: 700;
+  font-size: clamp(21px, 5.2vw, 28px);
+  line-height: 1.5;
+  color: var(--ly-next);
+  cursor: pointer;
+  transition: color 0.35s var(--ease), transform 0.35s var(--ease);
+}
+
+.lyrics-line:hover {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.lyrics-line.past {
+  color: var(--ly-past);
+}
+
+.lyrics-line.now {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.lyrics-line.now:not(:has(.word)) {
+  color: var(--ly-now);
+}
+
+.lyrics-line .word {
+  transition: color 0.2s linear, text-shadow 0.2s linear;
+}
+
+.lyrics-line .w-past {
+  color: var(--ly-now);
+}
+
+.lyrics-line .w-now {
+  color: var(--ly-now);
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.55);
+}
+
+.lyrics-line.found {
+  color: var(--ly-now);
+  text-decoration: underline 2px rgba(255, 214, 102, 0.7);
+  text-underline-offset: 6px;
+}
+
+.lyrics-line:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.lyrics-now {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 104px;
+  margin: 0 auto;
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  color: #1c2a52;
+  font: 600 13.5px var(--ui);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.lyrics-controls {
+  display: grid;
+  gap: 6px;
+  padding: 8px 18px 16px;
+  background: linear-gradient(to bottom, transparent, rgba(8, 12, 28, 0.35));
+}
+
+.lyrics.full .lyrics-controls {
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
+}
+
+.lyrics-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  direction: ltr;
+}
+
+.lyrics-play {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #121a35;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s var(--ease);
+}
+
+.lyrics-play:hover {
+  transform: scale(1.05);
+}
+
+.lyrics-play:active {
+  transform: scale(0.96);
+}
+
+.lyrics-scrub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  direction: ltr;
+  font: 12px var(--ui);
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.lyrics-scrub input[type='range'] {
+  flex: 1;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #fff var(--played, 0%), rgba(255, 255, 255, 0.25) var(--played, 0%));
+  cursor: pointer;
+}
+
+.lyrics-scrub input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.lyrics-scrub input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.lyrics-foot {
+  margin: 10px 4px 0;
+}
+
+.review-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.review-head .section-header {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .transcripts .lyrics:not(.full) {
+    border-radius: 12px;
+  }
+  .lyrics-scroll {
+    height: 58vh;
+    padding-inline: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lyrics-line,
+  .lyrics-line .word,
+  .lyrics-play {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------ reviewing: the editor */
+
+.tx-top {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tx-progress {
+  display: grid;
+  gap: 4px;
+}
+
+.tx-how,
+.tx-all {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg);
+}
+
+.tx-how > summary,
+.tx-all > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-md);
+  list-style: none;
+}
+
+.tx-how > summary::-webkit-details-marker,
+.tx-all > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tx-how ul {
+  margin: 0;
+  padding-inline: 34px 14px;
+  display: grid;
+  gap: 6px;
+  font-size: var(--fs-md);
+  color: var(--muted);
+}
+
+.tx-all > ul,
+.tx-all > p {
+  margin: 0;
+  padding: 0 14px 12px;
+}
+
+.tx-all > ul,
+.tx-history ul {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.tx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.tx-para {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  padding: 10px 14px 12px;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  scroll-margin: 90px;
+}
+
+.tx-para.open {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.tx-para.found {
+  background: var(--mark);
+}
+
+.tx-para-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tx-n {
+  font: 600 12px var(--ui);
+  color: var(--faint);
+  min-width: 18px;
+}
+
+.tx-time {
+  border: 0;
+  background: var(--sunken);
+  color: var(--muted);
+  font: 12px var(--ui);
+  font-variant-numeric: tabular-nums;
+  padding: 2px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  direction: ltr;
+}
+
+.tx-time:hover {
+  color: var(--accent);
+}
+
+.tx-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--r-sm);
+  font: 500 11.5px / 1 var(--ui);
+}
+
+.tx-state.ok {
+  color: var(--open);
+  background: var(--open-soft);
+}
+
+.tx-state.partly {
+  color: var(--approved);
+  background: var(--approved-soft);
+}
+
+.tx-sync-note {
+  font-size: 11.5px;
+}
+
+.tx-text {
+  font-family: var(--torah);
+  font-size: 19px;
+  line-height: 1.8;
+  color: var(--text);
+  cursor: pointer;
+  -webkit-touch-callout: default;
+}
+
+.tx-para.is-machine .tx-text {
+  color: var(--muted);
+}
+
+.tx-text .word {
+  border-radius: 3px;
+  transition: background-color 0.15s linear, color 0.15s linear;
+}
+
+.tx-text .word:hover {
+  background: var(--accent-soft);
+}
+
+.tx-text .word.w-past {
+  color: var(--text);
+}
+
+.tx-text .word.w-now {
+  background: var(--accent-soft);
+  color: var(--accent-strong, var(--text));
+}
+
+.tx-text .word.w-picked {
+  background: var(--accent-soft);
+  box-shadow: 0 2px 0 var(--accent);
+}
+
+.tx-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tx-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--bg);
+  color: var(--text);
+  font: 500 13.5px var(--ui);
+  cursor: pointer;
+}
+
+.tx-tool:hover {
+  background: var(--canvas);
+}
+
+.tx-tool.on {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.tx-tool:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.tx-edit {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tx-edit textarea,
+.tx-edit .input {
+  width: 100%;
+  font-family: var(--torah);
+  font-size: 18px;
+  line-height: 1.7;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.tx-edit .actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* The box for fixing words floats at the foot of the screen, above the player, however long the paragraph (the paragraph's own tools stay under it); retyping a whole paragraph, its Save does. */
+.tx-edit.words,
+.tx-edit.all .actions {
+  position: sticky;
+  bottom: calc(var(--player-h, 0px) + 8px);
+  z-index: 4;
+  margin-inline: -8px;
+  padding: 8px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 14px rgba(20, 24, 30, 0.1);
+}
+
+.tx-complete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-md);
+}
+
+.tx-pending {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  background: var(--canvas);
+}
+
+.tx-diff {
+  margin: 4px 0 0;
+  font-family: var(--torah);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.tx-diff del {
+  color: var(--del-fg);
+  background: var(--del-bg);
+}
+
+.tx-diff ins {
+  color: var(--add-fg);
+  background: var(--add-bg);
+  text-decoration: none;
+}
+
+.tx-sent {
+  margin: 8px 0 0;
+}
+
+.tx-done-note {
+  margin: 0 0 10px;
+}
+
+.tx-history {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-muted);
+  display: grid;
+  gap: 8px;
+}
+
+.tx-history ul {
+  margin: 0;
+  padding: 0;
+}
+
+.tx-change-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-md);
+}
+
+.tx-change p {
+  margin: 2px 0 0;
+}
+
+.tx-change-item {
+  margin-top: 4px;
+}
+
+/* Words selected in a paragraph: fixing them is one tap away, at the foot of the screen, clear of the phone's own menu. */
+.tx-pick {
+  position: fixed;
+  inset-inline: 12px;
+  bottom: calc(var(--player-h, 0px) + 12px);
+  z-index: 60;
+  margin: 0 auto;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-dialog);
+}
+
+.tx-pick-words {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--torah);
+  font-size: 17px;
+}
+
+/* A part's row: play it, or open its own page. */
+.part-list > li {
+  display: flex;
+  align-items: center;
+}
+
+.part-list > li > .part {
+  flex: 1;
+  min-width: 0;
+}
+
+.part-page {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-inline-end: 8px;
+  border-radius: 50%;
+  color: var(--subtle);
+}
+
+.part-page:hover {
+  background: var(--canvas);
+  color: var(--accent);
+}
+
+/* Where the synced player will be, while the browser asks for its transcript: the same deep blue, the same height. */
+.lyrics-wait {
+  height: calc(min(62vh, 560px) + 190px);
+  border-radius: 14px;
+  background: linear-gradient(170deg, #2c4378 0%, #1c2a52 48%, #121a35 100%);
+  opacity: 0.35;
+}
+
+/* Words a listener marked unclear (`[words?]`): underlined in dots, in the reader and the editor alike. */
+.w-unclear {
+  text-decoration: underline dotted;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+  text-decoration-color: var(--machine);
+}
+
+.lyrics .w-unclear {
+  text-decoration-color: #ffd98a;
+}
+
+.tx-state.resumed {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* Words a fix waiting for approval changes: shown as they are, marked until it is decided. */
+.w-pending {
+  text-decoration: underline dashed var(--accent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.lyrics-line .w-pending {
+  text-decoration-color: #8cc4ff;
+}
+
+/* Words both waiting for approval and marked unclear show as unclear, the brackets' words all alike. */
+.w-pending.w-unclear {
+  text-decoration: underline dotted var(--machine);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
+.lyrics .w-pending.w-unclear {
+  text-decoration-color: #ffd98a;
+}
+
+.tx-waiting ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.tx-waiting li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tx-waiting-n {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+}
+
+/* Talking over unclear words (components/TimingTools.tsx). */
+.lyrics .tx-discuss {
+  margin: 0 18px 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+}
+
+.lyrics .tx-discuss .row-sub {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.lyrics .tx-discuss a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+
+.tx-discuss {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  background: var(--canvas);
+}
+
+.tx-discuss-head {
+  margin: 0;
+  font-weight: 600;
+}
+
+.tx-discuss textarea {
+  width: 100%;
+  font: inherit;
+}
+
+.tx-discuss .actions {
+  display: flex;
+  gap: 6px;
+}
+
+.w-unclear[data-u] {
+  cursor: help;
+}
+
+/* Simpler on a phone: one quiet line saying the text is the machine's, the help and the changelog as small links, big buttons. */
+.tx-machine-line {
+  margin: 0;
+}
+
+.tx-how,
+.tx-all {
+  border: 0;
+  background: none;
+}
+
+.tx-how > summary,
+.tx-all > summary {
+  padding: 4px 0;
+  font-weight: 500;
+  font-size: var(--fs-sm, 13.5px);
+  color: var(--accent);
+}
+
+.tx-how[open],
+.tx-all[open] {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg);
+}
+
+.tx-how[open] > summary,
+.tx-all[open] > summary {
+  padding: 10px 14px;
+}
+
+.tx-how .training-goal,
+.tx-how > div {
+  margin: 10px 14px 12px;
+}
+
+.lyrics .machine-label {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 640px) {
+  .tx-para {
+    padding: 10px 12px 12px;
+  }
+  .tx-tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .tx-tool {
+    justify-content: center;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+  .tx-text {
+    font-size: 20px;
+  }
+}

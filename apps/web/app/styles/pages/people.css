@@ -1,0 +1,1275 @@
+/*
+ * People: a person's page (/u/…), the inbox, their own account, signing
+ * in, the follow button every item carries, and the handle field. The
+ * conversation pieces (timelines, the writing box, state badges) are in
+ * components.css, since talk pages and a new Report use them too.
+ * Everything is the tokens' colours only, so both themes and both
+ * directions come out right.
+ */
+
+/* ================================================================== follow */
+
+.btn.follow.is-on {
+  color: var(--accent);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.btn.follow.is-on:hover {
+  border-color: var(--accent);
+}
+
+/* ================================================================== a bar's account corner */
+
+.account-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 30px;
+}
+
+.account-link-me {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-link-me:hover {
+  text-decoration: none;
+  color: var(--accent);
+}
+
+/* ================================================================== the handle field (@mendy) */
+
+.handle-field {
+  margin-bottom: 0;
+}
+
+.handle-input {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.handle-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.handle-input .at {
+  display: grid;
+  place-items: center;
+  padding-inline: 10px;
+  background: var(--canvas);
+  border-inline-end: 1px solid var(--border);
+  color: var(--subtle);
+  font: 500 var(--fs-base) / 1 var(--mono);
+}
+
+/* Beats the form's own input rule: the box is drawn around the whole field. */
+.handle-input input.handle-in:not([type='radio']):not([type='checkbox']):not([type='file']) {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: var(--fs-md);
+}
+
+.handle-input input.handle-in:focus-visible {
+  outline: none;
+}
+
+.handle-state {
+  min-height: 18px;
+  font-size: var(--fs-sm);
+  font-weight: 400;
+}
+
+.handle-state .hint,
+.handle-ok,
+.handle-bad {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.handle-state .i,
+.handle-ok .i {
+  margin-top: 2px;
+  flex: none;
+}
+
+.handle-ok {
+  color: var(--open);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.handle-bad {
+  color: var(--closed);
+}
+
+.handle-bad .link-button {
+  font-family: var(--mono);
+}
+
+/* ================================================================== the account (settings) */
+
+/* One slim line of who you are, as GitHub's settings head: no page banner. */
+.acct {
+  padding-top: 20px;
+  padding-bottom: 56px;
+}
+
+.acct-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.acct-who {
+  flex: 1;
+  min-width: 180px;
+  display: grid;
+  gap: 2px;
+}
+
+.acct-name {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.acct-handle {
+  font-family: var(--mono);
+  font-size: var(--fs-md);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.acct-sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.acct-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+/* The parts, listed at the side in groups as GitHub's settings are; each is its own page. */
+.acct-nav {
+  position: sticky;
+  top: calc(var(--header-h) + 16px);
+  display: grid;
+  gap: 14px;
+}
+
+.acct-group + .acct-group {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.acct-group h2 {
+  margin: 0 0 4px;
+  padding-inline: 10px;
+  font: 600 12px / 1.4 var(--ui);
+  color: var(--subtle);
+}
+
+.acct-nav ul {
+  display: grid;
+  gap: 1px;
+}
+
+.acct-nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 10px;
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: var(--fs-md);
+  text-decoration: none;
+}
+
+.acct-nav a:hover {
+  background: var(--sunken);
+  text-decoration: none;
+}
+
+.acct-nav a[aria-current='page'] {
+  background: var(--sunken);
+  font-weight: 600;
+}
+
+/* The mark beside the part you are on, as GitHub draws it. */
+.acct-nav a[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -8px;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--accent-strong);
+}
+
+.acct-nav a .i {
+  color: var(--subtle);
+}
+
+.acct-nav .count {
+  margin-inline-start: auto;
+  background: var(--accent-strong);
+  color: #fff;
+  border-radius: 9px;
+  padding: 0 7px;
+  font: 600 11.5px / 18px var(--ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.acct-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.acct-title {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+}
+
+/* ================================================================== connecting an AI app */
+
+.ai-connect {
+  display: grid;
+  gap: 16px;
+}
+
+.ai-address {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-copy.big code {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.ai-apps {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ai-apps legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.ai-app-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ai-app-row .btn.on {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft, var(--sunken));
+  font-weight: 600;
+}
+
+.ai-how {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 22px;
+  list-style: decimal;
+}
+
+.ai-steps li {
+  line-height: 1.55;
+}
+
+.ai-steps .secret-line {
+  margin-top: 6px;
+}
+
+.ai-free {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.ai-free .i {
+  flex: none;
+  margin-top: 2px;
+}
+
+.ai-try {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--r);
+  background: var(--sunken);
+}
+
+.ai-try ul {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+}
+
+.ai-can {
+  display: grid;
+  gap: 8px;
+}
+
+.ai-can li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ai-can .i {
+  flex: none;
+  margin-top: 3px;
+  color: var(--positive, var(--accent-strong));
+}
+
+/* A box of settings: its heading in the box's head. */
+.set-box > .box-h h2 {
+  font: inherit;
+  margin: 0;
+}
+
+.set-box > .box-h > .i {
+  color: var(--muted);
+}
+
+.set-box > .box-h .count {
+  font: 500 12px / 1.5 var(--ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  background: var(--sunken);
+  border-radius: 9px;
+  padding: 0 7px;
+}
+
+.set-box > .box-h .end {
+  font-weight: 500;
+  font-size: var(--fs-sm);
+}
+
+.set-intro {
+  padding: 12px 16px;
+  color: var(--muted);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+}
+
+.set-pad {
+  padding: 12px 16px;
+}
+
+.set-box > .rows + .set-pad,
+.set-box > .empty + .set-pad {
+  border-top: 1px solid var(--border);
+}
+
+.set-box > .empty.compact {
+  border-top: 1px solid var(--border);
+}
+
+.set-box > .box-h + .empty.compact {
+  border-top: 0;
+}
+
+/* One setting: what it is (and a word about it), its value, and the button that changes it. */
+.set-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 34%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-md);
+}
+
+.box-h + .set-row {
+  border-top: 0;
+}
+
+.set-k {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.set-k b {
+  font-weight: 600;
+}
+
+.set-k .hint {
+  color: var(--subtle);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.set-v {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.set-v.mono {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.set-v a[dir='ltr'] {
+  font-family: var(--mono);
+  font-size: var(--fs-md);
+}
+
+.set-row > .set-v:last-child {
+  grid-column: 2 / -1;
+}
+
+/* Changing it, in place: the form takes the value's and the button's room. */
+.set-edit {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.set-edit .field {
+  margin-bottom: 0;
+}
+
+.set-edit .hint {
+  color: var(--subtle);
+  font-size: var(--fs-sm);
+}
+
+/* The field's own label repeats the row's; it stays for screen readers only. */
+.set-edit .handle-field > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.set-form {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.set-sub {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.set-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.set-inline .field {
+  margin-bottom: 0;
+}
+
+.set-inline .grow {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.set-inline-full {
+  flex-basis: 100%;
+}
+
+.field-label {
+  font-weight: 600;
+  font-size: var(--fs-md);
+}
+
+.set-form .choices {
+  font-weight: 400;
+}
+
+/* A secret shown once: the words, and the button that copies them. */
+.secret-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.secret-line code {
+  flex: 1 1 260px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 5px 8px;
+  font-size: var(--fs-sm);
+}
+
+.alert .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-box .row code {
+  font-size: 12px;
+}
+
+@media (max-width: 960px) {
+  .acct-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  /* On a phone the parts are a row of links under the head, scrolled sideways. */
+  .acct-nav {
+    position: static;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .acct-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .acct-group h2 {
+    display: none;
+  }
+  .acct-nav ul {
+    display: flex;
+    gap: 4px;
+  }
+  .acct-group + .acct-group {
+    border-top: 0;
+    padding-top: 0;
+    border-inline-start: 1px solid var(--border);
+    padding-inline-start: 4px;
+  }
+  .acct-nav a {
+    white-space: nowrap;
+    padding: 6px 10px;
+  }
+  .acct-nav a[aria-current='page']::before {
+    inset-inline: 10px;
+    top: auto;
+    bottom: -4px;
+    width: auto;
+    height: 3px;
+  }
+}
+
+@media (max-width: 720px) {
+  .acct-head {
+    margin-bottom: 12px;
+  }
+  .acct-head .phead-acts {
+    width: 100%;
+  }
+  .acct-head .phead-acts .btn {
+    flex: 1;
+  }
+  .set-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px 14px;
+  }
+  .set-row > .set-k {
+    grid-column: 1 / -1;
+  }
+  .set-row > .set-v {
+    grid-column: 1;
+  }
+  .set-row > .set-v:last-child {
+    grid-column: 1 / -1;
+  }
+  .set-edit {
+    grid-column: 1 / -1;
+  }
+  .set-intro,
+  .set-pad,
+  .set-form {
+    padding-inline: 14px;
+  }
+  .set-inline .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* ================================================================== signing in */
+
+.auth {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 40px var(--gutter) 64px;
+  display: grid;
+  gap: 16px;
+}
+
+.auth-head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.auth-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  font-size: 26px;
+  text-decoration: none;
+}
+
+.auth-mark:hover {
+  text-decoration: none;
+}
+
+.auth-title {
+  font: 600 var(--fs-2xl) / 1.3 var(--ui);
+  letter-spacing: -0.01em;
+  margin-top: 8px;
+}
+
+.auth-lede {
+  color: var(--muted);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+}
+
+.auth-box {
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.auth-box .form.stack > * + * {
+  margin-top: 14px;
+}
+
+.auth-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.auth-h .i {
+  color: var(--muted);
+}
+
+.auth-text {
+  color: var(--muted);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+}
+
+.auth-box .hint,
+.auth .form .hint {
+  color: var(--subtle);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Another way in, under a rule that says "or …". */
+.auth-way {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--subtle);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  margin: 6px 0 2px;
+}
+
+.auth-or::before,
+.auth-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.auth-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.auth-note > .i {
+  color: var(--subtle);
+  margin-top: 3px;
+  flex: none;
+}
+
+.auth-note b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .auth {
+    padding-top: 24px;
+  }
+  .auth-box {
+    padding: 16px;
+  }
+  .auth-title {
+    font-size: 21px;
+  }
+}
+
+/* ================================================================== connecting an app (OAuth) */
+
+/* A little wider than sign-in: the redirect address is shown whole. */
+.auth.consent {
+  max-width: 520px;
+}
+
+.consent-h {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.consent-scope {
+  cursor: pointer;
+  align-items: flex-start;
+}
+
+.consent-scope input {
+  margin-top: 4px;
+  accent-color: var(--accent-strong);
+}
+
+.consent-scope > .i {
+  margin-top: 2px;
+}
+
+.consent-never .row-sub {
+  margin-top: 0;
+}
+
+.consent-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.consent-actions .btn.primary {
+  flex: 1;
+  justify-content: center;
+}
+
+.consent-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+}
+
+.consent-links {
+  text-align: center;
+}
+
+/* ================================================================== the inbox */
+
+.inbox-row {
+  position: relative;
+  align-items: flex-start;
+  padding-inline-start: 22px;
+}
+
+.inbox-row > .state-icon {
+  margin-top: 2px;
+}
+
+.inbox-row .unread-dot {
+  position: absolute;
+  inset-inline-start: 8px;
+  top: 17px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.inbox-row.unread .unread-dot {
+  background: var(--accent-strong);
+}
+
+.inbox-row .row-title {
+  font-weight: 400;
+  display: inline;
+}
+
+.inbox-row.unread .row-title {
+  font-weight: 600;
+}
+
+.inbox-row:not(.unread) {
+  background: var(--canvas);
+}
+
+.inbox-row:not(.unread) .row-title {
+  color: var(--muted);
+}
+
+.inbox-row .row-title .num,
+.activity-row .row-title .num {
+  font-weight: 400;
+  color: var(--subtle);
+}
+
+.inbox-row .row-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 4px;
+}
+
+.inbox-row .who {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+a.who:hover {
+  color: var(--accent);
+}
+
+.inbox-row .btn.icon {
+  margin-top: -3px;
+  flex: none;
+}
+
+.inbox-row .btn.icon:hover {
+  color: var(--accent);
+}
+
+/* ================================================================== a person's page */
+
+.profile {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 40px;
+  padding-top: 32px;
+  padding-bottom: 56px;
+  align-items: start;
+}
+
+.profile-card {
+  display: grid;
+  gap: 14px;
+  position: sticky;
+  top: calc(var(--header-h) + 20px);
+}
+
+.avatar.profile-avatar {
+  width: 200px;
+  height: 200px;
+  font-size: 64px;
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.profile-names {
+  display: grid;
+  gap: 2px;
+}
+
+.profile-name {
+  font: 700 26px / 1.25 var(--display);
+  letter-spacing: -0.005em;
+  overflow-wrap: anywhere;
+}
+
+.profile-handle {
+  color: var(--subtle);
+  font: 400 var(--fs-lg) / 1.4 var(--mono);
+  text-align: start;
+}
+
+[dir='rtl'] .profile-handle {
+  text-align: right;
+}
+
+.profile-facts {
+  display: grid;
+  gap: 8px;
+  font-size: var(--fs-md);
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.profile-facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.profile-facts .i {
+  color: var(--subtle);
+  margin-top: 2px;
+  flex: none;
+}
+
+.profile-facts b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.profile-main {
+  min-width: 0;
+  display: grid;
+  gap: 0;
+  align-content: start;
+}
+
+.profile-main > .alert {
+  margin-bottom: 16px;
+}
+
+.profile-main > .h-block {
+  margin-top: 24px;
+}
+
+.profile-month + .profile-month {
+  margin-top: 22px;
+}
+
+.profile-month .h-sec {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-month .h-sec::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.activity-row {
+  align-items: flex-start;
+}
+
+.activity-row > .state-icon {
+  margin-top: 2px;
+}
+
+.activity-line {
+  display: block;
+  line-height: 1.5;
+}
+
+.activity-line .row-title {
+  display: inline;
+}
+
+.activity-excerpt {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 4px;
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--border);
+}
+
+.activity-row .when,
+.inbox-row .when {
+  color: var(--subtle);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.activity-row > .when {
+  margin-top: 2px;
+  flex: none;
+}
+
+@media (max-width: 960px) {
+  .profile {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding-top: 20px;
+  }
+  .profile-card {
+    position: static;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 16px;
+  }
+  .avatar.profile-avatar {
+    width: 72px;
+    height: 72px;
+    font-size: 24px;
+  }
+  .profile-card > :not(.profile-avatar):not(.profile-names) {
+    grid-column: 1 / -1;
+  }
+  .profile-name {
+    font-size: 22px;
+  }
+  .profile-handle {
+    font-size: var(--fs-md);
+  }
+}
+
+@media (max-width: 720px) {
+  .profile-main .tabs {
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+  }
+  .activity-row {
+    flex-wrap: wrap;
+  }
+  .activity-row > .when {
+    flex-basis: 100%;
+    padding-inline-start: 28px;
+    margin-top: -4px;
+  }
+}
+
+/* ================================================================== small settings details */
+
+/* An empty list in a box of settings says its sentence quietly. */
+.set-box .empty .empty-title {
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--muted);
+  max-width: 520px;
+  line-height: 1.6;
+}
+
+.set-form .check-line {
+  font-weight: 400;
+  margin-bottom: 6px;
+}
+
+.set-form fieldset.field,
+.set-form .choices,
+.auth .choices {
+  margin-bottom: 0;
+}
+
+/* ================================================================== a person, as design/ draws them (4a) */
+
+/* One column: who they are, three numbers, their squares, then what they did. */
+.profile.p2 {
+  display: block;
+  max-width: 760px;
+}
+
+.pf-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.pf-head .profile-avatar {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  font-size: 22px;
+}
+
+.pf-names {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.pf-sub {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--subtle);
+}
+
+.pf-role {
+  display: inline-block;
+  padding: 1px 10px;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.pf-edit {
+  flex: none;
+  align-self: flex-start;
+}
+
+.pf-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 24px 0 8px;
+  border-block: 1px solid var(--border);
+}
+
+.pf-stats a {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 18px 8px;
+  color: var(--text);
+  text-decoration: none;
+  text-align: center;
+}
+
+.pf-stats a + a {
+  border-inline-start: 1px solid var(--border);
+}
+
+.pf-stats a:hover {
+  background: var(--canvas);
+}
+
+.pf-stats b {
+  font: 700 28px / 1.1 var(--display);
+}
+
+.pf-stats span {
+  font-size: var(--fs-sm);
+  color: var(--subtle);
+}
+
+.pf-h {
+  margin: 24px 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* Twelve weeks, a column each; seven days, a row each. */
+.sq-grid {
+  display: grid;
+  grid-template-rows: repeat(7, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  max-width: 520px;
+}
+
+.sq {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--sunken);
+}
+
+.sq.none {
+  background: none;
+}
+
+.sq.l1 {
+  background: color-mix(in srgb, var(--accent) 28%, var(--sunken));
+}
+
+.sq.l2 {
+  background: color-mix(in srgb, var(--accent) 50%, var(--sunken));
+}
+
+.sq.l3 {
+  background: color-mix(in srgb, var(--accent) 72%, var(--sunken));
+}
+
+.sq.l4 {
+  background: var(--accent);
+}
+
+/* What they did lately: a quiet list, a line each. */
+.p2 .profile-month .h-sec {
+  margin-top: 14px;
+}
+
+.p2 .profile-month .box {
+  border-inline: 0;
+  border-radius: 0;
+  background: none;
+}
+
+@media (max-width: 720px) {
+  .pf-head .profile-avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .pf-stats b {
+    font-size: 24px;
+  }
+}
