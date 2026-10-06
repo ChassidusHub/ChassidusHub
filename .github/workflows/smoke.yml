@@ -1,0 +1,41 @@
+name: Smoke
+
+# After each deploy, the live site's main pages in a real browser
+# (scripts/smoke.cjs): a page that breaks, a script error, or a failed
+# request of the site's own turns this red, and GitHub emails whoever merged.
+# Cloudflare's Workers Builds deploys every push to main by itself; this
+# waits for it, then looks. Every morning too, and by hand.
+on:
+  # By hand only while RebbeHub is private (2 October 2026): Actions minutes are limited on a private repository.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SITE: https://rebbehub.org
+      API: https://api.rebbehub.org
+      # While RebbeHub is private, the pages open with the lock's key, made from this secret (scripts/smoke.cjs).
+      REBBEHUB_PASSWORD: ${{ secrets.REBBEHUB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install a browser
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          echo "NODE_PATH=$RUNNER_TEMP/pw/node_modules" >> "$GITHUB_ENV"
+      - name: Look at the pages
+        run: node scripts/smoke.cjs

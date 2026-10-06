@@ -1,0 +1,754 @@
+/*
+ * A showcase (routes/show.tsx): an information page about the agents that
+ * build RebbeHub, in the site's own colours and type. Plain text, a table,
+ * and the examples (scans, Torah text, the lyrics) as the site draws them.
+ * And the page where Shmuly makes them (routes/showcase.tsx), in the
+ * site's usual forms.
+ */
+.show {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.show-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.show code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+}
+
+.show-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+}
+.show-lang {
+  margin-inline-start: auto;
+  font-size: 14px;
+}
+.show-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  margin: 32px 0 8px;
+}
+.show-note {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+.show-lede {
+  max-width: 760px;
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+.show-meta {
+  color: var(--subtle);
+  font-size: 13px;
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.show-toc {
+  margin: 24px 0 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r, 6px);
+  background: var(--card);
+  max-width: 420px;
+}
+.show-toc-h {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.show-toc ol {
+  margin: 0;
+  padding-inline-start: 20px;
+  font-size: 15px;
+}
+
+.show-section {
+  padding: 40px 0 0;
+  scroll-margin-top: 8px;
+}
+.show-h {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(22px, 3vw, 28px);
+  margin: 0 0 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.show-sub {
+  margin: 8px 0 0;
+  max-width: 760px;
+}
+
+/* The agents, one row each. */
+.show-table-wrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+.show-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  background: var(--card);
+}
+.show-table th,
+.show-table td {
+  text-align: start;
+  vertical-align: top;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+}
+.show-table thead th {
+  background: var(--sunken);
+  font-size: 13px;
+  font-weight: 700;
+}
+.show-table tbody th {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.show-table code {
+  white-space: nowrap;
+}
+
+/* An example: its title, then the original and the agent's text. */
+.show-card {
+  margin: 20px 0 0;
+}
+.show-card-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 20px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.show-card-t {
+  font-size: 18px;
+  line-height: 1.3;
+  margin: 0;
+}
+.show-card-d {
+  margin: 2px 0 0;
+  color: var(--subtle);
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.show-seg {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r, 6px);
+  overflow: hidden;
+}
+.show-seg button {
+  border: 0;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.show-seg button + button {
+  border-inline-start: 1px solid var(--border-strong);
+}
+.show-seg button.on {
+  background: var(--strong);
+  color: var(--on-strong);
+}
+.show-pair {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+.show-pair-beside {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.show-pair-beside > .show-scan {
+  order: -1;
+}
+.show-pair-original .show-scan {
+  max-width: 860px;
+  width: 100%;
+}
+.show-scan {
+  position: sticky;
+  top: 8px;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #1a1a1a;
+}
+.show-pair-original .show-scan {
+  position: static;
+  max-height: none;
+}
+.show-words,
+.show-paper,
+.show-topics,
+.show-lyrics {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.show-words {
+  font-family: var(--torah);
+  font-size: 19px;
+  line-height: 1.8;
+  padding: 12px 16px;
+}
+.show-pair-text .show-words {
+  max-width: 820px;
+}
+.show-pair-beside .show-words {
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+}
+.show-paper {
+  max-width: 760px;
+  padding: 8px 20px;
+}
+
+/* Benchmarks (components/Benchmarks.tsx): a few figures, then each model against where it started. */
+.bm-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.bm-tile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.bm-tile-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.bm-tile-value {
+  font-family: var(--ui);
+  font-weight: 700;
+  font-size: clamp(28px, 3.4vw, 36px);
+  line-height: 1.2;
+  margin: 4px 0;
+  color: var(--text);
+}
+.bm-tile-note {
+  font-size: 12px;
+  color: var(--subtle);
+}
+.bm-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  align-items: start;
+  gap: 12px;
+  margin-top: 12px;
+}
+.bm-chart {
+  margin: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px 10px;
+}
+.bm-chart-t {
+  font-weight: 700;
+  font-size: 15px;
+}
+.bm-chart-sub {
+  font-size: 13px;
+  color: var(--subtle);
+}
+.bm-times {
+  margin: 8px 0 4px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.bm-times strong {
+  font-size: 22px;
+  color: var(--text);
+}
+.bm-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 6px;
+  font-family: var(--ui);
+}
+.bm-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.bm-hit {
+  fill: transparent;
+}
+.bm-bar {
+  fill: var(--border-strong);
+  transition: opacity 0.15s;
+}
+.bm-row.ours .bm-bar {
+  fill: var(--accent);
+}
+.bm-charts svg:has(.bm-row.hover) .bm-row:not(.hover) .bm-bar {
+  opacity: 0.45;
+}
+.bm-label {
+  font-size: 16px;
+  fill: var(--muted);
+}
+.bm-row.ours .bm-label {
+  fill: var(--text);
+  font-weight: 700;
+}
+.bm-value {
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A sicha set as printed (components/PrintPage.tsx): every line at its place on the page. */
+.pr-page {
+  position: relative;
+  width: 100%;
+  container-type: inline-size;
+  background: #fffefb;
+  color: #141210;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(31, 26, 19, 0.06), 0 8px 24px rgba(31, 26, 19, 0.08);
+  font-family: 'FrankRuehlCLM', var(--torah);
+  overflow: hidden;
+}
+.pr-line,
+.pr-head {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+.pr-line > span {
+  display: inline-block;
+  transform-origin: right center;
+}
+.pr-heading {
+  justify-content: center;
+}
+.pr-heading > span {
+  font-family: 'DavidCLM', 'FrankRuehlCLM', serif;
+  font-weight: 700;
+}
+.pr-end {
+  justify-content: flex-end;
+}
+.pr-head {
+  color: #2a2620;
+  font-family: 'DavidCLM', 'FrankRuehlCLM', serif;
+}
+.pr-head-center {
+  justify-content: center;
+}
+.pr-head-start {
+  justify-content: flex-start;
+}
+.pr-head-end {
+  justify-content: flex-end;
+}
+.pr-rule {
+  position: absolute;
+  background: #2a2620;
+  min-height: 1px;
+}
+/* Miram in its own face (fonts.css); bold Frank stands in only until the face has loaded. */
+.pr-miram {
+  font-family: 'Miram Lubavitch', 'FrankRuehlCLM', serif;
+  font-weight: 700;
+}
+/* The ois letter is the body's own Frank, not Miram (Shmuly). */
+.pr-ois {
+  font-weight: 400;
+}
+.pr-small {
+  font-size: 0.82em;
+}
+.pr-ref {
+  font-size: 0.62em;
+  line-height: 0;
+  vertical-align: 0.55em;
+}
+.pr-label {
+  font-weight: 400;
+}
+.show-print {
+  display: grid;
+  gap: 8px;
+}
+.show-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--subtle);
+}
+
+/* The farbrengens: one at a time. */
+.show-picks {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.show-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 280px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r, 6px);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: start;
+  cursor: pointer;
+}
+.show-pick.on {
+  background: var(--strong);
+  border-color: var(--strong);
+  color: var(--on-strong);
+}
+.show-pick-t {
+  font-weight: 700;
+}
+.show-pick-d {
+  font-size: 12px;
+  opacity: 0.8;
+}
+.show-parts {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.show-parts li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+/* The player: the farbrengen's name, its words and its controls on one deep panel, the words lit as they are said. */
+.show-player {
+  --pl-bg: radial-gradient(120% 70% at 85% 0%, rgba(120, 150, 230, 0.28) 0%, transparent 60%), radial-gradient(90% 60% at 0% 100%, rgba(150, 90, 170, 0.22) 0%, transparent 60%), linear-gradient(165deg, #22335f 0%, #19244a 50%, #121935 100%);
+  background: var(--pl-bg);
+  color: #fff;
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 1px 2px rgba(12, 18, 40, 0.2), 0 18px 40px rgba(12, 18, 40, 0.28);
+}
+.show-player .show-card-head {
+  margin-bottom: 4px;
+  padding: 2px 6px 0;
+}
+.show-player .show-card-t {
+  font-family: var(--display);
+  font-size: clamp(22px, 3vw, 28px);
+  color: #fff;
+}
+.show-player .show-card-d {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 14px;
+}
+.show-player .show-seg {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.show-player .show-seg button {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+}
+.show-player .show-seg button + button {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.show-player .show-seg button.on {
+  background: #fff;
+  color: #19244a;
+}
+.show-player .show-lyrics {
+  border: 0;
+  background: none;
+}
+.show-player .lyrics {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+.show-player .lyrics.full {
+  background: var(--pl-bg);
+}
+.show-player .lyrics-scroll {
+  height: min(66vh, 600px);
+}
+.show-player .lyrics-line {
+  font-size: clamp(21px, 2.6vw, 30px);
+  line-height: 1.55;
+  margin-bottom: 26px;
+}
+/* Before it plays, the words read well; once it plays, what was said, is said, and is to come each have their light. */
+.show-player .lyrics:not(:has(.lyrics-line.now)) .lyrics-line {
+  color: rgba(255, 255, 255, 0.84);
+}
+.show-player .lyrics-play {
+  width: 60px;
+  height: 60px;
+}
+.show-player .show-scan {
+  border: 0;
+  border-radius: 10px;
+}
+.show-player-meta {
+  color: rgba(255, 255, 255, 0.62);
+  padding: 0 6px;
+}
+
+/* The joined index. */
+.show-search {
+  display: flex;
+  gap: 8px;
+  max-width: 520px;
+  margin: 16px 0;
+}
+.show-search input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r, 6px);
+  background: var(--card);
+  color: var(--text);
+}
+.show-topics {
+  display: grid;
+  gap: 4px;
+  padding: 8px 16px;
+}
+.show-topics .mf-chip {
+  cursor: default;
+}
+
+.show-foot {
+  margin-top: 56px;
+  padding: 16px 20px 32px;
+  border-top: 1px solid var(--border);
+  color: var(--subtle);
+  font-size: 13px;
+}
+.show-foot p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .show-wrap {
+    padding: 0 14px;
+  }
+  .show-pair-beside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .show-pair-beside .show-scan {
+    top: 0;
+    max-height: 48vh;
+    z-index: 2;
+  }
+  .show-pair-beside .show-words {
+    max-height: none;
+  }
+  .show-words {
+    font-size: 17px;
+  }
+  .bm-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .bm-tile {
+    padding: 10px 12px;
+  }
+  .bm-tile-value {
+    font-size: 22px;
+  }
+  /* On a phone each agent is a small block of its own: the table's columns become labelled lines. */
+  .show-table,
+  .show-table tbody,
+  .show-table tr,
+  .show-table th,
+  .show-table td {
+    display: block;
+  }
+  .show-table thead {
+    display: none;
+  }
+  .show-table tr {
+    border: 1px solid var(--border);
+    border-bottom: 0;
+  }
+  .show-table tr:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+  .show-table th,
+  .show-table td {
+    border: 0;
+    padding: 2px 12px;
+  }
+  .show-table tbody th {
+    padding-top: 10px;
+  }
+  .show-table td:last-child {
+    padding-bottom: 10px;
+  }
+  .show-table td:empty {
+    display: none;
+  }
+  .show-table td::before {
+    content: attr(data-label) ': ';
+    color: var(--subtle);
+    font-size: 13px;
+  }
+}
+
+/* The picker (routes/showcase.tsx). */
+.showcase-page .box {
+  padding: 16px;
+}
+.sc-saved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 16px 0;
+}
+.sc-saved a {
+  word-break: break-all;
+  font-weight: 700;
+}
+.sc-list {
+  margin: 20px 0;
+}
+.sc-row,
+.sc-best li,
+.sc-picked li,
+.sc-found li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-muted);
+}
+.sc-best,
+.sc-picked,
+.sc-found {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sc-picked {
+  counter-reset: pick;
+}
+.sc-editor {
+  margin-top: 24px;
+}
+.sc-fields {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: 16px;
+}
+.sc-fields label {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--subtle);
+}
+.sc-fields input,
+.sc-fields select,
+.sc-finder input {
+  font: inherit;
+  color: var(--text);
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  background: var(--card);
+}
+.sc-finder input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.sc-found {
+  margin-top: 6px;
+  max-height: 320px;
+  overflow: auto;
+}
+.sc-h {
+  margin: 20px 0 2px;
+  font-size: 16px;
+}
+.sc-extras {
+  display: grid;
+  gap: 6px;
+}
+.sc-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.sc-actions {
+  margin: 20px 0 8px;
+}
+.sc-original {
+  display: block;
+  width: min(100%, 420px);
+  margin-top: 6px;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  background: var(--card);
+  color: var(--text);
+}
+.sc-file {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}

@@ -1,0 +1,20 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+.env
+.env.*
+!.env.example
+# local databases, mirrors and dumps made by the CLI
+.data/
+out/
+*.sqlite
+*.sqlite-journal
+# signing keys never live in the repository
+*.key
+*.secret.json
+# wrangler local state and secrets
+.wrangler/
+.dev.vars
+wrangler.local.toml
+__pycache__/

@@ -1,0 +1,340 @@
+import { hasUnclear, type EntityId } from '@rebbehub/model';
+import type { Catalog } from './catalog.js';
+
+/**
+ * The retraining cycle's data (docs/transcription.md): every transcript
+ * paragraph a person checked becomes training clips for the next Rebbe
+ * Whisper, with nobody gathering them by hand. People correct on the
+ * site; the nightly align run times the corrected words again; this reads
+ * the result as clips in the training script's own format (the rows of
+ * clips.jsonl: audio, start, end, text, split), ready for the next paid
+ * run whenever there is budget for one.
+ *
+ * Only words a person checked are used. A clip is `gold` when a person
+ * also checked where it is heard, `silver` when the timing is the
+ * machine's alignment of the checked words. Whisper hears at most 30
+ * seconds at a time, so a longer paragraph is cut at its word timings;
+ * without them it waits for the next align run. Each recording is kept
+ * wholly in `train` or wholly in `test`, by a hash of its id that never
+ * changes, so a model is never scored on audio it learned from.
+ */
+
+/** Longest clip, in seconds: under Whisper's 30-second window, with room for the edges. */
+export const CLIP_MAX_SECONDS = 28;
+const CLIP_MIN_SECONDS = 1;
+/** Letters per second outside this range mean the words and the timing do not match. */
+const MIN_CHARS_PER_SECOND = 3;
+const MAX_CHARS_PER_SECOND = 30;
+/** One recording in ten is held out for scoring. */
+const TEST_SHARE = 10;
+
+/**
+ * Recordings the training script already scores on, by JEM file: always
+ * `test`, so no version learns them. The four held-out farbrengens of 5742
+ * (Tzom Gedaliah, Taanis Esther, Lag BaOmer, 17 Tammuz) and 11 Nissan 5733.
+ */
+export const HELD_OUT_AUDIO: readonly string[] = [
+  'JEMSK2863.mp3',
+  'JEMSK3002.mp3',
+  'JEMSK3053.mp3',
+  'JEMSK3054.mp3',
+  'JEMSK3113.mp3',
+  'AR0015492.mp3',
+  'AR0015494.mp3',
+  'AR0015496.mp3',
+  'AR0015498.mp3',
+  'AR0015508.mp3',
+  'AR0015510.mp3',
+  'AR0015512.mp3',
+  'AR0015515.mp3',
+];
+
+export type ClipQuality = 'gold' | 'silver';
+
+/** One clip, as the training script reads it (clips.jsonl), plus where on RebbeHub it came from. */
+export interface TrainingClip {
+  /** The recording's audio: its JEM file name when JEM's, else its full address. */
+  audio: string[];
+  /** Seconds from the recording's start. */
+  start: number;
+  end: number;
+  text: string;
+  split: 'train' | 'test';
+  /** How its test score is reported, apart from the booklets' and 5742's. */
+  group: 'site';
+  section: 'site';
+  pdf: null;
+  quality: ClipQuality;
+  recording: EntityId;
+  segment: EntityId;
+  /** When the paragraph was last checked or changed (ISO). */
+  checkedAt: string;
+}
+
+export interface TrainingSkip {
+  segment: EntityId;
+  reason: 'no timing' | 'long, waiting for word timing' | 'too short' | 'words and timing disagree' | 'no audio' | 'words marked unclear';
+}
+
+export interface TrainingSummary {
+  clips: number;
+  hours: number;
+  gold: number;
+  silver: number;
+  trainHours: number;
+  testHours: number;
+  recordings: number;
+  /** Hours checked since `since`, when asked: what the next round would add. */
+  newHours: number | null;
+  skipped: Partial<Record<TrainingSkip['reason'], number>>;
+}
+
+interface Row {
+  segment: EntityId;
+  content: string;
+  recording: EntityId;
+  url: string | null;
+  file: string | null;
+  span: { startMs: number; endMs: number; words?: Array<{ from: number; to: number; startMs: number; endMs: number }>; locked?: boolean; origin?: { checked?: boolean; edited?: boolean } } | null;
+  checked_at: Date | string;
+}
+
+/** Every checked transcript paragraph with its recording and where it is heard, in one query. */
+async function checkedParagraphs(catalog: Catalog, since?: string): Promise<Row[]> {
+  const { rows } = await catalog.db.query<Row>(
+    `SELECT s.id AS segment, sr.data->>'content' AS content, rec.id AS recording, rr.data->>'url' AS url, rr.data->>'file' AS file,
+            sp.data AS span, sr.created_at AS checked_at
+     FROM entity t JOIN revision tr ON tr.id = t.main_rev AND tr.data->>'kind' = 'transcript'
+     JOIN entity rec ON rec.id = tr.data->>'recording' AND NOT rec.deleted JOIN revision rr ON rr.id = rec.main_rev
+     JOIN entity_ref x ON x.to_id = t.id AND x.field = 'text'
+     JOIN entity s ON s.id = x.from_id AND s.type = 'segment' AND NOT s.deleted
+     JOIN revision sr ON sr.id = s.main_rev
+     LEFT JOIN LATERAL (
+       SELECT spr.data FROM entity_ref y JOIN entity e ON e.id = y.from_id AND e.type = 'alignment-span' AND NOT e.deleted
+       JOIN revision spr ON spr.id = e.main_rev
+       JOIN entity a ON a.id = spr.data->>'alignment' AND NOT a.deleted JOIN revision ar ON ar.id = a.main_rev
+       WHERE y.to_id = s.id AND y.field = 'segment' AND ar.data->>'recording' = rec.id
+       ORDER BY e.id LIMIT 1
+     ) sp ON TRUE
+     WHERE t.type = 'text' AND NOT t.deleted
+       AND (COALESCE((sr.data->>'proofread')::int, 0) > 0 OR sr.data->'origin'->>'checked' = 'true')
+       ${since ? 'AND sr.created_at >= $1' : ''}
+     ORDER BY rec.id, sr.data->>'order'`,
+    since ? [since] : [],
+  );
+  return rows;
+}
+
+/** The recording's audio as the training script fetches it. */
+function audioOf(row: Pick<Row, 'url' | 'file'>, filesBaseUrl: string): string | null {
+  const jem = row.url ? /\/jem-audio\/([^/?#]+)$/.exec(row.url) : null;
+  if (jem) return decodeURIComponent(jem[1]!);
+  if (row.file) return `${filesBaseUrl.replace(/\/$/, '')}/objects/${row.file}`;
+  return row.url;
+}
+
+/** FNV-1a: the same recording id lands in the same split on every machine, every run. */
+function hash(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0;
+  return h;
+}
+
+export function splitOf(recording: EntityId, audio: string): 'train' | 'test' {
+  return HELD_OUT_AUDIO.includes(audio) || hash(recording) % TEST_SHARE === 0 ? 'test' : 'train';
+}
+
+/** A paragraph's pieces of at most CLIP_MAX_SECONDS, cut between words; null when it is too long and has no word timings. */
+export function piecesOf(content: string, span: NonNullable<Row['span']>): Array<{ text: string; startMs: number; endMs: number }> | null {
+  if (span.endMs - span.startMs <= CLIP_MAX_SECONDS * 1000) return [{ text: content, startMs: span.startMs, endMs: span.endMs }];
+  // Word times a fix carried over are good enough to follow along, not to cut clips by: those wait for the next alignment run.
+  const words = span.words?.length && !span.origin?.edited && span.words.every((w) => w.to <= content.length) ? span.words : null;
+  if (!words) return null;
+  const pieces: Array<{ text: string; startMs: number; endMs: number }> = [];
+  let first = 0;
+  for (let i = 1; i <= words.length; i++) {
+    const next = words[i];
+    if (next && next.endMs - words[first]!.startMs <= CLIP_MAX_SECONDS * 1000) continue;
+    const last = words[i - 1]!;
+    pieces.push({ text: content.slice(words[first]!.from, last.to).trim(), startMs: words[first]!.startMs, endMs: last.endMs });
+    first = i;
+  }
+  return pieces;
+}
+
+/**
+ * The clips people's checking has made so far, and what was left out and
+ * why. `since` (an ISO date) keeps only paragraphs checked since then.
+ */
+export async function trainingClips(catalog: Catalog, options: { since?: string; filesBaseUrl?: string } = {}): Promise<{ clips: TrainingClip[]; skipped: TrainingSkip[] }> {
+  const clips: TrainingClip[] = [];
+  const skipped: TrainingSkip[] = [];
+  for (const row of await checkedParagraphs(catalog, options.since)) {
+    const audio = audioOf(row, options.filesBaseUrl ?? 'https://api.rebbehub.org');
+    if (!audio) {
+      skipped.push({ segment: row.segment, reason: 'no audio' });
+      continue;
+    }
+    if (!row.span) {
+      skipped.push({ segment: row.segment, reason: 'no timing' });
+      continue;
+    }
+    // A listener's guess, marked `[words?]`, is no ground truth to learn from.
+    if (hasUnclear(row.content)) {
+      skipped.push({ segment: row.segment, reason: 'words marked unclear' });
+      continue;
+    }
+    const pieces = piecesOf(row.content, { ...row.span, startMs: Number(row.span.startMs), endMs: Number(row.span.endMs) });
+    if (!pieces) {
+      skipped.push({ segment: row.segment, reason: 'long, waiting for word timing' });
+      continue;
+    }
+    const quality: ClipQuality = row.span.locked || row.span.origin?.checked || !row.span.origin ? 'gold' : 'silver';
+    for (const piece of pieces) {
+      const seconds = (piece.endMs - piece.startMs) / 1000;
+      const letters = piece.text.replace(/[^\p{L}]/gu, '').length;
+      if (seconds < CLIP_MIN_SECONDS || !letters) {
+        skipped.push({ segment: row.segment, reason: 'too short' });
+        continue;
+      }
+      if (letters / seconds < MIN_CHARS_PER_SECOND || letters / seconds > MAX_CHARS_PER_SECOND) {
+        skipped.push({ segment: row.segment, reason: 'words and timing disagree' });
+        continue;
+      }
+      clips.push({
+        audio: [audio],
+        start: piece.startMs / 1000,
+        end: piece.endMs / 1000,
+        text: piece.text,
+        split: splitOf(row.recording, audio),
+        group: 'site',
+        section: 'site',
+        pdf: null,
+        quality,
+        recording: row.recording,
+        segment: row.segment,
+        checkedAt: new Date(row.checked_at).toISOString(),
+      });
+    }
+  }
+  return { clips, skipped };
+}
+
+/** How much training data people's checking has made, and how much of it is new since `since`. */
+export function summariseTraining(all: { clips: TrainingClip[]; skipped: TrainingSkip[] }, since?: string): TrainingSummary {
+  const hours = (clips: TrainingClip[]) => Math.round(clips.reduce((t, c) => t + (c.end - c.start), 0) / 36) / 100;
+  const skipped: TrainingSummary['skipped'] = {};
+  for (const s of all.skipped) skipped[s.reason] = (skipped[s.reason] ?? 0) + 1;
+  return {
+    clips: all.clips.length,
+    hours: hours(all.clips),
+    gold: all.clips.filter((c) => c.quality === 'gold').length,
+    silver: all.clips.filter((c) => c.quality === 'silver').length,
+    trainHours: hours(all.clips.filter((c) => c.split === 'train')),
+    testHours: hours(all.clips.filter((c) => c.split === 'test')),
+    recordings: new Set(all.clips.map((c) => c.recording)).size,
+    newHours: since ? hours(all.clips.filter((c) => c.checkedAt >= new Date(since).toISOString())) : null,
+    skipped,
+  };
+}
+
+/**
+ * What the next model waits for (the training thread, 2026-09-29): V4 is
+ * trained once people have checked about ten farbrengens, about 34 hours
+ * of speech (a farbrengen runs about 3.4 hours; V3 learned from about 66).
+ * Only what was checked since V3 was trained counts, and never the
+ * held-out recordings the models are scored on. Farbrengens before 5740
+ * are the most wanted: that is where the model is weakest. Reaching the
+ * goal starts nothing; each paid training run waits for a person's OK.
+ */
+export const TRAINING_GOAL = { model: 'V4', since: '2026-09-29', hours: 34, farbrengens: 10, mostWantedBefore: 5740 } as const;
+
+export interface GoalFarbrengen {
+  event: EntityId;
+  path: string | null;
+  title: { he: string; en?: string } | null;
+  date: string | null;
+  paragraphs: number;
+  checked: number;
+  /** Before 5740, where the model is weakest. */
+  mostWanted: boolean;
+}
+
+export interface TrainingGoal {
+  model: string;
+  since: string;
+  hours: { done: number; target: number };
+  /**
+   * `done` counts farbrengens checked through; `progress` also counts the
+   * part of each farbrengen checked so far (half checked is a half), so
+   * the bar moves with every paragraph and not only at a farbrengen's end.
+   */
+  farbrengens: { done: number; target: number; progress: number };
+  /** Paragraphs people checked since the last model. */
+  paragraphs: { checked: number };
+  /** Transcribed farbrengens not yet fully checked, the most wanted first, then those nearest done. */
+  next: GoalFarbrengen[];
+}
+
+/** Each transcribed farbrengen with how many of its transcripts' paragraphs a person has checked, in one query. */
+async function farbrengenProgress(catalog: Catalog, since: string): Promise<Array<GoalFarbrengen & { heldOut: boolean; recent: number }>> {
+  const { rows } = await catalog.db.query<{ event: EntityId; path: string | null; title: GoalFarbrengen['title']; date: string | null; url: string | null; paragraphs: string | number; checked: string | number; recent: string | number }>(
+    `SELECT ev.id AS event, ev.path, er.data->'title' AS title, er.data->>'date' AS date, rr.data->>'url' AS url,
+            count(s.id) AS paragraphs,
+            count(s.id) FILTER (WHERE coalesce((sr.data->>'proofread')::int, 0) > 0 OR sr.data->'origin'->>'checked' = 'true') AS checked,
+            count(s.id) FILTER (WHERE (coalesce((sr.data->>'proofread')::int, 0) > 0 OR sr.data->'origin'->>'checked' = 'true') AND sr.created_at >= $1) AS recent
+     FROM entity t JOIN revision tr ON tr.id = t.main_rev AND tr.data->>'kind' = 'transcript'
+     JOIN entity rec ON rec.id = tr.data->>'recording' AND NOT rec.deleted JOIN revision rr ON rr.id = rec.main_rev
+     JOIN entity ev ON ev.id = rr.data->>'event' AND NOT ev.deleted JOIN revision er ON er.id = ev.main_rev AND er.data->>'kind' = 'farbrengen'
+     JOIN entity_ref x ON x.to_id = t.id AND x.field = 'text'
+     JOIN entity s ON s.id = x.from_id AND s.type = 'segment' AND NOT s.deleted JOIN revision sr ON sr.id = s.main_rev
+     WHERE t.type = 'text' AND NOT t.deleted
+     GROUP BY ev.id, ev.path, er.data, rec.id, rr.data`,
+    [since],
+  );
+  const byEvent = new Map<EntityId, GoalFarbrengen & { heldOut: boolean; recent: number }>();
+  for (const r of rows) {
+    const jem = r.url ? /\/jem-audio\/([^/?#]+)$/.exec(r.url) : null;
+    const heldOut = Boolean(jem && HELD_OUT_AUDIO.includes(decodeURIComponent(jem[1]!)));
+    const year = Number(r.date?.slice(0, 4));
+    const e = byEvent.get(r.event) ?? { event: r.event, path: r.path, title: r.title, date: r.date, paragraphs: 0, checked: 0, mostWanted: year > 0 && year < TRAINING_GOAL.mostWantedBefore, heldOut: false, recent: 0 };
+    e.paragraphs += Number(r.paragraphs);
+    e.checked += Number(r.checked);
+    e.recent += Number(r.recent);
+    e.heldOut ||= heldOut;
+    byEvent.set(r.event, e);
+  }
+  return [...byEvent.values()];
+}
+
+/** How near the next model is: hours and farbrengens checked since the last one, and which farbrengens to check next. */
+export async function trainingGoal(catalog: Catalog, all: { clips: TrainingClip[] }, options: { next?: number } = {}): Promise<TrainingGoal> {
+  const since = new Date(TRAINING_GOAL.since).toISOString();
+  const counted = all.clips.filter((c) => c.checkedAt >= since && !c.audio.some((a) => HELD_OUT_AUDIO.includes(a)));
+  const seconds = counted.reduce((t, c) => t + (c.end - c.start), 0);
+  const recent = new Set(counted.map((c) => c.recording));
+  const farbrengens = (await farbrengenProgress(catalog, since)).filter((f) => !f.heldOut);
+  // A farbrengen counts once every transcribed paragraph of it is checked, some of it since the last model.
+  const recentEvents = new Set<EntityId>();
+  if (recent.size) {
+    const { rows } = await catalog.db.query<{ event: EntityId }>(`SELECT DISTINCT r.data->>'event' AS event FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = ANY($1::text[])`, [[...recent]]);
+    for (const r of rows) recentEvents.add(r.event);
+  }
+  const isDone = (f: (typeof farbrengens)[number]) => f.paragraphs > 0 && f.checked === f.paragraphs && (recentEvents.has(f.event) || f.recent > 0);
+  const done = farbrengens.filter(isDone).length;
+  // The farbrengens begun since the last model, each by how much of it is checked.
+  const begun = farbrengens.filter((f) => !isDone(f) && f.recent > 0).reduce((sum, f) => sum + f.checked / f.paragraphs, 0);
+  const next = farbrengens
+    .filter((f) => f.checked < f.paragraphs)
+    .sort((a, b) => Number(b.mostWanted) - Number(a.mostWanted) || b.checked / b.paragraphs - a.checked / a.paragraphs || (a.date ?? '').localeCompare(b.date ?? ''))
+    .slice(0, options.next ?? 5)
+    .map(({ heldOut: _h, recent: _r, ...f }) => f);
+  return {
+    model: TRAINING_GOAL.model,
+    since: TRAINING_GOAL.since,
+    hours: { done: Math.round(seconds / 36) / 100, target: TRAINING_GOAL.hours },
+    farbrengens: { done, target: TRAINING_GOAL.farbrengens, progress: Math.min(TRAINING_GOAL.farbrengens, Math.round((done + begun) * 100) / 100) },
+    paragraphs: { checked: farbrengens.reduce((sum, f) => sum + f.recent, 0) },
+    next,
+  };
+}
