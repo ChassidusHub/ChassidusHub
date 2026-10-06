@@ -46,8 +46,13 @@ of your Worker"
 
 A managed PostgreSQL cluster (Postgres 18, New York) with a database
 `chassidushub` owned by the user `chassidushub`, which the Workers connect
-as. Use its direct connection string (port 25060, `sslmode=require`), not
-a connection pool: Hyperdrive does the pooling.
+as. Use its direct connection string (port 25060), not a connection pool:
+Hyperdrive does the pooling. End it with
+`?sslmode=verify-full&sslrootcert=certs/digitalocean-ca.crt`: DigitalOcean
+signs its servers with its own CA, which no build machine trusts on its
+own, and `sslmode=require` now verifies too, so without the file the build
+stops at "self-signed certificate in certificate chain"
+([certs](../certs/README.md)).
 
 ### 2. Storage and the connection (Cloudflare dashboard)
 
