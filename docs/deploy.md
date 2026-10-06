@@ -2,7 +2,7 @@
 
 ChassidusHub runs as two Cloudflare Workers - `chassidushub-api` (the API and the
 media proxy) and `chassidushub-web` (the site) - on a Postgres database at
-Neon, reached through Cloudflare Hyperdrive, with files in R2.
+DigitalOcean, reached through Cloudflare Hyperdrive, with files in R2.
 
 Cloudflare builds and deploys both from this repository on every push to
 `main` (Workers Builds). No API token is kept anywhere: Cloudflare reads
@@ -42,18 +42,19 @@ of your Worker"
 
 ## One-time setup
 
-### 1. The database (Neon)
+### 1. The database (DigitalOcean)
 
-Use the **direct** connection string (Vercel's Neon integration calls it
-`DATABASE_URL_UNPOOLED`; its host has no `-pooler`), since Hyperdrive does
-the pooling.
+A managed PostgreSQL cluster (Postgres 18, New York) with a database
+`chassidushub` owned by the user `chassidushub`, which the Workers connect
+as. Use its direct connection string (port 25060, `sslmode=require`), not
+a connection pool: Hyperdrive does the pooling.
 
 ### 2. Storage and the connection (Cloudflare dashboard)
 
 - **R2 → Create bucket**: `chassidushub-public`, then `chassidushub-preservation`.
 - **Hyperdrive → Create → public database**: name `chassidushub`, the
   connection string from step 1. Its id is in `services/api/wrangler.toml`
-  (`a06ec525…`); if you ever make a new one, put its id there.
+  (`6cb8c1e5…`); if you ever make a new one, put its id there.
 
 ### 3. The two Workers (Workers & Pages → Create → Import a repository)
 

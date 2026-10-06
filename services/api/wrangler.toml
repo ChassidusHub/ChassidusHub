@@ -9,18 +9,18 @@ workers_dev = true
 [observability]
 enabled = true
 
-# Runs near the database (Neon, Virginia) rather than near the reader: an API request is
+# Runs near the database (DigitalOcean, New York) rather than near the reader: an API request is
 # several statements one after the other, and each is a round trip to Postgres, so the
 # round trips are short from there. Reads anyone may have are still answered from the
 # cache near the reader (docs/operations.md, "Traffic and crawlers").
 [placement]
 mode = "smart"
 
-# Postgres on Neon, pooled by Hyperdrive. The id names the config; it is not a secret
+# Postgres at DigitalOcean, pooled by Hyperdrive. The id names the config; it is not a secret
 # (the connection string lives only in Cloudflare).
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "a06ec525cf9442f484f60ce9d38f0d39"
+id = "6cb8c1e512574ef9a9872eb5d6dece3b"
 
 # The site's Worker, for the status checks: a Worker reaches another on the same zone surely only this way.
 [[services]]
@@ -101,7 +101,7 @@ RATE_LIMIT_ADDRESS_PER_MINUTE = "300"
 # CLOUDFLARE_ANALYTICS_TOKEN (Account Analytics: Read) and CLOUDFLARE_ACCOUNT_ID. The same token gives the page each
 # Worker's load today (STATUS_WORKERS, default "chassidushub-web,chassidushub-api") against the plan's CPU allowance for one
 # request (WORKERS_CPU_MS, default "10", the free plan's; "0" on a plan whose allowance does not matter).
-HYPERDRIVE_ID = "a06ec525cf9442f484f60ce9d38f0d39"
+HYPERDRIVE_ID = "6cb8c1e512574ef9a9872eb5d6dece3b"
 # The account the Workers and Hyperdrive live in (the project's own account).
 # Kept here, not only in the dashboard, because a deploy replaces the vars with this file's.
 CLOUDFLARE_ACCOUNT_ID = "80969862080309509e95c4e7fae5ffe3"
