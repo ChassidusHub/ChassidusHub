@@ -2,9 +2,9 @@ name = "sichos-kodesh-pack-api"
 main = "src/worker.ts"
 compatibility_date = "2026-01-01"
 
-# On the chassidushub.org account. The app server and the packs: the catalog API
-# (api.chassidushub.org/v1/app) reaches it over a service binding, the release workflow
-# and the download site at its own address.
+# On the chassidushub.org account, at packs.chassidushub.org: the app server and the packs.
+# The phone asks api.chassidushub.org/v1/app, which sends its update requests here (307);
+# the release workflow and the download site come here directly.
 workers_dev = true
 routes = [{ pattern = "packs.chassidushub.org", custom_domain = true }]
 
