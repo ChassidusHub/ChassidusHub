@@ -258,7 +258,7 @@ const en = {
   /** Android only: the seforim's texts (catalog schema 3). */
   aboutTextsBy: 'The seforim\'s texts come from ',
   aboutTextsBySuffix: ', each edition with its own licence and credit - Kehot Publication Society\'s under CC BY-NC, the community translations under CC0.',
-  aboutIgros: 'The letters of Igros Kodesh are those Kehot Publication Society printed, served from this app\'s own catalog server (api.sk.shmuky.dev).',
+  aboutIgros: 'The letters of Igros Kodesh are those Kehot Publication Society printed, served from this app\'s own catalog server (api.sk.chassidushub.org).',
   aboutHebrewBooks: 'The scanned seforim open on HebrewBooks.org; the list of them is Otzaria\'s open catalog of HebrewBooks.',
   aboutFonts: 'The reader\'s fonts',
   aboutFontsHelp: 'Shipped in the app unchanged, each with its licence. A tap opens where it is published.',
@@ -783,7 +783,7 @@ const he: typeof en = {
   aboutAudioBySuffix: 'המתארח ב-CloudFront, ומועבר דרך השרת שלנו כך שאתר צד-שלישי אינו מוצג ישירות לעולם.',
   aboutTextsBy: 'הטקסטים של הספרים מגיעים מ',
   aboutTextsBySuffix: ', כל מהדורה עם הרישיון והקרדיט שלה - של הוצאת קה״ת ברישיון CC BY-NC, והתרגומים הקהילתיים ברישיון CC0.',
-  aboutIgros: 'אגרות הקודש הן כפי שנדפסו בהוצאת קה״ת, ומגיעות מהשרת של האפליקציה עצמה (api.sk.shmuky.dev).',
+  aboutIgros: 'אגרות הקודש הן כפי שנדפסו בהוצאת קה״ת, ומגיעות מהשרת של האפליקציה עצמה (api.sk.chassidushub.org).',
   aboutHebrewBooks: 'הספרים הסרוקים נפתחים באתר HebrewBooks.org; רשימתם היא הקטלוג הפתוח של אוצריא ל-HebrewBooks.',
   aboutFonts: 'הגופנים של הקורא',
   aboutFontsHelp: 'כלולים באפליקציה כפי שהם, כל אחד עם הרישיון שלו. נגיעה פותחת את המקום שבו הוא מתפרסם.',

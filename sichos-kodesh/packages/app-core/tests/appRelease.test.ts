@@ -36,7 +36,7 @@ describe('the app release on the server', () => {
     expect(pickAppFile(release, ['arm64-v8a', 'armeabi-v7a', 'armeabi'])!.abi).toBe('arm64-v8a');
     expect(pickAppFile(release, ['armeabi-v7a', 'armeabi'])!.abi).toBe('armeabi-v7a');
     expect(pickAppFile(release, ['x86_64'])!.abi).toBe('universal');
-    expect(appFileUrl(release.files[0]!)).toBe('https://api.sk.shmuky.dev/v1/app/android/download/arm64-v8a');
+    expect(appFileUrl(release.files[0]!)).toBe('https://api.sk.chassidushub.org/v1/app/android/download/arm64-v8a');
   });
 
   it('asks about a newer version, and after "later" not again for a few days', () => {
@@ -54,7 +54,7 @@ describe('the app release on the server', () => {
     const asked: string[] = [];
     const ok = await fetchLatestAppRelease({ fetchFn: async (url) => (asked.push(url), { ok: true, status: 200, json: async () => release }) });
     expect(ok?.version).toBe('1.13.0');
-    expect(asked).toEqual(['https://api.sk.shmuky.dev/v1/app/android/latest.json']);
+    expect(asked).toEqual(['https://api.sk.chassidushub.org/v1/app/android/latest.json']);
     expect(await fetchLatestAppRelease({ fetchFn: async () => ({ ok: false, status: 404, json: async () => ({}) }) })).toBeNull();
     expect(
       await fetchLatestAppRelease({

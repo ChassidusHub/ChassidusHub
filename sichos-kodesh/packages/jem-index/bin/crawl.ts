@@ -18,7 +18,7 @@ const yearsArg = arg('years', '');
 const years = yearsArg ? yearsArg.split(',').map(Number) : undefined;
 
 const USER_AGENT =
-  'SichosKodeshAppResearch/0.1 (+https://github.com/shmuky/Sichos-Kodesh; building an offline kvius-scheduled farbrengen app; see repo for contact)';
+  'SichosKodeshAppResearch/0.1 (+https://github.com/ChassidusHub/ChassidusHub; building an offline kvius-scheduled farbrengen app; see repo for contact)';
 
 console.log(
   `Crawling JEM's ccdb catalog (${years ? `years ${years.join(',')}` : 'every year with audio'}) -> ${dbPath} (cache: ${cacheDir}, delay: ${delayMs}ms)`,

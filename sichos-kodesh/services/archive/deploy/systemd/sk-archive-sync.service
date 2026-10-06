@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/srv/sk/Sichos-Kodesh
+WorkingDirectory=/srv/sk/ChassidusHub/sichos-kodesh
 Environment=SK_ARCHIVE_ROOT=/srv/sk/archive
 Environment=NODE_OPTIONS=--no-warnings=ExperimentalWarning
 ExecStart=/usr/bin/node services/archive/dist/bin/sk-archive.js sync

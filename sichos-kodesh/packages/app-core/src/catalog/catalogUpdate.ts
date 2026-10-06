@@ -2,7 +2,7 @@ import { catalogManifestPath, isCatalogUpdateApplicable, parseCatalogManifest, p
 import type { CatalogManifest, CatalogRelease, LibraryRelease, WorksRelease } from '@sichos-kodesh/catalog';
 
 /** The origin the apps fetch catalog releases from - see packages/catalog/src/release.ts for what it serves. */
-export const CATALOG_API_BASE_URL = 'https://api.sk.shmuky.dev';
+export const CATALOG_API_BASE_URL = 'https://api.sk.chassidushub.org';
 
 /** The manifest an app of `schemaVersion` reads: `/v1/` for the web (farbrengens), `/v2/` for the phone (with the library). */
 export function catalogManifestUrl(baseUrl: string = CATALOG_API_BASE_URL, schemaVersion = 1): string {

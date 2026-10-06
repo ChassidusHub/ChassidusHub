@@ -86,6 +86,9 @@ plan (100k requests/day) is enough to start; upgrade to the $5/mo plan
 There is no CI/CD for this Worker — `npm run deploy` has to be run by hand
 after every change, or the live Worker keeps running old code.
 
-**Deployed**: `https://sichos-kodesh-media-proxy.shmuky.workers.dev`
-(free tier). `apps/mobile/src/config.ts`'s `MEDIA_PROXY_BASE_URL` points
-here. Redeploying (`npm run deploy`) updates this same URL in place.
+**Deployed** on the chassidushub.org account: `https://media.sk.chassidushub.org`
+(`wrangler.toml`; also `sichos-kodesh-media-proxy.chassidushub-org.workers.dev`).
+The apps' `MEDIA_PROXY_BASE_URL` points here. Phones installed before the move
+still call `sichos-kodesh-media-proxy.shmuky.workers.dev` (also to tell whether
+they are online), so that Worker stays up on the old account until they have
+updated.

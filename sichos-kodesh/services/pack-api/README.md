@@ -52,15 +52,15 @@ the publish time, so a CDN can cache every build as-is.
 ## The app's releases
 
 The release workflow (`.github/workflows/android-release-apk.yml`, then
-`.github/scripts/publish-apks.sh`) uploads each APK to
+`.github/scripts/sk-publish-apks.sh` at the repository root) uploads each APK to
 `app/android/<version>/` in the same bucket and publishes it, which
 writes `app/android/latest.json` and deletes every older version: the
 download links stay, what they serve moves on. The upload and the
 publish take a GitHub Actions OIDC token (`src/oidc.ts`): GitHub's
-signature, this repository, the release workflow, from a version tag or
-main - so there is no secret to keep. A tag's run publishes its own
-version only, and nothing older than what is out. `api.sk.shmuky.dev`
-passes `latest.json` through and redirects the downloads here; the phone
+signature, ChassidusHub/ChassidusHub, the sk-android-release-apk workflow, from an
+sk-v version tag or main - so there is no secret to keep. A tag's run publishes its own
+version only, and nothing older than what is out. `api.sk.chassidushub.org`
+passes `latest.json` and the downloads through from here; the phone
 asks it for updates (app-core's `appRelease.ts`).
 
 ## Deploying
@@ -71,6 +71,9 @@ rclone sync <archive>/published r2:sichos-kodesh-archive
 wrangler secret put PACK_SIGNING_KEY               # the JSON of <archive>/keys/pack-signing.json
 wrangler deploy
 ```
+
+It runs on the chassidushub.org account at `pack-api.sk.chassidushub.org`
+(`wrangler.toml`), beside the `sichos-kodesh-archive` bucket.
 
 This needs:
 

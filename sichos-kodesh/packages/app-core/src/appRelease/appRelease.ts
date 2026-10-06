@@ -5,7 +5,7 @@ import type { FetchLike } from '../catalog/catalogUpdate.js';
  * The phone app's newest release, as the app server keeps it: the release
  * workflow uploads each APK to the pack API Worker (R2), which keeps only
  * the newest version and serves `latest.json` beside the files;
- * api.sk.shmuky.dev passes both through. The phone asks it whether to
+ * api.sk.chassidushub.org passes both through. The phone asks it whether to
  * offer an update, the download site and the station link to its files.
  * Nothing here comes from GitHub.
  *

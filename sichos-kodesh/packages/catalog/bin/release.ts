@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Writes the files a catalog release consists of - what api.sk.shmuky.dev
+ * Writes the files a catalog release consists of - what api.sk.chassidushub.org
  * serves and the apps fetch (see src/release.ts for their shape):
  *
  *   <out>/catalog.json          schema 1: the farbrengens (every year the apps bundle) - the web app
@@ -26,7 +26,7 @@
  *   --library <dir>       the library files (default: apps/mobile/src/catalog/data/library); no library, no v2
  *   --works <dir>         the works files (default: apps/mobile/src/catalog/data/works); no works, no v3
  *   --out <dir>           where to write (default: packages/catalog/dist-release)
- *   --base-url <url>      the API origin the manifests' `url` points into (default: https://api.sk.shmuky.dev)
+ *   --base-url <url>      the API origin the manifests' `url` points into (default: https://api.sk.chassidushub.org)
  *   --released-at <iso>   the release timestamp to stamp (default: now) - services/catalog-api passes the
  *                         deployed commit's date, so the same commit always yields the same manifests
  *   --check               fail unless CATALOG_CHANGELOG's first entry is for CATALOG_VERSION (what CI runs on a tag)
@@ -61,7 +61,7 @@ const mobileDataDir = arg('mobile-data', path.join(repoRoot, 'apps', 'mobile', '
 const libraryDir = arg('library', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'library'));
 const worksDir = arg('works', path.join(repoRoot, 'apps', 'mobile', 'src', 'catalog', 'data', 'works'));
 const outDir = arg('out', path.join(__dirname, '..', 'dist-release'));
-const baseUrl = arg('base-url', 'https://api.sk.shmuky.dev').replace(/\/$/, '');
+const baseUrl = arg('base-url', 'https://api.sk.chassidushub.org').replace(/\/$/, '');
 const checkOnly = process.argv.includes('--check');
 
 const latest = CATALOG_CHANGELOG[0];

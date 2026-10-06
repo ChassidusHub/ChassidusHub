@@ -7,7 +7,7 @@ import { parseCatalogWorks } from './works/parse.js';
 import type { CatalogWorks } from './works/types.js';
 
 /**
- * What api.sk.shmuky.dev serves and what the apps consume - the contract
+ * What api.sk.chassidushub.org serves and what the apps consume - the contract
  * between this repo's `catalog-v…` releases (bin/release.ts writes these
  * two files) and the two apps' update code (packages/app-core's
  * catalogUpdate.ts). Both files are plain JSON with CORS open to any

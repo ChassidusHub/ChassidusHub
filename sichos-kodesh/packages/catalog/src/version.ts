@@ -5,7 +5,7 @@
  * data changes (a re-crawl, a corrected date, a new year, a new content
  * kind), and tagged `catalog-v<version>` on the commit that ships it - see
  * README.md's "Catalog releases". The apps compare it with the manifest
- * api.sk.shmuky.dev serves (release.ts) to decide whether a newer catalog
+ * api.sk.chassidushub.org serves (release.ts) to decide whether a newer catalog
  * is available to fetch.
  */
 export const CATALOG_VERSION = '1.7.2';

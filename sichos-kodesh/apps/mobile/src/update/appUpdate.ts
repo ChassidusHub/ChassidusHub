@@ -7,7 +7,7 @@ import { getOnlineSnapshot } from '../network/connectivity';
 import { APP_VERSION } from '../version';
 
 /**
- * A newer version of the app: the app server (api.sk.shmuky.dev, which the
+ * A newer version of the app: the app server (api.sk.chassidushub.org, which the
  * release workflow uploads each release to) says what the newest one is,
  * and the app asks once a launch whether to update - "Later" keeps that
  * version quiet for a few days (app-core's shouldPromptUpdate). Updating

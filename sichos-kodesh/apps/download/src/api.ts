@@ -1,13 +1,13 @@
 import type { CatalogEntry, LibraryCollection, LibraryItemBase } from '@sichos-kodesh/catalog';
 
 /** The published pack API (services/pack-api's Worker). */
-const PUBLISHED_PACK_API = 'https://sichos-kodesh-pack-api.shmuky.workers.dev';
+const PUBLISHED_PACK_API = 'https://pack-api.sk.chassidushub.org';
 
 /** The pack API: VITE_PACK_API when set; else `sk-pack serve` on :8787 in development and the published Worker in a build. */
 export const PACK_API = (import.meta.env.VITE_PACK_API as string | undefined)?.replace(/\/+$/, '') || (import.meta.env.DEV ? 'http://localhost:8787' : PUBLISHED_PACK_API);
 
-/** The phone app's releases: api.sk.shmuky.dev passes the app server's routes through (the pack API Worker keeps the APKs, app-core's appRelease.ts). */
-export const APP_API = (import.meta.env.VITE_APP_API as string | undefined)?.replace(/\/+$/, '') || 'https://api.sk.shmuky.dev';
+/** The phone app's releases: api.sk.chassidushub.org passes the app server's routes through (the pack API Worker keeps the APKs, app-core's appRelease.ts). */
+export const APP_API = (import.meta.env.VITE_APP_API as string | undefined)?.replace(/\/+$/, '') || 'https://api.sk.chassidushub.org';
 
 /** The newest release of the phone app, as far as the site needs it. */
 export interface AppRelease {

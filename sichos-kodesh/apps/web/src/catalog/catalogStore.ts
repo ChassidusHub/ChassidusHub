@@ -9,7 +9,7 @@ import bundledCatalog from './data';
 /**
  * The one catalog the whole app reads (see app-core's createCatalogStore):
  * the bundled data until a newer release is loaded from Cache Storage at
- * start-up (main.tsx) or fetched from api.sk.shmuky.dev (catalogUpdater.ts).
+ * start-up (main.tsx) or fetched from api.sk.chassidushub.org (catalogUpdater.ts).
  * Components read it through `useCatalog()` so a swap re-renders them in
  * place; code with no component (the retention pruner, the download
  * provider's own lookups) calls `getCatalog()` at the moment it needs it -

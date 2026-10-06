@@ -17,7 +17,7 @@ const cacheDir = arg('cache', path.join(__dirname, '..', '.cache'));
 const delayMs = Number(arg('delay-ms', '750'));
 
 const USER_AGENT =
-  'SichosKodeshAppResearch/0.1 (+https://github.com/shmuky/Sichos-Kodesh; building an offline kvius-scheduled farbrengen app; see repo for contact)';
+  'SichosKodeshAppResearch/0.1 (+https://github.com/ChassidusHub/ChassidusHub; building an offline kvius-scheduled farbrengen app; see repo for contact)';
 
 console.log(`Syncing ${dbPath} against mafteiach.app's current live listing...`);
 

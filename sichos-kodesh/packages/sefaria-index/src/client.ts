@@ -17,7 +17,7 @@ export { SEFARIA_BASE_URL, indexUrl, textUrl };
  */
 
 export const DEFAULT_USER_AGENT =
-  'SichosKodeshAppResearch/0.1 (+https://github.com/shmuky/Sichos-Kodesh; an offline library of Chabad texts with their licences; see repo for contact)';
+  'SichosKodeshAppResearch/0.1 (+https://github.com/ChassidusHub/ChassidusHub; an offline library of Chabad texts with their licences; see repo for contact)';
 
 
 export interface SefariaClientOptions {

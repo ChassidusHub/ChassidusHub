@@ -136,7 +136,7 @@ program
 program
   .command('apk')
   .description("fetch the newest release's phone APKs from the app server into the mirror, for phones without the app")
-  .option('--server <url>', 'the app server', 'https://api.sk.shmuky.dev')
+  .option('--server <url>', 'the app server', 'https://api.sk.chassidushub.org')
   .action(async (opts: { server: string }) => {
     const report = await syncApk(root(), undefined, opts.server);
     log(`apk ${report.version}: ${report.downloaded.length} fetched, ${report.kept.length} kept`);

@@ -24,7 +24,7 @@ const manifest = {
   schemaVersion: 1,
   version: '1.2.0',
   releasedAt: '2026-10-01T00:00:00.000Z',
-  url: 'https://api.sk.shmuky.dev/v1/catalog/1.2.0/catalog.json',
+  url: 'https://api.sk.chassidushub.org/v1/catalog/1.2.0/catalog.json',
   bytes: 2_000_000,
   sha256: 'ab'.repeat(32),
   years: [5710, 5711],

@@ -354,14 +354,14 @@ describe('texts the catalog API hosts', () => {
   const unit = { id: '6', label: 'אגרת ו', editions: [edition] };
 
   it('reads a text at its sha256, checked against its length', async () => {
-    expect(hostedTextUrl('ab')).toBe('https://api.sk.shmuky.dev/v3/texts/ab');
+    expect(hostedTextUrl('ab')).toBe('https://api.sk.chassidushub.org/v3/texts/ab');
     const asked: string[] = [];
     const serve = (body: string) => async (url: string) => {
       asked.push(url);
       return { ok: true, json: async () => ({}), text: async () => body };
     };
     expect(await fetchUnitText(igros, unit, edition, serve(html))).toBe(html);
-    expect(asked).toEqual([`https://api.sk.shmuky.dev/v3/texts/${'a'.repeat(64)}`]);
+    expect(asked).toEqual([`https://api.sk.chassidushub.org/v3/texts/${'a'.repeat(64)}`]);
     await expect(fetchHostedText(edition, serve('<p>other</p>'))).rejects.toEqual(new TextLoadError('unavailable'));
     await expect(fetchHostedText({ source: 1 }, serve(html))).rejects.toEqual(new TextLoadError('unavailable'));
     await expect(fetchHostedText(edition, async () => ({ ok: false, json: async () => ({}), text: async () => '' }))).rejects.toEqual(new TextLoadError('unavailable'));

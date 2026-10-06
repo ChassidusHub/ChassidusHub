@@ -138,7 +138,7 @@ export default defineConfig({
           {
             // Matches the deployed services/media-proxy origin - see src/config.ts. Both
             // /jem-audio/:filename and /drive/:fileId land here.
-            urlPattern: ({ url }) => url.hostname.endsWith('.workers.dev'),
+            urlPattern: ({ url }) => url.hostname === 'media.sk.chassidushub.org' || url.hostname.endsWith('.workers.dev'),
             handler: 'CacheFirst',
             options: {
               // Renamed whenever this route's cache gets poisoned, to force
@@ -251,7 +251,7 @@ export default defineConfig({
             // The texts the catalog API hosts (the Igros' letters), each at
             // its sha256: the address never serves anything else, so a
             // letter once read is kept and opens again offline.
-            urlPattern: ({ url }) => url.hostname === 'api.sk.shmuky.dev' && url.pathname.startsWith('/v3/texts/'),
+            urlPattern: ({ url }) => url.hostname === 'api.sk.chassidushub.org' && url.pathname.startsWith('/v3/texts/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'hosted-texts-v1',

@@ -215,7 +215,7 @@ sefer in the works (schema 3), from `packages/igros-index`'s
 The catalog data has its own version, changelog and release tags,
 separate from the two apps' versions: the apps bundle one copy of the
 data (their `src/catalog/data`, built as above) but fetch a newer one
-from `api.sk.shmuky.dev` on their own, so a corrected date or a re-crawl
+from `api.sk.chassidushub.org` on their own, so a corrected date or a re-crawl
 reaches every phone without an app update.
 
 - `CATALOG_VERSION` (`version.ts`) is the version of the shipped data;
@@ -252,7 +252,7 @@ reaches every phone without an app update.
   (CI); `--released-at` pins the timestamp (the API passes the commit's
   date).
 
-How the API gets the files: `api.sk.shmuky.dev` is
+How the API gets the files: `api.sk.chassidushub.org` is
 `services/catalog-api`, a Vercel project whose build runs this same
 `release-files` script against the checked-out commit and bakes the two
 files into the function. There is no upload step and no bucket: the

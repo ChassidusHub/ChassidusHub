@@ -11,7 +11,7 @@ import bundledWorks, { bundledShelf, bundledWorkContents } from './data/works';
  * The one catalog the whole app reads (see app-core's createCatalogStore):
  * the bundled data until a newer release is loaded from the app's own
  * files at start-up (App.tsx, and the headless background task) or fetched
- * from api.sk.shmuky.dev (catalogUpdater.ts - "Update catalog" in Settings,
+ * from api.sk.chassidushub.org (catalogUpdater.ts - "Update catalog" in Settings,
  * plus a silent daily check). Same shape as the web's catalogStore.ts:
  * components read it through `useCatalog()` so a swap re-renders them in
  * place; code with no component calls `getCatalog()` at the moment it

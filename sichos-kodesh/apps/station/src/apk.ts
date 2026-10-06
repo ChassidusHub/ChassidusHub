@@ -8,7 +8,7 @@ import type { FetchFn } from './api.js';
  * The app itself, for a phone that does not have it yet: the station keeps
  * the newest release's phone APKs in `<mirror>/apk/` and copies one into the
  * phone's `Download/` folder, where its file manager installs it. They come
- * from the app server (api.sk.shmuky.dev/v1/app/android/, app-core's
+ * from the app server (api.sk.chassidushub.org/v1/app/android/, app-core's
  * appRelease.ts), each checked against its sha256.
  */
 

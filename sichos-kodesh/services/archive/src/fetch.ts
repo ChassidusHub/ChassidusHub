@@ -113,7 +113,7 @@ export async function fetchToFile(url: string, dest: string, options: FetchOptio
       } catch {
         resumeFrom = 0;
       }
-      const headers: Record<string, string> = { 'user-agent': options.userAgent ?? 'sichos-kodesh-archive/0.1 (+https://github.com/shmuky/Sichos-Kodesh)' };
+      const headers: Record<string, string> = { 'user-agent': options.userAgent ?? 'sichos-kodesh-archive/0.1 (+https://github.com/ChassidusHub/ChassidusHub)' };
       if (resumeFrom > 0) headers.range = `bytes=${resumeFrom}-`;
       else if (conditional.etag) headers['if-none-match'] = conditional.etag;
       const response = await fetch(target, { headers, redirect: 'follow', signal: options.signal });

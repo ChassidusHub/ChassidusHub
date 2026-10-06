@@ -14,9 +14,9 @@ import { DownloadButton, useLoad } from './ui';
 declare const __SITE_VERSION__: string;
 
 /** The web version of the app. */
-const WEB_APP_URL = 'https://sichoskodesh.vercel.app';
+const WEB_APP_URL = 'https://app.chassidushub.org';
 /** Where the app was before the app server had a release of its own: its links go there until the first one is published. */
-const GITHUB_RELEASES_URL = 'https://github.com/shmuky/Sichos-Kodesh/releases/latest';
+const GITHUB_RELEASES_URL = 'https://github.com/ChassidusHub/ChassidusHub/releases';
 
 function LanguageToggle() {
   const { t, lang, setLang } = useI18n();

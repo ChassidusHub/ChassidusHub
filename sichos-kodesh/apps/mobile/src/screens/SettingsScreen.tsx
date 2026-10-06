@@ -177,7 +177,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
         <SettingRow label={t.viewDownloadedLabel} value={usage != null ? formatBytes(usage) : undefined} chevron onPress={() => navigation.navigate('Downloaded')} first={!packsAvailable && !onlineMode} />
       </SettingsGroup>
 
-      {/* The list of farbrengens itself has its own releases (packages/catalog) - the phone fetches a newer one from api.sk.shmuky.dev on its own once a day, and on demand here. */}
+      {/* The list of farbrengens itself has its own releases (packages/catalog) - the phone fetches a newer one from api.sk.chassidushub.org on its own once a day, and on demand here. */}
       <SettingsGroup title={t.catalogSection}>
         <SettingRow label={t.catalogVersionLabel} value={`${catalogInfo.version} · ${catalogInfo.source === 'bundled' ? t.catalogSourceBundled : t.catalogSourceUpdated}`} first />
         <SettingRow

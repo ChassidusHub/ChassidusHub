@@ -53,7 +53,7 @@ export async function loadStoredCatalog(): Promise<void> {
 }
 
 /**
- * Asks api.sk.shmuky.dev for a newer catalog and, if there is one, fetches
+ * Asks api.sk.chassidushub.org for a newer catalog and, if there is one, fetches
  * it, stores it and applies it live - every screen re-renders with the new
  * data in place. Concurrent calls share one run. The result is reported
  * through `useCatalogUpdateStatus` rather than returned, since the caller

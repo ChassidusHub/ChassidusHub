@@ -123,16 +123,19 @@ describe('seforim screens', () => {
   });
 
   it('reads a letter of the Igros from the catalog API, in David, with its notes after it', async () => {
-    // The first volume's letters as the catalog API hosts them (packages/igros-index's import-igros).
-    const bundle = require('../../../../../services/catalog-api/texts/igros-kodesh-rebbe/vol-01.json') as { texts: string[] };
-    const letter = bundle.texts[0]!;
+    // A made-up letter in the form import-igros writes (packages/igros-index's letterHtml): the real ones are
+    // ChassidusHub's, not kept in git. It is padded to the length the catalog gives letter 1, which the reader checks.
+    const made =
+      '<article dir="rtl" lang="he" data-id="1"><p class="end">\u05D1"\u05D4</p><p>\u05E9\u05DC\u05D5\u05DD \u05D5\u05D1\u05E8\u05DB\u05D4</p>' +
+      '<aside class="notes"><p>1) \u05D4\u05E2\u05E8\u05D4</p></aside><footer class="source">\u05D0\u05D2\u05E8\u05D5\u05EA \u05E7\u05D5\u05D3\u05E9 \u05D7\u05DC\u05E7 \u05D0, \u05D0</footer></article>';
+    const letter = made.replace('</article>', `${' '.repeat(4139 - 1 - encodeURIComponent(made).replace(/%[0-9A-F]{2}/g, 'x').length)}</article>\n`);
     const asked: string[] = [];
     globalThis.fetch = jest.fn(async (url: string) => {
       asked.push(url);
       return { ok: true, json: async () => ({}), text: async () => letter };
     }) as unknown as typeof fetch;
     const shown = await render(<screens.ReaderScreen {...props({ workId: 'igros-kodesh-rebbe', unitId: '1' })} />);
-    expect(asked).toEqual(['https://api.sk.shmuky.dev/v3/texts/3dda44babea1c3ef52ee262b5d2456dda32c8604eb9b80819d5110aad953ef47']);
+    expect(asked).toEqual(['https://api.sk.chassidushub.org/v3/texts/3dda44babea1c3ef52ee262b5d2456dda32c8604eb9b80819d5110aad953ef47']);
     expect(shown).toContain('Letter 1');
     expect(shown).toContain('DavidCLM');
     expect(shown).toContain('Notes');

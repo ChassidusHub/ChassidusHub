@@ -2,5 +2,7 @@ name = "sichos-kodesh-media-proxy"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
 
-# Free tier (100k requests/day) is plenty for now.
-# Upgrade to the $5/mo Workers plan only once real usage approaches that.
+# On the chassidushub.org account (Workers Paid). Its workers.dev address stays
+# on too: the OCR scripts use it.
+workers_dev = true
+routes = [{ pattern = "media.sk.chassidushub.org", custom_domain = true }]

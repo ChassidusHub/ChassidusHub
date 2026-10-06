@@ -122,7 +122,7 @@ mafteiach). A url that keeps erroring is retried on later runs up to a cap.
 ## First run on the VPS
 
 ```
-git clone https://github.com/shmuky/Sichos-Kodesh /srv/sk/Sichos-Kodesh && cd /srv/sk/Sichos-Kodesh
+git clone https://github.com/ChassidusHub/ChassidusHub /srv/sk/ChassidusHub && cd /srv/sk/ChassidusHub/sichos-kodesh
 npm ci && npm run build -w @sichos-kodesh/archive
 export SK_ARCHIVE_ROOT=/srv/sk/archive
 node services/archive/dist/bin/sk-archive.js inventory

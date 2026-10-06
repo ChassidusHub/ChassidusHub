@@ -62,7 +62,7 @@ export interface BundledWorks {
 /**
  * The one mutable catalog both apps read from: starts as the bundled
  * data, and is swapped for a newer release loaded from disk at start-up or
- * fetched from api.sk.shmuky.dev later. Every reader goes through this
+ * fetched from api.sk.chassidushub.org later. Every reader goes through this
  * store (a `useCatalog()` hook over `subscribe`/`get`, or `getCatalog()`
  * in code with no component), so a swap re-renders every screen with the
  * new data in place - nothing is remounted and nothing the user is doing

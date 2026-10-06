@@ -19,13 +19,13 @@ API (`services/pack-api`):
   month, next month or the whole years of the kvius in one tap.
 - **Ready-made packs** come from `/v1/packs/index.json`, one click each.
 - **The phone app** downloads from the app server
-  (`api.sk.shmuky.dev/v1/app/android/`), its newest release whatever it
+  (`api.sk.chassidushub.org/v1/app/android/`), its newest release whatever it
   is - never from GitHub.
 - **Putting it on the phone** is explained on the page: copy the pack into
   `import/` of the app's shared folder, or use "Import files".
 
 ```
-npm run build -w @sichos-kodesh/download   # against the published Worker, https://sichos-kodesh-pack-api.shmuky.workers.dev
+npm run build -w @sichos-kodesh/download   # against the published Worker, https://pack-api.sk.chassidushub.org
 VITE_PACK_API=https://<pack-api> npm run build -w @sichos-kodesh/download   # against another pack API
 npm run dev -w @sichos-kodesh/download   # against sk-pack serve on :8787 by default
 npm test -w @sichos-kodesh/download

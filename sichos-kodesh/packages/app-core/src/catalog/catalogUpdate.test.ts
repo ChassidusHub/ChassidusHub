@@ -3,7 +3,7 @@ import { CATALOG_CHECK_INTERVAL_MS, catalogManifestUrl, checkCatalogUpdate, fetc
 import type { FetchLike } from './catalogUpdate.js';
 
 const entry = { occasionId: 1, hebrewYear: 5711, hebrewDate: '5711-01-09', occasionLabel: 'x', audio: [], pdfs: [] };
-const manifest = { schemaVersion: 1, version: '1.1.0', releasedAt: 'x', url: 'https://api.sk.shmuky.dev/v1/catalog/1.1.0/catalog.json', bytes: 1, sha256: '', years: [5711], occasions: 1, changelog: [] };
+const manifest = { schemaVersion: 1, version: '1.1.0', releasedAt: 'x', url: 'https://api.sk.chassidushub.org/v1/catalog/1.1.0/catalog.json', bytes: 1, sha256: '', years: [5711], occasions: 1, changelog: [] };
 
 function fakeFetch(routes: Record<string, unknown | (() => never)>, status = 200): FetchLike {
   return async (url) => {
@@ -70,11 +70,11 @@ describe('schema 2 (the phone)', () => {
     parshiyos: [],
     collections: { likkuteiSichos: collection, maamorim: collection, yomanim: collection, hadranim: collection, michtavimKlolim: collection, reshimos: collection, jemEvents: collection },
   };
-  const manifest2 = { ...manifest, schemaVersion: 2, url: 'https://api.sk.shmuky.dev/v2/catalog/1.1.0/catalog.json' };
+  const manifest2 = { ...manifest, schemaVersion: 2, url: 'https://api.sk.chassidushub.org/v2/catalog/1.1.0/catalog.json' };
 
   it('reads its own manifest under /v2/', async () => {
-    expect(catalogManifestUrl()).toBe('https://api.sk.shmuky.dev/v1/catalog/manifest.json');
-    expect(catalogManifestUrl(undefined, 2)).toBe('https://api.sk.shmuky.dev/v2/catalog/manifest.json');
+    expect(catalogManifestUrl()).toBe('https://api.sk.chassidushub.org/v1/catalog/manifest.json');
+    expect(catalogManifestUrl(undefined, 2)).toBe('https://api.sk.chassidushub.org/v2/catalog/manifest.json');
     const result = await checkCatalogUpdate({ currentVersion: '1.0.0', schemaVersion: 2, fetchFn: fakeFetch({ [catalogManifestUrl(undefined, 2)]: manifest2 }) });
     expect(result.status).toBe('available');
   });

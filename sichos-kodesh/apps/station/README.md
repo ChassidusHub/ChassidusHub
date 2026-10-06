@@ -74,7 +74,7 @@ npm run station -w @sichos-kodesh/station -- <command>
   - A second run writes only what is new.
   - `--scope` narrows it to years or months.
 - **apk** keeps the newest release's `arm64-v8a` and `armeabi-v7a` APKs in
-  `apk/`, from the app server (`api.sk.shmuky.dev/v1/app/android/`), each
+  `apk/`, from the app server (`api.sk.chassidushub.org/v1/app/android/`), each
   checked against its sha256. **apk-to** copies one into a phone's `Download/`, where its
   file manager installs it.
 
