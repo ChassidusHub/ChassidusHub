@@ -85,9 +85,10 @@ In **chassidushub-api → Settings → Variables and Secrets**:
   reporters' addresses for rate limits;
 - `TURNSTILE_SECRET` - a [Turnstile](https://developers.cloudflare.com/turnstile/)
   secret, for a captcha on anonymous reports;
-- `RESEND_API_KEY` - a [Resend](https://resend.com) API key, for signing in
-  by email link, email updates and takedown receipts (and optionally the
-  variable `EMAIL_FROM`); see [accounts](accounts.md#email-updates);
+- email (signing in by email link, email updates and takedown receipts)
+  needs no secret: the API sends through Cloudflare's Email Service once
+  `chassidushub.org` is onboarded to Email Sending (optionally the variable
+  `EMAIL_FROM`); see [accounts](accounts.md#email-updates);
 - `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN` - Workers AI, the same
   pair the transcription uses (step 7): for the reviewer's advice on
   suggestions (see [accounts](accounts.md#the-reviewers-advice)) and for

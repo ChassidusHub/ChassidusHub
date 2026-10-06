@@ -44,8 +44,14 @@ bucket_name = "chassidushub-preservation"
 binding = "SK_ARCHIVE"
 bucket_name = "sichos-kodesh-archive"
 
+# Email (sign-in links, email updates, takedown receipts) through Cloudflare's Email Service: no key, the
+# binding sends from EMAIL_FROM, an address on chassidushub.org once the domain is onboarded (Email Service →
+# Email Sending → Onboard Domain; docs/accounts.md). Until then sending fails and says so.
+[[send_email]]
+name = "EMAIL"
+
 # Every five minutes (src/worker.ts, scheduled): the status checks (src/status.ts, the site's /status), then
-# webhooks, email updates (once RESEND_API_KEY is set) and the reviewer's advice on suggestions (once
+# webhooks, email updates (through EMAIL above) and the reviewer's advice on suggestions (once
 # CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are set).
 [triggers]
 crons = ["*/5 * * * *"]

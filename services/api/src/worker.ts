@@ -8,7 +8,7 @@ import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUT
 import { authFor } from './auth.js';
 import { LOCKED_HEADER, lockOf, openedBy, ownersFrom, unlocked, type LockEnv } from './lock.js';
 import { githubDispatch } from './machine.js';
-import { resendMailer, workersAiAdvisor } from './mail.js';
+import { cloudflareMailer, resendMailer, workersAiAdvisor, type SendEmailBinding } from './mail.js';
 import {
   FREE_CPU_MS,
   FREE_DAILY_QUERIES,
@@ -35,7 +35,7 @@ import {
  * which Hyperdrive pools. Configured in wrangler.toml; secrets REPORT_SALT,
  * for captchas on reports TURNSTILE_SECRET, for Google sign-in
  * GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, for email (sign-in links,
- * notifications) RESEND_API_KEY, for the reviewer's advice and search by
+ * notifications) the EMAIL binding or else RESEND_API_KEY, for the reviewer's advice and search by
  * meaning CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN, and for OAI-PMH the
  * administrators' address OAI_ADMIN_EMAIL. Each is off until set. Rate
  * limits come from the RATE_LIMIT_ADDRESS and RATE_LIMIT_TOKEN bindings
@@ -71,9 +71,11 @@ interface Env extends LockEnv {
   /** Google sign-in's client (secrets); without both, sign-in is by passkey alone. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
-  /** Resend's API key (a secret): email sign-in, notifications and takedown receipts; without it, none of them. */
+  /** Cloudflare's Email Service (wrangler.toml's send_email): email sign-in, notifications and takedown receipts. */
+  EMAIL?: SendEmailBinding;
+  /** Resend's API key (a secret), used only without the EMAIL binding; without either, no email at all. */
   RESEND_API_KEY?: string;
-  /** Who email comes from, on a domain verified with Resend (default `ChassidusHub <no-reply@chassidushub.org>`). */
+  /** Who email comes from, on a domain onboarded to Email Sending or verified with Resend (default `ChassidusHub <no-reply@chassidushub.org>`). */
   EMAIL_FROM?: string;
   /** Workers AI (secrets), for the reviewer's advice on suggestions and search by meaning (a token allowed only Workers AI); without both, neither. */
   CLOUDFLARE_ACCOUNT_ID?: string;
@@ -114,7 +116,12 @@ interface Ctx {
 /** The apps' catalog as last built, kept for this isolate's life: each request asks only whether anything changed. */
 const appReleases = new AppReleases();
 
-const mailerOf = (env: Env) => (env.RESEND_API_KEY ? resendMailer({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM }) : undefined);
+const mailerOf = (env: Env) =>
+  env.EMAIL
+    ? cloudflareMailer({ binding: env.EMAIL, from: env.EMAIL_FROM })
+    : env.RESEND_API_KEY
+      ? resendMailer({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM })
+      : undefined;
 
 const list = (value: string | undefined) => (value ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 

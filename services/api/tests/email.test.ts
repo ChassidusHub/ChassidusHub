@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
 import { linkGoogle, createPerson, sendNotifications, type EmailMessage, type Mailer } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
-import { resendMailer } from '../src/mail.js';
+import { cloudflareMailer, emailAddress, resendMailer } from '../src/mail.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -118,6 +118,20 @@ describe('signing in by email link', () => {
     expect(seen[0]!.url).toBe('https://api.resend.com/emails');
     expect((seen[0]!.init.headers as Record<string, string>).Authorization).toBe('Bearer re_test');
     expect(JSON.parse(String(seen[0]!.init.body))).toMatchObject({ from: 'ChassidusHub <no-reply@chassidushub.org>', to: ['a@b.org'], subject: 'S' });
+  });
+
+  it("sends through Cloudflare's binding, the sender's name apart from the address", async () => {
+    const seen: unknown[] = [];
+    const mailer = cloudflareMailer({ binding: { send: async (message) => (seen.push(message), { messageId: '1' }) } });
+    await mailer.send({ to: 'a@b.org', subject: 'S', text: 'T', html: '<p>T</p>', headers: { 'List-Unsubscribe': '<https://x.org/u>' } });
+    expect(seen[0]).toEqual({ from: { name: 'ChassidusHub', email: 'no-reply@chassidushub.org' }, to: 'a@b.org', subject: 'S', text: 'T', html: '<p>T</p>', headers: { 'List-Unsubscribe': '<https://x.org/u>' } });
+    expect(emailAddress('no-reply@chassidushub.org')).toBe('no-reply@chassidushub.org');
+    expect(emailAddress('"Chassidus Hub" <a@b.org>')).toEqual({ name: 'Chassidus Hub', email: 'a@b.org' });
+  });
+
+  it("says why Cloudflare's binding would not send", async () => {
+    const mailer = cloudflareMailer({ binding: { send: async () => { throw Object.assign(new Error('sender domain not verified'), { code: 'E_SENDER_NOT_VERIFIED' }); } } });
+    await expect(mailer.send({ to: 'a@b.org', subject: 'S', text: 'T', html: '<p>T</p>' })).rejects.toThrow('Cloudflare email: E_SENDER_NOT_VERIFIED sender domain not verified');
   });
 });
 
