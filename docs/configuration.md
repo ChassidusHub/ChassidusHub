@@ -36,7 +36,8 @@ On Workers, from `wrangler.toml` and the Worker's settings; with
 | `REPORT_SALT` | yes | hashes reporters' addresses for the hourly limits (`openssl rand -hex 32`) |
 | `TURNSTILE_SECRET` | yes | a captcha on anonymous reports and takedown requests |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | yes | signing in with Google ([accounts](accounts.md)) |
-| `RESEND_API_KEY`, `EMAIL_FROM` | key yes | email sign-in links, email updates, takedown receipts |
+| `EMAIL` (binding), `EMAIL_FROM` | - | email sign-in links, email updates, takedown receipts, through Cloudflare's Email Service ([accounts](accounts.md#email-updates)) |
+| `RESEND_API_KEY` | yes | the same through Resend, only without the `EMAIL` binding |
 | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_TOKEN` | yes | Workers AI: the reviewer's advice and search by meaning |
 | `OAI_ADMIN_EMAIL` | no | switches on OAI-PMH at `/oai` ([developers/oai-pmh](developers/oai-pmh.md)) |
 | `SITE` (binding) | - | the site's Worker, for the status checks ([operations](operations.md#status)); without it they ask `SITE_URL` over the internet |

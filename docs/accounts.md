@@ -95,7 +95,8 @@ as a redirect URI on the client.
 
 ## Email link
 
-Shown on `/signin` once the API can send email (`RESEND_API_KEY`); until
+Shown on `/signin` once the API can send email (the `EMAIL` binding, or
+`RESEND_API_KEY`); until
 then it is hidden, and so are email updates.
 
 - **Asking**: the person gives an address; the API sends a link to
@@ -129,13 +130,19 @@ Kept in `auth.notification_setting` (migration 0011).
 
 **Switching email on** (once):
 
-1. At [Resend](https://resend.com), add and verify the domain
-   `chassidushub.org` (its DNS records in Cloudflare), and make an API key
-   with sending access.
-2. In Cloudflare, Workers, `chassidushub-api`, Settings, Variables and
-   Secrets: add the secret `RESEND_API_KEY`. Optionally the variable
-   `EMAIL_FROM` (default `ChassidusHub <no-reply@chassidushub.org>`), an address
-   on the verified domain. Email sign-in appears on the next request.
+1. In Cloudflare, **Compute → Email Service → Email Sending → Onboard
+   Domain**, pick `chassidushub.org` and let it add its DNS records (MX
+   for bounces, SPF, DKIM, DMARC). Email Sending needs Workers Paid; it
+   costs $0.35 per thousand emails beyond the 3,000 a month the plan
+   includes.
+2. That's all: `services/api/wrangler.toml` already binds `EMAIL`
+   (`[[send_email]]`), so the next deploy sends through it. Optionally set
+   the variable `EMAIL_FROM` (default `ChassidusHub <no-reply@chassidushub.org>`),
+   an address on the onboarded domain.
+
+Without the binding (a server outside Cloudflare, `node.ts`), Resend does
+the same: verify the domain at [Resend](https://resend.com) and set the
+secret `RESEND_API_KEY`.
 
 Locally, `DEV_EMAIL=1 npm run dev:api` prints each email (with its link)
 instead of sending it.
