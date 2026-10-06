@@ -1,5 +1,5 @@
-import { normalizeSearchText, toHebrewNumeral, unfinal } from '@rebbehub/hebrew';
-import type { PageInline, PageSegment, PageVersion } from '@rebbehub/model';
+import { normalizeSearchText, toHebrewNumeral, unfinal } from '@chassidushub/hebrew';
+import type { PageInline, PageSegment, PageVersion } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 
 /**

@@ -1,6 +1,6 @@
 # Transcribing the Rebbe's recordings
 
-`rebbehub transcribe` and `rebbehub align` (services/jobs/src/transcribe.ts)
+`chassidushub transcribe` and `chassidushub align` (services/jobs/src/transcribe.ts)
 turn a recording into a machine transcript, each paragraph and word timed,
 and sync the farbrengen's hanacha to it paragraph by paragraph. Which
 Whisper hears the recording is the `--engine`:
@@ -10,7 +10,7 @@ Whisper hears the recording is the `--engine`:
   Apache-2.0) on the machine's own CPU, through faster-whisper
   (`pip install faster-whisper`; services/jobs/whisper/transcribe.py).
   Free. `WHISPER_MODEL` names another model: a Hugging Face id, or the
-  folder of one on disk, such as rebbehub-whisper (below), which the
+  folder of one on disk, such as chassidushub-whisper (below), which the
   transcribe workflow fetches from R2 when it can.
 - `workers-ai`: Whisper large-v3-turbo on Cloudflare Workers AI, paid by
   the minute (docs/deploy.md, step 7).
@@ -48,16 +48,16 @@ Whisper sometimes ends a piece in the middle of a word ("... פון דעם י",
 then "וד, און ..."). The local engine marks a piece that carries on the
 word before it (`glued`), and a paragraph never breaks there; a long
 paragraph breaks at the end of a sentence where it can. Transcripts made
-before that can have such a cut between two paragraphs; `rebbehub
+before that can have such a cut between two paragraphs; `chassidushub
 mend-splits` joins the ones it is sure of, as one suggestion per recording,
 in paragraphs no person has checked (`--dry-run` lists them first).
 
-## rebbehub-whisper: fine-tuned on the Rebbe's voice
+## chassidushub-whisper: fine-tuned on the Rebbe's voice
 
 Each version is ivrit.ai's Yiddish model trained further on the Rebbe's own
 speech, clip by clip against a word-for-word Yiddish text, on one rented
-GPU. None are published; they are kept in `rebbehub-preservation` under
-`models/rebbehub-whisper-v<N>/` (the faster-whisper copy, and under `hf/`
+GPU. None are published; they are kept in `chassidushub-preservation` under
+`models/chassidushub-whisper-v<N>/` (the faster-whisper copy, and under `hf/`
 the full weights the next version trains from), and the workflow picks the
 highest version there.
 
@@ -90,7 +90,7 @@ Scored in the booklets' spelling, words wrong / letters wrong:
 
 These and every other model's scores, side by side, are in
 [models.md](models.md#the-rebbes-voice-to-text-whisper) and on the site at
-[/models](https://rebbehub.org/models).
+[/models](https://chassidushub.org/models).
 
 They spell the Loshon Kodesh right (`דברי תורה שבכתב`, `שולחן ערוך`).
 What they still miss are rarer words (`תנות` for `תענית`). They run at the
@@ -103,7 +103,7 @@ files, not here, since the texts can't be.
 
 Every night the *Machine transcription* workflow takes the recordings
 people asked for (the button under a farbrengen's parts, the API, the
-`ask_machine` MCP tool, `rebbehub machine ask`), then the newest
+`ask_machine` MCP tool, `chassidushub machine ask`), then the newest
 recordings with no transcript, `TRANSCRIBE_NIGHTLY` for each worker,
 always with the local engine. None of the catalog's recordings is a
 served file yet (each is heard at another site, Drive or JEM), so the
@@ -135,10 +135,10 @@ gathered with nobody doing it by hand:
    for each word written otherwise, so everything checked is in one
    spelling. Every fix goes for review like any suggestion.
 2. **The machine times the words again.** A corrected paragraph loses its
-   word timings. The nightly run then runs `rebbehub align` on the
+   word timings. The nightly run then runs `chassidushub align` on the
    recordings with corrected paragraphs first, timing the new words.
 3. **They become clips.** `GET /v1/machine/training/clips` (or
-   `rebbehub training-clips --out clips-site.jsonl`) gives every checked
+   `chassidushub training-clips --out clips-site.jsonl`) gives every checked
    paragraph as clips in the training script's own format: `audio`,
    `start`, `end`, `text`, `split`, and `group: "site"`. Paragraphs over
    28 seconds are cut between words. A clip is `gold` when a person also
@@ -153,13 +153,13 @@ gathered with nobody doing it by hand:
    transcript to people signed in, with the farbrengens to check next
    (before 5740 first, where the model is weakest), in
    `GET /v1/machine/training` (its `goal`) and in the `training_data` MCP
-   tool. Training still waits for Shmuly's OK
+   tool. Training still waits for the steward's OK
    for each paid GPU run; the clips go in with the booklets' and 5742's
    (`train.py --clips clips-5742.jsonl clips-booklets.jsonl
    clips-site.jsonl`), and the version is published to R2 only when it
    scores better on the same held-out farbrengens.
 5. **The workflow picks it up.** The next transcription run uses the
-   highest `models/rebbehub-whisper-v<N>/` in R2.
+   highest `models/chassidushub-whisper-v<N>/` in R2.
 
 ## Next
 

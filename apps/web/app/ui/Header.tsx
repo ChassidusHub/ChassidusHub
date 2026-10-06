@@ -97,7 +97,7 @@ function ThemeSwitch({ lang }: { lang: Lang }) {
 /**
  * The bell: the inbox, with how many lines wait unread. The first count
  * comes with who is signed in; it is asked again on each new page and when
- * a page reads some (the `rebbehub:inbox` event).
+ * a page reads some (the `chassidushub:inbox` event).
  */
 function InboxLink({ lang, first }: { lang: Lang; first: number }) {
   const [unread, setUnread] = useState(first);
@@ -110,12 +110,12 @@ function InboxLink({ lang, first }: { lang: Lang; first: number }) {
         .then((r) => (r.ok ? (r.json() as Promise<{ unread: number }>) : null))
         .then((body) => live && body && setUnread(body.unread))
         .catch(() => undefined);
-    window.addEventListener('rebbehub:inbox', ask);
+    window.addEventListener('chassidushub:inbox', ask);
     if (seen.current) ask();
     seen.current = true;
     return () => {
       live = false;
-      window.removeEventListener('rebbehub:inbox', ask);
+      window.removeEventListener('chassidushub:inbox', ask);
     };
   }, [pathname]);
   const label = unread ? `${tu(lang, 'notifications')} (${unread})` : tu(lang, 'notifications');
@@ -286,13 +286,13 @@ export function Header({ lang }: { lang: Lang }) {
   const navItem = NAV.find((n) => n.to === section);
   // A page kept under another section's tab (what is missing, the catalog's health) is still called by its own name.
   const ownTitle = pathname.startsWith('/missing') ? tu(lang, 'missing') : pathname.startsWith('/health') ? tu(lang, 'health') : pathname.startsWith('/help') ? tu(lang, 'waysToHelp') : null;
-  const phoneTitle = phone.title?.[lang] ?? ownTitle ?? (navItem ? tu(lang, navItem.key) : pathname === '/search' ? tu(lang, 'searchShort') : 'RebbeHub');
+  const phoneTitle = phone.title?.[lang] ?? ownTitle ?? (navItem ? tu(lang, navItem.key) : pathname === '/search' ? tu(lang, 'searchShort') : 'ChassidusHub');
   const home = pathname === '/';
 
   return (
     <>
       <header className="top">
-        <Link to={href('/', lang)} className="brand" aria-label="RebbeHub">
+        <Link to={href('/', lang)} className="brand" aria-label="ChassidusHub">
           <Logo size={24} />
         </Link>
         <nav className="nav" aria-label={tu(lang, 'mainNav')}>
@@ -344,7 +344,7 @@ export function Header({ lang }: { lang: Lang }) {
 
       <header className="mtop">
         {home ? (
-          <Link to={href('/', lang)} className="brand" aria-label="RebbeHub">
+          <Link to={href('/', lang)} className="brand" aria-label="ChassidusHub">
             <Logo size={23} />
           </Link>
         ) : (

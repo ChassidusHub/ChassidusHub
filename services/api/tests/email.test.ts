@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { linkGoogle, createPerson, sendNotifications, type EmailMessage, type Mailer } from '@rebbehub/core';
+import { linkGoogle, createPerson, sendNotifications, type EmailMessage, type Mailer } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { resendMailer } from '../src/mail.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
@@ -11,7 +11,7 @@ import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helper
  * production.
  */
 
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 let app: Hono;
 let outbox: EmailMessage[];
 let fresh: Awaited<ReturnType<typeof freshCatalog>>;
@@ -21,7 +21,7 @@ const mailer: Mailer = { send: async (message) => void outbox.push(message) };
 beforeEach(async () => {
   fresh = await freshCatalog();
   outbox = [];
-  app = createApp({ catalog: fresh.catalog, mailer, auth: { rpId: 'rebbehub.test', rpName: 'RebbeHub', origins: [SITE] } });
+  app = createApp({ catalog: fresh.catalog, mailer, auth: { rpId: 'chassidushub.test', rpName: 'ChassidusHub', origins: [SITE] } });
 });
 
 const call = async (method: string, path: string, options: { body?: unknown; cookie?: string } = {}) => {
@@ -41,7 +41,7 @@ async function signUp(email: string, name: string) {
 
 describe('signing in by email link', () => {
   it('is hidden while the site cannot send email', async () => {
-    const off = createApp({ catalog: fresh.catalog, auth: { rpId: 'rebbehub.test', rpName: 'RebbeHub', origins: [SITE] } });
+    const off = createApp({ catalog: fresh.catalog, auth: { rpId: 'chassidushub.test', rpName: 'ChassidusHub', origins: [SITE] } });
     const me = await off.request(`${SITE}/v1/auth/me`);
     expect(await me.json()).toMatchObject({ person: null, email: false });
     const start = await off.request(`${SITE}/v1/auth/email/start`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: SITE }, body: JSON.stringify({ email: 'a@b.org' }) });
@@ -53,7 +53,7 @@ describe('signing in by email link', () => {
     const sent = await call('POST', '/v1/auth/email/start', { body: { email: '  Mendy@Example.ORG ', return: '/review', lang: 'en' } });
     expect(sent).toMatchObject({ status: 200, body: { sent: true } });
     expect(outbox).toHaveLength(1);
-    expect(outbox[0]).toMatchObject({ to: 'mendy@example.org', subject: 'RebbeHub: your sign-in link' });
+    expect(outbox[0]).toMatchObject({ to: 'mendy@example.org', subject: 'ChassidusHub: your sign-in link' });
     expect(outbox[0]!.text).toContain(`${SITE}/signin?email-token=`);
     expect(outbox[0]!.text).toContain('return=%2Freview');
     const token = lastToken();
@@ -95,7 +95,7 @@ describe('signing in by email link', () => {
     expect(await call('POST', '/v1/auth/email/start', { body: { email: 'chaim@example.org' }, cookie: mendy.cookie })).toMatchObject({ status: 400 });
 
     await call('POST', '/v1/auth/email/start', { body: { email: 'mendy@work.example' }, cookie: mendy.cookie });
-    expect(outbox.at(-1)!.subject).toBe('RebbeHub: אישור כתובת המייל');
+    expect(outbox.at(-1)!.subject).toBe('ChassidusHub: אישור כתובת המייל');
     expect((await call('POST', '/v1/auth/email/check', { body: { token: lastToken() } })).body.adding).toEqual({ displayName: 'Mendy' });
     // Opened in another browser, it adds the address without signing that browser in.
     const added = await call('POST', '/v1/auth/email/verify', { body: { token: lastToken() } });
@@ -117,7 +117,7 @@ describe('signing in by email link', () => {
     await resend.send({ to: 'a@b.org', subject: 'S', text: 'T', html: '<p>T</p>' });
     expect(seen[0]!.url).toBe('https://api.resend.com/emails');
     expect((seen[0]!.init.headers as Record<string, string>).Authorization).toBe('Bearer re_test');
-    expect(JSON.parse(String(seen[0]!.init.body))).toMatchObject({ from: 'RebbeHub <no-reply@rebbehub.org>', to: ['a@b.org'], subject: 'S' });
+    expect(JSON.parse(String(seen[0]!.init.body))).toMatchObject({ from: 'ChassidusHub <no-reply@chassidushub.org>', to: ['a@b.org'], subject: 'S' });
   });
 });
 
@@ -143,7 +143,7 @@ describe('notifications by email', () => {
     await catalog.submit(fix.id, 'mendy');
     await catalog.merge(fix.id, 'keeper');
     expect(await sendNotifications(catalog, mailer, { siteUrl: SITE })).toEqual({ sent: 1, looked: 1 });
-    expect(outbox[0]).toMatchObject({ to: 'chaim@example.org', subject: 'RebbeHub: one change in what you follow' });
+    expect(outbox[0]).toMatchObject({ to: 'chaim@example.org', subject: 'ChassidusHub: one change in what you follow' });
     expect(outbox[0]!.text).toContain('Fix the date');
     expect(outbox[0]!.text).toContain(`${SITE}/${event}?lang=en`);
     expect(outbox[0]!.headers!['List-Unsubscribe']).toMatch(/\/_\/auth\/email\/unsubscribe\?token=/);
@@ -158,7 +158,7 @@ describe('notifications by email', () => {
     await catalog.db.query("UPDATE auth.notification_setting SET last_sent_at = now() - interval '25 hours'");
     await add(catalog, 'mendy', 'keeper', 'recording', { event, title: { he: 'חלק א' }, sets: [set] });
     expect((await sendNotifications(catalog, mailer, { siteUrl: SITE })).sent).toBe(1);
-    expect(outbox.at(-1)!.subject).toBe('RebbeHub: 2 שינויים במה שאתם עוקבים אחריו');
+    expect(outbox.at(-1)!.subject).toBe('ChassidusHub: 2 שינויים במה שאתם עוקבים אחריו');
     await add(catalog, 'mendy', 'keeper', 'recording', { event, title: { he: 'חלק ב' }, sets: [set] });
     expect((await sendNotifications(catalog, mailer, { siteUrl: SITE })).sent).toBe(0);
 

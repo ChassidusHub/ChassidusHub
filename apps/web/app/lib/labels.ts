@@ -1,4 +1,4 @@
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import type { Entity } from './api.js';
 import { dateLabel } from './dates.js';
 import { nameOf, typeName, type Lang } from './i18n.js';

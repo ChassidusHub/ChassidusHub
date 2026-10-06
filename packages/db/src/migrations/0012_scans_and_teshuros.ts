@@ -3,7 +3,7 @@
  *
  *   file_fingerprint  what a held file was measured to be, once: a PDF's
  *                     page count, a recording's length and its audio
- *                     fingerprint (@rebbehub/model, fingerprints.ts), so
+ *                     fingerprint (@chassidushub/model, fingerprints.ts), so
  *                     the same recording in other bytes is caught
  *   file_page         one row per page of a PDF: its size, its perceptual
  *                     hash cut in bands (a GIN index finds near pages

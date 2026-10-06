@@ -49,7 +49,7 @@ const OLD_ANCHORS: Record<string, SectionId> = {
   webhooks: 'developers',
 };
 
-const API_FALLBACK = 'https://api.rebbehub.org';
+const API_FALLBACK = 'https://api.chassidushub.org';
 
 export function loader({ request, params, context }: Route.LoaderArgs) {
   const section = (params.section ?? '') as SectionId;

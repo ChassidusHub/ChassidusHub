@@ -1,7 +1,7 @@
 import { createContext, Fragment, useContext, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { toHebrewNumeral } from '@rebbehub/hebrew';
-import { allSegments, type PageInline, type PageSegment, type PageText, type PageVersion, type TextProfile } from '@rebbehub/model';
+import { toHebrewNumeral } from '@chassidushub/hebrew';
+import { allSegments, type PageInline, type PageSegment, type PageText, type PageVersion, type TextProfile } from '@chassidushub/model';
 import type { Lang } from '../lib/i18n.js';
 import { href } from '../lib/links.js';
 import { Icon } from '../ui/Icon.js';

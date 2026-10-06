@@ -1,5 +1,5 @@
 /**
- * The months as RebbeHub's date keys number them: Tishrei first, as the
+ * The months as ChassidusHub's date keys number them: Tishrei first, as the
  * year is counted, with a leap year's Adar split into 06A (Adar I) and 06B
  * (Adar II) rather than shifting every later month. This is mafteiach's
  * numbering, which Sichos-Kodesh's catalog already files every farbrengen

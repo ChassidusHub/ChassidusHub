@@ -1,10 +1,10 @@
 /**
- * RebbeHub is private for now (Shmuly, 2 October 2026): the site, the API,
+ * ChassidusHub is private for now (The steward, 2 October 2026): the site, the API,
  * the MCP server and the files open only for him. Everyone else gets the
  * lock page (the site) or 401 (the API).
  *
  * One password opens it. The browser never keeps the password itself, only
- * its key (`keyOf`), in a cookie on rebbehub.org and its subdomains, so the
+ * its key (`keyOf`), in a cookie on chassidushub.org and its subdomains, so the
  * site, the API's files and the reader all see it. GitHub's jobs send the
  * same key in a header. The Workers keep only the key's hash
  * (`LOCK_KEY_HASH` in wrangler.toml, safe to publish: the password is long
@@ -18,9 +18,9 @@
  */
 
 export const LOCK_COOKIE = '__Secure-rh_lock';
-export const LOCK_HEADER = 'x-rebbehub-key';
+export const LOCK_HEADER = 'x-chassidushub-key';
 /** Said on every answer the lock gave instead of the page, so the status checks know the Worker itself answered. */
-export const LOCKED_HEADER = 'x-rebbehub-locked';
+export const LOCKED_HEADER = 'x-chassidushub-locked';
 
 export interface LockEnv {
   /** The password, as a secret; wins over LOCK_KEY_HASH. */
@@ -37,7 +37,7 @@ async function sha256(text: string): Promise<string> {
 }
 
 /** What a password opens: the browser's cookie and the jobs' header carry this, never the password. */
-export const keyOf = (password: string): Promise<string> => sha256(`rebbehub-lock:${password}`);
+export const keyOf = (password: string): Promise<string> => sha256(`chassidushub-lock:${password}`);
 
 /** The hash a key must have, or null when nothing is locked (local work, tests). */
 export async function lockOf(env: LockEnv): Promise<string | null> {

@@ -10,7 +10,7 @@ name: Backup
 # one request) and SHA256SUMS. A night's copy is kept 35 days; the one of
 # the 1st of each month is kept.
 #
-# Needs DATABASE_URL, and a way to write rebbehub-preservation: either
+# Needs DATABASE_URL, and a way to write chassidushub-preservation: either
 # CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN (R2 edit rights, as the
 # upkeep's covers need), or R2_ENDPOINT, R2_ACCESS_KEY_ID and
 # R2_SECRET_ACCESS_KEY of an R2 token with Object Read & Write on the bucket.
@@ -40,7 +40,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: auto
-      BUCKET: rebbehub-preservation
+      BUCKET: chassidushub-preservation
       KEEP_DAYS: "35"
     steps:
       - name: Check it is configured

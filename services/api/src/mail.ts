@@ -1,4 +1,4 @@
-import type { Advisor, Mailer } from '@rebbehub/core';
+import type { Advisor, Mailer } from '@chassidushub/core';
 
 /**
  * The API's two outside helpers, each off until its secret is set
@@ -11,7 +11,7 @@ import type { Advisor, Mailer } from '@rebbehub/core';
  *               (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN)
  */
 
-export const DEFAULT_EMAIL_FROM = 'RebbeHub <no-reply@rebbehub.org>';
+export const DEFAULT_EMAIL_FROM = 'ChassidusHub <no-reply@chassidushub.org>';
 
 /** Email through Resend's HTTP API. */
 export function resendMailer(input: { apiKey: string; from?: string; fetch?: typeof fetch }): Mailer {

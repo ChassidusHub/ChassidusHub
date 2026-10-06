@@ -1,8 +1,8 @@
-import { isEntityId } from '@rebbehub/model';
+import { isEntityId } from '@chassidushub/model';
 
 /**
  * Three-way merge of an item's data against the version a suggestion was
- * written from (docs/plans/rebbehub.md, section 6, "Merging"):
+ * written from (docs/plans/chassidushub.md, section 6, "Merging"):
  *
  * - fields are merged one by one, nested objects field by field, so one
  *   person fixing the English title and another the date never clash;

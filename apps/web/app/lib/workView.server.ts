@@ -1,5 +1,5 @@
-import type { LocalName } from '@rebbehub/model';
-import type { Entity, RebbeHubApi } from './api.js';
+import type { LocalName } from '@chassidushub/model';
+import type { Entity, ChassidusHubApi } from './api.js';
 import { dateLabel } from './dates.js';
 import { nameOf, type Lang } from './i18n.js';
 import { labelOf } from './labels.js';
@@ -69,7 +69,7 @@ const printingLabel = (p: Entity, lang: Lang) => {
   return [d.publisher, d.date ? dateLabel(d.date, lang, { civil: false }) : d.gregorianYear ? String(d.gregorianYear) : null].filter(Boolean).join(', ');
 };
 
-export async function workToc(api: RebbeHubApi, units: Entity[], publications: Entity[], scanCounts: Record<string, number>, options: { part: Part | null; printing: string | null; lang: Lang }): Promise<WorkToc> {
+export async function workToc(api: ChassidusHubApi, units: Entity[], publications: Entity[], scanCounts: Record<string, number>, options: { part: Part | null; printing: string | null; lang: Lang }): Promise<WorkToc> {
   const { lang, part } = options;
   const rowsOf = units.slice(0, MAX_ROWS);
   // This volume's printings (all of them for a sefer of one volume).
@@ -168,7 +168,7 @@ export async function workToc(api: RebbeHubApi, units: Entity[], publications: E
   };
 }
 
-async function firstScanFile(api: RebbeHubApi, printing: string): Promise<string | null> {
+async function firstScanFile(api: ChassidusHubApi, printing: string): Promise<string | null> {
   const links = await api.backlinks(printing, { field: 'publication', type: 'scan' }).catch(() => []);
   const scans = await api.entities(links.map((l) => l.from)).catch(() => new Map<string, Entity>());
   const scan = [...scans.values()].sort((a, b) => Number(Boolean((b.data as D).preferred)) - Number(Boolean((a.data as D).preferred)))[0];

@@ -1,4 +1,4 @@
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import type { Route } from './+types/inbox';
@@ -77,7 +77,7 @@ function SubjectIcon({ subject }: { subject: InboxLine['subject'] }) {
 }
 
 /** Tells the top bar's inbox count to ask again. */
-const told = () => window.dispatchEvent(new Event('rebbehub:inbox'));
+const told = () => window.dispatchEvent(new Event('chassidushub:inbox'));
 
 export default function Inbox() {
   const lang = useLang();

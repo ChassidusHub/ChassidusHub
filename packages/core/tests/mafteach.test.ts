@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { driveId, mafteach, placesOf, type Catalog, type Json } from '@rebbehub/core';
-import type { EntityId, PageText } from '@rebbehub/model';
+import { driveId, mafteach, placesOf, type Catalog, type Json } from '@chassidushub/core';
+import type { EntityId, PageText } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
 /**
@@ -19,16 +19,16 @@ const volume = (segments: PageText['versions'][number]['segments']): PageText =>
 
 beforeAll(async () => {
   ({ catalog } = await freshCatalog());
-  ids.sefer = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'ספר בדיקה' }, slug: 'sefer-bdika', authors: [], genre: 'sichos', levels: ['volume', 'sicha'] }, '/sefer-bdika');
-  await add(catalog, 'shmuly', 'shmuly', 'unit', {
+  ids.sefer = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'ספר בדיקה' }, slug: 'sefer-bdika', authors: [], genre: 'sichos', levels: ['volume', 'sicha'] }, '/sefer-bdika');
+  await add(catalog, 'steward', 'steward', 'unit', {
     work: ids.sefer,
     position: [{ level: 'volume', value: '1' }, { level: 'sicha', value: '5' }],
     order: '01',
     label: { he: 'שיחה ראשונה' },
     editions: [{ kind: 'pdf', role: 'sicha', url: 'https://drive.google.com/file/d/AAAAAAAAAAAA/view', source: 'mafteiach', sourceId: 'AAAAAAAAAAAA', licence: 'facts-and-links' }],
   } as unknown as Json, '/sefer-bdika/1/5');
-  ids.index = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'מפתח בדיקה' }, slug: 'mafteach-bdika', authors: [], genre: 'sichos', levels: ['volume'] }, '/mafteach-bdika');
-  await add(catalog, 'shmuly', 'shmuly', 'unit', {
+  ids.index = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'מפתח בדיקה' }, slug: 'mafteach-bdika', authors: [], genre: 'sichos', levels: ['volume'] }, '/mafteach-bdika');
+  await add(catalog, 'steward', 'steward', 'unit', {
     work: ids.index,
     position: [{ level: 'volume', value: '1' }],
     order: '01V',
@@ -40,7 +40,7 @@ beforeAll(async () => {
       { id: 't2.1', kind: 'paragraph', text: [{ text: '12', href: read('BBBBBBBBBBBB', 'ח"א ע\' 11 (מים)') }, { text: '.' }] },
     ]),
   } as unknown as Json, '/mafteach-bdika/1');
-  await add(catalog, 'shmuly', 'shmuly', 'unit', {
+  await add(catalog, 'steward', 'steward', 'unit', {
     work: ids.index,
     position: [{ level: 'volume', value: '2' }],
     order: '02V',
@@ -92,7 +92,7 @@ describe('mafteach', () => {
   });
 
   it('sees a fix on an index page at once', async () => {
-    await add(catalog, 'shmuly', 'shmuly', 'unit', {
+    await add(catalog, 'steward', 'steward', 'unit', {
       work: ids.index,
       position: [{ level: 'volume', value: '3' }],
       order: '03V',

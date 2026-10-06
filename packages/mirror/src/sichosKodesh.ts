@@ -1,5 +1,5 @@
-import type { EntityView } from '@rebbehub/core';
-import { datePrecision, parseDateKey } from '@rebbehub/hebrew';
+import type { EntityView } from '@chassidushub/core';
+import { datePrecision, parseDateKey } from '@chassidushub/hebrew';
 import {
   SOURCE_IDS,
   type Author,
@@ -18,23 +18,23 @@ import {
   type Work,
   type WorkData,
   type WorkSource,
-} from '@rebbehub/model';
+} from '@chassidushub/model';
 
 /**
  * A catalog edition in the shape Sichos-Kodesh builds its library from:
  * the inputs of its `buildCatalogWorks` (packages/works) - authors, works,
  * and each work's contents and units as an importer would give them. Once
  * Sichos-Kodesh reads this instead of its own registry, it stops curating
- * a catalog of its own (docs/plans/rebbehub.md, section 2).
+ * a catalog of its own (docs/plans/chassidushub.md, section 2).
  *
  * Ids go back to the ones Sichos-Kodesh already uses (work and author
  * slugs, the phone's unit ids from `externalIds`), so downloads, progress
  * and packs made so far keep working. Only the sources Sichos-Kodesh knows
- * are carried; RebbeHub's other sources are left out rather than widening
+ * are carried; ChassidusHub's other sources are left out rather than widening
  * its types.
  */
 export interface SichosKodeshRelease {
-  format: 'rebbehub-sichos-kodesh-works';
+  format: 'chassidushub-sichos-kodesh-works';
   formatVersion: 1;
   tag: string;
   commit: number;
@@ -118,7 +118,7 @@ export function toSichosKodeshRelease(entities: Iterable<EntityView>, meta: { ta
     const source = (work.sourceCopies?.find((s) => KNOWN_SOURCES.has(s.source))?.source ?? 'mafteiach') as SourceId;
     imported.push({ workId: work.slug, source, contents: contentsOf(list), units: outUnits });
   }
-  return { format: 'rebbehub-sichos-kodesh-works', formatVersion: 1, tag: meta.tag, commit: meta.commit, authors: [...authors.values()].map((a) => a.author), works: outWorks, imported };
+  return { format: 'chassidushub-sichos-kodesh-works', formatVersion: 1, tag: meta.tag, commit: meta.commit, authors: [...authors.values()].map((a) => a.author), works: outWorks, imported };
 }
 
 /** A work's table of contents from its units' positions: every level but the last is a node. */

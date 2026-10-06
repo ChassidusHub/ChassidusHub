@@ -2,17 +2,17 @@
  * Links to PDFs on Google Drive, as the catalog stores them: the file's
  * own address on Drive (`https://drive.google.com/file/d/<id>/view`), the
  * link the mafteiach and Otzros HaRebbe give. The site reads a Drive file
- * through RebbeHub's own API (`GET /v1/drive/<id>`, services/api), so what
+ * through ChassidusHub's own API (`GET /v1/drive/<id>`, services/api), so what
  * is stored says where the file really is, not how it is fetched.
  *
  * Imports before this stored the address of Sichos-Kodesh's media proxy
- * instead (`https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/<id>?…`);
- * `rebbehub relink-drive` (services/jobs) suggests the Drive link in
+ * instead (`https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/<id>?…`);
+ * `chassidushub relink-drive` (services/jobs) suggests the Drive link in
  * their place, with `relinkDrive` below.
  */
 
 /** Sichos-Kodesh's media proxy: JEM's recordings are still played through it (`/jem-audio/<file>`); Drive files no longer are. */
-export const SICHOS_KODESH_MEDIA_PROXY = 'https://sichos-kodesh-media-proxy.shmuky.workers.dev';
+export const SICHOS_KODESH_MEDIA_PROXY = 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev';
 
 const PROXY_HOST = new URL(SICHOS_KODESH_MEDIA_PROXY).hostname;
 const DRIVE_ID = /^[A-Za-z0-9_-]{10,64}$/;

@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { joinPath, orderKeys, slugify, type Genre, type LocalName, type PageText, type PageVersion } from '@rebbehub/model';
+import { joinPath, orderKeys, slugify, type Genre, type LocalName, type PageText, type PageVersion } from '@chassidushub/model';
 import { articleOf, htmlToPageVersion, sourceFooter } from './htmlToPageText.js';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { fetchTexts, textUrl } from './sichosKodeshTexts.js';
@@ -10,9 +10,9 @@ import { fetchTexts, textUrl } from './sichosKodeshTexts.js';
  * `build-catalog-works` writes it to apps/mobile/src/catalog/data/works):
  * authors, the ~80 works of its registry with their sources, and the units
  * of every work imported so far. Read from a Sichos-Kodesh checkout at run
- * time - RebbeHub keeps no copy - and turned into sets (one per genre),
+ * time - ChassidusHub keeps no copy - and turned into sets (one per genre),
  * authors, works and units. The phone's ids ride along in `externalIds`,
- * so the release RebbeHub builds back for Sichos-Kodesh keeps them.
+ * so the release ChassidusHub builds back for Sichos-Kodesh keeps them.
  */
 
 /** Sichos-Kodesh's catalog schema 3 (its packages/catalog/src/works/types.ts), as far as this reads it. */
@@ -71,7 +71,7 @@ export interface SichosKodeshWorksInput {
 /** How each source's texts reached Sichos-Kodesh: the index its record names. */
 const VIA: Record<string, string> = { sefaria: 'sefaria-index', 'igros-app': 'igros-index', mafteiach: 'mafteiach-index', chabadlibrary: 'chabadlibrary' };
 
-/** Sichos-Kodesh's rights decision for a source, as RebbeHub's rights state. */
+/** Sichos-Kodesh's rights decision for a source, as ChassidusHub's rights state. */
 const RIGHTS: Record<string, 'open' | 'credit' | 'link' | 'preserved'> = { ship: 'open', 'ship-with-credit': 'credit', 'link-only': 'link', 'local-only': 'preserved' };
 
 /**
@@ -124,7 +124,7 @@ function bodyOf(unit: CatalogWorkContents['units'][number], sources: CatalogWork
 /**
  * Reads the works from a Sichos-Kodesh checkout (or any folder laid out
  * like its data/works), and with `texts`, the words of every unit whose
- * rights let it ship, from the copies RebbeHub keeps (sichosKodeshTexts.ts).
+ * rights let it ship, from the copies ChassidusHub keeps (sichosKodeshTexts.ts).
  */
 export async function readSichosKodeshWorks(root: string, options: { texts?: boolean; api?: string; log?: (line: string) => void } = {}): Promise<SichosKodeshWorksInput> {
   const dir = root.endsWith('works') ? root : join(root, 'apps/mobile/src/catalog/data/works');
@@ -198,7 +198,7 @@ export function sichosKodeshWorksImporter(input: SichosKodeshWorksInput | (() =>
       const { index, contents, texts, api } = typeof input === 'function' ? await input() : input;
       const genres = [...new Set(index.works.map((w) => w.genre))].sort() as Genre[];
       for (const genre of genres) {
-        yield { key: `rebbehub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre] ?? { he: genre, en: genre }, slug: genre, policy: 'moderated', keepers: [] } };
+        yield { key: `chassidushub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre] ?? { he: genre, en: genre }, slug: genre, policy: 'moderated', keepers: [] } };
       }
       for (const author of index.authors) {
         const data: Record<string, unknown> = { name: author.name, kind: 'rebbe', slug: author.id, externalIds: { 'sichos-kodesh-author': author.id } };
@@ -218,7 +218,7 @@ export function sichosKodeshWorksImporter(input: SichosKodeshWorksInput | (() =>
             authors: work.authors.map((a) => ref(`sichos-kodesh-author:${a}`)),
             genre: work.genre,
             levels: work.levels,
-            sets: [ref(`rebbehub-set:${work.genre}`)],
+            sets: [ref(`chassidushub-set:${work.genre}`)],
             externalIds,
             sourceCopies: work.sources.map((s) => {
               const copy: Record<string, string> = { source: s.source, sourceId: s.sourceId, kind: s.kind, licence: s.licence };

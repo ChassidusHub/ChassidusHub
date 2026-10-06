@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SchemaRegistry, applyShaar, readShaar, shaarBlocks, shaarFromCatalog, structureSentence, writeShaar, type WorkData } from '@rebbehub/model';
+import { SchemaRegistry, applyShaar, readShaar, shaarBlocks, shaarFromCatalog, structureSentence, writeShaar, type WorkData } from '@chassidushub/model';
 
 const work: WorkData = {
   title: { he: 'תניא', en: 'Tanya' },

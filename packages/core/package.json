@@ -1,15 +1,15 @@
 {
-  "name": "@rebbehub/core",
+  "name": "@chassidushub/core",
   "version": "0.1.0",
-  "description": "The RebbeHub catalog engine: suggestions, review and merge with three-way field and line merging, history and revert, projects, reports, trust levels and permissions, automatic checks, files and their rights, catalog editions and search - over the versioned Postgres schema.",
+  "description": "The ChassidusHub catalog engine: suggestions, review and merge with three-way field and line merging, history and revert, projects, reports, trust levels and permissions, automatic checks, files and their rights, catalog editions and search - over the versioned Postgres schema.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shmuky/RebbeHub.git",
+    "url": "git+https://github.com/ChassidusHub/ChassidusHub.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/shmuky/RebbeHub/tree/main/packages/core",
+  "homepage": "https://github.com/ChassidusHub/ChassidusHub/tree/main/packages/core",
   "bugs": {
-    "url": "https://github.com/shmuky/RebbeHub/issues"
+    "url": "https://github.com/ChassidusHub/ChassidusHub/issues"
   },
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -30,8 +30,8 @@
   "dependencies": {
     "@hebcal/core": "^6.11.0",
     "@hebcal/learning": "^6.11.4",
-    "@rebbehub/db": "^0.1.0",
-    "@rebbehub/hebrew": "^0.1.0",
-    "@rebbehub/model": "^0.1.0"
+    "@chassidushub/db": "^0.1.0",
+    "@chassidushub/hebrew": "^0.1.0",
+    "@chassidushub/model": "^0.1.0"
   }
 }

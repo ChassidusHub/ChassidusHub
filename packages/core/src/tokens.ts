@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import { base64url, hashToken } from './auth.js';
 import { invalid, notFound } from './errors.js';
 import { listConnections, oauthGrant, revokeConnection } from './oauth.js';

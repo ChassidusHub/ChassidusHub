@@ -1,4 +1,4 @@
-import { LANGUAGES, orderKeys, type EntityId, type Language, type Licence } from '@rebbehub/model';
+import { LANGUAGES, orderKeys, type EntityId, type Language, type Licence } from '@chassidushub/model';
 import type { Catalog, ChangesetRow } from './catalog.js';
 import { invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';
@@ -19,7 +19,7 @@ import type { Json } from './merge.js';
 /**
  * The rights a translation may be added with: the translator's own work
  * (no licence: community text, CC BY-SA like every correction), or a
- * published translation whose licence lets RebbeHub keep and serve a copy.
+ * published translation whose licence lets ChassidusHub keep and serve a copy.
  * Anything else (a publisher's all-rights-reserved translation, a site's
  * terms) is not pasted in at all; it is linked as a copy elsewhere.
  */

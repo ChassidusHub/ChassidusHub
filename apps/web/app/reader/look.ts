@@ -20,7 +20,7 @@ export interface PdfLook {
 }
 
 export const DEFAULT_PDF_LOOK: PdfLook = { colors: 'auto', contrast: false };
-const STORE = 'rebbehub.pdf-look';
+const STORE = 'chassidushub.pdf-look';
 
 /** A stored look, anything missing or unknown at its default. */
 export function parsePdfLook(raw: string | null | undefined): PdfLook {

@@ -124,7 +124,7 @@ function titlesOnly<T extends { items: Issue[] }>(listing: T): Omit<T, 'items'> 
   return { ...listing, items: listing.items.map(({ body: _body, ...row }) => row) };
 }
 
-const SAVED_KEY = 'rebbehub.issues.saved';
+const SAVED_KEY = 'chassidushub.issues.saved';
 function readSaved(): Array<{ name: string; line: string }> {
   try {
     const raw = localStorage.getItem(SAVED_KEY);

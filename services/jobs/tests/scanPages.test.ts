@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { filePages, getDerivations, getFile, registerFile, similarFiles } from '@rebbehub/core';
+import { filePages, getDerivations, getFile, registerFile, similarFiles } from '@chassidushub/core';
 import { decodeWav, fingerprintFiles, makePageImages, scansWithoutPageImages } from '../src/scanPages.js';
 import type { ObjectStore } from '../src/readingCopies.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';

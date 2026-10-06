@@ -1,5 +1,5 @@
 /**
- * Drawing a page through its page fix (RebbeHub's page fixes: a leaning
+ * Drawing a page through its page fix (ChassidusHub's page fixes: a leaning
  * page turned level, or a reading copy's placing) without a copy of the
  * file. A fix is a PDF matrix: where a point of the page is drawn, in the
  * page's own points. pdf.js draws a page through the viewport's matrix V

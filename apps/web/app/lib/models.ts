@@ -7,7 +7,7 @@
  */
 
 /**
- * RebbeHub's own models and their scores, for the /models page: what each
+ * ChassidusHub's own models and their scores, for the /models page: what each
  * one reads or hears, which one is in use, the test it was scored on (one
  * it never learned from) and every number, as docs/models.md has them.
  * Only descriptions and scores are published, never the models or how they
@@ -96,8 +96,8 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       'Reads each line of a scanned Likkutei Sichos page into text. Letters and Words: how many were read right; Lines perfect: whole lines read with no mistake at all; Body and Notes: the letter score in the main text and in the footnotes; Hard: mix-ups of the look-alikes ב/כ, ת/ח, ז/ן/ו.',
     ),
     models: [
-      { name: 'rebbehub-kraken-ls-v1', does: c('קורא את לקוטי שיחות מהסריקות; קורא עכשיו את חלקים טו-כה', 'Reads Likkutei Sichos from the scans; reading vols 15-25 now'), state: 'inUse' },
-      { name: 'rebbehub-kraken-v1', does: c('קורא את המפתחות; לא נבדק כאן', 'Reads the maftechos (indexes); not scored here'), state: 'inUse' },
+      { name: 'chassidushub-kraken-ls-v1', does: c('קורא את לקוטי שיחות מהסריקות; קורא עכשיו את חלקים טו-כה', 'Reads Likkutei Sichos from the scans; reading vols 15-25 now'), state: 'inUse' },
+      { name: 'chassidushub-kraken-v1', does: c('קורא את המפתחות; לא נבדק כאן', 'Reads the maftechos (indexes); not scored here'), state: 'inUse' },
     ],
     tables: [
       {
@@ -108,7 +108,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
         rows: [
           { name: c('PP-OCRv6, כמו שהוא', 'PP-OCRv6, as it came'), cells: ['96.45%', '86.39%', c('כ-44%', 'about 44%')], state: 'start' },
           { name: c('מועמד קודם (הטוב שלפניו)', 'An earlier candidate (the best before it)'), cells: ['99.82%', '99.41%', '96.1%'], state: 'superseded' },
-          { name: 'rebbehub-kraken-ls-v1', cells: ['99.91%', '99.68%', '97.7%'], state: 'inUse' },
+          { name: 'chassidushub-kraken-ls-v1', cells: ['99.91%', '99.68%', '97.7%'], state: 'inUse' },
           { name: c('+ בדיקת המילים אחרי הקריאה', '+ the word check after reading'), cells: ['99.88%*', '99.60%*', '97.3%*'], state: 'inUse' },
           { name: c('מועמד מאוחר (הטוב שבו)', 'A later candidate (its best)'), cells: ['99.87%', '99.51%', '97.0%'], state: 'notUsed' },
         ],
@@ -132,7 +132,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
           { name: '01-0.9986-v1', cells: ['99.83', '99.40', '96.0', '99.85', '99.68', '347', '17', '49 / 0', '33 / 0'] },
           { name: '01-0.9987', cells: ['99.82', '99.38', '96.0', '99.84', '99.69', '361', '17', '49 / 0', '41 / 0'] },
           { name: '01-0.9987-v1', cells: ['99.82', '99.41', '96.1', '99.84', '99.69', '357', '18', '51 / 0', '42 / 0'], state: 'superseded' },
-          { name: 'rebbehub-kraken-ls-v1', cells: ['99.91', '99.68', '97.7', '99.93', '99.81', '179', '18', '4 / 0', '6 / 1'], state: 'inUse' },
+          { name: 'chassidushub-kraken-ls-v1', cells: ['99.91', '99.68', '97.7', '99.93', '99.81', '179', '18', '4 / 0', '6 / 1'], state: 'inUse' },
         ],
         note: c(
           'בלי 35 הסימנים שנוספו הוא עדיין מנצח: 99.87% אותיות ו-97.0% שורות מושלמות, מול 99.84% ו-96.3%. הוא חצה את הטעויות (357 ל-179), כמעט כולן סימנים: מקפים שנשמטו מ-51 ל-4, נקודות מ-42 ל-6. באותיות הדומות לא השתנה דבר (18 ל-18).',
@@ -143,12 +143,12 @@ export const MODEL_FAMILIES: ModelFamily[] = [
         id: 'ocr-later',
         title: c('המועמדים המאוחרים', 'The later candidates'),
         test: c(
-          'אותן 4,500 שורות, ומפתח של הטקסט המוקלד ועוד 24 סימנים בקצות שורות; rebbehub-kraken-ls-v1 נקרא שוב באותה דרך להשוואה.',
-          'The same 4,500 lines, with a key of the typed text plus 24 line-edge marks; rebbehub-kraken-ls-v1 read again the same way, to compare.',
+          'אותן 4,500 שורות, ומפתח של הטקסט המוקלד ועוד 24 סימנים בקצות שורות; chassidushub-kraken-ls-v1 נקרא שוב באותה דרך להשוואה.',
+          'The same 4,500 lines, with a key of the typed text plus 24 line-edge marks; chassidushub-kraken-ls-v1 read again the same way, to compare.',
         ),
         columns: FULL,
         rows: [
-          { name: 'rebbehub-kraken-ls-v1', cells: ['99.90', '99.63', '97.5', '99.91', '99.80', '206', '20', '4 / 1', '0 / 10'], state: 'inUse' },
+          { name: 'chassidushub-kraken-ls-v1', cells: ['99.90', '99.63', '97.5', '99.91', '99.80', '206', '20', '4 / 1', '0 / 10'], state: 'inUse' },
           { name: 'r3-00-0.9982-2347', cells: ['99.83', '99.38', '95.8', '99.84', '99.74', '348', '59', '38 / 0', '10 / 3'] },
           { name: 'r3-00-0.9983-0003', cells: ['99.83', '99.35', '95.8', '99.85', '99.74', '337', '41', '37 / 0', '6 / 5'] },
           { name: 'r3-00-0.9984-0019', cells: ['99.87', '99.51', '97.0', '99.88', '99.81', '258', '22', '21 / 0', '10 / 2'], state: 'notUsed' },
@@ -213,12 +213,12 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     id: 'miram',
     title: c('גלאי המירם (מודגש)', 'The Miram (bold) detector'),
     intro: c(
-      'בשיחות הרבי אותיות מירם מסמנות את המילים המודגשות, ו-RebbeHub מציג אותן מודגשות. הגלאי אומר, מילה במילה, אילו מילים בעמוד הן במירם.',
-      "In the Rebbe's sichos, Miram type marks the stressed words, and RebbeHub shows them as bold. The detector says, word by word, which words on a page are in Miram.",
+      'בשיחות הרבי אותיות מירם מסמנות את המילים המודגשות, ו-ChassidusHub מציג אותן מודגשות. הגלאי אומר, מילה במילה, אילו מילים בעמוד הן במירם.',
+      "In the Rebbe's sichos, Miram type marks the stressed words, and ChassidusHub shows them as bold. The detector says, word by word, which words on a page are in Miram.",
     ),
     models: [
-      { name: 'rebbehub-facenet-v2', does: c('מוצא אילו מילים בעמוד הן במירם', 'Finds which words on a page are in Miram'), state: 'inUse' },
-      { name: 'rebbehub-facenet-v1', does: c('מוצא אילו מילים בעמוד הן במירם', 'Finds which words on a page are in Miram'), state: 'superseded' },
+      { name: 'chassidushub-facenet-v2', does: c('מוצא אילו מילים בעמוד הן במירם', 'Finds which words on a page are in Miram'), state: 'inUse' },
+      { name: 'chassidushub-facenet-v1', does: c('מוצא אילו מילים בעמוד הן במירם', 'Finds which words on a page are in Miram'), state: 'superseded' },
     ],
     tables: [
       {
@@ -231,12 +231,12 @@ export const MODEL_FAMILIES: ModelFamily[] = [
         columns: [c('מודל', 'Model'), c('מילים שמסכימות עם העין', 'Words agreeing with the eye')],
         rows: [
           { name: c('כללי עובי, בלי מודל', 'Thickness rules, no model'), cells: [c('מילים חלקיות; מחמיץ הערות מירם שלמות', 'partial words; misses whole Miram notes')], state: 'superseded' },
-          { name: 'rebbehub-facenet-v1', cells: ['1,832 / 1,832'], state: 'superseded' },
-          { name: 'rebbehub-facenet-v2', cells: ['1,832 / 1,832'], state: 'inUse' },
+          { name: 'chassidushub-facenet-v1', cells: ['1,832 / 1,832'], state: 'superseded' },
+          { name: 'chassidushub-facenet-v2', cells: ['1,832 / 1,832'], state: 'inUse' },
         ],
         note: c(
-          'סבב הבדיקה הראשון (2026-10-02) מצא 12 מילות מירם שהוחמצו, כולן בעמודים שנבנו לפני ש-rebbehub-facenet-v2 רץ. חמישה עמודים הם מבחן קטן; כל עמוד שנבדק בכלי הבדיקה מוסיף לו.',
-          'The first review round (2026-10-02) found 12 Miram misses, all on pages built before rebbehub-facenet-v2 ran. Five pages is a small test; every page checked in the review tool adds to it.',
+          'סבב הבדיקה הראשון (2026-10-02) מצא 12 מילות מירם שהוחמצו, כולן בעמודים שנבנו לפני ש-chassidushub-facenet-v2 רץ. חמישה עמודים הם מבחן קטן; כל עמוד שנבדק בכלי הבדיקה מוסיף לו.',
+          'The first review round (2026-10-02) found 12 Miram misses, all on pages built before chassidushub-facenet-v2 ran. Five pages is a small test; every page checked in the review tool adds to it.',
         ),
       },
     ],
@@ -250,9 +250,9 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       "Hears a recording of the Rebbe's Yiddish and writes it down, each word timed. Scores are words wrong / letters wrong (WER / CER); lower is better.",
     ),
     models: [
-      { name: 'rebbehub-whisper-v3', does: c('שומע את היידיש של הרבי וכותב אותה', "Hears the Rebbe's Yiddish and writes it down"), state: 'inUse' },
-      { name: 'rebbehub-whisper-v2', does: c('שומע את היידיש של הרבי וכותב אותה', "Hears the Rebbe's Yiddish and writes it down"), state: 'superseded' },
-      { name: 'rebbehub-whisper-v1', does: c('שומע את היידיש של הרבי וכותב אותה', "Hears the Rebbe's Yiddish and writes it down"), state: 'superseded' },
+      { name: 'chassidushub-whisper-v3', does: c('שומע את היידיש של הרבי וכותב אותה', "Hears the Rebbe's Yiddish and writes it down"), state: 'inUse' },
+      { name: 'chassidushub-whisper-v2', does: c('שומע את היידיש של הרבי וכותב אותה', "Hears the Rebbe's Yiddish and writes it down"), state: 'superseded' },
+      { name: 'chassidushub-whisper-v1', does: c('שומע את היידיש של הרבי וכותב אותה', "Hears the Rebbe's Yiddish and writes it down"), state: 'superseded' },
     ],
     tables: [
       {
@@ -277,9 +277,9 @@ export const MODEL_FAMILIES: ModelFamily[] = [
         columns: [c('מודל', 'Model'), c('התוועדויות תשמ״ב', '5742 farbrengens'), c('י״א ניסן תשל״ג', '11 Nissan 5733'), c('כל י״ז תמוז תשמ״ב (29 דקות)', 'Whole 17 Tammuz 5742 (29 min)')],
         rows: [
           { name: 'ivrit.ai Yiddish', cells: [c('כ-60%', 'about 60%'), '', ''], state: 'start' },
-          { name: 'rebbehub-whisper-v1', cells: ['12% / 6%', '22.5% / 9.0%', '13.0% / 5.9%'], state: 'superseded' },
-          { name: 'rebbehub-whisper-v2', cells: ['9.5% / 4.8%', '13.8% / 5.2%', '11.9% / 5.3%'], state: 'superseded' },
-          { name: 'rebbehub-whisper-v3', cells: ['10.1% / 5.2%', '13.7% / -', '11.5% / 5.5%'], state: 'inUse' },
+          { name: 'chassidushub-whisper-v1', cells: ['12% / 6%', '22.5% / 9.0%', '13.0% / 5.9%'], state: 'superseded' },
+          { name: 'chassidushub-whisper-v2', cells: ['9.5% / 4.8%', '13.8% / 5.2%', '11.9% / 5.3%'], state: 'superseded' },
+          { name: 'chassidushub-whisper-v3', cells: ['10.1% / 5.2%', '13.7% / -', '11.5% / 5.5%'], state: 'inUse' },
         ],
       },
     ],

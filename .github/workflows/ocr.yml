@@ -5,12 +5,12 @@ name: Machine OCR
 # such on the site until people check it line by line (services/jobs/src/ocr.ts).
 # Runs every night: the scans people asked for first (the site's "Read
 # this scan" button, POST /v1/machine/requests, the ask_machine MCP tool,
-# `rebbehub machine ask`), then the newest scans not read yet. When the API
+# `chassidushub machine ask`), then the newest scans not read yet. When the API
 # has GITHUB_DISPATCH_TOKEN, someone asking starts it at once for what was
 # asked (requested: true). Free: Tesseract on the runner's CPU. Needs the
 # DATABASE_URL repository secret, as the import does (docs/deploy.md).
 on:
-  # No nightly run while RebbeHub is private (2 October 2026): Actions minutes are limited on a private repository.
+  # No nightly run while ChassidusHub is private (2 October 2026): Actions minutes are limited on a private repository.
   # It runs when someone asks (the API starts it) or by hand.
   workflow_dispatch:
     inputs:
@@ -20,7 +20,7 @@ on:
         default: false
       steward:
         description: The steward who approves the machine's text
-        default: shmuly
+        default: steward
         required: true
       limit:
         description: How many scans to read this run
@@ -46,8 +46,8 @@ jobs:
     timeout-minutes: 120
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      # While RebbeHub is private, the jobs read the site with its key (services/jobs/src/privateKey.ts).
-      REBBEHUB_PASSWORD: ${{ secrets.REBBEHUB_PASSWORD }}
+      # While ChassidusHub is private, the jobs read the site with its key (services/jobs/src/privateKey.ts).
+      CHASSIDUSHUB_PASSWORD: ${{ secrets.CHASSIDUSHUB_PASSWORD }}
     steps:
       - name: Check it is configured
         run: |
@@ -65,11 +65,11 @@ jobs:
         run: npm run build
       - name: Read
         env:
-          STEWARD: ${{ inputs.steward || 'shmuly' }}
+          STEWARD: ${{ inputs.steward || 'steward' }}
           LIMIT: ${{ inputs.limit || '5' }}
           REQUESTED: ${{ inputs.requested }}
         run: |
-          npm run rebbehub -- migrate
+          npm run chassidushub -- migrate
           args=(--approve-as "$STEWARD" --limit "$LIMIT")
           if [ "$REQUESTED" = "true" ]; then args+=(--requested-only); fi
-          npm run rebbehub -- ocr "${args[@]}"
+          npm run chassidushub -- ocr "${args[@]}"

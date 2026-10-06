@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { answeredHere, readerFor } from '../src/reads.js';
 
-const API = 'https://api.rebbehub.org';
+const API = 'https://api.chassidushub.org';
 
 describe("the site's own reads (reads.ts)", () => {
   it('answers a read of /v1 as nobody in the site\'s Worker, and sends on what is signed in, changes, and what only the API\'s Worker has', () => {
@@ -29,7 +29,7 @@ describe("the site's own reads (reads.ts)", () => {
     // A name that only starts like one of those is still answered here.
     expect(answeredHere(`${API}/v1/authors`, undefined, API, true)).toBe(true);
     // Not the API at all, or not /v1.
-    expect(answeredHere('https://rebbehub.org/v1/sets', undefined, API, true)).toBe(false);
+    expect(answeredHere('https://chassidushub.org/v1/sets', undefined, API, true)).toBe(false);
     expect(answeredHere(`${API}/openapi.json`, undefined, API, true)).toBe(false);
     expect(answeredHere(`${API}/objects/abc`, undefined, API, true)).toBe(false);
   });

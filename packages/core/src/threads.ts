@@ -1,5 +1,5 @@
-import { one, type Db } from '@rebbehub/db';
-import { mentionsIn, referencesIn } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import { mentionsIn, referencesIn } from '@chassidushub/model';
 import { idsOfUsernames } from './usernames.js';
 
 /**

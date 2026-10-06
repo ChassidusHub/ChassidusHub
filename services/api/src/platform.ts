@@ -1,5 +1,5 @@
 import type { Context, MiddlewareHandler } from 'hono';
-import type { DbCost } from '@rebbehub/db';
+import type { DbCost } from '@chassidushub/db';
 
 /**
  * What every route of the public API shares (docs/developers/api.md):
@@ -76,10 +76,10 @@ const EXPOSE_HEADERS = 'ETag, Link, Retry-After, RateLimit-Policy, Content-Range
 /**
  * Any site's pages may read the API and send a token with it. Cookies are
  * never allowed across sites (no Allow-Credentials): a signed-in session
- * acts only from RebbeHub's own pages (auth.ts).
+ * acts only from ChassidusHub's own pages (auth.ts).
  */
 /** The site's own origins. */
-const SITE_ORIGIN = /^https:\/\/(www\.)?rebbehub\.org$/;
+const SITE_ORIGIN = /^https:\/\/(www\.)?chassidushub\.org$/;
 
 export function cors(): MiddlewareHandler {
   return async (c, next) => {
@@ -95,7 +95,7 @@ export function cors(): MiddlewareHandler {
       });
     }
     await next();
-    // The site's own pages may send their cookie (the reader's PDFs, while RebbeHub is private: lock.ts); anyone else's never.
+    // The site's own pages may send their cookie (the reader's PDFs, while ChassidusHub is private: lock.ts); anyone else's never.
     const origin = c.req.header('Origin');
     if (origin && SITE_ORIGIN.test(origin)) {
       c.header('Access-Control-Allow-Origin', origin);

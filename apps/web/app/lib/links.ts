@@ -16,7 +16,7 @@ export const itemPath = (item: { id: string; path: string | null }) => item.path
 export const setPath = (set: { id: string; path: string | null }) => (set.path === '/sets/farbrengens' ? '/calendar' : itemPath(set));
 
 /**
- * Where a source's copy is read or heard, when RebbeHub links rather than
+ * Where a source's copy is read or heard, when ChassidusHub links rather than
  * holds it. Unknown sources and ids give no link rather than a wrong one.
  */
 export function sourceUrl(copy: { source: string; sourceId: string; url?: string }): string | null {

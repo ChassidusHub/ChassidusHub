@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PageSegment, PageText } from '@rebbehub/model';
+import type { PageSegment, PageText } from '@chassidushub/model';
 import { isGreeting, letterOpening, shapeLetter } from '../app/lib/letters.js';
 
 /** A letter's page (5b, 5d) shows the date and addressee its own first lines give, and sets those lines as a letter prints them. */

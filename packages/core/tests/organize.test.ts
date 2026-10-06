@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyOrganize, catalogTree, keysBetween, previewOrganize, rekey, type Catalog, type OrganizePlan } from '@rebbehub/core';
-import { isOrderKey, type EntityId } from '@rebbehub/model';
+import { applyOrganize, catalogTree, keysBetween, previewOrganize, rekey, type Catalog, type OrganizePlan } from '@chassidushub/core';
+import { isOrderKey, type EntityId } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
 /**
@@ -22,7 +22,7 @@ const set = (slug: string, extra: Record<string, unknown> = {}) => ({ name: { he
 async function organize(plan: OrganizePlan, by = 'mendy') {
   const { suggestion, preview } = await applyOrganize(catalog, by, plan);
   const now = await catalog.changeset(suggestion.id);
-  if (now.status === 'open') await catalog.merge(suggestion.id, by === 'shmuly' ? 'shmuly' : 'shmuly');
+  if (now.status === 'open') await catalog.merge(suggestion.id, by === 'steward' ? 'steward' : 'steward');
   return { suggestion: await catalog.changeset(suggestion.id), preview };
 }
 
@@ -32,7 +32,7 @@ beforeEach(async () => {
   const fresh = await freshCatalog();
   catalog = fresh.catalog;
   farbrengens = fresh.set;
-  sichos = await add(catalog, 'shmuly', 'shmuly', 'set', set('sichos'), '/sets/sichos');
+  sichos = await add(catalog, 'steward', 'steward', 'set', set('sichos'), '/sets/sichos');
   likkutei = await add(catalog, 'mendy', 'keeper', 'work', work('likkutei-sichos', [sichos]), '/likkutei-sichos');
   units = [];
   for (const [n, order] of [[1, 'V'], [2, 'k'], [3, 'r']] as const) units.push(await add(catalog, 'mendy', 'keeper', 'unit', unit(likkutei, n, order), `/likkutei-sichos/${n}`));
@@ -78,12 +78,12 @@ describe('moving', () => {
   });
 
   it('moves sets under sets, never under their own descendants', async () => {
-    const child = await add(catalog, 'shmuly', 'shmuly', 'set', set('child', { parent: sichos }), '/sets/child');
+    const child = await add(catalog, 'steward', 'steward', 'set', set('child', { parent: sichos }), '/sets/child');
     await expect(previewOrganize(catalog, { operations: [{ op: 'move', items: [sichos], to: child }] })).rejects.toThrow(/inside it/);
     await expect(previewOrganize(catalog, { operations: [{ op: 'move', items: [sichos], to: sichos }] })).rejects.toThrow(/inside itself/);
-    await organize({ operations: [{ op: 'move', items: [child], to: farbrengens }] }, 'shmuly');
+    await organize({ operations: [{ op: 'move', items: [child], to: farbrengens }] }, 'steward');
     expect((await data(child)).parent).toBe(farbrengens);
-    await organize({ operations: [{ op: 'move', items: [child], to: null }] }, 'shmuly');
+    await organize({ operations: [{ op: 'move', items: [child], to: null }] }, 'steward');
     expect((await data(child)).parent).toBeUndefined();
   });
 
@@ -114,12 +114,12 @@ describe('moving', () => {
   });
 
   it('moves a sefer and a set up a level', async () => {
-    const child = await add(catalog, 'shmuly', 'shmuly', 'set', set('child', { parent: sichos }), '/sets/child');
-    const grandchild = await add(catalog, 'shmuly', 'shmuly', 'set', set('grandchild', { parent: child }), '/sets/grandchild');
+    const child = await add(catalog, 'steward', 'steward', 'set', set('child', { parent: sichos }), '/sets/child');
+    const grandchild = await add(catalog, 'steward', 'steward', 'set', set('grandchild', { parent: child }), '/sets/grandchild');
     const deep = await add(catalog, 'mendy', 'keeper', 'work', work('deep', [child]), '/deep');
     await organize({ operations: [{ op: 'move-up', items: [deep] }] });
     expect((await data(deep)).sets).toEqual([sichos]);
-    await organize({ operations: [{ op: 'move-up', items: [grandchild] }] }, 'shmuly');
+    await organize({ operations: [{ op: 'move-up', items: [grandchild] }] }, 'steward');
     expect((await data(grandchild)).parent).toBe(sichos);
     await expect(previewOrganize(catalog, { operations: [{ op: 'move-up', items: [deep] }] })).rejects.toThrow(/top set/);
     await expect(previewOrganize(catalog, { operations: [{ op: 'move-up', items: [sichos] }] })).rejects.toThrow(/already at the top/);
@@ -140,7 +140,7 @@ describe('renaming and ordering', () => {
   });
 
   it('renames a set and its slug', async () => {
-    await organize({ operations: [{ op: 'rename', item: sichos, name: { en: 'Talks' }, slug: 'talks' }] }, 'shmuly');
+    await organize({ operations: [{ op: 'rename', item: sichos, name: { en: 'Talks' }, slug: 'talks' }] }, 'steward');
     expect(await catalog.get(sichos)).toMatchObject({ path: '/sets/talks', data: { slug: 'talks', name: { he: 'sichos', en: 'Talks' } } });
   });
 
@@ -167,13 +167,13 @@ describe('renaming and ordering', () => {
 
 describe('sets', () => {
   it('makes a set with items in one suggestion, and removes it only once empty', async () => {
-    const { preview } = await organize({ operations: [{ op: 'create-set', key: 'ls', name: { he: 'לקוטי שיחות' }, slug: 'ls-set', parent: sichos, items: [likkutei] }] }, 'shmuly');
+    const { preview } = await organize({ operations: [{ op: 'create-set', key: 'ls', name: { he: 'לקוטי שיחות' }, slug: 'ls-set', parent: sichos, items: [likkutei] }] }, 'steward');
     const made = preview.created.ls!;
     expect(await catalog.get(made)).toMatchObject({ path: '/sets/ls-set', data: { parent: sichos, keepers: ['keeper'], policy: 'moderated' } });
     expect((await data(likkutei)).sets).toEqual([sichos, made]);
     await expect(previewOrganize(catalog, { operations: [{ op: 'delete-set', item: made }] })).rejects.toThrow(/still holds 1 item/);
     // Emptied and removed in the same plan; its path leads to its parent.
-    await organize({ operations: [{ op: 'move', items: [likkutei], from: made, to: null }, { op: 'delete-set', item: made }] }, 'shmuly');
+    await organize({ operations: [{ op: 'move', items: [likkutei], from: made, to: null }, { op: 'delete-set', item: made }] }, 'steward');
     expect(await catalog.get(made)).toBeNull();
     expect(await catalog.resolvePath('/sets/ls-set')).toMatchObject({ id: sichos, redirected: true });
     // A new set referred to by its key later in the plan.
@@ -185,11 +185,11 @@ describe('sets', () => {
 
 describe('merging and splitting', () => {
   it('merges a duplicate sefer: its sichos move over, lists are joined, its path leads to the one kept', async () => {
-    const otzros = await add(catalog, 'shmuly', 'shmuly', 'set', set('otzros'), '/sets/otzros');
-    const dup = await add(catalog, 'mendy', 'shmuly', 'work', work('ls-otzros', [otzros], { externalIds: { otzros: '17' }, description: { he: 'מאוצרות' } }), '/otzros/ls');
-    const dupUnit = await add(catalog, 'mendy', 'shmuly', 'unit', unit(dup, 4, 'V'), '/otzros/ls/4');
-    const publication = await add(catalog, 'mendy', 'shmuly', 'publication', { kind: 'book-volume', title: { he: 'כרך' }, work: dup });
-    const { preview, suggestion } = await organize({ operations: [{ op: 'merge', from: dup, into: likkutei }] }, 'shmuly');
+    const otzros = await add(catalog, 'steward', 'steward', 'set', set('otzros'), '/sets/otzros');
+    const dup = await add(catalog, 'mendy', 'steward', 'work', work('ls-otzros', [otzros], { externalIds: { otzros: '17' }, description: { he: 'מאוצרות' } }), '/otzros/ls');
+    const dupUnit = await add(catalog, 'mendy', 'steward', 'unit', unit(dup, 4, 'V'), '/otzros/ls/4');
+    const publication = await add(catalog, 'mendy', 'steward', 'publication', { kind: 'book-volume', title: { he: 'כרך' }, work: dup });
+    const { preview, suggestion } = await organize({ operations: [{ op: 'merge', from: dup, into: likkutei }] }, 'steward');
     expect(suggestion.status).toBe('merged');
     expect(preview.forwards).toEqual([{ from: dup, to: likkutei }]);
     expect(await catalog.get(dup)).toBeNull();
@@ -204,9 +204,9 @@ describe('merging and splitting', () => {
   });
 
   it('merges sets, never into their own descendants', async () => {
-    const child = await add(catalog, 'shmuly', 'shmuly', 'set', set('child', { parent: sichos }), '/sets/child');
+    const child = await add(catalog, 'steward', 'steward', 'set', set('child', { parent: sichos }), '/sets/child');
     await expect(previewOrganize(catalog, { operations: [{ op: 'merge', from: sichos, into: child }] })).rejects.toThrow(/inside/);
-    await organize({ operations: [{ op: 'merge', from: sichos, into: farbrengens }] }, 'shmuly');
+    await organize({ operations: [{ op: 'merge', from: sichos, into: farbrengens }] }, 'steward');
     expect((await data(child)).parent).toBe(farbrengens);
     expect((await data(likkutei)).sets).toEqual([farbrengens]);
   });
@@ -242,7 +242,7 @@ describe('plans', () => {
   });
 
   it('draws the tree: top sets, the sets and sefarim in them, and how much each holds', async () => {
-    await add(catalog, 'shmuly', 'shmuly', 'set', set('child', { parent: sichos }), '/sets/child');
+    await add(catalog, 'steward', 'steward', 'set', set('child', { parent: sichos }), '/sets/child');
     const top = await catalogTree(catalog, { depth: 1 });
     expect(top.children.map((n) => n.path).sort()).toEqual(['/farbrengens', '/sets/sichos']);
     const node = top.children.find((n) => n.id === sichos)!;

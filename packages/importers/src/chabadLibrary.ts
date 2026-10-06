@@ -2,21 +2,21 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parseHebrewNumeral, toHebrewNumeral } from '@rebbehub/hebrew';
-import { joinPath, orderKeys, type LocalName, type PageText } from '@rebbehub/model';
+import { parseHebrewNumeral, toHebrewNumeral } from '@chassidushub/hebrew';
+import { joinPath, orderKeys, type LocalName, type PageText } from '@chassidushub/model';
 import { htmlToPageVersion } from './htmlToPageText.js';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { textUrl } from './sichosKodeshTexts.js';
 import { workPath } from './sichosKodeshWorks.js';
 
 /**
- * The seforim of chabadlibrary.org (ספריית ליובאוויטש), a page on RebbeHub
+ * The seforim of chabadlibrary.org (ספריית ליובאוויטש), a page on ChassidusHub
  * for every chapter, letter and sicha, with its words and a link to that
  * exact page of the library. The table of contents is the titles and ids
  * its own API lists (`books/api/main?path=/<id>`); a crawl with texts also
  * keeps each page's text, credited to the library (a steward's decision,
  * 2026-09-28: docs/rights.md), as `texts/<sha256>.html` beside the tree,
- * and in RebbeHub's own storage like Sefaria's texts.
+ * and in ChassidusHub's own storage like Sefaria's texts.
  *
  * The contents are crawled politely, a few requests at a time, into a
  * file that later runs continue from (.github/workflows/import.yml keeps
@@ -41,7 +41,7 @@ export interface LibraryNode {
   sha256?: string;
   /** The form that text was kept in (`LIBRARY_TEXT_FORM`). */
   form?: number;
-  /** Whether that text is in RebbeHub's own storage (`texts/<sha256>`), so the page can link to its copy. */
+  /** Whether that text is in ChassidusHub's own storage (`texts/<sha256>`), so the page can link to its copy. */
   kept?: boolean;
 }
 
@@ -93,7 +93,7 @@ class PageNotes {
 }
 
 /**
- * One text of the library as the HTML RebbeHub reads (htmlToPageText.ts):
+ * One text of the library as the HTML ChassidusHub reads (htmlToPageText.ts):
  * its own marks in square brackets read for what they mean, a note's
  * beginning left as a place for `withNotes` to take the note from.
  */
@@ -180,7 +180,7 @@ export function libraryHtml(text: string, haoros?: string): string {
  */
 export const LIBRARY_TEXT_FORM = 2;
 
-/** A page of the library as the one HTML file RebbeHub keeps: its heading, text and notes, and where it is from. */
+/** A page of the library as the one HTML file ChassidusHub keeps: its heading, text and notes, and where it is from. */
 export function renderLibraryPage(page: { id: number; heading: string; text: string; haoros?: string }): string {
   const url = `${CHABAD_LIBRARY}/${page.id}`;
   return [
@@ -215,7 +215,7 @@ export async function crawlChabadLibrary(
   const read = async (id: number): Promise<ApiContent> => {
     for (let attempt = 1; ; attempt++) {
       try {
-        const response = await get(`${CHABAD_LIBRARY}/api/main?path=/${id}`, { headers: { 'User-Agent': 'RebbeHubIndex/0.1 (+https://github.com/shmuky/RebbeHub; the contents only, to link each page)' } });
+        const response = await get(`${CHABAD_LIBRARY}/api/main?path=/${id}`, { headers: { 'User-Agent': 'ChassidusHubIndex/0.1 (+https://github.com/ChassidusHub/ChassidusHub; the contents only, to link each page)' } });
         if (!response.ok) throw new Error(`answered ${response.status}`);
         return ((await response.json()) as { content: ApiContent }).content;
       } catch (error) {

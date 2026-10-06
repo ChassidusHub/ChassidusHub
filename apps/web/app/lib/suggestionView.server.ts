@@ -1,6 +1,6 @@
-import { unclearRanges, type LocalName } from '@rebbehub/model';
+import { unclearRanges, type LocalName } from '@chassidushub/model';
 import { foldChanges, foldedName, infoChanges, moreChanges, onlyInfo, valueText } from '../components/ChangeTable.js';
-import type { Entity, RebbeHubApi, SuggestionDetail, TalkComment } from './api.js';
+import type { Entity, ChassidusHubApi, SuggestionDetail, TalkComment } from './api.js';
 import { nameOf, typeName, type Lang } from './i18n.js';
 import { labelOf } from './labels.js';
 import { itemPath } from './links.js';
@@ -115,7 +115,7 @@ const printingLabel = (p: Entity | undefined, lang: Lang) => {
   return [nameOf(d.title, lang) || labelOf(p, lang), [d.publisher, d.date ?? (d.gregorianYear ? String(d.gregorianYear) : null)].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
 };
 
-async function scanOf(api: RebbeHubApi, segment: D, before: string, after: string, lang: Lang): Promise<ScanContext | null> {
+async function scanOf(api: ChassidusHubApi, segment: D, before: string, after: string, lang: Lang): Promise<ScanContext | null> {
   const words = newWords(before, after);
   const at = segment.page as { scan?: string; page?: number; lines?: string[] } | undefined;
   if (at?.scan) {
@@ -162,7 +162,7 @@ async function scanOf(api: RebbeHubApi, segment: D, before: string, after: strin
   return null;
 }
 
-export async function suggestionView(api: RebbeHubApi, detail: SuggestionDetail, lang: Lang): Promise<SuggestionView> {
+export async function suggestionView(api: ChassidusHubApi, detail: SuggestionDetail, lang: Lang): Promise<SuggestionView> {
   const cs = detail.changeset;
   const entries = detail.entries.slice(0, 40);
   const targets = await describeTargets(api, entries, lang).catch(() => new Map());

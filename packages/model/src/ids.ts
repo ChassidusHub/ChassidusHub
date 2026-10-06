@@ -47,7 +47,7 @@ export function newId(): EntityId {
  * time instead of duplicating them: `idFromSeed('mafteiach-occasion', '1234')`.
  */
 export async function idFromSeed(namespace: string, key: string): Promise<EntityId> {
-  const hex = await sha256Hex(`rebbehub-id\u0000${namespace}\u0000${key}`);
+  const hex = await sha256Hex(`chassidushub-id\u0000${namespace}\u0000${key}`);
   const bytes = new Uint8Array(5);
   for (let i = 0; i < 5; i++) bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   return `rh-${encode(bytes, ID_LENGTH)}`;

@@ -9,7 +9,7 @@ import '../styles/pages/info.css';
 import '../styles/pages/projects.css';
 
 /**
- * RebbeHub's own models (the Likkutei Sichos reader, the Miram detector,
+ * ChassidusHub's own models (the Likkutei Sichos reader, the Miram detector,
  * the Whisper that hears the Rebbe) and how good each one is, on a test it
  * never learned from (docs/models.md). Only their descriptions and scores
  * are published; the models are not released. The numbers live in
@@ -22,8 +22,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 const W = {
   title: { he: 'המודלים ומדדי הביצוע', en: 'Models and benchmarks' },
   intro: {
-    he: 'RebbeHub קורא סריקות ושומע הקלטות במודלים משלו. כאן כתוב מה כל אחד עושה, איזה מהם בשימוש, ואיך הוא הצליח במבחן שלא למד ממנו. המודלים הם של RebbeHub ואינם משוחררים; רק התיאורים והציונים מתפרסמים.',
-    en: 'RebbeHub reads scans and hears recordings with models of its own. Here is what each one does, which one is in use, and how it did on a test it never learned from. The models are RebbeHub’s own and are not released; only their descriptions and scores are published.',
+    he: 'ChassidusHub קורא סריקות ושומע הקלטות במודלים משלו. כאן כתוב מה כל אחד עושה, איזה מהם בשימוש, ואיך הוא הצליח במבחן שלא למד ממנו. המודלים הם של ChassidusHub ואינם משוחררים; רק התיאורים והציונים מתפרסמים.',
+    en: 'ChassidusHub reads scans and hears recordings with models of its own. Here is what each one does, which one is in use, and how it did on a test it never learned from. The models are ChassidusHub’s own and are not released; only their descriptions and scores are published.',
   },
   machine: {
     he: 'כל מה שמודל כותב מסומן באתר כפלט מכונה עד שאדם בודק אותו, יהיה הציון טוב ככל שיהיה.',
@@ -176,7 +176,7 @@ export default function Models({ loaderData }: Route.ComponentProps) {
             <h4>{W.docs[lang]}</h4>
             <p className="muted small">{W.more[lang]}</p>
             <p className="small">
-              <a href="https://github.com/shmuky/RebbeHub/blob/main/docs/models.md" dir="ltr">
+              <a href="https://github.com/ChassidusHub/ChassidusHub/blob/main/docs/models.md" dir="ltr">
                 docs/models.md
               </a>
             </p>

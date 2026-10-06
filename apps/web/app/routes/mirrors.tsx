@@ -226,8 +226,8 @@ export default function Mirrors({ loaderData }: Route.ComponentProps) {
             </h2>
             <p className="muted mirror-say">{W.howText[lang]}</p>
             <pre className="mirror-code" dir="ltr">
-              {`git clone https://github.com/shmuky/RebbeHub && cd RebbeHub && npm ci
-npm run rebbehub -- mirror-pull --api ${apiUrl} --out /srv/rebbehub --key ${pin}
+              {`git clone https://github.com/ChassidusHub/ChassidusHub && cd ChassidusHub && npm ci
+npm run chassidushub -- mirror-pull --api ${apiUrl} --out /srv/chassidushub --key ${pin}
 # or by hand, for one edition:
 curl -O ${apiUrl}/v1/editions/<tag>/SHA256SUMS && sha256sum -c SHA256SUMS`}
             </pre>
@@ -308,7 +308,7 @@ curl -O ${apiUrl}/v1/editions/<tag>/SHA256SUMS && sha256sum -c SHA256SUMS`}
               <a href={`${apiUrl}/v1/mirrors`} dir="ltr" className="mono">{`${apiUrl}/v1/mirrors`}</a>
             </p>
             <p className="small">
-              <a href="https://github.com/shmuky/RebbeHub/blob/main/docs/mirrors.md" dir="ltr">
+              <a href="https://github.com/ChassidusHub/ChassidusHub/blob/main/docs/mirrors.md" dir="ltr">
                 docs/mirrors.md
               </a>
             </p>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { likkuteiSichosImporter, type LikkuteiSichosItem } from '@rebbehub/importers';
+import { likkuteiSichosImporter, type LikkuteiSichosItem } from '@chassidushub/importers';
 
 const pdf = (sourceId: string, role = 'sicha') => ({ kind: 'pdf', sourceId, role });
 const ITEMS: LikkuteiSichosItem[] = [

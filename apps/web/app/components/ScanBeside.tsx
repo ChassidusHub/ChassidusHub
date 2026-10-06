@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { PrintedPlace } from '@rebbehub/model';
+import type { PrintedPlace } from '@chassidushub/model';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
 import { Link } from 'react-router';
 import { t, type Lang } from '../lib/i18n.js';
@@ -24,7 +24,7 @@ const WORDS = {
  * One page of a scan, drawn by pdf.js beside the words read from it, so
  * each segment is checked against the page itself. The file is loaded
  * once; turning pages and zooming only draw again. `file` is where its
- * bytes are read (a Drive file through RebbeHub's API), `src` its own
+ * bytes are read (a Drive file through ChassidusHub's API), `src` its own
  * address, for the reader (none: no link to the reader). `marks` are the clicked segment's lines, drawn
  * over the page they are on and scrolled into view.
  */

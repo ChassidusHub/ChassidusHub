@@ -1,6 +1,6 @@
 import type { Context, Hono } from 'hono';
-import { CatalogError, ExportGate, SITEMAP_PAGE_SIZE, SITEMAP_TYPES, coverSources, sitemapChunks, sitemapPage, coversOf, fileAbout, linkedCounts, linkedOfEach, linkedPage, pdfPageCounts, textsProgress, type Catalog, type CoverView, type EntityView } from '@rebbehub/core';
-import { mayServe, readId, type EntityId, type EntityType } from '@rebbehub/model';
+import { CatalogError, ExportGate, SITEMAP_PAGE_SIZE, SITEMAP_TYPES, coverSources, sitemapChunks, sitemapPage, coversOf, fileAbout, linkedCounts, linkedOfEach, linkedPage, pdfPageCounts, textsProgress, type Catalog, type CoverView, type EntityView } from '@chassidushub/core';
+import { mayServe, readId, type EntityId, type EntityType } from '@chassidushub/model';
 import { HttpError } from './app.js';
 import { cursor, nextLink } from './platform.js';
 

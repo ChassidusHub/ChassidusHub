@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { dateKeyToGregorian, dateKeyToHDate, monthByToken } from '@rebbehub/hebrew';
-import type { LocalName } from '@rebbehub/model';
+import { dateKeyToGregorian, dateKeyToHDate, monthByToken } from '@chassidushub/hebrew';
+import type { LocalName } from '@chassidushub/model';
 import { eventData, type EventItem } from '../components/EventRow.js';
 import { SeeAll } from '../components/Linked.js';
 import { Transcripts } from '../components/Transcripts.js';
@@ -123,8 +123,8 @@ const KIND_KEYS = {
 } as const;
 const kindName = (kind: string, lang: Lang) => t(lang, KIND_KEYS[kind as keyof typeof KIND_KEYS] ?? 'kind_other');
 
-/** PDFs the site's own reader opens (read.tsx lets only these in): RebbeHub's own files, and files on Google Drive. */
-export const readable = (url: string) => Boolean(driveFileId(url)) || /^https:\/\/(api\.rebbehub\.org|files\.rebbehub\.org)\//.test(url);
+/** PDFs the site's own reader opens (read.tsx lets only these in): ChassidusHub's own files, and files on Google Drive. */
+export const readable = (url: string) => Boolean(driveFileId(url)) || /^https:\/\/(api\.chassidushub\.org|files\.chassidushub\.org)\//.test(url);
 
 /** A YouTube video's id, when the link is one. */
 function youtubeId(url: string): string | null {

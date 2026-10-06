@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { toHebrewNumeral } from '@rebbehub/hebrew';
-import { joinPath, orderKeys, slugify, type Genre, type Licence, type LocalName, type PageVersion } from '@rebbehub/model';
+import { toHebrewNumeral } from '@chassidushub/hebrew';
+import { joinPath, orderKeys, slugify, type Genre, type Licence, type LocalName, type PageVersion } from '@chassidushub/model';
 import { htmlToPageVersion } from './htmlToPageText.js';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { GENRE_NAMES } from './sichosKodeshWorks.js';
@@ -14,14 +14,14 @@ import { textUrl } from './sichosKodeshTexts.js';
  * publishes the Tanya, Torah Ohr, Likkutei Torah, the Shulchan Aruch HaRav
  * and the rest of its registry; those come in with its works). Each book
  * is read from Sefaria's own API at import time, politely (one request at
- * a time, named, cached), and each chapter becomes a page on RebbeHub with
+ * a time, named, cached), and each chapter becomes a page on ChassidusHub with
  * its words.
  *
  * A text whose licence lets it be shared (Kehot's CC BY-NC, CC BY, CC0,
  * public domain) keeps its words, with its credit; any other stays a link
  * to Sefaria. Each kept text is one small HTML document in the same form
- * as Sichos-Kodesh's texts, stored once on RebbeHub's own storage by its
- * sha256 (`texts/<sha256>` in rebbehub-public, served at
+ * as Sichos-Kodesh's texts, stored once on ChassidusHub's own storage by its
+ * sha256 (`texts/<sha256>` in chassidushub-public, served at
  * `/v1/texts/<sha256>`), like the Sefaria copies that come through
  * Sichos-Kodesh. The repository keeps none of them.
  *
@@ -40,10 +40,10 @@ import { textUrl } from './sichosKodeshTexts.js';
  */
 
 export const SEFARIA = 'https://www.sefaria.org';
-export const SEFARIA_SET = { key: 'rebbehub-set:sefaria', path: '/sets/sefaria', name: { he: 'ספריא: ספרי חב״ד', en: 'Sefaria: Chabad books' } } as const;
+export const SEFARIA_SET = { key: 'chassidushub-set:sefaria', path: '/sets/sefaria', name: { he: 'ספריא: ספרי חב״ד', en: 'Sefaria: Chabad books' } } as const;
 /** The Set of the daily learning's texts from Sefaria (`dailyBooks`). */
-export const DAILY_SET = { key: 'rebbehub-set:chitas-rambam', path: '/sets/chitas-rambam', name: { he: 'חת״ת ורמב״ם', en: 'Chitas and Rambam' } } as const;
-const USER_AGENT = 'RebbeHubIndex/0.1 (+https://github.com/shmuky/RebbeHub; the Chabad books, with their licences and credit)';
+export const DAILY_SET = { key: 'chassidushub-set:chitas-rambam', path: '/sets/chitas-rambam', name: { he: 'חת״ת ורמב״ם', en: 'Chitas and Rambam' } } as const;
+const USER_AGENT = 'ChassidusHubIndex/0.1 (+https://github.com/ChassidusHub/ChassidusHub; the Chabad books, with their licences and credit)';
 
 // ---------------------------------------------------------------- the API
 
@@ -181,7 +181,7 @@ export const chabadTitles = (toc: unknown) => tocBooks(toc).filter((b) => b.cate
 
 // ---------------------------------------------------------------- the daily learning
 
-/** A book of the daily learning: where it lives on RebbeHub, and which Hebrew versions to ask Sefaria for. */
+/** A book of the daily learning: where it lives on ChassidusHub, and which Hebrew versions to ask Sefaria for. */
 export interface DailyBook {
   title: string;
   heTitle: string;
@@ -388,7 +388,7 @@ export function sefariaLicence(license: string | undefined): Licence {
   return 'unknown';
 }
 
-/** Whether a licence lets RebbeHub keep and show the words (docs/rights.md: open, or with credit). */
+/** Whether a licence lets ChassidusHub keep and show the words (docs/rights.md: open, or with credit). */
 export const mayKeepText = (licence: Licence) => licence === 'cc-by-nc' || licence === 'cc-by' || licence === 'cc0' || licence === 'public-domain';
 
 const sectionLabel = (name: string | undefined, n: number, language: 'he' | 'en') => {
@@ -437,7 +437,7 @@ export interface SefariaText {
   /** Set when the licence lets the words be kept: the document's hash and size (the bytes are in `texts/<sha256>.html` next to the crawl). */
   sha256?: string;
   bytes?: number;
-  /** Set once the document is on RebbeHub's own storage. */
+  /** Set once the document is on ChassidusHub's own storage. */
   kept?: boolean;
 }
 export interface SefariaUnit {
@@ -665,7 +665,7 @@ export function sefariaImporter(input: SefariaInput | (() => Promise<SefariaInpu
       if (crawl.books.some((b) => b.daily)) yield { key: DAILY_SET.key, type: 'set', path: DAILY_SET.path, data: { name: DAILY_SET.name, slug: 'chitas-rambam', policy: 'moderated', keepers: [] } };
       // The daily learning's books are not Chabad books: they are in their own Set, not a Chabad kind's.
       const genres = new Set(crawl.books.filter((b) => !b.daily).map(sefariaGenre));
-      for (const genre of [...genres].sort()) yield { key: `rebbehub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre], slug: genre, policy: 'moderated', keepers: [] } };
+      for (const genre of [...genres].sort()) yield { key: `chassidushub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre], slug: genre, policy: 'moderated', keepers: [] } };
       for (const book of crawl.books) {
         if (!book.units.length) continue;
         // A daily book's keys and path are its own (`sefaria-daily-work:Genesis` at /chumash/genesis), apart from the Chabad books'.
@@ -692,7 +692,7 @@ export function sefariaImporter(input: SefariaInput | (() => Promise<SefariaInpu
             authors: bookAuthors.map((a) => ref(`sichos-kodesh-author:${a}`)),
             genre,
             levels,
-            sets: book.daily ? [ref(DAILY_SET.key)] : [ref(`rebbehub-set:${genre}`), ref(SEFARIA_SET.key)],
+            sets: book.daily ? [ref(DAILY_SET.key)] : [ref(`chassidushub-set:${genre}`), ref(SEFARIA_SET.key)],
             externalIds: { sefaria: book.title.slice(0, 200) },
             sourceCopies: [...versions.values()].map((t) => ({ source: 'sefaria', sourceId: book.title, kind: 'text', language: t.language, licence: t.licence, version: t.version, ...(mayKeepText(t.licence) ? { credit: `Sefaria: ${t.version}` } : {}) })),
           },
@@ -700,7 +700,7 @@ export function sefariaImporter(input: SefariaInput | (() => Promise<SefariaInpu
         const orders = orderKeys(book.units.length);
         for (const [i, unit] of book.units.entries()) {
           // The page's words: each kept version (its Hebrew first, then its English), segment by
-          // segment as Sefaria numbers them, so the two stand side by side; the first one's own copy on RebbeHub.
+          // segment as Sefaria numbers them, so the two stand side by side; the first one's own copy on ChassidusHub.
           const kept = unit.texts.filter((t) => t.sha256 && mayKeepText(t.licence)).sort((a, b) => Number(b.language === 'he') - Number(a.language === 'he'));
           const versions: PageVersion[] = [];
           let bodySource: Record<string, string> | undefined;

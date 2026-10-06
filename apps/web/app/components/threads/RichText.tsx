@@ -1,4 +1,4 @@
-import { tokenize } from '@rebbehub/model';
+import { tokenize } from '@chassidushub/model';
 import { Link } from 'react-router';
 import type { Lang } from '../../lib/i18n.js';
 import { href } from '../../lib/links.js';

@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import type { PageInline } from '@rebbehub/model';
+import type { PageInline } from '@chassidushub/model';
 import type { PrintLine, PrintPage as Page } from '../lib/printLines.js';
 
 /**

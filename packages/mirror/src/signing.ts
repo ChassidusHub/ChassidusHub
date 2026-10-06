@@ -1,5 +1,5 @@
 import nacl from 'tweetnacl';
-import { canonicalJson } from '@rebbehub/model';
+import { canonicalJson } from '@chassidushub/model';
 
 /**
  * Ed25519 signatures over the canonical JSON of a manifest without its

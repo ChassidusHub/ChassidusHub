@@ -42,12 +42,12 @@ export function pageMeta(page: PageMeta): MetaDescriptor[] {
   const he = `${base}${page.path}`;
   const en = `${base}${page.path}${page.path.includes('?') ? '&' : '?'}lang=en`;
   const self = page.lang === 'en' ? en : he;
-  const title = page.title ? `${page.title} · RebbeHub` : 'RebbeHub';
-  const image = page.image ?? { url: `${base}${SITE_IMAGE}`, width: 512, height: 512, alt: 'RebbeHub' };
+  const title = page.title ? `${page.title} · ChassidusHub` : 'ChassidusHub';
+  const image = page.image ?? { url: `${base}${SITE_IMAGE}`, width: 512, height: 512, alt: 'ChassidusHub' };
   const out: MetaDescriptor[] = [
     { title },
     { property: 'og:title', content: title },
-    { property: 'og:site_name', content: 'RebbeHub' },
+    { property: 'og:site_name', content: 'ChassidusHub' },
     { property: 'og:type', content: page.type ?? 'website' },
     { property: 'og:url', content: self },
     { property: 'og:locale', content: page.lang === 'en' ? 'en_US' : 'he_IL' },

@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { isValidDateKey } from '@rebbehub/hebrew';
-import type { EventLink, EventLinkKind, LocalName } from '@rebbehub/model';
+import { isValidDateKey } from '@chassidushub/hebrew';
+import type { EventLink, EventLinkKind, LocalName } from '@chassidushub/model';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { SICHOS_KODESH_MEDIA_PROXY } from './driveLinks.js';
 import { mafteiachBody, mafteiachLinks, type MafteiachRecord } from './mafteiachIndex.js';
@@ -13,10 +13,10 @@ export { SICHOS_KODESH_MEDIA_PROXY };
  * hanachos: the per-year catalog its app is built from
  * (apps/web/src/catalog/data/<year>.json, made by its packages/catalog from
  * the mafteiach.app crawl). Read from a Sichos-Kodesh checkout at run time -
- * RebbeHub keeps no copy - and turned into events, one recording per part,
+ * ChassidusHub keeps no copy - and turned into events, one recording per part,
  * and links to the PDFs. The audio and the PDFs stay where they are: each
  * PDF is linked at its own address on Google Drive (driveLinks.ts), which
- * the site reads through RebbeHub's API; the recordings play through
+ * the site reads through ChassidusHub's API; the recordings play through
  * Sichos-Kodesh's media proxy, as its app plays them.
  */
 
@@ -45,7 +45,7 @@ export interface CatalogEntry {
   pdfs: CatalogPdf[];
 }
 
-export const FARBRENGENS_SET = { key: 'rebbehub-set:farbrengens', path: '/sets/farbrengens', name: { he: 'התוועדויות', en: 'Farbrengens' } } as const;
+export const FARBRENGENS_SET = { key: 'chassidushub-set:farbrengens', path: '/sets/farbrengens', name: { he: 'התוועדויות', en: 'Farbrengens' } } as const;
 
 const LINK_KINDS: Record<CatalogPdf['section'], EventLinkKind> = {
   mugah: 'mugah',
@@ -78,7 +78,7 @@ export const driveOrigin = (pdf: Pick<CatalogPdf, 'driveFileId' | 'resourceKey'>
 
 export const audioUrl = (file: string, proxy = SICHOS_KODESH_MEDIA_PROXY) => `${proxy}/jem-audio/${encodeURIComponent(file)}`;
 
-/** A PDF's address on the media proxy, as imports before stored it (`rebbehub relink-drive` replaces these with `driveOrigin`). */
+/** A PDF's address on the media proxy, as imports before stored it (`chassidushub relink-drive` replaces these with `driveOrigin`). */
 export const pdfUrl = (pdf: Pick<CatalogPdf, 'driveFileId' | 'resourceKey'>, proxy = SICHOS_KODESH_MEDIA_PROXY) =>
   `${proxy}/drive/${encodeURIComponent(pdf.driveFileId)}?filename=${encodeURIComponent(pdf.driveFileId)}.pdf${pdf.resourceKey ? `&resourcekey=${encodeURIComponent(pdf.resourceKey)}` : ''}`;
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { createPerson, personByUsername, sendNotifications, setUsername, slugForUsername, suggestUsername, type EmailMessage } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { createPerson, personByUsername, sendNotifications, setUsername, slugForUsername, suggestUsername, type EmailMessage } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -20,7 +20,7 @@ beforeEach(async () => {
   const { catalog } = fresh;
   // The helper's accounts, as people with handles (the keeper's own word is kept for the site).
   for (const [id, name, handle] of [
-    ['shmuly', 'Shmuly', 'shmuly'],
+    ['steward', 'Steward', 'steward'],
     ['keeper', 'Set keeper', 'setkeeper'],
     ['mendy', 'Mendy', 'Mendy'],
     ['chaim', 'Chaim', 'chaim'],
@@ -208,8 +208,8 @@ describe('reports as issues', () => {
     expect((await call('GET', '/v1/issues?q=blurred')).body.counts).toEqual({ open: 1, closed: 0 });
 
     // A comment naming someone, and a #reference to the other issue.
-    await call('POST', `/v1/issues/${n}/comments`, { as: 'chaim', body: { body: `Same scanner as #${anonymous.body.number}, @shmuly` } });
-    expect((await inboxOf('shmuly')).items[0]).toMatchObject({ reason: 'mention', actorUsername: 'chaim', subject: { number: n } });
+    await call('POST', `/v1/issues/${n}/comments`, { as: 'chaim', body: { body: `Same scanner as #${anonymous.body.number}, @steward` } });
+    expect((await inboxOf('steward')).items[0]).toMatchObject({ reason: 'mention', actorUsername: 'chaim', subject: { number: n } });
     expect((await inboxOf('mendy')).items.some((l: { reason: string }) => l.reason === 'comment')).toBe(true);
     const other = (await call('GET', `/v1/issues/${anonymous.body.number}`)).body;
     expect(other.timeline.some((i: { kind?: string; detail?: { from?: { number: number } } }) => i.kind === 'referenced' && i.detail?.from?.number === n)).toBe(true);
@@ -231,19 +231,19 @@ describe('reports as issues', () => {
     expect((await call('GET', `/v1/issues/${n}`, { as: 'mendy' })).status).toBe(200);
     expect((await call('GET', `/v1/issues/${n}`, { as: 'keeper' })).status).toBe(200);
     expect((await call('GET', '/v1/issues')).body.items).toEqual([]);
-    expect((await call('GET', '/v1/issues', { as: 'shmuly' })).body.items).toHaveLength(1);
+    expect((await call('GET', '/v1/issues', { as: 'steward' })).body.items).toHaveLength(1);
     // Named in it, a reader who may not read it is not told.
     await call('POST', `/v1/issues/${n}/comments`, { as: 'keeper', body: { body: '@chaim do you know?' } });
     expect((await inboxOf('chaim')).items).toEqual([]);
     // A rights claim stays private; another may be made public by a keeper.
     expect((await call('POST', `/v1/issues/${n}/visibility`, { as: 'keeper', body: { private: false } })).status).toBe(409);
     const other = await call('POST', '/v1/issues', { as: 'mendy', body: { title: 'Wrong year', type: 'wrong-fact', private: true } });
-    expect((await call('POST', `/v1/issues/${other.body.number}/visibility`, { as: 'shmuly', body: { private: false } })).body.private).toBe(false);
+    expect((await call('POST', `/v1/issues/${other.body.number}/visibility`, { as: 'steward', body: { private: false } })).body.private).toBe(false);
     // What people wrote before reports were public stays private (migration 0016); a steward still closes it the old way.
     const old = await fresh.catalog.report({ entityId: event, reason: 'other', note: 'old', private: true });
     await call('POST', `/v1/reports/${old}/close`, { as: 'keeper', body: { outcome: 'resolved', note: 'done' } });
     const oldNumber = (await fresh.catalog.db.query<{ number: string }>('SELECT number FROM report WHERE id = $1', [old])).rows[0]!.number;
-    expect((await call('GET', `/v1/issues/${oldNumber}`, { as: 'shmuly' })).body.issue).toMatchObject({ state: 'closed', stateReason: 'completed', closedBy: 'keeper' });
+    expect((await call('GET', `/v1/issues/${oldNumber}`, { as: 'steward' })).body.issue).toMatchObject({ state: 'closed', stateReason: 'completed', closedBy: 'keeper' });
   });
 });
 
@@ -262,11 +262,11 @@ describe('the inbox', () => {
     await fresh.catalog.db.query("INSERT INTO auth.notification_setting (person_id, mode, lang, last_seq, unsubscribe_token) VALUES ('mendy', 'immediate', 'en', (SELECT max(seq) FROM commit), 't')");
     const outbox: EmailMessage[] = [];
     const mailer = { send: async (m: EmailMessage) => void outbox.push(m) };
-    expect((await sendNotifications(fresh.catalog, mailer, { siteUrl: 'https://rebbehub.test' })).sent).toBe(1);
-    expect(outbox[0]!.subject).toBe('RebbeHub: one new notification');
+    expect((await sendNotifications(fresh.catalog, mailer, { siteUrl: 'https://chassidushub.test' })).sent).toBe(1);
+    expect(outbox[0]!.subject).toBe('ChassidusHub: one new notification');
     expect(outbox[0]!.text).toContain(`@chaim commented on #${n} Missing page 4 (×2)`);
-    expect(outbox[0]!.text).toContain(`https://rebbehub.test/issues/${n}?lang=en`);
-    expect((await sendNotifications(fresh.catalog, mailer, { siteUrl: 'https://rebbehub.test' })).sent).toBe(0);
+    expect(outbox[0]!.text).toContain(`https://chassidushub.test/issues/${n}?lang=en`);
+    expect((await sendNotifications(fresh.catalog, mailer, { siteUrl: 'https://chassidushub.test' })).sent).toBe(0);
 
     expect((await call('POST', '/v1/inbox/read', { as: 'mendy', body: { all: true } })).body).toEqual({ changed: 1, unread: 0 });
     expect((await call('GET', '/v1/inbox?filter=unread', { as: 'mendy' })).body.items).toEqual([]);

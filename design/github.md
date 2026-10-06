@@ -1,4 +1,4 @@
-repo: shmuky/RebbeHub
+repo: ChassidusHub/ChassidusHub
 branch: main
 path: apps/web
 

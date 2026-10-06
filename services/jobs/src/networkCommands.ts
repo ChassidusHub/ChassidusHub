@@ -1,4 +1,4 @@
-import { embedItems, embedderFromEnv, proposeCitations } from '@rebbehub/core';
+import { embedItems, embedderFromEnv, proposeCitations } from '@chassidushub/core';
 import { withCatalog, type Context } from './commands.js';
 import { checkLinks } from './linkCheck.js';
 
@@ -9,7 +9,7 @@ import { checkLinks } from './linkCheck.js';
  */
 
 /**
- * `rebbehub embed`: turns the words of items not embedded yet into
+ * `chassidushub embed`: turns the words of items not embedded yet into
  * vectors for search by meaning, with BGE-M3 on Cloudflare Workers AI
  * (CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN, as `transcribe` uses).
  */
@@ -23,7 +23,7 @@ export async function embedCommand(ctx: Context, input: { limit?: number }): Pro
 }
 
 /**
- * `rebbehub citations`: reads texts, scans' pages and pages of sichos for
+ * `chassidushub citations`: reads texts, scans' pages and pages of sichos for
  * citations and proposes the links as Suggestions by the citations bot,
  * left for a keeper, or approved at once with `--approve-as`.
  */
@@ -34,7 +34,7 @@ export async function citationsCommand(ctx: Context, input: { approveAs?: string
   });
 }
 
-/** `rebbehub check-links`: asks the catalog's links, those checked longest ago first, whether they still answer. */
+/** `chassidushub check-links`: asks the catalog's links, those checked longest ago first, whether they still answer. */
 export async function checkLinksCommand(ctx: Context, input: { limit?: number }): Promise<void> {
   await withCatalog(ctx, async (catalog) => {
     const done = await checkLinks(catalog, { limit: input.limit, log: ctx.log });

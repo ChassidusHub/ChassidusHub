@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import { base64url, hashToken, type Person } from './auth.js';
 import type { EmailMessage } from './notify.js';
 
@@ -126,8 +126,8 @@ export function signInMessage(input: { to: string; siteUrl: string; token: strin
   if (input.lang === 'en') params.set('lang', 'en');
   const link = `${input.siteUrl}/signin?${params.toString()}`;
   const he = input.lang === 'he';
-  const subject = input.adding ? (he ? 'RebbeHub: אישור כתובת המייל' : 'RebbeHub: confirm your email address') : he ? 'RebbeHub: קישור כניסה' : 'RebbeHub: your sign-in link';
-  const action = input.adding ? (he ? 'להוספת הכתובת לחשבון שלכם' : 'To add this address to your account') : he ? 'לכניסה ל-RebbeHub' : 'To sign in to RebbeHub';
+  const subject = input.adding ? (he ? 'ChassidusHub: אישור כתובת המייל' : 'ChassidusHub: confirm your email address') : he ? 'ChassidusHub: קישור כניסה' : 'ChassidusHub: your sign-in link';
+  const action = input.adding ? (he ? 'להוספת הכתובת לחשבון שלכם' : 'To add this address to your account') : he ? 'לכניסה ל-ChassidusHub' : 'To sign in to ChassidusHub';
   const button = input.adding ? (he ? 'אישור הכתובת' : 'Confirm the address') : he ? 'כניסה' : 'Sign in';
   const small = he
     ? `הקישור טוב ל-${EMAIL_LINK_MINUTES} דקות ולפעם אחת. לא ביקשתם אותו? אפשר להתעלם מהמייל הזה.`

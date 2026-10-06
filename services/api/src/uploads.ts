@@ -1,9 +1,9 @@
 import type { Context, Hono } from 'hono';
-import { addHanachaText, getFile, itemsUsingFile, proposeNewMaterial, registerFile, similarScans, suggestDocument, suggestHanachaPdf, suggestRecording, teshuraCredit, teshurosSetId, uploadAllowance, type Catalog, type EntityView, type HanachaTextRights, type Json, type Place } from '@rebbehub/core';
-import { one } from '@rebbehub/db';
-import { isValidDateKey, parseHebrewYear } from '@rebbehub/hebrew';
-import type { EntityId, EventLinkKind, FileClass, Genre, Licence } from '@rebbehub/model';
-import { GENRES, isEntityId, mayServe } from '@rebbehub/model';
+import { addHanachaText, getFile, itemsUsingFile, proposeNewMaterial, registerFile, similarScans, suggestDocument, suggestHanachaPdf, suggestRecording, teshuraCredit, teshurosSetId, uploadAllowance, type Catalog, type EntityView, type HanachaTextRights, type Json, type Place } from '@chassidushub/core';
+import { one } from '@chassidushub/db';
+import { isValidDateKey, parseHebrewYear } from '@chassidushub/hebrew';
+import type { EntityId, EventLinkKind, FileClass, Genre, Licence } from '@chassidushub/model';
+import { GENRES, isEntityId, mayServe } from '@chassidushub/model';
 import { HttpError } from './app.js';
 
 /**

@@ -10,10 +10,10 @@ import { UploadForm } from '../components/UploadForm.js';
 import { ItemBelowStart, ItemPage, ItemSideEnd } from '../views/ItemPage.js';
 import { ItemSlots } from '../ui/ItemShell.js';
 import { Icon } from '../ui/Icon.js';
-import { ApiError, type Entity, type RebbeHubApi } from '../lib/api.js';
+import { ApiError, type Entity, type ChassidusHubApi } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';
-import { dateKeyToGregorian } from '@rebbehub/hebrew';
-import type { LocalName } from '@rebbehub/model';
+import { dateKeyToGregorian } from '@chassidushub/hebrew';
+import type { LocalName } from '@chassidushub/model';
 import { langFrom, nameOf, t } from '../lib/i18n.js';
 import { loadItemView } from '../lib/itemData.server.js';
 import { describe, labelOf } from '../lib/labels.js';
@@ -59,7 +59,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
  * Whether a path that names nothing is a sefer's path and one of its volumes (`/likkutei-sichos/30`), and which.
  * Asked only for a path that is not found, so it costs a page nothing.
  */
-async function volumeOf(api: RebbeHubApi, path: string): Promise<{ path: string; part: string } | null> {
+async function volumeOf(api: ChassidusHubApi, path: string): Promise<{ path: string; part: string } | null> {
   const match = /^(\/.+)\/([^/]+)$/.exec(path);
   if (!match) return null;
   const [, seferPath, part] = match as unknown as [string, string, string];
@@ -238,7 +238,7 @@ const OG_TYPE: Record<string, PageMeta['type']> = { work: 'book', publication: '
 const NOT_INDEXED = new Set(['schema', 'segment', 'text-page', 'text-layer', 'alignment', 'alignment-span', 'contents-map', 'relation']);
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: 'RebbeHub' }];
+  if (!loaderData) return [{ title: 'ChassidusHub' }];
   const { entity, lang, siteUrl } = loaderData;
   const cover = coverOf(loaderData);
   return pageMeta({

@@ -1,7 +1,7 @@
 import { Check, CircleHelp, History, MessageCircle, Pencil, ShieldQuestion, Undo2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { carryWordTimes, markUnclear, spellingHints, unclearRanges } from '@rebbehub/model';
+import { carryWordTimes, markUnclear, spellingHints, unclearRanges } from '@chassidushub/model';
 import { t, type Lang } from '../lib/i18n.js';
 import { clockOf } from '../lib/i18nNetwork.js';
 import { href } from '../lib/links.js';
@@ -179,8 +179,8 @@ type Sent = { content: string; complete: boolean; merged: boolean };
  * reload, a lost signal or tomorrow picks up where they stopped. Storage
  * can be missing (private windows): then nothing is remembered.
  */
-const PLACE = 'rebbehub.review.place.';
-const DRAFT = 'rebbehub.review.draft.';
+const PLACE = 'chassidushub.review.place.';
+const DRAFT = 'chassidushub.review.draft.';
 function recall<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);

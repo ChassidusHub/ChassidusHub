@@ -1,5 +1,5 @@
-// Generated from the RebbeHub OpenAPI document by packages/client/scripts/generate.ts.
-// Do not edit by hand: run `npm run generate -w @rebbehub/client`.
+// Generated from the ChassidusHub OpenAPI document by packages/client/scripts/generate.ts.
+// Do not edit by hand: run `npm run generate -w @chassidushub/client`.
 /* eslint-disable */
 
 /** The API version this client was generated from. */
@@ -140,7 +140,7 @@ export type AppCatalogManifest = {
     works: number;
     units: number;
   };
-  /** Parts RebbeHub does not hold yet (farbrengens, library, works) */
+  /** Parts ChassidusHub does not hold yet (farbrengens, library, works) */
   missing?: Array<string>;
 };
 
@@ -904,19 +904,19 @@ export interface Operations {
         three: {
           label: string;
           refs: Array<string>;
-          /** Each reference's page on RebbeHub, null until the catalog has it */
+          /** Each reference's page on ChassidusHub, null until the catalog has it */
           paths: Array<string | null>;
         };
         one: {
           label: string;
           refs: Array<string>;
-          /** Each reference's page on RebbeHub, null until the catalog has it */
+          /** Each reference's page on ChassidusHub, null until the catalog has it */
           paths: Array<string | null>;
         };
         mitzvos: {
           label: string;
           refs: Array<string>;
-          /** Each reference's page on RebbeHub, null until the catalog has it */
+          /** Each reference's page on ChassidusHub, null until the catalog has it */
           paths: Array<string | null>;
         } | null;
       };
@@ -2443,7 +2443,7 @@ export interface Operations {
       counts: Record<string, number>;
     };
   };
-  /** Whether RebbeHub is up: the last checks of the site, the API, the MCP server, the database, its daily query allowance, the Workers' load and the scheduled jobs, with 90 days of them and the latest incidents */
+  /** Whether ChassidusHub is up: the last checks of the site, the API, the MCP server, the database, its daily query allowance, the Workers' load and the scheduled jobs, with 90 days of them and the latest incidents */
   status: {
     input: Record<string, never>;
     output: {
@@ -3709,7 +3709,7 @@ export abstract class GeneratedMethods {
     return this.call('stats', {} as Operations['stats']['input']);
   }
 
-  /** Whether RebbeHub is up: the last checks of the site, the API, the MCP server, the database, its daily query allowance, the Workers' load and the scheduled jobs, with 90 days of them and the latest incidents (GET /v1/status) */
+  /** Whether ChassidusHub is up: the last checks of the site, the API, the MCP server, the database, its daily query allowance, the Workers' load and the scheduled jobs, with 90 days of them and the latest incidents (GET /v1/status) */
   status(): Promise<Operations['status']['output']> {
     return this.call('status', {} as Operations['status']['input']);
   }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { createPerson, type Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { createPerson, type Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -20,7 +20,7 @@ beforeEach(async () => {
   catalog = fresh.catalog;
   set = fresh.set;
   event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set), '/events/5742-05-10');
-  app = createApp({ catalog, authenticate: (c) => c.req.header('X-Test-Account') ?? null, siteUrl: 'https://rebbehub.test' });
+  app = createApp({ catalog, authenticate: (c) => c.req.header('X-Test-Account') ?? null, siteUrl: 'https://chassidushub.test' });
 });
 
 let id = 0;
@@ -41,7 +41,7 @@ const writeToken = async (who: string) => {
 describe('the MCP server', () => {
   it('shakes hands, lists its tools, and answers notifications with nothing', async () => {
     const init = await rpc('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
-    expect(init.body.result).toMatchObject({ protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'rebbehub' } });
+    expect(init.body.result).toMatchObject({ protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'chassidushub' } });
     // A version we do not know: we answer with ours.
     expect((await rpc('initialize', { protocolVersion: '1999-01-01' })).body.result.protocolVersion).toBe('2025-11-25');
     expect(await rpc('notifications/initialized', undefined, { notification: true })).toEqual({ status: 202, body: null });
@@ -93,7 +93,7 @@ describe('the MCP server', () => {
   });
 
   it('reads without an account, and asks for one (step-up) only when a tool would write', async () => {
-    expect((await rpc('initialize', { protocolVersion: '2025-11-25' })).body.result.serverInfo.name).toBe('rebbehub');
+    expect((await rpc('initialize', { protocolVersion: '2025-11-25' })).body.result.serverInfo.name).toBe('chassidushub');
     const call = (token?: string) =>
       app.request('/mcp', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'suggest_fix', arguments: { id: event, changes: { note: 'x' }, title: 'A note' } } }) });
     // No token: 401, saying where to connect (RFC 9728), so a client set to sign in when needed asks the person.
@@ -119,7 +119,7 @@ describe('the MCP server', () => {
     const found = await tool('search', { query: 'יו״ד שבט תשמ״ב' });
     expect(found.isError).toBe(false);
     expect(found.structuredContent.results.map((r: { id: string }) => r.id)).toContain(event);
-    expect(found.content[0].text).toContain('https://rebbehub.test/events/5742-05-10');
+    expect(found.content[0].text).toContain('https://chassidushub.test/events/5742-05-10');
 
     expect((await tool('get_item', { path: '/events/5742-05-10' })).structuredContent).toMatchObject({ id: event, type: 'event' });
     expect((await tool('get_item', { id: 'rh-zzzzzzzz' })).isError).toBe(true);
@@ -206,7 +206,7 @@ describe('the MCP server', () => {
     const { token } = (await made.json()) as { token: string };
     const fixed = await tool('suggest_fix', { id: event, changes: { title: { he: 'יו״ד שבט', en: 'Yud Shvat' } }, title: 'Shorter title', note: 'As printed in the Sefer HaSichos' }, token);
     expect(fixed.isError).toBe(false);
-    expect(fixed.structuredContent).toMatchObject({ status: 'open', url: expect.stringContaining('https://rebbehub.test/review?s=') });
+    expect(fixed.structuredContent).toMatchObject({ status: 'open', url: expect.stringContaining('https://chassidushub.test/review?s=') });
     const suggestion = await catalog.changeset(fixed.structuredContent.suggestion);
     expect(suggestion.author).toBe(me);
     // Nothing changed on main until a keeper approves.
@@ -314,7 +314,7 @@ describe('the MCP server', () => {
     const tree = await tool('get_tree', {});
     expect(tree.isError).toBe(false);
     expect(tree.content[0].text).toContain(`(set, ${set}, /farbrengens) [0 sets, 1 items]`);
-    const other = await add(catalog, 'shmuly', 'shmuly', 'set', { name: { he: 'שיחות', en: 'Sichos' }, slug: 'sichos', policy: 'moderated', keepers: ['keeper'] }, '/sets/sichos');
+    const other = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'שיחות', en: 'Sichos' }, slug: 'sichos', policy: 'moderated', keepers: ['keeper'] }, '/sets/sichos');
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'חיבור' }, slug: 'w', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] }, '/w');
     const deep = await tool('get_tree', { root: set, depth: 1 });
     expect(deep.structuredContent.children.map((n: { id: string }) => n.id)).toEqual([work, event]);

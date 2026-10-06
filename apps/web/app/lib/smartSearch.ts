@@ -1,5 +1,5 @@
 import { HDate, Locale, getSedra, months as hmonths, parshiot } from '@hebcal/core';
-import { MONTHS, dateKeyFromHDate, normalizeSearchText, parseHebrewNumeral, parseHebrewYear, unfinal } from '@rebbehub/hebrew';
+import { MONTHS, dateKeyFromHDate, normalizeSearchText, parseHebrewNumeral, parseHebrewYear, unfinal } from '@chassidushub/hebrew';
 import type { Lang } from './i18n.js';
 import { FIRST_YEAR, LAST_YEAR, sameDayIn } from './week.js';
 

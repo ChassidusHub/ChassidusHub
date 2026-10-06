@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { tokenize } from '@rebbehub/model';
+import { tokenize } from '@chassidushub/model';
 import type { Lang } from '../lib/i18n.js';
 import { href } from '../lib/links.js';
 import { personPath } from '../lib/threads.js';
@@ -8,7 +8,7 @@ import { personPath } from '../lib/threads.js';
 /**
  * `@handle` as a link to the person and `#12` to the suggestion or issue
  * (an issue's page sends a suggestion's number on), read as the API reads
- * them (@rebbehub/model's mentions.ts); the rest stays words as written.
+ * them (@chassidushub/model's mentions.ts); the rest stays words as written.
  */
 function withMentions(text: string, lang: Lang, key: string): ReactNode[] {
   return tokenize(text).map((token, i) =>

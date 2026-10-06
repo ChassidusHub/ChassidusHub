@@ -5,18 +5,18 @@ import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { createGzip } from 'node:zlib';
-import { ExportGate, type Catalog, type EntityView } from '@rebbehub/core';
-import type { EntityId, TextData } from '@rebbehub/model';
+import { ExportGate, type Catalog, type EntityView } from '@chassidushub/core';
+import type { EntityId, TextData } from '@chassidushub/model';
 import { signManifest, type KeyPair, type Signature } from './signing.js';
 import { toSichosKodeshRelease } from './sichosKodesh.js';
 
 /**
- * A catalog edition's dumps (docs/plans/rebbehub.md, section 6): the whole
+ * A catalog edition's dumps (docs/plans/chassidushub.md, section 6): the whole
  * catalog as of the edition's commit, as
  *
- *   rebbehub-<tag>.sqlite         every item in one table, ready to query
- *   rebbehub-<tag>.jsonl.gz       one item per line
- *   rebbehub-<tag>.parquet        the same table, for data tools (DuckDB,
+ *   chassidushub-<tag>.sqlite         every item in one table, ready to query
+ *   chassidushub-<tag>.jsonl.gz       one item per line
+ *   chassidushub-<tag>.parquet        the same table, for data tools (DuckDB,
  *                                 pandas, Spark): id, type, path, rev and
  *                                 the item's data as JSON
  *   sichos-kodesh-<tag>.json      the works release Sichos-Kodesh builds from
@@ -33,7 +33,7 @@ export interface DumpFile {
 }
 
 export interface DumpManifest {
-  format: 'rebbehub-dump';
+  format: 'chassidushub-dump';
   formatVersion: 1;
   tag: string;
   commit: number;
@@ -84,10 +84,10 @@ export async function writeDump(catalog: Catalog, outDir: string, options: { tag
   const gate = new ExportGate(catalog, options.at);
   const withheld: Array<{ id: EntityId; reason: string }> = [];
   const counts: Record<string, number> = {};
-  const jsonlName = `rebbehub-${options.tag}.jsonl.gz`;
-  const sqliteName = `rebbehub-${options.tag}.sqlite`;
+  const jsonlName = `chassidushub-${options.tag}.jsonl.gz`;
+  const sqliteName = `chassidushub-${options.tag}.sqlite`;
   const sichosName = `sichos-kodesh-${options.tag}.json`;
-  const parquetName = `rebbehub-${options.tag}.parquet`;
+  const parquetName = `chassidushub-${options.tag}.parquet`;
 
   // node:sqlite is loaded only here, so nothing else in the package needs it.
   const { DatabaseSync } = await import('node:sqlite');
@@ -120,14 +120,14 @@ export async function writeDump(catalog: Catalog, outDir: string, options: { tag
   for (const w of withheld) insertWithheld.run(w.id, w.reason);
   const createdAt = (options.now ?? new Date()).toISOString();
   const insertMeta = sqlite.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
-  for (const [k, v] of Object.entries({ format: 'rebbehub-dump', formatVersion: '1', tag: options.tag, commit: String(options.at), createdAt })) insertMeta.run(k, v);
+  for (const [k, v] of Object.entries({ format: 'chassidushub-dump', formatVersion: '1', tag: options.tag, commit: String(options.at), createdAt })) insertMeta.run(k, v);
   sqlite.exec('COMMIT; CREATE INDEX entity_type ON entity (type); CREATE INDEX entity_path ON entity (path);');
   sqlite.close();
 
   await writeFile(join(outDir, sichosName), `${JSON.stringify(toSichosKodeshRelease(forSichos, { tag: options.tag, commit: options.at }))}\n`);
 
   let manifest: DumpManifest = {
-    format: 'rebbehub-dump',
+    format: 'chassidushub-dump',
     formatVersion: 1,
     tag: options.tag,
     commit: options.at,
@@ -164,7 +164,7 @@ async function parquetTable(path: string, meta: { tag: string; commit: number })
     writer: fileWriter(path),
     schema: schemaFromColumnData({ columnData: columnData(columns()) }),
     kvMetadata: [
-      { key: 'format', value: 'rebbehub-dump' },
+      { key: 'format', value: 'chassidushub-dump' },
       { key: 'tag', value: meta.tag },
       { key: 'commit', value: String(meta.commit) },
     ],

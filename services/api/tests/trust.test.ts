@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { UPLOAD_LIMITS, adviseSuggestions, createPerson, getFile, registerFile, uploadAllowance, type Account, type Advisor, type EmailMessage } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { UPLOAD_LIMITS, adviseSuggestions, createPerson, getFile, registerFile, uploadAllowance, type Account, type Advisor, type EmailMessage } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { workersAiAdvisor } from '../src/mail.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
@@ -42,7 +42,7 @@ const call = async (method: string, path: string, options: { body?: unknown; as?
 /** A text in an open set, and its first paragraph, for line fixes. */
 async function openText() {
   const { catalog } = fresh;
-  const open = await add(catalog, 'shmuly', 'shmuly', 'set', { name: { he: 'לקוטי שיחות' }, slug: 'ls', policy: 'open', keepers: ['keeper'] });
+  const open = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'לקוטי שיחות' }, slug: 'ls', policy: 'open', keepers: ['keeper'] });
   const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'לקוטי שיחות' }, slug: 'likkutei-sichos', authors: [], genre: 'sichos', levels: ['volume', 'sicha'], sets: [open] });
   const unit = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'volume', value: '1' }, { level: 'sicha', value: '1' }], order: 'V', label: { he: 'חלק א, שיחה א' } });
   const text = await add(catalog, 'mendy', 'keeper', 'text', { kind: 'edition', unit, language: 'he' });
@@ -106,7 +106,7 @@ describe('uploads', () => {
     }
     const limited = await upload('chaim');
     expect(limited).toMatchObject({ status: 429, body: { message: expect.stringMatching(/at most 20 files a day/) } });
-    expect((await upload('shmuly')).status).toBe(201);
+    expect((await upload('steward')).status).toBe(201);
   });
 
   it('follow the plan: stewards and bots are never held, bytes count too', () => {
@@ -134,11 +134,11 @@ describe('takedowns', () => {
     expect(bad.status).toBe(422);
     const asked = await call('POST', '/v1/takedowns', {
       ip: '203.0.113.9',
-      body: { target: 'https://rebbehub.org/events/5742-05-10', name: 'Rivka Cohen', email: 'rivka@example.org', relation: 'family', statement: 'This is our family recording; please take it down.' },
+      body: { target: 'https://chassidushub.org/events/5742-05-10', name: 'Rivka Cohen', email: 'rivka@example.org', relation: 'family', statement: 'This is our family recording; please take it down.' },
     });
     expect(asked).toMatchObject({ status: 201, body: { answerWithinDays: 14 } });
     // A receipt with when to expect an answer.
-    expect(outbox[0]).toMatchObject({ to: 'rivka@example.org', subject: `RebbeHub: takedown request ${asked.body.id} received` });
+    expect(outbox[0]).toMatchObject({ to: 'rivka@example.org', subject: `ChassidusHub: takedown request ${asked.body.id} received` });
     expect(outbox[0]!.text).toContain('within 14 days');
 
     // It is a Report on the item (reason rights) in the set's inbox; who asked is kept for stewards.
@@ -146,30 +146,30 @@ describe('takedowns', () => {
     expect(inbox.body.reports[0]).toMatchObject({ entity_id: event, reason: 'rights' });
     expect(JSON.stringify(inbox.body)).not.toContain('rivka@example.org');
     expect((await call('GET', '/v1/admin/takedowns', { as: 'keeper' })).status).toBe(403);
-    const list = await call('GET', '/v1/admin/takedowns', { as: 'shmuly' });
+    const list = await call('GET', '/v1/admin/takedowns', { as: 'steward' });
     expect(list.body.takedowns).toEqual([
       expect.objectContaining({ report: asked.body.id, name: 'Rivka Cohen', email: 'rivka@example.org', relation: 'family', entityId: event, files: [expect.objectContaining({ sha256, rights: 'open' })] }),
     ]);
 
     expect((await call('POST', `/v1/admin/files/${sha256}/takedown`, { as: 'keeper', body: { report: asked.body.id } })).status).toBe(403);
-    expect((await call('POST', `/v1/admin/files/${sha256}/takedown`, { as: 'shmuly', body: { report: asked.body.id } })).status).toBe(200);
+    expect((await call('POST', `/v1/admin/files/${sha256}/takedown`, { as: 'steward', body: { report: asked.body.id } })).status).toBe(200);
     expect(await getFile(catalog.db, sha256)).toMatchObject({ rights_state: 'preserved' });
-    expect(await catalog.auditLog({ kind: 'file', id: sha256 })).toEqual([expect.objectContaining({ actor: 'shmuly', action: 'file.rights', detail: { from: 'open', to: 'preserved', note: `takedown request ${asked.body.id}` } })]);
+    expect(await catalog.auditLog({ kind: 'file', id: sha256 })).toEqual([expect.objectContaining({ actor: 'steward', action: 'file.rights', detail: { from: 'open', to: 'preserved', note: `takedown request ${asked.body.id}` } })]);
     expect((await call('GET', `/v1/files/${sha256}`)).body.url).toBeNull();
 
     // Done: the request is closed like any report.
-    expect((await call('POST', `/v1/reports/${asked.body.id}/close`, { as: 'shmuly', body: { outcome: 'resolved' } })).status).toBe(200);
-    expect((await call('GET', '/v1/admin/takedowns', { as: 'shmuly' })).body.takedowns).toEqual([]);
+    expect((await call('POST', `/v1/reports/${asked.body.id}/close`, { as: 'steward', body: { outcome: 'resolved' } })).status).toBe(200);
+    expect((await call('GET', '/v1/admin/takedowns', { as: 'steward' })).body.takedowns).toEqual([]);
   });
 
   it('keeps a request for a file named by its address, and one it cannot place', async () => {
     const { catalog } = fresh;
     const sha256 = 'f'.repeat(64);
     await registerFile(catalog.db, { sha256, bytes: 5, mime: 'application/pdf', source: 'contribution', licence: 'cc0', held: true });
-    const byFile = await call('POST', '/v1/takedowns', { body: { target: `https://api.rebbehub.org/objects/${sha256}`, name: 'Kehot', email: 'rights@example.org', relation: 'rights-holder', statement: 'We hold the rights to this printing.' } });
+    const byFile = await call('POST', '/v1/takedowns', { body: { target: `https://api.chassidushub.org/objects/${sha256}`, name: 'Kehot', email: 'rights@example.org', relation: 'rights-holder', statement: 'We hold the rights to this printing.' } });
     const unknown = await call('POST', '/v1/takedowns', { body: { target: '/nothing/here', name: 'Someone', email: 'a@example.org', relation: 'other', statement: 'Something of ours is on the site.' } });
     expect([byFile.status, unknown.status]).toEqual([201, 201]);
-    const list = (await call('GET', '/v1/admin/takedowns', { as: 'shmuly' })).body.takedowns;
+    const list = (await call('GET', '/v1/admin/takedowns', { as: 'steward' })).body.takedowns;
     expect(list.map((t: { files: unknown[] }) => t.files.length)).toEqual([1, 0]);
   });
 });

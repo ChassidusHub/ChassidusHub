@@ -13,7 +13,7 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5];
  * and its farbrengen, play and the parts before and after, the scrubber,
  * and the list of parts. It stays while you move between pages. While a
  * transcript is being checked it also plays the last seconds again and
- * slows down or speeds up; only there, as Shmuly asked.
+ * slows down or speeds up; only there, as the steward asked.
  */
 export function PlayerBar() {
   const lang = useLang();

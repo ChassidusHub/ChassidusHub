@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { SHAAR_SECTIONS, shaarBlocks, shaarFromCatalog, shaarIsEmpty, type ShaarRun, type WorkData, type WorkShaar } from '@rebbehub/model';
+import { SHAAR_SECTIONS, shaarBlocks, shaarFromCatalog, shaarIsEmpty, type ShaarRun, type WorkData, type WorkShaar } from '@chassidushub/model';
 import type { Entity } from '../lib/api.js';
 import type { Lang } from '../lib/i18n.js';
 import { href } from '../lib/links.js';

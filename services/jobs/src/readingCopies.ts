@@ -1,17 +1,17 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { recordDerivation, recordPageFix, registerFile } from '@rebbehub/core';
-import type { Db } from '@rebbehub/db';
-import { checkFixed, fixPdf, PDF_FIX_ENCODER, type PagePlan } from '@rebbehub/pdf-fix';
+import { recordDerivation, recordPageFix, registerFile } from '@chassidushub/core';
+import type { Db } from '@chassidushub/db';
+import { checkFixed, fixPdf, PDF_FIX_ENCODER, type PagePlan } from '@chassidushub/pdf-fix';
 
 /**
  * The Sichos Kodesh scans and their reading copies (docs/operations.md).
  *
  * Sichos-Kodesh's archive already holds every hanacha scan its catalog
  * links to, in its own R2 bucket by sha256. `make` copies each old
- * typewritten Sichos Kodesh hanacha (rights: open) into RebbeHub's public
- * bucket, makes its reading copy (@rebbehub/pdf-fix: pages turned level,
+ * typewritten Sichos Kodesh hanacha (rights: open) into ChassidusHub's public
+ * bucket, makes its reading copy (@chassidushub/pdf-fix: pages turned level,
  * centred, cut free of the scanner's edges; the scan untouched), reads the
  * copy back to check every page came out level, and puts it next to the
  * original. A manifest lists what was done, with each page's measurements.
@@ -37,7 +37,7 @@ export const isOldSichosKodesh = (label: string): boolean => SICHOS_KODESH_LABEL
 export const READING_COPY = 'reading-copy';
 /** Where the manifest is published in the public bucket, and served by the API. */
 export const MANIFEST_KEY = 'manifests/reading-copies/sichos-kodesh.json';
-export const MANIFEST_URL = `https://api.rebbehub.org/${MANIFEST_KEY}`;
+export const MANIFEST_URL = `https://api.chassidushub.org/${MANIFEST_KEY}`;
 /**
  * Sichos-Kodesh's archive index: every object it holds, by sha256, with the
  * Drive id it came from. Read from the archive's own bucket
@@ -150,7 +150,7 @@ export interface ManifestEntry extends ScanRef {
 }
 
 export interface ReadingCopiesManifest {
-  format: 'rebbehub-reading-copies';
+  format: 'chassidushub-reading-copies';
   formatVersion: 1;
   encoder: string;
   madeAt: string;
@@ -177,7 +177,7 @@ export interface MakeOptions {
   archive: Map<string, { sha256: string; bytes: number }>;
   /** Sichos-Kodesh's archive bucket: `objects/<sha256>`. */
   source: ObjectStore;
-  /** RebbeHub's public bucket: the originals and their copies, `objects/<sha256>`. */
+  /** ChassidusHub's public bucket: the originals and their copies, `objects/<sha256>`. */
   target: ObjectStore;
   /** Where this run keeps its part of the manifest, so it can stop and go on. */
   work: string;
@@ -255,7 +255,7 @@ export async function collectManifest(work: string, scans: ScanRef[], now = new 
     if (part.encoder === PDF_FIX_ENCODER) Object.assign(files, part.files);
   }
   return {
-    format: 'rebbehub-reading-copies',
+    format: 'chassidushub-reading-copies',
     formatVersion: 1,
     encoder: PDF_FIX_ENCODER,
     madeAt: now.toISOString(),
@@ -265,7 +265,7 @@ export async function collectManifest(work: string, scans: ScanRef[], now = new 
 
 export function parseManifest(value: unknown): ReadingCopiesManifest {
   const manifest = value as ReadingCopiesManifest;
-  if (manifest?.format !== 'rebbehub-reading-copies' || manifest.formatVersion !== 1 || !Array.isArray(manifest.files)) throw new Error('not a reading-copies manifest');
+  if (manifest?.format !== 'chassidushub-reading-copies' || manifest.formatVersion !== 1 || !Array.isArray(manifest.files)) throw new Error('not a reading-copies manifest');
   return manifest;
 }
 

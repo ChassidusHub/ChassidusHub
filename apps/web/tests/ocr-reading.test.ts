@@ -20,7 +20,7 @@ describe("a page our reader read", () => {
     expect(reading.title).toBe('בהעלותך ב');
     expect(reading.scan).toBe('https://drive.google.com/open?id=1Q9h_YYCSVLm_HbGTqHxYgc_8b2nY2fWD');
     const [version] = reading.body.versions;
-    expect(version!.origin).toEqual({ by: 'ocr:rebbehub-kraken-ls-v1', checked: false });
+    expect(version!.origin).toEqual({ by: 'ocr:chassidushub-kraken-ls-v1', checked: false });
     expect(version!.segments.map((s) => s.kind)).toEqual(['heading', 'paragraph']);
     expect(version!.segments[0]!.text).toEqual([{ marker: '62' }, { text: 'בהעלותך ב' }]);
     expect(version!.notes!.map((n) => [n.id, n.n ?? n.label])).toEqual([

@@ -11,7 +11,7 @@ import { useLang } from '../lib/useLang.js';
  * A scan, read in the site's own reader at a page (the recording keeps
  * playing). Where the jobs have drawn its pages (page images, plan
  * section 8), the page itself is shown here, with a strip of thumbnails
- * and the scan's IIIF manifest for any library viewer. Scans RebbeHub may
+ * and the scan's IIIF manifest for any library viewer. Scans ChassidusHub may
  * not serve are linked at their source instead.
  */
 export function ScanViewer({

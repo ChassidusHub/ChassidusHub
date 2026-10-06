@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalogHealth } from '@rebbehub/core';
+import { catalogHealth } from '@chassidushub/core';
 import { checkLink, checkLinks, linksIn } from '../src/linkCheck.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 

@@ -1,10 +1,10 @@
 /**
  * Files on Google Drive the catalog links to (a hanacha's PDF, an Otzros
  * scan, a recording). The catalog keeps each file's own Drive address; the
- * reader and the player read its bytes through RebbeHub's API
+ * reader and the player read its bytes through ChassidusHub's API
  * (`GET /v1/drive/<id>`), which answers other pages and parts of a file as
  * Drive does not. An address on Sichos-Kodesh's media proxy, which older
- * imports stored, is read the same way until `rebbehub relink-drive`
+ * imports stored, is read the same way until `chassidushub relink-drive`
  * replaces it.
  */
 
@@ -16,7 +16,7 @@ export function driveFileId(url: string): string | null {
     const u = new URL(url);
     let id: string | null | undefined = null;
     if (u.hostname === 'drive.google.com') id = /^\/file\/d\/([^/]+)/.exec(u.pathname)?.[1] ?? (u.pathname === '/open' || u.pathname === '/uc' ? u.searchParams.get('id') : null);
-    else if (u.hostname === 'sichos-kodesh-media-proxy.shmuky.workers.dev') id = /^\/drive\/([^/]+)$/.exec(u.pathname)?.[1];
+    else if (u.hostname === 'sichos-kodesh-media-proxy.chassidushub-org.workers.dev') id = /^\/drive\/([^/]+)$/.exec(u.pathname)?.[1];
     return id && DRIVE_ID.test(id) ? id : null;
   } catch {
     return null;
@@ -32,7 +32,7 @@ export function driveReadUrl(url: string, apiBase: string): string | null {
 /**
  * A printing's PDF copy on Drive, when one of its sources is a Drive file
  * (the Otzros library's PDFs, added as printings of the sefer they copy):
- * read in the site's reader like a scan, though RebbeHub keeps no file of it.
+ * read in the site's reader like a scan, though ChassidusHub keeps no file of it.
  */
 export function driveCopyOf(sources: unknown): { url: string; credit: string | null } | null {
   if (!Array.isArray(sources)) return null;

@@ -1,10 +1,10 @@
-import { LOCK_COOKIE, LOCKED_HEADER, keyOf, lockOf, openedBy, opens, type LockEnv } from '@rebbehub/api';
+import { LOCK_COOKIE, LOCKED_HEADER, keyOf, lockOf, openedBy, opens, type LockEnv } from '@chassidushub/api';
 
 /**
- * The site's door while RebbeHub is private (services/api/src/lock.ts):
+ * The site's door while ChassidusHub is private (services/api/src/lock.ts):
  * without the key, every address answers the lock page, which asks for the
  * password once and keeps its key in a cookie for a year. The cookie is on
- * rebbehub.org and its subdomains, so the API's files (scans, recordings,
+ * chassidushub.org and its subdomains, so the API's files (scans, recordings,
  * PDFs) open for the same browser.
  *
  * Phones that installed the site as an app hold its pages in their service
@@ -40,7 +40,7 @@ const escape = (text: string) => text.replace(/[&<>"']/g, (ch) => `&#${ch.charCo
 function lockPage(next: string, wrong: boolean, status = 401): Response {
   const html = `<!doctype html>
 <html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow"><title>RebbeHub</title>
+<meta name="robots" content="noindex, nofollow"><title>ChassidusHub</title>
 <style>
 :root{color-scheme:light dark;--bg:#faf8f4;--fg:#1d1b18;--muted:#6b665e;--line:#d8d2c7;--accent:#1f4e79}
 @media (prefers-color-scheme:dark){:root{--bg:#161513;--fg:#ece8e1;--muted:#a39d93;--line:#3a3732;--accent:#8db7e0}}
@@ -52,7 +52,7 @@ button{background:var(--accent);border-color:var(--accent);color:var(--bg);curso
 .wrong{color:#b3261e}
 </style></head><body>
 <form method="post" action="/_/lock">
-<h1>RebbeHub</h1><p>Private for now.</p>
+<h1>ChassidusHub</h1><p>Private for now.</p>
 ${wrong ? '<p class="wrong">That password is not right.</p>' : ''}
 <input type="hidden" name="next" value="${escape(next)}">
 <input type="password" name="password" autocomplete="current-password" placeholder="Password" aria-label="Password" required autofocus>
@@ -100,7 +100,7 @@ export async function door(request: Request, env: DoorEnv, opened: (key: string)
     return null;
   }
   if (url.pathname === '/sw.js') return new Response(FORGET, { headers: { ...NOT_KEPT, 'Content-Type': 'text/javascript; charset=utf-8' } });
-  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('RebbeHub is private for now.', { status: 401, headers: { ...NOT_KEPT, 'Content-Type': 'text/plain; charset=utf-8' } });
+  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('ChassidusHub is private for now.', { status: 401, headers: { ...NOT_KEPT, 'Content-Type': 'text/plain; charset=utf-8' } });
   return lockPage(`${url.pathname}${url.search}`, false);
 }
 

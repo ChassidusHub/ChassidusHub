@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
-import { fileFromDrive, getFile, getPageFix } from '@rebbehub/core';
-import type { DriveFolder } from '@rebbehub/importers';
+import { fileFromDrive, getFile, getPageFix } from '@chassidushub/core';
+import type { DriveFolder } from '@chassidushub/importers';
 import { catalogIsRebuildable } from '../src/commands.js';
 import { collectPageFixes, makePageFixes, otzrosPdfs, registerPageFixes, type LinkedPdf } from '../src/pageFixes.js';
 import { freshCatalog } from '../../../packages/core/tests/helpers.js';
@@ -57,7 +57,7 @@ const tree: DriveFolder = {
   ],
 };
 
-describe('page fixes for the PDFs RebbeHub links to', () => {
+describe('page fixes for the PDFs ChassidusHub links to', () => {
   it("lists the Otzros library's PDFs once each, with the folders they sit in", () => {
     const pdfs = otzrosPdfs(tree);
     expect(pdfs.map((pdf) => pdf.driveFileId)).toEqual(['drive-typeset-1', 'drive-level-11', 'drive-leaning-1', 'drive-refused-1', 'drive-broken-11']);

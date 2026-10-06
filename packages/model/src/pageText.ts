@@ -19,7 +19,7 @@ import type { Language, MachineOrigin } from './entities.js';
  * headings), `chabad-library` (the texts of chabadlibrary.org: paragraphs
  * and headings, its footnotes and haoros as notes, the printed edition's
  * old page numbers as markers, and the library's credit line linking back
- * to the page there), and `plain` (what people write on RebbeHub itself).
+ * to the page there), and `plain` (what people write on ChassidusHub itself).
  */
 
 export type TextProfile = 'plain' | 'sefaria' | 'sichos-kodesh' | 'outline' | 'chabad-library';
@@ -127,7 +127,7 @@ export interface PageText {
 /** An id a segment or version may have: short, and safe in a URL fragment. */
 export const PAGE_ID_PATTERN = '^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$';
 const PAGE_ID = new RegExp(PAGE_ID_PATTERN);
-/** Where a link may go: the web, a path on RebbeHub, or an item by id. */
+/** Where a link may go: the web, a path on ChassidusHub, or an item by id. */
 export const PAGE_HREF_PATTERN = '^(https?://[^\\s]+|/[^\\s]*|rh-[0-9a-hjkmnp-tv-z]{6,16})$';
 const PAGE_HREF = new RegExp(PAGE_HREF_PATTERN);
 
@@ -211,7 +211,7 @@ export function newSegmentId(version: PageVersion, prefix = 'p'): string {
  * Words made tidy, the one form they are kept in: adjacent runs with the
  * same marks and link joined, empty runs dropped, marks in their fixed
  * order and never twice, spaces at the segment's two ends trimmed. Links
- * that are not the web, a RebbeHub path or an id lose their link.
+ * that are not the web, a ChassidusHub path or an id lose their link.
  */
 export function tidyInline(runs: readonly PageInline[]): PageInline[] {
   const out: PageInline[] = [];

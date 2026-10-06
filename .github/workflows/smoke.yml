@@ -6,7 +6,7 @@ name: Smoke
 # Cloudflare's Workers Builds deploys every push to main by itself; this
 # waits for it, then looks. Every morning too, and by hand.
 on:
-  # By hand only while RebbeHub is private (2 October 2026): Actions minutes are limited on a private repository.
+  # By hand only while ChassidusHub is private (2 October 2026): Actions minutes are limited on a private repository.
   workflow_dispatch:
 
 permissions:
@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SITE: https://rebbehub.org
-      API: https://api.rebbehub.org
-      # While RebbeHub is private, the pages open with the lock's key, made from this secret (scripts/smoke.cjs).
-      REBBEHUB_PASSWORD: ${{ secrets.REBBEHUB_PASSWORD }}
+      SITE: https://chassidushub.org
+      API: https://api.chassidushub.org
+      # While ChassidusHub is private, the pages open with the lock's key, made from this secret (scripts/smoke.cjs).
+      CHASSIDUSHUB_PASSWORD: ${{ secrets.CHASSIDUSHUB_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

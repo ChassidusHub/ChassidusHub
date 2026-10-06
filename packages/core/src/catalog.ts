@@ -1,5 +1,5 @@
-import { migrate, one, type Db } from '@rebbehub/db';
-import { normalizeSearchText, validateDateKey } from '@rebbehub/hebrew';
+import { migrate, one, type Db } from '@chassidushub/db';
+import { normalizeSearchText, validateDateKey } from '@chassidushub/hebrew';
 import {
   BUILTIN_SCHEMAS,
   BUILTIN_SCHEMA_VERSION,
@@ -17,7 +17,7 @@ import {
   type EntityType,
   type SchemaData,
   type SetData,
-} from '@rebbehub/model';
+} from '@chassidushub/model';
 import { summarizeChanges, type ChangeGroup } from './changeSummary.js';
 import { badState, CatalogError, forbidden, invalid, notFound } from './errors.js';
 import { driveFilesOf } from './driveFiles.js';
@@ -31,7 +31,7 @@ import { viaColumn, type Via } from './via.js';
 
 /**
  * The catalog: GitHub's model over the versioned Postgres schema, in the
- * words people see (docs/plans/rebbehub.md, sections 3, 6 and 7).
+ * words people see (docs/plans/chassidushub.md, sections 3, 6 and 7).
  *
  *   Suggestion (changeset)  revisions proposed together, sent for review
  *   Approve / Send back     a keeper's decision; approving merges to main
@@ -1526,7 +1526,7 @@ export class Catalog {
   /**
    * Files Sichos-Kodesh's archive could not get from upstream (migration
    * 0009): a Drive link that is gone, a recording the CDN no longer
-   * gives. Each with the item it belongs to, when RebbeHub has it, so
+   * gives. Each with the item it belongs to, when ChassidusHub has it, so
    * someone who has the file can add it there.
    */
   async archiveGaps(limit = 50): Promise<{ total: number; items: Array<ArchiveGapRow & { entity: EntityView | null }> }> {
@@ -1546,7 +1546,7 @@ export class Catalog {
     };
   }
 
-  /** Replaces the archive's list of files it could not get (`rebbehub archive-gaps`). */
+  /** Replaces the archive's list of files it could not get (`chassidushub archive-gaps`). */
   async loadArchiveGaps(gaps: Array<ArchiveGapRow & { source_id: string }>): Promise<number> {
     return this.db.transaction(async (tx) => {
       await tx.query('DELETE FROM archive_gap');

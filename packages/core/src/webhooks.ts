@@ -1,4 +1,4 @@
-import { one } from '@rebbehub/db';
+import { one } from '@chassidushub/db';
 import type { Catalog } from './catalog.js';
 import { forbidden, invalid, notFound } from './errors.js';
 import { ExportGate } from './gate.js';
@@ -7,7 +7,7 @@ import { ExportGate } from './gate.js';
  * Webhooks: every merge to the catalog, posted to the addresses people
  * registered (migration 0008). A delivery is a POST of
  * `{ "commits": [...] }`, the same commits `GET /v1/commits` lists (words
- * withheld for rights left out), signed in `X-RebbeHub-Signature` as
+ * withheld for rights left out), signed in `X-ChassidusHub-Signature` as
  * `sha256=<HMAC-SHA256 of the body with the hook's secret>`. Commits go in
  * order; a hook is sent the next ones only after the last were taken, and
  * after 20 failures in a row it is switched off.
@@ -90,7 +90,7 @@ export async function deliverWebhooks(catalog: Catalog, options: { fetch?: typeo
     try {
       const response = await send(hook.url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'User-Agent': 'RebbeHub-Webhooks', 'X-RebbeHub-Signature': await sign(hook.secret, body) },
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'ChassidusHub-Webhooks', 'X-ChassidusHub-Signature': await sign(hook.secret, body) },
         body,
         redirect: 'manual',
       });

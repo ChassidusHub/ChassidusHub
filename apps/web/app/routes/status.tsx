@@ -11,7 +11,7 @@ import { Bar, Box, EmptyState, RelativeTime, cx } from '../ui/primitives.js';
 import '../styles/pages/status.css';
 
 /**
- * Whether RebbeHub is up: the site, the API, the MCP server, the database,
+ * Whether ChassidusHub is up: the site, the API, the MCP server, the database,
  * its daily allowance of queries, the Workers' load and the scheduled
  * jobs. The API checks
  * them every five minutes and keeps the last report with ninety days of
@@ -21,7 +21,7 @@ import '../styles/pages/status.css';
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { api, siteUrl } = siteOf(context);
-  const apiBase = /^https?:\/\//.test(api.baseUrl) ? api.baseUrl.replace(/\/+$/, '') : 'https://api.rebbehub.org';
+  const apiBase = /^https?:\/\//.test(api.baseUrl) ? api.baseUrl.replace(/\/+$/, '') : 'https://api.chassidushub.org';
   const lang = langFrom(request);
   const answer = await api.status().catch((error: unknown) => {
     console.error('status', error);
@@ -77,8 +77,8 @@ const w = (lang: Lang, key: keyof typeof W) => W[key][lang];
 const fill = (text: string, values: Record<string, string>) => text.replace(/\{(\w+)\}/g, (_, k: string) => values[k] ?? '');
 
 const PARTS: Record<CheckId, { icon: IconName; name: Record<Lang, string>; about: Record<Lang, string> }> = {
-  site: { icon: 'globe', name: { he: 'האתר', en: 'The site' }, about: { he: 'rebbehub.org', en: 'rebbehub.org' } },
-  api: { icon: 'code', name: { he: 'ה-API', en: 'The API' }, about: { he: 'api.rebbehub.org, לתוכנות ולאפליקציה', en: 'api.rebbehub.org, for programs and the app' } },
+  site: { icon: 'globe', name: { he: 'האתר', en: 'The site' }, about: { he: 'chassidushub.org', en: 'chassidushub.org' } },
+  api: { icon: 'code', name: { he: 'ה-API', en: 'The API' }, about: { he: 'api.chassidushub.org, לתוכנות ולאפליקציה', en: 'api.chassidushub.org, for programs and the app' } },
   mcp: { icon: 'bot', name: { he: 'שרת ה-MCP', en: 'The MCP server' }, about: { he: 'לסוכני בינה מלאכותית (Claude ואחרים)', en: 'For AI agents (Claude and others)' } },
   database: { icon: 'database', name: { he: 'מסד הנתונים', en: 'The database' }, about: { he: 'הקטלוג עצמו', en: 'The catalog itself' } },
   quota: { icon: 'pulse', name: { he: 'מכסת השאילתות היומית', en: 'Daily query allowance' }, about: { he: 'כמה שאילתות למסד הנתונים מותרות ביום', en: 'How many database queries a day allows' } },

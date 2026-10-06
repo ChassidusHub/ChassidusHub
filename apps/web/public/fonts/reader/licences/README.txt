@@ -12,7 +12,7 @@ NotoSerifHebrew.ttf, NotoSerifHebrew_bold.ttf  Noto Serif Hebrew Regular and Bol
   https://github.com/notofonts/hebrew
 
 MiramLubavitch.ttf                          Miram Lubavitch
-  The face Likkutei Sichos sets its stressed words in, as Shmuly gave it
+  The face Likkutei Sichos sets its stressed words in, as the steward gave it
   (2026-10-05) for the printed page on a showcase. The file names no
   licence.
 

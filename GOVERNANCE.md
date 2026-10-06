@@ -1,8 +1,8 @@
-# How RebbeHub is run
+# How ChassidusHub is run
 
-RebbeHub belongs to the community. This page says who decides what, and
+ChassidusHub belongs to the community. This page says who decides what, and
 how anyone can check that decisions are made fairly. It follows section 11
-of [the plan](docs/plans/rebbehub.md).
+of [the plan](docs/plans/chassidushub.md).
 
 ## Roles
 
@@ -18,7 +18,7 @@ Bots (importers, OCR, sync) are contributors labelled as bots. They
 never approve anything, their own work least of all. Nobody but a steward
 approves their own suggestion.
 
-The first steward is Shmuly ([@shmuky](https://github.com/shmuky)). Stewards
+The first steward is the steward ([@ChassidusHub](https://github.com/ChassidusHub)). Stewards
 and set keepers are listed in the catalog itself (each set names its
 keepers) and in [.github/CODEOWNERS](.github/CODEOWNERS) for the code.
 
@@ -44,15 +44,15 @@ Farbrengens 5742 …), and every set has keepers and a policy:
 
 ## Content policy
 
-RebbeHub holds authentic Chabad material, described respectfully, with
+ChassidusHub holds authentic Chabad material, described respectfully, with
 sources. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Rights and takedowns
 
 Files start in the most careful state their source allows (see
 [docs/rights.md](docs/rights.md)). Anyone may ask for a file to be taken down, with no account, on the
-site's [takedown form](https://rebbehub.org/takedown) or through the
-[rights form](https://github.com/shmuky/RebbeHub/issues/new?template=3-rights.yml).
+site's [takedown form](https://chassidushub.org/takedown) or through the
+[rights form](https://github.com/ChassidusHub/ChassidusHub/issues/new?template=3-rights.yml).
 A steward answers within two weeks, and can move a file out of public view
 in one click - it is kept privately, never deleted - and the action is
 logged. A family may ask that a teshura not be shown, and its scans stop

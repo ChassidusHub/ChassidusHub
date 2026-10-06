@@ -38,8 +38,8 @@ import {
   type Resolution,
   type ReviewVerdict,
   type SubjectKind,
-} from '@rebbehub/core';
-import { readId } from '@rebbehub/model';
+} from '@chassidushub/core';
+import { readId } from '@chassidushub/model';
 import { HttpError } from './app.js';
 import { cursor, nextLink } from './platform.js';
 

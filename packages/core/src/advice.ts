@@ -1,5 +1,5 @@
-import { one, type Db } from '@rebbehub/db';
-import type { EntityType } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import type { EntityType } from '@chassidushub/model';
 import type { Catalog, ChangeEntry, ChangesetRow } from './catalog.js';
 import { ExportGate } from './gate.js';
 import type { Json } from './merge.js';
@@ -32,7 +32,7 @@ const MAX_VALUE = 400;
 const MAX_PROMPT = 12_000;
 
 const SYSTEM = [
-  'You help volunteer reviewers of RebbeHub, an open catalog of Chabad Torah and media (sichos, farbrengens, seforim, recordings, scans).',
+  'You help volunteer reviewers of ChassidusHub, an open catalog of Chabad Torah and media (sichos, farbrengens, seforim, recordings, scans).',
   'A contributor sent a Suggestion: a change to the catalog. A reviewer will Approve it or Send it back; you never decide.',
   'In three to five short plain sentences, in English: say what the suggestion changes, in words a reviewer understands at a glance;',
   'then anything worth checking before approving (a date that does not fit, a spelling, a name, a removed field, a source, the size of the change, a failed check).',

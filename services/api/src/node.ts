@@ -1,14 +1,14 @@
 import { serve } from '@hono/node-server';
-import { Catalog, embedderFromEnv } from '@rebbehub/core';
-import { connectPostgres } from '@rebbehub/db';
-import { openPGlite } from '@rebbehub/db/pglite';
+import { Catalog, embedderFromEnv } from '@chassidushub/core';
+import { connectPostgres } from '@chassidushub/db';
+import { openPGlite } from '@chassidushub/db/pglite';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createApp, type FileStore } from './app.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, memoryRateLimiter } from './platform.js';
 import { authFor } from './auth.js';
 import { resendMailer } from './mail.js';
-import { sendNotifications, type Mailer } from '@rebbehub/core';
+import { sendNotifications, type Mailer } from '@chassidushub/core';
 
 /**
  * The API on Node, for local work: `npm run dev:api`.
@@ -86,6 +86,6 @@ const app = createApp({
 });
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port, hostname });
-console.log(`RebbeHub API on http://${hostname}:${port}/v1 (${url ? 'Postgres' : 'PGlite'}${devAccount ? `, signed in as ${devAccount}` : ''})`);
+console.log(`ChassidusHub API on http://${hostname}:${port}/v1 (${url ? 'Postgres' : 'PGlite'}${devAccount ? `, signed in as ${devAccount}` : ''})`);
 // What the Workers' cron does every few minutes, here every minute: notifications by email.
 if (mailer) setInterval(() => void sendNotifications(catalog, mailer, { siteUrl: new URL(process.env.SITE_URL ?? 'http://localhost:5173').origin }).catch((error) => console.error('notifications', error)), 60_000);

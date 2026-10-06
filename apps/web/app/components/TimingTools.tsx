@@ -7,7 +7,7 @@ import { href } from '../lib/links.js';
 import { postJson } from '../lib/post.js';
 
 /**
- * Tools while listening. Nobody moves the sync by hand here: Shmuly had
+ * Tools while listening. Nobody moves the sync by hand here: the steward had
  * the "Timing" and "Exact timing" buttons taken out, as the model's sync
  * is already good and taps made clashing suggestions. "The sync is right"
  * marks the whole recording's sync checked. And words nobody is sure of

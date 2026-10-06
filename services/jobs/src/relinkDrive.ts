@@ -1,13 +1,13 @@
-import type { Catalog, Json } from '@rebbehub/core';
-import { relinkDrive, relinkJem, SICHOS_KODESH_MEDIA_PROXY } from '@rebbehub/importers';
-import type { EntityId, EntityType } from '@rebbehub/model';
+import type { Catalog, Json } from '@chassidushub/core';
+import { relinkDrive, relinkJem, SICHOS_KODESH_MEDIA_PROXY } from '@chassidushub/importers';
+import type { EntityId, EntityType } from '@chassidushub/model';
 
 /**
- * `rebbehub relink-drive` (docs/operations.md): the links older imports
+ * `chassidushub relink-drive` (docs/operations.md): the links older imports
  * stored on Sichos-Kodesh's media proxy (a hanacha's PDF on a farbrengen,
  * an Otzros page's reading copy) become the file's own Google Drive link,
  * the mafteiach's and Otzros HaRebbe's, which the site reads through
- * RebbeHub's own API. Everything else in the item stays as it is: a link's
+ * ChassidusHub's own API. Everything else in the item stays as it is: a link's
  * `origin`, its label, JEM's recordings (not on Drive).
  *
  * Each batch is one Suggestion from the relink bot, sent for review like
@@ -15,7 +15,7 @@ import type { EntityId, EntityType } from '@rebbehub/model';
  * what is still on the proxy and not already waiting in one of its
  * Suggestions, so it can be run until nothing is left.
  *
- * `rebbehub relink-jem` does the same for links to JEM's player: the
+ * `chassidushub relink-jem` does the same for links to JEM's player: the
  * older form (`ashreinu.app/player?…`) becomes the Ashreinu app's own
  * (`ashreinu.app/#/player/…`). The audio stays on the proxy.
  */
@@ -38,7 +38,7 @@ const DRIVE: Relink = {
   relink: (data) => relinkDrive(data as never) as { data: Json; links: number } | null,
   title: 'Drive links in place of the media proxy',
   description:
-    "Links older imports stored on Sichos-Kodesh's media proxy (sichos-kodesh-media-proxy.shmuky.workers.dev) become the file's own Google Drive link, as the mafteiach and Otzros HaRebbe give it. The site reads Drive files through RebbeHub's own API. A link's origin, label and everything else stay as they are.",
+    "Links older imports stored on Sichos-Kodesh's media proxy (sichos-kodesh-media-proxy.chassidushub-org.workers.dev) become the file's own Google Drive link, as the mafteiach and Otzros HaRebbe give it. The site reads Drive files through ChassidusHub's own API. A link's origin, label and everything else stay as they are.",
 };
 
 const JEM: Relink = {

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import type { Json } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import type { Json } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { freshCatalog } from '../../../packages/core/tests/helpers.js';
 
@@ -31,7 +31,7 @@ beforeAll(async () => {
   app = createApp({ catalog, authenticate: (c) => c.req.header('X-Test-Account') ?? null, reportSalt: 'test' });
   const event = (i: number, url: string) => ({ kind: 'farbrengen', title: { he: `התוועדות ${i}` }, date: '5742-05-10', sets: [fresh.set], links: [{ kind: 'mugah', label: { he: 'מוגה' }, url }] }) as unknown as Json;
   const setup = await catalog.createChangeset('mendy', { title: 'Farbrengens' });
-  for (let i = 0; i < N; i++) ids.push(await catalog.putRevision(setup.id, 'mendy', { type: 'event', data: event(i, `https://sichos-kodesh-media-proxy.shmuky.workers.dev/drive/f${i}`) }));
+  for (let i = 0; i < N; i++) ids.push(await catalog.putRevision(setup.id, 'mendy', { type: 'event', data: event(i, `https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/drive/f${i}`) }));
   await catalog.submit(setup.id, 'mendy');
   await catalog.merge(setup.id, 'keeper');
   await catalog.createAccount({ id: 'bot:relink-drive', displayName: 'Drive links (relink bot)', isBot: true });
@@ -60,7 +60,7 @@ describe("a bot's large Suggestion over the API", () => {
     const summarized = await call('GET', `/v1/suggestions/${bulk}?summary=1`, { as: 'keeper' });
     expect(summarized.body.entries).toHaveLength(25);
     expect(summarized.body.summary).toHaveLength(1);
-    expect(summarized.body.summary[0]).toMatchObject({ type: 'event', count: N, fields: [{ path: '/links', before: 'link:sichos-kodesh-media-proxy.shmuky.workers.dev', after: 'link:drive.google.com' }] });
+    expect(summarized.body.summary[0]).toMatchObject({ type: 'event', count: N, fields: [{ path: '/links', before: 'link:sichos-kodesh-media-proxy.chassidushub-org.workers.dev', after: 'link:drive.google.com' }] });
     const second = await call('GET', `/v1/suggestions/${bulk}?offset=${first.body.next}`);
     expect(second.body).toMatchObject({ offset: 25, next: 50 });
     const last = await call('GET', `/v1/suggestions/${bulk}?offset=50&limit=25`);

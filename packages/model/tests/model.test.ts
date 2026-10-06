@@ -25,7 +25,7 @@ import {
   referencesOf,
   rightsStateFromDecision,
   slugify,
-} from '@rebbehub/model';
+} from '@chassidushub/model';
 import { EXAMPLES } from './fixtures.js';
 
 describe('schemas', () => {

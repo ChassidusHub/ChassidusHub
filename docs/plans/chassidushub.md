@@ -1,4 +1,4 @@
-# RebbeHub: the plan
+# ChassidusHub: the plan
 
 Written 2026-09-28. A plan, not a build. It supersedes the Rebbe Drive
 (`docs/offline-plan.md` §3 and WP5b) and grows the Work/Unit/Edition model
@@ -6,7 +6,7 @@ of `docs/chabad-library-plan.md` into a community-edited index.
 
 ## 1. The idea
 
-RebbeHub is the biggest open index of Chabad Torah and media, built by the
+ChassidusHub is the biggest open index of Chabad Torah and media, built by the
 community. **Everything**: the Baal Shem Tov and the Maggid, every Rebbe,
 the Rebbe's sichos, maamarim, letters and recordings, the chassidim's
 seforim, kovtzei he'oros, yearbooks, diaries, and the thousands of
@@ -35,9 +35,9 @@ Video stays external links (YouTube, JEM, chabad.org) with timestamps.
 
 ## 2. What we already have (Sichos-Kodesh, reused)
 
-| Existing piece | Becomes in RebbeHub |
+| Existing piece | Becomes in ChassidusHub |
 | --- | --- |
-| `packages/works/src/types.ts` (Author → Work → Unit → Edition, `Licence`, `SourceId`) and its registry (~81 works, 9 authors) | The core of the data model, extracted to a published `@rebbehub/model` package that Sichos-Kodesh imports back. |
+| `packages/works/src/types.ts` (Author → Work → Unit → Edition, `Licence`, `SourceId`) and its registry (~81 works, 9 authors) | The core of the data model, extracted to a published `@chassidushub/model` package that Sichos-Kodesh imports back. |
 | `packages/works/src/rights.ts`, `packages/catalog/src/rights.ts` | The rights gate on every file (§8). |
 | `services/archive/src/schema.ts` (commits main/pending/rejected, objects by sha256, sources, wanted, refs, derivations) | The prototype of the versioning model (§6); its history is migrated in. `wanted` becomes the public **Missing** board. |
 | Indexers: `mafteiach-index`, `jem-index`, `hebrewbooks-index` (~1,450 Chabad books), `sefaria-index`, `igros-index` (11,059 letters), the chabadlibrary.org tree | **Bot contributors** that seed the hub on day one and keep syncing through suggestions like anyone else. |
@@ -48,11 +48,11 @@ Video stays external links (YouTube, JEM, chabad.org) with timestamps.
 | `packages/design` tokens | The look, so both projects feel related. |
 
 Sichos-Kodesh stops curating its own catalog: `packages/catalog/bin/build.ts`
-builds from a RebbeHub release.
+builds from a ChassidusHub release.
 
 ## 3. The words people see (GitHub for non-nerds)
 
-| GitHub | RebbeHub (en / he) | What the person does |
+| GitHub | ChassidusHub (en / he) | What the person does |
 | --- | --- | --- |
 | Repository | **Set** / סט (Likkutei Sichos, Igros Kodesh, Teshuros, Kovtzei He'oros, Farbrengens 5742) | Browses it. |
 | Issue | **Report** / דיווח ("wrong date", "page missing in scan", "audio cut off") | One button, one sentence. No account needed. |
@@ -74,7 +74,7 @@ JSON, raw field diffs, or a merge conflict they did not cause.
 
 Content and print are separate things. A letter of the Rebbe is one piece
 of content, printed in Igros Kodesh, reprinted by another publisher, and
-reproduced in a dozen wedding teshuros. RebbeHub models both sides and
+reproduced in a dozen wedding teshuros. ChassidusHub models both sides and
 the links between them.
 
 **Content side (what was said or written)**
@@ -113,7 +113,7 @@ the links between them.
     line by line by users. Only this one is edited; it is fully versioned.
 - **Text** of a unit: segmented into paragraphs with stable segment ids
   that survive edits, so citations (`LS 12:3 ¶4`) never break. A unit can
-  have texts from several publications; RebbeHub can **compare printings**
+  have texts from several publications; ChassidusHub can **compare printings**
   and show variant readings between publishers.
 - **Proofread level** per page and per segment: raw OCR → checked once →
   checked twice (Wikisource-style), shown as colours.
@@ -193,7 +193,7 @@ silently. A real clash goes to the reviewer as a simple choice ("A says
 undoes all of it in one click. Cheap undo is what lets the index be open.
 
 **Git mirror and dumps.** Every merge is exported to a public
-`rebbehub/catalog` git repo (one JSON file per entity, sharded; text as
+`chassidushub/catalog` git repo (one JSON file per entity, sharded; text as
 Markdown with segment anchors; alignments as WebVTT-like files) so anyone
 can clone, diff, fork and audit. Each weekly catalog edition also produces
 a signed SQLite + Parquet dump on R2 (Ed25519, via `pack-format`). The
@@ -302,7 +302,7 @@ contributors and never merge their own work.
 ```
  browsers / Sichos-Kodesh apps / other sites
             │
-   rebbehub web  (React Router 7 SSR on Cloudflare Workers;
+   chassidushub web  (React Router 7 SSR on Cloudflare Workers;
             │     SEO item pages, Hebrew RTL, PWA, scan viewer, synced player)
             ▼
    API  (Hono, TypeScript, OpenAPI; Workers + Hyperdrive)
@@ -329,17 +329,17 @@ contributors and never merge their own work.
 
 **Repos** (new, public):
 
-- `rebbehub/rebbehub` — code: `apps/web`, `services/api`, `services/jobs`,
+- `chassidushub/chassidushub` — code: `apps/web`, `services/api`, `services/jobs`,
   `services/ml` (OCR, ASR, alignment), `packages/model` (from
   `packages/works`), `packages/hebrew` (date keys, normalisation),
   `packages/importers` (the indexers as bots). AGPL-3.0 so hosted forks
   stay open.
-- `rebbehub/catalog` — the git mirror. Catalog facts CC0; community text,
+- `chassidushub/catalog` — the git mirror. Catalog facts CC0; community text,
   corrections and sync CC-BY-SA; source texts keep their own licence.
 
 ## 11. Governance and safety
 
-- A small **stewards** group (Shmuly first) sets policy and appoints set
+- A small **stewards** group (The steward first) sets policy and appoints set
   keepers. A public content policy: authentic Chabad material, respectful
   tone, sources required.
 - Every moderator action is logged and reversible.
@@ -353,10 +353,10 @@ contributors and never merge their own work.
 
 | Phase | What ships | Size |
 | --- | --- | --- |
-| 0. Foundations | New repos; `@rebbehub/model` with Publication/Scan/Text layer/Recording/Sync added; Postgres schema (§6); ID scheme; rights policy. Importers load everything Sichos-Kodesh knows (mafteiach, JEM, Igros, Sefaria, HebrewBooks, chabadlibrary.org, archive history) as bot commits. | 3 weeks |
+| 0. Foundations | New repos; `@chassidushub/model` with Publication/Scan/Text layer/Recording/Sync added; Postgres schema (§6); ID scheme; rights policy. Importers load everything Sichos-Kodesh knows (mafteiach, JEM, Igros, Sefaria, HebrewBooks, chabadlibrary.org, archive history) as bot commits. | 3 weeks |
 | 1. Read | Public site: sets, events calendar, item and publication pages, search, audio player, scan viewer, permanent links, SEO. Git mirror + first dump. | 5 weeks |
 | 2. Contribute | Accounts, Reports, Suggest a fix, review queue, history, revert, trust levels, follow. | 5 weeks |
-| 3. Scans and files | Uploads, dedup, publications and printings, contents maps, teshuros set, rights tiers, preservation bucket, IIIF. Sichos-Kodesh builds from RebbeHub releases; WP5b closed. | 5 weeks |
+| 3. Scans and files | Uploads, dedup, publications and printings, contents maps, teshuros set, rights tiers, preservation bucket, IIIF. Sichos-Kodesh builds from ChassidusHub releases; WP5b closed. | 5 weeks |
 | 4. Text | Machine OCR on every scan, uploaded OCR, community text with line fixing and proofread levels, compare printings, Projects, Missing board. | 6 weeks |
 | 5. Sync | Transcription, automatic alignment, synced player, "fix sync" tool, sync projects. | 5 weeks |
 | 6. Network | Public API + webhooks, semantic search, citation cross-linking, translations, embeds, mirrors. | ongoing |
@@ -368,7 +368,7 @@ with its words highlighted, and a user can fix a drifting line in two taps.
 
 ## 13. Open questions
 
-- Name: "RebbeHub" now that the scope is all of Chabad — keep, or pick a
+- Name: "ChassidusHub" now that the scope is all of Chabad — keep, or pick a
   broader name? Domain availability.
 - Which rightsholders and which teshura collections to approach first.
 - Initial stewards and set keepers.

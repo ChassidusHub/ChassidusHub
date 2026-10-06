@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MIGRATIONS, migrate } from '@rebbehub/db';
-import { openPGlite } from '@rebbehub/db/pglite';
+import { MIGRATIONS, migrate } from '@chassidushub/db';
+import { openPGlite } from '@chassidushub/db/pglite';
 
 describe('migrations', () => {
   it('create the catalog schema once, and are idempotent', async () => {

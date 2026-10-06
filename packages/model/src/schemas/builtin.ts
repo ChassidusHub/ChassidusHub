@@ -7,7 +7,7 @@ import { EDITION_KINDS, GENRES, LICENCES, SOURCE_IDS } from '../works.js';
  * The built-in schema of every entity type: JSON Schema 2020-12, one
  * self-contained document per type. They seed the store's `schema`
  * entities; from then on a schema is changed like any other item, by a
- * suggestion that stewards approve (docs/plans/rebbehub.md, section 4,
+ * suggestion that stewards approve (docs/plans/chassidushub.md, section 4,
  * "Schema as data"). The TypeScript types in entities.ts say the same, and
  * tests/schemas.test.ts keeps them in step.
  */
@@ -189,7 +189,7 @@ function entitySchema(type: EntityType, title: string, properties: Record<string
   // shared pieces would otherwise resolve against the first schema's $id.
   return structuredClone({
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $id: `https://rebbehub.org/schemas/${type}.json`,
+    $id: `https://chassidushub.org/schemas/${type}.json`,
     title,
     type: 'object',
     properties: options.common === false ? properties : { ...COMMON, ...properties },
@@ -255,12 +255,12 @@ const fractionalOrder = str({ pattern: '^[0-9A-Za-z]+$', maxLength: 64 });
  * 7: the `chabad-library` display profile for chabadlibrary.org's texts.
  * 8: a set's and a sefer's `order` among its siblings, for organizing the catalog by hand.
  * 9: a machine origin's `edited`, words a person fixed in part and still the machine's.
- * 10: a page segment's `printed`, where it stands on its version's scan (PR #83 added it
+ * 10: a page segment's `printed`, where it stands on its version's scan (an earlier change added it
  * to the schema without this, so live catalogs kept refusing it).
  * 11: a sefer's `shaar` (shaar.ts), its title page's words and its sections, read and written as one file.
  * 12: a sefer's `addition`, marking a work that is not one of the official sefarim the tree is built of
  * (a commentary, an index, a book about one) and the official sefer it belongs under.
- * 13: the page mark `ois`, the letter that opens a piece of a sicha (PR #152 added it
+ * 13: the page mark `ois`, the letter that opens a piece of a sicha (an earlier change added it
  * to the schema without this, so live catalogs kept refusing it).
  * 14: a printed line's end in a page's words (`{ eol }`), so a sicha can be set again exactly as printed.
  */

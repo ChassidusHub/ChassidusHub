@@ -1,5 +1,5 @@
-import { one } from '@rebbehub/db';
-import { readId, type EntityId, type RightsState } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import { readId, type EntityId, type RightsState } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 import { cleanEmail } from './email.js';
 import { forbidden, invalid, notFound } from './errors.js';

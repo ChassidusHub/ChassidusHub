@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { toHebrewNumeral } from '@rebbehub/hebrew';
-import { orderKeys } from '@rebbehub/model';
+import { toHebrewNumeral } from '@chassidushub/hebrew';
+import { orderKeys } from '@chassidushub/model';
 import { driveLink } from './driveLinks.js';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { workPath } from './sichosKodeshWorks.js';
@@ -15,7 +15,7 @@ import { workPath } from './sichosKodeshWorks.js';
  * Google Drive and, where there is one, the PDF of its Hebrew translation.
  * The words come later, from reading the scan, labelled as machine-read
  * until a person checks them. Read from a Sichos-Kodesh checkout at run
- * time; RebbeHub keeps no copy.
+ * time; ChassidusHub keeps no copy.
  */
 
 /** The volumes the Chabad Library typed: their pages come from chabadLibrary.ts, a page per printed page. */

@@ -1,6 +1,6 @@
 /**
  * One spelling for the Rebbe's Yiddish in transcripts: the farbrengen
- * booklets' written style (Shmuly, 2026-09-29: "booklets is good"). Most
+ * booklets' written style (The steward, 2026-09-29: "booklets is good"). Most
  * booklets write אויך, דעמאלט, ברענגט, וואנענט and keep abbreviations as
  * written (ע"י). People correcting a transcript are shown it, so what they
  * check trains the next model in one spelling; the training run rewrites

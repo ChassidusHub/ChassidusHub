@@ -3,13 +3,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { SefariaCrawl } from '@rebbehub/importers';
+import type { SefariaCrawl } from '@chassidushub/importers';
 import { keepSefariaTexts } from '../src/commands.js';
 import type { ObjectStore } from '../src/readingCopies.js';
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), 'rebbehub-sefaria-keep-'));
+  dir = mkdtempSync(join(tmpdir(), 'chassidushub-sefaria-keep-'));
   mkdirSync(join(dir, 'texts'));
 });
 afterEach(() => rmSync(dir, { recursive: true, force: true }));
@@ -19,7 +19,7 @@ const memory = (): ObjectStore & { objects: Map<string, Uint8Array> } => {
   return { objects, get: async (k) => objects.get(k) ?? null, has: async (k) => objects.has(k), put: async (k, b) => void objects.set(k, b) };
 };
 
-describe("Sefaria's texts on RebbeHub's own storage", () => {
+describe("Sefaria's texts on ChassidusHub's own storage", () => {
   it('stores each kept text once by its sha256, checked, and never one whose licence does not allow it', async () => {
     const html = '<article><p>synthetic</p></article>\n';
     const sha256 = createHash('sha256').update(html).digest('hex');

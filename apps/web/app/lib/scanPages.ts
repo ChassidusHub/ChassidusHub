@@ -1,4 +1,4 @@
-import type { PageSegment, PageText, PrintedPlace } from '@rebbehub/model';
+import type { PageSegment, PageText, PrintedPlace } from '@chassidushub/model';
 
 /**
  * The scan page a machine's segments were read from, found by the source

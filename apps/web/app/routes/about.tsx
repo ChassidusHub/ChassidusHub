@@ -9,7 +9,7 @@ import { Box } from '../ui/primitives.js';
 import '../styles/pages/info.css';
 
 /**
- * What RebbeHub is, in a few plain sentences; how a change gets in (a
+ * What ChassidusHub is, in a few plain sentences; how a change gets in (a
  * Report or a Suggestion, the keepers Approve, the history keeps it); and
  * where its code, rules and full copy are.
  */
@@ -24,12 +24,12 @@ export function meta({ loaderData }: Route.MetaArgs) {
 
 const TEXT = {
   he: [
-    'RebbeHub הוא המפתח הפתוח הגדול לתורת חב״ד ולהקלטותיה, הנבנה בידי הקהל: כל ספר וכל הוצאה שלו, כל סריקה, הטקסט של כל אחד מהם, כל התוועדות וכל הקלטה.',
+    'ChassidusHub הוא המפתח הפתוח הגדול לתורת חב״ד ולהקלטותיה, הנבנה בידי הקהל: כל ספר וכל הוצאה שלו, כל סריקה, הטקסט של כל אחד מהם, כל התוועדות וכל הקלטה.',
     'כל אחד יכול לדווח על טעות או להציע תיקון; אחראי כל אוסף מאשרים; וכל שינוי נשמר בהיסטוריה, כך ששום דבר אינו אובד.',
     'הקטלוג כולו פתוח ומיוצא לציבור, כדי שלעולם לא יינעל.',
   ],
   en: [
-    'RebbeHub is the biggest open index of Chabad Torah and media, built by the community: every sefer and every printing of it, every scan, the text of each, every farbrengen and every recording.',
+    'ChassidusHub is the biggest open index of Chabad Torah and media, built by the community: every sefer and every printing of it, every scan, the text of each, every farbrengen and every recording.',
     "Anyone can report a mistake or suggest a fix; each set's keepers approve; and every change is kept in the history, so nothing is ever lost.",
     'The whole catalog is exported openly, so it can never be locked away.',
   ],
@@ -98,20 +98,20 @@ export default function About({ loaderData }: Route.ComponentProps) {
             <h2>{W.links[lang]}</h2>
             <ul className="side-list help-now">
               <li>
-                <a href="https://github.com/shmuky/RebbeHub">
+                <a href="https://github.com/ChassidusHub/ChassidusHub">
                   <Icon name="code" />
                   <span className="grow">{W.code[lang]}</span>
                   <span className="subtle">GitHub</span>
                 </a>
               </li>
               <li>
-                <a href="https://github.com/shmuky/RebbeHub/blob/main/CONTRIBUTING.md">
+                <a href="https://github.com/ChassidusHub/ChassidusHub/blob/main/CONTRIBUTING.md">
                   <Icon name="heart" />
                   <span className="grow">{W.contributing[lang]}</span>
                 </a>
               </li>
               <li>
-                <a href="https://github.com/shmuky/RebbeHub/blob/main/GOVERNANCE.md">
+                <a href="https://github.com/ChassidusHub/ChassidusHub/blob/main/GOVERNANCE.md">
                   <Icon name="users" />
                   <span className="grow">{W.governance[lang]}</span>
                 </a>

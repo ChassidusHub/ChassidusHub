@@ -4,10 +4,10 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { keyIdFor, verifyManifest, type DumpManifest, type TrustedKeys } from '@rebbehub/mirror';
+import { keyIdFor, verifyManifest, type DumpManifest, type TrustedKeys } from '@chassidushub/mirror';
 
 /**
- * Keeping a mirror of RebbeHub (docs/mirrors.md): pulls every catalog
+ * Keeping a mirror of ChassidusHub (docs/mirrors.md): pulls every catalog
  * edition's dumps from an API's /v1/mirrors into a folder that any web
  * server can serve as it is,
  *
@@ -36,7 +36,7 @@ export interface MirrorIndex {
 }
 
 export interface PullOptions {
-  /** The API, e.g. https://api.rebbehub.org */
+  /** The API, e.g. https://api.chassidushub.org */
   api: string;
   out: string;
   /** Pinned release keys (base64 Ed25519 public keys). Without any, the keys the API names are trusted, and it says so. */

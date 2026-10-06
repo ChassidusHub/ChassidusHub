@@ -1,9 +1,9 @@
 /**
- * The one thing the rest of RebbeHub needs from a database: run a
+ * The one thing the rest of ChassidusHub needs from a database: run a
  * statement with parameters, run a script, and run a function in a
  * transaction. Adapters: node-postgres (production on Neon, Workers
  * through Hyperdrive) and PGlite (Postgres compiled to WebAssembly, for
- * tests and for trying RebbeHub locally with nothing installed).
+ * tests and for trying ChassidusHub locally with nothing installed).
  */
 export interface QueryResult<T> {
   rows: T[];

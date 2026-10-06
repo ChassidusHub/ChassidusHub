@@ -1,7 +1,7 @@
-import { connectPostgres, type Db } from '@rebbehub/db';
-import { openPGlite } from '@rebbehub/db/pglite';
-import { Catalog, type Json } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { connectPostgres, type Db } from '@chassidushub/db';
+import { openPGlite } from '@chassidushub/db/pglite';
+import { Catalog, type Json } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 
 let shared: Promise<Db> | null = null;
 
@@ -9,31 +9,31 @@ let shared: Promise<Db> | null = null;
  * A fresh catalog in memory, with a steward, a keeper, two contributors
  * and a bot, and one moderated set kept by the keeper. One PGlite per test
  * file (starting one takes seconds), emptied for every test. With
- * REBBEHUB_TEST_DATABASE_URL set, a real Postgres server instead (CI runs
+ * CHASSIDUSHUB_TEST_DATABASE_URL set, a real Postgres server instead (CI runs
  * both); its public and auth schemas are dropped, so never point it at real data.
  */
 export async function freshCatalog() {
-  const url = process.env.REBBEHUB_TEST_DATABASE_URL;
+  const url = process.env.CHASSIDUSHUB_TEST_DATABASE_URL;
   shared ??= url ? Promise.resolve(connectPostgres(url, { max: 4 })) : openPGlite();
   const db = await shared;
   await db.exec('DROP SCHEMA IF EXISTS auth CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
   const catalog = new Catalog(db, { now: () => new Date('2026-09-28T12:00:00Z') });
   await catalog.init();
-  await catalog.createAccount({ id: 'shmuly', displayName: 'Shmuly' });
-  await catalog.db.query("UPDATE account SET is_steward = TRUE WHERE id = 'shmuly'");
+  await catalog.createAccount({ id: 'steward', displayName: 'Steward' });
+  await catalog.db.query("UPDATE account SET is_steward = TRUE WHERE id = 'steward'");
   await catalog.createAccount({ id: 'keeper', displayName: 'Set keeper' });
   await catalog.createAccount({ id: 'mendy', displayName: 'Mendy' });
   await catalog.createAccount({ id: 'chaim', displayName: 'Chaim' });
   await catalog.createAccount({ id: 'bot:mafteiach', displayName: 'mafteiach importer', isBot: true });
 
-  const setup = await catalog.createChangeset('shmuly', { title: 'Set up Farbrengens' });
-  const set = await catalog.putRevision(setup.id, 'shmuly', {
+  const setup = await catalog.createChangeset('steward', { title: 'Set up Farbrengens' });
+  const set = await catalog.putRevision(setup.id, 'steward', {
     type: 'set',
     data: { name: { he: 'התוועדויות', en: 'Farbrengens' }, slug: 'farbrengens', policy: 'moderated', keepers: ['keeper'] },
     path: '/farbrengens',
   });
-  await catalog.submit(setup.id, 'shmuly');
-  await catalog.merge(setup.id, 'shmuly');
+  await catalog.submit(setup.id, 'steward');
+  await catalog.merge(setup.id, 'steward');
   return { db, catalog, set };
 }
 

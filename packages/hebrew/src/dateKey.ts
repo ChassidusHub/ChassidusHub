@@ -3,7 +3,7 @@ import { isMonthToken, monthByToken, MONTHS, type MonthToken } from './months.js
 import { toHebrewNumeral } from './numerals.js';
 
 /**
- * A Hebrew date key: how RebbeHub files an event, a letter or a printing
+ * A Hebrew date key: how ChassidusHub files an event, a letter or a printing
  * by date, and how its paths read (`/events/5742-05-10`).
  *
  *   5742          a year (a letter dated only by year)

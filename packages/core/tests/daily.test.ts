@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { dailyLearning, dailyPathOf, dailyShiurim, shiurimWords, spansOf, tanyaStart, type Catalog, type Json } from '@rebbehub/core';
-import type { EntityId, PageText } from '@rebbehub/model';
+import { dailyLearning, dailyPathOf, dailyShiurim, shiurimWords, spansOf, tanyaStart, type Catalog, type Json } from '@chassidushub/core';
+import type { EntityId, PageText } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
 /**
@@ -32,9 +32,9 @@ const chapter = (ref: string, n: number): PageText => ({
 
 beforeAll(async () => {
   ({ catalog } = await freshCatalog());
-  ids.tanya = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'תניא', en: 'Tanya' }, slug: 'tanya', authors: [], genre: 'chassidus', levels: ['part', 'chapter'] }, '/tanya');
+  ids.tanya = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'תניא', en: 'Tanya' }, slug: 'tanya', authors: [], genre: 'chassidus', levels: ['part', 'chapter'] }, '/tanya');
   const tanyaUnit = (ref: string, chapterNo: number, n: number) =>
-    add(catalog, 'shmuly', 'shmuly', 'unit', {
+    add(catalog, 'steward', 'steward', 'unit', {
       work: ids.tanya,
       position: [{ level: 'part', value: '4', label: { he: 'אגרת הקדש', en: 'Part IV; Iggeret HaKodesh' } }, { level: 'chapter', value: String(chapterNo) }],
       order: `4${String(chapterNo).padStart(2, '0')}`,
@@ -45,9 +45,9 @@ beforeAll(async () => {
   ids.ih22 = await tanyaUnit('Part IV; Iggeret HaKodesh 22', 22, 20);
   ids.ih23 = await tanyaUnit('Part IV; Iggeret HaKodesh 23', 23, 10);
 
-  ids.hayomYom = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'היום יום', en: 'Hayom Yom' }, slug: 'hayom-yom', authors: [], genre: 'minhagim', levels: ['day'] }, '/hayom-yom');
+  ids.hayomYom = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'היום יום', en: 'Hayom Yom' }, slug: 'hayom-yom', authors: [], genre: 'minhagim', levels: ['day'] }, '/hayom-yom');
   const day = (part: string, month: string, n: number, title: string) =>
-    add(catalog, 'shmuly', 'shmuly', 'unit', {
+    add(catalog, 'steward', 'steward', 'unit', {
       work: ids.hayomYom,
       position: [{ level: 'day', value: part, label: { he: `<h2>${month}</h2>` } }, { level: 'unit', value: String(n) }],
       order: `${part.padStart(2, '0')}${String(n).padStart(2, '0')}`,
@@ -107,7 +107,7 @@ describe("the day's learning", () => {
   it("names the day's Chumash, Tehillim and the Rambam's three tracks", async () => {
     // 19 Tishrei 5787 is in Sukkos: V'zos Habracha's fourth (a Wednesday); Tehillim 90-96.
     const day = (await dailyLearning(catalog, '2026-09-30'))!;
-    // The catalog here has none of their works, so no pages on RebbeHub yet.
+    // The catalog here has none of their works, so no pages on ChassidusHub yet.
     expect(day.chumash).toEqual({ label: 'וזאת הברכה, רביעי עם פירש״י', ref: 'Deuteronomy 33:18-21', path: null, rashi: null });
     expect(day.tehillim).toEqual([{ text: 'צ-צו.', ref: 'Psalms 90-96', path: null }]);
     expect(day.rambam).toEqual({
@@ -143,18 +143,18 @@ describe("the day's learning", () => {
   });
 
   it('links a shiur to its page once the catalog has it', async () => {
-    const work = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'תהלים', en: 'Psalms' }, slug: 'tehillim', authors: [], genre: 'chassidus', levels: ['chapter'] }, '/tehillim');
-    await add(catalog, 'shmuly', 'shmuly', 'unit', { work, position: [{ level: 'chapter', value: '90' }], order: '090', label: { he: 'צ', en: '90' } } as unknown as Json, '/tehillim/90');
+    const work = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'תהלים', en: 'Psalms' }, slug: 'tehillim', authors: [], genre: 'chassidus', levels: ['chapter'] }, '/tehillim');
+    await add(catalog, 'steward', 'steward', 'unit', { work, position: [{ level: 'chapter', value: '90' }], order: '090', label: { he: 'צ', en: '90' } } as unknown as Json, '/tehillim/90');
     const day = (await dailyLearning(catalog, '2026-09-30'))!;
     expect(day.tehillim[0]!.path).toBe('/tehillim/90');
     expect(day.chumash!.path).toBeNull();
   });
 
   it("gives a shiur's words cut to what is learned, in Hebrew, all pages in one read", async () => {
-    const work = await add(catalog, 'shmuly', 'shmuly', 'work', { title: { he: 'דברים', en: 'Deuteronomy' }, slug: 'deuteronomy', authors: [], genre: 'chassidus', levels: ['chapter'] }, '/chumash/deuteronomy');
+    const work = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'דברים', en: 'Deuteronomy' }, slug: 'deuteronomy', authors: [], genre: 'chassidus', levels: ['chapter'] }, '/chumash/deuteronomy');
     const verses = (language: string) => Array.from({ length: 29 }, (_, i) => ({ id: String(i + 1), n: i + 1, kind: 'verse', text: [{ text: `${language} ${i + 1}` }] }));
     const body = { profile: 'sefaria', versions: [{ id: 'he', language: 'he', segments: verses('he') }, { id: 'en', language: 'en', segments: verses('en') }] };
-    await add(catalog, 'shmuly', 'shmuly', 'unit', { work, position: [{ level: 'chapter', value: '33' }], order: '033', label: { he: 'פרק לג', en: '33' }, body } as unknown as Json, '/chumash/deuteronomy/33');
+    await add(catalog, 'steward', 'steward', 'unit', { work, position: [{ level: 'chapter', value: '33' }], order: '033', label: { he: 'פרק לג', en: '33' }, body } as unknown as Json, '/chumash/deuteronomy/33');
     const [section] = await shiurimWords(catalog, [{ key: 'chumash', label: 'וזאת הברכה, ששי עם פירש״י', refs: ['Deuteronomy 33:27-29'], rashi: true }]);
     // The verses learned and no others, in Hebrew; Rashi's page is not in this catalog, so it is left out.
     expect(section!.parts).toHaveLength(1);

@@ -1,9 +1,9 @@
-import { DAILY_WORKS, hayomYomShiurimOf, type HayomYomShiurim } from '@rebbehub/hebrew';
+import { DAILY_WORKS, hayomYomShiurimOf, type HayomYomShiurim } from '@chassidushub/hebrew';
 import { threadsAbout, type AboutThread } from './about.server.js';
 import { volumeLines, workToc, type VolumeLine, type WorkToc } from './workView.server.js';
 import { eventView, type EventView } from './eventView.server.js';
 import { eventRow } from '../components/EventRow.js';
-import type { Backlink, Cover, Entity, FileInfo, LinkGroup, RebbeHubApi, RelationLink, ScanPages, WorkCover } from './api.js';
+import type { Backlink, Cover, Entity, FileInfo, LinkGroup, ChassidusHubApi, RelationLink, ScanPages, WorkCover } from './api.js';
 import { workVolumes } from './volumes.js';
 
 /**
@@ -62,7 +62,7 @@ export interface ItemView {
 
 /** A text's paragraphs, all of them, a page at a time (a hanacha may have up to 2,000; a sefer's text more). */
 const MAX_SEGMENT_PAGES = 20;
-async function allSegments(api: RebbeHubApi, text: string): Promise<Entity[]> {
+async function allSegments(api: ChassidusHubApi, text: string): Promise<Entity[]> {
   const out: Entity[] = [];
   let after: string | undefined;
   for (let i = 0; i < MAX_SEGMENT_PAGES; i++) {
@@ -80,7 +80,7 @@ const orNone = <T>(promise: Promise<T>, none: T): Promise<T> => promise.catch(()
 const ids = (value: unknown): string[] => (Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : typeof value === 'string' ? [value] : []);
 
 /** What points at an item through one field, the items themselves in their own order, in one request (`/linked`), up to a page of them. */
-async function linkedItems(api: RebbeHubApi, id: string, field: string, type: string): Promise<Entity[]> {
+async function linkedItems(api: ChassidusHubApi, id: string, field: string, type: string): Promise<Entity[]> {
   return (await api.linked(id, { field, type, limit: 500 })).items;
 }
 
@@ -95,7 +95,7 @@ export function sortPrintings(publications: Entity[]): Entity[] {
   return [...publications].sort((a, b) => yearOf(a) - yearOf(b) || ((a.data as { printing?: number }).printing ?? 0) - ((b.data as { printing?: number }).printing ?? 0));
 }
 
-export async function loadItemView(api: RebbeHubApi, entity: Entity, url: URL): Promise<ItemView> {
+export async function loadItemView(api: ChassidusHubApi, entity: Entity, url: URL): Promise<ItemView> {
   const d = entity.data as Record<string, unknown>;
   const view: ItemView = { refs: {}, lists: {}, files: {}, apiBase: api.baseUrl, segments: {}, next: null, backlinks: [], relations: [], pages: {}, linked: [], covers: {}, about: [], keepers: [], talk: 0 };
   // What the conversations about it are matched by: the item, and what is in it.

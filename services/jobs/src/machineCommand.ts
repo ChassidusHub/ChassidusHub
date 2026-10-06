@@ -1,16 +1,16 @@
-import { machineRequests, machineSummary, requestMachineWork, type MachineKind, type MachineRequestStatus } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { machineRequests, machineSummary, requestMachineWork, type MachineKind, type MachineRequestStatus } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { withCatalog, type Context } from './commands.js';
 
 /**
- * `rebbehub machine`: the machines' queue from the command line, the same
+ * `chassidushub machine`: the machines' queue from the command line, the same
  * one the site, the API and the MCP tools fill (core/machineWork.ts).
  *
- *   rebbehub machine                 what waits, what is left, what was done this week
- *   rebbehub machine list [--kind ocr|transcript] [--status waiting|running|done|failed]
- *   rebbehub machine ask --kind ocr|transcript --item <id> --as <account>
+ *   chassidushub machine                 what waits, what is left, what was done this week
+ *   chassidushub machine list [--kind ocr|transcript] [--status waiting|running|done|failed]
+ *   chassidushub machine ask --kind ocr|transcript --item <id> --as <account>
  *
- * The work itself is done by `rebbehub ocr` and `rebbehub transcribe`,
+ * The work itself is done by `chassidushub ocr` and `chassidushub transcribe`,
  * which take the waiting requests first.
  */
 export async function machineCommand(ctx: Context, input: { action?: string; kind?: string; item?: string; as?: string; status?: string; limit?: number }): Promise<void> {
@@ -36,6 +36,6 @@ export async function machineCommand(ctx: Context, input: { action?: string; kin
       ctx.log(`${created ? 'asked' : 'already asked'}: #${request.id} ${request.kind} ${request.item}, ${request.status}${request.position ? `, ${request.position} in line` : ''}`);
       return;
     }
-    throw new Error('rebbehub machine [list | ask]');
+    throw new Error('chassidushub machine [list | ask]');
   });
 }

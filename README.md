@@ -1,6 +1,6 @@
-# RebbeHub
+# ChassidusHub
 
-[![CI](https://github.com/shmuky/RebbeHub/actions/workflows/ci.yml/badge.svg)](https://github.com/shmuky/RebbeHub/actions/workflows/ci.yml)
+[![CI](https://github.com/ChassidusHub/ChassidusHub/actions/workflows/ci.yml/badge.svg)](https://github.com/ChassidusHub/ChassidusHub/actions/workflows/ci.yml)
 [![Licence: AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue.svg)](LICENSE)
 
 **The open, community-built index of Chabad Torah and media.** Every sefer
@@ -26,8 +26,8 @@ reversible, and credited), and **it belongs to the community** (the whole
 catalog and all community text are exported openly, so it can never be
 locked away).
 
-The site is [rebbehub.org](https://rebbehub.org). The full plan is in
-[docs/plans/rebbehub.md](docs/plans/rebbehub.md); what is built so far, and
+The site is [chassidushub.org](https://chassidushub.org). The full plan is in
+[docs/plans/chassidushub.md](docs/plans/chassidushub.md); what is built so far, and
 what comes next: [docs/roadmap.md](docs/roadmap.md); what changed in each
 release: [CHANGELOG.md](CHANGELOG.md).
 
@@ -36,33 +36,33 @@ release: [CHANGELOG.md](CHANGELOG.md).
 Everything is readable without an account, and anything a person can do
 on the site can be done through the API, with the same review.
 
-- **The API**: `https://api.rebbehub.org/v1`, described completely by
-  [`/openapi.json`](https://api.rebbehub.org/openapi.json) (OpenAPI 3.1).
+- **The API**: `https://api.chassidushub.org/v1`, described completely by
+  [`/openapi.json`](https://api.chassidushub.org/openapi.json) (OpenAPI 3.1).
 - **The developer docs**, with an interactive reference:
-  [rebbehub.org/developers](https://rebbehub.org/developers) (the pages are
+  [chassidushub.org/developers](https://chassidushub.org/developers) (the pages are
   [docs/developers/](docs/developers/index.md)).
 - **API tokens**: made and revoked on your account page, read or read and
   write; suggestions sent with one are reviewed like any other.
-- **AI agents**: an MCP server at `https://api.rebbehub.org/mcp` (search,
+- **AI agents**: an MCP server at `https://api.chassidushub.org/mcp` (search,
   items, texts, suggesting a fix) that Claude and other clients connect
   to with OAuth, approved on the site (reading needs no account), and
-  [`/llms.txt`](https://rebbehub.org/llms.txt).
+  [`/llms.txt`](https://chassidushub.org/llms.txt).
 - **A typed TypeScript client**: [packages/client](packages/client).
 - **The whole catalog**, as signed dumps and a git mirror, for anyone to
   keep: [docs/mirrors.md](docs/mirrors.md); webhooks and OAI-PMH too.
 
 ## Models
 
-RebbeHub reads scans and hears recordings with models of its own: a
+ChassidusHub reads scans and hears recordings with models of its own: a
 Likkutei Sichos reader (OCR), a Miram (bold) detector, and a Whisper that
 hears the Rebbe's Yiddish. What each one does, which is in use, and every
 benchmark score: [docs/models.md](docs/models.md), and on the site at
-[rebbehub.org/models](https://rebbehub.org/models). The models are not
+[chassidushub.org/models](https://chassidushub.org/models). The models are not
 released; their descriptions and benchmarks are CC BY-NC-ND 4.0.
 
 ## Helping
 
-- **Found a mistake, or something missing?** [Open a report](https://github.com/shmuky/RebbeHub/issues/new/choose) -
+- **Found a mistake, or something missing?** [Open a report](https://github.com/ChassidusHub/ChassidusHub/issues/new/choose) -
   plain words are enough.
 - **Want to write code?** See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **How decisions are made**, who keeps which set, and the content policy:
@@ -85,29 +85,29 @@ apps/
 services/
   api/         the public API, its OpenAPI document and the MCP server
                (Hono; Cloudflare Workers or Node)
-  jobs/        the `rebbehub` command line and, later, the queue workers
+  jobs/        the `chassidushub` command line and, later, the queue workers
 docs/          the plan, the design, how the pieces fit, and the developer docs
 ```
 
 The site reads only the API; the API is the one place the catalog changes,
 through the engine in `packages/core`, which keeps every version in
 Postgres. Everything open (dumps, the git mirror, OAI-PMH, webhooks) is
-made from that history. The design is in [the plan, section 10](docs/plans/rebbehub.md#10-architecture)
+made from that history. The design is in [the plan, section 10](docs/plans/chassidushub.md#10-architecture)
 and [docs/versioning.md](docs/versioning.md).
 
 ## Running it
 
-You need Node 22. No database server is needed to start: RebbeHub runs on
+You need Node 22. No database server is needed to start: ChassidusHub runs on
 PGlite (Postgres in WebAssembly) until you point it at a real Postgres.
 
 ```sh
 npm install
 npm run check                      # types, tests, schemas
 
-npm run rebbehub -- migrate        # creates .data/pglite
-npm run rebbehub -- account --id me --name "Me" --steward
-npm run rebbehub -- import sichos-kodesh-works --from ../Sichos-Kodesh --approve-as me
-npm run rebbehub -- import sichos-kodesh-occasions --from ../Sichos-Kodesh --approve-as me
+npm run chassidushub -- migrate        # creates .data/pglite
+npm run chassidushub -- account --id me --name "Me" --steward
+npm run chassidushub -- import sichos-kodesh-works --from ../Sichos-Kodesh --approve-as me
+npm run chassidushub -- import sichos-kodesh-occasions --from ../Sichos-Kodesh --approve-as me
 npm run dev:api                    # http://127.0.0.1:8787/v1
 npm run dev:web                    # http://localhost:5173 (reads the API above)
 ```

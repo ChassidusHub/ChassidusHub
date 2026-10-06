@@ -1,6 +1,6 @@
 import { HDate } from '@hebcal/core';
 import { describe, expect, it } from 'vitest';
-import { chitasChumash, chumashPortion, dailyTehillim } from '@rebbehub/hebrew';
+import { chitasChumash, chumashPortion, dailyTehillim } from '@chassidushub/hebrew';
 
 const on = (iso: string) => {
   const [y, m, d] = iso.split('-').map(Number);

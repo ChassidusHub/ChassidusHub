@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import type { LocalName } from '@rebbehub/model';
+import type { LocalName } from '@chassidushub/model';
 import type { Route } from './+types/sets';
 import type { Entity } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';

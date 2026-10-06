@@ -1,4 +1,4 @@
-# Contributing to RebbeHub
+# Contributing to ChassidusHub
 
 Thank you for helping. There are two kinds of contribution, and the first
 needs no technical knowledge at all.
@@ -6,27 +6,27 @@ needs no technical knowledge at all.
 ## 1. Fixing and adding to the catalog
 
 The catalog - every sefer, printing, scan, text, farbrengen and recording -
-is not kept in this repository's files. It lives in RebbeHub's own
+is not kept in this repository's files. It lives in ChassidusHub's own
 versioned database, where every change is a **suggestion** that a **set
 keeper** approves, and every version is kept (see
 [docs/versioning.md](docs/versioning.md)). An export of the whole catalog
 is published after every change for anyone to download.
 
-The easiest way is on [rebbehub.org](https://rebbehub.org) itself: every
+The easiest way is on [chassidushub.org](https://chassidushub.org) itself: every
 page has *Report a problem* (no account needed) and *Suggest a fix*. With
 an account you can edit, add scans and recordings, proofread, and join a
 **project**. Scripts and AI agents can do the same through the API with a
 personal token, and their suggestions are reviewed like anyone's
-([developer docs](https://rebbehub.org/developers)).
+([developer docs](https://chassidushub.org/developers)).
 
 GitHub issues work too, and a keeper turns each into a suggestion and
 credits you:
 
 - **Something is wrong** - a date, a name, a missing page, a bad scan:
-  [open a report](https://github.com/shmuky/RebbeHub/issues/new?template=1-catalog-report.yml).
-- **Something is missing**: [tell us](https://github.com/shmuky/RebbeHub/issues/new?template=2-missing.yml).
-- **A rights question or takedown**: [ask here](https://github.com/shmuky/RebbeHub/issues/new?template=3-rights.yml),
-  or on the site at [/takedown](https://rebbehub.org/takedown).
+  [open a report](https://github.com/ChassidusHub/ChassidusHub/issues/new?template=1-catalog-report.yml).
+- **Something is missing**: [tell us](https://github.com/ChassidusHub/ChassidusHub/issues/new?template=2-missing.yml).
+- **A rights question or takedown**: [ask here](https://github.com/ChassidusHub/ChassidusHub/issues/new?template=3-rights.yml),
+  or on the site at [/takedown](https://chassidushub.org/takedown).
 
 Please never attach files you do not have the right to share, and never
 paste the text of a copyrighted sefer. Link to where it is instead.
@@ -36,17 +36,17 @@ paste the text of a copyrighted sefer. Link to where it is instead.
 ### Getting started
 
 ```sh
-git clone https://github.com/shmuky/RebbeHub && cd RebbeHub
+git clone https://github.com/ChassidusHub/ChassidusHub && cd ChassidusHub
 npm install
 npm run check        # typecheck, tests, schema check - the same as CI
 ```
 
 Node 22 is all you need; tests run on PGlite, an in-process Postgres. To
-test against a Postgres server too, set `REBBEHUB_TEST_DATABASE_URL` to an
+test against a Postgres server too, set `CHASSIDUSHUB_TEST_DATABASE_URL` to an
 **empty** database (the tests drop its `public` schema):
 
 ```sh
-REBBEHUB_TEST_DATABASE_URL=postgres://localhost/rebbehub_test npx vitest run --no-file-parallelism
+CHASSIDUSHUB_TEST_DATABASE_URL=postgres://localhost/chassidushub_test npx vitest run --no-file-parallelism
 ```
 
 ### The flow
@@ -90,7 +90,7 @@ REBBEHUB_TEST_DATABASE_URL=postgres://localhost/rebbehub_test npx vitest run --n
 - **The API is versioned.** Nothing under `/v1` is removed or changes
   meaning; every route is in `services/api/src/openapi.ts`, and a test
   fails when one is not. After changing it, run
-  `npm run generate -w @rebbehub/client` and note the change in
+  `npm run generate -w @chassidushub/client` and note the change in
   [CHANGELOG.md](CHANGELOG.md).
 
 ### Labels

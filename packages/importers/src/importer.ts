@@ -1,8 +1,8 @@
-import { canonicalJson, contentHash, idFromSeed, type EntityId, type EntityType } from '@rebbehub/model';
-import { threeWayMerge, type Catalog, type Json } from '@rebbehub/core';
+import { canonicalJson, contentHash, idFromSeed, type EntityId, type EntityType } from '@chassidushub/model';
+import { threeWayMerge, type Catalog, type Json } from '@chassidushub/core';
 
 /**
- * Bot contributors (docs/plans/rebbehub.md, section 2): an importer reads
+ * Bot contributors (docs/plans/chassidushub.md, section 2): an importer reads
  * a source and says what the catalog should hold; the runner turns that
  * into suggestions from the bot's own account, which a steward or keeper
  * approves like anyone else's. Bots never merge their own work.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chabadLibraryImporter, crawlChabadLibrary, htmlToPageVersion, libraryHtml, type LibraryTree } from '@rebbehub/importers';
+import { chabadLibraryImporter, crawlChabadLibrary, htmlToPageVersion, libraryHtml, type LibraryTree } from '@chassidushub/importers';
 
 /** A little library: a work with two parts, the first with two pages, the second with one. */
 const SITE: Record<number, { type: string; data: unknown }> = {

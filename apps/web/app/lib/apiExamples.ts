@@ -1,7 +1,7 @@
 /**
  * The API reference's operations, read from the API's own OpenAPI
  * document (GET /openapi.json), with an example of each in curl and in
- * TypeScript (@rebbehub/client). Used by /developers/reference and
+ * TypeScript (@chassidushub/client). Used by /developers/reference and
  * /llms-full.txt, so both say what the API says.
  */
 
@@ -102,7 +102,7 @@ const needsToken = (op: ApiOperation) => op.access === 'read' || op.access === '
 
 export function curlExample(op: ApiOperation, base: string, doc?: OpenApiDocument): string {
   const parts = [`curl${op.method === 'GET' ? '' : ` -X ${op.method}`} '${base}${examplePath(op, doc)}'`];
-  if (needsToken(op)) parts.push(`-H "Authorization: Bearer $REBBEHUB_TOKEN"`);
+  if (needsToken(op)) parts.push(`-H "Authorization: Bearer $CHASSIDUSHUB_TOKEN"`);
   if (op.body?.type.includes('json')) {
     parts.push(`-H 'Content-Type: application/json'`);
     parts.push(`-d '${JSON.stringify(exampleOf(op.body.schema, '', doc)).replace(/'/g, "'\\''")}'`);
@@ -116,7 +116,7 @@ export function typescriptExample(op: ApiOperation, doc?: OpenApiDocument): stri
   if (op.body?.type.includes('json')) input.body = exampleOf(op.body.schema, '', doc);
   else if (op.body) Object.assign(input, { body: '<the file>', contentType: 'application/pdf' });
   const args = Object.keys(input).length ? JSON.stringify(input, null, 2).replace(/"([A-Za-z_$][\w$]*)":/g, '$1:').replace('"<the file>"', 'file') : '';
-  const setup = `import { RebbeHub } from '@rebbehub/client';\n\nconst rh = new RebbeHub(${needsToken(op) ? '{ token: process.env.REBBEHUB_TOKEN }' : ''});\n`;
+  const setup = `import { ChassidusHub } from '@chassidushub/client';\n\nconst rh = new ChassidusHub(${needsToken(op) ? '{ token: process.env.CHASSIDUSHUB_TOKEN }' : ''});\n`;
   if (op.paged) return `${setup}for await (const item of rh.all('${op.id}', ${args || '{}'})) {\n  console.log(item);\n}`;
   return `${setup}const answer = await rh.${op.id}(${args});`;
 }

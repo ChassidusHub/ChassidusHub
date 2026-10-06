@@ -1,14 +1,14 @@
-import type { DbCost } from '@rebbehub/db';
+import type { DbCost } from '@chassidushub/db';
 import { createRequestHandler, type ServerBuild } from 'react-router';
-import { RebbeHubApi } from '../app/lib/api.js';
+import { ChassidusHubApi } from '../app/lib/api.js';
 import type { ShowcaseStore } from '../app/lib/showcase.js';
 import { hasSession, withCachePolicy } from './cachePolicy.js';
 
 /** The header the lock's key goes in (services/api/src/lock.ts). */
-const LOCK_HEADER = 'x-rebbehub-key';
+const LOCK_HEADER = 'x-chassidushub-key';
 
 export interface SiteOptions {
-  /** The public API, e.g. https://api.rebbehub.org */
+  /** The public API, e.g. https://api.chassidushub.org */
   apiUrl: string;
   /** The site's own address, for canonical links and sitemaps. */
   siteUrl: string;
@@ -22,7 +22,7 @@ export interface SiteOptions {
 
 /**
  * A page's own reader: the API answering the page's reads inside the
- * site's Worker, on one connection (`readerFor` in @rebbehub/api). What it
+ * site's Worker, on one connection (`readerFor` in @chassidushub/api). What it
  * does not answer goes the way `fetch` goes; what it answered cost the
  * database `cost`, counted whole.
  */
@@ -137,13 +137,13 @@ export function createSiteHandler(build: ServerBuild, options: SiteOptions, mode
   const handle = createRequestHandler(build, mode);
   const base = options.apiUrl.replace(/\/$/, '');
   const reach: Send = options.fetch ?? ((input, init) => fetch(input, init));
-  // Showcases are made by whoever opened the lock: while RebbeHub is private, its owner.
+  // Showcases are made by whoever opened the lock: while ChassidusHub is private, its owner.
   const showcases = (key?: string) => (options.showcases ? { store: options.showcases, owner: Boolean(key) || options.anyoneShowcases === true } : undefined);
   return async (request: Request, reader?: PageReader, key?: string) => {
     const started = performance.now();
     // The request's own count of what it asks the API, so its answer can say what it cost.
     const meter = new Meter();
-    // While RebbeHub is private, the visitor's key goes with every question to the API (services/api/src/lock.ts).
+    // While ChassidusHub is private, the visitor's key goes with every question to the API (services/api/src/lock.ts).
     const reachWithKey: Send = key
       ? (input, init) => {
           const headers = new Headers(init?.headers);
@@ -152,9 +152,9 @@ export function createSiteHandler(build: ServerBuild, options: SiteOptions, mode
         }
       : reach;
     const send = meter.wrap(reachWithKey, reader);
-    const api = new RebbeHubApi(base, send);
+    const api = new ChassidusHubApi(base, send);
     // Someone signed in may have just changed what they are looking at: their pages ask the API past its edge cache.
-    const fresh = new RebbeHubApi(base, (input, init) => {
+    const fresh = new ChassidusHubApi(base, (input, init) => {
       const headers = new Headers(init?.headers);
       headers.set('Cache-Control', 'no-cache');
       return send(input, { ...init, headers });

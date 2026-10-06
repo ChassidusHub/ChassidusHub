@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { knownDriveFile, type Catalog } from '@rebbehub/core';
-import { MIGRATIONS } from '@rebbehub/db';
+import { knownDriveFile, type Catalog } from '@chassidushub/core';
+import { MIGRATIONS } from '@chassidushub/db';
 import {
   driveLibraryImporter,
   idForKey,
@@ -13,12 +13,12 @@ import {
   type DriveFolder,
   type ImportRecord,
   type Importer,
-} from '@rebbehub/importers';
+} from '@chassidushub/importers';
 import { RELINK_BOT, RELINK_JEM_BOT, relinkDriveLinks, relinkJemLinks } from '../src/relinkDrive.js';
 import { freshCatalog } from '../../../packages/core/tests/helpers.js';
 
 /**
- * `rebbehub relink-drive`: the media proxy links older imports stored
+ * `chassidushub relink-drive`: the media proxy links older imports stored
  * become the files' own Drive links, as reviewed bot Suggestions.
  */
 
@@ -65,12 +65,12 @@ function legacy(importer: Importer): Importer {
 let catalog: Catalog;
 beforeEach(async () => {
   ({ catalog } = await freshCatalog());
-  await runImport(catalog, legacy(sichosKodeshOccasionsImporter(entries())), { approveAs: 'shmuly' });
-  await runImport(catalog, legacy(driveLibraryImporter(library)), { approveAs: 'shmuly' });
+  await runImport(catalog, legacy(sichosKodeshOccasionsImporter(entries())), { approveAs: 'steward' });
+  await runImport(catalog, legacy(driveLibraryImporter(library)), { approveAs: 'steward' });
 });
 
 const approveAll = async (ids: number[]) => {
-  for (const id of ids) await catalog.merge(id, 'shmuly');
+  for (const id of ids) await catalog.merge(id, 'steward');
 };
 
 describe('relinkDrive', () => {
@@ -78,7 +78,7 @@ describe('relinkDrive', () => {
     const out = relinkDrive({
       links: [
         { url: pdfUrl({ driveFileId: '1tk7tznpZCW0cyFVuNPcwYZMaqzSIC9oO', resourceKey: '0-Xqz7bN0vTC1CZxMnwXcPeg' }), origin: 'https://drive.google.com/open?id=1tk7tznpZCW0cyFVuNPcwYZMaqzSIC9oO' },
-        { url: 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/AR1.mp3' },
+        { url: 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/AR1.mp3' },
       ],
       editions: [
         { label: 'reader', url: pdfUrl({ driveFileId: 'otzrosfile01' }) },
@@ -89,7 +89,7 @@ describe('relinkDrive', () => {
     expect(out?.data).toEqual({
       links: [
         { url: 'https://drive.google.com/file/d/1tk7tznpZCW0cyFVuNPcwYZMaqzSIC9oO/view?resourcekey=0-Xqz7bN0vTC1CZxMnwXcPeg', origin: 'https://drive.google.com/open?id=1tk7tznpZCW0cyFVuNPcwYZMaqzSIC9oO' },
-        { url: 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/AR1.mp3' }, // JEM's audio is not on Drive
+        { url: 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/AR1.mp3' }, // JEM's audio is not on Drive
       ],
       editions: [{ label: 'drive', url: 'https://drive.google.com/file/d/otzrosfile01/view' }],
     });
@@ -97,7 +97,7 @@ describe('relinkDrive', () => {
   });
 });
 
-describe('rebbehub relink-drive', () => {
+describe('chassidushub relink-drive', () => {
   it('counts on a dry run and changes nothing', async () => {
     const head = await catalog.head();
     const result = await relinkDriveLinks(catalog, { dryRun: true });
@@ -157,20 +157,20 @@ const APP_PLAYER = 'https://ashreinu.app/#/player/parentEvent~75_event~76';
 
 describe('relinkJem', () => {
   it("turns the older links to JEM's player into the Ashreinu app's own, and leaves the audio on the proxy", () => {
-    const audio = 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/AR1.mp3';
+    const audio = 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/AR1.mp3';
     expect(relinkJem({ url: audio, sources: [{ source: 'jem', url: OLD_PLAYER }] })).toEqual({ links: 1, data: { url: audio, sources: [{ source: 'jem', url: APP_PLAYER }] } });
     expect(relinkJem({ url: audio, sources: [{ source: 'jem', url: APP_PLAYER }] })).toBeNull();
   });
 });
 
-describe('rebbehub relink-jem', () => {
+describe('chassidushub relink-jem', () => {
   it('sends the older player links for review, once', async () => {
     const id = await idForKey('mafteiach-recording:11113014/1');
     const before = (await catalog.get(id))!.data as { url: string };
-    const cs = await catalog.createChangeset('shmuly', { title: 'older JEM link' });
-    await catalog.putRevision(cs.id, 'shmuly', { id, type: 'recording', data: { ...before, sources: [{ source: 'jem', sourceId: 'AR0016657.mp3', url: OLD_PLAYER }] } });
-    await catalog.submit(cs.id, 'shmuly');
-    await catalog.merge(cs.id, 'shmuly');
+    const cs = await catalog.createChangeset('steward', { title: 'older JEM link' });
+    await catalog.putRevision(cs.id, 'steward', { id, type: 'recording', data: { ...before, sources: [{ source: 'jem', sourceId: 'AR0016657.mp3', url: OLD_PLAYER }] } });
+    await catalog.submit(cs.id, 'steward');
+    await catalog.merge(cs.id, 'steward');
 
     expect(await relinkJemLinks(catalog, { dryRun: true })).toMatchObject({ items: 1, links: 1, byType: { recording: 1 }, suggestions: [] });
     const result = await relinkJemLinks(catalog);

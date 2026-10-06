@@ -14,15 +14,15 @@ import {
   type CoverSource,
   type CoverToFetch,
   type GreyPage,
-} from '@rebbehub/core';
-import type { Db } from '@rebbehub/db';
-import { defaultRightsState, keepsPreservationCopy, mayServe, type CatalogSourceId, type EntityId } from '@rebbehub/model';
-import { pageTexts, renderPageImages, renderPages, type EncodedImage } from '@rebbehub/pdf-fix';
+} from '@chassidushub/core';
+import type { Db } from '@chassidushub/db';
+import { defaultRightsState, keepsPreservationCopy, mayServe, type CatalogSourceId, type EntityId } from '@chassidushub/model';
+import { pageTexts, renderPageImages, renderPages, type EncodedImage } from '@chassidushub/pdf-fix';
 import { downloadDrive } from './pageFixes.js';
 import type { ObjectStore } from './readingCopies.js';
 
 /**
- * `rebbehub covers`: each sefer's cover from its title page (core/covers.ts
+ * `chassidushub covers`: each sefer's cover from its title page (core/covers.ts
  * says how the page is found). For every sefer with a PDF and no cover
  * yet - or whose keeper chose another page since - the first pages of its
  * best PDF are drawn small and read (the PDF's own words, or the machine
@@ -31,7 +31,7 @@ import type { ObjectStore } from './readingCopies.js';
  * by sha256, recorded as derivations of the PDF. A page a keeper chose is
  * drawn as it is, and is the person's choice from then on.
  *
- * The best PDF is one RebbeHub serves. A sefer whose PDFs are only linked
+ * The best PDF is one ChassidusHub serves. A sefer whose PDFs are only linked
  * (the Otzros library on Drive, a printing's scan on HebrewBooks) gets its
  * cover from one of those: the PDF is fetched from its link, checked
  * against its sha256, and kept in the preservation bucket (never served),
@@ -84,7 +84,7 @@ export async function downloadLinked(url: string, fetchFn: typeof fetch = fetch)
     const resourceKey = new URL(url).searchParams.get('resourcekey');
     return downloadDrive({ driveFileId: drive[1]!, ...(resourceKey ? { resourceKey } : {}) }, fetchFn);
   }
-  const response = await fetchFn(url, { headers: { 'user-agent': 'RebbeHub covers (https://rebbehub.org)' } });
+  const response = await fetchFn(url, { headers: { 'user-agent': 'ChassidusHub covers (https://chassidushub.org)' } });
   if (!response.ok) throw new Error(`${url}: ${response.status}`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   // A site that will not give the file answers with a page, not an error.

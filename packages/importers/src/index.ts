@@ -13,7 +13,7 @@ export {
 } from './sichosKodeshOccasions.js';
 export { driveLink, proxiedDriveFile, relinkDrive, type DriveFileRef } from './driveLinks.js';
 export { articleOf, htmlToPageVersion, sourceFooter, type HtmlToPageOptions, type SourceFooter } from './htmlToPageText.js';
-export { REBBEHUB_API, textUrl, fetchTexts } from './sichosKodeshTexts.js';
+export { CHASSIDUSHUB_API, textUrl, fetchTexts } from './sichosKodeshTexts.js';
 export { MAFTEIACH, driveFileId, mafteiachBody, mafteiachLinks, mafteiachPage, readMafteiachCrawl, type MafteiachRecord } from './mafteiachIndex.js';
 export { CHABAD_LIBRARY, LIBRARY_CREDIT, chabadLibraryImporter, crawlChabadLibrary, libraryHtml, libraryWorks, readChabadLibrary, renderLibraryPage, type LibraryTree } from './chabadLibrary.js';
 export { TYPED_VOLUMES, likkuteiSichosImporter, readLikkuteiSichos, type LikkuteiSichosItem } from './likkuteiSichos.js';
@@ -50,4 +50,4 @@ export {
   type SefariaVersionInfo,
 } from './sefaria.js';
 export { archiveImporter, archiveSourceRef, archiveTarget, readArchiveIndex, type ArchiveCommit, type ArchiveGap, type ArchiveIndex, type ArchiveRef } from './archive.js';
-export { rebbehubSetsImporter } from './rebbehubSets.js';
+export { chassidushubSetsImporter } from './chassidushubSets.js';

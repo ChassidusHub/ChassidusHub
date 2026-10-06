@@ -1,18 +1,18 @@
-# RebbeHub for developers
+# ChassidusHub for developers
 
-RebbeHub is the open, community-edited index of Chabad Torah and media:
+ChassidusHub is the open, community-edited index of Chabad Torah and media:
 every sefer and printing, every sicha and letter, every farbrengen and
 recording, the scans and the texts of each. All of it is open to read
 through the API, with no account and no key, and everything people can
 do on the site - suggest a fix, fix a line, sync a paragraph - a script
 or an AI agent can do through the API too, under the same review.
 
-- **API**: `https://api.rebbehub.org/v1`, described in full by
-  [OpenAPI 3.1](https://api.rebbehub.org/openapi.json) and the
+- **API**: `https://api.chassidushub.org/v1`, described in full by
+  [OpenAPI 3.1](https://api.chassidushub.org/openapi.json) and the
   [interactive reference](/developers/reference).
 - **For AI agents**: [`/llms.txt`](/llms.txt) and an
-  [MCP server](agents.md) at `https://api.rebbehub.org/mcp`.
-- **TypeScript**: [`@rebbehub/client`](client.md), a small typed client
+  [MCP server](agents.md) at `https://api.chassidushub.org/mcp`.
+- **TypeScript**: [`@chassidushub/client`](client.md), a small typed client
   generated from the OpenAPI document.
 - **Everything at once**: weekly [signed dumps](../mirrors.md) (SQLite,
   JSON Lines, Parquet), a git mirror, [webhooks](webhooks.md) and
@@ -48,6 +48,6 @@ or an AI agent can do through the API too, under the same review.
   listed but withheld (`withheld` says why), everywhere: the API, the
   dumps, the MCP server.
 
-The code is [AGPL-3.0](https://github.com/shmuky/RebbeHub/blob/main/LICENSE);
+The code is [AGPL-3.0](https://github.com/ChassidusHub/ChassidusHub/blob/main/LICENSE);
 catalog facts are CC0; community text is CC BY-SA 4.0; texts from other
 sources keep their own licence (each text's `licence`).

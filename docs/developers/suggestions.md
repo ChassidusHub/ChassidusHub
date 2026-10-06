@@ -7,7 +7,7 @@ schema, its references, its dates, duplicates), then waits for the
 **keepers** of the item's sets to **approve** it or **send it back** with a
 note; every version stays in the history, and any merge can be undone.
 In an *open* set, a trusted person's line fixes go live at once and are
-reviewed after ([governance](https://github.com/shmuky/RebbeHub/blob/main/GOVERNANCE.md)).
+reviewed after ([governance](https://github.com/ChassidusHub/ChassidusHub/blob/main/GOVERNANCE.md)).
 
 All of this needs a [token](auth.md) with the `write` scope.
 
@@ -16,8 +16,8 @@ All of this needs a [token](auth.md) with the `write` scope.
 Send the item's whole new `data` (read it first; change what is wrong):
 
 ```sh
-curl -X POST https://api.rebbehub.org/v1/suggestions/quick \
-  -H "Authorization: Bearer $REBBEHUB_TOKEN" -H 'Content-Type: application/json' \
+curl -X POST https://api.chassidushub.org/v1/suggestions/quick \
+  -H "Authorization: Bearer $CHASSIDUSHUB_TOKEN" -H 'Content-Type: application/json' \
   -d '{ "entityId": "rh-7k2m9q4d", "title": "Fix the date", "note": "As printed in Sichos Kodesh 5742, vol. 2, p. 45",
         "data": { "kind": "farbrengen", "date": "5742-05-10", "title": { "he": "יו״ד שבט תשמ״ב" } } }'
 ```
@@ -27,7 +27,7 @@ const item = await rh.getItem({ id: 'rh-7k2m9q4d' });
 const suggestion = await rh.suggestFix({
   body: { entityId: item.id, data: { ...item.data, date: '5742-05-10' }, title: 'Fix the date', note: 'As printed in Sichos Kodesh 5742, vol. 2, p. 45' },
 });
-// { id: 812, status: 'open', checks: [...] }  - waiting for review at https://rebbehub.org/review?s=812
+// { id: 812, status: 'open', checks: [...] }  - waiting for review at https://chassidushub.org/review?s=812
 ```
 
 Say where it comes from in `note`: the keepers read it.
@@ -118,4 +118,4 @@ the sets it touches review it, and stewards review changes to sets.
   output you send (your own OCR, a machine translation) must say so
   (`engine`, `machine`), and is marked until people check it.
 - Big imports are importers, not suggestions by hand: talk to the
-  stewards first ([CONTRIBUTING](https://github.com/shmuky/RebbeHub/blob/main/CONTRIBUTING.md)).
+  stewards first ([CONTRIBUTING](https://github.com/ChassidusHub/ChassidusHub/blob/main/CONTRIBUTING.md)).

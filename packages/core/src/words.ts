@@ -1,4 +1,4 @@
-import { normalizeSearchText, unfinal } from '@rebbehub/hebrew';
+import { normalizeSearchText, unfinal } from '@chassidushub/hebrew';
 
 /**
  * Words, and which words of two texts are the same (the plan, section 9:

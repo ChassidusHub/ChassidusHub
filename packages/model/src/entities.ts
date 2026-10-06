@@ -1,4 +1,4 @@
-import type { DateKey } from '@rebbehub/hebrew';
+import type { DateKey } from '@chassidushub/hebrew';
 import type { RightsState } from './rights.js';
 import type { EntityId } from './ids.js';
 import type { PageText } from './pageText.js';
@@ -6,8 +6,8 @@ import type { WorkShaar } from './shaar.js';
 import type { EditionKind, Genre, Licence, SourceId } from './works.js';
 
 /**
- * Every kind of item RebbeHub holds, as the data of one revision of one
- * entity (docs/plans/rebbehub.md, section 4). The JSON Schemas in
+ * Every kind of item ChassidusHub holds, as the data of one revision of one
+ * entity (docs/plans/chassidushub.md, section 4). The JSON Schemas in
  * schemas/ say the same thing for the store, which validates every
  * suggestion against them; a test keeps the two in step.
  *
@@ -76,7 +76,7 @@ export interface LocalName {
 export type Language = 'he' | 'en' | 'yi' | 'ar' | 'ru' | 'fr' | 'es';
 
 /**
- * Where RebbeHub learned something: the Sichos-Kodesh sources, plus the
+ * Where ChassidusHub learned something: the Sichos-Kodesh sources, plus the
  * places people and bots bring things from.
  */
 export type CatalogSourceId = SourceId | 'contribution' | 'nli' | 'kehot' | 'chabad-org' | 'youtube' | 'archive-org' | 'otzar-hachochma' | 'library-of-agudas-chassidei-chabad' | 'other';
@@ -136,7 +136,7 @@ export interface BodySource {
   via?: string;
   sourceId?: string;
   url?: string;
-  /** RebbeHub's own copy of the text as the source gave it (`/v1/texts/<sha256>`), kept on RebbeHub's storage. */
+  /** ChassidusHub's own copy of the text as the source gave it (`/v1/texts/<sha256>`), kept on ChassidusHub's storage. */
   copy?: string;
   licence?: string;
   credit?: string;
@@ -225,7 +225,7 @@ export interface SchemaData {
 
 // ---------------------------------------------------------------- content
 
-/** One source's copy of a work, as Sichos-Kodesh lists it (`WorkSource`), with RebbeHub's wider source ids. */
+/** One source's copy of a work, as Sichos-Kodesh lists it (`WorkSource`), with ChassidusHub's wider source ids. */
 export interface WorkSourceData {
   source: CatalogSourceId;
   sourceId: string;
@@ -249,7 +249,7 @@ export interface WorkData extends CommonFields {
   /**
    * The page a person chose as its cover: the title page (shaar) of one of
    * its PDFs. Unset, the jobs choose one and label it as the machine's
-   * choice (`rebbehub covers`); set through a suggestion, the person's
+   * choice (`chassidushub covers`); set through a suggestion, the person's
    * choice wins.
    */
   cover?: CoverChoice;
@@ -302,7 +302,7 @@ export interface PositionStep {
   label?: LocalName;
 }
 
-/** One source's copy of one unit (Sichos-Kodesh's `Edition`, with provenance of RebbeHub's own). */
+/** One source's copy of one unit (Sichos-Kodesh's `Edition`, with provenance of ChassidusHub's own). */
 export interface EditionData {
   source: CatalogSourceId;
   sourceId: string;
@@ -345,7 +345,7 @@ export interface EventData extends CommonFields {
   people?: EntityId[];
   /** Order among events of the same day (a Shabbos farbrengen before a motzei Shabbos one). */
   order?: number;
-  /** Its documents kept where they are, hanachos first: RebbeHub links to them and holds no copy (docs/rights.md). */
+  /** Its documents kept where they are, hanachos first: ChassidusHub links to them and holds no copy (docs/rights.md). */
   links?: EventLink[];
 }
 
@@ -520,9 +520,9 @@ export interface VideoLink {
 export interface RecordingData extends CommonFields {
   event?: EntityId;
   title: LocalName;
-  /** The audio file, by sha256, when RebbeHub holds it. */
+  /** The audio file, by sha256, when ChassidusHub holds it. */
   file?: string;
-  /** Or where it is heard, when RebbeHub links rather than holds it. */
+  /** Or where it is heard, when ChassidusHub links rather than holds it. */
   url?: string;
   durationMs?: number;
   /** Which part of the event, when it is recorded in parts. */

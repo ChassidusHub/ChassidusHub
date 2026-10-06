@@ -1,11 +1,11 @@
-import { allSegments, inlineText, isPageText, tidyInline, type MachineOrigin, type PageInline, type PageMark, type PageSegment, type PageText } from '@rebbehub/model';
+import { allSegments, inlineText, isPageText, tidyInline, type MachineOrigin, type PageInline, type PageMark, type PageSegment, type PageText } from '@chassidushub/model';
 
 /**
  * A page our reader read (the Likkutei Sichos OCR model), for a showcase:
  * the text file the reader writes for a sicha, made into the site's own
- * words (PageText) so it draws as every text on RebbeHub does.
+ * words (PageText) so it draws as every text on ChassidusHub does.
  *
- * The reader's file, as RebbeHub-OCR's assemble step writes it:
+ * The reader's file, as ChassidusHub-OCR's assemble step writes it:
  *
  *   title: …                 (optional, first lines: the sicha's name,
  *   scan: https://…           its scan's address)
@@ -22,7 +22,7 @@ import { allSegments, inlineText, isPageText, tidyInline, type MachineOrigin, ty
 
 export interface Reading {
   title: string;
-  /** Where its scan is (a Drive or RebbeHub address), as the file names it; the showcase keeps its own copy of the address. */
+  /** Where its scan is (a Drive or ChassidusHub address), as the file names it; the showcase keeps its own copy of the address. */
   scan: string | null;
   body: PageText;
 }
@@ -103,7 +103,7 @@ export function readingOf(file: string, fallbackTitle = ''): Reading | null {
     segments.push({ id: `p${++n}`, kind: 'paragraph', text: readingInline(line) });
   }
   if (!segments.length) return null;
-  const origin: MachineOrigin = { by: 'ocr:rebbehub-kraken-ls-v1', checked: false };
+  const origin: MachineOrigin = { by: 'ocr:chassidushub-kraken-ls-v1', checked: false };
   return {
     title: title || fallbackTitle,
     scan,
@@ -112,11 +112,11 @@ export function readingOf(file: string, fallbackTitle = ''): Reading | null {
 }
 
 /**
- * The reader's own output file (RebbeHub-OCR's model-output-format.md:
+ * The reader's own output file (ChassidusHub-OCR's model-output-format.md:
  * `{ sicha, pageText, pages, layout }`), or its pageText alone, as a
  * reading. It keeps the print's line ends, so the showcase can set the
  * sicha as the printed page. Only the words are kept, made tidy (links
- * that go nowhere RebbeHub allows are dropped); the per-word layout is not.
+ * that go nowhere ChassidusHub allows are dropped); the per-word layout is not.
  */
 export function readingOfJson(file: string, fallbackTitle = ''): Reading | null {
   let parsed: unknown;
@@ -153,7 +153,7 @@ export function readingOfJson(file: string, fallbackTitle = ''): Reading | null 
           language: version.language === 'yi' ? 'yi' : 'he',
           segments,
           notes: (version.notes ?? []).map(clean),
-          origin: { by: 'ocr:rebbehub-kraken-ls-v1', checked: false },
+          origin: { by: 'ocr:chassidushub-kraken-ls-v1', checked: false },
         },
       ],
     },

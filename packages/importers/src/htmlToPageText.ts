@@ -1,10 +1,10 @@
-import { parseHebrewNumeral } from '@rebbehub/hebrew';
-import { PAGE_ID_PATTERN, tidyInline, type Language, type PageInline, type PageMark, type PageSegment, type PageVersion } from '@rebbehub/model';
+import { parseHebrewNumeral } from '@chassidushub/hebrew';
+import { PAGE_ID_PATTERN, tidyInline, type Language, type PageInline, type PageMark, type PageSegment, type PageVersion } from '@chassidushub/model';
 
 /**
- * The HTML texts Sichos-Kodesh publishes, and the Sefaria texts RebbeHub
+ * The HTML texts Sichos-Kodesh publishes, and the Sefaria texts ChassidusHub
  * keeps in the same form, read into a page's structured words
- * (@rebbehub/model's pageText.ts). The form is a fixed handful of tags
+ * (@chassidushub/model's pageText.ts). The form is a fixed handful of tags
  * (Sichos-Kodesh's packages/app-core textObject.ts):
  *
  *   <article dir lang data-...>   <h1> the title   <h2>-<h6>   <p>   <p class="end">

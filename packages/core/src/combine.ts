@@ -1,5 +1,5 @@
-import { one } from '@rebbehub/db';
-import type { EntityId, EntityType } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import type { EntityId, EntityType } from '@chassidushub/model';
 import type { Catalog, ChangesetRow } from './catalog.js';
 import { badState, forbidden, invalid } from './errors.js';
 import { resolveConflicts, threeWayMerge, type Json } from './merge.js';

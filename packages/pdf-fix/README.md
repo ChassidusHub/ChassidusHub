@@ -1,4 +1,4 @@
-# @rebbehub/pdf-fix
+# @chassidushub/pdf-fix
 
 A scan's **reading copy**: each page turned level, its text moved to the
 middle with even margins and the same enlargement on every page, and cut
@@ -25,9 +25,9 @@ original page to the copy - so a line found on the original (OCR, search
 hits) is drawn in the right place on the copy. `PDF_FIX_ENCODER`
 (`pdf-fix@1`) goes up whenever a copy would come out differently.
 
-Used by `rebbehub reading-copies` (services/jobs); see docs/operations.md.
+Used by `chassidushub reading-copies` (services/jobs); see docs/operations.md.
 
-A printed book RebbeHub only links to gets less (`inspect.ts`,
+A printed book ChassidusHub only links to gets less (`inspect.ts`,
 `level.ts`). Its margins, running heads and rules are the publisher's, so
 nothing is centred, enlarged or cut:
 - `inspectPdf` tells a book set in type from a scan without drawing it,

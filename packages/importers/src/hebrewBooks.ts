@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parseHebrewYear } from '@rebbehub/hebrew';
-import type { Genre, LocalName } from '@rebbehub/model';
+import { parseHebrewYear } from '@chassidushub/hebrew';
+import type { Genre, LocalName } from '@chassidushub/model';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { GENRE_NAMES } from './sichosKodeshWorks.js';
 
@@ -13,10 +13,10 @@ import { GENRE_NAMES } from './sichosKodeshWorks.js';
  * Sichos-Kodesh's packages/hebrewbooks-index reads it from Otzaria's public
  * HebrewBooks catalog and packages/works places each series with its sefer
  * (the shelf.json its works catalog carries). Each book becomes a
- * publication on RebbeHub with its HebrewBooks id, linking to its page
+ * publication on ChassidusHub with its HebrewBooks id, linking to its page
  * there; the scans are served from HebrewBooks only (docs/rights.md:
  * HebrewBooks is link-only whatever else is said). The importer copies
- * nothing; `rebbehub covers` later keeps a private copy of a scan it draws
+ * nothing; `chassidushub covers` later keeps a private copy of a scan it draws
  * a cover from.
  *
  * A series Sichos-Kodesh placed with a sefer it knows is printings of that
@@ -26,7 +26,7 @@ import { GENRE_NAMES } from './sichosKodeshWorks.js';
  */
 
 export const HEBREWBOOKS = 'https://hebrewbooks.org';
-export const HEBREWBOOKS_SET = { key: 'rebbehub-set:hebrewbooks', path: '/sets/hebrewbooks', name: { he: 'היברו בוקס: מדף חב״ד', en: 'HebrewBooks: the Chabad shelf' } } as const;
+export const HEBREWBOOKS_SET = { key: 'chassidushub-set:hebrewbooks', path: '/sets/hebrewbooks', name: { he: 'היברו בוקס: מדף חב״ד', en: 'HebrewBooks: the Chabad shelf' } } as const;
 
 /** One scan on the shelf: facts and a link, never the scan (Sichos-Kodesh's `ShelfScan`). */
 export interface ShelfScan {
@@ -152,7 +152,7 @@ export function hebrewBooksImporter(input: HebrewBooksInput | (() => Promise<Heb
                 authors: author.authorId && authors.has(author.authorId) ? [ref(`sichos-kodesh-author:${author.authorId}`)] : [],
                 genre,
                 levels: ['volume'],
-                sets: [ref(`rebbehub-set:${genre}`), ref(HEBREWBOOKS_SET.key)],
+                sets: [ref(`chassidushub-set:${genre}`), ref(HEBREWBOOKS_SET.key)],
                 sourceCopies: [{ source: 'hebrewbooks', sourceId: series.title, kind: 'scan', licence: 'site-terms' }],
               },
             });
@@ -183,7 +183,7 @@ export function hebrewBooksImporter(input: HebrewBooksInput | (() => Promise<Heb
         }
       }
       // The genre sets, as the works importer makes them (the same records: nothing changes if they are there).
-      for (const genre of [...genres].sort()) yield { key: `rebbehub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre], slug: genre, policy: 'moderated', keepers: [] } };
+      for (const genre of [...genres].sort()) yield { key: `chassidushub-set:${genre}`, type: 'set', path: `/sets/${genre}`, data: { name: GENRE_NAMES[genre], slug: genre, policy: 'moderated', keepers: [] } };
       yield* works;
       yield* publications;
     },

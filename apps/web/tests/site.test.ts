@@ -3,9 +3,9 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import { Catalog, createPerson, openIssue, registerFile, setUsername } from '@rebbehub/core';
-import { measured } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { Catalog, createPerson, openIssue, registerFile, setUsername } from '@chassidushub/core';
+import { measured } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { ITEM_PAGE, PUBLIC_PAGE, crawlBudget, crawlLater, edgeCacheable, forEdge } from '../server/cachePolicy.js';
@@ -18,7 +18,7 @@ import { createSiteHandler } from '../server/handler.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 let handle: ReturnType<typeof createSiteHandler>;
 let api: ReturnType<typeof createApp>;
 const ids: Record<string, EntityId> = {};
@@ -30,7 +30,7 @@ beforeAll(async () => {
 
   const { catalog, set } = await freshCatalog();
   ids.set = set;
-  ids.author = await add(catalog, 'shmuly', 'shmuly', 'author', { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, sets: [set] }, '/authors/the-rebbe');
+  ids.author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, sets: [set] }, '/authors/the-rebbe');
   ids.work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר לדוגמה', en: 'Sample Sefer' }, slug: 'sample', authors: [ids.author], genre: 'sichos', levels: ['volume', 'sicha'], sets: [set], sourceCopies: [{ source: 'sefaria', sourceId: 'Sample', kind: 'text', licence: 'cc-by-nc', language: 'he' }] }, '/sample');
   ids.event = await add(catalog, 'mendy', 'keeper', 'event', { kind: 'farbrengen', title: { he: 'התוועדות לדוגמה', en: 'Sample farbrengen' }, date: '5742-05-10', sets: [set] }, '/events/5742-05-10');
   ids.unit = await add(catalog, 'mendy', 'keeper', 'unit', {
@@ -69,7 +69,7 @@ beforeAll(async () => {
 
   // The API as on Workers: its database counted, so each answer says what it cost.
   const db = measured(catalog.db);
-  api = createApp({ catalog: new Catalog(db), cost: () => db.cost, reportSalt: 'test', filesBaseUrl: 'https://files.rebbehub.test' });
+  api = createApp({ catalog: new Catalog(db), cost: () => db.cost, reportSalt: 'test', filesBaseUrl: 'https://files.chassidushub.test' });
   handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(api.request(input, init)) });
 }, 120_000);
 
@@ -123,7 +123,7 @@ describe('the public site', () => {
     expect(page.html).toContain('התוועדות לדוגמה');
     // The parts play in the site's player; the served file is its source.
     expect(page.html).toContain('class="part-list"');
-    expect(page.html).toContain(`https://files.rebbehub.test/objects/${'a'.repeat(64)}`);
+    expect(page.html).toContain(`https://files.chassidushub.test/objects/${'a'.repeat(64)}`);
     expect(page.html).toContain('https://www.youtube.com/watch?v=x&amp;t=60');
     expect(page.html).toContain('1:02:03');
     expect(page.html).toContain('href="/sample/1/1"');
@@ -135,8 +135,8 @@ describe('the public site', () => {
     const page = await get('/teshuros/5784-cohen-levi');
     expect(page.html).toContain('כהן – לוי');
     // Read in the site's own reader; the file itself one tap away.
-    expect(page.html).toContain(`href="https://files.rebbehub.test/objects/${'b'.repeat(64)}"`);
-    expect(page.html).toContain(`href="/read?src=https%3A%2F%2Ffiles.rebbehub.test%2Fobjects%2F${'b'.repeat(64)}`);
+    expect(page.html).toContain(`href="https://files.chassidushub.test/objects/${'b'.repeat(64)}"`);
+    expect(page.html).toContain(`href="/read?src=https%3A%2F%2Ffiles.chassidushub.test%2Fobjects%2F${'b'.repeat(64)}`);
     expect(page.html).toContain('© The families');
     // What it reproduces, from which page and on how many.
     expect(page.html).toContain('<span class="pg num">3</span>');
@@ -230,7 +230,7 @@ describe('the public site', () => {
 
   it("gives every item's page its title, description, canonical address, languages, preview and structured data", async () => {
     const page = await get('/sample');
-    expect(page.html).toContain('<title>ספר לדוגמה · RebbeHub</title>');
+    expect(page.html).toContain('<title>ספר לדוגמה · ChassidusHub</title>');
     expect(page.html).toMatch(/<meta name="description" content="[^"]*ספר לדוגמה/);
     expect(page.html).toContain(`<link rel="canonical" href="${SITE}/sample"/>`);
     expect(page.html).toContain(`hrefLang="he" href="${SITE}/sample"`);
@@ -254,7 +254,7 @@ describe('the public site', () => {
     expect(eventData[0]).toMatchObject({
       '@type': 'Event',
       name: 'Sample farbrengen',
-      recordedIn: [{ '@type': 'AudioObject', name: 'Recording 1', contentUrl: `https://files.rebbehub.test/objects/${'a'.repeat(64)}`, encodingFormat: 'audio/mpeg', duration: 'PT1H2M3S' }],
+      recordedIn: [{ '@type': 'AudioObject', name: 'Recording 1', contentUrl: `https://files.chassidushub.test/objects/${'a'.repeat(64)}`, encodingFormat: 'audio/mpeg', duration: 'PT1H2M3S' }],
     });
     expect(eventData[0]!.startDate).toMatch(/^19\d\d-\d\d-\d\d$/);
     expect(eventData[1]!.itemListElement[0]).toMatchObject({ name: 'Farbrengens', item: `${SITE}/calendar` });
@@ -265,9 +265,9 @@ describe('the public site', () => {
     const home = await get('/');
     const homeData = JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/s.exec(home.html)![1]!)['@graph'] as Array<Record<string, any>>;
     expect(homeData[0]).toMatchObject({ '@type': 'WebSite', url: `${SITE}/`, publisher: { '@id': `${SITE}/#organization` }, potentialAction: { '@type': 'SearchAction' } });
-    expect(homeData[1]).toMatchObject({ '@type': 'Organization', logo: { url: `${SITE}/icon-512.png` }, sameAs: ['https://github.com/shmuky/RebbeHub'] });
+    expect(homeData[1]).toMatchObject({ '@type': 'Organization', logo: { url: `${SITE}/icon-512.png` }, sameAs: ['https://github.com/ChassidusHub/ChassidusHub'] });
     // Every page offers the address bar a way to search the catalog.
-    expect(home.html).toContain('<link rel="search" type="application/opensearchdescription+xml" title="RebbeHub" href="/opensearch.xml"/>');
+    expect(home.html).toContain('<link rel="search" type="application/opensearchdescription+xml" title="ChassidusHub" href="/opensearch.xml"/>');
     const openSearch = await get('/opensearch.xml');
     expect(openSearch.type).toContain('application/opensearchdescription+xml');
     expect(openSearch.html).toContain(`template="${SITE}/search?q={searchTerms}"`);
@@ -320,7 +320,7 @@ describe('the public site', () => {
     }
     const security = await get('/.well-known/security.txt');
     expect(security.type).toContain('text/plain');
-    expect(security.html).toContain('Contact: https://github.com/shmuky/RebbeHub/security/advisories/new\n');
+    expect(security.html).toContain('Contact: https://github.com/ChassidusHub/ChassidusHub/security/advisories/new\n');
     expect(security.html).toContain(`Canonical: ${SITE}/.well-known/security.txt\n`);
     const expires = new Date(/Expires: (\S+)/.exec(security.html)![1]!);
     expect(expires.getTime()).toBeGreaterThan(Date.now() + 90 * 86_400_000);

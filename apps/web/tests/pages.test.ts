@@ -3,8 +3,8 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import { recordCover, registerFile } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { recordCover, registerFile } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -17,7 +17,7 @@ import { createSiteHandler } from '../server/handler.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 let handle: (request: Request) => Promise<Response>;
 const ids: Record<string, EntityId> = {};
 const sha = (c: string) => c.repeat(64);
@@ -46,7 +46,7 @@ beforeAll(async () => {
   ids.tanyaIndex = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'תניא - מפתח' }, slug: 'tanya-index-sample', authors: [], genre: 'chassidus', levels: [], sets: [set], addition: { kind: 'index', to: ids.tanya } }, '/tanya-index-sample');
   ids.person = await add(catalog, 'mendy', 'keeper', 'person', { name: { he: 'ר׳ יואל כהן' }, externalIds: { wikidata: 'Q1' }, sets: [set] });
 
-  const api = createApp({ catalog, reportSalt: 'test', filesBaseUrl: 'https://files.rebbehub.test', siteUrl: SITE });
+  const api = createApp({ catalog, reportSalt: 'test', filesBaseUrl: 'https://files.chassidushub.test', siteUrl: SITE });
   handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(api.request(input, init)) });
 }, 120_000);
 
@@ -59,7 +59,7 @@ describe("every item's own page", () => {
   it("shows a sefer's title page as its cover, where it came from, and lets a keeper choose another", async () => {
     const page = await get('/shaar-sample');
     expect(page.status).toBe(200);
-    expect(page.html).toContain(`https://files.rebbehub.test/objects/${sha('b')}`);
+    expect(page.html).toContain(`https://files.chassidushub.test/objects/${sha('b')}`);
     expect(page.html).toContain('class="shaar-img"');
     expect(page.html).toContain('נבחר על ידי מחשב');
     expect(page.html).toContain('id="cover"');
@@ -67,7 +67,7 @@ describe("every item's own page", () => {
     const moved = await handle(new Request(`${SITE}/${ids.set}`));
     const shelf = await get(new URL(moved.headers.get('location') ?? `/${ids.set}`, SITE).pathname);
     expect(shelf.status).toBe(200);
-    expect(shelf.html).toContain(`https://files.rebbehub.test/objects/${sha('c')}`);
+    expect(shelf.html).toContain(`https://files.chassidushub.test/objects/${sha('c')}`);
   });
 
   it("lists a sefer's additions on its page, not on its shelf, and leads from an addition back to its sefer", async () => {
@@ -142,7 +142,7 @@ describe("every item's own page", () => {
   it("gives a file its own page: its rights, what uses it and what was made from it", async () => {
     const page = await get(`/files/${sha('a')}`);
     expect(page.status).toBe(200);
-    expect(page.html).toContain(`https://files.rebbehub.test/objects/${sha('a')}`);
+    expect(page.html).toContain(`https://files.chassidushub.test/objects/${sha('a')}`);
     expect(page.html).toContain('cover/2');
     expect(page.html).toContain('ספר השער');
     const kept = await get(`/files/${sha('d')}`);

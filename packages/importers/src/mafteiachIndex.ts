@@ -1,17 +1,17 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { plainInline, type EventLink, type EventLinkKind, type LocalName, type PageSegment, type PageText } from '@rebbehub/model';
+import { plainInline, type EventLink, type EventLinkKind, type LocalName, type PageSegment, type PageText } from '@chassidushub/model';
 
 /**
  * Everything mafteiach.app's index has for a farbrengen, as Sichos-Kodesh's
  * crawler (its packages/mafteiach-index, `npm run crawl`) writes it: one
  * JSON file per Hebrew year. Sichos-Kodesh's app keeps only the Google
- * Drive PDFs and the JEM recordings it can play; RebbeHub keeps every
+ * Drive PDFs and the JEM recordings it can play; ChassidusHub keeps every
  * link besides - HebrewBooks, chabad.org, sie.org, YouTube, JEM videos,
  * the English translations, the reshimos - and the index's own content
  * outline (תוכן ענינים) and additions as the page's words, recorded as
  * imported from the mafteiach index. The crawl is made at import time
- * (.github/workflows/import.yml); RebbeHub keeps no copy.
+ * (.github/workflows/import.yml); ChassidusHub keeps no copy.
  */
 
 export const MAFTEIACH = 'https://www.mafteiach.app';
@@ -89,7 +89,7 @@ const SECTIONS: Array<[keyof MafteiachRecord['detail'], EventLinkKind]> = [
  * Every link the index has for a farbrengen that is not already among
  * `known` (the Drive files Sichos-Kodesh's catalog brought). A Drive PDF's
  * address is `drive`'s (its own Drive link, which the site's reader opens
- * through RebbeHub's API), with the index's link kept as its origin; every
+ * through ChassidusHub's API), with the index's link kept as its origin; every
  * other link goes where it is.
  */
 export function mafteiachLinks(record: MafteiachRecord, known: Set<string>, drive: (fileId: string, url: string) => string): EventLink[] {

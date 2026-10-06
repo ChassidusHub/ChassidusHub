@@ -13,7 +13,7 @@ name: Links, embeddings and citations
 # Needs the DATABASE_URL repository secret, as the import does; embed also
 # the Workers AI secrets the transcription uses. See docs/operations.md.
 on:
-  # No nightly run while RebbeHub is private (2 October 2026): Actions minutes are limited on a private repository.
+  # No nightly run while ChassidusHub is private (2 October 2026): Actions minutes are limited on a private repository.
   # It runs by hand.
   workflow_dispatch:
     inputs:
@@ -46,8 +46,8 @@ jobs:
     timeout-minutes: 120
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      # While RebbeHub is private, the jobs read the site with its key (services/jobs/src/privateKey.ts).
-      REBBEHUB_PASSWORD: ${{ secrets.REBBEHUB_PASSWORD }}
+      # While ChassidusHub is private, the jobs read the site with its key (services/jobs/src/privateKey.ts).
+      CHASSIDUSHUB_PASSWORD: ${{ secrets.CHASSIDUSHUB_PASSWORD }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_AI_TOKEN: ${{ secrets.CLOUDFLARE_AI_TOKEN }}
       JOB: ${{ inputs.job || 'nightly' }}
@@ -70,16 +70,16 @@ jobs:
         run: npm run build
       - name: Run
         run: |
-          npm run rebbehub -- migrate
+          npm run chassidushub -- migrate
           case "$JOB" in
             nightly)
-              npm run rebbehub -- check-links --limit "$LIMIT"
+              npm run chassidushub -- check-links --limit "$LIMIT"
               # Search by meaning stays off until its keys are set.
               if [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$CLOUDFLARE_AI_TOKEN" ]; then
-                npm run rebbehub -- embed --limit "$LIMIT"
+                npm run chassidushub -- embed --limit "$LIMIT"
               else
                 echo "Workers AI keys not set: not embedding."
               fi
               ;;
-            *) npm run rebbehub -- "$JOB" --limit "$LIMIT" ;;
+            *) npm run chassidushub -- "$JOB" --limit "$LIMIT" ;;
           esac

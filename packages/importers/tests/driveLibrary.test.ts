@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Catalog } from '@rebbehub/core';
-import { driveLibraryImporter, idForKey, listDriveFolder, OTZROS_SET, otzrosFolderSetKey, parseFolderView, runImport, type DriveFolder, type ImportRecord } from '@rebbehub/importers';
+import type { Catalog } from '@chassidushub/core';
+import { driveLibraryImporter, idForKey, listDriveFolder, OTZROS_SET, otzrosFolderSetKey, parseFolderView, runImport, type DriveFolder, type ImportRecord } from '@chassidushub/importers';
 import { freshCatalog } from '../../core/tests/helpers.js';
 
 /** Drive's public folder view, as far as the importer reads it. */
@@ -62,7 +62,7 @@ describe("Otzros HaRebbe's Drive library", () => {
     expect(work.data).toMatchObject({ addition: { kind: 'other' } });
     const units = records.filter((r) => r.type === 'unit' && refs([(r.data as { work: unknown }).work])[0] === 'otzros-work:lks');
     expect(units.map((u) => (u.data as { label: { he: string } }).label.he)).toEqual(['02', '10']); // in number order; not the .txt
-    // The file's own Drive link; the site's reader opens it through RebbeHub's API.
+    // The file's own Drive link; the site's reader opens it through ChassidusHub's API.
     expect((units[0]!.data as { editions: Array<{ url: string }> }).editions.map((e) => e.url)).toEqual(['https://drive.google.com/file/d/f2/view']);
   });
 
@@ -77,9 +77,9 @@ describe("Otzros HaRebbe's Drive library", () => {
     expect(maamarim!.data).toMatchObject({ name: { he: 'ספר המאמרים' }, parent: { $ref: otzrosFolderSetKey('torah') }, description: { he: '1. תורת כ"ק אד"ש' } });
     // Each sefer: its genre, the library, and the Set of the folder it is in.
     const setsOf = (key: string) => refs((records.find((r) => r.key === key)!.data as { sets: unknown }).sets);
-    expect(setsOf('otzros-work:lks')).toEqual(['rebbehub-set:sichos', OTZROS_SET.key, otzrosFolderSetKey('torah')]);
-    expect(setsOf('otzros-work:maamarim')).toEqual(['rebbehub-set:sichos', OTZROS_SET.key, otzrosFolderSetKey('torah')]);
-    expect(setsOf('otzros-work:y5711')).toEqual(['rebbehub-set:sichos', OTZROS_SET.key, otzrosFolderSetKey('maamarim')]);
+    expect(setsOf('otzros-work:lks')).toEqual(['chassidushub-set:sichos', OTZROS_SET.key, otzrosFolderSetKey('torah')]);
+    expect(setsOf('otzros-work:maamarim')).toEqual(['chassidushub-set:sichos', OTZROS_SET.key, otzrosFolderSetKey('torah')]);
+    expect(setsOf('otzros-work:y5711')).toEqual(['chassidushub-set:sichos', OTZROS_SET.key, otzrosFolderSetKey('maamarim')]);
     // A folder named only by its year is named with the folder it is in.
     expect((records.find((r) => r.key === 'otzros-work:y5711')!.data as { title: { he: string } }).title.he).toBe('ספר המאמרים 5711');
     // A Set comes before what is in it.
@@ -101,7 +101,7 @@ describe('the Otzros import, run again', () => {
     const cs = await catalog.createChangeset('mendy', { title: 'Sorting' });
     await catalog.putRevision(cs.id, 'mendy', { id: item.id, type: item.type, data: change(structuredClone(item.data) as Record<string, unknown>) as never, ...(path ? { path } : {}) });
     await catalog.submit(cs.id, 'mendy');
-    await catalog.merge(cs.id, 'shmuly');
+    await catalog.merge(cs.id, 'steward');
     return item.id;
   }
 
@@ -116,9 +116,9 @@ describe('the Otzros import, run again', () => {
         else yield r;
       }
     } };
-    await runImport(catalog, before, { approveAs: 'shmuly' });
+    await runImport(catalog, before, { approveAs: 'steward' });
     const path = (await catalog.get(await idForKey('otzros-work:lks')))!.path;
-    const again = await runImport(catalog, driveLibraryImporter(tree), { approveAs: 'shmuly' });
+    const again = await runImport(catalog, driveLibraryImporter(tree), { approveAs: 'steward' });
     expect(again).toMatchObject({ created: 2, updated: 3 }); // two Sets; three sefarim join theirs
     const work = (await catalog.get(await idForKey('otzros-work:lks')))!;
     expect(work.path).toBe(path);
@@ -127,8 +127,8 @@ describe('the Otzros import, run again', () => {
 
   it('leaves what people moved, re-parented or deleted since as they left it', async () => {
     const tree = await library();
-    await runImport(catalog, driveLibraryImporter(tree), { approveAs: 'shmuly' });
-    const genre = await idForKey('rebbehub-set:sichos');
+    await runImport(catalog, driveLibraryImporter(tree), { approveAs: 'steward' });
+    const genre = await idForKey('chassidushub-set:sichos');
     // A person sorts the Likkutei Sichos folder's sefer out of the tree, and gives it a path of its own.
     await personChanges('otzros-work:lks', (d) => ({ ...d, sets: [genre] }), '/likkutei-sichos-otzros');
     // Another puts the ma'amarim's Set straight under the library.
@@ -138,7 +138,7 @@ describe('the Otzros import, run again', () => {
     // A fourth says the ma'amarim's folder is an official sefer, not an addition.
     await personChanges('otzros-work:y5711', ({ addition: _addition, ...d }) => d);
 
-    const again = await runImport(catalog, driveLibraryImporter(tree), { approveAs: 'shmuly' });
+    const again = await runImport(catalog, driveLibraryImporter(tree), { approveAs: 'steward' });
     expect(again.created).toBe(0);
     const lks = (await catalog.get(await idForKey('otzros-work:lks')))!;
     expect((lks.data as { sets: string[] }).sets).toEqual([genre]);

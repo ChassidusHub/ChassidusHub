@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { familyRequest, familyRequests, filePages, getFile, proposeUpload, recordAudioFingerprint, recordDerivation, recordPdfPages, registerFile, similarFiles, similarScans, suggestContents, yearsInText, type Catalog } from '@rebbehub/core';
-import { AUDIO_FINGERPRINT_ENCODER, PAGE_HASH_ENCODER, type EntityId } from '@rebbehub/model';
+import { familyRequest, familyRequests, filePages, getFile, proposeUpload, recordAudioFingerprint, recordDerivation, recordPdfPages, registerFile, similarFiles, similarScans, suggestContents, yearsInText, type Catalog } from '@chassidushub/core';
+import { AUDIO_FINGERPRINT_ENCODER, PAGE_HASH_ENCODER, type EntityId } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
 /**

@@ -1,14 +1,14 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import type { Catalog } from '@rebbehub/core';
-import { idForKey, runImport, sichosKodeshOccasionsImporter, sichosKodeshWorksImporter, type CatalogEntry, type SichosKodeshWorksInput } from '@rebbehub/importers';
+import type { Catalog } from '@chassidushub/core';
+import { idForKey, runImport, sichosKodeshOccasionsImporter, sichosKodeshWorksImporter, type CatalogEntry, type SichosKodeshWorksInput } from '@chassidushub/importers';
 import { createApp } from '../src/app.js';
 import { appWorks, driveFileOf, occasionDateKey } from '../src/appCatalog.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
 /**
- * The Sichos Kodesh apps' catalog, served from RebbeHub (appCatalog.ts).
+ * The Sichos Kodesh apps' catalog, served from ChassidusHub (appCatalog.ts).
  * A small catalog in Sichos-Kodesh's own format goes in through the
  * importers that read it, and comes back out at the apps' paths: the same
  * farbrengens, works and units, in the shapes their checks accept (the
@@ -161,15 +161,15 @@ let app: Hono;
 let catalog: Catalog;
 
 const get = async (path: string) => {
-  const response = await app.request(`https://api.rebbehub.test${path}`);
+  const response = await app.request(`https://api.chassidushub.test${path}`);
   const text = await response.text();
   return { status: response.status, headers: response.headers, text, body: /json/.test(response.headers.get('Content-Type') ?? '') ? JSON.parse(text) : text };
 };
 
 beforeEach(async () => {
   ({ catalog } = await freshCatalog());
-  await runImport(catalog, sichosKodeshOccasionsImporter(farbrengens()), { approveAs: 'shmuly' });
-  await runImport(catalog, sichosKodeshWorksImporter(works()), { approveAs: 'shmuly' });
+  await runImport(catalog, sichosKodeshOccasionsImporter(farbrengens()), { approveAs: 'steward' });
+  await runImport(catalog, sichosKodeshWorksImporter(works()), { approveAs: 'steward' });
   const texts = new Map([[`texts/${LETTER_SHA}`, LETTER]]);
   const store = { get: async (key: string) => (texts.has(key) ? { body: new Response(texts.get(key)).body!, size: texts.get(key)!.length } : null) };
   app = createApp({ catalog, texts: { store, writer: { put: async () => {} } } });
@@ -183,7 +183,7 @@ describe("the apps' manifests", () => {
       expect(status).toBe(200);
       expect(isManifest(body)).toBe(true);
       expect(body).toMatchObject({ schemaVersion: schema, years: [5714, 5741], occasions: 3 });
-      expect(body.url).toBe(`https://api.rebbehub.test/v1/app/v${schema}/catalog/${body.version}/catalog.json`);
+      expect(body.url).toBe(`https://api.chassidushub.test/v1/app/v${schema}/catalog/${body.version}/catalog.json`);
       expect(body.changelog[0].version).toBe(body.version);
       expect(headers.get('Cache-Control')).toBe('public, max-age=300, s-maxage=300');
       expect(headers.get('Access-Control-Allow-Origin')).toBe('*');
@@ -191,7 +191,7 @@ describe("the apps' manifests", () => {
     // The farbrengens are all there: numbered after the last commit, newer than any catalog Sichos-Kodesh made.
     expect((await get('/v1/app/v1/catalog/manifest.json')).body).toMatchObject({ version: `2.${head}.0` });
     expect((await get('/v1/app/v1/catalog/manifest.json')).body.missing).toBeUndefined();
-    // RebbeHub holds no library yet: served empty, and numbered so no app takes it in place of its own.
+    // ChassidusHub holds no library yet: served empty, and numbered so no app takes it in place of its own.
     const v3 = (await get('/v1/app/v3/catalog/manifest.json')).body;
     expect(v3).toMatchObject({ version: `0.${head}.0`, missing: ['library'], works: { works: 3, units: 4 } });
     expect(v3.collections).toEqual(Object.fromEntries(LIBRARY_IDS.map((id) => [id, 0])));
@@ -200,7 +200,7 @@ describe("the apps' manifests", () => {
   it("gives the changelog alone, and sends 'latest' to the served version", async () => {
     const manifest = (await get('/v1/app/v2/catalog/manifest.json')).body;
     expect((await get('/v1/app/v2/catalog/changelog.json')).body).toEqual(manifest.changelog);
-    const latest = await app.request('https://api.rebbehub.test/v1/app/v2/catalog/latest/catalog.json');
+    const latest = await app.request('https://api.chassidushub.test/v1/app/v2/catalog/latest/catalog.json');
     expect(latest.status).toBe(302);
     expect(latest.headers.get('Location')).toBe(manifest.url);
     expect((await get('/v1/app/v4/catalog/manifest.json')).status).toBe(404);
@@ -209,14 +209,14 @@ describe("the apps' manifests", () => {
   it('moves to a new version when a farbrengen changes, and not for anything the apps do not show', async () => {
     const before = (await get('/v1/app/v1/catalog/manifest.json')).body.version;
     const set = (await catalog.resolvePath('/sets/farbrengens'))!.id;
-    await add(catalog, 'mendy', 'shmuly', 'topic', { name: { he: 'אהבת ישראל' } });
+    await add(catalog, 'mendy', 'steward', 'topic', { name: { he: 'אהבת ישראל' } });
     expect((await get('/v1/app/v1/catalog/manifest.json')).body.version).toBe(before);
     const id = await idForKey('mafteiach-occasion:11113015');
     const event = (await catalog.get(id))!;
     const cs = await catalog.createChangeset('mendy', { title: 'English name' });
     await catalog.putRevision(cs.id, 'mendy', { id, type: 'event', data: { ...(event.data as object), title: { he: 'י"ט כסלו, סעודה', en: '19 Kislev, the meal' }, sets: [set] }, path: event.path ?? undefined });
     await catalog.submit(cs.id, 'mendy');
-    await catalog.merge(cs.id, 'shmuly');
+    await catalog.merge(cs.id, 'steward');
     const after = (await get('/v1/app/v1/catalog/manifest.json')).body;
     expect(after.version).toBe(`2.${await catalog.head()}.0`);
     expect(after.version).not.toBe(before);
@@ -279,11 +279,11 @@ describe("the apps' catalog.json", () => {
   });
 
   it("sends the phone's own updates on to Sichos-Kodesh's app server", async () => {
-    const latest = await app.request('https://api.rebbehub.test/v1/app/v1/app/android/latest.json');
+    const latest = await app.request('https://api.chassidushub.test/v1/app/v1/app/android/latest.json');
     expect(latest.status).toBe(307);
-    expect(latest.headers.get('Location')).toBe('https://api.sk.shmuky.dev/v1/app/android/latest.json');
-    const apk = await app.request('https://api.rebbehub.test/v1/app/v1/app/android/download/universal');
-    expect(apk.headers.get('Location')).toBe('https://api.sk.shmuky.dev/v1/app/android/download/universal');
+    expect(latest.headers.get('Location')).toBe('https://api.sk.chassidushub.org/v1/app/android/latest.json');
+    const apk = await app.request('https://api.chassidushub.test/v1/app/v1/app/android/download/universal');
+    expect(apk.headers.get('Location')).toBe('https://api.sk.chassidushub.org/v1/app/android/download/universal');
   });
 });
 

@@ -1,5 +1,5 @@
-import type { LocalName } from '@rebbehub/model';
-import type { Entity, RebbeHubApi } from './api.js';
+import type { LocalName } from '@chassidushub/model';
+import type { Entity, ChassidusHubApi } from './api.js';
 import { nameOf, typeName, type Lang } from './i18n.js';
 import { labelOf } from './labels.js';
 import { itemPath } from './links.js';
@@ -26,7 +26,7 @@ export interface Target {
 const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'יא', 'יב', 'יג', 'יד', 'טו', 'טז', 'יז', 'יח', 'יט', 'כ'];
 export const sectionLetter = (i: number, lang: Lang) => (lang === 'he' ? (LETTERS[i] ?? String(i + 1)) : String(i + 1));
 
-export async function describeTargets(api: RebbeHubApi, entries: Array<{ entityId: string; type: string; before: Record<string, unknown> | null; after: Record<string, unknown> | null }>, lang: Lang): Promise<Map<string, Target>> {
+export async function describeTargets(api: ChassidusHubApi, entries: Array<{ entityId: string; type: string; before: Record<string, unknown> | null; after: Record<string, unknown> | null }>, lang: Lang): Promise<Map<string, Target>> {
   const data = (e: (typeof entries)[number]) => (e.after ?? e.before ?? {}) as Record<string, unknown>;
   // First the items each points at: a paragraph's text, a unit's work, a printing's work, a recording's farbrengen.
   const up = new Set<string>();

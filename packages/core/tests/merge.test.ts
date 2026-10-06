@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diffData, resolveConflicts, threeWayMerge, UnresolvedConflictError } from '@rebbehub/core';
+import { diffData, resolveConflicts, threeWayMerge, UnresolvedConflictError } from '@chassidushub/core';
 
 describe('threeWayMerge', () => {
   const base = { title: { he: 'יו״ד שבט', en: 'Yud Shvat' }, date: '5742-05-10', sets: ['rh-00000001'] };

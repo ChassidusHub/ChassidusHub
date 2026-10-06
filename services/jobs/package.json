@@ -1,31 +1,31 @@
 {
-  "name": "@rebbehub/jobs",
+  "name": "@chassidushub/jobs",
   "version": "0.1.0",
   "private": true,
-  "description": "RebbeHub's job runner and command line: migrations, importers, the git mirror export, catalog editions and their signed dumps. Later the queue workers (hashing, fingerprints, transcodes, OCR, sync) live here too.",
+  "description": "ChassidusHub's job runner and command line: migrations, importers, the git mirror export, catalog editions and their signed dumps. Later the queue workers (hashing, fingerprints, transcodes, OCR, sync) live here too.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/shmuky/RebbeHub.git",
+    "url": "git+https://github.com/ChassidusHub/ChassidusHub.git",
     "directory": "services/jobs"
   },
-  "homepage": "https://github.com/shmuky/RebbeHub/tree/main/services/jobs",
+  "homepage": "https://github.com/ChassidusHub/ChassidusHub/tree/main/services/jobs",
   "bugs": {
-    "url": "https://github.com/shmuky/RebbeHub/issues"
+    "url": "https://github.com/ChassidusHub/ChassidusHub/issues"
   },
   "license": "AGPL-3.0-only",
   "type": "module",
   "bin": {
-    "rebbehub": "./dist/bin/rebbehub.js"
+    "chassidushub": "./dist/bin/chassidushub.js"
   },
   "scripts": {
     "build": "tsc -b"
   },
   "dependencies": {
-    "@rebbehub/core": "^0.1.0",
-    "@rebbehub/db": "^0.1.0",
-    "@rebbehub/importers": "^0.1.0",
-    "@rebbehub/mirror": "^0.1.0",
-    "@rebbehub/model": "^0.1.0",
-    "@rebbehub/pdf-fix": "^0.1.0"
+    "@chassidushub/core": "^0.1.0",
+    "@chassidushub/db": "^0.1.0",
+    "@chassidushub/importers": "^0.1.0",
+    "@chassidushub/mirror": "^0.1.0",
+    "@chassidushub/model": "^0.1.0",
+    "@chassidushub/pdf-fix": "^0.1.0"
   }
 }

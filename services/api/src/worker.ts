@@ -1,6 +1,6 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
-import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, sendNotifications } from '@rebbehub/core';
-import { connectPostgres, isCatalogHeld, measured } from '@rebbehub/db';
+import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, sendNotifications } from '@chassidushub/core';
+import { connectPostgres, isCatalogHeld, measured } from '@chassidushub/db';
 import { createApp, turnstileVerifier } from './app.js';
 import { r2Store, r2Writer, statusStore, type R2Bucket } from './r2.js';
 import { AppReleases } from './appCatalog.js';
@@ -42,7 +42,7 @@ import {
  * (docs/configuration.md); without them nothing is counted.
  */
 interface Env extends LockEnv {
-  /** While RebbeHub is private (lock.ts): accounts let in by token besides platform admins, comma separated. */
+  /** While ChassidusHub is private (lock.ts): accounts let in by token besides platform admins, comma separated. */
   OWNER_ACCOUNTS?: string;
   HYPERDRIVE: { connectionString: string };
   /** The site's Worker (a service binding), for the status checks; without it they ask SITE_URL over the internet. */
@@ -66,14 +66,14 @@ interface Env extends LockEnv {
   TURNSTILE_SECRET?: string;
   /** Where files are served from, when not this Worker (a separate media domain). */
   FILES_BASE_URL?: string;
-  /** The site's address (`https://rebbehub.org`): passkeys are bound to its domain, and sign-in happens on its pages. */
+  /** The site's address (`https://chassidushub.org`): passkeys are bound to its domain, and sign-in happens on its pages. */
   SITE_URL?: string;
   /** Google sign-in's client (secrets); without both, sign-in is by passkey alone. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   /** Resend's API key (a secret): email sign-in, notifications and takedown receipts; without it, none of them. */
   RESEND_API_KEY?: string;
-  /** Who email comes from, on a domain verified with Resend (default `RebbeHub <no-reply@rebbehub.org>`). */
+  /** Who email comes from, on a domain verified with Resend (default `ChassidusHub <no-reply@chassidushub.org>`). */
   EMAIL_FROM?: string;
   /** Workers AI (secrets), for the reviewer's advice on suggestions and search by meaning (a token allowed only Workers AI); without both, neither. */
   CLOUDFLARE_ACCOUNT_ID?: string;
@@ -101,7 +101,7 @@ interface Env extends LockEnv {
   DRIVE_MAX_MB?: string;
   /** A GitHub token (a secret) that may only run this repository's workflows: someone asking for OCR or a transcript starts the free machine job at once; without it, the nightly run takes the request. */
   GITHUB_DISPATCH_TOKEN?: string;
-  /** Whose workflows those are (default shmuky/RebbeHub). */
+  /** Whose workflows those are (default ChassidusHub/ChassidusHub). */
   GITHUB_REPO?: string;
 }
 
@@ -163,7 +163,7 @@ export default {
    * is answered here, fresh.
    */
   async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
-    // While RebbeHub is private (lock.ts), nothing comes from the edge cache: the key opens it, else only an owner's token.
+    // While ChassidusHub is private (lock.ts), nothing comes from the edge cache: the key opens it, else only an owner's token.
     const lock = await lockOf(env);
     if (lock) {
       if (await openedBy(request, lock)) {
@@ -171,7 +171,7 @@ export default {
         return answer(request, env, ctx, true);
       }
       if (request.method === 'OPTIONS' || mayAsk(request)) return answer(request, env, ctx, true);
-      return new Response(JSON.stringify({ error: 'unauthorized', message: 'RebbeHub is private for now' }), {
+      return new Response(JSON.stringify({ error: 'unauthorized', message: 'ChassidusHub is private for now' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', [LOCKED_HEADER]: '1' },
       });
@@ -247,17 +247,17 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
 async function keepStatus(env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }, now: Date, database: CheckResult, failedJobs: string[] | null): Promise<void> {
   if (!env.FILES_PUBLIC) return;
   const bucket = env.FILES_PUBLIC;
-  const siteOrigin = new URL(env.SITE_URL ?? 'https://rebbehub.org').origin;
+  const siteOrigin = new URL(env.SITE_URL ?? 'https://chassidushub.org').origin;
   const site = env.SITE ? (request: Request) => env.SITE!.fetch(request) : (request: Request) => fetch(request);
   const self = (request: Request) => answer(request, env, ctx);
-  const apiOrigin = 'https://api.rebbehub.org';
+  const apiOrigin = 'https://api.chassidushub.org';
   const limit = env.HYPERDRIVE_DAILY_QUERIES === undefined || env.HYPERDRIVE_DAILY_QUERIES === '' ? FREE_DAILY_QUERIES : Number(env.HYPERDRIVE_DAILY_QUERIES) || null;
   const cpuLimit = env.WORKERS_CPU_MS === undefined || env.WORKERS_CPU_MS === '' ? FREE_CPU_MS : Number(env.WORKERS_CPU_MS) || null;
-  const scripts = (env.STATUS_WORKERS ?? 'rebbehub-web,rebbehub-api').split(',').map((s) => s.trim()).filter(Boolean);
+  const scripts = (env.STATUS_WORKERS ?? 'chassidushub-web,chassidushub-api').split(',').map((s) => s.trim()).filter(Boolean);
   const analytics = env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_ANALYTICS_TOKEN ? { accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_ANALYTICS_TOKEN } : null;
   const [siteCheck, apiCheck, mcpCheck, used, load] = await Promise.all([
     // A fresh page each time, not the edge's copy: the Worker itself must answer.
-    // While RebbeHub is private the site answers its lock page: the Worker itself answered.
+    // While ChassidusHub is private the site answers its lock page: the Worker itself answered.
     probe('site', site, new Request(`${siteOrigin}/about?status=${now.getTime()}`, { headers: { 'Cache-Control': 'no-cache' } }), async (r) => (r.ok || r.headers.has(LOCKED_HEADER) ? null : `answered ${r.status}`)),
     probe('api', self, new Request(`${apiOrigin}/openapi.json`)),
     probe('mcp', self, mcpRequest(apiOrigin), mcpAnswers),

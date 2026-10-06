@@ -36,12 +36,12 @@ export const links: LinksFunction = () => [
   { rel: 'manifest', href: '/manifest.webmanifest' },
   { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
   // The address bar can search the catalog (routes/opensearch.ts).
-  { rel: 'search', type: 'application/opensearchdescription+xml', title: 'RebbeHub', href: '/opensearch.xml' },
+  { rel: 'search', type: 'application/opensearchdescription+xml', title: 'ChassidusHub', href: '/opensearch.xml' },
 ];
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
-  // A showcase opens in English for Shmuly's guests (routes/show.tsx).
+  // A showcase opens in English for the steward's guests (routes/show.tsx).
   const lang: Lang = url.pathname.startsWith('/show/') ? (url.searchParams.get('lang') === 'he' ? 'he' : 'en') : langFrom(request);
   return { lang, siteUrl: siteOf(context).siteUrl };
 }
@@ -59,7 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // An embed is the item alone, in another site's frame: no menus, no player bar.
   const { pathname } = useLocation();
   const embedded = pathname.startsWith('/embed/');
-  // A showcase is its own page, for a guest of Shmuly's: no menus or links into the private site, its own player (routes/show.tsx).
+  // A showcase is its own page, for a guest of the steward's: no menus or links into the private site, its own player (routes/show.tsx).
   const showcase = pathname.startsWith('/show/');
   useServiceWorker(!embedded && !showcase);
   return (

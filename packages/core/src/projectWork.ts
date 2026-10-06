@@ -1,5 +1,5 @@
-import { one } from '@rebbehub/db';
-import type { EntityId, LocalName } from '@rebbehub/model';
+import { one } from '@chassidushub/db';
+import type { EntityId, LocalName } from '@chassidushub/model';
 import type { Catalog, ProjectFocus } from './catalog.js';
 import { badState, notFound } from './errors.js';
 import { scanProgress } from './text.js';

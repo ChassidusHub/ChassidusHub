@@ -1,12 +1,12 @@
-import { one, type Db } from '@rebbehub/db';
-import { comparePages, compareAudio, hashBands, looksSameScan, sameRecording, sharesPages, AUDIO_FRAMES_PER_SECOND, type EntityId } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import { comparePages, compareAudio, hashBands, looksSameScan, sameRecording, sharesPages, AUDIO_FRAMES_PER_SECOND, type EntityId } from '@chassidushub/model';
 import { invalid, notFound } from './errors.js';
 
 /**
  * What the jobs measure in a held file, once (migration 0012): a PDF's
  * pages - each one's size, perceptual hash and, for a served scan, its
  * page image and thumbnail - and a recording's audio fingerprint. From
- * these RebbeHub finds the same scan or recording in other bytes ("we
+ * these ChassidusHub finds the same scan or recording in other bytes ("we
  * already have this — here"), and serves a scan's pages as IIIF.
  */
 
@@ -14,7 +14,7 @@ export interface PageRecord {
   page: number;
   widthPt: number;
   heightPt: number;
-  /** The page's perceptual hash (@rebbehub/model's `pageHash`); null for a blank page. */
+  /** The page's perceptual hash (@chassidushub/model's `pageHash`); null for a blank page. */
   hash: string | null;
   /** Its page image and thumbnail, when made (files already recorded as derivations of the PDF). */
   image?: { sha256: string; width: number; height: number };
@@ -92,7 +92,7 @@ export async function recordPdfPages(db: Db, input: { sha256: string; encoder: s
   });
 }
 
-/** Records a recording's fingerprint (@rebbehub/model's `audioFingerprint`) and length. */
+/** Records a recording's fingerprint (@chassidushub/model's `audioFingerprint`) and length. */
 export async function recordAudioFingerprint(db: Db, input: { sha256: string; encoder: string; durationMs: number; fingerprint: ArrayLike<number> }): Promise<void> {
   await requireFile(db, input.sha256);
   await db.query(

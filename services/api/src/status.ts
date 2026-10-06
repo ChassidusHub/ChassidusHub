@@ -1,7 +1,7 @@
 import type { Hono } from 'hono';
 
 /**
- * Is RebbeHub up? (docs/operations.md, "Status"). Every five minutes the
+ * Is ChassidusHub up? (docs/operations.md, "Status"). Every five minutes the
  * API's scheduled run checks the site, the API, the MCP server, the
  * database, the database's daily query allowance, the Workers' load (the
  * CPU a request takes, and how many were stopped for taking too much)
@@ -43,7 +43,7 @@ export interface QueryAllowance {
 
 /** One Worker's load since 00:00 UTC today, from Cloudflare's analytics. */
 export interface WorkerLoad {
-  /** The Worker's name in Cloudflare (`rebbehub-web`, `rebbehub-api`). */
+  /** The Worker's name in Cloudflare (`chassidushub-web`, `chassidushub-api`). */
   script: string;
   /** Requests today. */
   requests: number;
@@ -142,7 +142,7 @@ export function mcpRequest(apiOrigin: string): Request {
   return new Request(`${apiOrigin}/mcp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'rebbehub-status', version: '1' } } }),
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'chassidushub-status', version: '1' } } }),
   });
 }
 

@@ -3,8 +3,8 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import { Catalog, type Json } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { Catalog, type Json } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -13,12 +13,12 @@ import { mediaSourceOf, memoryShowcases, newToken, NO_EXTRAS, TOKEN, type Showca
 
 /** Showcases (app/lib/showcase.ts): what a guest's link opens, where they are kept, and making one. */
 
-const JEM = 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/AR0020571.mp3';
+const JEM = 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/AR0020571.mp3';
 const token = 'abcdefghijklmnopqrst';
 const SICHA_PDF = 'https://drive.google.com/file/d/1nwqfIqFnA_tV-3OqjBNCD9aPenfnPYZz/view';
 
 describe("a guest's requests", () => {
-  const as = (path: string, method = 'GET') => guestRequest(new Request(`https://rebbehub.org${path}`, { method }));
+  const as = (path: string, method = 'GET') => guestRequest(new Request(`https://chassidushub.org${path}`, { method }));
 
   it('lets in a showcase page, its data, files and transcripts, and the built files', () => {
     expect(as(`/show/${token}`)).toEqual({ kind: 'page', token });
@@ -45,10 +45,10 @@ describe("a guest's requests", () => {
 describe('where a file comes from', () => {
   it('reads the addresses the catalog has', () => {
     expect(mediaSourceOf(JEM)).toEqual({ kind: 'jem', file: 'AR0020571.mp3' });
-    expect(mediaSourceOf(`https://api.rebbehub.org/objects/${'a'.repeat(64)}`)).toEqual({ kind: 'object', sha256: 'a'.repeat(64) });
+    expect(mediaSourceOf(`https://api.chassidushub.org/objects/${'a'.repeat(64)}`)).toEqual({ kind: 'object', sha256: 'a'.repeat(64) });
     expect(mediaSourceOf('https://drive.google.com/file/d/1d6kTkWIB1eAWCe5r7PnjP5nnQiIpOF9i/view')).toEqual({ kind: 'drive', id: '1d6kTkWIB1eAWCe5r7PnjP5nnQiIpOF9i', resourceKey: null });
     expect(mediaSourceOf('https://example.com/a.mp3')).toBeNull();
-    expect(mediaSourceOf('https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/../x.mp3')).toBeNull();
+    expect(mediaSourceOf('https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/../x.mp3')).toBeNull();
   });
 
   it("passes JEM's audio on with its part, trying the file's other types", async () => {
@@ -58,7 +58,7 @@ describe('where a file comes from', () => {
       if (input.endsWith('.mp3')) return new Response('missing', { status: 404 });
       return new Response('bytes', { status: 206, headers: { 'content-type': 'audio/mp4', 'content-range': 'bytes 0-4/100', 'set-cookie': 'x=1' } });
     }) as typeof fetch;
-    const answer = await showcaseMedia({ kind: 'jem', file: 'AR1.mp3' }, new Request('https://rebbehub.org/show/x/m/0', { headers: { range: 'bytes=0-4' } }), { apiUrl: 'https://api.rebbehub.org', reader: null, fetch: send });
+    const answer = await showcaseMedia({ kind: 'jem', file: 'AR1.mp3' }, new Request('https://chassidushub.org/show/x/m/0', { headers: { range: 'bytes=0-4' } }), { apiUrl: 'https://api.chassidushub.org', reader: null, fetch: send });
     expect(answer.status).toBe(206);
     expect(answer.headers.get('content-range')).toBe('bytes 0-4/100');
     expect(answer.headers.get('set-cookie')).toBeNull();
@@ -73,7 +73,7 @@ describe('where a file comes from', () => {
     const send = (async () => {
       throw new Error('not the CDN');
     }) as typeof fetch;
-    const answer = await showcaseMedia({ kind: 'jem', file: 'AR1.mp3' }, new Request('https://rebbehub.org/show/x/m/0', { headers: { range: 'bytes=0-4' } }), { apiUrl: 'https://api.rebbehub.org', reader: null, fetch: send, media });
+    const answer = await showcaseMedia({ kind: 'jem', file: 'AR1.mp3' }, new Request('https://chassidushub.org/show/x/m/0', { headers: { range: 'bytes=0-4' } }), { apiUrl: 'https://api.chassidushub.org', reader: null, fetch: send, media });
     expect(answer.status).toBe(206);
     expect(answer.headers.get('cache-control')).toContain('no-store');
     expect(proxied).toEqual([{ url: 'https://media/jem-audio/AR1.mp3', range: 'bytes=0-4' }]);
@@ -84,13 +84,13 @@ describe("the scan of a sicha the page adds by itself", () => {
   const sicha = (path: string, by: string) => ({ path, data: { editions: [{ kind: 'pdf', role: 'translated', url: 'https://drive.google.com/file/d/1xT3d2w2FTIGX_RfSFOwyQjlIKz3-3Fxi/view' }, { kind: 'pdf', role: 'sicha', url: SICHA_PDF }], body: { versions: [{ origin: { by } }] } } });
 
   it("is the sicha's own PDF, once our reader read it", () => {
-    expect(readSichaScan(sicha('/likkutei-sichos/19/356', 'ocr:rebbehub-kraken-ls-v1'))).toEqual({ kind: 'drive', id: '1nwqfIqFnA_tV-3OqjBNCD9aPenfnPYZz', resourceKey: null });
+    expect(readSichaScan(sicha('/likkutei-sichos/19/356', 'ocr:chassidushub-kraken-ls-v1'))).toEqual({ kind: 'drive', id: '1nwqfIqFnA_tV-3OqjBNCD9aPenfnPYZz', resourceKey: null });
   });
 
   it('is nothing for words a person typed, or anything not a sicha of Likkutei Sichos', () => {
     expect(readSichaScan(sicha('/likkutei-sichos/19/356', 'import:chabad-library'))).toBeNull();
-    expect(readSichaScan(sicha('/igros-kodesh/1/2', 'ocr:rebbehub-kraken-ls-v1'))).toBeNull();
-    expect(readSichaScan(sicha('/likkutei-sichos-mafteach-sfarim/1-9', 'ocr:rebbehub-kraken-ls-v1'))).toBeNull();
+    expect(readSichaScan(sicha('/igros-kodesh/1/2', 'ocr:chassidushub-kraken-ls-v1'))).toBeNull();
+    expect(readSichaScan(sicha('/likkutei-sichos-mafteach-sfarim/1-9', 'ocr:chassidushub-kraken-ls-v1'))).toBeNull();
     expect(readSichaScan(null)).toBeNull();
   });
 });
@@ -119,7 +119,7 @@ describe('the store', () => {
 
 describe('making one and showing it', () => {
   const webRoot = fileURLToPath(new URL('..', import.meta.url));
-  const SITE = 'https://rebbehub.test';
+  const SITE = 'https://chassidushub.test';
   const store = memoryShowcases();
   const ids: Record<string, EntityId> = {};
   let handle: ReturnType<typeof createSiteHandler>;
@@ -144,7 +144,7 @@ describe('making one and showing it', () => {
       await catalog.putRevision(cs.id, 'bot:transcribe', { type: 'alignment-span', data: { alignment, segment, startMs: p.startMs, endMs: p.endMs, ...(p.words ? { words: p.words } : {}), origin } as unknown as Json });
     }
     await catalog.submit(cs.id, 'bot:transcribe');
-    await catalog.merge(cs.id, 'shmuly');
+    await catalog.merge(cs.id, 'steward');
     // A sicha our reader read (invented words), with its own scan.
     ids.ls = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'לקוטי שיחות', en: 'Likkutei Sichos' }, slug: 'likkutei-sichos', authors: [], genre: 'sichos', levels: ['volume', 'page'], sets: [set] }, '/likkutei-sichos');
     ids.sicha = await add(
@@ -158,7 +158,7 @@ describe('making one and showing it', () => {
         order: 'a',
         label: { he: 'חה"ס ב', en: 'Sukkos 2' },
         editions: [{ kind: 'pdf', role: 'sicha', url: SICHA_PDF, source: 'mafteiach', sourceId: '1nwqfIqFnA_tV-3OqjBNCD9aPenfnPYZz', licence: 'facts-and-links' }],
-        body: { profile: 'sichos-kodesh', versions: [{ id: 'ocr', language: 'he', url: SICHA_PDF, origin: { by: 'ocr:rebbehub-kraken-ls-v1' }, segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: 'מילים שנקראו לדוגמה' }] }] }] },
+        body: { profile: 'sichos-kodesh', versions: [{ id: 'ocr', language: 'he', url: SICHA_PDF, origin: { by: 'ocr:chassidushub-kraken-ls-v1' }, segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: 'מילים שנקראו לדוגמה' }] }] }] },
       },
       '/likkutei-sichos/19/356',
     );
@@ -216,7 +216,7 @@ describe('making one and showing it', () => {
     expect(html).toContain('Read by our model');
     expect(html).toContain('איתא בספרי');
     expect(html).toContain('Side by side');
-    expect(html).toContain('rebbehub-whisper-v3');
+    expect(html).toContain('chassidushub-whisper-v3');
     // A sicha our reader read into the catalog joins by itself, its scan through the showcase's own address.
     expect(html).toContain('Sukkos 2');
     expect(html).toContain(`/show/${showcase!.token}/s/${ids.sicha}`);

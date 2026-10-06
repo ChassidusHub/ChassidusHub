@@ -1,5 +1,5 @@
 // Taken from Sichos-Kodesh (apps/web/src/pdf/renderPdf.ts), so both read PDFs the same way; keep them in step.
-// RebbeHub's own addition: pages drawn through their page fixes (./pageFix.ts).
+// ChassidusHub's own addition: pages drawn through their page fixes (./pageFix.ts).
 // The polyfill must run before pdf.js is touched (see polyfills.ts).
 import './polyfills.js';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -66,8 +66,8 @@ const BASE_URL = import.meta.env.BASE_URL;
 export function loadPdfDocument(url: string, onProgress?: (p: { loaded: number; total: number }) => void): PDFDocumentLoadingTask {
   const task = pdfjsLib.getDocument({
     url,
-    // The API's files open only with the site's cookie while RebbeHub is private (services/api/src/lock.ts).
-    withCredentials: /^https:\/\/api\.rebbehub\.org\//.test(url),
+    // The API's files open only with the site's cookie while ChassidusHub is private (services/api/src/lock.ts).
+    withCredentials: /^https:\/\/api\.chassidushub\.org\//.test(url),
     disableRange: true,
     wasmUrl: `${BASE_URL}pdf-wasm/`,
     cMapUrl: `${BASE_URL}pdf-cmaps/`,

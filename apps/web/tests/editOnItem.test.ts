@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import type { EntityId } from '@rebbehub/model';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -19,7 +19,7 @@ import { shortLabel } from '../app/lib/links.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 const DRIVE = 'https://drive.google.com/drive/folders/1AiUDxZ71bhoTPlPoTvPqh53hp9w9Vikb';
 
 describe('what each action becomes', () => {
@@ -95,7 +95,7 @@ describe('the actions on a set’s and a sefer’s page', () => {
     const build = (await import(`${webRoot}/build/server/index.js`)) as ServerBuild;
     const { catalog, set } = await freshCatalog();
     ids.set = set;
-    ids.other = await add(catalog, 'shmuly', 'shmuly', 'set', { name: { he: 'אוצרות', en: 'Otzros' }, slug: 'otzros', policy: 'moderated', keepers: [] }, '/sets/otzros');
+    ids.other = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'אוצרות', en: 'Otzros' }, slug: 'otzros', policy: 'moderated', keepers: [] }, '/sets/otzros');
     ids.work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר לעריכה', en: 'A sefer' }, slug: 'edit-sample', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set], sources: [{ source: 'other', sourceId: DRIVE, url: DRIVE }] }, '/edit-sample');
     await add(catalog, 'mendy', 'keeper', 'unit', { work: ids.work, position: [{ level: 'sicha', value: '1' }], order: 'V', label: { he: 'שיחה א' } }, '/edit-sample/1');
     const api = createApp({ catalog, reportSalt: 'test', siteUrl: SITE });

@@ -1,9 +1,9 @@
-import type { Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import type { Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 
 /**
  * Dead links (the plan, section 9, health dashboards; section 7: "link
- * alive?"). RebbeHub links to more than it holds: hanachos on Drive,
+ * alive?"). ChassidusHub links to more than it holds: hanachos on Drive,
  * books on HebrewBooks, recordings and videos elsewhere. This finds every
  * address the catalog links to, asks each whether it still answers, and
  * keeps the answer in `link_check` for the health page. Each run checks
@@ -65,7 +65,7 @@ export async function checkLink(url: string, options: { fetch?: typeof fetch; ti
         method,
         redirect: 'follow',
         signal: controller.signal,
-        headers: { 'user-agent': 'RebbeHub link check (https://rebbehub.org)', ...(method === 'GET' ? { range: 'bytes=0-0' } : {}) },
+        headers: { 'user-agent': 'ChassidusHub link check (https://chassidushub.org)', ...(method === 'GET' ? { range: 'bytes=0-0' } : {}) },
       });
       await response.body?.cancel().catch(() => {});
       return response.status;

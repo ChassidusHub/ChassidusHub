@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import { createPerson } from '@rebbehub/core';
+import { createPerson } from '@chassidushub/core';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 import { edgeCacheable } from '../server/cachePolicy.js';
@@ -16,7 +16,7 @@ import { createSiteHandler } from '../server/handler.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 const CALLBACK = 'https://claude.ai/api/mcp/auth_callback';
 let handle: (request: Request) => Promise<Response>;
 let api: ReturnType<typeof createApp>;
@@ -31,7 +31,7 @@ beforeAll(async () => {
   const catalog = fresh.catalog;
   set = fresh.set;
   event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(fresh.set), '/events/5742-05-10');
-  me = (await createPerson(catalog.db, 'Shmuly', 'shmuly')).id;
+  me = (await createPerson(catalog.db, 'Owner', 'owner')).id;
   // The session in this test: a cookie naming the person (the real one is auth.ts's).
   api = createApp({ catalog, siteUrl: SITE, authenticate: (c) => /(?:^|;\s*)rh_session=(u-[\w-]+)/.exec(c.req.header('Cookie') ?? '')?.[1] ?? null });
   handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(api.request(input, init)) });

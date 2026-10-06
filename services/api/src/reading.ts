@@ -1,6 +1,6 @@
 import type { Context, Hono } from 'hono';
-import { addTranslation, fixTranslation, forgetPlace, listPlaces, savePlace, type Catalog, type PlaceKind } from '@rebbehub/core';
-import { readId, type EntityId } from '@rebbehub/model';
+import { addTranslation, fixTranslation, forgetPlace, listPlaces, savePlace, type Catalog, type PlaceKind } from '@chassidushub/core';
+import { readId, type EntityId } from '@chassidushub/model';
 
 /**
  * A reader's own things: where they stopped reading and listening

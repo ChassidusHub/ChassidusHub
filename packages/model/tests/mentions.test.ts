@@ -6,8 +6,8 @@ describe('what people write', () => {
     expect(mentionsIn('Thanks @Mendy and @chaim-b, cc @mendy.')).toEqual(['mendy', 'chaim-b']);
     expect(mentionsIn('write to mendy@example.org')).toEqual([]);
     expect(mentionsIn('see `@not-a-mention` here')).toEqual([]);
-    expect(mentionsIn('(@shmuly)')).toEqual(['shmuly']);
-    expect(mentionsIn('שאלה ל@shmuly')).toEqual(['shmuly']);
+    expect(mentionsIn('(@steward)')).toEqual(['steward']);
+    expect(mentionsIn('שאלה ל@steward')).toEqual(['steward']);
   });
 
   it('numbers suggestions and reports with #, and reads "Fixes #12", in Hebrew too', () => {
@@ -24,9 +24,9 @@ describe('what people write', () => {
 
   it('finds items by id, and addresses whole', () => {
     expect(itemsIn('Compare rh-7k2m9q4d with rh-7K2M')).toEqual(['rh-7k2m9q4d']);
-    expect(tokenize('Read https://rebbehub.org/x, then @mendy.')).toEqual([
+    expect(tokenize('Read https://chassidushub.org/x, then @mendy.')).toEqual([
       { kind: 'text', text: 'Read ' },
-      { kind: 'url', url: 'https://rebbehub.org/x', text: 'https://rebbehub.org/x' },
+      { kind: 'url', url: 'https://chassidushub.org/x', text: 'https://chassidushub.org/x' },
       { kind: 'text', text: ', then ' },
       { kind: 'mention', username: 'mendy', text: '@mendy' },
       { kind: 'text', text: '.' },

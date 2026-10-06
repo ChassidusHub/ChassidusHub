@@ -1,5 +1,5 @@
 import type { Issue, IssueLabel, IssueRights, IssueTemplate, People, SuggestionListItem, TimelineItem, Via } from './threads.js';
-import type { EntityType, LocalName } from '@rebbehub/model';
+import type { EntityType, LocalName } from '@chassidushub/model';
 import type { Transcript } from './transcript.js';
 
 /**
@@ -72,7 +72,7 @@ export interface ScanPages {
 /**
  * What a PDF needs to read straight (the API's page fixes): each page it
  * changes, drawn through `transform` (a PDF matrix) and, for a reading
- * copy's placing, cut to `clip`; or the reading copy RebbeHub serves.
+ * copy's placing, cut to `clip`; or the reading copy ChassidusHub serves.
  */
 export interface PageFixInfo {
   sha256: string;
@@ -295,7 +295,7 @@ export interface MachineToCheck {
   totals: { transcripts: number; paragraphs: number; scans: number; pages: number; texts: number; entries: number };
 }
 
-/** Whether RebbeHub is up, as GET /v1/status gives it (services/api/src/status.ts). */
+/** Whether ChassidusHub is up, as GET /v1/status gives it (services/api/src/status.ts). */
 export type CheckId = 'site' | 'api' | 'mcp' | 'database' | 'quota' | 'workers' | 'jobs';
 export type CheckState = 'up' | 'degraded' | 'down' | 'unknown';
 /** One Worker's load today: its requests, how many were stopped for CPU (error 1102), and the CPU a request takes. */
@@ -410,7 +410,7 @@ export class ApiError extends Error {
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
-export class RebbeHubApi {
+export class ChassidusHubApi {
   constructor(
     readonly baseUrl: string,
     private readonly fetcher: Fetch = (input, init) => fetch(input, init),
@@ -527,7 +527,7 @@ export class RebbeHubApi {
     return this.get<{ kind: string; total: number; items: Entity[] }>('/v1/missing', { kind, within: options.within, limit: options.limit });
   }
 
-  /** The files Sichos-Kodesh's archive could not get from upstream, each with its item when RebbeHub has it. */
+  /** The files Sichos-Kodesh's archive could not get from upstream, each with its item when ChassidusHub has it. */
   missingFiles(options: { limit?: number } = {}) {
     return this.get<{ kind: 'files'; total: number; items: ArchiveGap[] }>('/v1/missing', { kind: 'files', limit: options.limit });
   }
@@ -898,7 +898,7 @@ export interface MirrorsInfo {
 export interface RambamShiur {
   label: string;
   refs: string[];
-  /** Each reference's page on RebbeHub, once the catalog has it. */
+  /** Each reference's page on ChassidusHub, once the catalog has it. */
   paths?: Array<string | null>;
 }
 

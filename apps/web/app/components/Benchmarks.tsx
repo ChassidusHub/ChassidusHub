@@ -45,7 +45,7 @@ type Bar = { label: string; value: number; ours: boolean };
 function figures(lang: Lang) {
   const ocr = tableOf('ocr', 'ocr-headline');
   const start = ocr?.rows.find((r) => r.state === 'start');
-  const keeper = ocr?.rows.find((r) => en(r.name as Cell) === 'rebbehub-kraken-ls-v1');
+  const keeper = ocr?.rows.find((r) => en(r.name as Cell) === 'chassidushub-kraken-ls-v1');
   const whisper = tableOf('whisper', 'whisper-held-out');
   const whole = whisper?.rows[whisper.rows.length - 1];
   const miram = tableOf('miram', 'miram-pages')?.rows.find((r) => r.state === 'inUse');
@@ -53,7 +53,7 @@ function figures(lang: Lang) {
     start && keeper
       ? [
           { label: (start.name as L)[lang] ?? en(start.name as Cell), value: Number((100 - (pct(start.cells[1]) ?? 100)).toFixed(2)), ours: false },
-          { label: 'rebbehub-kraken-ls-v1', value: Number((100 - (pct(keeper.cells[1]) ?? 100)).toFixed(2)), ours: true },
+          { label: 'chassidushub-kraken-ls-v1', value: Number((100 - (pct(keeper.cells[1]) ?? 100)).toFixed(2)), ours: true },
         ]
       : [];
   const whisperBars: Bar[] =
@@ -63,7 +63,7 @@ function figures(lang: Lang) {
           const name = whisper.columns[i + 1];
           if (v === null || !name) return [];
           const short = name.en.replace(/\s*\(.*\)$/, '');
-          return [{ label: /^v\d/.test(short) ? `rebbehub-whisper-${short}` : short, value: v, ours: i === whole.cells.length - 1 }];
+          return [{ label: /^v\d/.test(short) ? `chassidushub-whisper-${short}` : short, value: v, ours: i === whole.cells.length - 1 }];
         })
       : [];
   return {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { createPerson, type Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { createPerson, type Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -12,8 +12,8 @@ import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helper
  * suggestion under its person's name, reviewed like any other.
  */
 
-const API = 'https://api.rebbehub.test';
-const SITE = 'https://rebbehub.test';
+const API = 'https://api.chassidushub.test';
+const SITE = 'https://chassidushub.test';
 const CALLBACK = 'https://claude.ai/api/mcp/auth_callback';
 const CIMD = 'https://client.example.test/oauth/client.json';
 
@@ -27,7 +27,7 @@ beforeEach(async () => {
   const fresh = await freshCatalog();
   catalog = fresh.catalog;
   event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(fresh.set), '/events/5742-05-10');
-  me = (await createPerson(catalog.db, 'Shmuly')).id;
+  me = (await createPerson(catalog.db, 'Steward')).id;
   fetched = [];
   app = createApp({
     catalog,
@@ -141,7 +141,7 @@ describe('OAuth for MCP clients', () => {
     const tokens = await tokensFor(client_id);
     expect(tokens).toMatchObject({ access_token: expect.stringMatching(/^rho_[\w-]{43}$/), refresh_token: expect.stringMatching(/^rhr_[\w-]{43}$/), scope: 'read write', expires_in: 3600 });
 
-    expect((await mcp(tokens.access_token, 'initialize', { protocolVersion: '2025-11-25' })).body.result.serverInfo.name).toBe('rebbehub');
+    expect((await mcp(tokens.access_token, 'initialize', { protocolVersion: '2025-11-25' })).body.result.serverInfo.name).toBe('chassidushub');
     const fixed = await mcp(tokens.access_token, 'tools/call', { name: 'suggest_fix', arguments: { id: event, changes: { title: { he: 'יו״ד שבט', en: 'Yud Shvat' } }, title: 'Shorter title' } });
     expect(fixed.body.result.isError).toBe(false);
     const suggestion = await catalog.changeset(fixed.body.result.structuredContent.suggestion);

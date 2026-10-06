@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { createPerson, setPersonRole, type Catalog } from '@rebbehub/core';
+import { createPerson, setPersonRole, type Catalog } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { keyFrom, keyOf, lockOf, opens, unlocked } from '../src/lock.js';
 import { freshCatalog } from '../../../packages/core/tests/helpers.js';
 
 /**
- * RebbeHub is private for now (src/lock.ts): the key opens everything; without
+ * ChassidusHub is private for now (src/lock.ts): the key opens everything; without
  * it, only an owner's token (a platform admin, or an account named as owner),
  * and connecting an app so his MCP connector can connect again.
  */
@@ -27,7 +27,7 @@ async function tokenOf(person: string): Promise<string> {
 
 beforeEach(async () => {
   catalog = (await freshCatalog()).catalog;
-  owner = (await createPerson(catalog.db, 'Shmuly', 'shmuly')).id;
+  owner = (await createPerson(catalog.db, 'Owner', 'owner')).id;
   someone = (await createPerson(catalog.db, 'Someone', 'someone')).id;
   await setPersonRole(catalog.db, owner, { admin: true });
   ownerToken = await tokenOf(owner);
@@ -47,7 +47,7 @@ describe('the lock', () => {
 
   it('reads the key from the header or the cookie', () => {
     const key = 'a'.repeat(64);
-    expect(keyFrom(new Request('https://x/', { headers: { 'x-rebbehub-key': key } }))).toBe(key);
+    expect(keyFrom(new Request('https://x/', { headers: { 'x-chassidushub-key': key } }))).toBe(key);
     expect(keyFrom(new Request('https://x/', { headers: { cookie: `a=b; __Secure-rh_lock=${key}` } }))).toBe(key);
     expect(keyFrom(new Request('https://x/'))).toBeNull();
   });

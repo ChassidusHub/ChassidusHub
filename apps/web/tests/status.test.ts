@@ -21,10 +21,10 @@ beforeAll(async () => {
 }, 120_000);
 
 const site = (answer: (path: string) => Promise<Response>) =>
-  createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: 'https://rebbehub.test', fetch: (input) => answer(new URL(String(input)).pathname) });
+  createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: 'https://chassidushub.test', fetch: (input) => answer(new URL(String(input)).pathname) });
 
 const page = async (handler: (request: Request) => Promise<Response>, lang = 'en') => {
-  const response = await handler(new Request(`https://rebbehub.test/status${lang === 'en' ? '?lang=en' : ''}`, { headers: { 'Accept-Language': lang } }));
+  const response = await handler(new Request(`https://chassidushub.test/status${lang === 'en' ? '?lang=en' : ''}`, { headers: { 'Accept-Language': lang } }));
   return { status: response.status, html: await response.text(), cache: response.headers.get('Cache-Control') };
 };
 
@@ -39,8 +39,8 @@ describe('the status page', () => {
       now,
       { used: 1234, limit: 100_000, resetsAt: now.toISOString(), runsOutAt: null },
       [
-        { script: 'rebbehub-web', requests: 4300, errors: 0, exceeded: 0, cpuP50Ms: 3.1, cpuP99Ms: 8.9 },
-        { script: 'rebbehub-api', requests: 0, errors: 0, exceeded: 0, cpuP50Ms: null, cpuP99Ms: null },
+        { script: 'chassidushub-web', requests: 4300, errors: 0, exceeded: 0, cpuP50Ms: 3.1, cpuP99Ms: 8.9 },
+        { script: 'chassidushub-api', requests: 0, errors: 0, exceeded: 0, cpuP50Ms: null, cpuP99Ms: null },
       ],
     );
     const handler = site(async (path) => (path === '/v1/status' ? Response.json({ now: now.toISOString(), report }) : new Response('{}', { status: 404 })));

@@ -82,7 +82,7 @@ export default function Takedown({ loaderData }: Route.ComponentProps) {
               ) : null}
               <label className="field">
                 {t(lang, 'takedownWhat')}
-                <input name="target" defaultValue={target} required maxLength={1000} dir="ltr" placeholder="https://rebbehub.org/…" />
+                <input name="target" defaultValue={target} required maxLength={1000} dir="ltr" placeholder="https://chassidushub.org/…" />
               </label>
               <div className="form-row">
                 <label className="field">

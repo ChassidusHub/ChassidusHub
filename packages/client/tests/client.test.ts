@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { createPerson, type Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { createPerson, type Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog, yudShvat } from '../../core/tests/helpers.js';
-import { RebbeHub, RebbeHubError } from '../src/index.js';
+import { ChassidusHub, ChassidusHubError } from '../src/index.js';
 import { generate } from '../scripts/generate.js';
 
 /**
@@ -14,7 +14,7 @@ import { generate } from '../scripts/generate.js';
  */
 
 describe('the generated client', () => {
-  it('is what the generator writes from the OpenAPI document now (run `npm run generate -w @rebbehub/client` after changing the API)', async () => {
+  it('is what the generator writes from the OpenAPI document now (run `npm run generate -w @chassidushub/client` after changing the API)', async () => {
     const kept = await readFile(new URL('../src/generated.ts', import.meta.url), 'utf8');
     expect(kept).toBe(generate());
   });
@@ -34,11 +34,11 @@ describe('the client against the API', () => {
     app = createApp({ catalog, authenticate: (c) => c.req.header('X-Test-Account') ?? null });
   });
 
-  const client = (token?: string) => new RebbeHub({ baseUrl: 'https://api.test', token, fetch: async (url, init) => app.request(url, init) });
+  const client = (token?: string) => new ChassidusHub({ baseUrl: 'https://api.test', token, fetch: async (url, init) => app.request(url, init) });
 
   it('reads, searches and resolves, typed', async () => {
     const rh = client();
-    expect((await rh.about()).name).toBe('RebbeHub');
+    expect((await rh.about()).name).toBe('ChassidusHub');
     const item = await rh.getItem({ id: event });
     expect(item).toMatchObject({ id: event, type: 'event' });
     expect((await rh.resolvePath({ path: '/events/5742-05-10' })).id).toBe(event);
@@ -58,7 +58,7 @@ describe('the client against the API', () => {
 
   it('throws the API\'s errors with their code, and suggests with a token', async () => {
     const error = await client().getItem({ id: 'rh-zzzzzzzz' }).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(RebbeHubError);
+    expect(error).toBeInstanceOf(ChassidusHubError);
     expect(error).toMatchObject({ status: 404, code: 'not-found' });
     await expect(client().suggestFix({ body: { entityId: event, data: {} } })).rejects.toMatchObject({ status: 401, code: 'unauthorized' });
 

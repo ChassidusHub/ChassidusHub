@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { EntityId } from '@rebbehub/model';
-import { anchorSync, fixParagraph, piecesOf, splitOf, summariseTraining, trainingClips, trainingGoal, type Catalog, type Json } from '@rebbehub/core';
+import type { EntityId } from '@chassidushub/model';
+import { anchorSync, fixParagraph, piecesOf, splitOf, summariseTraining, trainingClips, trainingGoal, type Catalog, type Json } from '@chassidushub/core';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 /** The retraining cycle's data (trainingClips.ts): checked transcript paragraphs become clips for the next model. */
@@ -34,7 +34,7 @@ async function transcribed(catalog: Catalog, set: EntityId, url: string, date?: 
     await catalog.putRevision(cs.id, 'bot:transcribe', { type: 'alignment-span', data: { alignment, segment, startMs: p.startMs, endMs: p.endMs, ...(p.words ? { words: p.words } : {}), origin } as unknown as Json });
   }
   await catalog.submit(cs.id, 'bot:transcribe');
-  await catalog.merge(cs.id, 'shmuly');
+  await catalog.merge(cs.id, 'steward');
   return { event, recording, segments };
 }
 
@@ -43,7 +43,7 @@ describe('the goal for the next model', () => {
     const { catalog, set } = await freshCatalog();
     const newer = await transcribed(catalog, set, 'https://example.org/a.mp3');
     const older = await transcribed(catalog, set, 'https://example.org/b.mp3', '5733-07-10');
-    const heldOut = await transcribed(catalog, set, 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/JEMSK3113.mp3');
+    const heldOut = await transcribed(catalog, set, 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/JEMSK3113.mp3');
     let goal = await trainingGoal(catalog, await trainingClips(catalog));
     expect(goal).toMatchObject({ model: 'V4', hours: { done: 0, target: 34 }, farbrengens: { done: 0, target: 10 } });
     // The held-out farbrengen is never asked for; the one before 5740 comes first.
@@ -83,7 +83,7 @@ describe('the goal for the next model', () => {
 describe('training clips from checked transcripts', () => {
   it('uses only paragraphs a person checked, in the training script format', async () => {
     const { catalog, set } = await freshCatalog();
-    const { recording, segments } = await transcribed(catalog, set, 'https://sichos-kodesh-media-proxy.shmuky.workers.dev/jem-audio/JEMSK%202957.mp3');
+    const { recording, segments } = await transcribed(catalog, set, 'https://sichos-kodesh-media-proxy.chassidushub-org.workers.dev/jem-audio/JEMSK%202957.mp3');
     expect((await trainingClips(catalog)).clips).toEqual([]);
 
     // Words checked, timing still the machine's: silver.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG_HELD, connectPostgres, holdCatalog, isCatalogHeld, migrate, waitingWhileHeld } from '@rebbehub/db';
-import { openPGlite } from '@rebbehub/db/pglite';
+import { CATALOG_HELD, connectPostgres, holdCatalog, isCatalogHeld, migrate, waitingWhileHeld } from '@chassidushub/db';
+import { openPGlite } from '@chassidushub/db/pglite';
 
 describe('holding the catalog for an import', () => {
   it('puts the write check on every catalog table, and writes go on while nobody holds it', async () => {
@@ -23,7 +23,7 @@ describe('holding the catalog for an import', () => {
   });
 
   // Two connections need a real server: PGlite is one session, which never waits for itself.
-  const url = process.env.REBBEHUB_TEST_DATABASE_URL;
+  const url = process.env.CHASSIDUSHUB_TEST_DATABASE_URL;
   it.skipIf(!url)('refuses writes while held, lets the copy back through, and the jobs wait it out', async () => {
     const db = connectPostgres(url!, { max: 4 });
     try {
@@ -43,7 +43,7 @@ describe('holding the catalog for an import', () => {
       expect(isCatalogHeld(refused)).toBe(true);
       // The import's own copy back is let through.
       await db.transaction(async (tx) => {
-        await tx.exec("SET LOCAL rebbehub.import = 'on'");
+        await tx.exec("SET LOCAL chassidushub.import = 'on'");
         await tx.query("INSERT INTO account (id, display_name) VALUES ('bot:import', 'An importer')");
       });
       // A job's write waits, and is saved once the import lets go.

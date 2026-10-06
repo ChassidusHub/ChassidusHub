@@ -1,5 +1,5 @@
-import { one, type Db } from '@rebbehub/db';
-import type { EntityId, EntityType } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import type { EntityId, EntityType } from '@chassidushub/model';
 import { FACTS, type EntityView, type RevisionRow } from './catalog.js';
 import { invalid } from './errors.js';
 

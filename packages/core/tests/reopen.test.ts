@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { reviewSuggestion, type Catalog } from '@rebbehub/core';
-import type { EntityId } from '@rebbehub/model';
+import { reviewSuggestion, type Catalog } from '@chassidushub/core';
+import type { EntityId } from '@chassidushub/model';
 import { freshCatalog, yudShvat } from './helpers.js';
 
 /**
@@ -46,14 +46,14 @@ describe('reopening a withdrawn suggestion', () => {
     await expect(catalog.reopen(id, 'mendy')).rejects.toThrow(/open/);
     await catalog.withdraw(id, 'mendy');
     await expect(catalog.reopen(id, 'keeper')).rejects.toThrow(/author/);
-    expect((await catalog.reopen(id, 'shmuly')).status).toBe('open');
+    expect((await catalog.reopen(id, 'steward')).status).toBe('open');
   });
 });
 
 describe('approving your own suggestion', () => {
   it('is for a steward only: others ask someone else to approve it', async () => {
-    const mine = await suggestion('shmuly');
-    expect((await reviewSuggestion(catalog, 'shmuly', mine, { verdict: 'approve' })).status).toBe('merged');
+    const mine = await suggestion('steward');
+    expect((await reviewSuggestion(catalog, 'steward', mine, { verdict: 'approve' })).status).toBe('merged');
     const theirs = await suggestion('mendy');
     await expect(reviewSuggestion(catalog, 'mendy', theirs, { verdict: 'approve' })).rejects.toThrow(/other than its author/);
   });
@@ -64,7 +64,7 @@ describe('undoing a merged suggestion', () => {
     const id = await suggestion('mendy');
     await catalog.merge(id, 'keeper');
     const [entity] = (await catalog.proposals(id)).map((p) => p.entityId);
-    const { commit } = await catalog.revert(id, 'shmuly');
+    const { commit } = await catalog.revert(id, 'steward');
     expect(commit).not.toBeNull();
     const { rows } = await catalog.db.query<{ deleted: boolean }>('SELECT deleted FROM entity WHERE id = $1', [entity]);
     expect(rows[0]!.deleted).toBe(true);

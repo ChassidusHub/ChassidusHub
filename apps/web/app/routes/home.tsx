@@ -1,4 +1,4 @@
-import { dateKeyToHDate } from '@rebbehub/hebrew';
+import { dateKeyToHDate } from '@chassidushub/hebrew';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { Route } from './+types/home';
@@ -74,7 +74,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
       {
         '@type': 'WebSite',
         '@id': `${base}/#website`,
-        name: 'RebbeHub',
+        name: 'ChassidusHub',
         url: `${base}/`,
         inLanguage: ['he', 'en'],
         publisher: { '@id': `${base}/#organization` },
@@ -83,10 +83,10 @@ export function meta({ loaderData }: Route.MetaArgs) {
       {
         '@type': 'Organization',
         '@id': `${base}/#organization`,
-        name: 'RebbeHub',
+        name: 'ChassidusHub',
         url: `${base}/`,
         logo: { '@type': 'ImageObject', url: `${base}/icon-512.png`, width: 512, height: 512 },
-        sameAs: ['https://github.com/shmuky/RebbeHub'],
+        sameAs: ['https://github.com/ChassidusHub/ChassidusHub'],
       },
     ],
   });

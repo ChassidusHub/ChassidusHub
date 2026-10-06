@@ -1,11 +1,11 @@
 import type { Context, Hono } from 'hono';
-import { parseHebrewNumeral } from '@rebbehub/hebrew';
-import { ENTITY_TYPES, allSegments, inlineText, isPageText } from '@rebbehub/model';
+import { parseHebrewNumeral } from '@chassidushub/hebrew';
+import { ENTITY_TYPES, allSegments, inlineText, isPageText } from '@chassidushub/model';
 import { mcpChallenge } from './oauth.js';
 import { mcpInnerCalls, tokenGrantOf } from './tokens.js';
 
 /**
- * RebbeHub for AI agents: a Model Context Protocol server at /mcp
+ * ChassidusHub for AI agents: a Model Context Protocol server at /mcp
  * (docs/developers/agents.md). Reading needs no account. A writing tool
  * (suggest_fix, open_issue) asks for the person the way the MCP
  * authorization spec says: without a token, HTTP 401 with
@@ -51,7 +51,7 @@ function pageWords(item: any, language: string | undefined): { text: string; str
 }
 
 export const MCP_PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'] as const;
-export const MCP_SERVER_NAME = 'rebbehub';
+export const MCP_SERVER_NAME = 'chassidushub';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -81,7 +81,7 @@ type ApiCall = (method: string, path: string, body?: unknown) => Promise<{ statu
 
 class ToolError extends Error {}
 
-const ID = { type: 'string', pattern: '^[rR][hH]-[0-9A-Za-z-]+$', description: 'A RebbeHub id, rh-…' };
+const ID = { type: 'string', pattern: '^[rR][hH]-[0-9A-Za-z-]+$', description: 'A ChassidusHub id, rh-…' };
 
 async function need(call: ApiCall, method: string, path: string, body?: unknown): Promise<any> {
   const answer = await call(method, path, body);
@@ -139,7 +139,7 @@ function tools(siteUrl: string): Tool[] {
   return [
     {
       name: 'search',
-      title: 'Search RebbeHub',
+      title: 'Search ChassidusHub',
       description:
         'Search the catalog of Chabad Torah and media (sefarim, sichos, letters, farbrengens, recordings, scans) by name or date, in Hebrew or English; or, with where="words", find the lines of scans and paragraphs of texts and transcripts that hold the words. Hebrew dates are understood (יו"ד שבט תשכ"ב, 10 Shevat 5722).',
       inputSchema: {
@@ -344,7 +344,7 @@ function tools(siteUrl: string): Tool[] {
       name: 'suggest_fix',
       title: 'Suggest a fix',
       description:
-        "Suggest a correction to one item: the fields to change (a field set to null is removed), with a short title and why. It becomes a suggestion under your account, checked and reviewed by the item's keepers like any other; nothing changes until they approve. Needs your RebbeHub account with the write scope: without it, the server asks your client to connect (OAuth), or send an API token.",
+        "Suggest a correction to one item: the fields to change (a field set to null is removed), with a short title and why. It becomes a suggestion under your account, checked and reviewed by the item's keepers like any other; nothing changes until they approve. Needs your ChassidusHub account with the write scope: without it, the server asks your client to connect (OAuth), or send an API token.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -387,7 +387,7 @@ function tools(siteUrl: string): Tool[] {
       name: 'suggest_shaar',
       title: "Suggest a sefer's shaar",
       description:
-        "Send a sefer's whole shaar file (as get_shaar gives it, changed) for review. The file is read strictly: one that cannot be read is refused with each line that is wrong and why. Setting the title, authors or genre here changes the sefer's own. Needs your RebbeHub account with the write scope.",
+        "Send a sefer's whole shaar file (as get_shaar gives it, changed) for review. The file is read strictly: one that cannot be read is refused with each line that is wrong and why. Setting the title, authors or genre here changes the sefer's own. Needs your ChassidusHub account with the write scope.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -437,7 +437,7 @@ function tools(siteUrl: string): Tool[] {
       name: 'open_issue',
       title: 'Open an issue',
       description:
-        'Open an issue about an item or the catalog: what is wrong or missing, for people to look into. It is public (reports of rights or of something offensive go to stewards only). @handles in the words are told; #12 links to that suggestion or issue. Needs your RebbeHub account with the write scope: without it, the server asks your client to connect (OAuth), or send an API token. To change an item yourself, use suggest_fix.',
+        'Open an issue about an item or the catalog: what is wrong or missing, for people to look into. It is public (reports of rights or of something offensive go to stewards only). @handles in the words are told; #12 links to that suggestion or issue. Needs your ChassidusHub account with the write scope: without it, the server asks your client to connect (OAuth), or send an API token. To change an item yourself, use suggest_fix.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -460,7 +460,7 @@ function tools(siteUrl: string): Tool[] {
       name: 'suggest_items',
       title: 'Add or change items',
       description:
-        "Add new items, or change or delete several at once, as one suggestion: what the site's editor does, many items at a time. Each item is its type and its whole data (as get_item shows data; schemas are at /schemas/<type>), with id to change an existing one (data null deletes it) and path for a new item's readable path. Up to 200 items a call: pass the suggestion id back as `suggestion` with submit false to keep adding to one suggestion, and submit it with the last call. New items get their ids here, in the order given. Reviewed by the keepers like any suggestion; a steward may approve it with approve_suggestion. Needs a RebbeHub API token with the write scope.",
+        "Add new items, or change or delete several at once, as one suggestion: what the site's editor does, many items at a time. Each item is its type and its whole data (as get_item shows data; schemas are at /schemas/<type>), with id to change an existing one (data null deletes it) and path for a new item's readable path. Up to 200 items a call: pass the suggestion id back as `suggestion` with submit false to keep adding to one suggestion, and submit it with the last call. New items get their ids here, in the order given. Reviewed by the keepers like any suggestion; a steward may approve it with approve_suggestion. Needs a ChassidusHub API token with the write scope.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -518,7 +518,7 @@ function tools(siteUrl: string): Tool[] {
       name: 'add_segments',
       title: 'Add segments to many pages',
       description:
-        "Add or replace a few segments in the words of many items at once, as one suggestion: a line a source left out, a heading, a machine's reading of a scan. Each item names its id and the segments (as get_item shows them in data.body: id, kind, text runs, origin for a machine's reading), and where each goes: at 'start', 'end', or a number (before that many of the version's segments). A segment whose id is already there is replaced where it stands. The rest of each item is left as it is, so only the new words are sent. Up to 200 items a call, kept in one suggestion like suggest_items. Needs a RebbeHub API token with the write scope.",
+        "Add or replace a few segments in the words of many items at once, as one suggestion: a line a source left out, a heading, a machine's reading of a scan. Each item names its id and the segments (as get_item shows them in data.body: id, kind, text runs, origin for a machine's reading), and where each goes: at 'start', 'end', or a number (before that many of the version's segments). A segment whose id is already there is replaced where it stands. The rest of each item is left as it is, so only the new words are sent. Up to 200 items a call, kept in one suggestion like suggest_items. Needs a ChassidusHub API token with the write scope.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -781,7 +781,7 @@ function machineTools(site: string): Tool[] {
       name: 'ask_machine',
       title: 'Ask the machine to read or transcribe',
       description:
-        "Ask RebbeHub's machines to read a scan (kind ocr: Hebrew OCR, line by line, so its words can be searched and proofread) or to transcribe a recording (kind transcript: the Rebbe's Yiddish heard by a model trained on his voice, synced paragraph by paragraph). The work is queued and done on free machines, usually within a day (at once where the site is set up for it); its words are marked [machine] until people check them. Asking for what already waits joins that request. Needs the write scope.",
+        "Ask ChassidusHub's machines to read a scan (kind ocr: Hebrew OCR, line by line, so its words can be searched and proofread) or to transcribe a recording (kind transcript: the Rebbe's Yiddish heard by a model trained on his voice, synced paragraph by paragraph). The work is queued and done on free machines, usually within a day (at once where the site is set up for it); its words are marked [machine] until people check them. Asking for what already waits joins that request. Needs the write scope.",
       inputSchema: { type: 'object', properties: { kind: { enum: ['ocr', 'transcript'] }, item: { ...ID, description: 'The scan (ocr) or recording (transcript)' } }, required: ['kind', 'item'], additionalProperties: false },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       async run(args, call) {
@@ -859,7 +859,7 @@ const SUGGESTION_WORDS = {
   note: { type: 'string', maxLength: 2000, description: 'Why, for the reviewers' },
 };
 const ORGANIZE_NOTE =
-  ' It becomes one suggestion under your account, reviewed by the keepers of the sets it touches (stewards for sets themselves); nothing changes until it is approved, and old paths redirect after. Needs a RebbeHub API token with the write scope. preview_organize shows the change first.';
+  ' It becomes one suggestion under your account, reviewed by the keepers of the sets it touches (stewards for sets themselves); nothing changes until it is approved, and old paths redirect after. Needs a ChassidusHub API token with the write scope. preview_organize shows the change first.';
 /** One decision for every clash of a suggestion: `*` stands for every item and every field (core's decisionsFor); in a merge "ours" is the site's version, "theirs" the suggestion's. */
 const ALL_LIVE = { '*': { '*': { take: 'ours' } } };
 const ALL_SUGGESTED = { '*': { '*': { take: 'theirs' } } };
@@ -1059,7 +1059,7 @@ function organizeTools(site: string): Tool[] {
  */
 class NeedsSignIn extends Error {
   constructor(readonly status: 401 | 403) {
-    super(status === 401 ? 'this tool sends a suggestion as you: connect your RebbeHub account (OAuth) or send an API token with the write scope' : 'this connection may only read: connect again and allow sending suggestions (the write scope)');
+    super(status === 401 ? 'this tool sends a suggestion as you: connect your ChassidusHub account (OAuth) or send an API token with the write scope' : 'this connection may only read: connect again and allow sending suggestions (the write scope)');
   }
 }
 
@@ -1077,9 +1077,9 @@ export function mcpRoutes(app: Hono, options: { siteUrl: string; version: string
         return {
           protocolVersion: (MCP_PROTOCOL_VERSIONS as readonly string[]).includes(asked) ? asked : MCP_PROTOCOL_VERSIONS[0],
           capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: MCP_SERVER_NAME, title: 'RebbeHub', version: options.version, websiteUrl: `${options.siteUrl.replace(/\/+$/, '')}/developers` },
+          serverInfo: { name: MCP_SERVER_NAME, title: 'ChassidusHub', version: options.version, websiteUrl: `${options.siteUrl.replace(/\/+$/, '')}/developers` },
           instructions:
-            'RebbeHub is the open, community-edited index of Chabad Torah and media. Search, read items and their words; ids are rh-… and never change. Words marked [machine] were read or heard by a machine and not yet checked. suggest_fix (write scope; you will be asked to connect your RebbeHub account) makes a suggestion under the connected person\'s account that people review before anything changes; suggest_items (write scope) adds, changes or deletes many items in one suggestion, list_suggestions and get_suggestion show what was suggested, approve_suggestion approves one when you may, and combine_suggestions makes several of your own into one; list_issues shows what people reported, and open_issue (write scope) reports a problem for people to look into. ask_machine (write scope) asks for a scan to be read by OCR or a recording transcribed; machine_queue shows where those requests stand, machine_to_check what the machines wrote that nobody checked yet, and training_data how much training data people\'s checking has made for the next transcription model. To organize the catalog, get_tree shows it; move_items, move_up, rename_item, reorder_children, create_set, delete_set, merge_items, mark_addition and organize (write scope) each make one suggestion that people review; preview_organize shows the change first. The tree is built of the official sefarim; other books are additions to one.',
+            'ChassidusHub is the open, community-edited index of Chabad Torah and media. Search, read items and their words; ids are rh-… and never change. Words marked [machine] were read or heard by a machine and not yet checked. suggest_fix (write scope; you will be asked to connect your ChassidusHub account) makes a suggestion under the connected person\'s account that people review before anything changes; suggest_items (write scope) adds, changes or deletes many items in one suggestion, list_suggestions and get_suggestion show what was suggested, approve_suggestion approves one when you may, and combine_suggestions makes several of your own into one; list_issues shows what people reported, and open_issue (write scope) reports a problem for people to look into. ask_machine (write scope) asks for a scan to be read by OCR or a recording transcribed; machine_queue shows where those requests stand, machine_to_check what the machines wrote that nobody checked yet, and training_data how much training data people\'s checking has made for the next transcription model. To organize the catalog, get_tree shows it; move_items, move_up, rename_item, reorder_children, create_set, delete_set, merge_items, mark_addition and organize (write scope) each make one suggestion that people review; preview_organize shows the change first. The tree is built of the official sefarim; other books are additions to one.',
         };
       }
       case 'ping':

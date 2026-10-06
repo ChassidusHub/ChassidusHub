@@ -15,7 +15,7 @@ import '../styles/pages/people.css';
 /**
  * Signing in, with a passkey: no password to choose or forget. The passkey
  * lives on the person's phone or computer, opened with their fingerprint,
- * face or screen lock, and works only on RebbeHub. New here: a name to be
+ * face or screen lock, and works only on ChassidusHub. New here: a name to be
  * known by and a handle for @mentions (suggested from the name), and the
  * device makes the passkey. Or with Google, once the
  * site has its Google sign-in keys: the browser goes to Google and back.
@@ -226,7 +226,7 @@ export default function SignIn() {
   return (
     <div className="auth">
       <div className="auth-head">
-        <Link to={href('/', lang)} className="mark auth-mark" aria-label="RebbeHub">
+        <Link to={href('/', lang)} className="mark auth-mark" aria-label="ChassidusHub">
           ר
         </Link>
         <h1 className="auth-title">{t(lang, 'signIn')}</h1>

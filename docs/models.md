@@ -1,16 +1,16 @@
-# RebbeHub's models, and how good they are
+# ChassidusHub's models, and how good they are
 
 > **Licence.** Model descriptions and benchmarks: CC BY-NC-ND 4.0. The
 > models are not released; all rights reserved.
 >
-> This page, the [/models](https://rebbehub.org/models) page on the site and
+> This page, the [/models](https://chassidushub.org/models) page on the site and
 > its data (`apps/web/app/lib/models.ts`) are under that licence, not the
 > repository's AGPL-3.0.
 
-RebbeHub reads scans and hears recordings with models of its own: a text
+ChassidusHub reads scans and hears recordings with models of its own: a text
 reader for Likkutei Sichos, a reader for the maftechos, a detector for the
 Miram (bold) words, and a Whisper that hears the Rebbe's Yiddish. The
-models are RebbeHub's own and are not released: only what each one does,
+models are ChassidusHub's own and are not released: only what each one does,
 which one is in use, and its scores are published here, each on a test it
 never learned from.
 
@@ -21,19 +21,19 @@ until a person checks it, however good its score.
 
 | Model | What it does | State |
 | --- | --- | --- |
-| rebbehub-kraken-ls-v1 | Reads the text of Likkutei Sichos from the scans | **in use**, reading vols 15-25 now |
-| rebbehub-kraken-v1 | Reads the maftechos (indexes) | in use, for the maftechos |
-| rebbehub-facenet-v2 | Finds which words on a page are in Miram (bold) | **in use** |
-| rebbehub-facenet-v1 | Finds which words on a page are in Miram (bold) | replaced |
-| rebbehub-whisper-v3 | Hears the Rebbe's Yiddish and writes it down | **in use** |
-| rebbehub-whisper-v2 | Hears the Rebbe's Yiddish and writes it down | superseded |
-| rebbehub-whisper-v1 | Hears the Rebbe's Yiddish and writes it down | superseded |
+| chassidushub-kraken-ls-v1 | Reads the text of Likkutei Sichos from the scans | **in use**, reading vols 15-25 now |
+| chassidushub-kraken-v1 | Reads the maftechos (indexes) | in use, for the maftechos |
+| chassidushub-facenet-v2 | Finds which words on a page are in Miram (bold) | **in use** |
+| chassidushub-facenet-v1 | Finds which words on a page are in Miram (bold) | replaced |
+| chassidushub-whisper-v3 | Hears the Rebbe's Yiddish and writes it down | **in use** |
+| chassidushub-whisper-v2 | Hears the Rebbe's Yiddish and writes it down | superseded |
+| chassidushub-whisper-v1 | Hears the Rebbe's Yiddish and writes it down | superseded |
 
 ## The Likkutei Sichos reader (OCR)
 
 Reads each line of a scanned Likkutei Sichos page into text. The model in
-use is **rebbehub-kraken-ls-v1**. The maftechos reader,
-**rebbehub-kraken-v1**, reads the indexes only and is not scored here.
+use is **chassidushub-kraken-ls-v1**. The maftechos reader,
+**chassidushub-kraken-v1**, reads the indexes only and is not scored here.
 
 ### The test
 
@@ -54,7 +54,7 @@ scan has.
 | --- | --- | --- | --- | --- |
 | PP-OCRv6, as it came (where it started) | 96.45% | 86.39% | about 44% | history |
 | An earlier candidate (the best before it) | 99.82% | 99.41% | 96.1% | superseded |
-| **rebbehub-kraken-ls-v1** | **99.91%** | **99.68%** | **97.7%** | **in use** |
+| **chassidushub-kraken-ls-v1** | **99.91%** | **99.68%** | **97.7%** | **in use** |
 | + the word check after reading | 99.88%* | 99.60%* | 97.3%* | in use |
 | A later candidate (its best) | 99.87% | 99.51% | 97.0% | not better, not used |
 
@@ -76,19 +76,19 @@ none.
 | 01-0.9986-v1 | 99.83 | 99.40 | 96.0 | 99.85 | 99.68 | 347 | 17 | 49 / 0 | 33 / 0 |
 | 01-0.9987 | 99.82 | 99.38 | 96.0 | 99.84 | 99.69 | 361 | 17 | 49 / 0 | 41 / 0 |
 | 01-0.9987-v1 (the best before it) | 99.82 | 99.41 | 96.1 | 99.84 | 99.69 | 357 | 18 | 51 / 0 | 42 / 0 |
-| **rebbehub-kraken-ls-v1** | **99.91** | **99.68** | **97.7** | **99.93** | **99.81** | **179** | 18 | 4 / 0 | 6 / 1 |
+| **chassidushub-kraken-ls-v1** | **99.91** | **99.68** | **97.7** | **99.93** | **99.81** | **179** | 18 | 4 / 0 | 6 / 1 |
 
-Without the 35 added marks rebbehub-kraken-ls-v1 still wins: 99.87%
+Without the 35 added marks chassidushub-kraken-ls-v1 still wins: 99.87%
 letters and 97.0% lines perfect, against 99.84% and 96.3%. It halved the
 mistakes (357 to 179), almost all of them marks: dropped dashes 51 to 4,
 dropped dots 42 to 6. The hard letters did not move (18 to 18).
 
 The later candidates, on the same 4,500 lines with a key of the typed text
-plus 24 line-edge marks, against rebbehub-kraken-ls-v1 read the same way:
+plus 24 line-edge marks, against chassidushub-kraken-ls-v1 read the same way:
 
 | Model or candidate | Letters | Words | Lines perfect | Body | Notes | Mistakes | Hard | Dash dropped / added | Dots dropped / added |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **rebbehub-kraken-ls-v1** | **99.90** | **99.63** | **97.5** | 99.91 | 99.80 | **206** | 20 | 4 / 1 | 0 / 10 |
+| **chassidushub-kraken-ls-v1** | **99.90** | **99.63** | **97.5** | 99.91 | 99.80 | **206** | 20 | 4 / 1 | 0 / 10 |
 | r3-00-0.9982-2347 | 99.83 | 99.38 | 95.8 | 99.84 | 99.74 | 348 | 59 | 38 / 0 | 10 / 3 |
 | r3-00-0.9983-0003 | 99.83 | 99.35 | 95.8 | 99.85 | 99.74 | 337 | 41 | 37 / 0 | 6 / 5 |
 | r3-00-0.9984-0019 | 99.87 | 99.51 | 97.0 | 99.88 | 99.81 | 258 | 22 | 21 / 0 | 10 / 2 |
@@ -186,7 +186,7 @@ Next: a round for Yiddish, scored again the same way to see the gap close.
 
 ## The Miram (bold) detector
 
-In the Rebbe's sichos, Miram type marks the stressed words; RebbeHub shows
+In the Rebbe's sichos, Miram type marks the stressed words; ChassidusHub shows
 them as bold. The detector says, word by word, which words on a page are in
 Miram.
 
@@ -196,11 +196,11 @@ The test: five regular sicha pages (38:40, 34:42, 31:93, 36:50, 33:70),
 | Model | Words agreeing with the eye | State |
 | --- | --- | --- |
 | Thickness rules, no model | partial words; misses whole Miram notes | replaced |
-| rebbehub-facenet-v1 | 1,832 / 1,832 | replaced |
-| **rebbehub-facenet-v2** | **1,832 / 1,832** | **in use** |
+| chassidushub-facenet-v1 | 1,832 / 1,832 | replaced |
+| **chassidushub-facenet-v2** | **1,832 / 1,832** | **in use** |
 
 The first review round (2026-10-02) found 12 Miram misses, all on pages
-built before rebbehub-facenet-v2 ran. Five pages is a small test; every
+built before chassidushub-facenet-v2 ran. Five pages is a small test; every
 page checked in the review tool adds to it.
 
 ## The Rebbe's voice to text (Whisper)
@@ -226,9 +226,9 @@ the one to compare by):
 | Model | 5742 farbrengens | 11 Nissan 5733 | Whole 17 Tammuz 5742 (29 min) | State |
 | --- | --- | --- | --- | --- |
 | ivrit.ai Yiddish (where it started) | about 60% | | | history |
-| rebbehub-whisper-v1 | 12% / 6% | 22.5% / 9.0% | 13.0% / 5.9% | superseded |
-| rebbehub-whisper-v2 | 9.5% / 4.8% | 13.8% / 5.2% | 11.9% / 5.3% | superseded |
-| **rebbehub-whisper-v3** | 10.1% / 5.2% | 13.7% / - | **11.5% / 5.5%** | **in use** |
+| chassidushub-whisper-v1 | 12% / 6% | 22.5% / 9.0% | 13.0% / 5.9% | superseded |
+| chassidushub-whisper-v2 | 9.5% / 4.8% | 13.8% / 5.2% | 11.9% / 5.3% | superseded |
+| **chassidushub-whisper-v3** | 10.1% / 5.2% | 13.7% / - | **11.5% / 5.5%** | **in use** |
 
 Weak spots: rarer words (`תנות` for `תענית`), and the older years
 (11 Nissan 5733 above).

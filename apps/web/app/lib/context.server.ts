@@ -1,4 +1,4 @@
-import { RebbeHubApi } from './api.js';
+import { ChassidusHubApi } from './api.js';
 import type { ShowcaseStore } from './showcase.js';
 
 /**
@@ -8,7 +8,7 @@ import type { ShowcaseStore } from './showcase.js';
  * environment.
  */
 export interface SiteContext {
-  api: RebbeHubApi;
+  api: ChassidusHubApi;
   siteUrl: string;
   /** Where showcases are kept, and whether this visitor may make them (lib/showcase.ts); unset, there are none. */
   showcases?: { store: ShowcaseStore; owner: boolean };
@@ -23,7 +23,7 @@ declare module 'react-router' {
 export function siteOf(context: { site?: SiteContext } | undefined): SiteContext {
   if (context?.site) return context.site;
   return {
-    api: new RebbeHubApi(process.env.REBBEHUB_API_URL ?? 'http://127.0.0.1:8787'),
+    api: new ChassidusHubApi(process.env.CHASSIDUSHUB_API_URL ?? 'http://127.0.0.1:8787'),
     siteUrl: process.env.SITE_URL ?? 'http://localhost:5173',
   };
 }

@@ -1,4 +1,4 @@
-import { one, type Db } from '@rebbehub/db';
+import { one, type Db } from '@chassidushub/db';
 import { invalid } from './errors.js';
 import { checkUsername, suggestUsername, usernameMessage } from './usernames.js';
 

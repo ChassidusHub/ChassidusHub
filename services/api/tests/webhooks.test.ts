@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createHmac } from 'node:crypto';
-import { createWebhook, deliverWebhooks, listWebhooks } from '@rebbehub/core';
+import { createWebhook, deliverWebhooks, listWebhooks } from '@chassidushub/core';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 describe('webhooks', () => {
@@ -14,7 +14,7 @@ describe('webhooks', () => {
     const posts: Array<{ body: string; signature: string }> = [];
     let answer = 500;
     const fetchStub = (async (_url: string, init: RequestInit) => {
-      posts.push({ body: String(init.body), signature: new Headers(init.headers).get('X-RebbeHub-Signature')! });
+      posts.push({ body: String(init.body), signature: new Headers(init.headers).get('X-ChassidusHub-Signature')! });
       return new Response('', { status: answer });
     }) as typeof fetch;
 

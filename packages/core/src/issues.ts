@@ -1,5 +1,5 @@
-import { one, type Db } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import { PRIVATE_REASONS, type Catalog, type ReportReason } from './catalog.js';
 import { byTime, peopleOf, threadItems, type PersonTag, type TimelineItem } from './conversation.js';
 import { badState, forbidden, invalid, notFound } from './errors.js';

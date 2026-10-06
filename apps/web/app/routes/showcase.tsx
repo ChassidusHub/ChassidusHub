@@ -14,11 +14,11 @@ import { EmptyState } from '../ui/primitives.js';
 import '../styles/pages/show.css';
 
 /**
- * Making a showcase (lib/showcase.ts): Shmuly picks the farbrengens and
- * sichos a guest will see, and what else of RebbeHub the page shows, and
+ * Making a showcase (lib/showcase.ts): the steward picks the farbrengens and
+ * sichos a guest will see, and what else of ChassidusHub the page shows, and
  * gets its secret address to send. The farbrengens whose transcripts
  * people checked most are offered first. Only he makes them: while
- * RebbeHub is private, whoever opened its lock.
+ * ChassidusHub is private, whoever opened its lock.
  *
  * Saving fixes which recordings and scans the page may pass on to a guest
  * (`media`); picking again and saving makes that list anew. Removing a
@@ -46,7 +46,7 @@ const W = {
   newOne: { he: 'דף חדש', en: 'New showcase' },
   editing: { he: 'עריכת הדף', en: 'Editing' },
   name: { he: 'כותרת', en: 'Title' },
-  namePh: { he: 'למשל: RebbeHub', en: 'e.g. RebbeHub' },
+  namePh: { he: 'למשל: ChassidusHub', en: 'e.g. ChassidusHub' },
   note: { he: 'שורה מתחת לכותרת (לא חובה)', en: 'A line under the title (optional)' },
   notePh: { he: 'למשל: הוכן במיוחד עבור…', en: 'e.g. Prepared for…' },
   farbrengens: { he: 'התוועדויות', en: 'Farbrengens' },
@@ -206,7 +206,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
   const withWords = new Set(transcribed.map((t) => t.recording));
 
-  // A farbrengen's original: a Drive file (or one RebbeHub keeps) he links.
+  // A farbrengen's original: a Drive file (or one ChassidusHub keeps) he links.
   const originals: Record<string, number> = {};
   for (const id of farbrengens) {
     const source = mediaSourceOf(String(form.get(`original:${id}`) ?? '').trim());
@@ -234,7 +234,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const now = new Date().toISOString();
   const showcase: Showcase = {
     token: existing?.token ?? newToken(),
-    title: String(form.get('title') ?? '').trim().slice(0, 120) || 'RebbeHub',
+    title: String(form.get('title') ?? '').trim().slice(0, 120) || 'ChassidusHub',
     note: String(form.get('note') ?? '').trim().slice(0, 240),
     lang: 'en',
     created: existing?.created ?? now,
@@ -257,7 +257,7 @@ export function headers() {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${w(loaderData?.lang ?? 'he', 'title')} · RebbeHub` }, { name: 'robots', content: 'noindex, nofollow' }];
+  return [{ title: `${w(loaderData?.lang ?? 'he', 'title')} · ChassidusHub` }, { name: 'robots', content: 'noindex, nofollow' }];
 }
 
 export function ErrorBoundary() {
@@ -356,7 +356,7 @@ function Editor({ lang, current, best, read }: { lang: Lang; current: Current; b
       <div className="sc-fields">
         <label>
           <span>{w(lang, 'name')}</span>
-          <input name="title" defaultValue={current?.title ?? 'RebbeHub'} placeholder={w(lang, 'namePh')} maxLength={120} dir="auto" />
+          <input name="title" defaultValue={current?.title ?? 'ChassidusHub'} placeholder={w(lang, 'namePh')} maxLength={120} dir="auto" />
         </label>
         <label>
           <span>{w(lang, 'note')}</span>

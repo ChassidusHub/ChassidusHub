@@ -1,6 +1,6 @@
 import type { Hono } from 'hono';
-import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchSimilar, type Catalog, type Embedder } from '@rebbehub/core';
-import { readId, type EntityType } from '@rebbehub/model';
+import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchSimilar, type Catalog, type Embedder } from '@chassidushub/core';
+import { readId, type EntityType } from '@chassidushub/model';
 import { HttpError } from './app.js';
 import { PUBLIC_SUMMARY } from './platform.js';
 

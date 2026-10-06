@@ -122,7 +122,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: 'RebbeHub' }];
+  if (!loaderData) return [{ title: 'ChassidusHub' }];
   return pageMeta({ title: ps(loaderData.lang, 'addNew'), path: '/add', lang: loaderData.lang, siteUrl: loaderData.siteUrl, noindex: true });
 }
 

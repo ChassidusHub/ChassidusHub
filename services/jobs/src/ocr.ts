@@ -3,8 +3,8 @@ import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { notRecentlyFailedSql, pageLevel, reseedLines, type Catalog, type Json } from '@rebbehub/core';
-import type { EntityId, TextLine } from '@rebbehub/model';
+import { notRecentlyFailedSql, pageLevel, reseedLines, type Catalog, type Json } from '@chassidushub/core';
+import type { EntityId, TextLine } from '@chassidushub/model';
 import { failIfAny, machineRun } from './machineQueue.js';
 
 /**
@@ -160,7 +160,7 @@ export async function readScans(
   return done;
 
   async function readOne(scan: { id: EntityId; file: string }): Promise<void> {
-    const dir = await mkdtemp(join(tmpdir(), 'rebbehub-ocr-'));
+    const dir = await mkdtemp(join(tmpdir(), 'chassidushub-ocr-'));
     try {
       const pdf = join(dir, 'scan.pdf');
       await writeFile(pdf, await input.fetchFile(scan.file));

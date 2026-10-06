@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CatalogError, sitemapChunks, sitemapPage } from '@rebbehub/core';
+import { CatalogError, sitemapChunks, sitemapPage } from '@chassidushub/core';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 /**
@@ -12,7 +12,7 @@ describe('sitemaps', () => {
     const { catalog, set } = await freshCatalog();
     const events = [];
     for (let day = 10; day < 15; day++) events.push(await add(catalog, 'mendy', 'keeper', 'event', { ...yudShvat(set), date: `5742-05-${day}` }, `/events/5742-05-${day}`));
-    const author = await add(catalog, 'shmuly', 'shmuly', 'author', { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, sets: [set] }, '/authors/the-rebbe');
+    const author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, sets: [set] }, '/authors/the-rebbe');
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר', en: 'Sefer' }, slug: 'sefer', authors: [author], genre: 'sichos', levels: ['sicha'], sets: [set] }, '/sefer');
 
     const chunks = await sitemapChunks(catalog.db, { size: 2 });

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { data, Form } from 'react-router';
-import { hayomYomShiurimOf } from '@rebbehub/hebrew';
-import { allSegments, isPageText, type PageText } from '@rebbehub/model';
+import { hayomYomShiurimOf } from '@chassidushub/hebrew';
+import { allSegments, isPageText, type PageText } from '@chassidushub/model';
 import { Pause, Play } from 'lucide-react';
 import type { Route } from './+types/show';
 import type { Entity, Mafteach } from '../lib/api.js';
@@ -30,16 +30,16 @@ import '../styles/pages/show.css';
 
 /**
  * A showcase, as its guest sees it (lib/showcase.ts): one page, made for
- * the people Shmuly meets, at an address only he gives out. The
+ * the people the steward meets, at an address only he gives out. The
  * farbrengens he picked play with their words lit as they are said; the
  * sichos he picked, and the newest our reader read into the catalog,
  * show their scan beside their words; then the rest of
- * what RebbeHub does, each as the site itself does it. Nothing on it leads
- * anywhere else: the rest of RebbeHub is private. What a machine heard or
+ * what ChassidusHub does, each as the site itself does it. Nothing on it leads
+ * anywhere else: the rest of ChassidusHub is private. What a machine heard or
  * read and nobody checked is marked so, here as everywhere.
  *
- * It is an information page about the agents that build RebbeHub
- * (Shmuly: "not a landing page, an information page"): plain text and a
+ * It is an information page about the agents that build ChassidusHub
+ * (The steward: "not a landing page, an information page"): plain text and a
  * table of what each agent does and how it scores, then examples of each
  * at work, the original beside what the agent made. It opens in English,
  * for the people he meets (`?lang=he` for Hebrew).
@@ -70,7 +70,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   if (!showcase) throw data('not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
   const { token, extras } = showcase;
   const url = new URL(request.url);
-  // In English, for the people Shmuly meets; a Hebrew reader can switch.
+  // In English, for the people the steward meets; a Hebrew reader can switch.
   const lang: Lang = url.searchParams.get('lang') === 'he' ? 'he' : 'en';
   const q = url.searchParams.get('q')?.trim().slice(0, 100) ?? '';
   const ids = [...showcase.farbrengens, ...showcase.sichos];
@@ -164,16 +164,16 @@ export function headers() {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: 'RebbeHub' }];
-  return [{ title: `${loaderData.title} · RebbeHub` }, { name: 'robots', content: 'noindex, nofollow' }, { name: 'referrer', content: 'no-referrer' }];
+  if (!loaderData) return [{ title: 'ChassidusHub' }];
+  return [{ title: `${loaderData.title} · ChassidusHub` }, { name: 'robots', content: 'noindex, nofollow' }, { name: 'referrer', content: 'no-referrer' }];
 }
 
 const W = {
   lede: {
-    he: 'RebbeHub הוא מפתח פתוח של תורת חב"ד ושל ההקלטות, שנבנה בידי סוכני AI ונבדק בידי אנשים. הסוכנים קוראים את הסריקות, שומעים את ההקלטות, מתזמנים כל מילה, מאחדים את המפתחות ומסדרים את הקטלוג. בדף הזה: מה כל סוכן עושה, איך הוא נבחן, ודוגמאות מעבודתו.',
-    en: "RebbeHub is an open index of Chabad Torah and recordings, built by AI agents and checked by people. The agents read the scans, transcribe the recordings, time every word, join the indexes and file the catalog. This page lists what each agent does, how it scores, and examples of its work.",
+    he: 'ChassidusHub הוא מפתח פתוח של תורת חב"ד ושל ההקלטות, שנבנה בידי סוכני AI ונבדק בידי אנשים. הסוכנים קוראים את הסריקות, שומעים את ההקלטות, מתזמנים כל מילה, מאחדים את המפתחות ומסדרים את הקטלוג. בדף הזה: מה כל סוכן עושה, איך הוא נבחן, ודוגמאות מעבודתו.',
+    en: "ChassidusHub is an open index of Chabad Torah and recordings, built by AI agents and checked by people. The agents read the scans, transcribe the recordings, time every word, join the indexes and file the catalog. This page lists what each agent does, how it scores, and examples of its work.",
   },
-  preview: { he: 'תצוגה פרטית. RebbeHub עדיין סגור לציבור.', en: 'Private preview. RebbeHub is not yet open to the public.' },
+  preview: { he: 'תצוגה פרטית. ChassidusHub עדיין סגור לציבור.', en: 'Private preview. ChassidusHub is not yet open to the public.' },
   roster: { he: 'הסוכנים', en: 'The agents' },
   rosterSub: { he: 'הציונים נמדדו על חומר שהמודל לא ראה באימון.', en: 'Scores are measured on material the model never saw in training.' },
   agent: { he: 'סוכן', en: 'Agent' },
@@ -223,14 +223,14 @@ const w = (lang: Lang, key: keyof typeof W) => W[key][lang];
 
 type Agent = { id: string; name: { he: string; en: string }; model: string; does: { he: string; en: string }; family?: 'ocr' | 'miram' | 'whisper'; scoreNote?: { he: string; en: string }; count?: { type: string; label: { he: string; en: string } } };
 
-/** RebbeHub's agents: the models (lib/models.ts gives their scores) and the bots that file and join the catalog. */
+/** ChassidusHub's agents: the models (lib/models.ts gives their scores) and the bots that file and join the catalog. */
 const AGENTS: Agent[] = [
-  { id: 'reader', name: { he: 'הקורא', en: 'Reader' }, model: 'rebbehub-kraken-ls-v1', does: { he: 'קורא סריקה והופך אותה לטקסט', en: 'Reads a scan into text' }, family: 'ocr' },
-  { id: 'miram', name: { he: 'גלאי המירם', en: 'Miram detector' }, model: 'rebbehub-facenet-v2', does: { he: 'מוצא את המילים המודגשות בסריקה', en: 'Finds the stressed (Miram) words in a scan' }, family: 'miram' },
-  { id: 'listener', name: { he: 'השומע', en: 'Listener' }, model: 'rebbehub-whisper-v3', does: { he: 'כותב את ההקלטה מילה במילה', en: 'Transcribes a recording word for word' }, family: 'whisper', scoreNote: { he: 'שגיאות במילים / באותיות', en: 'word / letter errors' }, count: { type: 'text', label: { he: 'תמלולים', en: 'transcripts' } } },
+  { id: 'reader', name: { he: 'הקורא', en: 'Reader' }, model: 'chassidushub-kraken-ls-v1', does: { he: 'קורא סריקה והופך אותה לטקסט', en: 'Reads a scan into text' }, family: 'ocr' },
+  { id: 'miram', name: { he: 'גלאי המירם', en: 'Miram detector' }, model: 'chassidushub-facenet-v2', does: { he: 'מוצא את המילים המודגשות בסריקה', en: 'Finds the stressed (Miram) words in a scan' }, family: 'miram' },
+  { id: 'listener', name: { he: 'השומע', en: 'Listener' }, model: 'chassidushub-whisper-v3', does: { he: 'כותב את ההקלטה מילה במילה', en: 'Transcribes a recording word for word' }, family: 'whisper', scoreNote: { he: 'שגיאות במילים / באותיות', en: 'word / letter errors' }, count: { type: 'text', label: { he: 'תמלולים', en: 'transcripts' } } },
   { id: 'timer', name: { he: 'המתזמן', en: 'Timer' }, model: 'align', does: { he: 'קובע את הרגע של כל מילה בהקלטה', en: 'Times each word to the recording' }, count: { type: 'alignment', label: { he: 'הקלטות מתוזמנות', en: 'recordings timed' } } },
   { id: 'indexer', name: { he: 'המפתח', en: 'Indexer' }, model: 'mafteach', does: { he: 'מאחד את מפתחות החלקים למפתח אחד', en: "Joins each volume's index into one" } },
-  { id: 'librarian', name: { he: 'הספרן', en: 'Librarian' }, model: 'rebbehub-mcp', does: { he: 'מוסיף ומסדר את הקטלוג', en: 'Adds and files the catalog' }, count: { type: 'unit', label: { he: 'שיחות, מאמרים ומכתבים', en: 'sichos, maamarim and letters' } } },
+  { id: 'librarian', name: { he: 'הספרן', en: 'Librarian' }, model: 'chassidushub-mcp', does: { he: 'מוסיף ומסדר את הקטלוג', en: 'Adds and files the catalog' }, count: { type: 'unit', label: { he: 'שיחות, מאמרים ומכתבים', en: 'sichos, maamarim and letters' } } },
 ];
 
 /** An agent's headline score: the first score of its model in use, as the /models page has it. */
@@ -337,7 +337,7 @@ export default function Show({ loaderData }: Route.ComponentProps) {
         ) : null}
 
         {pages.length ? (
-          <Section id="scans" title={w(lang, 'scans')} sub={w(lang, 'scansSub')} agent="rebbehub-kraken-ls-v1, rebbehub-facenet-v2" lang={lang}>
+          <Section id="scans" title={w(lang, 'scans')} sub={w(lang, 'scansSub')} agent="chassidushub-kraken-ls-v1, chassidushub-facenet-v2" lang={lang}>
             {pages.map((p) => (
               <PageCard key={p.id} page={p} lang={lang} />
             ))}
@@ -345,7 +345,7 @@ export default function Show({ loaderData }: Route.ComponentProps) {
         ) : null}
 
         {farbrengens.length ? (
-          <Section id="listen" title={w(lang, 'listen')} sub={w(lang, 'listenSub')} agent="rebbehub-whisper-v3, align" lang={lang}>
+          <Section id="listen" title={w(lang, 'listen')} sub={w(lang, 'listenSub')} agent="chassidushub-whisper-v3, align" lang={lang}>
             <Listen token={token} farbrengens={farbrengens} lang={lang} />
           </Section>
         ) : null}
@@ -364,7 +364,7 @@ export default function Show({ loaderData }: Route.ComponentProps) {
         ) : null}
 
         {hayomYom.length ? (
-          <Section id="daily" title={w(lang, 'daily')} sub={w(lang, 'dailySub')} agent="rebbehub-kraken-v1, layout" lang={lang}>
+          <Section id="daily" title={w(lang, 'daily')} sub={w(lang, 'dailySub')} agent="chassidushub-kraken-v1, layout" lang={lang}>
             <div className="show-paper">
               {hayomYom.map((h, i) => (
                 <HayomYomDay key={i} title={h.title} body={h.body} shiurim={h.shiurim} lang={lang} />

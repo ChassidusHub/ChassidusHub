@@ -11,7 +11,7 @@ import { freshCatalog } from '../../../packages/core/tests/helpers.js';
  * check - runs as in production.
  */
 
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 let app: Hono;
 let catalog: Awaited<ReturnType<typeof freshCatalog>>['catalog'];
 
@@ -27,8 +27,8 @@ beforeEach(async () => {
   app = createApp({
     catalog,
     auth: {
-      rpId: 'rebbehub.test',
-      rpName: 'RebbeHub',
+      rpId: 'chassidushub.test',
+      rpName: 'ChassidusHub',
       origins: [SITE],
       verify,
     },
@@ -53,7 +53,7 @@ describe('passkey sign-in', () => {
   it('makes an account with a passkey and signs it in, with a secure cookie', async () => {
     const options = await call('POST', '/v1/auth/passkey/register/options', { body: { name: '  Mendy   Cohen ' } });
     expect(options.status).toBe(200);
-    expect(options.body.options).toMatchObject({ rp: { id: 'rebbehub.test', name: 'RebbeHub' }, user: { name: 'Mendy Cohen' } });
+    expect(options.body.options).toMatchObject({ rp: { id: 'chassidushub.test', name: 'ChassidusHub' }, user: { name: 'Mendy Cohen' } });
 
     const created = await call('POST', '/v1/auth/passkey/register/verify', { body: { challengeId: options.body.challengeId, name: 'Mendy Cohen', response: { id: 'cred-1' } } });
     expect(created.status).toBe(201);
@@ -216,8 +216,8 @@ describe('Google sign-in', () => {
     app = createApp({
       catalog,
       auth: {
-        rpId: 'rebbehub.test',
-        rpName: 'RebbeHub',
+        rpId: 'chassidushub.test',
+        rpName: 'ChassidusHub',
         origins: [SITE],
         verify,
         google: {
@@ -314,7 +314,7 @@ describe('Google sign-in', () => {
     expect(back.headers.get('Location')).toBe('/account');
 
     const { catalog } = await freshCatalog();
-    const without = createApp({ catalog, auth: { rpId: 'rebbehub.test', rpName: 'RebbeHub', origins: [SITE] } });
+    const without = createApp({ catalog, auth: { rpId: 'chassidushub.test', rpName: 'ChassidusHub', origins: [SITE] } });
     expect((await without.request(`${SITE}/v1/auth/google/start`)).headers.get('Location')).toBe('/signin?error=google-off');
   });
 });

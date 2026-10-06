@@ -1,9 +1,9 @@
 /**
- * A showcase: one page Shmuly opens for the people he meets, at a secret
- * address of its own (`/show/<token>`), while the rest of RebbeHub is
+ * A showcase: one page the steward opens for the people he meets, at a secret
+ * address of its own (`/show/<token>`), while the rest of ChassidusHub is
  * private (server/lock.ts). He picks what it shows at `/showcase`: the
  * farbrengens whose transcripts play as lyrics, the sichos whose scans
- * sit beside their words, and the rest of what RebbeHub does (the day's
+ * sit beside their words, and the rest of what ChassidusHub does (the day's
  * Hayom Yom as printed, the subject index, the models' scores, the
  * catalog in numbers).
  *
@@ -17,7 +17,7 @@ import type { Reading } from './reading.js';
 
 /** Where a recording's or scan's bytes are, for a guest to be given them through the showcase. */
 export type MediaSource =
-  /** A file RebbeHub serves itself, from the public bucket (`objects/<sha256>`). */
+  /** A file ChassidusHub serves itself, from the public bucket (`objects/<sha256>`). */
   | { kind: 'object'; sha256: string }
   /** JEM's audio, from its CDN (what Sichos-Kodesh's media proxy passes on). */
   | { kind: 'jem'; file: string }
@@ -29,7 +29,7 @@ export interface ShowcaseExtras {
   daily: boolean;
   /** Likkutei Sichos' subject index, searchable. */
   mafteach: boolean;
-  /** RebbeHub's models and their scores (their scores only; the models are not released). */
+  /** ChassidusHub's models and their scores (their scores only; the models are not released). */
   models: boolean;
   /** The catalog in numbers. */
   numbers: boolean;
@@ -106,7 +106,7 @@ export const mediaPath = (token: string, index: number) => `/show/${token}/m/${i
 
 /**
  * A guest's address of the scan of a sicha our reader read into the
- * catalog: the page shows these on its own, beside the ones Shmuly picked.
+ * catalog: the page shows these on its own, beside the ones the steward picked.
  */
 export const scanPath = (token: string, unit: string) => `/show/${token}/s/${unit}`;
 

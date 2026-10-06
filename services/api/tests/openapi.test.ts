@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Catalog } from '@rebbehub/core';
+import type { Catalog } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { authFor } from '../src/auth.js';
 import { API_TAGS, OPENAPI, OPERATIONS } from '../src/openapi.js';
@@ -14,7 +14,7 @@ const store = { get: async () => null };
 const writer = { put: async () => {} };
 const app = createApp({
   catalog: {} as Catalog,
-  auth: authFor('https://rebbehub.org', { clientId: 'client', clientSecret: 'secret' }),
+  auth: authFor('https://chassidushub.org', { clientId: 'client', clientSecret: 'secret' }),
   oai: { adminEmail: 'admins@example.test' },
   uploads: { public: writer, preservation: writer },
   files: store,

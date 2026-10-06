@@ -1,6 +1,6 @@
 import { HDate } from '@hebcal/core';
 import { dailyRambam1, dailyRambam3, DailyRambamEvent, seferHaMitzvot } from '@hebcal/learning';
-import { toHebrewNumeral } from '@rebbehub/hebrew';
+import { toHebrewNumeral } from '@chassidushub/hebrew';
 
 /**
  * The daily Rambam in its three tracks, as the Rebbe set them in 5744:

@@ -55,17 +55,17 @@ describe('examples from the OpenAPI document', () => {
 
   it('makes curl and TypeScript examples that fill in the path', () => {
     const entity = ops.find((o) => o.path === '/v1/entities/{id}' && o.method === 'GET')!;
-    const curl = curlExample(entity, 'https://api.rebbehub.org', doc);
-    expect(curl).toMatch(/^curl .*https:\/\/api\.rebbehub\.org\/v1\/entities\/rh-/);
-    expect(typescriptExample(entity, doc)).toContain('new RebbeHub(');
+    const curl = curlExample(entity, 'https://api.chassidushub.org', doc);
+    expect(curl).toMatch(/^curl .*https:\/\/api\.chassidushub\.org\/v1\/entities\/rh-/);
+    expect(typescriptExample(entity, doc)).toContain('new ChassidusHub(');
     const suggest = ops.find((o) => o.path === '/v1/suggestions/quick' && o.method === 'POST')!;
-    expect(curlExample(suggest, 'https://api.rebbehub.org', doc)).toContain('Authorization: Bearer');
+    expect(curlExample(suggest, 'https://api.chassidushub.org', doc)).toContain('Authorization: Bearer');
   });
 });
 
 describe('the developer pages on the built site', () => {
   const webRoot = fileURLToPath(new URL('..', import.meta.url));
-  const SITE = 'https://rebbehub.test';
+  const SITE = 'https://chassidushub.test';
   let handle: (request: Request) => Promise<Response>;
 
   beforeAll(async () => {
@@ -103,7 +103,7 @@ describe('the developer pages on the built site', () => {
     const short = await get('/llms.txt');
     expect(short.status).toBe(200);
     expect(short.type).toContain('text/plain');
-    expect(short.body).toMatch(/^# RebbeHub\n\n> /);
+    expect(short.body).toMatch(/^# ChassidusHub\n\n> /);
     expect(short.body).toContain(`${SITE}/developers/auth`);
     expect(short.body).toContain('/mcp');
     const full = await get('/llms-full.txt');

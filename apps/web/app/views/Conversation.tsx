@@ -53,7 +53,7 @@ const W = {
 export function Person({ id, people, lang }: { id: string | null; people: People; lang: Lang }) {
   if (!id) return <b>{tt(lang, 'reader')}</b>;
   const p = people[id];
-  const name = p?.name ?? (id === 'system' ? 'RebbeHub' : id);
+  const name = p?.name ?? (id === 'system' ? 'ChassidusHub' : id);
   if (!p?.username) return <b>{name}</b>;
   return (
     <Link className="person" to={href(personPath(p.username), lang)} title={`@${p.username}`}>
@@ -66,7 +66,7 @@ export function Person({ id, people, lang }: { id: string | null; people: People
 /**
  * Who wrote something: the person, or, when an agent sent it for them (one
  * of their API tokens, an app they connected), the agent for the person:
- * "Claude · for @shmuly".
+ * "Claude · for @steward".
  */
 export function Author({ id, people, lang, via }: { id: string | null; people: People; lang: Lang; via?: Via | null }) {
   return (

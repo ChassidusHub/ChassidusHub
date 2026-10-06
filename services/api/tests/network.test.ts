@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { EntityId } from '@rebbehub/model';
-import { EMBEDDING_DIMENSIONS, embedItems, type Embedder } from '@rebbehub/core';
+import type { EntityId } from '@chassidushub/model';
+import { EMBEDDING_DIMENSIONS, embedItems, type Embedder } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -91,10 +91,10 @@ describe('OAI-PMH', () => {
   });
 
   it('identifies itself, lists records a page at a time, and reports deletions', async () => {
-    const author = await add(catalog, 'shmuly', 'shmuly', 'author', { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, sets: [set] });
+    const author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'הרבי', en: 'The Rebbe' }, kind: 'rebbe', rebbe: 7, sets: [set] });
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'לקוטי שיחות', en: 'Likkutei Sichos' }, slug: 'likkutei-sichos', authors: [author], genre: 'sichos', levels: ['volume'], sets: [set] }, '/likkutei-sichos');
     const unit = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'volume', value: '1' }], order: 'V', label: { he: 'בראשית' }, date: '5725-07-01', events: [event], sets: [set] });
-    const app = createApp({ catalog, oai: { adminEmail: 'stewards@example.org', siteUrl: 'https://rebbehub.test', pageSize: 2 } });
+    const app = createApp({ catalog, oai: { adminEmail: 'stewards@example.org', siteUrl: 'https://chassidushub.test', pageSize: 2 } });
 
     const identify = await xml(app, 'verb=Identify');
     expect(identify).toContain('<adminEmail>stewards@example.org</adminEmail>');
@@ -105,13 +105,13 @@ describe('OAI-PMH', () => {
     expect(first.match(/<header>/g)).toHaveLength(2);
     const token = /<resumptionToken>([^<]+)<\/resumptionToken>/.exec(first)![1]!;
     const second = await xml(app, `verb=ListRecords&resumptionToken=${token}`);
-    expect(second).toContain(`<identifier>oai:rebbehub.test:${unit}</identifier>`);
+    expect(second).toContain(`<identifier>oai:chassidushub.test:${unit}</identifier>`);
     expect(second).toContain('<dc:title xml:lang="he">בראשית</dc:title>');
     expect(second).toContain('<dc:creator xml:lang="en">The Rebbe</dc:creator>');
-    expect(second).toContain('<dc:relation>https://rebbehub.test/likkutei-sichos</dc:relation>');
+    expect(second).toContain('<dc:relation>https://chassidushub.test/likkutei-sichos</dc:relation>');
     expect(second).toContain('<resumptionToken></resumptionToken>');
 
-    const record = await xml(app, `verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:rebbehub.test:${event}`);
+    const record = await xml(app, `verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:chassidushub.test:${event}`);
     expect(record).toContain('<dc:type>Event</dc:type>');
     expect(record).toContain('<dc:coverage xml:lang="en">10 Shevat 5742</dc:coverage>');
     expect(record).toContain(`<setSpec>set:${set}</setSpec>`);
@@ -122,7 +122,7 @@ describe('OAI-PMH', () => {
     await catalog.merge(cs.id, 'keeper');
     const today = new Date().toISOString().slice(0, 10);
     const changed = await xml(app, `verb=ListIdentifiers&metadataPrefix=oai_dc&from=${today}&set=type:unit`);
-    expect(changed).toContain(`<header status="deleted"><identifier>oai:rebbehub.test:${unit}</identifier>`);
+    expect(changed).toContain(`<header status="deleted"><identifier>oai:chassidushub.test:${unit}</identifier>`);
 
     expect(await xml(app, 'verb=Nope')).toContain('<error code="badVerb">');
     expect(await xml(app, 'verb=ListRecords')).toContain('<error code="badArgument">');

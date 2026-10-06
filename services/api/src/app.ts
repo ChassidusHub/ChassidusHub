@@ -1,9 +1,9 @@
 import { Hono, type Context } from 'hono';
-import { isCatalogHeld, type DbCost } from '@rebbehub/db';
-import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, UnresolvedConflictError, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, transcribedRecordings, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@rebbehub/core';
-import { dailyLearning, dailyShiurim, peopleOf, shiurimWords } from '@rebbehub/core';
-import { parseDateText, describeDateKey } from '@rebbehub/hebrew';
-import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@rebbehub/model';
+import { isCatalogHeld, type DbCost } from '@chassidushub/db';
+import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, UnresolvedConflictError, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, transcribedRecordings, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
+import { dailyLearning, dailyShiurim, peopleOf, shiurimWords } from '@chassidushub/core';
+import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
+import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
 import { authRoutes, sessionAuthenticator, type AuthOptions } from './auth.js';
 import { adminRoutes } from './admin.js';
 import { uploadRoutes, type UploadOptions } from './uploads.js';
@@ -28,7 +28,7 @@ import { mafteachRoutes } from './mafteach.js';
 import { ownersOnly } from './private.js';
 
 /**
- * The RebbeHub API, version 1 (docs/developers/api.md). Reading needs
+ * The ChassidusHub API, version 1 (docs/developers/api.md). Reading needs
  * nothing; reporting a problem needs no account (a captcha and a rate
  * limit instead); suggesting and reviewing need a signed-in account: a
  * passkey session from the site's own pages (auth.ts), a personal API
@@ -40,7 +40,7 @@ import { ownersOnly } from './private.js';
 
 export interface ApiOptions {
   catalog: Catalog;
-  /** What the request's database has been asked so far (`measured` in @rebbehub/db), for the Server-Timing header on every answer. */
+  /** What the request's database has been asked so far (`measured` in @chassidushub/db), for the Server-Timing header on every answer. */
   cost?: () => DbCost;
   /** The account a request is signed in as, or null. Unset, the passkey session cookie (with `auth`). */
   authenticate?: (c: Context) => Promise<string | null> | string | null;
@@ -64,7 +64,7 @@ export interface ApiOptions {
   texts?: { store: FileStore; writer: { put(key: string, bytes: ArrayBuffer, mime: string): Promise<void> }; from?: FileStore };
   /** Where the catalog is mirrored, and the keys its editions are signed with (mirrors.ts). */
   mirrors?: MirrorOptions;
-  /** The site's address (`https://rebbehub.org`), for links home from IIIF manifests. Unset, the passkeys' site, else rebbehub.org. */
+  /** The site's address (`https://chassidushub.org`), for links home from IIIF manifests. Unset, the passkeys' site, else chassidushub.org. */
   siteUrl?: string;
   version?: string;
   /** Sends email (Resend): sign-in links, and a receipt to whoever asks for a takedown. Unset, no email is sent. */
@@ -86,7 +86,7 @@ export interface ApiOptions {
   /** Lets work finish after the answer is sent (Workers' waitUntil); unset, the answer waits for it. */
   waitUntil?: (work: Promise<unknown>) => void;
   /**
-   * While RebbeHub is private (lock.ts): a request that did not show the key at the Worker's door is answered only
+   * While ChassidusHub is private (lock.ts): a request that did not show the key at the Worker's door is answered only
    * for an owner, a platform admin or one of these accounts, signed in by token. Unset, the API is open.
    */
   privateTo?: { owners: string[] };
@@ -168,7 +168,7 @@ export function createApp(options: ApiOptions): Hono {
   const session = options.authenticate ?? (options.auth ? sessionAuthenticator(catalog, options.auth) : undefined);
   // A request's token, when it sent one, is who it is; otherwise its session.
   const authenticate = async (c: Context): Promise<string | null> => tokenGrantOf(c)?.personId ?? (await session?.(c)) ?? null;
-  const siteUrl = options.siteUrl ?? options.auth?.origins[0] ?? 'https://rebbehub.org';
+  const siteUrl = options.siteUrl ?? options.auth?.origins[0] ?? 'https://chassidushub.org';
 
   // Words whose rights forbid copies are never served, only listed.
   const redact = (views: EntityView[]): Promise<Array<EntityView & { withheld?: string }>> => {
@@ -189,7 +189,7 @@ export function createApp(options: ApiOptions): Hono {
     // An import holds the catalog for a few minutes (packages/db/src/hold.ts): nothing was written, so try again.
     if (isCatalogHeld(error)) {
       c.header('Retry-After', '120');
-      return c.json({ error: 'busy', message: 'RebbeHub is bringing in an import; nothing was changed. Try again in a few minutes.' }, 503);
+      return c.json({ error: 'busy', message: 'ChassidusHub is bringing in an import; nothing was changed. Try again in a few minutes.' }, 503);
     }
     console.error(error);
     return c.json({ error: 'internal', message: 'something went wrong on our side' }, 500);
@@ -241,7 +241,7 @@ export function createApp(options: ApiOptions): Hono {
 
   app.get('/v1', async (c) =>
     c.json({
-      name: 'RebbeHub',
+      name: 'ChassidusHub',
       version: options.version ?? API_VERSION,
       head: await catalog.head(),
       docs: '/openapi.json',
@@ -665,7 +665,7 @@ export function createApp(options: ApiOptions): Hono {
   const pageFixView = (fix: PageFixRow) => ({ encoder: fix.encoder, verdict: fix.verdict, reason: fix.reason, pages: fix.pages });
 
   // What a PDF on Google Drive needs to read straight, by its Drive id: the site's reader draws the file through
-  // it, or opens the file's reading copy when RebbeHub serves one.
+  // it, or opens the file's reading copy when ChassidusHub serves one.
   app.get('/v1/page-fixes/drive/:id{[\\w-]{10,}}', async (c) => {
     const sha256 = await fileFromDrive(catalog.db, c.req.param('id'));
     const fix = sha256 ? await pageFixOf(sha256) : null;
@@ -716,9 +716,9 @@ export function createApp(options: ApiOptions): Hono {
     return c.body(object.body, 200, headers);
   });
 
-  // A text of a sefer as its source gave it (one chapter or letter, an HTML <article>), kept on RebbeHub's own storage
+  // A text of a sefer as its source gave it (one chapter or letter, an HTML <article>), kept on ChassidusHub's own storage
   // (`texts/<sha256>` in the public bucket). The first time it is asked for, it is copied from Sichos-Kodesh's published
-  // archive, checked against its hash, and kept; after that RebbeHub serves its own copy. Pages link to it, and the
+  // archive, checked against its hash, and kept; after that ChassidusHub serves its own copy. Pages link to it, and the
   // works importer reads it for their words (packages/importers/src/sichosKodeshTexts.ts).
   const sourceText = async (c: Context) => {
     const sha256 = c.req.param('sha256') ?? '';
@@ -873,7 +873,7 @@ export function createApp(options: ApiOptions): Hono {
     const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For')?.split(',')[0]?.trim();
     const account = (await authenticate?.(c)) ?? null;
     if (!account && options.verifyCaptcha && !(await options.verifyCaptcha(input.captcha, ip))) throw new HttpError(403, 'the captcha was not solved');
-    const reporterHash = ip ? await sha256Hex(`${options.reportSalt ?? 'rebbehub'}\u0000${ip}`) : undefined;
+    const reporterHash = ip ? await sha256Hex(`${options.reportSalt ?? 'chassidushub'}\u0000${ip}`) : undefined;
     if (reporterHash && !account) {
       const { rows } = await catalog.db.query<{ n: number }>("SELECT count(*)::int AS n FROM report WHERE reporter_hash = $1 AND created_at > now() - interval '1 hour'", [reporterHash]);
       if ((rows[0]?.n ?? 0) >= (options.reportsPerHour ?? 10)) throw new HttpError(429, 'too many reports from here in the last hour; please try again later');
@@ -896,7 +896,7 @@ export function createApp(options: ApiOptions): Hono {
     const input = await body<{ target?: string; name?: string; email?: string; relation?: string; statement?: string; captcha?: string }>(c);
     const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For')?.split(',')[0]?.trim();
     if (options.verifyCaptcha && !(await options.verifyCaptcha(input.captcha, ip))) throw new HttpError(403, 'the captcha was not solved');
-    const reporterHash = ip ? await sha256Hex(`${options.reportSalt ?? 'rebbehub'}\u0000${ip}`) : undefined;
+    const reporterHash = ip ? await sha256Hex(`${options.reportSalt ?? 'chassidushub'}\u0000${ip}`) : undefined;
     if (reporterHash) {
       const { rows } = await catalog.db.query<{ n: number }>("SELECT count(*)::int AS n FROM report WHERE reporter_hash = $1 AND created_at > now() - interval '1 hour'", [reporterHash]);
       if ((rows[0]?.n ?? 0) >= (options.reportsPerHour ?? 10)) throw new HttpError(429, 'too many requests from here in the last hour; please try again later');
@@ -911,9 +911,9 @@ export function createApp(options: ApiOptions): Hono {
     });
     // A receipt, so they know it arrived and when to expect an answer (best effort: the request is kept either way).
     if (options.mailer && input.email) {
-      const text = `We received your takedown request (number ${id}) for: ${input.target}\n\nA steward will answer within ${TAKEDOWN_RESPONSE_DAYS} days. Until then nothing is deleted; if it is taken down, it stops being shown at once.\n\nRebbeHub`;
+      const text = `We received your takedown request (number ${id}) for: ${input.target}\n\nA steward will answer within ${TAKEDOWN_RESPONSE_DAYS} days. Until then nothing is deleted; if it is taken down, it stops being shown at once.\n\nChassidusHub`;
       await options.mailer
-        .send({ to: input.email.trim(), subject: `RebbeHub: takedown request ${id} received`, text, html: `<p>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')}</p>` })
+        .send({ to: input.email.trim(), subject: `ChassidusHub: takedown request ${id} received`, text, html: `<p>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')}</p>` })
         .catch((error) => console.error('takedown receipt', error));
     }
     return c.json({ id, answerWithinDays: TAKEDOWN_RESPONSE_DAYS }, 201);
@@ -1273,7 +1273,7 @@ export const API_ROBOTS_TXT = ['User-agent: *', 'Allow: /llms.txt', 'Allow: /ope
 /** The API's own /llms.txt: a pointer for agents that land here first. */
 function apiLlmsTxt(api: string, site: string): string {
   const home = site.replace(/\/+$/, '');
-  return `# RebbeHub API
+  return `# ChassidusHub API
 
 > The open, community-edited index of Chabad Torah and media: sefarim, sichos, letters, farbrengens, recordings and scans, with their texts. Reading needs no account.
 

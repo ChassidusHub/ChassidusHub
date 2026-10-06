@@ -1,11 +1,11 @@
 # The API for developers
 
-`https://api.rebbehub.org` serves the whole catalog, read without an
+`https://api.chassidushub.org` serves the whole catalog, read without an
 account; `/openapi.json` lists every route. What changes the catalog
 needs a signed-in person: the site's session, or a personal API token made
 on `/account` ([auth](developers/auth.md)). The developer docs, with every
 route's examples and a reference to try them in, are at
-[rebbehub.org/developers](https://rebbehub.org/developers)
+[chassidushub.org/developers](https://chassidushub.org/developers)
 ([developers/](developers/index.md)).
 
 ## Reading
@@ -81,7 +81,7 @@ route's examples and a reference to try them in, are at
   of a linked PDF is served; the PDF is not); `machine: true` until a
   person chose the page. `GET /v1/works/<id>/cover`: one sefer's cover,
   the page chosen, and the PDFs it may be chosen from (`linked: true` for
-  one RebbeHub only links to).
+  one ChassidusHub only links to).
 - `GET /v1/files/<sha256>/about`: a file's own page: rights, where it
   came from, what was made from it and measured in it, the covers drawn
   from it, and the items that use it (`usedBy.total` and the first of
@@ -89,7 +89,7 @@ route's examples and a reference to try them in, are at
 
 ## OAI-PMH for libraries
 
-`https://api.rebbehub.org/oai` speaks OAI-PMH 2.0 (when switched on,
+`https://api.chassidushub.org/oai` speaks OAI-PMH 2.0 (when switched on,
 [deploy](deploy.md)), Dublin Core records under CC0: see
 [OAI-PMH and IIIF](developers/oai-pmh.md).
 
@@ -102,7 +102,7 @@ translationOf?, content, machine? }` sends one for review, a blank line
 between paragraphs; `machine` names the tool when a machine made it, and
 its paragraphs are marked so until a person checks each.
 `POST /v1/translations/fix` with `{ segment, content }` suggests a fix to
-one paragraph. Only licences that let RebbeHub keep a copy are taken
+one paragraph. Only licences that let ChassidusHub keep a copy are taken
 (public domain, CC0, CC BY, CC BY-NC); see [rights](rights.md).
 
 ## Where you stopped
@@ -117,7 +117,7 @@ there. Personal: never cached, never exported.
 With a signed-in session or a token with the `write` scope:
 
 - `POST /v1/uploads/check` (`{ sha256, pageHashes?, work?, publication? }`):
-  before an upload, whether RebbeHub has the file or one like it, and
+  before an upload, whether ChassidusHub has the file or one like it, and
   whether it looks like another scan of a printing, a new printing or a
   new teshura.
 - `POST /v1/uploads` also takes `what=hanacha` (a PDF for a farbrengen
@@ -243,7 +243,7 @@ Every sefer, sicha, farbrengen and set can be shown on another site
 (*Embed on another site*, at the foot of its page):
 
 ```html
-<iframe src="https://rebbehub.org/embed/rh-…" width="100%" height="320" style="border:0" loading="lazy" title="RebbeHub"></iframe>
+<iframe src="https://chassidushub.org/embed/rh-…" width="100%" height="320" style="border:0" loading="lazy" title="ChassidusHub"></iframe>
 ```
 
 A farbrengen's recordings play in place. `/embed/…` is the only page

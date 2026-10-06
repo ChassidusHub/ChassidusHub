@@ -4,8 +4,8 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ServerBuild } from 'react-router';
-import { getFile, recordDerivation, recordPdfPages, registerFile, teshurosSetId, TESHUROS_SET } from '@rebbehub/core';
-import { PAGE_HASH_ENCODER, type EntityId } from '@rebbehub/model';
+import { getFile, recordDerivation, recordPdfPages, registerFile, teshurosSetId, TESHUROS_SET } from '@chassidushub/core';
+import { PAGE_HASH_ENCODER, type EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 import { createSiteHandler } from '../server/handler.js';
@@ -17,7 +17,7 @@ import { createSiteHandler } from '../server/handler.js';
  */
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
-const SITE = 'https://rebbehub.test';
+const SITE = 'https://chassidushub.test';
 let handle: (request: Request) => Promise<Response>;
 const ids: Record<string, EntityId> = {};
 const pdf = 'd'.repeat(64);
@@ -45,15 +45,15 @@ beforeAll(async () => {
   }
   await recordPdfPages(catalog.db, { sha256: pdf, encoder: PAGE_HASH_ENCODER, pageCount: 3, pages });
 
-  const cs = await catalog.createChangeset('shmuly', { title: 'Teshuros' });
-  ids.teshuros = await catalog.putRevision(cs.id, 'shmuly', { id: await teshurosSetId(), type: 'set', path: TESHUROS_SET.path, data: { name: TESHUROS_SET.name, slug: 'teshuros', description: TESHUROS_SET.description, policy: 'moderated', keepers: ['keeper'] } });
-  await catalog.submit(cs.id, 'shmuly');
-  await catalog.merge(cs.id, 'shmuly');
+  const cs = await catalog.createChangeset('steward', { title: 'Teshuros' });
+  ids.teshuros = await catalog.putRevision(cs.id, 'steward', { id: await teshurosSetId(), type: 'set', path: TESHUROS_SET.path, data: { name: TESHUROS_SET.name, slug: 'teshuros', description: TESHUROS_SET.description, policy: 'moderated', keepers: ['keeper'] } });
+  await catalog.submit(cs.id, 'steward');
+  await catalog.merge(cs.id, 'steward');
   await registerFile(catalog.db, { sha256: teshuraPdf, bytes: 500, mime: 'application/pdf', source: 'contribution', licence: 'unknown', fileClass: 'teshura-scan', held: true, credit: 'משפחות כהן – לוי' });
   ids.teshura = await add(catalog, 'mendy', 'keeper', 'publication', { kind: 'teshura', title: { he: 'תשורה משמחת כהן–לוי' }, simcha: { kind: 'wedding', families: ['כהן', 'לוי'] }, sets: [ids.teshuros] });
   await add(catalog, 'mendy', 'keeper', 'scan', { publication: ids.teshura, file: teshuraPdf, completeness: 'complete' });
 
-  const api = createApp({ catalog, reportSalt: 'test', filesBaseUrl: 'https://files.rebbehub.test', siteUrl: SITE });
+  const api = createApp({ catalog, reportSalt: 'test', filesBaseUrl: 'https://files.chassidushub.test', siteUrl: SITE });
   handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(api.request(input, init)) });
 }, 120_000);
 
@@ -67,7 +67,7 @@ describe('scans and printings on the site', () => {
     const page = await get(`/${ids.first}`);
     expect(page.status).toBe(200);
     expect(page.html).toContain('class="scan-page"');
-    expect(page.html).toContain(`https://files.rebbehub.test/objects/${createHash('sha256').update('image 1').digest('hex')}`);
+    expect(page.html).toContain(`https://files.chassidushub.test/objects/${createHash('sha256').update('image 1').digest('hex')}`);
     expect(page.html).toContain('class="scan-thumbs"');
     expect(page.html).toContain(`/manifests/iiif/${ids.scan}.json`);
     // The sefer's other printing, and the forms for adding a scan and mapping pages.

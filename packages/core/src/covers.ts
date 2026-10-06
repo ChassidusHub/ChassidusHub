@@ -1,11 +1,11 @@
-import { one, type Db } from '@rebbehub/db';
-import type { EntityId } from '@rebbehub/model';
+import { one, type Db } from '@chassidushub/db';
+import type { EntityId } from '@chassidushub/model';
 import { recordDerivation } from './files.js';
 import { invalid } from './errors.js';
 
 /**
  * A sefer's cover from its title page, the shaar (migration 0017). The
- * jobs' `covers` looks at the first pages of the sefer's best PDF RebbeHub
+ * jobs' `covers` looks at the first pages of the sefer's best PDF ChassidusHub
  * serves, finds the title page - the first real page that is neither
  * blank nor a cover sheet, going by how much ink a page holds, where it
  * stands, and the words on it ("ספר", a publisher's line, a year) - and
@@ -15,11 +15,11 @@ import { invalid } from './errors.js';
  * a page, which they do through a suggestion that sets the work's `cover`
  * (reviewed like any other); the jobs then draw the page the person chose.
  *
- * Covers come from PDFs RebbeHub serves (open or credit, in the public
+ * Covers come from PDFs ChassidusHub serves (open or credit, in the public
  * bucket) and, failing those, from PDFs it only links to (`link`: the
  * Otzros library on Drive, HebrewBooks). A linked PDF is fetched from its
  * link and kept in the preservation bucket, never served; its cover is
- * RebbeHub's own picture and is served, and the sefer's page still links
+ * ChassidusHub's own picture and is served, and the sefer's page still links
  * to the source for the PDF (the owner's decision, 2026-09-29: "we store
  * everything; link in public"). Either way a cover is a derivation of its
  * PDF, so a takedown takes the cover down with the file (docs/rights.md).
@@ -35,7 +35,7 @@ export const COVER_SAMPLE_PAGES = 10;
 export const COVER_WIDTH = 480;
 export const COVER_THUMB_WIDTH = 180;
 
-/** A page drawn in grey, one byte a pixel (what @rebbehub/pdf-fix renders). */
+/** A page drawn in grey, one byte a pixel (what @chassidushub/pdf-fix renders). */
 export interface GreyPage {
   width: number;
   height: number;

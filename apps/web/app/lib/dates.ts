@@ -1,4 +1,4 @@
-import { dateKeyToGregorian, datePrecision, describeDateKey, parseDateKey, toHebrewNumeral } from '@rebbehub/hebrew';
+import { dateKeyToGregorian, datePrecision, describeDateKey, parseDateKey, toHebrewNumeral } from '@chassidushub/hebrew';
 import type { Lang } from './i18n.js';
 
 /** A date key as people read it, with the civil date for a full day: `י׳ שבט תשמ״ב (3.2.1982)`. */

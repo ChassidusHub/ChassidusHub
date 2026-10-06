@@ -1,5 +1,5 @@
-import type { Db } from '@rebbehub/db';
-import type { EntityType } from '@rebbehub/model';
+import type { Db } from '@chassidushub/db';
+import type { EntityType } from '@chassidushub/model';
 import { invalid } from './errors.js';
 
 /**
