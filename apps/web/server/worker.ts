@@ -1,7 +1,7 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
 import { readerFor, type ReadsEnv } from '@chassidushub/api';
 import type { ServerBuild } from 'react-router';
-import { crawlBudget, crawlLater, edgeCacheable, forEdge } from './cachePolicy.js';
+import { crawlBudget, crawlLater, edgeCacheable, forEdge, mayBeFile } from './cachePolicy.js';
 import { createSiteHandler } from './handler.js';
 import { door, privately, type DoorEnv } from './lock.js';
 import { guestRequest, r2Showcases, readSichaScan, showcaseMedia, type ShowcaseBucket } from './showcase.js';
@@ -147,13 +147,13 @@ export default {
         }
         return privately(await env.MEDIA.fetch(new Request(`https://media${url.pathname.slice('/_/media'.length)}${url.search}`, { method: request.method, headers })));
       }
-      if (env.ASSETS && (request.method === 'GET' || request.method === 'HEAD')) {
+      if (env.ASSETS && mayBeFile(request)) {
         const file = await env.ASSETS.fetch(request);
         if (file.status !== 404) return privately(file);
       }
       return privately(await page(env, ctx, request, key));
     }
-    if (env.ASSETS) {
+    if (env.ASSETS && mayBeFile(request)) {
       const file = await env.ASSETS.fetch(request);
       if (file.status !== 404) return file;
     }
