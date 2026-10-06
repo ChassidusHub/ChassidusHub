@@ -4,6 +4,7 @@ interface PGliteLike {
   query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
   exec(sql: string): Promise<unknown>;
   transaction<T>(fn: (tx: PGliteTx) => Promise<T>): Promise<T>;
+  dumpDataDir(compression?: 'none'): Promise<Blob | File>;
   close(): Promise<void>;
 }
 
@@ -48,17 +49,30 @@ class PGliteDb implements Db {
   close(): Promise<void> {
     return this.pglite.close();
   }
+
+  dump(): Promise<Blob> {
+    return this.pglite.dumpDataDir('none');
+  }
 }
 
 /**
  * A database in this process: in memory, or kept in `dataDir` between
- * runs. Needs the optional `@electric-sql/pglite` package.
+ * runs. Needs the optional `@electric-sql/pglite` package. `from` starts it
+ * as a copy of a database `dumpPGlite` saved, which is much quicker than
+ * starting an empty one: the tests start each file this way.
  */
-export async function openPGlite(dataDir?: string): Promise<Db> {
+export async function openPGlite(dataDir?: string, from?: Blob): Promise<Db> {
   const { PGlite, types } = await import('@electric-sql/pglite');
   const pglite = await PGlite.create(dataDir, {
     // int8 as numbers, as the node-postgres adapter does.
     parsers: { [types.INT8]: (value: string) => Number(value) },
+    ...(from ? { loadDataDir: from } : {}),
   });
   return new PGliteDb(pglite as unknown as PGliteLike);
+}
+
+/** The whole of a database `openPGlite` opened, as one file to open again. */
+export function dumpPGlite(db: Db): Promise<Blob> {
+  if (!(db instanceof PGliteDb)) throw new Error('dumpPGlite: not a PGlite database');
+  return db.dump();
 }

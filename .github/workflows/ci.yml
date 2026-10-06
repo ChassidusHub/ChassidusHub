@@ -13,8 +13,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Types, tests and schemas (PGlite)
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      # Sichos Kodesh, the OCR engines and the docs have none of these checks: a pull request changing only them skips the rest.
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!sichos-kodesh/**'
+              - '!ocr/**'
+              - '!docs/**'
+              - '!design/**'
+              - '!**/*.md'
+              - '!.github/workflows/sk-*.yml'
+
+  types:
+    name: Types and schemas
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -24,9 +49,40 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: npm run build:web
-      - run: npm test
       - run: npm run catalog:check
+
+  tests:
+    name: Tests (PGlite) ${{ matrix.shard }}/3
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The tests were nine of the ten minutes in one job; split three ways, side by side.
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The site's tests render the built server.
+      - run: npm run build:web
+      - run: npx vitest run --shard=${{ matrix.shard }}/3
+
+  check:
+    # The name pull requests have always waited on: green when every job above passed or had nothing to check.
+    name: Types, tests and schemas (PGlite)
+    needs: [changes, types, tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every check passed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - run: echo "All checks passed."
 
   postgres:
     name: Tests on Postgres 16
