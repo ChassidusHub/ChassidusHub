@@ -239,7 +239,12 @@ function audioOf(data: RecordingData): AppAudio | null {
 /** The farbrengens by Hebrew year, in date order: every event mafteiach numbers, with its recordings and its hanachos on Drive. */
 export function farbrengensByYear(events: Array<Row<EventData>>, recordings: Array<Row<RecordingData>>): Record<number, AppEntry[]> {
   const parts = new Map<string, Array<Row<RecordingData>>>();
-  for (const r of recordings) if (r.data.event) parts.set(r.data.event, [...(parts.get(r.data.event) ?? []), r]);
+  for (const r of recordings) {
+    if (!r.data.event) continue;
+    const list = parts.get(r.data.event);
+    if (list) list.push(r);
+    else parts.set(r.data.event, [r]);
+  }
   const byYear: Record<number, AppEntry[]> = {};
   const seen = new Set<number>();
   for (const e of events) {
@@ -285,7 +290,11 @@ interface AuthorRow {
 export function appWorks(authors: Array<Row<AuthorRow>>, works: Array<Row<WorkData>>, units: Array<Row<UnitData>>): AppWorks {
   const authorIds = new Map(authors.map((a) => [a.id, a.data.slug ?? a.data.externalIds?.['sichos-kodesh-author'] ?? a.id]));
   const byWork = new Map<string, Array<Row<UnitData>>>();
-  for (const u of units) byWork.set(u.data.work, [...(byWork.get(u.data.work) ?? []), u]);
+  for (const u of units) {
+    const list = byWork.get(u.data.work);
+    if (list) list.push(u);
+    else byWork.set(u.data.work, [u]);
+  }
 
   const out: AppWorks = { authors: [], works: [], contents: {} };
   const used = new Set<string>();
@@ -396,6 +405,9 @@ function contentsOf(workId: string, list: Array<Row<UnitData>>, sources: AppWork
   return { workId, contents: strip(root.entries), units };
 }
 
+/** Whether ChassidusHub holds the library; until it does, `emptyLibrary` stands in for it. */
+export const HOLDS_LIBRARY = false;
+
 /** The library, which ChassidusHub does not hold yet: every collection, empty. */
 export function emptyLibrary(): AppLibrary {
   return { moadim: [], parshiyos: [], collections: Object.fromEntries(LIBRARY_COLLECTION_IDS.map((id) => [id, { items: [], groups: {} }])) as unknown as AppLibrary['collections'] };
@@ -477,9 +489,9 @@ async function lastChange(catalog: Catalog): Promise<{ seq: number; at: string }
   return { seq: Number(row?.seq ?? 0), at: row?.at ? new Date(row.at).toISOString() : new Date(0).toISOString() };
 }
 
-async function rows<T>(catalog: Catalog, where: string, params: unknown[] = []): Promise<Array<Row<T>>> {
+async function rows<T>(catalog: Catalog, where: string, params: unknown[] = [], data = 'r.data'): Promise<Array<Row<T>>> {
   const { rows } = await catalog.db.query<{ id: string; path: string | null; data: T }>(
-    `SELECT e.id, e.path, r.data FROM entity e JOIN revision r ON r.id = e.main_rev
+    `SELECT e.id, e.path, ${data} AS data FROM entity e JOIN revision r ON r.id = e.main_rev
      WHERE e.main_rev IS NOT NULL AND NOT e.deleted AND r.data IS NOT NULL AND ${where}
      ORDER BY e.id`,
     params,
@@ -487,13 +499,26 @@ async function rows<T>(catalog: Catalog, where: string, params: unknown[] = []):
   return rows;
 }
 
+/**
+ * Of a unit, only what the apps are given: a unit also holds its words
+ * (`body`), and tens of thousands of them read whole do not fit in a
+ * Worker's memory.
+ */
+const UNIT_FIELDS = `jsonb_strip_nulls(jsonb_build_object(
+  'work', r.data->'work', 'order', r.data->'order', 'label', r.data->'label', 'position', r.data->'position',
+  'externalIds', jsonb_build_object('sichos-kodesh-unit', r.data->'externalIds'->'sichos-kodesh-unit'),
+  'editions', (SELECT jsonb_agg(jsonb_build_object('source', x->'source', 'sourceId', x->'sourceId', 'language', x->'language', 'version', x->'version'))
+               FROM jsonb_array_elements(CASE WHEN jsonb_typeof(r.data->'editions') = 'array' THEN r.data->'editions' ELSE '[]'::jsonb END) x),
+  'bodySource', jsonb_build_object('source', r.data->'bodySource'->'source', 'rights', r.data->'bodySource'->'rights', 'copy', r.data->'bodySource'->'copy')
+))`;
+
 /** Everything the three schemas are made of, read from main. */
 export async function readParts(catalog: Catalog): Promise<Parts> {
   const { seq, at } = await lastChange(catalog);
   const events = await rows<EventData>(catalog, `e.type = 'event' AND r.data->'externalIds'->>'mafteiach' IS NOT NULL`);
   const recordings = await rows<RecordingData>(catalog, `e.type = 'recording' AND r.data->>'event' IS NOT NULL`);
   const works = await rows<WorkData>(catalog, `e.type = 'work' AND r.data->'externalIds'->>'sichos-kodesh-work' IS NOT NULL`);
-  const units = works.length ? await rows<UnitData>(catalog, `e.type = 'unit' AND r.data->>'work' = ANY($1)`, [works.map((w) => w.id)]) : [];
+  const units = works.length ? await rows<UnitData>(catalog, `e.type = 'unit' AND r.data->>'work' = ANY($1)`, [works.map((w) => w.id)], UNIT_FIELDS) : [];
   const authors = await rows<AuthorRow>(catalog, `e.type = 'author'`);
   return { seq, releasedAt: at, byYear: farbrengensByYear(events, recordings), library: emptyLibrary(), works: appWorks(authors, works, units) };
 }
@@ -543,8 +568,13 @@ export function appCatalogRoutes(app: Hono, catalog: Catalog, releases: AppRelea
   // The reader's catalog when this release is not whole yet; null when this one is served.
   const passOn = async (c: Context, manifest: { missing?: string[] }): Promise<Response | null> =>
     manifest.missing?.length && readerCatalog ? fromReader(c, readerCatalog, `${origin(c)}/v1/app`) : null;
+  // Schemas 2 and 3 show the library, which ChassidusHub does not hold yet: passed on before anything is built.
+  const ahead = (c: Context): Promise<Response> | null =>
+    readerCatalog && schemaOf(c) >= 2 && !HOLDS_LIBRARY ? fromReader(c, readerCatalog, `${origin(c)}/v1/app`) : null;
 
   app.get(`/v1/app/${SCHEMA}/catalog/manifest.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
     const schema = schemaOf(c);
     const { manifest } = await releases.get(catalog, schema);
     const passed = await passOn(c, manifest);
@@ -554,17 +584,23 @@ export function appCatalogRoutes(app: Hono, catalog: Catalog, releases: AppRelea
   });
 
   app.get(`/v1/app/${SCHEMA}/catalog/changelog.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
     const { manifest } = await releases.get(catalog, schemaOf(c));
     return (await passOn(c, manifest)) ?? c.json(manifest.changelog, 200, { 'Cache-Control': MANIFEST_CACHE });
   });
 
   app.get(`/v1/app/${SCHEMA}/catalog/latest/catalog.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
     const schema = schemaOf(c);
     const { manifest } = await releases.get(catalog, schema);
     return (await passOn(c, manifest)) ?? c.redirect(`${origin(c)}${catalogPath(schema, manifest.version)}`, 302);
   });
 
   app.get(`/v1/app/${SCHEMA}/catalog/:version{\\d+\\.\\d+\\.\\d+}/catalog.json`, async (c) => {
+    const early = ahead(c);
+    if (early) return early;
     const { manifest, body } = await releases.get(catalog, schemaOf(c));
     const passed = await passOn(c, manifest);
     if (passed) return passed;
