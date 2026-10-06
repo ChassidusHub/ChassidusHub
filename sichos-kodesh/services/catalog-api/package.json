@@ -1,0 +1,26 @@
+{
+  "name": "@sichos-kodesh/catalog-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "api.sk.shmuky.dev - the catalog release the apps fetch (manifest + versioned catalog.json), as one Vercel function whose files are generated from this repository's own catalog at build time.",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "prebuild": "npm run build -w @sichos-kodesh/catalog",
+    "build": "node scripts/build.mjs",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "@sichos-kodesh/catalog": "^0.1.0",
+    "@types/node": "^22.20.2",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  }
+}

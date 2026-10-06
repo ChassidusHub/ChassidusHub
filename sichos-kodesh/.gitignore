@@ -1,0 +1,51 @@
+node_modules
+dist/
+*.log
+.DS_Store
+.wrangler/
+
+# packages/mafteiach-index: raw HTTP response cache and the full generated
+# dataset are deliberately not committed - see that package's README for why
+# (resumable/reproducible from the crawler code instead of a data dump).
+packages/mafteiach-index/.cache/
+packages/mafteiach-index/data/
+packages/mafteiach-index/*.db
+packages/mafteiach-index/*.db-shm
+packages/mafteiach-index/*.db-wal
+
+# packages/jem-index: same reasoning - JEM's ccdb responses and the crawled
+# catalog are a local build artifact, reproducible from the crawler code.
+packages/jem-index/.cache/
+packages/jem-index/data/
+packages/jem-index/*.db
+packages/jem-index/*.db-shm
+packages/jem-index/*.db-wal
+
+# packages/catalog's own standalone output dir (its committed output lives
+# bundled inside apps/mobile/src/catalog/data instead, generated from real
+# bibliographic metadata only - see that package's README).
+packages/catalog/data/
+# packages/catalog's release files (bin/release.ts) - built by the
+# catalog-release workflow on a tag, never committed.
+packages/catalog/dist-release/
+
+# packages/igros-index: the letters and maanos read from a commercial app's
+# data files, built locally (see that package's README). The Igros ship as
+# text objects the catalog API hosts (services/catalog-api/texts); the
+# Maanos stay here.
+packages/igros-index/data/
+packages/igros-index/import/
+
+# packages/sefaria-index: Sefaria's answers and the imported texts - a local
+# build, reproducible from the importer (see that package's README).
+packages/sefaria-index/.cache/
+packages/sefaria-index/data/
+
+# packages/hebrewbooks-index: the shelf read from Otzaria's catalog - a local
+# build (import-hebrewbooks); packages/works bundles what the apps need.
+packages/hebrewbooks-index/data/
+
+# sk-pack keygen's pack signing key (<archive root>/keys/pack-signing.json):
+# its secret half never enters the repository.
+keys/
+pack-signing*.json

@@ -1,0 +1,5 @@
+# Written by scripts/build.mjs from the repository's own catalog - never committed.
+generated/
+.vercel/
+# The hosted texts, written from texts/ by scripts/build.mjs.
+public/v3/

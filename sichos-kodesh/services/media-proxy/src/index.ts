@@ -1,0 +1,296 @@
+/**
+ * Media proxy (Cloudflare Worker): the app never shows a user a
+ * drive.google.com or cloudfront.net URL, a Drive viewer, or any other
+ * source-site UI. Every download goes through this Worker's own domain;
+ * the Worker fetches from the real source server-side and streams bytes
+ * back under our own API, so from the client's perspective a farbrengen's
+ * hanacha PDF or audio just downloads, the way a track downloads from
+ * Spotify.
+ *
+ * Stateless proxy: no storage of our own beyond the short-lived edge cache
+ * below - every request round-trips to the real source. The route shapes
+ * are designed so a persistent cache (e.g. R2) could sit behind them later
+ * without changing the client-facing API.
+ *
+ * Two sources, two routes:
+ * - `/drive/:fileId` - Google Drive-hosted hanacha/maamar PDFs. Needs
+ *   Drive's confirm-token dance handled server-side for files over ~100MB.
+ * - `/jem-audio/:filename` - JEM's own CloudFront-hosted audio files
+ *   (resolved via packages/mafteiach-index's jemAudio.ts from JEM's
+ *   private "ccdb" API - see that package's README for how a farbrengen
+ *   occasion maps to a filename here). No confirm-token dance needed;
+ *   CloudFront serves these directly. This route is used for private,
+ *   pre-launch development ahead of a formal agreement with JEM about
+ *   serving their audio.
+ *
+ * Video is not proxied here: YouTube-sourced video carries its own
+ * platform Terms-of-Service constraints independent of the underlying
+ * content's rights, which a proxy doesn't change.
+ */
+
+export const DRIVE_ID_PATTERN = /^[a-zA-Z0-9_-]{10,64}$/;
+export const DRIVE_RESOURCE_KEY_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
+export const JEM_AUDIO_FILENAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}\.(mp3|m4a|opus)$/;
+const CACHE_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const JEM_AUDIO_CDN_BASE = 'https://dtgj2yu3gmlic.cloudfront.net';
+
+/**
+ * apps/mobile (React Native fetch) never needed this - no same-origin
+ * policy there. apps/web does: a plain `<audio src>`/`<a href>` doesn't
+ * enforce CORS, but a service worker caching those requests in `cors`
+ * mode (needed so Workbox's range-request handling can read Content-Length
+ * to slice cached responses for seeking - impossible on an opaque no-cors
+ * response) does. `Access-Control-Allow-Origin: *` is safe here: every
+ * route serves public, unauthenticated, read-only content with no cookies
+ * or credentials involved.
+ */
+const CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+  'Access-Control-Allow-Headers': 'Range',
+  'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Length',
+};
+
+export function withCors(response: Response): Response {
+  const headers = new Headers(response.headers);
+  for (const [key, value] of Object.entries(CORS_HEADERS)) headers.set(key, value);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+export interface Env {
+  // Reserved for a future R2 bucket binding; unused for now.
+}
+
+export function driveDownloadUrl(fileId: string, confirmToken?: string, resourceKey?: string | null): string {
+  const url = new URL('https://drive.google.com/uc');
+  url.searchParams.set('export', 'download');
+  url.searchParams.set('id', fileId);
+  if (confirmToken) url.searchParams.set('confirm', confirmToken);
+  if (resourceKey) url.searchParams.set('resourcekey', resourceKey);
+  return url.toString();
+}
+
+/**
+ * Google Drive serves large files behind a "can't scan for viruses"
+ * interstitial instead of the file directly. The well-documented
+ * workaround: the interstitial is HTML containing a `confirm=<token>`
+ * value: re-requesting the same download URL with that token (and the
+ * cookies the interstitial set) returns the real file. Small files skip
+ * this entirely and are returned directly on the first request.
+ */
+export function extractConfirmToken(html: string): string | null {
+  const match = html.match(/confirm=([0-9A-Za-z_-]+)/);
+  return match ? match[1]! : null;
+}
+
+/**
+ * `resourceKey`: Google added "resource keys" as an extra access
+ * requirement for links shared before a 2021 security change - a file
+ * that needs one 404s/redirects to a sign-in page without it, even
+ * though it's genuinely public. Roughly 4% of this app's crawled Drive
+ * links require one to be reachable at all.
+ *
+ * `range`, when given, is forwarded on every fetch here, including the
+ * very first one - confirmed safe against the confirm-token interstitial
+ * below: pdf.js's own first request for a document is always a plain,
+ * unranged GET (it only inspects that response's headers to decide
+ * whether to open separate ranged requests for later chunks), so by the
+ * time a *ranged* request ever reaches here, this app is no longer
+ * checking for an interstitial on that same request - it's a fresh
+ * top-level request that goes through this same interstitial check again,
+ * and Drive's virus-scan interstitial page is a few KB, well under pdf.js's
+ * smallest real range chunk (64 KB default), so a range request is never
+ * narrow enough to truncate it and hide the confirm token.
+ */
+export async function fetchFromDrive(fileId: string, resourceKey?: string | null, range?: string | null): Promise<Response> {
+  const rangeHeaders = range ? { Range: range } : undefined;
+  const first = await fetch(driveDownloadUrl(fileId, undefined, resourceKey), { redirect: 'follow', headers: rangeHeaders });
+  const contentType = first.headers.get('content-type') ?? '';
+
+  if (!contentType.includes('text/html')) {
+    return first; // small file - Drive returned it directly
+  }
+
+  const html = await first.text();
+  const token = extractConfirmToken(html);
+  if (!token) {
+    // Not the interstitial we expected - surface the HTML for debugging rather than silently mis-serving it as a "file."
+    return new Response('Drive returned an unexpected HTML response instead of a file or a confirm-token interstitial.', {
+      status: 502,
+    });
+  }
+
+  const cookie = first.headers.get('set-cookie') ?? undefined;
+  const headers = new Headers(rangeHeaders);
+  if (cookie) headers.set('cookie', cookie);
+  return fetch(driveDownloadUrl(fileId, token, resourceKey), {
+    redirect: 'follow',
+    headers,
+  });
+}
+
+const AUDIO_FILE_EXTENSIONS = ['mp3', 'm4a', 'opus'] as const;
+
+/**
+ * JEM's CloudFront distribution serves audio directly - no interstitial,
+ * no auth. `range` is forwarded as-is so a player can seek within a track.
+ *
+ * The extension in `filename` comes from packages/mafteiach-index's crawl
+ * of JEM's own ccdb API, which isn't always reliable about which of
+ * mp3/m4a/opus a recording actually is: every "AR"-prefixed recording
+ * (roughly half the crawled dataset) is stored as .mp3 but 404s there,
+ * while the same base filename exists as .m4a and .opus. Rather than
+ * trust the stored extension, try the other real ones on a 404/error
+ * before giving up - at most 2 extra upstream requests, and only when the
+ * first one fails, so the common case (already-correct extension) pays no
+ * added latency.
+ */
+export async function fetchFromJemAudioCdn(filename: string, range?: string | null): Promise<Response> {
+  const opts = range ? { headers: { Range: range } } : undefined;
+  const first = await fetch(`${JEM_AUDIO_CDN_BASE}/${filename}`, opts);
+  if (first.ok || first.status === 206) return first;
+
+  const dotIndex = filename.lastIndexOf('.');
+  const base = dotIndex === -1 ? filename : filename.slice(0, dotIndex);
+  const triedExt = dotIndex === -1 ? '' : filename.slice(dotIndex + 1);
+  for (const ext of AUDIO_FILE_EXTENSIONS) {
+    if (ext === triedExt) continue;
+    const alt = await fetch(`${JEM_AUDIO_CDN_BASE}/${base}.${ext}`, opts);
+    if (alt.ok || alt.status === 206) return alt;
+  }
+  return first; // none of the alternates worked either - return the original failure
+}
+
+/**
+ * Builds the response headers fresh rather than cloning upstream.headers -
+ * both Drive and CloudFront responses carry infrastructure headers
+ * (Server: UploadServer / AmazonS3, x-guploader-uploadid, x-goog-hash,
+ * x-amz-cf-id, a long Google-specific access-control-allow-headers list,
+ * ...) that would leak the real origin to anyone inspecting network
+ * traffic, even though the URL bar already shows only our own domain.
+ *
+ * `Accept-Ranges` / `Content-Range` are carried through deliberately - an
+ * audio player needs to seek within a track, which means issuing Range
+ * requests and getting back real 206 responses, not always the full file
+ * (a proxy that ignores the client's Range header and always returns
+ * 200-with-everything still "works" in that audio plays, but seeking
+ * breaks or re-downloads the whole file).
+ *
+ * `contentType`, when passed, overrides whatever upstream sent - Drive's
+ * `uc?export=download` endpoint returns a generic `application/octet-stream`
+ * for every file regardless of its real type, so trusting it would stop a
+ * browser from ever rendering a PDF inline.
+ *
+ * `Content-Disposition: inline` (not `attachment`), when a filename is
+ * given: apps/web opens this same URL directly (`window.open`/`<a
+ * target="_blank">`) so a browser shows the PDF, not a forced download -
+ * `attachment` overrides that regardless of Content-Type and silently
+ * routes the file to the Downloads folder instead, which looks exactly
+ * like "nothing happened." `inline` still carries the filename as a
+ * save-as hint. This has no effect on apps/mobile, which downloads bytes
+ * directly via react-native-blob-util and opens the local file through
+ * its own explicit `application/pdf` Android intent - neither header from
+ * this response is consulted there.
+ *
+ * `supportsRange` must reflect whether *this route* actually reads and
+ * forwards a client's Range header, not whether the upstream response
+ * happens to carry its own `accept-ranges` header. `/drive/:fileId` never
+ * forwards Range (Drive's confirm-token interstitial flow for larger
+ * files makes that meaningfully more complex to get right, unlike
+ * `/jem-audio/:filename`, which genuinely does), so claiming range
+ * support there regardless of what Drive itself advertises would be
+ * actively misleading to a client like pdf.js that probes for it and
+ * changes its request pattern accordingly.
+ */
+export function cleanResponseHeaders(upstream: Response, filename: string | null, contentType?: string, supportsRange = false): Headers {
+  const headers = new Headers({
+    'Content-Type': contentType ?? upstream.headers.get('content-type') ?? 'application/octet-stream',
+    'Cache-Control': `public, max-age=${CACHE_TTL_SECONDS}`,
+  });
+  if (supportsRange) headers.set('Accept-Ranges', upstream.headers.get('accept-ranges') ?? 'bytes');
+  const contentLength = upstream.headers.get('content-length');
+  if (contentLength) headers.set('Content-Length', contentLength);
+  const contentRange = upstream.headers.get('content-range');
+  if (contentRange) headers.set('Content-Range', contentRange);
+  if (filename) {
+    headers.set('Content-Disposition', `inline; filename="${encodeURIComponent(filename)}"`);
+  }
+  return headers;
+}
+
+async function handleDrive(fileId: string, filename: string | null, resourceKey: string | null, range: string | null): Promise<Response> {
+  if (!DRIVE_ID_PATTERN.test(fileId)) {
+    return new Response('Invalid file id', { status: 400 });
+  }
+  if (resourceKey && !DRIVE_RESOURCE_KEY_PATTERN.test(resourceKey)) {
+    return new Response('Invalid resource key', { status: 400 });
+  }
+  const upstream = await fetchFromDrive(fileId, resourceKey, range);
+  if (!upstream.ok) {
+    return new Response(`Upstream fetch failed with status ${upstream.status}`, { status: 502 });
+  }
+  // /drive/:fileId only ever serves the mugah/biltiMugah/maamorim/hagahos/hosofos
+  // PDF links packages/catalog extracts - always a PDF, so force the type
+  // rather than trust Drive's generic upstream content-type. `supportsRange:
+  // true` (unlike the false this route used to pass) is now accurate: the
+  // Range forwarding above is real, and Drive's own file-serving endpoint
+  // genuinely honors it (confirmed directly against a real file) - pdf.js
+  // reads this to decide whether to fetch a large PDF in chunks instead of
+  // sequentially, which is what actually lets it render page 1 before the
+  // rest of the document has finished downloading.
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: cleanResponseHeaders(upstream, filename, 'application/pdf', true),
+  });
+}
+
+async function handleJemAudio(filename: string, range: string | null): Promise<Response> {
+  if (!JEM_AUDIO_FILENAME_PATTERN.test(filename)) {
+    return new Response('Invalid audio filename', { status: 400 });
+  }
+  const upstream = await fetchFromJemAudioCdn(filename, range);
+  if (!upstream.ok && upstream.status !== 206) {
+    return new Response(`Upstream fetch failed with status ${upstream.status}`, { status: 502 });
+  }
+  return new Response(upstream.body, { status: upstream.status, headers: cleanResponseHeaders(upstream, null, undefined, true) });
+}
+
+export default {
+  async fetch(request: Request, _env: Env, ctx: ExecutionContext): Promise<Response> {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
+    const url = new URL(request.url);
+    const range = request.headers.get('Range');
+
+    // Only whole-file responses use this cache - a ranged request always
+    // round-trips live, so a player seeking within a track never risks
+    // getting served a mismatched cached slice. The cached copy already
+    // carries CORS headers (added below before it's stored), so a cache
+    // hit needs no extra wrapping.
+    const cache = caches.default;
+    const cacheKey = new Request(url.toString(), request);
+    if (!range) {
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
+    }
+
+    let response: Response;
+    const driveMatch = /^\/drive\/([^/]+)$/.exec(url.pathname);
+    const jemAudioMatch = /^\/jem-audio\/([^/]+)$/.exec(url.pathname);
+    if (driveMatch) {
+      response = await handleDrive(driveMatch[1]!, url.searchParams.get('filename'), url.searchParams.get('resourcekey'), range);
+    } else if (jemAudioMatch) {
+      response = await handleJemAudio(jemAudioMatch[1]!, range);
+    } else {
+      response = new Response('Not found', { status: 404 });
+    }
+
+    response = withCors(response);
+    if (!range && response.status === 200) {
+      ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    }
+    return response;
+  },
+};

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar notification icon: a play mark in a disc, white on transparent
+     as Android's small-icon rules require. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M12,2A10,10 0 1,0 12,22A10,10 0 1,0 12,2ZM9.5,7.5L16.5,12L9.5,16.5Z" />
+</vector>

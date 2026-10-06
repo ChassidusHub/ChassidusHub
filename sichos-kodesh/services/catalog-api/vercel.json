@@ -1,0 +1,50 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "redirects": [
+    {
+      "source": "/v1/app/android/download/:abi",
+      "destination": "https://sichos-kodesh-pack-api.shmuky.workers.dev/v1/app/android/download/:abi",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/v1/app/android/latest.json",
+      "destination": "https://sichos-kodesh-pack-api.shmuky.workers.dev/v1/app/android/latest.json"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/v3/texts/([0-9a-f]{64})",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=31536000"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'none'; style-src 'unsafe-inline'"
+        }
+      ]
+    }
+  ]
+}

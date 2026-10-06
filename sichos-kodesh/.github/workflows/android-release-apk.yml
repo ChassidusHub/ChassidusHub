@@ -1,0 +1,238 @@
+name: Android Signed Release APK
+
+# Builds the signed release APKs for phones and publishes the GitHub
+# Release with them attached - automatically, no draft to click through:
+#
+#   - Push a tag like v1.2.3 and CI does the rest: build, attach, publish.
+#     The tag must match the app's versionName in
+#     apps/mobile/android/app/build.gradle.
+#   - Or from GitHub's website (a phone will do): Actions -> Android
+#     Signed Release APK -> Run workflow, type the version (v1.2.3) and
+#     run; the release is published automatically (creating the tag if it
+#     isn't there).
+#   - A manual run with the version left empty only builds them - as
+#     downloadable workflow artifacts to try first.
+#
+# Once published, the APKs also go to the app server (the pack API
+# Worker's R2 bucket, .github/scripts/publish-apks.sh): the phones ask it
+# for updates, and pack.sk.shmuky.dev and the station download from it
+# (api.sk.shmuky.dev/v1/app/android/...). It keeps only the newest
+# version. The upload proves itself with this run's GitHub OIDC token, so
+# it needs no secret.
+#
+# APK only - no Play Store bundle. The Play bundle lives in
+# android-aab.yml; this is the file that gets handed to people directly,
+# because the Releases tab is where a phone downloads an APK from.
+#
+# Signing needs all four repository secrets (Settings -> Secrets and
+# variables -> Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+#   ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+# Without them the run fails fast in seconds, not after the 15-minute
+# build.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. v1.2.3 (the app's versionName in apps/mobile/android/app/build.gradle). Leave empty to only build the APKs."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  # The version is the pushed tag, or the manual input.
+  setup:
+    name: Resolve the version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # The release is created once, up front as a draft, and the build
+  # attaches its APKs to it - each making its own could race into
+  # duplicates. It's published automatically once the APKs are attached.
+  # Skipped when nothing is being released.
+  draft:
+    name: Create the release
+    needs: setup
+    if: needs.setup.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.draft.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create the release (or reuse the one a failed run left)
+        id: draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.setup.outputs.version }}
+        run: |
+          version=$(sed -n 's/^ *versionName "\(.*\)"/\1/p' apps/mobile/android/app/build.gradle | head -1)
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::The app's versionName is $version (apps/mobile/android/app/build.gradle), so the release is v$version, not \"$TAG\". Change the version there first to release another one."
+            exit 1
+          fi
+          existing=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
+            --jq ".[] | select(.tag_name == \"$TAG\") | .id" | head -n 1)
+          if [ -n "$existing" ]; then
+            echo "Reusing the existing release for $TAG."
+            id="$existing"
+          else
+            npm run --silent release-notes -w @sichos-kodesh/mobile > "$RUNNER_TEMP/release-notes.md"
+            cat "$RUNNER_TEMP/release-notes.md"
+            id=$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+              -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" \
+              -f name="Sichos Kodesh $TAG" -F body=@"$RUNNER_TEMP/release-notes.md" \
+              -F draft=true -F prerelease=false --jq .id)
+            echo "Created the release for $TAG from $GITHUB_SHA; it gets published once the APKs are attached."
+          fi
+          echo "release_id=$id" >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Signed release APK
+    needs: [setup, draft]
+    # Also when there's no release to draft (the draft job skipped) - but
+    # not when drafting it failed.
+    if: ${{ !cancelled() && needs.draft.result != 'failure' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: write
+      # The app server takes the APKs on this run's OIDC token (publish-apks.sh).
+      id-token: write
+
+    steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/powershell /usr/share/swift
+          df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Fail in a second, not after the 15-minute build: signing needs all
+      # four repository secrets (see the header comment).
+      - name: Check the signing secrets are set
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=""
+          for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Repository secrets not set:$missing - add them under Settings > Secrets and variables > Actions, then run this workflow again."
+            exit 1
+          fi
+          echo "All four signing secrets are set."
+
+      - name: Read the app version
+        id: version
+        run: |
+          version=$(sed -n 's/^ *versionName "\(.*\)"/\1/p' apps/mobile/android/app/build.gradle | head -1)
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Releasing $version"
+
+      - name: Decode upload keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+
+      - name: Build release APKs (one per phone ABI, plus universal)
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          npm run prebuild:check -w @sichos-kodesh/mobile
+          cd apps/mobile/android && ./gradlew assembleRelease \
+            -PabiSplits=true -PreactNativeArchitectures=armeabi-v7a,arm64-v8a --stacktrace
+
+      - name: Name the APKs after the version
+        run: |
+          version='${{ steps.version.outputs.version }}'
+          out=apps/mobile/android/app/build/outputs/apk/release
+          mkdir -p "$RUNNER_TEMP/apks"
+          for abi in arm64-v8a armeabi-v7a universal; do
+            cp "$out/app-$abi-release.apk" "$RUNNER_TEMP/apks/sichos-kodesh-$version-$abi.apk"
+          done
+          ls -la "$RUNNER_TEMP/apks"
+
+      # Attached to the release when releasing (it's published right
+      # after); otherwise they're just downloadable artifacts to try first.
+      - name: Attach the APKs to the release
+        if: needs.draft.outputs.release_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.setup.outputs.version }}" "$RUNNER_TEMP"/apks/*.apk --clobber
+
+      - name: Publish the release
+        if: needs.draft.outputs.release_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases/${{ needs.draft.outputs.release_id }}" \
+            -F draft=false --jq '"Published at \(.published_at)"'
+
+      # The same APKs on the app server, replacing the previous version there.
+      - name: Put the APKs on the app server
+        if: needs.draft.outputs.release_id != ''
+        run: |
+          npm run --silent release-notes -w @sichos-kodesh/mobile -- --json > "$RUNNER_TEMP/notes.json"
+          .github/scripts/publish-apks.sh '${{ steps.version.outputs.version }}' "$RUNNER_TEMP/apks" "$RUNNER_TEMP/notes.json"
+
+      - name: Keep the APKs
+        if: needs.draft.outputs.release_id == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: sichos-kodesh-release-apk
+          path: ${{ runner.temp }}/apks/*.apk
+          if-no-files-found: error
+          retention-days: 14
