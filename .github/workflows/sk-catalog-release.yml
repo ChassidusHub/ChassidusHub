@@ -1,16 +1,21 @@
-name: Catalog release
+name: Sichos Kodesh - catalog release
 
-# A `catalog-v<version>` tag ships one catalog release: the two files
-# api.sk.shmuky.dev serves (packages/catalog/src/release.ts) are built from
+# An `sk-catalog-v<version>` tag ships one catalog release: the two files
+# api.sk.chassidushub.org serves (packages/catalog/src/release.ts) are built from
 # the year files the apps bundle at that commit and attached to a GitHub
-# release of the tag. See packages/catalog/README.md, "Catalog releases".
+# release of the tag. See sichos-kodesh/packages/catalog/README.md, "Catalog releases".
 on:
   push:
     tags:
-      - 'catalog-v*'
+      - 'sk-catalog-v*'
 
 permissions:
   contents: write
+
+# Sichos-Kodesh is its own npm workspace in sichos-kodesh/, with its own lockfile.
+defaults:
+  run:
+    working-directory: sichos-kodesh
 
 jobs:
   release:
@@ -22,6 +27,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: sichos-kodesh/package-lock.json
 
       - run: npm ci
 
@@ -33,7 +39,7 @@ jobs:
           set -euo pipefail
           npm run release-files -w @sichos-kodesh/catalog -- --check
           version=$(node -e "import('./packages/catalog/dist/version.js').then(m => console.log(m.CATALOG_VERSION))")
-          if [ "catalog-v$version" != "${GITHUB_REF_NAME}" ]; then
+          if [ "sk-catalog-v$version" != "${GITHUB_REF_NAME}" ]; then
             echo "Tag ${GITHUB_REF_NAME} does not match CATALOG_VERSION ($version)" >&2
             exit 1
           fi
@@ -52,11 +58,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
-          body_path: packages/catalog/CHANGELOG.md
+          body_path: sichos-kodesh/packages/catalog/CHANGELOG.md
           files: |
-            packages/catalog/dist-release/catalog.json
-            packages/catalog/dist-release/manifest.json
-            packages/catalog/dist-release/catalog-v2.json
-            packages/catalog/dist-release/manifest-v2.json
-            packages/catalog/dist-release/catalog-v3.json
-            packages/catalog/dist-release/manifest-v3.json
+            sichos-kodesh/packages/catalog/dist-release/catalog.json
+            sichos-kodesh/packages/catalog/dist-release/manifest.json
+            sichos-kodesh/packages/catalog/dist-release/catalog-v2.json
+            sichos-kodesh/packages/catalog/dist-release/manifest-v2.json
+            sichos-kodesh/packages/catalog/dist-release/catalog-v3.json
+            sichos-kodesh/packages/catalog/dist-release/manifest-v3.json

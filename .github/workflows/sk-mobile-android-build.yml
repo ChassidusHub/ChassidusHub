@@ -1,17 +1,14 @@
-name: Mobile Android Build
+name: Sichos Kodesh - mobile Android build
 
-# Once per pull request, not again for every push to its branch: an Android build is about fifteen minutes, and
-# Actions minutes are limited while the repository is private (2 October 2026).
+# By hand only (Actions -> Run workflow): an Android build is about fifteen minutes, Actions minutes are limited while
+# the repository is private, and Sichos-Kodesh's rule is that no Android build runs unless asked (sichos-kodesh/CLAUDE.md).
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "apps/mobile/**"
-      - "packages/**"
-      - "scripts/**"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/mobile-android-build.yml"
+
+# Sichos-Kodesh is its own npm workspace in sichos-kodesh/, with its own lockfile.
+defaults:
+  run:
+    working-directory: sichos-kodesh
 
 jobs:
   android-build:
@@ -34,6 +31,7 @@ jobs:
         with:
           node-version: "22.12.0"
           cache: npm
+          cache-dependency-path: sichos-kodesh/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -53,7 +51,7 @@ jobs:
         with:
           name: mobile-android-build-artifacts
           path: |
-            apps/mobile/smoke-artifacts/**
-            apps/mobile/android/app/build/outputs/apk/**
-            apps/mobile/android/app/build/reports/**
-            apps/mobile/android/build/reports/**
+            sichos-kodesh/apps/mobile/smoke-artifacts/**
+            sichos-kodesh/apps/mobile/android/app/build/outputs/apk/**
+            sichos-kodesh/apps/mobile/android/app/build/reports/**
+            sichos-kodesh/apps/mobile/android/build/reports/**

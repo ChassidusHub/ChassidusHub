@@ -55,9 +55,9 @@ async function fakeGithub() {
         JSON.stringify({
           iss: 'https://token.actions.githubusercontent.com',
           aud: 'sichos-kodesh-app-release',
-          repository: 'shmuky/Sichos-Kodesh',
-          ref: 'refs/tags/v1.13.0',
-          workflow_ref: 'shmuky/Sichos-Kodesh/.github/workflows/android-release-apk.yml@refs/tags/v1.13.0',
+          repository: 'ChassidusHub/ChassidusHub',
+          ref: 'refs/tags/sk-v1.13.0',
+          workflow_ref: 'ChassidusHub/ChassidusHub/.github/workflows/sk-android-release-apk.yml@refs/tags/sk-v1.13.0',
           iat: now,
           nbf: now - 5,
           exp: now + 300,
@@ -77,8 +77,8 @@ const apk = (n: number, size: number) => new Uint8Array(size).map((_, i) => (i *
 describe('GitHub OIDC tokens', () => {
   it('lets the release workflow in, from a version tag or main', async () => {
     const github = await fakeGithub();
-    await expect(verifyGithubToken(await github.token(), APP_RELEASE_POLICY, github.jwks)).resolves.toMatchObject({ ref: 'refs/tags/v1.13.0' });
-    await expect(verifyGithubToken(await github.token({ ref: 'refs/heads/main', repository: 'SHMUKY/sichos-kodesh' }), APP_RELEASE_POLICY, github.jwks)).resolves.toBeTruthy();
+    await expect(verifyGithubToken(await github.token(), APP_RELEASE_POLICY, github.jwks)).resolves.toMatchObject({ ref: 'refs/tags/sk-v1.13.0' });
+    await expect(verifyGithubToken(await github.token({ ref: 'refs/heads/main', repository: 'chassidushub/CHASSIDUSHUB' }), APP_RELEASE_POLICY, github.jwks)).resolves.toBeTruthy();
   });
 
   it('keeps everyone else out', async () => {
@@ -90,8 +90,8 @@ describe('GitHub OIDC tokens', () => {
     };
     await refused({ aud: 'something-else' }, /not for/);
     await refused({ repository: 'someone/fork' }, /another repository/);
-    await refused({ ref: 'refs/heads/feature', workflow_ref: 'shmuky/Sichos-Kodesh/.github/workflows/android-release-apk.yml@refs/heads/feature' }, /version tag or main/);
-    await refused({ workflow_ref: 'shmuky/Sichos-Kodesh/.github/workflows/other.yml@refs/tags/v1.13.0' }, /release workflow/);
+    await refused({ ref: 'refs/heads/feature', workflow_ref: 'ChassidusHub/ChassidusHub/.github/workflows/sk-android-release-apk.yml@refs/heads/feature' }, /version tag or main/);
+    await refused({ workflow_ref: 'ChassidusHub/ChassidusHub/.github/workflows/other.yml@refs/tags/sk-v1.13.0' }, /release workflow/);
     await refused({ exp: Math.floor(Date.now() / 1000) - 3600 }, /expired/);
     await refused({ iss: 'https://example.com' }, /not from GitHub/);
     const [h, p] = (await github.token()).split('.');
@@ -159,7 +159,7 @@ describe('app releases on the server', () => {
     expect((await upload(token, '1.13.0', 'arm64-v8a', apk(1, 10))).status).toBe(201);
     expect((await publish(token, { version: '1.13.0', versionCode: 14 })).status).toBe(200);
     // A run started by hand on main may not go back to an older version.
-    const main = await github.token({ ref: 'refs/heads/main', workflow_ref: 'shmuky/Sichos-Kodesh/.github/workflows/android-release-apk.yml@refs/heads/main' });
+    const main = await github.token({ ref: 'refs/heads/main', workflow_ref: 'ChassidusHub/ChassidusHub/.github/workflows/sk-android-release-apk.yml@refs/heads/main' });
     expect((await upload(main, '1.12.0', 'arm64-v8a', apk(1, 10))).status).toBe(201);
     expect((await publish(main, { version: '1.12.0', versionCode: 13 })).status).toBe(409);
   });

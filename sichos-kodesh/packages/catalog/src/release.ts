@@ -78,9 +78,9 @@ export function catalogReleasePath(version: string, schemaVersion = 1): string {
   return `/v${schemaVersion}/catalog/${version}/catalog.json`;
 }
 
-/** The git tag a catalog release ships under. */
+/** The git tag a catalog release ships under: sk- first, as the repository's other tags are ChassidusHub's. */
 export function catalogReleaseTag(version: string): string {
-  return `catalog-v${version}`;
+  return `sk-catalog-v${version}`;
 }
 
 /** Plain numeric semver comparison (no pre-release tags - a catalog never has them): negative when `a` is older than `b`, zero when equal, positive when newer. */

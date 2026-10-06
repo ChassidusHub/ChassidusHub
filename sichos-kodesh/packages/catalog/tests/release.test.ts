@@ -47,7 +47,7 @@ describe('catalog versioning', () => {
   });
 
   it('names the tag and the data path from the version', () => {
-    expect(catalogReleaseTag('1.2.0')).toBe('catalog-v1.2.0');
+    expect(catalogReleaseTag('1.2.0')).toBe('sk-catalog-v1.2.0');
     expect(catalogReleasePath('1.2.0')).toBe('/v1/catalog/1.2.0/catalog.json');
   });
 });

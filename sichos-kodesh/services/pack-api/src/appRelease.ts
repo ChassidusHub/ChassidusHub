@@ -102,7 +102,7 @@ async function authorize(request: Request, options: AppReleaseOptions): Promise<
 
 /** A tag run publishes its own version only; a run started by hand on main names its version itself. */
 function checkRefMatches(claims: GithubClaims, version: string): void {
-  if (claims.ref.startsWith('refs/tags/') && claims.ref !== `refs/tags/v${version}`) throw new AppHttpError(403, `the ${claims.ref} run cannot publish ${version}`);
+  if (claims.ref.startsWith('refs/tags/') && claims.ref !== `refs/tags/sk-v${version}`) throw new AppHttpError(403, `the ${claims.ref} run cannot publish ${version}`);
 }
 
 async function download(request: Request, bucket: AppBucket, abi: AppAbi): Promise<Response> {

@@ -20,6 +20,10 @@ docs/plans/chassidushub.md; what is built and what is next is docs/roadmap.md.
 - ocr/ is the OCR engines (Python, moved from shmuky/RebbeHub-OCR): its own
   README and plan (ocr/docs/plans/ocr-engines.md). Scans, line images and
   models stay out of git, in the ocr-training R2 bucket.
+- sichos-kodesh/ is the Sichos Kodesh app (moved from shmuky/Sichos-Kodesh):
+  its own npm workspace and lockfile, its own rules (sichos-kodesh/CLAUDE.md:
+  no Android build unless asked), workflows at the root as sk-*.yml and tags
+  sk-v… / sk-catalog-v…. No texts: it reads them from ChassidusHub.
 - Machine output (OCR, transcription, sync) is always labelled until a
   person checks it.
 - Write like the code around you: plain-language doc comments that say

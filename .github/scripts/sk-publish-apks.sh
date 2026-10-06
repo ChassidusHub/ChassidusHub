@@ -2,21 +2,21 @@
 # Puts a release's APKs on the app server and makes them the newest:
 # the pack API Worker stores them in R2 (the same bucket as the packs),
 # writes latest.json and removes the older version. The phones ask it for
-# updates, the download site and the station link to it - api.sk.shmuky.dev
+# updates, the download site and the station link to it - api.sk.chassidushub.org
 # passes both through. Nothing is downloaded from GitHub.
 #
-#   .github/scripts/publish-apks.sh <version> <dir with the APKs> <notes.json>
+#   ../.github/scripts/sk-publish-apks.sh <version> <dir with the APKs> <notes.json>
 #
 # Runs in the release workflow only: the Worker lets in a GitHub Actions
-# OIDC token of this repository's android-release-apk.yml (the job needs
+# OIDC token of this repository's sk-android-release-apk.yml (the job needs
 # `permissions: id-token: write`), so there is no secret to keep.
-# notes.json is `npm run --silent release-notes -w @sichos-kodesh/mobile -- --json`.
+# Runs from sichos-kodesh/ (the workflow's working directory). notes.json is `npm run --silent release-notes -w @sichos-kodesh/mobile -- --json`.
 set -euo pipefail
 
 version="$1"
 dir="$2"
 notes="$3"
-server="${SK_APP_SERVER:-https://sichos-kodesh-pack-api.shmuky.workers.dev}"
+server="${SK_APP_SERVER:-https://pack-api.sk.chassidushub.org}"
 audience="sichos-kodesh-app-release"
 
 if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
@@ -52,4 +52,4 @@ curl -sS --fail-with-body --retry 3 --retry-all-errors -X POST \
   -H "Content-Type: application/json" \
   --data-binary @"$RUNNER_TEMP/publish.json" \
   "$server/v1/app/android/publish" | jq '{version, versionCode, files: [.files[] | {abi, bytes}], removed}'
-echo "The app server now offers $version: https://api.sk.shmuky.dev/v1/app/android/latest.json"
+echo "The app server now offers $version: https://api.sk.chassidushub.org/v1/app/android/latest.json"

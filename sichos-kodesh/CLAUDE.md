@@ -24,29 +24,31 @@ workflow for them.
 
 When he asks for a test build ("build an APK to try"), trigger the release
 workflow manually with the version left empty:
-`gh workflow run android-release-apk.yml --ref main`
+`gh workflow run sk-android-release-apk.yml --ref main`
 That only builds the APKs as downloadable workflow artifacts.
 
-When he explicitly asks for a tagged release (e.g. "make a tagged release v1.2.0"):
+When he explicitly asks for a tagged release (e.g. "make a tagged release v1.2.0").
+Sichos-Kodesh now lives in ChassidusHub/ChassidusHub under sichos-kodesh/, so
+its tags carry an sk- prefix (sk-v1.2.0); the plain v-tags are ChassidusHub's:
 
 1. Confirm the version matches the app's `versionName` in
    `apps/mobile/android/app/build.gradle`.
 2. Push the tag — that triggers CI:
-   `git tag vX.Y.Z && git push origin vX.Y.Z`
-   (Alternative: `gh workflow run android-release-apk.yml --ref main -f version=vX.Y.Z`.)
+   `git tag sk-vX.Y.Z && git push origin sk-vX.Y.Z`
+   (Alternative: `gh workflow run sk-android-release-apk.yml --ref main -f version=sk-vX.Y.Z`.)
 3. Wait for the run to finish — the Gradle build takes about 15 minutes.
 4. CI attaches the signed APKs (`arm64-v8a`, `armeabi-v7a`, `universal`)
    and publishes the release automatically. Nothing is left as a draft.
 5. Tell Shmuly it's ready, with the release tag as a clickable link:
-   [vX.Y.Z](https://github.com/shmuky/Sichos-Kodesh/releases/tag/vX.Y.Z)
+   [sk-vX.Y.Z](https://github.com/ChassidusHub/ChassidusHub/releases/tag/sk-vX.Y.Z)
 
 Shipping a finished major feature yourself: when a major feature or function
 is done, you don't need to ask — bump `versionName` (and `versionCode`) in
 `apps/mobile/android/app/build.gradle`, merge your work to main, push the
-tag `vX.Y.Z`, and let CI build and publish the release. Then tell Shmuly
+tag `sk-vX.Y.Z`, and let CI build and publish the release. Then tell Shmuly
 it's live, with the release tag as a clickable link:
-[vX.Y.Z](https://github.com/shmuky/Sichos-Kodesh/releases/tag/vX.Y.Z)
+[sk-vX.Y.Z](https://github.com/ChassidusHub/ChassidusHub/releases/tag/sk-vX.Y.Z)
 
 Notes:
 - This workflow is APK-only. The Play Store AAB lives in the separate
-  `android-aab.yml` workflow and is never part of a tagged phone release.
+  `sk-android-aab.yml` workflow and is never part of a tagged phone release.

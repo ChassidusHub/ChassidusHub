@@ -1,10 +1,15 @@
-name: Android Signed Release Bundle
+name: Sichos Kodesh - Android signed release bundle
 
 # Manual only - this produces a real signed upload artifact (Play Console
-# Internal testing track), unlike mobile-android-build.yml's debug-signed
+# Internal testing track), unlike sk-mobile-android-build.yml's debug-signed
 # assembleDebug that runs on every push/PR.
 on:
   workflow_dispatch: {}
+
+# Sichos-Kodesh is its own npm workspace in sichos-kodesh/, with its own lockfile.
+defaults:
+  run:
+    working-directory: sichos-kodesh
 
 jobs:
   android-aab:
@@ -27,6 +32,7 @@ jobs:
         with:
           node-version: "22.12.0"
           cache: npm
+          cache-dependency-path: sichos-kodesh/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -57,5 +63,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sichos-kodesh-release-aab
-          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          path: sichos-kodesh/apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error

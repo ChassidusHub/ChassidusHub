@@ -1,27 +1,28 @@
-name: Android Signed Release APK
+name: Sichos Kodesh - Android signed release APK
 
 # Builds the signed release APKs for phones and publishes the GitHub
 # Release with them attached - automatically, no draft to click through:
 #
-#   - Push a tag like v1.2.3 and CI does the rest: build, attach, publish.
+#   - Push a tag like sk-v1.2.3 and CI does the rest: build, attach, publish.
 #     The tag must match the app's versionName in
-#     apps/mobile/android/app/build.gradle.
+#     sichos-kodesh/apps/mobile/android/app/build.gradle, with sk- in front:
+#     this repository's plain v-tags are ChassidusHub's own.
 #   - Or from GitHub's website (a phone will do): Actions -> Android
-#     Signed Release APK -> Run workflow, type the version (v1.2.3) and
+#     Signed Release APK -> Run workflow, type the version (sk-v1.2.3) and
 #     run; the release is published automatically (creating the tag if it
 #     isn't there).
 #   - A manual run with the version left empty only builds them - as
 #     downloadable workflow artifacts to try first.
 #
 # Once published, the APKs also go to the app server (the pack API
-# Worker's R2 bucket, .github/scripts/publish-apks.sh): the phones ask it
-# for updates, and pack.sk.shmuky.dev and the station download from it
-# (api.sk.shmuky.dev/v1/app/android/...). It keeps only the newest
+# Worker's R2 bucket, .github/scripts/sk-publish-apks.sh): the phones ask it
+# for updates, and app.chassidushub.org/get and the station download from it
+# (api.sk.chassidushub.org/v1/app/android/...). It keeps only the newest
 # version. The upload proves itself with this run's GitHub OIDC token, so
 # it needs no secret.
 #
 # APK only - no Play Store bundle. The Play bundle lives in
-# android-aab.yml; this is the file that gets handed to people directly,
+# sk-android-aab.yml; this is the file that gets handed to people directly,
 # because the Releases tab is where a phone downloads an APK from.
 #
 # Signing needs all four repository secrets (Settings -> Secrets and
@@ -34,16 +35,21 @@ name: Android Signed Release APK
 on:
   push:
     tags:
-      - "v*"
+      - "sk-v*"
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release, e.g. v1.2.3 (the app's versionName in apps/mobile/android/app/build.gradle). Leave empty to only build the APKs."
+        description: "Version to release, e.g. sk-v1.2.3 (sk- and the app's versionName in sichos-kodesh/apps/mobile/android/app/build.gradle). Leave empty to only build the APKs."
         required: false
         default: ""
 
 permissions:
   contents: write
+
+# Sichos-Kodesh is its own npm workspace in sichos-kodesh/, with its own lockfile.
+defaults:
+  run:
+    working-directory: sichos-kodesh
 
 jobs:
   # The version is the pushed tag, or the manual input.
@@ -81,6 +87,7 @@ jobs:
         with:
           node-version: "22.12.0"
           cache: npm
+          cache-dependency-path: sichos-kodesh/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -92,8 +99,8 @@ jobs:
           TAG: ${{ needs.setup.outputs.version }}
         run: |
           version=$(sed -n 's/^ *versionName "\(.*\)"/\1/p' apps/mobile/android/app/build.gradle | head -1)
-          if [ "$TAG" != "v$version" ]; then
-            echo "::error::The app's versionName is $version (apps/mobile/android/app/build.gradle), so the release is v$version, not \"$TAG\". Change the version there first to release another one."
+          if [ "$TAG" != "sk-v$version" ]; then
+            echo "::error::The app's versionName is $version (apps/mobile/android/app/build.gradle), so the release is sk-v$version, not \"$TAG\". Change the version there first to release another one."
             exit 1
           fi
           existing=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
@@ -106,7 +113,7 @@ jobs:
             cat "$RUNNER_TEMP/release-notes.md"
             id=$(gh api "repos/$GITHUB_REPOSITORY/releases" \
               -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" \
-              -f name="Sichos Kodesh $TAG" -F body=@"$RUNNER_TEMP/release-notes.md" \
+              -f name="Sichos Kodesh ${TAG#sk-}" -F body=@"$RUNNER_TEMP/release-notes.md" \
               -F draft=true -F prerelease=false --jq .id)
             echo "Created the release for $TAG from $GITHUB_SHA; it gets published once the APKs are attached."
           fi
@@ -122,7 +129,7 @@ jobs:
     timeout-minutes: 40
     permissions:
       contents: write
-      # The app server takes the APKs on this run's OIDC token (publish-apks.sh).
+      # The app server takes the APKs on this run's OIDC token (sk-publish-apks.sh).
       id-token: write
 
     steps:
@@ -140,6 +147,7 @@ jobs:
         with:
           node-version: "22.12.0"
           cache: npm
+          cache-dependency-path: sichos-kodesh/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -226,7 +234,7 @@ jobs:
         if: needs.draft.outputs.release_id != ''
         run: |
           npm run --silent release-notes -w @sichos-kodesh/mobile -- --json > "$RUNNER_TEMP/notes.json"
-          .github/scripts/publish-apks.sh '${{ steps.version.outputs.version }}' "$RUNNER_TEMP/apks" "$RUNNER_TEMP/notes.json"
+          ../.github/scripts/sk-publish-apks.sh '${{ steps.version.outputs.version }}' "$RUNNER_TEMP/apks" "$RUNNER_TEMP/notes.json"
 
       - name: Keep the APKs
         if: needs.draft.outputs.release_id == ''

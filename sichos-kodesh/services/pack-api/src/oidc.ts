@@ -13,7 +13,7 @@ export interface OidcPolicy {
   audience: string;
   /** owner/name, compared without case (GitHub's own rule). */
   repository: string;
-  /** The workflow file that may publish, e.g. `.github/workflows/android-release-apk.yml`. */
+  /** The workflow file that may publish, e.g. `.github/workflows/sk-android-release-apk.yml`. */
   workflowPath: string;
   /** The refs it may publish from: a version tag, or main (a run started by hand). */
   refs: RegExp;
@@ -24,9 +24,9 @@ export const GITHUB_ISSUER = 'https://token.actions.githubusercontent.com';
 export const APP_RELEASE_POLICY: OidcPolicy = {
   issuer: GITHUB_ISSUER,
   audience: 'sichos-kodesh-app-release',
-  repository: 'shmuky/Sichos-Kodesh',
-  workflowPath: '.github/workflows/android-release-apk.yml',
-  refs: /^refs\/(tags\/v\d+\.\d+\.\d+|heads\/main)$/,
+  repository: 'ChassidusHub/ChassidusHub',
+  workflowPath: '.github/workflows/sk-android-release-apk.yml',
+  refs: /^refs\/(tags\/sk-v\d+\.\d+\.\d+|heads\/main)$/,
 };
 
 export interface GithubClaims {
