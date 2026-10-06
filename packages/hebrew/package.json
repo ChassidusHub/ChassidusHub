@@ -28,6 +28,6 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@hebcal/core": "^6.9.2"
+    "@hebcal/core": "^6.11.1"
   }
 }

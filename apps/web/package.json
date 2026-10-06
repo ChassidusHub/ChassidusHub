@@ -21,7 +21,7 @@
     "typecheck": "react-router typegen && tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@hebcal/core": "^6.9.2",
+    "@hebcal/core": "^6.11.1",
     "@hono/node-server": "^2.1.1",
     "@react-router/node": "^7.18.3",
     "@chassidushub/api": "^0.1.0",
