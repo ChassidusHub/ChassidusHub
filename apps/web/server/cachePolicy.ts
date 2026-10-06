@@ -31,6 +31,16 @@ const PASSAGES = /^\/(_|oauth)\//;
 const TRACKING = /^(utm_[a-z]+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|ref_src)$/i;
 
 /**
+ * Whether a request may be one of the site's built files: a GET or HEAD only.
+ * Anything else goes straight to the pages, body unread: the assets binding
+ * takes the body of whatever it is given, so a sign-in's POST handed to it
+ * first reached the API empty.
+ */
+export function mayBeFile(request: Request): boolean {
+  return request.method === 'GET' || request.method === 'HEAD';
+}
+
+/**
  * Whether a request may be answered from the edge cache: a GET or HEAD of a
  * page, from someone not signed in. Everything else reaches the Worker.
  */

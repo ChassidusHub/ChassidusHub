@@ -8,7 +8,7 @@ import { measured } from '@chassidushub/db';
 import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../../../services/api/src/app.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
-import { ITEM_PAGE, PUBLIC_PAGE, crawlBudget, crawlLater, edgeCacheable, forEdge } from '../server/cachePolicy.js';
+import { ITEM_PAGE, PUBLIC_PAGE, crawlBudget, crawlLater, edgeCacheable, forEdge, mayBeFile } from '../server/cachePolicy.js';
 import { createSiteHandler } from '../server/handler.js';
 
 /**
@@ -382,6 +382,10 @@ describe('the public site', () => {
     expect(edgeCacheable(request('/sample', { headers: { cookie: 'rh_session=abc' } }))).toBe(false);
     expect(edgeCacheable(request('/sample', { method: 'POST' }))).toBe(false);
     expect(edgeCacheable(request('/_/auth/me'))).toBe(false);
+    // Only a read may be a built file; a sign-in's POST keeps its body for the API.
+    expect(mayBeFile(request('/assets/app.js'))).toBe(true);
+    expect(mayBeFile(request('/assets/app.js', { method: 'HEAD' }))).toBe(true);
+    expect(mayBeFile(request('/_/auth/passkey/sign-in/options', { method: 'POST', body: '{}' }))).toBe(false);
     const cleaned = forEdge(request('/sample?utm_source=x&fbclid=y&lang=en', { headers: { cookie: 'theme=dark' } }));
     expect(cleaned.url).toBe(`${SITE}/sample?lang=en`);
     expect(cleaned.headers.get('cookie')).toBeNull();
