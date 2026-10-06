@@ -11,6 +11,8 @@ const UI = {
   navLibrary: { he: 'ספרייה', en: 'Library' },
   navFarbrengens: { he: 'התוועדויות', en: 'Farbrengens' },
   navDaily: { he: 'לימוד יומי', en: 'Daily' },
+  navDailyLong: { he: 'לימוד יומי', en: 'Daily learning' },
+  navTakePart: { he: 'להשתתף', en: 'Take part' },
   navListen: { he: 'שמיעה', en: 'Listen' },
   navSuggestions: { he: 'הצעות', en: 'Suggestions' },
   navReports: { he: 'דיווחים', en: 'Reports' },

@@ -163,7 +163,7 @@ export function oauthRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context) 
    */
   app.get('/oauth/authorize', async (c) => {
     const q = c.req.query();
-    const lang = (q.ui_locales ?? '').split(/\s+/)[0]?.startsWith('en') ? '&lang=en' : '';
+    const lang = (q.ui_locales ?? '').split(/\s+/)[0]?.startsWith('he') ? '&lang=he' : '';
     c.header('Cache-Control', 'no-store');
     let client: OAuthClient;
     try {

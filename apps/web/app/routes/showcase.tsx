@@ -257,7 +257,7 @@ export function headers() {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${w(loaderData?.lang ?? 'he', 'title')} · ChassidusHub` }, { name: 'robots', content: 'noindex, nofollow' }];
+  return [{ title: `${w(loaderData?.lang ?? 'en', 'title')} · ChassidusHub` }, { name: 'robots', content: 'noindex, nofollow' }];
 }
 
 export function ErrorBoundary() {

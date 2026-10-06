@@ -1,22 +1,24 @@
 import type { LocalName } from '@chassidushub/model';
 
 /**
- * Hebrew first, English in full. The language is part of the address -
- * `?lang=en`, carried by every link - and never a cookie, so each address
+ * English first, Hebrew in full. The language is part of the address -
+ * `?lang=he`, carried by every link - and never a cookie, so each address
  * always shows the same page: search engines index both languages and
- * caches never serve one language for the other.
+ * caches never serve one language for the other. The bare address is
+ * English; `?lang=en`, which older links and emails carry, still is.
  */
 export type Lang = 'he' | 'en';
 
+/** The page's language from its address: Hebrew only when asked for. */
+export const langOfUrl = (url: URL): Lang => (url.searchParams.get('lang') === 'he' ? 'he' : 'en');
+
 export function langFrom(request: Request): Lang {
-  const url = new URL(request.url);
-  const param = url.searchParams.get('lang');
-  return param === 'en' ? 'en' : 'he';
+  return langOfUrl(new URL(request.url));
 }
 
 export const dir = (lang: Lang) => (lang === 'he' ? 'rtl' : 'ltr');
 
-/** A name in the page's language, falling back to Hebrew. */
+/** A name in the page's language, falling back to Hebrew (most names are only in Hebrew). */
 export function nameOf(name: LocalName | undefined | null, lang: Lang): string {
   if (!name) return '';
   return untagged((lang === 'en' ? name.en : name.he) || name.he || name.en || '');

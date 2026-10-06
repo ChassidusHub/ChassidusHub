@@ -122,7 +122,7 @@ export function TokenSearch({
     if (mirror.current) mirror.current.scrollLeft = el.scrollLeft;
   };
 
-  const hiddenFields = { ...hidden, lang: lang === 'en' ? 'en' : undefined };
+  const hiddenFields = { ...hidden, lang: lang === 'he' ? 'he' : undefined };
 
   return (
     <Form method="get" action={action} role="search" className={cx('tsearch', js && 'js', size)} onSubmit={() => setOpen(false)}>

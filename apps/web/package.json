@@ -2,7 +2,7 @@
   "name": "@chassidushub/web",
   "version": "0.1.0",
   "private": true,
-  "description": "ChassidusHub's public site: sets, the events calendar, item, publication and event pages, search, the audio player and scan viewer, permanent links, SEO. React Router 7 with server rendering, Hebrew first.",
+  "description": "ChassidusHub's public site: sets, the events calendar, item, publication and event pages, search, the audio player and scan viewer, permanent links, SEO. React Router 7 with server rendering, English first, Hebrew in full.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ChassidusHub/ChassidusHub.git",

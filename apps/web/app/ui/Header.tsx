@@ -12,9 +12,10 @@ import { setTheme, useTheme, type Theme } from './theme.js';
 
 /**
  * The frame's header, as the redesign draws it (design/README.md). On a wide
- * screen: the logo, which is the way home, the other four sections, the search box (Ctrl K opens the
+ * screen: the logo, which is the way home, the three ways in (the library,
+ * the day's learning, listening) and how to take part, the search box (Ctrl K opens the
  * command palette; without script it is a plain form to the search page),
- * the bell and you; Reports, Projects and the language are in your menu.
+ * the language, the bell and you; Suggestions, Reports and Projects are in your menu.
  * On a phone: the logo on the home page, or back and the page's name
  * elsewhere, with search and the bell; the five sections are tabs along the
  * bottom, where a thumb reaches them, the last one the menu.
@@ -23,17 +24,22 @@ import { setTheme, useTheme, type Theme } from './theme.js';
 /** The sections a phone keeps as tabs at the bottom; the rest are in the menu. */
 const TABS = ['/', '/sets', '/daily', '/calendar'];
 
-/** The sections in the header and the phone's tabs. Listening is the farbrengens, where the recordings are. */
-const NAV: Array<{ to: string; key: UiKey; icon: IconName }> = [
+/**
+ * The sections in the header and the phone's tabs, in plain words for a
+ * first visit. Listening is the farbrengens, where the recordings are;
+ * taking part is the page of ways to help, which leads on to suggestions.
+ */
+const NAV: Array<{ to: string; key: UiKey; long?: UiKey; icon: IconName }> = [
   { to: '/', key: 'navHome', icon: 'home' },
   { to: '/sets', key: 'navLibrary', icon: 'book' },
-  { to: '/daily', key: 'navDaily', icon: 'cal' },
+  { to: '/daily', key: 'navDaily', long: 'navDailyLong', icon: 'cal' },
   { to: '/calendar', key: 'navListen', icon: 'audio' },
-  { to: '/suggestions', key: 'navSuggestions', icon: 'suggest' },
+  { to: '/help', key: 'navTakePart', icon: 'heart' },
 ];
 
 /** The rest of the site's sections, in the menu. */
 const MORE: Array<{ to: string; key: UiKey; icon: IconName }> = [
+  { to: '/suggestions', key: 'navSuggestions', icon: 'suggest' },
   { to: '/issues', key: 'navReports', icon: 'report' },
   { to: '/projects', key: 'navProjects', icon: 'target' },
 ];
@@ -45,7 +51,8 @@ export function sectionOf(pathname: string): string {
   if (pathname.startsWith('/calendar') || pathname.startsWith('/events') || pathname.startsWith('/sets/farbrengens')) return '/calendar';
   if (pathname.startsWith('/review') || pathname.startsWith('/suggestions')) return '/suggestions';
   if (pathname.startsWith('/issues')) return '/issues';
-  if (pathname.startsWith('/projects') || pathname.startsWith('/missing') || pathname.startsWith('/health') || pathname.startsWith('/help')) return '/projects';
+  if (pathname.startsWith('/help')) return '/help';
+  if (pathname.startsWith('/projects') || pathname.startsWith('/missing') || pathname.startsWith('/health')) return '/projects';
   if (['/search', '/signin', '/account', '/inbox', '/u/', '/admin', '/about', '/takedown', '/mirrors', '/models', '/connect', '/developers', '/read', '/_'].some((p) => pathname.startsWith(p))) return '';
   return '/sets';
 }
@@ -69,7 +76,7 @@ function usePhoneHead(): PhoneHead {
 
 function otherLangHref(lang: Lang, pathname: string, search: string): string {
   const params = new URLSearchParams(search);
-  if (lang === 'he') params.set('lang', 'en');
+  if (lang === 'en') params.set('lang', 'he');
   else params.delete('lang');
   const qs = params.toString();
   return qs ? `${pathname}?${qs}` : pathname;
@@ -298,7 +305,7 @@ export function Header({ lang }: { lang: Lang }) {
         <nav className="nav" aria-label={tu(lang, 'mainNav')}>
           {NAV.filter((n) => n.to !== '/').map((n) => (
             <Link key={n.to} to={href(n.to, lang)} aria-current={section === n.to ? 'page' : undefined}>
-              {tu(lang, n.key)}
+              {tu(lang, n.long ?? n.key)}
             </Link>
           ))}
         </nav>
@@ -331,7 +338,7 @@ export function Header({ lang }: { lang: Lang }) {
               e.currentTarget.dataset.typed = '1';
             }}
           />
-          {lang === 'en' ? <input type="hidden" name="lang" value="en" /> : null}
+          {lang === 'he' ? <input type="hidden" name="lang" value="he" /> : null}
         </form>
         <div className="top-end">
           <a className="lang" href={other} hrefLang={lang === 'he' ? 'en' : 'he'} lang={lang === 'he' ? 'en' : 'he'} aria-label={tu(lang, 'language')} title={tu(lang, 'language')}>
@@ -451,7 +458,6 @@ export function Header({ lang }: { lang: Lang }) {
               <MenuRow to={href('/search', lang)} icon="search" label={tu(lang, 'searchShort')} chevron={chevron} />
             </MenuGroup>
             <MenuGroup title={tu(lang, 'menuHelp')}>
-              <MenuRow to={href('/help', lang)} icon="pencil" label={tu(lang, 'navHelp')} chevron={chevron} />
               <MenuRow to={href('/about', lang)} icon="info" label={tu(lang, 'about')} chevron={chevron} />
             </MenuGroup>
             {account ? (

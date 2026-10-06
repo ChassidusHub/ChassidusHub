@@ -4,7 +4,7 @@ import type { Lang } from './i18n.js';
 export function href(path: string, lang: Lang, params: Record<string, string | undefined> = {}): string {
   const query = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') query.set(k, v);
-  if (lang === 'en') query.set('lang', 'en');
+  if (lang === 'he') query.set('lang', 'he');
   const qs = query.toString();
   return qs ? `${path}?${qs}` : path;
 }

@@ -265,7 +265,7 @@ describe('the inbox', () => {
     expect((await sendNotifications(fresh.catalog, mailer, { siteUrl: 'https://chassidushub.test' })).sent).toBe(1);
     expect(outbox[0]!.subject).toBe('ChassidusHub: one new notification');
     expect(outbox[0]!.text).toContain(`@chaim commented on #${n} Missing page 4 (×2)`);
-    expect(outbox[0]!.text).toContain(`https://chassidushub.test/issues/${n}?lang=en`);
+    expect(outbox[0]!.text).toContain(`https://chassidushub.test/issues/${n}\n`);
     expect((await sendNotifications(fresh.catalog, mailer, { siteUrl: 'https://chassidushub.test' })).sent).toBe(0);
 
     expect((await call('POST', '/v1/inbox/read', { as: 'mendy', body: { all: true } })).body).toEqual({ changed: 1, unread: 0 });

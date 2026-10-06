@@ -22,13 +22,13 @@ export function sitemapName(name: string): { kind: 'pages' } | { kind: 'items'; 
   return null;
 }
 
-/** One page, in Hebrew and in English, each naming the other (and Hebrew as the default). */
+/** One page, in English and in Hebrew, each naming the other (and English as the default). */
 export function urlEntries(base: string, path: string, lastmod?: string | null): string[] {
-  const he = escapeXml(`${base}${path}`);
-  const en = escapeXml(`${base}${path}${path.includes('?') ? '&' : '?'}lang=en`);
-  const alternates = `<xhtml:link rel="alternate" hreflang="he" href="${he}"/><xhtml:link rel="alternate" hreflang="en" href="${en}"/><xhtml:link rel="alternate" hreflang="x-default" href="${he}"/>`;
+  const en = escapeXml(`${base}${path}`);
+  const he = escapeXml(`${base}${path}${path.includes('?') ? '&' : '?'}lang=he`);
+  const alternates = `<xhtml:link rel="alternate" hreflang="en" href="${en}"/><xhtml:link rel="alternate" hreflang="he" href="${he}"/><xhtml:link rel="alternate" hreflang="x-default" href="${en}"/>`;
   const mod = lastmod ? `<lastmod>${escapeXml(lastmod)}</lastmod>` : '';
-  return [`  <url><loc>${he}</loc>${mod}${alternates}</url>`, `  <url><loc>${en}</loc>${mod}${alternates}</url>`];
+  return [`  <url><loc>${en}</loc>${mod}${alternates}</url>`, `  <url><loc>${he}</loc>${mod}${alternates}</url>`];
 }
 
 export const urlset = (entries: string[]) =>

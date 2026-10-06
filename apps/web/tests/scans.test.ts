@@ -77,14 +77,14 @@ describe('scans and printings on the site', () => {
   });
 
   it("lists a sefer's printings in the order they came out, with their scans", async () => {
-    const page = await get('/printings-sample?tab=printings');
+    const page = await get('/printings-sample?tab=printings&lang=he');
     expect(page.html).toContain('class="printings"');
     expect(page.html.indexOf('דפוס ראשון')).toBeLessThan(page.html.indexOf('דפוס שני'));
     expect(page.html).toContain('אין סריקה עדיין'); // the second printing
   });
 
   it('offers the Teshuros set a new teshura, and a teshura a family request', async () => {
-    const set = await get('/teshuros');
+    const set = await get('/teshuros?lang=he');
     expect(set.html).toContain('הוספת תשורה');
     const teshura = await get(`/${ids.teshura}`);
     expect(teshura.html).toContain('id="family-request"');
@@ -93,13 +93,13 @@ describe('scans and printings on the site', () => {
 
   it("takes a family's request without JavaScript, and the scan stops being shown", async () => {
     const body = new URLSearchParams({ intent: 'family-request', teshura: ids.teshura!, relation: 'אבי הכלה', note: 'נא להסיר' });
-    const response = await handle(new Request(`${SITE}/${ids.teshura}`, { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-forwarded-for': '10.0.0.9' } }));
+    const response = await handle(new Request(`${SITE}/${ids.teshura}?lang=he`, { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-forwarded-for': '10.0.0.9' } }));
     expect(response.status).toBe(200);
     const html = await response.text();
     expect(html).toContain('הבקשה התקבלה');
     expect(html).not.toContain('הדיווח לא נשלח');
     expect((await getFile(catalog.db, teshuraPdf))?.rights_state).toBe('preserved');
-    expect((await get(`/${ids.teshura}`)).html).toContain('מוצגת באתר המקור בלבד');
+    expect((await get(`/${ids.teshura}?lang=he`)).html).toContain('מוצגת באתר המקור בלבד');
   });
 
   it('looks items up by name for the forms', async () => {

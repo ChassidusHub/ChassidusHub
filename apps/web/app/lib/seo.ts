@@ -32,15 +32,15 @@ export function clip(text: string, max = 200): string {
  * Title, description, the canonical address, the page in the other
  * language, social previews and structured data - the same on every page.
  *
- * The language is in the address (`?lang=en`), so each language is its own
+ * The language is in the address (`?lang=he`), so each language is its own
  * page: each is canonical to itself and names the other (hreflang), with
- * Hebrew as the default. A page kept out of search (`noindex`) is still
+ * English as the default. A page kept out of search (`noindex`) is still
  * followed, so what it links to is found.
  */
 export function pageMeta(page: PageMeta): MetaDescriptor[] {
   const base = page.siteUrl.replace(/\/$/, '');
-  const he = `${base}${page.path}`;
-  const en = `${base}${page.path}${page.path.includes('?') ? '&' : '?'}lang=en`;
+  const en = `${base}${page.path}`;
+  const he = `${base}${page.path}${page.path.includes('?') ? '&' : '?'}lang=he`;
   const self = page.lang === 'en' ? en : he;
   const title = page.title ? `${page.title} · ChassidusHub` : 'ChassidusHub';
   const image = page.image ?? { url: `${base}${SITE_IMAGE}`, width: 512, height: 512, alt: 'ChassidusHub' };
@@ -63,7 +63,7 @@ export function pageMeta(page: PageMeta): MetaDescriptor[] {
     { tagName: 'link', rel: 'canonical', href: self },
     { tagName: 'link', rel: 'alternate', hrefLang: 'he', href: he },
     { tagName: 'link', rel: 'alternate', hrefLang: 'en', href: en },
-    { tagName: 'link', rel: 'alternate', hrefLang: 'x-default', href: he },
+    { tagName: 'link', rel: 'alternate', hrefLang: 'x-default', href: en },
   ];
   if (page.description) {
     const description = clip(page.description);

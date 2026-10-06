@@ -7,7 +7,7 @@ import { Panel } from '../ui/primitives.js';
 /** "Embed on another site": the code to paste, and a button to copy it. */
 export function EmbedCode({ entity, lang, siteUrl }: { entity: Pick<Entity, 'id'>; lang: Lang; siteUrl: string }) {
   const [copied, setCopied] = useState(false);
-  const code = `<iframe src="${siteUrl.replace(/\/$/, '')}/embed/${entity.id}${lang === 'en' ? '?lang=en' : ''}" width="100%" height="320" style="border:0" loading="lazy" title="ChassidusHub"></iframe>`;
+  const code = `<iframe src="${siteUrl.replace(/\/$/, '')}/embed/${entity.id}${lang === 'he' ? '?lang=he' : ''}" width="100%" height="320" style="border:0" loading="lazy" title="ChassidusHub"></iframe>`;
   return (
     <Panel id="embed" icon="embed" title={t(lang, 'embedOnSite')}>
       <div className="stack">

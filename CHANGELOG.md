@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The site is English first: a bare address is English and `?lang=he` is
+  Hebrew (`?lang=en` still works). Links in emails and the OAuth consent page
+  (`ui_locales=he`) follow; a new account's emails default to English.
 - The reader app (formerly Sichos Kodesh, now the ChassidusHub app in
   `reader/`) reads `/v1/app`. New: `GET /v1/app/item` finds the item an
   app's "Suggest a fix" or "Report a problem" is about, by the app's own ids

@@ -66,7 +66,7 @@ export async function setNotifications(catalog: Catalog, personId: string, input
     `INSERT INTO auth.notification_setting (person_id, mode, email, lang, last_seq, unsubscribe_token) VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (person_id) DO UPDATE SET mode = EXCLUDED.mode, email = EXCLUDED.email, lang = EXCLUDED.lang, updated_at = now(),
        last_seq = CASE WHEN auth.notification_setting.mode = 'off' THEN EXCLUDED.last_seq ELSE auth.notification_setting.last_seq END`,
-    [personId, input.mode, email, input.lang ?? 'he', head, base64url(token)],
+    [personId, input.mode, email, input.lang ?? 'en', head, base64url(token)],
   );
   return notificationSetting(catalog.db, personId);
 }
@@ -148,13 +148,13 @@ export function inboxText(line: InboxLine, lang: 'he' | 'en'): string {
 /** The email for a list of changes (and, before them, what waits in the inbox): plain text and a printed-looking HTML, each line linked to its page. */
 export function digestMessage(input: { to: string; lines: FeedLine[]; inbox?: InboxLine[]; lang: 'he' | 'en'; siteUrl: string; unsubscribeToken: string }): EmailMessage {
   const w = WORDS[input.lang];
-  const q = input.lang === 'en' ? '?lang=en' : '';
+  const q = input.lang === 'he' ? '?lang=he' : '';
   const inboxLines = input.inbox ?? [];
   const toInbox = `${input.siteUrl}/inbox${q}`;
   const inboxLink = (l: InboxLine) => `${input.siteUrl}${inboxHref(l)}${q}`;
   const page = (id: string) => `${input.siteUrl}/${id}${q}`;
   const settings = `${input.siteUrl}/account${q}`;
-  const stop = `${input.siteUrl}/account?unsubscribe=${encodeURIComponent(input.unsubscribeToken)}${input.lang === 'en' ? '&lang=en' : ''}`;
+  const stop = `${input.siteUrl}/account?unsubscribe=${encodeURIComponent(input.unsubscribeToken)}${input.lang === 'he' ? '&lang=he' : ''}`;
   const date = (iso: string) => new Intl.DateTimeFormat(input.lang === 'he' ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(iso));
   const detail = (l: FeedLine) => `${w.by} ${l.authorName} · ${date(l.at)}${l.changes > 1 ? ` · ${l.changes} ${w.changes}` : ''}`;
   const inboxText_ = inboxLines.length ? [w.inboxIntro, '', ...inboxLines.flatMap((l) => [`- ${inboxText(l, input.lang)}`, `  ${inboxLink(l)}`]), '', `${w.inbox}: ${toInbox}`, ''] : [];

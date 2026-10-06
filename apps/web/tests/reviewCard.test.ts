@@ -82,7 +82,7 @@ describe("a bot's Suggestion of 500 items in the review queue", () => {
     expect(html).toContain('What changes');
     expect(html).toContain('links to sichos-kodesh-media-proxy.chassidushub-org.workers.dev');
     expect(html).toContain('links to drive.google.com');
-    expect(html).toContain('href="/rh-e0?lang=en"');
+    expect(html).toContain('href="/rh-e0"');
     // Each example shows the address it had and the one it gets, not just "(changed)".
     expect(html).toContain('links › 0 › url');
     expect(html).toContain('<ins>drive</ins>');
@@ -209,7 +209,7 @@ describe('the review queue, as GitHub lists pull requests', () => {
   it('lists a Suggestion by its title, with its #number, who sent it and how many items, and none of its changes', () => {
     const html = line({ ...row, number: 12, kind: 'suggestion' });
     expect(html).toContain('Drive links in place of the media proxy (1-500)');
-    expect(html).toContain('href="/suggestions/12?lang=en"');
+    expect(html).toContain('href="/suggestions/12"');
     expect(html).toContain('#12');
     expect(html).toContain('Drive links (relink bot)');
     expect(html).toContain('500 items');
@@ -222,12 +222,12 @@ describe('the review queue, as GitHub lists pull requests', () => {
   });
 
   it('opens a Suggestion with no #number (an import) as its card in the queue', () => {
-    expect(line(row)).toContain('href="/review?s=7&amp;lang=en"');
+    expect(line(row)).toContain('href="/review?s=7"');
   });
 
   it('reads in Hebrew too', () => {
     const html = line({ ...row, number: 12 }, 'he');
-    expect(html).toContain('href="/suggestions/12"');
+    expect(html).toContain('href="/suggestions/12?lang=he"');
     expect(html).toContain('500 פריטים');
     expect(html).toContain('בוט');
   });

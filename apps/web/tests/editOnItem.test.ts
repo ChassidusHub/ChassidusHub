@@ -105,9 +105,9 @@ describe('the actions on a set’s and a sefer’s page', () => {
   }, 120_000);
 
   it('puts "…" in the page’s head and on each row, leading to the organizer without script', async () => {
-    const work = await (await handle(new Request(`${SITE}/edit-sample`))).text();
+    const work = await (await handle(new Request(`${SITE}/edit-sample?lang=he`))).text();
     expect(work).toContain('class="btn icon edit-more"');
-    expect(work).toContain(`href="/organize?root=${ids.work}"`);
+    expect(work).toContain(`href="/organize?root=${ids.work}&amp;lang=he"`);
     expect(work).toContain('aria-label="עוד פעולות"');
     // Each sicha in the contents has its own "…".
     expect(work).toMatch(/class="e-line"[\s\S]*?שיחה א[\s\S]*?class="btn ghost icon sm row-edit"[^>]*aria-label="פעולות על שיחה א"/);
@@ -115,10 +115,10 @@ describe('the actions on a set’s and a sefer’s page', () => {
     expect(work).toContain('drive.google.com/…');
     expect(work).toContain(`href="${DRIVE}"`);
     expect(work).toContain(`title="${DRIVE}"`);
-    const set = await (await handle(new Request(`${SITE}/farbrengens?lang=en`))).text();
+    const set = await (await handle(new Request(`${SITE}/farbrengens`))).text();
     expect(set).toContain('aria-label="More actions"');
     expect(set).toContain('aria-label="Actions for A sefer"');
-    expect(set).toContain(`href="/organize?root=${ids.set}&amp;lang=en"`);
+    expect(set).toContain(`href="/organize?root=${ids.set}"`);
   });
 
   it('previews a move through the site, and sends it as one suggestion for review', async () => {

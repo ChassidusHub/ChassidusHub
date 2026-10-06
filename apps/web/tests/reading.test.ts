@@ -45,10 +45,10 @@ const get = async (path: string) => {
 
 describe('translations on a unit page', () => {
   it('shows the original, with a link to each language', async () => {
-    const page = await get('/sample/1');
+    const page = await get('/sample/1?lang=he');
     expect(page.html).toContain('</a>פסקה במקור');
     expect(page.html).not.toContain('</a>A paragraph in English');
-    expect(page.html).toContain('href="/sample/1?tl=en"');
+    expect(page.html).toContain('href="/sample/1?lang=he&amp;tl=en"');
     expect(page.html).toContain('הוספת תרגום'); // Add a translation
   });
 

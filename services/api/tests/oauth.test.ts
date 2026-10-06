@@ -189,7 +189,7 @@ describe('OAuth for MCP clients', () => {
     // A redirect address the app never registered is never redirected to: the person is told on the site.
     const wrong = await authorize({ response_type: 'code', client_id, redirect_uri: 'https://evil.example/cb', code_challenge: (await pkce()).challenge, code_challenge_method: 'S256' });
     expect(wrong.toString()).toBe(`${SITE}/oauth/consent?error=invalid_redirect`);
-    expect((await authorize({ response_type: 'code', client_id: 'rhc-nobody', ui_locales: 'en' })).toString()).toBe(`${SITE}/oauth/consent?error=invalid_client&lang=en`);
+    expect((await authorize({ response_type: 'code', client_id: 'rhc-nobody', ui_locales: 'he' })).toString()).toBe(`${SITE}/oauth/consent?error=invalid_client&lang=he`);
   });
 
   it('lets the person say no, or allow reading only', async () => {

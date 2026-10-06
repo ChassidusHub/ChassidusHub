@@ -94,7 +94,7 @@ describe('signing in by email link', () => {
     await signUp('chaim@example.org', 'Chaim');
     expect(await call('POST', '/v1/auth/email/start', { body: { email: 'chaim@example.org' }, cookie: mendy.cookie })).toMatchObject({ status: 400 });
 
-    await call('POST', '/v1/auth/email/start', { body: { email: 'mendy@work.example' }, cookie: mendy.cookie });
+    await call('POST', '/v1/auth/email/start', { body: { email: 'mendy@work.example', lang: 'he' }, cookie: mendy.cookie });
     expect(outbox.at(-1)!.subject).toBe('ChassidusHub: אישור כתובת המייל');
     expect((await call('POST', '/v1/auth/email/check', { body: { token: lastToken() } })).body.adding).toEqual({ displayName: 'Mendy' });
     // Opened in another browser, it adds the address without signing that browser in.
@@ -159,13 +159,13 @@ describe('notifications by email', () => {
     expect(await sendNotifications(catalog, mailer, { siteUrl: SITE })).toEqual({ sent: 1, looked: 1 });
     expect(outbox[0]).toMatchObject({ to: 'chaim@example.org', subject: 'ChassidusHub: one change in what you follow' });
     expect(outbox[0]!.text).toContain('Fix the date');
-    expect(outbox[0]!.text).toContain(`${SITE}/${event}?lang=en`);
+    expect(outbox[0]!.text).toContain(`${SITE}/${event}\n`);
     expect(outbox[0]!.headers!['List-Unsubscribe']).toMatch(/\/_\/auth\/email\/unsubscribe\?token=/);
     // Told once.
     expect((await sendNotifications(catalog, mailer, { siteUrl: SITE })).sent).toBe(0);
 
     // A daily digest: sent, then not again within the day.
-    await call('POST', '/v1/auth/notifications', { body: { mode: 'daily' }, cookie: chaim.cookie });
+    await call('POST', '/v1/auth/notifications', { body: { mode: 'daily', lang: 'he' }, cookie: chaim.cookie });
     await add(catalog, 'mendy', 'keeper', 'recording', { event, title: { he: 'הקדמה' }, sets: [set] });
     // The last email was minutes ago: the digest waits for the day to pass.
     expect((await sendNotifications(catalog, mailer, { siteUrl: SITE })).sent).toBe(0);
