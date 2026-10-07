@@ -159,12 +159,14 @@ export interface ImportReport {
 /**
  * Loads a pod's transcripts and translations (see the top of this file).
  * `replace`: a recording's transcript is made again from the pod's, when
- * no person has checked, fixed or synced any of it. `dryRun`: only finds
+ * no person has checked, fixed or synced any of it; with `replaceChecked`
+ * even then (the steward, 2026-10-07: their fixes are kept as training clips
+ * first, and the old paragraphs stay in the history). `dryRun`: only finds
  * each recording and says what would be done.
  */
 export async function importPodTranscripts(
   catalog: Catalog,
-  input: { items: AsyncIterable<PodItem> | Iterable<PodItem>; approveAs: string; replace?: boolean; limit?: number; dryRun?: boolean; log?: (line: string) => void },
+  input: { items: AsyncIterable<PodItem> | Iterable<PodItem>; approveAs: string; replace?: boolean; replaceChecked?: boolean; limit?: number; dryRun?: boolean; log?: (line: string) => void },
 ): Promise<ImportReport> {
   const log = input.log ?? (() => {});
   const report: ImportReport = { imported: [], translated: [], skipped: [], notFound: [], links: { proposed: 0, suggestions: [] } };
@@ -207,7 +209,7 @@ export async function importPodTranscripts(
           log(`${rec}: ${recording}: has a transcript; left as it is (--replace to make it again)`);
           continue;
         }
-        const refused = await removeTranscript(catalog, { approveAs: input.approveAs, text: view.text, recording });
+        const refused = await removeTranscript(catalog, { approveAs: input.approveAs, text: view.text, recording, force: input.replaceChecked });
         if (refused) {
           report.skipped.push({ rec, recording, why: refused });
           log(`${rec}: ${recording}: not replaced: ${refused}`);
@@ -341,9 +343,9 @@ async function addTranslation(
  * its translations and theirs, the links found in it), so it can be made
  * again; as the transcription bot, approved by `approveAs`. Refused (and
  * why) when a person has checked, fixed or synced any of it, or something
- * else points at it.
+ * else points at it; `force` takes it out even when people worked on it.
  */
-export async function removeTranscript(catalog: Catalog, input: { approveAs: string; text: EntityId; recording: EntityId }): Promise<string | null> {
+export async function removeTranscript(catalog: Catalog, input: { approveAs: string; text: EntityId; recording: EntityId; force?: boolean }): Promise<string | null> {
   const all = new Map<EntityId, string>([[input.text, 'text']]);
   let frontier: EntityId[] = [input.text];
   while (frontier.length) {
@@ -364,7 +366,7 @@ export async function removeTranscript(catalog: Catalog, input: { approveAs: str
     'SELECT e.id, e.type, r.data FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = ANY($1::text[])',
     [[...all.keys()]],
   );
-  for (const r of rows) {
+  for (const r of input.force ? [] : rows) {
     const o = r.data.origin;
     const machine = o !== undefined && !o.checked && !o.edited;
     if (r.type === 'segment' && (!machine || Number(r.data.proofread ?? 0) > 0)) return `a person checked or fixed paragraph ${r.id}`;

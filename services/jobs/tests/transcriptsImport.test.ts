@@ -173,6 +173,11 @@ describe('transcripts made on GPU pods', () => {
     const refused = await importPodTranscripts(catalog, { approveAs: 'steward', items: items({ rec: '1002', transcript: { ...pod(1002, 'JEMTEST0002.mp3') }, translations: [] }), replace: true });
     expect(refused.skipped[0]).toMatchObject({ rec: '1002', recording: second, why: expect.stringContaining('a person checked or fixed') });
     expect((await recordingTranscript(catalog, second))!.paragraphs).toHaveLength(1);
+
+    // Unless the steward asks for it with replaceChecked: then it is made again too.
+    const forced = await importPodTranscripts(catalog, { approveAs: 'steward', items: items({ rec: '1002', transcript: { ...pod(1002, 'JEMTEST0002.mp3') }, translations: [] }), replace: true, replaceChecked: true });
+    expect(forced.imported).toEqual([{ rec: '1002', recording: second, paragraphs: 2, quotes: 2 }]);
+    expect((await recordingTranscript(catalog, second))!.paragraphs).toHaveLength(2);
   });
 
   it('reads a folder from a pod, one recording at a time, with its translations', async () => {
