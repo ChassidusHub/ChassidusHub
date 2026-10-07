@@ -174,17 +174,19 @@ export function Transcripts({ tracks, lang, onLoaded, only, view = 'listen' }: {
     );
   }
 
-  // A few words fixed while listening: in at once for those trusted with it, else waiting for approval and marked so in the words.
+  // A fix sent: in at once for those trusted with it, else waiting for approval and marked so in the words.
+  function sent(recording: string, segment: string, content: string, complete: boolean, row: { status?: string; id?: number }) {
+    if (row.status === 'merged') return fixed(recording, segment, content, complete);
+    const mine: Pending = { segment, content, complete, author: account?.person.id ?? '', authorName: account?.person.displayName ?? null, at: new Date().toISOString(), suggestion: row.id ?? null };
+    setTranscripts((all) => all.map((tr) => (tr.recording !== recording ? tr : { ...tr, pending: [...(tr.pending ?? []).filter((x) => !(x.segment === segment && x.author === mine.author)), mine] })));
+  }
+
+  // A few words fixed while listening, sent at once.
   async function fixWords(recording: string, segment: string, content: string): Promise<'merged' | 'sent'> {
     const row = await postJson<{ status?: string; id?: number }>(`recordings/${recording}/transcript/fix`, { segment, content, complete: false });
     noteChecked();
-    if (row.status === 'merged') {
-      fixed(recording, segment, content, false);
-      return 'merged';
-    }
-    const mine: Pending = { segment, content, complete: false, author: account?.person.id ?? '', authorName: account?.person.displayName ?? null, at: new Date().toISOString(), suggestion: row.id ?? null };
-    setTranscripts((all) => all.map((tr) => (tr.recording !== recording ? tr : { ...tr, pending: [...(tr.pending ?? []).filter((x) => !(x.segment === segment && x.author === mine.author)), mine] })));
-    return 'sent';
+    sent(recording, segment, content, false, row);
+    return row.status === 'merged' ? 'merged' : 'sent';
   }
 
   // Edit goes to the page's Text tab, where the words are read and checked.
@@ -235,7 +237,7 @@ export function Transcripts({ tracks, lang, onLoaded, only, view = 'listen' }: {
         nowMs={nowMs}
         found={found}
         account={account}
-        onFixed={fixed}
+        onSent={sent}
       />
       {ask}
     </section>
