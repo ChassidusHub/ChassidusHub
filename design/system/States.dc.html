@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Empty, loading, error states</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;family=Noto+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#f7f3ea}
+a{color:#8a2c1e}
+</style>
+</helmet>
+<div style="background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif; font-size: 15px; line-height: 1.55; min-height: 1000px;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 48px 20px 64px; display: flex; flex-direction: column; gap: 28px;">
+  <header style="display: flex; flex-direction: column; gap: 8px;">
+    <span style="font-size: 13px; color: #8a2c1e; font-weight: 600; letter-spacing: 0.04em;">38 · STATES</span>
+    <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 40px; line-height: 1.1;">Never a dead end</h1>
+    <p style="margin: 0; color: #4e463a; max-width: 820px;">Every state says, in one line, what happened and offers the one thing to do next. There are no codes, no blame and no blank screens. Loading looks like the page about to appear, so nothing jumps when it arrives.</p>
+  </header>
+
+  <div dir="rtl" lang="he" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; font-family: 'Noto Sans Hebrew', sans-serif;">
+
+    <div style="height: 520px; border-radius: 28px; border: 2px solid #1f1a13; background: #f7f3ea; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box;">
+      <span style="font: 600 12px 'Noto Sans', sans-serif; color: #8a2c1e;" dir="ltr">LOADING</span>
+      <span style="height: 26px; width: 55%; border-radius: 6px; background: #ece5d6;"></span>
+      <span style="height: 14px; width: 35%; border-radius: 6px; background: #ece5d6;"></span>
+      <div style="border-radius: 14px; background: #fffdf8; border: 1px solid #e9e1d1; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+        <span style="height: 12px; border-radius: 4px; background: #ece5d6;"></span><span style="height: 12px; border-radius: 4px; background: #ece5d6;"></span><span style="height: 12px; width: 70%; border-radius: 4px; background: #ece5d6;"></span><span style="height: 12px; border-radius: 4px; background: #ece5d6;"></span><span style="height: 12px; width: 50%; border-radius: 4px; background: #ece5d6;"></span>
+      </div>
+      <span style="font-size: 13px; color: #6b6253;">The shapes of the page, still. No spinners for anything under two seconds.</span>
+    </div>
+
+    <div style="height: 520px; border-radius: 28px; border: 2px solid #1f1a13; background: #f7f3ea; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box;">
+      <span style="font: 600 12px 'Noto Sans', sans-serif; color: #8a2c1e;" dir="ltr">NOTHING FOUND</span>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center; align-items: center;">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.4" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+        <b style="font-size: 18px;">אין שם „[המילים שחיפשתם]”</b>
+        <span style="font-size: 14px; color: #4e463a;">אולי בכתיב אחר? או לשאול את הספרייה לפי הרעיון.</span>
+        <a href="#" style="height: 44px; padding: 0 18px; border-radius: 999px; background: #8a2c1e; color: #fffdf8; text-decoration: none; font-weight: 600; display: flex; align-items: center;">לשאול את הספרייה</a>
+        <span style="font-size: 13px; color: #6b6253;">או: <a href="#">ליקוטי שיחות</a> · <a href="#">היום יום</a></span>
+      </div>
+    </div>
+
+    <div style="height: 520px; border-radius: 28px; border: 2px solid #1f1a13; background: #f7f3ea; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box;">
+      <span style="font: 600 12px 'Noto Sans', sans-serif; color: #8a2c1e;" dir="ltr">PAGE NOT FOUND</span>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center; align-items: center;">
+        <span style="width: 44px; height: 56px; border: 1.5px dashed #c8bba3; border-radius: 6px 12px 12px 6px;"></span>
+        <b style="font-size: 18px;">הדף הזה לא נמצא</b>
+        <span style="font-size: 14px; color: #4e463a;">אם הוא הועבר או אוחד, הקישור הישן מוביל אליו. כאן לא היה דבר כזה.</span>
+        <div style="width: 100%; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 14px; border-radius: 999px; background: #fffdf8; border: 1px solid #dcd2bf; box-sizing: border-box; color: #6b6253;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>שאלו או חפשו כל דבר</div>
+      </div>
+    </div>
+
+    <div style="height: 520px; border-radius: 28px; border: 2px solid #1f1a13; background: #f7f3ea; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box;">
+      <span style="font: 600 12px 'Noto Sans', sans-serif; color: #8a2c1e;" dir="ltr">SOMETHING BROKE</span>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center; align-items: center;">
+        <b style="font-size: 18px;">משהו השתבש אצלנו</b>
+        <span style="font-size: 14px; color: #4e463a;">זו לא טעות שלכם. כבר ניסינו שוב פעם אחת.</span>
+        <button type="button" style="height: 44px; padding: 0 20px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 15px 'Noto Sans Hebrew', sans-serif;">לנסות שוב</button>
+        <a href="#" style="font-size: 13px;">לדווח, עם מה שקרה כבר בפנים</a>
+      </div>
+    </div>
+
+    <div style="height: 520px; border-radius: 28px; border: 2px solid #1f1a13; background: #f7f3ea; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box; position: relative;">
+      <span style="font: 600 12px 'Noto Sans', sans-serif; color: #8a2c1e;" dir="ltr">OFFLINE</span>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: #1f1a13; color: #f7f3ea; font-size: 13px;"><span style="width: 8px; height: 8px; border-radius: 999px; background: #d6a64c;"></span><span style="flex-grow: 1;">אין חיבור. מתחברים מחדש…</span></div>
+      <span style="font-size: 14px; color: #4e463a;">הדף שפתוח נשאר פתוח, וההקלטה ממשיכה ממה שכבר נטען. תיקונים נשמרים בתיקונים שלכם ונשלחים כשהחיבור חוזר.</span>
+      <div style="margin-top: auto; height: 52px; border-radius: 14px; background: #fffdf8; border: 1px solid #dcd2bf; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 13px;"><span style="width: 32px; height: 32px; border-radius: 999px; background: #8a2c1e;"></span><b style="flex-grow: 1;">עדיין מתנגן</b></div>
+    </div>
+
+    <div style="height: 520px; border-radius: 28px; border: 2px solid #1f1a13; background: #f7f3ea; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box;">
+      <span style="font: 600 12px 'Noto Sans', sans-serif; color: #8a2c1e;" dir="ltr">WORDS WITHHELD FOR RIGHTS</span>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center; align-items: center;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+        <b style="font-size: 18px;">הטקסט של הספר הזה שמור לבעליו</b>
+        <span style="font-size: 14px; color: #4e463a;">אפשר לראות את התוכן, לחפש בשמות, ולפתוח את הספר במקור.</span>
+        <a href="#" style="height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #8a2c1e; color: #8a2c1e; text-decoration: none; font-weight: 600; display: flex; align-items: center;">לפתוח במקור</a>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

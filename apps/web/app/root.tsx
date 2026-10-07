@@ -18,6 +18,7 @@ import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
+import './styles/parts.css';
 import './styles/layout.css';
 import './styles/pages.css';
 import './styles/items.css';

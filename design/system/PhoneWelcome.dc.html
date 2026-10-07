@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone welcome</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 15px; display: flex; flex-direction: column; overflow: hidden; padding: 0 22px 26px;">
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;">
+    <span style="display: flex; gap: 6px;" aria-label="{{stepLabel}}"><sc-for list="{{dots}}" as="d" hint-placeholder-count="3"><span style="width: {{d.w}}; height: 8px; border-radius: 999px; background: {{d.c}};"></span></sc-for></span>
+    <button type="button" onClick="{{skip}}" style="height: 40px; padding: 0 10px; border: 0; background: transparent; font: 500 14px 'Noto Sans Hebrew', sans-serif; color: #6b6253;">דילוג</button>
+  </header>
+
+  <sc-if value="{{s0}}" hint-placeholder-val="{{true}}">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 26px;">
+      <span style="width: 48px; height: 60px; background: #8a2c1e; border-radius: 14px 8px 8px 14px; display: flex; align-items: center; justify-content: center; color: #f7f3ea; font: 700 32px 'Frank Ruhl Libre', serif;">C</span>
+      <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 38px; line-height: 1.15;">כל תורת חב״ד, במקום אחד.</h1>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <span style="display: flex; gap: 14px; align-items: flex-start;"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #f2e1d9; color: #8a2c1e; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg></span><span><b>לקרוא</b> כל ספר, שיחה ומכתב, עם הסריקה לצד הטקסט</span></span>
+        <span style="display: flex; gap: 14px; align-items: flex-start;"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #f2e1d9; color: #8a2c1e; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="4" y="14" width="4" height="6" rx="1.5"/><rect x="16" y="14" width="4" height="6" rx="1.5"/></svg></span><span><b>להאזין</b> להתוועדויות, והמילים מסומנות בזמן הדיבור</span></span>
+        <span style="display: flex; gap: 14px; align-items: flex-start;"><span style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: #f2e1d9; color: #8a2c1e; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8z"/></svg></span><span><b>לשאול</b> כל שאלה, ולקבל תשובה עם מקורות מהספרייה</span></span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s1}}" hint-placeholder-val="{{false}}">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 20px;">
+      <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 32px; line-height: 1.2;">מה תרצו לראות?</h1>
+      <span style="color: #4e463a;">אפשר לשנות תמיד, בלחיצה אחת בתפריט.</span>
+      <div role="radiogroup" aria-label="מה מוצג לי" style="display: flex; flex-direction: column; gap: 10px;">
+        <sc-for list="{{levels}}" as="l" hint-placeholder-count="3">
+          <button type="button" role="radio" aria-checked="{{l.on}}" onClick="{{l.pick}}" style="padding: 16px; border-radius: 16px; border: {{l.border}}; background: {{l.bg}}; text-align: right; display: flex; flex-direction: column; gap: 4px; font-family: 'Noto Sans Hebrew', sans-serif; color: #1f1a13;"><b style="font-size: 17px;">{{l.title}}</b><span style="font-size: 13px; color: #4e463a;">{{l.desc}}</span></button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px;">
+      <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 32px; line-height: 1.2;">לשמור את המקום שלכם</h1>
+      <span style="color: #4e463a;">עם חשבון, הלימוד היומי ומה ששמעתם עוברים בין הטלפון למחשב, ואפשר לתקן ולהציע.</span>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" style="height: 56px; border-radius: 14px; border: 0; background: #1f1a13; color: #f7f3ea; font: 600 16px 'Noto Sans Hebrew', sans-serif; display: flex; align-items: center; justify-content: center; gap: 10px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="9" r="4"/><path d="M12 12l8 8M17 17l2-2M15 19l2-2"/></svg>כניסה עם מפתח גישה</button>
+        <button type="button" style="height: 56px; border-radius: 14px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 600 16px 'Noto Sans Hebrew', sans-serif;">כניסה עם Google</button>
+        <button type="button" style="height: 56px; border-radius: 14px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 600 16px 'Noto Sans Hebrew', sans-serif;">קישור לאימייל</button>
+      </div>
+      <span style="font-size: 13px; color: #6b6253;">מפתח גישה נפתח בטביעת אצבע או בנעילת המסך. אין סיסמה לזכור.</span>
+    </div>
+  </sc-if>
+
+  <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 10px;">
+    <button type="button" onClick="{{next}}" style="height: 56px; border-radius: 14px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 16px 'Noto Sans Hebrew', sans-serif;">{{nextLabel}}</button>
+    <sc-if value="{{s2}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{skip}}" style="height: 44px; border: 0; background: transparent; font: 500 14px 'Noto Sans Hebrew', sans-serif; color: #4e463a;">להמשיך בלי חשבון</button></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { step: 0, level: 0 }; }
+  renderVals() {
+    const s = this.state;
+    const L = [
+      { title: 'קריאה ושמיעה', desc: 'הספרייה, הלימוד היומי, ההקלטות והחיפוש. נקי ופשוט.' },
+      { title: 'גם לעזור', desc: 'מוסיף תיקון בלחיצה, בדיקת תמלולים וסריקות, והיסטוריה.' },
+      { title: 'הכל', desc: 'לאחראים: אישור הצעות וסידור הספרייה. ניתן על ידי אנשים.' }
+    ];
+    return {
+      s0: s.step === 0, s1: s.step === 1, s2: s.step === 2,
+      stepLabel: 'שלב ' + (s.step + 1) + ' מתוך 3',
+      dots: [0, 1, 2].map((i) => ({ w: i === s.step ? '22px' : '8px', c: i <= s.step ? '#8a2c1e' : '#dcd2bf' })),
+      levels: L.map((l, i) => ({ title: l.title, desc: l.desc, on: i === s.level, pick: () => this.setState({ level: i }), border: i === s.level ? '2px solid #8a2c1e' : '1px solid #dcd2bf', bg: i === s.level ? '#fbf1ec' : '#fffdf8' })),
+      nextLabel: s.step === 0 ? 'להתחיל' : s.step === 1 ? 'המשך' : 'סיום',
+      next: () => this.setState({ step: s.step < 2 ? s.step + 1 : 0 }),
+      skip: () => this.setState({ step: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

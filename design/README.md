@@ -3,6 +3,7 @@
 Design mockups for the ChassidusHub web app (repo: ChassidusHub/ChassidusHub, apps/web). These are static design references, not production code. Recreate them in the real codebase; do not ship these files.
 
 ## Files
+- `system/` — **the current design system ("Sefer 2"), approved October 2026.** Where it and the older files below differ, it wins. Its own README lists the boards and the order of building them.
 - `ChassidusHub Screens.dc.html` — main design canvas (open in a browser). Newest work at the top:
   - Turn 5: special pages — Likkutei Sichos index (5a phone, 5c desktop, 5e tablet), single document / letter page (5b phone, 5d desktop)
   - Turn 4: profile (4a), menu & settings (4b), page history (4c), transcript editor (4d), proofreading against scan (4e, desktop), version compare (4f, desktop)

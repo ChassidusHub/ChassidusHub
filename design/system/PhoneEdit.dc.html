@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone fix a page</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 0 6px; border-bottom: 1px solid #dcd2bf;">
+    <a href="#" aria-label="חזרה" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></a>
+    <span style="flex-grow: 1; display: flex; flex-direction: column; line-height: 1.25;"><b style="font-size: 15px;">ליקוטי אמרים · פרק א</b><span style="font-size: 12px; color: #8a2c1e;">מצב תיקון · לחצו על מה שלא נכון</span></span>
+    <button type="button" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #c8bba3; background: #fffdf8; font: 500 14px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;">סיום</button>
+  </header>
+
+  <div style="flex-grow: 1; padding: 20px 18px 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden;">
+    <p style="margin: 0; padding: 8px 10px; border-radius: 8px; border: 1px dashed #dcd2bf; font-family: 'Frank Ruhl Libre', serif; font-size: 19px; line-height: 1.75; text-align: justify; color: #4e463a;"><span style="font-weight: 700; font-size: 1.3em;">כאן</span> בהקלטה או שנדפסו בספר עצמו והמילים שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה בלבד.</p>
+    <p style="margin: 0; padding: 8px 10px; border-radius: 8px; border: 2px solid #8a2c1e; background: #fffdf8; font-family: 'Frank Ruhl Libre', serif; font-size: 19px; line-height: 1.75; text-align: justify;">מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט האמיתי. הפסקה כפי שנאמרו בהקלטה או שנדפסו בספר עצמו <span style="background: #f6e7b4; border-radius: 3px; padding: 0 2px;">עצת</span> ולא יוכל המשפט הזה בשמחה.</p>
+  </div>
+
+  <div role="dialog" aria-label="תיקון הפסקה" style="position: absolute; left: 0; right: 0; bottom: 0; background: #fffdf8; border-radius: 16px 16px 0 0; box-shadow: 0 -8px 32px rgba(40,30,20,0.18); padding: 10px 16px 18px; display: flex; flex-direction: column; gap: 12px;">
+    <span style="align-self: center; width: 36px; height: 4px; border-radius: 2px; background: #c8bba3;"></span>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <b style="font-size: 16px; flex-grow: 1;">תיקון</b>
+      <div role="toolbar" aria-label="עיצוב" style="display: flex; gap: 2px; background: #ece5d6; border-radius: 8px; padding: 3px;">
+        <button type="button" aria-label="מודגש" style="width: 36px; height: 32px; border: 0; border-radius: 6px; background: transparent; font: 700 15px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;">B</button>
+        <button type="button" aria-label="נטוי" style="width: 36px; height: 32px; border: 0; border-radius: 6px; background: transparent; font: italic 500 15px Georgia, serif; color: #1f1a13;">I</button>
+        <button type="button" aria-label="קו תחתון" style="width: 36px; height: 32px; border: 0; border-radius: 6px; background: transparent; font: 500 15px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; text-decoration: underline;">U</button>
+      </div>
+      <button type="button" aria-label="עוד" style="width: 36px; height: 36px; border: 0; border-radius: 6px; background: transparent; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+    </div>
+    <label for="pe-text" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">המילים</label>
+    <textarea id="pe-text" rows="5" style="width: 100%; box-sizing: border-box; border: 1px solid #8a2c1e; outline: 2px solid #f2e1d9; border-radius: 8px; padding: 10px 12px; font: 18px/1.7 'Frank Ruhl Libre', serif; color: #1f1a13; background: #fffdf8; resize: none;">מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט האמיתי. שורה עד סוף המשפט הזה ועוד מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט.</textarea>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 13px; color: #6b6253;">מה תוקן? (לא חובה)</span>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <button type="button" aria-pressed="true" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #8a2c1e; background: #f2e1d9; color: #8a2c1e; font: 600 13px 'Noto Sans Hebrew', sans-serif;">כתיב</button>
+        <button type="button" aria-pressed="false" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; color: #4e463a; font: 500 13px 'Noto Sans Hebrew', sans-serif;">מילים חסרות</button>
+        <button type="button" aria-pressed="false" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; color: #4e463a; font: 500 13px 'Noto Sans Hebrew', sans-serif;">פיסוק</button>
+        <button type="button" aria-pressed="false" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; color: #4e463a; font: 500 13px 'Noto Sans Hebrew', sans-serif;">אחר</button>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button type="button" style="flex-grow: 1; height: 48px; border-radius: 10px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 15px 'Noto Sans Hebrew', sans-serif;">הוספה לתיקונים</button>
+      <button type="button" style="height: 48px; padding: 0 18px; border-radius: 10px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 15px 'Noto Sans Hebrew', sans-serif;">ביטול</button>
+    </div>
+    <a href="#" style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 14px; border-radius: 999px; background: #1f1a13; color: #f7f3ea; text-decoration: none; font-size: 14px;"><span>התיקונים שלך · <b>2</b></span><span style="color: #e2957f; font-weight: 600;">שליחה</span></a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

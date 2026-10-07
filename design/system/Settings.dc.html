@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Newsreader:opsz,wght@6..72,600&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;family=Noto+Sans:wght@400;500;600&amp;family=Noto+Serif+Hebrew:wght@400&amp;family=David+Libre&amp;display=swap">
+<style>
+body{margin:0;background:#f7f3ea}
+a{color:#8a2c1e}a:hover{color:#74241a}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif; font-size: 14px; line-height: 1.5; min-height: 1040px; position: relative;">
+
+<header style="height: 60px; border-bottom: 1px solid #dcd2bf;">
+  <div style="max-width: 1180px; margin: 0 auto; height: 100%; padding: 0 32px; box-sizing: border-box; display: flex; align-items: center; gap: 16px;">
+    <a href="#" aria-label="ChassidusHub home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #1f1a13;">
+      <span style="width: 22px; height: 28px; background: #8a2c1e; border-radius: 4px 7px 7px 4px; display: flex; align-items: center; justify-content: center; color: #f7f3ea; font-family: 'Frank Ruhl Libre', serif; font-weight: 700; font-size: 15px;">C</span>
+      <span style="font-family: 'Newsreader', serif; font-weight: 600; font-size: 20px; letter-spacing: -0.015em; position: relative; top: 3px;">ChassidusHub</span>
+    </a>
+    <span style="color: #c8bba3;">/</span>
+    <span style="font-weight: 600;">Settings</span>
+  </div>
+</header>
+
+<div style="max-width: 1180px; margin: 0 auto; padding: 32px 32px 96px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+
+  <nav aria-label="Settings groups" style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 8px; background: #ece5d6; color: #6b6253;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+      <label for="set-search" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search settings</label>
+      <input id="set-search" placeholder="Search settings" value="{{query}}" onChange="{{onQuery}}" style="flex-grow: 1; min-width: 0; border: 0; background: transparent; font: 14px 'Noto Sans', sans-serif; color: #1f1a13; outline: none;">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{sections}}" as="s" hint-placeholder-count="8">
+        <button type="button" onClick="{{s.pick}}" aria-current="{{s.ariaCurrent}}" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: 6px; text-align: left; font: {{s.font}}; color: {{s.color}}; background: {{s.bg}};">
+          <span style="flex-grow: 1;">{{s.label}}</span>
+          <sc-if value="{{s.changedCount}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: #8a2c1e;">{{s.changedCount}} changed</span></sc-if>
+        </button>
+      </sc-for>
+    </div>
+    <p style="margin: 0; padding: 0 12px; font-size: 12px; color: #6b6253;">Changes save as you make them, to your account and to this browser.</p>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+
+    <sc-if value="{{searching}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 32px;">Results for “{{query}}”</h1>
+        <span style="color: #6b6253;">{{resultCount}} settings, across every group, including the ones under More options.</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{browsing}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 32px;">{{current.label}}</h1>
+        <span style="color: #4e463a;">{{current.intro}}</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showLevel}}" hint-placeholder-val="{{true}}">
+      <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <span style="display: flex; flex-direction: column; flex: 1 1 240px;"><b style="font-size: 16px;">What you see</b><span style="font-size: 13px; color: #6b6253;">How many tools the site shows you. A higher level only adds things.</span></span>
+          <div role="radiogroup" aria-label="What you see" style="display: flex; padding: 3px; gap: 2px; background: #ece5d6; border-radius: 8px;">
+            <sc-for list="{{levels}}" as="l" hint-placeholder-count="3">
+              <button type="button" role="radio" aria-checked="{{l.on}}" onClick="{{l.pick}}" style="height: 36px; padding: 0 18px; border: 0; border-radius: 6px; font: 500 14px 'Noto Sans', sans-serif; background: {{l.bg}}; color: {{l.color}}; box-shadow: {{l.shadow}};">{{l.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+          <sc-for list="{{levels}}" as="l" hint-placeholder-count="3">
+            <div style="padding: 12px; border-radius: 8px; background: {{l.cardBg}}; border: 1px solid {{l.cardLine}}; display: flex; flex-direction: column; gap: 4px; opacity: {{l.cardOpacity}};">
+              <span style="font-size: 13px; font-weight: 600;">{{l.label}}</span>
+              <span style="font-size: 12px; color: #4e463a;">{{l.adds}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showPreview}}" hint-placeholder-val="{{false}}">
+      <div dir="rtl" lang="he" style="background: #fffdf8; border-radius: 10px; box-shadow: 0 1px 0 #e6decd, 0 2px 6px rgba(40,30,20,0.06); padding: 28px 36px; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; color: #6b6253; font-family: 'Noto Sans Hebrew', sans-serif;">תצוגה מקדימה · ליקוטי אמרים, פרק א</span>
+        <p style="margin: 0; font-family: {{previewFace}}; font-size: {{previewSize}}; line-height: {{previewLeading}}; text-align: justify;"><span style="font-weight: 700; font-size: 1.35em;">כאן</span> בהקלטה או שנדפסו בספר עצמו והמילים שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה בלבד<sup style="color: #8a2c1e; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 12px; font-weight: 600;">א</sup>.</p>
+      </div>
+    </sc-if>
+
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; display: flex; flex-direction: column;">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-top: {{r.topLine}}; flex-wrap: wrap;">
+          <div style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500;">{{r.label}}<sc-if value="{{r.changed}}" hint-placeholder-val="{{false}}"><span aria-label="Changed" style="width: 6px; height: 6px; border-radius: 999px; background: #8a2c1e;"></span></sc-if><sc-if value="{{r.advanced}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 500; color: #6b6253; border: 1px solid #dcd2bf; border-radius: 4px; padding: 0 5px;">More</span></sc-if></span>
+            <span style="font-size: 13px; color: #6b6253;">{{r.desc}}</span>
+            <sc-if value="{{searching}}" hint-placeholder-val="{{false}}"><span style="font-size: 12px; color: #8a2c1e;">in {{r.sectionLabel}}</span></sc-if>
+          </div>
+          <sc-if value="{{r.changed}}" hint-placeholder-val="{{false}}">
+            <button type="button" onClick="{{r.reset}}" style="height: 32px; padding: 0 8px; border: 0; background: transparent; color: #8a2c1e; font: 500 13px 'Noto Sans', sans-serif;">Reset</button>
+          </sc-if>
+          <sc-if value="{{r.isToggle}}" hint-placeholder-val="{{false}}">
+            <button type="button" role="switch" aria-checked="{{r.on}}" aria-label="{{r.label}}" onClick="{{r.toggle}}" style="width: 44px; height: 26px; border-radius: 999px; border: 0; padding: 0; position: relative; background: {{r.trackBg}};"><span style="position: absolute; top: 3px; left: {{r.knobLeft}}; width: 20px; height: 20px; border-radius: 999px; background: #fffdf8; box-shadow: 0 1px 2px rgba(0,0,0,0.2);"></span></button>
+          </sc-if>
+          <sc-if value="{{r.isSeg}}" hint-placeholder-val="{{false}}">
+            <div role="radiogroup" aria-label="{{r.label}}" style="display: flex; padding: 3px; gap: 2px; background: #ece5d6; border-radius: 8px; flex-wrap: wrap;">
+              <sc-for list="{{r.opts}}" as="o" hint-placeholder-count="3">
+                <button type="button" role="radio" aria-checked="{{o.on}}" onClick="{{o.pick}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: 6px; font: 500 13px 'Noto Sans', sans-serif; background: {{o.bg}}; color: {{o.color}}; box-shadow: {{o.shadow}};">{{o.label}}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{r.isLink}}" hint-placeholder-val="{{false}}">
+            <a href="#" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: {{r.linkColor}}; font-size: 14px;">{{r.value}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></a>
+          </sc-if>
+        </div>
+      </sc-for>
+      <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+        <div style="padding: 32px 20px; text-align: center; color: #6b6253;">No setting matches “{{query}}”. Try a word like size, email or speed.</div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{showMoreButton}}" hint-placeholder-val="{{true}}">
+      <button type="button" onClick="{{toggleMore}}" aria-expanded="{{moreOpen}}" style="align-self: flex-start; height: 36px; padding: 0 14px; border-radius: 6px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 14px 'Noto Sans', sans-serif; display: flex; align-items: center; gap: 8px;">{{moreLabel}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="{{moreChevron}}"/></svg></button>
+    </sc-if>
+  </main>
+</div>
+
+<sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
+  <div role="status" style="position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 8px 0 16px; border-radius: 8px; background: #1f1a13; color: #f7f3ea; font-size: 14px; box-shadow: 0 8px 24px rgba(40,30,20,0.18);">Saved: {{toast}}<button type="button" onClick="{{undo}}" style="height: 32px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: #e2957f; font: 600 13px 'Noto Sans', sans-serif;">Undo</button></div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startSection":{"editor":"enum","options":["basics","reading","listening","daily","notifications","helping","account","developers"],"default":"reading"},"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { section: null, query: '', more: {}, values: {}, level: 'help', toast: '', last: null };
+  }
+
+  sectionsDef() {
+    return [
+      { id: 'basics', label: 'Basics', intro: 'The few choices that change the whole site.' },
+      { id: 'reading', label: 'Reading', intro: 'How the words look. The same controls open from Aa on any page you read.' },
+      { id: 'listening', label: 'Listening', intro: 'Recordings, shiurim and the player at the foot of the page.' },
+      { id: 'daily', label: 'Daily learning', intro: 'What the Daily page shows you each day.' },
+      { id: 'notifications', label: 'Notifications', intro: 'What reaches you, and where.' },
+      { id: 'helping', label: 'Helping', intro: 'Tools for suggesting fixes, checking and reviewing.' },
+      { id: 'account', label: 'Account', intro: 'Your name, your sign-in and your data.' },
+      { id: 'developers', label: 'Apps & developers', intro: 'Tokens, connected apps and webhooks.' }
+    ];
+  }
+
+  settingsDef() {
+    return [
+      { id: 'lang', s: 'basics', label: 'Language', desc: 'The language of menus and buttons. Texts stay in their own language.', type: 'seg', opts: ['עברית', 'English'], def: 'עברית' },
+      { id: 'theme', s: 'basics', label: 'Theme', desc: 'Auto follows your device.', type: 'seg', opts: ['Auto', 'Light', 'Dark'], def: 'Auto' },
+      { id: 'dates', s: 'basics', label: 'Dates', desc: 'How dates are written across the site.', type: 'seg', opts: ['Hebrew', 'Both', 'Civil'], def: 'Both' },
+      { id: 'start', s: 'basics', adv: true, label: 'Start page', desc: 'Where the logo and the app open to.', type: 'seg', opts: ['Home', 'Daily', 'Last read'], def: 'Home' },
+      { id: 'keys', s: 'basics', adv: true, label: 'Keyboard shortcuts', desc: 'Press ? on any page to see them.', type: 'toggle', def: true },
+
+      { id: 'size', s: 'reading', label: 'Text size', desc: 'How large the Torah text is set.', type: 'seg', opts: ['S', 'M', 'L', 'XL', 'XXL'], def: 'M' },
+      { id: 'face', s: 'reading', label: 'Typeface', desc: 'The face for the words of the Torah.', type: 'seg', opts: ['Frank Ruehl', 'David', 'Noto Serif'], def: 'Frank Ruehl' },
+      { id: 'scan', s: 'reading', label: 'Scan beside the text', desc: 'Show the printed page next to the words when there is one.', type: 'toggle', def: false },
+      { id: 'machine', s: 'reading', label: 'Machine-read words', desc: 'Always marked with a small amber dot until a person checks them.', type: 'link', value: 'Always shown', def: 'Always shown' },
+      { id: 'leading', s: 'reading', adv: true, label: 'Line spacing', desc: 'Room between lines.', type: 'seg', opts: ['Tight', 'Normal', 'Airy'], def: 'Normal' },
+      { id: 'notes', s: 'reading', adv: true, label: 'Footnotes', desc: 'Where the notes appear.', type: 'seg', opts: ['Page foot', 'Margin', 'On tap'], def: 'Page foot' },
+      { id: 'place', s: 'reading', adv: true, label: 'Remember my place', desc: 'Open each sefer where you stopped.', type: 'toggle', def: true },
+      { id: 'focus', s: 'reading', adv: true, label: 'Open in focus mode', desc: 'Hide everything but the words until you move the mouse.', type: 'toggle', def: false },
+
+      { id: 'speed', s: 'listening', label: 'Playback speed', desc: 'For every recording, unless you change it in the player.', type: 'seg', opts: ['1×', '1.25×', '1.5×', '2×'], def: '1×' },
+      { id: 'follow', s: 'listening', label: 'Follow along in the text', desc: 'Highlight each line as it is said, where the recording is synced.', type: 'toggle', def: true },
+      { id: 'next', s: 'listening', label: 'Play the next one', desc: 'When a recording ends, start the next in the set.', type: 'toggle', def: false },
+      { id: 'silence', s: 'listening', adv: true, label: 'Skip long silences', desc: 'Shortens pauses over two seconds.', type: 'toggle', def: false },
+      { id: 'skip', s: 'listening', adv: true, label: 'Skip back', desc: 'How far the back button jumps.', type: 'seg', opts: ['10s', '15s', '30s'], def: '15s' },
+
+      { id: 'rambam', s: 'daily', label: 'Rambam', desc: 'Which daily track to show.', type: 'seg', opts: ['3 chapters', '1 chapter', 'Sefer Hamitzvos'], def: '3 chapters' },
+      { id: 'chitas', s: 'daily', label: 'Chitas', desc: 'Chumash, Tehillim and Tanya each day.', type: 'toggle', def: true },
+      { id: 'hayomyom', s: 'daily', label: 'Hayom Yom', desc: 'The day’s entry at the top.', type: 'toggle', def: true },
+      { id: 'tehillim', s: 'daily', adv: true, label: 'Tehillim by', desc: 'Split by the day of the month or of the week.', type: 'seg', opts: ['Month', 'Week'], def: 'Month' },
+      { id: 'remind', s: 'daily', adv: true, label: 'Daily reminder', desc: 'A note each morning with the day’s learning.', type: 'toggle', def: false },
+
+      { id: 'email', s: 'notifications', label: 'Email me about', desc: 'Replies to you, and changes to what you follow.', type: 'seg', opts: ['Everything', 'Replies', 'Nothing'], def: 'Replies' },
+      { id: 'followed', s: 'notifications', label: 'Things I follow', desc: 'Tell me when a followed sefer or recording changes.', type: 'toggle', def: true },
+      { id: 'weekly', s: 'notifications', adv: true, label: 'Weekly summary', desc: 'One email on Sunday instead of many.', type: 'toggle', def: false },
+
+      { id: 'linetools', s: 'helping', label: 'Suggest a fix on any line', desc: 'Show a small pencil when you hover over a line.', type: 'toggle', def: true },
+      { id: 'review', s: 'helping', label: 'Ask me to review', desc: 'Send me suggestions on sefarim I know.', type: 'toggle', def: false },
+      { id: 'diff', s: 'helping', adv: true, label: 'Show changes', desc: 'How a suggestion’s changes are drawn.', type: 'seg', opts: ['Inline', 'Side by side'], def: 'Inline' },
+      { id: 'ids', s: 'helping', adv: true, label: 'Show item ids', desc: 'Show each item’s rh- id, for citing and for tools.', type: 'toggle', def: false },
+
+      { id: 'name', s: 'account', label: 'Display name', desc: 'Shown on your suggestions and reports.', type: 'link', value: '[Your name]', def: '[Your name]' },
+      { id: 'signin', s: 'account', label: 'Sign-in & security', desc: 'Passkeys, connected Google account, sessions.', type: 'link', value: 'Manage', def: 'Manage' },
+      { id: 'profile', s: 'account', label: 'Public profile', desc: 'Let others see what you have helped with.', type: 'toggle', def: true },
+      { id: 'export', s: 'account', adv: true, label: 'Download my data', desc: 'Everything you added, as a file.', type: 'link', value: 'Download', def: 'Download' },
+      { id: 'delete', s: 'account', adv: true, label: 'Delete account', desc: 'Your suggestions stay, credited to “a former member”.', type: 'link', value: 'Delete', def: 'Delete', danger: true },
+
+      { id: 'tokens', s: 'developers', label: 'API tokens', desc: 'For your own scripts, read or write.', type: 'link', value: '[n] tokens', def: '[n] tokens' },
+      { id: 'apps', s: 'developers', label: 'Connected apps', desc: 'Apps and AI assistants you let act for you.', type: 'link', value: '[n] apps', def: '[n] apps' },
+      { id: 'hooks', s: 'developers', adv: true, label: 'Webhooks', desc: 'Get a signed message on every approved change.', type: 'link', value: 'Set up', def: 'Set up' }
+    ];
+  }
+
+  setValue(id, label, v) {
+    const values = Object.assign({}, this.state.values);
+    const prev = this.state.values[id];
+    values[id] = v;
+    this.setState({ values: values, toast: label, last: { id: id, prev: prev } });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: '' }), 3500);
+  }
+
+  renderVals() {
+    const sections = this.sectionsDef();
+    const defs = this.settingsDef();
+    const sectionId = this.state.section || this.props.startSection || 'reading';
+    const q = (this.state.query || '').trim().toLowerCase();
+    const searching = q.length > 0;
+    const val = (d) => (d.id in this.state.values && this.state.values[d.id] !== undefined) ? this.state.values[d.id] : d.def;
+    const changedIn = (sid) => defs.filter((d) => d.s === sid && d.type !== 'link' && val(d) !== d.def).length;
+    const moreOpen = !!this.state.more[sectionId];
+    const labelOf = (sid) => (sections.find((s) => s.id === sid) || {}).label;
+
+    let list;
+    if (searching) list = defs.filter((d) => (d.label + ' ' + d.desc + ' ' + labelOf(d.s)).toLowerCase().includes(q));
+    else list = defs.filter((d) => d.s === sectionId && (!d.adv || moreOpen));
+
+    const rows = list.map((d, i) => {
+      const v = val(d);
+      const changed = d.type !== 'link' && v !== d.def;
+      return {
+        label: d.label, desc: d.desc, advanced: !!d.adv, sectionLabel: labelOf(d.s),
+        topLine: i === 0 ? '0' : '1px solid #e9e1d1',
+        changed: changed,
+        reset: () => this.setValue(d.id, d.label + ' reset', d.def),
+        isToggle: d.type === 'toggle', isSeg: d.type === 'seg', isLink: d.type === 'link',
+        on: v === true,
+        trackBg: v === true ? '#8a2c1e' : '#c8bba3',
+        knobLeft: v === true ? '21px' : '3px',
+        toggle: () => this.setValue(d.id, d.label + (v ? ' off' : ' on'), !v),
+        value: v,
+        linkColor: d.danger ? '#9a3322' : '#4e463a',
+        opts: (d.opts || []).map((o) => ({
+          label: o, on: o === v,
+          bg: o === v ? '#fffdf8' : 'transparent',
+          color: o === v ? '#1f1a13' : '#4e463a',
+          shadow: o === v ? '0 1px 2px rgba(40,30,20,0.14)' : 'none',
+          pick: () => this.setValue(d.id, d.label + ': ' + o, o)
+        }))
+      };
+    });
+
+    const advCount = defs.filter((d) => d.s === sectionId && d.adv).length;
+    const levelDefs = [
+      { id: 'read', label: 'Read', adds: 'Library, daily learning, listening, search, and Aa for reading.' },
+      { id: 'help', label: 'Help', adds: 'Adds Suggest a fix, History, Versions, Projects and To review.' },
+      { id: 'steward', label: 'Steward', adds: 'Adds Approve, Organize and the site’s health. Given by people.' }
+    ];
+    const order = ['read', 'help', 'steward'];
+    const li = order.indexOf(this.state.level);
+    const levels = levelDefs.map((l, i) => ({
+      label: l.label, adds: l.adds, on: l.id === this.state.level,
+      bg: l.id === this.state.level ? '#fffdf8' : 'transparent',
+      color: l.id === this.state.level ? '#1f1a13' : '#4e463a',
+      shadow: l.id === this.state.level ? '0 1px 2px rgba(40,30,20,0.14)' : 'none',
+      cardBg: i <= li ? '#fbf7ee' : 'transparent',
+      cardLine: i === li ? '#8a2c1e' : '#e9e1d1',
+      cardOpacity: i <= li ? '1' : '0.55',
+      pick: () => { this.setState({ level: l.id, toast: 'What you see: ' + l.label, last: null }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 3500); }
+    }));
+
+    const sizeMap = { S: '17px', M: '20px', L: '23px', XL: '26px', XXL: '30px' };
+    const faceMap = { 'Frank Ruehl': "'Frank Ruhl Libre', serif", David: "'David Libre', serif", 'Noto Serif': "'Noto Serif Hebrew', serif" };
+    const leadMap = { Tight: '1.55', Normal: '1.8', Airy: '2.1' };
+    const get = (id) => val(defs.find((d) => d.id === id));
+    const current = sections.find((s) => s.id === sectionId);
+
+    return {
+      query: this.state.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      searching: searching, browsing: !searching,
+      resultCount: rows.length, noResults: searching && rows.length === 0,
+      current: current,
+      sections: sections.map((s) => {
+        const on = !searching && s.id === sectionId;
+        const n = changedIn(s.id);
+        return {
+          label: s.label, changedCount: n > 0 ? n : 0,
+          ariaCurrent: on ? 'page' : undefined,
+          bg: on ? '#ece5d6' : 'transparent',
+          color: on ? '#1f1a13' : '#4e463a',
+          font: on ? "600 14px 'Noto Sans', sans-serif" : "400 14px 'Noto Sans', sans-serif",
+          pick: () => this.setState({ section: s.id, query: '' })
+        };
+      }),
+      rows: rows,
+      showLevel: !searching && sectionId === 'basics',
+      levels: levels,
+      showPreview: !searching && sectionId === 'reading',
+      previewSize: sizeMap[get('size')] || '20px',
+      previewFace: faceMap[get('face')] || "'Frank Ruhl Libre', serif",
+      previewLeading: leadMap[get('leading')] || '1.8',
+      showMoreButton: !searching && advCount > 0,
+      moreOpen: moreOpen,
+      moreLabel: moreOpen ? 'Fewer options' : 'More options (' + advCount + ')',
+      moreChevron: moreOpen ? 'M7 14l5-5 5 5' : 'M7 10l5 5 5-5',
+      toggleMore: () => { const more = Object.assign({}, this.state.more); more[sectionId] = !moreOpen; this.setState({ more: more }); },
+      toastOn: !!this.state.toast, toast: this.state.toast,
+      undo: () => {
+        const last = this.state.last;
+        if (last) { const values = Object.assign({}, this.state.values); values[last.id] = last.prev; this.setState({ values: values, toast: '', last: null }); }
+        else this.setState({ toast: '' });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

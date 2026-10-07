@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foundations</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;family=Noto+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#f7f3ea}
+a{color:#8a2c1e}a:hover{color:#74241a}
+</style>
+</helmet>
+<div style="background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif; font-size: 15px; line-height: 1.6; min-height: 1880px;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 64px 32px 96px; display: flex; flex-direction: column; gap: 56px;">
+
+<header style="display: flex; flex-direction: column; gap: 8px;">
+  <span style="font-size: 13px; color: #8a2c1e; font-weight: 600; letter-spacing: 0.04em;">1 · FOUNDATIONS</span>
+  <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 48px; line-height: 1.1;">Paper, ink and one red</h1>
+  <p style="margin: 0; color: #4e463a; max-width: 720px;">Every colour, size and space is named for what it is for. Components use only these names, so light and dark, and Hebrew and English, all come out right.</p>
+</header>
+
+<section style="display: flex; flex-direction: column; gap: 20px;">
+  <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Colour: light and dark</h2>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px;">
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
+      <sc-for list="{{light}}" as="c" hint-placeholder-count="12">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="height: 56px; border-radius: 6px; border: 1px solid rgba(31,26,19,0.12); background: {{c.hex}};"></div>
+          <span style="font-size: 13px; font-weight: 600;">{{c.name}}</span>
+          <span style="font-size: 12px; color: #6b6253; font-family: ui-monospace, Menlo, monospace;">{{c.hex}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background: #1f1b15; border: 1px solid #3a3329; border-radius: 10px; padding: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; color: #ede5d5;">
+      <sc-for list="{{dark}}" as="c" hint-placeholder-count="12">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="height: 56px; border-radius: 6px; border: 1px solid rgba(237,229,213,0.14); background: {{c.hex}};"></div>
+          <span style="font-size: 13px; font-weight: 600;">{{c.name}}</span>
+          <span style="font-size: 12px; color: #948a78; font-family: ui-monospace, Menlo, monospace;">{{c.hex}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; font-size: 14px; color: #4e463a;">
+    <p style="margin: 0;"><b style="color: #1f1a13;">Accent is used only for:</b> links, focus rings, the one main button on a page, the current tab and footnote numbers.</p>
+    <p style="margin: 0;"><b style="color: #1f1a13;">Status colours</b> (open, approved, closed) appear only on suggestion and report pills, and always with a word next to them.</p>
+    <p style="margin: 0;"><b style="color: #1f1a13;">Contrast:</b> text on paper is 15.6:1, muted text 8.4:1, subtle text 5.4:1, and accent on paper 7.7:1. Nothing smaller than 4.5:1 carries words.</p>
+  </div>
+</section>
+
+<section style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 40px;">
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Type: the UI scale</h2>
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; display: flex; flex-direction: column;">
+      <sc-for list="{{type}}" as="t" hint-placeholder-count="9">
+        <div style="display: flex; align-items: baseline; gap: 20px; padding: 12px 20px; border-bottom: 1px solid #e9e1d1;">
+          <span style="width: 110px; flex-shrink: 0; font-size: 12px; color: #6b6253; font-family: ui-monospace, Menlo, monospace;">{{t.token}}</span>
+          <span style="width: 70px; flex-shrink: 0; font-size: 12px; color: #6b6253;">{{t.spec}}</span>
+          <span style="font-family: {{t.face}}; font-size: {{t.size}}; font-weight: {{t.weight}}; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{t.sample}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Type: the reading scale</h2>
+    <div dir="rtl" lang="he" style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 28px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 0 #e6decd, 0 2px 6px rgba(40,30,20,0.06);">
+      <span style="font-family: 'Noto Sans Hebrew', sans-serif; font-size: 13px; color: #6b6253;">ליקוטי אמרים · פרק א</span>
+      <p style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-size: 22px; line-height: 1.8; text-align: justify;"><span style="font-size: 30px; font-weight: 700;">כאן</span> בהקלטה או שנדפסו בספר עצמו והמילים שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה בלבד<sup style="color: #8a2c1e; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 12px; font-weight: 600;">1</sup>.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: #4e463a;">
+      <span><b style="color: #1f1a13;">Torah text:</b> FrankRuehlCLM (shown here in Frank Ruhl Libre), 22px with a 1.8 line height, justified.</span>
+      <span><b style="color: #1f1a13;">The reader picks</b> a size from 16 to 30px in five steps, the face (Frank Ruehl, David, Noto Serif) and the line spacing.</span>
+      <span><b style="color: #1f1a13;">Measure:</b> 34em at most; the first word is set at 1.35×.</span>
+      <span><b style="color: #1f1a13;">Faces:</b> Noto Sans Hebrew / Noto Sans for UI, Frank Ruhl Libre for titles, and Newsreader only in the logo.</span>
+    </div>
+  </div>
+</section>
+
+<section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px;">
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Space · 4px base</h2>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{space}}" as="s" hint-placeholder-count="9">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="width: 70px; font-size: 12px; color: #6b6253; font-family: ui-monospace, Menlo, monospace;">{{s.token}}</span>
+          <div style="height: 14px; width: {{s.px}}; background: #8a2c1e; opacity: 0.8; border-radius: 2px;"></div>
+          <span style="font-size: 13px; color: #4e463a;">{{s.px}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Shape &amp; depth</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+      <div style="height: 72px; background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 4px; display: flex; align-items: flex-end; padding: 8px; font-size: 12px; color: #6b6253;">r-sm 4 · chips</div>
+      <div style="height: 72px; background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 6px; display: flex; align-items: flex-end; padding: 8px; font-size: 12px; color: #6b6253;">r 6 · controls</div>
+      <div style="height: 72px; background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; display: flex; align-items: flex-end; padding: 8px; font-size: 12px; color: #6b6253;">r-lg 10 · cards</div>
+      <div style="height: 72px; background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 16px 16px 4px 4px; display: flex; align-items: flex-end; padding: 8px; font-size: 12px; color: #6b6253;">r-sheet 16 · sheets</div>
+      <div style="height: 72px; background: #fffdf8; border-radius: 6px; box-shadow: 0 1px 0 #e6decd, 0 2px 6px rgba(40,30,20,0.06); display: flex; align-items: flex-end; padding: 8px; font-size: 12px; color: #6b6253;">paper · the page</div>
+      <div style="height: 72px; background: #fffdf8; border-radius: 6px; box-shadow: 0 8px 24px rgba(40,30,20,0.08), 0 1px 2px rgba(40,30,20,0.06); display: flex; align-items: flex-end; padding: 8px; font-size: 12px; color: #6b6253;">pop · menus</div>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #4e463a;">Pages separate parts with rules rather than shadows. Only things that float above the page (menus, sheets and dialogs) have a shadow.</p>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Motion, size, screens</h2>
+    <div style="display: flex; flex-direction: column; border-top: 1px solid #dcd2bf; font-size: 14px;">
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span>fast · hover, press</span><span style="color: #6b6253;">120ms</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span>base · open, close</span><span style="color: #6b6253;">200ms</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span>slow · sheets</span><span style="color: #6b6253;">320ms</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span>ease</span><span style="color: #6b6253;">cubic-bezier(.2,0,0,1)</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span>control · mouse / touch</span><span style="color: #6b6253;">36 / 44px</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span><b>phone · the base</b></span><span style="color: #6b6253;">designed at 390px</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span>tablet · a second column</span><span style="color: #6b6253;">min-width 720px</span></div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #dcd2bf;"><span>desktop · up to 1280px wide</span><span style="color: #6b6253;">min-width 1100px</span></div>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #4e463a;">Styles are written for the phone first and grow with min-width steps, never the other way round. When the device asks for reduced motion, everything appears without moving.</p>
+  </div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 16px;">
+  <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Icons · 24px grid, 1.5 stroke, no fills</h2>
+  <div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 8px; color: #1f1a13;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg><span style="font-size: 11px; color: #6b6253;">home</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/></svg><span style="font-size: 11px; color: #6b6253;">book</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span style="font-size: 11px; color: #6b6253;">daily</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="4" y="14" width="4" height="6" rx="1.5"/><rect x="16" y="14" width="4" height="6" rx="1.5"/></svg><span style="font-size: 11px; color: #6b6253;">listen</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span style="font-size: 11px; color: #6b6253;">search</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l5 5-9 9H5v-5z"/><path d="M12 7l5 5"/></svg><span style="font-size: 11px; color: #6b6253;">suggest</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.5 4.5L19 7"/></svg><span style="font-size: 11px; color: #6b6253;">approve</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V4M6 5h11l-2 4 2 4H6"/></svg><span style="font-size: 11px; color: #6b6253;">report</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span style="font-size: 11px; color: #6b6253;">history</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19l5-14h1l5 14M6 14h7"/><path d="M15 19l3-8 3 8M16 16.5h4"/></svg><span style="font-size: 11px; color: #6b6253;">text size</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg><span style="font-size: 11px; color: #6b6253;">more ⋯</span></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; background: #fffdf8; border: 1px solid #e9e1d1; border-radius: 6px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg><span style="font-size: 11px; color: #6b6253;">settings</span></div>
+  </div>
+  <p style="margin: 0; font-size: 14px; color: #4e463a;">Arrows and chevrons flip in right-to-left text, while clocks, play buttons and check marks do not. No unicode arrows and no emoji.</p>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      light: [
+        { name: 'bg', hex: '#f7f3ea' }, { name: 'card', hex: '#fffdf8' }, { name: 'sunken', hex: '#ece5d6' }, { name: 'border', hex: '#dcd2bf' },
+        { name: 'text', hex: '#1f1a13' }, { name: 'muted', hex: '#4e463a' }, { name: 'subtle', hex: '#6b6253' }, { name: 'accent', hex: '#8a2c1e' },
+        { name: 'accent-soft', hex: '#f2e1d9' }, { name: 'open', hex: '#2f6b3f' }, { name: 'approved', hex: '#5b3f8a' }, { name: 'machine', hex: '#b07a1a' }
+      ],
+      dark: [
+        { name: 'bg', hex: '#16130e' }, { name: 'card', hex: '#1f1b15' }, { name: 'sunken', hex: '#2a251d' }, { name: 'border', hex: '#3a3329' },
+        { name: 'text', hex: '#ede5d5' }, { name: 'muted', hex: '#bcb19e' }, { name: 'subtle', hex: '#948a78' }, { name: 'accent', hex: '#e2957f' },
+        { name: 'accent-soft', hex: '#3a221b' }, { name: 'open', hex: '#86c79a' }, { name: 'approved', hex: '#c2a8e8' }, { name: 'machine', hex: '#d6a64c' }
+      ],
+      type: [
+        { token: '--t-hero', spec: '48 / 500', face: "'Frank Ruhl Libre', serif", size: '48px', weight: 500, sample: 'ספריית החסידות' },
+        { token: '--t-display', spec: '36 / 500', face: "'Frank Ruhl Libre', serif", size: '36px', weight: 500, sample: 'ליקוטי שיחות' },
+        { token: '--t-title', spec: '28 / 500', face: "'Frank Ruhl Libre', serif", size: '28px', weight: 500, sample: 'Page title' },
+        { token: '--t-heading', spec: '22 / 600', face: "'Noto Sans', sans-serif", size: '22px', weight: 600, sample: 'Section heading' },
+        { token: '--t-subhead', spec: '18 / 600', face: "'Noto Sans', sans-serif", size: '18px', weight: 600, sample: 'Card title, group name' },
+        { token: '--t-body-lg', spec: '16 / 400', face: "'Noto Sans', sans-serif", size: '16px', weight: 400, sample: 'Lead text and settings rows' },
+        { token: '--t-body', spec: '14 / 400', face: "'Noto Sans', sans-serif", size: '14px', weight: 400, sample: 'The UI default: lists, controls, menus' },
+        { token: '--t-small', spec: '13 / 400', face: "'Noto Sans', sans-serif", size: '13px', weight: 400, sample: 'Descriptions, meta, timestamps' },
+        { token: '--t-caption', spec: '12 / 500', face: "'Noto Sans', sans-serif", size: '12px', weight: 500, sample: 'Pills, labels, counts' }
+      ],
+      space: [
+        { token: '--s-1', px: '4px' }, { token: '--s-2', px: '8px' }, { token: '--s-3', px: '12px' }, { token: '--s-4', px: '16px' },
+        { token: '--s-5', px: '24px' }, { token: '--s-6', px: '32px' }, { token: '--s-7', px: '48px' }, { token: '--s-8', px: '64px' }, { token: '--s-9', px: '96px' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

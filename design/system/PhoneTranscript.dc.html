@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone check a transcript</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <header style="flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding: 6px 6px 10px; border-bottom: 1px solid #dcd2bf; background: #fffdf8;">
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <a href="#" aria-label="סגירה" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; line-height: 1.25;"><b style="font-size: 15px;">בדיקת תמלול</b><span style="font-size: 12px; color: #6b6253;">[שיעור בתניא · הקלטה לדוגמה]</span></span>
+      <button type="button" aria-label="עוד" style="width: 44px; height: 44px; border: 0; background: transparent; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px;">
+      <button type="button" onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; display: flex; align-items: center; justify-content: center;">
+        <sc-if value="{{playing}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+        <sc-if value="{{paused}}" hint-placeholder-val="{{true}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></sc-if>
+      </button>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;">
+        <span style="font-size: 12px; color: #6b6253; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{playStatus}}</span>
+        <span style="display: flex; gap: 2px; margin-top: 4px;"><span style="flex: {{progDone}}; height: 4px; border-radius: 2px; background: #2f6b3f;"></span><span style="flex: {{progLeft}}; height: 4px; border-radius: 2px; background: #dcd2bf;"></span></span>
+      </span>
+      <button type="button" onClick="{{hearAgain}}" style="height: 36px; padding: 0 10px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 500 12px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;">שוב 5 שנ׳</button>
+      <button type="button" onClick="{{cycleSpeed}}" aria-label="מהירות" style="height: 36px; min-width: 52px; padding: 0 8px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 600 12px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;"><span dir="ltr">{{speed}}</span></button>
+    </div>
+  </header>
+
+  <div style="flex-grow: 1; overflow-y: auto; padding: 14px 14px 230px; display: flex; flex-direction: column; gap: 10px;">
+    <span style="font-size: 12px; color: #6b6253;">{{checkedCount}} מתוך {{total}} פסקאות נבדקו</span>
+    <sc-for list="{{paras}}" as="p" hint-placeholder-count="3">
+      <div style="border-radius: 12px; padding: {{p.pad}}; background: {{p.bg}}; border: {{p.border}}; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b6253;">
+          <span dir="ltr" style="font-variant-numeric: tabular-nums;">{{p.time}}</span>
+          <span style="flex-grow: 1;"></span>
+          <span style="display: flex; align-items: center; gap: 6px; color: {{p.statusColor}}; font-weight: 600;"><span style="width: 7px; height: 7px; border-radius: 999px; background: {{p.statusColor}};"></span>{{p.statusLabel}}</span>
+        </div>
+        <sc-if value="{{p.isCur}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-wrap: wrap; gap: 2px 4px; font-family: 'Frank Ruhl Libre', serif; font-size: 25px; line-height: 1.55;">
+            <sc-for list="{{p.words}}" as="w" hint-placeholder-count="8">
+              <button type="button" onClick="{{w.pick}}" style="border: 0; margin: 0; padding: 0 3px; border-radius: 4px; font: inherit; color: {{w.color}}; background: {{w.bg}}; box-shadow: {{w.shadow}};">{{w.text}}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{p.notCur}}" hint-placeholder-val="{{true}}">
+          <button type="button" onClick="{{p.goTo}}" style="border: 0; background: transparent; padding: 0; text-align: right; font: 18px/1.6 'Frank Ruhl Libre', serif; color: {{p.textColor}};">{{p.plain}}</button>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #fffdf8; border-top: 1px solid #dcd2bf; box-shadow: 0 -8px 24px rgba(40,30,20,0.08); padding: 12px 14px 20px; display: flex; flex-direction: column; gap: 10px;">
+
+    <sc-if value="{{modeAnswer}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; color: #6b6253; min-height: 18px;">{{hint}}</span>
+        <sc-if value="{{noSel}}" hint-placeholder-val="{{true}}">
+          <div style="display: grid; grid-template-columns: 2fr 1.3fr 1fr; gap: 8px;">
+            <button type="button" onClick="{{right}}" style="height: 56px; border-radius: 12px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 16px 'Noto Sans Hebrew', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12l4.5 4.5L19 7"/></svg>נכון</button>
+            <button type="button" onClick="{{openFix}}" style="height: 56px; border-radius: 12px; border: 1.5px solid #8a2c1e; background: #fffdf8; color: #8a2c1e; font: 600 15px 'Noto Sans Hebrew', sans-serif;">תיקון</button>
+            <button type="button" onClick="{{notSure}}" style="height: 56px; border-radius: 12px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 14px 'Noto Sans Hebrew', sans-serif;">לא בטוח</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+          <div style="display: grid; grid-template-columns: 2fr 1.3fr 1fr; gap: 8px;">
+            <button type="button" onClick="{{openFix}}" style="height: 56px; border-radius: 12px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 15px 'Noto Sans Hebrew', sans-serif;">{{fixSelLabel}}</button>
+            <button type="button" onClick="{{notSure}}" style="height: 56px; border-radius: 12px; border: 1.5px solid #b07a1a; background: #fffdf8; color: #6b4a0d; font: 600 14px 'Noto Sans Hebrew', sans-serif;">לא בטוח</button>
+            <button type="button" onClick="{{clearSel}}" style="height: 56px; border-radius: 12px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 14px 'Noto Sans Hebrew', sans-serif;">ביטול</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{modeFix}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;"><b style="font-size: 15px;">{{fixTitle}}</b><span style="font-size: 12px; color: #6b6253;">ההקלטה נעצרה</span></div>
+        <label for="tx-draft" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">המילים הנכונות</label>
+        <textarea id="tx-draft" rows="3" value="{{draft}}" onChange="{{onDraft}}" style="width: 100%; box-sizing: border-box; border: 1px solid #8a2c1e; outline: 2px solid #f2e1d9; border-radius: 8px; padding: 10px 12px; font: 20px/1.6 'Frank Ruhl Libre', serif; color: #1f1a13; background: #fffdf8; resize: none;"></textarea>
+        <sc-if value="{{fixWhole}}" hint-placeholder-val="{{false}}">
+          <button type="button" role="checkbox" aria-checked="{{wholeChecked}}" onClick="{{toggleWhole}}" style="display: flex; align-items: center; gap: 10px; height: 40px; border: 0; background: transparent; padding: 0; font: 14px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; text-align: right;">
+            <span style="width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid {{checkLine}}; background: {{checkBg}}; color: #fffdf8; display: flex; align-items: center; justify-content: center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12l4.5 4.5L19 7"/></svg></span>
+            שמעתי ובדקתי את כל הפסקה
+          </button>
+        </sc-if>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" onClick="{{applyFix}}" style="flex-grow: 1; height: 52px; border-radius: 12px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 15px 'Noto Sans Hebrew', sans-serif;">הוספה לתיקונים</button>
+          <button type="button" onClick="{{cancelFix}}" style="height: 52px; padding: 0 18px; border-radius: 12px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 15px 'Noto Sans Hebrew', sans-serif;">ביטול</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{modeDone}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <b style="font-size: 16px;">כל הפסקאות נבדקו. תודה!</b>
+        <span style="font-size: 14px; color: #4e463a;">שאלה אחרונה: האם הסימון עקב אחרי הדיבור?</span>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" onClick="{{syncYes}}" style="flex-grow: 1; height: 48px; border-radius: 12px; border: 1.5px solid #2f6b3f; background: #fffdf8; color: #2f6b3f; font: 600 15px 'Noto Sans Hebrew', sans-serif;">כן, עקב</button>
+          <button type="button" onClick="{{syncNo}}" style="flex-grow: 1; height: 48px; border-radius: 12px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 15px 'Noto Sans Hebrew', sans-serif;">לא בדיוק</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showTrayChip}}" hint-placeholder-val="{{false}}">
+      <button type="button" onClick="{{openTray}}" style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 16px; border-radius: 999px; border: 0; background: #1f1a13; color: #f7f3ea; font: 14px 'Noto Sans Hebrew', sans-serif;"><span>התיקונים שלך · <b>{{trayCount}}</b></span><span style="color: #e2957f; font-weight: 600;">שליחה</span></button>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{modeTray}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(31,26,19,0.4); display: flex; flex-direction: column; justify-content: flex-end;">
+      <div role="dialog" aria-label="התיקונים שלך" style="background: #fffdf8; border-radius: 16px 16px 0 0; padding: 10px 16px 20px; display: flex; flex-direction: column; gap: 12px; max-height: 80%; box-sizing: border-box;">
+        <span style="align-self: center; width: 36px; height: 4px; border-radius: 2px; background: #c8bba3;"></span>
+        <div style="display: flex; align-items: center; justify-content: space-between;"><b style="font-size: 17px;">התיקונים שלך · {{trayCount}}</b><button type="button" onClick="{{closeTray}}" aria-label="סגירה" style="width: 40px; height: 40px; border: 0; background: transparent; color: #1f1a13;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div style="display: flex; flex-direction: column; overflow-y: auto; border: 1px solid #e9e1d1; border-radius: 10px;">
+          <sc-for list="{{tray}}" as="t" hint-placeholder-count="2">
+            <div style="display: flex; gap: 10px; padding: 12px; border-top: {{t.line}}; align-items: flex-start;">
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 12px; color: #6b6253;">{{t.where}} · {{t.kindLabel}}</span>
+                <sc-if value="{{t.isFix}}" hint-placeholder-val="{{true}}"><span style="font-family: 'Frank Ruhl Libre', serif; font-size: 18px;"><s style="color: #9a3322; background: #f4ddd6; text-decoration-thickness: 1px;">{{t.before}}</s> <span style="color: #23532d; background: #dfecd8;">{{t.after}}</span></span></sc-if>
+                <sc-if value="{{t.notFix}}" hint-placeholder-val="{{false}}"><span style="font-family: 'Frank Ruhl Libre', serif; font-size: 16px; color: #4e463a;">{{t.text}}</span></sc-if>
+              </span>
+              <button type="button" onClick="{{t.remove}}" aria-label="הסרה" style="width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 6px; background: transparent; color: #6b6253;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 13px; color: #4e463a;">הכל יישלח כהצעה אחת. האחראים יאשרו, וכל גרסה נשמרת בהיסטוריה.</span>
+        <button type="button" onClick="{{send}}" style="height: 52px; border-radius: 12px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 16px 'Noto Sans Hebrew', sans-serif;">שליחה לבדיקה</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: absolute; left: 14px; right: 14px; top: 132px; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px 0 14px; border-radius: 10px; background: #1f1a13; color: #f7f3ea; font-size: 14px; box-shadow: 0 8px 24px rgba(40,30,20,0.2);">
+      <span style="flex-grow: 1;">{{toast}}</span>
+      <sc-if value="{{canUndo}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{undo}}" style="height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: #e2957f; font: 600 13px 'Noto Sans Hebrew', sans-serif;">ביטול</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.fresh();
+  }
+
+  fresh() {
+    return {
+      paras: [
+        { time: '0:04', words: 'כאן יופיעו מילות הפסקה כפי שנאמרו בהקלטה או שנדפסו בספר עצמו והמילים'.split(' '), status: 'machine', unclear: [] },
+        { time: '0:11', words: 'המשפט הזה ועוד מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט'.split(' '), status: 'machine', unclear: [] },
+        { time: '0:19', words: 'מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט האמיתי'.split(' '), status: 'machine', unclear: [] }
+      ],
+      cur: 0, sel: null, mode: 'answer', draft: '', wholeChecked: true,
+      tray: [], playAt: 0, playing: false, speed: '1×', toast: '', undoState: null
+    };
+  }
+
+  say(text, undoState) {
+    this.setState({ toast: text, undoState: undoState || null });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: '', undoState: null }), 3500);
+  }
+
+  copyParas() {
+    return this.state.paras.map((p) => ({ time: p.time, words: p.words.slice(), status: p.status, unclear: p.unclear.slice() }));
+  }
+
+  snapshot() {
+    return { paras: this.copyParas(), cur: this.state.cur, tray: this.state.tray.slice(), mode: this.state.mode };
+  }
+
+  nextOpen(paras, from) {
+    for (let k = 1; k <= paras.length; k++) {
+      const i = (from + k) % paras.length;
+      if (paras[i].status !== 'checked') return i;
+    }
+    return -1;
+  }
+
+  where(i) { return 'פסקה ' + (i + 1); }
+
+  pick(i) {
+    if (this.state.mode !== 'answer') return;
+    const sel = this.state.sel;
+    let next;
+    if (!sel) next = { a: i, b: i };
+    else if (sel.a === sel.b && i !== sel.a) next = { a: Math.min(i, sel.a), b: Math.max(i, sel.a) };
+    else if (sel.a === sel.b && i === sel.a) next = null;
+    else next = { a: i, b: i };
+    this.setState({ sel: next, playAt: i });
+  }
+
+  right() {
+    const snap = this.snapshot();
+    const paras = this.copyParas();
+    const cur = this.state.cur;
+    paras[cur].status = 'checked';
+    const tray = this.state.tray.concat([{ kind: 'check', where: this.where(cur), text: paras[cur].words.join(' ') }]);
+    const n = this.nextOpen(paras, cur);
+    this.setState({ paras: paras, tray: tray, sel: null, cur: n === -1 ? cur : n, mode: n === -1 ? 'done' : 'answer', playAt: 0 });
+    this.say(this.where(cur) + ' נבדקה', snap);
+  }
+
+  openFix() {
+    const p = this.state.paras[this.state.cur];
+    const sel = this.state.sel;
+    const draft = sel ? p.words.slice(sel.a, sel.b + 1).join(' ') : p.words.join(' ');
+    this.setState({ mode: 'fix', draft: draft, wholeChecked: true, playing: false });
+  }
+
+  applyFix() {
+    const snap = this.snapshot();
+    const paras = this.copyParas();
+    const cur = this.state.cur;
+    const p = paras[cur];
+    const sel = this.state.sel;
+    const after = (this.state.draft || '').trim().split(/\s+/).filter(Boolean);
+    const before = sel ? p.words.slice(sel.a, sel.b + 1) : p.words.slice();
+    if (sel) {
+      p.words.splice(sel.a, sel.b - sel.a + 1, ...after);
+      p.unclear = [];
+      if (p.status === 'machine') p.status = 'partly';
+    } else {
+      p.words = after;
+      p.unclear = [];
+      p.status = this.state.wholeChecked ? 'checked' : 'partly';
+    }
+    const tray = this.state.tray.concat([{ kind: 'fix', where: this.where(cur), before: before.join(' '), after: after.join(' ') }]);
+    let nextCur = cur, mode = 'answer';
+    if (p.status === 'checked') {
+      const n = this.nextOpen(paras, cur);
+      if (n === -1) mode = 'done'; else nextCur = n;
+    }
+    this.setState({ paras: paras, tray: tray, sel: null, mode: mode, cur: nextCur, draft: '' });
+    this.say(p.status === 'checked' ? 'נוסף לתיקונים, והפסקה נבדקה' : 'נוסף לתיקונים. כשכל הפסקה נכונה, לוחצים „נכון”', snap);
+  }
+
+  notSure() {
+    const sel = this.state.sel;
+    if (!sel) { this.say('בחרו קודם את המילים שלא ברורות'); return; }
+    const snap = this.snapshot();
+    const paras = this.copyParas();
+    const cur = this.state.cur;
+    const p = paras[cur];
+    for (let i = sel.a; i <= sel.b; i++) if (p.unclear.indexOf(i) === -1) p.unclear.push(i);
+    const text = '[' + p.words.slice(sel.a, sel.b + 1).join(' ') + '?]';
+    const tray = this.state.tray.concat([{ kind: 'unclear', where: this.where(cur), text: text }]);
+    this.setState({ paras: paras, tray: tray, sel: null });
+    this.say('סומן כלא ברור. אפשר לשאול עליו בדף השיחה', snap);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const total = s.paras.length;
+    const checked = s.paras.filter((p) => p.status === 'checked').length;
+    const statusOf = {
+      machine: { label: 'מכונה, טרם נבדק', color: '#b07a1a' },
+      partly: { label: 'תוקן בחלקו', color: '#8f6312' },
+      checked: { label: 'נבדק', color: '#2f6b3f' }
+    };
+    const paras = s.paras.map((p, i) => {
+      const isCur = i === s.cur && s.mode !== 'done';
+      const words = p.words.map((w, j) => {
+        const selected = s.sel && j >= s.sel.a && j <= s.sel.b;
+        const unclear = p.unclear.indexOf(j) !== -1;
+        const playingHere = s.playAt === j && !selected;
+        return {
+          text: unclear ? '[' + w + '?]' : w,
+          bg: selected ? '#f2e1d9' : unclear ? '#f6ecd2' : 'transparent',
+          shadow: selected ? 'inset 0 -2px 0 #8a2c1e' : unclear ? 'inset 0 -2px 0 #b07a1a' : playingHere ? 'inset 0 -2px 0 #c8bba3' : 'none',
+          color: '#1f1a13',
+          pick: () => this.pick(j)
+        };
+      });
+      const plain = p.words.map((w, j) => (p.unclear.indexOf(j) !== -1 ? '[' + w + '?]' : w)).join(' ');
+      return {
+        time: p.time, isCur: isCur, notCur: !isCur, words: words, plain: plain,
+        statusLabel: statusOf[p.status].label, statusColor: statusOf[p.status].color,
+        textColor: p.status === 'checked' ? '#4e463a' : '#1f1a13',
+        bg: isCur ? '#fffdf8' : 'transparent',
+        border: isCur ? '2px solid #8a2c1e' : '1px solid #e9e1d1',
+        pad: isCur ? '14px' : '10px 12px',
+        goTo: () => this.setState({ cur: i, sel: null, mode: 'answer', playAt: 0 })
+      };
+    });
+    const cur = s.paras[s.cur];
+    const sel = s.sel;
+    const selCount = sel ? sel.b - sel.a + 1 : 0;
+    const playWord = cur ? cur.words[s.playAt] || cur.words[0] : '';
+    const trayLabels = { fix: 'תיקון', check: 'נכון', unclear: 'לא ברור' };
+    return {
+      total: total, checkedCount: checked,
+      progDone: String(checked || 0.001), progLeft: String(total - checked || 0.001),
+      paras: paras,
+      playing: s.playing, paused: !s.playing,
+      playLabel: s.playing ? 'עצירה' : 'ניגון',
+      playStatus: s.mode === 'fix' ? 'ההקלטה נעצרה בזמן התיקון' : (s.playing ? 'מנגן מ„' + playWord + '”' : 'לחיצה על מילה מנגנת ממנה'),
+      togglePlay: () => this.setState({ playing: !s.playing }),
+      hearAgain: () => { this.setState({ playing: true }); this.say('מנגן שוב, חמש שניות אחורה'); },
+      cycleSpeed: () => { const order = ['1×', '0.75×', '1.25×', '1.5×']; this.setState({ speed: order[(order.indexOf(s.speed) + 1) % order.length] }); },
+      speed: s.speed,
+      modeAnswer: s.mode === 'answer', modeFix: s.mode === 'fix', modeDone: s.mode === 'done', modeTray: s.mode === 'tray',
+      hasSel: !!sel, noSel: !sel,
+      hint: sel ? (selCount === 1 ? 'נבחרה מילה אחת. לחיצה על מילה נוספת בוחרת עד אליה.' : 'נבחרו ' + selCount + ' מילים.') : 'הקשיבו לפסקה. כל המילים נכונות? „נכון”. מילה שגויה? לחצו עליה.',
+      fixSelLabel: selCount === 1 ? 'תיקון המילה' : 'תיקון ' + selCount + ' המילים',
+      right: () => this.right(),
+      openFix: () => this.openFix(),
+      notSure: () => this.notSure(),
+      clearSel: () => this.setState({ sel: null }),
+      fixTitle: sel ? 'מה נאמר כאן?' : 'הפסקה כפי שנאמרה',
+      fixWhole: !sel,
+      draft: s.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      wholeChecked: s.wholeChecked,
+      checkBg: s.wholeChecked ? '#8a2c1e' : '#fffdf8',
+      checkLine: s.wholeChecked ? '#8a2c1e' : '#c8bba3',
+      toggleWhole: () => this.setState({ wholeChecked: !s.wholeChecked }),
+      applyFix: () => this.applyFix(),
+      cancelFix: () => this.setState({ mode: 'answer', draft: '' }),
+      syncYes: () => this.say('תודה. הסנכרון של כל ההקלטה סומן כנכון'),
+      syncNo: () => this.say('תודה. ההקלטה נשלחת לסנכרון מחדש'),
+      showTrayChip: s.tray.length > 0 && s.mode !== 'fix',
+      trayCount: s.tray.length,
+      openTray: () => this.setState({ mode: 'tray', prevMode: s.mode }),
+      closeTray: () => this.setState({ mode: s.prevMode && s.prevMode !== 'tray' ? s.prevMode : 'answer' }),
+      tray: s.tray.map((t, i) => ({
+        where: t.where, kindLabel: trayLabels[t.kind], isFix: t.kind === 'fix', notFix: t.kind !== 'fix',
+        before: t.before, after: t.after, text: t.text,
+        line: i === 0 ? '0' : '1px solid #e9e1d1',
+        remove: () => { const tray = s.tray.slice(); tray.splice(i, 1); this.setState({ tray: tray }); }
+      })),
+      send: () => { this.setState({ tray: [], mode: s.prevMode && s.prevMode !== 'tray' ? s.prevMode : 'answer' }); this.say('נשלח לבדיקה, כהצעה אחת'); },
+      toastOn: !!s.toast, toast: s.toast, canUndo: !!s.undoState,
+      undo: () => { const u = s.undoState; if (u) this.setState({ paras: u.paras, cur: u.cur, tray: u.tray, mode: u.mode, sel: null, toast: '', undoState: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone farbrengens calendar</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden;">
+  <header style="flex-shrink: 0; padding: 14px 16px 10px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button type="button" aria-label="החודש הקודם" style="width: 40px; height: 40px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></button>
+      <h1 style="flex-grow: 1; margin: 0; text-align: center; font-family: 'Frank Ruhl Libre', serif; font-size: 26px; font-weight: 500;">תשרי</h1>
+      <button type="button" aria-label="החודש הבא" style="width: 40px; height: 40px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg></button>
+    </div>
+    <div role="radiogroup" aria-label="איזו שנה" style="display: grid; grid-template-columns: 1.4fr 1fr; padding: 3px; gap: 2px; background: #ece5d6; border-radius: 10px;">
+      <button type="button" role="radio" aria-checked="{{kvOn}}" onClick="{{pickKv}}" style="height: 40px; border: 0; border-radius: 8px; font: 600 13px 'Noto Sans Hebrew', sans-serif; background: {{kvBg}}; color: #1f1a13; box-shadow: {{kvShadow}};">באותה קביעות: תשל״ו</button>
+      <button type="button" role="radio" aria-checked="{{allOn}}" onClick="{{pickAll}}" style="height: 40px; border: 0; border-radius: 8px; font: 600 13px 'Noto Sans Hebrew', sans-serif; background: {{allBg}}; color: #1f1a13; box-shadow: {{allShadow}};">כל השנים</button>
+    </div>
+  </header>
+
+  <div style="flex-shrink: 0; padding: 0 12px;">
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; font-size: 11px; color: #6b6253; text-align: center; padding-bottom: 6px;">
+      <span>א׳</span><span>ב׳</span><span>ג׳</span><span>ד׳</span><span>ה׳</span><span>ו׳</span><span style="color: #8a2c1e; font-weight: 600;">שבת</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px;">
+      <sc-for list="{{cells}}" as="c" hint-placeholder-count="36">
+        <button type="button" onClick="{{c.pick}}" aria-label="{{c.aria}}" aria-pressed="{{c.selected}}" style="height: 46px; border-radius: 10px; border: {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; visibility: {{c.vis}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; font: 500 15px 'Frank Ruhl Libre', serif;">{{c.label}}<span style="width: 5px; height: 5px; border-radius: 999px; background: {{c.dot}};"></span></button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; overflow-y: auto; padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; align-items: baseline; gap: 8px;"><h2 style="margin: 0; flex-grow: 1; font-family: 'Frank Ruhl Libre', serif; font-size: 22px; font-weight: 500;">{{dayTitle}}</h2><span style="font-size: 12px; color: #6b6253;">{{dayNote}}</span></div>
+    <sc-for list="{{events}}" as="e" hint-placeholder-count="2">
+      <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 14px;">
+        <span style="flex-grow: 1; display: flex; flex-direction: column;"><b style="font-size: 15px;">{{e.name}}</b><span style="font-size: 12px; color: #6b6253;">{{e.year}}</span></span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.5" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg>
+      </a>
+    </sc-for>
+    <sc-if value="{{noEvents}}" hint-placeholder-val="{{false}}"><span style="padding: 18px; text-align: center; color: #6b6253; border: 1px dashed #dcd2bf; border-radius: 14px;">אין התוועדות ביום הזה בתשל״ו. „כל השנים” מראה שנים אחרות.</span></sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { day: 29, mode: 'kv' }; }
+  renderVals() {
+    const s = this.state;
+    const heb = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'יא', 'יב', 'יג', 'יד', 'טו', 'טז', 'יז', 'יח', 'יט', 'כ', 'כא', 'כב', 'כג', 'כד', 'כה', 'כו', 'כז', 'כח', 'כט', 'ל'];
+    const kv = {
+      2: ['יום ב׳ דראש השנה'], 6: ['ו׳ תשרי'], 8: ['האזינו, שבת שובה'], 9: ['ערב יום כיפור, אחרי מנחה', 'ערב יום כיפור, ברכת הבנים'],
+      13: ['מוצאי י״ג תשרי'], 14: ['ערב סוכות, בעת מסירת האתרוגים'], 22: ['ליל שמחת תורה, לפני הקפות'], 23: ['יום שמחת תורה'],
+      29: ['בראשית, מברכים חשון וערב ראש חודש'], 30: ['מוצאי ראש חודש חשון']
+    };
+    const other = { 13: [['ליל י״ג תשרי', 'תשמ״ח · עם הקלטה ותמלול'], ['ליל י״ג תשרי', 'תשמ״ז · עם הקלטה ותמלול']], 23: [['יום שמחת תורה', 'תשל״ה'], ['יום שמחת תורה', 'תש״מ']], 25: [['כ״ה תשרי, יחידות כללית', 'תשמ״ז · עם הקלטה ותמלול']] };
+    const cells = [];
+    for (let i = 0; i < 6; i++) cells.push({ label: '', vis: 'hidden', pick: () => {}, aria: '', selected: false, border: '0', bg: 'transparent', fg: '#1f1a13', dot: 'transparent' });
+    for (let d = 1; d <= 30; d++) {
+      const has = s.mode === 'kv' ? !!kv[d] : !!(kv[d] || other[d]);
+      const sel = d === s.day;
+      const today = d === 26;
+      cells.push({
+        label: heb[d], vis: 'visible', aria: heb[d] + ' תשרי' + (has ? ', יש התוועדות' : ''), selected: sel,
+        border: today ? '2px solid #8a2c1e' : '1px solid ' + (sel ? '#1f1a13' : '#e9e1d1'),
+        bg: sel ? '#1f1a13' : '#fffdf8', fg: sel ? '#f7f3ea' : '#1f1a13',
+        dot: has ? (sel ? '#e2957f' : '#8a2c1e') : 'transparent',
+        pick: () => this.setState({ day: d })
+      });
+    }
+    const evs = [];
+    (kv[s.day] || []).forEach((n) => evs.push({ name: n, year: 'תשל״ו · באותה קביעות' }));
+    if (s.mode === 'all') (other[s.day] || []).forEach((x) => evs.push({ name: x[0], year: x[1] }));
+    const seg = (on) => ({ bg: on ? '#fffdf8' : 'transparent', sh: on ? '0 1px 2px rgba(40,30,20,0.14)' : 'none' });
+    const a = seg(s.mode === 'kv'), b = seg(s.mode === 'all');
+    return {
+      cells: cells, events: evs, noEvents: evs.length === 0,
+      dayTitle: heb[s.day] + ' תשרי',
+      dayNote: s.day === 26 ? 'היום' : s.day === 29 ? 'השבת' : '',
+      kvOn: s.mode === 'kv', allOn: s.mode === 'all',
+      kvBg: a.bg, kvShadow: a.sh, allBg: b.bg, allShadow: b.sh,
+      pickKv: () => this.setState({ mode: 'kv' }), pickAll: () => this.setState({ mode: 'all' })
+    };
+  }
+}
+</script>
+</body>
+</html>

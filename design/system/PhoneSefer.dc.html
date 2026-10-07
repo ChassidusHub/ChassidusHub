@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone sefer</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden;">
+
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 0 6px;">
+    <a href="PhoneShelf.dc.html" aria-label="חזרה למדף" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></a>
+    <span style="flex-grow: 1; font-size: 13px; color: #6b6253;">כ״ק אדמו״ר</span>
+    <button type="button" aria-label="עוד" style="width: 44px; height: 44px; border: 0; background: transparent; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+  </header>
+
+  <div style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: 4px 16px 20px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span style="width: 58px; height: 78px; flex-shrink: 0; background: #fbf7ee; border: 1px solid #dcd2bf; border-radius: 2px 5px 5px 2px; box-shadow: 0 2px 6px rgba(40,30,20,0.12); padding: 5px; box-sizing: border-box; display: flex;"><span style="flex-grow: 1; border: 1px solid #8a2c1e; display: flex; align-items: center; justify-content: center; text-align: center; font: 700 11px/1.2 'Frank Ruhl Libre', serif; color: #8a2c1e;">לקוטי<br>שיחות</span></span>
+      <span style="display: flex; flex-direction: column; gap: 2px;"><h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 28px; line-height: 1.15;">לקוטי שיחות</h1><span style="font-size: 13px; color: #6b6253;">39 חלקים</span></span>
+    </div>
+
+    <section style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;"><h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #6b6253;">חלקים</h2><button type="button" onClick="{{toggleAll}}" style="height: 32px; padding: 0 6px; border: 0; background: transparent; color: #8a2c1e; font: 500 13px 'Noto Sans Hebrew', sans-serif;">{{allLabel}}</button></div>
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px;">
+        <sc-for list="{{vols}}" as="v" hint-placeholder-count="16">
+          <button type="button" onClick="{{v.pick}}" aria-pressed="{{v.on}}" style="height: 40px; border-radius: 8px; border: {{v.border}}; background: {{v.bg}}; color: {{v.color}}; font: 600 15px 'Frank Ruhl Libre', serif;">{{v.label}}</button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <h2 style="margin: 0; flex-grow: 1; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 22px;">חלק {{volName}}</h2>
+        <button type="button" style="height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 500 12px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M7 12h10M10 17h4"/></svg>לפי פרשה</button>
+        <a href="PhonePDF.dc.html" style="height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h9l4 4v14H6z"/></svg>הסריקה</a>
+      </div>
+      <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; display: flex; flex-direction: column;">
+        <a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-bottom: 1px solid #e9e1d1;"><b style="font-family: 'Frank Ruhl Libre', serif; font-size: 18px; font-weight: 500;">בראשית</b><span style="display: flex; gap: 10px; font-size: 12px; color: #6b6253; align-items: center;"><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg>טקסט</span><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h9l4 4v14H6z"/></svg>סריקה</span><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 15v-3a8 8 0 0116 0v3"/></svg>הקלטה</span></span></a>
+        <a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-bottom: 1px solid #e9e1d1;"><b style="font-family: 'Frank Ruhl Libre', serif; font-size: 18px; font-weight: 500;">נח</b><span style="display: flex; gap: 10px; font-size: 12px; color: #6b6253; align-items: center;"><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg>טקסט</span><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h9l4 4v14H6z"/></svg>סריקה</span></span></a>
+        <a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-bottom: 1px solid #e9e1d1;"><b style="font-family: 'Frank Ruhl Libre', serif; font-size: 18px; font-weight: 500; display: flex; align-items: center; gap: 8px;">לך לך<span aria-label="טקסט מכונה" style="width: 7px; height: 7px; border-radius: 999px; background: #b07a1a;"></span></b><span style="display: flex; gap: 10px; font-size: 12px; color: #6b6253; align-items: center;"><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg>טקסט מכונה</span><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h9l4 4v14H6z"/></svg>סריקה</span></span></a>
+        <a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 12px 14px;"><b style="font-family: 'Frank Ruhl Libre', serif; font-size: 18px; font-weight: 500;">וירא</b><span style="display: flex; gap: 10px; font-size: 12px; color: #6b6253; align-items: center;"><span style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h9l4 4v14H6z"/></svg>סריקה</span></span></a>
+      </div>
+    </section>
+
+    <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px dashed #c8bba3; border-radius: 12px;"><span style="flex-grow: 1; display: flex; flex-direction: column;"><span style="font-weight: 500;">מפתחות ואוספים על הספר</span><span style="font-size: 12px; color: #6b6253;">מפתח ענינים, מפתח כללי, אוצר לקוטי שיחות ועוד</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.5" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg></a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { vol: 0, all: false }; }
+  renderVals() {
+    const names = 'א ב ג ד ה ו ז ח ט י יא יב יג יד טו טז יז יח יט כ כא כב כג כד כה כו כז כח כט ל לא לב לג לד לה לו לז לח לט'.split(' ');
+    const shown = this.state.all ? names : names.slice(0, 16);
+    return {
+      vols: shown.map((n, i) => {
+        const on = i === this.state.vol;
+        return { label: n, on: on, pick: () => this.setState({ vol: i }), bg: on ? '#8a2c1e' : '#fffdf8', color: on ? '#fffdf8' : '#1f1a13', border: on ? '1px solid #8a2c1e' : '1px solid #dcd2bf' };
+      }),
+      volName: names[this.state.vol],
+      allLabel: this.state.all ? 'פחות' : 'כל 39',
+      toggleAll: () => this.setState({ all: !this.state.all })
+    };
+  }
+}
+</script>
+</body>
+</html>

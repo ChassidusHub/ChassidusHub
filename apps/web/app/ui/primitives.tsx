@@ -1,4 +1,4 @@
-import { Children, Fragment, isValidElement, useId, type CSSProperties, type ReactNode } from 'react';
+import { Children, Fragment, isValidElement, useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { Lang } from '../lib/i18n.js';
 import { tu } from '../lib/i18nUi.js';
@@ -402,3 +402,85 @@ export function Bar({ value, max = 100, tone, label }: { value: number; max?: nu
 }
 
 export { cx };
+
+/* ------------------------------------------------------------ the design system's new parts (design/system, board 2) */
+
+/**
+ * On or off, taking effect at once (no Save): a setting, "pause on tap".
+ * A real button with role="switch", so a keyboard and a screen reader
+ * know what it is; the label is said, and drawn beside it when `show`.
+ */
+export function Switch({ checked, onChange, label, show, disabled, className }: { checked: boolean; onChange: (next: boolean) => void; label: string; show?: boolean; disabled?: boolean; className?: string }) {
+  const button = (
+    <button type="button" role="switch" aria-checked={checked} aria-label={show ? undefined : label} disabled={disabled} className={cx('switch', className)} onClick={() => onChange(!checked)}>
+      <span className="switch-knob" aria-hidden="true" />
+    </button>
+  );
+  if (!show) return button;
+  return (
+    <label className="switch-row">
+      <span className="grow">{label}</span>
+      {button}
+    </label>
+  );
+}
+
+/**
+ * A small rounded choice or shortcut: a topic under the search box, a day
+ * of the calendar's strip, "Fix" beside a tapped word. Pressed when
+ * chosen; a link when it leads somewhere.
+ */
+export function Chip({ children, pressed, onClick, to, tone, className, label }: { children: ReactNode; pressed?: boolean; onClick?: () => void; to?: string; tone?: 'ink' | 'accent'; className?: string; label?: string }) {
+  const classes = cx('chip', tone && `chip-${tone}`, className);
+  if (to) {
+    return (
+      <Link className={classes} to={to} aria-label={label} aria-current={pressed ? 'true' : undefined}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" className={classes} aria-label={label} aria-pressed={pressed === undefined ? undefined : pressed} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
+/**
+ * A sheet: from the bottom on a phone, under the thumb, and a centred
+ * panel on a wider screen. Escape and the backdrop close it, the page
+ * under it stays still, and focus comes back to where it was.
+ */
+export function Sheet({ open, onClose, title, children, footer, label }: { open: boolean; onClose: () => void; title?: ReactNode; children: ReactNode; footer?: ReactNode; label?: string }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useEffect(() => {
+    if (!open) return;
+    const before = document.activeElement as HTMLElement | null;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panel.current?.focus();
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = overflow;
+      before?.focus?.();
+    };
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <div className="ds-sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="ds-sheet-panel" role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : label} ref={panel} tabIndex={-1}>
+        <span className="ds-sheet-grip" aria-hidden="true" />
+        {title ? (
+          <h2 id={titleId} className="ds-sheet-title">
+            {title}
+          </h2>
+        ) : null}
+        <div className="ds-sheet-body">{children}</div>
+        {footer ? <div className="ds-sheet-foot">{footer}</div> : null}
+      </div>
+    </div>
+  );
+}
