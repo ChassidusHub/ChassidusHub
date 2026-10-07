@@ -79,7 +79,8 @@ describe('words cut in two between paragraphs', () => {
     // Heard before the fix: pieces cut mid-word, with pauses between, so each is a paragraph of its own.
     const heard = ['יראה פון דעם י', "וד, און ס'איז ניט סתם א יראה.", 'גרייטן זיך ביז ער', 'וואקסענע און דער יו"ד, און נאך א יו"ד, ערוואקסענע און ערוואקסענע.'];
     const transcriber: Transcriber = { name: 'fake', version: '1', transcribe: async () => heard.map((text, i) => ({ startMs: i * 10_000, endMs: i * 10_000 + 5000, text })) };
-    await transcribeRecordings(catalog, { approveAs: 'steward', transcriber, fetchAudio: async () => new Uint8Array([1]) });
+    // Lines as transcripts were cut before, a piece each.
+    await transcribeRecordings(catalog, { approveAs: 'steward', transcriber, fetchAudio: async () => new Uint8Array([1]), lines: (pieces) => pieces });
     let view = (await recordingTranscript(catalog, recording))!;
     // A person checked the third paragraph as it is: the cut after it stays for them to fix.
     await catalog.merge((await fixParagraph(catalog, 'chaim', { segment: view.paragraphs[2]!.id, content: 'גרייטן זיך ביז ער' })).id, 'keeper');

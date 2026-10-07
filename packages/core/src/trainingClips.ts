@@ -1,4 +1,4 @@
-import { hasUnclear, type EntityId } from '@chassidushub/model';
+import { hasUnclear, toHouseSpelling, type EntityId } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 
 /**
@@ -10,9 +10,19 @@ import type { Catalog } from './catalog.js';
  * clips.jsonl: audio, start, end, text, split), ready for the next paid
  * run whenever there is budget for one.
  *
- * Only words a person checked are used. A clip is `gold` when a person
- * also checked where it is heard, `silver` when the timing is the
- * machine's alignment of the checked words. Whisper hears at most 30
+ * Only words a person looked at are used: a paragraph checked as heard, a
+ * paragraph a person fixed some words of (`edited`), and the fixes still
+ * waiting for review (`pending`, the newest version a person suggested).
+ * `review` says which, so a training run can weigh them. A clip is `gold`
+ * when a person also checked where it is heard, `silver` when the timing
+ * is the machine's alignment of the checked words.
+ *
+ * Only the Rebbe's own voice is ever learned (the steward, 2026-10-07:
+ * "never include audio that's not from the Rebbe"): the recording must be
+ * of a farbrengen, a sicha or a maamar, and not one of its parts that is
+ * someone else (a niggun, the children's pesukim, guests, a bracha said to
+ * the Rebbe, davening), and a paragraph heard in Latin letters is a
+ * translator or a speaker before him, not the Rebbe. Whisper hears at most 30
  * seconds at a time, so a longer paragraph is cut at its word timings;
  * without them it waits for the next align run. Each recording is kept
  * wholly in `train` or wholly in `test`, by a hash of its id that never
@@ -50,6 +60,34 @@ export const HELD_OUT_AUDIO: readonly string[] = [
 ];
 
 export type ClipQuality = 'gold' | 'silver';
+/** How much of the words a person looked at: all of them, some of them, or a fix still waiting for review. */
+export type ClipReview = 'checked' | 'edited' | 'pending';
+
+/** The kinds of event where the Rebbe himself speaks to the people there. */
+export const REBBE_TALK_KINDS: readonly string[] = ['farbrengen', 'sicha', 'maamar'];
+
+/**
+ * Parts of a farbrengen that are not the Rebbe speaking, by the
+ * recording's name (JEM's, in English, or the catalog's Hebrew): niggunim,
+ * the children's twelve pesukim, guests and a chosson and kallah, the
+ * bracha chassidim say, dollars, davening. A part named a sicha or a
+ * maamar is his, even one answering the chassidim's bracha.
+ */
+const NOT_THE_REBBE = /nig+un|ניגון|נגון|pesukim|פסוקים|guest|אורחים|choson|kallah|חתן|bar.?\/?bas mitzvah|brach|ברכה|dollar|דאלאר|conversation|magbis|kapelye|shacharis|minch|ma.?ariv|tefil|davening|תפל|torah reading|kri.?as|kid+ush|chalukas|song|singing/i;
+const SPEECH_NAME = /^\s*(sicha|ma.?amar|שיחה|מאמר)/i;
+
+/** Whether a recording, by its event's kind and its own name, is the Rebbe speaking. */
+export function isRebbeTalk(kind: string | null, title: { he?: string; en?: string } | null): boolean {
+  if (!kind || !REBBE_TALK_KINDS.includes(kind)) return false;
+  const names = [title?.en, title?.he].filter((n): n is string => Boolean(n));
+  return names.some((n) => SPEECH_NAME.test(n)) || !names.some((n) => NOT_THE_REBBE.test(n));
+}
+
+/** Mostly Latin letters: English (a translator, a speaker before him, JEM's opening), not the Rebbe's Yiddish. */
+export function isLatin(text: string): boolean {
+  const letters = text.match(/\p{L}/gu) ?? [];
+  return letters.length > 0 && letters.filter((c) => /[A-Za-z]/.test(c)).length > letters.length / 3;
+}
 
 /** One clip, as the training script reads it (clips.jsonl), plus where on ChassidusHub it came from. */
 export interface TrainingClip {
@@ -65,6 +103,13 @@ export interface TrainingClip {
   section: 'site';
   pdf: null;
   quality: ClipQuality;
+  review: ClipReview;
+  /**
+   * `carried`: cut by word times a fix carried over from the machine's
+   * hearing, not timed from the audio again; the training run aligns these
+   * itself before it learns from them.
+   */
+  timing?: 'carried';
   recording: EntityId;
   segment: EntityId;
   /** When the paragraph was last checked or changed (ISO). */
@@ -73,7 +118,7 @@ export interface TrainingClip {
 
 export interface TrainingSkip {
   segment: EntityId;
-  reason: 'no timing' | 'long, waiting for word timing' | 'too short' | 'words and timing disagree' | 'no audio' | 'words marked unclear';
+  reason: 'no timing' | 'long, waiting for word timing' | 'too short' | 'words and timing disagree' | 'no audio' | 'words marked unclear' | 'not the Rebbe speaking';
 }
 
 export interface TrainingSummary {
@@ -81,6 +126,8 @@ export interface TrainingSummary {
   hours: number;
   gold: number;
   silver: number;
+  /** Clips by how much of their words a person looked at. */
+  review: Record<ClipReview, number>;
   trainHours: number;
   testHours: number;
   recordings: number;
@@ -92,23 +139,43 @@ export interface TrainingSummary {
 interface Row {
   segment: EntityId;
   content: string;
+  /** The paragraph's data: on the site, or as a person's open suggestion has it. */
+  sdata: { proofread?: number; origin?: { checked?: boolean; edited?: boolean } | null };
+  pending: boolean;
   recording: EntityId;
   url: string | null;
   file: string | null;
+  title: { he?: string; en?: string } | null;
+  kind: string | null;
   span: { startMs: number; endMs: number; words?: Array<{ from: number; to: number; startMs: number; endMs: number }>; locked?: boolean; origin?: { checked?: boolean; edited?: boolean } } | null;
   checked_at: Date | string;
 }
 
-/** Every checked transcript paragraph with its recording and where it is heard, in one query. */
+/**
+ * Every transcript paragraph a person checked or fixed, on the site or in a
+ * person's suggestion still waiting for review (its newest version wins),
+ * with its recording, the recording's event kind and where it is heard, in
+ * one query.
+ */
 async function checkedParagraphs(catalog: Catalog, since?: string): Promise<Row[]> {
   const { rows } = await catalog.db.query<Row>(
-    `SELECT s.id AS segment, sr.data->>'content' AS content, rec.id AS recording, rr.data->>'url' AS url, rr.data->>'file' AS file,
-            sp.data AS span, sr.created_at AS checked_at
+    `WITH pending AS (
+       SELECT DISTINCT ON (r.entity_id) r.entity_id AS segment, r.data, r.changeset_id, coalesce(c.submitted_at, c.created_at) AS at
+       FROM changeset c JOIN account a ON a.id = c.author AND NOT a.is_bot
+       JOIN revision r ON r.changeset_id = c.id AND r.entity_type = 'segment' AND r.data IS NOT NULL
+       WHERE c.status = 'open'
+       ORDER BY r.entity_id, r.id DESC
+     )
+     SELECT s.id AS segment, coalesce(p.data, sr.data)->>'content' AS content, coalesce(p.data, sr.data) AS sdata, p.segment IS NOT NULL AS pending,
+            rec.id AS recording, rr.data->>'url' AS url, rr.data->>'file' AS file, rr.data->'title' AS title, er.data->>'kind' AS kind,
+            coalesce(psp.data, sp.data) AS span, coalesce(p.at, sr.created_at) AS checked_at
      FROM entity t JOIN revision tr ON tr.id = t.main_rev AND tr.data->>'kind' = 'transcript'
      JOIN entity rec ON rec.id = tr.data->>'recording' AND NOT rec.deleted JOIN revision rr ON rr.id = rec.main_rev
+     LEFT JOIN entity ev ON ev.id = rr.data->>'event' AND NOT ev.deleted LEFT JOIN revision er ON er.id = ev.main_rev
      JOIN entity_ref x ON x.to_id = t.id AND x.field = 'text'
      JOIN entity s ON s.id = x.from_id AND s.type = 'segment' AND NOT s.deleted
      JOIN revision sr ON sr.id = s.main_rev
+     LEFT JOIN pending p ON p.segment = s.id
      LEFT JOIN LATERAL (
        SELECT spr.data FROM entity_ref y JOIN entity e ON e.id = y.from_id AND e.type = 'alignment-span' AND NOT e.deleted
        JOIN revision spr ON spr.id = e.main_rev
@@ -116,10 +183,17 @@ async function checkedParagraphs(catalog: Catalog, since?: string): Promise<Row[
        WHERE y.to_id = s.id AND y.field = 'segment' AND ar.data->>'recording' = rec.id
        ORDER BY e.id LIMIT 1
      ) sp ON TRUE
+     LEFT JOIN LATERAL (
+       SELECT r.data FROM revision r
+       WHERE r.changeset_id = p.changeset_id AND r.entity_type = 'alignment-span' AND r.data->>'segment' = s.id
+       ORDER BY r.id DESC LIMIT 1
+     ) psp ON TRUE
      WHERE t.type = 'text' AND NOT t.deleted
-       AND (COALESCE((sr.data->>'proofread')::int, 0) > 0 OR sr.data->'origin'->>'checked' = 'true')
-       ${since ? 'AND sr.created_at >= $1' : ''}
-     ORDER BY rec.id, sr.data->>'order'`,
+       AND (COALESCE((coalesce(p.data, sr.data)->>'proofread')::int, 0) > 0
+            OR coalesce(p.data, sr.data)->'origin'->>'checked' = 'true'
+            OR coalesce(p.data, sr.data)->'origin'->>'edited' = 'true')
+       ${since ? 'AND coalesce(p.at, sr.created_at) >= $1' : ''}
+     ORDER BY rec.id, coalesce(p.data, sr.data)->>'order'`,
     since ? [since] : [],
   );
   return rows;
@@ -145,10 +219,10 @@ export function splitOf(recording: EntityId, audio: string): 'train' | 'test' {
 }
 
 /** A paragraph's pieces of at most CLIP_MAX_SECONDS, cut between words; null when it is too long and has no word timings. */
-export function piecesOf(content: string, span: NonNullable<Row['span']>): Array<{ text: string; startMs: number; endMs: number }> | null {
+export function piecesOf(content: string, span: NonNullable<Row['span']>, options: { carried?: boolean } = {}): Array<{ text: string; startMs: number; endMs: number }> | null {
   if (span.endMs - span.startMs <= CLIP_MAX_SECONDS * 1000) return [{ text: content, startMs: span.startMs, endMs: span.endMs }];
-  // Word times a fix carried over are good enough to follow along, not to cut clips by: those wait for the next alignment run.
-  const words = span.words?.length && !span.origin?.edited && span.words.every((w) => w.to <= content.length) ? span.words : null;
+  // Word times a fix carried over are good enough to follow along, not to cut clips by: those wait for the next alignment run, unless `carried` (the training run aligns them again itself).
+  const words = span.words?.length && (!span.origin?.edited || options.carried) && span.words.every((w) => w.to <= content.length) ? span.words : null;
   if (!words) return null;
   const pieces: Array<{ text: string; startMs: number; endMs: number }> = [];
   let first = 0;
@@ -166,10 +240,14 @@ export function piecesOf(content: string, span: NonNullable<Row['span']>): Array
  * The clips people's checking has made so far, and what was left out and
  * why. `since` (an ISO date) keeps only paragraphs checked since then.
  */
-export async function trainingClips(catalog: Catalog, options: { since?: string; filesBaseUrl?: string } = {}): Promise<{ clips: TrainingClip[]; skipped: TrainingSkip[] }> {
+export async function trainingClips(catalog: Catalog, options: { since?: string; filesBaseUrl?: string; carried?: boolean } = {}): Promise<{ clips: TrainingClip[]; skipped: TrainingSkip[] }> {
   const clips: TrainingClip[] = [];
   const skipped: TrainingSkip[] = [];
   for (const row of await checkedParagraphs(catalog, options.since)) {
+    if (!isRebbeTalk(row.kind, row.title) || isLatin(row.content)) {
+      skipped.push({ segment: row.segment, reason: 'not the Rebbe speaking' });
+      continue;
+    }
     const audio = audioOf(row, options.filesBaseUrl ?? 'https://api.chassidushub.org');
     if (!audio) {
       skipped.push({ segment: row.segment, reason: 'no audio' });
@@ -184,12 +262,16 @@ export async function trainingClips(catalog: Catalog, options: { since?: string;
       skipped.push({ segment: row.segment, reason: 'words marked unclear' });
       continue;
     }
-    const pieces = piecesOf(row.content, { ...row.span, startMs: Number(row.span.startMs), endMs: Number(row.span.endMs) });
+    const span = { ...row.span, startMs: Number(row.span.startMs), endMs: Number(row.span.endMs) };
+    const pieces = piecesOf(row.content, span, { carried: options.carried });
+    const carried = Boolean(pieces && pieces.length > 1 && span.origin?.edited);
     if (!pieces) {
       skipped.push({ segment: row.segment, reason: 'long, waiting for word timing' });
       continue;
     }
     const quality: ClipQuality = row.span.locked || row.span.origin?.checked || !row.span.origin ? 'gold' : 'silver';
+    const checked = (Number(row.sdata.proofread) || 0) > 0 || Boolean(row.sdata.origin?.checked);
+    const review: ClipReview = row.pending ? 'pending' : checked ? 'checked' : 'edited';
     for (const piece of pieces) {
       const seconds = (piece.endMs - piece.startMs) / 1000;
       const letters = piece.text.replace(/[^\p{L}]/gu, '').length;
@@ -205,12 +287,15 @@ export async function trainingClips(catalog: Catalog, options: { since?: string;
         audio: [audio],
         start: piece.startMs / 1000,
         end: piece.endMs / 1000,
-        text: piece.text,
+        // The training text in the house spelling, with words a fix left glued after a ' apart again.
+        text: toHouseSpelling(piece.text),
         split: splitOf(row.recording, audio),
         group: 'site',
         section: 'site',
         pdf: null,
         quality,
+        review,
+        ...(carried ? { timing: 'carried' as const } : {}),
         recording: row.recording,
         segment: row.segment,
         checkedAt: new Date(row.checked_at).toISOString(),
@@ -230,6 +315,7 @@ export function summariseTraining(all: { clips: TrainingClip[]; skipped: Trainin
     hours: hours(all.clips),
     gold: all.clips.filter((c) => c.quality === 'gold').length,
     silver: all.clips.filter((c) => c.quality === 'silver').length,
+    review: { checked: all.clips.filter((c) => c.review === 'checked').length, edited: all.clips.filter((c) => c.review === 'edited').length, pending: all.clips.filter((c) => c.review === 'pending').length },
     trainHours: hours(all.clips.filter((c) => c.split === 'train')),
     testHours: hours(all.clips.filter((c) => c.split === 'test')),
     recordings: new Set(all.clips.map((c) => c.recording)).size,

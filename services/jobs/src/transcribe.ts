@@ -5,7 +5,7 @@ import { basename, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { alignAroundLocks, alignParagraphs, alignWords, hanachaOf, heardWords, notRecentlyFailedSql, recordingTranscript, type Catalog, type HeardWord, type Json } from '@chassidushub/core';
-import { orderKeys, type EntityId, type Language } from '@chassidushub/model';
+import { orderKeys, tidyHeard, type EntityId, type Language } from '@chassidushub/model';
 import { failIfAny, machineRun } from './machineQueue.js';
 
 /**
@@ -127,41 +127,96 @@ export function localWhisper(input: { model?: string; python?: string; script?: 
   };
 }
 
+/** A word, or a piece heard with no word times, as one unit, with whether it carries on the word before. */
+interface Unit {
+  text: string;
+  startMs: number;
+  endMs: number;
+  timed: boolean;
+}
+
+const SENTENCE_END = /[.?!:;…]["'״”)\]]*$/;
+const CLAUSE_END = /[,—–-]["'״”)\]]*$/;
+
 /**
- * Gathers what was heard into paragraphs of about a minute. A paragraph
- * breaks at a pause of two seconds or more; once it is a minute long, at
- * the end of a sentence (a piece ending in . ? ! : or ;), and once it is
- * two minutes long, at the next piece whatever it ends in, so a long run
- * without punctuation still breaks. It never breaks at a piece that carries
- * on the last word of the one before (`glued`): that piece is joined
- * without a space, and the two halves of the word are one word, heard from
- * the start of the first to the end of the second.
+ * Gathers what was heard into lines, one sentence each (the steward,
+ * 2026-10-07: "not stop mid sentence on his chunks, but stop on normal
+ * places, real stop... split sentences to new lines"). Whisper hears 30
+ * seconds at a time and cuts there, mid-sentence; its pieces are joined
+ * and cut again, word by word, where a sentence ends:
+ *
+ * - at a word ending in . ? ! : ; once the line is `minMs` long;
+ * - past `softMs`, where the Rebbe pauses after a comma (the models still
+ *   write few full stops, so a breath after a clause is the next best
+ *   "real stop");
+ * - past `maxMs`, at the best place seen since `softMs` (a comma, the
+ *   longest pause), so a long run without punctuation still breaks, and
+ *   never in the middle of a word.
+ *
+ * A piece that carries on the last word of the one before (`glued`) is
+ * joined without a space, and the two halves of the word are one word,
+ * heard from the start of the first to the end of the second; a line never
+ * breaks there. Pieces without word times are units of their own.
  */
-export function paragraphs(heard: Heard[], options: { targetMs?: number; maxMs?: number; pauseMs?: number } = {}): Heard[] {
-  const target = options.targetMs ?? 60_000;
-  const max = options.maxMs ?? target * 2;
-  const pause = options.pauseMs ?? 2_000;
-  const out: Heard[] = [];
+export function paragraphs(heard: Heard[], options: { minMs?: number; softMs?: number; maxMs?: number; pauseMs?: number } = {}): Heard[] {
+  const minMs = options.minMs ?? 2_000;
+  const softMs = options.softMs ?? 12_000;
+  const maxMs = options.maxMs ?? 28_000;
+  const pauseMs = options.pauseMs ?? 500;
+  const units: Unit[] = [];
   for (const h of heard) {
-    const last = out.at(-1);
-    const glued = Boolean(h.glued && last);
-    const length = last ? last.endMs - last.startMs : 0;
-    const sentenceEnd = last ? /[.?!:;…]["'״”)\]]*$/.test(last.text) : false;
-    if (last && (glued || (h.startMs - last.endMs < pause && (length < target || (length < max && !sentenceEnd))))) {
-      last.text = glued ? `${last.text}${h.text}` : `${last.text} ${h.text}`;
-      last.endMs = Math.max(last.endMs, h.endMs);
-      if (last.words && h.words) {
-        const [first, ...rest] = h.words;
-        const end = last.words.at(-1);
-        if (glued && end && first) last.words = [...last.words.slice(0, -1), { text: `${end.text}${first.text}`, startMs: end.startMs, endMs: first.endMs }, ...rest];
-        else last.words = [...last.words, ...h.words];
-      } else {
-        last.words = undefined;
-      }
+    const pieces: Unit[] = h.words?.length ? h.words.map((w) => ({ ...w, timed: true })) : [{ text: h.text, startMs: h.startMs, endMs: h.endMs, timed: false }];
+    const last = units.at(-1);
+    if (h.glued && last) {
+      const [first, ...rest] = pieces;
+      last.text += first!.text;
+      last.endMs = Math.max(last.endMs, first!.endMs);
+      last.timed &&= first!.timed;
+      units.push(...rest);
     } else {
-      out.push({ startMs: h.startMs, endMs: h.endMs, text: h.text, words: h.words ? [...h.words] : undefined });
+      units.push(...pieces);
     }
   }
+  const out: Heard[] = [];
+  let line: Unit[] = [];
+  const close = (n: number) => {
+    const taken = line.slice(0, n);
+    line = line.slice(n);
+    if (!taken.length) return;
+    const timed = taken.every((u) => u.timed);
+    out.push({
+      startMs: taken[0]!.startMs,
+      endMs: Math.max(...taken.map((u) => u.endMs)),
+      text: taken.map((u) => u.text).join(' '),
+      ...(timed ? { words: taken.map(({ text, startMs, endMs }) => ({ text, startMs, endMs })) } : {}),
+    });
+  };
+  for (const [i, unit] of units.entries()) {
+    line.push(unit);
+    const next = units[i + 1];
+    const length = unit.endMs - line[0]!.startMs;
+    const pause = next ? next.startMs - unit.endMs : Infinity;
+    if (!next) break;
+    if (SENTENCE_END.test(unit.text) && length >= minMs) close(line.length);
+    else if (length >= softMs && CLAUSE_END.test(unit.text) && pause >= pauseMs) close(line.length);
+    else if (length >= maxMs) {
+      // The best place since softMs: after a comma, then the longest pause.
+      let best = line.length;
+      let score = -Infinity;
+      for (let j = 0; j < line.length; j++) {
+        const u = line[j]!;
+        if (u.endMs - line[0]!.startMs < softMs && j < line.length - 1) continue;
+        const gap = (line[j + 1] ?? next).startMs - u.endMs;
+        const s = (CLAUSE_END.test(u.text) ? 1000 : 0) + gap;
+        if (s > score) {
+          score = s;
+          best = j + 1;
+        }
+      }
+      close(best);
+    }
+  }
+  close(line.length);
   return out;
 }
 
@@ -212,6 +267,8 @@ export async function transcribeRecordings(
     requestedOnly?: boolean;
     /** Part i of n of the recordings nobody asked for, for n jobs side by side; requests are shared among them. */
     shard?: [number, number];
+    /** How the pieces heard become lines: one sentence each (`paragraphs`), unless given otherwise. */
+    lines?: (heard: Heard[]) => Heard[];
     log?: (line: string) => void;
   },
 ): Promise<Array<{ recording: EntityId; paragraphs: number }>> {
@@ -236,7 +293,8 @@ export async function transcribeRecordings(
     try {
       const audio = join(dir, 'audio');
       await writeFile(audio, await input.fetchAudio(rec));
-      const paras = paragraphs(await input.transcriber.transcribe(audio, rec.language, dir));
+      // One sentence a line, in the house spelling (model/spelling.ts, tidyHeard); the word times follow the words as they were heard.
+      const paras = (input.lines ?? paragraphs)(await input.transcriber.transcribe(audio, rec.language, dir)).map((p) => ({ ...p, text: rec.language === 'yi' ? tidyHeard(p.text) : p.text }));
       if (paras.length === 0) return { skipped: 'nothing heard' };
       // Word timings: each paragraph's words matched to the words as they were heard.
       const timed = paras.some((p) => p.words?.length) ? alignWords(paras.map((p) => p.text), heardWords(paras)) : null;

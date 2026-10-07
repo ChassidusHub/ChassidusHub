@@ -49,9 +49,56 @@ function houseWord(word: string): string {
   return house;
 }
 
+/**
+ * What may follow a ' inside one word: Yiddish endings on a Loshon Kodesh
+ * word (רבי'ן, פסק'נט, חסיד'ישע, גוי'שקייט, יעקב'ס, אמת'ער).
+ */
+const ENDING_AFTER_APOSTROPHE = /^(?:ן|ען|נען|ענען|ס|ער|ערס|ערן|ע|עס|ט|טע|טן|נט|ענט|עט|נדיק\S*|עווען|יש|ישע|ישער|ישן|ישקייט|שקייט|קייט|דיק\S*|ניק|לעך|ל|נ|עלע)$/;
+/** Yiddish prefixes written with a ' before a Loshon Kodesh word (גע'פועל'ט, איבער'חזר'ן, אריינ'טענה'ט). */
+const PREFIX_BEFORE_APOSTROPHE = /(?:^|ג)ע$|^(?:איבער|אריינ|ארויס|אפ|אויס|פאר|צו|איינ|אונטער|דורכ|נאכ|מיט|אנ|אויפ|ארומ|צוריק|ארונטער|ארויפ)$/;
+
+/**
+ * Two words a ' was left gluing together (הוי'אלקיך, ראי'פון, וכו'וכו, ה'פון):
+ * the booklets' text lost the space after a ' where the line was set, the
+ * models learned it from them, and people fixing transcripts take it out
+ * again. A Yiddish ending (רבי'ן) or prefix (גע'פועל) stays one word.
+ */
+export function splitGluedApostrophes(token: string): string {
+  const m = /^([^\s']*[א-ת"])'([א-ת][^\s]*)$/.exec(token);
+  if (!m) return token;
+  const [, before, after] = m as unknown as [string, string, string];
+  const letters = after.replace(/[^א-ת'].*$/, '');
+  const head = before.replace(/^[^א-ת]+/, '');
+  // ס'איז and מ'האט are one word; a lone letter otherwise is a number or a name's mark (ה' פון, ד' אמות).
+  if (head === 'ס' || head === 'מ' || head === 'וס' || head === 'ומ') return token;
+  if (letters.length < 2 || ENDING_AFTER_APOSTROPHE.test(letters.split("'")[0]!) || PREFIX_BEFORE_APOSTROPHE.test(head)) return token;
+  return `${before}' ${splitGluedApostrophes(after)}`;
+}
+
+/**
+ * An abbreviation's ״ as a model or a typist wrote it otherwise: רש'י,
+ * הקב'ה, רמב'ם, הקב,"ה, חז.ל all mean רש"י, הקב"ה, רמב"ם, חז"ל. A ' before
+ * a last ס or ן after a longer word is a Yiddish ending (יעקב'ס, רבי'ן),
+ * and stays.
+ */
+export function fixAbbreviationMark(token: string): string {
+  const m = /^([^א-ת]*)([א-ת]{1,6})(?:,"|",|"\.|\."|\.|')([א-ת])([^א-ת]*)$/.exec(token);
+  if (!m) return token;
+  const [, lead, head, last, trail] = m as unknown as [string, string, string, string, string];
+  const apostrophe = token.slice(lead.length + head.length, token.length - last.length - trail.length) === "'";
+  if (apostrophe && (last === 'ן' || (last === 'ס' && head.length > 2) || head.length === 1)) return token;
+  return `${lead}${head}"${last}${trail}`;
+}
+
 /** A text rewritten into the house spelling, word for word (and ׳ ״ as ' "): what a training run does to text written otherwise. */
 export function toHouseSpelling(text: string): string {
-  const tokens = text.replaceAll('׳', "'").replaceAll('״', '"').split(/\s+/).filter(Boolean);
+  const tokens = text
+    .replaceAll('׳', "'")
+    .replaceAll('״', '"')
+    .split(/\s+/)
+    .filter(Boolean)
+    .flatMap((t) => splitGluedApostrophes(t).split(' '))
+    .map(fixAbbreviationMark);
   return tokens
     .map((token, i) => {
       const [lead, contraction, word, trail] = parts(token);
@@ -76,4 +123,35 @@ export function spellingHints(text: string): Array<{ written: string; house: str
     if (house !== word) hints.set(word, house);
   }
   return [...hints].map(([written, house]) => ({ written, house }));
+}
+
+/**
+ * Abbreviations the models hear as words and write out by sound, as people
+ * fixing transcripts have corrected them again and again (the reviews of
+ * 2026-09-29 to 10-05): עאכו כמה וכמה for עאכו"כ, משא נכן for משא"כ.
+ */
+export const HEARD_ABBREVIATIONS: ReadonlyArray<readonly [string, string]> = [
+  ['ועאכו כמה וכמה', 'ועאכו"כ'],
+  ['עאכו כמה וכמה', 'עאכו"כ'],
+  ['משא נכן', 'משא"כ'],
+  ['משא-כן', 'משא"כ'],
+  ['חב אד', 'חב"ד'],
+  ['שד ו', 'שד"י'],
+  ['יווד', 'יו"ד'],
+  // The last letter swallowed by the next word (רש'זאגט, הקב'איז), once that word is set apart.
+  ["רש'", 'רש"י'],
+  ["הקב'", 'הקב"ה'],
+];
+
+/**
+ * A machine transcript's words tidied before anyone reads them: the house
+ * spelling (with glued words after a ' apart and abbreviation marks as
+ * ״), and abbreviations heard as words written as abbreviations. Words
+ * are only respelled here, never guessed: a word heard wrong stays for a
+ * person, or the next model, to fix.
+ */
+export function tidyHeard(text: string): string {
+  let out = ` ${toHouseSpelling(text)} `;
+  for (const [heard, written] of HEARD_ABBREVIATIONS) out = out.replace(new RegExp(`(?<=\\s)${heard.replace(/[-"]/g, (c) => `\\${c}`)}(?=[\\s,.;:!?])`, 'g'), written);
+  return out.trim();
 }

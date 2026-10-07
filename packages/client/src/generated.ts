@@ -2560,12 +2560,15 @@ export interface Operations {
       id: number;
     };
   };
-  /** The training clips, one JSON object a line, as the training script reads them (audio, start, end, text, split) */
+  /** The training clips, one JSON object a line, as the training script reads them (audio, start, end, text, split, quality, review) */
   trainingClips: {
-    input: Record<string, never>;
+    input: {
+      /** With 1: fixed paragraphs cut by the word times the fix carried over too (marked timing: carried), for a training run that aligns them again */
+      carried?: "1";
+    };
     output: Record<string, unknown>;
   };
-  /** The next Rebbe Whisper's training data so far: every transcript paragraph a person checked, as clips */
+  /** The next Rebbe Whisper's training data so far: every transcript paragraph of the Rebbe speaking that a person checked or fixed, waiting fixes too, as clips */
   trainingSummary: {
     input: {
       /** A date: also count the hours checked since then */
@@ -2576,6 +2579,11 @@ export interface Operations {
       hours: number;
       gold: number;
       silver: number;
+      review: {
+        checked: number;
+        edited: number;
+        pending: number;
+      };
       trainHours: number;
       testHours: number;
       recordings: number;
@@ -2937,7 +2945,7 @@ export const OPERATIONS = {
   suggestWords: {"method":"POST","path":"/v1/suggestions/words","pathParams":[],"query":[],"body":"json","answer":"json"},
   textsProgress: {"method":"GET","path":"/v1/texts/batch/progress","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
   threadByNumber: {"method":"GET","path":"/v1/threads/{number}","pathParams":["number"],"query":[],"body":null,"answer":"json"},
-  trainingClips: {"method":"GET","path":"/v1/machine/training/clips","pathParams":[],"query":[],"body":null,"answer":"json"},
+  trainingClips: {"method":"GET","path":"/v1/machine/training/clips","pathParams":[],"query":["carried"],"body":null,"answer":"json"},
   trainingSummary: {"method":"GET","path":"/v1/machine/training","pathParams":[],"query":["since"],"body":null,"answer":"json"},
   transcribedRecordings: {"method":"GET","path":"/v1/transcripts","pathParams":[],"query":["limit"],"body":null,"answer":"json"},
   transcriptFixes: {"method":"GET","path":"/v1/transcripts/fixes","pathParams":[],"query":["limit"],"body":null,"answer":"json"},
@@ -3767,12 +3775,12 @@ export abstract class GeneratedMethods {
     return this.call('threadByNumber', input ?? {} as Operations['threadByNumber']['input']);
   }
 
-  /** The training clips, one JSON object a line, as the training script reads them (audio, start, end, text, split) (GET /v1/machine/training/clips) */
-  trainingClips(): Promise<Operations['trainingClips']['output']> {
-    return this.call('trainingClips', {} as Operations['trainingClips']['input']);
+  /** The training clips, one JSON object a line, as the training script reads them (audio, start, end, text, split, quality, review) (GET /v1/machine/training/clips) */
+  trainingClips(input?: Operations['trainingClips']['input']): Promise<Operations['trainingClips']['output']> {
+    return this.call('trainingClips', input ?? {} as Operations['trainingClips']['input']);
   }
 
-  /** The next Rebbe Whisper's training data so far: every transcript paragraph a person checked, as clips (GET /v1/machine/training) */
+  /** The next Rebbe Whisper's training data so far: every transcript paragraph of the Rebbe speaking that a person checked or fixed, waiting fixes too, as clips (GET /v1/machine/training) */
   trainingSummary(input?: Operations['trainingSummary']['input']): Promise<Operations['trainingSummary']['output']> {
     return this.call('trainingSummary', input ?? {} as Operations['trainingSummary']['input']);
   }

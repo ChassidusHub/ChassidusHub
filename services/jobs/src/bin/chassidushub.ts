@@ -100,9 +100,12 @@ const HELP = `chassidushub - ChassidusHub's command line
   chassidushub machine [list [--kind ocr|transcript] [--status <status>] | ask --kind <kind> --item <id> --as <account>]
                                                 the machines' queue: what waits, what is left, and asking
                                                 for a scan to be read or a recording transcribed
-  chassidushub training-clips [--out <clips.jsonl>] [--since <date>]
+  chassidushub training-clips [--out <clips.jsonl>] [--since <date>] [--carried]
                                                 the next Rebbe Whisper's training data: every transcript
-                                                paragraph a person checked, as clips (docs/transcription.md)
+                                                paragraph a person checked or fixed, waiting fixes too, of
+                                                the Rebbe speaking only, as clips (docs/transcription.md);
+                                                --carried also cuts fixed paragraphs by their carried word
+                                                times, for a run that aligns them again
   chassidushub embed [--limit <n>]                  vectors for search by meaning, of items not embedded yet
                                                 (BGE-M3 on Workers AI: CLOUDFLARE_ACCOUNT_ID and
                                                 CLOUDFLARE_AI_TOKEN)
@@ -192,6 +195,7 @@ const { values, positionals } = parseArgs({
     linked: { type: 'boolean' },
     reread: { type: 'boolean' },
     'requested-only': { type: 'boolean' },
+    carried: { type: 'boolean' },
     kind: { type: 'string' },
     item: { type: 'string' },
     as: { type: 'string' },
@@ -279,7 +283,7 @@ try {
       await transcribeCommand(ctx, { approveAs: need(values['approve-as'], 'approve-as'), recording: values.recording, limit: number(values.limit), linked: values.linked, files: values.files, engine: values.engine, requestedOnly: values['requested-only'], shard: values.shard });
       break;
     case 'training-clips':
-      await trainingClipsCommand(ctx, { out: values.out, since: values.since, files: values.files });
+      await trainingClipsCommand(ctx, { out: values.out, since: values.since, files: values.files, carried: values.carried });
       break;
     case 'machine':
       await machineCommand(ctx, { action: rest[0], kind: values.kind, item: values.item, as: values.as, status: values.status, limit: number(values.limit) });

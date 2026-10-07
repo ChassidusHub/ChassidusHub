@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityId } from '@chassidushub/model';
-import { anchorSync, fixParagraph, piecesOf, splitOf, summariseTraining, trainingClips, trainingGoal, type Catalog, type Json } from '@chassidushub/core';
+import { anchorSync, fixParagraph, isRebbeTalk, piecesOf, splitOf, summariseTraining, trainingClips, trainingGoal, type Catalog, type Json } from '@chassidushub/core';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 /** The retraining cycle's data (trainingClips.ts): checked transcript paragraphs become clips for the next model. */
 
 const word = (from: number, to: number, startMs: number, endMs: number) => ({ from, to, startMs, endMs });
 
-async function transcribed(catalog: Catalog, set: EntityId, url: string, date?: string) {
-  const event = await add(catalog, 'mendy', 'keeper', 'event', { ...yudShvat(set), ...(date ? { date } : {}) });
-  const recording = await add(catalog, 'mendy', 'keeper', 'recording', { event, title: { he: 'שיחה א׳' }, url, sets: [set] });
+async function transcribed(catalog: Catalog, set: EntityId, url: string, date?: string, options: { kind?: string; title?: { he: string; en?: string } } = {}) {
+  const event = await add(catalog, 'mendy', 'keeper', 'event', { ...yudShvat(set), ...(date ? { date } : {}), ...(options.kind ? { kind: options.kind } : {}) });
+  const recording = await add(catalog, 'mendy', 'keeper', 'recording', { event, title: options.title ?? { he: 'שיחה א׳' }, url, sets: [set] });
   await catalog.createAccount({ id: 'bot:transcribe', displayName: 'Machine transcription', isBot: true });
   const cs = await catalog.createChangeset('bot:transcribe', { title: 'Transcript' });
   const origin = { by: 'transcribe:fake@1' };
@@ -102,6 +102,52 @@ describe('training clips from checked transcripts', () => {
 
     const summary = summariseTraining({ clips, skipped }, '2000-01-01');
     expect(summary).toMatchObject({ clips: 2, gold: 1, silver: 1, recordings: 1, hours: 0, newHours: 0 });
+  });
+
+  it('learns only the Rebbe speaking: never a niggun, guests, davening or a translator', async () => {
+    const { catalog, set } = await freshCatalog();
+    const check = async (segment: EntityId) => {
+      const { content } = (await catalog.get(segment))!.data as { content: string };
+      await catalog.merge((await fixParagraph(catalog, 'chaim', { segment, content })).id, 'keeper');
+    };
+    const niggun = await transcribed(catalog, set, 'https://example.org/n.mp3', undefined, { title: { he: 'ניגון', en: 'Nigun 3' } });
+    const shacharis = await transcribed(catalog, set, 'https://example.org/s.mp3', undefined, { kind: 'other', title: { he: 'שחרית', en: 'Shacharis' } });
+    const sicha = await transcribed(catalog, set, 'https://example.org/t.mp3');
+    for (const segment of [niggun.segments[1]!, shacharis.segments[1]!, sicha.segments[1]!]) await check(segment);
+    // A translator's English in the middle of a sicha.
+    await catalog.merge((await fixParagraph(catalog, 'chaim', { segment: sicha.segments[2]!, content: 'The Rebbe said that every Jew' })).id, 'keeper');
+    const { clips, skipped } = await trainingClips(catalog);
+    expect(clips.map((c) => c.segment)).toEqual([sicha.segments[1]]);
+    expect(skipped.map((s) => [s.segment, s.reason])).toEqual(
+      expect.arrayContaining([
+        [niggun.segments[1], 'not the Rebbe speaking'],
+        [shacharis.segments[1], 'not the Rebbe speaking'],
+        [sicha.segments[2], 'not the Rebbe speaking'],
+      ]),
+    );
+    expect(isRebbeTalk('farbrengen', { en: 'Sicha 2' })).toBe(true);
+    expect(isRebbeTalk('farbrengen', { en: 'Sicha-Response to Chasidim’s Brachah' })).toBe(true);
+    expect(isRebbeTalk('farbrengen', { en: 'Chasidim’s Brachah' })).toBe(false);
+    expect(isRebbeTalk('kinus', { en: 'Children’s Rally – Pesukim' })).toBe(false);
+    expect(isRebbeTalk('yechidus', { en: 'Private Audience' })).toBe(false);
+  });
+
+  it('takes every review: whole paragraphs checked, paragraphs fixed in part, and fixes still waiting', async () => {
+    const { catalog, set } = await freshCatalog();
+    const { segments } = await transcribed(catalog, set, 'https://example.org/a.mp3');
+    await catalog.merge((await fixParagraph(catalog, 'chaim', { segment: segments[0]!, content: 'לחיים, לחיים טובים' })).id, 'keeper');
+    // Some words fixed, the rest left as heard.
+    await catalog.merge((await fixParagraph(catalog, 'chaim', { segment: segments[1]!, content: "עס שטייט אין הוי'אלקיך", complete: false })).id, 'keeper');
+    // Sent, and nobody has reviewed it yet: its words count as the person wrote them.
+    await fixParagraph(catalog, 'chaim', { segment: segments[2]!, content: "רש'י זאגט אויפן פסוק" });
+    const { clips } = await trainingClips(catalog);
+    expect(clips.map((c) => [c.text, c.review])).toEqual([
+      ['לחיים, לחיים טובים', 'checked'],
+      // The training text in the house spelling: the glued words apart, the abbreviation marked.
+      ["עס שטייט אין הוי' אלקיך", 'edited'],
+      ['רש"י זאגט אויפן פסוק', 'pending'],
+    ]);
+    expect(summariseTraining({ clips, skipped: [] }).review).toEqual({ checked: 1, edited: 1, pending: 1 });
   });
 
   it('leaves out a paragraph with words a listener marked unclear', async () => {

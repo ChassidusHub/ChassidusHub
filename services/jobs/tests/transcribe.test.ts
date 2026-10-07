@@ -8,58 +8,64 @@ import { localWhisper, paragraphs, recordingsToTranscribe, transcribeRecordings,
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 describe('machine transcription and sync', () => {
-  it('gathers what was heard into paragraphs, breaking at pauses and after about a minute', () => {
+  it('gathers what was heard into lines, one sentence each, never mid-sentence at a pause or a 30-second cut', () => {
+    const w = (text: string, startMs: number, endMs: number) => ({ text, startMs, endMs });
     const heard = [
-      { startMs: 0, endMs: 4000, text: 'א' },
-      { startMs: 4500, endMs: 9000, text: 'ב' },
-      { startMs: 15000, endMs: 20000, text: 'ג' }, // after a pause
-      { startMs: 20500, endMs: 90000, text: 'ד.' },
-      { startMs: 90500, endMs: 95000, text: 'ה' }, // the paragraph is already over a minute, and ends a sentence
+      // Whisper's 30-second piece ends mid-sentence; the sentence carries on into the next piece, after a pause.
+      { startMs: 0, endMs: 3000, text: 'עס שטייט אין', words: [w('עס', 0, 1000), w('שטייט', 1000, 2000), w('אין', 2000, 3000)] },
+      { startMs: 6000, endMs: 9000, text: 'פסוק. דער רבי', words: [w('פסוק.', 6000, 7000), w('דער', 7000, 8000), w('רבי', 8000, 9000)] },
+      { startMs: 9000, endMs: 10000, text: 'זאגט!', words: [w('זאגט!', 9000, 10000)] },
     ];
-    expect(paragraphs(heard)).toEqual([
-      { startMs: 0, endMs: 9000, text: 'א ב' },
-      { startMs: 15000, endMs: 90000, text: 'ג ד.' },
-      { startMs: 90500, endMs: 95000, text: 'ה' },
+    expect(paragraphs(heard).map((p) => [p.text, p.startMs, p.endMs])).toEqual([
+      ['עס שטייט אין פסוק.', 0, 7000],
+      ['דער רבי זאגט!', 7000, 10000],
     ]);
+    expect(paragraphs(heard)[0]!.words!.map((x) => x.text)).toEqual(['עס', 'שטייט', 'אין', 'פסוק.']);
   });
 
-  it('breaks a long paragraph at the end of a sentence, and past two minutes wherever it is', () => {
-    const heard = [
-      { startMs: 0, endMs: 61000, text: 'עס שטייט' },
-      { startMs: 61000, endMs: 70000, text: 'אין פסוק, און' }, // over a minute, but mid-sentence: carries on
-      { startMs: 70000, endMs: 80000, text: 'אזוי איז עס.' },
-      { startMs: 80000, endMs: 150000, text: 'דער רבי זאגט' }, // after the sentence's end: a new paragraph
-      { startMs: 150000, endMs: 205000, text: 'אז' },
-      { startMs: 205000, endMs: 210000, text: 'מען דארף' }, // two minutes without a sentence's end: breaks anyway
-    ];
-    expect(paragraphs(heard).map((p) => p.text)).toEqual(['עס שטייט אין פסוק, און אזוי איז עס.', 'דער רבי זאגט אז', 'מען דארף']);
+  it('breaks a long sentence where he pauses after a comma, and past the longest a line may be at the best place', () => {
+    const w = (text: string, startMs: number, endMs: number) => ({ text, startMs, endMs });
+    // Fifteen seconds without a full stop: a comma with a breath after it, past twelve seconds, ends the line.
+    const words = [w('ווארום', 0, 5000), w('ס׳איז,', 5000, 10000), w('דאך', 10000, 13000), w('אזוי,', 13000, 14000), w('אז', 15000, 16000), w('מען', 16000, 17000)];
+    expect(paragraphs([{ startMs: 0, endMs: 17000, text: '', words }]).map((p) => p.text)).toEqual(['ווארום ס׳איז, דאך אזוי,', 'אז מען']);
+    // No comma and no stop for half a minute: cut at the longest pause after twelve seconds.
+    const run = Array.from({ length: 30 }, (_, i) => w(`ווארט${i}`, i * 1000 + (i === 20 ? 400 : 0), i * 1000 + 900));
+    const lines = paragraphs([{ startMs: 0, endMs: 30000, text: '', words: run }]);
+    expect(lines.map((p) => p.words!.length)).toEqual([20, 10]);
   });
 
   it('joins a piece that carries on the word the piece before ended in, and never breaks there', () => {
     const heard = [
       {
         startMs: 0,
-        endMs: 70000,
+        endMs: 3000,
         text: 'יראה פון דעם י',
         words: [
           { text: 'יראה', startMs: 0, endMs: 1000 },
-          { text: 'פון', startMs: 1000, endMs: 69000 },
-          { text: 'דעם', startMs: 69000, endMs: 69500 },
-          { text: 'י', startMs: 69500, endMs: 70000 },
+          { text: 'פון', startMs: 1000, endMs: 2000 },
+          { text: 'דעם', startMs: 2000, endMs: 2500 },
+          { text: 'י', startMs: 2500, endMs: 3000 },
         ],
       },
-      // Over a minute already and after a pause, but it is the rest of "יוד".
-      { startMs: 72500, endMs: 74000, text: 'וד, און', glued: true, words: [{ text: 'וד,', startMs: 72500, endMs: 73000 }, { text: 'און', startMs: 73000, endMs: 74000 }] },
-      { startMs: 77000, endMs: 78000, text: 'נאך', words: [{ text: 'נאך', startMs: 77000, endMs: 78000 }] }, // after a pause
+      // After a pause, but it is the rest of "יוד".
+      { startMs: 5500, endMs: 7000, text: 'וד. און', glued: true, words: [{ text: 'וד.', startMs: 5500, endMs: 6000 }, { text: 'און', startMs: 6000, endMs: 7000 }] },
+      { startMs: 10000, endMs: 11000, text: 'נאך', words: [{ text: 'נאך', startMs: 10000, endMs: 11000 }] },
     ];
-    const [first, second, ...none] = paragraphs(heard);
-    expect(none).toEqual([]);
-    expect(first).toMatchObject({ startMs: 0, endMs: 74000, text: 'יראה פון דעם יוד, און' });
-    expect(first!.words!.slice(-2)).toEqual([
-      { text: 'יוד,', startMs: 69500, endMs: 73000 },
-      { text: 'און', startMs: 73000, endMs: 74000 },
+    const lines = paragraphs(heard);
+    expect(lines.map((p) => p.text)).toEqual(['יראה פון דעם יוד.', 'און נאך']);
+    expect(lines[0]!.words!.slice(-1)).toEqual([{ text: 'יוד.', startMs: 2500, endMs: 6000 }]);
+  });
+
+  it('keeps pieces heard without word times whole, and breaks after the ones that end a sentence', () => {
+    const heard = [
+      { startMs: 0, endMs: 4000, text: 'עס שטייט אין פסוק.' },
+      { startMs: 4500, endMs: 9000, text: 'דער רבי' },
+      { startMs: 15000, endMs: 20000, text: 'זאגט.' },
+    ];
+    expect(paragraphs(heard)).toEqual([
+      { startMs: 0, endMs: 4000, text: 'עס שטייט אין פסוק.' },
+      { startMs: 4500, endMs: 20000, text: 'דער רבי זאגט.' },
     ]);
-    expect(second).toMatchObject({ startMs: 77000, text: 'נאך' });
   });
 
   it("reads the local Whisper's lines, in milliseconds, without JEM's spoken opening", async () => {
@@ -101,7 +107,7 @@ describe('machine transcription and sync', () => {
       transcribe: async (_audio, language) => {
         expect(language).toBe('yi');
         return [
-          { startMs: 0, endMs: 5000, text: 'לחיים' },
+          { startMs: 0, endMs: 5000, text: 'לחיים.' },
           { startMs: 9000, endMs: 12000, text: 'עס שטייט' },
         ];
       },
@@ -113,7 +119,7 @@ describe('machine transcription and sync', () => {
     expect(text!.data).toMatchObject({ kind: 'transcript', recording: served, language: 'yi' });
     const segments = await catalog.list({ type: 'segment' });
     expect(segments.map((s) => s.data).sort((a, b) => ((a as { order: string }).order < (b as { order: string }).order ? -1 : 1))).toMatchObject([
-      { content: 'לחיים', proofread: 0, origin: { by: 'transcribe:fake@1' } },
+      { content: 'לחיים.', proofread: 0, origin: { by: 'transcribe:fake@1' } },
       { content: 'עס שטייט', proofread: 0 },
     ]);
     const spans = await catalog.list({ type: 'alignment-span' });
@@ -125,7 +131,7 @@ describe('machine transcription and sync', () => {
     const { fixParagraph, recordingTranscript } = await import('@chassidushub/core');
     const view = (await recordingTranscript(catalog, served))!;
     expect(view.paragraphs).toMatchObject([
-      { content: 'לחיים', startMs: 0, endMs: 5000, checked: false, by: 'transcribe:fake@1' },
+      { content: 'לחיים.', startMs: 0, endMs: 5000, checked: false, by: 'transcribe:fake@1' },
       { content: 'עס שטייט', startMs: 9000, endMs: 12000, checked: false },
     ]);
     const fix = await fixParagraph(catalog, 'chaim', { segment: view.paragraphs[1]!.id, content: 'עס שטייט אין פסוק' });
@@ -143,7 +149,7 @@ describe('word-level sync', () => {
     await registerFile(catalog.db, { sha256: 'd'.repeat(64), bytes: 10, mime: 'audio/mpeg', source: 'contribution', licence: 'cc0', held: true });
     const recording = await add(catalog, 'mendy', 'keeper', 'recording', { event, title: { he: 'שיחה א׳' }, file: 'd'.repeat(64), sets: [set] });
     const heard = [
-      { startMs: 0, endMs: 2000, text: 'לחיים עס', words: [{ text: 'לחיים', startMs: 0, endMs: 1000 }, { text: 'עס', startMs: 1000, endMs: 2000 }] },
+      { startMs: 0, endMs: 2000, text: 'לחיים עס.', words: [{ text: 'לחיים', startMs: 0, endMs: 1000 }, { text: 'עס.', startMs: 1000, endMs: 2000 }] },
       { startMs: 5000, endMs: 7000, text: 'שטייט אין', words: [{ text: 'שטייט', startMs: 5000, endMs: 6000 }, { text: 'אין', startMs: 6000, endMs: 7000 }] },
     ];
     const transcriber: Transcriber = { name: 'fake', version: '2', transcribe: async () => heard };

@@ -47,7 +47,7 @@ export {
   type GreyImage,
 } from './fingerprints.js';
 export { itemsIn, mentionsIn, referencesIn, tokenize, type Token } from './mentions.js';
-export { HOUSE_SPELLING_HEBREW_AFTER, HOUSE_SPELLING_PARTS, HOUSE_SPELLING_WORDS, spellingHints, toHouseSpelling } from './spelling.js';
+export { fixAbbreviationMark, HEARD_ABBREVIATIONS, HOUSE_SPELLING_HEBREW_AFTER, HOUSE_SPELLING_PARTS, HOUSE_SPELLING_WORDS, splitGluedApostrophes, spellingHints, tidyHeard, toHouseSpelling } from './spelling.js';
 export {
   SHAAR_SECTIONS,
   SHAAR_SECTION_MAX,
