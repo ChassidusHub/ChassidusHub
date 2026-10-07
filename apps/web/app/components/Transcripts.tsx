@@ -1,11 +1,12 @@
-import { Maximize2, Minimize2, Pause, PenLine, Play, SkipBack, SkipForward, Undo2, LocateFixed, Loader2 } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Check, Maximize2, Minimize2, Pause, PenLine, Play, SkipBack, SkipForward, Undo2, LocateFixed, Loader2, X } from 'lucide-react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { unclearRanges } from '@chassidushub/model';
 import { t, type Lang } from '../lib/i18n.js';
 import { clockOf, tn } from '../lib/i18nNetwork.js';
 import { href } from '../lib/links.js';
-import { get, pendingRanges, timedWords, within, type Transcript, type Word } from '../lib/transcript.js';
+import { get, noteChecked, pendingRanges, timedWords, within, type Paragraph, type Pending, type Transcript, type Word } from '../lib/transcript.js';
+import { postJson } from '../lib/post.js';
 import { useAccount } from '../lib/useAccount.js';
 import { clock, usePlayer, type Track } from '../player/PlayerProvider.js';
 import { MachineLabel } from '../ui/primitives.js';
@@ -62,53 +63,73 @@ function useNowMs(playing: boolean): number {
   return ms;
 }
 
-/** A paragraph's words, the one being said marked, the ones already said set apart; each knows when it is said, so a tap can play from it. */
-/** A paragraph's words with the ones a listener marked unclear (`[words?]`) shown as such, and the ones said with stress bold. */
-function Plain({ content, lang, pending = [], bold = [] }: { content: string; lang: Lang; pending?: Array<{ from: number; to: number }>; bold?: Array<{ from: number; to: number }> }) {
-  const marks = unclearRanges(content);
-  if (!marks.length && !pending.length && !bold.length) return <>{content}</>;
-  // Word by word, so a word a waiting fix changes is marked as well as an unclear one.
+type Range = { from: number; to: number };
+
+/**
+ * Something drawn among a paragraph's words: "Fix" right after the words a
+ * listener chose, or the box to type the right words in place of them.
+ */
+export type Slot = { from: number; to: number; node: React.ReactNode; replace: boolean };
+
+const overlaps = (list: Range[], from: number, to: number) => list.some((x) => from < x.to && to > x.from);
+
+/** The paragraph's words in order, with the slot drawn after the chosen words, or in their place. */
+export function slotted(words: Array<Range & { node: React.ReactNode }>, content: string, slot?: Slot): React.ReactNode[] {
   const out: React.ReactNode[] = [];
   let at = 0;
-  for (const m of content.matchAll(/\S+/g)) {
-    const from = m.index ?? 0;
-    const to = from + m[0].length;
-    if (from > at) out.push(content.slice(at, from));
-    const u = marks.findIndex((x) => from < x.to && to > x.from);
-    out.push(<Marked key={from} text={m[0]} unclear={u >= 0} u={u} waiting={pending.some((x) => from < x.to && to > x.from)} bold={bold.some((x) => from < x.to && to > x.from)} lang={lang} />);
-    at = to;
+  for (const w of words) {
+    const chosen = slot && w.from >= slot.from && w.to <= slot.to;
+    if (chosen && slot.replace) {
+      if (w.from === slot.from) {
+        if (w.from > at) out.push(content.slice(at, w.from));
+        out.push(<Fragment key="slot">{slot.node}</Fragment>);
+      }
+      at = w.to;
+      continue;
+    }
+    if (w.from > at) out.push(content.slice(at, w.from));
+    out.push(w.node);
+    at = w.to;
+    if (chosen && w.to === slot.to) out.push(<Fragment key="slot">{slot.node}</Fragment>);
   }
   if (at < content.length) out.push(content.slice(at));
-  return <>{out}</>;
+  return out;
+}
+
+/** A paragraph's words with the ones a listener marked unclear (`[words?]`) shown as such, and the ones said with stress bold; each word knows where it sits, so a tap can choose it. */
+function Plain({ content, lang, pending = [], bold = [], chosen, slot }: { content: string; lang: Lang; pending?: Range[]; bold?: Range[]; chosen?: Range; slot?: Slot }) {
+  const marks = unclearRanges(content);
+  const words = [...content.matchAll(/\S+/g)].map((m) => {
+    const from = m.index ?? 0;
+    const to = from + m[0].length;
+    const u = marks.findIndex((x) => from < x.to && to > x.from);
+    const className = chosen && from >= chosen.from && to <= chosen.to ? 'w-chosen' : undefined;
+    return { from, to, node: <Marked key={from} text={m[0]} from={from} className={className} unclear={u >= 0} u={u} waiting={overlaps(pending, from, to)} bold={overlaps(bold, from, to)} lang={lang} /> };
+  });
+  return <>{slotted(words, content, slot)}</>;
 }
 
 /** A word as a reader sees it, marked when a listener was unsure of it, or a fix of it waits for approval. */
-function Marked({ text, unclear, waiting, lang, className, ms, u, bold }: { text: string; unclear: boolean; waiting: boolean; lang: Lang; className?: string; ms?: number; u?: number; bold?: boolean }) {
+function Marked({ text, from, unclear, waiting, lang, className, ms, u, bold }: { text: string; from: number; unclear: boolean; waiting: boolean; lang: Lang; className?: string; ms?: number; u?: number; bold?: boolean }) {
   const classes = [className, unclear ? 'w-unclear' : '', waiting ? 'w-pending' : ''].filter(Boolean).join(' ');
-  const words = bold ? <b>{text}</b> : text;
-  if (!classes) return <>{words}</>;
   return (
-    <span className={classes} data-ms={ms} data-u={unclear && u !== undefined && u >= 0 ? u : undefined} title={[unclear ? t(lang, 'unclearWords') : '', waiting ? t(lang, 'pendingFix') : ''].filter(Boolean).join(' · ') || undefined}>
-      {words}
+    <span className={classes || undefined} data-from={from} data-to={from + text.length} data-ms={ms} data-u={unclear && u !== undefined && u >= 0 ? u : undefined} title={[unclear ? t(lang, 'unclearWords') : '', waiting ? t(lang, 'pendingFix') : ''].filter(Boolean).join(' · ') || undefined}>
+      {bold ? <b>{text}</b> : text}
     </span>
   );
 }
 
-function Spoken({ content, words, nowMs, lang, pending = [] }: { content: string; words: Word[]; nowMs: number; lang: Lang; pending?: Array<{ from: number; to: number }> }) {
-  const out: React.ReactNode[] = [];
+/** A paragraph's words, the one being said marked, the ones already said set apart; each knows when it is said, so a tap can play from it. */
+function Spoken({ content, words, nowMs, lang, pending = [], chosen, slot }: { content: string; words: Word[]; nowMs: number; lang: Lang; pending?: Range[]; chosen?: Range; slot?: Slot }) {
   const marks = unclearRanges(content);
-  let at = 0;
-  for (const [i, w] of words.entries()) {
-    if (w.from > at) out.push(content.slice(at, w.from));
+  const drawn = words.map((w, i) => {
     // Not `said`: that is the farbrengen page's "what was said" list, whose phone rule pulls it out to the screen's edges.
     const state = nowMs >= w.startMs && nowMs < Math.max(w.endMs, w.startMs + 1) ? 'w-now' : nowMs >= w.endMs ? 'w-past' : '';
-    const hits = (list: Array<{ from: number; to: number }>) => list.some((m) => w.from < m.to && w.to > m.from);
     const u = marks.findIndex((m) => w.from < m.to && w.to > m.from);
-    out.push(<Marked key={i} text={content.slice(w.from, w.to)} className={['word', state].filter(Boolean).join(' ')} ms={w.startMs} unclear={u >= 0} u={u} waiting={hits(pending)} bold={w.bold} lang={lang} />);
-    at = w.to;
-  }
-  if (at < content.length) out.push(content.slice(at));
-  return <>{out}</>;
+    const picked = chosen && w.from >= chosen.from && w.to <= chosen.to ? 'w-chosen' : '';
+    return { from: w.from, to: w.to, node: <Marked key={i} text={content.slice(w.from, w.to)} from={w.from} className={['word', state, picked].filter(Boolean).join(' ')} ms={w.startMs} unclear={u >= 0} u={u} waiting={overlaps(pending, w.from, w.to)} bold={w.bold} lang={lang} /> };
+  });
+  return <>{slotted(drawn, content, slot)}</>;
 }
 
 export function Transcripts({ tracks, lang, onLoaded, only, view = 'listen' }: { tracks: Track[]; lang: Lang; onLoaded?: (transcripts: number) => void; only?: string; view?: 'listen' | 'text' }) {
@@ -153,6 +174,19 @@ export function Transcripts({ tracks, lang, onLoaded, only, view = 'listen' }: {
     );
   }
 
+  // A few words fixed while listening: in at once for those trusted with it, else waiting for approval and marked so in the words.
+  async function fixWords(recording: string, segment: string, content: string): Promise<'merged' | 'sent'> {
+    const row = await postJson<{ status?: string; id?: number }>(`recordings/${recording}/transcript/fix`, { segment, content, complete: false });
+    noteChecked();
+    if (row.status === 'merged') {
+      fixed(recording, segment, content, false);
+      return 'merged';
+    }
+    const mine: Pending = { segment, content, complete: false, author: account?.person.id ?? '', authorName: account?.person.displayName ?? null, at: new Date().toISOString(), suggestion: row.id ?? null };
+    setTranscripts((all) => all.map((tr) => (tr.recording !== recording ? tr : { ...tr, pending: [...(tr.pending ?? []).filter((x) => !(x.segment === segment && x.author === mine.author)), mine] })));
+    return 'sent';
+  }
+
   // Edit goes to the page's Text tab, where the words are read and checked.
   function toText() {
     const next = new URLSearchParams(params);
@@ -186,7 +220,7 @@ export function Transcripts({ tracks, lang, onLoaded, only, view = 'listen' }: {
   if (view === 'listen')
     return (
       <section id="transcript" ref={section} className="transcripts">
-        <Lyrics transcripts={transcripts} tracks={tracks} lang={lang} nowMs={nowMs} found={found} machine={unchecked || syncUnchecked} signedIn={Boolean(account)} onEdit={toText} />
+        <Lyrics transcripts={transcripts} tracks={tracks} lang={lang} nowMs={nowMs} found={found} machine={unchecked || syncUnchecked} signedIn={Boolean(account)} onEdit={toText} onFix={account ? fixWords : undefined} />
         {unchecked || syncUnchecked ? <p className="lyrics-foot row-sub">{t(lang, 'lyricsMachineHint')}</p> : null}
         {ask}
       </section>
@@ -228,6 +262,7 @@ export function Lyrics({
   machine,
   signedIn,
   onEdit,
+  onFix,
 }: {
   transcripts: Transcript[];
   tracks: Track[];
@@ -237,8 +272,15 @@ export function Lyrics({
   machine: boolean;
   signedIn: boolean;
   onEdit?: () => void;
+  /** Sends a fix of one paragraph's words; answers whether it went in at once or waits for approval. Without it, words cannot be chosen. */
+  onFix?: (recording: string, segment: string, content: string) => Promise<'merged' | 'sent'>;
 }) {
   const player = usePlayer();
+  // The words a listener tapped, to fix: "Fix" shows beside them a few seconds, and a second tap in the same paragraph widens them to a phrase.
+  const [picked, setPicked] = useState<{ recording: string; segment: string; from: number; to: number; at: number; widened: boolean } | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState<{ text: string; error?: boolean } | null>(null);
   const [discuss, setDiscuss] = useState<{ words: string; atMs: number | null } | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const [follow, setFollow] = useState(true);
@@ -246,6 +288,19 @@ export function Lyrics({
   const foundIn = found ? transcripts.find((tr) => tr.paragraphs.some((p) => p.id === found))?.recording : undefined;
   const [chosen, setChosen] = useState<string>(foundIn ?? transcripts[0]!.recording);
   const playingId = player.current?.id;
+
+  // "Fix" waits a few seconds for a tap, then gets out of the way; never while the words are being typed.
+  useEffect(() => {
+    if (!picked || draft !== null) return;
+    const timer = setTimeout(() => setPicked(null), 6000);
+    return () => clearTimeout(timer);
+  }, [picked, draft]);
+
+  useEffect(() => {
+    if (!said || said.error) return;
+    const timer = setTimeout(() => setSaid(null), 4000);
+    return () => clearTimeout(timer);
+  }, [said]);
 
   // The part being played is the part shown.
   useEffect(() => {
@@ -326,6 +381,102 @@ export function Lyrics({
     } else player.play(tracks, index, ms / 1000);
   }
 
+  // A tap on a word chooses it, to fix, as well as playing from it; a second tap on another word of the same paragraph makes the two ends of a phrase.
+  function choose(p: Paragraph, target: HTMLElement): boolean {
+    if (!onFix || draft !== null) return false;
+    const word = target.closest<HTMLElement>('[data-from]');
+    if (!word) return false;
+    const from = Number(word.dataset.from);
+    const to = Number(word.dataset.to);
+    if (picked && picked.segment === p.id && !picked.widened && from !== picked.from) {
+      setPicked({ ...picked, from: Math.min(from, picked.from), to: Math.max(to, picked.to), at: Date.now(), widened: true });
+      return true;
+    }
+    setPicked({ recording: shown.recording, segment: p.id, from, to, at: Date.now(), widened: false });
+    return false;
+  }
+
+  function startFix() {
+    if (!picked) return;
+    const p = shown.paragraphs.find((x) => x.id === picked.segment);
+    if (!p) return;
+    if (playing && player.playing) player.toggle();
+    setSaid(null);
+    setDraft(p.content.slice(picked.from, picked.to));
+  }
+
+  function stopFix() {
+    setDraft(null);
+    setPicked(null);
+  }
+
+  async function sendFix() {
+    if (!picked || draft === null || !onFix) return;
+    const p = shown.paragraphs.find((x) => x.id === picked.segment);
+    if (!p) return;
+    const content = `${p.content.slice(0, picked.from)}${draft.trim()}${p.content.slice(picked.to)}`.replace(/\s+/g, ' ').trim();
+    if (content === p.content) return stopFix();
+    setBusy(true);
+    try {
+      const done = await onFix(picked.recording, p.id, content);
+      setSaid({ text: t(lang, done === 'merged' ? 'fixDone' : 'fixSent') });
+      stopFix();
+    } catch (e) {
+      setSaid({ text: e instanceof Error ? e.message : String(e), error: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // The chip beside the picked words, or the box that takes their place.
+  function slotFor(p: Paragraph): Slot | undefined {
+    if (!picked || picked.segment !== p.id || picked.recording !== shown.recording) return undefined;
+    if (draft === null)
+      return {
+        from: picked.from,
+        to: picked.to,
+        replace: false,
+        node: (
+          <button type="button" className="chip chip-accent lyrics-fix" onClick={startFix}>
+            <PenLine size={14} aria-hidden />
+            {t(lang, 'fixWords')}
+          </button>
+        ),
+      };
+    return {
+      from: picked.from,
+      to: picked.to,
+      replace: true,
+      node: (
+        <span className="lyrics-fixing">
+          <input
+            dir="auto"
+            value={draft}
+            autoFocus
+            aria-label={t(lang, 'rightWords')}
+            placeholder={t(lang, 'rightWords')}
+            size={Math.max(4, draft.length + 1)}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void sendFix();
+              if (e.key === 'Escape') {
+                e.stopPropagation();
+                stopFix();
+              }
+            }}
+          />
+          <button type="button" className="btn primary sm" onClick={() => void sendFix()} disabled={busy || !draft.trim()}>
+            {busy ? <Loader2 size={14} className="spin" aria-hidden /> : <Check size={14} aria-hidden />}
+            {t(lang, 'send')}
+          </button>
+          <button type="button" className="btn ghost sm icon" onClick={stopFix} aria-label={t(lang, 'cancel')} title={t(lang, 'cancel')}>
+            <X size={14} aria-hidden />
+          </button>
+        </span>
+      ),
+    };
+  }
+
   const duration = playing ? player.duration || (track?.durationMs ?? 0) / 1000 : (track?.durationMs ?? 0) / 1000;
   const time = playing ? player.time : 0;
   const percent = duration ? Math.min(100, (time / duration) * 100) : 0;
@@ -387,29 +538,39 @@ export function Lyrics({
           const past = playing && !now && p.endMs !== null && nowMs >= p.endMs;
           const classes = ['lyrics-line', now ? 'now' : past ? 'past' : '', p.id === found ? 'found' : ''].filter(Boolean).join(' ');
           const waiting = (shown.pending ?? []).filter((x) => x.segment === p.id).flatMap((x) => pendingRanges(p.content, x.content));
-          return (
-            <button
-              key={p.id}
-              id={`p-${p.id}`}
-              type="button"
-              data-p={p.id}
-              className={classes}
-              dir="auto"
-              onClick={(e) => {
-                const target = e.target as HTMLElement;
-                const at = target.closest<HTMLElement>('[data-ms]')?.dataset.ms;
-                const u = target.closest<HTMLElement>('[data-u]')?.dataset.u;
-                const mark = u !== undefined ? unclearRanges(p.content)[Number(u)] : undefined;
-                if (mark && onEdit) setDiscuss({ words: p.content.slice(mark.from, mark.to), atMs: at ? Number(at) : p.startMs });
-                playFrom(at ? Number(at) : (p.startMs ?? 0));
-              }}
-            >
-              {now && timedWords(p) ? <Spoken content={p.content} words={timedWords(p)!} nowMs={nowMs} lang={lang} pending={waiting} /> : <Plain content={p.content} lang={lang} pending={waiting} bold={p.words?.filter((w) => w.bold)} />}
+          const slot = slotFor(p);
+          const range = slot ? { from: slot.from, to: slot.to } : undefined;
+          const words = now && timedWords(p) ? <Spoken content={p.content} words={timedWords(p)!} nowMs={nowMs} lang={lang} pending={waiting} chosen={range} slot={slot} /> : <Plain content={p.content} lang={lang} pending={waiting} bold={p.words?.filter((w) => w.bold)} chosen={range} slot={slot} />;
+          const tap = (e: React.MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('.lyrics-fix, .lyrics-fixing')) return;
+            if (draft !== null) return;
+            // The second end of a phrase only widens it; the recording goes on from where it was.
+            if (choose(p, target)) return;
+            const at = target.closest<HTMLElement>('[data-ms]')?.dataset.ms;
+            const u = target.closest<HTMLElement>('[data-u]')?.dataset.u;
+            const mark = u !== undefined ? unclearRanges(p.content)[Number(u)] : undefined;
+            if (mark && onEdit) setDiscuss({ words: p.content.slice(mark.from, mark.to), atMs: at ? Number(at) : p.startMs });
+            playFrom(at ? Number(at) : (p.startMs ?? 0));
+          };
+          // With "Fix" or the box in it, the paragraph is no longer one button: a button holds no other.
+          return slot ? (
+            <div key={p.id} id={`p-${p.id}`} data-p={p.id} className={`${classes} choosing`} dir="auto" onClick={tap}>
+              {words}
+            </div>
+          ) : (
+            <button key={p.id} id={`p-${p.id}`} type="button" data-p={p.id} className={classes} dir="auto" onClick={tap}>
+              {words}
             </button>
           );
         })}
       </div>
       {discuss ? <DiscussUnclear recording={shown.recording} words={discuss.words} atMs={discuss.atMs} lang={lang} signedIn={signedIn} onClose={() => setDiscuss(null)} /> : null}
+      {said ? (
+        <p className={said.error ? 'lyrics-said error' : 'lyrics-said'} role="status">
+          {said.text}
+        </p>
+      ) : null}
       {!follow && playing ? (
         <button type="button" className="lyrics-now" onClick={backToNow}>
           <LocateFixed size={16} aria-hidden />
