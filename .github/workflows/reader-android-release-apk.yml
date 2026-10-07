@@ -191,8 +191,15 @@ jobs:
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          # Spaces or line breaks picked up when the secret was pasted are dropped.
-          printf %s "$ANDROID_KEYSTORE_BASE64" | tr -d ' \t\r\n' | base64 -d > "$RUNNER_TEMP/upload.keystore"
+          # Anything a paste picks up besides the base64 itself (spaces, line
+          # breaks, quotes, backticks) is dropped; the length says whether
+          # the whole value arrived, without showing it.
+          value=$(printf %s "$ANDROID_KEYSTORE_BASE64" | tr -cd 'A-Za-z0-9+/=')
+          echo "ANDROID_KEYSTORE_BASE64: ${#value} characters of base64 (${#ANDROID_KEYSTORE_BASE64} as pasted)."
+          if ! printf %s "$value" | base64 -d > "$RUNNER_TEMP/upload.keystore"; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not whole base64 (${#value} characters): paste the whole value again."
+            exit 1
+          fi
 
       - name: Build release APKs (one per phone ABI, plus universal)
         env:
