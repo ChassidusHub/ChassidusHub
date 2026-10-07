@@ -1,8 +1,9 @@
 /*
- * The library (routes/sets.tsx), as design/ draws it: the shelves down the
- * start side and the chosen shelf's sefarim as cards beside them on a wide
- * screen; on a phone the shelves are a row of names that scrolls, and the
- * cards are one column.
+ * The library (routes/sets.tsx), as design/system draws it (boards 15 to
+ * 17 and 21): on a wide screen the shelves down the start side and the
+ * chosen shelf beside them, each of its sets a row of title pages; on a
+ * phone, the first level is a list of its own (.lb-index), and a shelf
+ * once chosen has its row of shelf names that scrolls above it.
  */
 
 .lb {
@@ -79,11 +80,6 @@
   color: var(--subtle);
 }
 
-.lb-cards {
-  columns: 2 340px;
-  column-gap: 24px;
-}
-
 .lb-card {
   break-inside: avoid;
   display: block;
@@ -92,142 +88,6 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 24px;
-}
-
-.lb-card-h {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.lb-card-h h2 {
-  font: 700 24px / 1.25 var(--display);
-  letter-spacing: 0;
-}
-
-.lb-card-h h2 a {
-  color: var(--text);
-}
-
-.lb-card-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-size: var(--fs-md);
-  white-space: nowrap;
-}
-
-.lb-sub {
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  color: var(--subtle);
-  margin: 18px 0 10px;
-  letter-spacing: 0;
-}
-
-.lb-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-  gap: 6px;
-}
-
-.lb-grid a {
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--text);
-  font: 700 15px / 1 var(--display);
-  text-decoration: none;
-}
-
-.lb-grid a:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-/* Parts with names (Tanya's ליקוטי אמרים…) are a list, not squares. */
-.lb-parts {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 6px;
-}
-
-.lb-parts a {
-  display: block;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--display);
-}
-
-.lb-parts a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.lb-with {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px;
-}
-
-.lb-with a {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  height: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--bg);
-  color: var(--text);
-  text-decoration: none;
-}
-
-.lb-with a:hover {
-  border-color: var(--border-strong);
-}
-
-.lb-with b {
-  font-size: var(--fs-md);
-}
-
-.lb-with span {
-  font-size: var(--fs-sm);
-  color: var(--subtle);
-}
-
-/* A closed card: its name, how it is divided, and a way in. */
-.lb-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 18px 24px;
-  color: var(--text);
-  text-decoration: none;
-}
-
-.lb-row:hover {
-  text-decoration: none;
-  border-color: var(--border-strong);
-}
-
-.lb-row b {
-  flex: 1;
-  font: 700 19px / 1.3 var(--display);
-}
-
-.lb-row span {
-  color: var(--subtle);
-  font-size: var(--fs-md);
 }
 
 .lb-loose summary {
@@ -264,6 +124,141 @@
   color: var(--subtle);
   font-size: var(--fs-md);
   margin-top: 8px;
+}
+
+/* The first level, on a phone only: find a sefer, the Rebbeim, the ways in, the other shelves. */
+.lb-index {
+  display: none;
+}
+
+.lb-title {
+  margin: var(--s-5) 0 var(--s-3);
+  font: 700 var(--t-title) / 1.2 var(--display);
+}
+
+.lb-find {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--subtle);
+}
+
+.lb-find:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.lb-find input {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-h);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--t-body-lg);
+  outline: none;
+}
+
+.lb-index-h {
+  margin: var(--s-5) 0 var(--s-2);
+  color: var(--subtle);
+  font-size: var(--t-small);
+  font-weight: 700;
+}
+
+.lb-index-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.lb-index-list + .lb-index-list {
+  margin-top: var(--s-3);
+}
+
+.lb-index-list li + li {
+  border-top: 1px solid var(--border-muted);
+}
+
+.lb-index-list a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'icon name go' 'icon sub go';
+  align-items: center;
+  column-gap: var(--s-3);
+  min-height: 56px;
+  padding: var(--s-2) var(--s-4);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.lb-index-list a > .i:first-child:not(:last-child) {
+  grid-area: icon;
+  color: var(--accent);
+}
+
+.lb-index-list b {
+  grid-area: name;
+  font: 700 var(--t-body-lg) / 1.3 var(--display);
+}
+
+.lb-index-list span {
+  grid-area: sub;
+  color: var(--subtle);
+  font-size: var(--t-small);
+}
+
+.lb-index-list a > .i:last-child {
+  grid-area: go;
+}
+
+/* A shelf: each of its sets a section, its sefarim as title pages. */
+.lb-sets {
+  display: grid;
+  /* A column that may be narrower than a row of title pages, so that row scrolls and the page does not. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-6);
+}
+
+.lb-set-h {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.lb-set-h h2 {
+  margin: 0;
+  font: 700 var(--t-heading) / 1.3 var(--display);
+}
+
+.lb-set-h h2 a {
+  color: var(--text);
+}
+
+.lb-set-h span {
+  color: var(--subtle);
+  font-size: var(--t-small);
+}
+
+.lb-set-more {
+  display: inline-block;
+  margin-top: var(--s-3);
+  color: var(--accent);
+  font-size: var(--t-small);
+  font-weight: 600;
 }
 
 @media (max-width: 860px) {
@@ -310,33 +305,36 @@
   .lb-head p {
     font-size: var(--fs-md);
   }
-  .lb-cards {
-    columns: auto;
-    margin-inline: calc(var(--gutter) * -1);
-  }
   .lb-card {
     margin: 0;
     border-radius: 0;
     border-width: 0 0 1px;
     padding: 20px var(--gutter);
   }
-  .lb-card.open {
-    border-top-width: 1px;
-  }
-  .lb-row {
-    background: none;
-    padding-block: 16px;
-  }
-  .lb-card-h h2 {
-    font-size: 21px;
-  }
-  .lb-grid {
-    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
-  }
-  .lb-with {
-    grid-template-columns: 1fr 1fr;
-  }
   .lb-foot {
     margin-top: 20px;
+  }
+  /* No shelf chosen: the first level alone; once one is chosen, the shelf with its row of names. */
+  .lb-top .lb-index {
+    display: block;
+  }
+  .lb-top .lb-shelves,
+  .lb-top .lb-main {
+    display: none;
+  }
+  /* A set's title pages: one row that scrolls sideways. */
+  .lb-covers {
+    display: flex;
+    gap: var(--s-3);
+    overflow-x: auto;
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    scrollbar-width: none;
+  }
+  .lb-covers > li {
+    flex: none;
+  }
+  .lb-set-h h2 {
+    font-size: var(--t-subhead);
   }
 }

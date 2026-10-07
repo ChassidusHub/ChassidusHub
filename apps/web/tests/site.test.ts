@@ -103,6 +103,19 @@ describe('the public site', () => {
     expect(page.html).toContain('<input type="hidden" name="lang" value="he"/>');
   });
 
+  it('draws the library as levels: on a phone the first is a list, a shelf its sets as rows of title pages', async () => {
+    const top = (await get('/sets?lang=he')).html;
+    expect(top).toContain('class="wrap lb lb-top"');
+    expect(top).toContain('class="lb-index"');
+    expect(top).toMatch(/<form class="lb-find"[^>]*action="\/search"/);
+    expect(top).toContain('href="/calendar?lang=he"'); // the farbrengens, by year and day
+    expect(top).toContain('href="/daily?lang=he"');
+    expect(top).toContain('class="lb-set"');
+    expect(top).toContain('class="shaar-row lb-covers"');
+    // A shelf asked for by name is the shelf, with no first level above it on a phone.
+    expect((await get('/sets?shelf=the-rebbe&lang=he')).html).toContain('class="wrap lb lb-asked"');
+  });
+
   it('renders the same pages in English at the bare address, with both languages linked for search engines', async () => {
     const page = await get('/sample');
     expect(page.html).toContain('<html lang="en" dir="ltr">');
