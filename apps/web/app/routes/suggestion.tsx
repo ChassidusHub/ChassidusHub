@@ -18,6 +18,7 @@ import { threads, ThreadsError, type People, type TimelineItem } from '../lib/th
 import { tt } from '../lib/threadStrings.js';
 import { useAccount } from '../lib/useAccount.js';
 import { useLang } from '../lib/useLang.js';
+import { suggestionSentence } from '../lib/suggestionSentence.js';
 import { wordDiff } from '../lib/wordDiff.js';
 import { BeforeAfter, DiffBox, DiffSegment, DiffStat, FieldDiff, diffStat } from '../ui/Diff.js';
 import { Icon } from '../ui/Icon.js';
@@ -81,6 +82,8 @@ const W = {
   reviewer: { he: 'בודק', en: 'Reviewer' },
   sideBySide: { he: 'הצגה זה מול זה', en: 'Side by side' },
   inline: { he: 'הצגה רצופה', en: 'Inline' },
+  wholeParagraph: { he: 'הפסקה כולה', en: 'Show the paragraph' },
+  onlyChange: { he: 'רק מה שהשתנה', en: 'Only what changed' },
   printing: { he: 'הדפוס', en: 'The printing' },
   page: { he: 'עמ׳', en: 'p.' },
   pages: { he: 'עמ׳', en: 'pp.' },
@@ -623,7 +626,7 @@ function TitleLine({ view, number, lang, mayEdit, onSave }: { view: SuggestionVi
   return (
     <div className="title-row">
       <h1 className="page-title" dir="auto">
-        {view.title} <span className="num">#{number}</span>
+        {suggestionSentence(view, lang)} <span className="num">#{number}</span>
       </h1>
       {mayEdit ? (
         <button type="button" className="btn sm" onClick={() => (setValue(view.title), setEditing(true))}>
@@ -676,6 +679,8 @@ function EntryDiff({
   busy?: boolean;
 }) {
   const [both, setBoth] = useState(false);
+  // Only the changed words with a few around them, until the paragraph is asked for (design/system, board 22).
+  const [whole, setWhole] = useState(false);
   const seg = entry.segment;
   const parts = seg ? wordDiff(seg.before, seg.after) : null;
   const scan = entry.scan;
@@ -697,6 +702,11 @@ function EntryDiff({
       actions={
         <>
           {seg && seg.before && seg.after ? (
+            <button type="button" className="btn sm" onClick={() => setWhole(!whole)} aria-pressed={whole}>
+              {w(lang, whole ? 'onlyChange' : 'wholeParagraph')}
+            </button>
+          ) : null}
+          {seg && seg.before && seg.after && whole ? (
             <button type="button" className="btn sm" onClick={() => setBoth(!both)} aria-pressed={both}>
               {w(lang, both ? 'inline' : 'sideBySide')}
             </button>
@@ -735,19 +745,21 @@ function EntryDiff({
       {entry.withheld ? (
         <p className="note pad">{entry.withheld}</p>
       ) : seg ? (
-        both ? (
+        both && whole ? (
           <div className="diff-both">
             <DiffSegment n={seg.n} before={seg.before} />
             <DiffSegment n={seg.n} before={seg.after} />
           </div>
         ) : changed !== null ? (
-          <BeforeAfter before={seg.before} after={seg.after} lang={lang} />
-        ) : (
+          <BeforeAfter before={seg.before} after={seg.after} lang={lang} around={!whole} />
+        ) : whole ? (
           <>
             {seg.prev ? <DiffSegment n={seg.prev.n} before={seg.prev.content} context /> : null}
             <DiffSegment n={seg.n} before={seg.before} after={seg.after} />
             {seg.next && !compact ? <DiffSegment n={seg.next.n} before={seg.next.content} context /> : null}
           </>
+        ) : (
+          <DiffSegment n={seg.n} before={seg.before} after={seg.after} around />
         )
       ) : null}
       {entry.fields.map((f) => (
