@@ -1909,11 +1909,11 @@ export interface Operations {
       contentType?: string;
     };
     output: {
-      /** rho_… */
+      /** cho_… */
       access_token: string;
       token_type: "Bearer";
       expires_in: number;
-      /** rhr_… */
+      /** chr_… */
       refresh_token: string;
       scope: string;
     };

@@ -88,7 +88,7 @@ describe('the developer pages on the built site', () => {
     expect(index.body).toContain('href="/developers/reference"');
     const auth = await get('/developers/auth?lang=en');
     expect(auth.status).toBe(200);
-    expect(auth.body).toContain('rhp_');
+    expect(auth.body).toContain('chp_');
     expect((await get('/developers/no-such-page')).status).toBe(404);
   });
 

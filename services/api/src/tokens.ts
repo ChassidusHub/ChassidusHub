@@ -6,7 +6,7 @@ import { mcpChallenge, mcpResource } from './oauth.js';
 
 /**
  * Personal API tokens (packages/core/src/tokens.ts): made and revoked on
- * the account page, sent as `Authorization: Bearer rhp_…`. A token acts as
+ * the account page, sent as `Authorization: Bearer chp_…`. A token acts as
  * its person under the same rules as the site: what it sends is a
  * suggestion like any other, reviewed like any other.
  *
@@ -15,7 +15,7 @@ import { mcpChallenge, mcpResource } from './oauth.js';
  * tools (/v1/admin), or answer an app's request to connect (/v1/oauth).
  * Those need the person on the site's own pages.
  *
- * An app connected with OAuth (oauth.ts) sends its access token (`rho_…`)
+ * An app connected with OAuth (oauth.ts) sends its access token (`cho_…`)
  * the same way. A token given for the MCP server alone (RFC 8707) opens
  * only /mcp, and the calls the MCP server's tools make for it.
  */

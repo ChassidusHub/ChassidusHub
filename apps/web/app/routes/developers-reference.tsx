@@ -272,7 +272,7 @@ export default function Reference({ loaderData }: Route.ComponentProps) {
               <span className="k">Token</span>
               <span className="dv-token-in">
                 <Icon name="key" />
-                <input type="password" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="rhp_…" autoComplete="off" spellCheck={false} />
+                <input type="password" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="chp_…" autoComplete="off" spellCheck={false} />
               </span>
             </label>
             <p className="dv-intro-note">

@@ -13,7 +13,7 @@ import { GeneratedMethods, OPERATIONS, type OperationId, type Operations, type P
 export interface ChassidusHubOptions {
   /** The API's address. Default https://api.chassidushub.org. */
   baseUrl?: string;
-  /** A personal API token (rhp_…) from the account page; reading needs none. */
+  /** A personal API token (chp_…) from the account page; reading needs none. */
   token?: string;
   /** Another fetch (a test's, a Worker's service binding). */
   fetch?: (input: string, init?: RequestInit) => Promise<Response>;

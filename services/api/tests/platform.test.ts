@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import { Catalog, createPerson } from '@chassidushub/core';
+import { Catalog, createPerson, hashToken } from '@chassidushub/core';
 import { measured } from '@chassidushub/db';
 import type { EntityId } from '@chassidushub/model';
 import { createApp } from '../src/app.js';
@@ -227,7 +227,7 @@ describe('personal API tokens', () => {
   it('are made on the account page, shown once, used as Bearer, and revoked at once', async () => {
     const me = await person('Mendy');
     const made = await call('POST', '/v1/tokens', { as: me, body: { name: 'my script', scopes: ['read', 'write'] } });
-    expect(made).toMatchObject({ status: 201, body: { name: 'my script', scopes: ['read', 'write'], token: expect.stringMatching(/^rhp_[\w-]{43}$/) } });
+    expect(made).toMatchObject({ status: 201, body: { name: 'my script', scopes: ['read', 'write'], token: expect.stringMatching(/^chp_[\w-]{43}$/) } });
     const token = made.body.token as string;
     const listed = await call('GET', '/v1/tokens', { as: me });
     expect(listed.body.tokens).toEqual([expect.objectContaining({ id: made.body.id, prefix: token.slice(0, 8) })]);
@@ -247,6 +247,13 @@ describe('personal API tokens', () => {
     expect((await call('GET', '/v1/tokens', { as: me })).body.tokens[0].revokedAt).not.toBeNull();
   });
 
+  it('made before the site was renamed (rhp_) still sign in', async () => {
+    const me = await person('Zalmen');
+    const old = `rhp_${'a'.repeat(43)}`;
+    await catalog.db.query("INSERT INTO auth.api_token (id, person_id, name, prefix, token_hash, scopes) VALUES ('tok_old', $1, 'old script', 'rhp_aaaa', $2, ARRAY['read'])", [me, await hashToken(old)]);
+    expect((await call('GET', '/v1/follows', { token: old })).status).toBe(200);
+  });
+
   it('keep to their scope and never open sign-in, tokens or stewards\' tools', async () => {
     const me = await person('Chaim');
     const reader = (await call('POST', '/v1/tokens', { as: me, body: { name: 'reader' } })).body.token as string;
@@ -257,7 +264,7 @@ describe('personal API tokens', () => {
     expect(await call('POST', '/v1/tokens', { token: writer, body: { name: 'another' } })).toMatchObject({ status: 403 });
     expect(await call('GET', '/v1/admin/people', { token: writer })).toMatchObject({ status: 403 });
     // Nonsense is refused outright, never read as nobody.
-    expect(await call('GET', '/v1/stats', { token: 'rhp_nope' })).toMatchObject({ status: 401 });
+    expect(await call('GET', '/v1/stats', { token: 'chp_nope' })).toMatchObject({ status: 401 });
     expect(await call('POST', '/v1/tokens', { as: me, body: { name: '' } })).toMatchObject({ status: 422 });
     expect(await call('POST', '/v1/tokens', { as: me, body: { name: 'x', scopes: ['admin'] } })).toMatchObject({ status: 422 });
   });

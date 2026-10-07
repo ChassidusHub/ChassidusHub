@@ -9,7 +9,7 @@ OAuth**, which you approve on the site.
 
 On your [account page](/account), under *API tokens*: give it a name
 (what will use it: "my sync script", "Claude"), pick its scopes, and
-optionally when it expires. The token (`rhp_` and 43 letters) is shown
+optionally when it expires. The token (`chp_` and 43 letters) is shown
 **once**; ChassidusHub keeps only its sha256, so it cannot show it again.
 Lost it? Revoke it and make another.
 
@@ -77,8 +77,8 @@ What happens:
    calls itself), **the address it will send you back to**, and what it
    may do. Allow or Cancel. An address the app never registered is never
    redirected to.
-5. The app trades the code at `/oauth/token` for an access token (`rho_…`,
-   an hour) and a refresh token (`rhr_…`). Each refresh gives a new pair
+5. The app trades the code at `/oauth/token` for an access token (`cho_…`,
+   an hour) and a refresh token (`chr_…`). Each refresh gives a new pair
    and the old refresh token stops working; a refresh token unused for 90
    days expires. A code works once, within ten minutes; a code used twice
    ends the connection made with it.
