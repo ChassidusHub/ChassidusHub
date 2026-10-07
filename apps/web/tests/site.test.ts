@@ -94,6 +94,24 @@ describe('the public site', () => {
     expect(page.html).not.toContain('hm-help');
   });
 
+  it("shows what is new on Home, as what can be heard and read, with a button to all of it", async () => {
+    const home = (await get('/')).html;
+    expect(home).toContain('class="hm-new"');
+    expect(home).toContain('href="/new"');
+    expect(home).toContain('href="/new#heard"');
+    expect(home).toContain('href="/likkutei-sichos"');
+    expect(home).toContain('Cheshvan and Kislev farbrengens, transcribed by AI');
+    // Never told as work waiting for review.
+    expect(home).not.toMatch(/class="hm-new"[\s\S]*?review[\s\S]*?<\/section>/i);
+    const he = (await get('/?lang=he')).html;
+    expect(he).toContain('href="/new?lang=he#heard"');
+    const page = await get('/new');
+    expect(page.status).toBe(200);
+    expect(page.html).toContain('id="month-02"');
+    expect(page.html).toContain('id="month-03"');
+    expect(page.html).toContain('id="texts"');
+  });
+
   it('renders the home page in Hebrew, right to left, at ?lang=he', async () => {
     const page = await get('/?lang=he');
     expect(page.html).toContain('<html lang="he" dir="rtl">');

@@ -654,3 +654,88 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+/* ------------------------------------------------------------ what is new (lib/whatsNew.ts) */
+
+.hm-new {
+  margin: var(--s-5) 0 0;
+}
+
+.hm-new .hm-h-row {
+  align-items: center;
+}
+
+.hm-new .hm-h {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--text);
+  font: 700 var(--t-heading) / 1.3 var(--display);
+}
+
+.hm-new .hm-h .i {
+  color: var(--accent);
+}
+
+.hm-new-list {
+  display: grid;
+  gap: var(--s-3);
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 821px) {
+  .hm-new-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.hm-new-list a {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  height: 100%;
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.hm-new-list a:hover {
+  border-color: var(--border-strong);
+}
+
+.hm-new-list a > .i {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+
+.hm-new-list .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hm-new-list .grow > span {
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+/* Made by a machine: the same amber pill as everywhere. */
+.hm-new-ai {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid var(--machine-line);
+  border-radius: var(--r-pill);
+  background: var(--machine-soft);
+  color: var(--machine);
+  font-size: 12px;
+  font-weight: 600;
+}

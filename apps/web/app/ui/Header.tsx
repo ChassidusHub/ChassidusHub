@@ -49,7 +49,8 @@ const MORE: Array<{ to: string; key: UiKey; icon: IconName }> = [
 
 /** Which section a page belongs to: a farbrengen to Farbrengens, any other item to the Library. */
 export function sectionOf(pathname: string): string {
-  if (pathname === '/') return '/';
+  // What is new is Home's, reached from it.
+  if (pathname === '/' || pathname.startsWith('/new')) return '/';
   if (pathname.startsWith('/daily')) return '/daily';
   if (pathname.startsWith('/calendar') || pathname.startsWith('/events') || pathname.startsWith('/sets/farbrengens')) return '/calendar';
   if (pathname.startsWith('/review') || pathname.startsWith('/suggestions')) return '/suggestions';

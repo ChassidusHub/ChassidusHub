@@ -201,3 +201,93 @@ a.ct-card:hover {
   font-weight: 600;
   font-size: var(--t-small);
 }
+
+/* ------------------------------------------------------------ what is new (routes/new.tsx) */
+
+.nw-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 var(--s-5);
+}
+
+.nw-sec + .nw-sec {
+  margin-top: var(--s-7);
+}
+
+.nw-h {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-1);
+  font: 700 var(--t-heading) / 1.3 var(--display);
+}
+
+.nw-h .i {
+  color: var(--accent);
+}
+
+.nw-month {
+  margin-top: var(--s-5);
+  scroll-margin-top: calc(var(--header-h) + 16px);
+}
+
+.nw-month h3 {
+  margin: 0 0 var(--s-3);
+  font: 700 var(--t-title) / 1.2 var(--display);
+}
+
+.nw-year + .nw-year {
+  margin-top: var(--s-4);
+}
+
+.nw-year h4 {
+  margin: 0 0 var(--s-2);
+  color: var(--subtle);
+  font-size: var(--t-small);
+  font-weight: 700;
+}
+
+.nw-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+}
+
+.ct-list .nw-row a {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.ct-list .nw-row a:hover {
+  background: none;
+}
+
+.nw-row a > * {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.nw-row a b {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.nw-ai {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid var(--machine-line);
+  border-radius: var(--r-pill);
+  background: var(--machine-soft);
+  color: var(--machine);
+  font-size: var(--t-xs, 12px);
+  font-weight: 600;
+  white-space: nowrap;
+}

@@ -43,6 +43,8 @@ Chabad's Torah: לכשיפוצו מעינותיך חוצה.
 - `ui/page/PageFrame.tsx`: the bar, the title, the ⓘ panel, the edit hint
   and the `Tray`. A page's blocks get `editing` and
   draw themselves in either mode.
+- `lib/whatsNew.ts`: what is new, one list for Home's band and `/new`;
+  told as what can be heard and read, never as work waiting for review.
 - `styles/page.css`: the bar, the switch, the outlines in Edit (one dashed
   ring for everything that can change, standing `--edit-gap` off its
   words), the tray.
