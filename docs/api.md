@@ -112,6 +112,27 @@ the signed-in person stopped reading (a PDF's page) and listening (a
 farbrengen's part and moment), the latest 60, so every device reopens
 there. Personal: never cached, never exported.
 
+## Your changes, not sent yet
+
+`GET /v1/drafts`, and for one page `GET`, `PUT` and `DELETE
+/v1/drafts/<page id>`: the changes a signed-in person made on a page in
+Edit and has not sent, a draft per page, so they follow them to another
+device. `PUT` takes the whole list each time (`{ title?, ops }`; an empty
+list forgets it). Each change has a `key` (a later change with the same key
+replaces it), `says` (one sentence: "Renamed the sefer"), the `item` it
+changes, and either
+
+- `op: "set"`: one fact, `field` a path in the item's data (`title.en`),
+  `value` (left out, the fact is taken out), and `before`, what it was when
+  the person saw it; or
+- `op: "words"`: a page's words, as `POST /v1/suggestions/words` takes them
+  (`change`, `version`, `segment`, `text`, `before`, …).
+
+`POST /v1/drafts/<page id>/send` (`{ title?, note? }`) makes them one
+Suggestion, each change made on its item as it is now. A change that no
+longer fits answers 409 with `detail.key` naming it, and nothing is sent.
+Personal: never cached, never exported.
+
 ## Adding
 
 With a signed-in session or a token with the `write` scope:

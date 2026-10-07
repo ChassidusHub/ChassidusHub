@@ -32,7 +32,9 @@ Chabad's Torah: לכשיפוצו מעינותיך חוצה.
 - `lib/editMode.ts`: `?edit` read and written.
 - `lib/draft.ts`, `lib/useDraft.ts`: your changes not sent yet, one draft
   per page (its permanent id); a later change to the same thing replaces
-  the earlier. Kept in the browser until the drafts API (step 2).
+  the earlier. Kept in the browser at once and on the account
+  (`/v1/drafts`, packages/core/src/drafts.ts) a moment later; sent as one
+  Suggestion with `POST /v1/drafts/<page id>/send`.
 - `ui/page/PageFrame.tsx`: crumbs, the title with `ModeSwitch`, the ⓘ
   panel, the edit hint and the `Tray`. A page's blocks get `editing` and
   draw themselves in either mode.
@@ -45,11 +47,21 @@ One pull request each, merged as soon as checks pass (Shmuly: "make it
 merge right away"); each new screen replaces the old one as it lands.
 
 1. Tokens, parts and the page frame.
-2. Drafts and operations on the server (`PUT /v1/drafts/:id/ops`,
-   `POST /v1/drafts/:id/send`); today's write endpoints become wrappers,
-   so the MCP tools and the reader app are untouched.
-3. Text pages (sicha, letter, chapter, maamar) in Read and Edit.
-4. Sefer and volume pages.
+2. Drafts and operations on the server (`PUT /v1/drafts/<page id>`,
+   `POST /v1/drafts/<page id>/send`), with `set` and `words` changes; more
+   kinds join as their screens are built. Today's write endpoints stay as
+   they are, so the MCP tools and the reader app are untouched.
+3. Text pages (sicha, letter, chapter, maamar) in Read and Edit. In
+   Edit every paragraph is outlined; a tap opens it in place, and Done
+   puts the change into the page's draft (blue until sent). "Right" marks
+   a machine's paragraph checked; Remove and "Add a segment after" are
+   changes like any other, each with its own Undo. The tray sends them as
+   one Suggestion and says what came of it.
+4. Sefer and volume pages. A sefer's names (Hebrew and English) and its
+   few words are Fields: words in Read, a box to change in Edit. A volume
+   lists its sichos by their real names under their parshiyos (a sicha
+   kept in numbered pieces is one row, not "1", "2", "3"), and in Edit
+   each sicha's name can be changed in place.
 5. The library, with Organize as its Edit mode.
 6. Contribute, the Send sheet and Review.
 7. Home with AI search, navigation and You.

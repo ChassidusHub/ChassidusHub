@@ -30,6 +30,10 @@ export interface TocRow {
   translation: boolean;
   /** Some of its words a machine made and nobody checked yet: the list's quiet dot. */
   machine: boolean;
+  /** Its own name as kept (data.label), what Edit changes and checks against; none for a sicha kept in pieces. */
+  label: LocalName | null;
+  /** A sicha kept in numbered pieces, each its own item: how many, shown as one row. */
+  pieces?: number;
 }
 
 export interface TocGroup {
@@ -121,7 +125,7 @@ export async function workToc(api: ChassidusHubApi, units: Entity[], publication
   }
 
   const rows: Array<TocRow & { group: string | null }> = rowsOf.map((u) => {
-    const d = u.data as { events?: string[]; date?: string; position?: Array<{ level: string; value: string; label?: LocalName }>; editions?: Array<{ kind: string }> };
+    const d = u.data as { label?: LocalName; events?: string[]; date?: string; position?: Array<{ level: string; value: string; label?: LocalName }>; editions?: Array<{ kind: string }> };
     const event = d.events?.map((id) => events.get(id)).find(Boolean);
     const steps = d.position ?? [];
     const middle = steps.length >= 3 ? steps[steps.length - 2] : steps.length === 2 && !part ? steps[0] : undefined;
@@ -136,12 +140,38 @@ export async function workToc(api: ChassidusHubApi, units: Entity[], publication
       audio: Boolean(d.events?.some((id) => (recorded.get(id) ?? 0) > 0)),
       translation: translated.has(u.id),
       machine: (progressOf(u)?.machine ?? 0) > 0,
+      label: d.label ?? null,
       group: middle ? nameOf(middle.label, lang) || middle.value : null,
     };
   });
 
+  // A sicha kept in numbered pieces (its sections, each an item: 30/1/1/1, 30/1/1/2) is one row called by
+  // its own name, under its parsha, as the reading page's column has it (volumeLines), not "1", "2", "3".
+  type Step = { value: string; label?: LocalName };
+  const named = (step: Step | undefined) => (step ? nameOf(step.label, lang) || step.value : null);
+  const listed: typeof rows = [];
+  const sichaRow = new Map<string, (typeof rows)[number]>();
+  rows.forEach((row, i) => {
+    const steps = ((rowsOf[i]!.data as { position?: Step[] }).position ?? []) as Step[];
+    if (steps.length < 3 || !/^\d+$/.test(row.title)) return void listed.push(row);
+    const key = steps.slice(0, -1).map((x) => x.value).join('/');
+    const kept = sichaRow.get(key);
+    if (kept) {
+      kept.pieces = (kept.pieces ?? 1) + 1;
+      kept.audio ||= row.audio;
+      kept.machine ||= row.machine;
+      kept.scan ||= row.scan;
+      kept.translation ||= row.translation;
+      kept.sections = (kept.sections ?? 0) + (row.sections ?? 0) || null;
+      return;
+    }
+    const sicha = { ...row, title: named(steps[steps.length - 2]) ?? row.title, label: null, pieces: 1, group: steps.length > 3 ? named(steps[steps.length - 3]) : null };
+    sichaRow.set(key, sicha);
+    listed.push(sicha);
+  });
+
   const groups: TocGroup[] = [];
-  for (const row of rows) {
+  for (const row of listed) {
     const last = groups[groups.length - 1];
     const { group, ...rest } = row;
     if (last && last.label === group) last.rows.push(rest);

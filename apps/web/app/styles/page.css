@@ -259,3 +259,232 @@
     display: none;
   }
 }
+
+/* What came of sending: above the tray, or in its place once the draft is empty. */
+.tray-said {
+  max-width: 640px;
+  margin: var(--s-5) auto 0;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-card);
+  font-size: var(--t-small);
+}
+
+.tray-said.is-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.tray-said.is-error {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tray button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ------------------------------------------------------------ words in Edit (a text page) */
+
+/* Every paragraph can be tapped: a faint outline round each, so Edit looks like Edit before anything is touched. */
+.is-editing :is(.words-p, .words-verse, .words-heading, .words li, .words-notes li):has(> .words-editable, > .words-editor) {
+  border-radius: var(--r-sm);
+  box-shadow: 0 0 0 1px var(--border), 0 0 0 5px transparent;
+  transition: box-shadow var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.is-editing :is(.words-p, .words-verse, .words-heading, .words li, .words-notes li):has(> .words-editable:hover, > .words-editable:focus-visible) {
+  box-shadow: 0 0 0 1.5px var(--mine);
+}
+
+/* Yours, not sent yet: blue, as everywhere. */
+.is-editing :is(.words-p, .words-verse, .words-heading, .words li, .words-notes li):has(> .words-editable.is-mine) {
+  background: var(--mine-soft);
+  box-shadow: 0 0 0 1.5px var(--mine-line);
+}
+
+.is-editing .words-editable:hover,
+.is-editing .words-editable:focus-visible {
+  background: transparent;
+  box-shadow: none;
+}
+
+.words-added.is-mine {
+  background: var(--mine-soft);
+  box-shadow: 0 0 0 1.5px var(--mine-line);
+}
+
+.words-removed {
+  color: var(--subtle);
+  text-decoration-color: var(--mine);
+}
+
+.words-added {
+  display: block;
+  margin-top: var(--s-2);
+  padding: 2px 4px;
+  border-radius: var(--r-sm);
+}
+
+.words-mine-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: 8px;
+  font: 500 var(--t-small) / 1.3 var(--ui);
+  color: var(--mine);
+  vertical-align: 0.15em;
+}
+
+.words-undo {
+  border: 0;
+  padding: 0 4px;
+  background: transparent;
+  color: var(--mine);
+  font: 600 var(--t-small) var(--ui);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.words-added .words-undo {
+  margin-inline-start: 6px;
+}
+
+/* The open editor on a page in Edit is yours: blue, not the reading page's red. */
+.is-editing .words-editor {
+  border-color: var(--mine-line);
+  box-shadow: 0 0 0 3px var(--mine-soft);
+}
+
+/* ------------------------------------------------------------ a fact in Edit (ui/page/Field.tsx) */
+
+.fld {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+}
+
+.fld-show {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 100%;
+  padding: 2px 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: text;
+}
+
+.fld-show:hover,
+.fld-show:focus-visible {
+  border: 1px solid var(--mine);
+  outline: none;
+}
+
+.fld.is-mine .fld-show {
+  border: 1.5px solid var(--mine-line);
+  background: var(--mine-soft);
+}
+
+.fld-pen {
+  flex: none;
+  color: var(--mine);
+  opacity: 0.7;
+}
+
+.fld-empty {
+  color: var(--subtle);
+  font: 400 var(--t-small) var(--ui);
+}
+
+.fld.is-open {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: var(--s-2);
+  border: 1.5px solid var(--mine);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: 0 0 0 4px var(--mine-soft);
+}
+
+.fld-input {
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea.fld-input {
+  font: 400 var(--t-body) / 1.5 var(--ui);
+  resize: vertical;
+}
+
+.fld-input:focus {
+  border-color: var(--mine);
+  outline: none;
+}
+
+.fld-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.ihero-mode {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--s-2);
+}
+
+.phead .pf-edit-hint {
+  margin-bottom: var(--s-3);
+}
+
+.fld-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.fld-small {
+  font-size: var(--t-body);
+  font-family: var(--display);
+}
+
+.vol-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.vol .vol-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-2);
+}
+
+.fld-show > :first-child {
+  min-width: 0;
+}
+
+h1 .fld-show {
+  text-wrap: balance;
+}

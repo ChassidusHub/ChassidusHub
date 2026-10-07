@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useLocation, useSearchParams } from 'react-router';
 import { isPageText, type LocalName } from '@chassidushub/model';
 import { AudioPlayer } from '../components/AudioPlayer.js';
 import { ChapterNav } from '../components/ChapterNav.js';
@@ -9,7 +9,7 @@ import { ItemLink, ItemList } from '../components/ItemLink.js';
 import { Linked, Sources } from '../components/Linked.js';
 import { HayomYomDay } from '../components/HayomYomDay.js';
 import { PageBody } from '../components/PageBody.js';
-import { SideNotes } from '../components/PageWords.js';
+import { SideNotes, type DraftWords } from '../components/PageWords.js';
 import { Relations } from '../components/Relations.js';
 import { Printings } from '../components/Printings.js';
 import { ScanViewer } from '../components/ScanViewer.js';
@@ -19,7 +19,11 @@ import { UnitTexts } from '../components/Translations.js';
 import type { Entity } from '../lib/api.js';
 import { dateLabel } from '../lib/dates.js';
 import { kindName, languageName, nameOf, t, typeName, type Lang } from '../lib/i18n.js';
-import { num } from '../lib/i18nUi.js';
+import { num, tu } from '../lib/i18nUi.js';
+import { isEditing } from '../lib/editMode.js';
+import { useDraft } from '../lib/useDraft.js';
+import { EditTray } from '../ui/page/EditTray.js';
+import { ModeSwitch } from '../ui/page/ModeSwitch.js';
 import type { ItemView } from '../lib/itemData.server.js';
 import { driveCopyOf } from '../lib/drive.js';
 import { labelOf } from '../lib/labels.js';
@@ -200,6 +204,10 @@ function TextSize({ lang }: { lang: Lang }) {
 function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: ItemView; lang: Lang; about: ReactNode }) {
   const slots = useContext(ItemSlots);
   useHashPanels();
+  // Read · Edit (docs/plans/redesign.md): the same page; in Edit its words are changed in place, into the page's draft.
+  const editing = isEditing(useLocation().search);
+  const { draft: kept, put, remove } = useDraft(entity.id);
+  const draft: DraftWords | undefined = editing ? { get: (key) => kept.ops.find((o) => o.key === key), put, remove } : undefined;
   const d = entity.data as D;
   const work = view.refs[d.work];
   const steps = (d.position ?? []) as Array<{ level: string; value: string; label?: LocalName }>;
@@ -286,7 +294,7 @@ function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: Item
     </aside>
   ) : null;
   return (
-    <div className={`wrap rd${titled ? ' rd-titled' : ''}${toc ? ' rd-with-toc' : ''}${head ? ' rd-letter' : ''}`}>
+    <div className={`wrap rd${titled ? ' rd-titled' : ''}${toc ? ' rd-with-toc' : ''}${head ? ' rd-letter' : ''}${editing ? ' is-editing' : ''}`}>
       {toc}
       <div className="rd-main">
         <div className="rd-top">
@@ -295,6 +303,7 @@ function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: Item
             <span>{backLabel}</span>
           </Link>
           <span className="rd-tools">
+            <ModeSwitch lang={lang} />
             <TextSize lang={lang} />
             <MoreMenu links={links} actions={slots?.actions} lang={lang} />
           </span>
@@ -311,9 +320,17 @@ function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: Item
             <span className="rd-orn" aria-hidden="true" />
           </header>
         )}
+        {editing ? (
+          <p className="pf-edit-hint">
+            <Icon name="pencil" />
+            {tu(lang, 'editHint')}
+          </p>
+        ) : null}
         <SideNotes.Provider value={true}>
-          <UnitBody entity={shown} view={view} lang={lang} />
+          {/* In Edit the words are drawn as they are kept, not reshaped as a letter, so each change names the segment it is in. */}
+          <UnitBody entity={editing ? entity : shown} view={view} lang={lang} draft={draft} />
         </SideNotes.Provider>
+        {editing ? <EditTray place={entity.id} lang={lang} /> : null}
         {slots?.below ? <div className="below">{slots.below}</div> : null}
         <details className="rd-about">
           <summary>{lang === 'he' ? 'על הדף' : 'About this page'}</summary>
@@ -446,7 +463,7 @@ function UnitPage({ entity, view, lang }: { entity: Entity; view: ItemView; lang
   );
 }
 
-function UnitBody({ entity, view, lang }: { entity: Entity; view: ItemView; lang: Lang }) {
+function UnitBody({ entity, view, lang, draft }: { entity: Entity; view: ItemView; lang: Lang; draft?: DraftWords }) {
   const [params] = useSearchParams();
   const tab = params.get('tab');
   if (tab === 'suggestions') return <ThreadRows threads={view.about} lang={lang} empty={<EmptyState icon="suggest" title={w(lang, 'noSuggestions')} compact />} />;
@@ -468,10 +485,10 @@ function UnitBody({ entity, view, lang }: { entity: Entity; view: ItemView; lang
         </div>
       )}
       {/* The chapter's own words come first; where they and other copies are from, after. A day of Hayom Yom is set as the book prints it. */}
-      {view.hayomYom !== undefined && hasWords ? (
+      {view.hayomYom !== undefined && hasWords && !draft ? (
         <HayomYomDay title={labelOf(entity, 'he')} body={body} shiurim={view.hayomYom} lang={lang} />
       ) : (
-        <PageBody entity={entity} lang={lang} />
+        <PageBody entity={entity} lang={lang} draft={draft} />
       )}
       <ChapterNav unit={entity} previous={previous} next={next} lang={lang} where="bottom" />
     </>

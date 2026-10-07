@@ -121,6 +121,22 @@ const UI = {
   trayUndo: { he: 'ביטול האחרון', en: 'Undo last' },
   traySend: { he: 'שליחה', en: 'Send' },
   pageInfo: { he: 'על הדף', en: 'About this page' },
+  fieldChanged: { he: 'שונה', en: 'Changed' },
+  fieldChange: { he: 'שינוי', en: 'Change' },
+  fieldAdd: { he: 'הוספת', en: 'Add' },
+  fieldDone: { he: 'סיום', en: 'Done' },
+  fieldCancel: { he: 'ביטול', en: 'Cancel' },
+  fieldUndo: { he: 'ביטול', en: 'Undo' },
+  fieldNameHe: { he: 'השם בעברית', en: 'the Hebrew name' },
+  fieldNameEn: { he: 'השם באנגלית', en: 'the English name' },
+  fieldAbout: { he: 'כמה מילים על הספר', en: 'a few words about it' },
+  fieldRowName: { he: 'שם', en: 'the name of' },
+  traySending: { he: 'שולח…', en: 'Sending…' },
+  traySentLive: { he: 'השינויים שלך נכנסו לדף.', en: 'Your changes are live.' },
+  traySentOpen: { he: 'השינויים שלך נשלחו לבדיקה.', en: 'Your changes were sent for review.' },
+  traySee: { he: 'לראות', en: 'See it' },
+  traySignIn: { he: 'כדי לשלוח צריך להתחבר. השינויים נשמרים כאן עד אז.', en: 'Sign in to send. Your changes stay here until then.' },
+  trayConflict: { he: 'מישהו שינה את זה בינתיים. בטלו את השינוי המסומן ונסו שוב.', en: 'Someone changed this since. Undo the marked change and try again.' },
 } as const;
 
 export type UiKey = keyof typeof UI;

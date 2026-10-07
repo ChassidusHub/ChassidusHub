@@ -3,11 +3,10 @@ import { useLocation } from 'react-router';
 import type { Lang } from '../../lib/i18n.js';
 import { tu } from '../../lib/i18nUi.js';
 import { isEditing } from '../../lib/editMode.js';
-import { useDraft } from '../../lib/useDraft.js';
 import { Icon } from '../Icon.js';
 import { Breadcrumbs, Sheet } from '../primitives.js';
 import { ModeSwitch } from './ModeSwitch.js';
-import { Tray } from './Tray.js';
+import { EditTray } from './EditTray.js';
 
 /**
  * The frame every page of the redesign is drawn in (docs/plans/redesign.md):
@@ -39,14 +38,13 @@ export function PageFrame({
   sub?: ReactNode;
   /** What the ⓘ panel holds; no ⓘ when there is nothing. */
   info?: ReactNode;
-  /** Sending the tray: until the Send sheet is in, the page decides. */
+  /** Sending the tray; left out, the draft is sent as it is (the Send sheet comes in step 6). */
   onSend?: () => void;
   children: (editing: boolean) => ReactNode;
 }) {
   const { search } = useLocation();
   const editing = isEditing(search);
   const [infoOpen, setInfoOpen] = useState(false);
-  const { draft, undo } = useDraft(place);
   return (
     <div className={editing ? 'page-frame is-editing' : 'page-frame'}>
       <div className="pf-top">
@@ -71,7 +69,7 @@ export function PageFrame({
         </p>
       ) : null}
       <div className="pf-body">{children(editing)}</div>
-      {editing ? <Tray draft={draft} lang={lang} onUndo={undo} onSend={() => onSend?.()} /> : null}
+      {editing ? <EditTray place={place} lang={lang} onSend={onSend} /> : null}
       {info ? (
         <Sheet open={infoOpen} onClose={() => setInfoOpen(false)} title={tu(lang, 'pageInfo')}>
           {info}

@@ -10,6 +10,18 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Sefer and volume pages have Read and Edit: a sefer's names and its few
+  words, and each sicha's name in a volume, are changed in place into
+  your draft. A volume lists its sichos by name under their parshiyos,
+  where it listed a sicha's numbered pieces.
+- Text pages (a sicha, a letter, a chapter) have Read and Edit at the
+  same address. In Edit each paragraph can be fixed, taken out, marked
+  right or followed by a new one; the changes collect in your draft, shown
+  in blue, and Send makes them one Suggestion.
+- Drafts (docs/api.md, "Your changes, not sent yet"): `/v1/drafts` keeps
+  the changes a person made on a page in Edit until they send them, and
+  `POST /v1/drafts/<page id>/send` makes them one Suggestion, each change
+  checked against what the person saw. Migration 29.
 - The redesign begins (docs/plans/redesign.md): calmer colours across the
   site (whiter paper, green for approved, blue for your changes not sent
   yet), and the page frame every page will share, with Read and Edit at the

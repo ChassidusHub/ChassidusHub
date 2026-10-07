@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { useLocation } from 'react-router';
 import type { Lang } from '../lib/i18n.js';
+import { tu } from '../lib/i18nUi.js';
+import { isEditing } from '../lib/editMode.js';
+import { EditTray } from './page/EditTray.js';
+import { ModeSwitch } from './page/ModeSwitch.js';
 import { Icon, type IconName } from './Icon.js';
 import { Breadcrumbs, Tabs, cx, type TabItem } from './primitives.js';
 
@@ -33,6 +38,12 @@ export interface ItemHead {
   tab?: string;
   /** Anything under the facts (a machine label, a notice). */
   extra?: ReactNode;
+  /**
+   * A page of the redesign (docs/plans/redesign.md): the permanent id its
+   * changes collect under. With it the page has Read · Edit beside its name,
+   * and in Edit the tray of your changes at its foot.
+   */
+  place?: string;
 }
 
 export interface ItemSlotsValue {
@@ -49,13 +60,19 @@ export const ItemSlots = createContext<ItemSlotsValue | null>(null);
 
 export function ItemHeader({ head, lang, flat }: { head: ItemHead; lang: Lang; flat?: boolean }) {
   const slots = useContext(ItemSlots);
+  const editing = isEditing(useLocation().search) && Boolean(head.place);
   return (
-    <div className={cx('phead', flat && 'flat')}>
+    <div className={cx('phead', flat && 'flat', editing && 'is-editing')}>
       <div className="wrap">
         <Breadcrumbs items={head.crumbs} lang={lang} />
         <div className={cx('ihero', head.cover ? 'has-cover' : null)}>
           {head.cover ? <div className="ihero-cover">{head.cover}</div> : null}
           <div className="ihero-main">
+            {head.place ? (
+              <div className="ihero-mode">
+                <ModeSwitch lang={lang} />
+              </div>
+            ) : null}
             {head.kicker ? <p className="kicker">{head.kicker}</p> : null}
             <h1 className={cx('page-title', head.torah && 'torah')}>{head.title}</h1>
             {head.sub ? <p className="lede">{head.sub}</p> : null}
@@ -79,6 +96,12 @@ export function ItemHeader({ head, lang, flat }: { head: ItemHead; lang: Lang; f
             </div>
           ) : null}
         </div>
+        {editing ? (
+          <p className="pf-edit-hint">
+            <Icon name="pencil" />
+            {tu(lang, 'editHint')}
+          </p>
+        ) : null}
         {head.tabs?.length ? <Tabs items={head.tabs} current={head.tab ?? head.tabs[0]!.key} label={lang === 'he' ? 'חלקי העמוד' : 'Sections'} /> : null}
       </div>
     </div>
@@ -122,12 +145,14 @@ export function ItemShell({ head, lang, children, side, wide }: { head: ItemHead
   const slots = useContext(ItemSlots);
   useHashPanels();
   const hasSide = Boolean(side || slots?.side);
+  const editing = isEditing(useLocation().search) && Boolean(head.place);
   return (
     <>
       <ItemHeader head={head} lang={lang} />
-      <div className={cx('wrap', hasSide ? 'cols' : 'page', wide && 'wide-side')}>
+      <div className={cx('wrap', hasSide ? 'cols' : 'page', wide && 'wide-side', editing && 'is-editing')}>
         <div className="imain">
           {children}
+          {editing ? <EditTray place={head.place!} lang={lang} /> : null}
           {slots?.below ? <div className="below">{slots.below}</div> : null}
         </div>
         {hasSide ? (

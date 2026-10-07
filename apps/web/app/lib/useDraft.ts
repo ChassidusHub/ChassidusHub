@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { drafts, type Draft, type DraftOp } from './draft.js';
 
 const EMPTY = new Map<string, Draft>();
@@ -15,6 +15,10 @@ export function useDraft(place: string) {
       return kept;
     },
   );
+  // A draft started on another device is picked up here.
+  useEffect(() => {
+    void drafts.pull(place);
+  }, [place]);
   return useMemo(
     () => ({
       draft,
@@ -22,6 +26,7 @@ export function useDraft(place: string) {
       remove: (key: string) => drafts.remove(place, key),
       undo: () => drafts.undo(place),
       clear: () => drafts.clear(place),
+      send: (input?: { title?: string; note?: string }) => drafts.send(place, input),
     }),
     [draft, place],
   );
