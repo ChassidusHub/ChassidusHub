@@ -79,24 +79,27 @@ const get = async (path: string, headers: Record<string, string> = {}) => {
 };
 
 describe('the public site', () => {
-  it('renders the home page in English first: what the site is, a search box, the ways in, the day and its learning', async () => {
+  it('renders the home page in English first: the question, the one box, the buttons under it, the day and its learning', async () => {
     const page = await get('/');
     expect(page.status).toBe(200);
     expect(page.html).toContain('<html lang="en" dir="ltr">');
-    expect(page.html).toContain('The open library of Chabad Torah');
-    expect(page.html).toMatch(/<form class="hm-search"[^>]*action="\/search"/);
-    expect(page.html).toContain('class="hm-doors"'); // the library, the day's learning, listening
-    expect(page.html).toContain('class="hm-day"'); // the day, its chag or the coming parsha
+    expect(page.html).toContain('What would you like to learn today?');
+    expect(page.html).toMatch(/<form class="hm-box"[^>]*action="\/search"/);
+    expect(page.html).toContain('class="hm-btns"'); // the day's learning, the library, and listening when there is something to hear
+    expect(page.html).toContain('href="/daily"');
+    expect(page.html).toContain('class="hm-dayline"'); // the day, its chag or the coming parsha
     expect(page.html).toContain('class="hm-shiurim"'); // the day's learning, each with a tick
     expect(page.html).toContain('href="/sets?shelf=the-rebbe"'); // each Rebbe to his shelf
-    expect(page.html).toContain('href="/help"');
+    // What waits to be checked is a helper's question: it is on the Help page, not here.
+    expect(page.html).not.toContain('hm-help');
   });
 
   it('renders the home page in Hebrew, right to left, at ?lang=he', async () => {
     const page = await get('/?lang=he');
     expect(page.html).toContain('<html lang="he" dir="rtl">');
+    expect(page.html).toContain('מה תרצו ללמוד היום?');
     expect(page.html).toContain('לימוד יומי');
-    expect(page.html).toContain('href="/help?lang=he"');
+    expect(page.html).toContain('href="/daily?lang=he"');
     expect(page.html).toContain('<input type="hidden" name="lang" value="he"/>');
   });
 

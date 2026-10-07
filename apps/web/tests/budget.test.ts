@@ -191,8 +191,9 @@ function within(got: { status: number; statements: number; calls?: number; kB: n
 }
 
 describe("each page's statements and API calls stay within its ceiling", () => {
-  // The day's learning, this day's farbrengens and what waits to be checked: three reads.
-  it('the home page', async () => within(await page('/'), 'home', { statements: 14, calls: 3, kB: 35 }));
+  // The day's learning, this week in the kvius year, these days' farbrengens in any year, and which recordings have a
+  // transcript: four reads (what waits to be checked left the home page, design/system board 29).
+  it('the home page', async () => within(await page('/'), 'home', { statements: 14, calls: 4, kB: 35 }));
   it('the sets, and one set', async () => {
     within(await page('/sets'), '/sets', { statements: 13, calls: 7, kB: 30 });
     // A set lists its sefarim and the first sixty of each other kind in it, one request a kind: this one holds four kinds.
