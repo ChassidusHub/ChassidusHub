@@ -10,6 +10,7 @@ import { NewSetForm, ORGANIZE_ICONS as ICONS, Picker, PreviewView, RenameForm } 
 import { pageMeta } from '../lib/seo.js';
 import { useAccount } from '../lib/useAccount.js';
 import { Icon } from '../ui/Icon.js';
+import { ModeSwitch } from '../ui/page/ModeSwitch.js';
 import { Box, Breadcrumbs, EmptyState, Label, cx } from '../ui/primitives.js';
 import '../styles/pages/organize.css';
 
@@ -199,14 +200,10 @@ export default function Organize({ loaderData }: Route.ComponentProps) {
               <h1 className="page-title">{heading}</h1>
               <p className="lede">{ow(lang, 'lede')}</p>
             </div>
-            {root ? (
-              <div className="phead-acts">
-                <Link className="btn" to={href(root.path ?? `/${root.id}`, lang)}>
-                  <Icon name="external" />
-                  {ow(lang, 'open')}
-                </Link>
-              </div>
-            ) : null}
+            {/* Organize is the library's Edit (docs/plans/redesign.md): Read goes back to what is being organized. */}
+            <div className="phead-acts">
+              <ModeSwitch lang={lang} readTo={href(root ? (root.path ?? `/${root.id}`) : '/sets', lang)} />
+            </div>
           </div>
         </div>
       </div>

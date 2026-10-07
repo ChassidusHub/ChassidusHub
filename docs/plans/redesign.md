@@ -62,9 +62,34 @@ merge right away"); each new screen replaces the old one as it lands.
    lists its sichos by their real names under their parshiyos (a sicha
    kept in numbered pieces is one row, not "1", "2", "3"), and in Edit
    each sicha's name can be changed in place.
-5. The library, with Organize as its Edit mode.
-6. Contribute, the Send sheet and Review.
-7. Home with AI search, navigation and You.
+5. The library, with Organize as its Edit mode. The library and each
+   shelf carry Read · Edit; the library's Edit (`/sets?edit`) is Organize
+   on that shelf, and Organize's Read goes back to what it organizes. A
+   shelf's own page in Edit changes its names and few words as Fields,
+   with a button to move and order what is on it.
+6. Contribute, the Send sheet and Review. `/contribute` has Help (what
+   there is to do, each leading to where it is done), Review (what waits,
+   and the review queue) and Yours (your changes not sent yet, from this
+   browser and your account, each reopening its page in Edit; what you
+   sent). The tray's Send opens the Send sheet: every change with its own
+   Undo, an optional name and a note for the reviewers.
+7. Home with AI search, navigation and You. Home asks "Find anything
+   with AI, in seconds": the box searches by meaning when that is set up
+   (else by words, reading a parsha, a day and a year out of them), with
+   a few searches to try. Under it, the motto לכשיפוצו מעינותיך חוצה and
+   the invitation to help build the biggest open library of Chabad's
+   Torah, using modern technology and AI to make all of it accessible.
+   Listening comes first in the feed, each transcript labelled "AI
+   transcript". The phone's tabs are Home, Library, Listen, Contribute
+   and You (the menu); the wide header keeps Daily learning.
 8. Listen and farbrengen pages; the transcript editor is wrapped, not
-   rebuilt.
+   rebuilt. A farbrengen has Read · Edit: in Edit its names are Fields
+   and its recordings' words open in the transcript editor as it is (the
+   Text tab, which stays for old links).
 9. The old screens and their styles removed; old addresses redirect.
+   The separate Edit buttons are gone from pages that have Read · Edit
+   (a sefer's and a shelf's "…" keeps moving and organizing). The full
+   form of every detail (`/edit/<id>`) stays, linked from Edit's hint as
+   "Every detail", because Fields cover names and a few words so far; it
+   goes when Fields cover the rest. Old addresses (`/help`, `?tab=text`,
+   `/organize`) keep working.

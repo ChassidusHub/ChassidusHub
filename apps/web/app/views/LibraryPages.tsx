@@ -154,14 +154,37 @@ export function SetPage({ entity, view, lang }: { entity: Entity; view: ItemView
   // How many there are in all: the page lists the first of them (itemData.server.ts).
   const othersTotal = view.linked.filter((g) => g.field === 'sets' && g.type !== 'work').reduce((n, g) => n + g.count, 0) || others.length;
   const counts = view.counts ?? {};
+  // Read · Edit: in Edit the shelf's names and its few words change in place; moving and ordering what is on it is Organize.
+  const editing = isEditing(useLocation().search);
+  const names = d.name as LocalName | undefined;
   return (
     <ItemShell
       lang={lang}
       head={{
         crumbs: [{ label: t(lang, 'tabLibrary'), to: href('/sets', lang) }],
-        title: nameOf(d.name, lang),
+        title: editing ? (
+          <span className="fld-stack">
+            <Field editing place={entity.id} item={entity.id} field="name.he" before={names?.he} name={tu(lang, 'fieldNameHe')} lang={lang} dir="rtl" />
+            <Field editing place={entity.id} item={entity.id} field="name.en" before={names?.en} name={tu(lang, 'fieldNameEn')} lang={lang} dir="ltr" className="fld-small" />
+          </span>
+        ) : (
+          nameOf(d.name, lang)
+        ),
+        place: entity.id,
         torah: true,
-        sub: d.description ? nameOf(d.description, lang) : undefined,
+        sub: editing ? (
+          <Field editing place={entity.id} item={entity.id} field={`description.${lang}`} before={(d.description as LocalName | undefined)?.[lang]} name={tu(lang, 'fieldAbout')} lang={lang} long />
+        ) : d.description ? (
+          nameOf(d.description, lang)
+        ) : undefined,
+        extra: editing ? (
+          <p>
+            <Link className="btn" to={href('/organize', lang, { root: entity.id })}>
+              <Icon name="layers" />
+              {tu(lang, 'organizeShelf')}
+            </Link>
+          </p>
+        ) : undefined,
         facts: [
           works.length ? { icon: 'book', children: <><b>{num(works.length, lang)}</b> {t(lang, 'seforim')}</> } : null,
           others.length ? { icon: 'layers', children: <><b>{num(othersTotal, lang)}</b> {t(lang, 'unitsShort')}</> } : null,
@@ -460,7 +483,8 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
       {editing ? (
         <p className="pf-edit-hint">
           <Icon name="pencil" />
-          {tu(lang, 'editHint')}
+          <span className="grow">{tu(lang, 'editHint')}</span>
+          <Link to={href(`/edit/${entity.id}`, lang)}>{tu(lang, 'allDetails')}</Link>
         </p>
       ) : null}
 

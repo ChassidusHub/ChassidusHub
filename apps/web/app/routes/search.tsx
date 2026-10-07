@@ -100,15 +100,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     events?.catch(() => undefined);
     return { moments, search, events };
   };
-  // Asked by meaning, they wait to see whether search by meaning is set up; else they start now.
-  let byWords = words && !byMeaning ? askByWords() : null;
+  // Asked by meaning, they wait to see whether search by meaning is set up; else they start now. Words that name a parsha,
+  // a day or a year (the home page's box asks by meaning) are a date to find, so they are searched by words whatever was asked.
+  let byWords = words && (!byMeaning || understood) ? askByWords() : null;
   const meaning = await meaningAsked;
   const empty = {
     lang,
     siteUrl,
     q,
     kind: kind as Kind | null,
-    by: byMeaning && meaning.available ? ('meaning' as const) : ('words' as const),
+    by: byMeaning && meaning.available && !understood ? ('meaning' as const) : ('words' as const),
     meaningAvailable: meaning.available,
     understood: null as { parsha: string | null; day: string | null; year: number | null; month: string | null } | null,
     events: [] as EventItem[],

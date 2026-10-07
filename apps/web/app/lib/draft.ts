@@ -140,6 +140,31 @@ export const drafts = {
     for (const listener of listeners.get(place) ?? []) listener();
     return { ok: true, number: body.number ?? null, status: body.status ?? 'open' };
   },
+  /** Every draft this browser keeps, for the Yours list. */
+  local(): Draft[] {
+    const out: Draft[] = [];
+    try {
+      const store = globalThis.localStorage;
+      for (let i = 0; store && i < store.length; i++) {
+        const name = store.key(i);
+        if (name?.startsWith(STORE)) out.push(read(name.slice(STORE.length)));
+      }
+    } catch {
+      // Blocked storage: none kept here.
+    }
+    return out.filter((d) => d.ops.length);
+  },
+  /** The signed-in person's drafts on their account, from every device; none when signed out. */
+  async list(): Promise<Draft[]> {
+    try {
+      const response = await fetch('/_/drafts/', { headers: { accept: 'application/json' } });
+      if (!response.ok) return [];
+      const body = (await response.json()) as { drafts?: Array<{ place: string; ops: DraftOp[] }> };
+      return (body.drafts ?? []).map((d) => ({ place: d.place, ops: d.ops }));
+    } catch {
+      return [];
+    }
+  },
   subscribe(place: string, listener: Listener): () => void {
     const set = listeners.get(place) ?? new Set<Listener>();
     set.add(listener);

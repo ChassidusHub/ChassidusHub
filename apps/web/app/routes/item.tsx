@@ -254,6 +254,9 @@ export function meta({ loaderData }: Route.MetaArgs) {
   });
 }
 
+/** The pages of the redesign: Read · Edit beside their name, so no separate Edit button. */
+const EDITS_IN_PLACE = new Set(['set', 'work', 'unit', 'event']);
+
 /** What other sites may embed: sets, sefarim and their sichos, farbrengens, the Rebbeim and other people, printings. */
 const FOLLOWABLE = new Set(['set', 'work', 'unit', 'event', 'person', 'publication']);
 
@@ -271,8 +274,8 @@ export default function Item({ loaderData }: Route.ComponentProps) {
     actions: (
       <>
         {!NOT_FOLLOWED.has(entity.type) ? <FollowButton entity={entity} lang={lang} /> : null}
-        {/* A set's and a sefer's page have their own Edit, with organizing in it (components/EditSheet). */}
-        {entity.type === 'set' || entity.type === 'work' ? null : (
+        {/* A page with Read · Edit (docs/plans/redesign.md) is changed there, and its every detail is a link from Edit's hint; a set's and a sefer's "…" organizes. */}
+        {EDITS_IN_PLACE.has(entity.type) ? null : (
           <Link className="btn icon" to={href(`/edit/${entity.id}`, lang)} aria-label={lang === 'he' ? 'עריכה' : 'Edit'} title={lang === 'he' ? 'עריכה' : 'Edit'}>
             <Icon name="pencil" />
           </Link>

@@ -96,3 +96,17 @@ describe('the page frame', () => {
     expect(html).toContain('Tap anything outlined to change it.');
   });
 });
+
+describe('a place whose Edit is a screen of its own', () => {
+  it('the library: Read is where you are, Edit is Organize', () => {
+    const html = at('/sets', createElement(ModeSwitch, { lang: 'en', editTo: '/organize?root=rh-7tfxq00v' }));
+    expect(html).toContain('href="/organize?root=rh-7tfxq00v"');
+    expect(html.match(/<a [^>]*aria-current="page"[^>]*>/)?.[0]).not.toContain('is-edit');
+  });
+
+  it('Organize: Edit is where you are, Read goes back to the shelf', () => {
+    const html = at('/organize?root=rh-7tfxq00v', createElement(ModeSwitch, { lang: 'en', readTo: '/sets/the-rebbe' }));
+    expect(html).toContain('href="/sets/the-rebbe"');
+    expect(html.match(/<a [^>]*aria-current="page"[^>]*>/)?.[0]).toContain('is-edit');
+  });
+});

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
-import { useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
+import { href } from '../lib/links.js';
 import type { Lang } from '../lib/i18n.js';
 import { tu } from '../lib/i18nUi.js';
 import { isEditing } from '../lib/editMode.js';
@@ -99,7 +100,8 @@ export function ItemHeader({ head, lang, flat }: { head: ItemHead; lang: Lang; f
         {editing ? (
           <p className="pf-edit-hint">
             <Icon name="pencil" />
-            {tu(lang, 'editHint')}
+            <span className="grow">{tu(lang, 'editHint')}</span>
+            <Link to={href(`/edit/${head.place}`, lang)}>{tu(lang, 'allDetails')}</Link>
           </p>
         ) : null}
         {head.tabs?.length ? <Tabs items={head.tabs} current={head.tab ?? head.tabs[0]!.key} label={lang === 'he' ? 'חלקי העמוד' : 'Sections'} /> : null}

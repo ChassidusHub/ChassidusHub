@@ -10,6 +10,21 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Pages with Read and Edit lose their separate Edit buttons; every
+  detail of an item is one link from Edit's hint.
+- A farbrengen has Read and Edit: in Edit its names change in place and
+  its recordings' words open in the transcript editor, unchanged.
+- Home is built around finding anything with AI in seconds (search by
+  meaning when it is set up), the invitation to help build the biggest
+  open library of Chabad's Torah, and listening to the Rebbe with the AI
+  transcript. The phone's tabs are Home, Library, Listen, Contribute and
+  You.
+- Contribute (`/contribute`): Help, Review and Yours in one place, and
+  the Send sheet, which lists every change before it is sent with an
+  Undo for each, a name and a note for the reviewers.
+- The library's Edit is Organize: Read · Edit on the library and on each
+  shelf, `/sets?edit` opens Organize on the shelf, and a shelf's page in
+  Edit changes its names and few words in place.
 - Sefer and volume pages have Read and Edit: a sefer's names and its few
   words, and each sicha's name in a volume, are changed in place into
   your draft. A volume lists its sichos by name under their parshiyos,

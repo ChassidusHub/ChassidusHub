@@ -22,19 +22,22 @@ import { setTheme, useTheme, type Theme } from './theme.js';
  */
 
 /** The sections a phone keeps as tabs at the bottom; the rest are in the menu. */
-const TABS = ['/', '/sets', '/daily', '/calendar'];
+const TABS = ['/', '/sets', '/calendar', '/contribute'];
 
 /**
  * The sections in the header and the phone's tabs, in plain words for a
- * first visit. Listening is the farbrengens, where the recordings are;
- * taking part is the page of ways to help, which leads on to suggestions.
+ * first visit: the redesign's places (docs/plans/redesign.md), Home,
+ * Library, Listen and Contribute, with You in the phone's last tab (the
+ * menu: your account, your suggestions, the rest of the site). Listening
+ * is the farbrengens, where the recordings are; the day's learning keeps
+ * its place in the wide header and is in the menu on a phone.
  */
 const NAV: Array<{ to: string; key: UiKey; long?: UiKey; icon: IconName }> = [
   { to: '/', key: 'navHome', icon: 'home' },
   { to: '/sets', key: 'navLibrary', icon: 'book' },
   { to: '/daily', key: 'navDaily', long: 'navDailyLong', icon: 'cal' },
   { to: '/calendar', key: 'navListen', icon: 'audio' },
-  { to: '/help', key: 'navTakePart', icon: 'heart' },
+  { to: '/contribute', key: 'navTakePart', icon: 'heart' },
 ];
 
 /** The rest of the site's sections, in the menu. */
@@ -51,7 +54,7 @@ export function sectionOf(pathname: string): string {
   if (pathname.startsWith('/calendar') || pathname.startsWith('/events') || pathname.startsWith('/sets/farbrengens')) return '/calendar';
   if (pathname.startsWith('/review') || pathname.startsWith('/suggestions')) return '/suggestions';
   if (pathname.startsWith('/issues')) return '/issues';
-  if (pathname.startsWith('/help')) return '/help';
+  if (pathname.startsWith('/help') || pathname.startsWith('/contribute') || pathname.startsWith('/check')) return '/contribute';
   if (pathname.startsWith('/projects') || pathname.startsWith('/missing') || pathname.startsWith('/health')) return '/projects';
   if (['/search', '/signin', '/account', '/inbox', '/u/', '/admin', '/about', '/takedown', '/mirrors', '/models', '/connect', '/developers', '/read', '/_'].some((p) => pathname.startsWith(p))) return '';
   return '/sets';
@@ -449,7 +452,6 @@ export function Header({ lang }: { lang: Lang }) {
                 <span className="menu-value">{lang === 'he' ? 'עברית · English' : 'English · עברית'}</span>
                 <Icon name={chevron} />
               </a>
-              <MenuRow to={href('/daily', lang)} icon="cal" label={tu(lang, 'navDaily')} chevron={chevron} />
             </MenuGroup>
             <MenuGroup title={tu(lang, 'menuSite')}>
               {[...NAV.filter((n) => !TABS.includes(n.to)), ...MORE].map((n) => (
@@ -486,8 +488,8 @@ export function Header({ lang }: { lang: Lang }) {
             if (sheet.current) sheet.current.open = true;
           }}
         >
-          <Icon name="more" />
-          <span>{tu(lang, 'menu')}</span>
+          <Icon name="user" />
+          <span>{tu(lang, 'navYou')}</span>
         </button>
       </nav>
 
