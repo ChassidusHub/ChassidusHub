@@ -63,10 +63,10 @@ function useNowMs(playing: boolean): number {
 }
 
 /** A paragraph's words, the one being said marked, the ones already said set apart; each knows when it is said, so a tap can play from it. */
-/** A paragraph's words with the ones a listener marked unclear (`[words?]`) shown as such. */
-function Plain({ content, lang, pending = [] }: { content: string; lang: Lang; pending?: Array<{ from: number; to: number }> }) {
+/** A paragraph's words with the ones a listener marked unclear (`[words?]`) shown as such, and the ones said with stress bold. */
+function Plain({ content, lang, pending = [], bold = [] }: { content: string; lang: Lang; pending?: Array<{ from: number; to: number }>; bold?: Array<{ from: number; to: number }> }) {
   const marks = unclearRanges(content);
-  if (!marks.length && !pending.length) return <>{content}</>;
+  if (!marks.length && !pending.length && !bold.length) return <>{content}</>;
   // Word by word, so a word a waiting fix changes is marked as well as an unclear one.
   const out: React.ReactNode[] = [];
   let at = 0;
@@ -75,7 +75,7 @@ function Plain({ content, lang, pending = [] }: { content: string; lang: Lang; p
     const to = from + m[0].length;
     if (from > at) out.push(content.slice(at, from));
     const u = marks.findIndex((x) => from < x.to && to > x.from);
-    out.push(<Marked key={from} text={m[0]} unclear={u >= 0} u={u} waiting={pending.some((x) => from < x.to && to > x.from)} lang={lang} />);
+    out.push(<Marked key={from} text={m[0]} unclear={u >= 0} u={u} waiting={pending.some((x) => from < x.to && to > x.from)} bold={bold.some((x) => from < x.to && to > x.from)} lang={lang} />);
     at = to;
   }
   if (at < content.length) out.push(content.slice(at));
@@ -83,12 +83,13 @@ function Plain({ content, lang, pending = [] }: { content: string; lang: Lang; p
 }
 
 /** A word as a reader sees it, marked when a listener was unsure of it, or a fix of it waits for approval. */
-function Marked({ text, unclear, waiting, lang, className, ms, u }: { text: string; unclear: boolean; waiting: boolean; lang: Lang; className?: string; ms?: number; u?: number }) {
+function Marked({ text, unclear, waiting, lang, className, ms, u, bold }: { text: string; unclear: boolean; waiting: boolean; lang: Lang; className?: string; ms?: number; u?: number; bold?: boolean }) {
   const classes = [className, unclear ? 'w-unclear' : '', waiting ? 'w-pending' : ''].filter(Boolean).join(' ');
-  if (!classes) return <>{text}</>;
+  const words = bold ? <b>{text}</b> : text;
+  if (!classes) return <>{words}</>;
   return (
     <span className={classes} data-ms={ms} data-u={unclear && u !== undefined && u >= 0 ? u : undefined} title={[unclear ? t(lang, 'unclearWords') : '', waiting ? t(lang, 'pendingFix') : ''].filter(Boolean).join(' · ') || undefined}>
-      {text}
+      {words}
     </span>
   );
 }
@@ -103,7 +104,7 @@ function Spoken({ content, words, nowMs, lang, pending = [] }: { content: string
     const state = nowMs >= w.startMs && nowMs < Math.max(w.endMs, w.startMs + 1) ? 'w-now' : nowMs >= w.endMs ? 'w-past' : '';
     const hits = (list: Array<{ from: number; to: number }>) => list.some((m) => w.from < m.to && w.to > m.from);
     const u = marks.findIndex((m) => w.from < m.to && w.to > m.from);
-    out.push(<Marked key={i} text={content.slice(w.from, w.to)} className={['word', state].filter(Boolean).join(' ')} ms={w.startMs} unclear={u >= 0} u={u} waiting={hits(pending)} lang={lang} />);
+    out.push(<Marked key={i} text={content.slice(w.from, w.to)} className={['word', state].filter(Boolean).join(' ')} ms={w.startMs} unclear={u >= 0} u={u} waiting={hits(pending)} bold={w.bold} lang={lang} />);
     at = w.to;
   }
   if (at < content.length) out.push(content.slice(at));
@@ -403,7 +404,7 @@ export function Lyrics({
                 playFrom(at ? Number(at) : (p.startMs ?? 0));
               }}
             >
-              {now && timedWords(p) ? <Spoken content={p.content} words={timedWords(p)!} nowMs={nowMs} lang={lang} pending={waiting} /> : <Plain content={p.content} lang={lang} pending={waiting} />}
+              {now && timedWords(p) ? <Spoken content={p.content} words={timedWords(p)!} nowMs={nowMs} lang={lang} pending={waiting} /> : <Plain content={p.content} lang={lang} pending={waiting} bold={p.words?.filter((w) => w.bold)} />}
             </button>
           );
         })}

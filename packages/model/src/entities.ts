@@ -501,6 +501,30 @@ export interface SegmentData {
   proofread: ProofreadLevel;
   /** Where it stands in a scan, when known. */
   page?: { scan: EntityId; page: number; lines?: string[] };
+  /** The verses and sayings it quotes, with where each is from (SegmentQuote). */
+  quotes?: SegmentQuote[];
+  origin?: MachineOrigin;
+}
+
+/**
+ * A verse or saying a paragraph quotes, with where it is from, as a machine
+ * found it in a transcript (services/jobs/src/transcriptsImport.ts). Its
+ * words are the quote as said, which the paragraph's words also mark
+ * between ” ”; by its words, not by where it stands, so a fix of other
+ * words in the paragraph leaves it in place. Most sources (a verse, a
+ * Gemara, a Midrash) are not in the catalog, so a Relation, which points
+ * at a catalog item, cannot hold them; here they wait for a later pass to
+ * link them once the source is in the catalog, and the ones that already
+ * are get a `cites` Relation proposed too. Labelled until a person checks it.
+ */
+export interface SegmentQuote {
+  words: string;
+  /** Its place as Sefaria names it (`Genesis 1:1`). */
+  ref?: string;
+  /** Its page on Sefaria. */
+  url?: string;
+  /** The source's name, as said in Hebrew (`בראשית`). */
+  source?: string;
   origin?: MachineOrigin;
 }
 
@@ -547,8 +571,15 @@ export interface AlignmentSpanData {
   segment: EntityId;
   startMs: number;
   endMs: number;
-  /** Word timings for word-level sync: character offsets into the segment. */
-  words?: Array<{ from: number; to: number; startMs: number; endMs: number }>;
+  /**
+   * Word timings for word-level sync: character offsets into the segment.
+   * `bold`: the word is said with stress (written as bold, as the booklets
+   * set it in Miram). It is kept here, on the word, since a paragraph's
+   * content is plain words and this is the one place that knows each word
+   * by where it stands and carries it through people's fixes
+   * (model/timing.ts carryWordTimes).
+   */
+  words?: Array<{ from: number; to: number; startMs: number; endMs: number; bold?: boolean }>;
   locked?: boolean;
   origin?: MachineOrigin;
 }

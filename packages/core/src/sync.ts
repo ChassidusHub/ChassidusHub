@@ -20,6 +20,8 @@ export interface HeardWord {
   text: string;
   startMs: number;
   endMs: number;
+  /** Said with stress, when the recogniser marks it (the transcripts made on GPU pods do): drawn bold. */
+  bold?: boolean;
 }
 
 /** One word of a paragraph with when it is heard: character offsets into the paragraph. */
@@ -28,6 +30,7 @@ export interface WordTiming {
   to: number;
   startMs: number;
   endMs: number;
+  bold?: boolean;
 }
 
 export interface Timed {
@@ -45,7 +48,7 @@ export function heardWords(heard: ReadonlyArray<{ text: string; startMs: number;
   const out: HeardWord[] = [];
   for (const h of heard) {
     if (h.words?.length) {
-      for (const w of h.words) if (w.text.trim()) out.push({ text: w.text.trim(), startMs: w.startMs, endMs: Math.max(w.startMs, w.endMs) });
+      for (const w of h.words) if (w.text.trim()) out.push({ text: w.text.trim(), startMs: w.startMs, endMs: Math.max(w.startMs, w.endMs), ...(w.bold ? { bold: true } : {}) });
       continue;
     }
     const ws = h.text.split(/\s+/).filter(Boolean);
@@ -78,9 +81,12 @@ export function alignWords(paragraphs: readonly string[], heard: readonly HeardW
   if (!matches.length) return null;
   const start = new Array<number>(tokens.length).fill(NaN);
   const end = new Array<number>(tokens.length).fill(NaN);
+  // A word matched to one heard with stress is stressed; the words between take none.
+  const bold = new Array<boolean>(tokens.length).fill(false);
   for (const [t, h] of matches) {
     start[t] = heard[h]!.startMs;
     end[t] = heard[h]!.endMs;
+    bold[t] = Boolean(heard[h]!.bold);
   }
   // The words between two matched ones share the time between them, by length.
   const first = heard[0]!.startMs;
@@ -109,7 +115,7 @@ export function alignWords(paragraphs: readonly string[], heard: readonly HeardW
   return paragraphs.map((_, p) => {
     const ws: WordTiming[] = [];
     tokens.forEach((t, k) => {
-      if (t.p === p) ws.push({ from: t.from, to: t.to, startMs: Math.round(start[k]!), endMs: Math.max(Math.round(start[k]!), Math.round(end[k]!)) });
+      if (t.p === p) ws.push({ from: t.from, to: t.to, startMs: Math.round(start[k]!), endMs: Math.max(Math.round(start[k]!), Math.round(end[k]!)), ...(bold[k] ? { bold: true } : {}) });
     });
     if (!ws.length) return null;
     return { startMs: ws[0]!.startMs, endMs: Math.max(...ws.map((w) => w.endMs)), words: ws };

@@ -11,6 +11,8 @@ export interface Word {
   to: number;
   startMs: number;
   endMs: number;
+  /** Said with stress: drawn bold. */
+  bold?: boolean;
 }
 
 export interface Paragraph {

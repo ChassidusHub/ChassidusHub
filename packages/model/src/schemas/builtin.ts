@@ -263,8 +263,10 @@ const fractionalOrder = str({ pattern: '^[0-9A-Za-z]+$', maxLength: 64 });
  * 13: the page mark `ois`, the letter that opens a piece of a sicha (an earlier change added it
  * to the schema without this, so live catalogs kept refusing it).
  * 14: a printed line's end in a page's words (`{ eol }`), so a sicha can be set again exactly as printed.
+ * 15: a transcript paragraph's `quotes` (the verses it quotes, with their Sefaria refs) and a synced
+ * word's `bold` (said with stress), from the transcripts made on GPU pods (docs/transcription.md).
  */
-export const BUILTIN_SCHEMA_VERSION = 14;
+export const BUILTIN_SCHEMA_VERSION = 15;
 
 export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
   set: entitySchema(
@@ -509,6 +511,15 @@ export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
         required: ['scan', 'page'],
         additionalProperties: false,
       },
+      quotes: arrayOf(
+        {
+          type: 'object',
+          properties: { words: str({ minLength: 1, maxLength: 2000 }), ref: str({ minLength: 1, maxLength: 500 }), url: ref('url'), source: str({ maxLength: 500 }), origin: ref('machineOrigin') },
+          required: ['words'],
+          additionalProperties: false,
+        },
+        { maxItems: 200 },
+      ),
       origin: ref('machineOrigin'),
     },
     ['text', 'order', 'kind', 'content', 'proofread'],
@@ -556,7 +567,7 @@ export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
       endMs: int({ minimum: 0 }),
       words: arrayOf({
         type: 'object',
-        properties: { from: int({ minimum: 0 }), to: int({ minimum: 0 }), startMs: int({ minimum: 0 }), endMs: int({ minimum: 0 }) },
+        properties: { from: int({ minimum: 0 }), to: int({ minimum: 0 }), startMs: int({ minimum: 0 }), endMs: int({ minimum: 0 }), bold: { type: 'boolean' } },
         required: ['from', 'to', 'startMs', 'endMs'],
         additionalProperties: false,
       }),

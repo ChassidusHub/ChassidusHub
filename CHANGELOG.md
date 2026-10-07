@@ -10,6 +10,12 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Transcripts made on GPU pods come into the catalog with
+  `chassidushub transcripts-import` (docs/transcription.md): a transcript
+  paragraph may carry `quotes` (the verses it quotes, with their Sefaria
+  ref and page), a synced word `bold` (said with stress, drawn bold), and a
+  transcript may have machine translations, synced paragraph by paragraph.
+  Built-in schemas version 15.
 - Machine transcripts come one sentence a line, cut where a sentence ends
   rather than at Whisper's 30-second pieces, and tidied into the house
   spelling (glued words after a ' set apart, abbreviation marks as ״).
