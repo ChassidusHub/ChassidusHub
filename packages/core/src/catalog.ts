@@ -802,6 +802,90 @@ export class Catalog {
     });
   }
 
+  /**
+   * Many items' proposed versions in a draft suggestion at once, as
+   * putRevision adds each, with the same checks; returns their ids in
+   * order. An id can be given ahead for a new item, so another item in
+   * the same call can point at it. Read and written a few statements for
+   * the lot: a machine transcript of 700 paragraphs was 1,400 putRevisions
+   * of about ten round trips each, and loading a season of recordings
+   * took most of a day.
+   */
+  async putRevisions(changesetId: number, by: string, inputs: NewRevision[]): Promise<EntityId[]> {
+    const ids = inputs.map((input) => input.id ?? newId());
+    if (!inputs.length) return ids;
+    if (new Set(ids).size !== ids.length) throw invalid('an item is given twice');
+    await this.db.transaction(async (tx) => {
+      const cs = await this.changeset(changesetId, tx);
+      if (cs.author !== by) throw forbidden('only its author edits a suggestion');
+      if (cs.status !== 'draft' && cs.status !== 'sent_back') throw badState('this suggestion has been sent for review; it can no longer be edited');
+      const registry = await this.registry(tx);
+      for (const [i, input] of inputs.entries()) {
+        if (!registry.has(input.type)) throw invalid(`unknown entity type "${input.type}"`);
+        if (!isEntityId(ids[i]!)) throw invalid(`"${ids[i]}" is not an entity id`);
+      }
+      const given = ids.filter((_, i) => inputs[i]!.id !== undefined);
+      const types = new Map<string, string>();
+      const parents = new Map<string, RevisionRow>();
+      if (given.length) {
+        const { rows } = await tx.query<{ id: string; type: string }>('SELECT id, type FROM entity WHERE id = ANY($1::text[])', [given]);
+        for (const r of rows) types.set(r.id, r.type);
+      }
+      const old = [...types.keys()];
+      if (old.length) {
+        // What each item is as this suggestion sees it (currentFor): its own latest version, else the project's, else main's.
+        const { rows: own } = await tx.query<RevisionRow>('SELECT DISTINCT ON (entity_id) * FROM revision WHERE changeset_id = $1 AND entity_id = ANY($2::text[]) ORDER BY entity_id, id DESC', [cs.id, old]);
+        for (const r of own) parents.set(r.entity_id, r);
+        let rest = old.filter((id) => !parents.has(id));
+        if (rest.length && cs.project_id !== null) {
+          const { rows } = await tx.query<RevisionRow>('SELECT r.* FROM project_head h JOIN revision r ON r.id = h.rev_id WHERE h.project_id = $1 AND h.entity_id = ANY($2::text[])', [cs.project_id, rest]);
+          for (const r of rows) parents.set(r.entity_id, r);
+          rest = rest.filter((id) => !parents.has(id));
+        }
+        if (rest.length) {
+          const { rows } = await tx.query<RevisionRow>('SELECT r.* FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = ANY($1::text[])', [rest]);
+          for (const r of rows) parents.set(r.entity_id, r);
+        }
+      }
+      const fresh: Array<{ id: EntityId; type: string }> = [];
+      const rows: Array<{ id: EntityId; type: string; parent: string | null; data: string | null; path: string | null; hash: string }> = [];
+      for (const [i, input] of inputs.entries()) {
+        const id = ids[i]!;
+        const type = types.get(id);
+        if (type !== undefined && type !== input.type) throw invalid(`${id} is a ${type}, not a ${input.type}`);
+        if (type === undefined) {
+          if (input.data === null) throw notFound(`item ${id}`);
+          fresh.push({ id, type: input.type });
+        }
+        const parent = parents.get(id) ?? null;
+        if (input.data === null && (!parent || parent.data === null)) throw badState(`${id} is already deleted`);
+        let path = input.path === undefined ? (parent?.path ?? null) : input.path;
+        if (path !== null) {
+          path = path.toLowerCase();
+          if (!isEntityPath(path)) throw invalid(`"${path}" is not a path: lower-case letters, digits and hyphens between slashes`);
+        }
+        const data = input.data === null ? null : withStructuredBody(input.data);
+        const hash = await contentHash({ type: input.type, data, path });
+        if (parent && parent.hash === hash) continue; // no change
+        rows.push({ id, type: input.type, parent: parent ? String(parent.id) : null, data: data === null ? null : JSON.stringify(data), path, hash });
+      }
+      for (let i = 0; i < fresh.length; i += 1000) {
+        const batch = fresh.slice(i, i + 1000);
+        await tx.query('INSERT INTO entity (id, type) SELECT * FROM unnest($1::text[], $2::text[])', [batch.map((f) => f.id), batch.map((f) => f.type)]);
+      }
+      for (let i = 0; i < rows.length; i += 1000) {
+        const batch = rows.slice(i, i + 1000);
+        await tx.query(
+          `INSERT INTO revision (entity_id, entity_type, parent_rev, data, path, hash, changeset_id, author)
+           SELECT r.id, r.type, r.parent::bigint, r.data::jsonb, r.path, r.hash, $7, $8
+           FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[]) WITH ORDINALITY AS r(id, type, parent, data, path, hash, n) ORDER BY r.n`,
+          [batch.map((r) => r.id), batch.map((r) => r.type), batch.map((r) => r.parent), batch.map((r) => r.data), batch.map((r) => r.path), batch.map((r) => r.hash), cs.id, by],
+        );
+      }
+    });
+    return ids;
+  }
+
   /** The latest version of each item a suggestion changes, with the version it was made from. */
   async proposals(changesetId: number, db: Db = this.db): Promise<Proposal[]> {
     const { rows } = await db.query<RevisionRow & { base_rev: number | null }>(PROPOSALS_SQL, [changesetId]);
