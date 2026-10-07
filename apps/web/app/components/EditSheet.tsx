@@ -56,16 +56,10 @@ const fallbackOf = (target: EditTarget, lang: Lang, editHref: string) => (target
 
 /** The page's own buttons: a visible "Edit" for signed-in people, and "…" for everyone; both open the sheet. */
 export function EditActions({ target, lang, editHref }: { target: EditTarget; lang: Lang; editHref: string }) {
-  const account = useAccount();
+  // Changing the page itself is its Read · Edit switch (docs/plans/redesign.md); "…" keeps what is done to it from outside: moving, organizing, every detail.
   const [open, setOpen] = useState(false);
   return (
     <>
-      {account ? (
-        <button type="button" className="btn edit-open" onClick={() => setOpen(true)} aria-haspopup="dialog">
-          <Icon name="pencil" />
-          {ow(lang, 'edit')}
-        </button>
-      ) : null}
       {/* Without script, "…" still leads somewhere to organize: the full organizer, or the edit page. */}
       <a className="btn icon edit-more" href={fallbackOf(target, lang, editHref)} onClick={(e) => (e.preventDefault(), setOpen(true))} aria-haspopup="dialog" aria-label={ow(lang, 'moreActions')} title={ow(lang, 'moreActions')}>
         <Icon name="more" />

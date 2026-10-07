@@ -483,7 +483,8 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
       {editing ? (
         <p className="pf-edit-hint">
           <Icon name="pencil" />
-          {tu(lang, 'editHint')}
+          <span className="grow">{tu(lang, 'editHint')}</span>
+          <Link to={href(`/edit/${entity.id}`, lang)}>{tu(lang, 'allDetails')}</Link>
         </p>
       ) : null}
 

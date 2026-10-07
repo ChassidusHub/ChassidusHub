@@ -567,3 +567,14 @@ h1 .fld-show {
   justify-content: flex-end;
   gap: var(--s-2);
 }
+
+.pf-edit-hint .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.pf-edit-hint a {
+  flex: none;
+  color: var(--mine);
+  font-weight: 600;
+}

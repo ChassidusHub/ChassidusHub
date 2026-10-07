@@ -323,7 +323,8 @@ function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: Item
         {editing ? (
           <p className="pf-edit-hint">
             <Icon name="pencil" />
-            {tu(lang, 'editHint')}
+            <span className="grow">{tu(lang, 'editHint')}</span>
+            <Link to={href(`/edit/${entity.id}`, lang)}>{tu(lang, 'allDetails')}</Link>
           </p>
         ) : null}
         <SideNotes.Provider value={true}>

@@ -10,6 +10,8 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Pages with Read and Edit lose their separate Edit buttons; every
+  detail of an item is one link from Edit's hint.
 - A farbrengen has Read and Edit: in Edit its names change in place and
   its recordings' words open in the transcript editor, unchanged.
 - Home is built around finding anything with AI in seconds (search by

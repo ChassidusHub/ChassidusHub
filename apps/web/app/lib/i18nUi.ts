@@ -138,6 +138,7 @@ const UI = {
   sendName: { he: 'שם להצעה (לא חובה)', en: 'A name for it (optional)' },
   sendNote: { he: 'הערה לבודקים (לא חובה)', en: 'A note for the reviewers (optional)' },
   sendNow: { he: 'שליחה', en: 'Send' },
+  allDetails: { he: 'כל הפרטים', en: 'Every detail' },
   traySending: { he: 'שולח…', en: 'Sending…' },
   traySentLive: { he: 'השינויים שלך נכנסו לדף.', en: 'Your changes are live.' },
   traySentOpen: { he: 'השינויים שלך נשלחו לבדיקה.', en: 'Your changes were sent for review.' },

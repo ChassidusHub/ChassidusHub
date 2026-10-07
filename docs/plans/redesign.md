@@ -87,3 +87,9 @@ merge right away"); each new screen replaces the old one as it lands.
    and its recordings' words open in the transcript editor as it is (the
    Text tab, which stays for old links).
 9. The old screens and their styles removed; old addresses redirect.
+   The separate Edit buttons are gone from pages that have Read · Edit
+   (a sefer's and a shelf's "…" keeps moving and organizing). The full
+   form of every detail (`/edit/<id>`) stays, linked from Edit's hint as
+   "Every detail", because Fields cover names and a few words so far; it
+   goes when Fields cover the rest. Old addresses (`/help`, `?tab=text`,
+   `/organize`) keep working.
