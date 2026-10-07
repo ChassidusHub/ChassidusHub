@@ -292,8 +292,11 @@ function KviusCard({ card, lang }: { card: FeedCard; lang: Lang }) {
         </ul>
       ) : null}
       {card.maamar ? (
-        <p className="hm-maamar" lang="he" dir="rtl">
-          {w(lang, 'maamar')}: {card.maamar}
+        <p className="hm-maamar">
+          {w(lang, 'maamar')}:{' '}
+          <span lang="he" dir="rtl">
+            {card.maamar}
+          </span>
         </p>
       ) : null}
       <Link className="hm-kv-go" to={href(card.path, lang)}>

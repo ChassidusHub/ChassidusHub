@@ -266,6 +266,39 @@
   text-decoration: underline;
 }
 
+/* In dark, ink is light: the first to hear is a deeper card instead, set apart by its edge. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .hm-ls-first {
+    border: 1px solid var(--border-strong);
+    background: var(--sunken);
+    color: var(--text);
+  }
+  :root:not([data-theme='light']) .hm-ls-first .hm-ls-title,
+  :root:not([data-theme='light']) .hm-ls-first .hm-ls-go {
+    color: var(--text);
+  }
+  :root:not([data-theme='light']) .hm-ls-first .hm-ls-when,
+  :root:not([data-theme='light']) .hm-ls-first .hm-ls-topic {
+    color: var(--muted);
+  }
+}
+
+:root[data-theme='dark'] .hm-ls-first {
+  border: 1px solid var(--border-strong);
+  background: var(--sunken);
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .hm-ls-first .hm-ls-title,
+:root[data-theme='dark'] .hm-ls-first .hm-ls-go {
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .hm-ls-first .hm-ls-when,
+:root[data-theme='dark'] .hm-ls-first .hm-ls-topic {
+  color: var(--muted);
+}
+
 .hm-credit {
   grid-column: 1 / -1;
   margin: 0;
