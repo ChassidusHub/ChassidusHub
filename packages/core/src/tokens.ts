@@ -1,7 +1,7 @@
 import { one, type Db } from '@chassidushub/db';
 import { base64url, hashToken } from './auth.js';
 import { invalid, notFound } from './errors.js';
-import { listConnections, oauthGrant, revokeConnection } from './oauth.js';
+import { isAccessToken, listConnections, oauthGrant, revokeConnection } from './oauth.js';
 
 /**
  * Personal API tokens (migration 0018): how a person's scripts and agents
@@ -9,8 +9,9 @@ import { listConnections, oauthGrant, revokeConnection } from './oauth.js';
  * send goes through the same suggestions, checks and review as what they
  * do on the site, and a suspended person's tokens sign nothing in.
  *
- * A token is `rhp_` and 43 letters (32 random bytes), shown once when it is
- * made; only its sha256 is kept. Tokens never manage sign-in, other tokens
+ * A token is `chp_` and 43 letters (32 random bytes), shown once when it is
+ * made; only its sha256 is kept. Tokens made before the site was renamed
+ * start `rhp_` and still work. Tokens never manage sign-in, other tokens
  * or stewards' tools: those stay on the site's own pages.
  *
  * Apps a person connected with OAuth (oauth.ts) sign in the same way and
@@ -19,7 +20,7 @@ import { listConnections, oauthGrant, revokeConnection } from './oauth.js';
 
 export type TokenScope = 'read' | 'write';
 export const TOKEN_SCOPES: readonly TokenScope[] = ['read', 'write'];
-export const TOKEN_PREFIX = 'rhp_';
+export const TOKEN_PREFIX = 'chp_';
 /** How many live tokens one person may hold. */
 export const MAX_TOKENS_PER_PERSON = 20;
 
@@ -85,7 +86,7 @@ function random(bytes: number): Uint8Array {
 
 /** Whether a string looks like one of our tokens at all (before any lookup). */
 export function looksLikeToken(value: string): boolean {
-  return /^rh[po]_[A-Za-z0-9_-]{43}$/.test(value);
+  return /^(ch|rh)[po]_[A-Za-z0-9_-]{43}$/.test(value);
 }
 
 /**
@@ -148,7 +149,7 @@ export async function revokeAllApiTokens(db: Db, personId: string): Promise<numb
  */
 export async function tokenGrant(db: Db, token: string): Promise<TokenGrant | null> {
   if (!looksLikeToken(token)) return null;
-  if (token.startsWith('rho_')) return oauthGrant(db, token);
+  if (isAccessToken(token)) return oauthGrant(db, token);
   const row = await one<{ id: string; name: string; person_id: string; display_name: string; scopes: TokenScope[]; stale: boolean }>(
     db,
     `SELECT t.id, t.name, t.person_id, p.display_name, t.scopes,

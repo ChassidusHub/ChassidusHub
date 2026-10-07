@@ -297,7 +297,7 @@ to `chassidushub-api`. Without them no advice is written and nothing shows.
 ## API tokens
 
 A script or an AI agent acts for a person with a personal API token
-(`rhp_…`), made and revoked on `/account` (*For developers: API tokens*)
+(`chp_…`), made and revoked on `/account` (*For developers: API tokens*)
 and only there: a token cannot make, list or revoke tokens, sign in, or
 use the admin routes. Each has a name, its scopes (`read`, or `read` and
 `write`) and, if chosen, an end date. It is shown once; only its sha256

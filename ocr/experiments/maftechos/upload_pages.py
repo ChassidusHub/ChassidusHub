@@ -1,7 +1,7 @@
 """Uploads the index pages as one suggestion through ChassidusHub's API (the same
 routes the MCP's suggest_items calls) and sends it for review; a person
 approves it on the site. Few, large requests, to spare the database.
-    CHASSIDUSHUB_TOKEN=rhp_... python3 upload_pages.py pages.json [--dry-run]"""
+    CHASSIDUSHUB_TOKEN=chp_... python3 upload_pages.py pages.json [--dry-run]"""
 import json, os, sys, time, urllib.request
 
 API = os.environ.get('CHASSIDUSHUB_API_URL', 'https://api.chassidushub.org')

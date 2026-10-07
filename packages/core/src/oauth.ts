@@ -13,13 +13,20 @@ import type { ApiTokenView, TokenGrant, TokenScope } from './tokens.js';
  * reviewed like any other.
  *
  * Public apps only prove themselves with PKCE (S256); an app that
- * registered with a secret must send it too. Access tokens are `rho_` and
- * last an hour; refresh tokens are `rhr_`, and each use gives a new one
- * (the old one stops working). Only their sha256 is kept.
+ * registered with a secret must send it too. Access tokens are `cho_` and
+ * last an hour; refresh tokens are `chr_`, and each use gives a new one
+ * (the old one stops working). Only their sha256 is kept. Tokens given
+ * before the site was renamed start `rho_` and `rhr_`, and still work.
  */
 
-export const ACCESS_PREFIX = 'rho_';
-export const REFRESH_PREFIX = 'rhr_';
+export const ACCESS_PREFIX = 'cho_';
+export const REFRESH_PREFIX = 'chr_';
+/** The prefixes from before the rename (RebbeHub), still accepted. */
+const OLD_ACCESS_PREFIX = 'rho_';
+const OLD_REFRESH_PREFIX = 'rhr_';
+/** Whether a token is an access token, new or old. */
+export const isAccessToken = (token: string) => token.startsWith(ACCESS_PREFIX) || token.startsWith(OLD_ACCESS_PREFIX);
+const isRefreshToken = (token: string) => token.startsWith(REFRESH_PREFIX) || token.startsWith(OLD_REFRESH_PREFIX);
 /** How long each thing lasts, in seconds. */
 export const ACCESS_SECONDS = 3600;
 export const REFRESH_DAYS = 90;
@@ -453,7 +460,7 @@ export async function exchangeCode(db: Db, client: OAuthClient, input: { code?: 
  * apps). Scopes may be narrowed, never widened.
  */
 export async function refreshTokens(db: Db, client: OAuthClient, input: { refreshToken?: string; scope?: string; resource?: string }): Promise<TokenAnswer> {
-  if (!input.refreshToken?.startsWith(REFRESH_PREFIX)) throw new OAuthError('invalid_grant', 'this refresh token is not known');
+  if (!input.refreshToken || !isRefreshToken(input.refreshToken)) throw new OAuthError('invalid_grant', 'this refresh token is not known');
   const row = await one<{ id: string; client_id: string; scopes: TokenScope[]; resource: string }>(
     db,
     'SELECT id, client_id, scopes, resource FROM auth.oauth_connection WHERE refresh_hash = $1 AND revoked_at IS NULL AND refresh_expires_at > now()',
@@ -486,7 +493,7 @@ export async function refreshTokens(db: Db, client: OAuthClient, input: { refres
  * (nothing is revoked then).
  */
 export async function revokeOAuthToken(db: Db, token: string | undefined, clientId?: string): Promise<void> {
-  if (!token || !(token.startsWith(ACCESS_PREFIX) || token.startsWith(REFRESH_PREFIX))) return;
+  if (!token || !(isAccessToken(token) || isRefreshToken(token))) return;
   const hash = await hashToken(token);
   await db.query(
     `UPDATE auth.oauth_connection SET revoked_at = coalesce(revoked_at, now())
@@ -497,7 +504,7 @@ export async function revokeOAuthToken(db: Db, token: string | undefined, client
 
 /** Who an access token signs in, or null when it is unknown, revoked or expired. Its last use is kept to the minute. */
 export async function oauthGrant(db: Db, token: string): Promise<TokenGrant | null> {
-  if (!/^rho_[A-Za-z0-9_-]{43}$/.test(token)) return null;
+  if (!/^(cho|rho)_[A-Za-z0-9_-]{43}$/.test(token)) return null;
   const row = await one<{ id: string; person_id: string; display_name: string; scopes: TokenScope[]; resource: string; client_id: string; client_name: string; stale: boolean }>(
     db,
     `SELECT t.id, t.person_id, p.display_name, t.scopes, t.resource, t.client_id, c.name AS client_name,

@@ -32,7 +32,7 @@ stream. It has one address, `https://api.chassidushub.org/mcp`:
   `error="insufficient_scope"` and the scope it needs. A token that has
   ended or was revoked answers `401` with `error="invalid_token"`.
 - **Sign-in is OAuth 2.1** (you approve the app on chassidushub.org), or a
-  personal token sent as `Authorization: Bearer rhp_…`.
+  personal token sent as `Authorization: Bearer chp_…`.
 
 | Tool | Does |
 | --- | --- |
@@ -160,7 +160,7 @@ no OAuth send a token:
     "chassidushub": {
       "type": "http",
       "url": "https://api.chassidushub.org/mcp",
-      "headers": { "Authorization": "Bearer rhp_…" }
+      "headers": { "Authorization": "Bearer chp_…" }
     }
   }
 }

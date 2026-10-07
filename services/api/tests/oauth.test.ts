@@ -139,7 +139,7 @@ describe('OAuth for MCP clients', () => {
   it('connects with PKCE: the person says yes, the code is traded once for tokens, and a fix is a suggestion as them', async () => {
     const { client_id } = await register();
     const tokens = await tokensFor(client_id);
-    expect(tokens).toMatchObject({ access_token: expect.stringMatching(/^rho_[\w-]{43}$/), refresh_token: expect.stringMatching(/^rhr_[\w-]{43}$/), scope: 'read write', expires_in: 3600 });
+    expect(tokens).toMatchObject({ access_token: expect.stringMatching(/^cho_[\w-]{43}$/), refresh_token: expect.stringMatching(/^chr_[\w-]{43}$/), scope: 'read write', expires_in: 3600 });
 
     expect((await mcp(tokens.access_token, 'initialize', { protocolVersion: '2025-11-25' })).body.result.serverInfo.name).toBe('chassidushub');
     const fixed = await mcp(tokens.access_token, 'tools/call', { name: 'suggest_fix', arguments: { id: event, changes: { title: { he: 'יו״ד שבט', en: 'Yud Shvat' } }, title: 'Shorter title' } });
@@ -268,7 +268,7 @@ describe('OAuth for MCP clients', () => {
 
   it('knows an app by the address of its own description (Client ID Metadata Document), any port on this computer', async () => {
     const tokens = await tokensFor(CIMD, { redirect: 'http://127.0.0.1:54321/callback' });
-    expect(tokens.access_token).toMatch(/^rho_/);
+    expect(tokens.access_token).toMatch(/^cho_/);
     expect(fetched).toEqual([CIMD]);
     const { challenge } = await pkce();
     const consent = await authorize({ response_type: 'code', client_id: CIMD, redirect_uri: 'http://127.0.0.1:1/callback', code_challenge: challenge, code_challenge_method: 'S256' });
