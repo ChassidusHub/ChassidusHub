@@ -88,6 +88,7 @@ const PATHS = {
   dot: '<circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  send: '<path d="M4 12 20 4.5 15 20l-3-6.5z"/><path d="m12 13.5 8-9"/>',
   keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="1.5"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9"/>',
 } as const;
 

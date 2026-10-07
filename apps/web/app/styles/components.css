@@ -428,6 +428,8 @@ a.label:hover {
   border-bottom: 1px solid var(--border);
   background: var(--canvas);
   display: flex;
+  /* A long label goes under the title on a phone rather than past the screen's edge. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   font-weight: 600;

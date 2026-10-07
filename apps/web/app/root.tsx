@@ -19,6 +19,7 @@ import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
 import './styles/parts.css';
+import './styles/page.css';
 import './styles/layout.css';
 import './styles/pages.css';
 import './styles/items.css';
@@ -66,8 +67,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
-        <meta name="theme-color" content="#f7f3ea" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#16130e" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#f8f6f1" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#15130f" media="(prefers-color-scheme: dark)" />
         {/* The reader's own light or dark, set before anything is drawn. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <Meta />

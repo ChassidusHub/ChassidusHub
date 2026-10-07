@@ -5,33 +5,34 @@
  * menu and kept in this browser). Components use these names only, never a
  * colour of their own, so both themes and both directions come out right.
  *
- * The palette is a printed sefer's (design/README.md): warm paper, dark
- * ink, and one accent, the red of a title page (links, focus, the primary
- * action). Status keeps its own quiet colours: open is green, approved
- * purple, closed red. Machine output that no person has checked is amber,
- * always.
+ * The palette is a printed sefer's (design/README.md), made calmer in the
+ * redesign (2026-10): whiter paper, dark ink, and one accent, the red of a
+ * title page (links, focus, the primary action). Every other colour says
+ * one thing: blue is yours and not sent yet (--mine), green is checked or
+ * approved (--ok, --approved), amber is a machine's words nobody checked
+ * (--machine), ink is waiting (--open), red is closed.
  */
 :root {
   color-scheme: light;
 
   /* Surfaces */
-  --bg: #f7f3ea;
-  --canvas: #f0eadd;
-  --sunken: #ece5d6;
-  --overlay: #fffdf8;
+  --bg: #f8f6f1;
+  --canvas: #f3f0e9;
+  --sunken: #f0ece4;
+  --overlay: #ffffff;
   /* A raised card on the page: the paper a sefer's page is printed on. */
-  --card: #fffdf8;
-  --border: #dcd2bf;
-  --border-strong: #c8bba3;
-  --border-muted: #e9e1d1;
+  --card: #ffffff;
+  --border: #e4ded2;
+  --border-strong: #d3cbbb;
+  --border-muted: #ece7dd;
 
   /* Ink */
-  --text: #1f1a13;
-  --muted: #4e463a;
-  --subtle: #6b6253;
-  --faint: #9a8f7d;
-  --on-strong: #f7f3ea;
-  --strong: #1f1a13;
+  --text: #1b1814;
+  --muted: #4a443b;
+  --subtle: #6b6459;
+  --faint: #9a9184;
+  --on-strong: #f8f6f1;
+  --strong: #1b1814;
 
   /* The one accent */
   --accent: #8a2c1e;
@@ -42,12 +43,12 @@
   --focus: #8a2c1e;
 
   /* Status */
-  --open: #2f6b3f;
-  --open-strong: #2f6b3f;
-  --open-soft: #e3eddc;
-  --approved: #5b3f8a;
-  --approved-strong: #5b3f8a;
-  --approved-soft: #ece5f1;
+  --open: #4a443b;
+  --open-strong: #4a443b;
+  --open-soft: #f0ece4;
+  --approved: #2f6b3f;
+  --approved-strong: #2f6b3f;
+  --approved-soft: #e3eedd;
   --closed: #9a3322;
   --closed-strong: #9a3322;
   --closed-soft: #f4ddd6;
@@ -58,6 +59,17 @@
   --machine: #b07a1a;
   --machine-soft: #f6ecd2;
   --machine-line: #e6cf9a;
+
+  /*
+   * Yours, not sent yet: what a person changed in Edit and has not sent
+   * (the redesign's one rule for blue). Checked or approved is --ok.
+   */
+  --mine: #2b5a8a;
+  --mine-soft: #e6eef7;
+  --mine-line: #9bb7d4;
+  --on-mine: #ffffff;
+  --ok: #2f6b3f;
+  --ok-soft: #e3eedd;
 
   /* Diffs */
   --add-bg: #dfecd8;
@@ -74,7 +86,7 @@
   --l-scan: #9a3322;
   --l-date: #b07a1a;
   --l-meta: #6b6253;
-  --l-audio: #5b3f8a;
+  --l-audio: #2b5a8a;
   --l-translation: #2b6b66;
   --l-sync: #2f6b3f;
 
@@ -166,32 +178,32 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #16130e;
-    --canvas: #1c1812;
-    --sunken: #2a251d;
-    --overlay: #1f1b15;
-    --card: #1f1b15;
-    --border: #3a3329;
-    --border-strong: #4a4235;
-    --border-muted: #2b261e;
-    --text: #ede5d5;
-    --muted: #bcb19e;
-    --subtle: #948a78;
+    --bg: #15130f;
+    --canvas: #1a1813;
+    --sunken: #26221b;
+    --overlay: #1e1b16;
+    --card: #1e1b16;
+    --border: #332e25;
+    --border-strong: #463f33;
+    --border-muted: #29251e;
+    --text: #eee7d9;
+    --muted: #c7bfb0;
+    --subtle: #958b7b;
     --faint: #6f6656;
-    --on-strong: #16130e;
-    --strong: #ede5d5;
+    --on-strong: #15130f;
+    --strong: #eee7d9;
     --accent: #e2957f;
     --accent-strong: #a8432f;
     --accent-hover: #b9503a;
     --accent-soft: #3a221b;
     --accent-line: rgba(226, 149, 127, 0.5);
     --focus: #e2957f;
-    --open: #86c79a;
-    --open-strong: #2f6b3f;
-    --open-soft: #1d3322;
-    --approved: #c2a8e8;
-    --approved-strong: #6e4fa3;
-    --approved-soft: #2a2236;
+    --open: #c7bfb0;
+    --open-strong: #4a443b;
+    --open-soft: #26221b;
+    --approved: #8cc49a;
+    --approved-strong: #2f6b3f;
+    --approved-soft: #1c2c20;
     --closed: #f0a595;
     --closed-strong: #a8432f;
     --closed-soft: #3d1c16;
@@ -200,6 +212,12 @@
     --machine: #d6a64c;
     --machine-soft: #2e2512;
     --machine-line: #5b4717;
+    --mine: #8db6e0;
+    --mine-soft: #1c2a38;
+    --mine-line: #3d5a78;
+    --on-mine: #10161d;
+    --ok: #8cc49a;
+    --ok-soft: #1c2c20;
     --add-bg: #1d3322;
     --add-fg: #9fdcae;
     --add-line: #2c5034;
@@ -212,7 +230,7 @@
     --l-scan: #f0a595;
     --l-date: #d6a64c;
     --l-meta: #bcb19e;
-    --l-audio: #c2a8e8;
+    --l-audio: #8db6e0;
     --l-translation: #7fc4bc;
     --l-sync: #86c79a;
     --paper: #221e17;
@@ -229,32 +247,32 @@
 /* The reader's own choice of dark, whatever the device says. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #16130e;
-  --canvas: #1c1812;
-  --sunken: #2a251d;
-  --overlay: #1f1b15;
-  --card: #1f1b15;
-  --border: #3a3329;
-  --border-strong: #4a4235;
-  --border-muted: #2b261e;
-  --text: #ede5d5;
-  --muted: #bcb19e;
-  --subtle: #948a78;
+  --bg: #15130f;
+  --canvas: #1a1813;
+  --sunken: #26221b;
+  --overlay: #1e1b16;
+  --card: #1e1b16;
+  --border: #332e25;
+  --border-strong: #463f33;
+  --border-muted: #29251e;
+  --text: #eee7d9;
+  --muted: #c7bfb0;
+  --subtle: #958b7b;
   --faint: #6f6656;
-  --on-strong: #16130e;
-  --strong: #ede5d5;
+  --on-strong: #15130f;
+  --strong: #eee7d9;
   --accent: #e2957f;
   --accent-strong: #a8432f;
   --accent-hover: #b9503a;
   --accent-soft: #3a221b;
   --accent-line: rgba(226, 149, 127, 0.5);
   --focus: #e2957f;
-  --open: #86c79a;
-  --open-strong: #2f6b3f;
-  --open-soft: #1d3322;
-  --approved: #c2a8e8;
-  --approved-strong: #6e4fa3;
-  --approved-soft: #2a2236;
+  --open: #c7bfb0;
+  --open-strong: #4a443b;
+  --open-soft: #26221b;
+  --approved: #8cc49a;
+  --approved-strong: #2f6b3f;
+  --approved-soft: #1c2c20;
   --closed: #f0a595;
   --closed-strong: #a8432f;
   --closed-soft: #3d1c16;
@@ -263,6 +281,12 @@
   --machine: #d6a64c;
   --machine-soft: #2e2512;
   --machine-line: #5b4717;
+  --mine: #8db6e0;
+  --mine-soft: #1c2a38;
+  --mine-line: #3d5a78;
+  --on-mine: #10161d;
+  --ok: #8cc49a;
+  --ok-soft: #1c2c20;
   --add-bg: #1d3322;
   --add-fg: #9fdcae;
   --add-line: #2c5034;
@@ -275,7 +299,7 @@
   --l-scan: #f0a595;
   --l-date: #d6a64c;
   --l-meta: #bcb19e;
-  --l-audio: #c2a8e8;
+  --l-audio: #8db6e0;
   --l-translation: #7fc4bc;
   --l-sync: #86c79a;
   --paper: #221e17;

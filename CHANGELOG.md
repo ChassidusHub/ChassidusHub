@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The redesign begins (docs/plans/redesign.md): calmer colours across the
+  site (whiter paper, green for approved, blue for your changes not sent
+  yet), and the page frame every page will share, with Read and Edit at the
+  same address (`?edit`). The closed phone menu no longer makes pages wider
+  than the phone.
 - Transcripts made on GPU pods come into the catalog with
   `chassidushub transcripts-import` (docs/transcription.md): a transcript
   paragraph may carry `quotes` (the verses it quotes, with their Sefaria

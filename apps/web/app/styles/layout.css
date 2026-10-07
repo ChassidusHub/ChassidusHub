@@ -367,6 +367,11 @@ main#main {
   animation-name: sheet-in-rtl;
 }
 
+/* A closed menu draws nothing: kept drawn off the screen's edge, it made every phone page wider than the phone. */
+.msheet:not([open]) > :not(summary) {
+  display: none;
+}
+
 .sheet-h {
   display: flex;
   align-items: center;
