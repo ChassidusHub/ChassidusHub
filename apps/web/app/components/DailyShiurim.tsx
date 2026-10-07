@@ -11,8 +11,9 @@ import { Icon } from '../ui/Icon.js';
  * follows (three chapters, one chapter or Sefer HaMitzvos, chosen under it
  * and kept in this browser) and Hayom Yom, each a row going to its words,
  * with a circle to tick once it is learned and the first not yet learned
- * marked as next. The ticks stay in this browser only; a bar counts them,
- * and the days in a row on which everything was learned. Each shiur goes
+ * marked as next. The ticks stay in this browser only; a line says what is
+ * left today (board 33), and a bar counts them, and the days in a row on
+ * which everything was learned. Each shiur goes
  * to its words on the shiurim page, cut to what is learned (the Chumash
  * by aliyah); Hayom Yom to its words on this page.
  */
@@ -35,6 +36,10 @@ const W = {
   done: { he: 'מתוך', en: 'of' },
   streak: { he: 'ימים ברציפות', en: 'days in a row' },
   kept: { he: 'נשמר בדפדפן זה בלבד', en: 'Kept in this browser only' },
+  headStart: { he: 'הלימוד של היום', en: "Today's learning" },
+  headLeft: { he: 'עוד {n} להיום', en: '{n} more today' },
+  headLeftOne: { he: 'עוד אחד להיום', en: 'One more today' },
+  headDone: { he: 'כל הלימוד של היום, אשריכם', en: 'All of today, learned. Ashreichem' },
 } as const;
 
 export interface ShiurRow {
@@ -155,6 +160,10 @@ export function DailyShiurim({ day, lang }: { day: DailyLearning; lang: Lang }) 
 
   return (
     <section className="dl-shiurim" aria-label={t('title')}>
+      {/* What is left today, in a few words (design/system, board 33), above the bar and its count. */}
+      <p className={count === rows.length ? 'dl-head done' : 'dl-head'} role="status">
+        {count === 0 ? t('headStart') : count === rows.length ? t('headDone') : rows.length - count === 1 ? t('headLeftOne') : t('headLeft').replace('{n}', String(rows.length - count))}
+      </p>
       <div className="dl-progress" title={t('kept')}>
         <span className="dl-bar" aria-hidden="true">
           <span style={{ width: `${(count / rows.length) * 100}%` }} />

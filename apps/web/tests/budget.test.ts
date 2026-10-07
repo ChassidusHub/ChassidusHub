@@ -287,6 +287,8 @@ describe("each page's statements and API calls stay within its ceiling", () => {
     expect(html).toMatch(/class="dl-sub">[^<]*סוכות/);
     expect(html).toMatch(/class="dl-row next"/);
     expect(html.match(/class="dl-row next"/g)).toHaveLength(1);
+    // Above them, what is left today in a few words (design/system, board 33): nothing ticked yet on the server.
+    expect(html).toContain('<p class="dl-head" role="status">הלימוד של היום</p>');
   });
   it('the sitemap', async () => within(await page('/sitemap.xml'), '/sitemap.xml', { statements: 2, calls: 2, kB: 5 }));
 });
