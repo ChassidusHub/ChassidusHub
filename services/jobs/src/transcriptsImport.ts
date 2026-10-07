@@ -1,8 +1,8 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { one } from '@chassidushub/db';
-import { CITATIONS_BOT, recordingTranscript, type Catalog, type Json, type TranscriptView } from '@chassidushub/core';
-import { LANGUAGES, orderKeys, type EntityId, type Language, type RelationData, type SegmentQuote } from '@chassidushub/model';
+import { CITATIONS_BOT, recordingTranscript, type Catalog, type Json, type NewRevision, type TranscriptView } from '@chassidushub/core';
+import { LANGUAGES, newId, orderKeys, type EntityId, type Language, type RelationData, type SegmentQuote } from '@chassidushub/model';
 import { TRANSCRIBE_BOT, transcribeRecordings, type Heard, type Transcriber } from './transcribe.js';
 
 /**
@@ -322,17 +322,21 @@ async function addTranslation(
     data: { recording: input.recording, text, granularity: 'paragraph', engine: { name: 'translate', version: engine } } as Json,
   });
   const orders = orderKeys(lines.length);
+  const items: NewRevision[] = [];
   for (const [i, line] of lines.entries()) {
     const p = view.paragraphs[i]!;
-    const segment = await catalog.putRevision(suggestion.id, TRANSLATE_BOT, {
+    const segment = newId();
+    items.push({
+      id: segment,
       type: 'segment',
       data: { text, order: orders[i]!, kind: 'paragraph', content: String(line!.text ?? '').replace(/\s+/g, ' ').trim(), proofread: 0, origin } as Json,
     });
     // Heard when the transcript's paragraph is heard; the pod gives the same times.
     const startMs = p.startMs ?? Math.max(0, Math.round(line!.startMs));
     const endMs = p.endMs ?? Math.max(startMs, Math.round(line!.endMs));
-    await catalog.putRevision(suggestion.id, TRANSLATE_BOT, { type: 'alignment-span', data: { alignment, segment, startMs, endMs, origin } as Json });
+    items.push({ type: 'alignment-span', data: { alignment, segment, startMs, endMs, origin } as Json });
   }
+  await catalog.putRevisions(suggestion.id, TRANSLATE_BOT, items);
   await catalog.submit(suggestion.id, TRANSLATE_BOT);
   await catalog.merge(suggestion.id, input.approveAs, {}, 'Machine translation, labelled as such until checked');
   return { paragraphs: lines.length };
@@ -374,7 +378,7 @@ export async function removeTranscript(catalog: Catalog, input: { approveAs: str
     if (r.type === 'relation' && !machine) return `a person checked the link ${r.id}`;
   }
   const suggestion = await catalog.createChangeset(TRANSCRIBE_BOT, { title: `Machine transcript of ${input.recording} taken out, to be made again` });
-  for (const id of all.keys()) await catalog.putRevision(suggestion.id, TRANSCRIBE_BOT, { id, type: all.get(id) as 'text', data: null });
+  await catalog.putRevisions(suggestion.id, TRANSCRIBE_BOT, [...all.keys()].map((id) => ({ id, type: all.get(id) as 'text', data: null })));
   await catalog.submit(suggestion.id, TRANSCRIBE_BOT);
   await catalog.merge(suggestion.id, input.approveAs, {}, 'A machine transcript replaced by a newer one');
   return null;

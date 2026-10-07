@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { basename, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { alignAroundLocks, alignParagraphs, alignWords, hanachaOf, heardWords, notRecentlyFailedSql, recordingTranscript, type Catalog, type HeardWord, type Json } from '@chassidushub/core';
-import { orderKeys, tidyHeard, type EntityId, type Language, type SegmentQuote } from '@chassidushub/model';
+import { alignAroundLocks, alignParagraphs, alignWords, hanachaOf, heardWords, notRecentlyFailedSql, recordingTranscript, type Catalog, type HeardWord, type Json, type NewRevision } from '@chassidushub/core';
+import { newId, orderKeys, tidyHeard, type EntityId, type Language, type SegmentQuote } from '@chassidushub/model';
 import { failIfAny, machineRun } from './machineQueue.js';
 
 /**
@@ -308,12 +308,16 @@ export async function transcribeRecordings(
         data: { recording: rec.id, text, granularity: timed ? 'word' : 'paragraph', engine: { name: input.transcriber.name, version: input.transcriber.version } } as Json,
       });
       const orders = orderKeys(paras.length);
+      // Written together: each span points at its paragraph by an id given ahead.
+      const items: NewRevision[] = [];
       for (const [i, p] of paras.entries()) {
         const quotes = p.quotes?.length ? { quotes: p.quotes } : {};
-        const segment = await catalog.putRevision(suggestion.id, TRANSCRIBE_BOT, { type: 'segment', data: { text, order: orders[i]!, kind: 'paragraph', content: p.text, proofread: 0, ...quotes, origin } as unknown as Json });
+        const segment = newId();
+        items.push({ id: segment, type: 'segment', data: { text, order: orders[i]!, kind: 'paragraph', content: p.text, proofread: 0, ...quotes, origin } as unknown as Json });
         const words = timed?.[i]?.words;
-        await catalog.putRevision(suggestion.id, TRANSCRIBE_BOT, { type: 'alignment-span', data: { alignment, segment, startMs: p.startMs, endMs: p.endMs, ...(words ? { words } : {}), origin } as unknown as Json });
+        items.push({ type: 'alignment-span', data: { alignment, segment, startMs: p.startMs, endMs: p.endMs, ...(words ? { words } : {}), origin } as unknown as Json });
       }
+      await catalog.putRevisions(suggestion.id, TRANSCRIBE_BOT, items);
       await catalog.submit(suggestion.id, TRANSCRIBE_BOT);
       await catalog.merge(suggestion.id, input.approveAs, {}, 'Machine transcript, labelled as such until checked');
       log(`${rec.id}: ${paras.length} paragraphs`);
