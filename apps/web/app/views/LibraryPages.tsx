@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import { Form, Link, useLocation, useSearchParams } from 'react-router';
 import { hasShaar, type LocalName, type WorkData } from '@chassidushub/model';
 import { CoverChoice } from '../components/CoverChoice.js';
@@ -28,7 +28,7 @@ import { ofVolume } from '../lib/volumes.js';
 import { isEditing } from '../lib/editMode.js';
 import { EditTray } from '../ui/page/EditTray.js';
 import { Field } from '../ui/page/Field.js';
-import { ModeSwitch } from '../ui/page/ModeSwitch.js';
+import { EditHint, PageBar } from '../ui/page/PageBar.js';
 import '../styles/pages/volume.css';
 
 /**
@@ -396,7 +396,7 @@ function byParsha(groups: TocGroup[], lang: Lang, sichos: boolean): TocGroup[] {
  * else a sefer's page has (printings, recordings, suggestions, talk,
  * history, editing) is behind the one ⋯.
  */
-function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: Entity; view: ItemView; lang: Lang; part: string; title: string; partLabel: string }) {
+function VolumePage({ entity, view, lang, part, title, partLabel, crumbs }: { entity: Entity; view: ItemView; lang: Lang; part: string; title: string; partLabel: string; crumbs: Array<{ label: ReactNode; to?: string }> }) {
   const slots = useContext(ItemSlots);
   useHashPanels();
   const toc = view.toc!;
@@ -420,16 +420,7 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
   ];
   return (
     <div className={`wrap vol${editing ? ' is-editing' : ''}`}>
-      <div className="vol-top">
-        <Link className="vol-back" to={href(itemPath(entity), lang)}>
-          <Icon name="back" size={18} />
-          <span className="torah">{title}</span>
-        </Link>
-        <span className="vol-tools">
-          <ModeSwitch lang={lang} />
-          <MoreMenu links={more} actions={slots?.actions} lang={lang} />
-        </span>
-      </div>
+      <PageBar lang={lang} crumbs={crumbs} more={<MoreMenu links={more} actions={slots?.actions} lang={lang} />} />
 
       <header className="vol-head">
         <div>
@@ -480,13 +471,7 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
           </div>
         </details>
       </header>
-      {editing ? (
-        <p className="pf-edit-hint">
-          <Icon name="pencil" />
-          <span className="grow">{tu(lang, 'editHint')}</span>
-          <Link to={href(`/edit/${entity.id}`, lang)}>{tu(lang, 'allDetails')}</Link>
-        </p>
-      ) : null}
+      {editing ? <EditHint lang={lang} details={entity.id} /> : null}
 
       {groups.length ? (
         groups.map((g, gi) => (
@@ -583,15 +568,16 @@ export function WorkPage({ entity, view, lang }: { entity: Entity; view: ItemVie
   ].filter((f): f is NonNullable<typeof f> => f !== null);
 
   // A volume of a sefer of many opens as the design's volume page; its other tabs keep the full page.
-  if (partLabel && part && tab === 'contents' && toc?.groups.some((g) => g.rows.length)) return <VolumePage entity={entity} view={view} lang={lang} part={part} title={title} partLabel={partLabel} />;
+  const above = [...libraryCrumbs(view, d, lang), ...(additionTo ? [{ label: nameOf((additionTo.data as D).title, lang), to: href(itemPath(additionTo), lang) }] : [])];
+  if (partLabel && part && tab === 'contents' && toc?.groups.some((g) => g.rows.length))
+    return <VolumePage entity={entity} view={view} lang={lang} part={part} title={title} partLabel={partLabel} crumbs={[...above, { label: title, to: href(itemPath(entity), lang) }]} />;
 
   return (
     <ItemShell
       lang={lang}
       head={{
         crumbs: [
-          ...libraryCrumbs(view, d, lang),
-          ...(additionTo ? [{ label: nameOf((additionTo.data as D).title, lang), to: href(itemPath(additionTo), lang) }] : []),
+          ...above,
           ...(partLabel ? [{ label: title, to: href(itemPath(entity), lang) }, { label: partLabel }] : [{ label: title }]),
         ],
         cover: (

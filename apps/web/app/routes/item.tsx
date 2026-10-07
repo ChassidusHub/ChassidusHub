@@ -17,6 +17,7 @@ import type { LocalName } from '@chassidushub/model';
 import { langFrom, nameOf, t } from '../lib/i18n.js';
 import { loadItemView } from '../lib/itemData.server.js';
 import { describe, labelOf } from '../lib/labels.js';
+import { isEditing, modeHref } from '../lib/editMode.js';
 import { href, itemPath } from '../lib/links.js';
 import { breadcrumbs, pageMeta, type PageMeta } from '../lib/seo.js';
 import { ITEM_PAGE } from '../../server/cachePolicy.js';
@@ -32,7 +33,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const lang = langFrom(request);
   const url = new URL(request.url);
   const path = `/${params['*'] ?? ''}`.replace(/\/+$/, '') || '/';
-  const keep = (target: string) => href(target, lang, { after: url.searchParams.get('after') ?? undefined });
+  // A redirect keeps the page's place in a long list and its mode: Edit stays Edit.
+  const editing = isEditing(url.searchParams);
+  const keep = (target: string, extra: Record<string, string> = {}) => {
+    const to = href(target, lang, { ...extra, after: url.searchParams.get('after') ?? undefined });
+    const q = to.indexOf('?');
+    return q < 0 ? modeHref(to, '', editing) : modeHref(to.slice(0, q), to.slice(q), editing);
+  };
 
   const idMatch = /^\/(rh-?[0-9a-z-]+)$/i.exec(path);
   let entity = null;
@@ -44,7 +51,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     if (!resolved) {
       // A volume has no path of its own but is what people type: `/likkutei-sichos/30` is the sefer's `?part=30`.
       const volume = await volumeOf(api, path);
-      if (volume) throw redirect(href(volume.path, lang, { part: volume.part }), 302);
+      if (volume) throw redirect(keep(volume.path, { part: volume.part }), 302);
       throw data('not found', { status: 404 });
     }
     if (resolved.path && resolved.path !== path) throw redirect(keep(resolved.path), 301);

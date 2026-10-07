@@ -215,6 +215,8 @@ describe("each page's statements and API calls stay within its ceiling", () => {
     const volume = await handle(new Request(`${SITE}/igros-sample/1`));
     expect(volume.status).toBe(302);
     expect(volume.headers.get('location')).toBe('/igros-sample?part=1');
+    // Edit stays Edit on the way.
+    expect((await handle(new Request(`${SITE}/igros-sample/1?edit`))).headers.get('location')).toBe('/igros-sample?part=1&edit');
     expect((await handle(new Request(`${SITE}/igros-sample/999`))).status).toBe(404);
     expect((await handle(new Request(`${SITE}/no-such-sefer/1`))).status).toBe(404);
   });

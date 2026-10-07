@@ -10,8 +10,8 @@ import { NewSetForm, ORGANIZE_ICONS as ICONS, Picker, PreviewView, RenameForm } 
 import { pageMeta } from '../lib/seo.js';
 import { useAccount } from '../lib/useAccount.js';
 import { Icon } from '../ui/Icon.js';
-import { ModeSwitch } from '../ui/page/ModeSwitch.js';
-import { Box, Breadcrumbs, EmptyState, Label, cx } from '../ui/primitives.js';
+import { PageBar } from '../ui/page/PageBar.js';
+import { Box, EmptyState, Label, cx } from '../ui/primitives.js';
 import '../styles/pages/organize.css';
 
 /**
@@ -194,17 +194,10 @@ export default function Organize({ loaderData }: Route.ComponentProps) {
     <div className="org-page">
       <div className="phead">
         <div className="wrap">
-          <Breadcrumbs items={trail} lang={lang} />
-          <div className="phead-row">
-            <div>
-              <h1 className="page-title">{heading}</h1>
-              <p className="lede">{ow(lang, 'lede')}</p>
-            </div>
-            {/* Organize is the library's Edit (docs/plans/redesign.md): Read goes back to what is being organized. */}
-            <div className="phead-acts">
-              <ModeSwitch lang={lang} readTo={href(root ? (root.path ?? `/${root.id}`) : '/sets', lang)} />
-            </div>
-          </div>
+          {/* Organize is the library's Edit (docs/plans/redesign.md): Read goes back to what is being organized. */}
+          <PageBar lang={lang} crumbs={trail.length && !trail[trail.length - 1]!.to ? trail.slice(0, -1) : trail} mode={{ readTo: href(root ? (root.path ?? `/${root.id}`) : '/sets', lang) }} />
+          <h1 className="page-title">{heading}</h1>
+          <p className="lede">{ow(lang, 'lede')}</p>
         </div>
       </div>
 

@@ -23,7 +23,7 @@ import { num, tu } from '../lib/i18nUi.js';
 import { isEditing } from '../lib/editMode.js';
 import { useDraft } from '../lib/useDraft.js';
 import { EditTray } from '../ui/page/EditTray.js';
-import { ModeSwitch } from '../ui/page/ModeSwitch.js';
+import { EditHint, PageBar } from '../ui/page/PageBar.js';
 import type { ItemView } from '../lib/itemData.server.js';
 import { driveCopyOf } from '../lib/drive.js';
 import { labelOf } from '../lib/labels.js';
@@ -215,7 +215,6 @@ function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: Item
   const middle = steps.length > 2 ? steps[steps.length - 2] : null;
   const volumeName = volume ? nameOf(volume.label, lang) || volume.value : null;
   const back = work ? href(itemPath(work), lang, volume ? { part: volume.value } : {}) : href('/sets', lang);
-  const backLabel = [work ? labelOf(work, lang) : null, volumeName].filter(Boolean).join(' · ') || t(lang, 'tabLibrary');
   // A sicha numbered only (1, 2) is called by its words' own heading (שיחה א) when they open with one.
   const body = d.body as { versions?: Array<{ segments: Array<{ kind: string; text?: Array<{ text?: string }> }> }> } | undefined;
   const opening = body?.versions?.[0]?.segments?.[0];
@@ -297,17 +296,7 @@ function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: Item
     <div className={`wrap rd${titled ? ' rd-titled' : ''}${toc ? ' rd-with-toc' : ''}${head ? ' rd-letter' : ''}${editing ? ' is-editing' : ''}`}>
       {toc}
       <div className="rd-main">
-        <div className="rd-top">
-          <Link className="rd-back" to={back}>
-            <Icon name="back" size={18} />
-            <span>{backLabel}</span>
-          </Link>
-          <span className="rd-tools">
-            <ModeSwitch lang={lang} />
-            <TextSize lang={lang} />
-            <MoreMenu links={links} actions={slots?.actions} lang={lang} />
-          </span>
-        </div>
+        <PageBar lang={lang} crumbs={work ? workCrumbs(work, view, lang, volume) : [{ label: t(lang, 'tabLibrary'), to: href('/sets', lang) }]} tools={<TextSize lang={lang} />} more={<MoreMenu links={links} actions={slots?.actions} lang={lang} />} />
         {head ? (
           <header className="rd-head rd-letter-head">
             <h1 className="torah">{title}</h1>
@@ -320,13 +309,7 @@ function ReadingPage({ entity, view, lang, about }: { entity: Entity; view: Item
             <span className="rd-orn" aria-hidden="true" />
           </header>
         )}
-        {editing ? (
-          <p className="pf-edit-hint">
-            <Icon name="pencil" />
-            <span className="grow">{tu(lang, 'editHint')}</span>
-            <Link to={href(`/edit/${entity.id}`, lang)}>{tu(lang, 'allDetails')}</Link>
-          </p>
-        ) : null}
+        {editing ? <EditHint lang={lang} details={entity.id} /> : null}
         <SideNotes.Provider value={true}>
           {/* In Edit the words are drawn as they are kept, not reshaped as a letter, so each change names the segment it is in. */}
           <UnitBody entity={editing ? entity : shown} view={view} lang={lang} draft={draft} />

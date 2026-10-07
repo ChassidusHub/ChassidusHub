@@ -67,6 +67,11 @@
   margin-bottom: 24px;
 }
 
+.lb-head .pbar {
+  flex-basis: 100%;
+  margin-bottom: 0;
+}
+
 .lb-head h1 {
   font: 700 34px / 1.2 var(--display);
   letter-spacing: 0;
@@ -299,7 +304,12 @@
   .lb-head {
     margin: 18px 0 14px;
   }
-  .lb-head h1 {
+  .lb-head .pbar {
+  flex-basis: 100%;
+  margin-bottom: 0;
+}
+
+.lb-head h1 {
     font-size: 26px;
   }
   .lb-head p {

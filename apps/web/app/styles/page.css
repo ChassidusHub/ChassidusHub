@@ -80,6 +80,105 @@
   }
 }
 
+/* ------------------------------------------------------------ the page bar */
+
+/*
+ * The same bar on every page (ui/page/PageBar.tsx): where the page is on one
+ * side; Read · Edit, the page's tools and its "…" on the other, every one
+ * of them the same height, so nothing jumps between pages.
+ */
+.pbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 40px;
+  margin-bottom: var(--s-3);
+}
+
+.pbar-where {
+  flex: 1;
+  min-width: 0;
+}
+
+.pbar-crumbs .crumbs {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.pbar-crumbs .crumbs li {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.pbar-crumbs .crumbs li:last-child > :last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pbar-up {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin-inline-start: -4px;
+  color: var(--muted);
+  font-size: var(--fs-md);
+}
+
+.pbar-up span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pbar-up:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.pbar-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+}
+
+.pbar-tools > :is(.btn, .ib, .more > summary) {
+  height: 36px;
+}
+
+.pbar-tools .btn.icon,
+.pbar-tools .ib,
+.pbar-tools .more > summary {
+  width: 36px;
+}
+
+/* A phone: the trail folds to one link up, and the switch drops its icons before its words. */
+@media (max-width: 640px) {
+  .pbar-crumbs {
+    display: none;
+  }
+  .pbar-up {
+    display: inline-flex;
+  }
+  .pbar-tools {
+    gap: 4px;
+  }
+  .pbar-tools .mode-switch a {
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .pbar-tools .mode-switch a .i {
+    display: none;
+  }
+  .pbar-tools .btn:not(.icon) {
+    padding: 0 10px;
+  }
+}
+
 /* ------------------------------------------------------------ Read · Edit */
 
 .mode-switch {
@@ -96,7 +195,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 30px;
+  min-height: 28px;
   padding: 0 12px;
   border-radius: var(--r-pill);
   font-size: var(--t-small);
@@ -133,7 +232,7 @@
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  margin: var(--s-3) 0 0;
+  margin: var(--s-4) 0;
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r-card);
   background: var(--mine-soft);
@@ -287,20 +386,28 @@
 /* ------------------------------------------------------------ words in Edit (a text page) */
 
 /* Every paragraph can be tapped: a faint outline round each, so Edit looks like Edit before anything is touched. */
+/* The outline stands a little off the words, so they never touch it; the same gap on every block. */
 .is-editing :is(.words-p, .words-verse, .words-heading, .words li, .words-notes li):has(> .words-editable, > .words-editor) {
   border-radius: var(--r-sm);
-  box-shadow: 0 0 0 1px var(--border), 0 0 0 5px transparent;
-  transition: box-shadow var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  outline: 1px dashed var(--border-strong);
+  outline-offset: var(--edit-gap);
+  transition: outline-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 
 .is-editing :is(.words-p, .words-verse, .words-heading, .words li, .words-notes li):has(> .words-editable:hover, > .words-editable:focus-visible) {
-  box-shadow: 0 0 0 1.5px var(--mine);
+  outline: 1.5px solid var(--mine);
+}
+
+/* Room between blocks for their outlines. */
+.is-editing :is(.words-p, .words-verse, .words-heading):has(> .words-editable, > .words-editor) {
+  margin-bottom: calc(0.75em + 2 * var(--edit-gap));
 }
 
 /* Yours, not sent yet: blue, as everywhere. */
 .is-editing :is(.words-p, .words-verse, .words-heading, .words li, .words-notes li):has(> .words-editable.is-mine) {
   background: var(--mine-soft);
-  box-shadow: 0 0 0 1.5px var(--mine-line);
+  box-shadow: 0 0 0 var(--edit-gap) var(--mine-soft);
+  outline: 1.5px solid var(--mine-line);
 }
 
 .is-editing .words-editable:hover,
@@ -373,7 +480,7 @@
   align-items: center;
   gap: var(--s-2);
   max-width: 100%;
-  padding: 2px 6px;
+  padding: 2px var(--edit-gap);
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-sm);
   background: transparent;
@@ -385,7 +492,7 @@
 
 .fld-show:hover,
 .fld-show:focus-visible {
-  border: 1px solid var(--mine);
+  border: 1.5px solid var(--mine);
   outline: none;
 }
 
@@ -444,16 +551,6 @@ textarea.fld-input {
   gap: var(--s-2);
 }
 
-.ihero-mode {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--s-2);
-}
-
-.phead .pf-edit-hint {
-  margin-bottom: var(--s-3);
-}
-
 .fld-stack {
   display: flex;
   flex-direction: column;
@@ -464,12 +561,6 @@ textarea.fld-input {
 .fld-small {
   font-size: var(--t-body);
   font-family: var(--display);
-}
-
-.vol-tools {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
 }
 
 .vol .vol-edit-row {
@@ -487,15 +578,6 @@ textarea.fld-input {
 
 h1 .fld-show {
   text-wrap: balance;
-}
-
-/* The library's title rows carry Read · Edit; its Edit is Organize. */
-.lb-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-  flex-wrap: wrap;
 }
 
 /* ------------------------------------------------------------ the Send sheet */

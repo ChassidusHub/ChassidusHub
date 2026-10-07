@@ -10,27 +10,6 @@
   padding-block: 20px 56px;
 }
 
-.vol-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.vol-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--muted);
-  font-size: var(--fs-md);
-  margin-inline-start: -4px;
-}
-
-.vol-back:hover {
-  color: var(--accent);
-  text-decoration: none;
-}
-
 .vol-as {
   position: relative;
 }
