@@ -497,3 +497,73 @@ h1 .fld-show {
   gap: var(--s-3);
   flex-wrap: wrap;
 }
+
+/* ------------------------------------------------------------ the Send sheet */
+
+.send-lede {
+  margin: 0 0 var(--s-3);
+  color: var(--muted);
+  font-size: var(--t-small);
+}
+
+.send-list {
+  margin: 0 0 var(--s-4);
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--mine-line);
+  border-radius: var(--r-card);
+  background: var(--mine-soft);
+}
+
+.send-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--t-small);
+}
+
+.send-list li + li {
+  border-top: 1px solid var(--mine-line);
+}
+
+.send-list li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.send-list li.is-stuck {
+  background: var(--accent-soft);
+}
+
+.send-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--s-3);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.send-field input,
+.send-field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  font: 400 var(--t-body) / 1.4 var(--ui);
+}
+
+.send-field :is(input, textarea):focus {
+  border-color: var(--mine);
+  outline: none;
+}
+
+.send-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}

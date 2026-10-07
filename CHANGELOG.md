@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Contribute (`/contribute`): Help, Review and Yours in one place, and
+  the Send sheet, which lists every change before it is sent with an
+  Undo for each, a name and a note for the reviewers.
 - The library's Edit is Organize: Read · Edit on the library and on each
   shelf, `/sets?edit` opens Organize on the shelf, and a shelf's page in
   Edit changes its names and few words in place.

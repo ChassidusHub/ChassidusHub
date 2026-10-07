@@ -13,6 +13,8 @@ export default [
   // Asking for a file to stop being served (rights holders, families): no account needed.
   route('takedown', 'routes/takedown.tsx'),
   route('help', 'routes/help.tsx'),
+  // Contribute, one of the five places (docs/plans/redesign.md): Help, Review and Yours.
+  route('contribute', 'routes/contribute.tsx'),
   route('history/:id', 'routes/history.tsx'),
   // Every page's talk page and its editing, beside its history (the wiki model).
   route('talk/:id', 'routes/talk.tsx'),

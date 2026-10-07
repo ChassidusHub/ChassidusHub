@@ -67,7 +67,12 @@ merge right away"); each new screen replaces the old one as it lands.
    on that shelf, and Organize's Read goes back to what it organizes. A
    shelf's own page in Edit changes its names and few words as Fields,
    with a button to move and order what is on it.
-6. Contribute, the Send sheet and Review.
+6. Contribute, the Send sheet and Review. `/contribute` has Help (what
+   there is to do, each leading to where it is done), Review (what waits,
+   and the review queue) and Yours (your changes not sent yet, from this
+   browser and your account, each reopening its page in Edit; what you
+   sent). The tray's Send opens the Send sheet: every change with its own
+   Undo, an optional name and a note for the reviewers.
 7. Home with AI search, navigation and You.
 8. Listen and farbrengen pages; the transcript editor is wrapped, not
    rebuilt.
