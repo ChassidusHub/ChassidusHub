@@ -28,6 +28,10 @@ on:
         description: Rebuild machine transcripts already there (never ones people checked)
         type: boolean
         default: false
+      replace_checked:
+        description: Rebuild them even where people checked or fixed them (export the training clips first)
+        type: boolean
+        default: false
 
 jobs:
   import:
@@ -67,9 +71,11 @@ jobs:
           STEWARD: ${{ inputs.steward }}
           DRY_RUN: ${{ inputs.dry_run }}
           REPLACE: ${{ inputs.replace }}
+          REPLACE_CHECKED: ${{ inputs.replace_checked }}
         run: |
           npm run chassidushub -- migrate
           args=(--dir "$RUNNER_TEMP/pack" --approve-as "$STEWARD")
           if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
           if [ "$REPLACE" = "true" ]; then args+=(--replace); fi
+          if [ "$REPLACE_CHECKED" = "true" ]; then args+=(--replace-checked); fi
           npm run chassidushub -- transcripts-import "${args[@]}"

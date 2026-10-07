@@ -97,12 +97,13 @@ const HELP = `chassidushub - ChassidusHub's command line
                                                 CLOUDFLARE_AI_TOKEN; local: ivrit.ai's Yiddish Whisper
                                                 here, pip install faster-whisper); --linked also those
                                                 heard elsewhere
-  chassidushub transcripts-import --dir <folder> --approve-as <steward> [--replace] [--limit <n>] [--dry-run]
+  chassidushub transcripts-import --dir <folder> --approve-as <steward> [--replace | --replace-checked] [--limit <n>] [--dry-run]
                                                 transcripts made on GPU pods (<folder>/lines/<rec>.json, by
                                                 JEM's recording id, and <folder>/<lang>/<rec>.json, their
                                                 translations), with their quotes and stressed words, as
                                                 machine output; recordings with a transcript are left
-                                                (--replace: made again, if nobody touched them); lists
+                                                (--replace: made again, if nobody touched them;
+                                                --replace-checked: even if people did); lists
                                                 the ones the catalog does not have; reads no audio
   chassidushub machine [list [--kind ocr|transcript] [--status <status>] | ask --kind <kind> --item <id> --as <account>]
                                                 the machines' queue: what waits, what is left, and asking
@@ -201,6 +202,7 @@ const { values, positionals } = parseArgs({
     recording: { type: 'string' },
     linked: { type: 'boolean' },
     replace: { type: 'boolean' },
+    'replace-checked': { type: 'boolean' },
     reread: { type: 'boolean' },
     'requested-only': { type: 'boolean' },
     carried: { type: 'boolean' },
@@ -282,7 +284,7 @@ try {
       await alignCommand(ctx, { approveAs: need(values['approve-as'], 'approve-as'), recording: values.recording, limit: number(values.limit), linked: values.linked, files: values.files, engine: values.engine });
       break;
     case 'transcripts-import':
-      await transcriptsImportCommand(ctx, { dir: need(values.dir, 'dir'), approveAs: values['approve-as'], replace: values.replace, limit: number(values.limit), dryRun: values['dry-run'] });
+      await transcriptsImportCommand(ctx, { dir: need(values.dir, 'dir'), approveAs: values['approve-as'], replace: values.replace, replaceChecked: values['replace-checked'], limit: number(values.limit), dryRun: values['dry-run'] });
       break;
     case 'mend-splits':
       await mendSplitsCommand(ctx, { approveAs: values['approve-as'], recording: values.recording, limit: number(values.limit), dryRun: values['dry-run'] });
