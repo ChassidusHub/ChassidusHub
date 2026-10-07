@@ -46,11 +46,31 @@ English line.
 
 Whisper sometimes ends a piece in the middle of a word ("... פון דעם י",
 then "וד, און ..."). The local engine marks a piece that carries on the
-word before it (`glued`), and a paragraph never breaks there; a long
-paragraph breaks at the end of a sentence where it can. Transcripts made
+word before it (`glued`), and a line never breaks there. Transcripts made
 before that can have such a cut between two paragraphs; `chassidushub
 mend-splits` joins the ones it is sure of, as one suggestion per recording,
 in paragraphs no person has checked (`--dry-run` lists them first).
+
+### One sentence a line
+
+Whisper hears 30 seconds at a time and cuts there, in the middle of a
+sentence. `paragraphs()` joins its pieces and cuts them again word by
+word where a sentence really ends, so each line of a transcript is one
+sentence: at a full stop (. ? ! : ;); past 12 seconds, where the Rebbe
+pauses after a comma, since the models still write few full stops; and
+past 28 seconds, at the best place since then (a comma, the longest
+pause). A line is then also short enough to be one training clip as it
+is. Transcripts made before this keep their minute-long paragraphs.
+
+### Tidied before anyone reads it
+
+`tidyHeard` (packages/model/src/spelling.ts) puts each line in the house
+spelling and fixes what the reviews showed the models get wrong the same
+way every time, without guessing at any word: two words a ' glued
+together (הוי'אלקיך, ראי'פון), an abbreviation's ״ written as ' or , or .
+(רש'י, הקב,"ה, חז.ל), and abbreviations heard as words (עאכו כמה וכמה for
+עאכו"כ). On the 62 paragraphs people had fixed by 2026-10-05, this alone
+takes the words wrong from 4.1% to 2.8%.
 
 ## chassidushub-whisper: fine-tuned on the Rebbe's voice
 
@@ -138,14 +158,29 @@ gathered with nobody doing it by hand:
    word timings. The nightly run then runs `chassidushub align` on the
    recordings with corrected paragraphs first, timing the new words.
 3. **They become clips.** `GET /v1/machine/training/clips` (or
-   `chassidushub training-clips --out clips-site.jsonl`) gives every checked
-   paragraph as clips in the training script's own format: `audio`,
-   `start`, `end`, `text`, `split`, and `group: "site"`. Paragraphs over
-   28 seconds are cut between words. A clip is `gold` when a person also
-   set where it is heard, `silver` when that timing is the machine's.
+   `chassidushub training-clips --out clips-site.jsonl`) gives every
+   paragraph a person looked at as clips in the training script's own
+   format: `audio`, `start`, `end`, `text`, `split`, and `group: "site"`.
+   That is paragraphs checked as heard (`review: "checked"`), paragraphs
+   with some words fixed (`edited`), and fixes still waiting for review
+   (`pending`, the newest version a person suggested), so a training run
+   can weigh each. The text is in the house spelling. Paragraphs over
+   28 seconds are cut between words; `?carried=1` (`--carried`) also cuts
+   fixed ones by the word times the fix carried over, marked
+   `timing: "carried"`, for a run that aligns them again first. A clip is
+   `gold` when a person also set where it is heard, `silver` when that
+   timing is the machine's.
    Each recording is wholly in `train` or wholly in `test`, by a hash of
    its id that never changes (one in ten is `test`), so a version is never
    scored on audio it learned from.
+
+   **Only the Rebbe's voice** (the steward, 2026-10-07). A clip comes only
+   from a recording of a farbrengen, a sicha or a maamar, and never from
+   a part of it that is someone else, by the part's name: a niggun, the
+   children's pesukim, guests, a chosson and kallah, the bracha chassidim
+   say, dollars, davening (a part named a sicha or a maamar is always
+   his). A paragraph heard in Latin letters is a translator or a speaker
+   before him. These are left out as `not the Rebbe speaking`.
 4. **When there is enough, train.** The goal for the next version is
    written in `TRAINING_GOAL` (core/trainingClips.ts): for V4, ten
    farbrengens checked through, about 34 hours, counted from the day V3

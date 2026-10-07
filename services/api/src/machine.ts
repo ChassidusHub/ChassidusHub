@@ -58,7 +58,8 @@ export function machineRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context
 
   app.get('/v1/machine/training/clips', async (c) =>
     edgeCached(c.req.raw, 3600, async () => {
-      const { clips } = await trainingClips(catalog);
+      // ?carried=1: fixed paragraphs cut by the word times the fix carried over, for a training run that aligns them again.
+      const { clips } = await trainingClips(catalog, { carried: c.req.query('carried') === '1' });
       return new Response(clips.map((clip) => JSON.stringify(clip)).join('\n') + (clips.length ? '\n' : ''), {
         headers: { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Content-Disposition': 'inline; filename="clips-site.jsonl"' },
       });

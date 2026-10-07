@@ -10,6 +10,15 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Machine transcripts come one sentence a line, cut where a sentence ends
+  rather than at Whisper's 30-second pieces, and tidied into the house
+  spelling (glued words after a ' set apart, abbreviation marks as ״).
+- `GET /v1/machine/training/clips` gives only the Rebbe's own voice (no
+  niggunim, guests, davening or translators), and now also paragraphs fixed
+  in part and fixes waiting for review, each clip with `review`
+  (`checked`, `edited`, `pending`); `?carried=1` adds fixed paragraphs cut by
+  their carried word times (`timing: "carried"`). `GET /v1/machine/training`
+  counts them by `review`.
 - The site is English first: a bare address is English and `?lang=he` is
   Hebrew (`?lang=en` still works). Links in emails and the OAuth consent page
   (`ui_locales=he`) follow; a new account's emails default to English.
