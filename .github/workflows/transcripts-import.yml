@@ -1,0 +1,75 @@
+name: Import pod transcripts
+
+# Loads transcripts made on GPU pods (docs/transcription.md, "Transcripts
+# made on GPU pods") into the catalog with `chassidushub transcripts-import`:
+# the pack in R2 holds lines/<rec>.json (with quotes, their sources and
+# stressed words) and <lang>/<rec>.json translations. Everything stays
+# marked as machine output until people check it. Nothing in the pack is
+# ever committed: it is read from R2 at run time.
+#
+# Needs the same repository secrets as transcribe.yml: DATABASE_URL, and
+# R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY that can read
+# chassidushub-preservation.
+on:
+  workflow_dispatch:
+    inputs:
+      pack:
+        description: The pack's key in chassidushub-preservation (a .tar.gz)
+        required: true
+      steward:
+        description: The steward who approves the machine's transcripts
+        default: steward
+        required: true
+      dry_run:
+        description: Only match recordings and say what it would do
+        type: boolean
+        default: true
+      replace:
+        description: Rebuild machine transcripts already there (never ones people checked)
+        type: boolean
+        default: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CHASSIDUSHUB_PASSWORD: ${{ secrets.CHASSIDUSHUB_PASSWORD }}
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+    steps:
+      - name: Check it is configured
+        run: |
+          for name in DATABASE_URL R2_ENDPOINT AWS_ACCESS_KEY_ID; do
+            if [ -z "${!name}" ]; then echo "::error::Add the repository secret ${name/AWS_ACCESS_KEY_ID/R2_ACCESS_KEY_ID} (see docs/deploy.md)."; exit 1; fi
+          done
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Fetch the pack
+        env:
+          PACK: ${{ inputs.pack }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/pack"
+          aws s3 cp "s3://chassidushub-preservation/$PACK" - --endpoint-url "$R2_ENDPOINT" | tar -xz -C "$RUNNER_TEMP/pack"
+          ls "$RUNNER_TEMP/pack"; ls "$RUNNER_TEMP/pack/lines" | wc -l
+      - name: Install
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Import
+        env:
+          STEWARD: ${{ inputs.steward }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          REPLACE: ${{ inputs.replace }}
+        run: |
+          npm run chassidushub -- migrate
+          args=(--dir "$RUNNER_TEMP/pack" --approve-as "$STEWARD")
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ "$REPLACE" = "true" ]; then args+=(--replace); fi
+          npm run chassidushub -- transcripts-import "${args[@]}"
