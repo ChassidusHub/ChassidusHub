@@ -736,6 +736,69 @@ button.part.on:hover {
   text-underline-offset: 6px;
 }
 
+/* The words a listener tapped, to fix: framed, with "Fix" right after them. */
+.lyrics-line.choosing {
+  cursor: default;
+}
+
+.lyrics-line .w-chosen {
+  border-radius: 4px;
+  background: var(--ly-soft);
+  box-shadow: inset 0 0 0 1.5px var(--ly-now);
+  color: var(--ly-now);
+}
+
+.lyrics-fix {
+  margin-inline-start: 6px;
+  vertical-align: middle;
+  font-family: var(--ui);
+}
+
+/* The right words, typed in place of the chosen ones. */
+.lyrics-fixing {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.lyrics-fixing input {
+  max-width: 100%;
+  height: var(--control-h);
+  padding: 0 10px;
+  border: 1.5px solid var(--ly-now);
+  border-radius: var(--r);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85em;
+}
+
+.lyrics-fixing input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-line);
+}
+
+.lyrics-said {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 148px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  padding: 8px 14px;
+  border-radius: var(--r-card);
+  background: #fff;
+  color: #1c2a52;
+  font: 500 var(--t-small) var(--ui);
+  box-shadow: var(--shadow-pop);
+}
+
+.lyrics-said.error {
+  color: var(--closed);
+}
+
 .lyrics-line:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.6);
   outline-offset: 4px;
