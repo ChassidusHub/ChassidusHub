@@ -275,16 +275,18 @@ export class Catalog {
   async init(): Promise<void> {
     await migrate(this.db);
     // The schema items as main has them, and which of them are older than the built-in ones.
-    const { rows } = await this.db.query<{ type: string; version: number }>(
-      "SELECT r.data->>'entityType' AS type, (r.data->>'version')::int AS version FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'schema' AND NOT e.deleted",
+    const { rows } = await this.db.query<{ id: EntityId; type: string; version: number }>(
+      "SELECT e.id, r.data->>'entityType' AS type, (r.data->>'version')::int AS version FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'schema' AND NOT e.deleted",
     );
     const have = new Map(rows.map((r) => [r.type, r.version]));
+    // A catalog brought over from another install keeps its schema items under the ids it was given there.
+    const ids = new Map(rows.map((r) => [r.type, r.id]));
     const stale = Object.keys(BUILTIN_SCHEMAS).filter((type) => (have.get(type) ?? 0) < BUILTIN_SCHEMA_VERSION);
     if (stale.length === 0) return;
     const cs = await this.createChangeset('system', { title: have.size ? `Built-in schemas, version ${BUILTIN_SCHEMA_VERSION}` : 'Built-in schemas', kind: 'import' });
     for (const type of stale) {
       const data: SchemaData = { entityType: type, label: ENTITY_LABELS[type as EntityType], jsonSchema: BUILTIN_SCHEMAS[type as EntityType], version: BUILTIN_SCHEMA_VERSION };
-      await this.putRevision(cs.id, 'system', { id: await idFromSeed('schema', type), type: 'schema', data: data as unknown as Json, path: `/schemas/${type}` });
+      await this.putRevision(cs.id, 'system', { id: ids.get(type) ?? (await idFromSeed('schema', type)), type: 'schema', data: data as unknown as Json, path: `/schemas/${type}` });
     }
     // Schemas already the same as the built-in ones change nothing: then there is nothing to merge.
     if ((await this.proposals(cs.id)).length === 0) {
