@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone PDF</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+input[type=range]{accent-color:#8a2c1e}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #d9d1c1; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; position: relative; overflow: hidden;">
+
+  <button type="button" onClick="{{toggleChrome}}" aria-label="{{tapLabel}}" style="position: absolute; inset: 0; border: 0; padding: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: default;">
+    <span style="width: 362px; height: 560px; background: #fbf7ee; box-shadow: 0 6px 24px rgba(40,30,20,0.25); padding: 34px 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 9px; align-items: stretch;">
+      <span style="display: flex; justify-content: space-between; font: 500 10px 'Frank Ruhl Libre', serif; color: #6e6250; border-bottom: 1px solid #6e6250; padding-bottom: 4px; margin-bottom: 8px;"><span>לקוטי שיחות</span><span>{{pageHeb}}</span></span>
+      <span style="align-self: center; width: 46%; height: 12px; background: #2e271c; border-radius: 2px; margin-bottom: 8px;"></span>
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="22"><span style="height: 7px; width: {{l}}; align-self: flex-start; background: #6b604f; opacity: 0.75; border-radius: 2px;"></span></sc-for>
+      <span style="height: 1px; background: #6e6250; width: 30%; margin-top: 10px;"></span>
+      <sc-for list="{{notes}}" as="l" hint-placeholder-count="4"><span style="height: 5px; width: {{l}}; align-self: flex-start; background: #6b604f; opacity: 0.6; border-radius: 2px;"></span></sc-for>
+    </span>
+  </button>
+
+  <sc-if value="{{chrome}}" hint-placeholder-val="{{true}}">
+    <header style="position: absolute; top: 0; left: 0; right: 0; height: 56px; background: rgba(255,253,248,0.96); border-bottom: 1px solid #dcd2bf; display: flex; align-items: center; gap: 4px; padding: 0 6px;">
+      <a href="PhoneSefer.dc.html" aria-label="חזרה" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></a>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; line-height: 1.25;"><b style="font-size: 15px;">לקוטי שיחות · חלק א</b><span style="font-size: 12px; color: #6b6253;">סריקה · פרשת בראשית</span></span>
+      <a href="PhonePDFPages.dc.html" aria-label="עוד" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></a>
+    </header>
+
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; background: rgba(255,253,248,0.97); border-top: 1px solid #dcd2bf; display: flex; flex-direction: column;">
+      <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px; border-bottom: 1px solid #e9e1d1;">
+        <button type="button" aria-label="עצירה" style="width: 32px; height: 32px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; display: flex; align-items: center; justify-content: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+        <span style="flex-grow: 1; font-size: 12px; color: #4e463a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">מתנגן: [שיעור בתניא, פרק א]</span>
+      </div>
+      <div style="padding: 10px 16px 6px; display: flex; flex-direction: column; gap: 4px;">
+        <label for="pdf-page" style="display: flex; justify-content: space-between; font-size: 12px; color: #6b6253;"><span>עמוד <b style="color: #1f1a13; font-size: 14px;">{{page}}</b> מתוך [סה״כ]</span><span>{{pageHeb}}</span></label>
+        <input id="pdf-page" type="range" min="1" max="400" value="{{page}}" onChange="{{onPage}}" style="width: 100%; direction: rtl;">
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 8px 18px;">
+        <a href="PhonePDFPages.dc.html" style="height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="6" height="7" rx="1"/><rect x="14" y="4" width="6" height="7" rx="1"/><rect x="4" y="14" width="6" height="7" rx="1"/><rect x="14" y="14" width="6" height="7" rx="1"/></svg>עמודים</a>
+        <button type="button" style="height: 52px; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: 12px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 6h14M5 10h14M5 14h10M5 18h8"/></svg>טקסט</button>
+        <button type="button" style="height: 52px; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: 12px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>חיפוש</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{noChrome}}" hint-placeholder-val="{{false}}">
+    <span style="position: absolute; bottom: 16px; left: 16px; padding: 4px 10px; border-radius: 999px; background: rgba(31,26,19,0.6); color: #f7f3ea; font-size: 12px;">{{page}}</span>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { chrome: true, page: 12 }; }
+  heb(n) {
+    const ones = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
+    const tens = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
+    const hund = ['', 'ק', 'ר', 'ש', 'ת'];
+    let s = hund[Math.floor(n / 100)] || '';
+    const r = n % 100;
+    if (r === 15) return s + 'טו';
+    if (r === 16) return s + 'טז';
+    return s + tens[Math.floor(r / 10)] + ones[r % 10];
+  }
+  renderVals() {
+    const seed = this.state.page;
+    const lines = [];
+    for (let i = 0; i < 22; i++) lines.push(i % 7 === 6 ? (40 + ((seed * 7 + i * 13) % 40)) + '%' : '100%');
+    const notes = ['100%', '100%', '100%', '55%'];
+    return {
+      chrome: this.state.chrome, noChrome: !this.state.chrome,
+      tapLabel: this.state.chrome ? 'הסתרת הסרגלים' : 'הצגת הסרגלים',
+      toggleChrome: () => this.setState({ chrome: !this.state.chrome }),
+      page: this.state.page, pageHeb: this.heb(this.state.page),
+      onPage: (e) => this.setState({ page: Number(e.target.value) }),
+      lines: lines, notes: notes
+    };
+  }
+}
+</script>
+</body>
+</html>

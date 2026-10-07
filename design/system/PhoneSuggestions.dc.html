@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone suggestions list</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden;">
+  <div style="padding: 18px 16px 12px; display: flex; flex-direction: column; gap: 12px;">
+    <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 30px;">הצעות</h1>
+    <div role="tablist" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 3px; gap: 2px; background: #ece5d6; border-radius: 8px;">
+      <button type="button" role="tab" aria-selected="true" style="height: 38px; border: 0; border-radius: 6px; background: #fffdf8; box-shadow: 0 1px 2px rgba(40,30,20,0.14); font: 600 14px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;">לבדיקה · 4</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; border: 0; border-radius: 6px; background: transparent; font: 500 14px 'Noto Sans Hebrew', sans-serif; color: #4e463a;">שלי</button>
+      <button type="button" role="tab" aria-selected="false" style="height: 38px; border: 0; border-radius: 6px; background: transparent; font: 500 14px 'Noto Sans Hebrew', sans-serif; color: #4e463a;">הכל</button>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; overflow: hidden; padding: 0 16px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; background: #f2e1d9; border: 1px solid #e8bfb3;">
+      <span style="flex-grow: 1; display: flex; flex-direction: column;"><b style="font-size: 14px;">5 הצעות על אותה הקלטה</b><span style="font-size: 12px; color: #4e463a;">מאותו אדם. לאחד אותן להצעה אחת?</span></span>
+      <button type="button" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 13px 'Noto Sans Hebrew', sans-serif;">איחוד</button>
+    </div>
+
+    <a href="PhoneSuggestion.dc.html" style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b6253;"><span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: #e3eddc; color: #2f6b3f; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #2f6b3f;"></span>פתוחה</span>[שם] · [לפני יום]</span>
+      <b style="font-size: 15px;">תמלול [השיעור]: 2 מילים תוקנו, פסקה אחת נבדקה</b>
+      <span style="font-family: 'Frank Ruhl Libre', serif; font-size: 17px;"><span style="color: #6b6253;">במקום</span> <s style="color: #9a3322; background: #f4ddd6;">[מילה]</s> <span style="color: #23532d; background: #dfecd8;">[מילה]</span> <span style="color: #6b6253;">בשורה</span></span>
+    </a>
+
+    <a href="PhoneMerge.dc.html" style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b6253;"><span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: #e3eddc; color: #2f6b3f; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #2f6b3f;"></span>פתוחה</span>[שם] · [לפני שבוע]</span>
+      <b style="font-size: 15px;">מדפי הספרייה: עותקים כפולים ותרגומים אוחדו עם הספר שלהם</b>
+      <span style="font-size: 13px; color: #4e463a;">[n] איחודים · סידור הספרייה</span>
+    </a>
+
+    <a href="PhoneOrganize.dc.html" style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b6253;"><span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: #e3eddc; color: #2f6b3f; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #2f6b3f;"></span>פתוחה</span>[שם] · [לפני שעה]</span>
+      <b style="font-size: 15px;">ספר הועבר למדף לקוטי שיחות</b>
+      <span style="font-size: 13px; color: #4e463a;">מ־[המדף הקודם] אל כ״ק אדמו״ר › לקוטי שיחות</span>
+    </a>
+
+    <a href="PhoneBulk.dc.html" style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b6253;"><span style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: #f6ecd2; color: #6b4a0d; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #b07a1a;"></span>מכונה</span>בוט · [היום]</span>
+      <b style="font-size: 15px;">[500] הקלטות: הקישור עבר ל־Drive</b>
+      <span style="font-size: 13px; color: #4e463a;">כולן אותו שינוי · 3 דוגמאות לבדיקה</span>
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

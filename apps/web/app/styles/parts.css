@@ -1,0 +1,191 @@
+/*
+ * The design system's new parts (design/system, board 2): the switch, the
+ * chip as a button, and the sheet. They use the new scales in tokens.css
+ * (--control-h, --s-*, --r-*, --dur-*), so a finger gets 44px and a mouse
+ * 36px without a rule of their own.
+ */
+
+/* ------------------------------------------------------------ switch */
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+/* The finger's target is the whole row's height, not only the track. */
+.switch::before {
+  content: '';
+  position: absolute;
+  inset: calc((24px - var(--control-h)) / 2) -4px;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(40, 30, 20, 0.25);
+  transition: inset-inline-start var(--dur-fast) var(--ease);
+}
+
+.switch[aria-checked='true'] {
+  background: var(--accent-strong);
+}
+
+.switch[aria-checked='true'] .switch-knob {
+  inset-inline-start: 19px;
+}
+
+.switch:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--control-h);
+  font-size: var(--t-body);
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------ chip, as a button and in its tones */
+
+/* The chip itself is in components.css; a button needs the browser's look taken off. */
+button.chip {
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+button.chip:hover {
+  background: var(--canvas);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* Ink: a quiet choice on paper, chosen in dark ink (the calendar's days). */
+.chip-ink[aria-pressed='true'],
+.chip-ink[aria-current='true'] {
+  border-color: var(--strong);
+  background: var(--strong);
+  color: var(--on-strong);
+}
+
+/* Accent: the one action beside a tapped word ("תיקון"). */
+.chip-accent,
+button.chip-accent:hover {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: var(--on-strong);
+}
+
+/* ------------------------------------------------------------ sheet */
+
+.ds-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 15, 10, 0.4);
+  animation: ds-fade var(--dur-base) var(--ease);
+}
+
+.ds-sheet-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 88vh;
+  padding: var(--s-2) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  background: var(--card);
+  box-shadow: var(--shadow-dialog);
+  animation: ds-rise var(--dur-slow) var(--ease);
+}
+
+.ds-sheet-panel:focus {
+  outline: none;
+}
+
+.ds-sheet-grip {
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin-bottom: var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+}
+
+.ds-sheet-title {
+  margin: 0 0 var(--s-3);
+  font-family: var(--display);
+  font-size: var(--t-subhead);
+  font-weight: 600;
+}
+
+.ds-sheet-body {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.ds-sheet-foot {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: flex-end;
+  padding-top: var(--s-3);
+  margin-top: var(--s-3);
+  border-top: 1px solid var(--border-muted);
+}
+
+/* On a wider screen the sheet is a panel in the middle, with no grip. */
+@media (min-width: 720px) {
+  .ds-sheet-backdrop {
+    align-items: center;
+  }
+
+  .ds-sheet-panel {
+    width: min(520px, calc(100vw - 2 * var(--gutter)));
+    padding: var(--s-5);
+    border-radius: var(--r-sheet);
+  }
+
+  .ds-sheet-grip {
+    display: none;
+  }
+}
+
+@keyframes ds-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ds-rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}

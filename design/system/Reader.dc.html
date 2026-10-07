@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Reading page</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Newsreader:opsz,wght@6..72,600&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{opacity:.85}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="background: {{c.bg}}; color: {{c.text}}; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; line-height: 1.55; min-height: 980px; position: relative;">
+
+<header style="height: 60px; border-bottom: 1px solid {{c.border}}; background: {{c.bg}};">
+  <div style="max-width: 1280px; margin: 0 auto; height: 100%; padding: 0 32px; box-sizing: border-box; display: flex; align-items: center; gap: 28px;">
+    <a href="#" aria-label="ChassidusHub" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+      <span style="width: 22px; height: 28px; background: {{c.accent}}; border-radius: 7px 4px 4px 7px; display: flex; align-items: center; justify-content: center; color: {{c.bg}}; font-family: 'Frank Ruhl Libre', serif; font-weight: 700; font-size: 15px;">C</span>
+      <span dir="ltr" style="font-family: 'Newsreader', serif; font-weight: 600; font-size: 20px; letter-spacing: -0.015em; position: relative; top: 3px;">ChassidusHub</span>
+    </a>
+    <nav aria-label="ראשי" style="display: flex; gap: 22px; font-size: 14px;">
+      <a href="#" style="text-decoration: none; color: {{c.muted}};">בית</a>
+      <a href="#" style="text-decoration: none; font-weight: 600; box-shadow: inset 0 -2px 0 {{c.accent}}; padding: 19px 0;">ספרייה</a>
+      <a href="#" style="text-decoration: none; color: {{c.muted}};">לימוד יומי</a>
+      <a href="#" style="text-decoration: none; color: {{c.muted}};">שמיעה</a>
+    </nav>
+    <div style="flex-grow: 1; display: flex; justify-content: center;">
+      <div style="width: 100%; max-width: 420px; height: 36px; border-radius: 999px; background: {{c.sunken}}; display: flex; align-items: center; gap: 8px; padding: 0 14px; color: {{c.subtle}}; box-sizing: border-box;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+        <span style="flex-grow: 1;">חיפוש</span>
+        <span dir="ltr" style="font-size: 12px; border: 1px solid {{c.border}}; border-radius: 4px; padding: 0 6px;">/</span>
+      </div>
+    </div>
+    <a href="#" style="font-size: 13px; color: {{c.muted}}; text-decoration: none;">English</a>
+    <a href="#" aria-label="התראות" style="color: {{c.muted}}; display: flex;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 004 0"/></svg></a>
+    <a href="#" aria-label="החשבון שלי" style="width: 32px; height: 32px; border-radius: 999px; background: {{c.accentSoft}}; color: {{c.accent}}; display: flex; align-items: center; justify-content: center; font-weight: 600; text-decoration: none;">מ</a>
+  </div>
+</header>
+
+<div style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 120px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 48px;">
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <nav aria-label="מיקום" style="display: flex; gap: 8px; font-size: 13px; color: {{c.subtle}}; flex-grow: 1;"><a href="#" style="text-decoration: none;">ספרייה</a><span>/</span><a href="#" style="text-decoration: none;">אדמו"ר הזקן</a><span>/</span><a href="#" style="text-decoration: none;">תניא</a><span>/</span><span style="color: {{c.text}};">ליקוטי אמרים</span></nav>
+      <div role="tablist" aria-label="תצוגה" style="display: flex; padding: 3px; gap: 2px; background: {{c.sunken}}; border-radius: 8px;">
+        <button type="button" role="tab" aria-selected="true" style="height: 30px; padding: 0 14px; border: 0; border-radius: 6px; background: {{c.card}}; color: {{c.text}}; font: 500 13px 'Noto Sans Hebrew', sans-serif; box-shadow: 0 1px 2px rgba(40,30,20,0.12);">טקסט</button>
+        <button type="button" role="tab" aria-selected="false" style="height: 30px; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: {{c.muted}}; font: 500 13px 'Noto Sans Hebrew', sans-serif;">טקסט וסריקה</button>
+        <button type="button" role="tab" aria-selected="false" style="height: 30px; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: {{c.muted}}; font: 500 13px 'Noto Sans Hebrew', sans-serif;">סריקה</button>
+      </div>
+      <button type="button" aria-label="הגדרות קריאה" aria-expanded="true" style="height: 36px; padding: 0 12px; border-radius: 6px; border: 1px solid {{c.accent}}; background: {{c.accentSoft}}; color: {{c.accent}}; display: flex; align-items: center; gap: 6px; font: 600 14px 'Frank Ruhl Libre', serif;"><span dir="ltr">Aa</span></button>
+      <button type="button" aria-label="עוד" style="width: 36px; height: 36px; border-radius: 6px; border: 1px solid {{c.border}}; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+    </div>
+
+    <article style="background: {{c.card}}; border-radius: 10px; box-shadow: {{c.paperShadow}}; padding: 56px 64px 64px; display: flex; flex-direction: column; align-items: center; gap: 28px;">
+      <div style="text-align: center; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; color: {{c.subtle}};">ליקוטי אמרים · חלק ראשון</span>
+        <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 36px;">פרק א</h1>
+      </div>
+      <div style="max-width: 34em; font-family: 'Frank Ruhl Libre', serif; font-size: {{textSize}}px; line-height: 1.8; text-align: justify; display: flex; flex-direction: column; gap: 0.9em;">
+        <p style="margin: 0;"><span style="font-size: 1.35em; font-weight: 700;">כאן</span> בהקלטה או שנדפסו בספר עצמו והמילים שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה בלבד<sup style="color: {{c.accent}}; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 12px; font-weight: 600;">א</sup>. מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט האמיתי. בספר עצמו והמילים שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה בלבד בשורה. שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה.</p>
+        <p style="margin: 0; position: relative;"><span aria-label="נקרא במכונה, טרם נבדק" title="נקרא במכונה, טרם נבדק" style="position: absolute; right: -22px; top: 0.75em; width: 8px; height: 8px; border-radius: 999px; background: {{c.machine}};"></span>הפסקה כפי שנאמרו בהקלטה או שנדפסו בספר עצמו והמילים שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה<sup style="color: {{c.accent}}; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 12px; font-weight: 600;">ב</sup>.</p>
+      </div>
+      <div style="width: 100%; max-width: 34em; border-top: 1px solid {{c.border}}; padding-top: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: {{c.muted}};">
+        <span><b style="color: {{c.accent}};">א</b> נדה ל, ב.</span>
+        <span><b style="color: {{c.accent}};">ב</b> ברכות ז, א; סא, ב.</span>
+      </div>
+    </article>
+
+    <nav aria-label="פרקים" style="display: flex; justify-content: space-between; font-size: 14px;">
+      <a href="#" style="text-decoration: none; display: flex; align-items: center; gap: 6px; color: {{c.muted}};">הקדמה<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></a>
+      <a href="#" style="text-decoration: none; display: flex; align-items: center; gap: 6px; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg>פרק ב</a>
+    </nav>
+  </main>
+
+  <aside style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 20px;">
+    <section aria-label="הגדרות קריאה" style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 10px; box-shadow: 0 8px 24px rgba(40,30,20,0.08); padding: 18px; display: flex; flex-direction: column; gap: 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;"><b style="font-size: 15px;">קריאה</b><a href="#" style="font-size: 13px; color: {{c.accent}}; text-decoration: none;">כל ההגדרות</a></div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 13px; color: {{c.muted}};">גודל</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-family: 'Frank Ruhl Libre', serif; font-size: 14px;">א</span>
+          <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: {{c.sunken}}; position: relative;"><div style="position: absolute; right: 0; top: 0; height: 4px; width: 50%; border-radius: 2px; background: {{c.accent}};"></div><div style="position: absolute; right: calc(50% - 9px); top: -7px; width: 18px; height: 18px; border-radius: 999px; background: {{c.card}}; border: 2px solid {{c.accent}}; box-sizing: border-box;"></div></div>
+          <span style="font-family: 'Frank Ruhl Libre', serif; font-size: 22px;">א</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 13px; color: {{c.muted}};">גופן</span>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px;">
+          <button type="button" style="height: 44px; border-radius: 6px; border: 2px solid {{c.accent}}; background: {{c.card}}; color: {{c.text}}; font: 500 16px 'Frank Ruhl Libre', serif;">פרנק</button>
+          <button type="button" style="height: 44px; border-radius: 6px; border: 1px solid {{c.border}}; background: {{c.card}}; color: {{c.text}}; font: 400 16px 'David Libre', 'Frank Ruhl Libre', serif;">דוד</button>
+          <button type="button" style="height: 44px; border-radius: 6px; border: 1px solid {{c.border}}; background: {{c.card}}; color: {{c.text}}; font: 400 15px 'Noto Serif Hebrew', serif;">נוטו</button>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 13px; color: {{c.muted}};">רקע</span>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" aria-label="אוטומטי" style="width: 36px; height: 36px; border-radius: 999px; border: 2px solid {{c.accent}}; background: linear-gradient(90deg, #f7f3ea 50%, #16130e 50%);"></button>
+          <button type="button" aria-label="נייר" style="width: 36px; height: 36px; border-radius: 999px; border: 1px solid {{c.border}}; background: #f7f3ea;"></button>
+          <button type="button" aria-label="לבן" style="width: 36px; height: 36px; border-radius: 999px; border: 1px solid {{c.border}}; background: #ffffff;"></button>
+          <button type="button" aria-label="כהה" style="width: 36px; height: 36px; border-radius: 999px; border: 1px solid {{c.border}}; background: #16130e;"></button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid {{c.border}}; padding-top: 14px;">
+        <span>מצב ריכוז</span>
+        <button type="button" role="switch" aria-checked="false" aria-label="מצב ריכוז" style="width: 44px; height: 26px; border-radius: 999px; border: 0; background: {{c.borderStrong}}; position: relative; padding: 0;"><span style="position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 999px; background: #fffdf8;"></span></button>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px;">
+      <b style="font-size: 13px; color: {{c.subtle}};">שייך לפרק</b>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid {{c.border}}; border-radius: 8px; text-decoration: none;">
+        <span style="width: 32px; height: 32px; border-radius: 999px; background: {{c.sunken}}; display: flex; align-items: center; justify-content: center; color: {{c.text}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+        <span style="display: flex; flex-direction: column;"><span style="font-weight: 500;">שיעור בפרק א</span><span style="font-size: 12px; color: {{c.subtle}};">הקלטה · [משך]</span></span>
+      </a>
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid {{c.border}}; border-radius: 8px; text-decoration: none;">
+        <span style="width: 32px; height: 32px; border-radius: 4px; background: {{c.sunken}}; display: flex; align-items: center; justify-content: center; color: {{c.text}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg></span>
+        <span style="display: flex; flex-direction: column;"><span style="font-weight: 500;">דפוסים אחרים</span><span style="font-size: 12px; color: {{c.subtle}};">[מספר] דפוסים · השוואה</span></span>
+      </a>
+    </section>
+  </aside>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: {{c.card}}; border-top: 1px solid {{c.border}}; display: flex; align-items: center;">
+  <div style="max-width: 1280px; margin: 0 auto; width: 100%; padding: 0 32px; box-sizing: border-box; display: flex; align-items: center; gap: 16px;">
+    <button type="button" aria-label="נגן" style="width: 40px; height: 40px; border-radius: 999px; border: 0; background: {{c.accent}}; color: {{c.bg}}; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <span style="display: flex; flex-direction: column; min-width: 160px;"><b style="font-size: 13px;">שיעור בפרק א</b><span style="font-size: 12px; color: {{c.subtle}};">הטקסט עוקב אחרי ההקלטה</span></span>
+    <div style="flex-grow: 1; height: 4px; border-radius: 2px; background: {{c.sunken}}; position: relative;"><div style="position: absolute; right: 0; top: 0; height: 4px; width: 22%; border-radius: 2px; background: {{c.accent}};"></div></div>
+    <span dir="ltr" style="font-size: 12px; color: {{c.subtle}}; font-variant-numeric: tabular-nums;">1×</span>
+  </div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"textSize":{"editor":"range","min":16,"max":30,"step":2,"unit":"px","default":22},"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'light') === 'dark';
+    const c = dark
+      ? { bg: '#16130e', card: '#1f1b15', sunken: '#2a251d', border: '#3a3329', borderStrong: '#4a4235', text: '#ede5d5', muted: '#bcb19e', subtle: '#948a78', accent: '#e2957f', accentSoft: '#3a221b', machine: '#d6a64c', paperShadow: '0 1px 0 #3a3329, 0 2px 6px rgba(0,0,0,0.35)' }
+      : { bg: '#f7f3ea', card: '#fffdf8', sunken: '#ece5d6', border: '#dcd2bf', borderStrong: '#c8bba3', text: '#1f1a13', muted: '#4e463a', subtle: '#6b6253', accent: '#8a2c1e', accentSoft: '#f2e1d9', machine: '#b07a1a', paperShadow: '0 1px 0 #e6decd, 0 2px 6px rgba(40,30,20,0.06)' };
+    return { c, textSize: this.props.textSize ?? 22 };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The app plan</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#f7f3ea}
+a{color:#8a2c1e}
+</style>
+</helmet>
+<div style="background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans', sans-serif; font-size: 15px; line-height: 1.6; min-height: 1100px;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 56px 20px 72px; display: flex; flex-direction: column; gap: 40px;">
+  <header style="display: flex; flex-direction: column; gap: 10px;">
+    <span style="font-size: 13px; color: #8a2c1e; font-weight: 600; letter-spacing: 0.04em;">47 · THE CHASSIDUSHUB APP (reader/)</span>
+    <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: clamp(32px, 5vw, 50px); line-height: 1.1;">One system, two places: the site holds everything, the app goes with you.</h1>
+    <p style="margin: 0; color: #4e463a; font-size: 17px; max-width: 820px;">The app (formerly Sichos Kodesh) already does the right thing: it opens on <b>this week, in the kvius year</b>, plays farbrengens, opens their texts and keeps them for offline. It keeps its jobs and its five tabs (השבוע · התוועדויות · הספרייה · חיפוש · שלי). It takes the site's look and parts, so moving between the two feels like one place.</p>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>Shared from the site</b><span style="font-size: 14px; color: #4e463a;">The tokens (one theme-colors.css made from tokens.css), the logo and the book icon, the type scales, the player with its paragraph map and the highlighted word, the cards and rows, the Aa reading sheet, and the states.</span></div>
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>The app's own</b><span style="font-size: 14px; color: #4e463a;">Downloads and offline (a progress ring on each farbrengen, and a storage page), playing every chapter as one queue, its PDF screen with “invert PDF in dark mode”, and following a month across the years.</span></div>
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>Fix and ask go to the site</b><span style="font-size: 14px; color: #4e463a;">As the plan says (step 3): the ⋯ menu on a farbrengen or a page has “Suggest a fix” and “Report”, which open chassidushub.org at that place, so signing in, the Check sheet and the tray stay in one place. “Ask the library” opens the site's Ask with the question.</span></div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px;">
+    <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 28px;">What changes on screen</h2>
+    <div style="overflow-x: auto; border: 1px solid #dcd2bf; border-radius: 10px; background: #fffdf8;">
+      <table style="width: 100%; min-width: 720px; border-collapse: collapse; font-size: 14px;">
+        <thead><tr style="text-align: left; background: #ece5d6;"><th style="padding: 12px 16px; width: 22%;">Screen</th><th style="padding: 12px 16px;">New</th></tr></thead>
+        <tbody>
+          <tr style="border-top: 1px solid #e9e1d1;"><td style="padding: 12px 16px;"><b>This week</b></td><td style="padding: 12px 16px;">The site's homepage cards: what each farbrengen is about (its table of contents), why today (the day in the kvius year), then ▶ and Read. The strip of other years and the parsha's Likkutei Sichos stay. <b>Board 48.</b></td></tr>
+          <tr style="border-top: 1px solid #e9e1d1;"><td style="padding: 12px 16px;"><b>A farbrengen</b></td><td style="padding: 12px 16px;">One big ▶ for every chapter as a queue, the chapters under it, then the texts as rows (hanachos, mugah, maamarim) with what is downloaded marked. The topics sit up top. <b>Board 49.</b></td></tr>
+          <tr style="border-top: 1px solid #e9e1d1;"><td style="padding: 12px 16px;"><b>Downloads</b></td><td style="padding: 12px 16px;">One storage bar, what to keep (recordings, hanachos, mugah), Wi-Fi only, and each farbrengen with its size and a swipe to remove. <b>Board 50.</b></td></tr>
+          <tr style="border-top: 1px solid #e9e1d1;"><td style="padding: 12px 16px;"><b>Player &amp; transcript</b></td><td style="padding: 12px 16px;">The site's transcript page (6a) where the API has a transcript. Without one, the same player, with its chapters as the map.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <span style="font-size: 13px; color: #6b6253;">Per reader/CLAUDE.md, web changes merge at once and Android changes wait for a proper release.</span>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

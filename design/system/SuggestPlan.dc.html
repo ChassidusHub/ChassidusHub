@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Suggestions plan</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;family=Noto+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#f7f3ea}
+a{color:#8a2c1e}
+</style>
+</helmet>
+<div style="background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans', 'Noto Sans Hebrew', sans-serif; font-size: 15px; line-height: 1.6; min-height: 1900px;">
+<div style="max-width: 1240px; margin: 0 auto; padding: 56px 20px 80px; display: flex; flex-direction: column; gap: 48px;">
+
+<header style="display: flex; flex-direction: column; gap: 10px;">
+  <span style="font-size: 13px; color: #8a2c1e; font-weight: 600; letter-spacing: 0.04em;">22 · SUGGESTIONS &amp; MERGES</span>
+  <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: clamp(34px, 6vw, 54px); line-height: 1.08; max-width: 980px;">Say what changed in one sentence. Show only that.</h1>
+  <p style="margin: 0; font-size: 17px; color: #4e463a; max-width: 800px;">A suggestion should be understood in five seconds by anyone, without knowing how the catalog is built. So it begins with a sentence in plain words. It then shows the changed words with a few words around them, never the whole text side by side. Nothing that is not words a reader sees ever appears: no ids, field paths, kinds of record or JSON.</p>
+</header>
+
+<section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+  <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>1 · A sentence first</b><span style="font-size: 14px; color: #4e463a;">The title is written from the change itself: “2 words fixed in Likkutei Sichos 1, Bereishis”. The person's own note, if they wrote one, comes under it. “תיקון תמלול” ×5 becomes “Transcript of [the shiur]: 6 words fixed, 2 paragraphs checked”.</span></div>
+  <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>2 · Only the change, with a little around it</b><span style="font-size: 14px; color: #4e463a;">A change shows at most four words on each side, with “…” for the rest. “Show the paragraph” opens the full paragraph in place, and “Against the scan” shows the printed line, only when there is one.</span></div>
+  <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>3 · Nothing that is not words</b><span style="font-size: 14px; color: #4e463a;">Gone from view: <code>rh-…</code> ids, <code>/body/he/14.3</code>, “alignment-span”, “segment”, file hashes and source paths. Timing that moved together with a word fix is not shown; it is part of the fix. All of these stay in ⋯ › Details for the few who need them.</span></div>
+  <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>4 · Many alike, said once</b><span style="font-size: 14px; color: #4e463a;">500 changes of the same kind read as one line with three examples: “500 recordings: the link moved from the media proxy to Drive”. Anything that differs from the pattern is listed apart, at the top.</span></div>
+  <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>5 · One clear decision</b><span style="font-size: 14px; color: #4e463a;"><b>Approve</b>, or <b>Send back</b> with a line saying why. Keep or Remove on each change appears only when a suggestion has more than one. Comments fold into “2 comments” until opened.</span></div>
+  <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 8px;"><b>6 · Combine is offered, not needed</b><span style="font-size: 14px; color: #4e463a;">When one person has several open suggestions on the same place (as there are today: five “תיקון תמלול” on one recording), the list offers “Combine these 5 into one”. The tray keeps it from happening again.</span></div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 18px;">
+  <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 30px;">How each kind of change reads</h2>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px;">
+
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: #6b6253; font-weight: 600;">WORDS</span>
+      <b dir="rtl" style="font-family: 'Noto Sans Hebrew', sans-serif;">תוקנה מילה אחת בפסקה 2</b>
+      <span dir="rtl" style="font-family: 'Frank Ruhl Libre', serif; font-size: 19px; line-height: 1.7;"><span style="color: #6b6253;">… ואפילו מילים לדוגמה</span> <s style="color: #9a3322; background: #f4ddd6;">[מילה]</s> <span style="color: #23532d; background: #dfecd8; padding: 0 2px;">[מילה]</span> <span style="color: #6b6253;">בשורה הבאה שוב במקום</span></span>
+      <span style="font-size: 13px;"><a href="#">Show the paragraph</a> · <a href="#">Hear it</a></span>
+    </div>
+
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: #6b6253; font-weight: 600;">NAME OR DATE</span>
+      <b dir="rtl" style="font-family: 'Noto Sans Hebrew', sans-serif;">התאריך של ההתוועדות תוקן</b>
+      <div dir="rtl" style="display: flex; align-items: center; gap: 12px; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 17px;"><s style="color: #9a3322;">[התאריך הקודם]</s><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.5" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg><b style="color: #23532d;">[התאריך החדש]</b></div>
+      <span style="font-size: 13px; color: #6b6253;">A date is written as a date, in the reader's own way, never as a field name.</span>
+    </div>
+
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: #6b6253; font-weight: 600;">MERGE</span>
+      <b dir="rtl" style="font-family: 'Noto Sans Hebrew', sans-serif;">שני ספרים הם אותו ספר</b>
+      <div dir="rtl" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: 'Noto Sans Hebrew', sans-serif;"><span style="padding: 6px 10px; border: 1px dashed #c8bba3; border-radius: 8px; color: #4e463a;">[העותק הכפול]</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a2c1e" stroke-width="1.8" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg><span style="padding: 6px 10px; border: 1.5px solid #8a2c1e; border-radius: 8px; font-weight: 600;">[הספר שנשאר]</span></div>
+      <span style="font-size: 13px; color: #4e463a;">The sentence underneath says what moves with it and what nothing loses: “Its 3 printings move. Its address leads to the sefer.” <b>Board 25.</b></span>
+    </div>
+
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: #6b6253; font-weight: 600;">MOVE · RENAME · ORDER</span>
+      <b dir="rtl" style="font-family: 'Noto Sans Hebrew', sans-serif;">הועבר למדף אחר</b>
+      <div dir="rtl" style="display: flex; flex-direction: column; gap: 4px; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px;"><span style="color: #9a3322;">מ: <s>[המדף הקודם]</s></span><span style="color: #23532d; font-weight: 600;">אל: כ״ק אדמו״ר › לקוטי שיחות</span></div>
+      <span style="font-size: 13px; color: #4e463a;">For a new order, only the items that moved are shown, each with “up 3” or “down 1”. <b>Board 26.</b></span>
+    </div>
+
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: #6b6253; font-weight: 600;">ADD · REMOVE</span>
+      <b dir="rtl" style="font-family: 'Noto Sans Hebrew', sans-serif;">שיחה חדשה בחלק א</b>
+      <span dir="rtl" style="font-family: 'Noto Sans Hebrew', sans-serif; padding: 8px 12px; border-radius: 8px; background: #dfecd8; color: #23532d;">+ [שם השיחה] · [תאריך]</span>
+      <span style="font-size: 13px; color: #4e463a;">A removal is shown struck through, with where its contents go. Only an empty set can be removed.</span>
+    </div>
+
+    <div style="background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; color: #6b6253; font-weight: 600;">A BOT'S MANY CHANGES</span>
+      <b dir="rtl" style="font-family: 'Noto Sans Hebrew', sans-serif;">[500] הקלטות: הקישור עבר ל־Drive</b>
+      <span style="font-size: 13px; color: #4e463a;">One line, three examples, and “all 500 alike”. Anything different is listed apart. It is marked as a machine's work until a person approves it. <b>Board 27.</b></span>
+    </div>
+  </div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 14px;">
+  <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 30px;">Today → new</h2>
+  <div style="overflow-x: auto; border: 1px solid #dcd2bf; border-radius: 10px; background: #fffdf8;">
+    <table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px;">
+      <thead><tr style="text-align: left; background: #ece5d6;"><th style="padding: 12px 16px; width: 22%;">Part</th><th style="padding: 12px 16px; width: 39%;">Today</th><th style="padding: 12px 16px;">New</th></tr></thead>
+      <tbody>
+        <tr style="border-top: 1px solid #e9e1d1; vertical-align: top;"><td style="padding: 12px 16px;"><b>Title</b></td><td style="padding: 12px 16px; color: #4e463a;">What the sender typed (“תיקון תמלול”), and the kinds of record (segment, alignment-span).</td><td style="padding: 12px 16px;">A sentence made from the change, with the sender's note under it.</td></tr>
+        <tr style="border-top: 1px solid #e9e1d1; vertical-align: top;"><td style="padding: 12px 16px;"><b>The change</b></td><td style="padding: 12px 16px; color: #4e463a;">Paragraphs marked word by word among the paragraphs around them, and fields by name.</td><td style="padding: 12px 16px;">Only the changed words with four words of context. The paragraph opens on a tap.</td></tr>
+        <tr style="border-top: 1px solid #e9e1d1; vertical-align: top;"><td style="padding: 12px 16px;"><b>Views</b></td><td style="padding: 12px 16px; color: #4e463a;">Four tabs: Conversation, Changes, Against the scan, Checks. A side column holds reviewers and impact.</td><td style="padding: 12px 16px;">One page: sentence, changes, decision. Against the scan is a link on each change. Checks show only when one fails, and impact becomes one line (“Changes the words in every view and in search”).</td></tr>
+        <tr style="border-top: 1px solid #e9e1d1; vertical-align: top;"><td style="padding: 12px 16px;"><b>Many suggestions</b></td><td style="padding: 12px 16px; color: #4e463a;">One per word fix, joined later with Combine.</td><td style="padding: 12px 16px;">The tray sends one for each place, and Combine is offered in the list for older ones.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

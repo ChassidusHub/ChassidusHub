@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Desktop sign in</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Newsreader:opsz,wght@6..72,600&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#f7f3ea}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 15px; min-height: 900px; display: flex; flex-wrap: wrap;">
+  <section style="flex: 1 1 520px; background: #1f1a13; color: #f7f3ea; padding: 64px 56px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 30px;">
+    <span style="width: 48px; height: 60px; background: #8a2c1e; border-radius: 14px 8px 8px 14px; display: flex; align-items: center; justify-content: center; color: #f7f3ea; font: 700 32px 'Frank Ruhl Libre', serif;">C</span>
+    <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 52px; line-height: 1.1;">כל תורת חב״ד,<br>במקום אחד.</h1>
+    <div style="display: flex; flex-direction: column; gap: 16px; font-size: 16px; color: #e9e1cf;">
+      <span><b style="color: #e2957f;">לקרוא</b> כל ספר, שיחה ומכתב, עם הסריקה לצד הטקסט</span>
+      <span><b style="color: #e2957f;">להאזין</b> להתוועדויות, והמילים מסומנות בזמן הדיבור</span>
+      <span><b style="color: #e2957f;">לשאול</b> כל שאלה, ולקבל תשובה עם מקורות מהספרייה</span>
+    </div>
+  </section>
+  <section style="flex: 1 1 460px; padding: 64px 56px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <div style="width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-size: 34px; font-weight: 500;">כניסה</h2>
+      <span style="color: #4e463a;">עם חשבון, המקום שלכם והלימוד היומי עוברים בין הטלפון למחשב, ואפשר לתקן ולהציע.</span>
+      <button type="button" style="height: 56px; border-radius: 14px; border: 0; background: #1f1a13; color: #f7f3ea; font: 600 16px 'Noto Sans Hebrew', sans-serif;">כניסה עם מפתח גישה</button>
+      <button type="button" style="height: 56px; border-radius: 14px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 600 16px 'Noto Sans Hebrew', sans-serif;">כניסה עם Google</button>
+      <div style="display: flex; align-items: center; gap: 10px; color: #6b6253; font-size: 13px;"><span style="flex-grow: 1; height: 1px; background: #dcd2bf;"></span>או קישור לאימייל<span style="flex-grow: 1; height: 1px; background: #dcd2bf;"></span></div>
+      <label for="dw-email" style="font-size: 13px; font-weight: 500;">אימייל</label>
+      <input id="dw-email" dir="ltr" placeholder="you@example.com" style="height: 48px; padding: 0 14px; border-radius: 10px; border: 1px solid #c8bba3; background: #fffdf8; font: 15px 'Noto Sans', sans-serif; color: #1f1a13;">
+      <button type="button" style="height: 48px; border-radius: 10px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 15px 'Noto Sans Hebrew', sans-serif;">לשלוח קישור</button>
+      <span style="font-size: 13px; color: #6b6253;">מפתח גישה נפתח בטביעת אצבע או בנעילת המסך. אין סיסמה לזכור. <a href="#" style="color: #8a2c1e;">להמשיך בלי חשבון</a></span>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

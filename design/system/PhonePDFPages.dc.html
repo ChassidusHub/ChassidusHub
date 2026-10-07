@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone PDF pages</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #8f877a; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden;">
+  <div role="dialog" aria-label="עמודים ופרטים" style="height: 740px; background: #fffdf8; border-radius: 16px 16px 0 0; padding: 10px 16px 0; display: flex; flex-direction: column; gap: 14px; box-sizing: border-box;">
+    <span style="align-self: center; width: 36px; height: 4px; border-radius: 2px; background: #c8bba3;"></span>
+    <div role="tablist" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 3px; gap: 2px; background: #ece5d6; border-radius: 8px;">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+        <button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="height: 38px; border: 0; border-radius: 6px; font: {{t.font}}; background: {{t.bg}}; color: {{t.color}}; box-shadow: {{t.shadow}};">{{t.label}}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{isPages}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 12px; overflow: hidden; flex-grow: 1;">
+        <div style="display: flex; gap: 6px; overflow: hidden;">
+          <span style="font-size: 12px; color: #6b6253; align-self: center; flex-shrink: 0;">קפיצה ל:</span>
+          <button type="button" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #8a2c1e; background: #f2e1d9; color: #8a2c1e; font: 600 13px 'Noto Sans Hebrew', sans-serif; flex-shrink: 0;">בראשית</button>
+          <button type="button" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 500 13px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; flex-shrink: 0;">נח</button>
+          <button type="button" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 500 13px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; flex-shrink: 0;">לך לך</button>
+          <button type="button" style="height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 500 13px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; flex-shrink: 0;">וירא</button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 10px;">
+          <sc-for list="{{thumbs}}" as="p" hint-placeholder-count="9">
+            <a href="PhonePDF.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+              <span style="width: 100%; aspect-ratio: 0.68; background: #fbf7ee; border: {{p.border}}; box-shadow: 0 1px 4px rgba(40,30,20,0.15); padding: 10px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px;">
+                <span style="height: 5px; width: 50%; align-self: center; background: #2e271c; border-radius: 1px;"></span>
+                <span style="height: 3px; background: #6b604f; opacity: 0.6;"></span><span style="height: 3px; background: #6b604f; opacity: 0.6;"></span><span style="height: 3px; background: #6b604f; opacity: 0.6;"></span><span style="height: 3px; background: #6b604f; opacity: 0.6;"></span><span style="height: 3px; width: 60%; background: #6b604f; opacity: 0.6;"></span><span style="height: 3px; background: #6b604f; opacity: 0.6;"></span><span style="height: 3px; background: #6b604f; opacity: 0.6;"></span>
+              </span>
+              <span style="font-size: 12px; font-weight: {{p.weight}}; color: {{p.color}};">{{p.n}}</span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 999px; background: #ece5d6; color: #6b6253;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+          <label for="pdf-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">חיפוש בחלק הזה</label>
+          <input id="pdf-q" placeholder="חיפוש בחלק הזה" style="flex-grow: 1; min-width: 0; border: 0; background: transparent; font: 15px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; outline: none;">
+        </div>
+        <span style="font-size: 13px; color: #4e463a;">מחפש בטקסט של העמודים. איפה שהמכונה קראה ואדם עוד לא בדק, התוצאה מסומנת בנקודה.</span>
+        <div style="border: 1px solid #e9e1d1; border-radius: 10px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px; border-bottom: 1px solid #e9e1d1; color: #6b6253;">[התוצאות יופיעו כאן: עמוד, פרשה, והמילה מודגשת]</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isAbout}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="border: 1px solid #e9e1d1; border-radius: 10px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid #e9e1d1;"><span style="flex-grow: 1; display: flex; flex-direction: column;"><span>זכויות</span><span style="font-size: 12px; color: #2f6b3f;">פתוח: מוצג ומותר להורדה</span></span></div>
+          <a href="#" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid #e9e1d1;"><span style="flex-grow: 1; display: flex; flex-direction: column;"><span>מאיפה הקובץ</span><span style="font-size: 12px; color: #6b6253;">[המקור]</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.5" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg></a>
+          <a href="#" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 14px; border-bottom: 1px solid #e9e1d1;"><span style="flex-grow: 1; display: flex; flex-direction: column;"><span style="display: flex; align-items: center; gap: 6px;">עותק קריאה מיושר <span style="width: 6px; height: 6px; border-radius: 999px; background: #b07a1a;"></span></span><span style="font-size: 12px; color: #6b6253;">המכונה יישרה את העמודים. אפשר לחזור למקור.</span></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.5" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg></a>
+          <a href="#" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 14px;"><span style="flex-grow: 1;">דיווח על עמוד חסר או פגום</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b6253" stroke-width="1.5" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg></a>
+        </div>
+        <button type="button" style="height: 50px; border-radius: 12px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 600 15px 'Noto Sans Hebrew', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>הורדה</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'pages' }; }
+  renderVals() {
+    const tabs = [{ id: 'pages', label: 'עמודים' }, { id: 'search', label: 'חיפוש' }, { id: 'about', label: 'על הקובץ' }].map((t) => {
+      const on = t.id === this.state.tab;
+      return { label: t.label, on: on, pick: () => this.setState({ tab: t.id }), font: on ? "600 14px 'Noto Sans Hebrew', sans-serif" : "500 14px 'Noto Sans Hebrew', sans-serif", bg: on ? '#fffdf8' : 'transparent', color: on ? '#1f1a13' : '#4e463a', shadow: on ? '0 1px 2px rgba(40,30,20,0.14)' : 'none' };
+    });
+    const thumbs = [];
+    for (let n = 7; n <= 15; n++) thumbs.push({ n: n, border: n === 12 ? '2px solid #8a2c1e' : '1px solid #dcd2bf', weight: n === 12 ? 700 : 400, color: n === 12 ? '#8a2c1e' : '#4e463a' });
+    return { tabs: tabs, thumbs: thumbs, isPages: this.state.tab === 'pages', isSearch: this.state.tab === 'search', isAbout: this.state.tab === 'about' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone daily learning</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden;">
+
+  <header style="flex-shrink: 0; padding: 14px 16px 8px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button type="button" aria-label="היום הקודם" style="width: 40px; height: 40px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></button>
+      <span style="flex-grow: 1; text-align: center; display: flex; flex-direction: column;"><b style="font-family: 'Frank Ruhl Libre', serif; font-size: 24px; font-weight: 500;">כ״ו תשרי</b><span style="font-size: 12px; color: #6b6253;">יום רביעי · פרשת בראשית</span></span>
+      <button type="button" aria-label="היום הבא" style="width: 40px; height: 40px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M14 7l-5 5 5 5"/></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #fffdf8; border: 1px solid #dcd2bf;">
+      <span style="position: relative; width: 48px; height: 48px; flex-shrink: 0; border-radius: 999px; background: conic-gradient(#2f6b3f {{pct}}, #ece5d6 0); display: flex; align-items: center; justify-content: center;"><span style="width: 38px; height: 38px; border-radius: 999px; background: #fffdf8; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px;">{{done}}/5</span></span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column;"><b>{{headline}}</b><span style="font-size: 12px; color: #6b6253;">נשמר בחשבון, בטלפון ובמחשב</span></span>
+      <button type="button" style="height: 40px; padding: 0 14px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 13px 'Noto Sans Hebrew', sans-serif; display: flex; align-items: center; gap: 6px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>הכל ברצף</button>
+    </div>
+  </header>
+
+  <div style="flex-grow: 1; overflow-y: auto; padding: 4px 16px 20px; display: flex; flex-direction: column; gap: 10px;">
+    <sc-for list="{{items}}" as="i" hint-placeholder-count="5">
+      <div style="background: #fffdf8; border: 1px solid {{i.line}}; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+          <button type="button" role="checkbox" aria-checked="{{i.on}}" aria-label="{{i.checkLabel}}" onClick="{{i.toggle}}" style="width: 30px; height: 30px; flex-shrink: 0; margin-top: 2px; border-radius: 999px; border: 1.5px solid {{i.boxLine}}; background: {{i.boxBg}}; color: #fffdf8; display: flex; align-items: center; justify-content: center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12l4.5 4.5L19 7"/></svg></button>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><b style="font-size: 16px;">{{i.name}}</b><span style="font-family: 'Frank Ruhl Libre', serif; font-size: 17px; color: {{i.textColor}};">{{i.portion}}</span></span>
+        </div>
+        <div style="display: flex; gap: 8px; padding-right: 42px;">
+          <a href="#" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #dcd2bf; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg>ללמוד</a>
+          <sc-if value="{{i.hasAudio}}" hint-placeholder-val="{{true}}"><a href="#" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #dcd2bf; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>שיעור</a></sc-if>
+          <sc-if value="{{i.isRambam}}" hint-placeholder-val="{{false}}">
+            <span style="flex-grow: 1;"></span>
+            <button type="button" onClick="{{cycleRambam}}" style="height: 36px; padding: 0 12px; border-radius: 999px; border: 0; background: #ece5d6; font: 500 12px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;">{{rambamTrack}}</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { done: [true, false, false, false, false], track: 0 }; }
+  renderVals() {
+    const s = this.state;
+    const tracks = ['3 פרקים', 'פרק אחד', 'ספר המצוות'];
+    const list = [
+      { name: 'חומש', portion: 'בראשית, עד רביעי, עם פירש״י', audio: true },
+      { name: 'תהילים', portion: 'קיט, מ„מה” עד „לא שכחתי”', audio: true },
+      { name: 'תניא', portion: 'אגרת הקודש, סימן כה', audio: true },
+      { name: 'רמב״ם', portion: '[השיעור של היום · ' + tracks[s.track] + ']', audio: true, rambam: true },
+      { name: 'היום יום', portion: 'כ״ו תשרי', audio: false }
+    ];
+    const n = s.done.filter(Boolean).length;
+    const items = list.map((x, i) => {
+      const on = s.done[i];
+      return {
+        name: x.name, portion: x.portion, hasAudio: x.audio, isRambam: !!x.rambam, on: on,
+        checkLabel: on ? 'סומן כנלמד' : 'לסמן כנלמד',
+        line: on ? '#cfe0c9' : '#dcd2bf', boxLine: on ? '#2f6b3f' : '#c8bba3', boxBg: on ? '#2f6b3f' : '#fffdf8',
+        textColor: on ? '#6b6253' : '#1f1a13',
+        toggle: () => { const d = s.done.slice(); d[i] = !d[i]; this.setState({ done: d }); }
+      };
+    });
+    return {
+      items: items, done: n, pct: (n / 5 * 100) + '%',
+      headline: n === 5 ? 'כל הלימוד של היום, אשריכם' : n === 0 ? 'הלימוד של היום' : 'עוד ' + (5 - n) + ' להיום',
+      rambamTrack: tracks[s.track],
+      cycleRambam: () => this.setState({ track: (s.track + 1) % 3 })
+    };
+  }
+}
+</script>
+</body>
+</html>

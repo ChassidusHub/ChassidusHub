@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone home dark</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#16130e}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #16130e; color: #ede5d5; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 14px;">
+    <a href="PhoneMenu.dc.html" aria-label="תפריט" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h16"/></svg></a>
+    <span style="flex-grow: 1; text-align: center; font-size: 13px; color: #948a78;">כ״ו תשרי ה׳תשפ״ז · שבת בראשית</span>
+    <a href="#" aria-label="החשבון שלי" style="width: 34px; height: 34px; border-radius: 999px; background: #3a221b; color: #e2957f; display: flex; align-items: center; justify-content: center; font-weight: 600;">מ</a>
+  </header>
+
+  <div style="flex-grow: 1; overflow-y: auto; padding: 0 0 {{bottomPad}}; display: flex; flex-direction: column; gap: 30px;">
+
+    <section style="padding: 34px 20px 0; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center;">
+      <span style="width: 34px; height: 42px; background: #e2957f; border-radius: 10px 6px 6px 10px; display: flex; align-items: center; justify-content: center; color: #16130e; font: 700 22px 'Frank Ruhl Libre', serif;">C</span>
+      <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 34px; line-height: 1.2;">מה תרצו ללמוד היום?</h1>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%;">
+        <a href="#listen" style="grid-column: 1 / -1; min-height: 56px; padding: 0 16px; border-radius: 14px; background: #e2957f; color: #1f1b15; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 15px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="4" y="14" width="4" height="6" rx="1.5"/><rect x="16" y="14" width="4" height="6" rx="1.5"/></svg>להאזין, והמילים לפניכם</a>
+        <a href="#" style="min-height: 56px; padding: 8px 12px; border-radius: 14px; background: #1f1b15; border: 1px solid #3a3329; display: flex; flex-direction: column; justify-content: center; gap: 1px; text-align: right;"><b style="font-size: 14px;">להמשיך</b><span style="font-size: 12px; color: #948a78;">תניא · פרק א</span></a>
+        <a href="#" style="min-height: 56px; padding: 8px 12px; border-radius: 14px; background: #1f1b15; border: 1px solid #3a3329; display: flex; flex-direction: column; justify-content: center; gap: 1px; text-align: right;"><b style="font-size: 14px;">לימוד יומי</b><span style="font-size: 12px; color: #948a78;">חת״ת, רמב״ם, היום יום</span></a>
+      </div>
+    </section>
+
+    <section id="kvius" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="padding: 0 16px; display: flex; flex-direction: column; gap: 2px;">
+        <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 24px;">השבוע, באותה קביעות: תשל״ו</h2>
+        <span style="font-size: 13px; color: #948a78;">תשל״ו חלה כמו השנה: אותם ימים ואותן פרשיות</span>
+      </div>
+      <div style="display: flex; gap: 12px; padding: 0 16px 4px; overflow-x: auto; scroll-snap-type: x mandatory;">
+        <sc-for list="{{cards}}" as="c" hint-placeholder-count="2">
+          <article style="flex: 0 0 300px; scroll-snap-align: start; border-radius: 18px; background: {{c.bg}}; color: {{c.fg}}; border: {{c.border}}; padding: 18px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box;">
+            <span style="align-self: flex-start; height: 24px; padding: 0 10px; border-radius: 999px; background: {{c.tagBg}}; color: {{c.tagFg}}; font-size: 12px; font-weight: 600; display: flex; align-items: center;">{{c.when}}</span>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <h3 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-size: 26px; font-weight: 500; line-height: 1.15;">{{c.title}}</h3>
+              <span style="font-size: 13px; color: {{c.sub}};">{{c.year}}</span>
+            </div>
+            <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px;">
+              <sc-for list="{{c.topics}}" as="t" hint-placeholder-count="2">
+                <li style="display: flex; gap: 8px; font-size: 14px; line-height: 1.5;"><span style="width: 5px; height: 5px; margin-top: 9px; border-radius: 999px; background: {{c.dot}}; flex-shrink: 0;"></span><span>{{t}}</span></li>
+              </sc-for>
+            </ul>
+            <span style="font-size: 12px; color: {{c.sub}};">{{c.extra}}</span>
+            <a href="#" style="height: 46px; border-radius: 999px; background: {{c.ctaBg}}; color: {{c.ctaFg}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg>לקרוא את השיחות</a>
+            <span style="font-size: 11px; color: {{c.sub}};">{{c.has}}</span>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="listen" style="padding: 0 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 22px;">להאזין, והמילים לפניכם</h2>
+        <span style="font-size: 13px; color: #948a78;">מהימים האלה, עם הקלטה ותמלול</span>
+      </div>
+      <div style="background: #1f1b15; border: 1px solid #3a3329; border-radius: 16px; display: flex; flex-direction: column;">
+        <sc-for list="{{listen}}" as="r" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-top: {{r.top}};">
+            <button type="button" onClick="{{r.play}}" aria-label="{{r.playLabel}}" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 999px; border: 0; background: #e2957f; color: #1f1b15; display: flex; align-items: center; justify-content: center;">
+              <sc-if value="{{r.isPlaying}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+              <sc-if value="{{r.notPlaying}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></sc-if>
+            </button>
+            <a href="PhoneListen.dc.html" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;"><b style="font-size: 15px;">{{r.title}}</b><span style="font-size: 12px; color: #948a78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.topic}}</span></a>
+            <a href="PhoneListen.dc.html" aria-label="עם הטקסט" style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1.5px solid #e2957f; color: #e2957f; font-size: 12px; font-weight: 600; display: flex; align-items: center; flex-shrink: 0;">עם הטקסט</a>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 11px; color: #948a78;">תוכן הענינים: mafteiach.app</span>
+    </section>
+
+    <section style="padding: 0 16px; display: flex; flex-direction: column; gap: 10px;">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #948a78;">נושאים מהימים האלה</h2>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <sc-for list="{{topics}}" as="t" hint-placeholder-count="4">
+          <button type="button" onClick="{{t.pick}}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #3a3329; background: #1f1b15; font: 500 14px 'Noto Sans Hebrew', sans-serif; color: #ede5d5;">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <sc-if value="{{typing}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 10px; right: 10px; bottom: {{sheetBottom}}; background: #1f1b15; border: 1px solid #3a3329; border-radius: 16px; box-shadow: 0 -6px 30px rgba(0,0,0,0.16); display: flex; flex-direction: column; overflow: hidden;">
+      <a href="PhoneAsk.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 8px 14px; background: #3a221b; border-bottom: 1px solid #2b261e;">
+        <span style="width: 30px; height: 30px; border-radius: 999px; background: #e2957f; color: #1f1b15; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8z"/></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;"><b>לשאול את הספרייה</b><span style="font-size: 12px; color: #948a78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">„{{q}}” · תשובה עם מקורות</span></span>
+      </a>
+      <sc-for list="{{matches}}" as="m" hint-placeholder-count="3">
+        <a href="#" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 14px; border-bottom: 1px solid #2b261e;"><span style="min-width: 44px; font-size: 11px; color: #948a78;">{{m.kind}}</span><span style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;"><span>{{m.name}}</span><span style="font-size: 12px; color: #948a78;">{{m.sub}}</span></span></a>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 12px 22px; background: linear-gradient(to top, #16130e 70%, rgba(22,19,14,0)); display: flex; flex-direction: column; gap: 8px;">
+    <sc-if value="{{showPlayer}}" hint-placeholder-val="{{false}}">
+      <div style="height: 52px; border-radius: 14px; background: #ede5d5; color: #16130e; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 12px;">
+        <button type="button" onClick="{{stop}}" aria-label="עצירה" style="width: 38px; height: 38px; border-radius: 999px; border: 0; background: #8a2c1e; color: #ede5d5; display: flex; align-items: center; justify-content: center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+        <b style="flex-grow: 1; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{playingTitle}}</b>
+        <a href="PhoneListen.dc.html" style="height: 34px; padding: 0 12px; border-radius: 999px; background: #16130e; color: #ede5d5; font-size: 12px; font-weight: 600; display: flex; align-items: center;">לטקסט</a>
+      </div>
+    </sc-if>
+    <div style="display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 6px 0 16px; border-radius: 28px; background: #1f1b15; border: 1.5px solid {{boxLine}}; box-shadow: 0 8px 28px rgba(0,0,0,0.12);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e2957f" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8z"/></svg>
+      <label for="home-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">שאלה או חיפוש</label>
+      <input id="home-q" value="{{q}}" onChange="{{onQ}}" placeholder="שאלו או חפשו כל דבר" style="flex-grow: 1; min-width: 0; height: 52px; border: 0; background: transparent; font: 16px 'Noto Sans Hebrew', sans-serif; color: #ede5d5; outline: none;">
+      <a href="{{sendHref}}" aria-label="שליחה" style="width: 44px; height: 44px; border-radius: 999px; background: {{sendBg}}; color: #1f1b15; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { q: '', playing: -1 }; }
+  renderVals() {
+    const s = this.state;
+    const kv = [
+      { when: 'השבת · כ״ט תשרי', title: 'שבת בראשית', year: 'תשל״ו · מברכים חשון וערב ראש חודש',
+        topics: ['„קביעות שנה זו”: בין שמחת תורה לשבת בראשית [המילה הנכונה] ימים, והעילוי שבזה', 'משבת בראשית צריכה להיות הוראה על כל השנה'],
+        extra: 'מאמר: ד״ה ויאמר גו׳ מחר חודש', has: 'שיחות קודש · מאמר', dark: true },
+      { when: 'שמחת תורה · כ״ג תשרי', title: 'יום שמחת תורה', year: 'תשל״ו',
+        topics: ['„אתה הראת לדעת”: ההקפות והקשר עם העצמות', '„כי מציון תצא תורה”, ולימוד „ידין ידין”'],
+        extra: 'מאמר: ד״ה ביום השמיני עצרת', has: 'שיחות קודש · מוגה בלקוטי שיחות חט״ו וחי״ז · מאמר', dark: false }
+    ];
+    const cards = kv.map((c) => {
+      const d = c.dark;
+      return Object.assign({}, c, {
+        bg: d ? '#ede5d5' : '#1f1b15', fg: d ? '#16130e' : '#ede5d5', border: d ? '0' : '1px solid #3a3329',
+        sub: d ? '#4a4235' : '#948a78', dot: d ? '#8a2c1e' : '#e2957f',
+        tagBg: d ? 'rgba(226,149,127,0.18)' : '#3a221b', tagFg: d ? '#8a2c1e' : '#e2957f',
+        ctaBg: d ? '#16130e' : '#e2957f', ctaFg: d ? '#ede5d5' : '#1f1b15'
+      });
+    });
+    const ld = [
+      { title: 'כ״ה תשרי תשמ״ז', topic: 'יחידות כללית · „בראשית ברא” ותכלית הבריאה' },
+      { title: 'ליל י״ג תשרי תשמ״ח', topic: 'התוועדות · „מלכתחילה אריבער”, ו„הקהל” בזמן הזה' }
+    ];
+    const listen = ld.map((r, i) => {
+      const on = s.playing === i;
+      return Object.assign({}, r, { top: i === 0 ? '0' : '1px solid #2b261e', isPlaying: on, notPlaying: !on, playLabel: on ? 'עצירה' : 'ניגון', play: () => this.setState({ playing: on ? -1 : i }) });
+    });
+    const q = (s.q || '').trim();
+    const catalog = [
+      { kind: 'התוועדות', name: 'שבת בראשית', sub: 'תשל״ו · באותה קביעות' },
+      { kind: 'התוועדות', name: 'יום שמח״ת', sub: 'תשל״ו · באותה קביעות' },
+      { kind: 'התוועדות', name: 'ליל י״ג תשרי', sub: 'תשמ״ח · עם תמלול' },
+      { kind: 'התוועדות', name: 'כ״ה תשרי, יחידות כללית', sub: 'תשמ״ז · עם תמלול' },
+      { kind: 'מאמר', name: 'ד״ה ויאמר גו׳ מחר חודש', sub: 'שבת בראשית תשל״ו' },
+      { kind: 'ספר', name: 'לקוטי שיחות', sub: '39 חלקים' }
+    ];
+    const norm = (t) => t.replace(/[״׳"'„”]/g, '');
+    const matches = q ? catalog.filter((c) => norm(c.name + ' ' + c.sub).includes(norm(q))).slice(0, 3) : [];
+    const topicNames = ['קביעות השנה', 'בראשית ברא', 'אתה הראת לדעת', 'הקהל', 'מלכתחילה אריבער'];
+    return {
+      cards: cards, listen: listen,
+      topics: topicNames.map((t) => ({ label: t, pick: () => this.setState({ q: t }) })),
+      q: s.q, typing: !!q,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      matches: matches,
+      boxLine: q ? '#e2957f' : '#3a3329',
+      sendBg: q ? '#e2957f' : '#4a4235',
+      sendHref: q ? 'PhoneAsk.dc.html' : '#',
+      showPlayer: s.playing >= 0,
+      playingTitle: s.playing >= 0 ? ld[s.playing].title : '',
+      stop: () => this.setState({ playing: -1 }),
+      sheetBottom: s.playing >= 0 ? '154px' : '94px',
+      bottomPad: s.playing >= 0 ? '160px' : '100px'
+    };
+  }
+}
+</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #16130e; color: #ede5d5; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <header style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 14px;">
+    <a href="PhoneMenu.dc.html" aria-label="תפריט" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h16"/></svg></a>
+    <span style="flex-grow: 1; text-align: center; font-size: 13px; color: #948a78;">כ״ו תשרי ה׳תשפ״ז · שבת בראשית</span>
+    <a href="#" aria-label="החשבון שלי" style="width: 34px; height: 34px; border-radius: 999px; background: #3a221b; color: #e2957f; display: flex; align-items: center; justify-content: center; font-weight: 600;">מ</a>
+  </header>
+
+  <div style="flex-grow: 1; overflow-y: auto; padding: 0 0 {{bottomPad}}; display: flex; flex-direction: column; gap: 30px;">
+
+    <section style="padding: 34px 20px 0; display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center;">
+      <span style="width: 34px; height: 42px; background: #e2957f; border-radius: 10px 6px 6px 10px; display: flex; align-items: center; justify-content: center; color: #16130e; font: 700 22px 'Frank Ruhl Libre', serif;">C</span>
+      <h1 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 34px; line-height: 1.2;">מה תרצו ללמוד היום?</h1>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%;">
+        <a href="#listen" style="grid-column: 1 / -1; min-height: 56px; padding: 0 16px; border-radius: 14px; background: #e2957f; color: #1f1b15; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 15px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><rect x="4" y="14" width="4" height="6" rx="1.5"/><rect x="16" y="14" width="4" height="6" rx="1.5"/></svg>להאזין, והמילים לפניכם</a>
+        <a href="#" style="min-height: 56px; padding: 8px 12px; border-radius: 14px; background: #1f1b15; border: 1px solid #3a3329; display: flex; flex-direction: column; justify-content: center; gap: 1px; text-align: right;"><b style="font-size: 14px;">להמשיך</b><span style="font-size: 12px; color: #948a78;">תניא · פרק א</span></a>
+        <a href="#" style="min-height: 56px; padding: 8px 12px; border-radius: 14px; background: #1f1b15; border: 1px solid #3a3329; display: flex; flex-direction: column; justify-content: center; gap: 1px; text-align: right;"><b style="font-size: 14px;">לימוד יומי</b><span style="font-size: 12px; color: #948a78;">חת״ת, רמב״ם, היום יום</span></a>
+      </div>
+    </section>
+
+    <section id="kvius" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="padding: 0 16px; display: flex; flex-direction: column; gap: 2px;">
+        <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 24px;">השבוע, באותה קביעות: תשל״ו</h2>
+        <span style="font-size: 13px; color: #948a78;">תשל״ו חלה כמו השנה: אותם ימים ואותן פרשיות</span>
+      </div>
+      <div style="display: flex; gap: 12px; padding: 0 16px 4px; overflow-x: auto; scroll-snap-type: x mandatory;">
+        <sc-for list="{{cards}}" as="c" hint-placeholder-count="2">
+          <article style="flex: 0 0 300px; scroll-snap-align: start; border-radius: 18px; background: {{c.bg}}; color: {{c.fg}}; border: {{c.border}}; padding: 18px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box;">
+            <span style="align-self: flex-start; height: 24px; padding: 0 10px; border-radius: 999px; background: {{c.tagBg}}; color: {{c.tagFg}}; font-size: 12px; font-weight: 600; display: flex; align-items: center;">{{c.when}}</span>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <h3 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-size: 26px; font-weight: 500; line-height: 1.15;">{{c.title}}</h3>
+              <span style="font-size: 13px; color: {{c.sub}};">{{c.year}}</span>
+            </div>
+            <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px;">
+              <sc-for list="{{c.topics}}" as="t" hint-placeholder-count="2">
+                <li style="display: flex; gap: 8px; font-size: 14px; line-height: 1.5;"><span style="width: 5px; height: 5px; margin-top: 9px; border-radius: 999px; background: {{c.dot}}; flex-shrink: 0;"></span><span>{{t}}</span></li>
+              </sc-for>
+            </ul>
+            <span style="font-size: 12px; color: {{c.sub}};">{{c.extra}}</span>
+            <a href="#" style="height: 46px; border-radius: 999px; background: {{c.ctaBg}}; color: {{c.ctaFg}}; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/></svg>לקרוא את השיחות</a>
+            <span style="font-size: 11px; color: {{c.sub}};">{{c.has}}</span>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="listen" style="padding: 0 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <h2 style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-weight: 500; font-size: 22px;">להאזין, והמילים לפניכם</h2>
+        <span style="font-size: 13px; color: #948a78;">מהימים האלה, עם הקלטה ותמלול</span>
+      </div>
+      <div style="background: #1f1b15; border: 1px solid #3a3329; border-radius: 16px; display: flex; flex-direction: column;">
+        <sc-for list="{{listen}}" as="r" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-top: {{r.top}};">
+            <button type="button" onClick="{{r.play}}" aria-label="{{r.playLabel}}" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 999px; border: 0; background: #e2957f; color: #1f1b15; display: flex; align-items: center; justify-content: center;">
+              <sc-if value="{{r.isPlaying}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+              <sc-if value="{{r.notPlaying}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></sc-if>
+            </button>
+            <a href="PhoneListen.dc.html" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;"><b style="font-size: 15px;">{{r.title}}</b><span style="font-size: 12px; color: #948a78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.topic}}</span></a>
+            <a href="PhoneListen.dc.html" aria-label="עם הטקסט" style="height: 36px; padding: 0 12px; border-radius: 999px; border: 1.5px solid #e2957f; color: #e2957f; font-size: 12px; font-weight: 600; display: flex; align-items: center; flex-shrink: 0;">עם הטקסט</a>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 11px; color: #948a78;">תוכן הענינים: mafteiach.app</span>
+    </section>
+
+    <section style="padding: 0 16px; display: flex; flex-direction: column; gap: 10px;">
+      <h2 style="margin: 0; font-size: 13px; font-weight: 600; color: #948a78;">נושאים מהימים האלה</h2>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <sc-for list="{{topics}}" as="t" hint-placeholder-count="4">
+          <button type="button" onClick="{{t.pick}}" style="height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid #3a3329; background: #1f1b15; font: 500 14px 'Noto Sans Hebrew', sans-serif; color: #ede5d5;">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+
+  <sc-if value="{{typing}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 10px; right: 10px; bottom: {{sheetBottom}}; background: #1f1b15; border: 1px solid #3a3329; border-radius: 16px; box-shadow: 0 -6px 30px rgba(0,0,0,0.16); display: flex; flex-direction: column; overflow: hidden;">
+      <a href="PhoneAsk.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 8px 14px; background: #3a221b; border-bottom: 1px solid #2b261e;">
+        <span style="width: 30px; height: 30px; border-radius: 999px; background: #e2957f; color: #1f1b15; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8z"/></svg></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;"><b>לשאול את הספרייה</b><span style="font-size: 12px; color: #948a78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">„{{q}}” · תשובה עם מקורות</span></span>
+      </a>
+      <sc-for list="{{matches}}" as="m" hint-placeholder-count="3">
+        <a href="#" style="display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 14px; border-bottom: 1px solid #2b261e;"><span style="min-width: 44px; font-size: 11px; color: #948a78;">{{m.kind}}</span><span style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;"><span>{{m.name}}</span><span style="font-size: 12px; color: #948a78;">{{m.sub}}</span></span></a>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 12px 22px; background: linear-gradient(to top, #16130e 70%, rgba(22,19,14,0)); display: flex; flex-direction: column; gap: 8px;">
+    <sc-if value="{{showPlayer}}" hint-placeholder-val="{{false}}">
+      <div style="height: 52px; border-radius: 14px; background: #ede5d5; color: #16130e; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 12px;">
+        <button type="button" onClick="{{stop}}" aria-label="עצירה" style="width: 38px; height: 38px; border-radius: 999px; border: 0; background: #8a2c1e; color: #ede5d5; display: flex; align-items: center; justify-content: center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+        <b style="flex-grow: 1; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{playingTitle}}</b>
+        <a href="PhoneListen.dc.html" style="height: 34px; padding: 0 12px; border-radius: 999px; background: #16130e; color: #ede5d5; font-size: 12px; font-weight: 600; display: flex; align-items: center;">לטקסט</a>
+      </div>
+    </sc-if>
+    <div style="display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 6px 0 16px; border-radius: 28px; background: #1f1b15; border: 1.5px solid {{boxLine}}; box-shadow: 0 8px 28px rgba(0,0,0,0.12);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e2957f" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8z"/></svg>
+      <label for="home-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">שאלה או חיפוש</label>
+      <input id="home-q" value="{{q}}" onChange="{{onQ}}" placeholder="שאלו או חפשו כל דבר" style="flex-grow: 1; min-width: 0; height: 52px; border: 0; background: transparent; font: 16px 'Noto Sans Hebrew', sans-serif; color: #ede5d5; outline: none;">
+      <a href="{{sendHref}}" aria-label="שליחה" style="width: 44px; height: 44px; border-radius: 999px; background: {{sendBg}}; color: #1f1b15; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { q: '', playing: -1 }; }
+  renderVals() {
+    const s = this.state;
+    const data = [
+      {
+        when: 'אתמול, לפני 40 שנה', title: 'כ״ה תשרי', year: 'תשמ״ז', kind: 'יחידות כללית',
+        topics: ['הקשר לפרשת השבוע, „בראשית ברא”, ולתכלית הבריאה', 'שליחותם המיוחדת של אלה ש„תורתם אומנתם”, בחיבור נגלה וחסידות'],
+        extra: 'ועוד: ענין השמחה, והקשר לשמחת תורה', dark: true
+      },
+      {
+        when: 'י״ג תשרי, לפני 39 שנה', title: 'ליל י״ג תשרי', year: 'תשמ״ח', kind: 'התוועדות',
+        topics: ['ביום ההילולא: „מלכתחילה אריבער”', 'השייכות של „הקהל” בזמן הזה, והצעות לפועל'],
+        extra: 'מאמר: ד״ה בורא ניב שפתיים', dark: false
+      }
+    ];
+    const cards = data.map((c, i) => {
+      const d = c.dark;
+      const on = s.playing === i;
+      return Object.assign({}, c, {
+        bg: d ? '#ede5d5' : '#1f1b15', fg: d ? '#16130e' : '#ede5d5', border: d ? '0' : '1px solid #3a3329',
+        sub: d ? '#4a4235' : '#948a78', dot: d ? '#8a2c1e' : '#e2957f',
+        tagBg: d ? 'rgba(226,149,127,0.18)' : '#3a221b', tagFg: d ? '#8a2c1e' : '#e2957f',
+        playBg: d ? '#8a2c1e' : '#e2957f', playFg: d ? '#ede5d5' : '#1f1b15',
+        ctaLine: d ? '#16130e' : '#e2957f',
+        isPlaying: on, notPlaying: !on, playLabel: on ? 'עצירה' : 'ניגון',
+        play: () => this.setState({ playing: on ? -1 : i })
+      });
+    });
+    const q = (s.q || '').trim();
+    const catalog = [
+      { kind: 'התוועדות', name: 'ליל י״ג תשרי', sub: 'תשמ״ח · עם תמלול' },
+      { kind: 'התוועדות', name: 'כ״ה תשרי, יחידות כללית', sub: 'תשמ״ז · עם תמלול' },
+      { kind: 'התוועדות', name: 'יום שמח״ת', sub: 'תשל״ה' },
+      { kind: 'מאמר', name: 'ד״ה בורא ניב שפתיים', sub: 'ליל י״ג תשרי תשמ״ח' },
+      { kind: 'ספר', name: 'לקוטי שיחות', sub: '39 חלקים' },
+      { kind: 'ספר', name: 'היום יום', sub: 'כ״ו תשרי' }
+    ];
+    const norm = (t) => t.replace(/[״׳"'„”]/g, '');
+    const matches = q ? catalog.filter((c) => norm(c.name + ' ' + c.sub).includes(norm(q))).slice(0, 3) : [];
+    const topicNames = ['הקהל', 'בראשית ברא', 'מלכתחילה אריבער', 'שמחת תורה', 'תורתם אומנתם'];
+    return {
+      cards: cards,
+      topics: topicNames.map((t) => ({ label: t, pick: () => this.setState({ q: t }) })),
+      q: s.q, typing: !!q,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      matches: matches,
+      boxLine: q ? '#e2957f' : '#3a3329',
+      sendBg: q ? '#e2957f' : '#4a4235',
+      sendHref: q ? 'PhoneAsk.dc.html' : '#',
+      showPlayer: s.playing >= 0,
+      playingTitle: s.playing >= 0 ? data[s.playing].title + ' ' + data[s.playing].year : '',
+      stop: () => this.setState({ playing: -1 }),
+      sheetBottom: s.playing >= 0 ? '154px' : '94px',
+      bottomPad: s.playing >= 0 ? '160px' : '100px'
+    };
+  }
+}
+</script>
+</body>
+</html>

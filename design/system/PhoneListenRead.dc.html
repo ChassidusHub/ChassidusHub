@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone transcript regular mode</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 0 6px;">
+    <a href="#" aria-label="חזרה" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></a>
+    <span style="flex-grow: 1; display: flex; flex-direction: column; line-height: 1.25; min-width: 0; text-align: center;"><b style="font-size: 15px;">[שיעור בתניא · הקלטה לדוגמה]</b><span style="font-size: 11px; color: #6b6253; display: flex; align-items: center; justify-content: center; gap: 5px;"><span style="width: 5px; height: 5px; border-radius: 999px; background: #b07a1a;"></span>תמלול מכונה</span></span>
+    <button type="button" onClick="{{openMenu}}" aria-label="עוד" style="width: 44px; height: 44px; border: 0; background: transparent; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg></button>
+  </header>
+
+  <div ref="{{scroller}}" onScroll="{{onScroll}}" style="flex-grow: 1; overflow-y: auto; padding: 12px 22px 170px; display: flex; flex-direction: column; gap: 18px;">
+    <sc-for list="{{paras}}" as="p" hint-placeholder-count="5">
+      <p data-cur="{{p.curFlag}}" style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-size: 23px; line-height: 1.85; text-align: justify; opacity: {{p.opacity}}; transition: opacity 200ms;">
+        <sc-for list="{{p.items}}" as="w" hint-placeholder-count="10">
+          <sc-if value="{{w.isWord}}" hint-placeholder-val="{{true}}"><button type="button" onClick="{{w.tap}}" style="display: inline; border: 0; margin: 0; padding: 1px 2px; border-radius: 5px; font: inherit; line-height: inherit; color: {{w.color}}; background: {{w.bg}}; box-shadow: {{w.shadow}};">{{w.text}}</button> </sc-if>
+          <sc-if value="{{w.isChip}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{openFix}}" aria-label="תיקון המילים שסומנו" style="display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; height: 30px; margin: 0 2px; padding: 0 10px; border-radius: 999px; border: 0; background: #1f1a13; color: #f7f3ea; font: 600 13px 'Noto Sans Hebrew', sans-serif;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l5 5-9 9H5v-5z"/></svg>תיקון</button> </sc-if>
+          <sc-if value="{{w.isEdit}}" hint-placeholder-val="{{false}}"><span style="display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; padding: 2px 2px 2px 4px; border-radius: 10px; background: #fffdf8; box-shadow: 0 0 0 2px #8a2c1e, 0 6px 18px rgba(40,30,20,0.16);"><label for="fx" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">המילים הנכונות</label><input id="fx" value="{{draft}}" onChange="{{onDraft}}" size="{{draftSize}}" style="border: 0; outline: none; background: transparent; font: 22px 'Frank Ruhl Libre', serif; color: #1f1a13; padding: 0 6px; min-width: 60px;"><button type="button" onClick="{{saveFix}}" aria-label="שמירה" style="width: 34px; height: 34px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12l4.5 4.5L19 7"/></svg></button><button type="button" onClick="{{cancelFix}}" aria-label="ביטול" style="width: 34px; height: 34px; border-radius: 999px; border: 0; background: transparent; color: #6b6253; display: flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span> </sc-if>
+        </sc-for>
+      </p>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{showFollow}}" hint-placeholder-val="{{false}}">
+    <button type="button" onClick="{{follow}}" style="position: absolute; left: 50%; transform: translateX(-50%); bottom: 132px; height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #1f1a13; color: #f7f3ea; font: 500 13px 'Noto Sans Hebrew', sans-serif; white-space: nowrap;">חזרה למילה שנאמרת</button>
+  </sc-if>
+
+  <section aria-label="נגן" style="position: absolute; left: 12px; right: 12px; bottom: 18px; border-radius: 22px; background: #fffdf8; box-shadow: 0 10px 30px rgba(40,30,20,0.14); padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px;">
+    <div style="height: 3px; border-radius: 2px; background: #ece5d6; position: relative; overflow: hidden;"><span style="position: absolute; top: 0; bottom: 0; right: 0; width: {{progress}}; background: #8a2c1e;"></span></div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <span dir="ltr" style="width: 44px; font-size: 12px; color: #6b6253; font-variant-numeric: tabular-nums;">{{elapsed}}</span>
+      <span style="flex-grow: 1;"></span>
+      <button type="button" onClick="{{back5}}" aria-label="חמש שניות אחורה" style="width: 44px; height: 44px; border: 0; background: transparent; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 10-2.3 5.6"/><path d="M20 5v4h-4"/></svg></button>
+      <button type="button" onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 56px; height: 56px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; display: flex; align-items: center; justify-content: center;">
+        <sc-if value="{{playing}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+        <sc-if value="{{paused}}" hint-placeholder-val="{{true}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></sc-if>
+      </button>
+      <button type="button" onClick="{{cycleSpeed}}" aria-label="מהירות" style="width: 44px; height: 44px; border: 0; background: transparent; font: 600 13px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;"><span dir="ltr">{{speed}}</span></button>
+      <span style="flex-grow: 1;"></span>
+      <span dir="ltr" style="width: 44px; text-align: left; font-size: 12px; color: #6b6253; font-variant-numeric: tabular-nums;">{{total}}</span>
+    </div>
+  </section>
+
+  <sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(31,26,19,0.35); display: flex; flex-direction: column; justify-content: flex-end;">
+      <div role="dialog" aria-label="עוד" style="background: #fffdf8; border-radius: 16px 16px 0 0; padding: 10px 16px 22px; display: flex; flex-direction: column;">
+        <span style="align-self: center; width: 36px; height: 4px; border-radius: 2px; background: #c8bba3; margin-bottom: 8px;"></span>
+        <sc-for list="{{menu}}" as="m" hint-placeholder-count="6">
+          <button type="button" onClick="{{m.act}}" style="display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 0 6px; border: 0; border-top: {{m.top}}; background: transparent; font: 15px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; text-align: right;"><span style="flex-grow: 1;">{{m.label}}</span><span style="font-size: 13px; color: #6b6253;">{{m.note}}</span></button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: absolute; left: 14px; right: 14px; top: 64px; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; border-radius: 10px; background: #1f1a13; color: #f7f3ea; font-size: 14px;"><span style="flex-grow: 1;">{{toast}}</span><sc-if value="{{canUndo}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{undo}}" style="height: 34px; padding: 0 10px; border: 0; background: transparent; color: #e2957f; font: 600 13px 'Noto Sans Hebrew', sans-serif;">ביטול</button></sc-if></div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const mk = (t) => t.split(' ').map((x) => ({ t: x, fixed: false }));
+    this.state = {
+      paras: [
+        mk('כאן יופיעו מילות הפסקה כפי שנאמרו בהקלטה או שנדפסו בספר עצמו והמילים'),
+        mk('המשפט הזה ועוד מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט'),
+        mk('מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט האמיתי'),
+        mk('בהקלטה או שנדפסו בספר עצמו והמילים שאחריהן'),
+        mk('בשורה הבאה שוב במקום הטקסט האמיתי כאן יופיעו מילות הפסקה כפי שנאמרו בהקלטה')
+      ],
+      p: 0, w: 3, playing: false, speed: 1, following: true, sel: null, editing: false, draft: '', menuOpen: false, toast: '', undo: null
+    };
+    this.STEP = 420;
+  }
+  componentWillUnmount() { clearInterval(this._iv); clearTimeout(this._t); clearTimeout(this._c); }
+  componentDidUpdate(pp, ps) {
+    if (this.state.following && ps.p !== this.state.p && this._sc) {
+      const el = this._sc.querySelector('[data-cur="1"]');
+      if (el) { this._auto = Date.now(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    }
+  }
+  setPlaying(on) { clearInterval(this._iv); if (on) this._iv = setInterval(() => this.tick(), this.STEP / this.state.speed); this.setState({ playing: on }); }
+  tick() {
+    const s = this.state; let p = s.p, w = s.w + 1;
+    if (w >= s.paras[p].length) { p += 1; w = 0; }
+    if (p >= s.paras.length) { this.setPlaying(false); return; }
+    this.setState({ p: p, w: w });
+  }
+  say(t, undo) { this.setState({ toast: t, undo: undo || null }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '', undo: null }), 3500); }
+  clock(ms) { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  hideChipLater() { clearTimeout(this._c); this._c = setTimeout(() => { if (!this.state.editing) this.setState({ sel: null }); }, 5000); }
+  tapWord(pi, wi) {
+    const s = this.state;
+    if (s.editing) return;
+    if (s.sel && s.sel.p === pi && wi !== s.sel.a && s.sel.a === s.sel.b) {
+      this.setState({ sel: { p: pi, a: Math.min(wi, s.sel.a), b: Math.max(wi, s.sel.a) } });
+      this.hideChipLater();
+      return;
+    }
+    this.setState({ p: pi, w: wi, following: true, sel: { p: pi, a: wi, b: wi } });
+    this.setPlaying(true);
+    this.hideChipLater();
+  }
+  renderVals() {
+    const s = this.state;
+    const counts = s.paras.map((p) => p.length);
+    const pos = counts.slice(0, s.p).reduce((a, b) => a + b, 0) + s.w;
+    const totalW = counts.reduce((a, b) => a + b, 0);
+    const paras = s.paras.map((para, pi) => {
+      const isCur = pi === s.p;
+      const items = [];
+      para.forEach((w, wi) => {
+        const inSel = s.sel && s.sel.p === pi && wi >= s.sel.a && wi <= s.sel.b;
+        if (inSel && s.editing) { if (wi === s.sel.a) items.push({ isWord: false, isChip: false, isEdit: true }); return; }
+        const now = isCur && wi === s.w;
+        const said = pi < s.p || (isCur && wi < s.w);
+        let bg = 'transparent', color = '#1f1a13', shadow = 'none';
+        if (isCur && !said && !now) color = '#6b6253';
+        if (w.fixed) shadow = 'inset 0 -2px 0 #2f6b3f';
+        if (now) { bg = '#8a2c1e'; color = '#fffdf8'; shadow = 'none'; }
+        if (inSel) { bg = '#f2e1d9'; color = '#1f1a13'; shadow = 'inset 0 0 0 1.5px #8a2c1e'; }
+        items.push({ isWord: true, isChip: false, isEdit: false, text: w.t, bg: bg, color: color, shadow: shadow, tap: () => this.tapWord(pi, wi) });
+        if (inSel && wi === s.sel.b && !s.editing) items.push({ isWord: false, isChip: true, isEdit: false });
+      });
+      return { curFlag: isCur ? '1' : '0', opacity: isCur || pi === s.p + 1 || pi === s.p - 1 ? '1' : '0.75', items: items };
+    });
+    const speeds = [1, 1.25, 1.5, 0.75];
+    const sel = s.sel;
+    const selWords = sel ? s.paras[sel.p].slice(sel.a, sel.b + 1).map((x) => x.t).join(' ') : '';
+    return {
+      scroller: (el) => { this._sc = el; },
+      onScroll: () => { if (this._auto && Date.now() - this._auto < 900) return; if (s.following) this.setState({ following: false }); },
+      showFollow: !s.following,
+      follow: () => { this.setState({ following: true }); const el = this._sc && this._sc.querySelector('[data-cur="1"]'); if (el) { this._auto = Date.now(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } },
+      paras: paras,
+      progress: Math.round(pos / totalW * 100) + '%',
+      elapsed: this.clock(pos * this.STEP), total: this.clock(totalW * this.STEP),
+      playing: s.playing, paused: !s.playing, playLabel: s.playing ? 'עצירה' : 'ניגון',
+      togglePlay: () => { this.setState({ following: true }); this.setPlaying(!s.playing); },
+      back5: () => { let g = Math.max(0, pos - Math.round(5000 / this.STEP)); let pi = 0; while (g >= counts[pi]) { g -= counts[pi]; pi++; } this.setState({ p: pi, w: g }); },
+      speed: s.speed + '×',
+      cycleSpeed: () => { const n = speeds[(speeds.indexOf(s.speed) + 1) % speeds.length]; this.setState({ speed: n }, () => { if (this.state.playing) this.setPlaying(true); }); },
+      openFix: () => { clearTimeout(this._c); this.setPlaying(false); this.setState({ editing: true, draft: selWords }); },
+      draft: s.draft, draftSize: String(Math.max(4, (s.draft || '').length + 1)),
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      cancelFix: () => this.setState({ editing: false, sel: null }),
+      saveFix: () => {
+        const before = s.paras.map((p) => p.map((w) => Object.assign({}, w)));
+        const paras = s.paras.map((p) => p.map((w) => Object.assign({}, w)));
+        const nw = (s.draft || '').trim().split(/\s+/).filter(Boolean).map((t) => ({ t: t, fixed: true }));
+        paras[sel.p].splice(sel.a, sel.b - sel.a + 1, ...nw);
+        this.setState({ paras: paras, editing: false, sel: null, p: sel.p, w: Math.max(0, sel.a - 2) });
+        this.setPlaying(true);
+        this.say('נשלח לבדיקה. ממשיך מעט לפני', before);
+      },
+      menuOpen: s.menuOpen,
+      openMenu: () => this.setState({ menuOpen: true }),
+      menu: [
+        ['לשתף את הרגע הזה', this.clock(pos * this.STEP)], ['חיפוש בתמלול', ''], ['פרקים', '2'], ['גודל וגופן', 'Aa'], ['ההנחה הכתובה', ''], ['וידאו · הורדה', ''], ['סגירה', '']
+      ].map((m, i) => ({ label: m[0], note: m[1], top: i === 0 ? '0' : '1px solid #e9e1d1', act: () => this.setState({ menuOpen: false }) })),
+      toastOn: !!s.toast, toast: s.toast, canUndo: !!s.undo,
+      undo: () => { if (s.undo) this.setState({ paras: s.undo, toast: '', undo: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

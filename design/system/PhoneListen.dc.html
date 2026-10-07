@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Phone transcript page</title>
+<script src="../support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&amp;family=Noto+Sans+Hebrew:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+</style>
+</helmet>
+<div dir="rtl" lang="he" style="width: 390px; height: 844px; box-sizing: border-box; background: #f7f3ea; color: #1f1a13; font-family: 'Noto Sans Hebrew', sans-serif; font-size: 14px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+
+  <header style="flex-shrink: 0; background: #f7f3ea; border-bottom: 1px solid #dcd2bf;">
+    <div style="height: 52px; display: flex; align-items: center; gap: 4px; padding: 0 6px;">
+      <a href="#" aria-label="חזרה" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 7l5 5-5 5"/></svg></a>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; line-height: 1.25; min-width: 0;"><b style="font-size: 15px;">[שיעור בתניא, פרק א]</b><span style="font-size: 12px; color: #6b6253;">הקלטה לדוגמה · תמלול</span></span>
+      <sc-if value="{{hasTray}}" hint-placeholder-val="{{false}}">
+        <a href="PhoneSend.dc.html" style="height: 34px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 999px; background: #1f1a13; color: #f7f3ea; text-decoration: none; font-size: 13px;">תיקונים · <b>{{trayCount}}</b></a>
+      </sc-if>
+      <button type="button" aria-label="הגדרות קריאה" style="width: 44px; height: 44px; border: 0; background: transparent; color: #1f1a13; font: 600 17px 'Frank Ruhl Libre', serif;"><span dir="ltr">Aa</span></button>
+    </div>
+    <a href="PhoneTranscript.dc.html" style="display: flex; align-items: center; gap: 8px; margin: 0 12px 10px; padding: 0 12px; height: 40px; border-radius: 10px; background: #f6ecd2; color: #6b4a0d; text-decoration: none; font-size: 13px;">
+      <span style="width: 8px; height: 8px; border-radius: 999px; background: #b07a1a; flex-shrink: 0;"></span>
+      <span style="flex-grow: 1;">המכונה שמעה {{machineCount}} פסקאות שעוד לא נבדקו</span>
+      <b style="color: #8a2c1e;">לבדוק</b>
+    </a>
+  </header>
+
+  <div ref="{{scroller}}" onScroll="{{onScroll}}" style="flex-grow: 1; overflow-y: auto; padding: 16px 14px {{bottomPad}}; display: flex; flex-direction: column; gap: 6px;">
+    <sc-for list="{{paras}}" as="p" hint-placeholder-count="5">
+      <div data-cur="{{p.curFlag}}" style="border-radius: 12px; padding: 12px 14px; background: {{p.bg}}; box-shadow: {{p.shadow}}; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b6253;">
+          <button type="button" onClick="{{p.playFrom}}" aria-label="ניגון מתחילת הפסקה" style="height: 28px; padding: 0 8px; margin: 0 -8px; border: 0; border-radius: 6px; background: transparent; color: #6b6253; font: 12px 'Noto Sans Hebrew', sans-serif; display: flex; align-items: center; gap: 4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span dir="ltr" style="font-variant-numeric: tabular-nums;">{{p.time}}</span></button>
+          <span style="flex-grow: 1;"></span>
+          <span style="display: flex; align-items: center; gap: 5px; color: {{p.statusColor}};"><span style="width: 6px; height: 6px; border-radius: 999px; background: {{p.statusColor}};"></span>{{p.statusLabel}}</span>
+        </div>
+        <p style="margin: 0; font-family: 'Frank Ruhl Libre', serif; font-size: {{textSize}}; line-height: 1.75; text-align: justify;">
+          <sc-for list="{{p.words}}" as="w" hint-placeholder-count="10"><button type="button" onClick="{{w.tap}}" style="display: inline; border: 0; margin: 0 1px; padding: 1px 3px; border-radius: 5px; font: inherit; line-height: inherit; color: {{w.color}}; background: {{w.bg}}; box-shadow: {{w.shadow}}; transition: background 120ms, color 120ms;">{{w.text}}</button> </sc-for>
+        </p>
+      </div>
+    </sc-for>
+    <p style="margin: 8px 4px 0; font-size: 12px; color: #6b6253; text-align: center;">לחיצה על מילה מנגנת ממנה ופותחת תיקון.</p>
+  </div>
+
+  <sc-if value="{{showFollow}}" hint-placeholder-val="{{false}}">
+    <button type="button" onClick="{{follow}}" style="position: absolute; left: 50%; transform: translateX(-50%); bottom: {{followBottom}}; height: 40px; padding: 0 16px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 13px 'Noto Sans Hebrew', sans-serif; box-shadow: 0 6px 20px rgba(138,44,30,0.35); display: flex; align-items: center; gap: 6px; white-space: nowrap;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>חזרה למילה שנאמרת</button>
+  </sc-if>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column;">
+
+    <sc-if value="{{showWordBar}}" hint-placeholder-val="{{false}}">
+      <div style="margin: 0 10px 8px; padding: 10px 10px 10px 8px; background: #fffdf8; border: 1px solid #dcd2bf; border-radius: 14px; box-shadow: 0 8px 24px rgba(40,30,20,0.14); display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 11px; color: #6b6253;">{{selHint}}</span><b style="font-family: 'Frank Ruhl Libre', serif; font-size: 20px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{selText}}</b></span>
+          <button type="button" onClick="{{clearSel}}" aria-label="סגירה" style="width: 36px; height: 36px; border: 0; background: transparent; color: #6b6253;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 6px;">
+          <button type="button" onClick="{{openFix}}" style="height: 44px; border-radius: 10px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 14px 'Noto Sans Hebrew', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l5 5-9 9H5v-5z"/></svg>תיקון</button>
+          <button type="button" onClick="{{hearSel}}" style="height: 44px; border-radius: 10px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 13px 'Noto Sans Hebrew', sans-serif;">לשמוע שוב</button>
+          <button type="button" onClick="{{notSure}}" style="height: 44px; border-radius: 10px; border: 1px solid #e6cf9a; background: #fffdf8; color: #6b4a0d; font: 500 13px 'Noto Sans Hebrew', sans-serif;">לא בטוח</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <section aria-label="נגן" style="background: #fffdf8; border-top: 1px solid #dcd2bf; box-shadow: 0 -6px 20px rgba(40,30,20,0.06); padding: 10px 14px 18px; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="position: relative; height: 22px; display: flex; align-items: center;">
+          <div style="display: flex; gap: 3px; width: 100%; height: 8px;">
+            <sc-for list="{{map}}" as="m" hint-placeholder-count="5">
+              <button type="button" onClick="{{m.jump}}" aria-label="{{m.label}}" style="flex: {{m.flex}}; height: 8px; padding: 0; border: 0; border-radius: 4px; background: {{m.bg}}; position: relative; overflow: hidden;"><span style="position: absolute; top: 0; bottom: 0; right: 0; width: {{m.fill}}; background: {{m.fillBg}};"></span></button>
+            </sc-for>
+          </div>
+          <span style="position: absolute; top: 2px; right: {{headPos}}; width: 18px; height: 18px; margin-right: -9px; border-radius: 999px; background: #fffdf8; border: 3px solid #8a2c1e; box-sizing: border-box; pointer-events: none;"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6b6253; font-variant-numeric: tabular-nums;"><span dir="ltr">{{elapsed}}</span><span style="display: flex; gap: 10px;"><span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: #9fc29a;"></span>נבדק</span><span style="display: flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: #e6cf9a;"></span>מכונה</span></span><span dir="ltr">{{totalTime}}</span></div>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <button type="button" onClick="{{cycleSpeed}}" aria-label="מהירות" style="width: 56px; height: 44px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 600 13px 'Noto Sans Hebrew', sans-serif; color: #1f1a13;"><span dir="ltr">{{speed}}</span></button>
+        <button type="button" onClick="{{back5}}" aria-label="חמש שניות אחורה" style="width: 52px; height: 52px; border-radius: 999px; border: 0; background: transparent; color: #1f1a13; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 600 10px 'Noto Sans Hebrew', sans-serif;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 10-2.3 5.6"/><path d="M20 5v4h-4"/></svg>5</button>
+        <button type="button" onClick="{{togglePlay}}" aria-label="{{playLabel}}" style="width: 68px; height: 68px; border-radius: 999px; border: 0; background: #8a2c1e; color: #fffdf8; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(138,44,30,0.3);">
+          <sc-if value="{{playing}}" hint-placeholder-val="{{false}}"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+          <sc-if value="{{paused}}" hint-placeholder-val="{{true}}"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></sc-if>
+        </button>
+        <button type="button" onClick="{{nextPara}}" aria-label="הפסקה הבאה" style="width: 52px; height: 52px; border-radius: 999px; border: 0; background: transparent; color: #1f1a13; display: flex; align-items: center; justify-content: center;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6l-8 6 8 6z"/><path d="M6 6v12"/></svg></button>
+        <button type="button" onClick="{{toggleSlowFix}}" aria-pressed="{{pauseOnTap}}" aria-label="עצירה בלחיצה על מילה" style="width: 56px; height: 44px; border-radius: 999px; border: 1px solid {{pauseLine}}; background: {{pauseBg}}; color: {{pauseColor}}; font: 600 11px 'Noto Sans Hebrew', sans-serif; line-height: 1.1;">עצירה<br>בלחיצה</button>
+      </div>
+    </section>
+  </div>
+
+  <sc-if value="{{fixOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(31,26,19,0.35); display: flex; flex-direction: column; justify-content: flex-end;">
+      <div role="dialog" aria-label="תיקון" style="background: #fffdf8; border-radius: 16px 16px 0 0; padding: 10px 16px 20px; display: flex; flex-direction: column; gap: 12px;">
+        <span style="align-self: center; width: 36px; height: 4px; border-radius: 2px; background: #c8bba3;"></span>
+        <div style="display: flex; align-items: center; gap: 8px;"><b style="font-size: 16px; flex-grow: 1;">מה נאמר כאן?</b><span style="font-size: 12px; color: #6b6253;">ההקלטה נעצרה</span></div>
+        <div style="padding: 10px 12px; border-radius: 10px; background: #f7f3ea; font-family: 'Frank Ruhl Libre', serif; font-size: 18px; line-height: 1.6; color: #4e463a;">{{ctxBefore}} <span style="background: #f2e1d9; box-shadow: inset 0 -2px 0 #8a2c1e; color: #1f1a13; padding: 0 3px; border-radius: 3px;">{{selText}}</span> {{ctxAfter}}</div>
+        <label for="pl-draft" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">המילים הנכונות</label>
+        <input id="pl-draft" value="{{draft}}" onChange="{{onDraft}}" style="height: 52px; padding: 0 14px; border-radius: 10px; border: 1.5px solid #8a2c1e; outline: 3px solid #f2e1d9; background: #fffdf8; font: 22px 'Frank Ruhl Libre', serif; color: #1f1a13;">
+        <button type="button" onClick="{{hearSel}}" style="align-self: flex-start; height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid #dcd2bf; background: #fffdf8; font: 500 13px 'Noto Sans Hebrew', sans-serif; color: #1f1a13; display: flex; align-items: center; gap: 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>לשמוע את המילים האלה שוב</button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" onClick="{{applyFix}}" style="flex-grow: 1; height: 52px; border-radius: 12px; border: 0; background: #8a2c1e; color: #fffdf8; font: 600 15px 'Noto Sans Hebrew', sans-serif;">הוספה לתיקונים והמשך</button>
+          <button type="button" onClick="{{closeFix}}" style="height: 52px; padding: 0 18px; border-radius: 12px; border: 1px solid #c8bba3; background: #fffdf8; color: #1f1a13; font: 500 15px 'Noto Sans Hebrew', sans-serif;">ביטול</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{toastOn}}" hint-placeholder-val="{{false}}">
+    <div role="status" style="position: absolute; left: 14px; right: 14px; top: 112px; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px 0 14px; border-radius: 10px; background: #1f1a13; color: #f7f3ea; font-size: 14px; box-shadow: 0 8px 24px rgba(40,30,20,0.2);">
+      <span style="flex-grow: 1;">{{toast}}</span>
+      <sc-if value="{{canUndo}}" hint-placeholder-val="{{false}}"><button type="button" onClick="{{undo}}" style="height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: #e2957f; font: 600 13px 'Noto Sans Hebrew', sans-serif;">ביטול</button></sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"textSize":{"editor":"enum","options":["20px","22px","24px","27px"],"default":"22px"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const mk = (status, text) => ({ status: status, words: text.split(' ').map((t) => ({ t: t, unclear: false, fixed: false })) });
+    this.state = {
+      paras: [
+        mk('checked', 'במקום הטקסט האמיתי כאן יופיעו מילות הפסקה כפי שנאמרו בהקלטה או שנדפסו'),
+        mk('machine', 'המשפט הזה ועוד מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט'),
+        mk('machine', 'מילים לדוגמה בלבד בשורה הבאה שוב במקום הטקסט האמיתי'),
+        mk('machine', 'שאחריהן ממשיכות באותה שורה עד סוף המשפט הזה ועוד מילים לדוגמה בלבד בשורה הבאה שוב במקום'),
+        mk('machine', 'בהקלטה או שנדפסו בספר עצמו והמילים שאחריהן ממשיכות באותה שורה עד סוף')
+      ],
+      p: 1, w: 2, playing: false, speed: 1, sel: null, fixOpen: false, draft: '',
+      tray: [], following: true, pauseOnTap: true, toast: '', undo: null
+    };
+    this.STEP = 420;
+  }
+
+  componentWillUnmount() { clearInterval(this._iv); clearTimeout(this._t); }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.following && (prevState.p !== this.state.p) && this._sc) {
+      const el = this._sc.querySelector('[data-cur="1"]');
+      if (el) { this._auto = Date.now(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    }
+  }
+
+  setPlaying(on) {
+    clearInterval(this._iv);
+    if (on) this._iv = setInterval(() => this.tick(), this.STEP / this.state.speed);
+    this.setState({ playing: on });
+  }
+
+  tick() {
+    const s = this.state;
+    let p = s.p, w = s.w + 1;
+    if (w >= s.paras[p].words.length) { p += 1; w = 0; }
+    if (p >= s.paras.length) { this.setPlaying(false); this.setState({ p: s.paras.length - 1, w: s.paras[s.paras.length - 1].words.length - 1 }); return; }
+    this.setState({ p: p, w: w });
+  }
+
+  say(text, undo) {
+    this.setState({ toast: text, undo: undo || null });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: '', undo: null }), 3500);
+  }
+
+  copy() { return this.state.paras.map((p) => ({ status: p.status, words: p.words.map((w) => Object.assign({}, w)) })); }
+
+  tapWord(pi, wi) {
+    const s = this.state;
+    if (s.sel && s.sel.p === pi && s.sel.a === s.sel.b && wi !== s.sel.a) {
+      this.setState({ sel: { p: pi, a: Math.min(wi, s.sel.a), b: Math.max(wi, s.sel.a) } });
+      return;
+    }
+    this.setState({ p: pi, w: wi, sel: { p: pi, a: wi, b: wi }, following: true });
+    if (s.pauseOnTap) this.setPlaying(false);
+  }
+
+  hearSel() {
+    const s = this.state;
+    if (!s.sel) return;
+    this.setState({ p: s.sel.p, w: Math.max(0, s.sel.a - 2) });
+    this.setPlaying(true);
+    clearTimeout(this._stop);
+    const n = s.sel.b - Math.max(0, s.sel.a - 2) + 2;
+    this._stop = setTimeout(() => this.setPlaying(false), (n * this.STEP) / s.speed);
+  }
+
+  applyFix() {
+    const s = this.state;
+    const sel = s.sel;
+    if (!sel) return;
+    const before = { paras: this.copy(), tray: s.tray.slice() };
+    const paras = this.copy();
+    const para = paras[sel.p];
+    const oldText = para.words.slice(sel.a, sel.b + 1).map((w) => w.t).join(' ');
+    const newWords = (s.draft || '').trim().split(/\s+/).filter(Boolean).map((t) => ({ t: t, unclear: false, fixed: true }));
+    para.words.splice(sel.a, sel.b - sel.a + 1, ...newWords);
+    const tray = s.tray.concat([{ before: oldText, after: newWords.map((w) => w.t).join(' ') }]);
+    this.setState({ paras: paras, tray: tray, fixOpen: false, sel: null, p: sel.p, w: Math.max(0, sel.a - 2) });
+    this.setPlaying(true);
+    this.say('נוסף לתיקונים. ממשיך מעט לפני', before);
+  }
+
+  notSure() {
+    const s = this.state;
+    const sel = s.sel;
+    if (!sel) return;
+    const before = { paras: this.copy(), tray: s.tray.slice() };
+    const paras = this.copy();
+    for (let i = sel.a; i <= sel.b; i++) paras[sel.p].words[i].unclear = true;
+    const text = paras[sel.p].words.slice(sel.a, sel.b + 1).map((w) => w.t).join(' ');
+    this.setState({ paras: paras, tray: s.tray.concat([{ unclear: text }]), sel: null });
+    this.say('סומן כלא ברור', before);
+  }
+
+  clock(ms) {
+    const sec = Math.floor(ms / 1000);
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+
+  renderVals() {
+    const s = this.state;
+    const counts = s.paras.map((p) => p.words.length);
+    const total = counts.reduce((a, b) => a + b, 0);
+    const startOf = (pi) => counts.slice(0, pi).reduce((a, b) => a + b, 0);
+    const pos = startOf(s.p) + s.w;
+    const statusOf = { checked: { label: 'נבדק', color: '#2f6b3f' }, machine: { label: 'מכונה, טרם נבדק', color: '#b07a1a' } };
+
+    const paras = s.paras.map((para, pi) => {
+      const isCur = pi === s.p;
+      return {
+        curFlag: isCur ? '1' : '0',
+        bg: isCur ? '#fffdf8' : 'transparent',
+        shadow: isCur ? '0 1px 0 #e6decd, 0 4px 14px rgba(40,30,20,0.08)' : 'none',
+        time: this.clock(startOf(pi) * this.STEP),
+        statusLabel: statusOf[para.status].label, statusColor: statusOf[para.status].color,
+        playFrom: () => { this.setState({ p: pi, w: 0, sel: null, following: true }); this.setPlaying(true); },
+        words: para.words.map((w, wi) => {
+          const now = isCur && wi === s.w;
+          const said = pi < s.p || (isCur && wi < s.w);
+          const selected = s.sel && s.sel.p === pi && wi >= s.sel.a && wi <= s.sel.b;
+          let bg = 'transparent', color = '#1f1a13', shadow = 'none';
+          if (isCur && !said && !now) color = '#6b6253';
+          if (w.unclear) { bg = '#f6ecd2'; shadow = 'inset 0 -2px 0 #b07a1a'; }
+          if (w.fixed) { shadow = 'inset 0 -2px 0 #2f6b3f'; }
+          if (now) { bg = '#8a2c1e'; color = '#fffdf8'; shadow = 'none'; }
+          if (selected) { bg = '#f2e1d9'; color = '#1f1a13'; shadow = 'inset 0 0 0 2px #8a2c1e'; }
+          return { text: w.unclear ? '[' + w.t + '?]' : w.t, bg: bg, color: color, shadow: shadow, tap: () => this.tapWord(pi, wi) };
+        })
+      };
+    });
+
+    const map = s.paras.map((para, pi) => {
+      const done = pi < s.p ? '100%' : pi === s.p ? Math.round((s.w / para.words.length) * 100) + '%' : '0%';
+      return {
+        flex: String(para.words.length),
+        bg: para.status === 'checked' ? '#cfe0c9' : '#f3e2b8',
+        fillBg: para.status === 'checked' ? '#6f9e69' : '#c9a24e',
+        fill: done,
+        label: 'פסקה ' + (pi + 1),
+        jump: () => { this.setState({ p: pi, w: 0, sel: null, following: true }); }
+      };
+    });
+
+    const sel = s.sel;
+    const selWords = sel ? s.paras[sel.p].words.slice(sel.a, sel.b + 1).map((w) => w.t).join(' ') : '';
+    const ctxBefore = sel ? s.paras[sel.p].words.slice(Math.max(0, sel.a - 3), sel.a).map((w) => w.t).join(' ') : '';
+    const ctxAfter = sel ? s.paras[sel.p].words.slice(sel.b + 1, sel.b + 4).map((w) => w.t).join(' ') : '';
+    const speeds = [1, 1.25, 1.5, 0.75];
+    const machineCount = s.paras.filter((p) => p.status === 'machine').length;
+    const showWordBar = !!sel && !s.fixOpen;
+
+    return {
+      scroller: (el) => { this._sc = el; },
+      onScroll: () => { if (this._auto && Date.now() - this._auto < 900) return; if (s.following) this.setState({ following: false }); },
+      showFollow: !s.following,
+      follow: () => {
+        this.setState({ following: true });
+        const el = this._sc && this._sc.querySelector('[data-cur="1"]');
+        if (el) { this._auto = Date.now(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      },
+      followBottom: showWordBar ? '290px' : '186px',
+      bottomPad: showWordBar ? '300px' : '200px',
+      textSize: this.props.textSize ?? '22px',
+      paras: paras, map: map,
+      headPos: ((pos / Math.max(1, total - 1)) * 100).toFixed(1) + '%',
+      elapsed: this.clock(pos * this.STEP), totalTime: this.clock(total * this.STEP),
+      machineCount: machineCount,
+      playing: s.playing, paused: !s.playing, playLabel: s.playing ? 'עצירה' : 'ניגון',
+      togglePlay: () => { this.setState({ following: true }); this.setPlaying(!s.playing); },
+      back5: () => { const back = Math.round(5000 / this.STEP); let g = Math.max(0, pos - back); let pi = 0; while (g >= counts[pi]) { g -= counts[pi]; pi++; } this.setState({ p: pi, w: g, following: true }); },
+      nextPara: () => { if (s.p < s.paras.length - 1) this.setState({ p: s.p + 1, w: 0, following: true }); },
+      speed: (s.speed + '×'),
+      cycleSpeed: () => { const nxt = speeds[(speeds.indexOf(s.speed) + 1) % speeds.length]; this.setState({ speed: nxt }, () => { if (this.state.playing) this.setPlaying(true); }); },
+      pauseOnTap: s.pauseOnTap,
+      pauseBg: s.pauseOnTap ? '#f2e1d9' : '#fffdf8', pauseLine: s.pauseOnTap ? '#8a2c1e' : '#dcd2bf', pauseColor: s.pauseOnTap ? '#8a2c1e' : '#4e463a',
+      toggleSlowFix: () => { this.setState({ pauseOnTap: !s.pauseOnTap }); this.say(s.pauseOnTap ? 'לחיצה על מילה תמשיך לנגן ממנה' : 'לחיצה על מילה תעצור עליה, לתיקון נוח'); },
+      showWordBar: showWordBar,
+      selText: selWords,
+      selHint: sel && sel.a !== sel.b ? (sel.b - sel.a + 1) + ' מילים נבחרו' : 'נבחרה מילה · לחיצה על מילה נוספת בוחרת עד אליה',
+      clearSel: () => this.setState({ sel: null }),
+      openFix: () => { this.setPlaying(false); this.setState({ fixOpen: true, draft: selWords }); },
+      closeFix: () => this.setState({ fixOpen: false }),
+      fixOpen: s.fixOpen, draft: s.draft, ctxBefore: ctxBefore, ctxAfter: ctxAfter,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      hearSel: () => this.hearSel(),
+      applyFix: () => this.applyFix(),
+      notSure: () => this.notSure(),
+      hasTray: s.tray.length > 0, trayCount: s.tray.length,
+      toastOn: !!s.toast, toast: s.toast, canUndo: !!s.undo,
+      undo: () => { const u = s.undo; if (u) this.setState({ paras: u.paras, tray: u.tray, toast: '', undo: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
