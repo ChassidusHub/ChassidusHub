@@ -1,16 +1,15 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
-import { href } from '../lib/links.js';
+import { useLocation } from 'react-router';
 import type { Lang } from '../lib/i18n.js';
-import { tu } from '../lib/i18nUi.js';
 import { isEditing } from '../lib/editMode.js';
 import { EditTray } from './page/EditTray.js';
-import { ModeSwitch } from './page/ModeSwitch.js';
+import { EditHint, PageBar } from './page/PageBar.js';
 import { Icon, type IconName } from './Icon.js';
-import { Breadcrumbs, Tabs, cx, type TabItem } from './primitives.js';
+import { Tabs, cx, type TabItem } from './primitives.js';
 
 /**
- * Every item's page has one frame: breadcrumbs; a head with its picture
+ * Every item's page has one frame: the page bar (where it is, Read · Edit,
+ * its tools); a head with its picture
  * (a shaar, a portrait), its name, a line under it, its facts with their
  * icons, a few words about it and its actions; tabs with counts; then the
  * page's own body beside a side column of details. The item's route adds
@@ -59,21 +58,27 @@ export interface ItemSlotsValue {
 
 export const ItemSlots = createContext<ItemSlotsValue | null>(null);
 
+/** The trail above a page: its own name, the trail's last step without a link, is the title under the bar. */
+function ancestors(crumbs: Array<{ label: ReactNode; to?: string }>) {
+  return crumbs.length && !crumbs[crumbs.length - 1]!.to ? crumbs.slice(0, -1) : crumbs;
+}
+
 export function ItemHeader({ head, lang, flat }: { head: ItemHead; lang: Lang; flat?: boolean }) {
   const slots = useContext(ItemSlots);
   const editing = isEditing(useLocation().search) && Boolean(head.place);
   return (
     <div className={cx('phead', flat && 'flat', editing && 'is-editing')}>
       <div className="wrap">
-        <Breadcrumbs items={head.crumbs} lang={lang} />
+        <PageBar
+          lang={lang}
+          crumbs={ancestors(head.crumbs)}
+          mode={Boolean(head.place)}
+          tools={slots?.actions}
+          more={head.actions}
+        />
         <div className={cx('ihero', head.cover ? 'has-cover' : null)}>
           {head.cover ? <div className="ihero-cover">{head.cover}</div> : null}
           <div className="ihero-main">
-            {head.place ? (
-              <div className="ihero-mode">
-                <ModeSwitch lang={lang} />
-              </div>
-            ) : null}
             {head.kicker ? <p className="kicker">{head.kicker}</p> : null}
             <h1 className={cx('page-title', head.torah && 'torah')}>{head.title}</h1>
             {head.sub ? <p className="lede">{head.sub}</p> : null}
@@ -90,20 +95,8 @@ export function ItemHeader({ head, lang, flat }: { head: ItemHead; lang: Lang; f
             {head.extra}
             {head.desc ? <div className="ihero-desc">{head.desc}</div> : null}
           </div>
-          {head.actions || slots?.actions ? (
-            <div className="phead-acts">
-              {slots?.actions}
-              {head.actions}
-            </div>
-          ) : null}
         </div>
-        {editing ? (
-          <p className="pf-edit-hint">
-            <Icon name="pencil" />
-            <span className="grow">{tu(lang, 'editHint')}</span>
-            <Link to={href(`/edit/${head.place}`, lang)}>{tu(lang, 'allDetails')}</Link>
-          </p>
-        ) : null}
+        {editing ? <EditHint lang={lang} details={head.place} /> : null}
         {head.tabs?.length ? <Tabs items={head.tabs} current={head.tab ?? head.tabs[0]!.key} label={lang === 'he' ? 'חלקי העמוד' : 'Sections'} /> : null}
       </div>
     </div>

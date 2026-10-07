@@ -130,7 +130,7 @@ describe("every item's own page", () => {
     expect(page.html).toContain('https://www.chabad.org/multimedia/media_cdo/aid/12345');
     expect(page.html).toContain(`/files/${sha('d')}`);
     // Anyone may follow it.
-    expect(page.html).toContain('class="phead-acts"');
+    expect(page.html).toMatch(/class="pbar-tools".*class="btn follow"/s);
   });
 
   it("gives a person a page of facts, not raw data", async () => {

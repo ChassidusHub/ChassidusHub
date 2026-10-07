@@ -10,6 +10,13 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Every page has the same bar at its top: where it is on one side; Read ·
+  Edit, the page's tools and its "…" on the other, in the same order and
+  place on sefer, volume, text, farbrengen, shelf and Organize pages. On a
+  phone the trail folds to one link up. Edit's hint sits in one place
+  under the head, and everything that can change has the same outline,
+  standing off its words. Opening a volume by its path (`/likkutei-sichos/30?edit`)
+  keeps Edit.
 - Pages with Read and Edit lose their separate Edit buttons; every
   detail of an item is one link from Edit's hint.
 - A farbrengen has Read and Edit: in Edit its names change in place and

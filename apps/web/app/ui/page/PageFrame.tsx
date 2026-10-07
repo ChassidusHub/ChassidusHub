@@ -4,15 +4,15 @@ import type { Lang } from '../../lib/i18n.js';
 import { tu } from '../../lib/i18nUi.js';
 import { isEditing } from '../../lib/editMode.js';
 import { Icon } from '../Icon.js';
-import { Breadcrumbs, Sheet } from '../primitives.js';
-import { ModeSwitch } from './ModeSwitch.js';
+import { Sheet } from '../primitives.js';
+import { EditHint, PageBar } from './PageBar.js';
 import { EditTray } from './EditTray.js';
 
 /**
  * The frame every page of the redesign is drawn in (docs/plans/redesign.md):
- * where it is, its title with the Read · Edit switch beside it, an ⓘ that
+ * the page bar (where it is, Read · Edit, an ⓘ that
  * opens what is about the page rather than in it (history, discussion,
- * sources, its permanent id), and in Edit, the tray of your changes.
+ * sources, its permanent id)), its title, and in Edit, the tray of your changes.
  *
  * The page's own blocks read `editing` and draw themselves in either mode,
  * so a page never has a separate editor. `place` is the item's permanent id:
@@ -47,27 +47,22 @@ export function PageFrame({
   const [infoOpen, setInfoOpen] = useState(false);
   return (
     <div className={editing ? 'page-frame is-editing' : 'page-frame'}>
-      <div className="pf-top">
-        {crumbs?.length ? <Breadcrumbs items={crumbs} lang={lang} className="pf-crumbs" /> : <span />}
-        {info ? (
-          <button type="button" className="pf-info" aria-label={tu(lang, 'pageInfo')} onClick={() => setInfoOpen(true)}>
-            <Icon name="info" />
-          </button>
-        ) : null}
-      </div>
-      <div className="pf-title-row">
-        <h1 className={titleDir === 'rtl' ? 'pf-title is-torah' : 'pf-title'} dir={titleDir}>
-          {title}
-        </h1>
-        <ModeSwitch lang={lang} />
-      </div>
+      <PageBar
+        lang={lang}
+        crumbs={crumbs}
+        more={
+          info ? (
+            <button type="button" className="ib pf-info" aria-label={tu(lang, 'pageInfo')} onClick={() => setInfoOpen(true)}>
+              <Icon name="info" />
+            </button>
+          ) : null
+        }
+      />
+      <h1 className={titleDir === 'rtl' ? 'pf-title is-torah' : 'pf-title'} dir={titleDir}>
+        {title}
+      </h1>
       {sub ? <div className="pf-sub">{sub}</div> : null}
-      {editing ? (
-        <p className="pf-edit-hint">
-          <Icon name="pencil" />
-          {tu(lang, 'editHint')}
-        </p>
-      ) : null}
+      {editing ? <EditHint lang={lang} /> : null}
       <div className="pf-body">{children(editing)}</div>
       {editing ? <EditTray place={place} lang={lang} onSend={onSend} /> : null}
       {info ? (

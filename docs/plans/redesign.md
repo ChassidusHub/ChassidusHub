@@ -35,11 +35,17 @@ Chabad's Torah: לכשיפוצו מעינותיך חוצה.
   the earlier. Kept in the browser at once and on the account
   (`/v1/drafts`, packages/core/src/drafts.ts) a moment later; sent as one
   Suggestion with `POST /v1/drafts/<page id>/send`.
-- `ui/page/PageFrame.tsx`: crumbs, the title with `ModeSwitch`, the ⓘ
-  panel, the edit hint and the `Tray`. A page's blocks get `editing` and
+- `ui/page/PageBar.tsx`: the one bar at the top of every page (sefer,
+  volume, text, farbrengen, shelf, Organize): where the page is (one link
+  up on a phone), then Read · Edit, the page's tools and its "…", always
+  in that order and at the same height. `EditHint` is what Edit says under
+  the head, in the same place on every page.
+- `ui/page/PageFrame.tsx`: the bar, the title, the ⓘ panel, the edit hint
+  and the `Tray`. A page's blocks get `editing` and
   draw themselves in either mode.
-- `styles/page.css`: the frame, the switch, `.blk` outlines in Edit, the
-  tray.
+- `styles/page.css`: the bar, the switch, the outlines in Edit (one dashed
+  ring for everything that can change, standing `--edit-gap` off its
+  words), the tray.
 
 ## Build order
 

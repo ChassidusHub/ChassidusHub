@@ -25,55 +25,6 @@
   --rd-size: 28px;
 }
 
-.rd-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.rd-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  color: var(--muted);
-  font-size: var(--fs-md);
-  margin-inline-start: -4px;
-}
-
-.rd-back span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rd-back:hover {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.rd-tools {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex: none;
-}
-
-.rd-tools .mode-switch {
-  margin-inline-end: var(--s-2);
-}
-
-/* A phone: the switch keeps its words, the back link gives up room. */
-@media (max-width: 420px) {
-  .rd-tools .mode-switch a {
-    padding: 0 9px;
-  }
-  .rd-tools .mode-switch a .i {
-    display: none;
-  }
-}
-
 .rd-size {
   font: 700 18px / 1 var(--display);
   color: var(--text);

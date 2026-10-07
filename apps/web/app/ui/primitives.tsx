@@ -179,13 +179,14 @@ export function Segmented({ items, current, label, className }: { items: Array<{
 
 /* ------------------------------------------------------------ breadcrumbs */
 
-export function Breadcrumbs({ items, lang, className }: { items: Array<{ label: ReactNode; to?: string }>; lang: Lang; className?: string }) {
+/** `linkLast`: the trail ends above the page (the page bar's), so its last step is a link too. */
+export function Breadcrumbs({ items, lang, className, linkLast }: { items: Array<{ label: ReactNode; to?: string }>; lang: Lang; className?: string; linkLast?: boolean }) {
   if (items.length === 0) return null;
   return (
     <nav aria-label={tu(lang, 'crumbs')} className={className}>
       <ol className="crumbs">
         {items.map((it, i) => {
-          const last = i === items.length - 1;
+          const last = !linkLast && i === items.length - 1;
           return (
             <li key={i}>
               {i > 0 ? <Icon name="chev" className="flip-ltr" size={14} /> : null}

@@ -11,7 +11,7 @@ import { additionOf, byOrder, everyAddition, everyWork, shelvesOf, type Shelf } 
 import { REBBEIM } from '../lib/rebbeim.js';
 import { Icon } from '../ui/Icon.js';
 import { isEditing } from '../lib/editMode.js';
-import { ModeSwitch } from '../ui/page/ModeSwitch.js';
+import { PageBar } from '../ui/page/PageBar.js';
 import { Shaar } from '../ui/Shaar.js';
 import '../styles/pages/library.css';
 
@@ -187,10 +187,8 @@ function LibraryIndex({ lang, rebbeim, others }: { lang: Lang; rebbeim: Array<{ 
   const farbrengens = others.find((s) => s.farbrengens);
   return (
     <div className="lb-index">
-      <div className="lb-title-row">
-        <h1 className="lb-title">{w(lang, 'library')}</h1>
-        <ModeSwitch lang={lang} editTo={href('/organize', lang)} />
-      </div>
+      <PageBar lang={lang} mode={{ editTo: href('/organize', lang) }} />
+      <h1 className="lb-title">{w(lang, 'library')}</h1>
       <form className="lb-find" action="/search" method="get" role="search">
         <Icon name="search" />
         <input name="q" type="search" placeholder={w(lang, 'find')} aria-label={w(lang, 'find')} enterKeyHint="search" />
@@ -293,12 +291,10 @@ export default function Library({ loaderData }: Route.ComponentProps) {
       <div className="lb-main">
         {shelf ? (
           <header className="lb-head">
-            <div className="lb-title-row">
-              <h1>
-                <Link to={href(shelf.path, lang)}>{shelf.name}</Link>
-              </h1>
-              <ModeSwitch lang={lang} editTo={href('/organize', lang, { root: shelf.id })} />
-            </div>
+            <PageBar lang={lang} crumbs={[{ label: w(lang, 'library'), to: href('/sets', lang) }]} mode={{ editTo: href('/organize', lang, { root: shelf.id }) }} />
+            <h1>
+              <Link to={href(shelf.path, lang)}>{shelf.name}</Link>
+            </h1>
             {rebbe?.full ? <p>{rebbe.full[lang]}</p> : null}
           </header>
         ) : null}
