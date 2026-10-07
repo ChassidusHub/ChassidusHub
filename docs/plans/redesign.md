@@ -73,7 +73,15 @@ merge right away"); each new screen replaces the old one as it lands.
    browser and your account, each reopening its page in Edit; what you
    sent). The tray's Send opens the Send sheet: every change with its own
    Undo, an optional name and a note for the reviewers.
-7. Home with AI search, navigation and You.
+7. Home with AI search, navigation and You. Home asks "Find anything
+   with AI, in seconds": the box searches by meaning when that is set up
+   (else by words, reading a parsha, a day and a year out of them), with
+   a few searches to try. Under it, the motto לכשיפוצו מעינותיך חוצה and
+   the invitation to help build the biggest open library of Chabad's
+   Torah, using modern technology and AI to make all of it accessible.
+   Listening comes first in the feed, each transcript labelled "AI
+   transcript". The phone's tabs are Home, Library, Listen, Contribute
+   and You (the menu); the wide header keeps Daily learning.
 8. Listen and farbrengen pages; the transcript editor is wrapped, not
    rebuilt.
 9. The old screens and their styles removed; old addresses redirect.

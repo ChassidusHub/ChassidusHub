@@ -83,7 +83,7 @@ describe('the public site', () => {
     const page = await get('/');
     expect(page.status).toBe(200);
     expect(page.html).toContain('<html lang="en" dir="ltr">');
-    expect(page.html).toContain('What would you like to learn today?');
+    expect(page.html).toContain('Find anything with AI, in seconds');
     expect(page.html).toMatch(/<form class="hm-box"[^>]*action="\/search"/);
     expect(page.html).toContain('class="hm-btns"'); // the day's learning, the library, and listening when there is something to hear
     expect(page.html).toContain('href="/daily"');
@@ -97,7 +97,7 @@ describe('the public site', () => {
   it('renders the home page in Hebrew, right to left, at ?lang=he', async () => {
     const page = await get('/?lang=he');
     expect(page.html).toContain('<html lang="he" dir="rtl">');
-    expect(page.html).toContain('מה תרצו ללמוד היום?');
+    expect(page.html).toContain('למצוא כל דבר, בעזרת AI, תוך שניות');
     expect(page.html).toContain('לימוד יומי');
     expect(page.html).toContain('href="/daily?lang=he"');
     expect(page.html).toContain('<input type="hidden" name="lang" value="he"/>');

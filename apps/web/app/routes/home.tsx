@@ -35,6 +35,14 @@ import '../styles/pages/home.css';
  * is on the transcript itself and the Help page. Four reads of the API
  * make the page, the same for everyone and kept at the edge; where you
  * stopped and the ticks are yours, drawn in the browser.
+ *
+ * The redesign (docs/plans/redesign.md, Shmuly's words): the question is
+ * "find anything with AI, in seconds", and the box asks the search page
+ * by meaning, which answers by words (reading a parsha, a day and a year
+ * out of them) while search by meaning is not set up; under it, what ChassidusHub is for: the
+ * biggest open library of Chabad's Torah, built together, using modern
+ * technology and AI to make all of it accessible, לכשיפוצו מעינותיך חוצה.
+ * Listening leads with the AI transcript, labelled as a machine's.
  */
 
 /** Today as New York has it (`YYYY-MM-DD`), as the daily page does: pages are the same for everyone. */
@@ -110,8 +118,15 @@ const WEEKDAYS: Record<Lang, string[]> = {
 };
 
 const W = {
-  ask: { he: 'מה תרצו ללמוד היום?', en: 'What would you like to learn today?' },
-  box: { he: 'שאלה או חיפוש', en: 'Ask or search' },
+  ask: { he: 'למצוא כל דבר, בעזרת AI, תוך שניות', en: 'Find anything with AI, in seconds' },
+  box: { he: 'שאלה, רעיון, פרשה ושנה…', en: 'A question, an idea, a parsha and year…' },
+  tryLabel: { he: 'לנסות:', en: 'Try:' },
+  missionH: { he: 'עזרו לנו לבנות את הספרייה הפתוחה הגדולה ביותר של תורת חב״ד', en: "Help us build the biggest open library of Chabad's Torah" },
+  missionText: { he: 'בטכנולוגיה מודרנית ובבינה מלאכותית, כדי שכל התוכן יהיה נגיש לכל אחד: שיחות, מאמרים, אגרות והקלטות, לחיפוש, לקריאה ולהאזנה.', en: 'Using modern technology and AI to make all of it accessible to everyone: sichos, maamarim, letters and recordings, to search, read and hear.' },
+  motto: { he: 'לכשיפוצו מעינותיך חוצה', en: 'לכשיפוצו מעינותיך חוצה' },
+  join: { he: 'להשתתף', en: 'Contribute' },
+  howBuilt: { he: 'איך זה נבנה', en: 'How it is built' },
+  aiTranscript: { he: 'תמלול AI', en: 'AI transcript' },
   searchGo: { he: 'חיפוש', en: 'Search' },
   listenWords: { he: 'להאזין, והמילים לפניכם', en: 'Listen, with the words before you' },
   continueTo: { he: 'להמשיך', en: 'Continue' },
@@ -121,8 +136,8 @@ const W = {
   kviusTitle: { he: 'השבוע, באותה קביעות: {year}', en: 'This week, in the same kvius: {year}' },
   kviusText: { he: '{year} חלה כמו השנה: אותם ימים ואותן פרשיות', en: '{year} fell like this year: the same days and the same parshiyos' },
   readSichos: { he: 'לקרוא את השיחות', en: 'Read the sichos' },
-  listenTitle: { he: 'להאזין, והמילים לפניכם', en: 'Listen, with the words before you' },
-  listenText: { he: 'מהימים האלה, עם הקלטה ותמלול', en: 'From these days, with a recording and its transcript' },
+  listenTitle: { he: 'להאזין לרבי, עם תמלול AI', en: "Listen to the Rebbe, with the AI transcript" },
+  listenText: { he: 'התוועדויות מהימים האלה. את התמלול כתבה מכונה, ואנשים בודקים ומתקנים אותו תוך כדי.', en: 'Farbrengens of these days. A machine wrote the transcript, and people check and fix it as they listen.' },
   listenTextPlain: { he: 'מהימים האלה, בהקלטה', en: 'From these days, recorded' },
   withText: { he: 'להאזין עם הטקסט', en: 'Listen with the text' },
   hear: { he: 'להאזין', en: 'Listen' },
@@ -235,6 +250,12 @@ function ContinueButton({ lang }: { lang: Lang }) {
 }
 
 /** The question, the one box and the buttons under it. Without script the box is a plain form to the search page. */
+const TRY: Array<{ q: string; meaning?: boolean; he: string; en: string }> = [
+  { q: 'בשלח תשל״ו', he: 'בשלח תשל״ו', en: 'Beshalach 5736' },
+  { q: 'יו״ד שבט', he: 'יו״ד שבט', en: 'Yud Shevat' },
+  { q: 'אהבת ישראל', meaning: true, he: 'אהבת ישראל', en: 'ahavas Yisroel' },
+];
+
 function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasListen: boolean }) {
   return (
     <section className="hm-ask">
@@ -244,10 +265,20 @@ function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasLis
         <Icon name="search" />
         <input name="q" type="search" placeholder={w(lang, 'box')} aria-label={w(lang, 'box')} enterKeyHint="search" />
         {lang === 'he' ? <input type="hidden" name="lang" value="he" /> : null}
+        {/* By meaning: the search page answers by words instead while search by meaning is not set up, so the home page asks nothing more of the API. */}
+        <input type="hidden" name="by" value="meaning" />
         <button type="submit" className="hm-box-go" aria-label={w(lang, 'searchGo')}>
           <Icon name={lang === 'he' ? 'chev' : 'chevr'} size={18} />
         </button>
       </form>
+      <p className="hm-try">
+        <span>{w(lang, 'tryLabel')}</span>
+        {TRY.map((x) => (
+          <Link key={x.q} to={href('/search', lang, { q: x.q, ...(x.meaning ? { by: 'meaning' } : {}) })} dir="auto">
+            {x[lang]}
+          </Link>
+        ))}
+      </p>
       <nav className="hm-btns" aria-label={tu(lang, 'mainNav')}>
         {hasListen ? (
           <a className="hm-btn hm-btn-strong" href="#hm-listen">
@@ -325,11 +356,34 @@ function ListenCard({ card, lang, first }: { card: FeedCard; lang: Lang; first: 
         ) : null}
         {card.transcript ? (
           <Link className="hm-ls-go" to={href(card.path, lang)}>
+            <span className="hm-ai">{w(lang, 'aiTranscript')}</span>
             {w(lang, 'withText')}
           </Link>
         ) : null}
       </div>
     </li>
+  );
+}
+
+/** What ChassidusHub is for, in Shmuly's words, and the way in: built together, with modern technology and AI, open to all. */
+function Mission({ lang }: { lang: Lang }) {
+  return (
+    <section className="hm-mission" aria-labelledby="hm-mission">
+      <p className="hm-motto torah" lang="he" dir="rtl">
+        {w(lang, 'motto')}
+      </p>
+      <h2 id="hm-mission">{w(lang, 'missionH')}</h2>
+      <p>{w(lang, 'missionText')}</p>
+      <div className="hm-mission-go">
+        <Link className="btn primary" to={href('/contribute', lang)}>
+          <Icon name="heart" size={16} />
+          {w(lang, 'join')}
+        </Link>
+        <Link className="btn" to={href('/about', lang)}>
+          {w(lang, 'howBuilt')}
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -381,20 +435,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <div className="wrap">
         <Ask lang={lang} dayLine={`${week.todayLabel} · ${named}`} hasListen={listen.length > 0} />
       </div>
+      <div className="wrap">
+        <Mission lang={lang} />
+      </div>
       <div className="wrap hm-feed">
-        {kvius.length ? (
-          <section className="hm-section" aria-labelledby="hm-kvius">
-            <h2 className="hm-h" id="hm-kvius">
-              {w(lang, 'kviusTitle').replace('{year}', kvYear)}
-            </h2>
-            <p className="hm-sub">{w(lang, 'kviusText').replace('{year}', kvYear)}</p>
-            <ul className="hm-kvs">
-              {kvius.map((c) => (
-                <KviusCard key={c.id} card={c} lang={lang} />
-              ))}
-            </ul>
-          </section>
-        ) : null}
         {listen.length ? (
           <section className="hm-section" id="hm-listen" aria-labelledby="hm-listen-h">
             <h2 className="hm-h" id="hm-listen-h">
@@ -404,6 +448,19 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <ul className="hm-lss">
               {listen.map((c, i) => (
                 <ListenCard key={c.id} card={c} lang={lang} first={i === 0} />
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        {kvius.length ? (
+          <section className="hm-section" aria-labelledby="hm-kvius">
+            <h2 className="hm-h" id="hm-kvius">
+              {w(lang, 'kviusTitle').replace('{year}', kvYear)}
+            </h2>
+            <p className="hm-sub">{w(lang, 'kviusText').replace('{year}', kvYear)}</p>
+            <ul className="hm-kvs">
+              {kvius.map((c) => (
+                <KviusCard key={c.id} card={c} lang={lang} />
               ))}
             </ul>
           </section>

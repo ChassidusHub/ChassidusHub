@@ -567,3 +567,90 @@
     font-weight: 700;
   }
 }
+
+/* ------------------------------------------------------------ the redesign's home (docs/plans/redesign.md) */
+
+.hm-try {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  color: var(--subtle);
+  font-size: var(--t-small);
+}
+
+.hm-try a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+
+/* What ChassidusHub is for: the motto, the invitation, and the way in. */
+.hm-mission {
+  margin: var(--s-5) 0 var(--s-2);
+  padding: var(--s-5) var(--s-4);
+  border-radius: var(--r-sheet);
+  background: var(--strong);
+  color: var(--on-strong);
+  text-align: center;
+}
+
+.hm-motto {
+  margin: 0;
+  font-size: 1.5rem;
+  color: color-mix(in srgb, var(--on-strong) 80%, var(--accent));
+}
+
+.hm-mission h2 {
+  max-width: 30ch;
+  margin: var(--s-2) auto 0;
+  font: 600 1.45rem / 1.25 var(--display);
+  text-wrap: balance;
+}
+
+.hm-mission p:not(.hm-motto) {
+  max-width: 56ch;
+  margin: var(--s-2) auto 0;
+  opacity: 0.85;
+  font-size: var(--t-small);
+}
+
+.hm-mission-go {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+}
+
+.hm-mission-go .btn:not(.primary) {
+  background: transparent;
+  color: var(--on-strong);
+  border-color: color-mix(in srgb, var(--on-strong) 35%, transparent);
+}
+
+@media (min-width: 721px) {
+  .hm-mission {
+    padding: var(--s-6) var(--s-5);
+  }
+  .hm-mission h2 {
+    font-size: 1.8rem;
+  }
+  .hm-motto {
+    font-size: 1.8rem;
+  }
+}
+
+/* A machine wrote it: the AI transcript's label is amber, as all unchecked machine words are. */
+.hm-ai {
+  display: inline-block;
+  margin-inline-end: 6px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--machine-soft, color-mix(in srgb, var(--machine) 15%, transparent));
+  color: var(--machine);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

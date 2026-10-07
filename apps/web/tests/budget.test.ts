@@ -265,7 +265,8 @@ describe("each page's statements and API calls stay within its ceiling", () => {
     const html = await (await handle(new Request(`${SITE}/?lang=he`))).text();
     expect(html).toContain('<h2 class="sheet-title">תפריט</h2>');
     expect(html).toMatch(/<section class="menu-group"><h3>קריאה<\/h3>/);
-    expect(html).toMatch(/class="menu-row" href="\/help\?lang=he"/);
+    // The day's learning is a tab no more on a phone (Contribute took its place): it is in the menu.
+    expect(html).toMatch(/class="menu-row" href="\/daily\?lang=he"/);
   });
   it('search, suggestions and review', async () => {
     within(await page(`/search?q=${encodeURIComponent('שיחה')}`), 'search', { statements: 15, calls: 6, kB: 110 });
