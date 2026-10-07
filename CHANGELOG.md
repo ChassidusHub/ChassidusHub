@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The library's Edit is Organize: Read · Edit on the library and on each
+  shelf, `/sets?edit` opens Organize on the shelf, and a shelf's page in
+  Edit changes its names and few words in place.
 - Sefer and volume pages have Read and Edit: a sefer's names and its few
   words, and each sicha's name in a volume, are changed in place into
   your draft. A volume lists its sichos by name under their parshiyos,

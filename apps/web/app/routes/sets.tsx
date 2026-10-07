@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link, redirect } from 'react-router';
 import type { LocalName } from '@chassidushub/model';
 import type { Route } from './+types/sets';
 import type { Cover, Entity } from '../lib/api.js';
@@ -10,6 +10,8 @@ import { pageMeta } from '../lib/seo.js';
 import { additionOf, byOrder, everyAddition, everyWork, shelvesOf, type Shelf } from '../lib/shelves.js';
 import { REBBEIM } from '../lib/rebbeim.js';
 import { Icon } from '../ui/Icon.js';
+import { isEditing } from '../lib/editMode.js';
+import { ModeSwitch } from '../ui/page/ModeSwitch.js';
 import { Shaar } from '../ui/Shaar.js';
 import '../styles/pages/library.css';
 
@@ -131,6 +133,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const { api, siteUrl } = siteOf(context);
   const lang = langFrom(request);
   const params = new URL(request.url).searchParams;
+  // The library's Edit is Organize (docs/plans/redesign.md): `/sets?edit` opens it on the shelf asked for.
+  if (isEditing(`?${params}`)) {
+    const asking = params.get('shelf');
+    const set = asking ? (await api.list({ type: 'set', limit: 500 })).items.find((x) => slugOfShelf(x) === asking) : undefined;
+    throw redirect(href('/organize', lang, set ? { root: set.id } : {}));
+  }
   const [sets, works] = await Promise.all([api.list({ type: 'set', limit: 500 }), shelfWorks(api)]);
   const name = (x: Entity) => titleOf(x, lang);
   const isFarbrengens = (set: Entity) => set.path === '/sets/farbrengens';
@@ -179,7 +187,10 @@ function LibraryIndex({ lang, rebbeim, others }: { lang: Lang; rebbeim: Array<{ 
   const farbrengens = others.find((s) => s.farbrengens);
   return (
     <div className="lb-index">
-      <h1 className="lb-title">{w(lang, 'library')}</h1>
+      <div className="lb-title-row">
+        <h1 className="lb-title">{w(lang, 'library')}</h1>
+        <ModeSwitch lang={lang} editTo={href('/organize', lang)} />
+      </div>
       <form className="lb-find" action="/search" method="get" role="search">
         <Icon name="search" />
         <input name="q" type="search" placeholder={w(lang, 'find')} aria-label={w(lang, 'find')} enterKeyHint="search" />
@@ -282,9 +293,12 @@ export default function Library({ loaderData }: Route.ComponentProps) {
       <div className="lb-main">
         {shelf ? (
           <header className="lb-head">
-            <h1>
-              <Link to={href(shelf.path, lang)}>{shelf.name}</Link>
-            </h1>
+            <div className="lb-title-row">
+              <h1>
+                <Link to={href(shelf.path, lang)}>{shelf.name}</Link>
+              </h1>
+              <ModeSwitch lang={lang} editTo={href('/organize', lang, { root: shelf.id })} />
+            </div>
             {rebbe?.full ? <p>{rebbe.full[lang]}</p> : null}
           </header>
         ) : null}

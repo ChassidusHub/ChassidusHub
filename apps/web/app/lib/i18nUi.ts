@@ -131,6 +131,7 @@ const UI = {
   fieldNameEn: { he: 'השם באנגלית', en: 'the English name' },
   fieldAbout: { he: 'כמה מילים על הספר', en: 'a few words about it' },
   fieldRowName: { he: 'שם', en: 'the name of' },
+  organizeShelf: { he: 'הזזה וסידור של מה שבמדף', en: 'Move and order what is on this shelf' },
   traySending: { he: 'שולח…', en: 'Sending…' },
   traySentLive: { he: 'השינויים שלך נכנסו לדף.', en: 'Your changes are live.' },
   traySentOpen: { he: 'השינויים שלך נשלחו לבדיקה.', en: 'Your changes were sent for review.' },

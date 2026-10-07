@@ -488,3 +488,12 @@ textarea.fld-input {
 h1 .fld-show {
   text-wrap: balance;
 }
+
+/* The library's title rows carry Read · Edit; its Edit is Organize. */
+.lb-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}

@@ -62,7 +62,11 @@ merge right away"); each new screen replaces the old one as it lands.
    lists its sichos by their real names under their parshiyos (a sicha
    kept in numbered pieces is one row, not "1", "2", "3"), and in Edit
    each sicha's name can be changed in place.
-5. The library, with Organize as its Edit mode.
+5. The library, with Organize as its Edit mode. The library and each
+   shelf carry Read · Edit; the library's Edit (`/sets?edit`) is Organize
+   on that shelf, and Organize's Read goes back to what it organizes. A
+   shelf's own page in Edit changes its names and few words as Fields,
+   with a button to move and order what is on it.
 6. Contribute, the Send sheet and Review.
 7. Home with AI search, navigation and You.
 8. Listen and farbrengen pages; the transcript editor is wrapped, not
