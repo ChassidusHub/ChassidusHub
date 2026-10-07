@@ -384,6 +384,90 @@ export async function removeTranscript(catalog: Catalog, input: { approveAs: str
   return null;
 }
 
+/**
+ * Takes machine translations of transcripts off the catalog, with their
+ * paragraphs and sync, keeping the transcripts: the translations by
+ * `engine` (every machine translation when none is named). As the
+ * translation bot, `batch` translations a suggestion, approved by
+ * `approveAs`; its suggestions left unmerged by a stopped run are
+ * withdrawn. A translation a person checked, fixed or synced is left, and
+ * listed with why.
+ */
+export async function removeTranslations(
+  catalog: Catalog,
+  input: { approveAs: string; engine?: string; dryRun?: boolean; batch?: number; log?: (line: string) => void },
+): Promise<{ removed: Array<{ text: EntityId; paragraphs: number }>; kept: Array<{ text: EntityId; why: string }>; withdrawn: number[] }> {
+  const log = input.log ?? (() => {});
+  const credit = input.engine ? `Machine translation (${input.engine.trim()})` : null;
+  const { rows: texts } = await catalog.db.query<{ id: EntityId }>(
+    `SELECT t.id FROM entity t JOIN revision r ON r.id = t.main_rev
+     WHERE t.type = 'text' AND NOT t.deleted AND r.data->>'kind' = 'translation'
+       AND ($1::text IS NULL AND r.data->>'credit' LIKE 'Machine translation (%' OR r.data->>'credit' = $1)
+     ORDER BY t.id`,
+    [credit],
+  );
+  const removed: Array<{ text: EntityId; paragraphs: number }> = [];
+  const kept: Array<{ text: EntityId; why: string }> = [];
+  const doomed: Array<{ text: EntityId; items: Map<EntityId, string> }> = [];
+  for (const { id: text } of texts) {
+    const items = new Map<EntityId, string>([[text, 'text']]);
+    let frontier: EntityId[] = [text];
+    let why: string | null = null;
+    while (frontier.length && !why) {
+      const { rows } = await catalog.db.query<{ from_id: EntityId; type: string; field: string }>(
+        'SELECT r.from_id, e.type, r.field FROM entity_ref r JOIN entity e ON e.id = r.from_id WHERE r.to_id = ANY($1::text[]) AND NOT e.deleted',
+        [frontier],
+      );
+      frontier = [];
+      for (const r of rows) {
+        if (items.has(r.from_id)) continue;
+        const expected = (r.type === 'segment' && r.field === 'text') || (r.type === 'alignment' && r.field === 'text') || (r.type === 'alignment-span' && (r.field === 'alignment' || r.field === 'segment'));
+        if (!expected) {
+          why = `${r.from_id} (a ${r.type}) points at it`;
+          break;
+        }
+        items.set(r.from_id, r.type);
+        frontier.push(r.from_id);
+      }
+    }
+    if (!why) {
+      const { rows } = await catalog.db.query<{ id: EntityId; type: string; data: Record<string, unknown> & { origin?: { checked?: boolean; edited?: boolean } } }>(
+        'SELECT e.id, e.type, r.data FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = ANY($1::text[])',
+        [[...items.keys()]],
+      );
+      for (const r of rows) {
+        const o = r.data.origin;
+        const machine = o !== undefined && !o.checked && !o.edited;
+        if (r.type === 'segment' && (!machine || Number(r.data.proofread ?? 0) > 0)) why = `a person checked or fixed paragraph ${r.id}`;
+        else if (r.type === 'alignment-span' && (!machine || r.data.locked)) why = `a person set where ${String(r.data.segment)} is heard`;
+        if (why) break;
+      }
+    }
+    if (why) kept.push({ text, why });
+    else doomed.push({ text, items });
+  }
+  const { rows: open } = await catalog.db.query<{ id: number }>("SELECT id FROM changeset WHERE author = $1 AND status IN ('draft', 'open', 'sent_back') ORDER BY id", [TRANSLATE_BOT]);
+  const withdrawn = open.map((c) => c.id);
+  log(`${input.dryRun ? 'would take off' : 'taking off'} ${doomed.length} translations; ${kept.length} kept; ${withdrawn.length} unmerged suggestions to withdraw`);
+  for (const d of doomed) removed.push({ text: d.text, paragraphs: [...d.items.values()].filter((t) => t === 'segment').length });
+  if (input.dryRun) return { removed, kept, withdrawn };
+  for (const id of withdrawn) await catalog.withdraw(id, TRANSLATE_BOT);
+  const size = Math.max(1, input.batch ?? 25);
+  for (let i = 0; i < doomed.length; i += size) {
+    const batch = doomed.slice(i, i + size);
+    const suggestion = await catalog.createChangeset(TRANSLATE_BOT, { title: `Machine translations taken off (${batch.length})${input.engine ? ` (${input.engine})` : ''}` });
+    await catalog.putRevisions(
+      suggestion.id,
+      TRANSLATE_BOT,
+      batch.flatMap((d) => [...d.items].map(([id, type]) => ({ id, type: type as 'text', data: null }))),
+    );
+    await catalog.submit(suggestion.id, TRANSLATE_BOT);
+    await catalog.merge(suggestion.id, input.approveAs, {}, 'Machine translations taken off until they are good enough');
+    log(`took off ${Math.min(i + size, doomed.length)} of ${doomed.length}`);
+  }
+  return { removed, kept, withdrawn };
+}
+
 /** The longest Sefaria book title the catalog has that a ref starts with (`Genesis` for `Genesis 1:1`), by the sefarim's `sefaria` external id. */
 export function bookOf(ref: string, books: ReadonlyArray<{ title: string; id: EntityId }>): EntityId | null {
   let best: { title: string; id: EntityId } | null = null;
