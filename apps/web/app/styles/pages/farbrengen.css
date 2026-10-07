@@ -1134,6 +1134,71 @@ button.part.on:hover {
   cursor: default;
 }
 
+/* "Your fixes": what this listener answered, waiting to be sent together, held in view under the site's header (design/system, board 7). */
+.tx-tray {
+  position: sticky;
+  top: calc(var(--header-h) + 8px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-pop);
+}
+
+.tx-tray-open {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-height: var(--control-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: 600 var(--t-body) var(--ui);
+  text-align: start;
+  cursor: pointer;
+}
+
+.tx-tray-list {
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  display: grid;
+}
+
+.tx-tray-list li {
+  padding: var(--s-2) 0;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.tx-tray-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.tx-tray-list .tx-diff {
+  margin: 4px 0 0;
+  font-family: var(--torah);
+  font-size: var(--t-body-lg);
+  line-height: 1.7;
+}
+
+.tx-state.queued {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
 /* The three answers, at the foot of the screen within the thumb's reach, however long the paragraph (design/system, board 6). */
 .tx-answers {
   position: sticky;

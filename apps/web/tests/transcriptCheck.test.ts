@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { TranscriptEditor } from '../app/components/TranscriptEditor.js';
 import type { Transcript } from '../app/lib/transcript.js';
+import { aroundChanges, wordDiff } from '../app/lib/wordDiff.js';
 import { PlayerProvider } from '../app/player/PlayerProvider.js';
 
 /**
@@ -25,7 +26,7 @@ const track = { id: 'rh-rec1', title: 'Part 1', subtitle: '', url: '/a.mp3', hre
 
 const draw = (account: unknown) =>
   renderToStaticMarkup(
-    createElement(MemoryRouter, null, createElement(PlayerProvider, null, createElement(TranscriptEditor, { transcripts: [transcript], tracks: [track], lang: 'en', nowMs: 0, found: 'rh-p1', account, onFixed: () => {} }))),
+    createElement(MemoryRouter, null, createElement(PlayerProvider, null, createElement(TranscriptEditor, { transcripts: [transcript], tracks: [track], lang: 'en', nowMs: 0, found: 'rh-p1', account, onSent: () => {} }))),
   );
 
 describe('checking a transcript', () => {
@@ -49,5 +50,34 @@ describe('checking a transcript', () => {
     const html = draw(null);
     expect(html).not.toContain('tx-answers');
     expect(html).toContain('Sign in to fix');
+  });
+});
+
+describe('"Your fixes": only what changed', () => {
+  const text = 'one two three four five six seven eight nine ten eleven twelve';
+
+  it('keeps four words at each side of a change, and … where the rest was', () => {
+    expect(aroundChanges(wordDiff(text, text.replace('seven', 'SEVEN')))).toEqual([
+      { kind: 'same', text: '… three four five six ' },
+      { kind: 'del', text: 'seven' },
+      { kind: 'ins', text: 'SEVEN' },
+      { kind: 'same', text: ' eight nine ten eleven …' },
+    ]);
+  });
+
+  it('cuts only the side that has more, at the start of a paragraph', () => {
+    expect(aroundChanges(wordDiff(text, text.replace('one', 'ONE')))).toEqual([
+      { kind: 'del', text: 'one' },
+      { kind: 'ins', text: 'ONE' },
+      { kind: 'same', text: ' two three four five …' },
+    ]);
+  });
+
+  it('leaves a paragraph with no change as it is', () => {
+    expect(aroundChanges(wordDiff(text, text))).toEqual(wordDiff(text, text));
+  });
+
+  it('draws no tray while nothing waits in it', () => {
+    expect(draw({ person: { id: 'p1' } })).not.toContain('tx-tray');
   });
 });

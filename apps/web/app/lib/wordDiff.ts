@@ -115,3 +115,31 @@ export function diffStat(parts: DiffPart[]): { added: number; removed: number } 
   }
   return { added, removed };
 }
+
+/**
+ * Only what changed, with a few words around it (design/system, board 22):
+ * an unchanged run longer than that keeps `words` words at each side that
+ * touches a change, and `…` where the rest was. A diff with no change is
+ * left as it is.
+ */
+export function aroundChanges(parts: DiffPart[], words = 4): DiffPart[] {
+  if (!parts.some((p) => p.kind !== 'same')) return parts;
+  const keepStart = (text: string) => {
+    const m = new RegExp(`^(\\s*\\S+){0,${words}}`, 'u').exec(text);
+    return m ? m[0] : '';
+  };
+  const keepEnd = (text: string) => {
+    const m = new RegExp(`(\\S+\\s*){0,${words}}$`, 'u').exec(text);
+    return m ? m[0] : '';
+  };
+  return parts.map((p, i) => {
+    if (p.kind !== 'same') return p;
+    const before = i > 0;
+    const after = i < parts.length - 1;
+    const count = p.text.split(/\s+/u).filter(Boolean).length;
+    if (count <= words * (before && after ? 2 : 1)) return p;
+    if (before && after) return { kind: 'same', text: `${keepStart(p.text)} … ${keepEnd(p.text).trimStart()}` };
+    if (before) return { kind: 'same', text: `${keepStart(p.text)} …` };
+    return { kind: 'same', text: `… ${keepEnd(p.text).trimStart()}` };
+  });
+}

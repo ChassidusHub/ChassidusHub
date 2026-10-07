@@ -1,4 +1,4 @@
-import { Check, CircleHelp, History, MessageCircle, Pencil, ShieldQuestion, Undo2 } from 'lucide-react';
+import { Check, CircleHelp, History, MessageCircle, Pencil, ShieldQuestion, Trash2, Undo2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { carryWordTimes, markUnclear, spellingHints, unclearRanges } from '@chassidushub/model';
@@ -8,11 +8,11 @@ import { href } from '../lib/links.js';
 import { useAccount } from '../lib/useAccount.js';
 import { postJson } from '../lib/post.js';
 import { get, noteChecked, pendingRanges, tokensOf, trainingPath, within, type Paragraph, type Pending, type Transcript, type TranscriptCommit } from '../lib/transcript.js';
-import { wordDiff } from '../lib/wordDiff.js';
+import { aroundChanges, wordDiff } from '../lib/wordDiff.js';
 import { usePlayer, type Track } from '../player/PlayerProvider.js';
 import { InlineDiff } from '../ui/Diff.js';
 import { ConfirmSync, DiscussUnclear, discussLabel } from './TimingTools.js';
-import { Bar, MachineLabel, RelativeTime } from '../ui/primitives.js';
+import { Bar, MachineLabel, RelativeTime, Sheet } from '../ui/primitives.js';
 
 /**
  * Checking what the machine heard, opened from a farbrengen's or a
@@ -23,7 +23,11 @@ import { Bar, MachineLabel, RelativeTime } from '../ui/primitives.js';
  * thumb's reach however long the paragraph: Right (it is checked, and the
  * next paragraph left to check opens), Fix (the words chosen, or the whole
  * paragraph) and Not sure (the words chosen are kept as `[words?]`); its
- * history and talk over unclear words sit under it. As
+ * history and talk over unclear words sit under it. Every answer goes into
+ * "Your fixes", a tray kept in this browser and held in view at the top
+ * (board 7): it shows each change as only the words changed with a few
+ * around them, any can be taken out, and Send sends them all, which join
+ * one suggestion for the recording. As
  * the recording plays, the page follows the word being said, unless the
  * listener just scrolled away; the player bar offers "hear again" and a
  * slower or faster speed here only. What waits for approval, and what
@@ -68,6 +72,19 @@ const W = {
   cancel: { he: 'ביטול', en: 'Cancel' },
   wholeRight: { he: 'שמעתי ובדקתי את כל הפסקה', en: 'I listened and checked the whole paragraph' },
   sent: { he: 'נשלח. יופיע באתר אחרי אישור.', en: 'Sent. It shows on the site once approved.' },
+  inTray: { he: 'בתיקונים שלך, עוד לא נשלח', en: 'In your fixes, not sent yet' },
+  queuedRight: { he: 'נכון · בתיקונים שלך', en: 'Right · in your fixes' },
+  queuedFix: { he: 'בתיקונים שלך', en: 'In your fixes' },
+  tray: { he: 'התיקונים שלך', en: 'Your fixes' },
+  trayOpen: { he: 'לראות ולשלוח', en: 'See and send' },
+  traySend: { he: 'שליחה לבדיקה', en: 'Send for review' },
+  trayNote: { he: 'הכל יישלח כהצעה אחת. האחראים יאשרו, וכל גרסה נשמרת בהיסטוריה.', en: 'It all goes as one suggestion. The keepers approve it, and every version stays in the history.' },
+  trayRight: { he: 'נכון: הפסקה נבדקה', en: 'Right: the paragraph is checked' },
+  trayFix: { he: 'תיקון', en: 'Fix' },
+  trayUnsure: { he: 'לא בטוח', en: 'Not sure' },
+  trayRemove: { he: 'הסרה מהתיקונים', en: 'Remove from your fixes' },
+  traySent: { he: 'נשלחו {n}. יופיעו באתר אחרי אישור.', en: '{n} sent. They show on the site once approved.' },
+  traySaved: { he: 'נשמרו {n}.', en: '{n} saved.' },
   saved: { he: 'נשמר.', en: 'Saved.' },
   yourFix: { he: 'התיקון שלך, מחכה לאישור', en: 'Your fix, waiting for approval' },
   theirFix: { he: 'תיקון של {name}, מחכה לאישור', en: "{name}'s fix, waiting for approval" },
@@ -171,7 +188,8 @@ export function TrainingGoalBar({ lang }: { lang: Lang }) {
 }
 
 type Editing = { kind: 'words'; from: number; to: number; value: string } | { kind: 'all'; value: string; complete: boolean };
-type Sent = { content: string; complete: boolean; merged: boolean };
+/** Which answer a tray entry is: Right, a fix of words, or words marked not sure. */
+type TrayKind = 'right' | 'fix' | 'unsure';
 
 /*
  * Where a listener was, kept in this browser: the paragraph they had open
@@ -181,6 +199,16 @@ type Sent = { content: string; complete: boolean; merged: boolean };
  */
 const PLACE = 'chassidushub.review.place.';
 const DRAFT = 'chassidushub.review.draft.';
+const TRAY = 'chassidushub.review.tray.';
+
+/** One answer in the "Your fixes" tray: a paragraph's words as they will be sent. */
+interface TrayEntry {
+  recording: string;
+  segment: string;
+  content: string;
+  complete: boolean;
+  kind: TrayKind;
+}
 function recall<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
@@ -252,7 +280,7 @@ function Para({
   lang,
   onOpen,
   onPlayFrom,
-  onFixed,
+  onQueue,
   onRight,
   numberOf,
   waiting,
@@ -274,7 +302,8 @@ function Para({
   lang: Lang;
   onOpen: () => void;
   onPlayFrom: (ms: number) => void;
-  onFixed: (content: string, complete: boolean, merged: boolean) => void;
+  /** An answer, into the "Your fixes" tray: the words as they are now heard, whether the whole paragraph was checked, and which answer. */
+  onQueue: (content: string, complete: boolean, kind: TrayKind) => void;
   /** After "Right": the next paragraph left to check opens. */
   onRight: () => void;
   numberOf: (segment: string) => number;
@@ -292,11 +321,8 @@ function Para({
     keep(DRAFT + paragraph.id, next);
     setEditingNow(next);
   };
-  const [sent, setSent] = useState<Sent | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [discussing, setDiscussing] = useState<{ from: number; to: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (found) ref.current?.scrollIntoView({ block: 'center' });
@@ -330,25 +356,12 @@ function Para({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
-  async function send(content: string, complete: boolean): Promise<boolean> {
-    setError(null);
+  // Every answer goes into the tray, and is sent with the rest from there (design/system, board 7).
+  function send(content: string, complete: boolean, kind: TrayKind = 'fix') {
     setNote(null);
-    setBusy(true);
-    try {
-      const row = await postJson<{ status?: string }>(`recordings/${recording}/transcript/fix`, { segment: paragraph.id, content, complete });
-      const merged = row.status === 'merged';
-      setSent({ content, complete, merged });
-      setEditing(null);
-      setChosen(null);
-      noteChecked();
-      if (merged) onFixed(content, complete, true);
-      return true;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      return false;
-    } finally {
-      setBusy(false);
-    }
+    onQueue(content.replace(/\s+/g, ' ').trim(), complete, kind);
+    setEditing(null);
+    setChosen(null);
   }
 
   // A tap on a word of the open paragraph chooses it, to fix or mark; it plays from it only when it starts a new choice.
@@ -371,9 +384,10 @@ function Para({
   }
 
 
-  const pending = sent && !sent.merged ? sent : null;
+  // This listener's answer still in the tray, not sent yet.
+  const queued = waiting.find((x) => x.local) ?? null;
   // This listener's own fix that still waits: they go on from it, so it is never typed twice and a new fix never undoes their last.
-  const mine = pending ?? [...waiting].reverse().find((x) => x.author === me) ?? null;
+  const mine = queued ?? [...waiting].reverse().find((x) => x.author === me) ?? null;
   const base = mine?.content ?? paragraph.content;
   // Your waiting fix is shown with the words you left keeping their times, so it lights up word by word too.
   const shown = base === paragraph.content ? paragraph : { ...paragraph, content: base, words: carryWordTimes(paragraph.content, paragraph.words, base) };
@@ -394,7 +408,7 @@ function Para({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, editing, nowWord]);
   // Fixes already sent by others, or by this listener before, and not yet approved: their words are shown as they will be, below.
-  const others = waiting.filter((x) => x.content !== sent?.content);
+  const others = waiting;
   const changing = mine ? pendingRanges(base, paragraph.content) : others.flatMap((x) => pendingRanges(paragraph.content, x.content));
   const text: React.ReactNode[] = [];
   let at = 0;
@@ -440,6 +454,7 @@ function Para({
         ) : status === 'partly' ? (
           <span className="tx-state partly">{w(lang, 'partly')}</span>
         ) : null}
+        {queued ? <span className="tx-state queued">{w(lang, queued.complete && queued.content === paragraph.content ? 'queuedRight' : 'queuedFix')}</span> : null}
       </div>
 
       <div
@@ -460,7 +475,7 @@ function Para({
       {(open && showHistory ? others : []).map((x) => (
         <div key={`${x.suggestion}:${x.at}`} className="tx-pending">
           <span className="row-sub">
-            {x.author === me ? w(lang, 'yourFix') : w(lang, 'theirFix').replace('{name}', x.authorName ?? x.author)}
+            {x.local ? w(lang, 'inTray') : x.author === me ? w(lang, 'yourFix') : w(lang, 'theirFix').replace('{name}', x.authorName ?? x.author)}
             {x.suggestion !== null ? (
               <>
                 {' · '}
@@ -473,15 +488,6 @@ function Para({
           </p>
         </div>
       ))}
-
-      {open && showHistory && pending ? (
-        <div className="tx-pending">
-          <span className="row-sub">{w(lang, 'yourFix')}</span>
-          <p className="tx-diff" dir="auto">
-            <InlineDiff parts={wordDiff(paragraph.content, pending.content)} />
-          </p>
-        </div>
-      ) : null}
 
       {open && showHistory ? (
         <div className="tx-history">
@@ -521,7 +527,7 @@ function Para({
             <button
               type="button"
               className="btn primary"
-              disabled={busy || editing.value === base.slice(editing.from, editing.to)}
+              disabled={editing.value === base.slice(editing.from, editing.to)}
               onClick={() => send(`${base.slice(0, editing.from)}${editing.value}${base.slice(editing.to)}`, false)}
             >
               {w(lang, 'save')}
@@ -548,7 +554,7 @@ function Para({
             {w(lang, 'wholeRight')}
           </label>
           <div className="actions">
-            <button type="button" className="btn primary" disabled={busy || !editing.value.trim() || (editing.value.trim() === base && !editing.complete)} onClick={() => send(editing.value, editing.complete)}>
+            <button type="button" className="btn primary" disabled={!editing.value.trim() || (editing.value.trim() === base && !editing.complete)} onClick={() => send(editing.value, editing.complete)}>
               {w(lang, 'save')}
             </button>
             <button type="button" className="btn" onClick={() => setEditing(null)}>
@@ -575,9 +581,9 @@ function Para({
                     <button
                       type="button"
                       className="btn unsure"
-                      disabled={busy}
-                      onClick={async () => {
-                        if (await send(`${base.slice(0, chosen.from)}${markUnclear(base.slice(chosen.from, chosen.to))}${base.slice(chosen.to)}`, false)) setNote(w(lang, 'markedUnclear'));
+                      onClick={() => {
+                        send(`${base.slice(0, chosen.from)}${markUnclear(base.slice(chosen.from, chosen.to))}${base.slice(chosen.to)}`, false, 'unsure');
+                        setNote(w(lang, 'markedUnclear'));
                       }}
                     >
                       <ShieldQuestion size={16} aria-hidden />
@@ -590,13 +596,13 @@ function Para({
                 </div>
               ) : (
                 <div className="tx-answer-row">
-                  {!paragraph.checked && !(pending?.complete && pending.content === base) ? (
+                  {!paragraph.checked && !(queued?.complete && queued.content === base) ? (
                     <button
                       type="button"
                       className="btn primary"
-                      disabled={busy}
-                      onClick={async () => {
-                        if (await send(base, true)) onRight();
+                      onClick={() => {
+                        send(base, true, 'right');
+                        onRight();
                       }}
                     >
                       <Check size={16} aria-hidden />
@@ -641,8 +647,6 @@ function Para({
         />
       ) : null}
 
-      {sent ? <p className="row-sub tx-sent">{w(lang, sent.merged ? 'saved' : 'sent')}</p> : null}
-      {error ? <p role="alert">{error}</p> : null}
 
     </li>
   );
@@ -656,7 +660,7 @@ export function TranscriptEditor({
   found,
   account,
   onBack,
-  onFixed,
+  onSent,
 }: {
   transcripts: Transcript[];
   tracks: Track[];
@@ -666,7 +670,8 @@ export function TranscriptEditor({
   account: unknown;
   /** Back to the listening view, where there is one; on the page's Text tab its own tabs lead back. */
   onBack?: () => void;
-  onFixed: (recording: string, segment: string, content: string, complete: boolean) => void;
+  /** A fix sent from the tray, as the server answered it: in at once (`merged`), or waiting for approval. */
+  onSent: (recording: string, segment: string, content: string, complete: boolean, row: { status?: string; id?: number }) => void;
 }) {
   const player = usePlayer();
   // Where the recording is playing now, else where this listener stopped last time in these recordings, unless a link names a paragraph.
@@ -712,6 +717,51 @@ export function TranscriptEditor({
   const me = useAccount()?.person.id ?? null;
   const waitingAll = transcripts.flatMap((tr) => tr.pending ?? []);
 
+  // "Your fixes": every answer waits here, kept in this browser, until it is sent with the rest (design/system, board 7).
+  const trayKey = TRAY + transcripts.map((tr) => tr.recording).join(',');
+  const [tray, setTrayNow] = useState<TrayEntry[]>(() => (typeof window !== 'undefined' ? (recall<TrayEntry[]>(trayKey) ?? []) : []));
+  const setTray = (next: TrayEntry[]) => {
+    keep(trayKey, next.length ? next : null);
+    setTrayNow(next);
+  };
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [trayError, setTrayError] = useState<string | null>(null);
+  const [traySaid, setTraySaid] = useState<string | null>(null);
+  // A paragraph's answer replaces the one before it in the tray: the latest words are what is meant.
+  const queue = (recording: string, segment: string, content: string, complete: boolean, kind: TrayKind) => {
+    setTraySaid(null);
+    setTray([...tray.filter((x) => x.segment !== segment), { recording, segment, content, complete, kind }]);
+  };
+  const asPending = (x: TrayEntry): Pending => ({ segment: x.segment, content: x.content, complete: x.complete, author: me ?? '', authorName: null, at: '', suggestion: null, local: true });
+  // Sent one by one, they join one suggestion for each recording (core/sync.ts fixParagraph); what fails stays in the tray.
+  async function sendTray() {
+    setSending(true);
+    setTrayError(null);
+    let left = [...tray];
+    let sent = 0;
+    let merged = 0;
+    try {
+      for (const x of tray) {
+        const row = await postJson<{ status?: string; id?: number }>(`recordings/${x.recording}/transcript/fix`, { segment: x.segment, content: x.content, complete: x.complete });
+        left = left.filter((y) => y !== x);
+        setTray(left);
+        sent++;
+        if (row.status === 'merged') merged++;
+        onSent(x.recording, x.segment, x.content, x.complete, row);
+      }
+    } catch (e) {
+      setTrayError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSending(false);
+      if (sent) {
+        noteChecked();
+        setTraySaid(w(lang, merged === sent ? 'traySaved' : 'traySent').replace('{n}', sent.toLocaleString(lang)));
+      }
+      if (!left.length) setTrayOpen(false);
+    }
+  }
+
   // The changelog of every part, read once, when it is first wanted.
   const wanted = showAll || open !== null;
   useEffect(() => {
@@ -737,7 +787,7 @@ export function TranscriptEditor({
   // After "Right", the next paragraph not yet checked opens, so checking goes on without looking for it.
   const nextAfter = (segment: string) => {
     const at = all.findIndex((p) => p.id === segment);
-    return [...all.slice(at + 1), ...all.slice(0, at)].find((p) => !p.checked)?.id ?? null;
+    return [...all.slice(at + 1), ...all.slice(0, at)].find((p) => !p.checked && !tray.some((x) => x.segment === p.id && x.kind === 'right'))?.id ?? null;
   };
 
   return (
@@ -841,6 +891,65 @@ export function TranscriptEditor({
         </p>
       ) : null}
 
+      {tray.length || traySaid ? (
+        <div className="tx-tray" role="status">
+          {tray.length ? (
+            <>
+              <button type="button" className="tx-tray-open" onClick={() => setTrayOpen(true)}>
+                {w(lang, 'tray')} · <b>{tray.length.toLocaleString(lang)}</b>
+                <span className="row-sub">{w(lang, 'trayOpen')}</span>
+              </button>
+              <button type="button" className="btn primary sm" onClick={() => void sendTray()} disabled={sending}>
+                {w(lang, 'traySend')}
+              </button>
+            </>
+          ) : (
+            <span className="row-sub">{traySaid}</span>
+          )}
+        </div>
+      ) : null}
+
+      <Sheet
+        open={trayOpen}
+        onClose={() => setTrayOpen(false)}
+        title={`${w(lang, 'tray')} · ${tray.length.toLocaleString(lang)}`}
+        footer={
+          <>
+            <button type="button" className="btn" onClick={() => setTrayOpen(false)}>
+              {w(lang, 'cancel')}
+            </button>
+            <button type="button" className="btn primary" onClick={() => void sendTray()} disabled={sending || !tray.length}>
+              {w(lang, 'traySend')}
+            </button>
+          </>
+        }
+      >
+        <ul className="tx-tray-list">
+          {tray.map((x) => {
+            const before = all.find((p) => p.id === x.segment)?.content ?? '';
+            return (
+              <li key={x.segment}>
+                <div className="tx-tray-head">
+                  <span className="row-sub">
+                    {w(lang, 'para')} {numberOf(x.segment)} · {w(lang, x.kind === 'right' ? 'trayRight' : x.kind === 'unsure' ? 'trayUnsure' : 'trayFix')}
+                  </span>
+                  <button type="button" className="btn ghost sm icon" aria-label={w(lang, 'trayRemove')} title={w(lang, 'trayRemove')} onClick={() => setTray(tray.filter((y) => y !== x))}>
+                    <Trash2 size={14} aria-hidden />
+                  </button>
+                </div>
+                {x.content !== before ? (
+                  <p className="tx-diff" dir="auto">
+                    <InlineDiff parts={aroundChanges(wordDiff(before, x.content))} />
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+        <p className="row-sub">{w(lang, 'trayNote')}</p>
+        {trayError ? <p role="alert">{trayError}</p> : null}
+      </Sheet>
+
       {transcripts.map((tr) => {
         const index = tracks.findIndex((track) => track.id === tr.recording);
         const playing = player.current?.id === tr.recording;
@@ -869,13 +978,13 @@ export function TranscriptEditor({
                     playFrom(ms);
                     if (playing && !player.playing) player.toggle();
                   }}
-                  onFixed={(content, complete) => onFixed(tr.recording, p.id, content, complete)}
+                  onQueue={(content, complete, kind) => queue(tr.recording, p.id, content, complete, kind)}
                   onRight={() => {
                     const next = nextAfter(p.id);
                     if (next) setOpen(next);
                   }}
                   numberOf={numberOf}
-                  waiting={(tr.pending ?? []).filter((x) => x.segment === p.id)}
+                  waiting={[...(tr.pending ?? []).filter((x) => x.segment === p.id), ...tray.filter((x) => x.segment === p.id).map(asPending)]}
                   me={me}
                   follow={follow}
                 />

@@ -37,6 +37,8 @@ export interface Pending {
   authorName: string | null;
   at: string;
   suggestion: number | null;
+  /** Still in this browser's "Your fixes" tray, not sent yet. */
+  local?: boolean;
 }
 
 export interface Transcript {
