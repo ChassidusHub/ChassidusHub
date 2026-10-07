@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Lang } from '../lib/i18n.js';
 import { tu } from '../lib/i18nUi.js';
-import { diffStat, wordDiff, type DiffPart } from '../lib/wordDiff.js';
+import { aroundChanges, diffStat, wordDiff, type DiffPart } from '../lib/wordDiff.js';
 import { Icon, type IconName } from './Icon.js';
 
 /**
@@ -30,9 +30,14 @@ export function DiffStat({ parts, lang }: { parts: DiffPart[]; lang: Lang }) {
   );
 }
 
-/** One passage, before and after, marked word by word. `n` is its number in the margin (a se'if, a line). */
-export function DiffSegment({ before, after, n, context, torah = true }: { before: string; after?: string; n?: ReactNode; context?: boolean; torah?: boolean }) {
-  const parts = after === undefined ? [{ kind: 'same' as const, text: before }] : wordDiff(before, after);
+/**
+ * One passage, before and after, marked word by word. `n` is its number in
+ * the margin (a se'if, a line). `around` shows only the changed words with
+ * a few on each side (design/system, board 22), the rest as `…`.
+ */
+export function DiffSegment({ before, after, n, context, torah = true, around }: { before: string; after?: string; n?: ReactNode; context?: boolean; torah?: boolean; around?: boolean }) {
+  const all = after === undefined ? [{ kind: 'same' as const, text: before }] : wordDiff(before, after);
+  const parts = around ? aroundChanges(all) : all;
   return (
     <div className={context ? 'diff-seg ctx' : 'diff-seg'}>
       <span className="n">{n ?? ''}</span>
@@ -44,8 +49,8 @@ export function DiffSegment({ before, after, n, context, torah = true }: { befor
 }
 
 /** A changed passage as a reviewer decides on it: what it said, the words taken out marked, and what it will say, the words put in marked. */
-export function BeforeAfter({ before, after, lang, torah = true }: { before: string; after: string; lang: Lang; torah?: boolean }) {
-  const parts = wordDiff(before, after);
+export function BeforeAfter({ before, after, lang, torah = true, around }: { before: string; after: string; lang: Lang; torah?: boolean; around?: boolean }) {
+  const parts = around ? aroundChanges(wordDiff(before, after)) : wordDiff(before, after);
   return (
     <div className="diff-ba">
       <div className="ba was">
