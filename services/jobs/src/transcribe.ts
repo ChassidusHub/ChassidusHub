@@ -5,7 +5,7 @@ import { basename, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { alignAroundLocks, alignParagraphs, alignWords, hanachaOf, heardWords, notRecentlyFailedSql, recordingTranscript, type Catalog, type HeardWord, type Json } from '@chassidushub/core';
-import { orderKeys, tidyHeard, type EntityId, type Language } from '@chassidushub/model';
+import { orderKeys, tidyHeard, type EntityId, type Language, type SegmentQuote } from '@chassidushub/model';
 import { failIfAny, machineRun } from './machineQueue.js';
 
 /**
@@ -35,6 +35,8 @@ export interface Heard {
    * ended that piece in the middle of a word ("... פון דעם י", then "וד, און").
    */
   glued?: boolean;
+  /** The verses and sayings the line quotes, with their sources, when the recogniser found them (the GPU pods' transcripts do). */
+  quotes?: SegmentQuote[];
 }
 
 export interface Transcriber {
@@ -133,6 +135,7 @@ interface Unit {
   startMs: number;
   endMs: number;
   timed: boolean;
+  bold?: boolean;
 }
 
 const SENTENCE_END = /[.?!:;…]["'״”)\]]*$/;
@@ -188,7 +191,7 @@ export function paragraphs(heard: Heard[], options: { minMs?: number; softMs?: n
       startMs: taken[0]!.startMs,
       endMs: Math.max(...taken.map((u) => u.endMs)),
       text: taken.map((u) => u.text).join(' '),
-      ...(timed ? { words: taken.map(({ text, startMs, endMs }) => ({ text, startMs, endMs })) } : {}),
+      ...(timed ? { words: taken.map(({ text, startMs, endMs, bold }) => ({ text, startMs, endMs, ...(bold ? { bold } : {}) })) } : {}),
     });
   };
   for (const [i, unit] of units.entries()) {
@@ -306,7 +309,8 @@ export async function transcribeRecordings(
       });
       const orders = orderKeys(paras.length);
       for (const [i, p] of paras.entries()) {
-        const segment = await catalog.putRevision(suggestion.id, TRANSCRIBE_BOT, { type: 'segment', data: { text, order: orders[i]!, kind: 'paragraph', content: p.text, proofread: 0, origin } as Json });
+        const quotes = p.quotes?.length ? { quotes: p.quotes } : {};
+        const segment = await catalog.putRevision(suggestion.id, TRANSCRIBE_BOT, { type: 'segment', data: { text, order: orders[i]!, kind: 'paragraph', content: p.text, proofread: 0, ...quotes, origin } as unknown as Json });
         const words = timed?.[i]?.words;
         await catalog.putRevision(suggestion.id, TRANSCRIBE_BOT, { type: 'alignment-span', data: { alignment, segment, startMs: p.startMs, endMs: p.endMs, ...(words ? { words } : {}), origin } as unknown as Json });
       }
@@ -344,6 +348,8 @@ export async function recordingsToAlign(catalog: Catalog, options: { recording?:
               bool_or(${untimed} AND (coalesce((sr.data->>'proofread')::int, 0) > 0 OR sr.data->'origin'->>'checked' = 'true')) AS corrected,
               max(spr.created_at) AS last
        FROM entity a JOIN revision ar ON ar.id = a.main_rev
+       -- The transcript's own sync: a hanacha's or a translation's is by paragraph, with no words to time.
+       JOIN entity tt ON tt.id = ar.data->>'text' JOIN revision ttr ON ttr.id = tt.main_rev AND ttr.data->>'kind' = 'transcript'
        JOIN entity_ref y ON y.to_id = a.id AND y.field = 'alignment'
        JOIN entity sp ON sp.id = y.from_id AND sp.type = 'alignment-span' AND NOT sp.deleted JOIN revision spr ON spr.id = sp.main_rev
        LEFT JOIN entity s ON s.id = spr.data->>'segment' LEFT JOIN revision sr ON sr.id = s.main_rev
@@ -419,7 +425,10 @@ export async function alignRecordings(
           const t = timed[i];
           if (!t || p.locked) continue;
           words += t.words.length;
-          const data = { alignment: view.alignment, segment: p.id, startMs: t.startMs, endMs: t.endMs, words: t.words, origin } as unknown as Json;
+          // A word said with stress stays so: the fresh hearing does not mark stress, the words already timed do.
+          const stressed = new Set((p.words ?? []).filter((w) => w.bold).map((w) => `${w.from}:${w.to}`));
+          const timedWords = stressed.size ? t.words.map((w) => (stressed.has(`${w.from}:${w.to}`) ? { ...w, bold: true } : w)) : t.words;
+          const data = { alignment: view.alignment, segment: p.id, startMs: t.startMs, endMs: t.endMs, words: timedWords, origin } as unknown as Json;
           await catalog.putRevision(suggestion.id, ALIGN_BOT, p.span ? { id: p.span, type: 'alignment-span', data } : { type: 'alignment-span', data });
         }
       }

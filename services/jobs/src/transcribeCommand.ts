@@ -3,6 +3,7 @@ import { withCatalog, type Context } from './commands.js';
 import { alignRecordings, localWhisper, transcribeRecordings, workersAiWhisper, type Transcriber } from './transcribe.js';
 import { restoreWordTimes } from './restoreWordTimes.js';
 import { mendTranscriptSplits } from './wordSplits.js';
+import { importPodTranscripts, readPodFolder } from './transcriptsImport.js';
 
 /**
  * `chassidushub transcribe`: machine transcripts, with their sync, of
@@ -30,6 +31,24 @@ export async function transcribeCommand(ctx: Context, input: { approveAs: string
       fetchAudio: (recording) => fetchAudio(base, recording),
     });
     ctx.log(`transcribed ${done.length} recordings, ${done.reduce((n, d) => n + d.paragraphs, 0)} paragraphs`);
+  });
+}
+
+/**
+ * `chassidushub transcripts-import`: transcripts made on GPU pods, with
+ * their quotes, stress and translations, into the catalog (see
+ * transcriptsImport.ts). Reads no audio. Recordings the catalog does not
+ * have are listed at the end.
+ */
+export async function transcriptsImportCommand(ctx: Context, input: { dir: string; approveAs?: string; replace?: boolean; limit?: number; dryRun?: boolean }): Promise<void> {
+  if (!input.dryRun && !input.approveAs) throw new Error('--approve-as is needed, or --dry-run');
+  await withCatalog(ctx, async (catalog) => {
+    const report = await importPodTranscripts(catalog, { items: readPodFolder(input.dir), approveAs: input.approveAs ?? '', replace: input.replace, limit: input.limit, dryRun: input.dryRun, log: ctx.log });
+    ctx.log(
+      `${input.dryRun ? 'dry run: ' : ''}loaded ${report.imported.length} transcripts (${report.imported.reduce((n, d) => n + d.paragraphs, 0)} paragraphs, ${report.imported.reduce((n, d) => n + d.quotes, 0)} quotes), ` +
+        `${report.translated.length} translations, ${report.links.proposed} links to quoted sources for review; ${report.skipped.length} left as they were, ${report.notFound.length} not in the catalog`,
+    );
+    if (report.notFound.length) ctx.log(`not in the catalog: ${report.notFound.map((n) => (n.file ? `${n.rec} (${n.file})` : n.rec)).join(', ')}`);
   });
 }
 

@@ -15,6 +15,8 @@ export interface WordTime {
   to: number;
   startMs: number;
   endMs: number;
+  /** Said with stress (the Rebbe's emphasis, which the booklets set in Miram, written as bold): drawn bold. */
+  bold?: boolean;
 }
 
 /** How two words are compared: letters and digits only, so a comma or quote mark added in a fix leaves the word as it was. */
@@ -41,10 +43,13 @@ export function carryWordTimes(oldContent: string, oldWords: readonly WordTime[]
       lcs[i]![j] = tokens[i]!.key && tokens[i]!.key === heardKeys[j] ? lcs[i + 1]![j + 1]! + 1 : Math.max(lcs[i + 1]![j]!, lcs[i]![j + 1]!);
   const start = new Array<number>(n).fill(NaN);
   const end = new Array<number>(n).fill(NaN);
+  // A word kept as it was keeps its stress too.
+  const bold = new Array<boolean>(n).fill(false);
   for (let i = 0, j = 0; i < n && j < m; ) {
     if (tokens[i]!.key && tokens[i]!.key === heardKeys[j]) {
       start[i] = heard[j]!.startMs;
       end[i] = heard[j]!.endMs;
+      bold[i] = Boolean(heard[j]!.bold);
       i++;
       j++;
     } else if (lcs[i + 1]![j]! >= lcs[i]![j + 1]!) i++;
@@ -74,5 +79,5 @@ export function carryWordTimes(oldContent: string, oldWords: readonly WordTime[]
     }
     i = j;
   }
-  return tokens.map((t, i) => ({ from: t.from, to: t.to, startMs: Math.round(start[i]!), endMs: Math.max(Math.round(start[i]!), Math.round(end[i]!)) }));
+  return tokens.map((t, i) => ({ from: t.from, to: t.to, startMs: Math.round(start[i]!), endMs: Math.max(Math.round(start[i]!), Math.round(end[i]!)), ...(bold[i] ? { bold: true } : {}) }));
 }

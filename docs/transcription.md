@@ -138,6 +138,51 @@ on the API, a request starts the workflow at once for what was asked
 ([deploy](deploy.md#7-machine-ocr-and-transcription)). A rented GPU is
 never started this way: each GPU run waits for a person.
 
+## Transcripts made on GPU pods
+
+A rented GPU hears many recordings at once, away from the site: in
+October 2026, about 850 of JEM's recordings of Cheshvan and Kislev, with
+chassidushub-whisper-v3. A pod writes a folder: `lines/<rec>.json` for
+each recording (`rec` is JEM's id of the audio recording, and the file
+names its mp3), each line with its times, each word's time, the words
+said with stress, the verses and sayings it quotes and where they are
+from (a Sefaria ref and page); and `<lang>/<rec>.json`, a machine
+translation, line for line at the same times.
+
+```
+chassidushub transcripts-import --dir <folder> --approve-as <steward> [--dry-run] [--replace]
+```
+
+run from a machine with `DATABASE_URL`, loads them
+(services/jobs/src/transcriptsImport.ts). It reads no audio.
+
+- **Which recording**: by the mp3's name, which every JEM recording in
+  the catalog has in its sources; else by JEM's recording and event ids
+  together. Those it cannot find are listed at the end.
+- **The words**: written exactly as `chassidushub transcribe` writes them
+  (the same bot, a steward approving, each paragraph labelled
+  `transcribe:whisper-pod@chassidushub-whisper-v3` until checked), a
+  paragraph per line, timed word by word. The pod's marked words are used:
+  quotes between ” ”, Hebrew terms between ' '. A recording with a
+  transcript is left as it is; `--replace` makes it again, unless a person
+  checked, fixed or synced any of it. A second run adds only what is
+  missing, so a stopped run is simply run again.
+- **Stress**: a word said with stress (the booklets set it in Miram) is
+  `bold` on its timing in the sync span, the one place a paragraph's words
+  are kept by where they stand; a person's fix and the align run keep it.
+  The listening view draws it bold.
+- **Quotes**: on the paragraph, `quotes` (words, ref, url, source), each
+  labelled until checked. A link (a Relation) must point at an item in the
+  catalog, and most sources (a verse, a Gemara) are not, so they wait there
+  for a later pass to link them. Where the catalog has the sefer (a
+  Sefaria book, by its `sefaria` id), a `cites` link from the recording, at
+  the paragraph, is proposed for review, as the citations bot proposes
+  the ones it finds.
+- **Translations**: a text of kind `translation` of the transcript, a
+  paragraph per line, labelled `translate:<engine>`, synced to the
+  recording paragraph by paragraph at the transcript's times, so it can be
+  shown along as the recording plays.
+
 ## The retraining cycle
 
 Every correction people make is training data for the next version,
