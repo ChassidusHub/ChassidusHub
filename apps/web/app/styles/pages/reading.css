@@ -60,6 +60,20 @@
   flex: none;
 }
 
+.rd-tools .mode-switch {
+  margin-inline-end: var(--s-2);
+}
+
+/* A phone: the switch keeps its words, the back link gives up room. */
+@media (max-width: 420px) {
+  .rd-tools .mode-switch a {
+    padding: 0 9px;
+  }
+  .rd-tools .mode-switch a .i {
+    display: none;
+  }
+}
+
 .rd-size {
   font: 700 18px / 1 var(--display);
   color: var(--text);

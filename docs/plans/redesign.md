@@ -51,7 +51,12 @@ merge right away"); each new screen replaces the old one as it lands.
    `POST /v1/drafts/<page id>/send`), with `set` and `words` changes; more
    kinds join as their screens are built. Today's write endpoints stay as
    they are, so the MCP tools and the reader app are untouched.
-3. Text pages (sicha, letter, chapter, maamar) in Read and Edit.
+3. Text pages (sicha, letter, chapter, maamar) in Read and Edit. In
+   Edit every paragraph is outlined; a tap opens it in place, and Done
+   puts the change into the page's draft (blue until sent). "Right" marks
+   a machine's paragraph checked; Remove and "Add a segment after" are
+   changes like any other, each with its own Undo. The tray sends them as
+   one Suggestion and says what came of it.
 4. Sefer and volume pages.
 5. The library, with Organize as its Edit mode.
 6. Contribute, the Send sheet and Review.

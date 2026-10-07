@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import type { PageSegment, PageSegmentKind } from '@chassidushub/model';
+import type { PageInline, PageSegment, PageSegmentKind } from '@chassidushub/model';
 import { fill, readRuns } from '../lib/editorRuns.js';
 import { t, type Lang } from '../lib/i18n.js';
 import { href } from '../lib/links.js';
@@ -18,6 +18,7 @@ const WORDS = {
   removeTitle: { he: 'הסרת קטע מהטקסט', en: 'A segment taken out of the words' },
   startTitle: { he: 'הטקסט של הדף', en: "The page's words" },
   live: { he: 'נשמר.', en: 'Saved.' },
+  done: { he: 'סיום', en: 'Done' },
   changedSince: { he: 'הקטע השתנה מאז שנפתח. טענו את הדף מחדש.', en: 'This segment has changed since you opened it. Reload the page.' },
 } as const;
 
@@ -32,6 +33,10 @@ export interface SentSuggestion {
  * own (`edit`); or a new segment after it (`add`), or a page's first words
  * (`start`). Pasted text comes in as plain words; footnote marks and
  * source markers stay as they are.
+ *
+ * In a page's Edit mode (`onDraft`) nothing is sent from here: the change
+ * goes into the person's draft, beside their other changes, and is sent
+ * with them from the tray; `initial` is what they already typed there.
  */
 export function SegmentEditor({
   entityId,
@@ -45,6 +50,8 @@ export function SegmentEditor({
   onClose,
   onSent,
   onAddAfter,
+  initial,
+  onDraft,
 }: {
   entityId: string;
   version?: string;
@@ -55,14 +62,17 @@ export function SegmentEditor({
   lang: Lang;
   labelOf?: (note: string) => string;
   onClose: () => void;
-  onSent: (sent: SentSuggestion) => void;
+  /** Sent for review on its own; a page in Edit gives `onDraft` instead. */
+  onSent?: (sent: SentSuggestion) => void;
   onAddAfter?: () => void;
+  initial?: PageInline[];
+  onDraft?: (change: 'edit' | 'add' | 'remove', text: PageInline[] | undefined, note: string) => void;
 }) {
   const box = useRef<HTMLSpanElement>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const original = mode === 'edit' ? (segment?.text ?? []) : [];
+  const original = initial ?? (mode === 'edit' ? (segment?.text ?? []) : []);
 
   useEffect(() => {
     if (!box.current) return;
@@ -78,6 +88,10 @@ export function SegmentEditor({
   }, []);
 
   async function send(change: 'edit' | 'add' | 'remove' | 'start') {
+    if (onDraft && change !== 'start') {
+      onDraft(change, change === 'remove' ? undefined : readRuns(box.current!), note.trim());
+      return;
+    }
     setBusy(true);
     setError(null);
     const text = change === 'remove' ? undefined : readRuns(box.current!);
@@ -92,7 +106,7 @@ export function SegmentEditor({
       const json = (await response.json().catch(() => ({}))) as { id?: number; status?: string; message?: string };
       if (response.status === 409) throw new Error(WORDS.changedSince[lang]);
       if (!response.ok) throw new Error(json.message ?? t(lang, 'error'));
-      onSent({ id: json.id!, status: json.status ?? 'open' });
+      onSent?.({ id: json.id!, status: json.status ?? 'open' });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -145,7 +159,7 @@ export function SegmentEditor({
       <input className="words-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} dir="auto" placeholder={WORDS.note[lang]} aria-label={WORDS.note[lang]} />
       <span className="words-actions">
         <button type="button" className="btn sm primary" disabled={busy} onClick={() => void send(mode === 'edit' ? 'edit' : mode)}>
-          {busy ? t(lang, 'waiting') : t(lang, 'sendForReview')}
+          {busy ? t(lang, 'waiting') : onDraft ? WORDS.done[lang] : t(lang, 'sendForReview')}
         </button>
         {mode === 'edit' && onAddAfter ? (
           <button type="button" className="btn sm" disabled={busy} onClick={onAddAfter}>
@@ -153,7 +167,7 @@ export function SegmentEditor({
           </button>
         ) : null}
         {mode === 'edit' ? (
-          <button type="button" className="btn sm danger" disabled={busy} onClick={() => window.confirm(WORDS.removeSure[lang]) && void send('remove')}>
+          <button type="button" className="btn sm danger" disabled={busy} onClick={() => (onDraft || window.confirm(WORDS.removeSure[lang])) && void send('remove')}>
             {WORDS.remove[lang]}
           </button>
         ) : null}

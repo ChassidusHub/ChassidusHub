@@ -9,6 +9,7 @@ import { MachineNote } from '../ui/primitives.js';
 import { isGreeting } from '../lib/letters.js';
 import { linkTitle } from '../lib/linkTitle.js';
 import '../styles/pages/words.css';
+import type { DraftOp } from '../lib/draft.js';
 import { SegmentEditor, SentNote, type SentSuggestion } from './SegmentEditor.js';
 
 const WORDS = {
@@ -25,6 +26,12 @@ const WORDS = {
   right: { he: 'נכון', en: 'Right' },
   rightHint: { he: 'בדקתי מול הסריקה, והקטע נכון כמו שהוא', en: 'Checked against the scan: right as it is' },
   library: { he: 'ספריית ליובאוויטש', en: 'The Lubavitch Library' },
+  undo: { he: 'ביטול', en: 'Undo' },
+  markedRight: { he: 'סימנת שנכון', en: 'You marked it right' },
+  saysEdit: { he: 'תוקן', en: 'Fixed' },
+  saysAdd: { he: 'נוסף אחרי', en: 'Added after' },
+  saysRemove: { he: 'הוסר', en: 'Took out' },
+  saysCheck: { he: 'נבדק ונכון', en: 'Checked, right as it is' },
 } as const;
 
 const RTL = new Set(['he', 'yi', 'ar']);
@@ -198,7 +205,22 @@ interface EditState {
   setOpen: (key: string | null) => void;
   setAdding: (key: string | null) => void;
   markSent: (key: string, sent: SentSuggestion) => void;
+  /** A page in Edit (docs/plans/redesign.md): changes go into the page's draft, not each for review on its own. */
+  draft?: DraftWords;
 }
+
+/** The page's draft as the words see it: each segment's change kept under its own key. */
+export interface DraftWords {
+  get: (key: string) => DraftOp | undefined;
+  put: (op: DraftOp) => void;
+  remove: (key: string) => void;
+}
+
+const plain = (runs: readonly PageInline[] | undefined) => (runs ?? []).map((r) => ('text' in r ? (r.text ?? '') : ' ')).join('').replace(/\s+/g, ' ').trim();
+const snippet = (runs: readonly PageInline[] | undefined) => {
+  const words = plain(runs);
+  return words.length > 48 ? `${words.slice(0, 47)}…` : words;
+};
 
 /**
  * A segment's words: as read, or, on the editing page, as a place to
@@ -207,6 +229,7 @@ interface EditState {
 function Words({ segment, ctx }: { segment: PageSegment; ctx: Context }) {
   const edit = ctx.edit;
   if (!edit) return <Runs runs={segment.text} ctx={ctx} lead={ctx.lead === segment.id} />;
+  if (edit.draft) return <DraftedWords segment={segment} ctx={ctx} edit={edit} draft={edit.draft} />;
   const key = `${ctx.version.id}/${segment.id}`;
   const sent = edit.sent[key];
   const editor =
@@ -266,6 +289,131 @@ function Words({ segment, ctx }: { segment: PageSegment; ctx: Context }) {
             edit.setAdding(null);
             edit.markSent(key, s);
           }}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * A segment's words on a page in Edit: tap to change them, "Right" for a
+ * machine's words found right, and what you changed shown in blue in their
+ * place until it is sent. The words you see are your draft's; what was
+ * there (`before`) goes with each change, so it never overwrites a fix
+ * someone made since.
+ */
+function DraftedWords({ segment, ctx, edit, draft }: { segment: PageSegment; ctx: Context; edit: EditState; draft: DraftWords }) {
+  const where = `${ctx.version.id}/${segment.id}`;
+  const key = `words:${edit.entityId}:${where}`;
+  const addKey = `${key}:add`;
+  const mine = draft.get(key);
+  const added = draft.get(addKey);
+  const change = mine?.change as string | undefined;
+  const runs = change === 'edit' ? (mine!.text as PageInline[]) : segment.text;
+  const lang = ctx.lang;
+  const put = (kind: 'edit' | 'add' | 'remove' | 'check', text: PageInline[] | undefined, note: string) => {
+    const verb = kind === 'edit' ? WORDS.saysEdit : kind === 'add' ? WORDS.saysAdd : kind === 'remove' ? WORDS.saysRemove : WORDS.saysCheck;
+    const op: DraftOp = {
+      key: kind === 'add' ? addKey : key,
+      op: 'words',
+      says: note || `${verb[lang]}: ${snippet(kind === 'edit' || kind === 'add' ? text : segment.text)}`,
+      item: edit.entityId,
+      change: kind,
+      version: ctx.version.id,
+      segment: segment.id,
+      ...(text ? { text } : {}),
+      before: segment.text ?? [],
+    };
+    // A segment taken out has nothing after it to add to.
+    if (kind === 'remove' && added) draft.remove(addKey);
+    draft.put(op);
+    edit.setOpen(null);
+    edit.setAdding(null);
+    edit.onFocus?.(segment.id);
+  };
+  const open = edit.open === where;
+  const words =
+    change === 'remove' ? (
+      <del className="words-removed">
+        <Runs runs={segment.text} ctx={ctx} />
+      </del>
+    ) : (
+      <Runs runs={runs} ctx={ctx} />
+    );
+  return (
+    <>
+      {open ? (
+        <SegmentEditor
+          entityId={edit.entityId}
+          version={ctx.version.id}
+          segment={segment}
+          mode="edit"
+          lang={lang}
+          labelOf={ctx.noteLabel}
+          initial={change === 'edit' ? (mine!.text as PageInline[]) : undefined}
+          onClose={() => edit.setOpen(null)}
+          onDraft={(kind, text, note) => put(kind, text, note)}
+          onAddAfter={segment.kind === 'section' || segment.kind === 'note' || change === 'remove' ? undefined : () => edit.setAdding(where)}
+        />
+      ) : (
+        <span
+          className={`words-editable${mine ? ' is-mine' : ''}`}
+          role="button"
+          tabIndex={0}
+          title={WORDS.fixHint[lang]}
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest('a')) e.preventDefault();
+            edit.setOpen(where);
+            edit.onFocus?.(segment.id);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              edit.setOpen(where);
+              edit.onFocus?.(segment.id);
+            }
+          }}
+        >
+          {words}
+        </span>
+      )}
+      {!open && !mine && unchecked(segment) ? (
+        <button type="button" className="btn sm words-right" onClick={() => put('check', undefined, '')} title={WORDS.rightHint[lang]}>
+          <Icon name="check" size={14} />
+          {WORDS.right[lang]}
+        </button>
+      ) : null}
+      {!open && mine ? (
+        <span className="words-mine-note" role="status">
+          {change === 'check' ? (
+            <>
+              <Icon name="check" size={13} />
+              {WORDS.markedRight[lang]}
+            </>
+          ) : null}
+          <button type="button" className="words-undo" onClick={() => draft.remove(key)}>
+            {WORDS.undo[lang]}
+          </button>
+        </span>
+      ) : null}
+      {added && edit.adding !== where ? (
+        <span className="words-added is-mine">
+          <Runs runs={added.text as PageInline[]} ctx={ctx} />
+          <button type="button" className="words-undo" onClick={() => draft.remove(addKey)}>
+            {WORDS.undo[lang]}
+          </button>
+        </span>
+      ) : null}
+      {edit.adding === where ? (
+        <SegmentEditor
+          entityId={edit.entityId}
+          version={ctx.version.id}
+          segment={segment}
+          mode="add"
+          lang={lang}
+          initial={added?.text as PageInline[] | undefined}
+          onClose={() => edit.setAdding(null)}
+          onDraft={(_kind, text, note) => put('add', text, note)}
         />
       ) : null}
     </>
@@ -588,7 +736,7 @@ const versionName = (v: PageVersion, lang: Lang) => (v.language === 'he' || v.la
  * Every segment has an anchor (`#s-3.14`) a link can point at. With
  * `edit`, each segment can be clicked and fixed in place (the Edit tab).
  */
-export function PageWords({ page, lang, edit }: { page: PageText; lang: Lang; edit?: { entityId: string; check?: boolean; onFocus?: (segmentId: string) => void } }) {
+export function PageWords({ page, lang, edit }: { page: PageText; lang: Lang; edit?: { entityId: string; check?: boolean; onFocus?: (segmentId: string) => void; draft?: DraftWords } }) {
   const versions = page.versions.filter((v) => v.segments.length);
   const pairable = page.profile === 'sefaria' && versions.length > 1;
   const [shown, setShown] = useState<string>(pairable ? 'both' : (versions[0]?.id ?? ''));
@@ -601,6 +749,7 @@ export function PageWords({ page, lang, edit }: { page: PageText; lang: Lang; ed
         entityId: edit.entityId,
         check: edit.check,
         onFocus: edit.onFocus,
+        draft: edit.draft,
         open,
         adding,
         sent,

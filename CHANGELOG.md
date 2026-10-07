@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Text pages (a sicha, a letter, a chapter) have Read and Edit at the
+  same address. In Edit each paragraph can be fixed, taken out, marked
+  right or followed by a new one; the changes collect in your draft, shown
+  in blue, and Send makes them one Suggestion.
 - Drafts (docs/api.md, "Your changes, not sent yet"): `/v1/drafts` keeps
   the changes a person made on a page in Edit until they send them, and
   `POST /v1/drafts/<page id>/send` makes them one Suggestion, each change
