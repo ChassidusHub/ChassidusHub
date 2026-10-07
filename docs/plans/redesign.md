@@ -83,5 +83,7 @@ merge right away"); each new screen replaces the old one as it lands.
    transcript". The phone's tabs are Home, Library, Listen, Contribute
    and You (the menu); the wide header keeps Daily learning.
 8. Listen and farbrengen pages; the transcript editor is wrapped, not
-   rebuilt.
+   rebuilt. A farbrengen has Read · Edit: in Edit its names are Fields
+   and its recordings' words open in the transcript editor as it is (the
+   Text tab, which stays for old links).
 9. The old screens and their styles removed; old addresses redirect.

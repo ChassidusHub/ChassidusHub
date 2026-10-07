@@ -10,7 +10,9 @@ import type { Entity } from '../lib/api.js';
 import { dateLabel, yearLabel } from '../lib/dates.js';
 import type { EventText, SaidRow } from '../lib/eventView.server.js';
 import { nameOf, t, type Lang } from '../lib/i18n.js';
-import { num } from '../lib/i18nUi.js';
+import { num, tu } from '../lib/i18nUi.js';
+import { isEditing } from '../lib/editMode.js';
+import { Field } from '../ui/page/Field.js';
 import type { ItemView } from '../lib/itemData.server.js';
 import { labelOf } from '../lib/labels.js';
 import { href, itemPath } from '../lib/links.js';
@@ -564,8 +566,11 @@ export function EventPage({ entity, view, lang }: { entity: Entity; view: ItemVi
   const recordings = view.lists.recordings ?? [];
   const sources = Object.fromEntries(recordings.map((r) => [r.id, view.files[r.id]?.url ?? null]));
   const tracks = tracksOf(entity, recordings, lang, sources, view.apiBase);
-  // The words heard in its recordings, read and checked on a tab of their own (older links say `?review=1`).
-  const textTab = tracks.length > 0 && (params.get('tab') === 'text' || params.get('review') === '1');
+  // Read · Edit (docs/plans/redesign.md): in Edit its names change in place, and its recordings' words open in the
+  // transcript editor, as it is (it is wrapped here, not rebuilt).
+  const editing = isEditing(`?${params}`);
+  // The words heard in its recordings, read and checked on a tab of their own (older links say `?review=1`), and in Edit.
+  const textTab = tracks.length > 0 && (editing || params.get('tab') === 'text' || params.get('review') === '1');
   const year = d.date ? Number(d.date.slice(0, 4)) : null;
   const monthToken = d.date ? d.date.split('-')[1] : undefined;
   const month = monthToken ? (monthByToken(monthToken) ?? monthByToken(monthToken.toUpperCase())) : undefined;
@@ -599,7 +604,15 @@ export function EventPage({ entity, view, lang }: { entity: Entity; view: ItemVi
       { label: name },
     ],
     kicker: d.kind && d.kind !== 'farbrengen' ? eventKindName(d.kind, lang) : undefined,
-    title,
+    title: editing ? (
+      <span className="fld-stack">
+        <Field editing place={entity.id} item={entity.id} field="title.he" before={d.title?.he} name={tu(lang, 'fieldNameHe')} lang={lang} dir="rtl" />
+        <Field editing place={entity.id} item={entity.id} field="title.en" before={d.title?.en} name={tu(lang, 'fieldNameEn')} lang={lang} dir="ltr" className="fld-small" />
+      </span>
+    ) : (
+      title
+    ),
+    place: entity.id,
     torah: true,
     sub: [whenLine(d.date, lang), place ? labelOf(place, lang) : null].filter(Boolean).join(' · ') || undefined,
     extra: (

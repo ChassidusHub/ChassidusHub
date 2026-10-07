@@ -10,6 +10,8 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A farbrengen has Read and Edit: in Edit its names change in place and
+  its recordings' words open in the transcript editor, unchanged.
 - Home is built around finding anything with AI in seconds (search by
   meaning when it is set up), the invitation to help build the biggest
   open library of Chabad's Torah, and listening to the Rebbe with the AI
