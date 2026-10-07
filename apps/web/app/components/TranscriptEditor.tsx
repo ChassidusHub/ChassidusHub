@@ -1,4 +1,4 @@
-import { Check, CircleHelp, History, MessageCircle, Pencil, ShieldQuestion, Undo2, X } from 'lucide-react';
+import { Check, CircleHelp, History, MessageCircle, Pencil, ShieldQuestion, Undo2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { carryWordTimes, markUnclear, spellingHints, unclearRanges } from '@chassidushub/model';
@@ -7,7 +7,7 @@ import { clockOf } from '../lib/i18nNetwork.js';
 import { href } from '../lib/links.js';
 import { useAccount } from '../lib/useAccount.js';
 import { postJson } from '../lib/post.js';
-import { get, noteChecked, pendingRanges, tokensOf, trainingPath, wholeWords, within, type Paragraph, type Pending, type Transcript, type TranscriptCommit } from '../lib/transcript.js';
+import { get, noteChecked, pendingRanges, tokensOf, trainingPath, within, type Paragraph, type Pending, type Transcript, type TranscriptCommit } from '../lib/transcript.js';
 import { wordDiff } from '../lib/wordDiff.js';
 import { usePlayer, type Track } from '../player/PlayerProvider.js';
 import { InlineDiff } from '../ui/Diff.js';
@@ -17,11 +17,13 @@ import { Bar, MachineLabel, RelativeTime } from '../ui/primitives.js';
 /**
  * Checking what the machine heard, opened from a farbrengen's or a
  * recording's transcript by "Review machine text". The words are the
- * recording: tapping one plays from it. Selecting words opens a small
- * editor for just those, or marks them unclear (`[words?]`); the
- * paragraph's own tools (all exact, retype it, talk over unclear words, and its history) show under the paragraph being worked
- * on, each saying what it does, and stay in view at the foot of the
- * screen however long the paragraph (as the fixing box's Save does). As
+ * recording: tapping one plays from it and chooses it, and a tap on another
+ * chooses the words up to it (design/system, board 6). The paragraph being
+ * worked on has three answers at the foot of the screen, within the
+ * thumb's reach however long the paragraph: Right (it is checked, and the
+ * next paragraph left to check opens), Fix (the words chosen, or the whole
+ * paragraph) and Not sure (the words chosen are kept as `[words?]`); its
+ * history and talk over unclear words sit under it. As
  * the recording plays, the page follows the word being said, unless the
  * listener just scrolled away; the player bar offers "hear again" and a
  * slower or faster speed here only. What waits for approval, and what
@@ -38,27 +40,33 @@ const W = {
   title: { he: 'בדיקת טקסט המכונה', en: 'Review machine text' },
   back: { he: 'חזרה לתצוגת ההאזנה', en: 'Back to listening' },
   how: { he: 'איך בודקים', en: 'How to review' },
-  howTap: { he: 'לחיצה על מילה מנגנת ממנה.', en: 'Tap a word to play from it.' },
-  howSelect: { he: 'סמנו מילים (לחיצה ארוכה וגרירה) כדי לתקן רק אותן.', en: 'Select words (press and drag) to fix just those.' },
-  howRight: { he: '„הכל מדוייק”: שמעתם, וכל המילים נכונות כפי שהמחשב שמע. כך היא נבדקת, ומלמדת את המודל הבא.', en: '"All exact": you listened and every word is right as the machine heard it. That checks it, and teaches the next model.' },
-  howEdit: { he: '„עריכת הפסקה”: להקליד אותה מחדש. סמנו אם בדקתם את כולה; אם לא, היא נשארת טקסט מכונה.', en: '"Edit paragraph": retype it. Say whether you checked all of it; if not, it stays machine text.' },
-  howUnclear: { he: '„לא ברור”: סמנו מילים שלא בטוח מה נאמר בהן. הן נשמרות כך [מילים?], ולא מלמדים מהן את המודל.', en: '"Unclear": mark words you are not sure of. They are kept as [words?], and the model does not learn from them.' },
+  howTap: { he: 'לחיצה על מילה מנגנת ממנה ובוחרת אותה; לחיצה על מילה נוספת בוחרת עד אליה.', en: 'Tap a word to play from it and choose it; tap another word to choose up to it.' },
+  howRight: { he: '„נכון”: שמעתם, וכל המילים נכונות כפי שהמחשב שמע. כך היא נבדקת, מלמדת את המודל הבא, וממשיכים לפסקה הבאה.', en: '"Right": you listened and every word is right as the machine heard it. That checks it, teaches the next model, and moves on to the next paragraph.' },
+  howEdit: { he: '„תיקון”: את המילים שבחרתם, או בלי בחירה את כל הפסקה. סמנו אם בדקתם את כולה; אם לא, היא נשארת טקסט מכונה.', en: '"Fix": the words you chose, or with none chosen the whole paragraph. Say whether you checked all of it; if not, it stays machine text.' },
+  howUnclear: { he: '„לא בטוח”: על המילים שבחרתם, כשלא ברור מה נאמר. הן נשמרות כך [מילים?], ולא מלמדים מהן את המודל.', en: '"Not sure": on the words you chose, when it is not clear what was said. They are kept as [words?], and the model does not learn from them.' },
   howPause: { he: 'בזמן עריכה ההקלטה נעצרת, וממשיכה מעט לפני כן כשמסיימים.', en: 'The recording pauses while you edit, and goes on from a little before when you finish.' },
   howHistory: { he: '„היסטוריה”: מה תוקן בפסקה מאז שהמחשב שמע אותה, ומה מחכה לאישור, מי ומתי.', en: '"History": what was fixed in the paragraph since the machine heard it, and what waits for approval, by whom and when.' },
   howSpeed: { he: 'בנגן למטה: לשמוע שוב חמש שניות אחורה, ולהאט או להאיץ.', en: 'In the player below: hear the last five seconds again, and slow down or speed up.' },
   progress: { he: '{n} מתוך {of} פסקאות נבדקו', en: '{n} of {of} paragraphs checked' },
   checked: { he: 'נבדק', en: 'Checked' },
   partly: { he: 'תוקן בחלקו', en: 'Partly fixed' },
-  allRight: { he: 'הכל מדוייק', en: 'All exact' },
-  edit: { he: 'עריכת הפסקה', en: 'Edit paragraph' },
-  unclear: { he: 'לא ברור', en: 'Unclear' },
+  allRight: { he: 'נכון', en: 'Right' },
+  edit: { he: 'תיקון', en: 'Fix' },
+  unclear: { he: 'לא בטוח', en: 'Not sure' },
   markUnclear: { he: 'סימון כלא ברור', en: 'Mark as unclear' },
+  fixOne: { he: 'תיקון המילה', en: 'Fix the word' },
+  fixMany: { he: 'תיקון {n} המילים', en: 'Fix the {n} words' },
+  hintAnswer: { he: 'הקשיבו לפסקה. כל המילים נכונות? „נכון”. מילה שגויה? לחצו עליה.', en: 'Listen to the paragraph. Every word right? "Right". A wrong word? Tap it.' },
+  hintOne: { he: 'נבחרה מילה אחת. לחיצה על מילה נוספת בוחרת עד אליה.', en: 'One word chosen. Tap another word to choose up to it.' },
+  hintMany: { he: 'נבחרו {n} מילים.', en: '{n} words chosen.' },
+  chooseFirst: { he: 'בחרו קודם את המילים שלא ברורות, בלחיצה עליהן.', en: 'First choose the words that are not clear, by tapping them.' },
+  markedUnclear: { he: 'סומן כלא ברור.', en: 'Marked as not clear.' },
   continueHere: { he: 'כאן עצרת בפעם הקודמת', en: 'You stopped here last time' },
   history: { he: 'היסטוריה', en: 'History' },
   fixWords: { he: 'תיקון המילים שסומנו', en: 'Fix the selected words' },
   save: { he: 'שמירה', en: 'Save' },
   cancel: { he: 'ביטול', en: 'Cancel' },
-  wholeRight: { he: 'בדקתי את כל הפסקה, והיא נכונה עכשיו', en: 'I checked the whole paragraph, and it is right now' },
+  wholeRight: { he: 'שמעתי ובדקתי את כל הפסקה', en: 'I listened and checked the whole paragraph' },
   sent: { he: 'נשלח. יופיע באתר אחרי אישור.', en: 'Sent. It shows on the site once approved.' },
   saved: { he: 'נשמר.', en: 'Saved.' },
   yourFix: { he: 'התיקון שלך, מחכה לאישור', en: 'Your fix, waiting for approval' },
@@ -162,14 +170,6 @@ export function TrainingGoalBar({ lang }: { lang: Lang }) {
   );
 }
 
-/** Where in a paragraph's text a point of the page is, as a character offset (its text is exactly the paragraph's content). */
-function offsetIn(host: HTMLElement, node: Node, offset: number): number {
-  const range = document.createRange();
-  range.setStart(host, 0);
-  range.setEnd(node, offset);
-  return range.toString().length;
-}
-
 type Editing = { kind: 'words'; from: number; to: number; value: string } | { kind: 'all'; value: string; complete: boolean };
 type Sent = { content: string; complete: boolean; merged: boolean };
 
@@ -253,7 +253,7 @@ function Para({
   onOpen,
   onPlayFrom,
   onFixed,
-  pickWords,
+  onRight,
   numberOf,
   waiting,
   me,
@@ -275,7 +275,8 @@ function Para({
   onOpen: () => void;
   onPlayFrom: (ms: number) => void;
   onFixed: (content: string, complete: boolean, merged: boolean) => void;
-  pickWords: { from: number; to: number; unclear?: boolean } | null;
+  /** After "Right": the next paragraph left to check opens. */
+  onRight: () => void;
   numberOf: (segment: string) => number;
   /** Fixes of this paragraph's words that wait for approval, and who is signed in, to tell theirs from others'. */
   waiting: Pending[];
@@ -300,14 +301,17 @@ function Para({
   useEffect(() => {
     if (found) ref.current?.scrollIntoView({ block: 'center' });
   }, [found]);
-  // Words picked in the text open their editor here, already marked when they were picked as unclear.
+  // Opened by "Right" on the one before: brought into view if it is out of it.
   useEffect(() => {
-    if (!pickWords || !canFix) return;
-    const words = base.slice(pickWords.from, pickWords.to);
-    setEditing({ kind: 'words', from: pickWords.from, to: pickWords.to, value: pickWords.unclear ? markUnclear(words) : words });
-    // Only a new pick opens it; the words changing under it (an approved fix) must not open it again.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pickWords]);
+    const r = ref.current?.getBoundingClientRect();
+    if (open && r && (r.top < 80 || r.top > window.innerHeight * 0.6)) ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [open]);
+  // The words chosen by tapping: the first tap one word, a tap on another the words up to it, a tap on the one chosen lets it go.
+  const [chosen, setChosen] = useState<{ from: number; to: number; one: boolean } | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) setChosen(null);
+  }, [open]);
 
   // The recording waits while the words are being fixed, and goes on from a little before, so nothing is missed.
   const resume = useRef(false);
@@ -326,21 +330,44 @@ function Para({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
-  async function send(content: string, complete: boolean) {
+  async function send(content: string, complete: boolean): Promise<boolean> {
     setError(null);
+    setNote(null);
     setBusy(true);
     try {
       const row = await postJson<{ status?: string }>(`recordings/${recording}/transcript/fix`, { segment: paragraph.id, content, complete });
       const merged = row.status === 'merged';
       setSent({ content, complete, merged });
       setEditing(null);
+      setChosen(null);
       noteChecked();
       if (merged) onFixed(content, complete, true);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      return false;
     } finally {
       setBusy(false);
     }
+  }
+
+  // A tap on a word of the open paragraph chooses it, to fix or mark; it plays from it only when it starts a new choice.
+  function tapWord(word: HTMLElement): boolean {
+    if (!canFix || !open || editing) return false;
+    const from = Number(word.dataset.from);
+    const to = Number(word.dataset.to);
+    if (Number.isNaN(from)) return false;
+    setNote(null);
+    if (chosen?.one && chosen.from === from) {
+      setChosen(null);
+      return true;
+    }
+    if (chosen?.one) {
+      setChosen({ from: Math.min(from, chosen.from), to: Math.max(to, chosen.to), one: false });
+      return true;
+    }
+    setChosen({ from, to, one: true });
+    return false;
   }
 
 
@@ -352,6 +379,7 @@ function Para({
   const shown = base === paragraph.content ? paragraph : { ...paragraph, content: base, words: carryWordTimes(paragraph.content, paragraph.words, base) };
   const tokens = tokensOf(shown);
   const marks = unclearRanges(base);
+  const chosenCount = chosen ? base.slice(chosen.from, chosen.to).split(/\s+/).filter(Boolean).length : 0;
 
   // The page follows the word being said: once it nears the foot of the screen (where the tools float) or has gone above, it is brought back to the middle.
   const nowWord = active ? tokens.findIndex((tk, i) => tk.ms !== null && nowMs >= tk.ms && nowMs < (tokens[i + 1]?.ms ?? paragraph.endMs ?? Infinity)) : -1;
@@ -374,12 +402,13 @@ function Para({
     if (tk.from > at) text.push(base.slice(at, tk.from));
     const next = tokens[i + 1]?.ms ?? paragraph.endMs ?? Infinity;
     const state = active && tk.ms !== null ? (nowMs >= tk.ms && nowMs < next ? ' w-now' : nowMs >= next ? ' w-past' : '') : '';
-    const picked = editing?.kind === 'words' && tk.from < editing.to && tk.to > editing.from ? ' w-picked' : '';
+    const pick = editing?.kind === 'words' ? editing : chosen;
+    const picked = pick && tk.from < pick.to && tk.to > pick.from ? ' w-picked' : '';
     const unclear = marks.some((m) => tk.from < m.to && tk.to > m.from);
     const pendingWord = changing.some((m) => tk.from < m.to && tk.to > m.from);
     const title = [unclear ? t(lang, 'unclearWords') : '', pendingWord ? t(lang, 'pendingFix') : ''].filter(Boolean).join(' · ');
     text.push(
-      <span key={i} className={`word${state}${picked}${unclear ? ' w-unclear' : ''}${pendingWord ? ' w-pending' : ''}`} data-ms={tk.ms ?? undefined} title={title || undefined}>
+      <span key={i} className={`word${state}${picked}${unclear ? ' w-unclear' : ''}${pendingWord ? ' w-pending' : ''}`} data-ms={tk.ms ?? undefined} data-from={tk.from} data-to={tk.to} title={title || undefined}>
         {base.slice(tk.from, tk.to)}
       </span>,
     );
@@ -418,9 +447,10 @@ function Para({
         data-para={paragraph.id}
         dir="auto"
         onClick={(e) => {
-          if (!document.getSelection()?.isCollapsed) return;
+          const word = (e.target as HTMLElement).closest<HTMLElement>('[data-from]');
+          if (word && tapWord(word)) return;
           onOpen();
-          const ms = (e.target as HTMLElement).closest<HTMLElement>('[data-ms]')?.dataset.ms;
+          const ms = word?.dataset.ms;
           onPlayFrom(ms ? Number(ms) : (paragraph.startMs ?? 0));
         }}
       >
@@ -529,30 +559,75 @@ function Para({
       ) : null}
 
       {open && !editing ? (
-        <div className="tx-tools">
-          {canFix && !paragraph.checked && !(pending?.complete && pending.content === base) ? (
-            <button type="button" className="tx-tool" onClick={() => send(base, true)} disabled={busy}>
-              <Check size={16} aria-hidden />
-              {w(lang, 'allRight')}
-            </button>
+        <>
+          {canFix ? (
+            <div className="tx-answers">
+              <p className="row-sub tx-hint" role="status">
+                {note ?? (chosen ? (chosen.one ? w(lang, 'hintOne') : w(lang, 'hintMany').replace('{n}', chosenCount.toLocaleString(lang))) : w(lang, 'hintAnswer'))}
+              </p>
+              {chosen ? (
+                <div className="tx-answer-row">
+                  <button type="button" className="btn primary" onClick={() => setEditing({ kind: 'words', from: chosen.from, to: chosen.to, value: base.slice(chosen.from, chosen.to) })}>
+                    <Pencil size={16} aria-hidden />
+                    {chosenCount === 1 ? w(lang, 'fixOne') : w(lang, 'fixMany').replace('{n}', chosenCount.toLocaleString(lang))}
+                  </button>
+                  {!marks.some((m) => chosen.from < m.to && chosen.to > m.from) ? (
+                    <button
+                      type="button"
+                      className="btn unsure"
+                      disabled={busy}
+                      onClick={async () => {
+                        if (await send(`${base.slice(0, chosen.from)}${markUnclear(base.slice(chosen.from, chosen.to))}${base.slice(chosen.to)}`, false)) setNote(w(lang, 'markedUnclear'));
+                      }}
+                    >
+                      <ShieldQuestion size={16} aria-hidden />
+                      {w(lang, 'unclear')}
+                    </button>
+                  ) : null}
+                  <button type="button" className="btn" onClick={() => setChosen(null)}>
+                    {w(lang, 'cancel')}
+                  </button>
+                </div>
+              ) : (
+                <div className="tx-answer-row">
+                  {!paragraph.checked && !(pending?.complete && pending.content === base) ? (
+                    <button
+                      type="button"
+                      className="btn primary"
+                      disabled={busy}
+                      onClick={async () => {
+                        if (await send(base, true)) onRight();
+                      }}
+                    >
+                      <Check size={16} aria-hidden />
+                      {w(lang, 'allRight')}
+                    </button>
+                  ) : null}
+                  <button type="button" className="btn" onClick={() => setEditing({ kind: 'all', value: base, complete: true })}>
+                    <Pencil size={16} aria-hidden />
+                    {w(lang, 'edit')}
+                  </button>
+                  <button type="button" className="btn unsure" onClick={() => setNote(w(lang, 'chooseFirst'))}>
+                    <ShieldQuestion size={16} aria-hidden />
+                    {w(lang, 'unclear')}
+                  </button>
+                </div>
+              )}
+            </div>
           ) : null}
-          {canFix && !mine ? (
-            <button type="button" className="tx-tool" onClick={() => setEditing({ kind: 'all', value: base, complete: true })}>
-              <Pencil size={16} aria-hidden />
-              {w(lang, 'edit')}
+          <div className="tx-tools">
+            {marks.map((m) => (
+              <button key={m.from} type="button" className={discussing?.from === m.from ? 'tx-tool on' : 'tx-tool'} onClick={() => setDiscussing(discussing?.from === m.from ? null : m)}>
+                <MessageCircle size={16} aria-hidden />
+                {discussLabel[lang]} · <span dir="auto">{base.slice(m.from, m.to)}</span>
+              </button>
+            ))}
+            <button type="button" className={showHistory ? 'tx-tool on' : 'tx-tool'} onClick={() => setShowHistory((s) => !s)} aria-expanded={showHistory}>
+              <History size={16} aria-hidden />
+              {w(lang, 'history')}
             </button>
-          ) : null}
-          {marks.map((m) => (
-            <button key={m.from} type="button" className={discussing?.from === m.from ? 'tx-tool on' : 'tx-tool'} onClick={() => setDiscussing(discussing?.from === m.from ? null : m)}>
-              <MessageCircle size={16} aria-hidden />
-              {discussLabel[lang]} · <span dir="auto">{base.slice(m.from, m.to)}</span>
-            </button>
-          ))}
-          <button type="button" className={showHistory ? 'tx-tool on' : 'tx-tool'} onClick={() => setShowHistory((s) => !s)} aria-expanded={showHistory}>
-            <History size={16} aria-hidden />
-            {w(lang, 'history')}
-          </button>
-        </div>
+          </div>
+        </>
       ) : null}
 
       {open && discussing ? (
@@ -628,8 +703,6 @@ export function TranscriptEditor({
     keep(placeKey, segment);
     setOpenNow(segment);
   };
-  const [pick, setPick] = useState<{ segment: string; from: number; to: number; unclear?: boolean } | null>(null);
-  const [offer, setOffer] = useState<{ segment: string; from: number; to: number; words: string } | null>(null);
   const [history, setHistory] = useState<Record<string, TranscriptCommit[]>>({});
   const [showAll, setShowAll] = useState(false);
   // Paragraphs checked before this visit, with no unclear words, are left out so what is left to check comes first; checked here, they stay until the next visit.
@@ -656,34 +729,16 @@ export function TranscriptEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wanted, transcripts.map((tr) => tr.recording).join(',')]);
 
-  // Words selected inside one paragraph's text are offered for fixing, widened to whole words.
-  useEffect(() => {
-    if (!canFix) return;
-    const onSelection = () => {
-      const sel = document.getSelection();
-      if (!sel || sel.isCollapsed || !sel.rangeCount) return setOffer(null);
-      const range = sel.getRangeAt(0);
-      const hostOf = (n: Node) => (n instanceof Element ? n : n.parentElement)?.closest<HTMLElement>('[data-para]') ?? null;
-      const host = hostOf(range.startContainer);
-      if (!host || host !== hostOf(range.endContainer)) return setOffer(null);
-      const segment = host.dataset.para!;
-      const paragraph = transcripts.flatMap((tr) => tr.paragraphs).find((p) => p.id === segment);
-      if (!paragraph) return setOffer(null);
-      // The words as shown: the listener's own waiting fix, where they have one.
-      const content = host.textContent ?? paragraph.content;
-      const span = wholeWords(content, offsetIn(host, range.startContainer, range.startOffset), offsetIn(host, range.endContainer, range.endOffset));
-      setOffer(span.to > span.from ? { segment, ...span, words: content.slice(span.from, span.to) } : null);
-    };
-    document.addEventListener('selectionchange', onSelection);
-    return () => document.removeEventListener('selectionchange', onSelection);
-  }, [canFix, transcripts]);
-
   const all = transcripts.flatMap((tr) => tr.paragraphs);
   const checked = all.filter((p) => p.checked).length;
   const numbers = new Map(all.map((p, i) => [p.id, i + 1]));
   const numberOf = (segment: string) => numbers.get(segment) ?? 0;
   const commits = transcripts.flatMap((tr) => history[tr.recording] ?? []).sort((a, b) => b.commit - a.commit);
-  const offered = offer ? all.find((p) => p.id === offer.segment) : undefined;
+  // After "Right", the next paragraph not yet checked opens, so checking goes on without looking for it.
+  const nextAfter = (segment: string) => {
+    const at = all.findIndex((p) => p.id === segment);
+    return [...all.slice(at + 1), ...all.slice(0, at)].find((p) => !p.checked)?.id ?? null;
+  };
 
   return (
     <>
@@ -710,7 +765,6 @@ export function TranscriptEditor({
           </summary>
           <ul>
             <li>{w(lang, 'howTap')}</li>
-            <li>{w(lang, 'howSelect')}</li>
             <li>{w(lang, 'howRight')}</li>
             <li>{w(lang, 'howEdit')}</li>
             <li>{w(lang, 'howUnclear')}</li>
@@ -816,7 +870,10 @@ export function TranscriptEditor({
                     if (playing && !player.playing) player.toggle();
                   }}
                   onFixed={(content, complete) => onFixed(tr.recording, p.id, content, complete)}
-                  pickWords={pick?.segment === p.id ? pick : null}
+                  onRight={() => {
+                    const next = nextAfter(p.id);
+                    if (next) setOpen(next);
+                  }}
                   numberOf={numberOf}
                   waiting={(tr.pending ?? []).filter((x) => x.segment === p.id)}
                   me={me}
@@ -829,44 +886,6 @@ export function TranscriptEditor({
         );
       })}
 
-      {offer && offered ? (
-        <div className="tx-pick" role="dialog" aria-label={w(lang, 'fixWords')}>
-          <span className="tx-pick-words" dir="auto">
-            {offer.words}
-          </span>
-          <button
-            type="button"
-            className="btn primary"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              setOpen(offer.segment);
-              setPick({ ...offer });
-              setOffer(null);
-              document.getSelection()?.removeAllRanges();
-            }}
-          >
-            <Pencil size={15} aria-hidden />
-            {w(lang, 'fixWords')}
-          </button>
-          <button
-            type="button"
-            className="btn"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              setOpen(offer.segment);
-              setPick({ ...offer, unclear: true });
-              setOffer(null);
-              document.getSelection()?.removeAllRanges();
-            }}
-          >
-            <ShieldQuestion size={15} aria-hidden />
-            {w(lang, 'unclear')}
-          </button>
-          <button type="button" className="icon-button" aria-label={w(lang, 'cancel')} onClick={() => (document.getSelection()?.removeAllRanges(), setOffer(null))}>
-            <X size={16} />
-          </button>
-        </div>
-      ) : null}
     </>
   );
 }
