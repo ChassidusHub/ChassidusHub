@@ -3,7 +3,7 @@ import type { Hono } from 'hono';
 import type { EntityId } from '@chassidushub/model';
 import { MAX_PLACES, paragraphsOf } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
-import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
+import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 let app: Hono;
 let set: EntityId;
@@ -49,6 +49,32 @@ describe('where a person stopped', () => {
     expect((await call('PUT', '/v1/places', { as: 'chaim', body: { ...reading, place: { big: 'x'.repeat(20_000) } } })).status).toBe(422);
     for (let i = 0; i < MAX_PLACES + 3; i++) await call('PUT', '/v1/places', { as: 'chaim', body: { ...reading, key: `k${i}` } });
     expect((await call('GET', '/v1/places?limit=100', { as: 'chaim' })).body.places).toHaveLength(MAX_PLACES);
+  });
+});
+
+describe('drafts', () => {
+  it("keeps a person's changes per page, only for them, and sends them as one Suggestion", async () => {
+    const event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set));
+    const op = { key: 'title', op: 'set', says: 'Renamed the farbrengen', item: event, field: 'title.en', value: 'Yud Shvat', before: 'Yud Shvat 5742' };
+    expect((await call('PUT', `/v1/drafts/${event}`, { body: { ops: [op] } })).status).toBe(401);
+    expect((await call('PUT', `/v1/drafts/${event}`, { as: 'chaim', body: { ops: [op] } })).body.draft.ops).toHaveLength(1);
+    expect((await call('GET', '/v1/drafts', { as: 'chaim' })).body.drafts).toHaveLength(1);
+    expect((await call('GET', `/v1/drafts/${event}`, { as: 'mendy' })).body.draft).toBeNull();
+    expect((await call('PUT', `/v1/drafts/${event}`, { as: 'chaim', body: { ops: [{ ...op, field: 'body' }] } })).status).toBe(422);
+
+    const sent = await call('POST', `/v1/drafts/${event}/send`, { as: 'chaim', body: { note: 'As printed' } });
+    expect(sent.status).toBe(201);
+    expect(sent.body.title).toBe('Renamed the farbrengen');
+    expect((await call('GET', `/v1/drafts/${event}`, { as: 'chaim' })).body.draft).toBeNull();
+    expect((await call('POST', `/v1/drafts/${event}/send`, { as: 'chaim', body: {} })).status).toBe(409);
+  });
+
+  it('answers 409 naming the change someone else made since', async () => {
+    const event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set));
+    await call('PUT', `/v1/drafts/${event}`, { as: 'chaim', body: { ops: [{ key: 'title', op: 'set', says: 'Renamed it', item: event, field: 'title.en', value: 'X', before: 'Not this' }] } });
+    const sent = await call('POST', `/v1/drafts/${event}/send`, { as: 'chaim', body: {} });
+    expect(sent.status).toBe(409);
+    expect(sent.body.detail).toEqual({ key: 'title' });
   });
 });
 

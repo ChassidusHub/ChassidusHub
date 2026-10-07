@@ -68,12 +68,13 @@ function words(text: PageInline[] | undefined): PageInline[] {
 
 const sameWords = (a: PageInline[] | undefined, b: PageInline[] | undefined) => JSON.stringify(tidyInline(a ?? [])) === JSON.stringify(tidyInline(b ?? []));
 
-/** Sends one segment's change for review. Returns the suggestion (merged at once when its author's changes go live there). */
-export async function suggestWords(catalog: Catalog, by: string, input: WordsInput): Promise<ChangesetRow> {
-  if (!isEntityId(input.entity)) throw invalid('say which item these words are on');
-  const entity = await catalog.get(input.entity);
-  if (!entity) throw notFound(`item ${input.entity}`);
-  const data = withStructuredBody(entity.data as Record<string, unknown>);
+/**
+ * An item's data with one change to its words made: what suggestWords
+ * sends, and what a draft's `words` operation does (drafts.ts). Checks that
+ * the segment is still as the person saw it (`before`).
+ */
+export function applyWords(itemData: Record<string, unknown>, input: Omit<WordsInput, 'entity' | 'title' | 'note'>): Record<string, unknown> {
+  const data = withStructuredBody(itemData);
   const source = data.bodySource as { rights?: RightsState } | undefined;
   // Words whose source forbids copies are not shown, so nobody edits them either.
   if (source?.rights && !mayExport(source.rights)) throw forbidden("its source's terms do not allow copies of these words");
@@ -113,10 +114,18 @@ export async function suggestWords(catalog: Catalog, by: string, input: WordsInp
       throw error;
     }
   }
+  return { ...data, body: page };
+}
 
+/** Sends one segment's change for review. Returns the suggestion (merged at once when its author's changes go live there). */
+export async function suggestWords(catalog: Catalog, by: string, input: WordsInput): Promise<ChangesetRow> {
+  if (!isEntityId(input.entity)) throw invalid('say which item these words are on');
+  const entity = await catalog.get(input.entity);
+  if (!entity) throw notFound(`item ${input.entity}`);
+  const data = applyWords(entity.data as Record<string, unknown>, input);
   const title = (input.title ?? '').trim().slice(0, 200) || 'A fix to the words';
   const suggestion = await catalog.createChangeset(by, { title, description: input.note?.trim().slice(0, 2000) || undefined });
-  await catalog.putRevision(suggestion.id, by, { id: entity.id, type: entity.type, data: { ...data, body: page } as unknown as Json });
+  await catalog.putRevision(suggestion.id, by, { id: entity.id, type: entity.type, data: data as unknown as Json });
   return catalog.submit(suggestion.id, by);
 }
 

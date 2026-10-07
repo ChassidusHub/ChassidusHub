@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Drafts (docs/api.md, "Your changes, not sent yet"): `/v1/drafts` keeps
+  the changes a person made on a page in Edit until they send them, and
+  `POST /v1/drafts/<page id>/send` makes them one Suggestion, each change
+  checked against what the person saw. Migration 29.
 - The redesign begins (docs/plans/redesign.md): calmer colours across the
   site (whiter paper, green for approved, blue for your changes not sent
   yet), and the page frame every page will share, with Read and Edit at the

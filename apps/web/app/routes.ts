@@ -29,6 +29,8 @@ export default [
   route('_/uploads', 'routes/uploads.ts'),
   // Where you stopped reading and listening, and translations sent for review.
   route('_/places', 'routes/places.ts'),
+  // Your changes on a page in Edit, not sent yet, and sending them (lib/draft.ts).
+  route('_/drafts/*', 'routes/drafts-pass.ts'),
   route('_/translations/*', 'routes/translations-pass.ts'),
   route('_/uploads/check', 'routes/uploads-check.ts'),
   route('_/uploads/propose', 'routes/uploads-propose.ts'),

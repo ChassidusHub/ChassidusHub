@@ -32,7 +32,9 @@ Chabad's Torah: לכשיפוצו מעינותיך חוצה.
 - `lib/editMode.ts`: `?edit` read and written.
 - `lib/draft.ts`, `lib/useDraft.ts`: your changes not sent yet, one draft
   per page (its permanent id); a later change to the same thing replaces
-  the earlier. Kept in the browser until the drafts API (step 2).
+  the earlier. Kept in the browser at once and on the account
+  (`/v1/drafts`, packages/core/src/drafts.ts) a moment later; sent as one
+  Suggestion with `POST /v1/drafts/<page id>/send`.
 - `ui/page/PageFrame.tsx`: crumbs, the title with `ModeSwitch`, the ⓘ
   panel, the edit hint and the `Tray`. A page's blocks get `editing` and
   draw themselves in either mode.
@@ -45,9 +47,10 @@ One pull request each, merged as soon as checks pass (Shmuly: "make it
 merge right away"); each new screen replaces the old one as it lands.
 
 1. Tokens, parts and the page frame.
-2. Drafts and operations on the server (`PUT /v1/drafts/:id/ops`,
-   `POST /v1/drafts/:id/send`); today's write endpoints become wrappers,
-   so the MCP tools and the reader app are untouched.
+2. Drafts and operations on the server (`PUT /v1/drafts/<page id>`,
+   `POST /v1/drafts/<page id>/send`), with `set` and `words` changes; more
+   kinds join as their screens are built. Today's write endpoints stay as
+   they are, so the MCP tools and the reader app are untouched.
 3. Text pages (sicha, letter, chapter, maamar) in Read and Edit.
 4. Sefer and volume pages.
 5. The library, with Organize as its Edit mode.

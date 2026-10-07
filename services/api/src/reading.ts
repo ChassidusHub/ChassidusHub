@@ -1,5 +1,5 @@
 import type { Context, Hono } from 'hono';
-import { addTranslation, fixTranslation, forgetPlace, listPlaces, savePlace, type Catalog, type PlaceKind } from '@chassidushub/core';
+import { addTranslation, fixTranslation, forgetDraft, forgetPlace, getDraft, listDrafts, listPlaces, saveDraft, savePlace, sendDraft, type Catalog, type PlaceKind } from '@chassidushub/core';
 import { readId, type EntityId } from '@chassidushub/model';
 
 /**
@@ -12,6 +12,15 @@ import { readId, type EntityId } from '@chassidushub/model';
  *   DELETE /v1/places?kind=&key=            forgets one
  *   POST   /v1/units/<id>/translations      { language, credit, licence?, translationOf?, content, machine? }
  *   POST   /v1/translations/fix             { segment, content }
+ *
+ * And their drafts (packages/core/src/drafts.ts): the changes made on a page
+ * in Edit and not sent yet, kept per page so they follow the person.
+ *
+ *   GET    /v1/drafts                       the signed-in person's drafts, the latest first
+ *   GET    /v1/drafts/<page id>             one page's draft
+ *   PUT    /v1/drafts/<page id>             keeps it { title?, ops }; an empty list forgets it
+ *   DELETE /v1/drafts/<page id>             forgets it
+ *   POST   /v1/drafts/<page id>/send        sends it as one Suggestion { title?, note? }
  */
 
 type Fail = (status: 400 | 401, message: string) => never;
@@ -50,6 +59,35 @@ export function readingRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context
     if (!kind || !key) fail(400, 'say which place (kind and key)');
     await forgetPlace(catalog, by, kind!, key!);
     return c.json({ ok: true });
+  });
+
+  app.get('/v1/drafts', async (c) => {
+    const by = await signedIn(c);
+    const limit = Number(c.req.query('limit') ?? 50);
+    return c.json({ drafts: await listDrafts(catalog, by, Number.isFinite(limit) ? limit : 50) }, 200, { 'Cache-Control': 'no-store' });
+  });
+
+  app.get('/v1/drafts/:place', async (c) => {
+    const by = await signedIn(c);
+    return c.json({ draft: await getDraft(catalog, by, c.req.param('place')) }, 200, { 'Cache-Control': 'no-store' });
+  });
+
+  app.put('/v1/drafts/:place', async (c) => {
+    const by = await signedIn(c);
+    const input = await json<{ title?: unknown; ops?: unknown }>(c);
+    return c.json({ draft: await saveDraft(catalog, by, { place: c.req.param('place'), title: input.title, ops: input.ops }) }, 200, { 'Cache-Control': 'no-store' });
+  });
+
+  app.delete('/v1/drafts/:place', async (c) => {
+    const by = await signedIn(c);
+    await forgetDraft(catalog, by, c.req.param('place'));
+    return c.json({ ok: true });
+  });
+
+  app.post('/v1/drafts/:place/send', async (c) => {
+    const by = await signedIn(c);
+    const input = await json<{ title?: unknown; note?: unknown }>(c);
+    return c.json(await sendDraft(catalog, by, { place: c.req.param('place'), title: input.title, note: input.note }), 201);
   });
 
   app.post('/v1/units/:id/translations', async (c) => {

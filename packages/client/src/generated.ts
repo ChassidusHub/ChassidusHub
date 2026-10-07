@@ -1105,6 +1105,16 @@ export interface Operations {
       ok: true;
     };
   };
+  /** Forget a page's draft */
+  forgetDraft: {
+    input: {
+      /** The page's id */
+      place: string;
+    };
+    output: {
+      ok: true;
+    };
+  };
   /** Forget one place */
   forgetPlace: {
     input: {
@@ -1114,6 +1124,16 @@ export interface Operations {
     };
     output: {
       ok: true;
+    };
+  };
+  /** One page's draft: your changes on it not sent yet */
+  getDraft: {
+    input: {
+      /** The page's id */
+      place: string;
+    };
+    output: {
+      draft: Record<string, unknown>;
     };
   };
   /** One of an edition's dumps (SQLite, JSON Lines, Parquet) */
@@ -1411,6 +1431,16 @@ export interface Operations {
     output: {
       commits: Array<Commit>;
       next: string | null;
+    };
+  };
+  /** Your changes not sent yet, a draft per page, the latest first (never cached) */
+  listDrafts: {
+    input: {
+      /** How many (at most 100) */
+      limit?: number;
+    };
+    output: {
+      drafts: Array<Record<string, unknown>>;
     };
   };
   /** Farbrengens and other events by Hebrew date, each with how many recordings it has */
@@ -2200,6 +2230,21 @@ export interface Operations {
     input: Record<string, never>;
     output: Response;
   };
+  /** Keep a page's draft, the whole list of changes each time; an empty list forgets it */
+  saveDraft: {
+    input: {
+      /** The page's id */
+      place: string;
+      body: {
+        title?: string;
+        /** Changes: { key, op: "set", says, item, field, value?, before? } or { key, op: "words", says, item, change, version?, segment?, text?, before?, kind?, language? } */
+        ops: Array<Record<string, unknown>>;
+      };
+    };
+    output: {
+      draft: Record<string, unknown>;
+    };
+  };
   /** Keep where you stopped in one thing */
   savePlace: {
     input: {
@@ -2348,6 +2393,18 @@ export interface Operations {
     output: {
       ok: true;
     };
+  };
+  /** Send a page's draft as one Suggestion: every change made on the items as they are now, each checked against what you saw */
+  sendDraft: {
+    input: {
+      /** The page's id */
+      place: string;
+      body?: {
+        title?: string;
+        note?: string;
+      };
+    };
+    output: Suggestion;
   };
   /** Set who it is assigned to (yourself; others when you may triage) */
   setIssueAssignees: {
@@ -2833,7 +2890,9 @@ export const OPERATIONS = {
   fixTranscript: {"method":"POST","path":"/v1/recordings/{id}/transcript/fix","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   fixTranslation: {"method":"POST","path":"/v1/translations/fix","pathParams":[],"query":[],"body":"json","answer":"json"},
   follow: {"method":"POST","path":"/v1/follows","pathParams":[],"query":[],"body":"json","answer":"json"},
+  forgetDraft: {"method":"DELETE","path":"/v1/drafts/{place}","pathParams":["place"],"query":[],"body":null,"answer":"json"},
   forgetPlace: {"method":"DELETE","path":"/v1/places","pathParams":[],"query":["kind","key"],"body":null,"answer":"json"},
+  getDraft: {"method":"GET","path":"/v1/drafts/{place}","pathParams":["place"],"query":[],"body":null,"answer":"json"},
   getDump: {"method":"GET","path":"/dumps/{tag}/{name}","pathParams":["tag","name"],"query":[],"body":null,"answer":"raw"},
   getFile: {"method":"GET","path":"/v1/files/{sha256}","pathParams":["sha256"],"query":[],"body":null,"answer":"json"},
   getFiles: {"method":"GET","path":"/v1/files/batch","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
@@ -2862,6 +2921,7 @@ export const OPERATIONS = {
   linkedOfEach: {"method":"GET","path":"/v1/entities/batch/linked","pathParams":[],"query":["ids","field","type","limit"],"body":null,"answer":"json"},
   listChildren: {"method":"GET","path":"/v1/entities/{id}/children","pathParams":["id"],"query":["field","type","after","limit","cursor"],"body":null,"answer":"json","items":"items"},
   listCommits: {"method":"GET","path":"/v1/commits","pathParams":[],"query":["since","limit","changes","cursor"],"body":null,"answer":"json","items":"commits"},
+  listDrafts: {"method":"GET","path":"/v1/drafts","pathParams":[],"query":["limit"],"body":null,"answer":"json"},
   listEvents: {"method":"GET","path":"/v1/events","pathParams":[],"query":["within","day","dates","missing","brief","limit"],"body":null,"answer":"json"},
   listFollows: {"method":"GET","path":"/v1/follows","pathParams":[],"query":["limit"],"body":null,"answer":"json"},
   listIssues: {"method":"GET","path":"/v1/issues","pathParams":[],"query":["state","label","type","set","entity","assignee","author","q","before","limit","cursor"],"body":null,"answer":"json","items":"items"},
@@ -2917,6 +2977,7 @@ export const OPERATIONS = {
   reviewSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/reviews","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   robotsTxt: {"method":"GET","path":"/robots.txt","pathParams":[],"query":[],"body":null,"answer":"text"},
   root: {"method":"GET","path":"/","pathParams":[],"query":[],"body":null,"answer":"raw"},
+  saveDraft: {"method":"PUT","path":"/v1/drafts/{place}","pathParams":["place"],"query":[],"body":"json","answer":"json"},
   savePlace: {"method":"PUT","path":"/v1/places","pathParams":[],"query":[],"body":"json","answer":"json"},
   scanPages: {"method":"GET","path":"/v1/scans/{id}/pages","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   scanProgress: {"method":"GET","path":"/v1/scans/{id}/progress","pathParams":["id"],"query":[],"body":null,"answer":"json"},
@@ -2928,6 +2989,7 @@ export const OPERATIONS = {
   searchThreads: {"method":"GET","path":"/v1/threads","pathParams":[],"query":["q","limit"],"body":null,"answer":"json"},
   seedScanText: {"method":"POST","path":"/v1/scans/{id}/text/seed","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   sendBackSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/send-back","pathParams":["id"],"query":[],"body":"json","answer":"json"},
+  sendDraft: {"method":"POST","path":"/v1/drafts/{place}/send","pathParams":["place"],"query":[],"body":"json","answer":"json"},
   setIssueAssignees: {"method":"PUT","path":"/v1/issues/{number}/assignees","pathParams":["number"],"query":[],"body":"json","answer":"json"},
   setIssueLabels: {"method":"PUT","path":"/v1/issues/{number}/labels","pathParams":["number"],"query":[],"body":"json","answer":"json"},
   setIssueState: {"method":"POST","path":"/v1/issues/{number}/state","pathParams":["number"],"query":[],"body":"json","answer":"json"},
@@ -3215,9 +3277,19 @@ export abstract class GeneratedMethods {
     return this.call('follow', input ?? {} as Operations['follow']['input']);
   }
 
+  /** Forget a page's draft (DELETE /v1/drafts/{place}) */
+  forgetDraft(input: Operations['forgetDraft']['input']): Promise<Operations['forgetDraft']['output']> {
+    return this.call('forgetDraft', input ?? {} as Operations['forgetDraft']['input']);
+  }
+
   /** Forget one place (DELETE /v1/places) */
   forgetPlace(input: Operations['forgetPlace']['input']): Promise<Operations['forgetPlace']['output']> {
     return this.call('forgetPlace', input ?? {} as Operations['forgetPlace']['input']);
+  }
+
+  /** One page's draft: your changes on it not sent yet (GET /v1/drafts/{place}) */
+  getDraft(input: Operations['getDraft']['input']): Promise<Operations['getDraft']['output']> {
+    return this.call('getDraft', input ?? {} as Operations['getDraft']['input']);
   }
 
   /** One of an edition's dumps (SQLite, JSON Lines, Parquet) (GET /dumps/{tag}/{name}) */
@@ -3358,6 +3430,11 @@ export abstract class GeneratedMethods {
   /** Every merge to main after a given one, in order, with what each changed: the way to follow the catalog without webhooks (GET /v1/commits) */
   listCommits(input?: Operations['listCommits']['input']): Promise<Operations['listCommits']['output']> {
     return this.call('listCommits', input ?? {} as Operations['listCommits']['input']);
+  }
+
+  /** Your changes not sent yet, a draft per page, the latest first (never cached) (GET /v1/drafts) */
+  listDrafts(input?: Operations['listDrafts']['input']): Promise<Operations['listDrafts']['output']> {
+    return this.call('listDrafts', input ?? {} as Operations['listDrafts']['input']);
   }
 
   /** Farbrengens and other events by Hebrew date, each with how many recordings it has (GET /v1/events) */
@@ -3635,6 +3712,11 @@ export abstract class GeneratedMethods {
     return this.call('root', {} as Operations['root']['input']);
   }
 
+  /** Keep a page's draft, the whole list of changes each time; an empty list forgets it (PUT /v1/drafts/{place}) */
+  saveDraft(input: Operations['saveDraft']['input']): Promise<Operations['saveDraft']['output']> {
+    return this.call('saveDraft', input ?? {} as Operations['saveDraft']['input']);
+  }
+
   /** Keep where you stopped in one thing (PUT /v1/places) */
   savePlace(input: Operations['savePlace']['input']): Promise<Operations['savePlace']['output']> {
     return this.call('savePlace', input ?? {} as Operations['savePlace']['input']);
@@ -3688,6 +3770,11 @@ export abstract class GeneratedMethods {
   /** Send back with a note (POST /v1/suggestions/{id}/send-back) */
   sendBackSuggestion(input: Operations['sendBackSuggestion']['input']): Promise<Operations['sendBackSuggestion']['output']> {
     return this.call('sendBackSuggestion', input ?? {} as Operations['sendBackSuggestion']['input']);
+  }
+
+  /** Send a page's draft as one Suggestion: every change made on the items as they are now, each checked against what you saw (POST /v1/drafts/{place}/send) */
+  sendDraft(input: Operations['sendDraft']['input']): Promise<Operations['sendDraft']['output']> {
+    return this.call('sendDraft', input ?? {} as Operations['sendDraft']['input']);
   }
 
   /** Set who it is assigned to (yourself; others when you may triage) (PUT /v1/issues/{number}/assignees) */
