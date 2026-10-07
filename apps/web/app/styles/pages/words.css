@@ -688,3 +688,10 @@ input.words-note:focus {
     z-index: 2;
   }
 }
+
+/* On a phone a paragraph's number would hang past the screen's edge and widen the page: it is cut there instead. */
+@media (max-width: 720px) {
+  .rd-main {
+    overflow-x: clip;
+  }
+}

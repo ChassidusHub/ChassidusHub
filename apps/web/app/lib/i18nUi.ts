@@ -111,6 +111,16 @@ const UI = {
   then: { he: 'ואז', en: 'then' },
   copied: { he: 'הקישור הועתק', en: 'Link copied' },
   copyLink: { he: 'העתקת קישור', en: 'Copy link' },
+  // Every page's two modes, the tray of your changes, and the page's info panel (the redesign's page frame).
+  modeLabel: { he: 'קריאה או עריכה', en: 'Read or edit' },
+  modeRead: { he: 'קריאה', en: 'Read' },
+  modeEdit: { he: 'עריכה', en: 'Edit' },
+  editHint: { he: 'כל מה שמסומן אפשר לשנות. הקישו עליו.', en: 'Tap anything outlined to change it.' },
+  trayLabel: { he: 'השינויים שלך', en: 'Your changes' },
+  traySaved: { he: 'נשמרים תוך כדי', en: 'Saved as you go' },
+  trayUndo: { he: 'ביטול האחרון', en: 'Undo last' },
+  traySend: { he: 'שליחה', en: 'Send' },
+  pageInfo: { he: 'על הדף', en: 'About this page' },
 } as const;
 
 export type UiKey = keyof typeof UI;
