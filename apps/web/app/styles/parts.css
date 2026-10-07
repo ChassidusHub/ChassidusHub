@@ -98,7 +98,7 @@ button.chip:hover {
 button.chip-accent:hover {
   border-color: var(--accent-strong);
   background: var(--accent-strong);
-  color: var(--on-strong);
+  color: #fff;
 }
 
 /* ------------------------------------------------------------ sheet */

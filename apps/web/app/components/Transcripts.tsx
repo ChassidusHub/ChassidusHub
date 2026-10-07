@@ -465,11 +465,11 @@ export function Lyrics({
               }
             }}
           />
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => void sendFix()} disabled={busy || !draft.trim()}>
+          <button type="button" className="btn primary sm" onClick={() => void sendFix()} disabled={busy || !draft.trim()}>
             {busy ? <Loader2 size={14} className="spin" aria-hidden /> : <Check size={14} aria-hidden />}
             {t(lang, 'send')}
           </button>
-          <button type="button" className="btn btn-ghost btn-sm btn-icon" onClick={stopFix} aria-label={t(lang, 'cancel')} title={t(lang, 'cancel')}>
+          <button type="button" className="btn ghost sm icon" onClick={stopFix} aria-label={t(lang, 'cancel')} title={t(lang, 'cancel')}>
             <X size={14} aria-hidden />
           </button>
         </span>

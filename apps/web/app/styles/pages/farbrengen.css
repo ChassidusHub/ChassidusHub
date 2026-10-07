@@ -521,34 +521,33 @@ button.part.on:hover {
   height: 6px;
 }
 
-/* ------------------------------------------------------------ listening: the words as lyrics */
+/* ------------------------------------------------------------ listening: the words as they are said */
 
 /*
- * Always deep blue, in light and dark alike, as a music app colours its
- * lyrics by the song: the words are white on it, lit as they are said.
+ * The transcript as a page of a sefer that follows the recording
+ * (design/system, boards 6c and 6d): the words in ink on paper, the word
+ * being said in solid red, the paragraph being heard a little quieter
+ * where it is still to come. The player under it is calm: play, the
+ * time, and the parts. Both themes come from the tokens.
  */
 .lyrics {
-  --ly-bg: linear-gradient(170deg, #2c4378 0%, #1c2a52 48%, #121a35 100%);
-  --ly-now: #ffffff;
-  --ly-past: rgba(255, 255, 255, 0.6);
-  --ly-next: rgba(255, 255, 255, 0.36);
-  --ly-soft: rgba(255, 255, 255, 0.12);
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--ly-bg);
-  color: var(--ly-now);
-  border-radius: 14px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(12, 18, 40, 0.25);
 }
 
 .lyrics.full {
   position: fixed;
   inset: 0;
   z-index: 80;
+  border: 0;
   border-radius: 0;
-  box-shadow: none;
+  background: var(--bg);
 }
 
 :root.lyrics-full,
@@ -559,8 +558,9 @@ button.part.on:hover {
 .lyrics-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 18px 6px;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4) var(--s-2);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .lyrics-titles {
@@ -570,27 +570,20 @@ button.part.on:hover {
 }
 
 .lyrics-kicker {
-  font: 600 12px var(--ui);
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.7);
+  font: 600 var(--t-caption) var(--ui);
+  color: var(--subtle);
 }
 
 .lyrics-title {
-  font: 600 15px var(--ui);
+  font: 600 var(--t-body) var(--ui);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.lyrics .machine-label {
-  background: rgba(255, 214, 102, 0.16);
-  color: #ffd98a;
-  border-color: rgba(255, 214, 102, 0.35);
-}
-
 .lyrics-ib {
-  width: 38px;
-  height: 38px;
+  width: var(--control-h);
+  height: var(--control-h);
   flex: none;
   display: grid;
   place-items: center;
@@ -598,13 +591,13 @@ button.part.on:hover {
   padding: 0;
   border-radius: 50%;
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
   cursor: pointer;
 }
 
 .lyrics-ib:hover {
-  background: var(--ly-soft);
-  color: #fff;
+  background: var(--sunken);
+  color: var(--text);
 }
 
 .lyrics-ib:disabled {
@@ -618,24 +611,25 @@ button.part.on:hover {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font: 600 14px var(--ui);
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--muted);
+  font: 600 var(--t-small) var(--ui);
   cursor: pointer;
 }
 
 .lyrics-edit:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--canvas);
+  color: var(--text);
 }
 
 .lyrics-parts {
   display: flex;
   gap: 6px;
-  padding: 4px 18px 2px;
+  padding: var(--s-2) var(--s-4) 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -644,96 +638,195 @@ button.part.on:hover {
   min-width: 32px;
   height: 28px;
   padding: 0 10px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--ly-soft);
-  color: rgba(255, 255, 255, 0.8);
-  font: 600 13px var(--ui);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--muted);
+  font: 600 var(--t-small) var(--ui);
+  font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
 
 .lyrics-parts button.on {
-  background: #fff;
-  color: #1c2a52;
+  border-color: var(--strong);
+  background: var(--strong);
+  color: var(--on-strong);
 }
 
 .lyrics-scroll {
   height: min(62vh, 560px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 28px 22px 40%;
-  scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px, #000 calc(100% - 72px), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 56px, #000 calc(100% - 72px), transparent 100%);
-}
-
-.lyrics-scroll::-webkit-scrollbar {
-  display: none;
+  padding: var(--s-5) var(--s-5) 40%;
+  scrollbar-width: thin;
 }
 
 .lyrics-scroll:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline: 2px solid var(--focus);
   outline-offset: -4px;
 }
 
 .lyrics.full .lyrics-scroll {
   flex: 1;
   height: auto;
-  max-width: 900px;
+  max-width: calc(var(--measure) + 2 * var(--s-5));
   width: 100%;
   margin: 0 auto;
 }
 
+/* A paragraph: tap to play from it, or tap a word to play from it and fix it. */
 .lyrics-line {
   display: block;
   width: 100%;
-  margin: 0 0 22px;
+  max-width: var(--measure);
+  margin: 0 auto var(--s-4);
   padding: 0;
   border: 0;
   background: none;
-  text-align: start;
+  text-align: justify;
   font-family: var(--torah);
-  font-weight: 700;
-  font-size: clamp(21px, 5.2vw, 28px);
-  line-height: 1.5;
-  color: var(--ly-next);
+  font-weight: 400;
+  font-size: var(--t-torah);
+  line-height: var(--t-torah-leading);
+  color: var(--text);
   cursor: pointer;
-  transition: color 0.35s var(--ease), transform 0.35s var(--ease);
 }
 
-.lyrics-line:hover {
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.lyrics-line.past {
-  color: var(--ly-past);
-}
-
+/* The paragraph being heard: what is still to come a little quieter. */
 .lyrics-line.now {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--subtle);
 }
 
 .lyrics-line.now:not(:has(.word)) {
-  color: var(--ly-now);
+  color: var(--text);
 }
 
 .lyrics-line .word {
-  transition: color 0.2s linear, text-shadow 0.2s linear;
+  border-radius: 3px;
+  transition: background var(--dur-fast) linear, color var(--dur-fast) linear;
 }
 
 .lyrics-line .w-past {
-  color: var(--ly-now);
+  color: var(--text);
 }
 
+/* The word being said: solid red, the one strong colour on the page. */
 .lyrics-line .w-now {
-  color: var(--ly-now);
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.55);
+  background: var(--accent-strong);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--accent-strong);
 }
 
+/* A search hit, until it plays. */
 .lyrics-line.found {
-  color: var(--ly-now);
-  text-decoration: underline 2px rgba(255, 214, 102, 0.7);
-  text-underline-offset: 6px;
+  background: var(--mark);
+  box-shadow: 0 0 0 6px var(--mark);
+  border-radius: 2px;
+}
+
+.lyrics-line:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.lyrics-now {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 112px;
+  margin: 0 auto;
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--accent);
+  font: 600 var(--t-small) var(--ui);
+  box-shadow: var(--shadow-pop);
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* The player: play in the middle, the time under it. */
+.lyrics-controls {
+  display: grid;
+  gap: var(--s-1);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border-top: 1px solid var(--border-muted);
+  background: var(--card);
+}
+
+.lyrics.full .lyrics-controls {
+  padding-bottom: max(var(--s-4), env(safe-area-inset-bottom));
+}
+
+.lyrics-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-5);
+  direction: ltr;
+}
+
+.lyrics-play {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--strong);
+  color: var(--on-strong);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.lyrics-play:active {
+  transform: scale(0.96);
+}
+
+.lyrics-scrub {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  direction: ltr;
+  font: var(--t-caption) var(--ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--subtle);
+}
+
+.lyrics-scrub input[type='range'] {
+  flex: 1;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent-strong) var(--played, 0%), var(--sunken) var(--played, 0%));
+  cursor: pointer;
+}
+
+.lyrics-scrub input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+}
+
+.lyrics-scrub input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-strong);
+}
+
+.lyrics-foot {
+  margin: 10px 4px 0;
 }
 
 /* The words a listener tapped, to fix: framed, with "Fix" right after them. */
@@ -743,9 +836,9 @@ button.part.on:hover {
 
 .lyrics-line .w-chosen {
   border-radius: 4px;
-  background: var(--ly-soft);
-  box-shadow: inset 0 0 0 1.5px var(--ly-now);
-  color: var(--ly-now);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1.5px var(--accent-strong);
+  color: var(--text);
 }
 
 .lyrics-fix {
@@ -767,7 +860,7 @@ button.part.on:hover {
   max-width: 100%;
   height: var(--control-h);
   padding: 0 10px;
-  border: 1.5px solid var(--ly-now);
+  border: 1.5px solid var(--accent-strong);
   border-radius: var(--r);
   background: var(--card);
   color: var(--text);
@@ -789,122 +882,15 @@ button.part.on:hover {
   margin: 0 auto;
   padding: 8px 14px;
   border-radius: var(--r-card);
-  background: #fff;
-  color: #1c2a52;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
   font: 500 var(--t-small) var(--ui);
   box-shadow: var(--shadow-pop);
 }
 
 .lyrics-said.error {
   color: var(--closed);
-}
-
-.lyrics-line:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-.lyrics-now {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 104px;
-  margin: 0 auto;
-  width: max-content;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 18px;
-  background: #fff;
-  color: #1c2a52;
-  font: 600 13.5px var(--ui);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  z-index: 1;
-}
-
-.lyrics-controls {
-  display: grid;
-  gap: 6px;
-  padding: 8px 18px 16px;
-  background: linear-gradient(to bottom, transparent, rgba(8, 12, 28, 0.35));
-}
-
-.lyrics.full .lyrics-controls {
-  padding-bottom: max(18px, env(safe-area-inset-bottom));
-}
-
-.lyrics-transport {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  direction: ltr;
-}
-
-.lyrics-play {
-  width: 54px;
-  height: 54px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  padding: 0;
-  border-radius: 50%;
-  background: #fff;
-  color: #121a35;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s var(--ease);
-}
-
-.lyrics-play:hover {
-  transform: scale(1.05);
-}
-
-.lyrics-play:active {
-  transform: scale(0.96);
-}
-
-.lyrics-scrub {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  direction: ltr;
-  font: 12px var(--ui);
-  font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.lyrics-scrub input[type='range'] {
-  flex: 1;
-  appearance: none;
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(to right, #fff var(--played, 0%), rgba(255, 255, 255, 0.25) var(--played, 0%));
-  cursor: pointer;
-}
-
-.lyrics-scrub input[type='range']::-webkit-slider-thumb {
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.lyrics-scrub input[type='range']::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border: 0;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.lyrics-foot {
-  margin: 10px 4px 0;
 }
 
 .review-head {
@@ -921,17 +907,16 @@ button.part.on:hover {
 }
 
 @media (max-width: 640px) {
-  .transcripts .lyrics:not(.full) {
-    border-radius: 12px;
-  }
   .lyrics-scroll {
     height: 58vh;
-    padding-inline: 18px;
+    padding-inline: var(--s-4);
+  }
+  .lyrics-line {
+    text-align: start;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lyrics-line,
   .lyrics-line .word,
   .lyrics-play {
     transition: none;
@@ -1312,12 +1297,13 @@ button.part.on:hover {
   color: var(--accent);
 }
 
-/* Where the synced player will be, while the browser asks for its transcript: the same deep blue, the same height. */
+/* Where the synced player will be, while the browser asks for its transcript: the same paper, the same height. */
 .lyrics-wait {
   height: calc(min(62vh, 560px) + 190px);
-  border-radius: 14px;
-  background: linear-gradient(170deg, #2c4378 0%, #1c2a52 48%, #121a35 100%);
-  opacity: 0.35;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  opacity: 0.6;
 }
 
 /* Words a listener marked unclear (`[words?]`): underlined in dots, in the reader and the editor alike. */
@@ -1326,10 +1312,6 @@ button.part.on:hover {
   text-decoration-thickness: 2px;
   text-underline-offset: 5px;
   text-decoration-color: var(--machine);
-}
-
-.lyrics .w-unclear {
-  text-decoration-color: #ffd98a;
 }
 
 .tx-state.resumed {
@@ -1344,19 +1326,11 @@ button.part.on:hover {
   text-underline-offset: 4px;
 }
 
-.lyrics-line .w-pending {
-  text-decoration-color: #8cc4ff;
-}
-
 /* Words both waiting for approval and marked unclear show as unclear, the brackets' words all alike. */
 .w-pending.w-unclear {
   text-decoration: underline dotted var(--machine);
   text-decoration-thickness: 2px;
   text-underline-offset: 5px;
-}
-
-.lyrics .w-pending.w-unclear {
-  text-decoration-color: #ffd98a;
 }
 
 .tx-waiting ul {
@@ -1384,13 +1358,13 @@ button.part.on:hover {
   margin: 0 18px 6px;
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--sunken);
   color: inherit;
 }
 
 .lyrics .tx-discuss .row-sub {
   margin: 0;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--muted);
 }
 
 .lyrics .tx-discuss a {
@@ -1461,12 +1435,6 @@ button.part.on:hover {
 .tx-how .training-goal,
 .tx-how > div {
   margin: 10px 14px 12px;
-}
-
-.lyrics .machine-label {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 0.25);
 }
 
 @media (max-width: 640px) {
