@@ -116,6 +116,16 @@ describe('the public site', () => {
     expect((await get('/sets?shelf=the-rebbe&lang=he')).html).toContain('class="wrap lb lb-asked"');
   });
 
+  it('opens a PDF with only a slim bar: back, its name, and ⋯ for everything else (design/system, board 19)', async () => {
+    const page = await get(`/read?src=${encodeURIComponent('https://drive.google.com/file/d/1abcdefghijklmnopqrstuvwxyzABCDEF/view')}&title=${encodeURIComponent('Sample')}`);
+    expect(page.status).toBe(200);
+    expect(page.html).toContain('class="reader-bar"');
+    expect(page.html).toContain('<h1 class="reader-title">Sample</h1>');
+    expect(page.html).toMatch(/aria-label="More"[^>]*aria-haspopup="dialog"/);
+    // The paper's colours and the rest wait in the sheet, not in a row of tools under the bar.
+    expect(page.html).not.toContain('reader-tools"');
+  });
+
   it('renders the same pages in English at the bare address, with both languages linked for search engines', async () => {
     const page = await get('/sample');
     expect(page.html).toContain('<html lang="en" dir="ltr">');
