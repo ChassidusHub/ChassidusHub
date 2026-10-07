@@ -12,7 +12,7 @@ import { useLang } from '../lib/useLang.js';
 import { PDF_COLORS, pdfCssFilter, resolvedColors, setPdfLook, usePdfLook, usePrefersDark, type PdfColors } from '../reader/look.js';
 import { fixesByPage } from '../reader/pageFix.js';
 import { Icon } from '../ui/Icon.js';
-import { Bar, EmptyState, cx } from '../ui/primitives.js';
+import { Bar, EmptyState, Sheet, Switch, cx } from '../ui/primitives.js';
 import '../styles/pages/reader.css';
 
 /**
@@ -40,6 +40,11 @@ import '../styles/pages/reader.css';
  * paper, and with stronger contrast (reader/look.ts). And it reopens where
  * the reader stopped (lib/places.ts): in this browser, and on the account
  * of a signed-in reader, so the phone opens where the computer left off.
+ *
+ * The page is the page (design/system, board 19): the bars show on a tap
+ * and hide again after three seconds of reading; at the foot, a slider to
+ * any page with its number; everything else (the paper's colours, the
+ * straightened copy, going to a page, the file itself) in one ⋯ sheet.
  */
 
 const ALLOWED_HOSTS = ['api.chassidushub.org', 'files.chassidushub.org'];
@@ -122,7 +127,15 @@ const WORDS = {
   of: { he: 'מתוך', en: 'of' },
   toolbar: { he: 'כלי הקריאה', en: 'Reading tools' },
   original_file: { he: 'הקובץ', en: 'File' },
+  more: { he: 'עוד', en: 'More' },
+  goTo: { he: 'מעבר לעמוד', en: 'Go to page' },
+  go: { he: 'מעבר', en: 'Go' },
+  pageSlider: { he: 'העמוד', en: 'The page' },
+  bars: { he: 'הצגת הסרגלים', en: 'Show the bars' },
 } as const;
+
+/** How long the bars stay after a tap, while reading (board 19). */
+const BARS_FOR_MS = 3000;
 
 /** The page at the top of the screen: the first whose foot is still below the reader's toolbar. */
 function pageInView(container: HTMLElement): number {
@@ -153,6 +166,14 @@ export default function Read({ loaderData }: Route.ComponentProps) {
   // The page at the top of the screen, for the toolbar's count.
   const [at, setAt] = useState(pageAsked ? page : 1);
   const moved = useRef(false);
+  // The bars: shown on a tap, hidden again after a few seconds, and kept while the ⋯ sheet is open.
+  const [bars, setBars] = useState(true);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    if (!bars || more || state.status !== 'ready') return;
+    const timer = setTimeout(() => setBars(false), BARS_FOR_MS);
+    return () => clearTimeout(timer);
+  }, [bars, more, state.status, at]);
 
   // A pinch zooms the page (reader/pdfPageZoom.ts), not the whole site: native pinch zoom is off while reading.
   useEffect(() => {
@@ -268,7 +289,7 @@ export default function Read({ loaderData }: Route.ComponentProps) {
 
   const total_ = state.status === 'ready' ? state.pages : null;
   return (
-    <div className={cx('pdf-viewer-screen', zoomed && 'zoomed', colors === 'dark' && 'pdf-dark')} style={{ '--pdf-filter': pdfCssFilter(colors, look.contrast) } as CSSProperties}>
+    <div className={cx('pdf-viewer-screen', zoomed && 'zoomed', colors === 'dark' && 'pdf-dark', !bars && 'bars-hidden')} style={{ '--pdf-filter': pdfCssFilter(colors, look.contrast) } as CSSProperties}>
       <header className="reader-bar">
         <div className="reader-bar-in">
           <button type="button" className="btn ghost icon" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))} aria-label={t(lang, 'back')} title={t(lang, 'back')}>
@@ -278,38 +299,9 @@ export default function Read({ loaderData }: Route.ComponentProps) {
             <h1 className="reader-title">{title || t(lang, 'readScan')}</h1>
             {sub ? <p className="reader-sub">{sub}</p> : null}
           </div>
-          <span className="reader-count" aria-live="polite">
-            {total_ ? (
-              <>
-                {WORDS.page[lang]} <b>{at}</b> {WORDS.of[lang]} {total_}
-              </>
-            ) : null}
-          </span>
-          <a className="btn sm reader-file" href={src} target="_blank" rel="noreferrer" title={t(lang, 'openOriginal')}>
-            <Icon name="external" size={14} />
-            <span>{WORDS.original_file[lang]}</span>
-          </a>
-        </div>
-        <div className="reader-tools" role="toolbar" aria-label={WORDS.toolbar[lang]}>
-          <span className="reader-tools-label">{WORDS.pagesLook[lang]}</span>
-          <div className="segmented reader-colors" role="group" aria-label={WORDS.pagesLook[lang]}>
-            {PDF_COLORS.map((c) => (
-              <button key={c} type="button" aria-pressed={look.colors === c} onClick={() => setPdfLook({ colors: c as PdfColors })} title={c === 'auto' ? WORDS.autoHint[lang] : undefined}>
-                <i className={`paper ${c}`} aria-hidden="true" />
-                {WORDS[c][lang]}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="btn sm toggle" aria-pressed={look.contrast} onClick={() => setPdfLook({ contrast: !look.contrast })} title={WORDS.contrastHint[lang]}>
-            <Icon name="sun" size={14} />
-            {WORDS.contrast[lang]}
+          <button type="button" className="btn ghost icon" onClick={() => setMore(true)} aria-label={WORDS.more[lang]} title={WORDS.more[lang]} aria-haspopup="dialog">
+            <Icon name="more" />
           </button>
-          {fix ? (
-            <button type="button" className="btn sm toggle reader-straighten" aria-pressed={!straight} onClick={() => setStraight(!straight)}>
-              <Icon name="scan" size={14} />
-              {t(lang, straight ? 'showAsScanned' : 'showStraightened')}
-            </button>
-          ) : null}
         </div>
         {resumedAt && ready ? (
           <div className="reader-note">
@@ -335,6 +327,81 @@ export default function Read({ loaderData }: Route.ComponentProps) {
           </div>
         ) : null}
       </header>
+      {/* While the bars are hidden, a tap anywhere on the page brings them back; for a keyboard, this button does. */}
+      {!bars ? (
+        <button type="button" className="reader-show-bars" onClick={() => setBars(true)}>
+          {WORDS.bars[lang]}
+        </button>
+      ) : null}
+      {total_ ? (
+        <div className="reader-foot" role="toolbar" aria-label={WORDS.toolbar[lang]}>
+          <input
+            type="range"
+            className="reader-slider"
+            min={1}
+            max={total_}
+            step={1}
+            value={at}
+            dir={lang === 'he' ? 'rtl' : 'ltr'}
+            aria-label={WORDS.pageSlider[lang]}
+            aria-valuetext={`${WORDS.page[lang]} ${at} ${WORDS.of[lang]} ${total_}`}
+            onChange={(e) => {
+              moved.current = true;
+              goTo(Number(e.target.value));
+              setBars(true);
+            }}
+            style={{ '--played': `${total_ > 1 ? ((at - 1) / (total_ - 1)) * 100 : 0}%` } as CSSProperties}
+          />
+          <span className="reader-count" aria-live="polite">
+            {WORDS.page[lang]} <b>{at}</b> {WORDS.of[lang]} {total_}
+          </span>
+        </div>
+      ) : null}
+      <Sheet
+        open={more}
+        onClose={() => setMore(false)}
+        title={title || WORDS.more[lang]}
+      >
+        <div className="reader-more">
+          <h3 className="reader-tools-label">{WORDS.pagesLook[lang]}</h3>
+          <div className="segmented reader-colors" role="group" aria-label={WORDS.pagesLook[lang]}>
+            {PDF_COLORS.map((c) => (
+              <button key={c} type="button" aria-pressed={look.colors === c} onClick={() => setPdfLook({ colors: c as PdfColors })} title={c === 'auto' ? WORDS.autoHint[lang] : undefined}>
+                <i className={`paper ${c}`} aria-hidden="true" />
+                {WORDS[c][lang]}
+              </button>
+            ))}
+          </div>
+          <Switch checked={look.contrast} onChange={(on) => setPdfLook({ contrast: on })} label={WORDS.contrastHint[lang]} show />
+          {fix ? <Switch checked={!straight} onChange={(on) => setStraight(!on)} label={t(lang, 'showAsScanned')} show /> : null}
+          {total_ ? (
+            <form
+              className="reader-goto"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const n = Number(new FormData(e.currentTarget).get('page'));
+                if (Number.isInteger(n) && n >= 1) {
+                  moved.current = true;
+                  goTo(Math.min(n, total_));
+                  setMore(false);
+                }
+              }}
+            >
+              <label>
+                {WORDS.goTo[lang]}
+                <input className="input" name="page" type="number" min={1} max={total_} defaultValue={at} key={at} inputMode="numeric" />
+              </label>
+              <button type="submit" className="btn">
+                {WORDS.go[lang]}
+              </button>
+            </form>
+          ) : null}
+          <a className="btn reader-file" href={src} target="_blank" rel="noreferrer">
+            <Icon name="external" size={14} />
+            {t(lang, 'openOriginal')}
+          </a>
+        </div>
+      </Sheet>
       <div className="pdf-viewer-status">
         {state.status === 'loading' ? (
           <div className="pdf-loading" role="status">
@@ -358,7 +425,7 @@ export default function Read({ loaderData }: Route.ComponentProps) {
           />
         ) : null}
       </div>
-      <div ref={pages} className="pdf-pages" />
+      <div ref={pages} className="pdf-pages" onClick={() => !zoomed && setBars((b) => !b)} />
       {state.status === 'ready' ? (
         <p className="pdf-viewer-foot">
           <a href={src} target="_blank" rel="noreferrer">

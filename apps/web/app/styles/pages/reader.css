@@ -1,8 +1,9 @@
 /*
- * The reader (/read), as Sichos-Kodesh's PDF screen lays it out: a
- * toolbar that stays under the site's header (the name, the page one is
- * on, the paper's colours), and the pages down a reading column on the
- * canvas, edge to edge while pinch-zoomed.
+ * The reader (/read), as design/system board 19 draws it: the pages down a
+ * reading column on the canvas, edge to edge on a phone and while
+ * pinch-zoomed; a slim bar at the top (back, the name, ⋯) and one at the
+ * foot (a slider to any page, and its number), both shown on a tap and
+ * gone again while reading.
  */
 
 main#main:has(> .pdf-viewer-screen) {
@@ -25,8 +26,7 @@ main#main:has(> .pdf-viewer-screen) {
   border-bottom: 1px solid var(--border);
 }
 
-.reader-bar-in,
-.reader-tools {
+.reader-bar-in {
   max-width: 980px;
   margin: 0 auto;
   padding-inline: var(--gutter);
@@ -72,10 +72,134 @@ main#main:has(> .pdf-viewer-screen) {
   font-weight: 600;
 }
 
-.reader-tools {
-  padding-block: 0 8px;
-  flex-wrap: wrap;
-  row-gap: 6px;
+/* The bars step aside while reading, and come back on a tap. */
+.reader-bar,
+.reader-foot {
+  transition: transform var(--dur-base) var(--ease), opacity var(--dur-base) var(--ease);
+}
+
+.bars-hidden .reader-bar {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bars-hidden .reader-foot {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* For a keyboard, a way back to the bars; it shows only when it has the focus. */
+.reader-show-bars {
+  position: fixed;
+  top: calc(var(--header-h) + 8px);
+  inset-inline-start: 8px;
+  z-index: 21;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--text);
+  font-size: var(--t-small);
+  clip-path: inset(50%);
+}
+
+.reader-show-bars:focus-visible {
+  clip-path: none;
+}
+
+/* The foot: a slider to any page, and the page one is on. */
+.reader-foot {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(var(--tabs-h, 0px) + var(--player-h, 0px));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) max(var(--gutter), calc((100vw - 980px) / 2));
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.reader-slider {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reader-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to var(--slider-to, right), var(--accent-strong) var(--played, 0%), var(--sunken) var(--played, 0%));
+}
+
+[dir='rtl'] .reader-slider {
+  --slider-to: left;
+}
+
+.reader-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+}
+
+.reader-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sunken);
+}
+
+.reader-slider::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent-strong);
+}
+
+.reader-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-strong);
+}
+
+/* The ⋯ sheet: the paper's colours, contrast, the scan as it is, a page to go to, the file. */
+.reader-more {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.reader-more .reader-tools-label {
+  margin: 0;
+  font-size: var(--t-small);
+}
+
+.reader-goto {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-2);
+}
+
+.reader-goto label {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  font-size: var(--t-small);
+  color: var(--muted);
+}
+
+.reader-more .reader-file {
+  justify-self: start;
 }
 
 .reader-tools-label {
@@ -237,20 +361,8 @@ main#main:has(> .pdf-viewer-screen) {
     gap: 6px;
     min-height: 48px;
   }
-  .reader-file span,
-  .reader-tools-label {
-    display: none;
-  }
-  .reader-tools {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .reader-tools::-webkit-scrollbar {
-    display: none;
-  }
-  .reader-tools > * {
-    flex: none;
+  .reader-colors {
+    flex-wrap: wrap;
   }
   .pdf-pages {
     padding: 8px 0 0;
