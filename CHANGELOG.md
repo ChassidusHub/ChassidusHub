@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- What's new: Home has a band of what can now be heard and read (the
+  Cheshvan and Kislev farbrengens transcribed by AI, the Likkutei Sichos
+  text and Sefer HaSichos 5747–5752, read from the scans by AI), each
+  labelled AI, with a button to `/new`, which lists every Cheshvan and
+  Kislev farbrengen with a recording, year by year, to play at once.
 - Every page has the same bar at its top: where it is on one side; Read ·
   Edit, the page's tools and its "…" on the other, in the same order and
   place on sefer, volume, text, farbrengen, shelf and Organize pages. On a

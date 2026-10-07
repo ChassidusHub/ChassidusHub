@@ -15,6 +15,7 @@ import { accountPlaces, localPlaces, mergePlaces, type Place } from '../lib/plac
 import { REBBEIM } from '../lib/rebbeim.js';
 import { pageMeta } from '../lib/seo.js';
 import { useAccount } from '../lib/useAccount.js';
+import { NEW_THINGS } from '../lib/whatsNew.js';
 import { kviusYears, sameDayIn, thisWeek } from '../lib/week.js';
 import { Icon } from '../ui/Icon.js';
 import '../styles/pages/home.css';
@@ -153,6 +154,8 @@ const W = {
   browse: { he: 'לפי רבי', en: 'Browse by Rebbe' },
   allShelves: { he: 'כל הספרייה', en: 'The whole library' },
   popular: { he: 'ספרים מבוקשים', en: 'Well-known sefarim' },
+  newH: { he: 'מה חדש', en: "What's new" },
+  newAll: { he: 'הכול', en: 'See all' },
 } as const;
 const w = (lang: Lang, key: keyof typeof W) => W[key][lang];
 
@@ -365,6 +368,44 @@ function ListenCard({ card, lang, first }: { card: FeedCard; lang: Lang; first: 
   );
 }
 
+/** A place on the site, kept in the reader's language; a `#part` of it stays at the end. */
+const placeHref = (to: string, lang: Lang) => {
+  const [path, hash] = to.split('#');
+  return `${href(path!, lang)}${hash ? `#${hash}` : ''}`;
+};
+
+/** What is new (lib/whatsNew.ts): what can now be heard and read, each to its place, and a button to all of it. */
+function WhatsNew({ lang }: { lang: Lang }) {
+  return (
+    <section className="hm-new" aria-labelledby="hm-new">
+      <header className="hm-h-row">
+        <h2 className="hm-h" id="hm-new">
+          <Icon name="star" size={16} />
+          {w(lang, 'newH')}
+        </h2>
+        <Link className="btn sm" to={href('/new', lang)}>
+          {w(lang, 'newAll')}
+          <Icon name="chev" size={14} className="flip-ltr" />
+        </Link>
+      </header>
+      <ul className="hm-new-list">
+        {NEW_THINGS.map((x) => (
+          <li key={x.key}>
+            <Link to={placeHref(x.to, lang)}>
+              <Icon name={x.icon} />
+              <span className="grow">
+                <b>{x.title[lang]}</b>
+                <span>{x.text[lang]}</span>
+              </span>
+              <span className="hm-new-ai">AI</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /** What ChassidusHub is for, in Shmuly's words, and the way in: built together, with modern technology and AI, open to all. */
 function Mission({ lang }: { lang: Lang }) {
   return (
@@ -434,6 +475,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     <div className="hm-page">
       <div className="wrap">
         <Ask lang={lang} dayLine={`${week.todayLabel} · ${named}`} hasListen={listen.length > 0} />
+      </div>
+      <div className="wrap">
+        <WhatsNew lang={lang} />
       </div>
       <div className="wrap">
         <Mission lang={lang} />
