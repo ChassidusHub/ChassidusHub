@@ -355,3 +355,136 @@
   border-color: var(--mine-line);
   box-shadow: 0 0 0 3px var(--mine-soft);
 }
+
+/* ------------------------------------------------------------ a fact in Edit (ui/page/Field.tsx) */
+
+.fld {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+}
+
+.fld-show {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 100%;
+  padding: 2px 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: text;
+}
+
+.fld-show:hover,
+.fld-show:focus-visible {
+  border: 1px solid var(--mine);
+  outline: none;
+}
+
+.fld.is-mine .fld-show {
+  border: 1.5px solid var(--mine-line);
+  background: var(--mine-soft);
+}
+
+.fld-pen {
+  flex: none;
+  color: var(--mine);
+  opacity: 0.7;
+}
+
+.fld-empty {
+  color: var(--subtle);
+  font: 400 var(--t-small) var(--ui);
+}
+
+.fld.is-open {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: var(--s-2);
+  border: 1.5px solid var(--mine);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: 0 0 0 4px var(--mine-soft);
+}
+
+.fld-input {
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea.fld-input {
+  font: 400 var(--t-body) / 1.5 var(--ui);
+  resize: vertical;
+}
+
+.fld-input:focus {
+  border-color: var(--mine);
+  outline: none;
+}
+
+.fld-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.ihero-mode {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--s-2);
+}
+
+.phead .pf-edit-hint {
+  margin-bottom: var(--s-3);
+}
+
+.fld-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.fld-small {
+  font-size: var(--t-body);
+  font-family: var(--display);
+}
+
+.vol-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.vol .vol-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-2);
+}
+
+.fld-show > :first-child {
+  min-width: 0;
+}
+
+h1 .fld-show {
+  text-wrap: balance;
+}

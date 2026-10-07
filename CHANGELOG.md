@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Sefer and volume pages have Read and Edit: a sefer's names and its few
+  words, and each sicha's name in a volume, are changed in place into
+  your draft. A volume lists its sichos by name under their parshiyos,
+  where it listed a sicha's numbered pieces.
 - Text pages (a sicha, a letter, a chapter) have Read and Edit at the
   same address. In Edit each paragraph can be fixed, taken out, marked
   right or followed by a new one; the changes collect in your draft, shown

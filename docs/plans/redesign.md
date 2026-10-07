@@ -57,7 +57,11 @@ merge right away"); each new screen replaces the old one as it lands.
    a machine's paragraph checked; Remove and "Add a segment after" are
    changes like any other, each with its own Undo. The tray sends them as
    one Suggestion and says what came of it.
-4. Sefer and volume pages.
+4. Sefer and volume pages. A sefer's names (Hebrew and English) and its
+   few words are Fields: words in Read, a box to change in Edit. A volume
+   lists its sichos by their real names under their parshiyos (a sicha
+   kept in numbered pieces is one row, not "1", "2", "3"), and in Edit
+   each sicha's name can be changed in place.
 5. The library, with Organize as its Edit mode.
 6. Contribute, the Send sheet and Review.
 7. Home with AI search, navigation and You.

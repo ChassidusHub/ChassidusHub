@@ -60,3 +60,17 @@ describe('a text page in Edit', () => {
     expect(html).toMatch(/words-added is-mine">פסקה חדשה/);
   });
 });
+
+describe("an item's fact in Edit (Field)", () => {
+  it('reads as its words in Read and as a box to change in Edit', async () => {
+    const { Field } = await import('../app/ui/page/Field.js');
+    const props = { place: ITEM, item: ITEM, field: 'title.en', before: 'Likkutei Sichos', name: 'the English name', lang: 'en' as const };
+    const read = renderToStaticMarkup(createElement(Field, { ...props, editing: false }));
+    expect(read).toBe('Likkutei Sichos');
+    const edit = renderToStaticMarkup(createElement(Field, { ...props, editing: true }));
+    expect(edit).toContain('class="fld"');
+    expect(edit).toContain('aria-label="Change the English name"');
+    const empty = renderToStaticMarkup(createElement(Field, { ...props, before: null, editing: true }));
+    expect(empty).toContain('Add the English name');
+  });
+});

@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { Form, Link, useSearchParams } from 'react-router';
+import { Form, Link, useLocation, useSearchParams } from 'react-router';
 import { hasShaar, type LocalName, type WorkData } from '@chassidushub/model';
 import { CoverChoice } from '../components/CoverChoice.js';
 import { EditActions, RowEdit } from '../components/EditSheet.js';
@@ -25,6 +25,10 @@ import { EmptyState, MachineLabel } from '../ui/primitives.js';
 import { Shaar } from '../ui/Shaar.js';
 import { commonTabs, p, SideActivity, SideDetails, SideKeepers, SideSection, SideSources, ThreadRows } from './itemParts.js';
 import { ofVolume } from '../lib/volumes.js';
+import { isEditing } from '../lib/editMode.js';
+import { EditTray } from '../ui/page/EditTray.js';
+import { Field } from '../ui/page/Field.js';
+import { ModeSwitch } from '../ui/page/ModeSwitch.js';
 import '../styles/pages/volume.css';
 
 /**
@@ -373,6 +377,8 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
   const slots = useContext(ItemSlots);
   useHashPanels();
   const toc = view.toc!;
+  // Read · Edit: in Edit each sicha's name can be changed in place, into the sefer's draft.
+  const editing = isEditing(useLocation().search);
   const groups = byParsha(toc.groups.filter((g) => g.rows.length), lang, (entity.data as D).genre === 'sichos');
   // From the first parsha to the last ("בראשית – ויחי"); a section like "הוספות - שיחות ומכתבים" is not one.
   const named = groups.map((g) => g.label).filter((x): x is string => Boolean(x) && !x!.includes(' - '));
@@ -390,13 +396,16 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
     { to: href(`/edit/${entity.id}`, lang), icon: 'pencil', label: p(lang, 'edit') },
   ];
   return (
-    <div className="wrap vol">
+    <div className={`wrap vol${editing ? ' is-editing' : ''}`}>
       <div className="vol-top">
         <Link className="vol-back" to={href(itemPath(entity), lang)}>
           <Icon name="back" size={18} />
           <span className="torah">{title}</span>
         </Link>
-        <MoreMenu links={more} actions={slots?.actions} lang={lang} />
+        <span className="vol-tools">
+          <ModeSwitch lang={lang} />
+          <MoreMenu links={more} actions={slots?.actions} lang={lang} />
+        </span>
       </div>
 
       <header className="vol-head">
@@ -448,13 +457,25 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
           </div>
         </details>
       </header>
+      {editing ? (
+        <p className="pf-edit-hint">
+          <Icon name="pencil" />
+          {tu(lang, 'editHint')}
+        </p>
+      ) : null}
 
       {groups.length ? (
         groups.map((g, gi) => (
           <section key={gi} className="vol-group" aria-label={g.label ?? undefined}>
             {g.label ? <h2>{g.label}</h2> : null}
             <ul>
-              {g.rows.map((r) => (
+              {g.rows.map((r) =>
+                editing && !r.pieces ? (
+                  <li key={r.id} className="vol-edit-row">
+                    <Field editing place={entity.id} item={r.id} field="label.he" before={r.label?.he} name={`${tu(lang, 'fieldRowName')} ${r.title}`} lang={lang} dir="rtl" className="torah" />
+                    {r.sub ? <span className="vol-when">{r.sub}</span> : null}
+                  </li>
+                ) : (
                 <li key={r.id}>
                   <Link to={href(r.path, lang)}>
                     <span className="grow">
@@ -470,7 +491,8 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
                     <Icon name="chev" size={16} className="subtle flip-ltr" />
                   </Link>
                 </li>
-              ))}
+                ),
+              )}
             </ul>
           </section>
         ))
@@ -484,6 +506,7 @@ function VolumePage({ entity, view, lang, part, title, partLabel }: { entity: En
           </Link>
         </p>
       ) : null}
+      {editing ? <EditTray place={entity.id} lang={lang} /> : null}
       {slots?.below ? <div className="below">{slots.below}</div> : null}
     </div>
   );
@@ -521,6 +544,9 @@ export function WorkPage({ entity, view, lang }: { entity: Entity; view: ItemVie
   // An addition belongs under an official sefer, and its page leads back there; an official sefer lists its additions.
   const additionTo = typeof d.addition?.to === 'string' ? view.refs[d.addition.to] : undefined;
   const additions = view.lists.additions ?? [];
+  // Read · Edit: in Edit its names and its few words are changed in place, into its draft.
+  const editing = isEditing(useLocation().search) && !partLabel;
+  const names = d.title as LocalName | undefined;
 
   const facts = [
     additionTo ? { icon: 'book' as const, children: <>{w(lang, 'additionTo')}{lang === 'he' ? '' : ' '}<Link to={href(itemPath(additionTo), lang)}>{nameOf((additionTo.data as D).title, lang)}</Link></> } : null,
@@ -559,8 +585,18 @@ export function WorkPage({ entity, view, lang }: { entity: Entity; view: ItemVie
             caption={cover?.machine ? <MachineLabel lang={lang} size="sm">{w(lang, 'machineCover')}</MachineLabel> : firstYear ? `${w(lang, 'shaar')} · ${w(lang, 'printingOf')} ${firstYear}` : undefined}
           />
         ),
-        title: partLabel ? `${title}, ${partLabel}` : title,
+        title: partLabel ? (
+          `${title}, ${partLabel}`
+        ) : editing ? (
+          <span className="fld-stack">
+            <Field editing place={entity.id} item={entity.id} field="title.he" before={names?.he} name={tu(lang, 'fieldNameHe')} lang={lang} dir="rtl" />
+            <Field editing place={entity.id} item={entity.id} field="title.en" before={names?.en} name={tu(lang, 'fieldNameEn')} lang={lang} dir="ltr" className="fld-small" />
+          </span>
+        ) : (
+          title
+        ),
         torah: true,
+        place: partLabel ? undefined : entity.id,
         sub:
           GENRES[d.genre] || authors.length ? (
             <>
@@ -574,7 +610,13 @@ export function WorkPage({ entity, view, lang }: { entity: Entity; view: ItemVie
             </>
           ) : undefined,
         facts,
-        desc: d.description ? <p>{nameOf(d.description, lang)}</p> : undefined,
+        desc: editing ? (
+          <p>
+            <Field editing place={entity.id} item={entity.id} field={`description.${lang}`} before={(d.description as LocalName | undefined)?.[lang]} name={tu(lang, 'fieldAbout')} lang={lang} long />
+          </p>
+        ) : d.description ? (
+          <p>{nameOf(d.description, lang)}</p>
+        ) : undefined,
         actions: (
           <>
             <EditActions target={{ id: entity.id, type: 'work', label: title, parent: sets[0]?.id ?? null }} lang={lang} editHref={href(`/edit/${entity.id}`, lang)} />
