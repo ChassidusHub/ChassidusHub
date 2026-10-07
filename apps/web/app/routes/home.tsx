@@ -3,36 +3,38 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { Route } from './+types/home';
 import { shiurRows, useLearned } from '../components/DailyShiurim.js';
-import { PlayEventButton, eventData, eventRow, type EventItem } from '../components/EventRow.js';
-import type { DailyLearning, MachineToCheck } from '../lib/api.js';
+import { PlayEventButton } from '../components/EventRow.js';
+import type { DailyLearning, Entity } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';
-import { dateLabel } from '../lib/dates.js';
+import { dateLabel, yearLabel } from '../lib/dates.js';
+import { feedCard, type FeedCard } from '../lib/homeFeed.js';
 import { langFrom, nameOf, t, type Lang } from '../lib/i18n.js';
 import { num, tu } from '../lib/i18nUi.js';
-import { href, itemPath } from '../lib/links.js';
-import { accountPlaces, localPlaces, mergePlaces, placeKey, type Place } from '../lib/places.js';
+import { href } from '../lib/links.js';
+import { accountPlaces, localPlaces, mergePlaces, type Place } from '../lib/places.js';
 import { REBBEIM } from '../lib/rebbeim.js';
 import { pageMeta } from '../lib/seo.js';
 import { useAccount } from '../lib/useAccount.js';
-import { thisWeek } from '../lib/week.js';
-import { clock, usePlayer, type Track } from '../player/PlayerProvider.js';
-import { Icon, type IconName } from '../ui/Icon.js';
+import { kviusYears, sameDayIn, thisWeek } from '../lib/week.js';
+import { Icon } from '../ui/Icon.js';
 import '../styles/pages/home.css';
 
 /**
- * The home page. First what ChassidusHub is, in one line, with a search box
- * and the three ways in (the library, the day's learning, listening), so a
- * first visit knows where to go. Then the page as the redesign draws it
- * (design/, screens 3f and 3n): the
- * day (its date, and the chag or the coming Shabbos's parsha), where you
- * stopped reading or listening, the day's learning with a tick for each
- * shiur, where you can help (what the machines read or heard that nobody
- * checked), and a farbrengen of this day in the Rebbe's years to hear. Where
- * you stopped and the ticks are yours, so they are drawn in the browser;
- * the page itself is the same for everyone and kept at the edge. Three reads
- * of the API make it: the day's learning, this day's farbrengens, and what
- * waits to be checked. The Rebbeim and the best-known sefarim at the foot
- * are fixed links, so they cost no read.
+ * The home page, shaped like a chat app's opening screen (design/system,
+ * boards 29 to 32): the day, a big question, one box to search, and
+ * buttons under it (listen with the words, continue, the day's learning,
+ * the library). On a phone the box is docked at the foot, under the
+ * thumb; on a wider screen it sits under the question. Then two things
+ * to press play on or read, each told by what it is about, in its own
+ * table of contents' words: this week in the year whose calendar falls
+ * like this one (the same days and the same parshiyos, lib/week.ts
+ * `kviusYears`), and farbrengens of these days, in any year, that have a
+ * recording with its transcript. Then the day's learning with a tick for
+ * each shiur, and the Rebbeim and best-known sefarim. What waits to be
+ * checked is a helper's question, not a listener's, so it is not here: it
+ * is on the transcript itself and the Help page. Four reads of the API
+ * make the page, the same for everyone and kept at the edge; where you
+ * stopped and the ticks are yours, drawn in the browser.
  */
 
 /** Today as New York has it (`YYYY-MM-DD`), as the daily page does: pages are the same for everyone. */
@@ -42,25 +44,30 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const { api, siteUrl } = siteOf(context);
   const lang = langFrom(request);
   const week = thisWeek(lang);
-  const todayTokens = week.dayTokens.filter((tok) => tok.endsWith(week.today.slice(-3)));
-  const [day, events, toCheck] = await Promise.all([
+  const year = Number(week.today.slice(0, 4));
+  // The latest year of farbrengens whose calendar falls like this one: its week, day by day.
+  const kviusYear = kviusYears(year).find((y) => y !== year) ?? null;
+  const kviusDates = kviusYear ? week.days.map((d) => sameDayIn(d, kviusYear)) : [];
+  const [day, kviusEvents, nearEvents, transcribed] = await Promise.all([
     api.daily(todayInNewYork()).catch(() => null),
-    api.events({ day: todayTokens, limit: 200, brief: true }).catch(() => []),
-    api.toCheck(1).catch(() => null),
+    kviusDates.length ? api.events({ dates: kviusDates, limit: 40 }).catch(() => []) : Promise.resolve([]),
+    api.events({ day: week.dayTokens, limit: 300 }).catch(() => []),
+    api.transcribed(1000).catch(() => []),
   ]);
-  // A farbrengen of this day to hear: the latest year's that has a recording.
-  const heard = events
-    .filter((e) => todayTokens.includes(String(eventData(e).date).slice(5)) && (e.recordings ?? 0) > 0)
-    .sort((a, b) => String(eventData(b).date).localeCompare(String(eventData(a).date)));
+  const withWords = new Set(transcribed.map((r) => r.event).filter((x): x is string => Boolean(x)));
+  const byDate = (a: Entity, b: Entity) => String((a.data as { date?: string }).date).localeCompare(String((b.data as { date?: string }).date));
+  // These days in any year, those with a recording and its transcript first; the kvius year's own are above already.
+  const heard = nearEvents.filter((e) => (e.recordings ?? 0) > 0 && !kviusEvents.some((k) => k.id === e.id));
+  const listen = [...heard.filter((e) => withWords.has(e.id)), ...heard.filter((e) => !withWords.has(e.id))].slice(0, 5);
   return {
     lang,
     siteUrl,
     week,
     weekday: dateKeyToHDate(week.today)?.getDay() ?? 0,
     day,
-    listen: heard[0] ? eventRow(heard[0]) : null,
-    listenMore: Math.max(0, heard.length - 1),
-    help: toCheck ? { totals: toCheck.totals, next: toCheck.transcripts[0] ?? null } : null,
+    kviusYear,
+    kvius: [...kviusEvents].sort(byDate).map((e) => feedCard(e, withWords)),
+    listen: listen.map((e) => feedCard(e, withWords)),
   };
 }
 
@@ -103,123 +110,36 @@ const WEEKDAYS: Record<Lang, string[]> = {
 };
 
 const W = {
-  heroTitle: { he: 'הספרייה הפתוחה של תורת חב״ד', en: 'The open library of Chabad Torah' },
-  heroText: {
-    he: 'ספרי רבותינו נשיאינו, ההתוועדויות של הרבי בהקלטה, והלימוד היומי. חינם לכולם, ונבנה יחד בידי הלומדים.',
-    en: 'Read the Rebbeim’s sefarim, hear the Rebbe’s farbrengens, and learn each day’s shiurim. Free for everyone, and built together by the people who learn here.',
-  },
+  ask: { he: 'מה תרצו ללמוד היום?', en: 'What would you like to learn today?' },
+  box: { he: 'שאלה או חיפוש', en: 'Ask or search' },
   searchGo: { he: 'חיפוש', en: 'Search' },
-  try: { he: 'למשל:', en: 'Try:' },
-  yudShvat: { he: 'י׳ שבט', en: 'Yud Shvat' },
-  libraryText: { he: 'ספרי הרבי ורבותינו נשיאינו, לפי רבי וספר', en: 'The Rebbe’s and the Rebbeim’s sefarim, by Rebbe and sefer' },
-  dailyText: { he: 'חומש, תהילים, תניא, רמב״ם והיום יום', en: 'Chumash, Tehillim, Tanya, Rambam and Hayom Yom' },
-  listenText: { he: 'התוועדויות הרבי בהקלטה, לפי תאריך', en: 'The Rebbe’s farbrengens, recorded, by date' },
-  today: { he: 'היום', en: 'Today' },
-  browse: { he: 'לפי רבי', en: 'Browse by Rebbe' },
-  allShelves: { he: 'כל הספרייה', en: 'The whole library' },
-  popular: { he: 'ספרים מבוקשים', en: 'Well-known sefarim' },
-  helpAll: { he: 'כל הדרכים לעזור', en: 'All the ways to help' },
-  parsha: { he: 'פרשת', en: 'Parshas' },
-  continue: { he: 'להמשיך מאיפה שהפסקתם', en: 'Continue where you stopped' },
-  read: { he: 'המשך קריאה', en: 'Continue reading' },
-  hear: { he: 'המשך שמיעה', en: 'Continue listening' },
-  pause: { he: 'השהיה', en: 'Pause' },
-  page: { he: 'עמוד', en: 'Page' },
-  of: { he: 'מתוך', en: 'of' },
+  listenWords: { he: 'להאזין, והמילים לפניכם', en: 'Listen, with the words before you' },
+  continueTo: { he: 'להמשיך', en: 'Continue' },
   daily: { he: 'לימוד יומי', en: 'Daily learning' },
+  library: { he: 'ספרייה', en: 'Library' },
+  parsha: { he: 'פרשת', en: 'Parshas' },
+  kviusTitle: { he: 'השבוע, באותה קביעות: {year}', en: 'This week, in the same kvius: {year}' },
+  kviusText: { he: '{year} חלה כמו השנה: אותם ימים ואותן פרשיות', en: '{year} fell like this year: the same days and the same parshiyos' },
+  readSichos: { he: 'לקרוא את השיחות', en: 'Read the sichos' },
+  listenTitle: { he: 'להאזין, והמילים לפניכם', en: 'Listen, with the words before you' },
+  listenText: { he: 'מהימים האלה, עם הקלטה ותמלול', en: 'From these days, with a recording and its transcript' },
+  listenTextPlain: { he: 'מהימים האלה, בהקלטה', en: 'From these days, recorded' },
+  withText: { he: 'להאזין עם הטקסט', en: 'Listen with the text' },
+  hear: { he: 'להאזין', en: 'Listen' },
+  maamar: { he: 'מאמר', en: 'Maamar' },
+  parts: { he: 'חלקים', en: 'parts' },
+  credit: { he: 'תוכן הענינים: mafteiach.app', en: 'Contents: mafteiach.app' },
   dailyPage: { he: 'לדף המלא', en: 'The full page' },
   all: { he: 'הכול', en: 'All' },
   hayomYom: { he: 'היום יום', en: 'Hayom Yom' },
   rambam: { he: 'רמב״ם', en: 'Rambam' },
   learned: { he: 'למדתי', en: 'Learned' },
-  help: { he: 'אפשר לעזור', en: 'You can help' },
-  helpText: { he: 'הכול כאן נבנה בידי הלומדים: כל תיקון נבדק לפני שהוא נכנס.', en: 'Everything here is built by the people who learn here: every fix is checked before it goes in.' },
-  pages: { he: 'דפים שטרם נבדקו', en: 'Pages not yet checked' },
-  pagesHint: { he: 'להשוות טקסט לדף הסרוק', en: 'Compare the text with the scanned page' },
-  recordings: { he: 'הקלטות לתמלול', en: 'Recordings to transcribe' },
-  recordingsHint: { he: 'להקשיב ולתקן שורות', en: 'Listen and fix lines' },
-  listen: { he: 'להאזנה', en: 'To listen' },
-  recording: { he: 'הקלטת הרבי', en: 'The Rebbe’s recording' },
-  parts: { he: 'חלקים', en: 'parts' },
-  part: { he: 'חלק', en: 'part' },
-  moreToday: { he: 'עוד {n} מהיום הזה בשנים אחרות', en: '{n} more from this day in other years' },
+  of: { he: 'מתוך', en: 'of' },
+  browse: { he: 'לפי רבי', en: 'Browse by Rebbe' },
+  allShelves: { he: 'כל הספרייה', en: 'The whole library' },
+  popular: { he: 'ספרים מבוקשים', en: 'Well-known sefarim' },
 } as const;
 const w = (lang: Lang, key: keyof typeof W) => W[key][lang];
-
-/** How far into a place you are, 0 to 1, and where: `עמוד 14 מתוך 60`, `חלק 2 · 12:40`. */
-function progressOf(place: Place, lang: Lang): { done: number; where: string } {
-  const p = place.place;
-  if (place.kind === 'read') {
-    const page = Number(p.page) || 1;
-    const pages = Number(p.pages) || 0;
-    return { done: pages ? page / pages : 0, where: `${w(lang, 'page')} ${page}${pages ? ` ${w(lang, 'of')} ${pages}` : ''}` };
-  }
-  const queue = (p.queue as Track[] | undefined) ?? [];
-  const index = Number(p.index) || 0;
-  const time = Number(p.time) || 0;
-  const duration = Number(p.duration) || 0;
-  const done = queue.length ? (index + (duration ? time / duration : 0)) / queue.length : 0;
-  return { done, where: [queue.length > 1 ? `${w(lang, 'part')} ${index + 1}/${queue.length}` : '', clock(time)].filter(Boolean).join(' · ') };
-}
-
-/**
- * The last thing you were reading or hearing, from this browser and, when
- * signed in, your account (what you left on your phone is here on your
- * computer). Nothing is drawn until there is one.
- */
-function ContinueCard({ lang }: { lang: Lang }) {
-  const account = useAccount();
-  const player = usePlayer();
-  const [place, setPlace] = useState<Place | null>(null);
-  useEffect(() => {
-    let live = true;
-    setPlace(localPlaces()[0] ?? null);
-    if (account) void accountPlaces({ limit: 5 }).then((remote) => live && setPlace(mergePlaces(localPlaces(), remote)[0] ?? null));
-    return () => {
-      live = false;
-    };
-  }, [account]);
-  if (!place) return null;
-  const { done, where } = progressOf(place, lang);
-  const pct = Math.round(Math.max(0, Math.min(1, done)) * 100);
-  const queue = (place.place.queue as Track[] | undefined) ?? [];
-  const index = Number(place.place.index) || 0;
-  const mine = place.kind === 'listen' && player.current !== null && placeKey(player.current) === place.key;
-  return (
-    <section className="hm-continue" aria-labelledby="hm-continue">
-      <h2 className="hm-h" id="hm-continue">
-        {w(lang, 'continue')}
-      </h2>
-      <div className="hm-card">
-        {place.sub ? <span className="hm-kicker">{place.sub}</span> : null}
-        <Link className="hm-card-title" to={place.href}>
-          {place.title}
-        </Link>
-        <span className="hm-where">{where}</span>
-        <div className="hm-progress">
-          {place.kind === 'listen' && queue[index] ? (
-            <button type="button" className="btn primary" onClick={() => (mine ? player.toggle() : player.play(queue, index, Number(place.place.time) || 0))}>
-              <Icon name={mine && player.playing ? 'pause' : 'play'} size={14} />
-              {mine && player.playing ? w(lang, 'pause') : w(lang, 'hear')}
-            </button>
-          ) : (
-            <Link className="btn primary" to={place.href}>
-              {w(lang, 'read')}
-            </Link>
-          )}
-          {pct ? (
-            <>
-              <span className="hm-pct">{pct}%</span>
-              <span className="hm-track" aria-hidden="true">
-                <i style={{ width: `${pct}%` }} />
-              </span>
-            </>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /** The day's learning: each shiur with a tick, kept in this browser and shared with the daily page. */
 function DailyCard({ day, lang }: { day: DailyLearning; lang: Lang }) {
@@ -275,70 +195,6 @@ function DailyCard({ day, lang }: { day: DailyLearning; lang: Lang }) {
   );
 }
 
-/** Where help is needed: what the machines read and heard that no person has checked. */
-function HelpList({ help, lang }: { help: { totals: MachineToCheck['totals']; next: MachineToCheck['transcripts'][number] | null }; lang: Lang }) {
-  const { totals, next } = help;
-  const rows: Array<{ key: string; to: string; title: string; hint: string; icon: 'dot' | 'audio' }> = [];
-  if (totals.texts) rows.push({ key: 'pages', to: href('/check', lang), title: w(lang, 'pages'), hint: `${num(totals.texts, lang)} · ${w(lang, 'pagesHint')}`, icon: 'dot' });
-  if (totals.transcripts) rows.push({ key: 'recordings', to: next ? href(next.path ?? `/${next.event}`, lang, { tab: 'text' }) : href('/check', lang), title: w(lang, 'recordings'), hint: `${num(totals.transcripts, lang)} · ${w(lang, 'recordingsHint')}`, icon: 'audio' });
-  return (
-    <section className="hm-help" aria-labelledby="hm-help">
-      <h2 className="hm-h" id="hm-help">
-        {w(lang, 'help')}
-      </h2>
-      <p className="hm-help-text">{w(lang, 'helpText')}</p>
-      <ul className="hm-help-list">
-        {rows.map((r) => (
-          <li key={r.key}>
-            <Link to={r.to}>
-              <Icon name={r.icon} size={r.icon === 'dot' ? 20 : 16} className={r.icon === 'dot' ? 'hm-machine' : 'subtle'} />
-              <span className="hm-help-main">
-                <b>{r.title}</b>
-                <span>{r.hint}</span>
-              </span>
-              <Icon name={lang === 'he' ? 'chev' : 'chevr'} size={16} className="subtle hm-go" />
-            </Link>
-          </li>
-        ))}
-        <li>
-          <Link to={href('/help', lang)}>
-            <Icon name="heart" size={16} className="subtle" />
-            <span className="hm-help-main">
-              <b>{w(lang, 'helpAll')}</b>
-            </span>
-            <Icon name={lang === 'he' ? 'chev' : 'chevr'} size={16} className="subtle hm-go" />
-          </Link>
-        </li>
-      </ul>
-    </section>
-  );
-}
-
-/** A farbrengen of this day in the Rebbe's years, to play here. */
-function ListenCard({ event, more, lang }: { event: EventItem & { recordings?: number }; more: number; lang: Lang }) {
-  const d = eventData(event);
-  const parts = event.recordings ?? 0;
-  return (
-    <section className="hm-listen" aria-labelledby="hm-listen">
-      <h2 className="hm-h" id="hm-listen">
-        {w(lang, 'listen')}
-      </h2>
-      <div className="hm-card hm-listen-card">
-        <PlayEventButton event={event} size="large" />
-        <Link className="hm-listen-main" to={href(itemPath(event), lang)}>
-          <b>{nameOf(d.title, lang)}</b>
-          <span>{[w(lang, 'recording'), d.date ? dateLabel(d.date, lang, { civil: false }) : '', parts > 1 ? `${num(parts, lang)} ${w(lang, 'parts')}` : ''].filter(Boolean).join(' · ')}</span>
-        </Link>
-      </div>
-      {more ? (
-        <Link className="hm-more" to={href('/calendar', lang)}>
-          {w(lang, 'moreToday').replace('{n}', num(more, lang))}
-        </Link>
-      ) : null}
-    </section>
-  );
-}
-
 /** The best-known sefarim, by their lasting addresses (an address that changes keeps redirecting). */
 const POPULAR: Array<{ to: string; he: string; en: string }> = [
   { to: '/likkutei-sichos', he: 'לקוטי שיחות', en: 'Likkutei Sichos' },
@@ -351,59 +207,126 @@ const POPULAR: Array<{ to: string; he: string; en: string }> = [
   { to: '/shulchan-aruch-harav', he: 'שולחן ערוך הרב', en: 'Shulchan Aruch HaRav' },
 ];
 
-/** What ChassidusHub is, the search box, and a few things to try. Without script the box is a plain form to the search page. */
-function Hero({ lang }: { lang: Lang }) {
-  const tries: Array<{ to: string; label: string }> = [
-    { to: href('/likkutei-sichos', lang), label: lang === 'he' ? 'לקוטי שיחות' : 'Likkutei Sichos' },
-    { to: href('/tanya', lang), label: lang === 'he' ? 'תניא' : 'Tanya' },
-    { to: href('/search', lang, { q: 'יו״ד שבט' }), label: w(lang, 'yudShvat') },
-  ];
+/**
+ * The last thing you were reading or hearing, from this browser and, when
+ * signed in, your account, as a button under the question. Nothing is
+ * drawn until there is one.
+ */
+function ContinueButton({ lang }: { lang: Lang }) {
+  const account = useAccount();
+  const [place, setPlace] = useState<Place | null>(null);
+  useEffect(() => {
+    let live = true;
+    setPlace(localPlaces()[0] ?? null);
+    if (account) void accountPlaces({ limit: 5 }).then((remote) => live && setPlace(mergePlaces(localPlaces(), remote)[0] ?? null));
+    return () => {
+      live = false;
+    };
+  }, [account]);
+  if (!place) return null;
   return (
-    <section className="hm-hero">
-      <h1>{w(lang, 'heroTitle')}</h1>
-      <p className="hm-lede">{w(lang, 'heroText')}</p>
-      <form className="hm-search" action="/search" method="get" role="search" aria-label={tu(lang, 'searchShort')}>
+    <Link className="hm-btn" to={place.href}>
+      <Icon name={place.kind === 'listen' ? 'audio' : 'book'} size={16} />
+      <span>
+        {w(lang, 'continueTo')} <b>{place.title}</b>
+      </span>
+    </Link>
+  );
+}
+
+/** The question, the one box and the buttons under it. Without script the box is a plain form to the search page. */
+function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasListen: boolean }) {
+  return (
+    <section className="hm-ask">
+      <p className="hm-dayline">{dayLine}</p>
+      <h1>{w(lang, 'ask')}</h1>
+      <form className="hm-box" action="/search" method="get" role="search" aria-label={tu(lang, 'searchShort')}>
         <Icon name="search" />
-        <input name="q" type="search" placeholder={tu(lang, 'searchLibrary')} aria-label={tu(lang, 'searchShort')} />
+        <input name="q" type="search" placeholder={w(lang, 'box')} aria-label={w(lang, 'box')} enterKeyHint="search" />
         {lang === 'he' ? <input type="hidden" name="lang" value="he" /> : null}
-        <button type="submit" className="btn primary">
-          {w(lang, 'searchGo')}
+        <button type="submit" className="hm-box-go" aria-label={w(lang, 'searchGo')}>
+          <Icon name={lang === 'he' ? 'chev' : 'chevr'} size={18} />
         </button>
       </form>
-      <p className="hm-try">
-        <span>{w(lang, 'try')}</span>
-        {tries.map((x) => (
-          <Link key={x.to} to={x.to}>
-            {x.label}
-          </Link>
-        ))}
-      </p>
+      <nav className="hm-btns" aria-label={tu(lang, 'mainNav')}>
+        {hasListen ? (
+          <a className="hm-btn hm-btn-strong" href="#hm-listen">
+            <Icon name="audio" size={16} />
+            {w(lang, 'listenWords')}
+          </a>
+        ) : null}
+        <ContinueButton lang={lang} />
+        <Link className="hm-btn" to={href('/daily', lang)}>
+          <Icon name="cal" size={16} />
+          {w(lang, 'daily')}
+        </Link>
+        <Link className="hm-btn" to={href('/sets', lang)}>
+          <Icon name="book" size={16} />
+          {w(lang, 'library')}
+        </Link>
+      </nav>
     </section>
   );
 }
 
-/** The three ways in, each with a line saying what is there. */
-function Doors({ lang }: { lang: Lang }) {
-  const doors: Array<{ to: string; icon: IconName; title: string; text: string }> = [
-    { to: '/sets', icon: 'book', title: tu(lang, 'navLibrary'), text: w(lang, 'libraryText') },
-    { to: '/daily', icon: 'cal', title: tu(lang, 'navDailyLong'), text: w(lang, 'dailyText') },
-    { to: '/calendar', icon: 'audio', title: tu(lang, 'navListen'), text: w(lang, 'listenText') },
-  ];
+const WHEN: Record<Lang, string[]> = {
+  he: ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'השבת'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Shabbos'],
+};
+
+/** A farbrengen of this week in the kvius year: when, its name, what it is about, and its maamar. */
+function KviusCard({ card, lang }: { card: FeedCard; lang: Lang }) {
+  const day = card.date ? dateKeyToHDate(card.date)?.getDay() : undefined;
+  const when = [day !== undefined ? WHEN[lang][day] : '', card.date ? dateLabel(card.date, lang, { civil: false }).replace(/\s\S+$/u, '') : ''].filter(Boolean).join(' · ');
   return (
-    <nav className="hm-doors" aria-label={tu(lang, 'mainNav')}>
-      {doors.map((d) => (
-        <Link key={d.to} className="hm-door" to={href(d.to, lang)}>
-          <span className="hm-door-icon">
-            <Icon name={d.icon} size={22} />
-          </span>
-          <span className="hm-door-main">
-            <b>{d.title}</b>
-            <span>{d.text}</span>
-          </span>
-          <Icon name={lang === 'he' ? 'chev' : 'chevr'} size={18} className="subtle hm-go" />
+    <li className="hm-kv">
+      <span className="hm-kicker">{when}</span>
+      <Link className="hm-kv-title" to={href(card.path, lang)}>
+        {nameOf(card.title, lang)} {card.date ? yearLabel(Number(card.date.slice(0, 4)), lang) : ''}
+      </Link>
+      {card.topics.length ? (
+        <ul className="hm-topics torah" lang="he" dir="rtl">
+          {card.topics.map((x) => (
+            <li key={x}>{x}</li>
+          ))}
+        </ul>
+      ) : null}
+      {card.maamar ? (
+        <p className="hm-maamar" lang="he" dir="rtl">
+          {w(lang, 'maamar')}: {card.maamar}
+        </p>
+      ) : null}
+      <Link className="hm-kv-go" to={href(card.path, lang)}>
+        {w(lang, 'readSichos')}
+        <Icon name={lang === 'he' ? 'chev' : 'chevr'} size={14} />
+      </Link>
+    </li>
+  );
+}
+
+/** A farbrengen of these days to hear: the first one large, in ink; the rest as quiet rows. */
+function ListenCard({ card, lang, first }: { card: FeedCard; lang: Lang; first: boolean }) {
+  const event = { id: card.id, type: 'event', path: card.path, rev: 0, data: { title: card.title, date: card.date }, recordings: card.recordings } as unknown as Entity & { recordings: number };
+  return (
+    <li className={first ? 'hm-ls hm-ls-first' : 'hm-ls'}>
+      <PlayEventButton event={event} size={first ? 'large' : undefined} />
+      <div className="hm-ls-main">
+        <Link className="hm-ls-title" to={href(card.path, lang)}>
+          {nameOf(card.title, lang)}
         </Link>
-      ))}
-    </nav>
+        <span className="hm-ls-when">{[card.date ? dateLabel(card.date, lang, { civil: false }) : '', card.recordings > 1 ? `${num(card.recordings, lang)} ${w(lang, 'parts')}` : ''].filter(Boolean).join(' · ')}</span>
+        {card.topics[0] ? (
+          <p className="hm-ls-topic torah" lang="he" dir="rtl">
+            {card.topics[0]}
+          </p>
+        ) : null}
+        {card.transcript ? (
+          <Link className="hm-ls-go" to={href(card.path, lang)}>
+            {w(lang, 'withText')}
+          </Link>
+        ) : null}
+      </div>
+    </li>
   );
 }
 
@@ -446,30 +369,45 @@ function Browse({ lang }: { lang: Lang }) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { lang, week, weekday, day, listen, listenMore, help } = loaderData;
-  const title = week.holidays[0] ?? (week.parsha ? `${w(lang, 'parsha')} ${week.parsha}` : WEEKDAYS[lang][weekday]!);
+  const { lang, week, weekday, day, kviusYear, kvius, listen } = loaderData;
+  const named = week.holidays[0] ?? (week.parsha ? `${w(lang, 'parsha')} ${week.parsha}` : WEEKDAYS[lang][weekday]!);
+  const kvYear = kviusYear ? yearLabel(kviusYear, lang) : '';
+  const words = listen.some((c) => c.transcript);
   return (
     <div className="hm-page">
       <div className="wrap">
-        <Hero lang={lang} />
-        <Doors lang={lang} />
+        <Ask lang={lang} dayLine={`${week.todayLabel} · ${named}`} hasListen={listen.length > 0} />
       </div>
-      <div className="wrap hm">
-        <div className="hm-col hm-start">
-          <header className="hm-day">
-            <p>
-              {w(lang, 'today')} · {WEEKDAYS[lang][weekday]} · {week.todayLabel}
-            </p>
-            <h2>{title}</h2>
-          </header>
-          <ContinueCard lang={lang} />
-          {listen ? <ListenCard event={listen as EventItem & { recordings?: number }} more={listenMore} lang={lang} /> : null}
-        </div>
-        <div className="hm-col hm-end">
-          {day ? <DailyCard day={day} lang={lang} /> : null}
-          <HelpList help={help ?? { totals: { texts: 0, transcripts: 0 } as MachineToCheck['totals'], next: null }} lang={lang} />
-        </div>
+      <div className="wrap hm-feed">
+        {kvius.length ? (
+          <section className="hm-section" aria-labelledby="hm-kvius">
+            <h2 className="hm-h" id="hm-kvius">
+              {w(lang, 'kviusTitle').replace('{year}', kvYear)}
+            </h2>
+            <p className="hm-sub">{w(lang, 'kviusText').replace('{year}', kvYear)}</p>
+            <ul className="hm-kvs">
+              {kvius.map((c) => (
+                <KviusCard key={c.id} card={c} lang={lang} />
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        {listen.length ? (
+          <section className="hm-section" id="hm-listen" aria-labelledby="hm-listen-h">
+            <h2 className="hm-h" id="hm-listen-h">
+              {w(lang, 'listenTitle')}
+            </h2>
+            <p className="hm-sub">{w(lang, words ? 'listenText' : 'listenTextPlain')}</p>
+            <ul className="hm-lss">
+              {listen.map((c, i) => (
+                <ListenCard key={c.id} card={c} lang={lang} first={i === 0} />
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        {kvius.some((c) => c.topics.length) || listen.some((c) => c.topics.length) ? <p className="hm-credit">{w(lang, 'credit')}</p> : null}
       </div>
+      <div className="wrap hm-day-wrap">{day ? <DailyCard day={day} lang={lang} /> : null}</div>
       <div className="wrap">
         <Browse lang={lang} />
       </div>

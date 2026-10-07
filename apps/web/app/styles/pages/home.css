@@ -1,141 +1,372 @@
 /*
- * The home page (routes/home.tsx). At the top, what the site is, the search
- * box and the three ways in; then, as design/ draws it: on a wide screen
- * two columns, the day and where you stopped at the start, the day's
- * learning and where to help at the end; on a phone one column, the
- * learning as cards to swipe through.
+ * The home page (routes/home.tsx), shaped like a chat app's opening screen
+ * (design/system, boards 29 to 32): the day, a big question, one box and
+ * the buttons under it; then this week in the kvius year and farbrengens
+ * of these days to hear, each told by what it is about; then the day's
+ * learning and the library. On a phone the box is docked at the foot,
+ * under the thumb, above the tabs and the player.
  */
 
-/* What the site is, in a line, and the search box under it. */
-.hm-hero {
-  padding-block: 44px 24px;
-  max-width: 760px;
+.hm-ask {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-4);
+  max-width: 720px;
+  margin: 0 auto;
+  padding-block: var(--s-8) var(--s-7);
+  text-align: center;
 }
 
-.hm-hero h1 {
-  font: 700 40px / 1.15 var(--display);
-  letter-spacing: -0.01em;
+.hm-dayline {
   margin: 0;
+  color: var(--subtle);
+  font-size: var(--t-small);
 }
 
-.hm-lede {
-  margin-top: 12px;
-  font-size: 17px;
-  line-height: 1.55;
-  color: var(--muted);
-  max-width: 640px;
+.hm-ask h1 {
+  margin: 0;
+  font: 700 var(--t-hero) / 1.1 var(--display);
+  letter-spacing: -0.01em;
 }
 
-.hm-search {
+/* The one box: search now, and ask when the library can answer (design/system, board 31). */
+.hm-box {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 22px;
-  padding: 6px 6px 6px 16px;
-  background: var(--card);
+  gap: var(--s-2);
+  width: 100%;
+  margin-top: var(--s-2);
+  padding: 6px 6px 6px 18px;
   border: 1px solid var(--border-strong);
-  border-radius: 12px;
+  border-radius: var(--r-pill);
+  background: var(--card);
   color: var(--subtle);
+  box-shadow: var(--shadow-pop);
 }
 
-[dir='rtl'] .hm-search {
-  padding: 6px 16px 6px 6px;
+[dir='rtl'] .hm-box {
+  padding: 6px 18px 6px 6px;
 }
 
-.hm-search:focus-within {
+.hm-box:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-pop);
 }
 
-.hm-search input {
+.hm-box input {
   flex: 1;
   min-width: 0;
+  padding: 10px 0;
   border: 0;
   background: none;
-  font: inherit;
-  font-size: 17px;
   color: var(--text);
-  padding: 8px 0;
+  font: inherit;
+  font-size: var(--t-body-lg);
   outline: none;
 }
 
-.hm-search .btn {
+.hm-box-go {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
   height: 40px;
-  padding: 0 20px;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  color: #fff;
+  cursor: pointer;
+}
+
+.hm-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+.hm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--control-h);
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--text);
+  font-size: var(--t-small);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.hm-btn:hover {
+  border-color: var(--accent-line);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.hm-btn b {
+  font-weight: 600;
+}
+
+.hm-btn-strong {
+  border-color: var(--strong);
+  background: var(--strong);
+  color: var(--on-strong);
+}
+
+.hm-btn-strong:hover {
+  color: var(--on-strong);
+  opacity: 0.92;
+}
+
+/* The two lists: this week in the kvius year, and these days to hear. */
+.hm-feed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-6);
+  align-items: start;
+  padding-bottom: var(--s-6);
+}
+
+.hm-section {
+  min-width: 0;
+  scroll-margin-top: calc(var(--header-h) + 16px);
+}
+
+.hm-section .hm-h {
+  margin: 0;
+  color: var(--text);
+  font: 700 var(--t-heading) / 1.3 var(--display);
+}
+
+.hm-sub {
+  margin: 2px 0 var(--s-3);
+  color: var(--subtle);
+  font-size: var(--t-small);
+}
+
+.hm-kvs,
+.hm-lss {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+.hm-kv {
+  display: grid;
+  gap: 4px;
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+}
+
+.hm-kicker {
+  color: var(--subtle);
+  font-size: var(--t-caption);
+}
+
+.hm-kv-title {
+  color: var(--text);
+  font: 700 var(--t-subhead) / 1.35 var(--display);
+}
+
+.hm-topics {
+  margin: 4px 0 0;
+  padding-inline-start: 1.1em;
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: var(--t-body-lg);
+  line-height: 1.6;
+}
+
+.hm-maamar {
+  margin: 2px 0 0;
+  color: var(--accent);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.hm-kv-go,
+.hm-ls-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+  margin-top: 6px;
+  color: var(--accent);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+
+.hm-ls {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.hm-ls-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hm-ls-title {
+  color: var(--text);
   font-weight: 700;
 }
 
-.hm-try {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  margin-top: 12px;
-  font-size: var(--fs-md);
+.hm-ls-when {
   color: var(--subtle);
+  font-size: var(--t-caption);
 }
 
-/* The three ways in: a card each, its icon, its name and what is there. */
-.hm-doors {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+.hm-ls-topic {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: var(--t-body);
+  line-height: 1.55;
+}
+
+/* The first to hear, large and in ink. */
+.hm-ls-first {
+  padding: var(--s-4);
+  border: 0;
+  border-radius: var(--r-card);
+  background: var(--strong);
+  color: var(--on-strong);
+}
+
+.hm-ls-first .hm-ls-title {
+  color: var(--on-strong);
+  font: 700 var(--t-subhead) / 1.35 var(--display);
+}
+
+.hm-ls-first .hm-ls-when,
+.hm-ls-first .hm-ls-topic {
+  color: color-mix(in srgb, var(--on-strong) 75%, transparent);
+}
+
+.hm-ls-first .pp {
+  width: 52px;
+  height: 52px;
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+.hm-ls-first .hm-ls-go {
+  color: var(--on-strong);
+  text-decoration: underline;
+}
+
+.hm-credit {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--faint);
+  font-size: var(--t-caption);
+}
+
+.hm-day-wrap {
+  max-width: 720px;
+  padding-bottom: var(--s-6);
+}
+
+/* A section's heading: small, quiet, above its content. */
+.hm-h {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 10px;
+  letter-spacing: 0;
+}
+
+.hm-h-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
 }
 
-.hm-door {
-  display: flex;
+.hm-h-row .hm-h {
+  margin: 0;
+}
+
+.hm-h-row a {
+  font-size: var(--fs-md);
+}
+
+.hm-count {
+  font-weight: 400;
+  color: var(--subtle);
+}
+
+.hm-narrow {
+  display: none;
+}
+
+/* The day's learning: a tick, the shiur's name, and today's portion. */
+.hm-shiurim li {
+  display: grid;
+  grid-template-columns: 26px 9rem minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
-  padding: 18px 18px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.hm-tick {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  background: none;
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.done .hm-tick {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.hm-shiur-name {
+  color: var(--subtle);
+}
+
+.hm-shiurim li:not(.done) .hm-shiur-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.hm-shiur-what {
+  font-size: 17px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hm-shiur-what a {
   color: var(--text);
 }
 
-.hm-door:hover {
-  text-decoration: none;
-  border-color: var(--accent-line);
-}
-
-.hm-door:hover b {
-  color: var(--accent);
-}
-
-.hm-door-icon {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.hm-door-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.hm-door-main b {
-  font-size: 17px;
-}
-
-.hm-door-main span {
+.done .hm-shiur-what,
+.done .hm-shiur-what a {
   color: var(--subtle);
-  font-size: var(--fs-md);
-  line-height: 1.4;
-}
-
-.hm-help-text {
-  color: var(--subtle);
-  font-size: var(--fs-md);
-  margin: -4px 0 8px;
+  font-weight: 400;
 }
 
 /* The Rebbeim, each to his shelf, and the best-known sefarim. */
@@ -197,302 +428,29 @@
   font-weight: 700;
 }
 
-.hm {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 40px;
-  padding-block: 32px 40px;
-  align-items: start;
-}
-
-.hm-col {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  min-width: 0;
-}
-
-.hm-day p {
-  color: var(--subtle);
-  font-size: var(--fs-md);
-}
-
-.hm-day h2 {
-  font: 700 34px / 1.2 var(--display);
-  letter-spacing: 0;
-  margin-top: 2px;
-}
-
-/* A section's heading: small, quiet, above its content. */
-.hm-h {
-  font-size: var(--fs-md);
-  font-weight: 700;
-  color: var(--muted);
-  margin-bottom: 10px;
-  letter-spacing: 0;
-}
-
-.hm-h-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
-}
-
-.hm-h-row .hm-h {
-  margin: 0;
-}
-
-.hm-h-row a {
-  font-size: var(--fs-md);
-}
-
-.hm-count {
-  font-weight: 400;
-  color: var(--subtle);
-}
-
-.hm-narrow {
-  display: none;
-}
-
-.hm-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 22px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.hm-kicker,
-.hm-where {
-  color: var(--subtle);
-  font-size: var(--fs-md);
-}
-
-.hm-card-title {
-  font: 700 24px / 1.3 var(--display);
-  color: var(--text);
-}
-
-.hm-card-title:hover {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.hm-progress {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.hm-progress .btn {
-  height: 38px;
-  padding: 0 18px;
-  border-radius: var(--r-lg);
-  font-weight: 700;
-}
-
-.hm-pct {
-  color: var(--subtle);
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.hm-track {
-  flex: 1;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--sunken);
-  overflow: hidden;
-}
-
-.hm-track i {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-}
-
-/* The day's learning: a tick, the shiur's name, and today's portion. */
-.hm-shiurim li {
-  display: grid;
-  grid-template-columns: 26px 9rem minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.hm-tick {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1.5px solid var(--accent);
-  background: none;
-  color: var(--bg);
-  display: grid;
-  place-items: center;
-  padding: 0;
-  cursor: pointer;
-}
-
-.done .hm-tick {
-  background: var(--text);
-  border-color: var(--text);
-}
-
-.hm-shiur-name {
-  color: var(--subtle);
-}
-
-.hm-shiurim li:not(.done) .hm-shiur-name {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.hm-shiur-what {
-  font-size: 17px;
-  font-weight: 700;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hm-shiur-what a {
-  color: var(--text);
-}
-
-.done .hm-shiur-what,
-.done .hm-shiur-what a {
-  color: var(--subtle);
-  font-weight: 400;
-}
-
-/* Where to help: a row each, the machine's quiet dot beside what it read. */
-.hm-help-list {
-  border-top: 1px solid var(--border);
-}
-
-.hm-help-list a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-}
-
-.hm-help-list a:hover {
-  text-decoration: none;
-}
-
-.hm-help-list a:hover b {
-  color: var(--accent);
-}
-
-.hm-help-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.hm-help-main span {
-  color: var(--subtle);
-  font-size: var(--fs-md);
-}
-
-.hm-machine {
-  color: var(--machine);
-  margin-inline: -2px;
-}
-
-.hm-go {
-  flex: none;
-}
-
-.hm-listen-card {
-  flex-direction: row;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-}
-
-.hm-listen-card .pp {
-  width: 40px;
-  height: 40px;
-  background: var(--sunken);
-  color: var(--text);
-}
-
-.hm-listen-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  color: var(--text);
-}
-
-.hm-listen-main:hover {
-  text-decoration: none;
-}
-
-.hm-listen-main:hover b {
-  color: var(--accent);
-}
-
-.hm-listen-main span {
-  color: var(--subtle);
-  font-size: var(--fs-sm);
-}
-
-.hm-more {
-  display: inline-block;
-  margin-top: 8px;
-  font-size: var(--fs-md);
-}
-
-/*
- * A phone: one column, in the design's order (the day, where you stopped,
- * the learning, where to help, something to hear), and the learning as
- * cards side by side that scroll.
- */
 @media (max-width: 860px) {
-  .hm-hero {
-    padding-block: 20px 16px;
+  .hm-ask {
+    padding-block: var(--s-6) var(--s-5);
+    gap: var(--s-3);
   }
-  .hm-hero h1 {
-    font-size: 27px;
+  .hm-ask h1 {
+    font-size: var(--t-title);
   }
-  .hm-lede {
-    font-size: 15px;
-    margin-top: 8px;
+  /* On a phone the box is docked at the foot, under the thumb: above the tabs, and the player when one plays. */
+  .hm-box {
+    position: fixed;
+    inset-inline: 12px;
+    bottom: calc(var(--tabs-h, 0px) + var(--player-h, 0px) + 10px);
+    z-index: 30;
+    width: auto;
+    margin: 0;
   }
-  .hm-search {
-    margin-top: 16px;
+  .hm-page {
+    padding-bottom: 84px;
   }
-  .hm-search input {
-    font-size: 16px;
-  }
-  .hm-search .btn {
-    display: none;
-  }
-  .hm-doors {
+  .hm-feed {
     grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .hm-door {
-    padding: 12px 14px;
-  }
-  .hm-door-icon {
-    width: 38px;
-    height: 38px;
+    gap: var(--s-5);
   }
   .hm-browse {
     grid-template-columns: 1fr;
@@ -504,42 +462,6 @@
   }
   .hm-rebbeim span {
     display: none;
-  }
-  .hm {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 26px;
-    padding-block: 18px 32px;
-  }
-  .hm-col {
-    display: contents;
-  }
-  .hm-day {
-    order: 1;
-  }
-  .hm-continue {
-    order: 2;
-  }
-  .hm-daily {
-    order: 3;
-    max-width: 100%;
-    min-width: 0;
-  }
-  .hm-help {
-    order: 4;
-  }
-  .hm-listen {
-    order: 5;
-  }
-  .hm-day h2 {
-    font-size: 28px;
-  }
-  .hm-card {
-    padding: 18px 20px;
-  }
-  .hm-card-title {
-    font-size: 21px;
   }
   .hm-wide {
     display: none;
