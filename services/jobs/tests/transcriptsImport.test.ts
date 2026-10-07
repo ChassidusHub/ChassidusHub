@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { fixParagraph, recordingTranscript, relationsOf } from '@chassidushub/core';
 import type { EntityId } from '@chassidushub/model';
 import { recordingsToAlign } from '../src/transcribe.js';
-import { findJemRecording, importPodTranscripts, readPodFolder, type PodItem, type PodTranscript } from '../src/transcriptsImport.js';
+import { findJemRecording, importPodTranscripts, readPodFolder, removeTranslations, type PodItem, type PodTranscript } from '../src/transcriptsImport.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 // Made-up words and sources only: no real texts.
@@ -177,6 +177,32 @@ describe('transcripts made on GPU pods', () => {
     // Unless the steward asks for it with replaceChecked: then it is made again too.
     const forced = await importPodTranscripts(catalog, { approveAs: 'steward', items: items({ rec: '1002', transcript: { ...pod(1002, 'JEMTEST0002.mp3') }, translations: [] }), replace: true, replaceChecked: true });
     expect(forced.imported).toEqual([{ rec: '1002', recording: second, paragraphs: 2, quotes: 2 }]);
+    expect((await recordingTranscript(catalog, second))!.paragraphs).toHaveLength(2);
+  });
+
+  it('takes machine translations off, keeping the transcripts and any translation a person fixed', async () => {
+    const { catalog, first, second } = await setUp();
+    await importPodTranscripts(catalog, {
+      approveAs: 'steward',
+      items: items({ rec: '1001', transcript: pod(1001, 'JEMTEST0001.mp3'), translations: [english(1001)] }, { rec: '1002', transcript: pod(1002, 'JEMTEST0002.mp3'), translations: [english(1002)] }),
+    });
+    const translations = async () => (await catalog.list({ type: 'text' })).filter((t) => (t.data as { kind: string }).kind === 'translation');
+    const [, fixedOne] = await translations();
+    const [paragraph] = await catalog.children(fixedOne!.id as EntityId, 'text', 'segment');
+    await catalog.merge((await fixParagraph(catalog, 'chaim', { segment: paragraph!.id as EntityId, content: 'Aleph bet.' })).id, 'steward');
+
+    expect((await removeTranslations(catalog, { approveAs: 'steward', engine: 'another-engine' })).removed).toEqual([]);
+    const dry = await removeTranslations(catalog, { approveAs: 'steward', dryRun: true });
+    expect(dry.removed).toHaveLength(1);
+    expect(await translations()).toHaveLength(2);
+
+    const done = await removeTranslations(catalog, { approveAs: 'steward', engine: 'translate-test-1' });
+    expect(done.removed).toEqual([{ text: expect.any(String), paragraphs: 2 }]);
+    expect(done.kept).toEqual([{ text: fixedOne!.id, why: expect.stringContaining('a person checked or fixed') }]);
+    expect((await translations()).map((t) => t.id)).toEqual([fixedOne!.id]);
+    expect(await catalog.get(done.removed[0]!.text)).toBeNull();
+    // The transcripts stay as they were.
+    expect((await recordingTranscript(catalog, first))!.paragraphs).toHaveLength(2);
     expect((await recordingTranscript(catalog, second))!.paragraphs).toHaveLength(2);
   });
 

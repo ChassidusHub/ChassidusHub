@@ -5,7 +5,7 @@ import { checkLinksCommand, citationsCommand, embedCommand } from '../networkCom
 import { machineCommand } from '../machineCommand.js';
 import { trainingClipsCommand } from '../trainingClipsCommand.js';
 import { ocrCommand } from '../ocrCommand.js';
-import { alignCommand, mendSplitsCommand, restoreWordTimesCommand, transcribeCommand, transcriptsImportCommand } from '../transcribeCommand.js';
+import { alignCommand, mendSplitsCommand, restoreWordTimesCommand, transcribeCommand, transcriptsImportCommand, translationsRemoveCommand } from '../transcribeCommand.js';
 import { coversCommand, fingerprintsCommand, pageImagesCommand } from '../scanPagesCommand.js';
 import {
   accountCommand,
@@ -105,6 +105,10 @@ const HELP = `chassidushub - ChassidusHub's command line
                                                 (--replace: made again, if nobody touched them;
                                                 --replace-checked: even if people did); lists
                                                 the ones the catalog does not have; reads no audio
+  chassidushub translations-remove --approve-as <steward> [--engine <name>] [--dry-run]
+                                                machine translations of transcripts taken off (those of
+                                                --engine, else all), keeping the transcripts; any a
+                                                person checked or fixed is left
   chassidushub machine [list [--kind ocr|transcript] [--status <status>] | ask --kind <kind> --item <id> --as <account>]
                                                 the machines' queue: what waits, what is left, and asking
                                                 for a scan to be read or a recording transcribed
@@ -282,6 +286,9 @@ try {
       break;
     case 'align':
       await alignCommand(ctx, { approveAs: need(values['approve-as'], 'approve-as'), recording: values.recording, limit: number(values.limit), linked: values.linked, files: values.files, engine: values.engine });
+      break;
+    case 'translations-remove':
+      await translationsRemoveCommand(ctx, { approveAs: values['approve-as'], engine: values.engine, dryRun: values['dry-run'] });
       break;
     case 'transcripts-import':
       await transcriptsImportCommand(ctx, { dir: need(values.dir, 'dir'), approveAs: values['approve-as'], replace: values.replace, replaceChecked: values['replace-checked'], limit: number(values.limit), dryRun: values['dry-run'] });

@@ -3,7 +3,7 @@ import { withCatalog, type Context } from './commands.js';
 import { alignRecordings, localWhisper, transcribeRecordings, workersAiWhisper, type Transcriber } from './transcribe.js';
 import { restoreWordTimes } from './restoreWordTimes.js';
 import { mendTranscriptSplits } from './wordSplits.js';
-import { importPodTranscripts, readPodFolder } from './transcriptsImport.js';
+import { importPodTranscripts, readPodFolder, removeTranslations } from './transcriptsImport.js';
 
 /**
  * `chassidushub transcribe`: machine transcripts, with their sync, of
@@ -49,6 +49,19 @@ export async function transcriptsImportCommand(ctx: Context, input: { dir: strin
         `${report.translated.length} translations, ${report.links.proposed} links to quoted sources for review; ${report.skipped.length} left as they were, ${report.notFound.length} not in the catalog`,
     );
     if (report.notFound.length) ctx.log(`not in the catalog: ${report.notFound.map((n) => (n.file ? `${n.rec} (${n.file})` : n.rec)).join(', ')}`);
+  });
+}
+
+/**
+ * `chassidushub translations-remove`: machine translations of transcripts
+ * taken off, the transcripts kept (see removeTranslations).
+ */
+export async function translationsRemoveCommand(ctx: Context, input: { approveAs?: string; engine?: string; dryRun?: boolean }): Promise<void> {
+  if (!input.dryRun && !input.approveAs) throw new Error('--approve-as is needed, or --dry-run');
+  await withCatalog(ctx, async (catalog) => {
+    const report = await removeTranslations(catalog, { approveAs: input.approveAs ?? '', engine: input.engine, dryRun: input.dryRun, log: ctx.log });
+    ctx.log(`${input.dryRun ? 'dry run: would take off' : 'took off'} ${report.removed.length} translations (${report.removed.reduce((n, r) => n + r.paragraphs, 0)} paragraphs); withdrew ${report.withdrawn.length} unmerged suggestions; ${report.kept.length} kept`);
+    for (const k of report.kept) ctx.log(`kept ${k.text}: ${k.why}`);
   });
 }
 

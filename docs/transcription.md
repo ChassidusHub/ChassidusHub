@@ -181,7 +181,11 @@ run from a machine with `DATABASE_URL`, loads them
 - **Translations**: a text of kind `translation` of the transcript, a
   paragraph per line, labelled `translate:<engine>`, synced to the
   recording paragraph by paragraph at the transcript's times, so it can be
-  shown along as the recording plays.
+  shown along as the recording plays. `chassidushub translations-remove
+  --approve-as <steward> [--engine <name>] [--dry-run]` (the workflow
+  translations-remove.yml) takes them off again, keeping the transcripts
+  and any translation a person checked or fixed: in October 2026 the first
+  ones (chassidushub-translate-v1) were not accurate enough to show.
 
 ## The retraining cycle
 
