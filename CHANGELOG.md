@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- One record per volume: `chassidushub merge-printings` merges the printings
+  of a sefer that are the same volume (HebrewBooks, אוצרות הרבי, a text) into
+  one, with all their scans and sources, a Suggestion per sefer.
 - Built-in schemas, version 16: a page segment's `printed` takes up to 1,000
   places (it was 50), so long notes read by machine are accepted. A schema
   upgrade that a start left unmerged is withdrawn on the next start, and an
