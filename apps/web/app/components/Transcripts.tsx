@@ -198,6 +198,14 @@ export function Transcripts({ tracks, lang, onLoaded, only, view = 'listen' }: {
     requestAnimationFrame(() => window.scrollTo({ top: 0 }));
   }
 
+  // Closing the check goes back to the page's first tab, where the recording is heard.
+  function toListen() {
+    const next = new URLSearchParams(params);
+    next.delete('tab');
+    next.delete('review');
+    navigate({ search: next.size ? `?${next}` : '' });
+  }
+
   // Parts with no transcript yet: anyone signed in may ask the machine for one.
   const missing = loaded ? heard.filter((tr) => !transcripts.some((x) => x.recording === tr.id)) : [];
   const ask = missing.length ? (
@@ -237,6 +245,7 @@ export function Transcripts({ tracks, lang, onLoaded, only, view = 'listen' }: {
         nowMs={nowMs}
         found={found}
         account={account}
+        onBack={toListen}
         onSent={sent}
       />
       {ask}

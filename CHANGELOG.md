@@ -10,6 +10,15 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Checking a transcript has a screen of its own, as the design draws it
+  (design/system, board 6): Close, the recording's name and "…" at the
+  top with a calm player (play, hear the last five seconds again, speed,
+  how much is checked); the paragraph being checked large in a red frame,
+  each paragraph with its state (machine, partly fixed, checked); Right,
+  Fix and Not sure in the foot of the screen, where the box to fix the
+  words opens too, with "Your fixes" under them; a word after each answer
+  with Undo; when all is checked, the question whether the highlight
+  followed the speech.
 - Merging with the site as it is now: `GET`/`POST /v1/suggestions/{id}/merge-check`
   says whether a suggestion would merge, its stage, what stops it, links left
   dangling, other suggestions changing the same items and each clash with the
