@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Built-in schemas, version 16: a page segment's `printed` takes up to 1,000
+  places (it was 50), so long notes read by machine are accepted. A schema
+  upgrade that a start left unmerged is withdrawn on the next start, and an
+  upgrade finds a schema item by its path too. Merge all on `/review` counts
+  a suggestion merged in the meantime as merged.
 - Merging with the site as it is now: `GET`/`POST /v1/suggestions/{id}/merge-check`
   says whether a suggestion would merge, its stage, what stops it, links left
   dangling, other suggestions changing the same items and each clash with the

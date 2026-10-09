@@ -355,26 +355,34 @@ export class Catalog {
   async init(): Promise<void> {
     await migrate(this.db);
     // The schema items as main has them, and which of them are older than the built-in ones.
-    const { rows } = await this.db.query<{ id: EntityId; type: string; version: number }>(
-      "SELECT e.id, r.data->>'entityType' AS type, (r.data->>'version')::int AS version FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'schema' AND NOT e.deleted",
+    const { rows } = await this.db.query<{ id: EntityId; type: string; path: string | null; version: number }>(
+      "SELECT e.id, r.data->>'entityType' AS type, r.path, (r.data->>'version')::int AS version FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'schema' AND NOT e.deleted",
     );
+    // An upgrade an earlier start left unmerged (it stopped half way, or the catalog it was made for was
+    // replaced since) is out of date by now: it is withdrawn, so it does not wait in the review queue for ever.
+    await this.db.query("UPDATE changeset SET status = 'withdrawn', closed_at = now() WHERE author = 'system' AND kind = 'import' AND status IN ('draft', 'open') AND title LIKE 'Built-in schemas%' AND created_at < now() - interval '10 minutes'");
     const have = new Map(rows.map((r) => [r.type, r.version]));
-    // A catalog brought over from another install keeps its schema items under the ids it was given there.
-    const ids = new Map(rows.map((r) => [r.type, r.id]));
+    // A catalog brought over from another install keeps its schema items under the ids it was given there;
+    // found by the type they describe, or else by their path, so an upgrade never makes a second item there.
+    const ids = new Map([...rows.filter((r) => r.path?.startsWith('/schemas/')).map((r) => [r.path!.slice('/schemas/'.length), r.id] as const), ...rows.map((r) => [r.type, r.id] as const)]);
     const stale = Object.keys(BUILTIN_SCHEMAS).filter((type) => (have.get(type) ?? 0) < BUILTIN_SCHEMA_VERSION);
     if (stale.length === 0) return;
     const cs = await this.createChangeset('system', { title: have.size ? `Built-in schemas, version ${BUILTIN_SCHEMA_VERSION}` : 'Built-in schemas', kind: 'import' });
-    for (const type of stale) {
-      const data: SchemaData = { entityType: type, label: ENTITY_LABELS[type as EntityType], jsonSchema: BUILTIN_SCHEMAS[type as EntityType], version: BUILTIN_SCHEMA_VERSION };
-      await this.putRevision(cs.id, 'system', { id: ids.get(type) ?? (await idFromSeed('schema', type)), type: 'schema', data: data as unknown as Json, path: `/schemas/${type}` });
+    const withdraw = () => this.db.query("UPDATE changeset SET status = 'withdrawn', closed_at = now() WHERE id = $1 AND status IN ('draft', 'open')", [cs.id]);
+    try {
+      for (const type of stale) {
+        const data: SchemaData = { entityType: type, label: ENTITY_LABELS[type as EntityType], jsonSchema: BUILTIN_SCHEMAS[type as EntityType], version: BUILTIN_SCHEMA_VERSION };
+        await this.putRevision(cs.id, 'system', { id: ids.get(type) ?? (await idFromSeed('schema', type)), type: 'schema', data: data as unknown as Json, path: `/schemas/${type}` });
+      }
+      // Schemas already the same as the built-in ones change nothing: then there is nothing to merge.
+      if ((await this.proposals(cs.id)).length === 0) return void (await withdraw());
+      await this.submit(cs.id, 'system');
+      await this.merge(cs.id, 'system');
+    } catch (e) {
+      // Not merged: the start fails and says why, and leaves no upgrade behind for people to review.
+      await withdraw();
+      throw e;
     }
-    // Schemas already the same as the built-in ones change nothing: then there is nothing to merge.
-    if ((await this.proposals(cs.id)).length === 0) {
-      await this.db.query("UPDATE changeset SET status = 'withdrawn', closed_at = now() WHERE id = $1", [cs.id]);
-      return;
-    }
-    await this.submit(cs.id, 'system');
-    await this.merge(cs.id, 'system');
   }
 
   // ------------------------------------------------------------ accounts
