@@ -127,7 +127,7 @@ const DEFS: Record<string, JsonSchema> = {
           required: ['page', 'box'],
           additionalProperties: false,
         },
-        { maxItems: 50 },
+        { maxItems: 1000 },
       ),
     },
     required: ['id', 'kind'],
@@ -265,8 +265,10 @@ const fractionalOrder = str({ pattern: '^[0-9A-Za-z]+$', maxLength: 64 });
  * 14: a printed line's end in a page's words (`{ eol }`), so a sicha can be set again exactly as printed.
  * 15: a transcript paragraph's `quotes` (the verses it quotes, with their Sefaria refs) and a synced
  * word's `bold` (said with stress), from the transcripts made on GPU pods (docs/transcription.md).
+ * 16: a page segment's `printed` takes up to 1,000 places, not 50: a long note in Likkutei Sichos is
+ * printed over a hundred lines and more, each with its own box, and the machine reading of vols 6-24 was refused.
  */
-export const BUILTIN_SCHEMA_VERSION = 15;
+export const BUILTIN_SCHEMA_VERSION = 16;
 
 export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
   set: entitySchema(
