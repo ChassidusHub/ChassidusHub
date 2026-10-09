@@ -102,14 +102,13 @@ describe("a bot's Suggestion of 500 items in the review queue", () => {
     expect(html).toContain('בוט');
   });
 
-  it('says before Approve how many items clash with the site, and approves them keeping the site or taking the suggestion', () => {
+  it('hands a suggestion that clashes with the site to the merge panel, which decides each clash before it merges', () => {
     const plain = render(detail);
-    expect(plain).not.toContain('Items changed on the site since');
+    expect(plain).not.toContain('class="mp"');
+    expect(plain).toMatch(/>Approve<span/);
     const html = render({ ...detail, clashes: 12, unchanged: 480 });
-    expect(html).toContain('Items changed on the site since: <span class="num">12</span>');
-    expect(html).toContain('480</span> already on the site as suggested');
-    expect(html).toMatch(/Approve, keep what’s on the site|Approve, keep what&#x27;s on the site/);
-    expect(html).toContain('Approve, take the suggestion');
+    expect(html).toContain('class="mp"');
+    expect(html).toContain('Checking against the site');
     expect(html).not.toMatch(/>Approve<span/);
   });
 

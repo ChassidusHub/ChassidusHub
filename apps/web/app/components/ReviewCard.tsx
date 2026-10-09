@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode, type Ref, type RefObject }
 import { Clamp } from '../ui/Clamp.js';
 import { Link } from 'react-router';
 import { ChangeDiff } from './ChangeDiff.js';
+import { MergePanel } from './MergePanel.js';
 import { fieldName, isInfoOnly, onlyInfo } from './ChangeTable.js';
 import { PlainWords } from './PlainWords.js';
 import type { ChangeGroup, SuggestionDetail } from '../lib/api.js';
@@ -105,14 +106,6 @@ const W = {
   deleted: { he: 'נמחקים', en: 'deleted' },
   all: { he: 'הכול', en: 'all' },
   loadError: { he: 'לא נטען. לנסות שוב', en: "Didn't load. Try again" },
-  clashTitle: { he: 'פריטים שהשתנו באתר מאז', en: 'Items changed on the site since' },
-  clashWhy: {
-    he: 'באתר שונו השדות האלה אחרי שההצעה נכתבה. בוחרים פעם אחת מה נשאר בכולם:',
-    en: 'These fields were changed on the site after this was suggested. Choose once what stays in all of them:',
-  },
-  keepSite: { he: 'לאשר, להשאיר את מה שבאתר', en: "Approve, keep what's on the site" },
-  takeSuggested: { he: 'לאשר, לקחת את ההצעה', en: 'Approve, take the suggestion' },
-  unchanged: { he: 'כבר באתר כפי שהוצע', en: 'already on the site as suggested' },
   merging: { he: 'ממזג…', en: 'Merging…' },
   sendingBack: { he: 'מחזיר…', en: 'Sending back…' },
   withdrawing: { he: 'מבטל…', en: 'Withdrawing…' },
@@ -679,23 +672,18 @@ export function SuggestionCard({
             </div>
           </div>
         ) : null}
-        {clashes > 0 && cs.status === 'open' && mayApprove ? (
-          <div className="alert info rq-clashes" role="status">
-            <Icon name="warn" />
-            <span>
-              <b>
-                {W.clashTitle[lang]}: <span className="num">{num(clashes, lang)}</span>
-              </b>
-              {detail?.unchanged ? (
-                <span className="subtle">
-                  {' '}
-                  · <span className="num">{num(detail.unchanged, lang)}</span> {W.unchanged[lang]}
-                </span>
-              ) : null}
-              <br />
-              {W.clashWhy[lang]}
-            </span>
-          </div>
+        {/* Clashes are decided one by one (or all at once, or by the AI's proposals) and merged from the panel; its author brings it up to date there. */}
+        {detail && cs.status === 'open' && !done && (clashes > 0 || detail.mine) ? (
+          <MergePanel
+            id={cs.id}
+            lang={lang}
+            mine={detail.mine}
+            merge={mayApprove}
+            onMerged={() => {
+              setDecision({ ...UNDECIDED, done: 'approve' });
+              onDone();
+            }}
+          />
         ) : null}
         {error ? (
           <p className="alert negative" role="alert">
@@ -714,18 +702,7 @@ export function SuggestionCard({
         {cs.status === 'open' && mayApprove ? (
           note === null ? (
             <>
-              {clashes > 0 ? (
-                <>
-                  <button type="button" className="btn approve" onClick={act('approve', { resolutions: KEEP_SITE })} disabled={busy} aria-busy={doing === 'approve' || undefined}>
-                    {icon('approve', 'check')}
-                    {says('approve', <>{W.keepSite[lang]}{allOf}</>)}
-                  </button>
-                  <button type="button" className="btn" onClick={act('approve-theirs', { resolutions: TAKE_SUGGESTED })} disabled={busy} aria-busy={doing === 'approve-theirs' || undefined}>
-                    {doing === 'approve-theirs' ? icon('approve-theirs', 'check') : null}
-                    {says('approve-theirs', W.takeSuggested[lang])}
-                  </button>
-                </>
-              ) : (
+              {clashes > 0 ? null /* the merge panel above merges it, with a choice for each clash */ : (
                 <button type="button" className="btn approve" onClick={act('approve')} disabled={busy} aria-busy={doing === 'approve' || undefined}>
                   {icon('approve', 'check')}
                   {says('approve', <>{t(lang, 'approve')}{allOf}</>)}

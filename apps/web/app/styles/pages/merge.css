@@ -1,0 +1,314 @@
+/* A suggestion's way into the library (components/MergePanel.tsx) and the review queue's Merge all (routes/review.tsx). */
+
+.mp {
+  display: grid;
+  gap: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  padding: var(--s-3) var(--s-4);
+  margin-block: var(--s-3);
+}
+
+.mp-merged {
+  border-color: var(--add-line);
+  background: var(--approved-soft);
+}
+
+.mp-blocked {
+  border-color: var(--del-line);
+}
+
+.mp-clashes {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.mp h4 {
+  margin: 0;
+  font-size: var(--t-small);
+}
+
+.mp-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mp-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 2px 10px;
+  font-size: var(--t-caption);
+  color: var(--subtle);
+  background: var(--sunken);
+}
+
+.mp-step.is-done {
+  color: var(--approved);
+  border-color: var(--add-line);
+  background: var(--approved-soft);
+}
+
+.mp-step.is-now {
+  color: var(--attention);
+  border-color: var(--machine-line);
+  background: var(--attention-soft);
+  font-weight: 600;
+}
+
+.mp-step.is-stopped {
+  color: var(--closed);
+  border-color: var(--del-line);
+  background: var(--closed-soft);
+  font-weight: 600;
+}
+
+.mp-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1);
+  margin: 0;
+}
+
+.mp-when {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--t-caption);
+}
+
+.mp-note {
+  margin: 0;
+  font-size: var(--t-small);
+}
+
+.mp-block {
+  border-inline-start: 3px solid var(--closed);
+  padding-inline-start: var(--s-3);
+}
+
+.mp-block.warn {
+  border-color: var(--attention);
+}
+
+.mp-block.info {
+  border-color: var(--mine);
+}
+
+.mp-block ul {
+  list-style: none;
+  margin: var(--s-1) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: var(--t-small);
+}
+
+.mp-tools,
+.mp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.mp-ai-note,
+.mp-why {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.mp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+.mp-clash {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-2) var(--s-3);
+  display: grid;
+  gap: var(--s-2);
+  background: var(--card);
+}
+
+.mp-clash.is-open {
+  border-color: var(--machine-line);
+}
+
+.mp-where {
+  margin: 0;
+  font-size: var(--t-small);
+}
+
+.mp-sides {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+@media (max-width: 640px) {
+  .mp-sides {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.mp-side {
+  border-radius: var(--r-sm);
+  padding: var(--s-1) var(--s-2);
+  background: var(--sunken);
+  min-width: 0;
+}
+
+.mp-side.site {
+  background: var(--mine-soft);
+}
+
+.mp-side.theirs {
+  background: var(--add-bg);
+}
+
+.mp-side pre {
+  margin: 2px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: var(--t-small);
+  max-height: 12em;
+  overflow: auto;
+}
+
+.mp-label {
+  font-size: var(--t-caption);
+  color: var(--subtle);
+}
+
+.mp-choice {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  font-size: var(--t-small);
+}
+
+.mp-choice label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+}
+
+.mp-own textarea {
+  width: 100%;
+  font: inherit;
+  font-size: var(--t-small);
+}
+
+.mp-bad {
+  color: var(--closed);
+  margin: 2px 0 0;
+}
+
+/* The review queue: each row's stage, and Merge all with its live count. */
+
+.rq-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--r-pill);
+  padding: 0 8px;
+  font-size: var(--t-caption);
+  border: 1px solid var(--border);
+}
+
+.rq-stage.ok {
+  color: var(--approved);
+  border-color: var(--add-line);
+  background: var(--approved-soft);
+}
+
+.rq-stage.attention {
+  color: var(--attention);
+  border-color: var(--machine-line);
+  background: var(--attention-soft);
+}
+
+.rq-stage.closed {
+  color: var(--closed);
+  border-color: var(--del-line);
+  background: var(--closed-soft);
+}
+
+.rq-stage.merged {
+  color: var(--approved);
+  border-color: var(--add-line);
+}
+
+.ma {
+  display: grid;
+  gap: var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--card);
+  padding: var(--s-3) var(--s-4);
+  margin-bottom: var(--s-3);
+}
+
+.ma-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.ma-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-3);
+  font-size: var(--t-small);
+  margin: 0;
+}
+
+.ma progress {
+  width: 100%;
+}
+
+.ma-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  font-size: var(--t-small);
+  max-height: 16em;
+  overflow: auto;
+}
+
+.ma-log .merged {
+  color: var(--approved);
+}
+
+.ma-log .skipped {
+  color: var(--attention);
+}
+
+.ma-log .failed {
+  color: var(--closed);
+}

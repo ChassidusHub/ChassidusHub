@@ -49,6 +49,7 @@ const THREAD_STRINGS = {
   reply: { he: 'תשובה', en: 'Reply' },
   edit: { he: 'עריכה', en: 'Edit' },
   edited: { he: 'נערך', en: 'edited' },
+  broughtUpToDate: { he: 'עדכן/ה את ההצעה מול מה שבאתר עכשיו', en: 'brought it up to date with the site' },
   cancel: { he: 'ביטול', en: 'Cancel' },
   hiddenComment: { he: 'התגובה הוסתרה.', en: 'This comment was hidden.' },
   signInToJoin: { he: 'כדי להשתתף בשיחה צריך להתחבר.', en: 'Sign in to join the conversation.' },

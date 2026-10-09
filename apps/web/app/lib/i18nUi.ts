@@ -145,6 +145,7 @@ const UI = {
   traySee: { he: 'לראות', en: 'See it' },
   traySignIn: { he: 'כדי לשלוח צריך להתחבר. השינויים נשמרים כאן עד אז.', en: 'Sign in to send. Your changes stay here until then.' },
   trayConflict: { he: 'מישהו שינה את זה בינתיים. בטלו את השינוי המסומן ונסו שוב.', en: 'Someone changed this since. Undo the marked change and try again.' },
+  sendOverlap: { he: 'הצעות אחרות שעוד ממתינות משנות את אותו מקום. כדאי לעיין בהן קודם, כדי שלא יתנגשו:', en: 'Other suggestions still waiting change the same place. Worth a look first, so they do not clash:' },
 } as const;
 
 export type UiKey = keyof typeof UI;

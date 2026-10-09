@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { Lang } from '../../lib/i18n.js';
 import { num, tu } from '../../lib/i18nUi.js';
@@ -14,7 +14,9 @@ import { Tray } from './Tray.js';
  * give one) and a note for the reviewers; sending makes them one
  * Suggestion. What came of it (live at once, sent for review, or why it
  * was not sent) shows in the tray's place, and a change that no longer
- * fits is named so the person can undo it.
+ * fits is named so the person can undo it. Other suggestions still
+ * waiting on the same place are named in the sheet before sending, so two
+ * people do not change the same thing at once and clash when merged.
  */
 export function EditTray({ place, lang, onSend }: { place: string; lang: Lang; onSend?: () => void }) {
   const { draft, undo, remove, send } = useDraft(place);
@@ -23,6 +25,20 @@ export function EditTray({ place, lang, onSend }: { place: string; lang: Lang; o
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState<{ ok: boolean; text: string; number?: number | null; key?: string } | null>(null);
+  const [overlap, setOverlap] = useState<{ number: number; title: string }[]>([]);
+  // The items these changes touch: the page, and any item a change names.
+  const about = [...new Set([place, ...draft.ops.flatMap((o) => [o['id'], o['entity'], o['item']]).filter((x): x is string => typeof x === 'string' && x.startsWith('rh-'))])].slice(0, 50).join(',');
+  useEffect(() => {
+    if (!sheet) return;
+    let gone = false;
+    fetch(`/_/suggestions?state=open&limit=5&about=${encodeURIComponent(about)}`, { credentials: 'same-origin', headers: { accept: 'application/json' } })
+      .then((r) => (r.ok ? (r.json() as Promise<{ suggestions?: { number: number; title: string }[] }>) : { suggestions: [] }))
+      .then((d) => !gone && setOverlap(d.suggestions ?? []))
+      .catch(() => !gone && setOverlap([]));
+    return () => {
+      gone = true;
+    };
+  }, [sheet, about]);
   const go = async () => {
     setBusy(true);
     setSaid(null);
@@ -86,6 +102,20 @@ export function EditTray({ place, lang, onSend }: { place: string; lang: Lang; o
             </li>
           ))}
         </ol>
+        {overlap.length ? (
+          <div className="note send-overlap" role="note">
+            <p>{tu(lang, 'sendOverlap')}</p>
+            <ul>
+              {overlap.map((o) => (
+                <li key={o.number}>
+                  <Link to={href(`/suggestions/${o.number}`, lang)} target="_blank" rel="noopener">
+                    <span dir="auto">{o.title}</span> <span className="num">#{o.number}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <label className="send-field">
           <span>{tu(lang, 'sendName')}</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} dir="auto" placeholder={draft.ops[0]?.says} />

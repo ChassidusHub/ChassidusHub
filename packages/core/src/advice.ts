@@ -17,7 +17,8 @@ import type { Json } from './merge.js';
 /** A language model that answers one question (Workers AI on the API; a stand-in in tests). */
 export interface Advisor {
   model: string;
-  complete(system: string, user: string): Promise<string>;
+  /** One answer; `maxTokens` caps its length (the advisor's own default when left out). */
+  complete(system: string, user: string, options?: { maxTokens?: number }): Promise<string>;
 }
 
 export interface Advice {
