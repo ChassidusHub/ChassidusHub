@@ -61,6 +61,8 @@ describe('the MCP server', () => {
       'add_segments',
       'list_suggestions',
       'get_suggestion',
+      'check_merge',
+      'bring_up_to_date',
       'approve_suggestion',
       'close_suggestion',
       'reopen_suggestion',

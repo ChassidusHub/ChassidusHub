@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
-import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, UnresolvedConflictError, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, transcribedRecordings, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
+import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, transcribedRecordings, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
 import { dailyLearning, dailyShiurim, peopleOf, shiurimWords } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
@@ -71,6 +71,8 @@ export interface ApiOptions {
   version?: string;
   /** Sends email (Resend): sign-in links, and a receipt to whoever asks for a takedown. Unset, no email is sent. */
   mailer?: Mailer;
+  /** A language model (Workers AI) that proposes how to settle a suggestion's clashes, for a person to accept; unset, that help is not offered. */
+  advisor?: Advisor | null;
   /** Turns questions into vectors for search by meaning (Workers AI); unset, that search says it is not available. */
   embedder?: Embedder | null;
   /** OAI-PMH for libraries, at /oai; unset (no administrators' address), it is not offered. */
@@ -160,6 +162,14 @@ async function body<T>(c: Context): Promise<T> {
 }
 
 /** An item's data without its words (`body`): what a list carries, and a feed's page of a suggestion (docs/operations.md, "The statement budget"). */
+/** An item's name as a reviewer reads it: its title, name or label, Hebrew and English. */
+function nameOfData(data: Json | null): string | null {
+  const d = (data ?? {}) as { title?: { he?: string; en?: string }; name?: { he?: string; en?: string }; label?: { he?: string; en?: string } };
+  const name = d.title ?? d.name ?? d.label;
+  const text = [name?.he, name?.en].filter(Boolean).join(' / ');
+  return text || null;
+}
+
 function withoutWords(data: Json | null): Json | null {
   return data && typeof data === 'object' && !Array.isArray(data) && 'body' in data ? Object.fromEntries(Object.entries(data).filter(([key]) => key !== 'body')) : data;
 }
@@ -1003,6 +1013,15 @@ export function createApp(options: ApiOptions): Hono {
     return c.json({ suggestions: suggestions.map(({ checks: _checks, ...s }) => ({ ...s, items: counts.get(Number(s.id)) ?? 0 })), people: await peopleOf(catalog.db, suggestions.map((s) => s.author)), next });
   });
 
+  // Where each listed suggestion stands on its way in (a review list's one read for all its rows): items, how many the
+  // site changed since it was written, how many other open suggestions share items with it, and whether a check stops it.
+  app.get('/v1/suggestions/stages', async (c) => {
+    const ids = (c.req.query('ids') ?? '').split(',').filter(Boolean).map((x) => intParam(x, 'ids')!);
+    if (ids.length > 200) throw new HttpError(400, 'at most 200 ids');
+    const stages = await catalog.mergeStages(ids);
+    return c.json({ stages: Object.fromEntries([...stages].map(([id, stage]) => [String(id), stage])) }, 200, { 'Cache-Control': 'no-store' });
+  });
+
   app.get('/v1/suggestions/:id', async (c) => {
     // A page of its items at a time (a bot's Suggestion may change hundreds), with how many in all; the summary of them
     // all only when asked (summary=1: the review page shows it; a feed that lists the suggestion does not need it).
@@ -1182,6 +1201,80 @@ export function createApp(options: ApiOptions): Hono {
     const by = await signedIn(c);
     const input = await body<{ resolutions?: Record<string, Record<string, Resolution>>; note?: string }>(c).catch(() => ({}) as { resolutions?: undefined; note?: undefined });
     return c.json(await catalog.merge(intParam(c.req.param('id'), 'id')!, by, input.resolutions ?? {}, input.note));
+  });
+
+  // ------------------------------------------------------------ merging: the check before, settling clashes, keeping up to date
+
+  /**
+   * A merge check as the site may show it: each clash's values with words whose rights keep them home left out, and
+   * any value too long to read on a phone (a sicha's whole text) cut to its start, marked so; the items named.
+   */
+  const shownCheck = async (check: MergeCheck) => {
+    const gate = new ExportGate(catalog);
+    const ids = [...new Set([...check.clashes.map((x) => x.entityId), ...check.problems.map((x) => x.entityId), ...check.dangling.flatMap((x) => [x.from, x.to])])].slice(0, 300);
+    const items: Record<string, { type: string; name: string | null; path: string | null; withheld?: string }> = {};
+    for (const id of ids) {
+      const item = await catalog.get(id).catch(() => null);
+      if (!item) continue;
+      const shown = await gate.redact(item);
+      items[id] = { type: item.type, name: nameOfData(item.data), path: item.path, ...(shown.withheld ? { withheld: shown.withheld } : {}) };
+    }
+    const MAX = 4000;
+    const cut = (value: Json | undefined) => {
+      if (value === undefined) return { value: undefined, cut: false };
+      const text = JSON.stringify(value);
+      return text.length > MAX ? { value: `${text.slice(0, MAX)}…` as Json, cut: true } : { value, cut: false };
+    };
+    const clashes = check.clashes.map((x) => {
+      if (items[x.entityId]?.withheld) return { ...x, base: undefined, ours: undefined, theirs: undefined, cut: true, withheld: items[x.entityId]!.withheld };
+      const [base, ours, theirs] = [cut(x.base), cut(x.ours), cut(x.theirs)];
+      return { ...x, base: base.value, ours: ours.value, theirs: theirs.value, cut: base.cut || ours.cut || theirs.cut };
+    });
+    return { ...check, clashes, named: items };
+  };
+  const resolutionsOf = (input: { resolutions?: unknown }): Record<string, Record<string, Resolution>> => {
+    const r = input.resolutions;
+    if (r === undefined || r === null) return {};
+    if (typeof r !== 'object' || Array.isArray(r) || !Object.values(r).every((v) => typeof v === 'object' && v !== null && !Array.isArray(v))) throw new HttpError(400, 'resolutions is { itemId or *: { field path or *: { take: ours | theirs } or { value } } }');
+    return r as Record<string, Record<string, Resolution>>;
+  };
+
+  // What approving would do now, changing nothing: its clashes (each with the decision given), what would stop it,
+  // links it would leave pointing at nothing, and the other suggestions changing the same items. POST it with the
+  // decisions made so far to see whether they settle everything.
+  app.get('/v1/suggestions/:id/merge-check', async (c) => {
+    const viewer = (await authenticate?.(c)) ?? null;
+    return c.json(await shownCheck(await catalog.mergeCheck(intParam(c.req.param('id'), 'id')!, viewer)), 200, { 'Cache-Control': 'no-store' });
+  });
+  app.post('/v1/suggestions/:id/merge-check', async (c) => {
+    const viewer = (await authenticate?.(c)) ?? null;
+    const input = await body<{ resolutions?: unknown }>(c).catch(() => ({}) as { resolutions?: unknown });
+    return c.json(await shownCheck(await catalog.mergeCheck(intParam(c.req.param('id'), 'id')!, viewer, resolutionsOf(input))), 200, { 'Cache-Control': 'no-store' });
+  });
+
+  // Bring up to date: the site's later changes merged into the suggestion itself, its clashes settled by the decisions given.
+  app.post('/v1/suggestions/:id/update', async (c) => {
+    const by = await signedIn(c);
+    const id = intParam(c.req.param('id'), 'id')!;
+    const input = await body<{ resolutions?: unknown }>(c).catch(() => ({}) as { resolutions?: unknown });
+    const { updated } = await catalog.bringUpToDate(id, by, resolutionsOf(input));
+    return c.json({ updated, check: await shownCheck(await catalog.mergeCheck(id, by)) });
+  });
+
+  // A machine's proposals for the clashes no decision settles yet: advice for whoever may approve it (or its author),
+  // labelled as a machine's; nothing merges until a person approves.
+  app.post('/v1/suggestions/:id/resolve-ai', async (c) => {
+    const by = await signedIn(c);
+    if (!options.advisor) throw new HttpError(404, 'the machine that proposes how to settle clashes is not set up here');
+    const id = intParam(c.req.param('id'), 'id')!;
+    const input = await body<{ resolutions?: unknown; limit?: unknown }>(c).catch(() => ({}) as { resolutions?: unknown; limit?: unknown });
+    const check = await catalog.mergeCheck(id, by, resolutionsOf(input));
+    const actor = await catalog.account(by);
+    const author = (await catalog.changeset(id)).author;
+    if (!check.mayApprove && author !== by && !actor?.is_steward) throw new HttpError(403, 'the keepers who may approve it, or its author, ask the machine about its clashes');
+    const limit = typeof input.limit === 'number' ? input.limit : undefined;
+    const result = await proposeClashResolutions(catalog, options.advisor, check, { limit });
+    return c.json({ ...result, machine: true }, 200, { 'Cache-Control': 'no-store' });
   });
 
   app.post('/v1/suggestions/:id/send-back', async (c) => {

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import type { Route } from './+types/review';
+import { MergeAll } from '../components/MergeAll.js';
 import { QueueRow } from '../components/QueueRow.js';
 import { TranscriptFixes } from '../components/TranscriptFixes.js';
 import { ReviewCard, suggestionCall as call, type ReviewDetail, type ReviewPerson, type ReviewRow } from '../components/ReviewCard.js';
 import { langFrom, t } from '../lib/i18n.js';
 import { num } from '../lib/i18nUi.js';
 import { href } from '../lib/links.js';
+import { mergeApi, type ListStage } from '../lib/merge.js';
 import { pageMeta } from '../lib/seo.js';
 import { useAccount } from '../lib/useAccount.js';
 import { useLang } from '../lib/useLang.js';
@@ -29,7 +31,13 @@ import '../styles/pages/contribute.css';
  * own page, so a queue of a bot's Suggestions of 500 items each opens at
  * once and reads at a glance. A Suggestion with no #number (an import)
  * has no page of its own: its line opens it here (`?s=`), whole, as its
- * card (components/ReviewCard.tsx).
+ * card (components/ReviewCard.tsx). Each line says where its Suggestion
+ * stands on its way in (merges cleanly, changed on the site since, shares
+ * items with another, stopped by a check), read for the whole queue in one
+ * request; a steward or keeper can Merge all that are ready, oldest first,
+ * and watch it go (components/MergeAll.tsx). The queue is read again now
+ * and then while it is open, so what others merge drops off without a
+ * reload.
  */
 export function loader({ request }: Route.LoaderArgs) {
   return { lang: langFrom(request), siteUrl: new URL(request.url).origin };
@@ -74,6 +82,7 @@ export default function Review() {
   const [live, setLive] = useState<ReviewRow[]>([]);
   const [people, setPeople] = useState<Record<string, ReviewPerson>>({});
   const [decidable, setDecidable] = useState<ReadonlySet<number>>(new Set());
+  const [stages, setStages] = useState<Record<string, ListStage>>({});
   const [error, setError] = useState<string | null>(null);
 
   // The lists alone: each Suggestion's changes are read by its card, as it comes into view.
@@ -97,6 +106,11 @@ export default function Review() {
       }
       setPeople(found);
       setWaiting(waitingRows);
+      // Where each stands, for the whole queue in one read; the list shows without it until it comes.
+      void mergeApi
+        .stages(waitingRows.filter((r) => r.status === 'open').slice(0, 200).map((r) => r.id))
+        .then((answer) => setStages(answer.stages))
+        .catch(() => {});
       setLive(wentLive.suggestions);
       // Newest first; those still waiting are already listed above.
       setMine(own.suggestions.filter((s) => s.status !== 'open' && s.status !== 'draft').reverse().slice(0, 10));
@@ -108,6 +122,18 @@ export default function Review() {
   useEffect(() => {
     if (account !== undefined) void load();
   }, [account, load]);
+
+  // Read again now and then while the page is in view: what others merged or sent leaves or joins the queue without a reload.
+  useEffect(() => {
+    if (account === undefined) return;
+    const every = setInterval(() => {
+      if (document.visibilityState === 'visible') void load();
+    }, 60_000);
+    return () => clearInterval(every);
+  }, [account, load]);
+
+  // Merged by Merge all: drawn merged at once, before the queue is read again.
+  const mergedHere = useCallback((id: number) => setWaiting((rows) => (rows ? rows.map((r) => (r.id === id ? { ...r, status: 'merged' as const } : r)) : rows)), []);
 
   const onDecidable = useCallback((id: number, may: boolean) => setDecidable((d) => (may === d.has(id) ? d : may ? new Set([...d, id]) : new Set([...d].filter((x) => x !== id)))), []);
 
@@ -153,6 +179,7 @@ export default function Review() {
             </p>
           ) : null}
           {view === 'transcripts' ? <TranscriptFixes lang={lang} onDone={load} /> : null}
+          {view === 'waiting' && waiting && account && (account.person.steward || mayApproveAny) ? <MergeAll rows={waiting} lang={lang} onMerged={mergedHere} onFinished={() => void load()} /> : null}
           {view === 'live' ? <p className="rq-intro muted">{t(lang, 'liveIntro')}</p> : null}
           {view !== 'transcripts' && waiting === null && !error ? (
             <div className="box">
@@ -174,7 +201,7 @@ export default function Review() {
             <section className="box">
               <ul className="rows issue-rows">
                 {shown.filter((row) => row.id !== focus).map((row) => (
-                  <QueueRow key={row.id} row={row} person={people[row.author]} lang={lang} />
+                  <QueueRow key={row.id} row={row} person={people[row.author]} lang={lang} stage={stages[String(row.id)]} />
                 ))}
               </ul>
             </section>

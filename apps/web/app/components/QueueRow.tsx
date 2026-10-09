@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import type { ReviewPerson, ReviewRow } from './ReviewCard.js';
 import type { Lang } from '../lib/i18n.js';
 import { num } from '../lib/i18nUi.js';
+import { listStage, type ListStage } from '../lib/merge.js';
 import { href } from '../lib/links.js';
 import { stateOf, stateWord } from '../lib/suggestions.js';
 import { Icon } from '../ui/Icon.js';
@@ -22,15 +23,19 @@ const W = {
  * as GitHub lists a pull request: its title to its own page (or, with no
  * #number, to its card in the queue), then who sent it, when, and how
  * many items it changes. None of its changes: those are on its page.
- * A bot's work is marked a machine's until a person approves it.
+ * A bot's work is marked a machine's until a person approves it. With
+ * its stage (read for the whole queue at once), where it stands on its
+ * way in: merges cleanly, items changed on the site since, items shared
+ * with other suggestions, or stopped by a check.
  */
-export function QueueRow({ row, person, lang }: { row: ReviewRow; person?: ReviewPerson; lang: Lang }) {
+export function QueueRow({ row, person, lang, stage }: { row: ReviewRow; person?: ReviewPerson; lang: Lang; stage?: ListStage }) {
   const bot = person?.bot ?? row.author.startsWith('bot:');
   const author = person?.name ?? row.author;
   const live = row.post_review === 'pending';
   const state = live ? 'open' : stateOf(row.status);
   const to = row.number ? href(`/suggestions/${row.number}`, lang) : href('/review', lang, { s: String(row.id) });
   const total = row.items ?? 0;
+  const where = row.status === 'open' && !live ? listStage(stage, lang) : null;
   return (
     <li className="row issue-row" id={`s${row.id}`}>
       <StateIcon kind="suggestion" state={row.status === 'merged' && !live ? 'approved' : state === 'closed' ? 'closed' : 'open'} label={live ? W.wentLive[lang] : row.status === 'open' ? W.open[lang] : stateWord(row.status, lang)} />
@@ -50,6 +55,12 @@ export function QueueRow({ row, person, lang }: { row: ReviewRow; person?: Revie
             </StatusBadge>
           ) : null}
           {bot && row.status !== 'merged' ? <MachineLabel lang={lang} size="sm" /> : null}
+          {where ? (
+            <span className={`rq-stage ${where.tone}`}>
+              <Icon name={where.tone === 'ok' ? 'check' : where.tone === 'closed' ? 'x' : 'warn'} size={12} />
+              {where.words}
+            </span>
+          ) : null}
         </div>
         <div className="row-sub">
           {row.number ? (

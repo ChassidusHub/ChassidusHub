@@ -405,7 +405,8 @@ function EventItem({ event, people, lang, labels = [] }: ConversationProps & { e
       break;
     case 'edited':
       icon = 'pencil';
-      text = tt(lang, 'edited');
+      // Brought up to date (Catalog.bringUpToDate): its items now start from the site as it is.
+      text = d.upToDate ? tt(lang, 'broughtUpToDate') : tt(lang, 'edited');
       break;
     case 'labeled':
     case 'unlabeled':

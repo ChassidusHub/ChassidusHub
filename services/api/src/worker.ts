@@ -221,6 +221,7 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
     uploads: env.FILES_PUBLIC && env.FILES_PRESERVATION ? { public: r2Writer(env.FILES_PUBLIC), preservation: r2Writer(env.FILES_PRESERVATION) } : undefined,
     status: env.FILES_PUBLIC ? statusStore(env.FILES_PUBLIC) : undefined,
     embedder: embedderFromEnv({ CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_AI_TOKEN: env.CLOUDFLARE_AI_TOKEN }),
+    advisor: env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN ? workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_AI_TOKEN }) : null,
     oai: env.OAI_ADMIN_EMAIL ? { adminEmail: env.OAI_ADMIN_EMAIL, siteUrl: env.SITE_URL } : undefined,
     mirrors: { gitUrls: list(env.CATALOG_GIT_URL), publicKeys: list(env.RELEASE_PUBLIC_KEYS), dumpsBaseUrl: env.DUMPS_BASE_URL || undefined },
     siteUrl: env.SITE_URL,

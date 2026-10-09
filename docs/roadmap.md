@@ -83,6 +83,20 @@ the email updates) ([api](api.md#people-and-conversations),
 [accounts](accounts.md#handles-and-mentions)). Not yet: @mentions linked
 inside talk pages' wiki text, and a steward's page to edit labels.
 
+Merging with the site as it is now is built: every suggestion is checked
+against the site before it merges (`GET /v1/suggestions/{id}/merge-check`:
+its stage, the checks that stop it, links left pointing at deleted items,
+other suggestions changing the same items, and each field the site changed
+since). The suggestion page and `/review` show that live, without
+reloading; each clash is settled by hand (the site's, the suggestion's, or
+one's own words) or with the AI's proposal (Workers AI, marked as
+machine-written until a person approves); the author or a steward can
+bring a suggestion up to date with the site, so it no longer clashes; a
+keeper can *Merge all* that are ready on `/review`, oldest first, watching
+each go in; and the Send sheet names other suggestions waiting on the same
+place, so two people do not change one thing at once. The MCP has
+`check_merge` and `bring_up_to_date`.
+
 ## Phases 3-6
 
 - **The Sichos Kodesh scans** ✅: 2,710 old typewritten hanachos, open,

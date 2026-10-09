@@ -3,6 +3,8 @@ import { Clamp } from '../ui/Clamp.js';
 import { data, Link, redirect, useRevalidator, useSearchParams } from 'react-router';
 import type { Route } from './+types/suggestion';
 import { Composer } from '../components/threads/Composer.js';
+import { MergePanel } from '../components/MergePanel.js';
+import type { Resolution } from '../lib/merge.js';
 import { Picker } from '../components/threads/Picker.js';
 import { RichText } from '../components/threads/RichText.js';
 import { loadPeople, useReadOnOpen } from '../components/threads/Side.js';
@@ -183,6 +185,8 @@ export default function SuggestionPage({ loaderData }: Route.ComponentProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
+  // What the reviewer chose for each clash in the merge panel, sent with an approval from the review box.
+  const [resolutions, setResolutions] = useState<Record<string, Record<string, Resolution>>>({});
   const revalidator = useRevalidator();
   useEffect(() => setView(loaderData.view), [loaderData.view]);
 
@@ -350,7 +354,7 @@ export default function SuggestionPage({ loaderData }: Route.ComponentProps) {
       onSubmit={(choice, note) =>
         act(async () => {
           if (choice === 'comment' && !pending.length) await threads(`suggestions/${id}/comments`, { body: { body: note } });
-          else await threads(`suggestions/${id}/reviews`, { body: { verdict: choice === 'send_back' ? 'request_changes' : choice, body: note, comments: pending } });
+          else await threads(`suggestions/${id}/reviews`, { body: { verdict: choice === 'send_back' ? 'request_changes' : choice, body: note, comments: pending, ...(choice === 'approve' && Object.keys(resolutions).length ? { resolutions } : {}) } });
           setPending([]);
           if (choice === 'approve') {
             // Approving merges it there and then (Catalog.merge): the page is merged from this moment, whatever is read next.
@@ -411,6 +415,26 @@ export default function SuggestionPage({ loaderData }: Route.ComponentProps) {
                 ) : null}
                 <Checks checks={view.checks} lang={lang} plain />
                 {undoBar}
+                {/* Whether it would merge now, its stage, each clash with the site to decide (by hand or with the AI), and bringing it up to date. */}
+                {account && live && detail ? (
+                  <MergePanel
+                    id={id!}
+                    lang={lang}
+                    mine={detail.mine}
+                    steward={Boolean(account.person.steward)}
+                    merge={detail.mayApprove}
+                    onChoices={(r) => setResolutions(r)}
+                    onMerged={() => {
+                      setView((v) => (v ? { ...v, status: 'merged' } : v));
+                      void load();
+                      void revalidator.revalidate();
+                    }}
+                    onChanged={() => {
+                      void load();
+                      void revalidator.revalidate();
+                    }}
+                  />
+                ) : null}
                 {reviewFirst ? reviewBox : null}
               </div>
               <Timeline label={w(lang, 'conversation')}>

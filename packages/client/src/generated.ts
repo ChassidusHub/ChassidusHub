@@ -1819,6 +1819,24 @@ export interface Operations {
     input: Record<string, never>;
     output: ProtectedResource;
   };
+  /** What approving would do now, changing nothing: `stage` (draft, sent_back, blocked, clashes, ready, merged, withdrawn), whether it is `ready`, whether you may approve it, its clashes with the site field by field (base, ours = the site, theirs = the suggestion; long values cut, `cut: true`; withheld words left out; the items named in `named`), what would stop it (`blocking` checks, `problems`), live items it would leave pointing at nothing (`dangling`), and other open suggestions changing the same items (`overlaps`) */
+  mergeCheck: {
+    input: {
+      id: number;
+    };
+    output: Record<string, unknown>;
+  };
+  /** The merge check with the decisions made so far, as Approve takes them: each clash says the decision that settles it (`decided`), and `ready` whether they settle everything */
+  mergeCheckWith: {
+    input: {
+      id: number;
+      body?: {
+        /** As Approve takes them: {item or *: {field or *: {take: "ours" | "theirs"} or {value}}} */
+        resolutions?: Record<string, unknown>;
+      };
+    };
+    output: Record<string, unknown>;
+  };
   /** Everything a mirror needs: the git mirror, the release keys, every edition and its dumps */
   mirrors: {
     input: Record<string, never>;
@@ -2136,6 +2154,30 @@ export interface Operations {
     output: {
       id: number;
       answerWithinDays?: number;
+    };
+  };
+  /** A machine's proposals for the clashes no decision settles yet (the keepers who may approve it, or its author): for each, the site's version, the suggestion's, or one value that keeps both, with why. Advice, labelled `machine: true`: nothing merges until a person approves */
+  resolveClashesWithAi: {
+    input: {
+      id: number;
+      body?: {
+        /** The decisions made so far */
+        resolutions?: Record<string, unknown>;
+        /** How many clashes to ask about (default 40, at most 100) */
+        limit?: number;
+      };
+    };
+    output: {
+      proposals: Array<{
+        entityId: string;
+        path: string;
+        resolution: Record<string, unknown>;
+        why: string;
+      }>;
+      asked: number;
+      left: number;
+      model: string;
+      machine: boolean;
     };
   };
   /** Resolve (or unresolve) a comment on a suggestion's field */
@@ -2555,6 +2597,21 @@ export interface Operations {
       subscribed?: boolean;
     };
   };
+  /** Where each of several suggestions stands on its way in, for a list's rows in one read: how many items it changes, how many the site changed since it was written (`behind`: they may clash), how many other open suggestions change some of the same items, and whether a failed check stops it */
+  suggestionStages: {
+    input: {
+      /** The suggestions */
+      ids: string;
+    };
+    output: {
+      stages: Record<string, {
+        items: number;
+        behind: number;
+        overlaps: number;
+        blocked: boolean;
+      }>;
+    };
+  };
   /** A sefer's shaar, the whole file, sent for review; a file the catalog cannot read is refused with each line that is wrong (`detail.problems`) */
   suggestShaar: {
     input: {
@@ -2719,6 +2776,20 @@ export interface Operations {
     };
     output: {
       stopped?: boolean;
+    };
+  };
+  /** Bring a suggestion up to date (its author, or a steward): the site's later changes merged into it field by field, its clashes settled by `resolutions`; nothing is written until every clash is. Its checks run again. */
+  updateSuggestion: {
+    input: {
+      id: number;
+      body?: {
+        /** As Approve takes them */
+        resolutions?: Record<string, unknown>;
+      };
+    };
+    output: {
+      updated: number;
+      check: Record<string, unknown>;
     };
   };
   /** Add a file: a recording of a farbrengen; a hanacha's PDF for a farbrengen or sicha; a scan (another scan of a printing, a new printing of a sefer, a teshura); or other material (a new sefer, a letter, a document) */
@@ -2942,6 +3013,8 @@ export const OPERATIONS = {
   markInboxRead: {"method":"POST","path":"/v1/inbox/read","pathParams":[],"query":[],"body":"json","answer":"json"},
   mcp: {"method":"POST","path":"/mcp","pathParams":[],"query":[],"body":"json","answer":"json"},
   mcpProtectedResource: {"method":"GET","path":"/.well-known/oauth-protected-resource/mcp","pathParams":[],"query":[],"body":null,"answer":"json"},
+  mergeCheck: {"method":"GET","path":"/v1/suggestions/{id}/merge-check","pathParams":["id"],"query":[],"body":null,"answer":"json"},
+  mergeCheckWith: {"method":"POST","path":"/v1/suggestions/{id}/merge-check","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   mirrors: {"method":"GET","path":"/v1/mirrors","pathParams":[],"query":[],"body":null,"answer":"json"},
   missing: {"method":"GET","path":"/v1/missing","pathParams":[],"query":["kind","within","limit"],"body":null,"answer":"json"},
   oai: {"method":"GET","path":"/oai","pathParams":[],"query":["verb","metadataPrefix","identifier","from","until","set","resumptionToken"],"body":null,"answer":"text"},
@@ -2969,6 +3042,7 @@ export const OPERATIONS = {
   requestMachineWork: {"method":"POST","path":"/v1/machine/requests","pathParams":[],"query":[],"body":"json","answer":"json"},
   requestReview: {"method":"POST","path":"/v1/suggestions/{id}/review-requests","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   requestTakedown: {"method":"POST","path":"/v1/takedowns","pathParams":[],"query":[],"body":"json","answer":"json"},
+  resolveClashesWithAi: {"method":"POST","path":"/v1/suggestions/{id}/resolve-ai","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   resolveComment: {"method":"POST","path":"/v1/comments/{id}/resolve","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   resolvePath: {"method":"GET","path":"/v1/resolve","pathParams":[],"query":["path"],"body":null,"answer":"json"},
   restoreItem: {"method":"POST","path":"/v1/entities/{id}/restore","pathParams":["id"],"query":[],"body":"json","answer":"json"},
@@ -3003,6 +3077,7 @@ export const OPERATIONS = {
   submitSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/submit","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   suggestFix: {"method":"POST","path":"/v1/suggestions/quick","pathParams":[],"query":[],"body":"json","answer":"json"},
   suggestionConversation: {"method":"GET","path":"/v1/suggestions/{id}/conversation","pathParams":["id"],"query":[],"body":null,"answer":"json"},
+  suggestionStages: {"method":"GET","path":"/v1/suggestions/stages","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
   suggestShaar: {"method":"POST","path":"/v1/suggestions/shaar","pathParams":[],"query":[],"body":"json","answer":"json"},
   suggestWords: {"method":"POST","path":"/v1/suggestions/words","pathParams":[],"query":[],"body":"json","answer":"json"},
   textsProgress: {"method":"GET","path":"/v1/texts/batch/progress","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
@@ -3016,6 +3091,7 @@ export const OPERATIONS = {
   unitNeighbours: {"method":"GET","path":"/v1/units/{id}/neighbours","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   unitPrintings: {"method":"GET","path":"/v1/units/{id}/printings","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   unsubscribe: {"method":"POST","path":"/v1/auth/email/unsubscribe","pathParams":[],"query":["token"],"body":"json","answer":"json"},
+  updateSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/update","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   upload: {"method":"POST","path":"/v1/uploads","pathParams":[],"query":["what","for","eventTitle","eventDate","kind","set","author","genre","unit","rights","as","title","publication","publisher","year","printing","families","simcha","date"],"body":"application/octet-stream","answer":"raw"},
   uploadOcr: {"method":"POST","path":"/v1/scans/{id}/ocr","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   withdrawSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/withdraw","pathParams":["id"],"query":[],"body":null,"answer":"json"},
@@ -3537,6 +3613,16 @@ export abstract class GeneratedMethods {
     return this.call('mcpProtectedResource', {} as Operations['mcpProtectedResource']['input']);
   }
 
+  /** What approving would do now, changing nothing: `stage` (draft, sent_back, blocked, clashes, ready, merged, withdrawn), whether it is `ready`, whether you may approve it, its clashes with the site field by field (base, ours = the site, theirs = the suggestion; long values cut, `cut: true`; withheld words left out; the items named in `named`), what would stop it (`blocking` checks, `problems`), live items it would leave pointing at nothing (`dangling`), and other open suggestions changing the same items (`overlaps`) (GET /v1/suggestions/{id}/merge-check) */
+  mergeCheck(input: Operations['mergeCheck']['input']): Promise<Operations['mergeCheck']['output']> {
+    return this.call('mergeCheck', input ?? {} as Operations['mergeCheck']['input']);
+  }
+
+  /** The merge check with the decisions made so far, as Approve takes them: each clash says the decision that settles it (`decided`), and `ready` whether they settle everything (POST /v1/suggestions/{id}/merge-check) */
+  mergeCheckWith(input: Operations['mergeCheckWith']['input']): Promise<Operations['mergeCheckWith']['output']> {
+    return this.call('mergeCheckWith', input ?? {} as Operations['mergeCheckWith']['input']);
+  }
+
   /** Everything a mirror needs: the git mirror, the release keys, every edition and its dumps (GET /v1/mirrors) */
   mirrors(): Promise<Operations['mirrors']['output']> {
     return this.call('mirrors', {} as Operations['mirrors']['input']);
@@ -3670,6 +3756,11 @@ export abstract class GeneratedMethods {
   /** Ask for a file to stop being served (no account needed); stewards answer within two weeks (POST /v1/takedowns) */
   requestTakedown(input: Operations['requestTakedown']['input']): Promise<Operations['requestTakedown']['output']> {
     return this.call('requestTakedown', input ?? {} as Operations['requestTakedown']['input']);
+  }
+
+  /** A machine's proposals for the clashes no decision settles yet (the keepers who may approve it, or its author): for each, the site's version, the suggestion's, or one value that keeps both, with why. Advice, labelled `machine: true`: nothing merges until a person approves (POST /v1/suggestions/{id}/resolve-ai) */
+  resolveClashesWithAi(input: Operations['resolveClashesWithAi']['input']): Promise<Operations['resolveClashesWithAi']['output']> {
+    return this.call('resolveClashesWithAi', input ?? {} as Operations['resolveClashesWithAi']['input']);
   }
 
   /** Resolve (or unresolve) a comment on a suggestion's field (POST /v1/comments/{id}/resolve) */
@@ -3842,6 +3933,11 @@ export abstract class GeneratedMethods {
     return this.call('suggestionConversation', input ?? {} as Operations['suggestionConversation']['input']);
   }
 
+  /** Where each of several suggestions stands on its way in, for a list's rows in one read: how many items it changes, how many the site changed since it was written (`behind`: they may clash), how many other open suggestions change some of the same items, and whether a failed check stops it (GET /v1/suggestions/stages) */
+  suggestionStages(input: Operations['suggestionStages']['input']): Promise<Operations['suggestionStages']['output']> {
+    return this.call('suggestionStages', input ?? {} as Operations['suggestionStages']['input']);
+  }
+
   /** A sefer's shaar, the whole file, sent for review; a file the catalog cannot read is refused with each line that is wrong (`detail.problems`) (POST /v1/suggestions/shaar) */
   suggestShaar(input: Operations['suggestShaar']['input']): Promise<Operations['suggestShaar']['output']> {
     return this.call('suggestShaar', input ?? {} as Operations['suggestShaar']['input']);
@@ -3905,6 +4001,11 @@ export abstract class GeneratedMethods {
   /** Stop email updates, from the link in any of them (no sign-in) (POST /v1/auth/email/unsubscribe) */
   unsubscribe(input?: Operations['unsubscribe']['input']): Promise<Operations['unsubscribe']['output']> {
     return this.call('unsubscribe', input ?? {} as Operations['unsubscribe']['input']);
+  }
+
+  /** Bring a suggestion up to date (its author, or a steward): the site's later changes merged into it field by field, its clashes settled by `resolutions`; nothing is written until every clash is. Its checks run again. (POST /v1/suggestions/{id}/update) */
+  updateSuggestion(input: Operations['updateSuggestion']['input']): Promise<Operations['updateSuggestion']['output']> {
+    return this.call('updateSuggestion', input ?? {} as Operations['updateSuggestion']['input']);
   }
 
   /** Add a file: a recording of a farbrengen; a hanacha's PDF for a farbrengen or sicha; a scan (another scan of a printing, a new printing of a sefer, a teshura); or other material (a new sefer, a letter, a document) (POST /v1/uploads) */

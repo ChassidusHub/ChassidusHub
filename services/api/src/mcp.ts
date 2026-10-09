@@ -706,6 +706,46 @@ function tools(siteUrl: string): Tool[] {
       },
     },
     {
+      name: 'check_merge',
+      title: 'Check a suggestion before merging',
+      description:
+        "What approving a suggestion would do now, changing nothing: its stage (draft, sent_back, blocked, clashes, ready, merged, withdrawn), whether it would merge, whether you may approve it, each field that clashes with a later change on the site (the site's value and the suggestion's), what would stop the merge (failed checks, items that would not be valid, links to items that are gone), live items it would leave pointing at nothing, and other open suggestions changing the same items. Settle clashes with approve_suggestion's `clashes`, or bring_up_to_date.",
+      inputSchema: { type: 'object', properties: { suggestion: { type: 'integer' } }, required: ['suggestion'], additionalProperties: false },
+      annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+      async run(args, call) {
+        const id = Number(args.suggestion);
+        const check = await need(call, 'GET', `/v1/suggestions/${id}/merge-check`);
+        const short = (value: unknown) => {
+          const text = JSON.stringify(value) ?? 'nothing';
+          return text.length > 200 ? `${text.slice(0, 200)}…` : text;
+        };
+        const lines = [
+          `Suggestion ${id}${check.number != null ? ` (#${check.number})` : ''}: ${check.stage}${check.ready ? ', ready to merge' : ''}. ${check.items} items, ${check.behind} changed on the site since it was written, ${check.approvals} approvals. ${site}/review?s=${id}`,
+          check.mayApprove === null ? '' : check.mayApprove ? 'You may approve it.' : `You may not approve it: ${check.reason}.`,
+          ...(check.blocking as any[]).map((k) => `Failed check: ${k.message}`),
+          ...(check.problems as any[]).map((p) => `Would stop the merge: ${p.message}`),
+          ...(check.clashes as any[]).slice(0, 50).map((c) => `Clash on ${c.entityId}${c.path || ' (the whole item)'}: site ${short(c.ours)}, suggestion ${short(c.theirs)}${c.decided ? ' (decided)' : ''}`),
+          check.clashes.length > 50 ? `…and ${check.clashes.length - 50} more clashes.` : '',
+          ...(check.dangling as any[]).slice(0, 20).map((d) => `${d.from} (${d.field}) would point at ${d.to}, which this deletes.`),
+          ...(check.overlaps as any[]).map((o) => `Also changing ${o.shared} of the same items: #${o.number ?? o.id} ${o.title}.`),
+        ].filter(Boolean);
+        return { text: lines.join('\n'), structured: check };
+      },
+    },
+    {
+      name: 'bring_up_to_date',
+      title: 'Bring a suggestion up to date',
+      description:
+        "Your own suggestion (or any, as a steward): the site's later changes merged into it field by field, so it no longer clashes and shows only what it still changes; its checks run again. Where a field clashes, `clashes` settles all of them: keep_live takes the site's version, take_suggestion keeps the suggestion's. Nothing is written until every clash is settled.",
+      inputSchema: { type: 'object', properties: { suggestion: { type: 'integer' }, clashes: { type: 'string', enum: ['keep_live', 'take_suggestion'] } }, required: ['suggestion'], additionalProperties: false },
+      annotations: WRITE,
+      async run(args, call) {
+        const resolutions = args.clashes === 'keep_live' ? ALL_LIVE : args.clashes === 'take_suggestion' ? ALL_SUGGESTED : undefined;
+        const done = await need(call, 'POST', `/v1/suggestions/${Number(args.suggestion)}/update`, { resolutions });
+        return { text: `Suggestion ${args.suggestion}: ${done.updated} items brought up to date; now ${done.check.stage}. ${site}/review?s=${Number(args.suggestion)}`, structured: { suggestion: args.suggestion, updated: done.updated, stage: done.check.stage } };
+      },
+    },
+    {
       name: 'approve_suggestion',
       title: 'Approve a suggestion',
       description:
@@ -1079,7 +1119,7 @@ export function mcpRoutes(app: Hono, options: { siteUrl: string; version: string
           capabilities: { tools: { listChanged: false } },
           serverInfo: { name: MCP_SERVER_NAME, title: 'ChassidusHub', version: options.version, websiteUrl: `${options.siteUrl.replace(/\/+$/, '')}/developers` },
           instructions:
-            'ChassidusHub is the open, community-edited index of Chabad Torah and media. Search, read items and their words; ids are rh-… and never change. Words marked [machine] were read or heard by a machine and not yet checked. suggest_fix (write scope; you will be asked to connect your ChassidusHub account) makes a suggestion under the connected person\'s account that people review before anything changes; suggest_items (write scope) adds, changes or deletes many items in one suggestion, list_suggestions and get_suggestion show what was suggested, approve_suggestion approves one when you may, and combine_suggestions makes several of your own into one; list_issues shows what people reported, and open_issue (write scope) reports a problem for people to look into. ask_machine (write scope) asks for a scan to be read by OCR or a recording transcribed; machine_queue shows where those requests stand, machine_to_check what the machines wrote that nobody checked yet, and training_data how much training data people\'s checking has made for the next transcription model. To organize the catalog, get_tree shows it; move_items, move_up, rename_item, reorder_children, create_set, delete_set, merge_items, mark_addition and organize (write scope) each make one suggestion that people review; preview_organize shows the change first. The tree is built of the official sefarim; other books are additions to one.',
+            'ChassidusHub is the open, community-edited index of Chabad Torah and media. Search, read items and their words; ids are rh-… and never change. Words marked [machine] were read or heard by a machine and not yet checked. suggest_fix (write scope; you will be asked to connect your ChassidusHub account) makes a suggestion under the connected person\'s account that people review before anything changes; suggest_items (write scope) adds, changes or deletes many items in one suggestion, list_suggestions and get_suggestion show what was suggested, check_merge what approving one would do now (its clashes, what would stop it, others changing the same items), approve_suggestion approves one when you may, bring_up_to_date merges the site\'s later changes into your own, and combine_suggestions makes several of your own into one; list_issues shows what people reported, and open_issue (write scope) reports a problem for people to look into. ask_machine (write scope) asks for a scan to be read by OCR or a recording transcribed; machine_queue shows where those requests stand, machine_to_check what the machines wrote that nobody checked yet, and training_data how much training data people\'s checking has made for the next transcription model. To organize the catalog, get_tree shows it; move_items, move_up, rename_item, reorder_children, create_set, delete_set, merge_items, mark_addition and organize (write scope) each make one suggestion that people review; preview_organize shows the change first. The tree is built of the official sefarim; other books are additions to one.',
         };
       }
       case 'ping':

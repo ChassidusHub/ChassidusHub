@@ -1,4 +1,4 @@
-export { Catalog, PRIVATE_REASONS, isoWeekTag, type ArchiveGapRow, type ChangeEntry, type ChangesetKind, type ChangesetRow, type ChangesetStatus, type Check, type EntityView, type HistoryEntry, type NewRevision, type ProjectFocus, type ProjectView, type Proposal, type ReportReason, type RevisionRow } from './catalog.js';
+export { Catalog, PRIVATE_REASONS, isoWeekTag, type ArchiveGapRow, type ChangeEntry, type ChangesetKind, type ChangesetRow, type ChangesetStatus, type Check, type EntityView, type HistoryEntry, type MergeCheck, type MergeClash, type MergeOverlap, type MergeProblem, type MergeStage, type NewRevision, type ProjectFocus, type ProjectView, type Proposal, type ReportReason, type RevisionRow } from './catalog.js';
 export { summarizeChanges, type ChangeGroup } from './changeSummary.js';
 export { CatalogError, type CatalogErrorCode } from './errors.js';
 export { ExportGate } from './gate.js';
@@ -73,6 +73,7 @@ export { MAX_HOOKS_PER_ACCOUNT, createWebhook, deleteWebhook, deliverWebhooks, l
 export { EMAIL_LINKS_PER_HOUR, EMAIL_LINK_MINUTES, addEmail, cleanEmail, emailsOf, peekEmailLink, personByEmail, signInMessage, startEmailLink, takeEmailLink, type EmailLinkRefusal, type EmailLinkView } from './email.js';
 export { NOTIFICATION_MODES, digestMessage, notificationSetting, sendNotifications, setNotifications, unsubscribe, type EmailMessage, type Mailer, type NotificationMode, type NotificationSetting } from './notify.js';
 export { adviceFor, advicePrompt, adviseSuggestions, type Advice, type Advisor } from './advice.js';
+export { clashPrompt, proposeClashResolutions, readClashAnswer, type ClashProposal } from './clashAdvice.js';
 export { TAKEDOWN_RELATIONS, TAKEDOWN_RESPONSE_DAYS, requestTakedown, resolveTakedownTarget, takeDownFile, takedowns, type TakedownRelation, type TakedownView } from './takedown.js';
 export { bestLine, matchingWords, momentOf, queryWords, searchMoments, snippetOf, type Moment, type ParagraphMoment, type ScanLineMoment } from './moments.js';
 export {

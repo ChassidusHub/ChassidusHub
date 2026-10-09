@@ -660,3 +660,13 @@ h1 .fld-show {
   color: var(--mine);
   font-weight: 600;
 }
+
+/* The Send sheet's note on other suggestions waiting on the same place (EditTray). */
+.send-overlap {
+  font-size: var(--t-small);
+}
+
+.send-overlap p,
+.send-overlap ul {
+  margin: 0;
+}

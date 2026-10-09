@@ -26,7 +26,7 @@ import { diffData, threeWayMerge, resolveConflicts, UnresolvedConflictError, typ
 import { canApprove, canSuggest, earnedTrust, mayGoLive, type Account, type SetInfo } from './permissions.js';
 import { searchTextOf, searchTierSql, toTsQuery } from './searchText.js';
 import { focusCounts } from './projectWork.js';
-import { commented, reportOpened, reportStateChanged, reviewGiven, suggestionMerged, suggestionReverted, suggestionStarted, suggestionReopened, suggestionSubmitted, suggestionWithdrawn } from './threads.js';
+import { commented, reportOpened, threadEvent, reportStateChanged, reviewGiven, suggestionMerged, suggestionReverted, suggestionStarted, suggestionReopened, suggestionSubmitted, suggestionWithdrawn } from './threads.js';
 import { viaColumn, type Via } from './via.js';
 
 /**
@@ -151,6 +151,77 @@ export interface Proposal {
   rev: RevisionRow;
 }
 
+/** One item as a merge would land it: its new version, and whether the suggestion's own can be used as it is. */
+interface PlannedMerge {
+  proposal: Proposal;
+  current: RevisionRow | null;
+  data: Json | null;
+  path: string | null;
+  direct: boolean;
+}
+
+/** A reason a suggestion could not be merged as things stand, besides its clashes. */
+export interface MergeProblem {
+  kind: 'invalid' | 'reference' | 'path';
+  entityId: EntityId;
+  message: string;
+  detail?: unknown;
+}
+
+/** A field both the site and a suggestion changed since it was written, each its own way, and how it is settled so far. */
+export interface MergeClash extends Conflict {
+  entityId: EntityId;
+  type: EntityType;
+  /** The decision given for it (the item's own, its `*`, or every item's), or null: it still needs one. */
+  decided: Resolution | null;
+}
+
+/** Another suggestion waiting for review that changes some of the same items. */
+export interface MergeOverlap {
+  id: number;
+  number: number | null;
+  title: string;
+  author: string;
+  status: ChangesetStatus;
+  /** How many items both change. */
+  shared: number;
+}
+
+/**
+ * Where a suggestion stands on its way into the library: written (draft),
+ * sent back to its author, stopped by a failed check or by a merge it
+ * could not make, waiting on a decision for its clashes, ready to merge
+ * (a keeper's approval away), merged, or withdrawn.
+ */
+export type MergeStage = 'draft' | 'sent_back' | 'blocked' | 'clashes' | 'ready' | 'merged' | 'withdrawn';
+
+/** What approving a suggestion now would do, found without changing anything (Catalog.mergeCheck). */
+export interface MergeCheck {
+  suggestion: number;
+  number: number | null;
+  status: ChangesetStatus;
+  stage: MergeStage;
+  /** It would merge now, with the decisions given. */
+  ready: boolean;
+  /** Whether the person asking may approve it, and if not why; null when nobody is signed in. */
+  mayApprove: boolean | null;
+  reason: string | null;
+  items: number;
+  /** Items changed on the site since it was written. They are merged field by field, so most need nothing; the clashes are the rest. */
+  behind: number;
+  approvals: number;
+  /** Failed checks that stop a merge (the suggestion's author fixes them and sends it again). */
+  blocking: Check[];
+  clashes: MergeClash[];
+  problems: MergeProblem[];
+  /** Live items that point at an item this change deletes, and would point at nothing once it lands. */
+  dangling: Array<{ from: EntityId; field: string; to: EntityId }>;
+  overlaps: MergeOverlap[];
+  /** Once merged: its commit and when. */
+  merged: { commit: number | null; at: string | null } | null;
+  checkedAt: string;
+}
+
 export interface NewRevision {
   /** Leave out to create a new item. */
   id?: EntityId;
@@ -259,8 +330,17 @@ export interface CatalogOptions {
 }
 
 /** A changeset's proposals, one per item (its latest version there) with the version it was made from, in id order. */
-const PROPOSALS_SQL = `SELECT DISTINCT ON (r.entity_id) r.*,
-         (SELECT f.parent_rev FROM revision f WHERE f.changeset_id = r.changeset_id AND f.entity_id = r.entity_id ORDER BY f.id ASC LIMIT 1) AS base_rev
+/**
+ * Each item's latest proposed version in a suggestion, with the version it
+ * was made from (`base_rev`): the parent of its last version not made on
+ * top of the suggestion's own. That is its first version, until the
+ * suggestion is brought up to date (Catalog.bringUpToDate), which makes a
+ * version on top of the site's and so moves the base there.
+ */
+const BASE_REV_SQL = `(SELECT f.parent_rev FROM revision f WHERE f.changeset_id = r.changeset_id AND f.entity_id = r.entity_id AND f.merge_rev IS NULL
+           AND NOT EXISTS (SELECT 1 FROM revision g WHERE g.id = f.parent_rev AND g.changeset_id = f.changeset_id)
+         ORDER BY f.id DESC LIMIT 1)`;
+const PROPOSALS_SQL = `SELECT DISTINCT ON (r.entity_id) r.*, ${BASE_REV_SQL} AS base_rev
   FROM revision r WHERE r.changeset_id = $1 AND r.merge_rev IS NULL ORDER BY r.entity_id, r.id DESC`;
 
 export class Catalog {
@@ -1256,6 +1336,202 @@ export class Catalog {
     }
   }
 
+  /**
+   * What approving a suggestion now would do, found without changing
+   * anything: the fields that clash with what the site changed since (and
+   * the decision given for each, with `resolutions` as Approve takes them),
+   * what would stop the merge (a failed check, an item that would not be
+   * valid, a link to an item that is gone, a path already taken), the live
+   * items that would be left pointing at an item it deletes, and the other
+   * suggestions waiting for review that change the same items. The review
+   * page asks it before Approve, and again as each clash is decided.
+   */
+  async mergeCheck(changesetId: number, by: string | null, resolutions: Record<string, Record<string, Resolution>> = {}): Promise<MergeCheck> {
+    const cs = await this.changeset(changesetId);
+    const [proposals, overlaps, approvals] = await Promise.all([
+      this.proposals(changesetId),
+      this.overlaps(changesetId),
+      one<{ n: number }>(this.db, "SELECT count(DISTINCT reviewer)::int AS n FROM review WHERE changeset_id = $1 AND verdict = 'approve'", [changesetId]),
+    ]);
+    let mayApprove: boolean | null = null;
+    let reason: string | null = null;
+    if (by !== null && (cs.status === 'open' || cs.status === 'sent_back')) {
+      const may = await this.mayApprove(changesetId, by);
+      mayApprove = may.ok;
+      reason = may.ok ? null : may.reason;
+    }
+    const blocking = cs.checks.filter((c) => c.status === 'fail' && BLOCKING_CHECKS.has(c.check));
+    const out: MergeCheck = {
+      suggestion: cs.id,
+      number: cs.number,
+      status: cs.status,
+      stage: 'ready',
+      ready: false,
+      mayApprove,
+      reason,
+      items: proposals.length,
+      behind: 0,
+      approvals: approvals?.n ?? 0,
+      blocking,
+      clashes: [],
+      problems: [],
+      dangling: [],
+      overlaps,
+      merged: null,
+      checkedAt: new Date().toISOString(),
+    };
+    if (cs.status === 'merged') {
+      const commit = cs.merged_commit === null ? null : await one<{ at: Date | string }>(this.db, 'SELECT at FROM commit WHERE seq = $1', [cs.merged_commit]);
+      return { ...out, stage: 'merged', overlaps: [], merged: { commit: cs.merged_commit, at: commit ? new Date(commit.at).toISOString() : cs.closed_at } };
+    }
+    if (cs.status === 'withdrawn') return { ...out, stage: 'withdrawn', overlaps: [] };
+    if (cs.project_id !== null) {
+      // A project's suggestion lands in the project, not main: only its clashes with the project's versions are known here.
+      const entries = await this.changeEntries(this.db, cs, proposals);
+      out.clashes = entries.flatMap((e) => e.conflicts.map((c) => ({ ...c, entityId: e.entityId, type: e.type, decided: decisionsFor(resolutions, e.entityId, [c])[c.path] ?? null })));
+      out.behind = entries.filter((e) => e.conflicts.length > 0).length;
+    } else {
+      const plan = await this.planMerge(this.db, proposals, resolutions);
+      out.behind = plan.behind;
+      out.clashes = plan.clashes.map((c) => ({ ...c, decided: decisionsFor(resolutions, c.entityId, [c])[c.path] ?? null }));
+      out.problems = plan.problems;
+      const deleted = plan.planned.filter((x) => x.data === null).map((x) => x.proposal.entityId);
+      if (deleted.length) {
+        const { rows } = await this.db.query<{ from_id: EntityId; field: string; to_id: EntityId }>(
+          'SELECT from_id, field, to_id FROM entity_ref WHERE to_id = ANY($1::text[]) AND NOT (from_id = ANY($2::text[])) ORDER BY to_id, from_id LIMIT 200',
+          [deleted, proposals.map((p) => p.entityId)],
+        );
+        out.dangling = rows.map((r) => ({ from: r.from_id, field: r.field, to: r.to_id }));
+      }
+    }
+    const undecided = out.clashes.some((c) => c.decided === null);
+    out.stage =
+      cs.status === 'draft' ? 'draft' : cs.status === 'sent_back' ? 'sent_back' : blocking.length > 0 || out.problems.length > 0 ? 'blocked' : undecided ? 'clashes' : 'ready';
+    out.ready = cs.status === 'open' && out.stage === 'ready' && mayApprove !== false;
+    return out;
+  }
+
+  /** Other suggestions waiting for review (or sent back) that change some of the same items as this one. */
+  async overlaps(changesetId: number): Promise<MergeOverlap[]> {
+    const { rows } = await this.db.query<{ id: string | number; number: number | null; title: string; author: string; status: ChangesetStatus; shared: number }>(
+      `SELECT c.id, c.number, c.title, c.author, c.status, count(DISTINCT o.entity_id)::int AS shared
+       FROM (SELECT DISTINCT entity_id FROM revision WHERE changeset_id = $1 AND merge_rev IS NULL) m
+       JOIN revision o ON o.entity_id = m.entity_id AND o.changeset_id <> $1 AND o.merge_rev IS NULL
+       JOIN changeset c ON c.id = o.changeset_id AND c.status IN ('open', 'sent_back')
+       GROUP BY c.id, c.number, c.title, c.author, c.status ORDER BY c.id LIMIT 50`,
+      [changesetId],
+    );
+    return rows.map((r) => ({ id: Number(r.id), number: r.number, title: r.title, author: r.author, status: r.status, shared: r.shared }));
+  }
+
+  /**
+   * Each suggestion's place on its way in, for a list to show without
+   * reading any of them whole: how many items it changes, how many the
+   * site changed since it was written (`behind`: they may clash), how many
+   * other open suggestions change some of the same items, and whether a
+   * failed check stops it. Two reads for the whole list.
+   */
+  async mergeStages(changesetIds: number[]): Promise<Map<number, { items: number; behind: number; overlaps: number; blocked: boolean }>> {
+    const out = new Map<number, { items: number; behind: number; overlaps: number; blocked: boolean }>();
+    if (!changesetIds.length) return out;
+    const [counts, shared, checks] = await Promise.all([
+      this.db.query<{ changeset_id: string | number; items: number; behind: number }>(
+        `SELECT p.changeset_id, count(*)::int AS items, count(*) FILTER (WHERE p.base_rev IS DISTINCT FROM e.main_rev)::int AS behind
+         FROM (SELECT DISTINCT ON (r.changeset_id, r.entity_id) r.changeset_id, r.entity_id, ${BASE_REV_SQL} AS base_rev
+               FROM revision r WHERE r.changeset_id = ANY($1::bigint[]) AND r.merge_rev IS NULL ORDER BY r.changeset_id, r.entity_id, r.id DESC) p
+         LEFT JOIN entity e ON e.id = p.entity_id GROUP BY p.changeset_id`,
+        [changesetIds],
+      ),
+      this.db.query<{ changeset_id: string | number; n: number }>(
+        `SELECT m.changeset_id, count(DISTINCT o.changeset_id)::int AS n
+         FROM (SELECT DISTINCT changeset_id, entity_id FROM revision WHERE changeset_id = ANY($1::bigint[]) AND merge_rev IS NULL) m
+         JOIN revision o ON o.entity_id = m.entity_id AND o.changeset_id <> m.changeset_id AND o.merge_rev IS NULL
+         JOIN changeset c ON c.id = o.changeset_id AND c.status IN ('open', 'sent_back')
+         GROUP BY m.changeset_id`,
+        [changesetIds],
+      ),
+      this.db.query<{ id: string | number; checks: Check[] }>('SELECT id, checks FROM changeset WHERE id = ANY($1::bigint[])', [changesetIds]),
+    ]);
+    for (const row of checks.rows) {
+      out.set(Number(row.id), { items: 0, behind: 0, overlaps: 0, blocked: (row.checks ?? []).some((c) => c.status === 'fail' && BLOCKING_CHECKS.has(c.check)) });
+    }
+    for (const row of counts.rows) {
+      const kept = out.get(Number(row.changeset_id));
+      if (kept) Object.assign(kept, { items: row.items, behind: row.behind });
+    }
+    for (const row of shared.rows) {
+      const kept = out.get(Number(row.changeset_id));
+      if (kept) kept.overlaps = row.n;
+    }
+    return out;
+  }
+
+  /**
+   * "Bring up to date", as a pull request's branch is updated from main:
+   * each item the site changed since the suggestion was written gets a new
+   * version in the suggestion, the site's changes merged into the
+   * suggestion's field by field, made on top of the site's version. Clashes
+   * are settled by `resolutions` (as Approve takes them); until every one
+   * is, nothing is written. After it the suggestion shows only what it
+   * still changes, clashes with nothing, and its checks run again. For its
+   * author, or a steward; not for a project's suggestion.
+   */
+  async bringUpToDate(changesetId: number, by: string, resolutions: Record<string, Record<string, Resolution>> = {}): Promise<{ updated: number }> {
+    return this.db.transaction(async (tx) => {
+      await tx.query('SELECT pg_advisory_xact_lock($1)', [MERGE_LOCK]);
+      const cs = await this.changeset(changesetId, tx);
+      const actor = await this.requireAccount(by, tx);
+      if (cs.author !== by && !actor.is_steward) throw forbidden('only its author or a steward brings a suggestion up to date');
+      if (cs.status !== 'draft' && cs.status !== 'open' && cs.status !== 'sent_back') throw badState(`this suggestion is ${cs.status}`);
+      if (cs.project_id !== null) throw badState("a project's suggestion follows its project, not the site");
+      const proposals = await this.proposals(cs.id, tx);
+      const currents = await this.targetRevs(tx, null, proposals.map((p) => p.entityId));
+      const moved = proposals.filter((p) => String(currents.get(p.entityId)?.id ?? '') !== String(p.baseRev ?? '') || (currents.get(p.entityId) !== undefined) !== (p.baseRev !== null));
+      if (!moved.length) return { updated: 0 };
+      const bases = new Map<string, RevisionRow>();
+      const baseIds = [...new Set(moved.filter((p) => p.baseRev !== null).map((p) => String(p.baseRev)))];
+      if (baseIds.length) {
+        const { rows } = await tx.query<RevisionRow>('SELECT * FROM revision WHERE id = ANY($1::bigint[])', [baseIds]);
+        for (const row of rows) bases.set(String(row.id), row);
+      }
+      const unresolved: Conflict[] = [];
+      const made: Array<{ p: Proposal; current: RevisionRow | null; data: Json | null; path: string | null }> = [];
+      for (const p of moved) {
+        const current = currents.get(p.entityId) ?? null;
+        const base = p.baseRev === null ? null : (bases.get(String(p.baseRev)) ?? null);
+        const merged = threeWayMerge(base?.data ?? null, current?.data ?? null, p.rev.data);
+        let data = merged.merged;
+        if (merged.conflicts.length > 0) {
+          const decided = decisionsFor(resolutions, p.entityId, merged.conflicts);
+          const open = merged.conflicts.filter((c) => !decided[c.path]);
+          if (open.length > 0) {
+            unresolved.push(...open.map((c) => ({ ...c, path: `${p.entityId}${c.path}` })));
+            continue;
+          }
+          data = resolveConflicts(merged, decided);
+        }
+        const path = (base?.path ?? null) === (current?.path ?? null) ? p.rev.path : (base?.path ?? null) === p.rev.path ? (current?.path ?? null) : p.rev.path;
+        made.push({ p, current, data: data === null ? null : withStructuredBody(data), path });
+      }
+      if (unresolved.length > 0) throw new UnresolvedConflictError(unresolved);
+      for (const x of made) {
+        await tx.query(
+          `INSERT INTO revision (entity_id, entity_type, parent_rev, data, path, hash, changeset_id, author)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [x.p.entityId, x.p.type, x.current?.id ?? null, x.data === null ? null : JSON.stringify(x.data), x.path, await contentHash({ type: x.p.type, data: x.data, path: x.path }), cs.id, by],
+        );
+      }
+      // What it changes now is checked again, so a check that failed against the old versions says how it stands.
+      if (cs.status === 'open') {
+        const checks = await this.runChecks(tx, cs, await this.proposals(cs.id, tx));
+        await tx.query('UPDATE changeset SET checks = $2 WHERE id = $1', [cs.id, JSON.stringify(checks)]);
+      }
+      if (cs.number !== null) await threadEvent(tx, { kind: 'changeset', id: cs.id }, by, 'edited', { upToDate: made.length });
+      await this.audit(tx, by, 'changeset.update', 'changeset', String(cs.id), { items: made.length });
+      return { updated: made.length };
+    });
+  }
+
   private async assertMayApprove(tx: Db, cs: ChangesetRow, by: string, read?: Proposal[]): Promise<void> {
     const reviewer = await this.requireAccount(by, tx);
     // A steward approves any suggestion, so its items and the sets above them are not read: for a Suggestion of hundreds of
@@ -1277,11 +1553,23 @@ export class Catalog {
     if (!decision.ok) throw forbidden(decision.reason);
   }
 
-  /** Merges proposals into main as one commit. Returns the commit's number. */
-  private async applyToMain(tx: Db, changesetId: number, proposals: Proposal[], by: string, message: string, resolutions: Record<string, Record<string, Resolution>>): Promise<number> {
+  /**
+   * What merging proposals would make of each item, and every reason it
+   * could not land as things stand, gathered rather than thrown: clashes no
+   * decision settles, items that would not be valid, links to items that
+   * are gone, paths already taken. Approve (applyToMain) refuses on the
+   * first of them; the merge check (mergeCheck) shows them all.
+   */
+  private async planMerge(
+    tx: Db,
+    proposals: Proposal[],
+    resolutions: Record<string, Record<string, Resolution>>,
+  ): Promise<{ planned: PlannedMerge[]; unresolved: Conflict[]; clashes: Array<Conflict & { entityId: EntityId; type: EntityType }>; problems: MergeProblem[]; behind: number }> {
     const registry = await this.registry(tx);
-    const planned: Array<{ proposal: Proposal; current: RevisionRow | null; data: Json | null; path: string | null; direct: boolean }> = [];
+    const planned: PlannedMerge[] = [];
     const unresolved: Conflict[] = [];
+    const clashes: Array<Conflict & { entityId: EntityId; type: EntityType }> = [];
+    const problems: MergeProblem[] = [];
     // Main's versions, and the versions the moved ones were made from, read at once: a bot's Suggestion of 500 items is two reads, not a thousand.
     const currents = await this.targetRevs(tx, null, proposals.map((p) => p.entityId));
     const moved = proposals.filter((p) => p.baseRev !== null && String(currents.get(p.entityId)?.id ?? '') !== String(p.baseRev));
@@ -1302,6 +1590,7 @@ export class Catalog {
       const merged = threeWayMerge(base?.data ?? null, current?.data ?? null, p.rev.data);
       let data = merged.merged;
       if (merged.conflicts.length > 0) {
+        clashes.push(...merged.conflicts.map((c) => ({ ...c, entityId: p.entityId, type: p.type })));
         const decided = decisionsFor(resolutions, p.entityId, merged.conflicts);
         const open = merged.conflicts.filter((c) => !decided[c.path]);
         if (open.length > 0) {
@@ -1315,28 +1604,26 @@ export class Catalog {
       const path = (base?.path ?? null) === (current?.path ?? null) ? p.rev.path : (base?.path ?? null) === p.rev.path ? (current?.path ?? null) : p.rev.path;
       planned.push({ proposal: p, current, data, path, direct: false });
     }
-    if (unresolved.length > 0) throw new UnresolvedConflictError(unresolved);
 
     // What main will hold once this lands, for checking the merged result.
-    // Checked and written a few statements for the whole change, not a few per item:
+    // Checked a few statements for the whole change, not a few per item:
     // a catalog reorganisation of 700 items was minutes of round trips and never landed.
     const landing = new Map(planned.map((x) => [x.proposal.entityId, x]));
     const pointing: Array<{ from: EntityId; ref: Reference }> = [];
     for (const x of planned) {
       if (x.data === null) continue;
       const valid = registry.validate(x.proposal.type, x.data);
-      if (!valid.ok) throw invalid(`${x.proposal.entityId} would not be valid after merging: ${valid.issues.map((i) => `${i.path || '/'} ${i.message}`).join('; ')}`, valid.issues);
+      if (!valid.ok) problems.push({ kind: 'invalid', entityId: x.proposal.entityId, message: `${x.proposal.entityId} would not be valid after merging: ${valid.issues.map((i) => `${i.path || '/'} ${i.message}`).join('; ')}`, detail: valid.issues });
       for (const ref of referencesOf(x.proposal.type, x.data)) {
         const target = landing.get(ref.id);
         if (!target) pointing.push({ from: x.proposal.entityId, ref });
-        else if (target.data === null) throw invalid(`${x.proposal.entityId} points at ${ref.id}, which this change deletes`);
+        else if (target.data === null) problems.push({ kind: 'reference', entityId: x.proposal.entityId, message: `${x.proposal.entityId} points at ${ref.id}, which this change deletes` });
       }
     }
     if (pointing.length) {
       const { rows } = await tx.query<{ id: string }>('SELECT id FROM entity WHERE id = ANY($1::text[]) AND NOT deleted AND main_rev IS NOT NULL', [[...new Set(pointing.map((p) => p.ref.id))]]);
       const live = new Set(rows.map((r) => r.id));
-      const missing = pointing.find((p) => !live.has(p.ref.id));
-      if (missing) throw invalid(`${missing.from} points at ${missing.ref.id} (${missing.ref.field}), which is not in the catalog`);
+      for (const missing of pointing.filter((p) => !live.has(p.ref.id))) problems.push({ kind: 'reference', entityId: missing.from, message: `${missing.from} points at ${missing.ref.id} (${missing.ref.field}), which is not in the catalog` });
     }
     const paths = planned.filter((x) => x.path !== null);
     if (paths.length) {
@@ -1346,9 +1633,18 @@ export class Catalog {
         const taken = holder.get(x.path!);
         if (taken === undefined || taken === x.proposal.entityId) continue;
         // Taken by an item this change moves elsewhere: it is released first.
-        if (!(landing.has(taken) && landing.get(taken)!.path !== x.path)) throw invalid(`the path ${x.path} already belongs to ${taken}`);
+        if (!(landing.has(taken) && landing.get(taken)!.path !== x.path)) problems.push({ kind: 'path', entityId: x.proposal.entityId, message: `the path ${x.path} already belongs to ${taken}` });
       }
     }
+    return { planned, unresolved, clashes, problems, behind: moved.length };
+  }
+
+  /** Merges proposals into main as one commit. Returns the commit's number. */
+  private async applyToMain(tx: Db, changesetId: number, proposals: Proposal[], by: string, message: string, resolutions: Record<string, Record<string, Resolution>>): Promise<number> {
+    const { planned, unresolved, problems } = await this.planMerge(tx, proposals, resolutions);
+    if (unresolved.length > 0) throw new UnresolvedConflictError(unresolved);
+    const problem = problems[0];
+    if (problem) throw invalid(problem.message, problem.detail);
 
     const commit = await one<{ seq: number }>(tx, 'INSERT INTO commit (changeset_id, merged_by, message) VALUES ($1, $2, $3) RETURNING seq', [changesetId, by, message]);
     const seq = commit!.seq;

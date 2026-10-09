@@ -67,11 +67,11 @@ export function workersAiAdvisor(input: { accountId: string; token: string; mode
   const model = input.model ?? DEFAULT_ADVICE_MODEL;
   return {
     model: model.replace(/^@cf\//, ''),
-    async complete(system, user) {
+    async complete(system, user, options) {
       const response = await (input.fetch ?? fetch)(`https://api.cloudflare.com/client/v4/accounts/${input.accountId}/ai/run/${model}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${input.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: 400, temperature: 0.2 }),
+        body: JSON.stringify({ messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: options?.maxTokens ?? 400, temperature: 0.2 }),
       });
       const body = (await response.json().catch(() => ({}))) as { success?: boolean; errors?: unknown; result?: { response?: string } };
       if (!response.ok || !body.success) throw new Error(`Workers AI: ${response.status} ${JSON.stringify(body.errors ?? body).slice(0, 300)}`);
