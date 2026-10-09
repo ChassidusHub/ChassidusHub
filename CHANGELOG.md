@@ -10,6 +10,15 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Merging with the site as it is now: `GET`/`POST /v1/suggestions/{id}/merge-check`
+  says whether a suggestion would merge, its stage, what stops it, links left
+  dangling, other suggestions changing the same items and each clash with the
+  site; `POST /v1/suggestions/{id}/update` brings it up to date;
+  `POST /v1/suggestions/{id}/resolve-ai` proposes how to settle each clash
+  (machine-written, advice only); `GET /v1/suggestions/stages?ids=` gives a
+  list's stages at once. The suggestion page and `/review` show this live,
+  `/review` has Merge all, and the Send sheet names suggestions already
+  waiting on the same place. MCP: `check_merge`, `bring_up_to_date`.
 - What's new: Home has a band of what can now be heard and read (the
   Cheshvan and Kislev farbrengens transcribed by AI, the Likkutei Sichos
   text and Sefer HaSichos 5747–5752, read from the scans by AI), each
