@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { Catalog, convertLegacyBodies, fillShaars } from '@chassidushub/core';
+import { Catalog, applyOrganize, convertLegacyBodies, fillShaars, planPrintingMerges } from '@chassidushub/core';
 import { connectPostgres, holdCatalog, one, waitingWhileHeld, type Db } from '@chassidushub/db';
 import { openPGlite } from '@chassidushub/db/pglite';
 import {
@@ -523,7 +523,34 @@ export async function importCommand(ctx: Context, input: { source: string; from:
     const importer = make(input.from);
     const result = await runImport(catalog, importer, { approveAs: input.approveAs, dryRun: input.dryRun, chunkSize: input.chunkSize, log: ctx.log });
     ctx.log(`${input.dryRun ? 'would create' : 'created'} ${result.created}, updated ${result.updated}, unchanged ${result.unchanged}${result.skipped ? `, skipped ${result.skipped} (not in the catalog yet)` : ''}; kept ${result.keptHumanEdits} human edits; suggestions: ${result.changesets.join(', ') || 'none'}`);
+    // A volume this source brought that the catalog already has from another one is joined to it, not kept beside it.
+    if (result.created > 0) await mergePrintings(ctx, catalog, { dryRun: input.dryRun || !input.approveAs, approveAs: input.approveAs });
   });
+}
+
+const PRINTINGS_BOT = { id: 'bot:printings', displayName: 'One record per volume' };
+
+/**
+ * Merges the printings that are the same volume of a sefer into one
+ * (printings.ts): a Suggestion per sefer, for review, or approved as
+ * `approveAs`. After an import that was itself approved by a steward, the
+ * import runs this too; otherwise it only reports what it would merge.
+ */
+export async function mergePrintingsCommand(ctx: Context, input: { work?: string; dryRun?: boolean; approveAs?: string }): Promise<void> {
+  await withCatalog(ctx, (catalog) => mergePrintings(ctx, catalog, input));
+}
+
+async function mergePrintings(ctx: Context, catalog: Catalog, input: { work?: string; dryRun?: boolean; approveAs?: string }): Promise<void> {
+  const plans = await planPrintingMerges(catalog, input.work as never);
+  const merges = plans.reduce((n, p) => n + p.operations.length, 0);
+  if (!merges) return ctx.log('every volume is one record');
+  if (input.dryRun) return ctx.log(`would merge ${merges} printings into the volumes they repeat, in ${plans.length} suggestions`);
+  await catalog.createAccount({ id: PRINTINGS_BOT.id, displayName: PRINTINGS_BOT.displayName, isBot: true });
+  for (const plan of plans) {
+    const { suggestion } = await applyOrganize(catalog, PRINTINGS_BOT.id, plan);
+    if (input.approveAs) await catalog.merge(suggestion.id, input.approveAs, {}, 'One record per volume');
+    ctx.log(`suggestion ${suggestion.id}: ${plan.operations.length} printings merged${input.approveAs ? '' : ', waiting for review'}`);
+  }
 }
 
 /**

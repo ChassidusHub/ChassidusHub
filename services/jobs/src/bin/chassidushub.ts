@@ -9,6 +9,7 @@ import { alignCommand, mendSplitsCommand, restoreWordTimesCommand, transcribeCom
 import { coversCommand, fingerprintsCommand, pageImagesCommand } from '../scanPagesCommand.js';
 import {
   accountCommand,
+  mergePrintingsCommand,
   convertBodiesCommand,
   shaarsCommand,
   archiveGapsCommand,
@@ -59,6 +60,9 @@ const HELP = `chassidushub - ChassidusHub's command line
                                                 links to JEM's player in the older form as the
                                                 Ashreinu app's own, the same way
   chassidushub account --id <id> --name <name> [--steward] [--bot]
+  chassidushub merge-printings [--work <id>] [--approve-as <steward>] [--dry-run]
+                                                the printings that are one volume of a sefer (HebrewBooks,
+                                                אוצרות הרבי, a text) made one record, a suggestion per sefer
   chassidushub import <importer> --from <Sichos-Kodesh checkout> [--approve-as <steward>] [--dry-run] [--chunk <n>]
                                                 sichos-kodesh-works, sichos-kodesh-occasions, otzros, hebrewbooks;
                                                 chabadlibrary (CHABADLIBRARY_TREE), jem (JEM_DB), sefaria (SEFARIA_DATA),
@@ -268,6 +272,9 @@ try {
       break;
     case 'account':
       await accountCommand(ctx, { id: need(values.id, 'id'), name: need(values.name, 'name'), steward: values.steward, bot: values.bot });
+      break;
+    case 'merge-printings':
+      await mergePrintingsCommand(ctx, { work: values.work, approveAs: values['approve-as'], dryRun: values['dry-run'] });
       break;
     case 'import':
       await importCommand(ctx, { source: need(rest[0], 'source'), from: need(values.from, 'from'), approveAs: values['approve-as'], dryRun: values['dry-run'], chunkSize: number(values.chunk) });
