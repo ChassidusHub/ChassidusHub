@@ -69,7 +69,7 @@ review of the exact commit, and one place merges.
    then, if needed, a paragraph on the reason.
 4. **Open a pull request** early - a draft is fine - using the template,
    saying `Closes #N` and the milestone. CI runs the checks on PGlite and
-   on Postgres 16, and skips drafts.
+   on Postgres 16.
 5. **Review**: when CI is green, ask for review. The reviewer reads the
    diff against the issue's acceptance criteria and, when it is right,
    comments exactly `APPROVE <head sha>` - the full sha of the commit
