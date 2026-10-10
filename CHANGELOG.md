@@ -10,6 +10,8 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A signed-out reader's page no longer asks for an account's draft it would be
+  refused (a 401 that smoke counted as a broken page).
 - One record per volume: `chassidushub merge-printings` merges the printings
   of a sefer that are the same volume (HebrewBooks, אוצרות הרבי, a text) into
   one, with all their scans and sources, a Suggestion per sefer.
