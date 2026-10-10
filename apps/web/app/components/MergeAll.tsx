@@ -71,6 +71,12 @@ export function MergeAll({ rows, lang, onMerged, onFinished }: { rows: ReviewRow
       const at = { id: row.id, number: row.number, title: row.title };
       try {
         const check = await mergeApi.check(row.id);
+        // Merged in the meantime (by someone else, or in another tab): it counts as merged here too.
+        if (check.stage === 'merged') {
+          setLog((l) => [{ ...at, outcome: 'merged', commit: check.merged?.commit ?? null }, ...l]);
+          onMerged(row.id);
+          continue;
+        }
         if (check.mayApprove === false) {
           setLog((l) => [{ ...at, outcome: 'skipped', why: check.reason ?? W.notYours[lang] }, ...l]);
           continue;

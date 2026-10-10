@@ -36,4 +36,26 @@ describe('built-in schema upgrades', () => {
     const { rows } = await catalog.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM entity WHERE type = 'schema' AND NOT deleted`);
     expect(rows[0]!.n).toBe(Object.keys(BUILTIN_SCHEMAS).length);
   });
+
+  it('withdraws an upgrade an earlier start left unmerged, and finds a schema item by its path when its type was renamed', async () => {
+    const { catalog } = await freshCatalog();
+    const head = await catalog.head();
+    const left = await catalog.createChangeset('system', { title: `Built-in schemas, version ${BUILTIN_SCHEMA_VERSION}`, kind: 'import' });
+    await catalog.db.query(`UPDATE changeset SET status = 'open', created_at = now() - interval '1 day' WHERE id = $1`, [left.id]);
+    // An item under another install's id that says another type than its path: an upgrade still changes it, rather than making a second item at its path.
+    await catalog.db.query(`SET session_replication_role = replica`);
+    for (const table of ['revision', 'commit_change', 'entity']) {
+      const column = table === 'entity' ? 'id' : 'entity_id';
+      const has = await catalog.db.query(`SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2`, [table, column]);
+      if (has.rows.length) await catalog.db.query(`UPDATE ${table} SET ${column} = ${column} || 'x' WHERE ${column} IN (SELECT id FROM entity WHERE type = 'schema' AND path = '/schemas/alignment-span')`);
+    }
+    await catalog.db.query(`SET session_replication_role = DEFAULT`);
+    await catalog.db.query(`UPDATE revision SET data = jsonb_set(jsonb_set(data, '{version}', '1'), '{entityType}', '"old-name"'), hash = 'old-' || hash WHERE entity_type = 'schema' AND path = '/schemas/alignment-span'`);
+    await catalog.init();
+    expect(await catalog.head()).toBe(head + 1);
+    const { rows } = await catalog.db.query<{ status: string }>(`SELECT status FROM changeset WHERE id = $1`, [left.id]);
+    expect(rows[0]!.status).toBe('withdrawn');
+    const { rows: at } = await catalog.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM entity WHERE type = 'schema' AND path = '/schemas/alignment-span' AND NOT deleted`);
+    expect(at[0]!.n).toBe(1);
+  });
 });

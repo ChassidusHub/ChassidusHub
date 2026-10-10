@@ -311,6 +311,20 @@ On the catalog as the Sichos-Kodesh checkout builds it, that is about
 index's own Drive links) and about 5,400 Otzros pages: some 18
 Suggestions. The dry run says the real numbers.
 
+### One record per volume
+
+The same volume of a sefer often comes from several places: two scans on
+HebrewBooks, a PDF in אוצרות הרבי's Drive, a typed text. Each volume is
+one printing, with every scan and source on it (Shmuly, 2026-10-09).
+`chassidushub merge-printings` (or the workflow's `merge-printings-dry-run`
+and `merge-printings`) finds the printings of each sefer that are one
+volume, and one part where a year is printed in two (`תשמ״ז - חלק א` and
+`תשמ''ז א`), and merges them into the one with a path, else the
+HebrewBooks one: a Suggestion per sefer, by `bot:printings`, for review.
+A printing whose volume is not a number is left alone. An import approved
+as a steward (`--approve-as`) runs it after itself, so a volume a new
+source brings joins the one already there.
+
 ## Text and sync
 
 - `chassidushub ocr --reread` reads again the scans an older version of the
