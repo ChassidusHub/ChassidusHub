@@ -51,7 +51,7 @@ On Workers, from `wrangler.toml` and the Worker's settings; with
 | `DRIVE_MAX_MB` | no | the largest Drive file `GET /v1/drive/<id>` passes on, in MB (default 300) |
 
 Under Node only: `PORT`, `HOST`, `PGLITE_DIR`, `DEV_ACCOUNT` (signs every
-request in as one account, on localhost only), `DEV_EMAIL=1` (prints
+request in as one account, and shows the site signed in as it, on localhost only), `DEV_EMAIL=1` (prints
 email instead of sending it), `RATE_LIMIT=1` (counts requests in memory).
 
 ## The site (apps/web)
