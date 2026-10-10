@@ -456,6 +456,13 @@ ninety days of it and the latest incidents.
   Hyperdrive never caches): 288 a day. When the database does not answer,
   the run's jobs (webhooks, email updates, the reviewer's advice) wait
   for the next run rather than spend queries failing.
+- The run also keeps the transcripts summary at
+  `summaries/transcripts.json` in the same bucket, made again when it is
+  over fifteen minutes old (`services/api/src/summaries.ts`): counting
+  every transcript's paragraphs takes tens of seconds on a cold database,
+  so `/v1/transcripts` (which the home page waits on) reads the kept list
+  and never counts while someone waits. A new transcript shows there
+  within about twenty minutes.
 - The site is asked for `/about` through the `SITE` service binding (it
   needs neither the API nor the database); the API and the MCP server are
   this Worker's own answers to `/openapi.json` and `initialize`.

@@ -1,7 +1,7 @@
 import { Catalog } from '@chassidushub/core';
 import { connectPostgres, measured, type DbCost } from '@chassidushub/db';
 import { createApp } from './app.js';
-import { r2Store, r2Writer, statusStore, type R2Bucket } from './r2.js';
+import { r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
 
 /**
  * The API answering the site's own reads inside the site's Worker
@@ -83,6 +83,7 @@ export function readerFor(env: ReadsEnv, waitUntil: (work: Promise<unknown>) => 
     files: files ? r2Store(files) : undefined,
     texts: files ? { store: r2Store(files), writer: r2Writer(files), from: env.SK_ARCHIVE ? r2Store(env.SK_ARCHIVE) : undefined } : undefined,
     status: files ? statusStore(files) : undefined,
+    transcripts: files ? transcriptsStore(files) : undefined,
     siteUrl: env.SITE_URL,
     waitUntil,
   });

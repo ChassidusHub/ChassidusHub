@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The home page no longer waits half a minute after a quiet spell:
+  `/v1/transcripts` answers from a list the API's scheduled run keeps
+  (made again every fifteen minutes) instead of counting every
+  transcript's paragraphs on the request. The list can be up to about
+  twenty minutes behind.
 - One record per volume: `chassidushub merge-printings` merges the printings
   of a sefer that are the same volume (HebrewBooks, אוצרות הרבי, a text) into
   one, with all their scans and sources, a Suggestion per sefer.
