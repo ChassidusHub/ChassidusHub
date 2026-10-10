@@ -8,7 +8,8 @@ import { siteOf } from './lib/context.server.js';
 import { PlayerBar } from './player/PlayerBar.js';
 import { PlayerProvider } from './player/PlayerProvider.js';
 import { useServiceWorker } from './lib/pwa.js';
-import { Header } from './ui/Header.js';
+import { Header, sectionOf } from './ui/Header.js';
+import { Sidebar } from './ui/Sidebar.js';
 import { Footer } from './ui/Footer.js';
 import { ToastProvider } from './ui/Toast.js';
 import { EmptyState } from './ui/primitives.js';
@@ -21,6 +22,7 @@ import './styles/components.css';
 import './styles/parts.css';
 import './styles/page.css';
 import './styles/layout.css';
+import './styles/shell.css';
 import './styles/pages.css';
 import './styles/items.css';
 import './styles/pages/farbrengen.css';
@@ -89,9 +91,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {tu(lang, 'skip')}
             </a>
             <PlayerProvider>
-              <Header lang={lang} />
-              <main id="main">{children}</main>
-              <Footer lang={lang} />
+              {/* The new look's frame: the sidebar, and beside it the header, the page and its foot. */}
+              <div className="shell">
+                <Sidebar lang={lang} section={sectionOf(pathname)} />
+                <div className="shell-main">
+                  <Header lang={lang} />
+                  <main id="main">{children}</main>
+                  <Footer lang={lang} />
+                </div>
+              </div>
               <PlayerBar />
             </PlayerProvider>
           </ToastProvider>

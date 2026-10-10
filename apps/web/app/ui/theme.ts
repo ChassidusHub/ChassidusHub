@@ -13,8 +13,10 @@ export type TextFont = 'frank' | 'david' | 'noto';
 const THEME_KEY = 'chassidushub.theme';
 const FONT_KEY = 'chassidushub.text-font';
 
+const SIDE_KEY = 'chassidushub.sidebar';
+
 /** Runs in <head> before anything is drawn. Kept tiny and free of imports. */
-export const THEME_SCRIPT = `(function(){try{var d=document.documentElement,t=localStorage.getItem('${THEME_KEY}');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);var f=localStorage.getItem('${FONT_KEY}');if(f==='david'||f==='noto')d.setAttribute('data-text-font',f)}catch(e){}})();`;
+export const THEME_SCRIPT = `(function(){try{var d=document.documentElement,t=localStorage.getItem('${THEME_KEY}');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);var f=localStorage.getItem('${FONT_KEY}');if(f==='david'||f==='noto')d.setAttribute('data-text-font',f);if(localStorage.getItem('${SIDE_KEY}')==='folded')d.setAttribute('data-side','folded')}catch(e){}})();`;
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
@@ -75,5 +77,45 @@ export function useTextFont(): TextFont {
       return f === 'david' || f === 'noto' ? f : 'frank';
     },
     () => 'frank',
+  );
+}
+
+/** Whether the page is dark now: the reader's choice, or the device's when they left it to the device. */
+export function useDarkNow(): boolean {
+  return useSyncExternalStore(
+    (l) => {
+      const off = subscribe(l);
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      media.addEventListener('change', l);
+      return () => {
+        off();
+        media.removeEventListener('change', l);
+      };
+    },
+    () => {
+      const t = read(THEME_KEY);
+      return t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    },
+    () => false,
+  );
+}
+
+/**
+ * The sidebar on a wide screen: open, or folded to its icons. Kept in this
+ * browser and set on <html data-side> before the page is drawn, like the theme.
+ */
+export function setSideFolded(folded: boolean): void {
+  const root = document.documentElement;
+  if (folded) root.setAttribute('data-side', 'folded');
+  else root.removeAttribute('data-side');
+  write(SIDE_KEY, folded ? 'folded' : null);
+  notify();
+}
+
+export function useSideFolded(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => read(SIDE_KEY) === 'folded',
+    () => false,
   );
 }

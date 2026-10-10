@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useMatches, useNavigate } from 'react-router';
 import type { Lang } from '../lib/i18n.js';
 import { tu, type UiKey } from '../lib/i18nUi.js';
@@ -8,36 +8,26 @@ import { CommandPalette } from './CommandPalette.js';
 import { Icon, type IconName } from './Icon.js';
 import { Logo } from './Logo.js';
 import { Avatar } from './primitives.js';
-import { setTheme, useTheme, type Theme } from './theme.js';
+import { openDrawer } from './Sidebar.js';
+import { setTheme, useDarkNow, useTheme, type Theme } from './theme.js';
 
 /**
- * The frame's header, as the redesign draws it (design/README.md). On a wide
- * screen: the logo, which is the way home, the three ways in (the library,
- * the day's learning, listening) and how to take part, the search box (Ctrl K opens the
- * command palette; without script it is a plain form to the search page),
- * the language, the bell and you; Suggestions, Reports and Projects are in your menu.
- * On a phone: the logo on the home page, or back and the page's name
- * elsewhere, with search and the bell; the five sections are tabs along the
- * bottom, where a thumb reaches them, the last one the menu.
+ * The header of the new look (studio/design-target): the sections moved to
+ * the sidebar (ui/Sidebar.tsx), so on a wide screen it holds the search box
+ * (Ctrl K opens the command palette; without script it is a plain form to
+ * the search page), and at its end light or dark, the bell and you, with
+ * Suggestions, Reports and Projects in your menu. On a phone: the logo on
+ * the home page, or back and the page's name elsewhere, with search, light
+ * or dark, the bell and the button that opens the sidebar as a drawer.
  */
 
-/** The sections a phone keeps as tabs at the bottom; the rest are in the menu. */
-const TABS = ['/', '/sets', '/calendar', '/contribute'];
-
-/**
- * The sections in the header and the phone's tabs, in plain words for a
- * first visit: the redesign's places (docs/plans/redesign.md), Home,
- * Library, Listen and Contribute, with You in the phone's last tab (the
- * menu: your account, your suggestions, the rest of the site). Listening
- * is the farbrengens, where the recordings are; the day's learning keeps
- * its place in the wide header and is in the menu on a phone.
- */
-const NAV: Array<{ to: string; key: UiKey; long?: UiKey; icon: IconName }> = [
-  { to: '/', key: 'navHome', icon: 'home' },
-  { to: '/sets', key: 'navLibrary', icon: 'book' },
-  { to: '/daily', key: 'navDaily', long: 'navDailyLong', icon: 'cal' },
-  { to: '/calendar', key: 'navListen', icon: 'audio' },
-  { to: '/contribute', key: 'navTakePart', icon: 'heart' },
+/** The sections, named for the phone header's title on their pages. */
+const NAV: Array<{ to: string; key: UiKey }> = [
+  { to: '/', key: 'navHome' },
+  { to: '/sets', key: 'navLibrary' },
+  { to: '/daily', key: 'navDaily' },
+  { to: '/calendar', key: 'navListen' },
+  { to: '/contribute', key: 'navTakePart' },
 ];
 
 /** The rest of the site's sections, in the menu. */
@@ -78,14 +68,6 @@ function usePhoneHead(): PhoneHead {
   return {};
 }
 
-function otherLangHref(lang: Lang, pathname: string, search: string): string {
-  const params = new URLSearchParams(search);
-  if (lang === 'en') params.set('lang', 'he');
-  else params.delete('lang');
-  const qs = params.toString();
-  return qs ? `${pathname}?${qs}` : pathname;
-}
-
 function ThemeSwitch({ lang }: { lang: Lang }) {
   const theme = useTheme();
   const choices: Array<[Theme, IconName, UiKey]> = [
@@ -102,6 +84,17 @@ function ThemeSwitch({ lang }: { lang: Lang }) {
         </button>
       ))}
     </div>
+  );
+}
+
+/** The new look's one button for light and dark, top right; "as the device" stays in your menu. */
+function ThemeToggle({ lang }: { lang: Lang }) {
+  const dark = useDarkNow();
+  const label = tu(lang, dark ? 'toLight' : 'toDark');
+  return (
+    <button type="button" className="ib theme-toggle" onClick={() => setTheme(dark ? 'light' : 'dark')} aria-label={label} title={label}>
+      <Icon name={dark ? 'sun' : 'moon'} />
+    </button>
   );
 }
 
@@ -134,28 +127,6 @@ function InboxLink({ lang, first }: { lang: Lang; first: number }) {
     <Link className="icon-link" to={href('/inbox', lang)} aria-label={label} title={label}>
       <Icon name="bell" />
       {unread ? <span className="dot-count">{unread > 99 ? '99+' : unread}</span> : null}
-    </Link>
-  );
-}
-
-/** One part of the phone's menu, under its small heading (design/ 4b). */
-function MenuGroup({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="menu-group">
-      <h3>{title}</h3>
-      {children}
-    </section>
-  );
-}
-
-/** A line of the menu: its icon and words, a count when something waits, and the arrow on. */
-function MenuRow({ to, icon, label, badge, current, chevron }: { to: string; icon: IconName; label: string; badge?: number; current?: boolean; chevron: IconName }) {
-  return (
-    <Link className="menu-row" to={to} aria-current={current ? 'page' : undefined}>
-      <Icon name={icon} />
-      <span className="grow">{label}</span>
-      {badge ? <span className="menu-badge">{badge > 99 ? '99+' : badge}</span> : null}
-      <Icon name={chevron} />
     </Link>
   );
 }
@@ -252,14 +223,15 @@ export function Header({ lang }: { lang: Lang }) {
   const account = useAccount();
   const phone = usePhoneHead();
   const [palette, setPalette] = useState<{ open: boolean; initial: string }>({ open: false, initial: '' });
-  const sheet = useRef<HTMLDetailsElement>(null);
   const section = sectionOf(pathname);
   const q = pathname === '/search' ? (new URLSearchParams(search).get('q') ?? '') : '';
 
-  // Close the phone's menu on every page change.
+  // The sidebar's Search opens the palette too (ui/Sidebar.tsx).
   useEffect(() => {
-    if (sheet.current) sheet.current.open = false;
-  }, [pathname, search]);
+    const onOpen = (e: Event) => setPalette({ open: true, initial: String((e as CustomEvent).detail ?? '') });
+    window.addEventListener('chassidushub:palette', onOpen);
+    return () => window.removeEventListener('chassidushub:palette', onOpen);
+  }, []);
 
   // Keyboard: Ctrl/⌘ K or / for the palette, ? for the shortcuts, g then h/l/d/f/s/r/p to go.
   useEffect(() => {
@@ -291,9 +263,6 @@ export function Header({ lang }: { lang: Lang }) {
   }, [lang, navigate]);
 
   const openPalette = (initial = '') => setPalette({ open: true, initial });
-  const other = otherLangHref(lang, pathname, search);
-  // The menu's arrows point on, toward the end of the line: left in Hebrew.
-  const chevron: IconName = lang === 'he' ? 'chev' : 'chevr';
   const navItem = NAV.find((n) => n.to === section);
   // A page kept under another section's tab (what is missing, the catalog's health) is still called by its own name.
   const ownTitle = pathname.startsWith('/missing') ? tu(lang, 'missing') : pathname.startsWith('/health') ? tu(lang, 'health') : pathname.startsWith('/help') ? tu(lang, 'waysToHelp') : null;
@@ -303,16 +272,6 @@ export function Header({ lang }: { lang: Lang }) {
   return (
     <>
       <header className="top">
-        <Link to={href('/', lang)} className="brand" aria-label="ChassidusHub">
-          <Logo size={24} />
-        </Link>
-        <nav className="nav" aria-label={tu(lang, 'mainNav')}>
-          {NAV.filter((n) => n.to !== '/').map((n) => (
-            <Link key={n.to} to={href(n.to, lang)} aria-current={section === n.to ? 'page' : undefined}>
-              {tu(lang, n.long ?? n.key)}
-            </Link>
-          ))}
-        </nav>
         <form
           className="search-form"
           action="/search"
@@ -345,9 +304,7 @@ export function Header({ lang }: { lang: Lang }) {
           {lang === 'he' ? <input type="hidden" name="lang" value="he" /> : null}
         </form>
         <div className="top-end">
-          <a className="lang" href={other} hrefLang={lang === 'he' ? 'en' : 'he'} lang={lang === 'he' ? 'en' : 'he'} aria-label={tu(lang, 'language')} title={tu(lang, 'language')}>
-            {lang === 'he' ? 'English' : 'עברית'}
-          </a>
+          <ThemeToggle lang={lang} />
           {account ? <InboxLink lang={lang} first={account.unread ?? 0} /> : null}
           <AccountMenu lang={lang} />
         </div>
@@ -386,113 +343,21 @@ export function Header({ lang }: { lang: Lang }) {
         >
           <Icon name="search" />
         </Link>
+        <ThemeToggle lang={lang} />
         {account ? <InboxLink lang={lang} first={account.unread ?? 0} /> : null}
-        <details className="msheet" ref={sheet}>
-          <summary className="ib" aria-label={tu(lang, 'menu')}>
-            <Icon name="more" />
-          </summary>
-          <div
-            className="sheet-backdrop"
-            onClick={() => {
-              if (sheet.current) sheet.current.open = false;
-            }}
-          />
-          <div className="sheet" role="dialog" aria-label={tu(lang, 'menu')}>
-            <div className="sheet-h">
-              <h2 className="sheet-title">{tu(lang, 'menu')}</h2>
-              <button
-                type="button"
-                className="ib"
-                aria-label={tu(lang, 'close')}
-                onClick={() => {
-                  if (sheet.current) sheet.current.open = false;
-                }}
-              >
-                <Icon name="x" />
-              </button>
-            </div>
-            {account ? (
-              <Link className="me-card" to={href(account.person.username ? `/u/${account.person.username}` : '/account', lang)}>
-                <Avatar name={account.person.displayName} id={account.person.id} />
-                <span className="grow">
-                  <b>{account.person.displayName}</b>
-                  <span>{tu(lang, 'myProfile')}</span>
-                </span>
-                <Icon name={chevron} />
-              </Link>
-            ) : account === null ? (
-              <Link className="me-card" to={href('/signin', lang, { return: `${pathname}${search}` })}>
-                <span className="me-icon">
-                  <Icon name="user" />
-                </span>
-                <span className="grow">
-                  <b>{tu(lang, 'signIn')}</b>
-                  <span>{tu(lang, 'signInWhy')}</span>
-                </span>
-                <Icon name={chevron} />
-              </Link>
-            ) : null}
-            {account ? (
-              <MenuGroup title={tu(lang, 'menuMine')}>
-                <MenuRow to={href('/suggestions', lang, { q: lang === 'he' ? 'מצב:פתוחה מציע:@me' : 'state:open author:@me' })} icon="suggest" label={tu(lang, 'mySuggestions')} chevron={chevron} />
-                <MenuRow to={href('/suggestions', lang, { q: lang === 'he' ? 'מצב:פתוחה בודק:@me' : 'state:open reviewer:@me' })} icon="check" label={tu(lang, 'toReview')} chevron={chevron} />
-                <MenuRow to={href('/inbox', lang)} icon="bell" label={tu(lang, 'notifications')} badge={account.unread || undefined} chevron={chevron} />
-                <MenuRow to={href('/account', lang)} icon="user" label={tu(lang, 'account')} chevron={chevron} />
-                {account.person.steward ? <MenuRow to={href('/admin', lang)} icon="shield" label={tu(lang, 'admin')} chevron={chevron} /> : null}
-              </MenuGroup>
-            ) : null}
-            <MenuGroup title={tu(lang, 'menuReading')}>
-              <div className="menu-row static">
-                <Icon name="sun" />
-                <span className="grow">{tu(lang, 'theme')}</span>
-                <ThemeSwitch lang={lang} />
-              </div>
-              <a className="menu-row" href={other} hrefLang={lang === 'he' ? 'en' : 'he'}>
-                <Icon name="globe" />
-                <span className="grow">{tu(lang, 'language')}</span>
-                <span className="menu-value">{lang === 'he' ? 'עברית · English' : 'English · עברית'}</span>
-                <Icon name={chevron} />
-              </a>
-            </MenuGroup>
-            <MenuGroup title={tu(lang, 'menuSite')}>
-              {[...NAV.filter((n) => !TABS.includes(n.to)), ...MORE].map((n) => (
-                <MenuRow key={n.to} to={href(n.to, lang)} icon={n.icon} label={tu(lang, n.key)} current={section === n.to} chevron={chevron} />
-              ))}
-              <MenuRow to={href('/search', lang)} icon="search" label={tu(lang, 'searchShort')} chevron={chevron} />
-            </MenuGroup>
-            <MenuGroup title={tu(lang, 'menuHelp')}>
-              <MenuRow to={href('/about', lang)} icon="info" label={tu(lang, 'about')} chevron={chevron} />
-            </MenuGroup>
-            {account ? (
-              <div className="menu-group">
-                <button type="button" className="menu-row" onClick={signOut}>
-                  <Icon name="logout" />
-                  <span className="grow">{tu(lang, 'signOut')}</span>
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </details>
-      </header>
-
-      <nav className="mtabs" aria-label={tu(lang, 'mainNav')}>
-        {NAV.filter((n) => TABS.includes(n.to)).map((n) => (
-          <Link key={n.to} to={href(n.to, lang)} aria-current={section === n.to ? 'page' : undefined}>
-            <Icon name={n.icon} />
-            <span>{tu(lang, n.key)}</span>
-          </Link>
-        ))}
-        <button
-          type="button"
-          aria-current={TABS.includes(section) ? undefined : 'page'}
-          onClick={() => {
-            if (sheet.current) sheet.current.open = true;
+        {/* The sidebar, as a drawer; without script the link opens it by its address. */}
+        <a
+          className="ib"
+          href="#nav"
+          aria-label={tu(lang, 'menu')}
+          onClick={(e) => {
+            e.preventDefault();
+            openDrawer();
           }}
         >
-          <Icon name="user" />
-          <span>{tu(lang, 'navYou')}</span>
-        </button>
-      </nav>
+          <Icon name="menu" />
+        </a>
+      </header>
 
       <CommandPalette lang={lang} account={account} open={palette.open} initial={palette.initial} onClose={() => setPalette({ open: false, initial: '' })} />
     </>

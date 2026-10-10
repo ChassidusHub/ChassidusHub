@@ -42,6 +42,14 @@
   --accent-strong: #8a2c1e;
   --accent-hover: #74241a;
   --accent-soft: #f2e1d9;
+  /*
+   * The new look's mark (studio/design-target): a small glowing yellow dot
+   * beside a section's label and the current place, and the main action's
+   * pill. A deeper gold on paper, so it still shows.
+   */
+  --glow: #e0a800;
+  --glow-halo: rgba(224, 168, 0, 0.35);
+  --on-glow: #1b1814;
   --accent-line: rgba(138, 44, 30, 0.45);
   --focus: #8a2c1e;
 
@@ -199,6 +207,8 @@
     --accent-strong: #a8432f;
     --accent-hover: #b9503a;
     --accent-soft: #3a221b;
+    --glow: #f3d931;
+    --glow-halo: rgba(243, 217, 49, 0.45);
     --accent-line: rgba(226, 149, 127, 0.5);
     --focus: #e2957f;
     --open: #c7bfb0;
@@ -268,6 +278,8 @@
   --accent-strong: #a8432f;
   --accent-hover: #b9503a;
   --accent-soft: #3a221b;
+  --glow: #f3d931;
+  --glow-halo: rgba(243, 217, 49, 0.45);
   --accent-line: rgba(226, 149, 127, 0.5);
   --focus: #e2957f;
   --open: #c7bfb0;

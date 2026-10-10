@@ -10,6 +10,14 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The new look, part 1: every page sits beside a sidebar. At its head the
+  logo and a button that folds it to its icons (remembered); then My study
+  (where you stopped reading or listening), the Library and Search, under a
+  line the site's other sections, and settings, feedback and the language at
+  its foot. On a phone it opens as a drawer from the header, in place of the
+  tabs along the bottom and the menu. The header keeps the search box, a
+  light/dark button, the bell and your menu. The page you are on is marked
+  with a small glowing dot.
 - One record per volume: `chassidushub merge-printings` merges the printings
   of a sefer that are the same volume (HebrewBooks, אוצרות הרבי, a text) into
   one, with all their scans and sources, a Suggestion per sefer.

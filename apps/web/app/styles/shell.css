@@ -1,0 +1,323 @@
+/*
+ * The new look's frame (studio/design-target, ui/Sidebar.tsx): the sidebar
+ * at the start of every page and, beside it, the header, the page and its
+ * foot. On a wide screen the sidebar stands beside the page and folds to
+ * its icons (`data-side="folded"` on <html>, kept in this browser); on a
+ * phone it is a drawer over the page. Its section labels are set in small
+ * spaced capitals in the mono face, in English; Hebrew has no capitals, so
+ * there they are the UI face, bold.
+ */
+
+.shell {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.shell-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The header no longer carries the logo and sections: search where the page starts, you at the end. */
+.top .search-form {
+  flex: 0 1 420px;
+  margin-inline-start: 0;
+}
+
+.top .top-end {
+  margin-inline-start: auto;
+  gap: 6px;
+}
+
+/* ------------------------------------------------------------ the sidebar */
+
+.side {
+  --side-w: 264px;
+  position: sticky;
+  top: 0;
+  z-index: 51;
+  width: var(--side-w);
+  height: 100vh;
+  height: 100dvh;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px calc(12px + var(--player-h, 0px));
+  border-inline-end: 1px solid var(--border);
+  background: var(--bg);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.side-h {
+  height: var(--header-h);
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.side-h .brand {
+  flex: 1;
+  min-width: 0;
+}
+
+.side-x,
+.side-me,
+.side-scrim {
+  display: none;
+}
+
+.side-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+}
+
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: var(--r-lg);
+  color: var(--muted);
+  font-size: var(--fs-md);
+  text-decoration: none;
+  cursor: pointer;
+  list-style: none;
+}
+
+.side-link:hover {
+  color: var(--text);
+  background: var(--canvas);
+  text-decoration: none;
+}
+
+.side-link > .i {
+  flex: none;
+}
+
+.side-t {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The new look's main places: My study, the Library, Search. */
+.side-link.side-key,
+.mono-label {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+[dir='rtl'] .side-link.side-key,
+[dir='rtl'] .mono-label {
+  font-family: var(--ui);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* The page you are on: a warm wash from the start edge, and the glowing dot. */
+.side-link[aria-current='page'] {
+  color: var(--text);
+  background: linear-gradient(to right, color-mix(in srgb, var(--glow) 22%, transparent), transparent 85%);
+}
+
+[dir='rtl'] .side-link[aria-current='page'] {
+  background: linear-gradient(to left, color-mix(in srgb, var(--glow) 22%, transparent), transparent 85%);
+}
+
+.side-link[aria-current='page']::after,
+.glow-dot {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--glow);
+  box-shadow: 0 0 8px 2px var(--glow-halo);
+}
+
+.glow-dot {
+  display: inline-block;
+}
+
+.side-sec > summary::-webkit-details-marker {
+  display: none;
+}
+
+.side-chev {
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.side-sec:not([open]) .side-chev {
+  transform: rotate(-90deg);
+}
+
+[dir='rtl'] .side-sec:not([open]) .side-chev {
+  transform: rotate(90deg);
+}
+
+.side-study {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0 0 8px;
+  padding-inline-start: 38px;
+}
+
+.side-place,
+.side-more {
+  display: block;
+  padding: 5px 8px;
+  border-radius: var(--r);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.side-place:hover,
+.side-more:hover {
+  color: var(--text);
+  background: var(--canvas);
+  text-decoration: none;
+}
+
+.side-place small {
+  display: block;
+  color: var(--subtle);
+  font-size: var(--fs-xs);
+}
+
+.side-more {
+  color: var(--subtle);
+}
+
+.side-empty {
+  margin: 0;
+  padding: 2px 8px 6px;
+  color: var(--subtle);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.side hr {
+  margin: 10px 6px;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.side-foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* Folded, on a wide screen: the icons alone, each named on hover. */
+@media (min-width: 861px) {
+  :root[data-side='folded'] .side {
+    --side-w: 64px;
+    padding-inline: 10px;
+  }
+  :root[data-side='folded'] .side :is(.side-t, .side-chev, .side-study, .brand),
+  :root[data-side='folded'] .side-link[aria-current='page']::after {
+    display: none;
+  }
+  :root[data-side='folded'] .side :is(.side-h, .side-link) {
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+/* ------------------------------------------------------------ on a phone, a drawer */
+
+@media (max-width: 860px) {
+  .side {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 70;
+    width: min(320px, 86vw);
+    height: auto;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    box-shadow: var(--shadow-dialog);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform var(--dur-slow) var(--ease),
+      visibility 0s linear var(--dur-slow);
+  }
+  [dir='rtl'] .side {
+    transform: translateX(100%);
+  }
+  .side.open,
+  .side:target {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--dur-slow) var(--ease);
+  }
+  .side-fold {
+    display: none;
+  }
+  .side-h {
+    padding-inline-start: 8px;
+  }
+  .side-x {
+    display: grid;
+    margin-inline-end: -6px;
+  }
+  .side-me {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 8px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-card);
+    background: var(--card);
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .side-link {
+    min-height: 44px;
+  }
+  .side-scrim:not([hidden]),
+  .side-scrim:has(+ .side:target) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 69;
+    background: rgb(0 0 0 / 40%);
+  }
+  /* The top bar's menu button sits at the very end, lined up with the page's edge. */
+  .mtop > .ib:last-child {
+    margin-inline-end: -4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side,
+  .side-chev {
+    transition: none !important;
+  }
+}

@@ -264,12 +264,12 @@ describe("each page's statements and API calls stay within its ceiling", () => {
     expect(html.indexOf('class="sg-review"')).toBeGreaterThan(-1);
     expect(html.indexOf('class="sg-review"')).toBeLessThan(html.indexOf('id="description"'));
   });
-  it('draws the menu as the design does (4b): its name, then its parts under small headings', async () => {
+  it('draws the new look’s sidebar (studio/design-target): My study, the Library and Search, then the sections', async () => {
     const html = await (await handle(new Request(`${SITE}/?lang=he`))).text();
-    expect(html).toContain('<h2 class="sheet-title">תפריט</h2>');
-    expect(html).toMatch(/<section class="menu-group"><h3>קריאה<\/h3>/);
-    // The day's learning is a tab no more on a phone (Contribute took its place): it is in the menu.
-    expect(html).toMatch(/class="menu-row" href="\/daily\?lang=he"/);
+    expect(html).toMatch(/<aside id="nav" class="side"/);
+    expect(html).toContain('<span class="side-t">הלימוד שלי</span>');
+    // The day's learning, a tab no more, is among the sections under the line.
+    expect(html).toMatch(/class="side-link" href="\/daily\?lang=he"/);
   });
   it('search, suggestions and review', async () => {
     within(await page(`/search?q=${encodeURIComponent('שיחה')}`), 'search', { statements: 15, calls: 6, kB: 110 });
