@@ -2,9 +2,9 @@
 # schema, rights and governance; add set keepers and maintainers here as
 # they are appointed (GOVERNANCE.md).
 *                                @ChassidusHub
-/packages/model/                 @ChassidusHub
-/packages/db/src/migrations/     @ChassidusHub
-/packages/model/src/rights.ts    @ChassidusHub
+/packages/model/                 @shmuky
+/packages/db/src/migrations/     @shmuky
+/packages/model/src/rights.ts    @shmuky
 /services/api/src/openapi.ts     @ChassidusHub
 /GOVERNANCE.md                   @ChassidusHub
-/.github/                        @ChassidusHub
+/.github/                        @shmuky
