@@ -1,0 +1,45 @@
+name: Approval re-run
+
+# A comment cannot be the approval check itself: a run started by a comment belongs to main, not to the pull
+# request's head. So when someone comments "APPROVE ..." on a pull request, this re-runs that head's latest
+# Approval run (approval.yml), which then reads the comment. Opening or closing the studio-stop issue re-runs
+# every open pull request's, so the stop shows at once.
+on:
+  issue_comment:
+    types: [created, edited]
+  issues:
+    types: [opened, edited, closed, reopened]
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: approval-rerun-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  rerun:
+    if: >-
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request && startsWith(github.event.comment.body, 'APPROVE'))
+      || (github.event_name == 'issues' && contains(github.event.issue.title, 'studio-stop'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const numbers = context.eventName === 'issue_comment'
+              ? [context.payload.issue.number]
+              : (await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 })).map((pr) => pr.number);
+            for (const number of numbers) {
+              const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+              const { data } = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'approval.yml', head_sha: pr.head.sha, per_page: 1 });
+              const latest = data.workflow_runs[0];
+              if (!latest) { core.info(`#${number}: no Approval run on ${pr.head.sha} yet.`); continue; }
+              if (latest.status !== 'completed') { core.info(`#${number}: the Approval run is still going; it reads the comments when it gets to them.`); continue; }
+              await github.rest.actions.reRunWorkflow({ owner, repo, run_id: latest.id });
+              core.info(`#${number}: re-ran Approval run ${latest.id} on ${pr.head.sha}.`);
+            }

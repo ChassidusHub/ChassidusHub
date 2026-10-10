@@ -1,0 +1,37 @@
+name: Approval
+
+# The studio's one rule (studio/GOALS.md): nothing reaches main without a reviewer's "APPROVE <head sha>" on the
+# pull request, and only the QA lane merges. This check is green only when that comment names this head, or when
+# every commit since the approved one is the QA lane merging main; it is red while an issue titled studio-stop is
+# open. GitHub cannot require it on a private repository without a paid plan, so the QA lane also audits main
+# hourly (studio/branch-protection.md). A new comment re-runs it (approval-rerun.yml).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Read-only: it only reads comments, reviews, issues and commits.
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: approval-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  approval:
+    name: Approved at this commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # The gate's script as main has it, never the pull request's own copy.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          sparse-checkout: .github/scripts
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const { run } = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/approval.cjs`);
+            await run({ github, context, core });
