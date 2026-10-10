@@ -89,6 +89,11 @@ async function decide({ github, owner, repo, pr }) {
       const { data: fromMain } = await github.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${approved}...${last.parents[1].sha}` });
       mainFiles = new Set((fromMain.files ?? []).map((f) => f.filename));
     }
+    // GitHub lists at most 300 changed files; past that nobody can tell what else changed.
+    if ((compared.files ?? []).length >= 300 || mainFiles.size >= 300) {
+      reasons.push(`Too many files changed since ${approved.slice(0, 7)} to check the merges; approve the head.`);
+      continue;
+    }
     const changed = (compared.files ?? []).map((f) => f.filename);
     const reason = await onlyQaMerges(approved, compared.commits, onMain, changed, mainFiles);
     if (!reason) return { ok: true, summary: `Approved at ${approved.slice(0, 7)}; every commit since is the QA lane merging main.` };

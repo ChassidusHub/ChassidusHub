@@ -1,12 +1,14 @@
 name: Approval re-run
 
 # A comment cannot be the approval check itself: a run started by a comment belongs to main, not to the pull
-# request's head. So when someone comments "APPROVE ..." on a pull request, this re-runs that head's latest
-# Approval run (approval.yml), which then reads the comment. Opening or closing the studio-stop issue re-runs
-# every open pull request's, so the stop shows at once.
+# request's head. So when someone comments or reviews "APPROVE ..." on a pull request, this re-runs that head's
+# latest Approval run (approval.yml), which then reads it. Opening, closing or retitling the studio-stop issue
+# re-runs every open pull request's, so the stop shows at once both ways.
 on:
   issue_comment:
     types: [created, edited]
+  pull_request_review:
+    types: [submitted, edited]
   issues:
     types: [opened, edited, closed, reopened]
 
@@ -16,14 +18,15 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: approval-rerun-${{ github.event.issue.number }}
+  group: approval-rerun-${{ github.event.issue.number || github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
   rerun:
     if: >-
       (github.event_name == 'issue_comment' && github.event.issue.pull_request && startsWith(github.event.comment.body, 'APPROVE'))
-      || (github.event_name == 'issues' && contains(github.event.issue.title, 'studio-stop'))
+      || (github.event_name == 'pull_request_review' && startsWith(github.event.review.body, 'APPROVE'))
+      || (github.event_name == 'issues' && (contains(github.event.issue.title, 'studio-stop') || contains(github.event.changes.title.from, 'studio-stop')))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -31,8 +34,8 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const numbers = context.eventName === 'issue_comment'
-              ? [context.payload.issue.number]
+            const numbers = context.eventName === 'issue_comment' ? [context.payload.issue.number]
+              : context.eventName === 'pull_request_review' ? [context.payload.pull_request.number]
               : (await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 })).map((pr) => pr.number);
             for (const number of numbers) {
               const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });

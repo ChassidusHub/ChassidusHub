@@ -119,3 +119,18 @@ test('a QA merge that slips in a change of its own fails', async () => {
   assert.equal(result.ok, false);
   assert.match(result.summary, /sneaky\.ts/);
 });
+
+test('past the 300 files GitHub lists, a QA merge cannot be checked', async () => {
+  const many = Array.from({ length: 300 }, (_, i) => ({ filename: `f${i}.ts` }));
+  const github = fake({
+    comments: [said(`APPROVE ${A}`)],
+    compare: {
+      [`${A}...${B}`]: { status: 'ahead', behind_by: 0, total_commits: 1, commits: [merge(B, A, M)], files: many },
+      [`${A}...${M}`]: { status: 'ahead', files: many },
+      [`${M}...main`]: { status: 'identical' },
+    },
+  });
+  const result = await decide({ github, owner: 'o', repo: 'r', pr: pr(B) });
+  assert.equal(result.ok, false);
+  assert.match(result.summary, /Too many files/);
+});
