@@ -51,22 +51,40 @@ CHASSIDUSHUB_TEST_DATABASE_URL=postgres://localhost/chassidushub_test npx vitest
 
 ### The flow
 
+Every merge to `main` is a live deploy of chassidushub.org, and the API's
+build runs the database migrations. So nothing reaches `main` without a
+review of the exact commit, and one place merges.
+
 1. **Find or open an issue** for what you want to change, so the work is
    visible and nobody does it twice. For anything larger than a fix, say
-   how you plan to do it before you start.
+   how you plan to do it before you start. A change to the core (data
+   model, schema, the API's meaning, the merge engine, rights) starts as
+   an RFC in [docs/rfc/](docs/rfc/0000-template.md).
 2. **Branch** from `main`, named for what it does:
    `fix/segment-order-after-revert`, `feat/iiif-manifests`,
-   `docs/rights-policy`, `chore/update-vitest`.
+   `docs/rights-policy`, `chore/update-vitest`. The studio's lanes use
+   `claude/<lane>-<subject>`.
 3. **Commit** in small steps with messages that say what and why:
    a short first line ("Keep path redirects when an item is deleted"),
    then, if needed, a paragraph on the reason.
-4. **Open a pull request** early - a draft is fine - using the template.
-   CI runs the checks on PGlite and on Postgres 16.
-5. **Review**: a maintainer (see [CODEOWNERS](.github/CODEOWNERS)) reviews.
-   Changes to the data model, the database schema, rights or governance
-   need a steward's approval.
-6. **Merge**: squash-merged into `main` by a maintainer once CI is green and
-   the review is approved.
+4. **Open a pull request** early - a draft is fine - using the template,
+   saying `Closes #N` and the milestone. CI runs the checks on PGlite and
+   on Postgres 16, and skips drafts.
+5. **Review**: when CI is green, ask for review. The reviewer reads the
+   diff against the issue's acceptance criteria and, when it is right,
+   comments exactly `APPROVE <head sha>` - the full sha of the commit
+   approved. Any later push cancels it; the new head needs its own
+   `APPROVE`. Changes to the data model, the database schema, rights,
+   governance or `.github/` also need a steward ([CODEOWNERS](.github/CODEOWNERS)).
+6. **Merge**: only the QA lane merges, one pull request at a time. It
+   brings the branch up to date, waits for green CI, squash-merges with
+   the approved head sha, waits for both deploys, and runs the smoke
+   test. Nobody merges their own pull request. A migration ships in its
+   own pull request, first and alone, and is never reverted - it is fixed
+   forward with a new one.
+
+**Stop switch.** While an issue titled `studio-stop` is open, nobody
+pushes or merges; finish the commit locally and wait.
 
 ### Rules of the house
 
@@ -95,9 +113,12 @@ CHASSIDUSHUB_TEST_DATABASE_URL=postgres://localhost/chassidushub_test npx vitest
 
 ### Labels
 
-`report`, `missing`, `rights` (catalog issues) · `bug`, `idea` (software) ·
-`good first issue`, `help wanted` · `model`, `db`, `api`, `mirror`,
-`importers`, `hebrew` (area) · `phase-1` … `phase-6` (roadmap).
+`report`, `missing`, `rights` (catalog issues) · `type:bug`,
+`type:feature`, `type:chore`, `type:rfc`, `idea` · `P1` … `P3` (priority) ·
+`own:<lane>` (who owns it) · `ready`, `claimed`, `blocked`,
+`needs-shmuly` (state) · `main-red`, `freeze` · `discovery` (found by
+visiting the site) · `good first issue`, `help wanted`. Milestones M0 … M6
+are the roadmap's goals.
 
 ## Conduct
 
