@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/mafteach`: a place in a volume kept page by page (Likkutei Sichos
+  30-39) opens that page on the site (`text`), where most opened only the
+  sicha's PDF; and whether the kept index is current is asked of each
+  unit's place, not every version of the sefer (#100).
 - `GET /v1/search/moments` and `/v1/search/page` answer a common word (שבת,
   גאולה) faster: each match's words are ranked once, where it is found, and
   fewer are ranked (1000 pages, 1000 paragraphs, 100 sichos) (#172).

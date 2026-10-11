@@ -66,6 +66,9 @@ interface Built {
 
 const cache = new Map<string, { stamp: string; built: Built }>();
 
+/** How the index is built; raised when that changes, so kept indexes are built again (2: places open their page, #100). */
+const BUILD = 2;
+
 /**
  * Where a built index is kept between requests (the API keeps it in R2): a
  * cold Worker reads it rather than building it again, which on the live
@@ -80,8 +83,12 @@ export interface MafteachKept {
 const keyOf = (topic: string) => unfinal(normalizeSearchText(topic));
 const LETTERS = 'אבגדהוזחטיכלמנסעפצקרשת';
 
-/** The index's runs of one volume's paragraph as places: `126 (context). 194.` */
-export function placesOf(runs: readonly PageInline[], textOf: (pdf: string) => string | undefined): MafteachPlace[] {
+/**
+ * The index's runs of one volume's paragraph as places: `126 (context). 194.`
+ * `textOf` is the page on the site a place opens: by the PDF it links, or by
+ * its page alone.
+ */
+export function placesOf(runs: readonly PageInline[], textOf: (pdf: string, page: number) => string | undefined): MafteachPlace[] {
   const places: MafteachPlace[] = [];
   for (const run of runs) {
     if (!('text' in run)) continue;
@@ -100,9 +107,9 @@ export function placesOf(runs: readonly PageInline[], textOf: (pdf: string) => s
         if (Number.isInteger(at) && at > 1) place.at = at;
         const sicha = query.get('title')?.trim();
         if (sicha) place.sicha = sicha;
-        const text = textOf(src);
-        if (text) place.text = text;
       }
+      const text = textOf(place.pdf ?? '', place.page);
+      if (text) place.text = text;
       places.push(place);
       continue;
     }
@@ -119,7 +126,7 @@ export function driveId(url: string): string | null {
 }
 
 async function build(catalog: Catalog, indexId: string, seferId: string | null): Promise<Built> {
-  const [head, units, sichos] = await Promise.all([
+  const [head, units, sichos, pages] = await Promise.all([
     catalog.db.query<{ path: string | null; title: unknown }>(`SELECT e.path, r.data->'title' AS title FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = $1`, [indexId]),
     catalog.db.query<{ path: string | null; position: Array<{ value?: string }> | null; version: PageVersion | null }>(
       `SELECT e.path, r.data->'position' AS position, r.data->'body'->'versions'->0 AS version
@@ -137,13 +144,29 @@ async function build(catalog: Catalog, indexId: string, seferId: string | null):
           [seferId],
         )
       : Promise.resolve({ rows: [] as Array<{ path: string; url: string }> }),
+    // The sefer's printed pages, where its units are pages (volumes 30-39 of Likkutei Sichos, from Chabad Library, are
+    // each page its own unit named by its number): a place opens that page, not the PDF of its sicha (#100).
+    seferId
+      ? catalog.db.query<{ part: string | null; page: string; path: string }>(
+          `SELECT part, label->>'he' AS page, path FROM unit_place
+           WHERE work_id = $1 AND path IS NOT NULL AND label->>'he' ~ '^[0-9]+$' ORDER BY ord`,
+          [seferId],
+        )
+      : Promise.resolve({ rows: [] as Array<{ part: string | null; page: string; path: string }> }),
   ]);
+  const byPage = new Map<string, string>();
+  for (const row of pages.rows) {
+    const key = `${row.part}:${Number(row.page)}`;
+    if (!byPage.has(key)) byPage.set(key, row.path);
+  }
   const byDrive = new Map<string, string>();
   for (const row of sichos.rows) {
     const id = driveId(row.url);
     if (id && !byDrive.has(id)) byDrive.set(id, row.path);
   }
-  const textOf = (pdf: string) => {
+  const textOf = (volume: number) => (pdf: string, page: number) => {
+    const exact = byPage.get(`${volume}:${page}`);
+    if (exact) return exact;
     const id = driveId(pdf);
     return id ? byDrive.get(id) : undefined;
   };
@@ -164,7 +187,7 @@ async function build(catalog: Catalog, indexId: string, seferId: string | null):
         continue;
       }
       if (segment.kind !== 'paragraph' || !topic || topic === '(המשך)') continue;
-      const found = placesOf(segment.text ?? [], textOf);
+      const found = placesOf(segment.text ?? [], textOf(volume));
       if (!found.length) continue;
       const key = keyOf(topic);
       if (!key) continue;
@@ -199,7 +222,8 @@ async function build(catalog: Catalog, indexId: string, seferId: string | null):
  * The index at `indexId` (a work whose units are its volumes' index pages),
  * each place linked to the sicha's page in `seferId` when there is one.
  * Built once and kept until an index page or a sicha changes: one small
- * statement answers whether it did.
+ * statement answers whether it did, from each unit's place (unit_place),
+ * never reading the sefer's versions.
  */
 export async function mafteach(
   catalog: Catalog,
@@ -221,10 +245,11 @@ export async function mafteach(
   const seferId = options.seferId ?? null;
   const stamp = await catalog.db.query<{ stamp: string | null }>(
     `SELECT (SELECT max(e.main_rev) FROM entity e WHERE e.id = $1)::text || ':' ||
-            coalesce((SELECT max(r.id) FROM revision r JOIN entity e ON e.main_rev = r.id WHERE r.data->>'work' = ANY($2)), 0)::text AS stamp`,
+            coalesce((SELECT max(e.main_rev) FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "default" WHERE p.work_id = ANY($2)), 0)::text AS stamp`,
     [indexId, seferId ? [indexId, seferId] : [indexId]],
   );
-  const now = stamp.rows[0]?.stamp;
+  // The way it is built is part of the stamp: an index kept by an older build is built again.
+  const now = stamp.rows[0]?.stamp ? `${BUILD}:${stamp.rows[0].stamp}` : null;
   if (!now) return null;
   const at = `${indexId}-${seferId ?? 'none'}`;
   let hit = cache.get(at);
