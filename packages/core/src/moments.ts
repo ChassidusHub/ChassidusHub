@@ -241,16 +241,15 @@ export const MOMENT_CANDIDATES = 200;
 
 /**
  * How many matches of each kind are ranked at most. Ranking reads each
- * match's words whole: a page or a paragraph is short, but a sicha's are
- * all its text, and a common word (שבת, גאולה) over every sicha took eight
- * to ten seconds. Past these, the first matches found are ranked. Each
- * match is ranked where it is found, so its words are read once (#172).
- * Reading them is most of a first search's time (a word nobody searched
- * lately is read from disk): a sicha's words are some 80 KB, a page's 4,
- * a paragraph's 1, so fewer sichos and pages are ranked than paragraphs
- * (#182: תניא took 1.9 s cold to rank 100 sichos and 1,000 pages).
+ * match's words: a page's are some 4 KB, a paragraph's 1, and a sicha is
+ * ranked on its lead (unit_place.lead, migration 0033: its name and its
+ * first few hundred words), never on all its 80 KB. A common word (שבת,
+ * גאולה) over every sicha's whole words took eight to ten seconds, and
+ * forty sichos read whole were most of a first search's time (#172,
+ * #182). Past these, the first matches found are ranked. Each match is
+ * ranked where it is found, so its words are read once.
  */
-export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 40 } as const;
+export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 400 } as const;
 
 /**
  * The places in scans and texts where the query's words are: lines on
@@ -268,12 +267,16 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   // then the rest: that needs each such match's revision, so only a search with a date reads it before the limit.
   // A scan page's layer comes from its link (entity_ref), not its revision, which holds all the page's lines (#182).
   const within = options.within ?? null;
-  const RANK = `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
+  // A sicha is ranked on its lead, a sicha outside a sefer (no unit_place row) last; the rest on their words.
+  const rank = (type: keyof typeof MOMENT_RANKED) =>
+    type === 'unit'
+      ? `coalesce((SELECT ts_rank(p.lead, to_tsquery('simple', $1)) FROM unit_place p WHERE p.unit_id = e.id COLLATE "C"), 0)`
+      : `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
   const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
-    `(SELECT e.id, e.type, e.main_rev, ${RANK} AS rank, ${tier} AS tier FROM entity e
+    `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, ${tier} AS tier FROM entity e
           WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED[type]})`;
   const ofDate = (type: keyof typeof MOMENT_RANKED) =>
-    `(SELECT e.id, e.type, e.main_rev, ${RANK} AS rank, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
+    `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
           WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1)
             AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
   const kinds = ['text-page', 'segment', 'unit'] as const;

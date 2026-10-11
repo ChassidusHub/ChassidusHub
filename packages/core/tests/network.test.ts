@@ -212,6 +212,19 @@ describe('search that lands on the moment', () => {
     catalog.db.query = query;
   });
 
+  it('ranks a sicha on its lead, its name and first words, not on all its words (#182)', async () => {
+    const { catalog, set } = await freshCatalog();
+    const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'שיחות' }, slug: 'sichos', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] });
+    const body = (p: string) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: p }] }] }] });
+    // Made-up words: one sicha says them often, but only far past its opening; the other opens on them.
+    const filler = Array.from({ length: 400 }, (_, i) => `מלה${i}`).join(' ');
+    await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '1' }], order: '1', label: { he: 'שיחה 1' }, body: body(`${filler} פתח דבר פתח דבר פתח דבר`), sets: [set] });
+    const opens = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '2' }], order: '2', label: { he: 'שיחה 2' }, body: body(`לפני פתח דבר ${filler}`), sets: [set] });
+    // One asked for: the best ranked is the one shown (neither opens with the words, which would put it first anyway).
+    const moments = await searchMoments(catalog, 'פתח דבר', { limit: 1 });
+    expect(moments.map((m) => (m as { unit?: string }).unit)).toEqual([opens]);
+  });
+
   it('puts first what was said in the year, month or day: a text by its own date, its farbrengen or its own words naming the year, a transcript by its farbrengen; then the rest (#90, #167)', async () => {
     const { catalog, set } = await freshCatalog();
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מאמרים' }, slug: 'maamarim', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });
