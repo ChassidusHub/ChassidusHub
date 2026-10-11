@@ -7,6 +7,7 @@ import { siteOf } from '../lib/context.server.js';
 import { langFrom, type Lang } from '../lib/i18n.js';
 import { labelOf } from '../lib/labels.js';
 import { href, itemPath } from '../lib/links.js';
+import { issueAfterReport, type SignedOutReport } from '../lib/reportAnswer.js';
 import { pageMeta } from '../lib/seo.js';
 import { questionsOf } from '../lib/issueTokens.js';
 import { LABELS } from '../lib/suggestions.js';
@@ -44,8 +45,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const item = entity ? { id: entity.id, path: itemPath(entity), name: labelOf(entity, lang) || entity.id } : null;
   return { lang, siteUrl, templates, item, open: open?.items ?? [] };
 }
-
-export type SignedOutReport = { number: number | null } | { error: string };
 
 /** A report from someone not signed in: sent from the server, so the API sees who asked only as an address for its hourly limit. */
 export async function action({ request, context }: Route.ActionArgs): Promise<SignedOutReport> {
@@ -119,15 +118,15 @@ export default function NewIssue({ loaderData }: Route.ComponentProps) {
     setParams(next, { replace: true, preventScrollReset: true });
   };
 
-  // A signed-out report's answer: to the issue it became, or the reason it was not sent.
+  // A signed-out report's answer: to the issue it became (a private one is thanked here), or the reason it was not sent.
   const answer = fetcher.data;
+  const after = issueAfterReport(answer, Boolean(template?.private));
   useEffect(() => {
-    if (!answer) return;
-    if ('error' in answer) {
+    if (answer && 'error' in answer) {
       setError(answer.error);
       setBusy(false);
-    } else if (answer.number !== null) navigate(href(`/issues/${answer.number}`, lang));
-  }, [answer, lang, navigate]);
+    } else if (typeof after === 'number') navigate(href(`/issues/${after}`, lang));
+  }, [answer, after, lang, navigate]);
 
   async function send() {
     setBusy(true);
@@ -230,7 +229,7 @@ export default function NewIssue({ loaderData }: Route.ComponentProps) {
                 <Icon name="lock" size={14} /> {tt(lang, 'privateType')}
               </p>
             ) : null}
-            {answer && 'number' in answer && answer.number === null ? (
+            {after === 'thanks' ? (
               <p className="alert positive" role="status">
                 <Icon name="check" /> {w(lang, 'sent')}
               </p>
