@@ -41,16 +41,27 @@ export type ShownText =
       /** Every version there is to switch to, this one among them. */
       versions: Array<{ version: string; from: 'body' | 'text'; language: string; title?: string }>;
     }
-  | {
-      kind: 'pages';
-      /** The scan and its file (served at /v1/files/{sha256}) with the PDF pages that hold the item. */
-      scan: EntityId;
-      file: string;
-      firstPage: number;
-      lastPage: number;
-      publication: EntityId;
-    }
+  | ({ kind: 'pages' } & ScanPlace)
   | { kind: 'withheld'; reason: string; url?: string };
+
+/** Where a unit is printed: the scan and its file (served at /v1/files/{sha256}) with the PDF pages that hold it. */
+export interface ScanPlace {
+  scan: EntityId;
+  file: string;
+  firstPage: number;
+  lastPage: number;
+  publication: EntityId;
+  /** The PDF itself, when it is served from here: `/objects/{sha256}`, made whole by the API. */
+  url: string | null;
+}
+
+/** A recording of the farbrengen a unit was said at, to hear the Rebbe say it. */
+export interface HeardAt {
+  id: EntityId;
+  path: string | null;
+  name: Json | null;
+  durationMs: number | null;
+}
 
 export interface ItemView {
   /** The item's facts, without its words (they are in `text`). */
@@ -61,6 +72,10 @@ export interface ItemView {
   previous: Brief | null;
   next: Brief | null;
   text: ShownText | null;
+  /** A unit's scan, even when it has words of its own: the corner menu's "the scan". Null for other items, or when none may be served. */
+  scan: ScanPlace | null;
+  /** The recordings of the farbrengens a unit was said at, in their order. */
+  recordings: HeardAt[];
 }
 
 interface Brief {
@@ -108,10 +123,13 @@ export async function itemView(catalog: Catalog, at: { path: string } | { id: En
   const shown = await gate.redact(found);
   const { body, ...facts } = shown.data as Record<string, unknown>;
   const isUnit = found.type === 'unit';
-  const [bar, around, text] = await Promise.all([
+  const events = Array.isArray(facts.events) ? (facts.events as EntityId[]) : [];
+  const media = isUnit ? unitMedia(catalog, found.id, events) : Promise.resolve({ scan: null, recordings: [] });
+  const [bar, around, text, { scan, recordings }] = await Promise.all([
     pathBar(catalog, found),
     isUnit ? catalog.unitNeighbours(found.id) : Promise.resolve({ previous: null, next: null }),
-    isUnit ? unitText(catalog, gate, found.id, body as PageText | undefined, facts, shown.withheld, options.language) : Promise.resolve(null),
+    isUnit ? unitText(catalog, gate, found.id, body as PageText | undefined, facts, shown.withheld, options.language, media) : Promise.resolve(null),
+    media,
   ]);
   return {
     item: { ...found, data: facts as Json },
@@ -120,6 +138,8 @@ export async function itemView(catalog: Catalog, at: { path: string } | { id: En
     previous: brief(around.previous),
     next: brief(around.next),
     text,
+    scan,
+    recordings,
   };
 }
 
@@ -130,7 +150,7 @@ interface TextRow {
 }
 
 /** A unit's best words: its own, else the first text of it whose rights let it be shown (an edition before a hanacha), else a scan's pages. */
-async function unitText(catalog: Catalog, gate: ExportGate, unit: EntityId, body: PageText | undefined, facts: Record<string, unknown>, withheld: string | undefined, language?: string): Promise<ShownText | null> {
+async function unitText(catalog: Catalog, gate: ExportGate, unit: EntityId, body: PageText | undefined, facts: Record<string, unknown>, withheld: string | undefined, language: string | undefined, media: Promise<UnitMedia>): Promise<ShownText | null> {
   const ownVersions = (body?.versions ?? []).map((v) => ({ version: v.id, from: 'body' as const, language: v.language, ...(v.title ? { title: v.title } : {}) }));
   if (body && body.versions.length) {
     const version = body.versions.find((v) => v.language === language || v.id === language) ?? body.versions[0]!;
@@ -190,28 +210,47 @@ async function unitText(catalog: Catalog, gate: ExportGate, unit: EntityId, body
       versions: shown.map((t) => ({ version: t.id, from: 'text' as const, language: t.data.language ?? 'he' })),
     };
   }
-  const pages = await scanPages(catalog, unit);
-  if (pages) return pages;
+  const { scan } = await media;
+  if (scan) return { kind: 'pages', ...scan };
   if (withheld) return { kind: 'withheld', reason: withheld, ...((facts.bodySource as { url?: string } | undefined)?.url ? { url: (facts.bodySource as { url: string }).url } : {}) };
   return null;
 }
 
-/** The PDF pages of a scan the unit is printed on, from its contents maps, where the scan's file may be served: one statement. */
-async function scanPages(catalog: Catalog, unit: EntityId): Promise<ShownText | null> {
-  const { rows } = await catalog.db.query<{ scan: EntityId; publication: EntityId; pages: { from: number; to: number; scheme: 'printed' | 'pdf' }; labels: Parameters<typeof pdfPagesOf>[1] | null; file: string | null; rights: RightsState | null }>(
-    `SELECT s.id AS scan, mr.data->>'publication' AS publication, mr.data->'pages' AS pages, sr.data->'pageLabels' AS labels, sr.data->>'file' AS file, f.rights_state AS rights
-     FROM entity_ref x JOIN entity m ON m.id = x.from_id AND m.type = 'contents-map' AND NOT m.deleted JOIN revision mr ON mr.id = m.main_rev
-     JOIN entity_ref y ON y.to_id = mr.data->>'publication' AND y.field = 'publication'
-     JOIN entity s ON s.id = y.from_id AND s.type = 'scan' AND NOT s.deleted JOIN revision sr ON sr.id = s.main_rev
-     LEFT JOIN file f ON f.sha256 = sr.data->>'file'
-     WHERE x.to_id = $1 AND x.field = 'unit'
-     ORDER BY m.id, s.id`,
-    [unit],
+interface UnitMedia {
+  scan: ScanPlace | null;
+  recordings: HeardAt[];
+}
+
+/**
+ * A unit's scan and recordings in one statement: the PDF pages of a scan
+ * it is printed on, from its contents maps, where the scan's file may be
+ * served; and the recordings of its farbrengens.
+ */
+async function unitMedia(catalog: Catalog, unit: EntityId, events: EntityId[]): Promise<UnitMedia> {
+  type ScanRow = { scan: EntityId; publication: EntityId; pages: { from: number; to: number; scheme: 'printed' | 'pdf' }; labels: Parameters<typeof pdfPagesOf>[1] | null; file: string | null; rights: RightsState | null; tier: string | null };
+  const { rows } = await catalog.db.query<{ scans: ScanRow[]; recordings: HeardAt[] }>(
+    `SELECT
+       (SELECT coalesce(jsonb_agg(jsonb_build_object('scan', s.id, 'publication', mr.data->>'publication', 'pages', mr.data->'pages', 'labels', sr.data->'pageLabels', 'file', sr.data->>'file', 'rights', f.rights_state, 'tier', f.storage_tier) ORDER BY m.id, s.id), '[]'::jsonb)
+        FROM entity_ref x JOIN entity m ON m.id = x.from_id AND m.type = 'contents-map' AND NOT m.deleted JOIN revision mr ON mr.id = m.main_rev
+        JOIN entity_ref y ON y.to_id = mr.data->>'publication' AND y.field = 'publication'
+        JOIN entity s ON s.id = y.from_id AND s.type = 'scan' AND NOT s.deleted JOIN revision sr ON sr.id = s.main_rev
+        LEFT JOIN file f ON f.sha256 = sr.data->>'file'
+        WHERE x.to_id = $1 AND x.field = 'unit') AS scans,
+       (SELECT coalesce(jsonb_agg(jsonb_build_object('id', g.id, 'path', g.path, 'name', gr.data->'title', 'durationMs', (gr.data->>'durationMs')::bigint)
+                                  ORDER BY array_position($2::text[], gr.data->>'event'), gr.data->>'part' COLLATE "C", g.id), '[]'::jsonb)
+        FROM revision gr JOIN entity g ON g.main_rev = gr.id AND g.type = 'recording' AND NOT g.deleted
+        WHERE gr.data->>'event' = ANY($2::text[])) AS recordings`,
+    [unit, events],
   );
-  for (const row of rows) {
+  const { scans, recordings } = rows[0]!;
+  let scan: ScanPlace | null = null;
+  for (const row of scans) {
     if (!row.file || !row.rights || !mayServe(row.rights)) continue;
     const range = pdfPagesOf(row.pages, row.labels ?? undefined);
-    if (range) return { kind: 'pages', scan: row.scan, file: row.file, firstPage: range.from, lastPage: range.to, publication: row.publication };
+    if (range) {
+      scan = { scan: row.scan, file: row.file, firstPage: range.from, lastPage: range.to, publication: row.publication, url: row.tier === 'public' ? `/objects/${row.file}` : null };
+      break;
+    }
   }
-  return null;
+  return { scan, recordings: recordings.map((r) => ({ ...r, durationMs: r.durationMs ?? null })) };
 }
