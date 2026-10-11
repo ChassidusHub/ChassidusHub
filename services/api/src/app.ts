@@ -3,7 +3,7 @@ import { isCatalogHeld, type DbCost } from '@chassidushub/db';
 import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
 import { dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords, topicOf } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
-import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
+import { ENTITY_TYPES, isEntityId, LANGUAGES, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
 import { authRoutes, sessionAuthenticator, type AuthOptions } from './auth.js';
 import { adminRoutes } from './admin.js';
 import { uploadRoutes, type UploadOptions } from './uploads.js';
@@ -879,10 +879,24 @@ export function createApp(options: ApiOptions): Hono {
     const type = c.req.query('type');
     if (type && !(await catalog.registry()).has(type)) throw new HttpError(400, `unknown type "${type}"`);
     const date = parseDateText(q);
-    const work = c.req.query('work');
+    // The filters (#72), combined: a sefer, an author, a set with the sets under it, a topic with the narrower ones, a language.
+    const idOf = (name: string) => {
+      const value = c.req.query(name);
+      return value ? entityId(value) : undefined;
+    };
+    const language = c.req.query('language') || undefined;
+    if (language && !(LANGUAGES as readonly string[]).includes(language)) throw new HttpError(400, `language must be one of ${LANGUAGES.join(', ')}`);
     // A subject in English letters (bitachon) is looked for as the texts write it (בטחון), as /v1/search/page does (#99).
     const topic = date.ok ? null : topicOf(q);
-    const results = await catalog.search(topic?.he ?? q, { type: type as EntityType | undefined, work: work ? entityId(work) : undefined, limit: intParam(c.req.query('limit'), 'limit') });
+    const results = await catalog.search(topic?.he ?? q, {
+      type: type as EntityType | undefined,
+      work: idOf('work'),
+      author: idOf('author'),
+      set: idOf('set'),
+      topic: idOf('topic'),
+      language: language as Language | undefined,
+      limit: intParam(c.req.query('limit'), 'limit'),
+    });
     return c.json({ query: q, topic, date: date.ok ? { key: date.key, he: describeDateKey(date.key, 'he'), en: describeDateKey(date.key, 'en') } : null, results: await redact(results) });
   });
 

@@ -24,6 +24,7 @@ import { driveFilesOf } from './driveFiles.js';
 import { withStructuredBody } from './legacyWords.js';
 import { diffData, threeWayMerge, resolveConflicts, UnresolvedConflictError, type Conflict, type FieldChange, type Json, type Resolution } from './merge.js';
 import { canApprove, canSuggest, earnedTrust, LIVE_FIX_UNDO_HOURS, mayFixLive, mayGoLive, type Account, type SetInfo } from './permissions.js';
+import { searchFilterSql, type SearchFilters } from './searchFilters.js';
 import { searchTextOf, searchTierSql, toTsQuery } from './searchText.js';
 import { focusCounts } from './projectWork.js';
 import { commented, reportOpened, threadEvent, reportStateChanged, reviewGiven, suggestionMerged, suggestionReverted, suggestionStarted, suggestionReopened, suggestionSubmitted, suggestionWithdrawn } from './threads.js';
@@ -783,15 +784,16 @@ export class Catalog {
    * or a set the query names comes first, an official sefer before an
    * addition to one (searchTierSql); then the rest, by how well they match.
    */
-  async search(query: string, options: { type?: EntityType; work?: EntityId; limit?: number } = {}): Promise<EntityView[]> {
+  async search(query: string, options: SearchFilters & { type?: EntityType; limit?: number } = {}): Promise<EntityView[]> {
     const tsQuery = toTsQuery(query);
     if (!tsQuery) return [];
     const params: unknown[] = [tsQuery, normalizeSearchText(query)];
     // The words as kept (search_tsv, migration 0024): matched and ranked from the column, never read again from the text.
     const where = ["e.search_tsv @@ to_tsquery('simple', $1)", 'NOT e.deleted', 'e.main_rev IS NOT NULL'];
     if (options.type) where.push(`e.type = $${params.push(options.type)}`);
-    // One sefer's items alone: its many printings share its name, so a search over the whole catalog fills its limit before it reaches them all.
-    if (options.work) where.push(`EXISTS (SELECT 1 FROM entity_ref w WHERE w.from_id = e.id AND w.field = 'work' AND w.to_id = $${params.push(options.work)})`);
+    // The filters combine: each one narrows what the words found (#72). They are tested before the limit below, so a
+    // filtered search still finds what is filtered for even when the words alone match thousands.
+    where.push(...searchFilterSql(options, params));
     // Ranked first, by what the entity row keeps, and only the few that are shown are then read: a common word matches
     // thousands of sichos, and carrying each one's facts through the sort unpacked all their words (seven to twenty seconds).
     // Sefarim and sets, the few the query may name, are all ranked; of everything else only the first SEARCH_RANKED

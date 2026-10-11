@@ -29,6 +29,30 @@ const json = async (app: ReturnType<typeof createApp>, path: string) => {
   return { status: response.status, body: (await response.json()) as any };
 };
 
+describe('search filters (#72)', () => {
+  it('narrows /v1/search by author, set, topic and language, combined, for Hebrew and English words', async () => {
+    const author = await add(catalog, 'steward', 'steward', 'author', { name: { he: 'מחבר א' }, kind: 'rebbe' });
+    const topic = await add(catalog, 'mendy', 'keeper', 'topic', { name: { he: 'נושא' }, sets: [set] });
+    const english = [{ kind: 'text', source: 'sefaria', licence: 'cc0', language: 'en', sourceId: 'Example' }];
+    const mine = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'זזזג אחד', en: 'Qwzx One' }, slug: 'one', authors: [author], genre: 'chassidus', levels: ['chapter'], sets: [set], topics: [topic] }, '/one');
+    const other = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'זזזג שני', en: 'Qwzx Two' }, slug: 'two', authors: [], genre: 'chassidus', levels: ['chapter'], sets: [set], sourceCopies: english }, '/two');
+    const app = createApp({ catalog });
+    const ids = async (query: string) => {
+      const { status, body } = await json(app, `/v1/search?${query}`);
+      expect(status).toBe(200);
+      return (body.results as Array<{ id: string }>).map((r) => r.id).sort();
+    };
+    const q = (words: string) => `q=${encodeURIComponent(words)}`;
+    expect(await ids(q('זזזג'))).toEqual([mine, other].sort());
+    expect(await ids(`${q('זזזג')}&author=${author}`)).toEqual([mine]);
+    expect(await ids(`${q('qwzx')}&topic=${topic}`)).toEqual([mine]);
+    expect(await ids(`${q('qwzx')}&language=en`)).toEqual([other]);
+    expect(await ids(`${q('זזזג')}&set=${set}&language=he`)).toEqual([mine]);
+    expect(await ids(`${q('זזזג')}&author=${author}&language=en`)).toEqual([]);
+    expect((await json(app, `/v1/search?${q('זזזג')}&language=xx`)).status).toBe(400);
+  });
+});
+
 describe('search that lands on the moment, and by meaning', () => {
   it('gives the paragraph of a transcript with the moment it is heard', async () => {
     const recording = await add(catalog, 'mendy', 'keeper', 'recording', { event, title: { he: 'חלק א' }, url: 'https://example.org/a.mp3', sets: [set] });

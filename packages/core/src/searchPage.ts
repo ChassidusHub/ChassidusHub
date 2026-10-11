@@ -5,7 +5,7 @@ import { matchingWords, queryWords, searchMoments, type Moment } from './moments
 import { languageSql, languageTitleWords, splitLanguage } from './language.js';
 import { parshaDays, parshaHe, parshaOf } from './parsha.js';
 import { topicOf } from './topics.js';
-import { nameTierSql, NAMES, normalizedSql, toTsQuery } from './searchText.js';
+import { NAME_SQL, nameTierSql, NAMES, normalizedSql, toTsQuery } from './searchText.js';
 
 /**
  * The new site's search screen in one read (apps/www): everything the page
@@ -149,7 +149,6 @@ const INFO = `e.id, e.type, e.path,
       UNION ALL SELECT r.data->>'language') ls WHERE l IS NOT NULL ORDER BY l) AS languages`;
 
 /** An item's names in Hebrew and English together, as the search compares them. */
-const NAME_SQL = normalizedSql("concat_ws(' ', r.data->'title'->>'he', r.data->'title'->>'en', r.data->'name'->>'he', r.data->'name'->>'en')");
 
 /**
  * Items found by name, best first, with their facts: one statement. With a language, only those in it.

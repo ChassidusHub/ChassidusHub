@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `/v1/search` takes filters that combine (#72): `author`, `set` (with the
+  sets under it), `topic` (with the narrower topics), `language`, beside
+  `work`. A sicha counts when its sefer matches, so an author's or a
+  series' sichos are found too.
 - Search by name reads only a sefer's or shelf's revision while ranking, and
   finds a farbrengen's recordings through its links (#182): a common word in
   thousands of farbrengens and recordings no longer reads each one's
