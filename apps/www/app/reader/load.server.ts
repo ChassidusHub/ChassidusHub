@@ -3,6 +3,7 @@ import type { PageSegment } from '@chassidushub/model';
 import type { AppLoadContext } from 'react-router';
 import { namesOf } from '../edit/names';
 import { nameOf } from '../lib/catalog';
+import { clock } from '../listen/common';
 import { pdfsOf } from '../lib/pdfs';
 import type { ReaderData, ReaderText } from './types';
 import { notesHtml, wordsHtml } from './words.server';
@@ -31,6 +32,12 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     previous: neighbour(view.previous),
     next: neighbour(view.next),
     text,
+    scan: view.scan?.url ? `${view.scan.url}#page=${view.scan.firstPage}` : null,
+    recordings: (view.recordings ?? []).map((r) => ({
+      path: r.path ?? `/${r.id}`,
+      label: nameOf(r.name) || 'הקלטה',
+      ...(r.durationMs ? { duration: clock(r.durationMs) } : {}),
+    })),
     pdfs: pdfsOf(view.item.data),
     citation: [...middle, title].join(', '),
     url: `${origin}${path}`,
@@ -69,15 +76,12 @@ async function shownText(view: ItemView, api: ChassidusHub, context: AppLoadCont
   if (text.kind === 'pages' && text.scan && text.firstPage && text.lastPage) {
     const first = text.firstPage;
     const last = text.lastPage;
-    const [pages, file] = await Promise.all([
-      api.scanPages({ id: text.scan }).catch(() => null) as Promise<{ pages?: { page: number; image: string; width: number; height: number }[] } | null>,
-      text.file ? api.getFile({ sha256: text.file }).catch(() => null) : Promise.resolve(null),
-    ]);
+    const pages = (await api.scanPages({ id: text.scan }).catch(() => null)) as { pages?: { page: number; image: string; width: number; height: number }[] } | null;
     const images = (pages?.pages ?? [])
       .filter((p) => p.page >= first && p.page <= last && p.image)
       .map((p) => ({ page: p.page, src: p.image, width: p.width || 1000, height: p.height || 1414 }));
-    const pdf = (file as { url?: string | null } | null)?.url ?? null;
-    return { kind: 'pages', first, last, images, pdf: pdf ? `${pdf}#page=${first}` : null };
+    // The view gives the whole PDF's address where files are served.
+    return { kind: 'pages', first, last, images, pdf: text.url ? `${text.url}#page=${first}` : null };
   }
   if (text.kind === 'withheld') return { kind: 'withheld', reason: text.reason ?? '', ...(text.url ? { source: text.url } : {}) };
   return { kind: 'none' };

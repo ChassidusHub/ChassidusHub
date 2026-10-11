@@ -35,6 +35,11 @@ const views: Record<string, unknown> = {
     pathBar: bar(1),
     previous: null,
     next: { id: 'rh-aaaaaab2', path: '/sample/1/2', name: name('שיחה שניה') },
+    scan: { scan: 'rh-aaaaaas1', file: 'f'.repeat(64), firstPage: 7, lastPage: 9, publication: 'rh-aaaaaap1', url: 'https://files.example.org/sample.pdf' },
+    recordings: [
+      { id: 'rh-aaaaaar1', path: null, name: name('הקלטה ראשונה'), durationMs: 3_725_000 },
+      { id: 'rh-aaaaaar2', path: null, name: name('הקלטה שניה'), durationMs: null },
+    ],
     text: {
       kind: 'words',
       from: 'body',

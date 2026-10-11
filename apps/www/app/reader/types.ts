@@ -44,6 +44,10 @@ export interface ReaderData {
   previous: Neighbour | null;
   next: Neighbour | null;
   text: ReaderText;
+  /** The printing's scan where its file is served: the whole PDF, opened at the page's first page. */
+  scan: string | null;
+  /** The recordings of the farbrengens the page was said at, each heard on its listening page. */
+  recordings: { path: string; label: string; duration?: string }[];
   /** The page's PDFs, its own printing first. */
   pdfs: Pdf[];
   /** How the page is cited when its words are copied ("לקוטי שיחות, חלק י״ב, שמיני א"). */

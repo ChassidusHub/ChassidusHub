@@ -8,7 +8,7 @@ import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';
 import { ServerHtml } from './Words';
 
-type Open = null | 'look' | 'more' | 'versions' | { note: string };
+type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string };
 
 /**
  * The reading page: only the words and their footnotes. A footnote's mark
@@ -171,10 +171,15 @@ export function Reader({ data }: { data: ReaderData }) {
         <Option
           icon="scan"
           label="הסריקה"
-          end={text.kind === 'pages' || (text.kind === 'none' && data.pdfs.length) ? 'מוצגת' : data.pdfs.length ? 'PDF' : 'בקרוב'}
-          onSelect={words && data.pdfs[0] ? () => (close(), window.open(data.pdfs[0]!.url, '_blank', 'noopener')) : undefined}
+          end={text.kind === 'pages' || (text.kind === 'none' && data.pdfs.length) ? 'מוצגת' : data.scan || data.pdfs.length ? 'PDF' : 'אין סריקה מקושרת'}
+          onSelect={words && (data.scan || data.pdfs[0]) ? () => (close(), window.open(data.scan ?? data.pdfs[0]!.url, '_blank', 'noopener')) : undefined}
         />
-        <Option icon="listen" label="לשמוע את הרבי" end="אין הקלטה מקושרת" />
+        <Option
+          icon="listen"
+          label="לשמוע את הרבי"
+          end={data.recordings.length === 1 ? data.recordings[0]!.duration : data.recordings.length > 1 ? `${data.recordings.length} הקלטות` : 'אין הקלטה מקושרת'}
+          onSelect={data.recordings.length === 1 ? () => (close(), navigate(data.recordings[0]!.path)) : data.recordings.length > 1 ? () => setOpen('recordings') : undefined}
+        />
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
         <Option
@@ -191,6 +196,18 @@ export function Reader({ data }: { data: ReaderData }) {
         {/* Reporting waits until a report can carry who sends it (sign-in, or the captcha the API asks for when signed out). */}
         <Option icon="flag" label="משהו לא בסדר כאן" end="בקרוב" quiet />
       </Sheet>
+
+      {data.recordings.length > 1 && (
+        <Sheet open={open === 'recordings'} title="לשמוע את הרבי" onClose={close}>
+          {data.recordings.map((r) => (
+            <Link key={r.path} className="opt" to={r.path} onClick={close}>
+              <Icon name="listen" />
+              <span className="t">{r.label}</span>
+              {r.duration && <span className="r">{r.duration}</span>}
+            </Link>
+          ))}
+        </Sheet>
+      )}
 
       {words && (
         <Sheet open={open === 'versions'} title="נוסח" onClose={close}>
