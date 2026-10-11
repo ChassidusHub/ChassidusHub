@@ -184,7 +184,7 @@ describe('search that lands on the moment', () => {
     expect(inner).toContain(`e.type = 'unit' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED.unit}`);
   });
 
-  it('narrows to the year, month or day the words were said: a text by its own date or its farbrengen, a transcript by its farbrengen (#90)', async () => {
+  it('puts first what was said in the year, month or day: a text by its own date, its farbrengen or its own words naming the year, a transcript by its farbrengen; then the rest (#90, #167)', async () => {
     const { catalog, set } = await freshCatalog();
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מאמרים' }, slug: 'maamarim', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });
     const body = (p: string) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: p }] }] }] });
@@ -195,12 +195,21 @@ describe('search that lands on the moment', () => {
     const text = await add(catalog, 'mendy', 'keeper', 'text', { kind: 'transcript', recording, language: 'yi' });
     const heard = await add(catalog, 'mendy', 'keeper', 'segment', { text, order: 'V', kind: 'paragraph', content: 'פתח דבר לדוגמה', proofread: 0, origin: { by: 'transcribe:fake@1' } });
 
-    const ids = async (within: string | null) => (await searchMoments(catalog, 'פתח דבר לדוגמה', { within })).map((m) => m.id).sort();
-    expect(await ids(null)).toEqual([early, late, heard].sort());
-    expect(await ids('5711')).toEqual([early]);
-    expect(await ids('5742-05')).toEqual([late, heard].sort());
-    expect(await ids('5742-05-11')).toEqual([]);
-    expect(await ids('574')).toEqual([]);
+    // A maamar with no date of its own, dated by its heading, as the printed maamarim are.
+    const headed = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'maamar', value: '3' }], order: '3', label: { he: 'בס"ד, יו"ד שבט, ה\'תשי"א' }, body: body('פתח דבר לדוגמה'), sets: [set] });
+
+    const ids = async (within: string | null) => (await searchMoments(catalog, 'פתח דבר לדוגמה', { within })).map((m) => m.id);
+    const all = [early, late, heard, headed].sort();
+    expect((await ids(null)).sort()).toEqual(all);
+    const first = async (within: string, n: number) => {
+      const found = await ids(within);
+      expect([...found].sort()).toEqual(all);
+      return found.slice(0, n).sort();
+    };
+    expect(await first('5711', 2)).toEqual([early, headed].sort());
+    expect(await first('5742-05', 2)).toEqual([late, heard].sort());
+    // A day nothing was said on, or no date at all, leaves the order to the words.
+    expect((await ids('5742-05-11')).sort()).toEqual(all);
   });
 });
 

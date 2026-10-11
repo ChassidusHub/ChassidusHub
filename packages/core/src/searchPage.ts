@@ -12,9 +12,9 @@ import { normalizedSql, searchTierSql, toTsQuery } from './searchText.js';
  * sichos the words name; the farbrengens and recordings they name, or that
  * were on the date they give; and the places in the words themselves,
  * each opening at its paragraph, line or moment. A date in the query
- * ("תשי"א", "יו"ד שבט תשי"א") is taken as the date, not as words: it
- * narrows the words to that year, month or day, and alone it finds that
- * day's farbrengen. Words that are a parsha's name and nothing else
+ * ("תשי"א", "יו"ד שבט תשי"א") is taken as the date, not as words: the
+ * words said in that year, month or day come first, then the rest (#167),
+ * and alone it finds that day's farbrengen. Words that are a parsha's name and nothing else
  * ("תצוה", "פרשת בשלח תשמ"ב") are also the farbrengens of its weeks, in the
  * year given or in every year. Titles and the line under them are in
  * Hebrew, as the site shows them.
@@ -63,7 +63,7 @@ export interface SearchPage {
   language: string | null;
   /** The parsha the words are, when they are a parsha's name and nothing else: hebcal's name and the Hebrew. */
   parsha: { key: string; he: string } | null;
-  /** The date the words are narrowed to: the `within` asked for, else the query's date. */
+  /** The date whose words come first: the `within` asked for, else the query's date. */
   within: string | null;
   /** What the person most likely wants: the day's farbrengen, a maamar that opens with the words, else the best name. */
   top: SearchHit | null;

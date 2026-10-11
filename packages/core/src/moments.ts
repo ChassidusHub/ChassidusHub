@@ -1,4 +1,4 @@
-import { normalizeSearchText } from '@chassidushub/hebrew';
+import { describeDateKey, normalizeSearchText } from '@chassidushub/hebrew';
 import { mayExport, type EntityId, type PageSegment, type PageText, type RightsState, type TextData, type TextLine } from '@chassidushub/model';
 import type { Catalog, EntityView } from './catalog.js';
 import { ExportGate } from './gate.js';
@@ -211,10 +211,10 @@ async function segmentMoment(row: SegmentRow, words: readonly string[], gate: Ex
 }
 
 /**
- * When a hit was said, for narrowing to a year, month or day (issue #90): a
- * unit's own date, else its first event's; a paragraph's text's unit, else
- * its recording's event. A page of a scan has none (its print year is not
- * when it was said), so a narrowed search leaves pages out.
+ * When a hit was said, for putting a year, month or day first (issues #90,
+ * #167): a unit's own date, else its first event's; a paragraph's text's
+ * unit, else its recording's event. A page of a scan has none (its print
+ * year is not when it was said).
  */
 const DATE_OF = `CASE e.type
   WHEN 'unit' THEN coalesce(r.data->>'date', (SELECT vr.data->>'date' FROM entity v JOIN revision vr ON vr.id = v.main_rev WHERE v.id = r.data->'events'->>0))
@@ -225,6 +225,16 @@ const DATE_OF = `CASE e.type
     LEFT JOIN entity v ON v.id = gr.data->>'event' LEFT JOIN revision vr ON vr.id = v.main_rev
     WHERE t.id = r.data->>'text')
   END`;
+
+/**
+ * A year as its own words say it, as a tsquery: `תשי"א` or `ה'תשי"א`, as a
+ * maamar's heading dates it (בס"ד, יו"ד שבט, ה'תשי"א) when the item itself
+ * carries no date (#167).
+ */
+export function yearWordsQuery(within: string): string {
+  const year = normalizeSearchText(describeDateKey(within.slice(0, 4), 'he'));
+  return `${year} | ה${year}`;
+}
 
 /** How many of the best-ranked matches are read; the rest are not read at all. */
 export const MOMENT_CANDIDATES = 200;
@@ -248,32 +258,36 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
   // Ranked in two steps, so a common word does not unpack every page that has it: the best matches by rank, read
   // from the entity row and its index alone (MOMENT_CANDIDATES); then, for those only, the revision says whether a
-  // machine read or heard it and nobody checked, and checked words come first. A date to narrow by needs each
-  // match's revision, so only a narrowed search reads it before the limit. Only MOMENT_RANKED of each kind are ranked.
+  // machine read or heard it and nobody checked, and checked words come first. Only MOMENT_RANKED of each kind are
+  // ranked. A date (`within`) puts first the matches said then, or whose own words name its year (a maamar's heading),
+  // then the rest: that needs each such match's revision, so only a search with a date reads it before the limit.
   const within = options.within ?? null;
-  const matched = (type: keyof typeof MOMENT_RANKED) =>
-    within
-      ? `(SELECT e.id FROM entity e JOIN revision r ON r.id = e.main_rev
-          WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1)
-            AND ((${DATE_OF}) || '-') LIKE $2 || '-%' LIMIT ${MOMENT_RANKED[type]})`
-      : `(SELECT e.id FROM entity e
+  const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
+    `(SELECT e.id, ${tier} AS tier FROM entity e
           WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED[type]})`;
-  const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit' }>(
-    `SELECT c.id, c.type FROM (
-       SELECT e.id, e.type, e.main_rev, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank
-       FROM (${matched('text-page')} UNION ALL ${matched('segment')} UNION ALL ${matched('unit')}) m
+  const ofDate = (type: keyof typeof MOMENT_RANKED) =>
+    `(SELECT e.id, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
+          WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1)
+            AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
+  const kinds = ['text-page', 'segment', 'unit'] as const;
+  const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1))] : kinds.map((k) => all(k, 0));
+  const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
+    `SELECT c.id, c.type, c.tier FROM (
+       SELECT e.id, e.type, e.main_rev, m.tier, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank
+       FROM (SELECT id, min(tier) AS tier FROM (${matched.join(' UNION ALL ')}) u GROUP BY id) m
        JOIN entity e ON e.id = m.id
-       ORDER BY rank DESC, e.id LIMIT ${MOMENT_CANDIDATES}
+       ORDER BY m.tier, rank DESC, e.id LIMIT ${MOMENT_CANDIDATES}
      ) c
      JOIN revision r ON r.id = c.main_rev
      LEFT JOIN entity l ON c.type = 'text-page' AND l.id = r.data->>'layer' LEFT JOIN revision lr ON lr.id = l.main_rev
-     ORDER BY CASE
+     ORDER BY c.tier,
+              CASE
                 WHEN c.type = 'text-page' THEN (coalesce(lr.data->>'kind', '') <> 'community')
                 WHEN c.type = 'segment' THEN (r.data ? 'origin' AND coalesce((r.data->>'proofread')::int, 0) = 0 AND NOT coalesce((r.data->'origin'->>'checked')::boolean, FALSE))
                 ELSE FALSE END,
               c.rank DESC, c.id
      LIMIT ${limit * 2}`,
-    within ? [tsQuery, within] : [tsQuery],
+    within ? [tsQuery, within, yearWordsQuery(within)] : [tsQuery],
   );
   const gate = new ExportGate(catalog);
   const pages = new Map((await pageRows(catalog, rows.filter((r) => r.type === 'text-page').map((r) => r.id))).map((r) => [r.id, r]));
@@ -308,9 +322,12 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
       if (moment) out.push(moment);
     }
   }
-  // A maamar or sicha that opens with the words asked is what was looked for: first, in the order found.
+  // A maamar or sicha that opens with the words asked is what was looked for: first, in the order found, after
+  // the date's own (a moment's id is its match's).
   const opens = (m: Moment) => m.kind === 'paragraph' && m.opening === true;
-  return [...out.filter(opens), ...out.filter((m) => !opens(m))];
+  const tier = new Map(rows.map((r) => [r.id, Number(r.tier)]));
+  const ofTier = (t: number) => out.filter((m) => (tier.get(m.id) ?? 0) === t);
+  return [0, 1].flatMap((t) => [...ofTier(t).filter(opens), ...ofTier(t).filter((m) => !opens(m))]);
 }
 
 interface UnitRow {
