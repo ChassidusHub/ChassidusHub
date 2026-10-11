@@ -20,6 +20,7 @@ jobs:
       pull-requests: read
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      www: ${{ steps.www.outputs.www }}
     steps:
       # Sichos Kodesh, the OCR engines and the docs have none of these checks: a pull request changing only them skips the rest.
       - uses: dorny/paths-filter@v3
@@ -35,6 +36,15 @@ jobs:
               - '!design/**'
               - '!**/*.md'
               - '!.github/workflows/sk-*.yml'
+      # The new site's browser tests, when it or what it is built from changed (any one of these).
+      - uses: dorny/paths-filter@v3
+        id: www
+        with:
+          filters: |
+            www:
+              - 'apps/www/**'
+              - 'package-lock.json'
+              - '.github/workflows/ci.yml'
 
   types:
     name: Types and schemas
@@ -74,10 +84,29 @@ jobs:
       - run: npm run build:web
       - run: npx vitest run --shard=${{ matrix.shard }}/3
 
+  www:
+    # The new site in a real browser: the page budgets, accessibility and a smoke test of every page (apps/www/e2e).
+    name: New site in a browser
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.www == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:www
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/www
+      - run: npx playwright test
+        working-directory: apps/www
+
   check:
     # The name pull requests have always waited on: green when every job above passed or had nothing to check.
     name: Types, tests and schemas (PGlite)
-    needs: [changes, types, tests]
+    needs: [changes, types, tests, www]
     if: always()
     runs-on: ubuntu-latest
     steps:
