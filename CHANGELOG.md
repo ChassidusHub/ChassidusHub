@@ -14,9 +14,12 @@ any time. `@chassidushub/client` carries the API's version.
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a
   misreading fixed, in an open set, within a daily limit (RFC 0001); its
-  author may undo it for a day with `POST /v1/fix/{changeset}/undo`. A
-  machine's words a person fixed are marked edited, not checked. Anything
-  else is a suggestion, with the reason. `LIVE_FIXES=off` turns going live
+  author may undo it for a day with `POST /v1/fix/{changeset}/undo`. Only
+  the words may change live: a fix that also changes bold, a link or a
+  note is a suggestion. A machine's words a person fixed stay labelled:
+  a sefer's and a transcript's are marked edited, a scan's line keeps its
+  level, none is marked checked. Anything else is a suggestion, with the
+  reason. `LIVE_FIXES=off` turns going live
   off.
 - A farbrengen's video shows as its still picture with a play button, and
   YouTube's player (about 1 MB) is fetched only when someone taps it, so

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CatalogError, LIVE_FIX_LIMITS, mayFixLive, type Account, type Catalog } from '@chassidushub/core';
+import { CatalogError, LIVE_FIX_LIMITS, mayFixLive, registerFile, scanText, sendFix, shapeOf, type Account, type Catalog, type FixJudge, type Json } from '@chassidushub/core';
 import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
@@ -82,5 +82,76 @@ describe('small fixes that go live', () => {
     await catalog.submit(later.id, 'keeper');
     await catalog.merge(later.id, 'steward');
     await expect(catalog.undoFix(first.changeset.id, 'mendy')).rejects.toThrow(/changed these words since/);
+  });
+});
+
+describe('a live fix changes only the words (RFC 0001)', () => {
+  const yes: FixJudge = async () => true;
+  const styled = [{ text: 'מלים לדגומה כאן', marks: ['b'] }, { note: 'n1' }, { text: ' עוד' }];
+
+  async function styledSicha(catalog: Catalog) {
+    const { set, work } = await sicha(catalog, 'open');
+    const unit = await add(catalog, 'mendy', 'keeper', 'unit', {
+      work, position: [{ level: 'sicha', value: '2' }], order: 'W', label: { he: 'שיחה ב' }, sets: [set],
+      body: { profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: styled }], notes: [{ id: 'n1', kind: 'note', text: [{ text: 'הערה' }] }] }] },
+    } as unknown as Json);
+    return { set, unit };
+  }
+  const runsOf = async (catalog: Catalog, unit: EntityId) => ((await catalog.get(unit))!.data as any).body.versions[0].segments[0].text;
+
+  it('keeps for review a fix that adds a link, drops a note or changes the bold, and leaves the words as they were', async () => {
+    const { catalog } = await freshCatalog();
+    const { unit } = await styledSicha(catalog);
+    const send = (after: unknown[]) => sendFix(catalog, 'mendy', { item: unit, segment: 'p1', before: styled as never, after: after as never }, { judge: yes, liveFixes: true });
+    const link = await send([{ text: 'מלים לדוגמה כאן', marks: ['b'] }, { note: 'n1' }, { text: ' עוד', href: 'https://spam.example/buy' }]);
+    const noNote = await send([{ text: 'מלים לדוגמה כאן', marks: ['b'] }, { text: ' עוד' }]);
+    const plain = await send([{ text: 'מלים לדוגמה כאן' }, { note: 'n1' }, { text: ' עוד' }]);
+    for (const result of [link, noNote, plain]) {
+      expect(result).toMatchObject({ live: false, changeset: { status: 'open' } });
+      expect(result.reason).toMatch(/more than the words/);
+    }
+    expect(await runsOf(catalog, unit)).toEqual(styled);
+  });
+
+  it('puts live a fix of the words alone, keeping the bold and the note', async () => {
+    const { catalog } = await freshCatalog();
+    const { unit } = await styledSicha(catalog);
+    const after = [{ text: 'מלים לדוגמה כאן', marks: ['b'] }, { note: 'n1' }, { text: ' עוד' }];
+    const result = await sendFix(catalog, 'mendy', { item: unit, segment: 'p1', before: styled as never, after: after as never }, { judge: yes, liveFixes: true });
+    expect(result.live).toBe(true);
+    expect(await runsOf(catalog, unit)).toEqual(after);
+  });
+
+  it('compares runs by their marks, links and inlines, not by how the words are split', () => {
+    expect(shapeOf([{ text: 'א ' }, { text: 'ב' }])).toBe(shapeOf([{ text: 'א ב' }]));
+    expect(shapeOf([{ text: 'א', marks: ['b', 'i'] }])).toBe(shapeOf([{ text: 'א', marks: ['i', 'b'] }]));
+    expect(shapeOf([{ text: 'א', marks: [] }])).toBe(shapeOf([{ text: 'א' }]));
+    expect(shapeOf([{ text: 'א' }, { br: true }])).not.toBe(shapeOf([{ text: 'א' }]));
+  });
+
+  it("leaves a machine's line on a scan unchecked when a fix of it goes live", async () => {
+    const { catalog } = await freshCatalog();
+    const { set } = await sicha(catalog, 'open');
+    await registerFile(catalog.db, { sha256: 'a'.repeat(64), bytes: 10, mime: 'application/pdf', source: 'contribution', licence: 'cc0', held: true });
+    const publication = await add(catalog, 'mendy', 'keeper', 'publication', { kind: 'book-volume', title: { he: 'כרך' }, sets: [set] });
+    const scan = await add(catalog, 'mendy', 'keeper', 'scan', { publication, file: 'a'.repeat(64), completeness: 'complete', sets: [set] });
+    await catalog.createAccount({ id: 'bot:ocr', displayName: 'Machine OCR', isBot: true });
+    const cs = await catalog.createChangeset('bot:ocr', { title: 'OCR' });
+    const layer = await catalog.putRevision(cs.id, 'bot:ocr', { type: 'text-layer', data: { scan, kind: 'machine-ocr', engine: { name: 'fake', version: '1' } } as Json });
+    await catalog.putRevision(cs.id, 'bot:ocr', { type: 'text-layer', data: { scan, kind: 'community', seededFrom: layer } as Json });
+    await catalog.putRevision(cs.id, 'bot:ocr', { type: 'text-page', data: { layer, page: 1, lines: [{ id: 'l1', text: 'מלים לדגומה כאן' }, { id: 'l2', text: 'שורה שנייה לדגומה' }], proofread: 0 } as unknown as Json });
+    await catalog.submit(cs.id, 'bot:ocr');
+    await catalog.merge(cs.id, 'steward');
+
+    // The page's first fix makes the people's copy of the page: reviewed first. Even approved, the line is not checked.
+    const first = await sendFix(catalog, 'mendy', { item: scan, segment: '1:l1', before: 'מלים לדגומה כאן', after: 'מלים לדוגמה כאן' }, { judge: yes, liveFixes: true });
+    expect(first.live).toBe(false);
+    await catalog.merge(first.changeset.id, 'keeper');
+    const result = await sendFix(catalog, 'mendy', { item: scan, segment: '1:l2', before: 'שורה שנייה לדגומה', after: 'שורה שנייה לדוגמה' }, { judge: yes, liveFixes: true });
+    expect(result).toMatchObject({ live: true, reason: null });
+    expect((await scanText(catalog, scan, 1))!.lines).toMatchObject([
+      { text: 'מלים לדוגמה כאן', level: 0, checked: false },
+      { text: 'שורה שנייה לדוגמה', level: 0, checked: false },
+    ]);
   });
 });

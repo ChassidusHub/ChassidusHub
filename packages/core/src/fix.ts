@@ -84,7 +84,7 @@ export async function sendFix(catalog: Catalog, by: string, input: FixInput, opt
   if (item.type === 'scan') {
     const [page, line] = input.segment.split(':');
     if (!page || !line || !/^\d+$/.test(page)) throw invalid('on a scan, the segment is page:line');
-    await fixLine(catalog, by, { scan: item.id, page: Number(page), line, text: after, before }, { send });
+    await fixLine(catalog, by, { scan: item.id, page: Number(page), line, text: after, before }, { send, checked: false });
   } else if (item.type === 'recording') {
     const segment = await catalog.get(input.segment as EntityId);
     const text = segment?.type === 'segment' ? await catalog.get((segment.data as { text?: EntityId }).text as EntityId) : null;
@@ -103,11 +103,38 @@ export async function sendFix(catalog: Catalog, by: string, input: FixInput, opt
       const found = findSegment(body.versions.find((v) => v.id === version)!, input.segment);
       if (found) found.segment.origin = { ...origin, edited: true };
     }
+    // Live, only the words may change: the same notes, markers and line ends, the same bold and links. Anything else is reviewed.
+    if (reason === null) {
+      const was = old ? findSegment(old, input.segment)?.segment.text : undefined;
+      const nextVersion = (next.body as PageText).versions.find((v) => v.id === version);
+      const now = nextVersion ? findSegment(nextVersion, input.segment)?.segment.text : undefined;
+      if (!was || !now || shapeOf(was) !== shapeOf(now)) reason = 'this changes more than the words (bold, a link, a note); a reviewer looks first';
+    }
     const suggestion = await catalog.createChangeset(by, { title: 'A fix to the words' });
     await catalog.putRevision(suggestion.id, by, { id: item.id, type: item.type, data: next as unknown as Json });
     await send(suggestion.id);
   }
   return result!;
+}
+
+/**
+ * A segment's runs without their words: each text run's marks and link,
+ * and every note, marker and line end in order. Runs with the same marks
+ * and link side by side count as one, so words moved between them do not
+ * count as a change.
+ */
+export function shapeOf(runs: readonly PageInline[]): string {
+  const shapes: string[] = [];
+  for (const run of runs) {
+    const { text, ...rest } = run as { text?: string } & Record<string, unknown>;
+    const isText = typeof text === 'string';
+    if (isText && (rest.marks as string[] | undefined)?.length === 0) delete rest.marks;
+    if (isText && rest.marks) rest.marks = [...(rest.marks as string[])].sort();
+    const shape = JSON.stringify([isText, Object.entries(rest).sort(([a], [b]) => a.localeCompare(b))]);
+    if (isText && shapes.at(-1) === shape) continue;
+    shapes.push(shape);
+  }
+  return shapes.join('|');
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
