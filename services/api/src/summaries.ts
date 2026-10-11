@@ -1,4 +1,4 @@
-import { machineToCheck, mafteach, transcribedRecordings, type Catalog, type MachineToCheck, type MafteachKept, type TranscribedRecording } from '@chassidushub/core';
+import { machineToCheck, mafteach, transcribedRecordings, type Catalog, type CommunityPage, type MachineToCheck, type MafteachKept, type TranscribedRecording } from '@chassidushub/core';
 
 /**
  * Answers too costly to work out while someone waits, worked out by the
@@ -89,6 +89,30 @@ export function keptMafteach(kept: Kept): MafteachKept {
 
 /** The subject indexes the site shows (/mafteach), built again by the scheduled run whenever one of their pages changed. */
 export const KEPT_INDEXES = [{ index: '/likkutei-sichos-mafteach-inyanim', sefer: '/likkutei-sichos' }];
+
+interface KeptCommunity {
+  at: string;
+  totals: Pick<CommunityPage, 'people' | 'gaps'>;
+}
+
+/**
+ * The community page (GET /v1/community, /contribute): the latest merges and what waits read now, the sums over
+ * the whole catalog (people, farbrengens without recordings or texts) from what the scheduled run keeps. On a cold
+ * database those sums made /contribute's first visit after a deploy time out (#171). Nothing kept yet: all read now.
+ */
+export async function communityFor(catalog: Catalog, kept: Kept | undefined, limit: number | undefined): Promise<CommunityPage> {
+  const got = await kept?.get<KeptCommunity>('community').catch(() => null);
+  if (!got) return catalog.community(limit);
+  return { ...(await catalog.communityLive(limit)), ...got.totals };
+}
+
+/** Sums the community page again when missing or older than SUMMARY_MAX_AGE_MS; whether it did. */
+export async function refreshCommunity(catalog: Catalog, kept: Kept, now: Date): Promise<boolean> {
+  const got = await kept.get<KeptCommunity>('community').catch(() => null);
+  if (got && now.getTime() - Date.parse(got.at) < SUMMARY_MAX_AGE_MS) return false;
+  await kept.put('community', { at: now.toISOString(), totals: await catalog.communityTotals() } satisfies KeptCommunity);
+  return true;
+}
 
 /** Builds each kept index again when its pages changed since it was kept; how many it built. */
 export async function refreshMafteach(catalog: Catalog, kept: Kept): Promise<number> {

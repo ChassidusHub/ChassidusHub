@@ -3,7 +3,7 @@ import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, sendNotif
 import { connectPostgres, isCatalogHeld, measured } from '@chassidushub/db';
 import { createApp, turnstileVerifier } from './app.js';
 import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
-import { refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
+import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
@@ -157,6 +157,7 @@ export default {
       await job('webhooks', () => deliverWebhooks(catalog));
       if (env.FILES_PUBLIC) await job('transcripts summary', () => refreshTranscripts(catalog, transcriptsStore(env.FILES_PUBLIC!), new Date()));
       if (env.FILES_PUBLIC) await job('to-check summary', () => refreshToCheck(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
+      if (env.FILES_PUBLIC) await job('community sums', () => refreshCommunity(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
       if (env.FILES_PUBLIC) await job('subject index', () => refreshMafteach(catalog, keptStore(env.FILES_PUBLIC!)));
       if (mailer && env.SITE_URL) await job('email updates', () => sendNotifications(catalog, mailer, { siteUrl: new URL(env.SITE_URL!).origin }));
       if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN) {
