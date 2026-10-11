@@ -15,4 +15,8 @@ describe('the switch-over', () => {
     expect(toNewSite(asked('https://chassidushub.org/'), { NEW_SITE, NEW_SITE_HOSTS: '' })).toBe(false);
     expect(toNewSite(asked('https://chassidushub.org/'), { NEW_SITE_HOSTS: 'chassidushub.org' })).toBe(false);
   });
+
+  it('keeps the recordings this site plays through its media proxy', () => {
+    expect(toNewSite(asked('https://chassidushub.org/_/media/jem-audio/a.mp3'), { NEW_SITE, NEW_SITE_HOSTS: 'chassidushub.org' })).toBe(false);
+  });
 });
