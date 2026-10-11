@@ -2473,6 +2473,8 @@ export interface Operations {
     input: {
       /** The words */
       q: string;
+      /** Only what was said in this year, month or day (a date key); leave the date out of q */
+      within?: string;
       /** How many (at most 100) */
       limit?: number;
     };
@@ -3190,7 +3192,7 @@ export const OPERATIONS = {
   scanProgress: {"method":"GET","path":"/v1/scans/{id}/progress","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   scanText: {"method":"GET","path":"/v1/scans/{id}/text","pathParams":["id"],"query":["page"],"body":null,"answer":"json"},
   search: {"method":"GET","path":"/v1/search","pathParams":[],"query":["q","type","work","limit"],"body":null,"answer":"json"},
-  searchMoments: {"method":"GET","path":"/v1/search/moments","pathParams":[],"query":["q","limit"],"body":null,"answer":"json"},
+  searchMoments: {"method":"GET","path":"/v1/search/moments","pathParams":[],"query":["q","within","limit"],"body":null,"answer":"json"},
   searchPeople: {"method":"GET","path":"/v1/people","pathParams":[],"query":["q","ids","thread","limit"],"body":null,"answer":"json"},
   searchSimilar: {"method":"GET","path":"/v1/search/similar","pathParams":[],"query":["q","types","limit"],"body":null,"answer":"json"},
   searchThreads: {"method":"GET","path":"/v1/threads","pathParams":[],"query":["q","limit"],"body":null,"answer":"json"},

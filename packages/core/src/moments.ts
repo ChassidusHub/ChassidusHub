@@ -211,10 +211,26 @@ async function segmentMoment(row: SegmentRow, words: readonly string[], gate: Ex
 }
 
 /**
+ * When a hit was said, for narrowing to a year, month or day (issue #90): a
+ * unit's own date, else its first event's; a paragraph's text's unit, else
+ * its recording's event. A page of a scan has none (its print year is not
+ * when it was said), so a narrowed search leaves pages out.
+ */
+const DATE_OF = `CASE e.type
+  WHEN 'unit' THEN coalesce(r.data->>'date', (SELECT vr.data->>'date' FROM entity v JOIN revision vr ON vr.id = v.main_rev WHERE v.id = r.data->'events'->>0))
+  WHEN 'segment' THEN (SELECT coalesce(ur.data->>'date', vr.data->>'date')
+    FROM entity t JOIN revision tr ON tr.id = t.main_rev
+    LEFT JOIN entity u ON u.id = tr.data->>'unit' LEFT JOIN revision ur ON ur.id = u.main_rev
+    LEFT JOIN entity g ON g.id = tr.data->>'recording' LEFT JOIN revision gr ON gr.id = g.main_rev
+    LEFT JOIN entity v ON v.id = gr.data->>'event' LEFT JOIN revision vr ON vr.id = v.main_rev
+    WHERE t.id = r.data->>'text')
+  END`;
+
+/**
  * The places in scans and texts where the query's words are: lines on
  * scans' pages and paragraphs of texts and transcripts, best first.
  */
-export async function searchMoments(catalog: Catalog, query: string, options: { limit?: number } = {}): Promise<Moment[]> {
+export async function searchMoments(catalog: Catalog, query: string, options: { limit?: number; within?: string | null } = {}): Promise<Moment[]> {
   const tsQuery = toTsQuery(query);
   if (!tsQuery) return [];
   const words = queryWords(query);
@@ -226,13 +242,14 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
      WHERE e.type IN ('text-page', 'segment', 'unit') AND NOT e.deleted
        AND e.search_tsv @@ to_tsquery('simple', $1)
        AND (e.type <> 'unit' OR r.data ? 'body')
+       AND ($2::text IS NULL OR ((${DATE_OF}) || '-') LIKE $2 || '-%')
      ORDER BY CASE
                 WHEN e.type = 'text-page' THEN (coalesce(lr.data->>'kind', '') <> 'community')
                 WHEN e.type = 'segment' THEN (r.data ? 'origin' AND coalesce((r.data->>'proofread')::int, 0) = 0 AND NOT coalesce((r.data->'origin'->>'checked')::boolean, FALSE))
                 ELSE FALSE END,
               ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.id
      LIMIT ${limit * 2}`,
-    [tsQuery],
+    [tsQuery, options.within ?? null],
   );
   const gate = new ExportGate(catalog);
   const pages = new Map((await pageRows(catalog, rows.filter((r) => r.type === 'text-page').map((r) => r.id))).map((r) => [r.id, r]));

@@ -39,6 +39,10 @@ describe('search that lands on the moment, and by meaning', () => {
     const app = createApp({ catalog });
     const { body } = await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}`);
     expect(body.moments).toMatchObject([{ kind: 'paragraph', id: segment, event, recording, startMs: 61_000, machine: true }]);
+    // Narrowed to when it was said: the farbrengen's year keeps it, another year does not, and a date must be a date key.
+    expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=5742`)).body.moments).toHaveLength(1);
+    expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=5711`)).body.moments).toEqual([]);
+    expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=${encodeURIComponent('57%')}`)).status).toBe(422);
   });
 
   it("gives a farbrengen's parts their synced hanachos in one request, and each part its own", async () => {

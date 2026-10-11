@@ -1,5 +1,6 @@
 import type { Hono } from 'hono';
 import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchSimilar, type Catalog, type Embedder } from '@chassidushub/core';
+import { isValidDateKey } from '@chassidushub/hebrew';
 import { readId, type EntityType } from '@chassidushub/model';
 import { HttpError } from './app.js';
 import { PUBLIC_SUMMARY } from './platform.js';
@@ -20,7 +21,10 @@ export function networkRoutes(app: Hono, catalog: Catalog, options: { embedder?:
   // Lines on scans' pages and paragraphs of texts and transcripts where the words are: where to open, and whether a person has checked it.
   app.get('/v1/search/moments', async (c) => {
     const q = c.req.query('q') ?? '';
-    return c.json({ query: q, moments: await searchMoments(catalog, q, { limit: whole(c.req.query('limit'), 'limit', 100) }) });
+    // A year, month or day the words were said in (a date key: 5711, 5711-11, 5711-11-10); the caller takes it out of q.
+    const within = c.req.query('within') || null;
+    if (within !== null && !isValidDateKey(within)) throw new HttpError(422, 'within must be a date key, like 5711 or 5711-11-10');
+    return c.json({ query: q, moments: await searchMoments(catalog, q, { limit: whole(c.req.query('limit'), 'limit', 100), within }) });
   });
 
   // Search by meaning: off (available: false) until the embeddings' keys are set. Every result is the machine's guess, and says so.
