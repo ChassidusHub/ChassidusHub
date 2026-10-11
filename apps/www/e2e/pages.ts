@@ -37,5 +37,13 @@ export const pages: { name: string; path: string }[] = [
         { name: 'New report', path: '/issues/new?item=rh-aaaaaab1' },
         { name: 'Inbox', path: '/inbox' },
         { name: 'A person', path: '/u/sample-reader' },
+        { name: 'History', path: '/history/rh-aaaaaab1' },
+        { name: 'Talk', path: '/talk/rh-aaaaaab1' },
+        { name: 'Printings compared', path: '/compare/rh-aaaaaab1' },
+        { name: "A scan's text", path: '/text/rh-aaaaaat1' },
+        { name: 'Shaar', path: '/shaar/rh-aaaaaaw9' },
+        { name: 'A file', path: `/files/${'5'.repeat(64)}` },
+        { name: 'Subject index', path: '/mafteach' },
+        { name: 'Embed', path: '/embed/rh-3dvjfkyc' },
       ]),
 ];

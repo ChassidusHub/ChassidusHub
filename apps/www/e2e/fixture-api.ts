@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { itemToolsAnswer } from './fixture-item-tools';
 import { libraryAnswer } from './fixture-library';
 import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
 import { searchAnswer } from './fixture-search';
@@ -295,7 +296,8 @@ createServer((req, res) => {
     req.on('end', () => {
       const cookie = req.headers.cookie ?? '';
       const [status, answer] =
-        url.pathname === '/v1/fix'
+        itemToolsAnswer('POST', url, JSON.parse(raw || '{}'), cookie) ??
+        (url.pathname === '/v1/fix'
           ? fix(JSON.parse(raw || '{}'), cookie)
           : url.pathname === '/v1/organize'
             ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { suggestion: { id: 200 + edits.length, status: 'open', title: 'edit' }, merged: false, mayApprove: false, preview: {} }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
@@ -303,7 +305,7 @@ createServer((req, res) => {
             ? takedown(JSON.parse(raw || '{}'), req.headers['x-forwarded-for'])
           : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
             ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
-            : [404, { error: 'not-found', message: 'not found' }];
+            : [404, { error: 'not-found', message: 'not found' }]);
       res.statusCode = status;
       res.end(JSON.stringify(answer));
     });
@@ -320,6 +322,8 @@ createServer((req, res) => {
     res.statusCode = searched[0];
     return res.end(JSON.stringify(searched[1]));
   }
+  const tools = itemToolsAnswer('GET', url, {}, req.headers.cookie ?? '');
+  if (tools) return ((res.statusCode = tools[0]), res.end(JSON.stringify(tools[1])));
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
   const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
   if (entity) {
