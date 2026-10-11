@@ -7,7 +7,7 @@
 const he = (text: string) => ({ he: text });
 
 const events = [
-  { id: 'rh-3dvjfkyc', type: 'event', path: '/events/5732-11-20', data: { date: '5732-11-20', kind: 'farbrengen', title: he('התוועדות לדוגמה') }, recordings: 2 },
+  { id: 'rh-3dvjfkyc', type: 'event', rev: 1, path: '/events/5732-11-20', data: { date: '5732-11-20', kind: 'farbrengen', title: he('התוועדות לדוגמה') }, recordings: 2 },
   { id: 'rh-aaaaaae1', type: 'event', path: '/events/5747-03-19', data: { date: '5747-03-19', kind: 'farbrengen', title: he('י״ט כסלו לדוגמה') }, recordings: 1 },
   { id: 'rh-aaaaaae2', type: 'event', path: '/events/5747-05-10', data: { date: '5747-05-10', kind: 'farbrengen' }, recordings: 3 },
   { id: 'rh-aaaaaae3', type: 'event', path: '/events/5711-03-19', data: { date: '5711-03-19', kind: 'sicha' }, recordings: 1 },
