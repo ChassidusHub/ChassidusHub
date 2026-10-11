@@ -97,6 +97,19 @@ export default [
   // The old site's /edit/<id> and /all/<id>: a permanent redirect to the item's own page.
   route('edit/:id', 'routes/to-item.ts', { id: 'edit-redirect' }),
   route('all/:id', 'routes/to-item.ts', { id: 'all-redirect' }),
+  // The old site's addresses with no page of their own here: a permanent redirect to the nearest one (routes/moved.ts).
+  route('sets', 'routes/moved.ts', { id: 'moved-sets' }),
+  route('read', 'routes/moved.ts', { id: 'moved-read' }),
+  route('help', 'routes/moved.ts', { id: 'moved-help' }),
+  route('contribute', 'routes/moved.ts', { id: 'moved-contribute' }),
+  route('check', 'routes/moved.ts', { id: 'moved-check' }),
+  route('account/:section', 'routes/moved.ts', { id: 'moved-account' }),
+  route('calendar/*', 'routes/moved.ts', { id: 'moved-calendar' }),
+  route('calendar', 'routes/moved.ts', { id: 'moved-calendar-top' }),
+  route('daily/*', 'routes/moved.ts', { id: 'moved-daily' }),
+  route('daily', 'routes/moved.ts', { id: 'moved-daily-top' }),
+  route('shiurim/*', 'routes/moved.ts', { id: 'moved-shiurim' }),
+  route('shiurim', 'routes/moved.ts', { id: 'moved-shiurim-top' }),
   // Organizing the catalog, the stewards' tools, adding what is missing and showcases, as the person, never kept.
   route('_/organize/*', 'routes/organize-pass.ts'),
   route('_/steward/*', 'routes/steward-pass.ts'),

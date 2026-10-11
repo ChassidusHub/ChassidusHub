@@ -18,6 +18,8 @@ any time. `@chassidushub/client` carries the API's version.
   (`subjects`): `בטחון` lists Likkutei Sichos' index entry with how many places
   and volumes it has, opening `/mafteach?q=בטחון`. Read from topics the
   scheduled run keeps beside the built index, never a statement (#99).
+- Search by words reads a scan page's layer from its link, not from the page's
+  revision with all its lines, when it orders the best matches (#182).
 - The site's own reads of `GET /v1/community`, `GET /v1/machine/to-check` and
   `GET /v1/mafteach` read what the scheduled run keeps in the public bucket,
   as the API's Worker does: on a cold page they summed or built it on the spot.

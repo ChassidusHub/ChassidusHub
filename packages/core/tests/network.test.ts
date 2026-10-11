@@ -184,6 +184,8 @@ describe('search that lands on the moment', () => {
     expect(inner).toContain(`e.type = 'unit' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED.unit}`);
     // Each match is ranked where it is found, its words read once: one rank per kind, none after (#172).
     expect(inner.match(/ts_rank/g)).toHaveLength(3);
+    // A scan page's layer is read from its link, never from its revision, which holds all its lines (#182).
+    expect(sql[0]).not.toContain("r.data->>'layer'");
   });
 
   it("reads the words of only as many sichos as it shows, and more only when one of those shows nothing (#182)", async () => {
