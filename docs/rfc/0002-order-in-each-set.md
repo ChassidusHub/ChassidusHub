@@ -1,6 +1,6 @@
 # RFC 0002: A sefer's own place in each set it sits in
 
-- Status: proposed
+- Status: accepted (Director, 2026-10-11: works.ts untouched; tests for every list named)
 - Issue: #78
 - Author (lane or person): Data lane
 - Date: 2026-10-11
