@@ -243,13 +243,15 @@ export const MOMENT_CANDIDATES = 200;
  * How many matches of each kind are ranked at most. Ranking reads each
  * match's words: a page's are some 4 KB, a paragraph's 1, and a sicha is
  * ranked on its lead (unit_place.lead, migration 0033: its name and its
- * first few hundred words), never on all its 80 KB. A common word (שבת,
- * גאולה) over every sicha's whole words took eight to ten seconds, and
- * forty sichos read whole were most of a first search's time (#172,
- * #182). Past these, the first matches found are ranked. Each match is
+ * first few hundred words), never on all its 80 KB. Finding the matches
+ * reads words too: the first sichos found that hold the query are found by
+ * reading each one's words whole (a common word is in most of them, so the
+ * database reads them in turn rather than through the index), so only 40
+ * sichos are found, as before the lead; 400 read 30 MB on a first search
+ * (#182). Past these, the first matches found are ranked. Each match is
  * ranked where it is found, so its words are read once.
  */
-export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 400 } as const;
+export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 40 } as const;
 
 /**
  * The places in scans and texts where the query's words are: lines on
