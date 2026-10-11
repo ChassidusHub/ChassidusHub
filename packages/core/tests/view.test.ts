@@ -41,6 +41,30 @@ describe('an item view', () => {
     expect(view.text?.kind === 'words' && view.text.segments.map((s) => s.id)).toEqual(['p1', 'p2']);
   });
 
+  it("marks a machine's words inside a section and in the notes as machine", async () => {
+    const words = { profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [
+      { id: 's1', kind: 'section', children: [{ id: 'p1', kind: 'paragraph', text: [{ text: 'לדוגמה' }], origin: { by: 'ocr:test' } }] },
+    ], notes: [{ id: 'n1', kind: 'note', text: [{ text: 'הערה לדוגמה' }] }] }] };
+    await unit('1', { body: words });
+    const view = (await itemView(catalog, { path: '/sefer/1/1' }))!;
+    expect(view.text).toMatchObject({ kind: 'words', machine: 'some' });
+  });
+
+  it("writes a version's machine origin onto each of its segments with words, and counts them all as machine", async () => {
+    const words = { profile: 'plain', versions: [{ id: 'he', language: 'he', origin: { by: 'ocr:test' }, segments: [
+      { id: 's1', kind: 'section', children: [{ id: 'p1', kind: 'paragraph', text: [{ text: 'לדוגמה' }] }] },
+      { id: 'p2', kind: 'paragraph', text: [{ text: 'לדוגמה ב' }] },
+    ], notes: [{ id: 'n1', kind: 'note', text: [{ text: 'הערה לדוגמה' }] }] }] };
+    await unit('1', { body: words });
+    const view = (await itemView(catalog, { path: '/sefer/1/1' }))!;
+    if (view.text?.kind !== 'words') throw new Error('expected words');
+    expect(view.text.machine).toBe('all');
+    expect(view.text.segments[0]!.origin).toBeUndefined();
+    expect(view.text.segments[0]!.children![0]!.origin).toEqual({ by: 'ocr:test' });
+    expect(view.text.segments[1]!.origin).toEqual({ by: 'ocr:test' });
+    expect(view.text.notes[0]!.origin).toEqual({ by: 'ocr:test' });
+  });
+
   it("falls back to a text of the unit, marking a machine's unchecked paragraphs", async () => {
     const u = await unit('1');
     const text = await add(catalog, 'steward', 'steward', 'text', { kind: 'edition', unit: u, language: 'he', licence: 'cc0' });

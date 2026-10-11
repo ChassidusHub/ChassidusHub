@@ -1,4 +1,4 @@
-import { mayServe, type EntityId, type MachineOrigin, type PageSegment, type PageText, type RightsState, type TextData, type TextProfile } from '@chassidushub/model';
+import { allSegments, mayServe, type EntityId, type MachineOrigin, type PageSegment, type PageText, type RightsState, type TextData, type TextProfile } from '@chassidushub/model';
 import type { Catalog, EntityView } from './catalog.js';
 import { pdfPagesOf } from './compare.js';
 import { ExportGate } from './gate.js';
@@ -71,6 +71,16 @@ interface Brief {
 
 const brief = (v: EntityView | null): Brief | null => (v ? { id: v.id, path: v.path, name: (v.data as { label?: Json }).label ?? null } : null);
 
+/** Segments with their version's `origin` written onto each one with words that has none of its own, so a reader sees which a machine made. */
+function withOrigin(segments: PageSegment[], origin: MachineOrigin | undefined): PageSegment[] {
+  if (!origin) return segments;
+  return segments.map((s) => ({
+    ...s,
+    ...(!s.origin && s.text?.length ? { origin } : {}),
+    ...(s.children ? { children: withOrigin(s.children, origin) } : {}),
+  }));
+}
+
 /** Whether words a machine made still wait for a person. */
 const unchecked = (origin: MachineOrigin | undefined, proofread?: number) => Boolean(origin && !origin.checked && !(proofread && proofread > 0));
 
@@ -124,7 +134,9 @@ async function unitText(catalog: Catalog, gate: ExportGate, unit: EntityId, body
   const ownVersions = (body?.versions ?? []).map((v) => ({ version: v.id, from: 'body' as const, language: v.language, ...(v.title ? { title: v.title } : {}) }));
   if (body && body.versions.length) {
     const version = body.versions.find((v) => v.language === language || v.id === language) ?? body.versions[0]!;
-    const flags = version.segments.map((s) => unchecked(s.origin ?? version.origin));
+    // Every segment with words counts, inside sections and in the notes too, each by its own origin or its version's.
+    const worded = [...allSegments(version.segments), ...allSegments(version.notes)].filter((s) => s.text?.length);
+    const flags = worded.map((s) => unchecked(s.origin ?? version.origin));
     const source = facts.bodySource as { url?: string } | undefined;
     return {
       kind: 'words',
@@ -136,8 +148,8 @@ async function unitText(catalog: Catalog, gate: ExportGate, unit: EntityId, body
       ...(version.credit ? { credit: version.credit } : {}),
       ...(version.licence ? { licence: version.licence } : {}),
       ...((version.url ?? source?.url) ? { url: version.url ?? source?.url } : {}),
-      segments: version.segments,
-      notes: version.notes ?? [],
+      segments: withOrigin(version.segments, version.origin),
+      notes: withOrigin(version.notes ?? [], version.origin),
       machine: share(flags),
       versions: ownVersions,
     };
