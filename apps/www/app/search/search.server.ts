@@ -1,5 +1,5 @@
 import type { ChassidusHub } from '@chassidushub/client';
-import { KIND, type Hit, type SearchPage, type WordHit } from './names';
+import { KIND, type Hit, type SearchPage, type Subject, type WordHit } from './names';
 
 /**
  * The Search screen's reads: one for the results (GET /v1/search/page) and
@@ -36,18 +36,25 @@ function wordHitOf(words: Words): WordHit {
   };
 }
 
+/** A subject index entry, as a row. */
+function subjectOf(found: Answer['subjects'][number]): Subject {
+  const index = found.index as { he?: string; en?: string } | null;
+  return { topic: found.topic, index: index?.he ?? index?.en ?? '', places: found.places, volumes: found.volumes, to: found.path, machine: found.machine };
+}
+
 const rows = (found: Found[]) => found.map(hitOf).filter((hit): hit is Hit => hit !== null);
 
 /** The whole results page for one query. */
 export async function searchPage(api: ChassidusHub, query: string): Promise<SearchPage> {
   const answer = await api.searchPage({ q: query }).catch(() => null);
-  if (!answer) return { query, top: null, works: [], events: [], words: [], failed: true };
+  if (!answer) return { query, top: null, subjects: [], works: [], events: [], words: [], failed: true };
   const top = answer.top ? hitOf(answer.top) : null;
   const rest = (found: Found[]) => rows(found).filter((hit) => hit.to !== top?.to);
   return {
     query,
     topic: answer.topic?.he,
     top,
+    subjects: (answer.subjects ?? []).map(subjectOf),
     works: rest(answer.works),
     events: rest(answer.events),
     words: answer.words.map(wordHitOf),
