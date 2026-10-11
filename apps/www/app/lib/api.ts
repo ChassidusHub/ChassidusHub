@@ -12,8 +12,9 @@ declare module 'react-router' {
     visitor?: ChassidusHub;
     /**
      * A request sent on to the API as it came (its method, body, cookie and
-     * Origin), for signing in only (routes/auth.ts): the API sets the session
-     * cookie on its answer, and the site hands that to the browser as its own.
+     * Origin), for the narrow pass-throughs only (routes/auth.ts `passTo`):
+     * signing in, where the API sets the session cookie and the site hands it
+     * to the browser as its own; connecting an app; API keys; a takedown.
      */
     forward?: (path: string, request: Request) => Promise<Response>;
   }
@@ -44,7 +45,7 @@ export function visitorApi(request: Request, make: (cookie: string) => Chassidus
   return cookie ? make(cookie) : undefined;
 }
 
-/** The headers a request to sign in carries on to the API; nothing else of the browser's goes. */
+/** The headers a passed-on request carries to the API; nothing else of the browser's goes. */
 const FORWARDED = ['accept', 'content-type', 'cookie', 'origin', 'user-agent'];
 
 /** Sends a browser's request on to the API's `path`, through the binding when there is one (AppLoadContext.forward). */
@@ -57,6 +58,9 @@ export function forwardFor({ binding, baseUrl = 'https://api.chassidushub.org' }
     }
     // The API sets a Secure cookie only for a request it knows came over HTTPS.
     if (new URL(request.url).protocol === 'https:') headers.set('x-forwarded-proto', 'https');
+    // The address Cloudflare saw the person at (a browser cannot write it), for the API's hourly limits on reports and takedowns.
+    const address = request.headers.get('cf-connecting-ip');
+    if (address) headers.set('x-forwarded-for', address);
     const query = new URL(request.url).search;
     const init: RequestInit = { method: request.method, headers, redirect: 'manual', ...(request.method === 'GET' || request.method === 'HEAD' ? {} : { body: await request.text() }) };
     const url = `${baseUrl.replace(/\/+$/, '')}${path}${query}`;

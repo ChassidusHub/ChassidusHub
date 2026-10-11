@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import type { DailyLearning } from '../lib/api.js';
 import type { Lang } from '../lib/i18n.js';
 import { href } from '../lib/links.js';
+import { dateLabel } from '../lib/dates.js';
 import { labelOf } from '../lib/labels.js';
+import { chumashEnglish, rambamEnglish, tehillimEnglish } from '../lib/shiurEnglish.js';
 import { Icon } from '../ui/Icon.js';
 
 /**
@@ -47,7 +49,12 @@ export interface ShiurRow {
   name: string;
   /** Each piece of the shiur: its words, and where it is learned. */
   pieces: Array<{ text: string; to: string | null; external: boolean }>;
+  /** Whether the words are in English (the English page, where Sefaria's references say it); else they are Hebrew, set as Torah text. */
+  english?: boolean;
 }
+
+/** A day's Hebrew date as the day and month only, in the page's language: `ל׳ תשרי`, `30th of Tishrei`. */
+export const dayOfMonth = (hebrew: string, lang: Lang) => dateLabel(hebrew, lang, { civil: false }).replace(/,?\s\S+$/, '');
 
 const STORE = 'chassidushub:daily-learned';
 type Store = Record<string, string[]>;
@@ -92,12 +99,19 @@ export function shiurRows(day: DailyLearning, lang: Lang, { rambam: tracks = ['t
   const t = (key: keyof typeof W) => W[key][lang];
   const rows: ShiurRow[] = [];
   const at = (section: string) => ({ to: `${href(`/shiurim/${day.date}`, lang)}#${section}`, external: false });
-  if (day.chumash) rows.push({ key: 'chumash', name: t('chumash'), pieces: [{ text: day.chumash.label, ...at('chumash') }] });
-  if (day.tehillim?.length) rows.push({ key: 'tehillim', name: t('tehillim'), pieces: [{ text: day.tehillim.map((p) => p.text.replace(/\.$/, '')).join(' '), ...at('tehillim') }] });
-  if (day.tanya.length) rows.push({ key: 'tanya', name: t('tanya'), pieces: [{ text: day.tanya.map((p) => labelOf(p, 'he')).join(' – '), ...at('tanya') }] });
+  // A row in English where the page is and the English is there to say it; otherwise as the Hebrew calendars print it.
+  const row = (key: string, name: string, he: string, en: string | null | undefined, to: { to: string | null; external: boolean }): ShiurRow =>
+    lang === 'en' && en ? { key, name, pieces: [{ text: en, ...to }], english: true } : { key, name, pieces: [{ text: he, ...to }] };
+  const englishOf = (e: { data: unknown }) => (e.data as { label?: { en?: string } }).label?.en;
+  if (day.chumash) rows.push(row('chumash', t('chumash'), day.chumash.label, chumashEnglish(day.chumash.ref), at('chumash')));
+  if (day.tehillim?.length) rows.push(row('tehillim', t('tehillim'), day.tehillim.map((p) => p.text.replace(/\.$/, '')).join(' '), tehillimEnglish(day.tehillim.map((p) => p.ref)), at('tehillim')));
+  if (day.tanya.length) {
+    const en = day.tanya.map(englishOf);
+    rows.push(row('tanya', t('tanya'), day.tanya.map((p) => labelOf(p, 'he')).join(' – '), en.every(Boolean) ? en.join(' – ') : null, at('tanya')));
+  }
   const rambam = day.rambam;
-  if (rambam) for (const key of tracks) if (rambam[key]) rows.push({ key, name: t(key), pieces: [{ text: rambam[key]!.label, ...at(key) }] });
-  if (hayomYom && day.hayomYom.length) rows.push({ key: 'hayom-yom', name: t('hayomYom'), pieces: [{ text: day.hayomYom.map((e) => labelOf(e, 'he')).join(' – '), to: hayomYom, external: false }] });
+  if (rambam) for (const key of tracks) if (rambam[key]) rows.push(row(key, t(key), rambam[key]!.label, rambamEnglish(rambam[key]!.refs), at(key)));
+  if (hayomYom && day.hayomYom.length) rows.push(row('hayom-yom', t('hayomYom'), day.hayomYom.map((e) => labelOf(e, 'he')).join(' – '), dayOfMonth(day.hebrew, 'en'), { to: hayomYom, external: false }));
   return rows;
 }
 
@@ -188,7 +202,7 @@ export function DailyShiurim({ day, lang }: { day: DailyLearning; lang: Lang }) 
                   {rambam ? `${t('rambam')} · ${trackName[row.key as Track]}` : row.name}
                   {row.key === next ? ` · ${t('next')}` : null}
                 </span>
-                <span className="dl-text torah" lang="he" dir="rtl">
+                <span className={row.english ? 'dl-text' : 'dl-text torah'} lang={row.english ? 'en' : 'he'} dir={row.english ? 'ltr' : 'rtl'}>
                   {first?.to ? (
                     <a className="dl-main" href={first.to} target={first.external ? '_blank' : undefined} rel={first.external ? 'noopener' : undefined}>
                       {first.text}

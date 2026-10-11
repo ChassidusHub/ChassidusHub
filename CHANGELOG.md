@@ -19,6 +19,10 @@ any time. `@chassidushub/client` carries the API's version.
   out, "Open the report" sends it without a name (the same hourly limit as
   the quick report on an item's page) and opens it as an issue. Before,
   the form ended in "Sign in to open a report" after it was written.
+- On a phone the You tab lights only on your own pages, not on search.
+  A sefer's pieces are counted in their own word (52 maamarim, letters,
+  sichos), one printing is "1 printing", and a maamar with no text says
+  "This maamar has no text here yet".
 - The English home page has a "New here?" for someone who reads only
   English: who the Rebbe is, what Chassidus is, where to start (Tanya,
   Hayom Yom with English, Sichos In English, Books in English) and the
@@ -45,6 +49,11 @@ any time. `@chassidushub/client` carries the API's version.
   (the recordings of the farbrengens it was said at: id, path, name and
   length). A page with no words gives its PDF's `url` too. Still six
   statements at most.
+- On the English pages the day's shiurim are named in English, from
+  Sefaria's references (Genesis 6:9–22 with Rashi, Psalms 145–150, Robbery
+  and Lost Property chapters 4–6, 30 Tishrei), and a name that is only a
+  Hebrew month, such as Hayom Yom's volumes, is given its English name. The
+  Hebrew pages are as before.
 - `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a

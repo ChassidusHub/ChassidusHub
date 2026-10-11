@@ -69,6 +69,9 @@ export interface RevisionRow {
  */
 export const FACTS = factsWith("r.data - 'body'");
 
+/** How many matches other than sefarim and sets a search ranks at most: ranking reads each one's words. */
+const SEARCH_RANKED = 400;
+
 /** The same columns with `data` as an expression over `r.data`: a list that carries even less of each item. */
 export function factsWith(data: string): string {
   return `r.id, r.entity_id, r.entity_type, r.parent_rev, r.merge_rev, ${data} AS data, r.path, r.hash, r.changeset_id, r.author, r.schema_version, r.created_at`;
@@ -625,7 +628,7 @@ export class Catalog {
   /** The units of one top-level part of a work (a volume), in order: found by their places, and only they are read. */
   async workPart(work: EntityId, part: string, limit = 1000): Promise<EntityView[]> {
     const { rows } = await this.db.query<RevisionRow>(
-      `SELECT ${FACTS} FROM unit_place p JOIN entity e ON e.id = p.unit_id JOIN revision r ON r.id = e.main_rev
+      `SELECT ${FACTS} FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "default" JOIN revision r ON r.id = e.main_rev
        WHERE p.work_id = $1 AND p.part = $2
        ORDER BY p.ord, p.unit_id LIMIT ${Math.min(Math.max(limit, 1), 2000)}`,
       [work, part],
@@ -645,7 +648,7 @@ export class Catalog {
       `(SELECT '${dir}' AS side, ${FACTS} FROM (
           SELECT p.unit_id FROM me JOIN unit_place p ON p.work_id = me.work_id AND (p.ord, p.unit_id) ${dir} (me.ord, me.unit_id)
           ORDER BY p.ord ${sort}, p.unit_id ${sort} LIMIT 1
-        ) n JOIN entity e ON e.id = n.unit_id JOIN revision r ON r.id = e.main_rev)`;
+        ) n JOIN entity e ON e.id = n.unit_id COLLATE "default" JOIN revision r ON r.id = e.main_rev)`;
     const { rows } = await this.db.query<RevisionRow & { side: '<' | '>' }>(
       `WITH me AS (SELECT work_id, ord, unit_id FROM unit_place WHERE unit_id = $1)
        ${side('<', 'DESC')} UNION ALL ${side('>', 'ASC')}`,
@@ -771,10 +774,15 @@ export class Catalog {
     if (options.work) where.push(`EXISTS (SELECT 1 FROM entity_ref w WHERE w.from_id = e.id AND w.field = 'work' AND w.to_id = $${params.push(options.work)})`);
     // Ranked first, by what the entity row keeps, and only the few that are shown are then read: a common word matches
     // thousands of sichos, and carrying each one's facts through the sort unpacked all their words (seven to twenty seconds).
+    // Sefarim and sets, the few the query may name, are all ranked; of everything else only the first SEARCH_RANKED
+    // matches are, since ranking reads each match's words whole (a common word over every sicha: eight to fourteen seconds).
+    const matched = `FROM entity e WHERE ${where.join(' AND ')}`;
     const { rows } = await this.db.query<RevisionRow>(
       `SELECT ${FACTS} FROM (
-         SELECT e.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
-         FROM entity e JOIN revision r ON r.id = e.main_rev WHERE ${where.join(' AND ')}
+         SELECT m.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
+         FROM ((SELECT e.id ${matched} AND e.type IN ('work', 'set'))
+               UNION ALL (SELECT e.id ${matched} AND e.type NOT IN ('work', 'set') LIMIT ${SEARCH_RANKED})) m
+         JOIN entity e ON e.id = m.id JOIN revision r ON r.id = e.main_rev
          ORDER BY n LIMIT ${Math.min(options.limit ?? 20, 100)}
        ) hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev
        ORDER BY hit.n`,
