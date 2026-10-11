@@ -22,6 +22,9 @@ export default [
     route('connect', 'routes/connect.tsx'),
     route('oauth/consent', 'routes/oauth-consent.tsx'),
     route('back', 'routes/backroom.tsx'),
+    // Suggestions as pull requests: the list and one suggestion's page (thread 6, the rebuild); the old /review is the back room's.
+    route('suggestions', 'routes/suggestions.tsx'),
+    route('suggestions/:number', 'routes/suggestion.tsx'),
     route('ui', 'routes/ui.tsx'),
     route('*', 'routes/item.tsx'),
   ]),
@@ -48,4 +51,7 @@ export default [
   route('_/tokens/*', 'routes/tokens-pass.ts'),
   // One live change in the back room: its words (GET), and keeping or undoing it as the person (POST).
   route('_/back/:id', 'routes/back-item.ts'),
+  route('review', 'routes/review.ts'),
+  // One suggestion as the person: whether they may approve it, and what they do on it.
+  route('_/suggestions/*', 'routes/suggestions-pass.ts'),
 ] satisfies RouteConfig;

@@ -678,8 +678,9 @@ export class ChassidusHubApi {
   }
 
   /** Where the words are in the texts: lines on scans, paragraphs of transcripts. */
-  async moments(q: string, limit?: number) {
-    return (await this.get<{ moments: Moment[] }>('/v1/search/moments', { q, limit })).moments;
+  /** `within` (a year, month or day key) puts the words said then first (#167). */
+  async moments(q: string, limit?: number, within?: string) {
+    return (await this.get<{ moments: Moment[] }>('/v1/search/moments', { q, limit, within })).moments;
   }
 
   /** Search by meaning; `available` is false until it is set up. */

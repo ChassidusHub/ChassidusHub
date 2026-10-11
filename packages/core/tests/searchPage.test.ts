@@ -67,18 +67,34 @@ describe('the search screen in one read', () => {
     expect((await searchPage(catalog, 'יו״ד שבט')).events[0]).toMatchObject({ id: event, kind: 'farbrengen', listen: true });
   });
 
-  it('a year narrows the words; a date alone is that day, its farbrengen first, in one statement', async () => {
+  it('a year puts its words first, then the rest; a date alone is that day, its farbrengen first, in one statement', async () => {
     const { catalog, opens, mentions, event } = await sample();
     const narrowed = await searchPage(catalog, 'פתח דבר לדוגמה תשי"א');
     expect(narrowed).toMatchObject({ date: { key: '5711' }, within: '5711' });
-    expect(narrowed.words.map((w) => w.id)).toEqual([opens]);
-    expect((await searchPage(catalog, 'פתח דבר לדוגמה', { within: '5742' })).words.map((w) => w.id)).toContain(mentions);
+    expect(narrowed.words[0]!.id).toBe(opens);
+    expect(narrowed.words.map((w) => w.id)).toContain(mentions);
+    expect((await searchPage(catalog, 'פתח דבר לדוגמה', { within: '5742' })).words[0]!.id).toBe(mentions);
 
     const { result: day, statements } = await counted(catalog, () => searchPage(catalog, 'יו"ד שבט תשמ"ב'));
     expect(statements).toBe(1);
     expect(day).toMatchObject({ date: { key: '5742-05-10' }, words: [], works: [] });
     expect(day.top).toMatchObject({ id: event, kind: 'farbrengen', title: 'יו״ד שבט תשמ״ב', listen: true });
     expect(day.events.map((e) => e.id)).toEqual([event]);
+  });
+
+  it('"באתי לגני תשי״א" opens on the 5711 maamar, dated only by its heading, before the other years (#167)', async () => {
+    const { catalog, maamar, body } = await sample();
+    // Printed maamarim are named by their heading, which dates them; the words open the first paragraph.
+    const headed = (n: string, heading: string, extra: Record<string, unknown> = {}) => maamar(n, body('באתי לגני לדוגמה אחותי כלה'), { label: { he: heading }, ...extra });
+    const other = await headed('3', 'בס"ד, יו"ד שבט, ה\'תשי"ט', { date: '5719-11-10' });
+    const later = await headed('4', 'ש"פ בא, יו"ד שבט, ה\'תשל"ג');
+    const wanted = await headed('5', 'בס"ד, יו"ד שבט, תשי"א*');
+    const { result: page, statements } = await counted(catalog, () => searchPage(catalog, 'באתי לגני תשי״א'));
+    expect(statements).toBeLessThanOrEqual(6);
+    expect(page.date).toMatchObject({ key: '5711' });
+    expect(page.words[0]).toMatchObject({ id: wanted, opening: true });
+    expect(page.words.map((w) => w.id).sort()).toEqual([wanted, other, later].sort());
+    expect(page.top).toMatchObject({ id: wanted, kind: 'maamar' });
   });
 
   it("a parsha's name alone is the farbrengens of its weeks; words that end in one stay words (#90)", async () => {
