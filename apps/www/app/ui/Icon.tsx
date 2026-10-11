@@ -44,6 +44,10 @@ export const iconNames = [
   'pause',
   'history',
   'talk',
+  'download',
+  'link',
+  'code',
+  'people',
 ] as const;
 
 export type IconName = (typeof iconNames)[number];

@@ -17,6 +17,12 @@ export const pages: { name: string; path: string }[] = [
   { name: 'Takedown', path: '/takedown' },
   { name: 'Connect an AI app', path: '/connect' },
   { name: 'Connect consent', path: '/oauth/consent?request=oar-sample' },
+  { name: 'Status', path: '/status' },
+  { name: 'Mirrors', path: '/mirrors' },
+  { name: 'Models', path: '/models' },
+  { name: 'Developers', path: '/developers' },
+  { name: 'Developers: the endpoints', path: '/developers/endpoints' },
+  { name: 'API reference', path: '/developers/reference' },
   // These pages come from the stand-in API (fixture-api.ts), so only on the local build.
   ...(process.env.BASE_URL
     ? []
@@ -45,5 +51,11 @@ export const pages: { name: string; path: string }[] = [
         { name: 'A file', path: `/files/${'5'.repeat(64)}` },
         { name: 'Subject index', path: '/mafteach' },
         { name: 'Embed', path: '/embed/rh-3dvjfkyc' },
+        { name: 'Health', path: '/health' },
+        { name: 'Missing', path: '/missing' },
+        { name: 'Missing files', path: '/missing?kind=files' },
+        { name: 'Projects', path: '/projects' },
+        { name: 'A project', path: '/projects/sample-5745' },
+        { name: 'API reference, a group', path: '/developers/reference/search' },
       ]),
 ];

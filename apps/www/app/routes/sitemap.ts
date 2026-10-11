@@ -1,9 +1,10 @@
 import { data, redirect } from 'react-router';
+import { DOC_PAGES, docAddress } from '../developers/pages';
 import { escapeXml, fileResponse, siteOf } from '../lib/site';
 import type { Route } from './+types/sitemap';
 
-/** The site's own pages worth finding. */
-const PAGES = ['/', '/library', '/listen', '/about', '/connect', '/takedown'];
+/** The site's own pages worth finding: the main ones, the catalog as a whole, and every page of the developer docs. */
+const PAGES = ['/', '/library', '/listen', '/about', '/connect', '/takedown', '/health', '/status', '/missing', '/projects', '/mirrors', '/models', ...DOC_PAGES.map((page) => docAddress(page.slug))];
 
 const TYPES = ['set', 'author', 'person', 'work', 'unit', 'event', 'publication', 'recording'] as const;
 type ItemType = (typeof TYPES)[number];
