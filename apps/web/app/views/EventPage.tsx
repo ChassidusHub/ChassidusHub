@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { dateKeyToGregorian, dateKeyToHDate, monthByToken } from '@chassidushub/hebrew';
 import type { LocalName } from '@chassidushub/model';
@@ -96,6 +96,7 @@ const W = {
   next: { he: 'הבאה', en: 'Next' },
   elsewhere: { he: 'במקומות אחרים', en: 'Elsewhere' },
   videos: { he: 'וידאו', en: 'Video' },
+  playVideo: { he: 'הפעלת הווידאו', en: 'Play the video' },
   video: { he: 'וידאו', en: 'Video' },
   atSource: { he: 'במקור', en: 'At the source' },
 } as const;
@@ -726,9 +727,7 @@ export function EventPage({ entity, view, lang }: { entity: Entity; view: ItemVi
           <section className="ev-sec">
             <h2 className="ev-h">{w(lang, 'videos')}</h2>
             {videos.map((id) => (
-              <div key={id} className="video-embed">
-                <iframe src={`https://www.youtube-nocookie.com/embed/${id}`} title="YouTube" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" referrerPolicy="strict-origin-when-cross-origin" />
-              </div>
+              <Video key={id} id={id} lang={lang} />
             ))}
           </section>
         ) : null}
@@ -748,5 +747,43 @@ export function EventPage({ entity, view, lang }: { entity: Entity; view: ItemVi
         </div>
       </div>
     </ItemShell>
+  );
+}
+
+/**
+ * A YouTube video as its still picture with a play button: the player
+ * (about 1 MB of YouTube's script) is fetched only when someone taps it,
+ * so a farbrengen's own recordings and words come first on a slow line
+ * (#110). Without script the picture is a link to the video on YouTube.
+ */
+function Video({ id, lang }: { id: string; lang: Lang }) {
+  const [playing, setPlaying] = useState(false);
+  const frame = useRef<HTMLIFrameElement>(null);
+  // The still picture had the focus; once the player takes its place, give
+  // the focus to the player so a keyboard reader stays where they were.
+  useEffect(() => {
+    if (playing) frame.current?.focus();
+  }, [playing]);
+  return (
+    <div className="video-embed">
+      {playing ? (
+        <iframe ref={frame} src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1`} title="YouTube" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerPolicy="strict-origin-when-cross-origin" />
+      ) : (
+        <a
+          className="video-still"
+          href={`https://www.youtube.com/watch?v=${id}`}
+          aria-label={w(lang, 'playVideo')}
+          onClick={(e) => {
+            e.preventDefault();
+            setPlaying(true);
+          }}
+        >
+          <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" decoding="async" />
+          <span className="video-play" aria-hidden="true">
+            <Icon name="play" size={30} />
+          </span>
+        </a>
+      )}
+    </div>
   );
 }
