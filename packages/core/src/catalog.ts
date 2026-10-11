@@ -25,6 +25,7 @@ import { withStructuredBody } from './legacyWords.js';
 import { diffData, threeWayMerge, resolveConflicts, UnresolvedConflictError, type Conflict, type FieldChange, type Json, type Resolution } from './merge.js';
 import { canApprove, canSuggest, earnedTrust, LIVE_FIX_UNDO_HOURS, mayFixLive, mayGoLive, type Account, type SetInfo } from './permissions.js';
 import { searchFilterSql, type SearchFilters } from './searchFilters.js';
+import { orderSql } from './setOrder.js';
 import { searchTextOf, searchTierSql, toTsQuery } from './searchText.js';
 import { focusCounts } from './projectWork.js';
 import { commented, reportOpened, threadEvent, reportStateChanged, reviewGiven, suggestionMerged, suggestionReverted, suggestionStarted, suggestionReopened, suggestionSubmitted, suggestionWithdrawn } from './threads.js';
@@ -541,7 +542,7 @@ export class Catalog {
 
   /**
    * An item's children on main in their own order (a work's units, a
-   * text's segments), a page at a time: `after` is the last `order` seen,
+   * text's segments; a set's items by their place in that set, RFC 0002), a page at a time: `after` is the last `order` seen,
    * and `afterId` the last id, so children sharing an order are not skipped.
    */
   async children(parentId: EntityId, field: string, type: EntityType, options: { after?: string; afterId?: string; limit?: number } = {}): Promise<EntityView[]> {
@@ -549,9 +550,9 @@ export class Catalog {
       `SELECT ${FACTS} FROM entity_ref x JOIN entity e ON e.id = x.from_id JOIN revision r ON r.id = e.main_rev
        WHERE x.to_id = $1 AND x.field = $2 AND e.type = $3 AND NOT e.deleted
          AND ($4::text IS NULL
-              OR coalesce(r.data->>'order', '') COLLATE "C" > $4::text COLLATE "C"
-              OR ($5::text IS NOT NULL AND coalesce(r.data->>'order', '') COLLATE "C" = $4::text COLLATE "C" AND e.id > $5::text))
-       ORDER BY coalesce(r.data->>'order', '') COLLATE "C", e.id LIMIT ${Math.min(Math.max(options.limit ?? 100, 1), 1000)}`,
+              OR ${orderSql('$1', '$2')} COLLATE "C" > $4::text COLLATE "C"
+              OR ($5::text IS NOT NULL AND ${orderSql('$1', '$2')} COLLATE "C" = $4::text COLLATE "C" AND e.id > $5::text))
+       ORDER BY ${orderSql('$1', '$2')} COLLATE "C", e.id LIMIT ${Math.min(Math.max(options.limit ?? 100, 1), 1000)}`,
       [parentId, field, type, options.after ?? null, options.afterId ?? null],
     );
     return rows.map((r) => ({ id: r.entity_id, type: r.entity_type, path: r.path, rev: r.id, data: r.data! }));
@@ -2457,6 +2458,14 @@ export class Catalog {
         }
         if (type === null) checks.push({ check: 'references', status: 'fail', entityId: id, path: ref.field, message: `${ref.field} points at ${ref.id}, which is not in the catalog` });
         else if (ref.expected.length > 0 && !ref.expected.includes(type as EntityType)) checks.push({ check: 'references', status: 'fail', entityId: id, path: ref.field, message: `${ref.field} should be a ${ref.expected.join(' or ')}, but ${ref.id} is a ${type}` });
+      }
+      // A place is kept only in a set the item sits in (RFC 0002): a key for another set would sort nothing and outlive the set.
+      const orderIn = (p.rev.data as { orderIn?: Record<string, unknown>; sets?: unknown } | null)?.orderIn;
+      if (orderIn && typeof orderIn === 'object') {
+        const sets = Array.isArray((p.rev.data as { sets?: unknown }).sets) ? ((p.rev.data as { sets: string[] }).sets) : [];
+        for (const set of Object.keys(orderIn)) {
+          if (!sets.includes(set)) checks.push({ check: 'references', status: 'fail', entityId: id, path: `orderIn.${set}`, message: `orderIn has a place in ${set}, but the item is not in that set` });
+        }
       }
       // The tree is built of official sefarim: an addition hangs on one of them, never on itself or on another addition.
       const additionTo = p.type === 'work' ? (p.rev.data as { addition?: { to?: EntityId } }).addition?.to : undefined;

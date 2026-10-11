@@ -116,6 +116,11 @@ export interface CommonFields {
   externalIds?: ExternalIds;
   sources?: SourceRef[];
   topics?: EntityId[];
+  /**
+   * Its place in each of several sets it sits in, by set id (RFC 0002): a sefer in two sets can stand first in
+   * one and last in the other. A set lists by its own key here, else by `order`.
+   */
+  orderIn?: Record<EntityId, string>;
   note?: string;
   /**
    * The page's own words: a letter, a chapter, a farbrengen's outline, as

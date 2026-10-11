@@ -84,11 +84,11 @@ async function shelves(catalog: Catalog, from: { set: EntityId } | { work: Entit
     workId === null
       ? ''
       : `UNION ALL
-         (SELECT -1, w.id, w.path, wr.data->'title', w.id = $${params.push(workId)}, 'work', coalesce(wr.data->>'order', ''), w.path
+         (SELECT -1, w.id, w.path, wr.data->'title', w.id = $${params.push(workId)}, 'work', coalesce(wr.data->'orderIn'->>s.id, wr.data->>'order', ''), w.path
           FROM shelf s JOIN entity_ref x ON x.to_id = s.id AND x.field = 'sets' JOIN entity w ON w.id = x.from_id AND w.type = 'work' AND NOT w.deleted
           JOIN revision wr ON wr.id = w.main_rev
           WHERE NOT coalesce(wr.data->'addition' ? 'to', FALSE) OR w.id = $${params.length}
-          ORDER BY coalesce(wr.data->>'order', '') COLLATE "C", w.path LIMIT ${PATH_CHOICES_MAX})`;
+          ORDER BY coalesce(wr.data->'orderIn'->>s.id, wr.data->>'order', '') COLLATE "C", w.path LIMIT ${PATH_CHOICES_MAX})`;
   const { rows } = await catalog.db.query<SetRow & { ord: string }>(
     `WITH RECURSIVE start AS (${start}),
      chain AS (SELECT id, data, 0 AS depth FROM start
