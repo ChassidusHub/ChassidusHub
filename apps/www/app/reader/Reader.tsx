@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { EditBar, EditFields, Linked, NameField } from '../edit/Edit';
+import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../path';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
@@ -13,7 +15,8 @@ type Open = null | 'look' | 'more' | 'versions' | { note: string };
  * opens it in a sheet; text size and light or dark are under the text button;
  * everything else (versions, the scan, the recording, copying with the
  * source, sharing, Edit, reporting) is in the corner menu. The sicha before
- * and after are at the foot.
+ * and after are at the foot. Selecting words opens a small bar to fix,
+ * copy or share them (app/fix).
  */
 export function Reader({ data }: { data: ReaderData }) {
   const [open, setOpen] = useState<Open>(null);
@@ -23,6 +26,14 @@ export function Reader({ data }: { data: ReaderData }) {
 
   const text = data.text;
   const words = text.kind === 'words' ? text : null;
+  // Edit is the same page, with ?edit: only its own fields, and words fixed by selecting them.
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  const editing = search.has('edit');
+  const without = new URLSearchParams(search);
+  without.delete('edit');
+  const reading = `${data.path}${without.size ? `?${without}` : ''}`;
+  const [rev, setRev] = useState(data.rev);
 
   // A footnote's mark opens the note; without script it is a link to the note at the end of the page.
   const onWords = (event: MouseEvent) => {
@@ -76,10 +87,23 @@ export function Reader({ data }: { data: ReaderData }) {
           </>
         }
       />
+      {editing && <EditBar done={reading} />}
       <main id="content" className="view wide">
         <article className="reader">
           <h1 className="stitle">{data.title}</h1>
           {data.sub && <p className="ssub">{data.sub}</p>}
+          {editing && (
+            <EditFields>
+              <NameField item={data.id} rev={rev} language="he" label="שם" value={data.names.he} onSaved={(next) => next && setRev(next)} />
+              <NameField item={data.id} rev={rev} language="en" label="שם באנגלית" value={data.names.en} onSaved={(next) => next && setRev(next)} />
+              {data.work && (
+                <Linked to={`${data.work.path}?edit`} action="לערוך שם">
+                  נמצא בספר: {data.sub || data.work.label}
+                </Linked>
+              )}
+              <Linked action="בקרוב">הקלטה: לא מקושרת</Linked>
+            </EditFields>
+          )}
           {words && words.machine !== 'none' && (
             <p className="mach">
               <span className="machine">{words.machine === 'all' ? 'נקרא במכונה, עוד לא נבדק בידי אדם' : 'חלק מהמילים נקראו במכונה ועוד לא נבדקו'}</span>
@@ -87,7 +111,7 @@ export function Reader({ data }: { data: ReaderData }) {
           )}
 
           {words && (
-            <div ref={torah} onClick={onWords}>
+            <div ref={torah} onClick={onWords} data-fix-item={data.id} data-fix-version={words.version || undefined}>
               <ServerHtml id={`body:${data.path}`} html={words.body} className={words.machine === 'all' ? 'torah unchecked' : 'torah'} />
               {words.hasNotes && (
                 <section className="notes" aria-labelledby="notes-h">
@@ -134,6 +158,7 @@ export function Reader({ data }: { data: ReaderData }) {
         </article>
       </main>
 
+      {words && <Fixing root={torah} path={data.path} citation={data.citation} url={data.url} title={data.title} />}
       <NoteSheet note={note} onNote={(id) => setOpen({ note: id })} onClose={close} />
       <Look open={open === 'look'} onClose={close} />
 
@@ -148,7 +173,17 @@ export function Reader({ data }: { data: ReaderData }) {
         <Option icon="listen" label="לשמוע את הרבי" end="אין הקלטה מקושרת" />
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
-        <Option icon="pen" label="עריכה" end="בקרוב" quiet />
+        <Option
+          icon="pen"
+          label="עריכה"
+          quiet
+          onSelect={() => {
+            close();
+            const next = new URLSearchParams(search);
+            next.set('edit', '');
+            navigate(`?${next}`, { replace: true, preventScrollReset: true });
+          }}
+        />
         {/* Reporting waits until a report can carry who sends it (sign-in, or the captcha the API asks for when signed out). */}
         <Option icon="flag" label="משהו לא בסדר כאן" end="בקרוב" quiet />
       </Sheet>

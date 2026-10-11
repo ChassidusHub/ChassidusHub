@@ -12,6 +12,12 @@ export const nameOf = (name: unknown): string => {
   return String(names.he ?? names.en ?? Object.values(names)[0] ?? '');
 };
 
+/** A page's own names, Hebrew and English, as Edit shows them. */
+function namesOf(label: unknown): { he: string; en: string } {
+  const names = (typeof label === 'string' ? { he: label } : (label ?? {})) as Record<string, unknown>;
+  return { he: typeof names.he === 'string' ? names.he : '', en: typeof names.en === 'string' ? names.en : '' };
+}
+
 /** What the menu at each level of the path is called. */
 function titleOf(level: ApiLevel, above: string, first: boolean): string {
   if (level.kind === 'set') return first ? 'רבותינו נשיאינו' : `המדפים של ${above}`;
@@ -67,6 +73,9 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     text,
     citation: [...middle, title].join(', '),
     url: `${origin}${path}`,
+    rev: (view.item as { rev?: number }).rev ?? 0,
+    names: namesOf((view.item.data as { label?: unknown }).label),
+    work: fromWork >= 0 && view.pathBar[fromWork]!.chosen.path ? { path: view.pathBar[fromWork]!.chosen.path!, label: nameOf(view.pathBar[fromWork]!.chosen.name) } : null,
   };
 }
 

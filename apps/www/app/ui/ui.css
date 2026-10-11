@@ -523,3 +523,38 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .missing { text-align: center; margin: 40px 0; }
 .scan { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .scan img { width: 100%; height: auto; border: 1px solid var(--g300); border-radius: 4px; background: var(--g50); }
+
+/* ---------- fixing: the bar over selected words, the fix box, words just fixed (the prototype's) ---------- */
+.pop {
+  position: fixed; z-index: 88; display: flex; overflow: hidden;
+  background: var(--g900); color: var(--g0); border-radius: 10px; box-shadow: 0 8px 24px -6px rgb(0 0 0 / 0.3);
+}
+.pop button { display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 10px 13px; font-size: 13px; white-space: nowrap; }
+.pop button + button { border-inline-start: 1px solid color-mix(in srgb, var(--g0) 18%, transparent); }
+.pop button:hover, .pop button:focus-visible { background: color-mix(in srgb, var(--g0) 12%, transparent); }
+.fixbox { display: flex; flex-direction: column; gap: 6px; }
+.fixbox textarea {
+  width: 100%; min-height: 96px; border: 1px solid var(--g400); border-radius: 8px; padding: 10px 12px;
+  font-family: var(--torah); font-size: 19px; line-height: 1.6; background: var(--g0); color: var(--g900); resize: vertical;
+}
+.fixbox textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--g0), 0 0 0 4px var(--g900); }
+.fixbox .note { margin: 2px 0 8px; }
+.fixbox .acts { display: flex; gap: 8px; }
+.fixed { background: var(--g200); border-radius: 3px; text-decoration: none; }
+
+/* ---------- Edit: the same page, only its own fields (the prototype's) ---------- */
+.editbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; height: 48px; display: flex; align-items: center; gap: 10px;
+  padding-inline: 16px; background: var(--g900); color: var(--g0); font-size: 14px;
+}
+.editbar .sp { flex: 1; }
+.editbar a { display: inline-flex; align-items: center; height: 32px; padding-inline: 14px; border-radius: 6px; background: var(--g0); color: var(--g900); font-weight: 500; }
+.editfields { border: 1px solid var(--g300); border-radius: 10px; padding: 6px 14px 12px; margin: 10px 0 18px; }
+.editfields > p { margin: 10px 0 0; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-block: 10px; }
+.field label { font-size: 12px; color: var(--g600); }
+.field input { height: 40px; border: 1px solid var(--g300); border-radius: 6px; padding-inline: 10px; font: inherit; background: var(--g0); color: var(--g900); }
+.field input:focus { outline: none; box-shadow: 0 0 0 2px var(--g0), 0 0 0 4px var(--g900); }
+.linked { display: flex; align-items: center; gap: 10px; border: 1px solid var(--g300); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-top: 8px; }
+.linked .t { flex: 1; min-width: 0; }
+.linked a { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; min-height: 40px; }

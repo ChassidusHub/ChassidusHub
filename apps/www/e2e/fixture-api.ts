@@ -1,11 +1,13 @@
 import { createServer } from 'node:http';
 import { libraryAnswer } from './fixture-library';
-import { listenAnswer, shelves } from './fixture-listen';
+import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
  * a few made-up pages, so the reading page is tested without a database,
- * listening's reads (fixture-listen.ts) and the library's (fixture-library.ts).
+ * listening's reads (fixture-listen.ts), the library's (fixture-library.ts),
+ * and POST /v1/fix as a signed-in reader (the cookie rh_session=sample) or a
+ * signed-out one.
  * Every word here is sample text written for the tests (לדוגמה), never a
  * sefer's own words. `FIXTURE_PORT` picks the port (default 3002).
  */
@@ -85,12 +87,57 @@ const views: Record<string, unknown> = {
   },
 };
 
+/** The fixes sent, newest last, for the tests to read back (GET /_fixes). The pages' words never change. */
+const fixes: unknown[] = [];
+/** The same for what was saved in Edit (GET /_edits). */
+const edits: unknown[] = [];
+
+const plain = (runs: unknown) => (Array.isArray(runs) ? runs.map((r: { text?: string }) => r.text ?? '').join('') : String(runs));
+
+/** POST /v1/fix as the API answers it: signed in by the sample cookie, live when a few words changed, 409 when the words moved. */
+function fix(body: { item?: string; segment?: string; before?: unknown; after?: unknown }, cookie: string): [number, unknown] {
+  if (!/(?:^|; )rh_session=sample(?:;|$)/.test(cookie)) return [401, { error: 'unauthorized', message: 'sign in first' }];
+  const view = Object.values(views).find((v) => (v as { item: { id: string } }).item.id === body.item) as { text: { segments: { id: string; text: unknown }[]; notes: { id: string; text: unknown }[] } } | undefined;
+  const heard = paragraphWords(body.item ?? '', body.segment ?? '');
+  const segment = heard !== undefined ? { text: heard } : view && [...view.text.segments, ...view.text.notes].find((s) => s.id === body.segment);
+  if (!segment || JSON.stringify(segment.text) !== JSON.stringify(body.before)) return [409, { error: 'conflict', message: 'the words changed' }];
+  fixes.push(body);
+  const changed = plain(body.after).split(' ').filter((w, i) => w !== plain(body.before).split(' ')[i]).length;
+  return [201, changed <= 5 ? { changeset: 100 + fixes.length, live: true, undo: `/v1/fix/${100 + fixes.length}/undo` } : { changeset: 100 + fixes.length, live: false, reason: 'more than 5 words changed; a reviewer looks first' }];
+}
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
-  const view = (url.pathname === '/v1/view' ? views[url.searchParams.get('path') ?? ''] : undefined) ?? libraryAnswer(url, shelves) ?? listenAnswer(url);
   res.setHeader('Content-Type', 'application/json');
+  if (req.method === 'POST') {
+    let raw = '';
+    req.on('data', (chunk) => (raw += chunk));
+    req.on('end', () => {
+      const cookie = req.headers.cookie ?? '';
+      const [status, answer] =
+        url.pathname === '/v1/fix'
+          ? fix(JSON.parse(raw || '{}'), cookie)
+          : url.pathname === '/v1/organize'
+            ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { suggestion: { id: 200 + edits.length, status: 'open', title: 'edit' }, merged: false, mayApprove: false, preview: {} }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
+          : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
+            ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
+            : [404, { error: 'not-found', message: 'not found' }];
+      res.statusCode = status;
+      res.end(JSON.stringify(answer));
+    });
+    return;
+  }
   // The browser reads some of it too (a sefer's printings).
   res.setHeader('Access-Control-Allow-Origin', '*');
+  if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
+  if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
+  const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
+  const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
+  if (entity) {
+    const found = byId(entity) as { item: unknown } | undefined;
+    if (found) return res.end(JSON.stringify(found.item));
+  }
+  const view = (url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : undefined) ?? libraryAnswer(url, shelves) ?? listenAnswer(url);
   if (!view) {
     res.statusCode = 404;
     return res.end(JSON.stringify({ error: 'not-found', message: 'not found' }));

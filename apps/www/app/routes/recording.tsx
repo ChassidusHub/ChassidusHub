@@ -5,6 +5,8 @@ import listenCss from '../listen/listen.css?url';
 import { player, usePlaying, type Part } from '../listen/play';
 import { recordedEvent } from '../listen/recording.server';
 import { API, clock, eventLevel, LISTEN_COOKIE, listening, paragraphsOf, yearLevel, writeStopped, type ApiTranscript, type Chapter, type Paragraph } from '../listen/common';
+import { Fixing } from '../fix/Fixing';
+import { replaceInText } from '../fix/replace';
 import { Button, IconButton, TopBar } from '../ui';
 import type { Route } from './+types/recording';
 
@@ -50,6 +52,19 @@ export default function Recording() {
   // The words: what came with the page, then each part's as it nears the screen or starts playing.
   const [words, setWords] = useState<Words>(() => Object.fromEntries(chapters.filter((c) => c.complete).map((c) => [c.recording, c.words ?? []])));
   const asked = useRef(new Set<string>());
+  // Paragraphs fixed live on this visit, by id: drawn with their new words, lightly marked, until Undo or the next visit.
+  const [fixed, setFixed] = useState<Record<string, string>>({});
+  const yi = useRef<HTMLDivElement>(null);
+  const onLive = useCallback((place: { segment: string; at: number; selected: string }, typed: string) => {
+    const shown = document.getElementById(`w-${place.segment}`)?.textContent ?? '';
+    const now = replaceInText(shown, place.at, place.selected, typed);
+    if (typeof now === 'string') setFixed((f) => ({ ...f, [place.segment]: now }));
+    return () =>
+      setFixed((f) => {
+        const { [place.segment]: _, ...rest } = f;
+        return rest;
+      });
+  }, []);
   const load = useCallback((chapter: Chapter) => {
     if (chapter.niggun || asked.current.has(chapter.recording)) return;
     asked.current.add(chapter.recording);
@@ -160,12 +175,13 @@ export default function Recording() {
         </div>
         {!parts && <p className="faint">אין עדיין הקלטה שאפשר לשמוע כאן.</p>}
 
-        <div className="yi" onClick={hear}>
+        <div className="yi" ref={yi} onClick={hear}>
           {chapters.map((c, index) => {
             const ps = words[c.recording] ?? c.words;
             return (
               <section
                 key={c.recording}
+                data-fix-item={c.recording}
                 data-load={c.words ? undefined : c.recording}
                 ref={(el) => {
                   if (el) sections.current.set(c.recording, el);
@@ -186,8 +202,8 @@ export default function Recording() {
                   <p>
                     {ps.map((p) => (
                       <span key={p.id}>
-                        <span id={`w-${p.id}`} className={p.id === now ? 'p now' : 'p'} data-part={index} data-at={p.start ?? 0}>
-                          {p.text}
+                        <span id={`w-${p.id}`} className={[p.id === now ? 'p now' : 'p', fixed[p.id] !== undefined && 'fixed'].filter(Boolean).join(' ')} data-part={index} data-at={p.start ?? 0}>
+                          {fixed[p.id] ?? p.text}
                         </span>{' '}
                       </span>
                     ))}
@@ -199,6 +215,7 @@ export default function Recording() {
           })}
         </div>
       </main>
+      <Fixing root={yi} path={to} citation={[date, title].filter(Boolean).join(', ')} url={to} title={title || date} onLive={onLive} />
       {mine?.playing && !follow && now && (
         <button
           type="button"
