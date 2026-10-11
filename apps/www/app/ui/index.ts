@@ -11,3 +11,5 @@ export { Sheet } from './Sheet';
 export { Box, SectionHead, Tile } from './Tile';
 export { ToastProvider, useToast } from './Toast';
 export { useMedia, usePhone } from './useMedia';
+export { AppShell, TopBar, type Section } from './Shell';
+export { useTheme } from './theme';
