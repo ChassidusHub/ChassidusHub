@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search reads each hit's facts with its record unpacked once (#214): a
+  sicha's name, place and sefer each unpacked its whole record again, words
+  and all. Twenty sichos' facts now read about a seventh as much.
 - Search's moments read a third less (#214): the sichos whose opening has
   the words are looked up one by one by id instead of joined over every
   sicha, and only a paragraph's revision is read (to say whether a machine

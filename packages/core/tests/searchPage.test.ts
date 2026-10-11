@@ -73,6 +73,10 @@ describe('the search screen in one read', () => {
     const named = sql.find((q) => q.includes('WITH named'))!;
     expect(named).toContain(`WHERE r.id = e.main_rev AND e.type IN ('work', 'set') OFFSET 0) r ON TRUE`);
     expect(named).not.toContain("g.data->>'event'");
+    // A hit's facts unpack its revision once, its words left out, rather than once for each fact (#214); the maamar
+    // above still says it can be read.
+    expect(named).toContain(`SELECT x - 'body' AS data, x ? 'body' AS has_body FROM (SELECT r.data || '{}'::jsonb AS x OFFSET 0) y OFFSET 0`);
+    expect(named.slice(named.lastIndexOf('SELECT e.id, e.type, e.path'))).not.toMatch(/\br\.data\b(?! \|\| '\{\}')/);
   });
 
   it('a year puts its words first, then the rest; a date alone is that day, its farbrengen first, in one statement', async () => {

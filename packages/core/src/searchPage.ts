@@ -129,24 +129,35 @@ interface Info {
 
 type Local = { he?: string; en?: string };
 
-/** An item's facts for a hit, with the names of what it belongs to, all in the one statement that finds it. */
+/**
+ * An item's revision, unpacked once (`d`): a revision's `data` is one value kept compressed apart from its row, and
+ * each `r.data->…` unpacked all of it again, a sicha's words and all, some eight times for each of its facts (#214).
+ * `|| '{}'` makes the one unpacked copy the rest read from; the words are dropped from it, and only whether there are
+ * any is kept.
+ */
+const UNPACKED = `CROSS JOIN LATERAL (SELECT x - 'body' AS data, x ? 'body' AS has_body FROM (SELECT r.data || '{}'::jsonb AS x OFFSET 0) y OFFSET 0) d`;
+
+/** The same names for an event's revision, read as it is: events are small, and those on a date are picked by it first. */
+const AS_IS = `CROSS JOIN LATERAL (SELECT r.data AS data, r.data ? 'body' AS has_body) d`;
+
+/** An item's facts for a hit, with the names of what it belongs to, all in the one statement that finds it: from UNPACKED. */
 const INFO = `e.id, e.type, e.path,
-  coalesce(r.data->'title', r.data->'name', r.data->'label') AS name,
-  r.data->>'date' AS date, r.data->>'kind' AS kind, r.data->'position' AS position,
-  (SELECT x.data->'title' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = r.data->>'work') AS work,
-  (SELECT x.data->'name' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = r.data->'authors'->>0) AS author,
-  (SELECT x.data->'name' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = r.data->>'parent') AS parent,
-  (SELECT x.data->'title' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = r.data->>'event') AS event,
+  coalesce(d.data->'title', d.data->'name', d.data->'label') AS name,
+  d.data->>'date' AS date, d.data->>'kind' AS kind, d.data->'position' AS position,
+  (SELECT x.data->'title' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = d.data->>'work') AS work,
+  (SELECT x.data->'name' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = d.data->'authors'->>0) AS author,
+  (SELECT x.data->'name' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = d.data->>'parent') AS parent,
+  (SELECT x.data->'title' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = d.data->>'event') AS event,
   CASE e.type WHEN 'recording' THEN TRUE
     WHEN 'event' THEN EXISTS (SELECT 1 FROM entity_ref y JOIN entity ge ON ge.id = y.from_id WHERE y.to_id = e.id AND y.field = 'event' AND ge.type = 'recording' AND NOT ge.deleted)
     ELSE FALSE END AS listen,
-  CASE e.type WHEN 'unit' THEN r.data ? 'body'
-    WHEN 'event' THEN coalesce(r.data->'links' @> '[{"kind":"mugah"}]' OR r.data->'links' @> '[{"kind":"bilti-mugah"}]', FALSE)
+  CASE e.type WHEN 'unit' THEN d.has_body
+    WHEN 'event' THEN coalesce(d.data->'links' @> '[{"kind":"mugah"}]' OR d.data->'links' @> '[{"kind":"bilti-mugah"}]', FALSE)
     ELSE FALSE END AS read,
   ARRAY(SELECT DISTINCT l FROM (
-      SELECT x->>'language' AS l FROM jsonb_array_elements(CASE jsonb_typeof(r.data->'sourceCopies') WHEN 'array' THEN r.data->'sourceCopies' ELSE '[]' END) x
-      UNION ALL SELECT x->>'language' FROM jsonb_array_elements(CASE jsonb_typeof(r.data->'editions') WHEN 'array' THEN r.data->'editions' ELSE '[]' END) x
-      UNION ALL SELECT r.data->>'language') ls WHERE l IS NOT NULL ORDER BY l) AS languages`;
+      SELECT x->>'language' AS l FROM jsonb_array_elements(CASE jsonb_typeof(d.data->'sourceCopies') WHEN 'array' THEN d.data->'sourceCopies' ELSE '[]' END) x
+      UNION ALL SELECT x->>'language' FROM jsonb_array_elements(CASE jsonb_typeof(d.data->'editions') WHEN 'array' THEN d.data->'editions' ELSE '[]' END) x
+      UNION ALL SELECT d.data->>'language') ls WHERE l IS NOT NULL ORDER BY l) AS languages`;
 
 /** An item's names in Hebrew and English together, as the search compares them. */
 
@@ -182,7 +193,7 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
      hit AS (
        SELECT id, row_number() OVER (ORDER BY tier, addition, src, rank DESC, k1, k2) AS n
        FROM (SELECT * FROM named UNION ALL SELECT * FROM unit) u ORDER BY n LIMIT ${limit})
-     SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ORDER BY hit.n`,
+     SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ${UNPACKED} ORDER BY hit.n`,
     language
       ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language), normalizeSearchText(typed)]
       : [tsQuery, normalizeSearchText(query), NAMED, normalizeSearchText(typed)],
@@ -197,9 +208,9 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
 async function infoOf(catalog: Catalog, ids: readonly EntityId[], date: string | null, days: readonly string[] = []): Promise<Info[]> {
   if (ids.length === 0 && !date && days.length === 0) return [];
   const { rows } = await catalog.db.query<Info>(
-    `(SELECT ${INFO}, FALSE AS dated FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = ANY($1::text[]) AND NOT e.deleted)
+    `(SELECT ${INFO}, FALSE AS dated FROM entity e JOIN revision r ON r.id = e.main_rev ${UNPACKED} WHERE e.id = ANY($1::text[]) AND NOT e.deleted)
      UNION ALL
-     (SELECT ${INFO}, TRUE AS dated FROM entity e JOIN revision r ON r.id = e.main_rev
+     (SELECT ${INFO}, TRUE AS dated FROM entity e JOIN revision r ON r.id = e.main_rev ${AS_IS}
       WHERE e.type = 'event' AND NOT e.deleted
         AND (${days.length > 0 ? `r.data->>'date' = ANY($2::text[])` : `$2::text IS NOT NULL AND (r.data->>'date' || '-') LIKE $2 || '-%'`})
       ORDER BY (r.data->>'kind' <> 'farbrengen'), r.data->>'date' COLLATE "C", coalesce((r.data->>'order')::int, 0), e.id
