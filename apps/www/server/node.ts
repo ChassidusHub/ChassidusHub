@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { createRequestListener } from '@react-router/node';
 import type { ServerBuild } from 'react-router';
-import { apiFor } from '../app/lib/api';
+import { apiFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 
 /**
@@ -17,7 +17,7 @@ const client = path.join(root, 'build/client');
 // @ts-ignore - made by `react-router build`
 const build = (await import('../build/server/index.js')) as unknown as ServerBuild;
 const api = apiFor({ baseUrl: process.env.API_URL });
-const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, visitor: apiFor({ baseUrl: process.env.API_URL, cookie: request.headers.get('cookie') }), ...pageContext(request) }) });
+const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), ...pageContext(request) }) });
 
 const types: Record<string, string> = {
   '.js': 'text/javascript',
