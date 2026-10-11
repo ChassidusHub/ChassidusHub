@@ -101,11 +101,11 @@ describe('the other kept answers (#104)', () => {
     ] }] };
     await add(catalog, 'steward', 'steward', 'unit', { work: index, position: [{ level: 'volume', value: '1' }], order: '01', label: { he: 'חלק א' }, body } as never, '/likkutei-sichos-mafteach-inyanim/1');
     expect(await refreshMafteach(catalog, kept)).toBe(1);
-    expect(stored.get('mafteach-subjects')).toMatchObject({ indexes: [{ page: '/mafteach', topics: { 'מלה בדויה': ['מלה בדויה', 2, 1] } }] });
+    expect(stored.get('mafteach-subjects')).toMatchObject({ indexes: [{ page: '/mafteach', topics: { 'מלה בדויה': ['מלה בדויה', 2, 1, false] } }] });
 
     forgetSubjects();
     const page = async (q: string) => (await (await createApp({ catalog, kept }).request(`/v1/search/page?q=${encodeURIComponent(q)}`)).json()) as { subjects: unknown[] };
-    expect((await page('מלה בדויה')).subjects).toEqual([{ index: { he: 'מפתח בדיקה' }, topic: 'מלה בדויה', places: 2, volumes: 1, path: `/mafteach?q=${encodeURIComponent('מלה בדויה')}` }]);
+    expect((await page('מלה בדויה')).subjects).toEqual([{ index: { he: 'מפתח בדיקה' }, topic: 'מלה בדויה', places: 2, volumes: 1, machine: false, path: `/mafteach?q=${encodeURIComponent('מלה בדויה')}` }]);
     expect((await page('מלה')).subjects).toHaveLength(1);
     expect((await page('אחרת')).subjects).toEqual([]);
     // Nothing kept (local work): no entries, and the rest of the page as always.

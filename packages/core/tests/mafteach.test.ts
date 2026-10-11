@@ -71,13 +71,14 @@ describe('mafteach', () => {
   it("names an index entry for search, from the topics in short: that very topic, then those that begin with it as a word (#99)", async () => {
     const subjects = await mafteachSubjects(catalog, ids.index!, { seferId: ids.sefer });
     expect(Object.values(subjects!.topics)).toEqual([
-      ['אור וחושך', 3, 2],
-      ['מים', 1, 1],
+      // Volume 1's entry was read by a machine and nobody checked it: so is the topic's.
+      ['אור וחושך', 3, 2, true],
+      ['מים', 1, 1, false],
     ]);
-    expect(subjectsNamed(subjects!, 'מים')).toEqual([{ topic: 'מים', places: 1, volumes: 1 }]);
+    expect(subjectsNamed(subjects!, 'מים')).toEqual([{ topic: 'מים', places: 1, volumes: 1, machine: false }]);
     // The same words, spelled with a final letter or not, and a topic that begins with the word.
-    expect(subjectsNamed(subjects!, 'אור וחושך')).toEqual([{ topic: 'אור וחושך', places: 3, volumes: 2 }]);
-    expect(subjectsNamed(subjects!, 'אור')).toEqual([{ topic: 'אור וחושך', places: 3, volumes: 2 }]);
+    expect(subjectsNamed(subjects!, 'אור וחושך')).toEqual([{ topic: 'אור וחושך', places: 3, volumes: 2, machine: true }]);
+    expect(subjectsNamed(subjects!, 'אור')).toEqual([{ topic: 'אור וחושך', places: 3, volumes: 2, machine: true }]);
     // Part of a word is not the word.
     expect(subjectsNamed(subjects!, 'או')).toEqual([]);
   });

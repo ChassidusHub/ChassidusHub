@@ -2605,6 +2605,8 @@ export interface Operations {
         places: number;
         /** In how many volumes */
         volumes: number;
+        /** A machine read some of it from the printed index, and no person has checked it */
+        machine: boolean;
         /** The site's page of that entry: /mafteach?q=… */
         path: string;
       }>;

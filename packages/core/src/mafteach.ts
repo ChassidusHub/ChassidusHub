@@ -313,12 +313,13 @@ export async function mafteach(
 /**
  * A subject index's topics in short, for search to name an index entry
  * without reading the whole index (#99): each topic's key (as `keyOf`
- * compares it), its printed name, and how many places and volumes it has.
+ * compares it), its printed name, how many places and volumes it has, and
+ * whether a machine read any of it and no person checked it (as `machine` on a volume).
  * The scheduled run keeps it beside the built index.
  */
 export interface MafteachSubjects {
   index: Mafteach['index'];
-  topics: Record<string, [topic: string, places: number, volumes: number]>;
+  topics: Record<string, [topic: string, places: number, volumes: number, machine: boolean]>;
 }
 
 export async function mafteachSubjects(
@@ -329,7 +330,7 @@ export async function mafteachSubjects(
   const built = await builtIndex(catalog, indexId, options);
   if (!built) return null;
   const topics: MafteachSubjects['topics'] = {};
-  for (const t of built.topics) topics[t.key] = [t.topic, t.volumes.reduce((n, v) => n + v.places.length, 0), t.volumes.length];
+  for (const t of built.topics) topics[t.key] = [t.topic, t.volumes.reduce((n, v) => n + v.places.length, 0), t.volumes.length, t.volumes.some((v) => v.machine)];
   return { index: built.index, topics };
 }
 
@@ -337,14 +338,14 @@ export async function mafteachSubjects(
  * The topics of a subject index a search names: the topic of that very name,
  * then those that begin with it as a whole word (בטחון, then בטחון בה׳), up to `limit`.
  */
-export function subjectsNamed(subjects: MafteachSubjects, query: string, limit = 3): Array<{ topic: string; places: number; volumes: number }> {
+export function subjectsNamed(subjects: MafteachSubjects, query: string, limit = 3): Array<{ topic: string; places: number; volumes: number; machine: boolean }> {
   const q = keyOf(query);
   if (!q) return [];
   const exact = subjects.topics[q];
-  const out = exact ? [{ topic: exact[0], places: exact[1], volumes: exact[2] }] : [];
-  for (const [key, [topic, places, volumes]] of Object.entries(subjects.topics)) {
+  const out = exact ? [{ topic: exact[0], places: exact[1], volumes: exact[2], machine: exact[3] }] : [];
+  for (const [key, [topic, places, volumes, machine]] of Object.entries(subjects.topics)) {
     if (out.length >= limit) break;
-    if (key.startsWith(`${q} `)) out.push({ topic, places, volumes });
+    if (key.startsWith(`${q} `)) out.push({ topic, places, volumes, machine });
   }
   return out;
 }

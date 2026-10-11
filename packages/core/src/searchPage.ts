@@ -89,6 +89,8 @@ export interface SearchSubjectHit {
   topic: string;
   places: number;
   volumes: number;
+  /** A machine read some of the entry from the printed index, and no person has checked it. */
+  machine: boolean;
   /** The site's page of that entry. */
   path: string;
 }
