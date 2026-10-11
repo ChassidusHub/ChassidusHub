@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` understands a parsha: words that are a parsha's
+  name and nothing else (`בשלח`, `פרשת בשלח תשמ"ב`, `Beshalach`) come back
+  as `parsha` with the farbrengens of its weeks, in the year given or in
+  every year. Words that only end in one (`ואתה תצוה`) stay words, so the
+  maamar that opens with them comes first (#90).
 - `GET /v1/search/page`: the new site's search screen in one read, at most
   six statements. Sefarim and shelves the words name, farbrengens and
   recordings, and the places in the words (a sefer's paragraph, a line on
