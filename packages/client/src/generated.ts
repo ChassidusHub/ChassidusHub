@@ -110,6 +110,26 @@ export type Item = {
   recordings?: number;
 };
 
+export type PathChoice = {
+  /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+  id?: string;
+  path: string | null;
+  name: Record<string, unknown> | null;
+  /** A part's or unit's place in its work (1) */
+  value?: string;
+  /** How many units a part holds */
+  units?: number;
+};
+
+export type PathLevel = {
+  kind: "set" | "work" | "part" | "unit";
+  /** What the work calls this level (volume, sicha), for its parts and units */
+  level?: string;
+  chosen: PathChoice;
+  /** Every choice at this level in the catalog's order, the chosen one among them */
+  choices: Array<PathChoice>;
+};
+
 export type ItemPage = {
   items: Array<Item>;
   next: string | null;
@@ -2004,6 +2024,15 @@ export interface Operations {
       en?: string;
     };
   };
+  /** An item's whole path for the path bar: its shelves from the top of the tree, its sefer, the sefer's parts and the item, each level with the other choices there */
+  pathBar: {
+    input: {
+      id: string;
+    };
+    output: {
+      levels: Array<PathLevel>;
+    };
+  };
   /** What a plan of moves, renames, orderings, new sets and merges would change, item by item, saved nowhere */
   previewOrganize: {
     input: {
@@ -3060,6 +3089,7 @@ export const OPERATIONS = {
   openIssue: {"method":"POST","path":"/v1/issues","pathParams":[],"query":[],"body":"json","answer":"json"},
   organize: {"method":"POST","path":"/v1/organize","pathParams":[],"query":[],"body":"json","answer":"json"},
   parseDate: {"method":"GET","path":"/v1/dates/parse","pathParams":[],"query":["q"],"body":null,"answer":"json"},
+  pathBar: {"method":"GET","path":"/v1/entities/{id}/path-bar","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   previewOrganize: {"method":"POST","path":"/v1/organize/preview","pathParams":[],"query":[],"body":"json","answer":"json"},
   proposeUpload: {"method":"POST","path":"/v1/uploads/propose","pathParams":[],"query":[],"body":"json","answer":"json"},
   protectedResource: {"method":"GET","path":"/.well-known/oauth-protected-resource","pathParams":[],"query":[],"body":null,"answer":"json"},
@@ -3720,6 +3750,11 @@ export abstract class GeneratedMethods {
   /** Read a Hebrew date as people write it (GET /v1/dates/parse) */
   parseDate(input: Operations['parseDate']['input']): Promise<Operations['parseDate']['output']> {
     return this.call('parseDate', input ?? {} as Operations['parseDate']['input']);
+  }
+
+  /** An item's whole path for the path bar: its shelves from the top of the tree, its sefer, the sefer's parts and the item, each level with the other choices there (GET /v1/entities/{id}/path-bar) */
+  pathBar(input: Operations['pathBar']['input']): Promise<Operations['pathBar']['output']> {
+    return this.call('pathBar', input ?? {} as Operations['pathBar']['input']);
   }
 
   /** What a plan of moves, renames, orderings, new sets and merges would change, item by item, saved nowhere (POST /v1/organize/preview) */

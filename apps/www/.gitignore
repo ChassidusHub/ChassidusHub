@@ -1,0 +1,4 @@
+.react-router/
+build/
+test-results/
+playwright-report/

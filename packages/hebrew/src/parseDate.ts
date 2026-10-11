@@ -1,4 +1,4 @@
-import { HDate } from '@hebcal/core';
+import { HDate } from '@hebcal/hdate';
 import { formatDateKey, parseDateKey, validateDateKey, type DateKey } from './dateKey.js';
 import { MONTHS, type MonthInfo } from './months.js';
 import { normalizeSearchText } from './normalize.js';

@@ -2279,12 +2279,46 @@ a.chip:hover {
   margin-top: 12px;
 }
 
-.video-embed iframe {
+.video-embed iframe,
+.video-still,
+.video-still img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+/* The still picture in the player's place, until it is tapped (#110). */
+.video-still {
+  display: grid;
+  place-items: center;
+}
+
+.video-still img {
+  object-fit: cover;
+}
+
+.video-play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  transition: background 0.15s;
+}
+
+.video-play svg {
+  /* The triangle's weight sits left of its box; it points right in both languages. */
+  margin-left: 3px;
+}
+
+.video-still:hover .video-play,
+.video-still:focus-visible .video-play {
+  background: var(--accent);
 }
 
 /* ------------------------------------------------------------ conversations (views/Conversation.tsx) */
