@@ -39,6 +39,13 @@ test('while typing, the first names come up under the box', async ({ page }) => 
   await expect(page).toHaveURL(/\/sets\/sample/);
 });
 
+test('a subject typed in English letters says which Hebrew word it searched', async ({ page }) => {
+  await page.goto('/search?q=piska');
+  await expect(page.locator('main')).toContainText('תוצאות עבור פסקה');
+  await page.goto('/search?q=' + encodeURIComponent('פסקה'));
+  await expect(page.locator('main')).not.toContainText('תוצאות עבור');
+});
+
 test('nothing found, and a search that failed, each say so', async ({ page }) => {
   await page.goto('/search?q=' + encodeURIComponent('אין כזה'));
   await expect(page.locator('main')).toContainText('לא נמצא דבר');
