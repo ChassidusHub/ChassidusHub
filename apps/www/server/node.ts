@@ -17,7 +17,7 @@ const client = path.join(root, 'build/client');
 // @ts-ignore - made by `react-router build`
 const build = (await import('../build/server/index.js')) as unknown as ServerBuild;
 const api = apiFor({ baseUrl: process.env.API_URL });
-const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, ...pageContext(request) }) });
+const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, visitor: apiFor({ baseUrl: process.env.API_URL, cookie: request.headers.get('cookie') }), ...pageContext(request) }) });
 
 const types: Record<string, string> = {
   '.js': 'text/javascript',

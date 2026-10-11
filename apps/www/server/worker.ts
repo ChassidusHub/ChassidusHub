@@ -20,6 +20,10 @@ const handler = createRequestHandler(build as unknown as ServerBuild);
 
 export default {
   fetch(request: Request, env: Env): Promise<Response> {
-    return handler(request, { api: apiFor({ binding: env.API, baseUrl: env.API_URL }), ...pageContext(request) });
+    return handler(request, {
+      api: apiFor({ binding: env.API, baseUrl: env.API_URL }),
+      visitor: apiFor({ binding: env.API, baseUrl: env.API_URL, cookie: request.headers.get('cookie') }),
+      ...pageContext(request),
+    });
   },
 };
