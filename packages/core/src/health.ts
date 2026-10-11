@@ -1,5 +1,5 @@
 import { one } from '@chassidushub/db';
-import type { EntityId } from '@chassidushub/model';
+import { EMAIL_PATTERN, FOLDER_NUMBER_PATTERN, nameJunk, PHONE_PATTERN, type EntityId, type NameJunk } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 import type { Json } from './merge.js';
 import { embeddingCoverage } from './semantic.js';
@@ -30,7 +30,12 @@ export interface CatalogHealth {
   /** Links that did not answer at the last check, those failing longest first. */
   deadLinks: Array<{ url: string; status: number | null; error: string | null; checkedAt: string; failingSince: string | null; entities: EntityId[] }>;
   embeddings: { embedded: number; waiting: number };
+  /** Names of sets, sefarim, printings, authors and topics that carry a folder number or contact details, for people to fix (#125). */
+  junkNames: Array<{ id: EntityId; type: string; path: string | null; name: string; junk: NameJunk[] }>;
 }
+
+/** The kinds whose names are shown as titles, and few enough to read every one. */
+const NAMED_KINDS = ['set', 'work', 'publication', 'author', 'topic'];
 
 const iso = (value: unknown): string | null => (value === null || value === undefined ? null : new Date(value as string).toISOString());
 
@@ -41,7 +46,7 @@ export async function catalogHealth(catalog: Catalog, options: { limit?: number 
       JOIN revision tr ON tr.id = t.main_rev WHERE y.to_id = rec.id AND y.field = 'recording' AND tr.data->>'kind' = 'transcript')`;
   const hasSync = `EXISTS (SELECT 1 FROM entity_ref y JOIN entity a ON a.id = y.from_id AND a.type = 'alignment' AND NOT a.deleted WHERE y.to_id = rec.id AND y.field = 'recording')`;
 
-  const [years, sets, pages, scans, recordings, unsynced, suggestions, links, dead, embeddings] = await Promise.all([
+  const [years, sets, pages, scans, recordings, unsynced, suggestions, links, dead, embeddings, junk] = await Promise.all([
     db.query<{ year: number; events: number; with_recording: number; with_text: number; with_transcript: number }>(
       `SELECT substring(r.data->>'date' from 1 for 4)::int AS year, count(*)::int AS events,
               count(*) FILTER (WHERE EXISTS (SELECT 1 FROM entity_ref x JOIN entity rec ON rec.id = x.from_id AND rec.type = 'recording' AND NOT rec.deleted
@@ -91,6 +96,13 @@ export async function catalogHealth(catalog: Catalog, options: { limit?: number 
       `SELECT url, status, error, checked_at, failing_since, entity_ids FROM link_check WHERE NOT ok ORDER BY failing_since NULLS LAST, url LIMIT ${limit * 2}`,
     ),
     embeddingCoverage(catalog),
+    db.query<{ id: EntityId; type: string; path: string | null; name: string }>(
+      `SELECT e.id, e.type, e.path, n.name FROM entity e JOIN revision r ON r.id = e.main_rev
+       CROSS JOIN LATERAL (VALUES (r.data->'name'->>'he'), (r.data->'name'->>'en'), (r.data->'title'->>'he'), (r.data->'title'->>'en')) n (name)
+       WHERE e.type = ANY ($1::text[]) AND NOT e.deleted AND n.name IS NOT NULL AND (n.name ~ $2 OR n.name ~ $3 OR n.name ~ $4)
+       ORDER BY e.path, e.id LIMIT ${limit}`,
+      [NAMED_KINDS, FOLDER_NUMBER_PATTERN, PHONE_PATTERN, EMAIL_PATTERN],
+    ),
   ]);
 
   const bySet = new Map<string, CatalogHealth['sets'][number]>();
@@ -114,6 +126,7 @@ export async function catalogHealth(catalog: Catalog, options: { limit?: number 
     links: { checked: links?.checked ?? 0, dead: links?.dead ?? 0, lastChecked: iso(links?.last) },
     deadLinks: dead.rows.map((r) => ({ url: r.url, status: r.status, error: r.error, checkedAt: iso(r.checked_at)!, failingSince: iso(r.failing_since), entities: r.entity_ids })),
     embeddings,
+    junkNames: junk.rows.map((r) => ({ ...r, junk: nameJunk(r.name) })),
   };
 }
 

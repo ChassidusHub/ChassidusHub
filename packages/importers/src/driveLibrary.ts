@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { orderKeys, type Genre } from '@chassidushub/model';
+import { cleanName, orderKeys, type Genre } from '@chassidushub/model';
 import { ref, type ImportRecord, type Importer } from './importer.js';
 import { GENRE_NAMES } from './sichosKodeshWorks.js';
 
@@ -105,8 +105,8 @@ function genreOf(top: string): Genre {
 
 const short = (id: string) => createHash('sha256').update(id).digest('hex').slice(0, 12);
 const clip = (text: string) => text.slice(0, 500);
-/** "05 בראשית.pdf" → "05 בראשית". */
-const nameOf = (file: string) => file.replace(/\.pdf$/i, '').trim() || file;
+/** "05 בראשית.pdf" → "05 בראשית"; a folder number in front and contact details dropped (#125). */
+const nameOf = (file: string) => cleanName(file.replace(/\.pdf$/i, '').trim() || file);
 const natural = new Intl.Collator('he', { numeric: true });
 
 
@@ -118,10 +118,14 @@ export const otzrosFolderSetKey = (folderId: string) => `otzros-folder:${folderI
 /** Whether a folder, or any folder in it, holds a PDF. */
 const holdsPdfs = (folder: DriveFolder): boolean => folder.files.some((f) => /\.pdf$/i.test(f.title)) || folder.folders.some(holdsPdfs);
 
-/** A folder's name; one named only by a year or a number ("5727") is named with the folder it is in. */
+/**
+ * A folder's name; one named only by a year or a number ("5727") is named with the folder it is in. A folder
+ * number in front ("יד.1.") and contact details someone put in a folder's name are dropped (#125): the catalog
+ * keeps no folder numbers in names, and the folder on Drive (its id, kept on the item) still has the name as it was.
+ */
 function folderName(folder: DriveFolder, trail: string[]): string {
   const bare = !/[\p{L}]/u.test(folder.title.replace(/^\d+[.)]\s*/, '')) && trail.length > 0;
-  return clip(bare ? `${trail[trail.length - 1]!.replace(/^\d+[.)]\s*/, '')} ${folder.title}` : folder.title);
+  return clip(bare ? `${cleanName(trail[trail.length - 1]!)} ${folder.title}` : cleanName(folder.title));
 }
 
 export function driveLibraryImporter(input: DriveFolder | (() => Promise<DriveFolder>)): Importer {
@@ -152,7 +156,7 @@ export function driveLibraryImporter(input: DriveFolder | (() => Promise<DriveFo
               policy: 'moderated',
               keepers: [],
               parent: ref(inSet),
-              ...(trail.length ? { description: { he: clip(trail.join(' / ')) } } : {}),
+              ...(trail.length ? { description: { he: clip(trail.map(cleanName).join(' / ')) } } : {}),
             },
           });
         }
@@ -177,7 +181,7 @@ export function driveLibraryImporter(input: DriveFolder | (() => Promise<DriveFo
               levels: ['volume'],
               // Its genre, the library, and the Set of the folder it is in.
               sets: [...new Set([`chassidushub-set:${genre}`, OTZROS_SET.key, inSet])].map(ref),
-              ...(trail.length ? { description: { he: clip(trail.join(' / ')) } } : {}),
+              ...(trail.length ? { description: { he: clip(trail.map(cleanName).join(' / ')) } } : {}),
               externalIds: { 'drive-folder': folder.id },
               // The folder on Drive, as the copy's id: a link is its own address.
               sourceCopies: [{ source: 'other', sourceId: `https://drive.google.com/drive/folders/${folder.id}${folder.resourceKey ? `?resourcekey=${folder.resourceKey}` : ''}`, kind: 'pdf', licence: 'free-to-read', credit: 'אוצרות הרבי' }],
@@ -193,7 +197,7 @@ export function driveLibraryImporter(input: DriveFolder | (() => Promise<DriveFo
                 work: ref(key),
                 position: [{ level: 'volume', value: String(i + 1) }],
                 order: orders[i]!,
-                label: { he: clip(pdfs.length === 1 ? folder.title : nameOf(file.title)) },
+                label: { he: clip(pdfs.length === 1 ? cleanName(folder.title) : nameOf(file.title)) },
                 externalIds: { 'drive-file': file.id },
                 // The exact file on Drive; the site's reader opens it through ChassidusHub's API (GET /v1/drive/<id>).
                 editions: [{ source: 'other', sourceId: file.id, kind: 'pdf', licence: 'free-to-read', credit: 'אוצרות הרבי', label: 'drive', url: driveViewUrl(file) }],

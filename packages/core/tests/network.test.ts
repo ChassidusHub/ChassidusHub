@@ -325,5 +325,19 @@ describe('health of the catalog', () => {
     expect(health.unsynced.map((r) => r.id)).toHaveLength(1);
     expect(health.openSuggestions).toMatchObject([{ id: waiting.id, title: 'תיקון תאריך', authorName: 'Chaim' }]);
     expect(health.deadLinks).toMatchObject([{ url: 'https://example.org/a.mp3', status: 404, entities: [event] }]);
+    expect(health.junkNames).toEqual([]);
+  });
+
+  it('lists names that carry a folder number or contact details, for people to fix (#125)', async () => {
+    const { catalog, set } = await freshCatalog();
+    const work = (he: string, slug: string) => ({ title: { he, en: slug }, slug, authors: [], genre: 'chassidus', levels: ['volume'], sets: [set] });
+    const numbered = await add(catalog, 'mendy', 'keeper', 'work', work('יד.1. ספר לדוגמה', 'numbered'), '/numbered');
+    const phoned = await add(catalog, 'mendy', 'keeper', 'work', work('ספר לדוגמה - 347-426-8187', 'phoned'), '/phoned');
+    await add(catalog, 'mendy', 'keeper', 'work', work('ספר לדוגמה 5711', 'clean'), '/clean');
+    const { junkNames } = await catalogHealth(catalog);
+    expect(junkNames).toEqual([
+      { id: numbered, type: 'work', path: '/numbered', name: 'יד.1. ספר לדוגמה', junk: ['folder-number'] },
+      { id: phoned, type: 'work', path: '/phoned', name: 'ספר לדוגמה - 347-426-8187', junk: ['phone'] },
+    ]);
   });
 });

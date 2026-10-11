@@ -1387,7 +1387,7 @@ export interface Operations {
     };
     output: Record<string, unknown>;
   };
-  /** The health of the catalog: coverage per year and set, unchecked pages, unsynced recordings, dead links, the oldest open suggestions */
+  /** The health of the catalog: coverage per year and set, unchecked pages, unsynced recordings, dead links, the oldest open suggestions, names that carry a folder number or contact details */
   health: {
     input: {
       /** How many (at most 500) */
@@ -3778,7 +3778,7 @@ export abstract class GeneratedMethods {
     return this.call('getSuggestion', input ?? {} as Operations['getSuggestion']['input']);
   }
 
-  /** The health of the catalog: coverage per year and set, unchecked pages, unsynced recordings, dead links, the oldest open suggestions (GET /v1/health) */
+  /** The health of the catalog: coverage per year and set, unchecked pages, unsynced recordings, dead links, the oldest open suggestions, names that carry a folder number or contact details (GET /v1/health) */
   health(input?: Operations['health']['input']): Promise<Operations['health']['output']> {
     return this.call('health', input ?? {} as Operations['health']['input']);
   }

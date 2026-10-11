@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Names keep no folder numbers or contact details (#125): the Otzros
+  library import drops a folder's number in front (`יד.1.`) and a phone
+  number or email someone wrote into a folder's or file's name, and
+  `/v1/health` lists the names in the catalog that still carry them
+  (`junkNames`), for people to fix as suggestions.
 - Search by name reads only a sefer's or shelf's revision while ranking, and
   finds a farbrengen's recordings through its links (#182): a common word in
   thousands of farbrengens and recordings no longer reads each one's

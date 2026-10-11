@@ -15,7 +15,8 @@ const SITE: Record<string, string> = {
     { id: 'empty', title: '9. ריק', folder: true },
   ]),
   torah: view([
-    { id: 'lks', title: 'לקוטי שיחות', folder: true },
+    // A folder number in front and a phone number someone wrote in: neither belongs in the sefer's name (#125).
+    { id: 'lks', title: 'יד.1. לקוטי שיחות - 347-426-8187', folder: true },
     { id: 'maamarim', title: 'ספר המאמרים', folder: true },
   ]),
   lks: view([
@@ -57,7 +58,7 @@ describe("Otzros HaRebbe's Drive library", () => {
   it('makes a sefer of every folder of PDFs and a page of every PDF, linked to its exact file on Drive', async () => {
     const records = await recordsOf(await library());
     const work = records.find((r) => r.key === 'otzros-work:lks')!;
-    expect(work.data).toMatchObject({ title: { he: 'לקוטי שיחות' }, genre: 'sichos', description: { he: '1. תורת כ"ק אד"ש' } });
+    expect(work.data).toMatchObject({ title: { he: 'לקוטי שיחות' }, genre: 'sichos', description: { he: 'תורת כ"ק אד"ש' } });
     // Not an official sefer of the tree until a person places it: an addition.
     expect(work.data).toMatchObject({ addition: { kind: 'other' } });
     const units = records.filter((r) => r.type === 'unit' && refs([(r.data as { work: unknown }).work])[0] === 'otzros-work:lks');
@@ -72,9 +73,10 @@ describe("Otzros HaRebbe's Drive library", () => {
     // Folders that hold folders of PDFs; not the sefarim's own folders, not an empty branch.
     expect(sets.map((s) => s.key)).toEqual([otzrosFolderSetKey('torah'), otzrosFolderSetKey('maamarim')]);
     const [torah, maamarim] = sets;
-    expect(torah!.data).toMatchObject({ name: { he: '1. תורת כ"ק אד"ש' }, parent: { $ref: OTZROS_SET.key } });
+    // The folder's number is not part of its name.
+    expect(torah!.data).toMatchObject({ name: { he: 'תורת כ"ק אד"ש' }, parent: { $ref: OTZROS_SET.key } });
     expect(torah!.path).toMatch(/^\/sets\/otzros\/[0-9a-f]{12}$/);
-    expect(maamarim!.data).toMatchObject({ name: { he: 'ספר המאמרים' }, parent: { $ref: otzrosFolderSetKey('torah') }, description: { he: '1. תורת כ"ק אד"ש' } });
+    expect(maamarim!.data).toMatchObject({ name: { he: 'ספר המאמרים' }, parent: { $ref: otzrosFolderSetKey('torah') }, description: { he: 'תורת כ"ק אד"ש' } });
     // Each sefer: its genre, the library, and the Set of the folder it is in.
     const setsOf = (key: string) => refs((records.find((r) => r.key === key)!.data as { sets: unknown }).sets);
     expect(setsOf('otzros-work:lks')).toEqual(['chassidushub-set:sichos', OTZROS_SET.key, otzrosFolderSetKey('torah')]);
