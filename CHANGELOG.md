@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Every API answer's `Server-Timing` also gives each statement's own time,
+  in order (`db1;dur=…`, `db2;dur=…`, the first 16): which read a slow
+  answer waited on.
 - `GET /v1/search/page` and `/v1/search/suggest` find a sicha or maamar by its
   own name (`דברים ב`, `Devarim 2`, `שבת חזון`) among `works`, after a sefer
   whose name is as good (#176).

@@ -22,7 +22,15 @@ export interface Db {
 export interface DbCost {
   statements: number;
   ms: number;
+  /**
+   * Each statement's own time, in order (the first STATEMENT_TIMES): which
+   * one a slow answer waited on, when the whole says only that it waited.
+   */
+  each?: number[];
 }
+
+/** How many statements' own times a cost keeps. */
+export const STATEMENT_TIMES = 16;
 
 /**
  * The same database, counting what a request costs it: every statement
@@ -38,7 +46,10 @@ export function measured(db: Db, cost: DbCost = { statements: 0, ms: 0 }, inTran
     try {
       return await work();
     } finally {
-      cost.ms += performance.now() - started;
+      const took = performance.now() - started;
+      cost.ms += took;
+      const each = (cost.each ??= []);
+      if (each.length < STATEMENT_TIMES) each.push(took);
     }
   };
   return {
