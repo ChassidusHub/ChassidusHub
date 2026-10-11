@@ -1,5 +1,4 @@
-import { siteOf, fileResponse } from '../lib/site';
-import type { Route } from './+types/robots';
+import { siteOf, fileResponse } from '../lib/site.js';
 
 /**
  * What crawlers may read (lib/site.ts says where that is at all). Every
@@ -16,7 +15,7 @@ export function robotsTxt(origin: string, indexed: boolean): string {
   return ['User-agent: *', 'Allow: /', ...DISALLOWED.map((path) => `Disallow: ${path}`), '', `Sitemap: ${origin}/sitemap.xml`, ''].join('\n');
 }
 
-export function loader({ request }: Route.LoaderArgs) {
+export function loader({ request }: { request: Request }) {
   const { origin, indexed } = siteOf(request);
   return fileResponse(robotsTxt(origin, indexed), 'text/plain', 86400);
 }
