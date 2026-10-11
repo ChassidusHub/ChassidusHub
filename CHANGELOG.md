@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A sefer in several sets has its own place in each (RFC 0002, #78):
+  `orderIn` keeps its place by set, and ordering one set leaves the others
+  as they were. Organize writes it only for an item in more than one set; a
+  set's lists (children, the tree, linked pages, the path bar) read it, else
+  `order`. Schemas version 17.
 - Names keep no folder numbers or contact details (#125): the Otzros
   library import drops a folder's number in front (`יד.1.`) and a phone
   number or email someone wrote into a folder's or file's name, and

@@ -163,6 +163,8 @@ const COMMON: Record<string, JsonSchema> = {
   externalIds: ref('externalIds'),
   sources: arrayOf(ref('sourceRef')),
   topics: arrayOf(ref('entityId'), { uniqueItems: true }),
+  // Its place in each of several sets it sits in, by set id (RFC 0002): a set lists by its own key, else by `order`.
+  orderIn: { type: 'object', additionalProperties: str({ pattern: '^[0-9A-Za-z]+$', maxLength: 64 }), propertyNames: ref('entityId') },
   note: str({ maxLength: 5000 }),
   // The page's words (entities.ts, CommonFields.body; pageText.ts), and where an importer brought them from.
   body: ref('pageText'),
@@ -267,8 +269,9 @@ const fractionalOrder = str({ pattern: '^[0-9A-Za-z]+$', maxLength: 64 });
  * word's `bold` (said with stress), from the transcripts made on GPU pods (docs/transcription.md).
  * 16: a page segment's `printed` takes up to 1,000 places, not 50: a long note in Likkutei Sichos is
  * printed over a hundred lines and more, each with its own box, and the machine reading of vols 6-24 was refused.
+ * 17: `orderIn`, an item's own place in each set it sits in (RFC 0002, #78).
  */
-export const BUILTIN_SCHEMA_VERSION = 16;
+export const BUILTIN_SCHEMA_VERSION = 17;
 
 export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
   set: entitySchema(
