@@ -10,6 +10,14 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
+  a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
+  live at once when the automatic check says it looks like a typo or a
+  misreading fixed, in an open set, within a daily limit (RFC 0001); its
+  author may undo it for a day with `POST /v1/fix/{changeset}/undo`. A
+  machine's words a person fixed are marked edited, not checked. Anything
+  else is a suggestion, with the reason. `LIVE_FIXES=off` turns going live
+  off.
 - A signed-out reader's page no longer asks for an account's draft it would be
   refused (a 401 that smoke counted as a broken page).
 - A maamar's name no longer carries what the print adds to its dateline:

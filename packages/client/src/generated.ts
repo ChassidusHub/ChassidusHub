@@ -1053,6 +1053,27 @@ export interface Operations {
     };
     output: Record<string, unknown>;
   };
+  /** Fix words in any text: a sefer's own words, a transcript's paragraph, a line on a scan */
+  fix: {
+    input: {
+      body: {
+        /** The page: a unit (or any item with words), a recording, or a scan */
+        item: string;
+        /** A body's version (he, en); its first when left out */
+        version?: string;
+        /** A body segment's id, a transcript paragraph's id, or page:line on a scan */
+        segment: string;
+        before: Record<string, unknown>;
+        after: Record<string, unknown>;
+      };
+    };
+    output: {
+      changeset: number;
+      live: boolean;
+      undo?: string;
+      reason?: string;
+    };
+  };
   /** Fix one line of a scan's text (a suggestion) */
   fixScanLine: {
     input: {
@@ -2747,6 +2768,17 @@ export interface Operations {
       }>;
     };
   };
+  /** Undo your own live fix, within 24 hours and while nobody changed it since */
+  undoFix: {
+    input: {
+      /** The fix's suggestion number */
+      changeset: number;
+    };
+    output: {
+      changeset: number;
+      commit: number;
+    };
+  };
   /** The units just before and after a unit in its work's order, across volumes: a sicha's previous and next */
   unitNeighbours: {
     input: {
@@ -2957,6 +2989,7 @@ export const OPERATIONS = {
   editSuggestion: {"method":"PATCH","path":"/v1/suggestions/{id}","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   familyRequest: {"method":"POST","path":"/v1/teshuros/{id}/family-request","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   fileAbout: {"method":"GET","path":"/v1/files/{sha256}/about","pathParams":["sha256"],"query":["limit"],"body":null,"answer":"json"},
+  fix: {"method":"POST","path":"/v1/fix","pathParams":[],"query":[],"body":"json","answer":"json"},
   fixScanLine: {"method":"POST","path":"/v1/scans/{id}/text/fix","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   fixTranscript: {"method":"POST","path":"/v1/recordings/{id}/transcript/fix","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   fixTranslation: {"method":"POST","path":"/v1/translations/fix","pathParams":[],"query":[],"body":"json","answer":"json"},
@@ -3088,6 +3121,7 @@ export const OPERATIONS = {
   transcriptFixes: {"method":"GET","path":"/v1/transcripts/fixes","pathParams":[],"query":["limit"],"body":null,"answer":"json"},
   transcriptHistory: {"method":"GET","path":"/v1/recordings/{id}/transcript/history","pathParams":["id"],"query":["limit"],"body":null,"answer":"json"},
   types: {"method":"GET","path":"/v1/types","pathParams":[],"query":[],"body":null,"answer":"json"},
+  undoFix: {"method":"POST","path":"/v1/fix/{changeset}/undo","pathParams":["changeset"],"query":[],"body":null,"answer":"json"},
   unitNeighbours: {"method":"GET","path":"/v1/units/{id}/neighbours","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   unitPrintings: {"method":"GET","path":"/v1/units/{id}/printings","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   unsubscribe: {"method":"POST","path":"/v1/auth/email/unsubscribe","pathParams":[],"query":["token"],"body":"json","answer":"json"},
@@ -3331,6 +3365,11 @@ export abstract class GeneratedMethods {
   /** A file's own page: its rights, where it came from, what was made from it, and what uses it (GET /v1/files/{sha256}/about) */
   fileAbout(input: Operations['fileAbout']['input']): Promise<Operations['fileAbout']['output']> {
     return this.call('fileAbout', input ?? {} as Operations['fileAbout']['input']);
+  }
+
+  /** Fix words in any text: a sefer's own words, a transcript's paragraph, a line on a scan (POST /v1/fix) */
+  fix(input: Operations['fix']['input']): Promise<Operations['fix']['output']> {
+    return this.call('fix', input ?? {} as Operations['fix']['input']);
   }
 
   /** Fix one line of a scan's text (a suggestion) (POST /v1/scans/{id}/text/fix) */
@@ -3986,6 +4025,11 @@ export abstract class GeneratedMethods {
   /** Every kind of item and its JSON Schema (GET /v1/types) */
   types(): Promise<Operations['types']['output']> {
     return this.call('types', {} as Operations['types']['input']);
+  }
+
+  /** Undo your own live fix, within 24 hours and while nobody changed it since (POST /v1/fix/{changeset}/undo) */
+  undoFix(input: Operations['undoFix']['input']): Promise<Operations['undoFix']['output']> {
+    return this.call('undoFix', input ?? {} as Operations['undoFix']['input']);
   }
 
   /** The units just before and after a unit in its work's order, across volumes: a sicha's previous and next (GET /v1/units/{id}/neighbours) */

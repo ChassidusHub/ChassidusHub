@@ -1,7 +1,7 @@
 import { one } from '@chassidushub/db';
 import type { EntityId, ProofreadLevel, TextLine } from '@chassidushub/model';
 import type { Catalog, ChangesetRow } from './catalog.js';
-import { forbidden, invalid, notFound } from './errors.js';
+import { CatalogError, forbidden, invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';
 import { parseOcr, sniffOcrFormat, type OcrFormat } from './ocrFormats.js';
 
@@ -185,12 +185,20 @@ export function reseedLines(current: readonly TextLine[], fresh: readonly TextLi
  * the community page (made from the seed's page the first time). The line
  * is marked checked. Returns the suggestion, submitted.
  */
-export async function fixLine(catalog: Catalog, by: string, input: { scan: EntityId; page: number; line: string; text: string }): Promise<ChangesetRow> {
+export async function fixLine(
+  catalog: Catalog,
+  by: string,
+  input: { scan: EntityId; page: number; line: string; text: string; before?: string },
+  options: { send?: (suggestion: number) => Promise<ChangesetRow> } = {},
+): Promise<ChangesetRow> {
   const text = input.text.replace(/\s+/g, ' ').trim();
   if (!text || text.length > 2000) throw invalid('a line of 1 to 2000 characters');
   const { community, existing, source } = await communityPage(catalog, input.scan, input.page);
   const line = source.lines.find((l) => l.id === input.line);
   if (!line) throw notFound(`line ${input.line} on page ${input.page}`);
+  if (input.before !== undefined && input.before.replace(/\s+/g, ' ').trim() !== line.text.replace(/\s+/g, ' ').trim()) {
+    throw new CatalogError('conflict', 'this line has changed since you opened it; open it again to see it as it is now');
+  }
   const lines = source.lines.map((l) => (l.id === input.line ? { ...l, text, proofread: Math.max(1, levelOf(l)) as ProofreadLevel } : l));
   const suggestion = await catalog.createChangeset(by, { title: `תיקון שורה, עמוד ${input.page}` });
   await catalog.putRevision(suggestion.id, by, {
@@ -198,7 +206,7 @@ export async function fixLine(catalog: Catalog, by: string, input: { scan: Entit
     type: 'text-page',
     data: { layer: community.id, page: input.page, lines, proofread: pageLevel(lines) } as unknown as Json,
   });
-  return catalog.submit(suggestion.id, by);
+  return options.send ? options.send(suggestion.id) : catalog.submit(suggestion.id, by);
 }
 
 async function communityPage(catalog: Catalog, scan: EntityId, page: number) {
