@@ -163,6 +163,26 @@ function auth(method: string, path: string, body: Record<string, unknown>, cooki
   return [404, { error: 'not-found', message: 'not found' }];
 }
 
+/** The back room's sample: one live fix waiting to be looked at after, and what the machines wrote (sample names only). */
+const liveDecided = new Map<number, string>();
+const liveList = () => ({
+  suggestions: [{ id: 301, number: 41, title: 'A fix to the words', author: 'u-sample', status: 'merged', post_review: 'pending', submitted_at: '2026-10-11T09:00:00Z', items: 1 }],
+  people: { 'u-sample': { name: 'קורא לדוגמה', username: 'sample-reader', bot: false } },
+  next: null,
+});
+const liveOne = (cookie: string) => ({
+  changeset: { id: 301, title: 'A fix to the words', status: 'merged', post_review: 'pending' },
+  entries: [{ entityId: 'rh-aaaaaab1', type: 'unit', before: { path: '/sample/1/1' }, after: { path: '/sample/1/1' }, changes: [{ path: '/body/versions/he/segments/p2/text', before: [{ text: 'פסקה שניה לדוגמה, עם הערה נוספת' }], after: [{ text: 'פסקה שנייה לדוגמה, עם הערה נוספת' }] }], conflicts: [] }],
+  total: 1,
+  mayApprove: signedIn(cookie) ? { ok: true } : { ok: false, reason: 'sign in to review' },
+});
+const toCheck = {
+  transcripts: [{ event: 'rh-3dvjfkyc', path: '/listen/5732/rh-3dvjfkyc', title: { he: 'התוועדות לדוגמה' }, date: null, paragraphs: 40, checked: 3, made: '2026-10-10T00:00:00Z' }],
+  scans: [],
+  texts: [{ entity: 'rh-aaaaaab2', type: 'unit', path: '/sample/1/2', title: { he: 'שיחה שניה' }, label: { he: 'שיחה שניה' }, segments: 2, checked: 0, made: '2026-10-09T00:00:00Z' }],
+  totals: { transcripts: 1, paragraphs: 40, scans: 0, pages: 0, texts: 1, segments: 2 },
+};
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
   res.setHeader('Content-Type', 'application/json');
@@ -178,6 +198,27 @@ createServer((req, res) => {
     });
     return;
   }
+  const reviewLive = /^\/v1\/suggestions\/(\d+)\/review-live$/.exec(url.pathname);
+  if (req.method === 'POST' && reviewLive) {
+    let raw = '';
+    req.on('data', (chunk) => (raw += chunk));
+    req.on('end', () => {
+      const id = Number(reviewLive[1]);
+      const [status, answer] = !signedIn(req.headers.cookie ?? '')
+        ? [401, { error: 'unauthorized', message: 'sign in first' }]
+        : liveDecided.has(id)
+          ? [409, { error: 'state', message: 'this change is not waiting for review' }]
+          : (liveDecided.set(id, JSON.parse(raw || '{}').verdict), [200, {}]);
+      res.statusCode = status;
+      res.end(JSON.stringify(answer));
+    });
+    return;
+  }
+  if (url.pathname === '/v1/suggestions' && url.searchParams.get('postReview') === 'true') return res.end(JSON.stringify(liveList()));
+  if (url.pathname === '/v1/suggestions/301') return res.end(JSON.stringify(liveOne(req.headers.cookie ?? '')));
+  if (url.pathname === '/v1/machine/to-check') return res.end(JSON.stringify(toCheck));
+  if (url.pathname === '/_live') return res.end(JSON.stringify(Object.fromEntries(liveDecided)));
+  if (url.pathname === '/_live/reset') return (liveDecided.clear(), res.end('{}'));
   if (req.method === 'POST') {
     let raw = '';
     req.on('data', (chunk) => (raw += chunk));
