@@ -392,4 +392,7 @@ svg.i.filled { fill: currentColor; stroke: none; }
 .top-answer .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 mark { background: none; color: var(--g900); font-weight: 700; }
 .row .t .snip { font-weight: 400; }
+.search-form { margin-top: 8px; }
+.sugg { margin-top: 6px; }
 .sugg .row { min-height: 52px; }
+h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }

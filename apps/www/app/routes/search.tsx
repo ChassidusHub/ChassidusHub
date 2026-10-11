@@ -10,9 +10,9 @@ export const handle = { section: 'search' };
 /** What to try, when nothing is typed yet: one of each kind of question the search answers. */
 const TRY = ['באתי לגני תשי״א', 'שמיני א', 'י״ט כסלו תשמ״ז', '"ותצא אש"'];
 
-export async function loader({ request }: Route.LoaderArgs): Promise<SearchPage | null> {
+export async function loader({ request, context }: Route.LoaderArgs): Promise<SearchPage | null> {
   const query = new URL(request.url).searchParams.get('q')?.trim().slice(0, 200) ?? '';
-  return query ? searchPage(query) : null;
+  return query ? searchPage(context.api, query) : null;
 }
 
 /** A search's answers change only when the catalog does; a minute at the edge keeps a popular one quick. */
@@ -54,7 +54,7 @@ export default function Search({ loaderData: page }: Route.ComponentProps) {
       <TopBar title="חיפוש" />
       <main id="content" className="view" aria-busy={searching}>
         <h1 className="sr-only">חיפוש</h1>
-        <Form method="get" action="/search" role="search" style={{ marginTop: 8 }}>
+        <Form method="get" action="/search" role="search" className="search-form">
           <SearchField
             name="q"
             autoFocus={!page}
@@ -69,7 +69,7 @@ export default function Search({ loaderData: page }: Route.ComponentProps) {
           <Results page={page} />
         ) : (
           <>
-            <h2 className="faint" style={{ fontWeight: 500, fontSize: 13 }}>
+            <h2 className="try">
               נסו
             </h2>
             <Chips label="דוגמאות לחיפוש">
@@ -90,7 +90,7 @@ export default function Search({ loaderData: page }: Route.ComponentProps) {
 function Suggestions({ hits }: { hits: Hit[] }) {
   if (hits.length === 0) return null;
   return (
-    <div className="sugg" style={{ marginTop: 6 }}>
+    <div className="sugg">
       <Rows>
         {hits.map((hit) => (
           <Row key={hit.to} title={hit.title} sub={hit.sub} to={hit.to} />

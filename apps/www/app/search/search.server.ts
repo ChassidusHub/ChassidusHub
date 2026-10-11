@@ -1,3 +1,4 @@
+import type { ChassidusHub } from '@chassidushub/client';
 import { cleanLabel, describeDate, UNIT_KIND, type Hit, type SearchPage, type WordHit } from './names';
 
 /**
@@ -6,10 +7,8 @@ import { cleanLabel, describeDate, UNIT_KIND, type Hit, type SearchPage, type Wo
  * together here from today's reads, in at most two rounds: the search, the
  * words inside the texts and the date's farbrengens together, then the names
  * of the sefarim and farbrengens they point to in one batch. When the one read
- * lands, only this file changes.
+ * lands, only this file changes. `api` is the loader's `context.api`.
  */
-
-const API = (typeof process !== 'undefined' && process.env.API_URL) || 'https://api.chassidushub.org';
 
 interface Item {
   id: string;
@@ -43,12 +42,6 @@ interface Moment {
   machine: boolean;
 }
 
-async function read<T>(path: string, wait = 6000): Promise<T> {
-  const response = await fetch(`${API}${path}`, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(wait) });
-  if (!response.ok) throw new Error(`${path}: ${response.status}`);
-  return (await response.json()) as T;
-}
-
 const he = (name?: { he?: string; en?: string }) => name?.he ?? name?.en ?? '';
 
 /** Hebrew letters only, no quotes or gershayim, one space between words: how a title is compared with what was typed. */
@@ -59,10 +52,10 @@ const plain = (text: string) =>
     .trim();
 
 /** The batch of items the results name: their sefarim, farbrengens and printings. */
-async function namesOf(ids: Iterable<string>): Promise<Map<string, Item>> {
+async function namesOf(api: ChassidusHub, ids: Iterable<string>): Promise<Map<string, Item>> {
   const wanted = [...new Set(ids)].slice(0, 200);
   if (wanted.length === 0) return new Map();
-  const { items } = await read<{ items: Item[] }>(`/v1/entities/batch?ids=${wanted.join(',')}`).catch(() => ({ items: [] as Item[] }));
+  const { items } = await api.getItems({ ids: wanted.join(',') }).then((found) => found as unknown as { items: Item[] }, () => ({ items: [] as Item[] }));
   return new Map(items.map((item) => [item.id, item]));
 }
 
@@ -135,24 +128,23 @@ function chooseTop(query: string, dated: Hit[], hits: Hit[]): Hit | null {
 }
 
 /** The whole results page for one query. */
-export async function searchPage(query: string): Promise<SearchPage> {
-  const q = encodeURIComponent(query);
+export async function searchPage(api: ChassidusHub, query: string): Promise<SearchPage> {
   const [found, moments] = await Promise.all([
-    read<{ date: { key: string; he: string } | null; results: Item[] }>(`/v1/search?q=${q}&limit=20`),
-    read<{ moments: Moment[] }>(`/v1/search/moments?q=${q}&limit=8`).catch(() => ({ moments: [] as Moment[] })),
+    api.search({ q: query, limit: 20 }) as unknown as Promise<{ date: { key: string; he: string } | null; results: Item[] }>,
+    (api.searchMoments({ q: query, limit: 8 }) as unknown as Promise<{ moments: Moment[] }>).catch(() => ({ moments: [] as Moment[] })),
   ]).catch(() => [null, null] as const);
   if (!found) return { query, top: null, works: [], events: [], words: [], failed: true };
 
   const [dated, names] = await Promise.all([
-    found.date ? read<{ items: Item[] }>(`/v1/events?dates=${found.date.key}&limit=5`).catch(() => ({ items: [] as Item[] })) : { items: [] as Item[] },
-    namesOf([
+    found.date ? (api.listEvents({ dates: found.date.key, limit: 5 }) as unknown as Promise<{ items: Item[] }>).catch(() => ({ items: [] as Item[] })) : { items: [] as Item[] },
+    namesOf(api, [
       ...found.results.flatMap((item) => (item.data.work ? [item.data.work] : [])),
       ...(moments?.moments ?? []).flatMap((m) => [m.unit, m.event, m.publication].filter((id): id is string => Boolean(id))),
     ]),
   ]);
   // A unit found by its words is named with its sefer: one more batch only when the units found are new.
   const units = [...names.values()].flatMap((item) => (item.type === 'unit' && item.data.work && !names.has(item.data.work) ? [item.data.work] : []));
-  for (const [id, item] of await namesOf(units)) names.set(id, item);
+  for (const [id, item] of await namesOf(api, units)) names.set(id, item);
 
   const dates = dated.items.map((item) => hitOf(item, names)).filter((hit): hit is Hit => hit !== null);
   const hits = found.results.map((item) => hitOf(item, names)).filter((hit): hit is Hit => hit !== null);
@@ -168,9 +160,9 @@ export async function searchPage(query: string): Promise<SearchPage> {
 }
 
 /** A few rows while typing: the search's first answers, named. */
-export async function suggestions(query: string): Promise<Hit[]> {
-  const found = await read<{ results: Item[] }>(`/v1/search?q=${encodeURIComponent(query)}&limit=6`, 3000).catch(() => null);
+export async function suggestions(api: ChassidusHub, query: string): Promise<Hit[]> {
+  const found = await (api.search({ q: query, limit: 6 }) as unknown as Promise<{ results: Item[] }>).catch(() => null);
   if (!found) return [];
-  const names = await namesOf(found.results.flatMap((item) => (item.data.work ? [item.data.work] : [])));
+  const names = await namesOf(api, found.results.flatMap((item) => (item.data.work ? [item.data.work] : [])));
   return found.results.map((item) => hitOf(item, names)).filter((hit): hit is Hit => hit !== null);
 }
