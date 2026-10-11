@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Names keep no folder numbers or contact details (#125): the Otzros
+  library import drops a folder's number in front (`יד.1.`) and a phone
+  number or email someone wrote into a folder's or file's name, and
+  `/v1/health` lists the names in the catalog that still carry them
+  (`junkNames`), for people to fix as suggestions.
 - `/v1/search` takes filters that combine (#72): `author`, `set` (with the
   sets under it), `topic` (with the narrower topics), `language`, beside
   `work`. A sicha counts when its sefer matches, so an author's or a
