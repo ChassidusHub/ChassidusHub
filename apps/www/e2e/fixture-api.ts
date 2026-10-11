@@ -4,8 +4,11 @@ import { createServer } from 'node:http';
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
  * a few made-up pages, so the reading page is tested without a database.
  * Every word here is sample text written for the tests (לדוגמה), never a
- * sefer's own words. `FIXTURE_PORT` picks the port (default 3002).
+ * sefer's own words. Every other request goes on to the real API (`UPSTREAM`,
+ * default https://api.chassidushub.org), which the other screens' tests read
+ * as they do on main. `FIXTURE_PORT` picks the port (default 3002).
  */
+const upstream = process.env.UPSTREAM ?? 'https://api.chassidushub.org';
 const name = (he: string) => ({ he });
 const bar = (unit: 1 | 2) => [
   { kind: 'set', chosen: { id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }, choices: [{ id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }] },
@@ -82,13 +85,22 @@ const views: Record<string, unknown> = {
   },
 };
 
-createServer((req, res) => {
+createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
-  const view = url.pathname === '/v1/view' ? views[url.searchParams.get('path') ?? ''] : undefined;
-  res.setHeader('Content-Type', 'application/json');
-  if (!view) {
-    res.statusCode = 404;
-    return res.end(JSON.stringify({ error: 'not-found', message: 'not found' }));
+  const path = url.pathname === '/v1/view' ? (url.searchParams.get('path') ?? '') : '';
+  if (path.startsWith('/sample/')) {
+    const view = views[path];
+    res.setHeader('Content-Type', 'application/json');
+    res.statusCode = view ? 200 : 404;
+    return res.end(JSON.stringify(view ?? { error: 'not-found', message: 'not found' }));
   }
-  res.end(JSON.stringify(view));
+  try {
+    const answer = await fetch(`${upstream}${url.pathname}${url.search}`, { method: req.method, headers: { accept: 'application/json' } });
+    res.statusCode = answer.status;
+    res.setHeader('Content-Type', answer.headers.get('content-type') ?? 'application/json');
+    res.end(Buffer.from(await answer.arrayBuffer()));
+  } catch {
+    res.statusCode = 502;
+    res.end(JSON.stringify({ error: 'upstream', message: 'the real API could not be reached' }));
+  }
 }).listen(Number(process.env.FIXTURE_PORT ?? 3002));

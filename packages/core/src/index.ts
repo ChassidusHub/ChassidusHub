@@ -5,7 +5,7 @@ export { ExportGate } from './gate.js';
 export { derivedRights, fileFromDrive, getDerivations, getDerivationsOf, isCoverProfile, getFile, getFiles, getPageFix, getPageFixes, recordDerivation, recordPageFix, registerFile, setRights, storageTierFor, type DerivationRow, type FileRow, type NewDerivation, type NewFile, type NewPageFix, type PageFixRow, type PageFixVerdict } from './files.js';
 export { driveFileOf, driveFilesOf, knownDriveFile, type DriveFileLink } from './driveFiles.js';
 export { diffData, mergeText, resolveConflicts, threeWayMerge, UnresolvedConflictError, type Conflict, type FieldChange, type Json, type MergeResult, type Resolution } from './merge.js';
-export { LIVE_TYPES, STEWARD_TYPES, TRUST_THRESHOLD, UPLOAD_HOLD_HOURS, UPLOAD_LIMITS, canApprove, canSuggest, earnedTrust, mayGoLive, uploadAllowance, type Account, type SetInfo } from './permissions.js';
+export { LIVE_FIX_LIMITS, LIVE_FIX_UNDO_HOURS, LIVE_FIX_WORDS, LIVE_TYPES, STEWARD_TYPES, TRUST_THRESHOLD, UPLOAD_HOLD_HOURS, UPLOAD_LIMITS, canApprove, canSuggest, earnedTrust, mayFixLive, mayGoLive, uploadAllowance, type Account, type SetInfo } from './permissions.js';
 export { searchTextOf, searchTierSql, toTsQuery } from './searchText.js';
 export {
   CHALLENGE_MINUTES,
@@ -271,5 +271,6 @@ export { dailyRambam, type DailyRambam, type RambamShiur } from './rambam.js';
 export { combineSuggestions } from './combine.js';
 export { fillShaars, shaarFile, suggestShaar, type ShaarFile, type ShaarInput } from './shaar.js';
 export { driveId, mafteach, placesOf, type Mafteach, type MafteachPlace, type MafteachTopic, type MafteachVolume } from './mafteach.js';
+export { FIX_CHECK_MS, sendFix, shapeOf, wordsChanged, type FixInput, type FixJudge, type FixResult } from './fix.js';
 export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
 export { itemView, type ItemView, type MachineShare, type ShownText } from './view.js';

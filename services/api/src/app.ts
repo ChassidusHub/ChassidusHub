@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
-import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
+import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
 import { dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
@@ -23,6 +23,7 @@ import { pageRoutes } from './pages.js';
 import { driveRoutes, type DriveOptions } from './drive.js';
 import { threadRoutes } from './threads.js';
 import { organizeRoutes } from './organize.js';
+import { fixRoutes } from './fixes.js';
 import { appCatalogRoutes, type AppReleases, type ReaderCatalog } from './appCatalog.js';
 import { machineRoutes, type MachineDispatch } from './machine.js';
 import { mafteachRoutes } from './mafteach.js';
@@ -76,6 +77,10 @@ export interface ApiOptions {
   advisor?: Advisor | null;
   /** Turns questions into vectors for search by meaning (Workers AI); unset, that search says it is not available. */
   embedder?: Embedder | null;
+  /** The AI check a small fix passes to go live (fixes.ts); unset, every fix waits for a reviewer. */
+  fixJudge?: FixJudge | null;
+  /** Small fixes may go live (RFC 0001); false (LIVE_FIXES=off) and every fix waits for a reviewer. */
+  liveFixes?: boolean;
   /** OAI-PMH for libraries, at /oai; unset (no administrators' address), it is not offered. */
   oai?: OaiOptions;
   /** Requests allowed per address and per token (platform.ts); unset, none are counted (local work, tests). */
@@ -234,6 +239,7 @@ export function createApp(options: ApiOptions): Hono {
   mirrorRoutes(app, catalog, { mirrors: options.mirrors, files: options.files });
   threadRoutes(app, catalog, signedIn, authenticate);
   organizeRoutes(app, catalog, signedIn);
+  fixRoutes(app, catalog, signedIn, { judge: options.fixJudge ?? null, liveFixes: options.liveFixes ?? false });
   appCatalogRoutes(app, catalog, options.appReleases, options.readerCatalog);
   mafteachRoutes(app, catalog);
   machineRoutes(app, catalog, signedIn, { dispatch: options.machineDispatch, waitUntil: options.waitUntil ? (_c, work) => options.waitUntil!(work) : undefined });

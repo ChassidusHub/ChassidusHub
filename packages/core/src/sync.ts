@@ -1,7 +1,7 @@
 import { one } from '@chassidushub/db';
 import { carryWordTimes, type EntityId } from '@chassidushub/model';
 import type { Catalog, ChangesetRow, NewRevision } from './catalog.js';
-import { invalid, notFound } from './errors.js';
+import { CatalogError, invalid, notFound } from './errors.js';
 import type { Json } from './merge.js';
 import { matchWords, wordKey, words as wordsOf } from './words.js';
 
@@ -384,12 +384,20 @@ export async function recordingTranscript(catalog: Catalog, recording: EntityId)
  * from the audio again. Words checked unchanged keep theirs, and are
  * training clips at once (trainingClips.ts).
  */
-export async function fixParagraph(catalog: Catalog, by: string, input: { segment: EntityId; content: string; complete?: boolean }): Promise<ChangesetRow> {
+export async function fixParagraph(
+  catalog: Catalog,
+  by: string,
+  input: { segment: EntityId; content: string; complete?: boolean; before?: string },
+  options: { send?: (suggestion: number) => Promise<ChangesetRow> } = {},
+): Promise<ChangesetRow> {
   const content = input.content.replace(/\s+/g, ' ').trim();
   if (!content || content.length > 20_000) throw invalid('a paragraph of 1 to 20,000 characters');
   const segment = await catalog.get(input.segment);
   if (!segment || segment.type !== 'segment') throw notFound(`paragraph ${input.segment}`);
   const data = segment.data as Record<string, unknown> & { origin?: Record<string, unknown> };
+  if (input.before !== undefined && input.before.replace(/\s+/g, ' ').trim() !== String(data.content ?? '').replace(/\s+/g, ' ').trim()) {
+    throw new CatalogError('conflict', 'this paragraph has changed since you opened it; open it again to see it as it is now');
+  }
   const revisions: NewRevision[] = [
     {
       id: segment.id,
@@ -420,10 +428,11 @@ export async function fixParagraph(catalog: Catalog, by: string, input: { segmen
      ORDER BY c.id DESC LIMIT 1`,
     [by, FIX_TITLE, String(data.text ?? '')],
   );
-  if (open && (await catalog.amend(open.id, by, revisions))) return catalog.changeset(open.id);
+  // A fix sent on its own (a small fix that may go live, and be undone) is its own suggestion.
+  if (!options.send && open && (await catalog.amend(open.id, by, revisions))) return catalog.changeset(open.id);
   const suggestion = await catalog.createChangeset(by, { title: FIX_TITLE });
   for (const revision of revisions) await catalog.putRevision(suggestion.id, by, revision);
-  return catalog.submit(suggestion.id, by);
+  return options.send ? options.send(suggestion.id) : catalog.submit(suggestion.id, by);
 }
 
 const FIX_TITLE = 'תיקון תמלול';

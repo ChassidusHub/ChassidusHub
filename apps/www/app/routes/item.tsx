@@ -1,4 +1,4 @@
-import { data, redirect } from 'react-router';
+import { data, redirect, type AppLoadContext } from 'react-router';
 import { pathLevels } from '../path';
 import { nameOf, pathSteps, readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
@@ -39,10 +39,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw error;
   }
   if (view.movedTo) throw redirect(`${view.movedTo}${url.search}`, 301);
+  // An event, or one of its recordings, is heard on its listening page.
+  if (view.item.type === 'event' || view.item.type === 'recording') {
+    const to = await listeningPage(view.item, context.api);
+    if (to) throw redirect(to, 301);
+  }
   const fields = view.item.data as { label?: unknown; title?: unknown; name?: unknown };
   const name = nameOf(fields.label ?? fields.title ?? fields.name) || view.item.id;
   if (view.item.type === 'unit') return { kind: 'reader' as const, type: view.item.type, name, reader: await readerData(view, context, url.origin) };
   return { kind: 'item' as const, id: view.item.id, type: view.item.type, name, pathBar: pathSteps(view.pathBar) };
+}
+
+/** Where an event or recording is heard: /listen/<year>/<event>, a recording picked with ?r=. */
+async function listeningPage(item: { id: string; type: string; data: unknown }, api: AppLoadContext['api']): Promise<string | null> {
+  const fields = item.data as { date?: string; event?: string };
+  const event = item.type === 'event' ? { id: item.id, date: fields.date } : fields.event ? { id: fields.event, date: ((await api.getItem({ id: fields.event }).catch(() => null))?.data as { date?: string } | undefined)?.date } : null;
+  const year = event?.date?.slice(0, 4);
+  return event && year ? `/listen/${year}/${event.id}${item.type === 'recording' ? `?r=${item.id}` : ''}` : null;
 }
 
 export const handle = { section: (loaded: Awaited<ReturnType<typeof loader>> | undefined): Section => (loaded && listening.has(loaded.type) ? 'listen' : 'library') };
