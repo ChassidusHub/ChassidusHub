@@ -23,7 +23,7 @@ import { badState, CatalogError, forbidden, invalid, notFound } from './errors.j
 import { driveFilesOf } from './driveFiles.js';
 import { withStructuredBody } from './legacyWords.js';
 import { diffData, threeWayMerge, resolveConflicts, UnresolvedConflictError, type Conflict, type FieldChange, type Json, type Resolution } from './merge.js';
-import { canApprove, canSuggest, earnedTrust, mayGoLive, type Account, type SetInfo } from './permissions.js';
+import { canApprove, canSuggest, earnedTrust, LIVE_FIX_UNDO_HOURS, mayFixLive, mayGoLive, type Account, type SetInfo } from './permissions.js';
 import { searchTextOf, searchTierSql, toTsQuery } from './searchText.js';
 import { focusCounts } from './projectWork.js';
 import { commented, reportOpened, threadEvent, reportStateChanged, reviewGiven, suggestionMerged, suggestionReverted, suggestionStarted, suggestionReopened, suggestionSubmitted, suggestionWithdrawn } from './threads.js';
@@ -1098,6 +1098,20 @@ export class Catalog {
    * reviewed after.
    */
   async submit(changesetId: number, by: string): Promise<ChangesetRow> {
+    return (await this.submitWith(changesetId, by, false)).changeset;
+  }
+
+  /**
+   * Sends a small fix of a text's words (RFC 0001): live at once, without
+   * trust, when mayFixLive allows it; else a suggestion like any other,
+   * with the reason it waits. The caller has already counted the words
+   * (at most LIVE_FIX_WORDS) and asked the AI check; this judges the rest.
+   */
+  async submitFix(changesetId: number, by: string): Promise<{ changeset: ChangesetRow; live: boolean; reason: string | null }> {
+    return this.submitWith(changesetId, by, true);
+  }
+
+  private async submitWith(changesetId: number, by: string, smallFix: boolean): Promise<{ changeset: ChangesetRow; live: boolean; reason: string | null }> {
     const result = await this.db.transaction(async (tx) => {
       const cs = await this.changeset(changesetId, tx);
       if (cs.author !== by) throw forbidden('only its author sends a suggestion for review');
@@ -1108,8 +1122,25 @@ export class Catalog {
       await tx.query("UPDATE changeset SET status = 'open', submitted_at = now(), checks = $2 WHERE id = $1", [cs.id, JSON.stringify(checks)]);
       const author = await this.requireAccount(cs.author, tx);
       const sets = await this.setsOfProposals(tx, proposals);
-      const live =
-        cs.project_id === null && !checks.some((c) => c.status === 'fail' && BLOCKING_CHECKS.has(c.check)) && mayGoLive(author, { types: new Set(proposals.map((p) => p.type)), sets });
+      const types = new Set(proposals.map((p) => p.type));
+      const clear = cs.project_id === null && !checks.some((c) => c.status === 'fail' && BLOCKING_CHECKS.has(c.check));
+      let live = clear && mayGoLive(author, { types, sets });
+      let reason: string | null = null;
+      if (smallFix && !live) {
+        if (!clear) reason = cs.project_id === null ? 'an automatic check found a problem' : 'changes in a project are reviewed first';
+        else {
+          const seen = await one<{ age_hours: number; live_today: number }>(
+            tx,
+            `SELECT extract(epoch FROM now() - a.created_at) / 3600 AS age_hours,
+                    (SELECT count(*)::int FROM changeset c WHERE c.author = a.id AND c.kind = 'live' AND c.created_at > now() - interval '1 day') AS live_today
+             FROM account a WHERE a.id = $1`,
+            [cs.author],
+          );
+          const allowed = mayFixLive(author, { types, sets, onlyWords: await this.onlyWords(tx, proposals) }, { accountAgeHours: seen ? Number(seen.age_hours) : null, liveToday: seen?.live_today ?? 0 });
+          live = allowed.ok;
+          reason = allowed.ok ? null : allowed.message;
+        }
+      }
       await suggestionSubmitted(tx, {
         id: cs.id,
         by,
@@ -1119,13 +1150,55 @@ export class Catalog {
         live,
         authorIsBot: author.is_bot,
       });
-      return { live };
+      return { live, reason };
     });
     if (result.live) {
       await this.db.query("UPDATE changeset SET kind = 'live', post_review = 'pending' WHERE id = $1", [changesetId]);
       await this.mergeInternal(changesetId, by, {}, { skipPermission: true });
     }
-    return this.changeset(changesetId);
+    return { changeset: await this.changeset(changesetId), live: result.live, reason: result.reason };
+  }
+
+  /**
+   * Whether a change is only words: it changes items that exist, and a
+   * unit only in its body (its name, place and the rest are reviewed first).
+   */
+  private async onlyWords(db: Db, proposals: Proposal[]): Promise<boolean> {
+    for (const p of proposals) {
+      if (p.baseRev === null || p.rev.data === null) return false;
+      if (p.type !== 'unit') continue;
+      const base = await this.revision(p.baseRev, db);
+      if (!base?.data) return false;
+      if (diffData(base.data as Json, p.rev.data as Json).some((c) => c.path !== '/body' && !c.path.startsWith('/body/'))) return false;
+      if (base.path !== p.rev.path) return false;
+    }
+    return true;
+  }
+
+  /**
+   * "Undo" on the author's own live fix (RFC 0001): within
+   * LIVE_FIX_UNDO_HOURS, and while nobody has changed what it changed
+   * since, it is reverted at once and does not count against them. Later,
+   * or once someone else changed it, undoing is an ordinary revert on review.
+   */
+  async undoFix(changesetId: number, by: string): Promise<{ changeset: number; commit: number }> {
+    const target = await this.changeset(changesetId);
+    if (target.author !== by) throw forbidden('only its author undoes a fix this way; others revert it on review');
+    if (target.kind !== 'live' || target.status !== 'merged' || target.merged_commit === null) throw badState('only a fix that went live can be undone');
+    if (await one(this.db, 'SELECT 1 FROM changeset WHERE reverts_changeset = $1 LIMIT 1', [target.id])) throw badState('this fix was already undone');
+    const fresh = await one<{ fresh: boolean; untouched: boolean }>(
+      this.db,
+      `SELECT c.at > now() - make_interval(hours => $2) AS fresh,
+              NOT EXISTS (SELECT 1 FROM commit_change cc JOIN entity e ON e.id = cc.entity_id WHERE cc.commit_seq = c.seq AND e.main_rev IS DISTINCT FROM cc.rev_id) AS untouched
+       FROM commit c WHERE c.seq = $1`,
+      [target.merged_commit, LIVE_FIX_UNDO_HOURS],
+    );
+    if (!fresh?.fresh) throw badState(`a fix is undone this way within ${LIVE_FIX_UNDO_HOURS} hours; after that, revert it on review`);
+    if (!fresh.untouched) throw badState('someone has changed these words since; revert it on review');
+    const { changeset, commit } = await this.revertWith(target, by, 'Undone by its author', true);
+    if (commit === null) throw badState('this fix could not be undone; revert it on review');
+    await suggestionReverted(this.db, { id: target.id, by, revert: changeset });
+    return { changeset, commit };
   }
 
   /** Withdraws a suggestion that has not been merged. */
@@ -1827,6 +1900,16 @@ export class Catalog {
   async revert(changesetId: number, by: string, reason?: string): Promise<{ changeset: number; commit: number | null }> {
     const target = await this.changeset(changesetId);
     if (target.status !== 'merged' || target.merged_commit === null) throw badState('only a suggestion merged into main can be reverted');
+    const { changeset, commit } = await this.revertWith(target, by, reason, false);
+    if (commit !== null) {
+      await this.credit(target.author, 'reverted');
+      await suggestionReverted(this.db, { id: target.id, by, revert: changeset });
+    }
+    return { changeset, commit };
+  }
+
+  /** A revert of a merged suggestion, merged at once when `by` may (or when it is its author's own undo). */
+  private async revertWith(target: ChangesetRow, by: string, reason: string | undefined, ownUndo: boolean): Promise<{ changeset: number; commit: number | null }> {
     const { rows: changes } = await this.db.query<{ entity_id: EntityId; rev_id: number; prev_rev_id: number | null; entity_type: EntityType }>(
       'SELECT cc.entity_id, cc.rev_id, cc.prev_rev_id, e.type AS entity_type FROM commit_change cc JOIN entity e ON e.id = cc.entity_id WHERE cc.commit_seq = $1',
       [target.merged_commit],
@@ -1850,14 +1933,10 @@ export class Catalog {
     });
     let commit: number | null = null;
     try {
-      commit = (await this.mergeInternal(revert.id, by, {}, { skipPermission: false, note: reason })).commit;
+      commit = (await this.mergeInternal(revert.id, by, {}, { skipPermission: ownUndo, note: reason })).commit;
     } catch (error) {
       // Not theirs to merge (or it clashes): the revert waits for review as a suggestion.
       if (!(error instanceof CatalogError && error.code === 'forbidden') && !(error instanceof UnresolvedConflictError)) throw error;
-    }
-    if (commit !== null) {
-      await this.credit(target.author, 'reverted');
-      await suggestionReverted(this.db, { id: target.id, by, revert: revert.id });
     }
     return { changeset: revert.id, commit };
   }

@@ -9,6 +9,7 @@ export { Row, Rows } from './Row';
 export { SearchField } from './SearchField';
 export { Sheet } from './Sheet';
 export { Box, SectionHead, Tile } from './Tile';
+export { TopAnswer } from './TopAnswer';
 export { ToastProvider, useToast } from './Toast';
 export { useMedia, usePhone } from './useMedia';
 export { AppShell, TopBar, type Section } from './Shell';
