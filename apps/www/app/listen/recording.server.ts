@@ -1,6 +1,7 @@
 import type { ChassidusHub } from '@chassidushub/client';
 import type { ApiEvent, ApiRecording } from './data.server';
 import { dateLabel, withTranscripts, yearLabel } from './data.server';
+import { namesOf } from '../edit/names';
 import { paragraphsOf, type ApiTranscript, type Chapter, type Paragraph } from './common';
 
 /** The words that come with the page, at most this many characters: the rest load as the reader scrolls toward them. */
@@ -55,6 +56,9 @@ export async function recordedEvent(api: ChassidusHub, id: string) {
     title: event.data.title?.he?.trim() ?? '',
     totalMs: offset,
     chapters,
+    // For Edit: the revision shown and the event's own names.
+    rev: (event as { rev?: number }).rev ?? 0,
+    names: namesOf(event.data),
   };
 }
 
