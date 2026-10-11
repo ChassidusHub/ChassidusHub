@@ -73,7 +73,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
-    if (item.type === 'unit') return { screen: 'reader' as const, type: item.type, name, reader: await readerData(view, context, url.origin) };
+    if (item.type === 'unit') {
+      const reader = await readerData(view, context, url.origin);
+      const loaded = { screen: 'reader' as const, type: item.type, name, reader };
+      // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
+      // Said in a header, on the server, so it costs the reader's script nothing.
+      if (reader.text.kind !== 'words') return loaded;
+      return data(loaded, { headers: { Link: `<${torahFont}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
+    }
     return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: pathSteps(view.pathBar) };
   } catch (error) {
     if (notFound(error)) throw data('not found', { status: 404 });
@@ -94,9 +101,12 @@ async function listeningPage(item: { id: string; type: string; data: unknown }, 
  * the edge keeps it (server/pageCache.ts): fresh for two minutes, as the
  * API's own answers are, then shown while it is drawn again behind it.
  */
-export const headers = () => ({ 'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600' });
+export const headers = ({ loaderHeaders }: Route.HeadersArgs) => ({
+  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600',
+  ...(loaderHeaders.has('Link') ? { Link: loaderHeaders.get('Link')! } : {}),
+});
 
-type Loaded = Awaited<ReturnType<typeof loader>>;
+type Loaded = Route.ComponentProps['loaderData'];
 
 export const handle = { section: (loaded: Loaded | undefined): Section => (loaded && 'type' in loaded && listening.has(loaded.type) ? 'listen' : 'library') };
 
@@ -106,13 +116,8 @@ function titleOf(loaded: Loaded): string {
   return loaded.title;
 }
 
-/** A sicha's words are set in the Torah face, so a page that shows them fetches it with the page instead of after it has drawn. */
 export function meta({ data: loaded }: Route.MetaArgs) {
-  const words = loaded?.screen === 'reader' && loaded.reader.text.kind === 'words';
-  return [
-    { title: loaded ? `${titleOf(loaded)} · ChassidusHub` : 'ChassidusHub' },
-    ...(words ? [{ tagName: 'link', rel: 'preload', href: torahFont, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' }] : []),
-  ];
+  return [{ title: loaded ? `${titleOf(loaded)} · ChassidusHub` : 'ChassidusHub' }];
 }
 
 export default function Item({ loaderData }: Route.ComponentProps) {
