@@ -254,6 +254,11 @@ export function Fixing({
       <Sheet open={!!fixing} title="תיקון" onClose={close}>
         {fixing && (
           <div className="fixbox">
+            {/* What is being changed, so the person sees before and after while they type. */}
+            <p className="was sm">
+              <span className="faint">במקום: </span>
+              <q>{fixing.selected}</q>
+            </p>
             <label htmlFor="fix-words" className="sm faint">
               המילים הנכונות
             </label>

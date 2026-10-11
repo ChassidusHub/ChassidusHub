@@ -100,6 +100,9 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
         <Sheet open={account} title="החשבון שלי" onClose={() => setAccount(false)}>
           {/* Who is signed in is asked only once the sheet has been opened, never on every page. */}
           {asked ? <AccountOptions close={() => setAccount(false)} /> : null}
+          <Link className="opt" to="/back" onClick={() => setAccount(false)}>
+            <span className="t">בדיקה: עזרה בבדיקת טקסט שנקרא במכונה</span>
+          </Link>
           <button type="button" className="opt" onClick={toggleTheme}>
             <span className="t">{theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}</span>
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />

@@ -62,7 +62,15 @@ export function rangeAt(root: Node, at: number, length: number): Range | null {
  * item's words, words only (no footnote's mark or marker in it), and short.
  * Null otherwise; it can still be copied or shared.
  */
-export function placeOf(range: Range): Place | null {
+export function placeOf(selection: Range): Place | null {
+  // A double-click takes a footnote's mark written right after a word as part of it ("והערה1"): the mark is left out, and the word can be fixed.
+  const range = selection.cloneRange();
+  const markOf = (node: Node) => (node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement)?.closest('.nm, .mk');
+  const endMark = markOf(range.endContainer);
+  if (endMark) range.setEndBefore(endMark);
+  const startMark = markOf(range.startContainer);
+  if (startMark) range.setStartAfter(startMark);
+  if (range.collapsed) return null;
   const start = segmentOf(range.startContainer);
   const end = segmentOf(range.endContainer);
   if (!start || !end || start.element !== end.element) return null;

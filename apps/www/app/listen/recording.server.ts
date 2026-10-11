@@ -1,22 +1,22 @@
 import type { ChassidusHub } from '@chassidushub/client';
 import type { ApiEvent, ApiRecording } from './data.server';
 import { dateLabel, withTranscripts, yearLabel } from './data.server';
-import { paragraphsOf, type ApiTranscript, type Chapter } from './common';
+import { paragraphsOf, type ApiTranscript, type Chapter, type Paragraph } from './common';
 
 /** The words that come with the page, at most this many characters: the rest load as the reader scrolls toward them. */
-const FIRST_WORDS = 12_000;
+const FIRST_WORDS = 6_000;
 
 const NIGGUN = /ניגון|ניגונים|רצית|אימתי|בבות|שיבנה|אודך|הושיעה|צמאה/;
 
 /**
  * A recorded event's page in a few reads: the event, its recordings (one per
- * part), where the files are heard, and the first part's words.
+ * part) and where the files are heard. The words come after (`firstWords`),
+ * so the page and its play button do not wait for them.
  */
 export async function recordedEvent(api: ChassidusHub, id: string) {
-  const [event, { items }, transcribed] = await Promise.all([
+  const [event, { items }] = await Promise.all([
     api.getItem({ id }) as unknown as Promise<ApiEvent & { type: string }>,
     api.listChildren({ id, field: 'event', type: 'recording', limit: 200 }) as unknown as Promise<{ items: ApiRecording[] }>,
-    withTranscripts(api),
   ]);
   if (event.type !== 'event') throw new Response('not found', { status: 404 });
 
@@ -45,17 +45,6 @@ export async function recordedEvent(api: ChassidusHub, id: string) {
     offset += durationMs;
   }
 
-  // The first part with words comes with the page, up to FIRST_WORDS characters.
-  const first = chapters.find((c) => transcribed.recordings.has(c.recording)) ?? chapters.find((c) => !c.niggun);
-  if (first) {
-    const transcript = await (api.recordingTranscript({ id: first.recording }) as unknown as Promise<ApiTranscript>).catch(() => null);
-    if (transcript) {
-      let size = 0;
-      const all = paragraphsOf(transcript);
-      first.words = all.filter((p, at) => (size += p.text.length) <= FIRST_WORDS || at === 0);
-      first.complete = first.words.length === all.length;
-    }
-  }
 
   const year = Number(event.data.date.slice(0, 4));
   return {
@@ -67,4 +56,31 @@ export async function recordedEvent(api: ChassidusHub, id: string) {
     totalMs: offset,
     chapters,
   };
+}
+
+/** The words that come with the page: the first part that has any, up to FIRST_WORDS characters. */
+export interface FirstWords {
+  recording: string;
+  words: Paragraph[];
+  /** Whether these are all of that part's words. */
+  complete: boolean;
+}
+
+/**
+ * The first part's words, read while the page is already on its way: the
+ * first part that is not a niggun is asked for at once, alongside the list of
+ * parts that have words, in case it is another part.
+ */
+export async function firstWords(api: ChassidusHub, chapters: Chapter[]): Promise<FirstWords | null> {
+  const read = (recording: string) => (api.recordingTranscript({ id: recording }) as unknown as Promise<ApiTranscript>).catch(() => null);
+  const guess = chapters.find((c) => !c.niggun);
+  if (!guess) return null;
+  const [transcribed, guessed] = await Promise.all([withTranscripts(api), read(guess.recording)]);
+  const first = chapters.find((c) => transcribed.recordings.has(c.recording)) ?? guess;
+  const transcript = first === guess ? guessed : await read(first.recording);
+  if (!transcript) return null;
+  let size = 0;
+  const all = paragraphsOf(transcript);
+  const words = all.filter((p, at) => (size += p.text.length) <= FIRST_WORDS || at === 0);
+  return { recording: first.recording, words, complete: words.length === all.length };
 }
