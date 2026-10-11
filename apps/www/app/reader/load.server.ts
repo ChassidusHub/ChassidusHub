@@ -1,6 +1,7 @@
 import type { ChassidusHub, ItemView, PathLevel as ApiLevel } from '@chassidushub/client';
 import type { PageSegment } from '@chassidushub/model';
 import type { AppLoadContext } from 'react-router';
+import { pdfsOf } from '../lib/pdfs';
 import type { PathStep } from '../path';
 import type { ReaderData, ReaderText } from './types';
 import { notesHtml, wordsHtml } from './words.server';
@@ -71,6 +72,7 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     previous: neighbour(view.previous),
     next: neighbour(view.next),
     text,
+    pdfs: pdfsOf(view.item.data),
     citation: [...middle, title].join(', '),
     url: `${origin}${path}`,
     rev: (view.item as { rev?: number }).rev ?? 0,

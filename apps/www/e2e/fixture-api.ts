@@ -78,6 +78,25 @@ const views: Record<string, unknown> = {
       versions: [{ version: 'he', from: 'body', language: 'he' }],
     },
   },
+  '/sample/1/4': {
+    item: {
+      id: 'rh-aaaaaab4',
+      type: 'unit',
+      path: '/sample/1/4',
+      rev: 1,
+      data: {
+        label: name('שיחה רביעית'),
+        editions: [
+          { kind: 'pdf', role: 'translated', label: 'תרגום לדוגמה', url: 'https://drive.google.com/file/d/sample-translated/view' },
+          { kind: 'pdf', role: 'sicha', label: 'drive', url: 'https://drive.google.com/file/d/sample-printed/view' },
+        ],
+      },
+    },
+    pathBar: bar(2),
+    previous: null,
+    next: null,
+    text: null,
+  },
   '/sample/1/3': {
     item: { id: 'rh-aaaaaab3', type: 'unit', path: '/sample/1/3', rev: 1, data: { label: name('שיחה שלישית') } },
     pathBar: bar(2),
