@@ -32,5 +32,10 @@ export const pages: { name: string; path: string }[] = [
         { name: 'A suggestion, its changes', path: '/suggestions/42?tab=changes' },
         { name: 'Reader', path: '/sample/1/1' },
         { name: 'Reader, machine words', path: '/sample/1/2' },
+        { name: 'Reports', path: '/issues' },
+        { name: 'A report', path: '/issues/12' },
+        { name: 'New report', path: '/issues/new?item=rh-aaaaaab1' },
+        { name: 'Inbox', path: '/inbox' },
+        { name: 'A person', path: '/u/sample-reader' },
       ]),
 ];
