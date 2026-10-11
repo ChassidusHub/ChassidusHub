@@ -5,4 +5,5 @@
 export const pages: { name: string; path: string }[] = [
   { name: 'Home', path: '/' },
   { name: 'Design system', path: '/ui' },
+  { name: 'Search', path: '/search' },
 ];
