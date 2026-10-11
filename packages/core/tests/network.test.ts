@@ -182,8 +182,9 @@ describe('search that lands on the moment', () => {
     expect(inner).not.toMatch(/revision/);
     // A sicha's words are long to rank: only so many sichos are, however many have the words.
     expect(inner).toContain(`e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED.unit}`);
-    // The words are tested on each kind's own live rows, in plain sight, so either the words' index or the type's can find them (#182).
-    for (const kind of ['text-page', 'segment', 'unit']) expect(inner).toContain(`e.type = '${kind}' AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', $1)`);
+    // The words are tested on each kind's own live rows, in plain sight, so either the words' index or the type's can find
+    // them, and the type as `= ANY`, which the planner tests before the words (#182).
+    for (const kind of ['text-page', 'segment', 'unit']) expect(inner).toContain(`e.type = ANY ('{${kind}}'::text[]) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', $1)`);
     expect(inner).not.toContain('CASE WHEN e.type');
     // Each match is ranked where it is found, its words read once: one rank per kind, none after (#172).
     expect(inner.match(/ts_rank/g)).toHaveLength(3);

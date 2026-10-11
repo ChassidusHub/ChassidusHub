@@ -276,10 +276,11 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
       : `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
   // Each kind's own live rows are tested for the words, and in plain sight: a word few items have is then found through
   // the words' index (entity_search_tsv), a common one through the type index (entity_type, which holds the live rows
-  // only, hence main_rev IS NOT NULL). Hidden in a CASE, as #204 had it, the words' index could not be used, and a rare
-  // word read every page's words to find its few (#182).
+  // only, hence main_rev IS NOT NULL) or by reading the rows in turn. The type is asked as `= ANY`, not `=`: the planner
+  // tests a plain `type = '…'` last, after the words, and so read every page's words while looking for paragraphs; and
+  // hidden in a CASE, as #204 had it, the words' index could not be used, so a rare word read every page's words (#182).
   const has = (type: keyof typeof MOMENT_RANKED, query = '$1') =>
-    `e.type = '${type}' AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', ${query})`;
+    `e.type = ANY ('{${type}}'::text[]) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', ${query})`;
   const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, ${tier} AS tier FROM entity e
           WHERE ${has(type)} LIMIT ${MOMENT_RANKED[type]})`;

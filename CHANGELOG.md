@@ -13,7 +13,8 @@ any time. `@chassidushub/client` carries the API's version.
 - Search by words finds a rare word through the words' index again (#182):
   #204 hid the words' test from the database, so a word few items have read
   every page's words to find them. Each kind's live rows are still what is
-  searched, so a common word in sichos is found through the type index.
+  searched, the kind tested before the words, so a common word does not read
+  the words of other kinds' rows either.
 - `GET /v1/places?within=/likkutei-sichos/12`: only the places that reopen at
   that page of the site or under it, the latest first, so a volume's page
   can offer "continue reading" where its reader stopped in it; the latest
