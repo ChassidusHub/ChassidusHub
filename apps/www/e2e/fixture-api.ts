@@ -6,6 +6,7 @@ import { searchAnswer } from './fixture-search';
 import { suggestionsAnswer } from './fixture-suggestions';
 import { servePeople } from './fixture-people';
 import { projectPagesAnswer } from './fixture-project-pages';
+import { stewardsAnswer } from './fixture-stewards';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
@@ -229,6 +230,7 @@ createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
   res.setHeader('Content-Type', 'application/json');
   if (projectPagesAnswer(req, res, url)) return;
+  if (stewardsAnswer(req, res, url)) return;
   const tokensPath = /^\/v1\/tokens(\/[\w-]+)?$/.exec(url.pathname);
   const consent = url.pathname === '/v1/oauth/requests/oar-sample';
   if (tokensPath || consent) {

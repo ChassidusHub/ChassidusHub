@@ -5,6 +5,7 @@ import { createRequestListener } from '@react-router/node';
 import type { ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
+import { memoryShowcases } from '../app/stewards/showcase';
 
 /**
  * The built site on Node, for the browser tests in CI and for trying a build
@@ -18,7 +19,9 @@ const client = path.join(root, 'build/client');
 const build = (await import('../build/server/index.js')) as unknown as ServerBuild;
 const api = apiFor({ baseUrl: process.env.API_URL });
 const forward = forwardFor({ baseUrl: process.env.API_URL });
-const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, ...pageContext(request) }) });
+// Showcases are kept in memory here: this is the site for local work and the browser tests.
+const showcases = memoryShowcases();
+const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, ...pageContext(request) }) });
 
 const types: Record<string, string> = {
   '.js': 'text/javascript',

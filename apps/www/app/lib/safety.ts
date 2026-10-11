@@ -6,10 +6,12 @@
  */
 export function pageSafety(pathname: string): Record<string, string> {
   const embed = pathname.startsWith('/embed/');
+  // A showcase (/show/…) is one guest's private link: framed by nobody, its address never sent on.
+  const showcase = pathname.startsWith('/show/');
   return {
-    'Content-Security-Policy': embed ? 'frame-ancestors *' : "frame-ancestors 'self'",
-    ...(embed ? {} : { 'X-Frame-Options': 'SAMEORIGIN' }),
+    'Content-Security-Policy': embed ? 'frame-ancestors *' : showcase ? "frame-ancestors 'none'" : "frame-ancestors 'self'",
+    ...(embed ? {} : { 'X-Frame-Options': showcase ? 'DENY' : 'SAMEORIGIN' }),
     'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Referrer-Policy': showcase ? 'no-referrer' : 'strict-origin-when-cross-origin',
   };
 }
