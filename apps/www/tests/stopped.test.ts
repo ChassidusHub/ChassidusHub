@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readStopped, resumeLink } from '../app/listen/common';
+import { readStopped, resumeLink } from '../app/listen/stopped.js';
 
 const cookie = (value: unknown) => `theme=dark; ch_listen=${encodeURIComponent(JSON.stringify(value))}`;
 

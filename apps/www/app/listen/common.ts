@@ -3,6 +3,9 @@
  * of their data, where a reader stopped, the ways in, and the path bar's levels.
  */
 import type { MenuItem, PathLevel } from '../ui';
+import type { Stopped } from './stopped';
+
+export { LISTEN_COOKIE, READ_COOKIE, readStopped, resumeLink, type Stopped } from './stopped';
 
 /** One event in a list of recordings: its date, a line about it, and its page. */
 export interface EventRow {
@@ -12,44 +15,8 @@ export interface EventRow {
   sub: string;
 }
 
-/**
- * Where a reader stopped, kept in a cookie so the server can draw Home's
- * "continue" tiles in the first paint, with nothing moving after it.
- * `ch_listen` is written while a recording plays; `ch_read` by the reader.
- */
-export interface Stopped {
-  to: string;
-  title: string;
-  sub?: string;
-  /** For a recording: which one, and where in it (ms), and how long it is. */
-  recording?: string;
-  at?: number;
-  durationMs?: number;
-}
-
 /** The API, read from the browser for words that load after the page. */
 export const API = 'https://api.chassidushub.org';
-
-export const LISTEN_COOKIE = 'ch_listen';
-export const READ_COOKIE = 'ch_read';
-
-/** A path on this site: one slash, then not another (//other.site and /\\other.site are other sites). */
-const SITE_PATH = /^\/(?![/\\])/;
-
-/** A cookie's value read from a request's Cookie header, as the shape above; null when missing or broken. */
-export function readStopped(cookies: string | null, name: string): Stopped | null {
-  const raw = cookies
-    ?.split(/;\s*/)
-    .find((c) => c.startsWith(`${name}=`))
-    ?.slice(name.length + 1);
-  if (!raw) return null;
-  try {
-    const value = JSON.parse(decodeURIComponent(raw)) as Stopped;
-    return typeof value.to === 'string' && SITE_PATH.test(value.to) && typeof value.title === 'string' ? value : null;
-  } catch {
-    return null;
-  }
-}
 
 export function writeStopped(name: string, value: Stopped) {
   document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}; path=/; max-age=31536000; samesite=lax`;
@@ -62,12 +29,6 @@ export function clock(ms: number): string {
   const m = Math.floor((s % 3600) / 60);
   const pad = (n: number) => String(n).padStart(2, '0');
   return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
-}
-
-/** The recording page, opened at the part and the second where the reader stopped (?r=rh-…&t=seconds). */
-export function resumeLink(stopped: Stopped): string {
-  if (!stopped.recording) return stopped.to;
-  return `${stopped.to}?r=${encodeURIComponent(stopped.recording)}&t=${Math.floor((stopped.at ?? 0) / 1000)}`;
 }
 
 /** A paragraph of words, and where in its part it is heard (ms). */
