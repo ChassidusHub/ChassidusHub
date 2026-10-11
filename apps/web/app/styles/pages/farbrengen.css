@@ -507,7 +507,7 @@ button.part.on:hover {
 }
 
 /* The house spelling, under the editor: a hint, never a change. */
-.tx-edit .spelling-hints {
+.txc-fix .spelling-hints {
   margin: 0.25rem 0 0.5rem;
   font-size: 0.85em;
 }
@@ -893,19 +893,6 @@ button.part.on:hover {
   color: var(--closed);
 }
 
-.review-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.review-head .section-header {
-  margin: 0;
-}
-
 @media (max-width: 640px) {
   .lyrics-scroll {
     height: 58vh;
@@ -929,11 +916,6 @@ button.part.on:hover {
   display: grid;
   gap: 10px;
   margin-bottom: 16px;
-}
-
-.tx-progress {
-  display: grid;
-  gap: 4px;
 }
 
 .tx-how,
@@ -1016,12 +998,6 @@ button.part.on:hover {
   margin-bottom: 4px;
 }
 
-.tx-n {
-  font: 600 12px var(--ui);
-  color: var(--faint);
-  min-width: 18px;
-}
-
 .tx-time {
   border: 0;
   background: var(--sunken);
@@ -1046,20 +1022,6 @@ button.part.on:hover {
   padding: 0 7px;
   border-radius: var(--r-sm);
   font: 500 11.5px / 1 var(--ui);
-}
-
-.tx-state.ok {
-  color: var(--open);
-  background: var(--open-soft);
-}
-
-.tx-state.partly {
-  color: var(--approved);
-  background: var(--approved-soft);
-}
-
-.tx-sync-note {
-  font-size: 11.5px;
 }
 
 .tx-text {
@@ -1134,40 +1096,6 @@ button.part.on:hover {
   cursor: default;
 }
 
-/* "Your fixes": what this listener answered, waiting to be sent together, held in view under the site's header (design/system, board 7). */
-.tx-tray {
-  position: sticky;
-  top: calc(var(--header-h) + 8px);
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  margin-bottom: var(--s-3);
-  padding: var(--s-2) var(--s-3);
-  border: 1px solid var(--accent-line);
-  border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--card) 94%, transparent);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-pop);
-}
-
-.tx-tray-open {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 8px;
-  min-height: var(--control-h);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--text);
-  font: 600 var(--t-body) var(--ui);
-  text-align: start;
-  cursor: pointer;
-}
-
 .tx-tray-list {
   list-style: none;
   margin: 0 0 var(--s-3);
@@ -1197,85 +1125,6 @@ button.part.on:hover {
 .tx-state.queued {
   color: var(--accent-strong);
   background: var(--accent-soft);
-}
-
-/* The three answers, at the foot of the screen within the thumb's reach, however long the paragraph (design/system, board 6). */
-.tx-answers {
-  position: sticky;
-  bottom: calc(var(--player-h, 0px) + 8px);
-  z-index: 4;
-  display: grid;
-  gap: var(--s-2);
-  margin: var(--s-3) -8px 0;
-  padding: var(--s-2);
-  border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--card) 94%, transparent);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 -2px 14px rgba(20, 24, 30, 0.1);
-}
-
-.tx-hint {
-  margin: 0;
-  padding-inline: var(--s-1);
-}
-
-.tx-answer-row {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: var(--s-2);
-}
-
-.tx-answer-row .btn {
-  height: max(var(--control-h), 44px);
-  justify-content: center;
-  font-size: var(--t-body);
-}
-
-/* Not sure: the machine's amber, as the words it marks. */
-.tx-answer-row .btn.unsure {
-  border-color: var(--machine);
-  color: var(--attention);
-}
-
-.tx-edit {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.tx-edit textarea,
-.tx-edit .input {
-  width: 100%;
-  font-family: var(--torah);
-  font-size: 18px;
-  line-height: 1.7;
-  padding: 8px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r);
-  background: var(--bg);
-  color: var(--text);
-}
-
-.tx-edit .actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* The box for fixing words floats at the foot of the screen, above the player, however long the paragraph (the paragraph's own tools stay under it); retyping a whole paragraph, its Save does. */
-.tx-edit.words,
-.tx-edit.all .actions {
-  position: sticky;
-  bottom: calc(var(--player-h, 0px) + 8px);
-  z-index: 4;
-  margin-inline: -8px;
-  padding: 8px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 -2px 14px rgba(20, 24, 30, 0.1);
 }
 
 .tx-complete {
@@ -1308,10 +1157,6 @@ button.part.on:hover {
   color: var(--add-fg);
   background: var(--add-bg);
   text-decoration: none;
-}
-
-.tx-sent {
-  margin: 8px 0 0;
 }
 
 .tx-done-note {
@@ -1449,7 +1294,6 @@ button.part.on:hover {
   text-decoration: underline;
 }
 
-
 .tx-discuss {
   display: grid;
   gap: 6px;
@@ -1531,4 +1375,492 @@ button.part.on:hover {
   .tx-text {
     font-size: 20px;
   }
+}
+
+/* ------------------------------------------------------------ checking a transcript: its own screen (design/system, board 6) */
+
+/* The page under it is held still while the check is open. */
+html.txc-on,
+html.txc-on body {
+  overflow: hidden;
+}
+
+/* The whole screen, above the site's header, tabs and player bar; sheets open above it. */
+.txc {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: var(--t-body);
+}
+
+.txc-head {
+  flex: none;
+  display: grid;
+  gap: 8px;
+  padding: 6px 6px 10px;
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--card);
+}
+
+.txc-head > *,
+.txc-body > *,
+.txc-foot > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 760px;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.txc-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.txc-icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.txc-icon:hover {
+  background: var(--sunken);
+}
+
+.txc-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.txc-title b {
+  font-size: 15px;
+}
+
+.txc-title span {
+  font-size: var(--t-caption);
+  color: var(--subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.txc-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 8px;
+  box-sizing: border-box;
+}
+
+.txc-play {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: #fff;
+  cursor: pointer;
+}
+
+.txc-play:hover {
+  background: var(--accent-hover);
+}
+
+.txc-now {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.txc-now .row-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.txc-progress {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  overflow: hidden;
+}
+
+.txc-progress i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ok);
+}
+
+.txc-pill {
+  flex: none;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font: 500 var(--t-caption) var(--ui);
+  cursor: pointer;
+}
+
+.txc-pill.speed {
+  min-width: 52px;
+  font-weight: 600;
+}
+
+.txc-pill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The paragraphs scroll between the head and the foot; room is left at the end so the last one clears the answers. */
+.txc-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 14px 240px;
+  box-sizing: border-box;
+}
+
+.txc-count,
+.txc .tx-done-note {
+  margin-block: 0 10px;
+}
+
+.txc-part {
+  margin: 14px 0 8px;
+  font-size: var(--t-body-lg);
+}
+
+.txc .tx-para {
+  border: 1px solid var(--border-muted);
+  border-radius: 12px;
+  background: transparent;
+  padding: 10px 12px;
+  box-shadow: none;
+  scroll-margin: 20px;
+}
+
+.txc .tx-para.open {
+  border: 2px solid var(--accent);
+  background: var(--card);
+  padding: 14px;
+  box-shadow: none;
+}
+
+.txc .tx-para.found {
+  background: var(--mark);
+}
+
+.txc .tx-para-head {
+  margin-bottom: 8px;
+}
+
+.txc .tx-text {
+  font-family: var(--display);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.txc .tx-para.is-checked:not(.open) .tx-text {
+  color: var(--muted);
+}
+
+/* The paragraph being checked is read large, every word a target for a finger. */
+.txc .tx-para.open .tx-text {
+  font-size: 25px;
+  line-height: 1.55;
+}
+
+.txc .tx-para.open .tx-text .word {
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
+.txc .tx-text .word.w-picked {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* The paragraph's state: a dot and a word, the machine's in amber, checked in green. */
+.txc-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  font: 600 var(--t-caption) var(--ui);
+}
+
+.txc-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.txc-status.machine {
+  color: var(--machine);
+}
+
+.txc-status.partly {
+  color: var(--attention);
+}
+
+.txc-status.checked {
+  color: var(--ok);
+}
+
+.txc .tx-time {
+  background: none;
+  padding: 0;
+  color: var(--subtle);
+}
+
+/* The foot: the open paragraph's answers or the box to fix it, then "Your fixes". */
+.txc-foot {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-strong);
+  background: var(--card);
+  box-shadow: 0 -8px 24px rgba(40, 30, 20, 0.08);
+  box-sizing: border-box;
+}
+
+.txc-slot:empty,
+.txc-foot.empty {
+  display: none;
+}
+
+.txc-answers,
+.txc-fix,
+.txc-done {
+  display: grid;
+  gap: 10px;
+}
+
+.txc-hint {
+  margin: 0;
+  min-height: 18px;
+}
+
+.txc-answer-row {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 1fr;
+  gap: 8px;
+}
+
+.txc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font: 500 14px var(--ui);
+  cursor: pointer;
+}
+
+.txc-btn.primary {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.txc-btn.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.txc-btn.accent {
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Not sure: the machine's amber, as the words it marks. */
+.txc-btn.unsure {
+  border: 1.5px solid var(--machine);
+  color: var(--attention);
+  font-weight: 600;
+}
+
+.txc-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.txc-btn.wide {
+  width: 100%;
+  height: 52px;
+}
+
+.txc-fix-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.txc-fix-head label {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.txc-fix textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--accent);
+  outline: 2px solid var(--accent-soft);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: 20px / 1.6 var(--display);
+  color: var(--text);
+  background: var(--card);
+  resize: none;
+}
+
+.txc-fix .spelling-hints {
+  margin: 0;
+}
+
+.txc-fix-row {
+  display: flex;
+  gap: 8px;
+}
+
+.txc-fix-row .txc-btn {
+  height: 52px;
+  padding: 0 18px;
+}
+
+.txc-fix-row .txc-btn.primary {
+  flex: 1;
+}
+
+.txc .tx-complete {
+  min-height: 40px;
+  font-size: 14px;
+}
+
+.txc .tx-complete input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+
+.txc-done b {
+  font-size: 16px;
+}
+
+.txc-done span {
+  color: var(--muted);
+}
+
+.txc-signin {
+  margin: 0;
+}
+
+/* "Your fixes": a dark pill under the answers; it opens the list, and Send is there. */
+.txc-tray {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--strong);
+  color: var(--bg);
+  font: 14px var(--ui);
+  cursor: pointer;
+}
+
+.txc-tray-send {
+  color: var(--accent-soft);
+  font-weight: 600;
+}
+
+/* A word after each answer, with Undo, just under the head. */
+.txc-toast {
+  position: absolute;
+  inset-inline: 14px;
+  top: 132px;
+  z-index: 3;
+  max-width: 732px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-block: 6px;
+  padding-inline: 14px 8px;
+  border-radius: 10px;
+  background: var(--strong);
+  color: var(--bg);
+  box-shadow: 0 8px 24px rgba(40, 30, 20, 0.2);
+  box-sizing: border-box;
+}
+
+.txc-toast span {
+  flex: 1;
+}
+
+.txc-toast button {
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-soft);
+  font: 600 13px var(--ui);
+  cursor: pointer;
+}
+
+/* The open paragraph's own tools (talk over unclear words, its history) stay small under its words. */
+.txc .tx-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.txc .tx-tool {
+  height: 36px;
+  border-radius: 999px;
+  font-size: 13.5px;
 }

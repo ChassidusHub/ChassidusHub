@@ -15,6 +15,25 @@ any time. `@chassidushub/client` carries the API's version.
   shelf, the sefer, the volume, the sicha). Each level lists the other
   choices at that level, and a volume says how many units it holds. It
   takes three statements however deep the path is.
+- A shared sicha opens faster on a slow phone, and its words no longer
+  jump as the fonts arrive: the reading fonts are served as WOFF2 (the
+  words' face from 110 KB to 73 KB), the logo's face carries only its
+  letters, the words' face is asked for with the page, and until the fonts
+  come the page is drawn in a face the device has, sized to take the same
+  room. Sicha and home pages load 30 KB less script: the full calendar is
+  left to the pages that use it.
+- Checking a transcript has a screen of its own, as the design draws it
+  (design/system, board 6): Close, the recording's name and "…" at the
+  top with a calm player (play, hear the last five seconds again, speed,
+  how much is checked); the paragraph being checked large in a red frame,
+  each paragraph with its state (machine, partly fixed, checked); Right,
+  Fix and Not sure in the foot of the screen, where the box to fix the
+  words opens too, with "Your fixes" under them; a word after each answer
+  with Undo; when all is checked, the question whether the highlight
+  followed the speech. With a keyboard, Tab stays on the screen (its head
+  first) and Escape closes it; History on a paragraph opens again.
+- A signed-out reader's page no longer asks for an account's draft it would be
+  refused (a 401 that smoke counted as a broken page).
 - A maamar's name no longer carries what the print adds to its dateline:
   the Chabad Library importer leaves out the opening `בס"ד` and the footnote
   `*` (`בס"ד, יו"ד שבט, תשי"ב*` is named `יו"ד שבט, תשי"ב`). It takes effect

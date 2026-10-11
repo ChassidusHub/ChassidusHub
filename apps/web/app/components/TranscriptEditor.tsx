@@ -1,5 +1,6 @@
-import { Check, CircleHelp, History, MessageCircle, Pencil, ShieldQuestion, Trash2, Undo2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Check, CircleHelp, History, MessageCircle, MoreHorizontal, Pause, Play, ShieldQuestion, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
 import { carryWordTimes, markUnclear, spellingHints, unclearRanges } from '@chassidushub/model';
 import { t, type Lang } from '../lib/i18n.js';
@@ -12,24 +13,30 @@ import { aroundChanges, wordDiff } from '../lib/wordDiff.js';
 import { usePlayer, type Track } from '../player/PlayerProvider.js';
 import { InlineDiff } from '../ui/Diff.js';
 import { ConfirmSync, DiscussUnclear, discussLabel } from './TimingTools.js';
-import { Bar, MachineLabel, RelativeTime, Sheet } from '../ui/primitives.js';
+import { MachineLabel, RelativeTime, Sheet } from '../ui/primitives.js';
 
 /**
  * Checking what the machine heard, opened from a farbrengen's or a
- * recording's transcript by "Review machine text". The words are the
+ * recording's transcript (its Text tab), on a screen of its own as
+ * design/system board 6 draws it: a head with Close, the recording's name,
+ * "…" (how to check, every change, the sync) and a calm player (play,
+ * hear again, speed, how much is checked); the paragraphs, the one being
+ * checked large in a red frame; and a foot with its answers. The words are the
  * recording: tapping one plays from it and chooses it, and a tap on another
  * chooses the words up to it (design/system, board 6). The paragraph being
- * worked on has three answers at the foot of the screen, within the
- * thumb's reach however long the paragraph: Right (it is checked, and the
+ * worked on has three answers in the foot of the screen, within the
+ * thumb's reach however long the paragraph, and the box to fix it opens
+ * there too: Right (it is checked, and the
  * next paragraph left to check opens), Fix (the words chosen, or the whole
  * paragraph) and Not sure (the words chosen are kept as `[words?]`); its
  * history and talk over unclear words sit under it. Every answer goes into
- * "Your fixes", a tray kept in this browser and held in view at the top
- * (board 7): it shows each change as only the words changed with a few
+ * "Your fixes", a tray kept in this browser and held in the foot under
+ * the answers (board 7), and a word at the top says what was done, with
+ * Undo. The tray shows each change as only the words changed with a few
  * around them, any can be taken out, and Send sends them all, which join
  * one suggestion for the recording. As
  * the recording plays, the page follows the word being said, unless the
- * listener just scrolled away; the player bar offers "hear again" and a
+ * listener just scrolled away; the player offers "hear again" and a
  * slower or faster speed here only. What waits for approval, and what
  * was fixed since the machine heard the words, shows under them on
  * History. The recording pauses while words are being fixed, and this
@@ -41,8 +48,30 @@ import { Bar, MachineLabel, RelativeTime, Sheet } from '../ui/primitives.js';
  */
 
 const W = {
-  title: { he: 'בדיקת טקסט המכונה', en: 'Review machine text' },
-  back: { he: 'חזרה לתצוגת ההאזנה', en: 'Back to listening' },
+  title: { he: 'בדיקת תמלול', en: 'Check the transcript' },
+  back: { he: 'סגירה, חזרה להאזנה', en: 'Close, back to listening' },
+  more: { he: 'עוד', en: 'More' },
+  machine: { he: 'מכונה, טרם נבדק', en: 'Machine, not checked' },
+  play: { he: 'ניגון', en: 'Play' },
+  pause: { he: 'עצירה', en: 'Pause' },
+  tapPlays: { he: 'לחיצה על מילה מנגנת ממנה', en: 'Tap a word to play from it' },
+  playingAt: { he: 'מנגן · {at}', en: 'Playing · {at}' },
+  pausedAt: { he: 'נעצר · {at}', en: 'Paused · {at}' },
+  again: { he: 'שוב 5 שנ׳', en: 'Again 5s' },
+  againLabel: { he: 'לשמוע שוב, חמש שניות אחורה', en: 'Hear the last five seconds again' },
+  speed: { he: 'מהירות', en: 'Speed' },
+  fixWhat: { he: 'מה נאמר כאן?', en: 'What was said here?' },
+  fixWhole: { he: 'הפסקה כפי שנאמרה', en: 'The paragraph as it was said' },
+  pausedFix: { he: 'ההקלטה נעצרה', en: 'The recording is paused' },
+  addFix: { he: 'הוספה לתיקונים', en: 'Add to your fixes' },
+  allDone: { he: 'כל הפסקאות נבדקו. תודה!', en: 'Every paragraph is checked. Thank you!' },
+  syncAsk: { he: 'שאלה אחרונה: האם הסימון עקב אחרי הדיבור?', en: 'One last question: did the highlight follow the speech?' },
+  traySendShort: { he: 'שליחה', en: 'Send' },
+  toastRight: { he: 'פסקה {n} נבדקה', en: 'Paragraph {n} checked' },
+  toastFix: { he: 'נוסף לתיקונים. כשכל הפסקה נכונה, לוחצים „נכון”', en: 'Added to your fixes. When the whole paragraph is right, tap "Right"' },
+  toastFixAll: { he: 'נוסף לתיקונים, והפסקה נבדקה', en: 'Added to your fixes, and the paragraph is checked' },
+  toastUnsure: { he: 'סומן כלא ברור. אפשר לשאול עליו בדף השיחה', en: 'Marked as not clear. You can ask about it on the talk page' },
+  undo: { he: 'ביטול', en: 'Undo' },
   how: { he: 'איך בודקים', en: 'How to review' },
   howTap: { he: 'לחיצה על מילה מנגנת ממנה ובוחרת אותה; לחיצה על מילה נוספת בוחרת עד אליה.', en: 'Tap a word to play from it and choose it; tap another word to choose up to it.' },
   howRight: { he: '„נכון”: שמעתם, וכל המילים נכונות כפי שהמחשב שמע. כך היא נבדקת, מלמדת את המודל הבא, וממשיכים לפסקה הבאה.', en: '"Right": you listened and every word is right as the machine heard it. That checks it, teaches the next model, and moves on to the next paragraph.' },
@@ -57,18 +86,14 @@ const W = {
   allRight: { he: 'נכון', en: 'Right' },
   edit: { he: 'תיקון', en: 'Fix' },
   unclear: { he: 'לא בטוח', en: 'Not sure' },
-  markUnclear: { he: 'סימון כלא ברור', en: 'Mark as unclear' },
   fixOne: { he: 'תיקון המילה', en: 'Fix the word' },
   fixMany: { he: 'תיקון {n} המילים', en: 'Fix the {n} words' },
   hintAnswer: { he: 'הקשיבו לפסקה. כל המילים נכונות? „נכון”. מילה שגויה? לחצו עליה.', en: 'Listen to the paragraph. Every word right? "Right". A wrong word? Tap it.' },
   hintOne: { he: 'נבחרה מילה אחת. לחיצה על מילה נוספת בוחרת עד אליה.', en: 'One word chosen. Tap another word to choose up to it.' },
   hintMany: { he: 'נבחרו {n} מילים.', en: '{n} words chosen.' },
   chooseFirst: { he: 'בחרו קודם את המילים שלא ברורות, בלחיצה עליהן.', en: 'First choose the words that are not clear, by tapping them.' },
-  markedUnclear: { he: 'סומן כלא ברור.', en: 'Marked as not clear.' },
   continueHere: { he: 'כאן עצרת בפעם הקודמת', en: 'You stopped here last time' },
   history: { he: 'היסטוריה', en: 'History' },
-  fixWords: { he: 'תיקון המילים שסומנו', en: 'Fix the selected words' },
-  save: { he: 'שמירה', en: 'Save' },
   cancel: { he: 'ביטול', en: 'Cancel' },
   wholeRight: { he: 'שמעתי ובדקתי את כל הפסקה', en: 'I listened and checked the whole paragraph' },
   sent: { he: 'נשלח. יופיע באתר אחרי אישור.', en: 'Sent. It shows on the site once approved.' },
@@ -266,7 +291,7 @@ function ChangeRow({ commit, lang, numberOf, only }: { commit: TranscriptCommit;
 }
 
 function Para({
-  n,
+  foot,
   recording,
   paragraph,
   open,
@@ -281,13 +306,13 @@ function Para({
   onOpen,
   onPlayFrom,
   onQueue,
-  onRight,
   numberOf,
   waiting,
   me,
   follow,
 }: {
-  n: number;
+  /** The foot of the screen, where the open paragraph's answers go. */
+  foot: HTMLElement | null;
   recording: string;
   paragraph: Paragraph;
   open: boolean;
@@ -304,8 +329,6 @@ function Para({
   onPlayFrom: (ms: number) => void;
   /** An answer, into the "Your fixes" tray: the words as they are now heard, whether the whole paragraph was checked, and which answer. */
   onQueue: (content: string, complete: boolean, kind: TrayKind) => void;
-  /** After "Right": the next paragraph left to check opens. */
-  onRight: () => void;
   numberOf: (segment: string) => number;
   /** Fixes of this paragraph's words that wait for approval, and who is signed in, to tell theirs from others'. */
   waiting: Pending[];
@@ -437,24 +460,109 @@ function Para({
   const status = paragraph.checked ? 'checked' : paragraph.edited ? 'partly' : 'machine';
   const classes = ['tx-para', open ? 'open' : '', active ? 'active' : '', found && !resumed ? 'found' : '', `is-${status}`].filter(Boolean).join(' ');
 
+  // The answers and the box for fixing sit in the foot of the screen, within the thumb's reach, for the paragraph open only (design/system, board 6).
+  const footer = open && canFix ? (
+    editing?.kind === 'words' ? (
+      <div className="txc-fix">
+        <div className="txc-fix-head">
+          <label htmlFor={`fix-${paragraph.id}`}>{w(lang, 'fixWhat')}</label>
+          <span className="row-sub">{w(lang, 'pausedFix')}</span>
+        </div>
+        <textarea id={`fix-${paragraph.id}`} rows={2} dir="auto" autoFocus value={editing.value} onChange={(e) => setEditing({ ...editing, value: e.target.value })} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)} />
+        <SpellingHints text={editing.value} lang={lang} />
+        <div className="txc-fix-row">
+          <button
+            type="button"
+            className="txc-btn primary"
+            disabled={editing.value === base.slice(editing.from, editing.to)}
+            onClick={() => send(`${base.slice(0, editing.from)}${editing.value}${base.slice(editing.to)}`, false)}
+          >
+            {w(lang, 'addFix')}
+          </button>
+          <button type="button" className="txc-btn" onClick={() => setEditing(null)}>
+            {w(lang, 'cancel')}
+          </button>
+        </div>
+      </div>
+    ) : editing?.kind === 'all' ? (
+      <div className="txc-fix">
+        <div className="txc-fix-head">
+          <label htmlFor={`fix-${paragraph.id}`}>{w(lang, 'fixWhole')}</label>
+          <span className="row-sub">{w(lang, 'pausedFix')}</span>
+        </div>
+        <textarea id={`fix-${paragraph.id}`} value={editing.value} onChange={(e) => setEditing({ ...editing, value: e.target.value })} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)} rows={4} dir="auto" autoFocus />
+        <SpellingHints text={editing.value} lang={lang} />
+        <label className="tx-complete">
+          <input type="checkbox" checked={editing.complete} onChange={(e) => setEditing({ ...editing, complete: e.target.checked })} />
+          {w(lang, 'wholeRight')}
+        </label>
+        <div className="txc-fix-row">
+          <button type="button" className="txc-btn primary" disabled={!editing.value.trim() || (editing.value.trim() === base && !editing.complete)} onClick={() => send(editing.value, editing.complete)}>
+            {w(lang, 'addFix')}
+          </button>
+          <button type="button" className="txc-btn" onClick={() => setEditing(null)}>
+            {w(lang, 'cancel')}
+          </button>
+        </div>
+      </div>
+    ) : (
+      <div className="txc-answers">
+        <p className="row-sub txc-hint" role="status">
+          {note ?? (chosen ? (chosen.one ? w(lang, 'hintOne') : w(lang, 'hintMany').replace('{n}', chosenCount.toLocaleString(lang))) : w(lang, 'hintAnswer'))}
+        </p>
+        {chosen ? (
+          <div className="txc-answer-row">
+            <button type="button" className="txc-btn primary" onClick={() => setEditing({ kind: 'words', from: chosen.from, to: chosen.to, value: base.slice(chosen.from, chosen.to) })}>
+              {chosenCount === 1 ? w(lang, 'fixOne') : w(lang, 'fixMany').replace('{n}', chosenCount.toLocaleString(lang))}
+            </button>
+            <button
+              type="button"
+              className="txc-btn unsure"
+              disabled={marks.some((m) => chosen.from < m.to && chosen.to > m.from)}
+              onClick={() => send(`${base.slice(0, chosen.from)}${markUnclear(base.slice(chosen.from, chosen.to))}${base.slice(chosen.to)}`, false, 'unsure')}
+            >
+              {w(lang, 'unclear')}
+            </button>
+            <button type="button" className="txc-btn" onClick={() => setChosen(null)}>
+              {w(lang, 'cancel')}
+            </button>
+          </div>
+        ) : (
+          <div className="txc-answer-row">
+            <button
+              type="button"
+              className="txc-btn primary"
+              disabled={paragraph.checked && !unclearRanges(base).length && base === paragraph.content}
+              onClick={() => send(base, true, 'right')}
+            >
+              <Check size={20} strokeWidth={2.5} aria-hidden />
+              {w(lang, 'allRight')}
+            </button>
+            <button type="button" className="txc-btn accent" onClick={() => setEditing({ kind: 'all', value: base, complete: true })}>
+              {w(lang, 'edit')}
+            </button>
+            <button type="button" className="txc-btn" onClick={() => setNote(w(lang, 'chooseFirst'))}>
+              {w(lang, 'unclear')}
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  ) : null;
+
   return (
     <li ref={ref} id={`p-${paragraph.id}`} className={classes}>
       <div className="tx-para-head">
-        <span className="tx-n">{n}</span>
         {paragraph.startMs !== null ? (
           <button type="button" className="tx-time" onClick={() => onPlayFrom(paragraph.startMs ?? 0)}>
             {clockOf(paragraph.startMs)}
           </button>
         ) : null}
-        {status === 'checked' ? (
-          <span className="tx-state ok">
-            <Check size={12} aria-hidden />
-            {w(lang, 'checked')}
-          </span>
-        ) : status === 'partly' ? (
-          <span className="tx-state partly">{w(lang, 'partly')}</span>
-        ) : null}
         {queued ? <span className="tx-state queued">{w(lang, queued.complete && queued.content === paragraph.content ? 'queuedRight' : 'queuedFix')}</span> : null}
+        <span className={`txc-status ${status}`}>
+          <i aria-hidden />
+          {w(lang, status)}
+        </span>
       </div>
 
       <div
@@ -516,124 +624,19 @@ function Para({
         </div>
       ) : null}
 
-      {editing?.kind === 'words' ? (
-        <div className="tx-edit words">
-          <label className="row-sub" htmlFor={`fix-${paragraph.id}`}>
-            {w(lang, 'fixWords')}
-          </label>
-          <input id={`fix-${paragraph.id}`} className="input" dir="auto" autoFocus value={editing.value} onChange={(e) => setEditing({ ...editing, value: e.target.value })} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)} />
-          <SpellingHints text={editing.value} lang={lang} />
-          <div className="actions">
-            <button
-              type="button"
-              className="btn primary"
-              disabled={editing.value === base.slice(editing.from, editing.to)}
-              onClick={() => send(`${base.slice(0, editing.from)}${editing.value}${base.slice(editing.to)}`, false)}
-            >
-              {w(lang, 'save')}
+      {open ? (
+        <div className="tx-tools">
+          {marks.map((m) => (
+            <button key={m.from} type="button" className={discussing?.from === m.from ? 'tx-tool on' : 'tx-tool'} onClick={() => setDiscussing(discussing?.from === m.from ? null : m)}>
+              <MessageCircle size={16} aria-hidden />
+              {discussLabel[lang]} · <span dir="auto">{base.slice(m.from, m.to)}</span>
             </button>
-            {!/^\[.*\?\]$/.test(editing.value.trim()) ? (
-              <button type="button" className="btn" onClick={() => setEditing({ ...editing, value: markUnclear(editing.value.trim()) })}>
-                <ShieldQuestion size={15} aria-hidden />
-                {w(lang, 'markUnclear')}
-              </button>
-            ) : null}
-            <button type="button" className="btn" onClick={() => setEditing(null)}>
-              {w(lang, 'cancel')}
-            </button>
-          </div>
+          ))}
+          <button type="button" className={showHistory ? 'tx-tool on' : 'tx-tool'} onClick={() => setShowHistory((s) => !s)} aria-expanded={showHistory}>
+            <History size={16} aria-hidden />
+            {w(lang, 'history')}
+          </button>
         </div>
-      ) : null}
-
-      {editing?.kind === 'all' ? (
-        <div className="tx-edit all">
-          <textarea value={editing.value} onChange={(e) => setEditing({ ...editing, value: e.target.value })} rows={6} dir="auto" autoFocus />
-          <SpellingHints text={editing.value} lang={lang} />
-          <label className="tx-complete">
-            <input type="checkbox" checked={editing.complete} onChange={(e) => setEditing({ ...editing, complete: e.target.checked })} />
-            {w(lang, 'wholeRight')}
-          </label>
-          <div className="actions">
-            <button type="button" className="btn primary" disabled={!editing.value.trim() || (editing.value.trim() === base && !editing.complete)} onClick={() => send(editing.value, editing.complete)}>
-              {w(lang, 'save')}
-            </button>
-            <button type="button" className="btn" onClick={() => setEditing(null)}>
-              {w(lang, 'cancel')}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {open && !editing ? (
-        <>
-          {canFix ? (
-            <div className="tx-answers">
-              <p className="row-sub tx-hint" role="status">
-                {note ?? (chosen ? (chosen.one ? w(lang, 'hintOne') : w(lang, 'hintMany').replace('{n}', chosenCount.toLocaleString(lang))) : w(lang, 'hintAnswer'))}
-              </p>
-              {chosen ? (
-                <div className="tx-answer-row">
-                  <button type="button" className="btn primary" onClick={() => setEditing({ kind: 'words', from: chosen.from, to: chosen.to, value: base.slice(chosen.from, chosen.to) })}>
-                    <Pencil size={16} aria-hidden />
-                    {chosenCount === 1 ? w(lang, 'fixOne') : w(lang, 'fixMany').replace('{n}', chosenCount.toLocaleString(lang))}
-                  </button>
-                  {!marks.some((m) => chosen.from < m.to && chosen.to > m.from) ? (
-                    <button
-                      type="button"
-                      className="btn unsure"
-                      onClick={() => {
-                        send(`${base.slice(0, chosen.from)}${markUnclear(base.slice(chosen.from, chosen.to))}${base.slice(chosen.to)}`, false, 'unsure');
-                        setNote(w(lang, 'markedUnclear'));
-                      }}
-                    >
-                      <ShieldQuestion size={16} aria-hidden />
-                      {w(lang, 'unclear')}
-                    </button>
-                  ) : null}
-                  <button type="button" className="btn" onClick={() => setChosen(null)}>
-                    {w(lang, 'cancel')}
-                  </button>
-                </div>
-              ) : (
-                <div className="tx-answer-row">
-                  {!paragraph.checked && !(queued?.complete && queued.content === base) ? (
-                    <button
-                      type="button"
-                      className="btn primary"
-                      onClick={() => {
-                        send(base, true, 'right');
-                        onRight();
-                      }}
-                    >
-                      <Check size={16} aria-hidden />
-                      {w(lang, 'allRight')}
-                    </button>
-                  ) : null}
-                  <button type="button" className="btn" onClick={() => setEditing({ kind: 'all', value: base, complete: true })}>
-                    <Pencil size={16} aria-hidden />
-                    {w(lang, 'edit')}
-                  </button>
-                  <button type="button" className="btn unsure" onClick={() => setNote(w(lang, 'chooseFirst'))}>
-                    <ShieldQuestion size={16} aria-hidden />
-                    {w(lang, 'unclear')}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : null}
-          <div className="tx-tools">
-            {marks.map((m) => (
-              <button key={m.from} type="button" className={discussing?.from === m.from ? 'tx-tool on' : 'tx-tool'} onClick={() => setDiscussing(discussing?.from === m.from ? null : m)}>
-                <MessageCircle size={16} aria-hidden />
-                {discussLabel[lang]} · <span dir="auto">{base.slice(m.from, m.to)}</span>
-              </button>
-            ))}
-            <button type="button" className={showHistory ? 'tx-tool on' : 'tx-tool'} onClick={() => setShowHistory((s) => !s)} aria-expanded={showHistory}>
-              <History size={16} aria-hidden />
-              {w(lang, 'history')}
-            </button>
-          </div>
-        </>
       ) : null}
 
       {open && discussing ? (
@@ -647,7 +650,8 @@ function Para({
         />
       ) : null}
 
-
+      {/* Before the foot is there (the page as the server sends it), they sit under the words. */}
+      {footer ? (foot ? createPortal(footer, foot) : footer) : null}
     </li>
   );
 }
@@ -679,7 +683,8 @@ export function TranscriptEditor({
   const [start] = useState<string | null>(() => {
     if (found) return found;
     const heard = transcripts.find((tr) => tr.recording === player.current?.id)?.paragraphs.find((p) => within(player.time * 1000, p));
-    return heard?.id ?? (typeof window !== 'undefined' ? recall<string>(placeKey) : null);
+    const left = transcripts.flatMap((tr) => tr.paragraphs).find((p) => !p.checked);
+    return heard?.id ?? (typeof window !== 'undefined' ? recall<string>(placeKey) : null) ?? left?.id ?? null;
   });
 
   // "Hear again" and the speed, in the player bar while checking only; the speed goes back to 1 on leaving.
@@ -727,11 +732,31 @@ export function TranscriptEditor({
   const [trayOpen, setTrayOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [trayError, setTrayError] = useState<string | null>(null);
-  const [traySaid, setTraySaid] = useState<string | null>(null);
-  // A paragraph's answer replaces the one before it in the tray: the latest words are what is meant.
+  // A short word at the top after each answer, with Undo for a few seconds (design/system, board 6).
+  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const say = useCallback((text: string, undo?: () => void) => {
+    setToast({ text, undo });
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), undo ? 5000 : 3500);
+  }, []);
+  useEffect(() => () => clearTimeout(toastTimer.current), []);
+  // A paragraph's answer replaces the one before it in the tray: the latest words are what is meant. Once it is all right, the next paragraph left to check opens.
   const queue = (recording: string, segment: string, content: string, complete: boolean, kind: TrayKind) => {
-    setTraySaid(null);
-    setTray([...tray.filter((x) => x.segment !== segment), { recording, segment, content, complete, kind }]);
+    const was = { tray, open };
+    const next = [...tray.filter((x) => x.segment !== segment), { recording, segment, content, complete, kind }];
+    setTray(next);
+    if (complete) {
+      const after = nextAfter(segment, next);
+      if (after) setOpen(after);
+      else setOpenNow(null);
+    }
+    const undo = () => {
+      setTray(was.tray);
+      setOpenNow(was.open);
+      setToast(null);
+    };
+    say(kind === 'right' ? w(lang, 'toastRight').replace('{n}', numberOf(segment).toLocaleString(lang)) : kind === 'unsure' ? w(lang, 'toastUnsure') : w(lang, complete ? 'toastFixAll' : 'toastFix'), undo);
   };
   const asPending = (x: TrayEntry): Pending => ({ segment: x.segment, content: x.content, complete: x.complete, author: me ?? '', authorName: null, at: '', suggestion: null, local: true });
   // Sent one by one, they join one suggestion for each recording (core/sync.ts fixParagraph); what fails stays in the tray.
@@ -756,7 +781,7 @@ export function TranscriptEditor({
       setSending(false);
       if (sent) {
         noteChecked();
-        setTraySaid(w(lang, merged === sent ? 'traySaved' : 'traySent').replace('{n}', sent.toLocaleString(lang)));
+        say(w(lang, merged === sent ? 'traySaved' : 'traySent').replace('{n}', sent.toLocaleString(lang)));
       }
       if (!left.length) setTrayOpen(false);
     }
@@ -785,127 +810,202 @@ export function TranscriptEditor({
   const numberOf = (segment: string) => numbers.get(segment) ?? 0;
   const commits = transcripts.flatMap((tr) => history[tr.recording] ?? []).sort((a, b) => b.commit - a.commit);
   // After "Right", the next paragraph not yet checked opens, so checking goes on without looking for it.
-  const nextAfter = (segment: string) => {
+  const nextAfter = (segment: string, answered: TrayEntry[] = tray) => {
     const at = all.findIndex((p) => p.id === segment);
-    return [...all.slice(at + 1), ...all.slice(0, at)].find((p) => !p.checked && !tray.some((x) => x.segment === p.id && x.kind === 'right'))?.id ?? null;
+    return [...all.slice(at + 1), ...all.slice(0, at)].find((p) => !p.checked && !answered.some((x) => x.segment === p.id && x.complete))?.id ?? null;
   };
+  const allDone = all.length > 0 && all.every((p) => p.checked || tray.some((x) => x.segment === p.id && x.complete));
+
+  // The foot of the screen, which the open paragraph fills with its answers; the page under this one is held still while it is open.
+  const [foot, setFoot] = useState<HTMLElement | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const screen = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    document.documentElement.classList.add('txc-on');
+    // The screen is all there is while it is open: everything around it (the page under it, the site's
+    // header and sidebar, the player bar) is made inert, so Tab stays on the screen, its head first.
+    const held: HTMLElement[] = [];
+    for (let el: HTMLElement | null = screen.current; el && el !== document.body; el = el.parentElement) {
+      for (const sibling of Array.from(el.parentElement?.children ?? [])) {
+        if (sibling === el || !(sibling instanceof HTMLElement) || sibling.inert || sibling.tagName === 'SCRIPT') continue;
+        sibling.inert = true;
+        held.push(sibling);
+      }
+    }
+    screen.current?.querySelector<HTMLElement>('.txc-head button')?.focus({ preventScroll: true });
+    return () => {
+      document.documentElement.classList.remove('txc-on');
+      for (const el of held) el.inert = false;
+    };
+  }, []);
+  // Escape closes the screen, back to listening, unless it is closing something on it first (a sheet, the fix box).
+  useEffect(() => {
+    if (!onBack) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (e.key !== 'Escape' || e.defaultPrevented || target?.closest('textarea, input, .ds-sheet-backdrop') || screen.current?.querySelector('.ds-sheet-backdrop')) return;
+      // A browser's own Escape stops what is loading, and leaving loads the listening view's data: leave after it.
+      e.preventDefault();
+      setTimeout(onBack, 0);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onBack]);
+
+  // The player, in the page's own head: play from the paragraph open, hear again, and the speed (design/system, board 6).
+  const openIn = transcripts.find((tr) => tr.paragraphs.some((p) => p.id === open)) ?? transcripts[0];
+  const heardHere = transcripts.some((tr) => tr.recording === player.current?.id);
+  const playing = heardHere && player.playing;
+  function playPause() {
+    if (heardHere) return player.toggle();
+    if (!openIn) return;
+    const index = tracks.findIndex((track) => track.id === openIn.recording);
+    const from = openIn.paragraphs.find((p) => p.id === open)?.startMs ?? 0;
+    player.play(tracks, index, from / 1000);
+  }
+  const speeds = [1, 0.75, 1.25, 1.5];
+  const name = tracks.find((track) => track.id === openIn?.recording)?.subtitle || tracks[0]?.subtitle || '';
+  const showTray = tray.length > 0;
 
   return (
-    <>
-      <div className="review-head">
-        <h2 className="section-header">{w(lang, 'title')}</h2>
-        {onBack ? (
-          <button type="button" className="btn" onClick={onBack}>
-            <Undo2 size={16} aria-hidden />
-            {w(lang, 'back')}
+    <div className="txc" ref={screen} lang={lang} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+      <header className="txc-head">
+        <div className="txc-bar">
+          {onBack ? (
+            <button type="button" className="txc-icon" onClick={onBack} aria-label={w(lang, 'back')} title={w(lang, 'back')}>
+              <X size={22} strokeWidth={1.5} aria-hidden />
+            </button>
+          ) : (
+            <span className="txc-icon" aria-hidden />
+          )}
+          <span className="txc-title">
+            <b>{w(lang, 'title')}</b>
+            {name ? <span dir="auto">{name}</span> : null}
+          </span>
+          <button type="button" className="txc-icon" onClick={() => setMoreOpen(true)} aria-label={w(lang, 'more')} title={w(lang, 'more')}>
+            <MoreHorizontal size={22} strokeWidth={1.5} aria-hidden />
           </button>
-        ) : null}
-      </div>
-
-      <div className="tx-top">
-        <div className="tx-progress">
-          <span className="row-sub">{w(lang, 'progress').replace('{n}', checked.toLocaleString(lang)).replace('{of}', all.length.toLocaleString(lang))}</span>
-          <Bar value={checked} max={all.length || 1} tone="open" />
         </div>
-        <p className="row-sub tx-machine-line">{t(lang, 'lyricsMachineHint')}</p>
-        <details className="tx-how">
-          <summary>
-            <CircleHelp size={15} aria-hidden />
-            {w(lang, 'how')}
-          </summary>
-          <ul>
-            <li>{w(lang, 'howTap')}</li>
-            <li>{w(lang, 'howRight')}</li>
-            <li>{w(lang, 'howEdit')}</li>
-            <li>{w(lang, 'howUnclear')}</li>
-            <li>{w(lang, 'howPause')}</li>
-            <li>{w(lang, 'howHistory')}</li>
-            <li>{w(lang, 'howSpeed')}</li>
-          </ul>
-          {canFix && checked < all.length ? <TrainingGoalBar lang={lang} /> : null}
-        </details>
-        {waitingAll.length ? (
-          <p className="row-sub tx-waiting-note">
-            {w(lang, 'waitingCount').replace('{n}', waitingAll.length.toLocaleString(lang))}
-            {' · '}
-            <Link to={href('/review', lang, { view: 'transcripts' })}>{w(lang, 'reviewAll')}</Link>
+        <div className="txc-player">
+          <button type="button" className="txc-play" onClick={playPause} aria-label={w(lang, playing ? 'pause' : 'play')}>
+            {playing ? <Pause size={18} fill="currentColor" aria-hidden /> : <Play size={18} fill="currentColor" aria-hidden />}
+          </button>
+          <span className="txc-now">
+            <span className="row-sub">{heardHere ? w(lang, playing ? 'playingAt' : 'pausedAt').replace('{at}', clockOf(nowMs)) : w(lang, 'tapPlays')}</span>
+            <span className="txc-progress" role="progressbar" aria-valuemin={0} aria-valuemax={all.length} aria-valuenow={checked} aria-label={w(lang, 'progress').replace('{n}', checked.toLocaleString(lang)).replace('{of}', all.length.toLocaleString(lang))}>
+              <i style={{ width: `${all.length ? (checked / all.length) * 100 : 0}%` }} />
+            </span>
+          </span>
+          <button
+            type="button"
+            className="txc-pill"
+            disabled={!heardHere}
+            aria-label={w(lang, 'againLabel')}
+            title={w(lang, 'againLabel')}
+            onClick={() => {
+              player.seek(Math.max(0, player.now() - 5));
+              if (!player.playing) player.toggle();
+            }}
+          >
+            {w(lang, 'again')}
+          </button>
+          <button type="button" className="txc-pill speed" aria-label={w(lang, 'speed')} title={w(lang, 'speed')} onClick={() => player.setRate(speeds[(speeds.indexOf(player.rate) + 1) % speeds.length] ?? 1)}>
+            <span dir="ltr">{player.rate.toLocaleString(lang)}×</span>
+          </button>
+        </div>
+      </header>
+
+      <div className="txc-body">
+        <p className="row-sub txc-count">{w(lang, 'progress').replace('{n}', checked.toLocaleString(lang)).replace('{of}', all.length.toLocaleString(lang))}</p>
+        {done.size && done.size < all.length ? (
+          <p className="row-sub tx-done-note">
+            {showDone ? null : `${w(lang, 'hiddenChecked').replace('{n}', done.size.toLocaleString(lang))} · `}
+            <button type="button" className="link-button" onClick={() => setShowDone((s) => !s)}>
+              {w(lang, showDone ? 'hideChecked' : 'showChecked')}
+            </button>
           </p>
         ) : null}
+
+        {transcripts.map((tr) => {
+          const index = tracks.findIndex((track) => track.id === tr.recording);
+          const here = player.current?.id === tr.recording;
+          const playFrom = (ms: number) => (here ? player.seek(ms / 1000) : player.play(tracks, index, ms / 1000));
+          return (
+            <div key={tr.recording}>
+              {transcripts.length > 1 ? <h3 className="txc-part">{tracks[index]?.title}</h3> : null}
+              <ol className="tx-list">
+                {tr.paragraphs.filter((p) => showDone || done.size === all.length || !done.has(p.id) || p.id === found).map((p) => (
+                  <Para
+                    key={p.id}
+                    foot={foot}
+                    recording={tr.recording}
+                    paragraph={p}
+                    open={open === p.id}
+                    active={here && within(nowMs, p)}
+                    found={p.id === start}
+                    resumed={p.id === start && !found}
+                    nowMs={nowMs}
+                    playing={here}
+                    canFix={canFix}
+                    history={history[tr.recording] ?? null}
+                    lang={lang}
+                    onOpen={() => setOpen(p.id)}
+                    onPlayFrom={(ms) => {
+                      playFrom(ms);
+                      if (here && !player.playing) player.toggle();
+                    }}
+                    onQueue={(content, complete, kind) => queue(tr.recording, p.id, content, complete, kind)}
+                    numberOf={numberOf}
+                    waiting={[...(tr.pending ?? []).filter((x) => x.segment === p.id), ...tray.filter((x) => x.segment === p.id).map(asPending)]}
+                    me={me}
+                    follow={follow}
+                  />
+                ))}
+              </ol>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className={canFix && open === null && !allDone && !showTray ? 'txc-foot empty' : 'txc-foot'}>
+        <div ref={setFoot} className="txc-slot" />
         {!canFix ? (
-          <p className="row-sub">
+          <p className="row-sub txc-signin">
             {w(lang, 'signIn')} <Link to={href('/signin', lang)}>{t(lang, 'signIn')}</Link>
           </p>
+        ) : open === null && allDone ? (
+          <div className="txc-done">
+            <b>{w(lang, 'allDone')}</b>
+            {transcripts.some((tr) => tr.paragraphs.some((p) => p.syncChecked === false)) ? (
+              <>
+                <span>{w(lang, 'syncAsk')}</span>
+                {transcripts
+                  .filter((tr) => tr.paragraphs.some((p) => p.syncChecked === false))
+                  .map((tr) => (
+                    <ConfirmSync key={tr.recording} recording={tr.recording} lang={lang} />
+                  ))}
+              </>
+            ) : null}
+          </div>
         ) : null}
-        <details className="tx-all" open={showAll} onToggle={(e) => setShowAll((e.target as HTMLDetailsElement).open)}>
-          <summary>
-            <History size={15} aria-hidden />
-            {w(lang, 'allChanges')}
-          </summary>
-          {showAll && waitingAll.length ? (
-            <div className="tx-waiting">
-              <h4 className="row-sub">
-                {w(lang, 'waitingTitle')} · {waitingAll.length.toLocaleString(lang)}
-                {' · '}
-                <Link to={href('/review', lang, { view: 'transcripts' })}>{w(lang, 'reviewAll')}</Link>
-              </h4>
-              <ul>
-                {waitingAll.map((x) => (
-                  <li key={`${x.suggestion}:${x.segment}`}>
-                    <button type="button" className="tx-waiting-n" onClick={() => setOpen(x.segment)}>
-                      ¶{numberOf(x.segment)}
-                    </button>{' '}
-                    <span className="row-sub">
-                      {x.authorName ?? x.author}
-                      {x.suggestion !== null ? ` · #${x.suggestion}` : ''}
-                    </span>
-                    <p className="tx-diff" dir="auto">
-                      <InlineDiff parts={wordDiff(all.find((p) => p.id === x.segment)?.content ?? '', x.content)} />
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          {showAll ? (
-            transcripts.some((tr) => !history[tr.recording]) ? (
-              <p className="row-sub">…</p>
-            ) : commits.some((c) => c.changes.some((x) => x.kind !== 'made')) ? (
-              <ul>
-                {commits.map((c) => (
-                  <ChangeRow key={c.commit} commit={c} lang={lang} numberOf={numberOf} />
-                ))}
-              </ul>
-            ) : (
-              <p className="row-sub">{w(lang, 'noChanges')}</p>
-            )
-          ) : null}
-        </details>
+        {showTray ? (
+          <button type="button" className="txc-tray" onClick={() => setTrayOpen(true)}>
+            <span>
+              {w(lang, 'tray')} · <b>{tray.length.toLocaleString(lang)}</b>
+            </span>
+            <span className="txc-tray-send">{w(lang, 'traySendShort')}</span>
+          </button>
+        ) : null}
       </div>
 
-      {done.size && done.size < all.length ? (
-        <p className="row-sub tx-done-note">
-          {showDone ? null : `${w(lang, 'hiddenChecked').replace('{n}', done.size.toLocaleString(lang))} · `}
-          <button type="button" className="link-button" onClick={() => setShowDone((s) => !s)}>
-            {w(lang, showDone ? 'hideChecked' : 'showChecked')}
-          </button>
-        </p>
-      ) : null}
-
-      {tray.length || traySaid ? (
-        <div className="tx-tray" role="status">
-          {tray.length ? (
-            <>
-              <button type="button" className="tx-tray-open" onClick={() => setTrayOpen(true)}>
-                {w(lang, 'tray')} · <b>{tray.length.toLocaleString(lang)}</b>
-                <span className="row-sub">{w(lang, 'trayOpen')}</span>
-              </button>
-              <button type="button" className="btn primary sm" onClick={() => void sendTray()} disabled={sending}>
-                {w(lang, 'traySend')}
-              </button>
-            </>
-          ) : (
-            <span className="row-sub">{traySaid}</span>
-          )}
+      {toast ? (
+        <div className="txc-toast" role="status">
+          <span>{toast.text}</span>
+          {toast.undo ? (
+            <button type="button" onClick={toast.undo}>
+              {w(lang, 'undo')}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -914,14 +1014,9 @@ export function TranscriptEditor({
         onClose={() => setTrayOpen(false)}
         title={`${w(lang, 'tray')} · ${tray.length.toLocaleString(lang)}`}
         footer={
-          <>
-            <button type="button" className="btn" onClick={() => setTrayOpen(false)}>
-              {w(lang, 'cancel')}
-            </button>
-            <button type="button" className="btn primary" onClick={() => void sendTray()} disabled={sending || !tray.length}>
-              {w(lang, 'traySend')}
-            </button>
-          </>
+          <button type="button" className="txc-btn primary wide" onClick={() => void sendTray()} disabled={sending || !tray.length}>
+            {w(lang, 'traySend')}
+          </button>
         }
       >
         <ul className="tx-tray-list">
@@ -950,51 +1045,86 @@ export function TranscriptEditor({
         {trayError ? <p role="alert">{trayError}</p> : null}
       </Sheet>
 
-      {transcripts.map((tr) => {
-        const index = tracks.findIndex((track) => track.id === tr.recording);
-        const playing = player.current?.id === tr.recording;
-        const playFrom = (ms: number) => (playing ? player.seek(ms / 1000) : player.play(tracks, index, ms / 1000));
-        return (
-          <div key={tr.recording}>
-            {transcripts.length > 1 ? <h3>{tracks[index]?.title}</h3> : null}
-            <ol className="tx-list">
-              {tr.paragraphs.filter((p) => showDone || done.size === all.length || !done.has(p.id) || p.id === found).map((p) => (
-                <Para
-                  key={p.id}
-                  n={numberOf(p.id)}
-                  recording={tr.recording}
-                  paragraph={p}
-                  open={open === p.id}
-                  active={playing && within(nowMs, p)}
-                  found={p.id === start}
-                  resumed={p.id === start && !found}
-                  nowMs={nowMs}
-                  playing={playing}
-                  canFix={canFix}
-                  history={history[tr.recording] ?? null}
-                  lang={lang}
-                  onOpen={() => setOpen(p.id)}
-                  onPlayFrom={(ms) => {
-                    playFrom(ms);
-                    if (playing && !player.playing) player.toggle();
-                  }}
-                  onQueue={(content, complete, kind) => queue(tr.recording, p.id, content, complete, kind)}
-                  onRight={() => {
-                    const next = nextAfter(p.id);
-                    if (next) setOpen(next);
-                  }}
-                  numberOf={numberOf}
-                  waiting={[...(tr.pending ?? []).filter((x) => x.segment === p.id), ...tray.filter((x) => x.segment === p.id).map(asPending)]}
-                  me={me}
-                  follow={follow}
-                />
-              ))}
-            </ol>
-            {canFix && tr.paragraphs.some((p) => p.syncChecked === false) ? <ConfirmSync recording={tr.recording} lang={lang} /> : null}
-          </div>
-        );
-      })}
-
-    </>
+      <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title={w(lang, 'title')}>
+        <div className="tx-top">
+          <p className="row-sub tx-machine-line">{t(lang, 'lyricsMachineHint')}</p>
+          <details className="tx-how">
+            <summary>
+              <CircleHelp size={15} aria-hidden />
+              {w(lang, 'how')}
+            </summary>
+            <ul>
+              <li>{w(lang, 'howTap')}</li>
+              <li>{w(lang, 'howRight')}</li>
+              <li>{w(lang, 'howEdit')}</li>
+              <li>{w(lang, 'howUnclear')}</li>
+              <li>{w(lang, 'howPause')}</li>
+              <li>{w(lang, 'howHistory')}</li>
+              <li>{w(lang, 'howSpeed')}</li>
+            </ul>
+            {canFix && checked < all.length ? <TrainingGoalBar lang={lang} /> : null}
+          </details>
+          {waitingAll.length ? (
+            <p className="row-sub tx-waiting-note">
+              {w(lang, 'waitingCount').replace('{n}', waitingAll.length.toLocaleString(lang))}
+              {' · '}
+              <Link to={href('/review', lang, { view: 'transcripts' })}>{w(lang, 'reviewAll')}</Link>
+            </p>
+          ) : null}
+          <details className="tx-all" open={showAll} onToggle={(e) => setShowAll((e.target as HTMLDetailsElement).open)}>
+            <summary>
+              <History size={15} aria-hidden />
+              {w(lang, 'allChanges')}
+            </summary>
+            {showAll && waitingAll.length ? (
+              <div className="tx-waiting">
+                <h4 className="row-sub">
+                  {w(lang, 'waitingTitle')} · {waitingAll.length.toLocaleString(lang)}
+                </h4>
+                <ul>
+                  {waitingAll.map((x) => (
+                    <li key={`${x.suggestion}:${x.segment}`}>
+                      <button
+                        type="button"
+                        className="tx-waiting-n"
+                        onClick={() => {
+                          setOpen(x.segment);
+                          setMoreOpen(false);
+                        }}
+                      >
+                        ¶{numberOf(x.segment)}
+                      </button>{' '}
+                      <span className="row-sub">
+                        {x.authorName ?? x.author}
+                        {x.suggestion !== null ? ` · #${x.suggestion}` : ''}
+                      </span>
+                      <p className="tx-diff" dir="auto">
+                        <InlineDiff parts={wordDiff(all.find((p) => p.id === x.segment)?.content ?? '', x.content)} />
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {showAll ? (
+              transcripts.some((tr) => !history[tr.recording]) ? (
+                <p className="row-sub">…</p>
+              ) : commits.some((c) => c.changes.some((x) => x.kind !== 'made')) ? (
+                <ul>
+                  {commits.map((c) => (
+                    <ChangeRow key={c.commit} commit={c} lang={lang} numberOf={numberOf} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="row-sub">{w(lang, 'noChanges')}</p>
+              )
+            ) : null}
+          </details>
+          {canFix && !allDone && transcripts.some((tr) => tr.paragraphs.some((p) => p.syncChecked === false))
+            ? transcripts.filter((tr) => tr.paragraphs.some((p) => p.syncChecked === false)).map((tr) => <ConfirmSync key={tr.recording} recording={tr.recording} lang={lang} />)
+            : null}
+        </div>
+      </Sheet>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { HDate } from '@hebcal/core';
+import { HDate } from '@hebcal/hdate';
 import { isMonthToken, monthByToken, MONTHS, type MonthToken } from './months.js';
 import { toHebrewNumeral } from './numerals.js';
 
