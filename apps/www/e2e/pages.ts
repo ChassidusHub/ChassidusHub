@@ -13,6 +13,8 @@ export const pages: { name: string; path: string }[] = [
   { name: 'Design system', path: '/ui' },
   { name: 'Sign in', path: '/signin' },
   { name: 'Account', path: '/account' },
+  { name: 'About', path: '/about' },
+  { name: 'Takedown', path: '/takedown' },
   // These pages come from the stand-in API (fixture-api.ts), so only on the local build.
   ...(process.env.BASE_URL
     ? []

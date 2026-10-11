@@ -183,6 +183,15 @@ const toCheck = {
   totals: { transcripts: 1, paragraphs: 40, scans: 0, pages: 0, texts: 1, segments: 2 },
 };
 
+/** Takedown requests asked for (GET /_takedowns), checked as core's takedown.ts checks them. */
+const takedowns: unknown[] = [];
+function takedown(input: Record<string, string>, from: string | string[] | undefined): [number, unknown] {
+  if (!input.name) return [400, { error: 'invalid', message: 'your name, up to 200 characters' }];
+  if ((input.statement ?? '').length < 10) return [400, { error: 'invalid', message: 'say in a few words why (10 to 4000 characters)' }];
+  takedowns.push({ ...input, from: from ?? null });
+  return [201, { id: 40 + takedowns.length, answerWithinDays: 14 }];
+}
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
   res.setHeader('Content-Type', 'application/json');
@@ -229,6 +238,8 @@ createServer((req, res) => {
           ? fix(JSON.parse(raw || '{}'), cookie)
           : url.pathname === '/v1/organize'
             ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { suggestion: { id: 200 + edits.length, status: 'open', title: 'edit' }, merged: false, mayApprove: false, preview: {} }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
+          : url.pathname === '/v1/takedowns'
+            ? takedown(JSON.parse(raw || '{}'), req.headers['x-forwarded-for'])
           : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
             ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
             : [404, { error: 'not-found', message: 'not found' }];
@@ -242,6 +253,7 @@ createServer((req, res) => {
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
   if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
   if (url.pathname === '/_mails') return res.end(JSON.stringify(mails));
+  if (url.pathname === '/_takedowns') return res.end(JSON.stringify(takedowns));
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
   const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
   if (entity) {

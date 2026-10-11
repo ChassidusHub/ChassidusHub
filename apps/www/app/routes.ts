@@ -18,6 +18,7 @@ export default [
     route('account', 'routes/account.tsx'),
     route('me/fixes', 'routes/fixes.tsx'),
     route('about', 'routes/about.tsx'),
+    route('takedown', 'routes/takedown.tsx'),
     route('back', 'routes/backroom.tsx'),
     route('ui', 'routes/ui.tsx'),
     route('*', 'routes/item.tsx'),

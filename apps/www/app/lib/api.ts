@@ -57,6 +57,9 @@ export function forwardFor({ binding, baseUrl = 'https://api.chassidushub.org' }
     }
     // The API sets a Secure cookie only for a request it knows came over HTTPS.
     if (new URL(request.url).protocol === 'https:') headers.set('x-forwarded-proto', 'https');
+    // The address Cloudflare saw the person at (a browser cannot write it), for the API's hourly limits on reports and takedowns.
+    const address = request.headers.get('cf-connecting-ip');
+    if (address) headers.set('x-forwarded-for', address);
     const query = new URL(request.url).search;
     const init: RequestInit = { method: request.method, headers, redirect: 'manual', ...(request.method === 'GET' || request.method === 'HEAD' ? {} : { body: await request.text() }) };
     const url = `${baseUrl.replace(/\/+$/, '')}${path}${query}`;

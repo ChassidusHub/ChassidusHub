@@ -614,3 +614,31 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .view > .seg { margin-block: 6px 14px; }
 .fixbox .was { margin: 0 0 4px; }
 .fixbox .was q { font-family: var(--torah); font-size: 17px; quotes: '„' '”'; }
+
+/* ---------- about, help and asking for a takedown (thread 6) ---------- */
+.field textarea { min-height: 120px; border: 1px solid var(--g300); border-radius: 6px; padding: 8px 10px; font: inherit; line-height: 1.5; background: var(--g0); color: var(--g900); resize: vertical; }
+.field textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--g0), 0 0 0 4px var(--g900); }
+.choice { border: 0; padding: 0; margin-inline: 0; gap: 0; }
+.choice legend { font-size: 12px; color: var(--g600); padding: 0; margin-bottom: 4px; }
+.choice label { display: flex; align-items: center; gap: 10px; min-height: 44px; padding-inline: 12px; border: 1px solid var(--g300); font-size: 15px; color: var(--g900); cursor: pointer; }
+.choice label + label { border-top: 0; }
+.choice label:first-of-type { border-start-start-radius: 8px; border-start-end-radius: 8px; }
+.choice label:last-of-type { border-end-start-radius: 8px; border-end-end-radius: 8px; }
+.choice input { accent-color: var(--g900); width: 18px; height: 18px; margin: 0; }
+.choice label:has(input:checked) { background: var(--g100); font-weight: 500; }
+.choice label:has(input:focus-visible) { box-shadow: inset 0 0 0 2px var(--g900); }
+.steps { list-style: none; padding: 0; margin: 0; }
+.steps li { display: flex; gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--g200); }
+.steps li:last-child { border-bottom: 0; }
+.steps .bk { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--g100); color: var(--g900); }
+.steps b { display: block; }
+.steps span.s { display: block; color: var(--g700); font-size: 14px; }
+.terms { margin: 0; }
+.terms div { display: flex; justify-content: space-between; gap: 12px; padding-block: 8px; border-bottom: 1px solid var(--g200); }
+.terms div:last-child { border-bottom: 0; }
+.terms dt { color: var(--g700); }
+.terms dd { margin: 0; font-weight: 500; }
+.links { list-style: none; padding: 0; margin: 0 0 8px; }
+.links a { display: flex; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--g200); color: var(--g900); }
+.links li:last-child a { border-bottom: 0; }
+.links a:hover span { text-decoration: underline; text-underline-offset: 3px; }
