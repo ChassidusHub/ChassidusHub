@@ -31,9 +31,15 @@ const types: Record<string, string> = {
 };
 
 createServer((req, res) => {
-  const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
-  const file = path.join(client, pathname);
-  if (file.startsWith(client + path.sep) && existsSync(file) && statSync(file).isFile()) {
+  let pathname: string | null;
+  try {
+    pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
+  } catch {
+    // A broken % escape is no file; the page answers it (a 404).
+    pathname = null;
+  }
+  const file = pathname === null ? null : path.join(client, pathname);
+  if (pathname !== null && file && file.startsWith(client + path.sep) && existsSync(file) && statSync(file).isFile()) {
     res.setHeader('Content-Type', types[path.extname(file)] ?? 'application/octet-stream');
     if (pathname.startsWith('/assets/')) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     createReadStream(file).pipe(res);

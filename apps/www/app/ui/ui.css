@@ -424,9 +424,3 @@ svg.i.filled { fill: currentColor; stroke: none; }
 .missing { text-align: center; margin: 40px 0; }
 .scan { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .scan img { width: 100%; height: auto; border: 1px solid var(--g300); border-radius: 4px; background: var(--g50); }
-.fixbox textarea {
-  width: 100%; min-height: 96px; border: 1px solid var(--g400); border-radius: 8px; padding: 10px 12px;
-  font: inherit; font-size: 16px; line-height: 1.6; background: var(--g0); color: var(--g900); resize: vertical;
-}
-.fixbox textarea:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--g0), 0 0 0 4px var(--g900); }
-.fixbox .actions { display: flex; gap: 8px; margin-top: 12px; }

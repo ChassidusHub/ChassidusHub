@@ -53,24 +53,22 @@ test('keeps the text size the reader picks', async ({ page }) => {
   expect(await size()).toBe(before + 2);
 });
 
-test('the corner menu: versions, and reporting a problem', async ({ page }) => {
+test('the corner menu switches versions', async ({ page }) => {
   await page.goto('/sample/1/1');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'עוד', exact: true }).click();
   await page.getByRole('dialog', { name: 'עוד' }).getByRole('button', { name: /נוסח/ }).click();
   await expect(page.getByRole('dialog', { name: 'נוסח' }).getByRole('link', { name: 'אנגלית' })).toBeVisible();
-  await page.keyboard.press('Escape');
-
-  await page.getByRole('button', { name: 'עוד', exact: true }).click();
-  await page.getByRole('button', { name: 'משהו לא בסדר כאן' }).click();
-  await page.getByRole('textbox', { name: 'מה לא בסדר' }).fill('בדיקה לדוגמה');
-  await page.getByRole('button', { name: 'שליחה' }).click();
-  await expect(page.getByRole('status')).toContainText('תודה');
 });
 
 test('a page with nothing to show yet says so', async ({ page }) => {
   await page.goto('/sample/1/3');
   await expect(page.getByText('אין עדיין טקסט או סריקה לדף הזה.')).toBeVisible();
+});
+
+test('a broken % escape is a 404', async ({ page }) => {
+  const response = await page.goto('/sample/%E0%A4%A');
+  expect(response?.status()).toBe(404);
 });
 
 test('an unknown path is a 404', async ({ page }) => {

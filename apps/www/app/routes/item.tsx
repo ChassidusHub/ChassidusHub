@@ -20,7 +20,13 @@ const listening = new Set(['event', 'recording']);
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
-  const path = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
+  let path: string;
+  try {
+    path = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
+  } catch {
+    // A broken % escape names no item.
+    throw data('not found', { status: 404 });
+  }
   const permanent = /^\/(rh-[\w-]+)$/i.exec(path)?.[1];
   const language = url.searchParams.get('language') ?? undefined;
   let view;
@@ -37,25 +43,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const name = nameOf(fields.label ?? fields.title ?? fields.name) || view.item.id;
   if (view.item.type === 'unit') return { kind: 'reader' as const, type: view.item.type, name, reader: await readerData(view, context, url.origin) };
   return { kind: 'item' as const, id: view.item.id, type: view.item.type, name, pathBar: pathSteps(view.pathBar) };
-}
-
-/** "Something is wrong here", from the reader's corner menu. */
-export async function action({ request, context }: Route.ActionArgs) {
-  const form = await request.formData();
-  const note = String(form.get('note') ?? '')
-    .trim()
-    .slice(0, 2000);
-  const entityId = String(form.get('id') ?? '');
-  if (form.get('intent') !== 'report' || !note) return { error: 'כתבו מה לא בסדר.' };
-  try {
-    await context.api.report({ body: { entityId, reason: 'other', note } });
-    return { ok: true };
-  } catch (error) {
-    const status = (error as { status?: number } | null)?.status;
-    if (status === 403) return { error: 'כדי לדווח צריך להיכנס לחשבון.' };
-    if (status === 429) return { error: 'נשלחו מכאן הרבה דיווחים בשעה האחרונה. נסו שוב מאוחר יותר.' };
-    return { error: 'השליחה לא הצליחה. נסו שוב.' };
-  }
 }
 
 export const handle = { section: (loaded: Awaited<ReturnType<typeof loader>> | undefined): Section => (loaded && listening.has(loaded.type) ? 'listen' : 'library') };

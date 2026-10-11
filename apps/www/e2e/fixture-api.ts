@@ -86,7 +86,6 @@ createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
   const view = url.pathname === '/v1/view' ? views[url.searchParams.get('path') ?? ''] : undefined;
   res.setHeader('Content-Type', 'application/json');
-  if (url.pathname === '/v1/reports' && req.method === 'POST') return res.end(JSON.stringify({ id: 1, number: null }));
   if (!view) {
     res.statusCode = 404;
     return res.end(JSON.stringify({ error: 'not-found', message: 'not found' }));

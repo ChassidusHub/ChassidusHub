@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
-import { Link, useFetcher } from 'react-router';
+import { Link } from 'react-router';
 import { pathLevels } from '../path';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';
 import { ServerHtml } from './Words';
 
-type Open = null | 'look' | 'more' | 'versions' | 'report' | { note: string };
+type Open = null | 'look' | 'more' | 'versions' | { note: string };
 
 /**
  * The reading page: only the words and their footnotes. A footnote's mark
@@ -149,7 +149,8 @@ export function Reader({ data }: { data: ReaderData }) {
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
         <Option icon="pen" label="עריכה" end="בקרוב" quiet />
-        <Option icon="flag" label="משהו לא בסדר כאן" onSelect={() => setOpen('report')} quiet />
+        {/* Reporting waits until a report can carry who sends it (sign-in, or the captcha the API asks for when signed out). */}
+        <Option icon="flag" label="משהו לא בסדר כאן" end="בקרוב" quiet />
       </Sheet>
 
       {words && (
@@ -164,7 +165,6 @@ export function Reader({ data }: { data: ReaderData }) {
         </Sheet>
       )}
 
-      <Report open={open === 'report'} id={data.id} onClose={close} onSent={() => toast('תודה. נבדוק את זה')} />
     </>
   );
 }
@@ -259,38 +259,6 @@ function Look({ open, onClose }: { open: boolean; onClose: () => void }) {
         <span className="r">{theme === 'dark' ? 'כהה' : 'בהיר'}</span>
         <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
       </button>
-    </Sheet>
-  );
-}
-
-/** "Something is wrong here": a few words to the people who look after the catalog. */
-function Report({ open, id, onClose, onSent }: { open: boolean; id: string; onClose: () => void; onSent: () => void }) {
-  const fetcher = useFetcher<{ ok?: boolean; error?: string }>();
-  const [note, setNote] = useState('');
-  useEffect(() => {
-    if (fetcher.state === 'idle' && fetcher.data?.ok) {
-      setNote('');
-      onClose();
-      onSent();
-    }
-  }, [fetcher.state, fetcher.data, onClose, onSent]);
-  const busy = fetcher.state !== 'idle';
-  return (
-    <Sheet open={open} title="משהו לא בסדר כאן" onClose={onClose}>
-      <fetcher.Form method="post" className="fixbox">
-        <input type="hidden" name="intent" value="report" />
-        <input type="hidden" name="id" value={id} />
-        <textarea name="note" value={note} onChange={(event) => setNote(event.target.value)} aria-label="מה לא בסדר" placeholder="מה לא בסדר? לדוגמה: חסר עמוד, שם שגוי" required maxLength={2000} />
-        {fetcher.data?.error && <p className="sm">{fetcher.data.error}</p>}
-        <div className="actions">
-          <Button type="submit" disabled={busy || !note.trim()}>
-            {busy ? 'שולח…' : 'שליחה'}
-          </Button>
-          <Button look="ghost" onClick={onClose}>
-            ביטול
-          </Button>
-        </div>
-      </fetcher.Form>
     </Sheet>
   );
 }
