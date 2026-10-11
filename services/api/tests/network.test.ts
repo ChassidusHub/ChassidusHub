@@ -44,6 +44,14 @@ describe('search that lands on the moment, and by meaning', () => {
     expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=5711`)).body.moments).toHaveLength(1);
     expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=${encodeURIComponent('57%')}`)).status).toBe(422);
 
+    // A subject in English letters is looked for as the texts write it, by the older reads too (#99): the site's /search uses them.
+    const english = (await json(app, `/v1/search/moments?q=${encodeURIComponent('ahavas yisroel')}`)).body;
+    expect(english.topic).toEqual({ key: 'ahavas yisroel', he: 'אהבת ישראל' });
+    expect(english.moments).toMatchObject([{ id: segment }]);
+    const named = (await json(app, `/v1/search?q=${encodeURIComponent('ahavas yisroel')}`)).body;
+    expect(named.topic).toEqual({ key: 'ahavas yisroel', he: 'אהבת ישראל' });
+    expect((await json(app, `/v1/search?q=${encodeURIComponent('אהבת')}`)).body.topic).toBeNull();
+
     // The new site's screen: the transcript opens at its farbrengen at the moment heard; a date alone is that day's farbrengen.
     const page = (await json(app, `/v1/search/page?q=${encodeURIComponent('אהבת')}`)).body;
     expect(page.words).toMatchObject([{ id: segment, kind: 'paragraph', title: 'יו״ד שבט תשמ״ב', path: '/events/5742-05-10?t=61', machine: true }]);
