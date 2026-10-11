@@ -18,7 +18,6 @@ import { labelOf } from '../lib/labels.js';
 import { href, itemPath } from '../lib/links.js';
 import { eventKindName } from '../lib/pageStrings.js';
 import { totalLength, tracksOf } from '../lib/tracks.js';
-import { parshaOf } from '../lib/week.js';
 import { clock, usePlayer, type Track } from '../player/PlayerProvider.js';
 import { Icon } from '../ui/Icon.js';
 import { ItemShell, type ItemHead } from '../ui/ItemShell.js';
@@ -577,7 +576,7 @@ export function EventPage({ entity, view, lang }: { entity: Entity; view: ItemVi
   const month = monthToken ? (monthByToken(monthToken) ?? monthByToken(monthToken.toUpperCase())) : undefined;
   const links = d.links ?? [];
   const length = totalLength(recordings, lang);
-  const parsha = d.date ? parshaOf(d.date, lang) : null;
+  const parsha = view.parsha ?? null;
   const place = d.place ? view.refs[d.place] : undefined;
   const said = view.event?.said ?? [];
   const texts = view.event?.texts ?? [];

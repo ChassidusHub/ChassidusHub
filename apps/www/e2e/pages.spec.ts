@@ -37,18 +37,21 @@ for (const { name, path } of pages) {
       const of = (type: string) => sizes.filter((s) => s.type === type);
       const sum = (list: { bytes: number }[]) => list.reduce((total, s) => total + s.bytes, 0);
       const shift = await page.evaluate(() => (window as unknown as { shift: number }).shift);
+      const preloaded = await page.evaluate(() => [...document.querySelectorAll<HTMLLinkElement>('link[rel=preload][as=font]')].map((link) => link.href));
+      const preloadedFonts = of('font').filter((s) => preloaded.includes(s.url));
 
       const report = {
         serverWaitMs: Math.round(wait),
         firstVisitBytes: sum(sizes),
         javascriptBytes: sum(of('script')),
         javascriptFiles: of('script').length,
-        fontBytes: sum(of('font')),
-        fontFiles: of('font').length,
+        preloadedFontBytes: sum(preloadedFonts),
+        preloadedFontFiles: preloadedFonts.length,
         htmlBytes: sum(of('document')),
         layoutShift: Number(shift.toFixed(3)),
       };
       test.info().annotations.push({ type: 'budgets', description: JSON.stringify(report) });
+      console.log(`${name} on ${test.info().project.name}: ${JSON.stringify(report)}`);
       for (const key of Object.keys(budgets) as (keyof typeof budgets & string)[]) {
         expect.soft(report[key], `${key} (budget ${budgets[key]})`).toBeLessThanOrEqual(budgets[key]);
       }
@@ -59,8 +62,12 @@ for (const { name, path } of pages) {
       expect(response?.headers()['x-robots-tag']).toBe('noindex');
       await expect(page.locator('html')).toHaveAttribute('lang', 'he');
       await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-      const { violations } = await new AxeBuilder({ page }).analyze();
-      expect(violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+      // Both themes: the dark one has its own contrasts.
+      for (const colorScheme of ['light', 'dark'] as const) {
+        await page.emulateMedia({ colorScheme });
+        const { violations } = await new AxeBuilder({ page }).analyze();
+        expect(violations.map((v) => `${colorScheme} ${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`)).toEqual([]);
+      }
     });
   });
 }
