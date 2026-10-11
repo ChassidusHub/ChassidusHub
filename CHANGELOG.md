@@ -10,6 +10,12 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A signed-out reader's page no longer asks for an account's draft it would be
+  refused (a 401 that smoke counted as a broken page).
+- A maamar's name no longer carries what the print adds to its dateline:
+  the Chabad Library importer leaves out the opening `בס"ד` and the footnote
+  `*` (`בס"ד, יו"ד שבט, תשי"ב*` is named `יו"ד שבט, תשי"ב`). It takes effect
+  at the next import.
 - The home page no longer waits half a minute after a quiet spell:
   `/v1/transcripts` answers from a list the API's scheduled run keeps
   (made again every fifteen minutes) instead of counting every

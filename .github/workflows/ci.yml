@@ -2,7 +2,9 @@ name: CI
 
 on:
   # Pull requests only, not again on main after the merge, while Actions minutes are limited (private repository).
+  # A draft is not checked: Actions minutes go to pull requests that are ready (studio/briefs/qa.md).
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +17,7 @@ concurrency:
 jobs:
   changes:
     name: What changed
+    if: github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -107,7 +110,8 @@ jobs:
     # The name pull requests have always waited on: green when every job above passed or had nothing to check.
     name: Types, tests and schemas (PGlite)
     needs: [changes, types, tests, www]
-    if: always()
+    # Skipped with the rest on a draft, so a draft never shows a green check it did not earn.
+    if: always() && (github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft)
     runs-on: ubuntu-latest
     steps:
       - name: Every check passed
