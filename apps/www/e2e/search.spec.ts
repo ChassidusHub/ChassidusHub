@@ -21,8 +21,13 @@ test('a search opens its results and keeps the words in the box', async ({ page 
   await expect(main.getByRole('link', { name: /שיחה ראשונה/ })).toHaveCount(1);
   // The subject index entry the words name, read by a machine.
   await expect(main.getByRole('heading', { name: 'במפתח הענינים' })).toBeVisible();
-  await expect(main.locator('a[href^="/mafteach?q="]')).toContainText('34 מקומות ב־12 חלקים · מפתח לדוגמה');
-  await expect(main.locator('a[href^="/mafteach?q="]')).toContainText('במכונה');
+  const entry = main.locator('a[href="/mafteach?q=%D7%A4%D7%A1%D7%A7%D7%94"]');
+  await expect(entry).toContainText('34 מקומות ב־12 חלקים · מפתח לדוגמה');
+  await expect(entry).toContainText('במכונה');
+  // One place in one volume is said as such, and a checked entry has no machine label.
+  const small = main.locator('a[href="/mafteach?q=%D7%A7%D7%98%D7%A0%D7%94"]');
+  await expect(small).toContainText('מקום אחד בחלק אחד');
+  await expect(small).not.toContainText('במכונה');
   await expect(main.getByRole('heading', { name: 'ספרים ומאמרים' })).toBeVisible();
   await expect(main.getByRole('link', { name: /מדף לדוגמה/ })).toBeVisible();
   await expect(main.getByRole('heading', { name: 'התוועדויות' })).toBeVisible();

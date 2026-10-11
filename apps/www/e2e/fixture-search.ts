@@ -27,7 +27,10 @@ export function searchAnswer(url: URL): [number, unknown] | undefined {
       date: null,
       within: null,
       top: sicha,
-      subjects: [{ index: { he: 'מפתח לדוגמה' }, topic: 'פסקה', places: 34, volumes: 12, machine: true, path: '/mafteach?q=%D7%A4%D7%A1%D7%A7%D7%94' }],
+      subjects: [
+        { index: { he: 'מפתח לדוגמה' }, topic: 'פסקה', places: 34, volumes: 12, machine: true, path: '/mafteach?q=%D7%A4%D7%A1%D7%A7%D7%94' },
+        { index: null, topic: 'פסקה קטנה', places: 1, volumes: 1, machine: false, path: '/mafteach?q=%D7%A7%D7%98%D7%A0%D7%94' },
+      ],
       works: [sicha, sefer, shelf],
       events: [farbrengen],
       words: [

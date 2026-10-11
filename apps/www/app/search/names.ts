@@ -64,6 +64,11 @@ export const KIND: Record<string, string> = {
   author: 'אישים',
 };
 
+/** How much a subject index entry lists, in words: "מקום אחד בחלק אחד", "34 מקומות ב־12 חלקים". */
+export function placesIn(places: number, volumes: number): string {
+  return `${places === 1 ? 'מקום אחד' : `${places} מקומות`} ${volumes === 1 ? 'בחלק אחד' : `ב־${volumes} חלקים`}`;
+}
+
 /** A snippet cut at its marks: what <mark> wraps. Marks out of order or out of range are tidied, never trusted. */
 export function markWords(snippet: string, marks: readonly (readonly number[])[]): { text: string; marked: boolean }[] {
   const out: { text: string; marked: boolean }[] = [];
