@@ -174,7 +174,8 @@ const liveOne = (cookie: string) => ({
   changeset: { id: 301, title: 'A fix to the words', status: 'merged', post_review: 'pending' },
   entries: [{ entityId: 'rh-aaaaaab1', type: 'unit', before: { path: '/sample/1/1' }, after: { path: '/sample/1/1' }, changes: [{ path: '/body/versions/he/segments/p2/text', before: [{ text: 'פסקה שניה לדוגמה, עם הערה נוספת' }], after: [{ text: 'פסקה שנייה לדוגמה, עם הערה נוספת' }] }], conflicts: [] }],
   total: 1,
-  mayApprove: signedIn(cookie) ? { ok: true } : { ok: false, reason: 'sign in to review' },
+  mayApprove: signedIn(cookie),
+  mayApproveReason: signedIn(cookie) ? null : 'sign in to review',
 });
 const toCheck = {
   transcripts: [{ event: 'rh-3dvjfkyc', path: '/listen/5732/rh-3dvjfkyc', title: { he: 'התוועדות לדוגמה' }, date: null, paragraphs: 40, checked: 3, made: '2026-10-10T00:00:00Z' }],
