@@ -12,8 +12,9 @@ declare module 'react-router' {
     visitor?: ChassidusHub;
     /**
      * A request sent on to the API as it came (its method, body, cookie and
-     * Origin), for signing in only (routes/auth.ts): the API sets the session
-     * cookie on its answer, and the site hands that to the browser as its own.
+     * Origin), for the narrow pass-throughs only (routes/auth.ts `passTo`):
+     * signing in, where the API sets the session cookie and the site hands it
+     * to the browser as its own; connecting an app; API keys; a takedown.
      */
     forward?: (path: string, request: Request) => Promise<Response>;
   }
@@ -44,7 +45,7 @@ export function visitorApi(request: Request, make: (cookie: string) => Chassidus
   return cookie ? make(cookie) : undefined;
 }
 
-/** The headers a request to sign in carries on to the API; nothing else of the browser's goes. */
+/** The headers a passed-on request carries to the API; nothing else of the browser's goes. */
 const FORWARDED = ['accept', 'content-type', 'cookie', 'origin', 'user-agent'];
 
 /** Sends a browser's request on to the API's `path`, through the binding when there is one (AppLoadContext.forward). */
