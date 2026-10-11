@@ -1,0 +1,30 @@
+/*
+ * A recording's words, as the prototype draws them, in the design system's
+ * tokens only. The site-wide player brings the same rules into ui/ui.css; this
+ * file goes when it is on main.
+ */
+
+/* A recording's words: one continuous text, a small heading where each part starts. */
+.chh {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 26px 0 6px; font-family: var(--ui); font-size: 13px; font-weight: 600; line-height: 1.45; color: var(--g700);
+}
+.chh span:last-child { font-weight: 400; color: var(--g600); font-variant-numeric: tabular-nums; }
+.yi { font-family: var(--torah); font-size: calc(var(--torah-size) - 1px); line-height: 1.8; }
+.yi .p {
+  display: inline; color: var(--g700); border-radius: 4px; cursor: pointer; padding: 1px 2px;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+}
+.yi .p:hover { color: var(--g900); }
+.yi .p.now { background: var(--g100); color: var(--g900); }
+.yi .wait { font-family: var(--ui); font-size: 13px; color: var(--g600); }
+.rec-acts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0 4px; }
+
+/* "Back to what is playing", when the reader has scrolled away from it. */
+.backnow {
+  position: fixed; inset-inline-start: 50%; transform: translateX(50%);
+  bottom: calc(132px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  height: 34px; padding-inline: 14px; border-radius: 999px;
+  background: var(--g900); color: var(--g0); font-size: 13px; box-shadow: var(--shadow);
+}
+@media (min-width: 900px) { .backnow { bottom: 96px; } }
