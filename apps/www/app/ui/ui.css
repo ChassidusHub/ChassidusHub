@@ -603,3 +603,5 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .panel .chips { margin-top: 10px; }
 .auth { max-width: 420px; margin-inline: auto; }
 .auth .lede { color: var(--g700); }
+.fixbox .was { margin: 0 0 4px; }
+.fixbox .was q { font-family: var(--torah); font-size: 17px; quotes: '„' '”'; }
