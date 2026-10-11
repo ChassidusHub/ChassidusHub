@@ -1,3 +1,4 @@
+import { MONTHS } from '@chassidushub/hebrew';
 import type { LocalName } from '@chassidushub/model';
 
 /**
@@ -18,9 +19,16 @@ export function langFrom(request: Request): Lang {
 
 export const dir = (lang: Lang) => (lang === 'he' ? 'rtl' : 'ltr');
 
-/** A name in the page's language, falling back to Hebrew (most names are only in Hebrew). */
+/**
+ * A name in the page's language, falling back to Hebrew (most names are only in Hebrew). A name that is
+ * just a Hebrew month (Hayom Yom's volumes: `כסלו`, `אדר א`) has its English name on the English page.
+ */
 export function nameOf(name: LocalName | undefined | null, lang: Lang): string {
   if (!name) return '';
+  if (lang === 'en' && !name.en && name.he) {
+    const he = untagged(name.he);
+    return MONTHS.find((m) => m.he === he || m.aliases.includes(he))?.en ?? he;
+  }
   return untagged((lang === 'en' ? name.en : name.he) || name.he || name.en || '');
 }
 
