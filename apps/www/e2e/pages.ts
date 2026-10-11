@@ -15,6 +15,8 @@ export const pages: { name: string; path: string }[] = [
   { name: 'Account', path: '/account' },
   { name: 'About', path: '/about' },
   { name: 'Takedown', path: '/takedown' },
+  { name: 'Connect an AI app', path: '/connect' },
+  { name: 'Connect consent', path: '/oauth/consent?request=oar-sample' },
   // These pages come from the stand-in API (fixture-api.ts), so only on the local build.
   ...(process.env.BASE_URL
     ? []

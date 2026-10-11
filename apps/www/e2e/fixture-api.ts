@@ -192,9 +192,55 @@ function takedown(input: Record<string, string>, from: string | string[] | undef
   return [201, { id: 40 + takedowns.length, answerWithinDays: 14 }];
 }
 
+/** The sample reader's API keys and connected app (GET /_tokens), and the one request to connect (oar-sample), answered once. */
+let tokens: Record<string, unknown>[] = [];
+const tokensReset = () =>
+  (tokens = [{ id: 'oac-sample', kind: 'oauth', name: 'Claude', prefix: 'cho_', scopes: ['read', 'write'], createdAt: '2026-10-01T00:00:00Z', lastUsedAt: null, expiresAt: null, revokedAt: null, client: { id: 'https://claude.ai/oauth/claude-code-client-metadata', name: 'Claude', uri: null, host: 'claude.ai' } }]);
+tokensReset();
+let consentAnswered: unknown = null;
+function tokensAnswer(method: string, path: string, input: Record<string, unknown>, cookie: string): [number, unknown] {
+  if (!signedIn(cookie)) return [401, { error: 'unauthorized', message: 'sign in first' }];
+  if (method === 'GET') return [200, { tokens }];
+  if (method === 'POST') {
+    if (typeof input.name !== 'string' || !input.name) return [400, { error: 'invalid', message: 'give the token a name of 1 to 80 characters (what uses it)' }];
+    const id = `tok-${tokens.length}`;
+    tokens.unshift({ id, kind: 'personal', name: input.name, prefix: 'chp_abcd', scopes: input.scopes, createdAt: '2026-10-11T00:00:00Z', lastUsedAt: null, expiresAt: null, revokedAt: null });
+    return [201, { token: 'chp_abcdSECRETsample', id }];
+  }
+  if (method === 'DELETE') return (tokens = tokens.filter((token) => `/${token.id}` !== path)), [200, { ok: true }];
+  return [404, { error: 'not-found', message: 'not found' }];
+}
+const consentRequest = { id: 'oar-sample', client: { id: 'https://claude.ai/oauth/claude-code-client-metadata', name: 'Claude', uri: null, kind: 'metadata', host: 'claude.ai' }, redirectUri: 'https://claude.ai/api/mcp/auth_callback', redirectHost: 'claude.ai', loopback: false, scopes: ['read', 'write'], resource: 'https://api.chassidushub.org/mcp', expiresAt: '2026-10-11T12:00:00Z' };
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
   res.setHeader('Content-Type', 'application/json');
+  const tokensPath = /^\/v1\/tokens(\/[\w-]+)?$/.exec(url.pathname);
+  const consent = url.pathname === '/v1/oauth/requests/oar-sample';
+  if (tokensPath || consent) {
+    let raw = '';
+    req.on('data', (chunk) => (raw += chunk));
+    req.on('end', () => {
+      const cookie = req.headers.cookie ?? '';
+      const input = JSON.parse(raw || '{}');
+      const [status, answer]: [number, unknown] = tokensPath
+        ? tokensAnswer(req.method ?? 'GET', tokensPath[1] ?? '', input, cookie)
+        : !signedIn(cookie)
+          ? [401, { error: 'unauthorized', message: 'sign in first' }]
+          : consentAnswered
+            ? [404, { error: 'not-found', message: 'this request to connect is over' }]
+            : req.method === 'POST'
+              ? ((consentAnswered = input), [200, { redirect: `http://localhost:3002/_callback?approve=${input.approve}` }])
+              : [200, consentRequest];
+      res.statusCode = status;
+      res.end(JSON.stringify(answer));
+    });
+    return;
+  }
+  if (url.pathname === '/_tokens') return res.end(JSON.stringify(tokens));
+  if (url.pathname === '/_tokens/reset') return (tokensReset(), (consentAnswered = null), res.end('{}'));
+  if (url.pathname === '/_consent') return res.end(JSON.stringify(consentAnswered));
+  if (url.pathname === '/_callback') return res.end(JSON.stringify({ back: true }));
   const authPath = /^\/v1\/auth\/([a-z/-]+)$/.exec(url.pathname)?.[1];
   if (authPath) {
     let raw = '';

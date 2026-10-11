@@ -642,3 +642,11 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .links a { display: flex; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--g200); color: var(--g900); }
 .links li:last-child a { border-bottom: 0; }
 .links a:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.copyline { display: flex; gap: 8px; }
+.copyline input { flex: 1; min-width: 0; }
+.howto { padding-inline-start: 22px; margin: 12px 0; }
+.howto li { margin-block: 8px; }
+.code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--g100); border-radius: 4px; padding: 1px 5px; word-break: break-all; }
+.choice label .hint { display: inline; }
+.choice label > span { padding-block: 10px; }
+.token { margin: 10px 0; }
