@@ -28,7 +28,8 @@ is asked of the foundation, never added in a screen.
 | any item's path, `/rh-…` | routes/item.tsx (a shelf, sefer or volume: 2; a sicha: 3; an event or recording: 1) | foundation, then by kind |
 | `/search` | routes/search.tsx | 5. Search |
 | `/me/fixes` | routes/fixes.tsx | 4. Fixing and Edit |
-| `/signin`, `/about`, `/back` | routes/signin.tsx, about.tsx, backroom.tsx | 6. Back room and the rest |
+| `/signin`, `/account`, `/about`, `/back` | routes/signin.tsx, account.tsx, about.tsx, backroom.tsx | 6. Back room and the rest |
+| `/_/auth/*` | routes/auth.ts: signing in, passed on to the API's /v1/auth/* | 6. Back room and the rest |
 | `/ui` | routes/ui.tsx: every piece of the design system | foundation |
 
 An item's page is one read of `GET /v1/view` (routes/item.tsx). A sicha's
