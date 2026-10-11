@@ -66,6 +66,16 @@ interface Built {
 
 const cache = new Map<string, { stamp: string; built: Built }>();
 
+/**
+ * Where a built index is kept between requests (the API keeps it in R2): a
+ * cold Worker reads it rather than building it again, which on the live
+ * catalog takes longer than a request may run (issue #104).
+ */
+export interface MafteachKept {
+  get(at: string): Promise<{ stamp: string; built: unknown } | null>;
+  put(at: string, value: { stamp: string; built: unknown }): Promise<void>;
+}
+
 /** A topic as a key: the same topic printed a little differently in two volumes (quotes, a final letter) meets once. */
 const keyOf = (topic: string) => unfinal(normalizeSearchText(topic));
 const LETTERS = 'אבגדהוזחטיכלמנסעפצקרשת';
@@ -191,7 +201,23 @@ async function build(catalog: Catalog, indexId: string, seferId: string | null):
  * Built once and kept until an index page or a sicha changes: one small
  * statement answers whether it did.
  */
-export async function mafteach(catalog: Catalog, indexId: string, options: { seferId?: string | null; letter?: string; q?: string; limit?: number; places?: number; offset?: number } = {}): Promise<Mafteach | null> {
+export async function mafteach(
+  catalog: Catalog,
+  indexId: string,
+  options: {
+    seferId?: string | null;
+    letter?: string;
+    q?: string;
+    limit?: number;
+    places?: number;
+    offset?: number;
+    /** Where the built index is kept; with `stale`, a kept index a page has changed since is served as it is (the scheduled run builds it again). */
+    kept?: MafteachKept;
+    stale?: boolean;
+    /** Told when the index is built rather than found. */
+    onBuild?: () => void;
+  } = {},
+): Promise<Mafteach | null> {
   const seferId = options.seferId ?? null;
   const stamp = await catalog.db.query<{ stamp: string | null }>(
     `SELECT (SELECT max(e.main_rev) FROM entity e WHERE e.id = $1)::text || ':' ||
@@ -200,10 +226,16 @@ export async function mafteach(catalog: Catalog, indexId: string, options: { sef
   );
   const now = stamp.rows[0]?.stamp;
   if (!now) return null;
-  const at = `${indexId}|${seferId ?? ''}`;
+  const at = `${indexId}-${seferId ?? 'none'}`;
   let hit = cache.get(at);
   if (!hit || hit.stamp !== now) {
-    hit = { stamp: now, built: await build(catalog, indexId, seferId) };
+    const stored = (await options.kept?.get(at).catch(() => null)) as { stamp: string; built: Built } | null | undefined;
+    if (stored && (stored.stamp === now || options.stale)) hit = stored;
+    else {
+      options.onBuild?.();
+      hit = { stamp: now, built: await build(catalog, indexId, seferId) };
+      await options.kept?.put(at, hit);
+    }
     cache.set(at, hit);
   }
   const { built } = hit;

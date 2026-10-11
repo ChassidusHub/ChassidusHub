@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `/v1/machine/to-check` and `/v1/mafteach` answer from what the scheduled
+  run keeps, as `/v1/transcripts` does: working them out took longer than
+  a request may run, so `/help` and `/mafteach` waited 30 s and failed
+  (#104). What to check is at most 15 minutes behind; the subject index is
+  built again within a run of one of its pages changing.
 - `GET /v1/search/page` reads a language in the words (`Tanya in English`,
   `תניא באנגלית`) or takes `language=en` (the Language chip): only names in
   that language are listed, as `language`. Each hit in another language

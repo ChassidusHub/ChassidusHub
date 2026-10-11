@@ -63,6 +63,16 @@ describe('migrations', () => {
     await db.close();
   });
 
+  it('turn off compiling queries for every new connection (migration 0031)', async () => {
+    const db = await openPGlite();
+    await migrate(db);
+    const { rows } = await db.query<{ setconfig: string[] }>(
+      'SELECT setconfig FROM pg_db_role_setting WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())',
+    );
+    expect(rows[0]?.setconfig).toContain('jit=off');
+    await db.close();
+  });
+
   it('rolls a failed transaction back', async () => {
     const db = await openPGlite();
     await migrate(db);

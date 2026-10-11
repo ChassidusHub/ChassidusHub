@@ -1,6 +1,6 @@
 import type { FileStore } from './app.js';
 import { STATUS_KEY, type StatusReport, type StatusStore } from './status.js';
-import type { SummaryStore, TranscriptsSummary } from './summaries.js';
+import type { Kept, SummaryStore, TranscriptsSummary } from './summaries.js';
 
 /**
  * The little of an R2 bucket the API uses (declared here rather than
@@ -50,6 +50,20 @@ export function transcriptsStore(bucket: R2Bucket): SummaryStore {
     },
     async write(summary) {
       await bucket.put(TRANSCRIPTS_SUMMARY_KEY, JSON.stringify(summary), { httpMetadata: { contentType: 'application/json', cacheControl: 'no-store' } });
+    },
+  };
+}
+
+/** Answers the scheduled run keeps by name (summaries.ts), each as summaries/<name>.json in the public bucket. */
+export function keptStore(bucket: R2Bucket): Kept {
+  const key = (name: string) => `summaries/${name.replace(/[^\w.-]+/g, '_')}.json`;
+  return {
+    async get<T>(name: string) {
+      const object = await bucket.get(key(name));
+      return object ? (JSON.parse(await object.text()) as T) : null;
+    },
+    async put(name, value) {
+      await bucket.put(key(name), JSON.stringify(value), { httpMetadata: { contentType: 'application/json', cacheControl: 'no-store' } });
     },
   };
 }
