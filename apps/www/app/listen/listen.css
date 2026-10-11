@@ -1,14 +1,8 @@
 /*
- * Home's and listening's own pieces, as the prototype draws them, in the design
- * system's tokens only (no colour, size or face of their own). Waiting to move
- * into ui/ui.css, where the foundation decides their place and names.
+ * A recording's words, as the prototype draws them, in the design system's
+ * tokens only. The site-wide player brings the same rules into ui/ui.css; this
+ * file goes when it is on main.
  */
-
-/* Home's opening: the site's line and the big search box. */
-.hero { padding-block: 30px 6px; text-align: center; }
-.hero h1 { font-family: var(--title); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
-.hero p { margin: 0 0 18px; color: var(--g600); font-size: 14px; }
-.hero + .tiles { margin-top: 16px; }
 
 /* A recording's words: one continuous text, a small heading where each part starts. */
 .chh {

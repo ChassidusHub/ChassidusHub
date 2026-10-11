@@ -383,3 +383,10 @@ svg.i.filled { fill: currentColor; stroke: none; }
   .dock { inset-inline-start: var(--rail); }
   .top .homelogo { display: none; }
 }
+
+/* ---------- Home and listening ---------- */
+/* Home's opening: the site's line and the big search box. */
+.hero { padding-block: 30px 6px; text-align: center; }
+.hero h1 { font-family: var(--title); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
+.hero p { margin: 0 0 18px; color: var(--g600); font-size: 14px; }
+.hero + .tiles { margin-top: 16px; }

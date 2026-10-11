@@ -3,11 +3,8 @@ import { Link, useLoaderData } from 'react-router';
 import { clock, DAYS, LISTEN_COOKIE, listening, readStopped, resumeLink } from '../listen/common';
 import { eventRow, eventsOn, eventsWithWords, fitting, nextDays, yearLabel, YEARS } from '../listen/data.server';
 import { PlayRow } from '../listen/play';
-import listenCss from '../listen/listen.css?url';
 import { Row, Rows, SearchField, TopBar } from '../ui';
 import type { Route } from './+types/listen';
-
-export const links: Route.LinksFunction = () => [{ rel: 'stylesheet', href: listenCss }];
 
 export const handle = { section: 'listen' };
 

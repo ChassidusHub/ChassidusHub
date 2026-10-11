@@ -2,11 +2,8 @@ import { useLoaderData } from 'react-router';
 import { eventRow, eventsOn, eventsWithWords } from '../listen/data.server';
 import { DAYS, listening } from '../listen/common';
 import { PlayRow } from '../listen/play';
-import listenCss from '../listen/listen.css?url';
 import { TopBar, type PathLevel } from '../ui';
 import type { Route } from './+types/listen-day';
-
-export const links: Route.LinksFunction = () => [{ rel: 'stylesheet', href: listenCss }];
 
 export const handle = { section: 'listen' };
 

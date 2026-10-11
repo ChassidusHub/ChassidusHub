@@ -2,11 +2,8 @@ import { useLoaderData } from 'react-router';
 import { eventRow, eventsOn, eventsWithWords, fitting, nextDays, rebbeim } from '../listen/data.server';
 import { PlayRow } from '../listen/play';
 import { clock, LISTEN_COOKIE, READ_COOKIE, readStopped, resumeLink } from '../listen/common';
-import listenCss from '../listen/listen.css?url';
 import { Box, SearchField, SectionHead, Tile, TopBar } from '../ui';
 import type { Route } from './+types/home';
-
-export const links: Route.LinksFunction = () => [{ rel: 'stylesheet', href: listenCss }];
 
 export const handle = { section: 'home' };
 
