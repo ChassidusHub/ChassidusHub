@@ -10,6 +10,14 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A shared sicha opens faster on a slow phone, and its words no longer
+  jump as the fonts arrive: the reading fonts are served as WOFF2 (the
+  words' face from 110 KB to 73 KB), the logo's face carries only its
+  letters, the words' face is asked for with the page, and until the fonts
+  come the page is drawn in a face the device has, sized to take the same
+  room. Sicha and home pages load 30 KB less script: the full calendar is
+  left to the pages that use it.
+
 - A maamar's name no longer carries what the print adds to its dateline:
   the Chabad Library importer leaves out the opening `בס"ד` and the footnote
   `*` (`בס"ד, יו"ד שבט, תשי"ב*` is named `יו"ד שבט, תשי"ב`). It takes effect

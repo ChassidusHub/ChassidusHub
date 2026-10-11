@@ -1,4 +1,5 @@
 import { createContext, Fragment, useContext, useState, type ReactNode } from 'react';
+import { preload } from 'react-dom';
 import { Link } from 'react-router';
 import { toHebrewNumeral } from '@chassidushub/hebrew';
 import { allSegments, type PageInline, type PageSegment, type PageText, type PageVersion, type TextProfile } from '@chassidushub/model';
@@ -744,6 +745,8 @@ export function PageWords({ page, lang, edit }: { page: PageText; lang: Lang; ed
   const [adding, setAdding] = useState<string | null>(null);
   const [sent, setSent] = useState<Record<string, SentSuggestion>>({});
   if (!versions.length) return null;
+  // The words' own face, asked for in the page's head beside its styles, so it comes with them and the words are drawn in it once (#109).
+  preload('/fonts/reader/FrankRuehlCLM.woff2', { as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' });
   const editState: EditState | undefined = edit
     ? {
         entityId: edit.entityId,
