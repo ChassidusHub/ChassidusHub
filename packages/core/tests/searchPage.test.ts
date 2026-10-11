@@ -30,7 +30,7 @@ async function sample() {
   const heard = await add(catalog, 'mendy', 'keeper', 'segment', { text, order: 'V', kind: 'paragraph', content: 'מען דארף פתח דבר לדוגמה', proofread: 0, origin: { by: 'transcribe:fake@1' } });
   const alignment = await add(catalog, 'mendy', 'keeper', 'alignment', { recording, text, granularity: 'paragraph' });
   await add(catalog, 'mendy', 'keeper', 'alignment-span', { alignment, segment: heard, startMs: 754_000, endMs: 800_000 });
-  return { catalog, work, opens, mentions, event, recording, heard };
+  return { catalog, set, work, maamar, body, opens, mentions, event, recording, heard };
 }
 
 describe('the search screen in one read', () => {
@@ -79,6 +79,29 @@ describe('the search screen in one read', () => {
     expect(day).toMatchObject({ date: { key: '5742-05-10' }, words: [], works: [] });
     expect(day.top).toMatchObject({ id: event, kind: 'farbrengen', title: 'יו״ד שבט תשמ״ב', listen: true });
     expect(day.events.map((e) => e.id)).toEqual([event]);
+  });
+
+  it("a parsha's name alone is the farbrengens of its weeks; words that end in one stay words (#90)", async () => {
+    const { catalog, maamar, body, event } = await sample();
+    // 10 Shevat 5742 is in the week of Beshalach.
+    const { result: week, statements } = await counted(catalog, () => searchPage(catalog, 'בשלח'));
+    expect(statements).toBeLessThanOrEqual(6);
+    expect(week.parsha).toEqual({ key: 'Beshalach', he: 'בשלח' });
+    expect(week.events.map((e) => e.id)).toEqual([event]);
+    expect(week.top).toMatchObject({ id: event, kind: 'farbrengen' });
+    expect((await searchPage(catalog, 'פרשת בשלח תשמ"ב')).events.map((e) => e.id)).toEqual([event]);
+    expect((await searchPage(catalog, 'Beshalah')).parsha?.key).toBe('Beshalach');
+    expect((await searchPage(catalog, 'תצווה')).parsha?.key).toBe('Tetzaveh');
+    // In Hebrew a letter apart is another word: a mitzvah is not Tetzaveh.
+    expect((await searchPage(catalog, 'מצוה')).parsha).toBeNull();
+    expect(await searchPage(catalog, 'בשלח תשמ"א')).toMatchObject({ parsha: { key: 'Beshalach' }, events: [] });
+    expect(await searchPage(catalog, 'יתרו')).toMatchObject({ parsha: { key: 'Yitro' }, events: [] });
+
+    // A maamar that opens with a parsha's name is looked for by its words, and comes first.
+    const tetzaveh = await maamar('3', body('ואתה תצוה לדוגמה את בני ישראל'));
+    const opening = await searchPage(catalog, 'ואתה תצוה');
+    expect(opening.parsha).toBeNull();
+    expect(opening.top).toMatchObject({ id: tetzaveh, kind: 'maamar' });
   });
 
   it('suggests names as someone types, up to six, in one statement', async () => {

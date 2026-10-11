@@ -2517,6 +2517,11 @@ export interface Operations {
         key: string;
         he: string;
       } | null;
+      parsha: {
+        /** hebcal's name: Beshalach */
+        key: string;
+        he: string;
+      } | null;
       within: string | null;
       top: {
         /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */

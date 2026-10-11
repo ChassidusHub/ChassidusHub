@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` understands a parsha: words that are a parsha's
+  name and nothing else (`בשלח`, `פרשת בשלח תשמ"ב`, `Beshalach`) come back
+  as `parsha` with the farbrengens of its weeks, in the year given or in
+  every year. Words that only end in one (`ואתה תצוה`) stay words, so the
+  maamar that opens with them comes first (#90).
 - A report can be opened without an account, as every page says: signed
   out, "Open the report" sends it without a name (the same hourly limit as
   the quick report on an item's page) and opens it as an issue. Before,
