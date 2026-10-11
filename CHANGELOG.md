@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The search page no longer offers "By idea" while its index is still
+  empty (it answered nothing for every question); a question sent by idea,
+  as the home page's box does, is searched by words. It comes back when the
+  index is filled.
 - `GET /v1/search` and `GET /v1/search/moments` also look for a subject typed
   in English letters as the texts write it (`bitachon` as `בטחון`), and say so
   in `topic`, as `/v1/search/page` does: chassidushub.org's /search uses them

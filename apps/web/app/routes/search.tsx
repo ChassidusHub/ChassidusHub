@@ -56,7 +56,7 @@ export const SEARCH_KEYS: TokenKey[] = [
 type Kind = 'event' | 'library' | 'text';
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { api, siteUrl } = siteOf(context);
+  const { api, siteUrl, byIdea } = siteOf(context);
   const lang = langFrom(request);
   const url = new URL(request.url);
   const q = url.searchParams.get('q')?.trim() ?? '';
@@ -66,8 +66,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const kind = (['event', 'library', 'text'] as const).find((k) => parsed.filters.type?.includes(k)) ?? null;
   const words = [parsed.text, ...(parsed.filters.year ?? [])].filter(Boolean).join(' ');
   // Whether search by meaning is set up: asked with no question, it costs nothing. It goes to the API's own Worker, so the
-  // reads below that do not wait on it are started beside it, not after it.
-  const meaningAsked = api.similar('').catch(() => ({ available: false, results: [] as SimilarItem[] }));
+  // reads below that do not wait on it are started beside it, not after it. While it is not offered (SiteOptions.byIdea)
+  // it is not asked at all, and a question sent by idea is searched by words.
+  const meaningAsked = byIdea ? api.similar('').catch(() => ({ available: false, results: [] as SimilarItem[] })) : Promise.resolve({ available: false, results: [] as SimilarItem[] });
   const smart = parseSmartQuery(words);
   const understood =
     smart.parsha || smart.day || smart.year
