@@ -10,6 +10,17 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
+  a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
+  live at once when the automatic check says it looks like a typo or a
+  misreading fixed, in an open set, within a daily limit (RFC 0001); its
+  author may undo it for a day with `POST /v1/fix/{changeset}/undo`. Only
+  the words may change live: a fix that also changes bold, a link or a
+  note is a suggestion. A machine's words a person fixed stay labelled:
+  a sefer's and a transcript's are marked edited, a scan's line keeps its
+  level, none is marked checked. Anything else is a suggestion, with the
+  reason. `LIVE_FIXES=off` turns going live
+  off.
 - `GET /v1/view?path=…` (or `?id=`): one page of the new site in one read.
   It returns the item's facts, its path bar, the units before and after
   it, and the best words there are for it. Those are its own words, else
