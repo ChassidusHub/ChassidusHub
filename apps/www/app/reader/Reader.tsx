@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Link } from 'react-router';
+import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../path';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
@@ -13,7 +14,8 @@ type Open = null | 'look' | 'more' | 'versions' | { note: string };
  * opens it in a sheet; text size and light or dark are under the text button;
  * everything else (versions, the scan, the recording, copying with the
  * source, sharing, Edit, reporting) is in the corner menu. The sicha before
- * and after are at the foot.
+ * and after are at the foot. Selecting words opens a small bar to fix,
+ * copy or share them (app/fix).
  */
 export function Reader({ data }: { data: ReaderData }) {
   const [open, setOpen] = useState<Open>(null);
@@ -87,7 +89,7 @@ export function Reader({ data }: { data: ReaderData }) {
           )}
 
           {words && (
-            <div ref={torah} onClick={onWords}>
+            <div ref={torah} onClick={onWords} data-fix-item={data.id} data-fix-version={words.version || undefined}>
               <ServerHtml id={`body:${data.path}`} html={words.body} className={words.machine === 'all' ? 'torah unchecked' : 'torah'} />
               {words.hasNotes && (
                 <section className="notes" aria-labelledby="notes-h">
@@ -134,6 +136,7 @@ export function Reader({ data }: { data: ReaderData }) {
         </article>
       </main>
 
+      {words && <Fixing root={torah} path={data.path} citation={data.citation} url={data.url} title={data.title} />}
       <NoteSheet note={note} onNote={(id) => setOpen({ note: id })} onClose={close} />
       <Look open={open === 'look'} onClose={close} />
 

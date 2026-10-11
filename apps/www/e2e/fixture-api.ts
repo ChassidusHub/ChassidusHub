@@ -4,7 +4,8 @@ import { listenAnswer } from './fixture-listen';
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
  * a few made-up pages, so the reading page is tested without a database,
- * and listening's reads (fixture-listen.ts).
+ * and listening's reads (fixture-listen.ts), and POST /v1/fix as a signed-in
+ * reader (the cookie rh_session=sample) or a signed-out one.
  * Every word here is sample text written for the tests (לדוגמה), never a
  * sefer's own words. `FIXTURE_PORT` picks the port (default 3002).
  */
@@ -84,10 +85,44 @@ const views: Record<string, unknown> = {
   },
 };
 
+/** The fixes sent, newest last, for the tests to read back (GET /_fixes). The pages' words never change. */
+const fixes: unknown[] = [];
+
+const plain = (runs: unknown) => (Array.isArray(runs) ? runs.map((r: { text?: string }) => r.text ?? '').join('') : String(runs));
+
+/** POST /v1/fix as the API answers it: signed in by the sample cookie, live when a few words changed, 409 when the words moved. */
+function fix(body: { item?: string; segment?: string; before?: unknown; after?: unknown }, cookie: string): [number, unknown] {
+  if (!/(?:^|; )rh_session=sample(?:;|$)/.test(cookie)) return [401, { error: 'unauthorized', message: 'sign in first' }];
+  const view = Object.values(views).find((v) => (v as { item: { id: string } }).item.id === body.item) as { text: { segments: { id: string; text: unknown }[]; notes: { id: string; text: unknown }[] } } | undefined;
+  const segment = view && [...view.text.segments, ...view.text.notes].find((s) => s.id === body.segment);
+  if (!segment || JSON.stringify(segment.text) !== JSON.stringify(body.before)) return [409, { error: 'conflict', message: 'the words changed' }];
+  fixes.push(body);
+  const changed = plain(body.after).split(' ').filter((w, i) => w !== plain(body.before).split(' ')[i]).length;
+  return [201, changed <= 5 ? { changeset: 100 + fixes.length, live: true, undo: `/v1/fix/${100 + fixes.length}/undo` } : { changeset: 100 + fixes.length, live: false, reason: 'more than 5 words changed; a reviewer looks first' }];
+}
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
-  const view = url.pathname === '/v1/view' ? views[url.searchParams.get('path') ?? ''] : listenAnswer(url);
   res.setHeader('Content-Type', 'application/json');
+  if (req.method === 'POST') {
+    let raw = '';
+    req.on('data', (chunk) => (raw += chunk));
+    req.on('end', () => {
+      const cookie = req.headers.cookie ?? '';
+      const [status, answer] =
+        url.pathname === '/v1/fix'
+          ? fix(JSON.parse(raw || '{}'), cookie)
+          : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
+            ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
+            : [404, { error: 'not-found', message: 'not found' }];
+      res.statusCode = status;
+      res.end(JSON.stringify(answer));
+    });
+    return;
+  }
+  if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
+  const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
+  const view = url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : listenAnswer(url);
   if (!view) {
     res.statusCode = 404;
     return res.end(JSON.stringify({ error: 'not-found', message: 'not found' }));
