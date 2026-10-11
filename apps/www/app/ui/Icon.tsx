@@ -48,6 +48,10 @@ export const iconNames = [
   'link',
   'code',
   'people',
+  'chevron-up',
+  'plus',
+  'upload',
+  'shield',
 ] as const;
 
 export type IconName = (typeof iconNames)[number];

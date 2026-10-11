@@ -1033,3 +1033,73 @@ h2.family { font-size: 20px; margin-top: 40px; }
   .figure b { font-size: 19px; }
   .doc .routes a span:last-child { padding-inline-start: 0; }
 }
+/* ---------- stewards: organize, the stewards' tools, adding, showcases (thread 6) ---------- */
+/* Organizing: the bar of actions on the picked rows, kept in sight under the top bar while scrolling. */
+.orgbar {
+  position: sticky; top: calc(52px + env(safe-area-inset-top, 0px)); z-index: 19; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin-block: 8px 4px; padding: 8px 0; background: var(--g0); border-bottom: 1px solid var(--g200);
+}
+.orgbar .count { font-size: 13px; color: var(--g700); margin-inline-end: 4px; }
+.rows.org .row { gap: 6px; }
+.rows.org .row input[type='checkbox'], .check input { accent-color: var(--g900); width: 18px; height: 18px; margin: 0; flex: none; }
+.rows.org .row .t { cursor: pointer; }
+/* A row's kind, address and size on one quiet line; a name's handle and tags beside it. */
+.row.stew .t b span { display: inline; }
+.rows.org .row.on { background: var(--g100); }
+.rows.org .row.over { box-shadow: inset 0 2px 0 var(--g900); }
+.rows.org .row.dragged { opacity: 0.5; }
+.rows.org .row[draggable='true'] { cursor: grab; }
+.renamed { font-weight: 400; color: var(--g700); }
+.orgplan { list-style: none; padding: 0; margin: 4px 0 8px; }
+.orgplan li { display: flex; align-items: center; gap: 8px; min-height: 40px; border-bottom: 1px solid var(--g200); font-size: 14px; }
+.orgplan li span { flex: 1; }
+.orgpreview h3 { font-size: 15px; margin: 14px 0 2px; }
+.orgpreview .diff { font-size: 14px; line-height: 1.5; }
+.orgpreview .diff ins, .orgpreview .diff del { margin-inline: 4px; }
+.picker .rows { max-height: 50dvh; overflow: auto; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 14px; cursor: pointer; }
+/* The stewards' tools: a row with its actions at its end, wrapping under it on a phone. */
+.row.stew { flex-wrap: wrap; }
+.row.stew .t { min-width: 12em; }
+.row.stew .t a { display: block; text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.row.stew .t .note-text { color: var(--g900); font-size: 14px; }
+.row.stew .field { margin-block: 6px 0; }
+.row.stew .field input { inline-size: 100%; }
+.row.stew .t:has(.field) { flex-basis: 100%; }
+/* The owner's showcases: on a phone the actions go under the name. */
+.showlist .row { flex-wrap: wrap; }
+.showlist .row .t { min-width: 12em; }
+.acts, .sure { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sure .sm { color: var(--g700); }
+.tag, .row .t .tag { display: inline-block; margin-inline-start: 6px; padding: 1px 8px; border-radius: 6px; background: var(--g200); color: var(--g900); font-size: 12px; font-weight: 500; }
+.quote { margin: 8px 0; padding: 8px 12px; border-inline-start: 3px solid var(--g300); color: var(--g900); white-space: pre-wrap; }
+/* Adding what is missing: its steps, numbered down the side, and the place to drop a file. */
+.addsteps { list-style: none; padding: 0; margin: 0; counter-reset: step; }
+.addsteps > li { position: relative; padding-block: 4px 18px; padding-inline-start: 30px; border-inline-start: 1px solid var(--g200); margin-inline-start: 14px; counter-increment: step; }
+.addsteps > li:last-child { border-inline-start-color: transparent; }
+.addsteps > li::before {
+  content: counter(step); position: absolute; inset-inline-start: -15px; top: 4px; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--g100); color: var(--g900); font-size: 13px; font-weight: 600; box-shadow: 0 0 0 4px var(--g0);
+}
+.addsteps > li > h2 { font-size: 16px; margin: 8px 0 6px; }
+.addsteps > li > .choice:first-child { margin-top: 8px; }
+.addsteps .seg { margin-top: 6px; }
+.drop {
+  display: flex; align-items: center; gap: 12px; padding: 18px 16px; margin-block: 8px; border: 1px dashed var(--g400); border-radius: 10px;
+  color: var(--g700); cursor: pointer;
+}
+.drop:hover, .drop.over { background: var(--g50); border-color: var(--g900); }
+.drop:focus-within { box-shadow: 0 0 0 2px var(--g0), 0 0 0 4px var(--g900); }
+.drop.has { border-style: solid; }
+.drop .t { flex: 1; min-width: 0; }
+.drop .t b { display: block; color: var(--g900); font-weight: 500; overflow-wrap: anywhere; }
+.drop .t span { display: block; font-size: 13px; color: var(--g600); }
+.proposal { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0; font-size: 14px; }
+/* What is new: a year's heading over its farbrengens. */
+.newyear { font-size: 13px; font-weight: 600; color: var(--g700); margin: 18px 0 2px; }
+/* A showcase: a farbrengen, and its words under it. */
+.showcard { border-bottom: 1px solid var(--g200); padding-bottom: 8px; }
+.showcard .row { border-bottom: 0; }
+.showcard .btns { margin: 0 0 6px; padding-inline-start: 44px; }
+.showwords { font-family: var(--torah); font-size: 18px; line-height: 1.8; color: var(--g900); margin: 6px 0 10px; }
+.showwords p { margin: 0 0 0.7em; }

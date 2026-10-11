@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by words is faster on a word nobody searched lately (#182): fewer
+  sichos (40) and scan pages (300) are ranked, and only the sichos shown have
+  their words read, the rest only when one of those shows nothing.
 - `GET /v1/search/page` looks for a subject typed in English letters
   (`bitachon`, `ahavas yisroel`, `hashgacha pratis`) as the texts write it
   (`בטחון`), names and words alike, and says so in the new `topic` field.
