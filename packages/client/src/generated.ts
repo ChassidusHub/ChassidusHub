@@ -1696,6 +1696,8 @@ export interface Operations {
       kind?: "read" | "listen";
       /** One thing only */
       key?: string;
+      /** Only places that reopen at this page of the site or under it (a volume, /likkutei-sichos/12): where its reader stopped in it */
+      within?: string;
       /** How many (at most 60) */
       limit?: number;
     };
@@ -1892,6 +1894,33 @@ export interface Operations {
       found: number;
       offset: number;
       next: number | null;
+    };
+  };
+  /** One first letter's topics of a sefer's subject index by name only, each with the offset that opens its page in /v1/mafteach and how many places it has: a list to jump from */
+  mafteachNames: {
+    input: {
+      /** The index: a work whose units are its volumes' index pages (an id, or its path, like /likkutei-sichos-mafteach-inyanim) */
+      index: string;
+      /** The sefer it indexes (an id or path), as given to /v1/mafteach */
+      sefer?: string;
+      /** The first letter (the index's first letter when it has not this one) */
+      letter?: string;
+    };
+    output: {
+      /** id, path, title */
+      index: Record<string, unknown>;
+      letters: Array<{
+        letter: string;
+        topics: number;
+      }>;
+      letter: string | null;
+      names: Array<{
+        topic: string;
+        /** The offset= of /v1/mafteach whose page begins with it */
+        offset: number;
+        places: number;
+        machine: boolean;
+      }>;
     };
   };
   /** Map pages of a publication to the unit they hold (an existing unit, a new one, or words) */
@@ -3300,7 +3329,7 @@ export const OPERATIONS = {
   listItems: {"method":"GET","path":"/v1/entities","pathParams":[],"query":["type","set","shelf","official","additions-of","after","limit","cursor"],"body":null,"answer":"json","items":"items"},
   listLabels: {"method":"GET","path":"/v1/labels","pathParams":[],"query":[],"body":null,"answer":"json"},
   listLinked: {"method":"GET","path":"/v1/entities/{id}/linked","pathParams":["id"],"query":["field","type","after","limit","cursor"],"body":null,"answer":"json","items":"items"},
-  listPlaces: {"method":"GET","path":"/v1/places","pathParams":[],"query":["kind","key","limit"],"body":null,"answer":"json"},
+  listPlaces: {"method":"GET","path":"/v1/places","pathParams":[],"query":["kind","key","within","limit"],"body":null,"answer":"json"},
   listProjects: {"method":"GET","path":"/v1/projects","pathParams":[],"query":["status"],"body":null,"answer":"json"},
   listReports: {"method":"GET","path":"/v1/reports","pathParams":[],"query":["set","status"],"body":null,"answer":"json"},
   listSuggestions: {"method":"GET","path":"/v1/suggestions","pathParams":[],"query":["status","state","author","reviewer","q","about","postReview","limit","cursor"],"body":null,"answer":"json","items":"suggestions"},
@@ -3310,6 +3339,7 @@ export const OPERATIONS = {
   machineSummary: {"method":"GET","path":"/v1/machine","pathParams":[],"query":[],"body":null,"answer":"json"},
   machineToCheck: {"method":"GET","path":"/v1/machine/to-check","pathParams":[],"query":["limit"],"body":null,"answer":"json"},
   mafteach: {"method":"GET","path":"/v1/mafteach","pathParams":[],"query":["index","sefer","letter","q","limit","places","offset"],"body":null,"answer":"json"},
+  mafteachNames: {"method":"GET","path":"/v1/mafteach/names","pathParams":[],"query":["index","sefer","letter"],"body":null,"answer":"json"},
   mapContents: {"method":"POST","path":"/v1/suggestions/contents-map","pathParams":[],"query":[],"body":"json","answer":"json"},
   markInboxRead: {"method":"POST","path":"/v1/inbox/read","pathParams":[],"query":[],"body":"json","answer":"json"},
   mcp: {"method":"POST","path":"/mcp","pathParams":[],"query":[],"body":"json","answer":"json"},
@@ -3906,6 +3936,11 @@ export abstract class GeneratedMethods {
   /** A sefer's whole subject index on one page, gathered from its volumes' index pages: every topic once, each volume's places under it with their context and links (the sicha's PDF at that page, the sicha's page here); one first letter's topics, or those a search finds (GET /v1/mafteach) */
   mafteach(input: Operations['mafteach']['input']): Promise<Operations['mafteach']['output']> {
     return this.call('mafteach', input ?? {} as Operations['mafteach']['input']);
+  }
+
+  /** One first letter's topics of a sefer's subject index by name only, each with the offset that opens its page in /v1/mafteach and how many places it has: a list to jump from (GET /v1/mafteach/names) */
+  mafteachNames(input: Operations['mafteachNames']['input']): Promise<Operations['mafteachNames']['output']> {
+    return this.call('mafteachNames', input ?? {} as Operations['mafteachNames']['input']);
   }
 
   /** Map pages of a publication to the unit they hold (an existing unit, a new one, or words) (POST /v1/suggestions/contents-map) */
