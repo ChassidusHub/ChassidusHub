@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
-import { refreshTranscripts, SUMMARY_MAX_AGE_MS, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
+import { refreshMafteach, refreshToCheck, refreshTranscripts, SUMMARY_MAX_AGE_MS, type Kept, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -44,5 +44,35 @@ describe('the transcripts summary', () => {
   it('counts on the request when nothing is kept (local work)', async () => {
     expect(await transcripts(createApp({ catalog, transcripts: store }))).toMatchObject([{ paragraphs: 2 }]);
     expect(await transcripts(createApp({ catalog }))).toMatchObject([{ paragraphs: 2 }]);
+  });
+});
+
+describe('the other kept answers (#104)', () => {
+  const stored = new Map<string, unknown>();
+  const kept: Kept = { get: async <T>(name: string) => (stored.get(name) as T) ?? null, put: async (name, value) => void stored.set(name, JSON.parse(JSON.stringify(value))) };
+  beforeEach(() => stored.clear());
+  const toCheck = async (app: ReturnType<typeof createApp>, query = '') => (await (await app.request(`/v1/machine/to-check${query}`)).json()) as { transcripts: unknown[]; totals: { transcripts: number } };
+
+  it('keeps what to check, made when missing or old', async () => {
+    const now = new Date('2026-10-11T14:00:00Z');
+    expect(await refreshToCheck(catalog, kept, now)).toBe(true);
+    expect(stored.get('to-check')).toMatchObject({ at: now.toISOString(), lists: { totals: { transcripts: 1 } } });
+    expect(await refreshToCheck(catalog, kept, new Date(now.getTime() + SUMMARY_MAX_AGE_MS - 1))).toBe(false);
+    expect(await refreshToCheck(catalog, kept, new Date(now.getTime() + SUMMARY_MAX_AGE_MS))).toBe(true);
+  });
+
+  it('answers GET /v1/machine/to-check from the kept lists, cut to the limit, without counting again', async () => {
+    const rows = [1, 2, 3].map((n) => ({ event: `rh-kept${n}`, path: null, title: null, date: null, paragraphs: n, checked: 0, made: '2026-10-11T00:00:00.000Z' }));
+    stored.set('to-check', { at: new Date().toISOString(), lists: { transcripts: rows, scans: [], texts: [], totals: { transcripts: 3, paragraphs: 6, scans: 0, pages: 0, texts: 0, entries: 0 } } });
+    const answer = await toCheck(createApp({ catalog, kept }), '?limit=2');
+    expect(answer.transcripts).toHaveLength(2);
+    expect(answer.totals.transcripts).toBe(3);
+    // Nothing kept (local work): counted on the request.
+    expect((await toCheck(createApp({ catalog }))).totals.transcripts).toBe(1);
+  });
+
+  it('builds no subject index the catalog does not have', async () => {
+    expect(await refreshMafteach(catalog, kept)).toBe(0);
+    expect(stored.size).toBe(0);
   });
 });

@@ -2,6 +2,7 @@ import { isbot } from 'isbot';
 import { renderToReadableStream } from 'react-dom/server';
 import { ServerRouter, type AppLoadContext, type EntryContext } from 'react-router';
 import { pageSafety } from './lib/safety';
+import { siteOf } from './lib/site';
 import { ServerOnly } from './serverOnly';
 
 /**
@@ -24,8 +25,8 @@ export default async function handleRequest(request: Request, status: number, he
   });
   if (isbot(request.headers.get('user-agent') ?? '')) await body.allReady;
   headers.set('Content-Type', 'text/html; charset=utf-8');
-  // The beta stays out of search engines until the switch-over gives it chassidushub.org.
-  headers.set('X-Robots-Tag', 'noindex');
+  // Only chassidushub.org itself is for search engines (lib/site.ts): the beta and previews stay out.
+  if (!siteOf(request).indexed) headers.set('X-Robots-Tag', 'noindex');
   for (const [name, value] of Object.entries(pageSafety(new URL(request.url).pathname))) headers.set(name, value);
   return new Response(body, { headers, status: failed ? 500 : status });
 }

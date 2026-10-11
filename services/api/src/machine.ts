@@ -1,7 +1,8 @@
 import type { Context, Hono } from 'hono';
-import { machineRequests, machineSummary, machineToCheck, requestMachineWork, summariseTraining, trainingClips, trainingGoal, type Catalog, type MachineKind, type MachineRequestStatus } from '@chassidushub/core';
+import { machineRequests, machineSummary, requestMachineWork, summariseTraining, trainingClips, trainingGoal, type Catalog, type MachineKind, type MachineRequestStatus } from '@chassidushub/core';
 import { readId, type EntityId } from '@chassidushub/model';
 import { HttpError } from './app.js';
+import { toCheckFor, type Kept } from './summaries.js';
 
 /**
  * Asking the machines for work (core/machineWork.ts), for the site, agents
@@ -28,7 +29,7 @@ export type MachineDispatch = (kind: MachineKind) => Promise<boolean>;
 const KINDS = ['ocr', 'transcript'];
 const STATUSES = ['waiting', 'running', 'done', 'failed'];
 
-export function machineRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context) => Promise<string>, options: { dispatch?: MachineDispatch; waitUntil?: (c: Context, work: Promise<unknown>) => void } = {}): void {
+export function machineRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context) => Promise<string>, options: { dispatch?: MachineDispatch; waitUntil?: (c: Context, work: Promise<unknown>) => void; kept?: Kept } = {}): void {
   const id = (raw: string): EntityId => {
     const read = readId(raw);
     if (!read) throw new HttpError(400, `"${raw}" is not an id (rh-…)`);
@@ -48,12 +49,13 @@ export function machineRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context
     });
   });
 
-  // What the machines wrote that no person has checked, the newest first: the list the home page links to. Kept five minutes at the edge.
+  // What the machines wrote that no person has checked, the newest first: the list the home page links to. Kept five minutes at the edge,
+  // and from the lists the scheduled run keeps when there are any: counting them took longer than a request may run (#104).
   app.get('/v1/machine/to-check', async (c) => {
     const raw = c.req.query('limit');
     const limit = raw === undefined ? 50 : Number(raw);
     if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw new HttpError(400, 'limit is a whole number from 1 to 200');
-    return edgeCached(c.req.raw, 300, async () => Response.json(await machineToCheck(catalog, { limit })));
+    return edgeCached(c.req.raw, 300, async () => Response.json(await toCheckFor(catalog, options.kept, limit)));
   });
 
   app.get('/v1/machine/training/clips', async (c) =>

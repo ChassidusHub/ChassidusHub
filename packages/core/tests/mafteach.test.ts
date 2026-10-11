@@ -101,4 +101,27 @@ describe('mafteach', () => {
     } as unknown as Json, '/mafteach-bdika/3');
     expect((await mafteach(catalog, ids.index!))!.totals).toEqual({ topics: 3, places: 5, volumes: 3 });
   });
+
+  it('keeps the built index where a cold Worker reads it, and serves it stale until the scheduled run builds it again (#104)', async () => {
+    const index = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'מפתח שמור' }, slug: 'mafteach-shamur', authors: [], genre: 'sichos', levels: ['volume'] }, '/mafteach-shamur');
+    const page = (n: string, topic: string) =>
+      add(catalog, 'steward', 'steward', 'unit', { work: index, position: [{ level: 'volume', value: n }], order: `0${n}V`, label: { he: `חלק ${n}` }, body: volume([{ id: 't1', kind: 'heading', level: 2, text: [{ text: topic }] }, { id: 't1.1', kind: 'paragraph', text: [{ text: '5' }, { text: '.' }] }]) } as unknown as Json);
+    await page('1', 'אמונה');
+    const stored = new Map<string, { stamp: string; built: unknown }>();
+    const kept = { get: async (at: string) => stored.get(at) ?? null, put: async (at: string, value: { stamp: string; built: unknown }) => void stored.set(at, value) };
+    let builds = 0;
+    const onBuild = () => void builds++;
+    // How many topics, over every letter.
+    const topics = async (options: { stale?: boolean } = {}) => (await mafteach(catalog, index, { kept, onBuild, ...options }))!.totals.topics;
+
+    expect(await topics({ stale: true })).toBe(1);
+    expect([builds, stored.size]).toEqual([1, 1]);
+    // A page added: a request serves what is kept and builds nothing; the scheduled run (not stale) builds it again.
+    await page('2', 'ביטחון');
+    expect(await topics({ stale: true })).toBe(1);
+    expect(builds).toBe(1);
+    expect(await topics()).toBe(2);
+    expect(builds).toBe(2);
+    expect(await topics({ stale: true })).toBe(2);
+  });
 });
