@@ -15,6 +15,25 @@ test('the path bar opens the other choices at a level, and filters them', async 
   await expect(menu).toBeHidden();
 });
 
+test('the path bar works from the keyboard alone', async ({ page }) => {
+  await page.goto('/ui');
+  await page.getByRole('button', { name: 'חלק י״ב' }).focus();
+  await page.keyboard.press('Enter');
+  const menu = page.getByRole('menu', { name: 'חלקי ליקוטי שיחות' });
+  await expect(menu.getByRole('menuitemradio')).toHaveCount(39);
+  // Focus is inside the list, so typing filters it, the arrows move and Enter picks.
+  const inside = () => page.evaluate(() => !!document.activeElement?.closest('.menu, [role=dialog]'));
+  await expect.poll(inside).toBe(true);
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.locator('.mi.active')).toHaveText('חלק י״ב');
+  await page.keyboard.press('ArrowDown');
+  await expect(menu.locator('.mi.active')).toHaveText('חלק י״ג');
+  await page.keyboard.press('Tab');
+  await expect.poll(inside).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+});
+
 test('a toast offers Undo, and a sheet closes on Escape', async ({ page }) => {
   await page.goto('/ui');
   await page.getByRole('button', { name: 'הודעה עם ביטול' }).click();
