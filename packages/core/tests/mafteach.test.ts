@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { driveId, mafteach, placesOf, type Catalog, type Json } from '@chassidushub/core';
+import { driveId, mafteach, mafteachSubjects, placesOf, subjectsNamed, type Catalog, type Json } from '@chassidushub/core';
 import type { EntityId, PageText } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
@@ -66,6 +66,21 @@ describe('mafteach', () => {
     ]);
     expect(driveId('https://drive.google.com/file/d/1abcDEF_ghij/view')).toBe('1abcDEF_ghij');
     expect(driveId('https://drive.google.com/open?id=1abcDEF_ghij')).toBe('1abcDEF_ghij');
+  });
+
+  it("names an index entry for search, from the topics in short: that very topic, then those that begin with it as a word (#99)", async () => {
+    const subjects = await mafteachSubjects(catalog, ids.index!, { seferId: ids.sefer });
+    expect(Object.values(subjects!.topics)).toEqual([
+      // Volume 1's entry was read by a machine and nobody checked it: so is the topic's.
+      ['אור וחושך', 3, 2, true],
+      ['מים', 1, 1, false],
+    ]);
+    expect(subjectsNamed(subjects!, 'מים')).toEqual([{ topic: 'מים', places: 1, volumes: 1, machine: false }]);
+    // The same words, spelled with a final letter or not, and a topic that begins with the word.
+    expect(subjectsNamed(subjects!, 'אור וחושך')).toEqual([{ topic: 'אור וחושך', places: 3, volumes: 2, machine: true }]);
+    expect(subjectsNamed(subjects!, 'אור')).toEqual([{ topic: 'אור וחושך', places: 3, volumes: 2, machine: true }]);
+    // Part of a word is not the word.
+    expect(subjectsNamed(subjects!, 'או')).toEqual([]);
   });
 
   it('gathers every volume under each topic, the machine-read labelled, each place linked to its sicha', async () => {
