@@ -12,10 +12,10 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 /** One year: every event with recordings, month by month. */
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   const year = Number(params.year);
   if (!YEARS.includes(year)) throw new Response('not found', { status: 404 });
-  const [withWords, events] = await Promise.all([eventsWithWords(), eventsIn(year)]);
+  const [withWords, events] = await Promise.all([eventsWithWords(api), eventsIn(api, year)]);
   const months: { name: string; rows: EventRow[] }[] = [];
   for (const event of events) {
     const name = monthLabel(event.data.date);

@@ -10,6 +10,11 @@ workers_dev = false
 # The beta address, hidden from search engines (public/robots.txt, X-Robots-Tag).
 routes = [{ pattern = "new.chassidushub.org", custom_domain = true }]
 
+# The shared packages are used from source, as in vite.config.ts, so the deploy needs nothing built first.
+[alias]
+"@chassidushub/client" = "../../packages/client/src/index.ts"
+"@chassidushub/hebrew" = "../../packages/hebrew/src/index.ts"
+
 [observability]
 enabled = true
 
@@ -18,3 +23,12 @@ enabled = true
 [assets]
 directory = "build/client"
 binding = "ASSETS"
+
+# The API, reached inside Cloudflare without a public round trip; API_URL is its
+# public address, used only when the binding is absent (app/lib/api.ts).
+[[services]]
+binding = "API"
+service = "chassidushub-api"
+
+[vars]
+API_URL = "https://api.chassidushub.org"

@@ -19,8 +19,8 @@ const SOME_YEARS = [5710, 5711, 5722, 5734, 5747, 5752];
  * Listening: where the reader stopped, the farbrengens of these days in
  * earlier years, and the way in by day of the year or by year.
  */
-export async function loader({ request }: Route.LoaderArgs) {
-  const [withWords, upcoming] = await Promise.all([eventsWithWords(), eventsOn(nextDays(14)).catch(() => [])]);
+export async function loader({ request, context: { api } }: Route.LoaderArgs) {
+  const [withWords, upcoming] = await Promise.all([eventsWithWords(api), eventsOn(api, nextDays(14)).catch(() => [])]);
   return {
     stopped: readStopped(request.headers.get('cookie'), LISTEN_COOKIE),
     these: fitting(upcoming, withWords, 5).map((e) => eventRow(e, withWords)),

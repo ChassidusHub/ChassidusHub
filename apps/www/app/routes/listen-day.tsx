@@ -12,10 +12,10 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 /** One day of the year (י״ט כסלו, יו״ד שבט): its farbrengens in every year, the latest first. */
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   const day = DAYS.find((d) => d.day === params.day);
   if (!day) throw new Response('not found', { status: 404 });
-  const [withWords, events] = await Promise.all([eventsWithWords(), eventsOn([day.day])]);
+  const [withWords, events] = await Promise.all([eventsWithWords(api), eventsOn(api, [day.day])]);
   const rows = events.sort((a, b) => b.data.date.localeCompare(a.data.date)).map((e) => eventRow(e, withWords));
   return { day: day.day, label: day.label, rows };
 }

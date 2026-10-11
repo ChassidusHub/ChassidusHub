@@ -16,9 +16,9 @@ export function meta(_: Route.MetaArgs) {
  * in the first paint), recordings that fit the coming days, and the Rebbeim.
  * A read that fails leaves its part out rather than failing the page.
  */
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context: { api } }: Route.LoaderArgs) {
   const cookies = request.headers.get('cookie');
-  const [withWords, upcoming, shelves] = await Promise.all([eventsWithWords(), eventsOn(nextDays(7)).catch(() => []), rebbeim().catch(() => [])]);
+  const [withWords, upcoming, shelves] = await Promise.all([eventsWithWords(api), eventsOn(api, nextDays(7)).catch(() => []), rebbeim(api).catch(() => [])]);
   return {
     listening: readStopped(cookies, LISTEN_COOKIE),
     reading: readStopped(cookies, READ_COOKIE),
@@ -72,7 +72,7 @@ export default function Home() {
         <SectionHead title="הספרייה" more={{ label: 'הכול', to: '/library' }} />
         <div className="boxes">
           {rebbeim.map((r) => (
-            <Box key={r.slug} title={r.name} sub={r.sefarim} to={`/library/${r.slug}`} />
+            <Box key={r.to} title={r.name} sub={r.sefarim} to={r.to} />
           ))}
         </div>
       </main>

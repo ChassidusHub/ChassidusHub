@@ -1,5 +1,5 @@
 import { dateKeyFromGregorian, describeDateKey, monthByToken, parseDateKey, toHebrewNumeral } from '@chassidushub/hebrew';
-import { api } from './api.server';
+import type { ChassidusHub } from '@chassidushub/client';
 import type { EventRow } from './common';
 export { DAYS, YEARS } from './common';
 
@@ -72,9 +72,9 @@ export function eventRow(event: ApiEvent, withWords: Set<string>, { dateFirst = 
 }
 
 /** Every recording with a transcript to follow along with, and their events (the API keeps this list ready; one cached read). */
-export async function withTranscripts(): Promise<{ events: Set<string>; recordings: Set<string> }> {
+export async function withTranscripts(api: ChassidusHub): Promise<{ events: Set<string>; recordings: Set<string> }> {
   try {
-    const { recordings } = await api<{ recordings: { recording: string; event?: string }[] }>('/v1/transcripts?limit=1000', { cache: 3600 });
+    const recordings = (await api.transcribedRecordings({ limit: 1000 })).recordings as { recording: string; event?: string }[];
     return { events: new Set(recordings.flatMap((r) => (r.event ? [r.event] : []))), recordings: new Set(recordings.map((r) => r.recording)) };
   } catch {
     return { events: new Set(), recordings: new Set() };
@@ -82,17 +82,17 @@ export async function withTranscripts(): Promise<{ events: Set<string>; recordin
 }
 
 /** The events whose words can be followed. */
-export const eventsWithWords = async () => (await withTranscripts()).events;
+export const eventsWithWords = async (api: ChassidusHub) => (await withTranscripts(api)).events;
 
 /** Events with recordings on these days of the year (MM-DD), in any year. */
-export async function eventsOn(days: string[]): Promise<ApiEvent[]> {
-  const { items } = await api<{ items: ApiEvent[] }>(`/v1/events?day=${days.join(',')}&brief=1&limit=500`, { cache: 3600 });
+export async function eventsOn(api: ChassidusHub, days: string[]): Promise<ApiEvent[]> {
+  const items = (await api.listEvents({ day: days.join(','), brief: '1', limit: 500 })).items as unknown as ApiEvent[];
   return items.filter((e) => (e.recordings ?? 0) > 0);
 }
 
 /** Events with recordings in one year, in the order of the year. */
-export async function eventsIn(year: number): Promise<ApiEvent[]> {
-  const { items } = await api<{ items: ApiEvent[] }>(`/v1/events?within=${year}&brief=1&limit=1000`, { cache: 3600 });
+export async function eventsIn(api: ChassidusHub, year: number): Promise<ApiEvent[]> {
+  const items = (await api.listEvents({ within: String(year), brief: '1', limit: 1000 })).items as unknown as ApiEvent[];
   return items.filter((e) => (e.recordings ?? 0) > 0);
 }
 
@@ -106,12 +106,13 @@ export function fitting(events: ApiEvent[], withWords: Set<string>, count: numbe
     .slice(0, count);
 }
 
-/** The Rebbeim, in order: the top shelves of the library. */
+/** The Rebbeim, in order: the top shelves of the library (the Library thread keeps the same list). */
 const REBBEIM = ['baal-shem-tov', 'maggid', 'alter-rebbe', 'mitteler-rebbe', 'tzemach-tzedek', 'rebbe-maharash', 'rebbe-rashab', 'frierdiker-rebbe', 'the-rebbe'];
 
 /** The Rebbeim with the first of their sefarim under each name: one cached read of the library's shelves. */
-export async function rebbeim(): Promise<{ slug: string; name: string; sefarim: string }[]> {
-  const { items } = await api<{ items: { id: string; data: { slug?: string; name?: { he?: string }; parent?: string; order?: string } }[] }>('/v1/entities?type=set&shelf=1&limit=200', { cache: 3600 });
+export async function rebbeim(api: ChassidusHub): Promise<{ to: string; name: string; sefarim: string }[]> {
+  type Shelf = { id: string; path?: string | null; data: { slug?: string; name?: { he?: string }; parent?: string; order?: string } };
+  const items = (await api.listItems({ type: 'set', shelf: true, limit: 200 })).items as unknown as Shelf[];
   const order = (x: { data: { order?: string } }) => x.data.order ?? '~';
   return REBBEIM.flatMap((slug) => {
     const set = items.find((s) => s.data.slug === slug && !s.data.parent);
@@ -122,6 +123,6 @@ export async function rebbeim(): Promise<{ slug: string; name: string; sefarim: 
       .slice(0, 3)
       .map((s) => s.data.name?.he)
       .filter(Boolean);
-    return [{ slug, name: set.data.name?.he ?? slug, sefarim: sefarim.join(' · ') }];
+    return [{ to: set.path ?? `/sets/${slug}`, name: set.data.name?.he ?? slug, sefarim: sefarim.join(' · ') }];
   });
 }

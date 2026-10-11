@@ -33,6 +33,9 @@ export const API = 'https://api.chassidushub.org';
 export const LISTEN_COOKIE = 'ch_listen';
 export const READ_COOKIE = 'ch_read';
 
+/** A path on this site: one slash, then not another (//other.site and /\\other.site are other sites). */
+const SITE_PATH = /^\/(?![/\\])/;
+
 /** A cookie's value read from a request's Cookie header, as the shape above; null when missing or broken. */
 export function readStopped(cookies: string | null, name: string): Stopped | null {
   const raw = cookies
@@ -42,7 +45,7 @@ export function readStopped(cookies: string | null, name: string): Stopped | nul
   if (!raw) return null;
   try {
     const value = JSON.parse(decodeURIComponent(raw)) as Stopped;
-    return typeof value.to === 'string' && value.to.startsWith('/') && typeof value.title === 'string' ? value : null;
+    return typeof value.to === 'string' && SITE_PATH.test(value.to) && typeof value.title === 'string' ? value : null;
   } catch {
     return null;
   }

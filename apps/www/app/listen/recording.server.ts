@@ -1,4 +1,4 @@
-import { api } from './api.server';
+import type { ChassidusHub } from '@chassidushub/client';
 import type { ApiEvent, ApiRecording } from './data.server';
 import { dateLabel, withTranscripts, yearLabel } from './data.server';
 import { paragraphsOf, type ApiTranscript, type Chapter } from './common';
@@ -12,11 +12,11 @@ const NIGGUN = /ניגון|ניגונים|רצית|אימתי|בבות|שיבנ�
  * A recorded event's page in a few reads: the event, its recordings (one per
  * part), where the files are heard, and the first part's words.
  */
-export async function recordedEvent(id: string) {
+export async function recordedEvent(api: ChassidusHub, id: string) {
   const [event, { items }, transcribed] = await Promise.all([
-    api<ApiEvent & { type: string }>(`/v1/entities/${id}`),
-    api<{ items: ApiRecording[] }>(`/v1/entities/${id}/children?field=event&type=recording&limit=200`),
-    withTranscripts(),
+    api.getItem({ id }) as unknown as Promise<ApiEvent & { type: string }>,
+    api.listChildren({ id, field: 'event', type: 'recording', limit: 200 }) as unknown as Promise<{ items: ApiRecording[] }>,
+    withTranscripts(api),
   ]);
   if (event.type !== 'event') throw new Response('not found', { status: 404 });
 
@@ -30,7 +30,7 @@ export async function recordedEvent(id: string) {
   const files = parts.flatMap((r) => (r.data.url || !r.data.file ? [] : [r.data.file]));
   const urls = new Map<string, string>();
   if (files.length) {
-    const { items: found } = await api<{ items: { sha256: string; url: string | null }[] }>(`/v1/files/batch?ids=${files.join(',')}`);
+    const { items: found } = (await api.getFiles({ ids: files.join(',') })) as unknown as { items: { sha256: string; url: string | null }[] };
     for (const f of found) if (f.url) urls.set(f.sha256, f.url);
   }
 
@@ -48,7 +48,7 @@ export async function recordedEvent(id: string) {
   // The first part with words comes with the page, up to FIRST_WORDS characters.
   const first = chapters.find((c) => transcribed.recordings.has(c.recording)) ?? chapters.find((c) => !c.niggun);
   if (first) {
-    const transcript = await api<ApiTranscript>(`/v1/recordings/${first.recording}/transcript`).catch(() => null);
+    const transcript = await (api.recordingTranscript({ id: first.recording }) as unknown as Promise<ApiTranscript>).catch(() => null);
     if (transcript) {
       let size = 0;
       const all = paragraphsOf(transcript);

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { redirect, useLoaderData, useSearchParams } from 'react-router';
-import { notFound } from '../listen/api.server';
+import { data as answer, redirect, useLoaderData, useSearchParams } from 'react-router';
 import { YEARS, yearLabel } from '../listen/data.server';
 import listenCss from '../listen/listen.css?url';
 import { player, usePlaying, type Part } from '../listen/play';
@@ -17,8 +16,13 @@ export function meta({ data }: Route.MetaArgs) {
   return [{ title: data ? `${data.date}${data.title ? ` · ${data.title}` : ''} · ChassidusHub` : 'ChassidusHub' }];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
-  const found = await recordedEvent(params.event).catch(notFound);
+export async function loader({ params, context: { api } }: Route.LoaderArgs) {
+  if (!/^rh-[a-z0-9]+$/i.test(params.event)) throw answer('not found', { status: 404 });
+  const found = await recordedEvent(api, params.event).catch((error: unknown) => {
+    // By its status, not its class, as routes/item.tsx does.
+    if ((error as { status?: number } | null)?.status === 404) throw answer('not found', { status: 404 });
+    throw error;
+  });
   if (String(found.year) !== params.year) throw redirect(`/listen/${found.year}/${found.id}`, 301);
   return { ...found, years: YEARS.map((year) => ({ year, label: yearLabel(year) })) };
 }
