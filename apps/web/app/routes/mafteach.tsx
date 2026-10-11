@@ -92,6 +92,7 @@ const W = {
   sefer: { he: 'לקוטי שיחות', en: 'Likkutei Sichos' },
   kinds: { he: 'איזה מפתח', en: 'Which index' },
   entries: { he: 'ערכים', en: 'entries' },
+  continues: { he: 'האות {l} ממשיכה בעמודים הבאים, לפי סדר הא״ב. מחפשים ערך אחד? כתבו אותו בחיפוש למעלה.', en: 'The letter {l} goes on over the next pages, in alphabetical order. Looking for one entry? Type it in the search above.' },
   picked: { he: 'ההפניה שנבחרה', en: 'The reference picked' },
   open: { he: 'לפתוח בעמוד', en: 'Open at the page' },
   more: { he: 'עוד תחת ״{t}״', en: 'More under "{t}"' },
@@ -220,6 +221,28 @@ export default function MafteachPage({ loaderData }: Route.ComponentProps) {
   const prev = index.offset > 0 ? here(back[back.length - 1] ?? 0, back.slice(0, -1)) : null;
   const next = index.next !== null ? here(index.next, [...back, index.offset]) : null;
   const shown = index.topics.length ? `${num(index.offset + 1, lang)}-${num(index.offset + index.topics.length, lang)} ${w(lang, 'of')} ${num(index.found, lang)}` : '';
+  const pager = (where: 'top' | 'bottom') => (
+    <nav className={`mf-pager ${where}`} aria-label={w(lang, 'pages')}>
+      {prev ? (
+        <Link className="btn" to={prev}>
+          <Icon name={lang === 'he' ? 'chevr' : 'chev'} />
+          {w(lang, 'prev')}
+        </Link>
+      ) : (
+        <span />
+      )}
+      {/* Above the entries the letter's head already says which these are. */}
+      <span className="subtle">{where === 'bottom' ? shown : null}</span>
+      {next ? (
+        <Link className="btn" to={next}>
+          {w(lang, 'next')}
+          <Icon name={lang === 'he' ? 'chev' : 'chevr'} />
+        </Link>
+      ) : (
+        <span />
+      )}
+    </nav>
+  );
   const pickedTopic = picked ? index.topics.find((t) => t.topic === picked.topic) : undefined;
   const pickedRef = pickedTopic ? topicLines(pickedTopic).flatMap((l) => l.refs).find((r) => r.key === picked?.key) : undefined;
 
@@ -269,11 +292,14 @@ export default function MafteachPage({ loaderData }: Route.ComponentProps) {
             <span className="mf-big">{letter}</span>
             {inLetter !== undefined ? (
               <span className="subtle">
-                {num(inLetter, lang)} {w(lang, 'entries')}
+                {prev || next ? shown : num(inLetter, lang)} {w(lang, 'entries')}
               </span>
             ) : null}
           </div>
         ) : null}
+        {/* A letter runs over many pages (ב has 217 entries, 40 to a page): say so above its first entries, with the way on (#191). */}
+        {letter && next && !prev ? <p className="mf-continues subtle">{w(lang, 'continues').replace('{l}', letter)}</p> : null}
+        {prev || next ? pager('top') : null}
         {index.topics.length ? (
           <div className="mf-topics">
             {index.topics.map((t) => (
@@ -285,27 +311,7 @@ export default function MafteachPage({ loaderData }: Route.ComponentProps) {
             {w(lang, 'noneSay')}
           </EmptyState>
         )}
-        {prev || next ? (
-          <nav className="mf-pager" aria-label={w(lang, 'pages')}>
-            {prev ? (
-              <Link className="btn" to={prev}>
-                <Icon name={lang === 'he' ? 'chevr' : 'chev'} />
-                {w(lang, 'prev')}
-              </Link>
-            ) : (
-              <span />
-            )}
-            <span className="subtle">{shown}</span>
-            {next ? (
-              <Link className="btn" to={next}>
-                {w(lang, 'next')}
-                <Icon name={lang === 'he' ? 'chev' : 'chevr'} />
-              </Link>
-            ) : (
-              <span />
-            )}
-          </nav>
-        ) : null}
+        {prev || next ? pager('bottom') : null}
       </div>
 
       <p className="mf-about subtle">
