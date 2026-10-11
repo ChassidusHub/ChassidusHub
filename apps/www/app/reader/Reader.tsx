@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { EditBar, EditFields, Linked, NameField } from '../edit/Edit';
+import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../lib/catalog';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
@@ -33,7 +33,6 @@ export function Reader({ data }: { data: ReaderData }) {
   const without = new URLSearchParams(search);
   without.delete('edit');
   const reading = `${data.path}${without.size ? `?${without}` : ''}`;
-  const [rev, setRev] = useState(data.rev);
 
   // A footnote's mark opens the note; without script it is a link to the note at the end of the page.
   const onWords = (event: MouseEvent) => {
@@ -94,8 +93,7 @@ export function Reader({ data }: { data: ReaderData }) {
           {data.sub && <p className="ssub">{data.sub}</p>}
           {editing && (
             <EditFields>
-              <NameField item={data.id} rev={rev} language="he" label="שם" value={data.names.he} onSaved={(next) => next && setRev(next)} />
-              <NameField item={data.id} rev={rev} language="en" label="שם באנגלית" value={data.names.en} onSaved={(next) => next && setRev(next)} />
+              <Names item={data.id} rev={data.rev} names={data.names} />
               {data.work && (
                 <Linked to={`${data.work.path}?edit`} action="לערוך שם">
                   נמצא בספר: {data.sub || data.work.label}

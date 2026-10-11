@@ -1,16 +1,11 @@
 import type { ChassidusHub, ItemView } from '@chassidushub/client';
 import type { PageSegment } from '@chassidushub/model';
 import type { AppLoadContext } from 'react-router';
+import { namesOf } from '../edit/names';
 import { nameOf } from '../lib/catalog';
 import { pdfsOf } from '../lib/pdfs';
 import type { ReaderData, ReaderText } from './types';
 import { notesHtml, wordsHtml } from './words.server';
-
-/** A page's own names, Hebrew and English, as Edit shows them. */
-function namesOf(label: unknown): { he: string; en: string } {
-  const names = (typeof label === 'string' ? { he: label } : (label ?? {})) as Record<string, unknown>;
-  return { he: typeof names.he === 'string' ? names.he : '', en: typeof names.en === 'string' ? names.en : '' };
-}
 
 const languages: Record<string, string> = { he: 'עברית', en: 'אנגלית', yi: 'אידיש', ru: 'רוסית', fr: 'צרפתית', es: 'ספרדית' };
 
@@ -40,7 +35,7 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     citation: [...middle, title].join(', '),
     url: `${origin}${path}`,
     rev: (view.item as { rev?: number }).rev ?? 0,
-    names: namesOf((view.item.data as { label?: unknown }).label),
+    names: namesOf(view.item.data),
     work: fromWork >= 0 && view.pathBar[fromWork]!.chosen.path ? { path: view.pathBar[fromWork]!.chosen.path!, label: nameOf(view.pathBar[fromWork]!.chosen.name) } : null,
   };
 }

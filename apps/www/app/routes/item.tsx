@@ -88,6 +88,13 @@ async function listeningPage(item: { id: string; type: string; data: unknown }, 
   return event && year ? `/listen/${year}/${event.id}${item.type === 'recording' ? `?r=${item.id}` : ''}` : null;
 }
 
+/**
+ * The same page for everyone (who is signed in is asked by the browser), so
+ * the edge keeps it (server/pageCache.ts): fresh for two minutes, as the
+ * API's own answers are, then shown while it is drawn again behind it.
+ */
+export const headers = () => ({ 'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600' });
+
 type Loaded = Awaited<ReturnType<typeof loader>>;
 
 export const handle = { section: (loaded: Loaded | undefined): Section => (loaded && 'type' in loaded && listening.has(loaded.type) ? 'listen' : 'library') };
