@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A letter of the Likkutei Sichos subject index that runs over several
+  pages says so above its first entries ("1-30 of 217 entries", the letter
+  goes on in alphabetical order, or search for one entry), with the way to
+  the next page above the entries as well as below them.
 - The site's own reads of `GET /v1/community`, `GET /v1/machine/to-check` and
   `GET /v1/mafteach` read what the scheduled run keeps in the public bucket,
   as the API's Worker does: on a cold page they summed or built it on the spot.
