@@ -1,6 +1,7 @@
 import type { Item } from '@chassidushub/client';
 import { useEffect, useState } from 'react';
 import { nameOf } from '../lib/catalog';
+import { driveEmbed } from '../lib/pdfs';
 
 /**
  * A sefer's printings (its publications) and where their scans can be read.
@@ -16,12 +17,6 @@ export interface Printing {
   title: string;
   /** Places to read the scan: an embeddable PDF (Google Drive), or a page elsewhere. */
   scans: Array<{ label: string; url: string; embed?: string }>;
-}
-
-/** A Google Drive file's address in its embeddable form, or nothing for any other address. */
-function driveEmbed(url: string): string | undefined {
-  const id = /^https:\/\/drive\.google\.com\/file\/d\/([\w-]+)/.exec(url)?.[1];
-  return id ? `https://drive.google.com/file/d/${id}/preview` : undefined;
 }
 
 const sourceNames: Record<string, string> = { hebrewbooks: 'HebrewBooks', other: '' };

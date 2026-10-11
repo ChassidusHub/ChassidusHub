@@ -38,3 +38,47 @@ test('signed out, Edit says to sign in and keeps the page as it was', async ({ p
   await name.press('Enter');
   await expect(page.getByRole('status')).toContainText('כדי לערוך צריך להיכנס');
 });
+
+test('a shelf\'s Edit shows its own name, and saves it by a rename', async ({ page }) => {
+  await page.context().addCookies([{ name: 'rh_session', value: 'sample', url: 'http://localhost:3001' }]);
+  await page.goto('/sets/the-rebbe');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'עוד', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'עריכה' }).click();
+  await expect(page).toHaveURL(/\/sets\/the-rebbe\?edit/);
+  await expect(page.getByRole('region', { name: 'עריכה' })).toBeVisible();
+
+  const name = page.getByLabel('שם', { exact: true });
+  await expect(name).toHaveValue('הרבי');
+  await page.getByLabel('שם באנגלית').fill('The Rebbe');
+  await page.getByLabel('שם באנגלית').press('Enter');
+  await expect(page.getByRole('status')).toContainText('נשמר');
+  const sent = (await (await page.request.get('http://localhost:3002/_edits')).json()) as { operations: unknown[] }[];
+  expect(sent.at(-1)!.operations).toEqual([{ op: 'rename', item: 'rh-aaaaaas3', name: { en: 'The Rebbe' } }]);
+  // Its sefarim are still there, each edited on its own page.
+  await expect(page.getByRole('link', { name: /שיחות לדוגמה/ }).first()).toBeVisible();
+});
+
+test('a sefer\'s Edit shows its title, and the shelf it is on is edited on the shelf\'s page', async ({ page }) => {
+  await page.context().addCookies([{ name: 'rh_session', value: 'sample', url: 'http://localhost:3001' }]);
+  await page.goto('/sample-sichos?edit');
+  await page.waitForLoadState('networkidle');
+  const name = page.getByLabel('שם', { exact: true });
+  await expect(name).toHaveValue('שיחות לדוגמה');
+  await name.fill('שיחות לדוגמה, מתוקן');
+  await name.press('Enter');
+  await expect(page.getByRole('status')).toContainText('נשמר');
+  const sent = (await (await page.request.get('http://localhost:3002/_edits')).json()) as { operations: unknown[] }[];
+  expect(sent.at(-1)!.operations).toEqual([{ op: 'rename', item: 'rh-aaaaaaw1', name: { he: 'שיחות לדוגמה, מתוקן' } }]);
+  await expect(page.locator('.linked', { hasText: 'נמצא במדף' }).getByRole('link')).toHaveAttribute('href', '/sets/the-rebbe-sample-sichos?edit');
+  await page.getByRole('link', { name: 'סיום' }).click();
+  await expect(page).toHaveURL(/\/sample-sichos$/);
+});
+
+test('a volume has no name of its own: Edit sends to its sefer', async ({ page }) => {
+  await page.goto('/sample-sichos/3?edit');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('region', { name: 'עריכה' })).toBeVisible();
+  await expect(page.getByLabel('שם', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.linked', { hasText: 'נמצא בספר' }).getByRole('link')).toHaveAttribute('href', '/sample-sichos?edit');
+});

@@ -37,10 +37,16 @@ export function libraryAnswer(url: URL, top: Array<{ id: string; path: string; d
   const shelfLevel = { kind: 'set', chosen: choice(shelves[0]!), choices: [choice(shelves[0]!)] };
   const seferLevel = { kind: 'work', chosen: choice(sefer), choices: [choice(sefer)] };
   if (path === '/v1/entities' && query('type') === 'set') return { items: sets };
+  // One item, as Edit reads it before a rename.
+  const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(path)?.[1];
+  if (entity) {
+    const found = [...sets, ...works].find((item) => item.id === entity);
+    return found ? { rev: 1, ...found } : undefined;
+  }
   if (path === '/v1/view') {
     const at = query('path');
-    if (at === rebbe.path) return { item: rebbe, pathBar: [topLevel(rebbe)], previous: null, next: null, text: null };
-    if (at === shelves[0]!.path) return { item: shelves[0], pathBar: [topLevel(rebbe), shelfLevel], previous: null, next: null, text: null };
+    if (at === rebbe.path) return { item: { rev: 1, ...rebbe }, pathBar: [topLevel(rebbe)], previous: null, next: null, text: null };
+    if (at === shelves[0]!.path) return { item: { rev: 1, ...shelves[0] }, pathBar: [topLevel(rebbe), shelfLevel], previous: null, next: null, text: null };
     if (at === sefer.path) return { item: sefer, pathBar: [topLevel(rebbe), shelfLevel, seferLevel], previous: null, next: null, text: null };
     return undefined;
   }
