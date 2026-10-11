@@ -14,6 +14,10 @@ any time. `@chassidushub/client` carries the API's version.
   finds a farbrengen's recordings through its links (#182): a common word in
   thousands of farbrengens and recordings no longer reads each one's
   revision, nor every recording's, to list thirty names.
+- The MCP connector's `suggest_items` takes `set` in place of `data`: only
+  those fields of an existing item change (a maamar's label, say), and the
+  rest, its words too, is left as it is, so many labels go in one small
+  suggestion (#89).
 - Search by words finds sichos first by their lead, their name and opening
   words, through its index (#182): up to 40 sichos that open on the words are
   found without reading any sicha's words, and only 20 more that say them

@@ -460,7 +460,7 @@ function tools(siteUrl: string): Tool[] {
       name: 'suggest_items',
       title: 'Add or change items',
       description:
-        "Add new items, or change or delete several at once, as one suggestion: what the site's editor does, many items at a time. Each item is its type and its whole data (as get_item shows data; schemas are at /schemas/<type>), with id to change an existing one (data null deletes it) and path for a new item's readable path. Up to 200 items a call: pass the suggestion id back as `suggestion` with submit false to keep adding to one suggestion, and submit it with the last call. New items get their ids here, in the order given. Reviewed by the keepers like any suggestion; a steward may approve it with approve_suggestion. Needs a ChassidusHub API token with the write scope.",
+        "Add new items, or change or delete several at once, as one suggestion: what the site's editor does, many items at a time. Each item is its type and its whole data (as get_item shows data; schemas are at /schemas/<type>), with id to change an existing one (data null deletes it) and path for a new item's readable path. To change only some fields of an existing item (its label, say), give set in place of data: those fields replace its own, a field set to null is removed, and the rest of its data (its words too) is left as it is, so only the change is sent. Up to 200 items a call: pass the suggestion id back as `suggestion` with submit false to keep adding to one suggestion, and submit it with the last call. New items get their ids here, in the order given. Reviewed by the keepers like any suggestion; a steward may approve it with approve_suggestion. Needs a ChassidusHub API token with the write scope.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -473,10 +473,11 @@ function tools(siteUrl: string): Tool[] {
               properties: {
                 type: { enum: [...ENTITY_TYPES] },
                 data: { oneOf: [{ type: 'object', additionalProperties: true }, { type: 'null' }], description: "The item's whole data; null deletes it" },
+                set: { type: 'object', additionalProperties: true, description: 'In place of data, for an existing item (id): only these fields change, the rest is left as it is; a field set to null is removed' },
                 id: { ...ID, description: 'An existing item to change, or an id for a new one; left out, a new id is made' },
                 path: { type: 'string', description: "A new item's readable path, starting with /" },
               },
-              required: ['type', 'data'],
+              required: ['type'],
               additionalProperties: false,
             },
           },
@@ -497,9 +498,26 @@ function tools(siteUrl: string): Tool[] {
           suggestion = (await need(call, 'POST', '/v1/suggestions', { title, description: typeof args.note === 'string' ? args.note : undefined })).id as number;
         }
         const made: { id: string; type: string; path: string | null }[] = [];
+        // An item given as `set` is read as it stands and only those fields change, so a label is changed without sending
+        // back the item's words (a maamar's are some 26 kB).
+        const kept = (i: number) => `(suggestion ${suggestion} keeps the ${i} before it)`;
         for (const [i, item] of (args.items as any[]).entries()) {
-          if (!item || typeof item !== 'object' || typeof item.type !== 'string' || item.data === undefined) throw new ToolError(`item ${i + 1}: give type and data (suggestion ${suggestion} keeps the ${i} before it)`);
-          const answer = await call('PUT', `/v1/suggestions/${suggestion}/items`, { type: item.type, data: item.data, id: item.id, path: item.path });
+          if (!item || typeof item !== 'object' || typeof item.type !== 'string' || (item.data === undefined && item.set === undefined)) throw new ToolError(`item ${i + 1}: give type and data ${kept(i)}`);
+          let data = item.data;
+          if (item.set !== undefined) {
+            if (item.data !== undefined) throw new ToolError(`item ${i + 1}: give data or set, not both ${kept(i)}`);
+            if (typeof item.id !== 'string' || !item.set || typeof item.set !== 'object' || Array.isArray(item.set)) throw new ToolError(`item ${i + 1}: set changes an existing item: give its id, and set as an object of fields ${kept(i)}`);
+            const live = await call('GET', `/v1/entities/${encodeURIComponent(item.id)}`);
+            if (live.status >= 400) throw new ToolError(`item ${i + 1}: ${live.body?.message ?? `the API answered ${live.status}`} ${kept(i)}`);
+            if (live.body.withheld) throw new ToolError(`item ${i + 1}: ${live.body.id} is withheld for its rights; suggest on the site ${kept(i)}`);
+            if (live.body.type !== item.type) throw new ToolError(`item ${i + 1}: ${live.body.id} is a ${live.body.type}, not a ${item.type} ${kept(i)}`);
+            data = structuredClone(live.body.data ?? {});
+            for (const [field, value] of Object.entries(item.set as Record<string, unknown>)) {
+              if (value === null) delete data[field];
+              else data[field] = value;
+            }
+          }
+          const answer = await call('PUT', `/v1/suggestions/${suggestion}/items`, { type: item.type, data, id: item.id, path: item.path });
           if (answer.status >= 400) throw new ToolError(`item ${i + 1}: ${answer.body?.message ?? `the API answered ${answer.status}`} (suggestion ${suggestion} keeps the ${i} before it; fix it and call again with suggestion ${suggestion})`);
           made.push({ id: answer.body.id, type: item.type, path: item.path ?? null });
         }

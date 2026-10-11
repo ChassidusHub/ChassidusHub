@@ -312,6 +312,26 @@ describe('the MCP server', () => {
     expect((await tool('add_segments', { items: [{ id: work, segments: [{ segment: line('x') }] }] }, token)).content[0].text).toMatch(/has no words/);
   });
 
+  it('changes only the fields given in set, leaving the rest of each item as it is (#89)', async () => {
+    const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מאמרים' }, slug: 'mm', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] }, '/mm');
+    const body = { profile: 'chabad-library', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: 'פתח דבר' }] }] }] };
+    const maamar = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'maamar', value: '1' }], order: '1', label: { he: 'בס"ד. יום א' }, body, sets: [set] }, '/mm/1');
+    const token = await writeToken((await createPerson(catalog.db, 'Namer')).id);
+    const made = await tool('suggest_items', { items: [{ type: 'unit', id: maamar, set: { label: { he: 'פתח דבר · יום א' }, note: 'machine' } }], title: 'Names' }, token);
+    expect(made.isError).toBe(false);
+    const [proposal] = await catalog.proposals(made.structuredContent.suggestion);
+    expect(proposal!.rev.data).toMatchObject({ label: { he: 'פתח דבר · יום א' }, note: 'machine', work, order: '1', body });
+    // A field set to null is removed; the rest stays.
+    const cleared = await tool('suggest_items', { items: [{ type: 'unit', id: maamar, set: { sets: null } }] }, token);
+    const [second] = await catalog.proposals(cleared.structuredContent.suggestion);
+    expect((second!.rev.data as any).sets).toBeUndefined();
+    expect((second!.rev.data as any).body).toEqual(body);
+    // set changes an existing item of the type named, and never together with data.
+    expect((await tool('suggest_items', { items: [{ type: 'unit', set: { label: { he: 'x' } } }] }, token)).content[0].text).toMatch(/give its id/);
+    expect((await tool('suggest_items', { items: [{ type: 'work', id: maamar, set: { label: { he: 'x' } } }] }, token)).content[0].text).toMatch(/is a unit, not a work/);
+    expect((await tool('suggest_items', { items: [{ type: 'unit', id: maamar, data: {}, set: {} }] }, token)).content[0].text).toMatch(/data or set, not both/);
+  });
+
   it('shows the tree and organizes it as suggestions, with a write token', async () => {
     const tree = await tool('get_tree', {});
     expect(tree.isError).toBe(false);
