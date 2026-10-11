@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog } from '@chassidushub/core';
 import type { EntityId } from '@chassidushub/model';
 import type { Json } from '@chassidushub/core';
+import { up as fillLeads } from '../../db/src/migrations/0034_unit_lead_fill.js';
 import { add, freshCatalog } from './helpers.js';
 
 /**
@@ -65,5 +66,41 @@ describe('unit_place', () => {
       [one],
     );
     expect(rows).toEqual([{ name_he: 'דברים שבת חזון', name_en: 'vaeschanan 2', found: true }]);
+  });
+  it('keeps each unit\'s lead: its name and the start of its words, never its footnotes (migrations 0033, 0034)', async () => {
+    // Made-up words: a long opening paragraph, the word far into it past the lead.
+    const long = Array.from({ length: 400 }, (_, i) => `מלה${i}`).join(' ');
+    const body = {
+      profile: 'plain',
+      versions: [
+        {
+          id: 'he',
+          language: 'he',
+          segments: [
+            { id: 'h1', kind: 'heading', text: [{ text: 'פְּתִיחָה' }] },
+            { id: 'p1', kind: 'paragraph', text: [{ text: `זבולון-יששכר ${long}` }] },
+          ],
+          notes: [{ id: 'n1', kind: 'note', text: [{ text: 'הערתא' }] }],
+        },
+      ],
+    };
+    const one = await add(catalog, 'mendy', 'keeper', 'unit', unit(1, { label: { he: 'שיחה ראשונה', en: 'First' }, body }), '/ls/1/1');
+    const has = async (word: string) =>
+      (await catalog.db.query<{ found: boolean }>(`SELECT lead @@ to_tsquery('simple', $2) AS found FROM unit_place WHERE unit_id = $1`, [one, `${word}:*`])).rows[0]!.found;
+    const check = async () => {
+      expect(await has('ראשונה')).toBe(true);
+      expect(await has('first')).toBe(true);
+      expect(await has('פתיחה')).toBe(true);
+      expect(await has('יששכר')).toBe(true);
+      expect(await has('מלה10')).toBe(true);
+      expect(await has('מלה399')).toBe(false);
+      expect(await has('הערתא')).toBe(false);
+    };
+    await check();
+
+    // The units already there when the lead came are filled the same way.
+    await catalog.db.exec('UPDATE unit_place SET lead = NULL');
+    await catalog.db.exec(fillLeads);
+    await check();
   });
 });
