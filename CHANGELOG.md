@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A report can be opened without an account, as every page says: signed
+  out, "Open the report" sends it without a name (the same hourly limit as
+  the quick report on an item's page) and opens it as an issue. Before,
+  the form ended in "Sign in to open a report" after it was written.
 - `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a
