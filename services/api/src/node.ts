@@ -17,8 +17,9 @@ import { sendNotifications, type Mailer } from '@chassidushub/core';
  *   PORT           default 8787
  *   FILES_DIR      a folder standing in for the two buckets, to try uploads
  *   SITE_URL       the site signing in happens on (default http://localhost:5173)
- *   DEV_ACCOUNT    sign every request in as this account - local testing only,
- *                  refused unless the server listens on localhost
+ *   DEV_ACCOUNT    sign every request in as this account, and show the site
+ *                  signed in as it - local testing only, refused unless the
+ *                  server listens on localhost (`npm run sample` makes `dev`)
  *   RESEND_API_KEY, EMAIL_FROM   email sign-in and notifications (looked
  *                  for every minute); DEV_EMAIL=1 prints email here instead
  *   CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_AI_TOKEN   search by meaning (Workers AI)
@@ -69,7 +70,7 @@ const app = createApp({
   mailer,
   catalog,
   authenticate: devAccount ? () => devAccount : undefined,
-  auth: authFor(process.env.SITE_URL ?? 'http://localhost:5173', { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET }),
+  auth: { ...authFor(process.env.SITE_URL ?? 'http://localhost:5173', { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET }), ...(devAccount ? { devPerson: devAccount } : {}) },
   filesBaseUrl: process.env.FILES_BASE_URL,
   files: publicFolder,
   uploads: filesDir ? { public: folder('public'), preservation: folder('preservation') } : undefined,

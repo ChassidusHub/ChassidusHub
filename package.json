@@ -30,6 +30,7 @@
     "db:migrate": "tsx services/jobs/src/bin/chassidushub.ts migrate",
     "dev:api": "tsx services/api/src/node.ts",
     "chassidushub": "tsx services/jobs/src/bin/chassidushub.ts",
+    "sample": "tsx services/jobs/src/bin/chassidushub.ts sample",
     "dev:web": "npm run dev -w @chassidushub/web",
     "build:web": "npm run build -w @chassidushub/web",
     "cloudflare:setup": "scripts/cloudflare-setup.sh"
