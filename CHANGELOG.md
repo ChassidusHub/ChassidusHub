@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` and `/v1/search/suggest` find a sicha or maamar by its
+  own name (`דברים ב`, `Devarim 2`, `שבת חזון`) among `works`, after a sefer
+  whose name is as good (#176).
 - `/v1/community` answers its sums (people, farbrengens without recordings
   or texts) from what the scheduled run keeps, at most 15 minutes behind;
   the latest merges and what waits are read on the request. Summing every
