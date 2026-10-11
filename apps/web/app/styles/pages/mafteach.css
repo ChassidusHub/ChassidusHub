@@ -229,6 +229,16 @@
   font-size: var(--fs-sm);
 }
 
+/* Above a letter's entries, the same way on, closer to them. */
+.mf-pager.top {
+  margin: 4px 0 8px;
+}
+
+.mf-continues {
+  margin: 6px 0 0;
+  font-size: var(--fs-sm);
+}
+
 /* Tablet: the letters run down the side so the topics get the width. */
 @media (min-width: 721px) {
   .mf2 {

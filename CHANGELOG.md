@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A letter of the Likkutei Sichos subject index that runs over several
+  pages says so above its first entries ("1-30 of 217 entries", the letter
+  goes on in alphabetical order, or search for one entry), with the way to
+  the next page above the entries as well as below them.
 - The search page no longer offers "By idea" while its index is still
   empty (it answered nothing for every question); a question sent by idea,
   as the home page's box does, is searched by words. It comes back when the
