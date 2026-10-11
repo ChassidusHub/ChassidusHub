@@ -62,12 +62,24 @@ export async function savePlace(catalog: Catalog, by: string, input: { kind?: un
   return toPlace(rows[0]!);
 }
 
-/** Where `by` stopped lately, the latest first. */
-export async function listPlaces(catalog: Catalog, by: string, options: { kind?: PlaceKind; key?: string; limit?: number } = {}): Promise<ReadingPlace[]> {
+/**
+ * Where `by` stopped lately, the latest first. `within` is a page of the
+ * site (a sefer's volume, `/likkutei-sichos/12`): only places that reopen
+ * there or under it, so a volume's page offers where its reader stopped in
+ * it (#71); the latest overall is `limit=1` without it.
+ */
+export async function listPlaces(catalog: Catalog, by: string, options: { kind?: PlaceKind; key?: string; within?: string; limit?: number } = {}): Promise<ReadingPlace[]> {
   const params: unknown[] = [by];
   const where = ['account_id = $1'];
   if (options.kind) where.push(`kind = $${params.push(options.kind)}`);
   if (options.key) where.push(`key = $${params.push(options.key)}`);
+  if (options.within !== undefined) {
+    const within = options.within.replace(/[/?#]+$/, '');
+    if (!/^\/(?!\/)/.test(within) || within.length > 2000) throw invalid('within is a page on this site (starting with one /)');
+    const n = params.push(within);
+    const like = params.push(within.replace(/[\\%_]/g, (c) => `\\${c}`));
+    where.push(`(href = $${n} OR href LIKE $${like} || '/%' OR href LIKE $${like} || '?%' OR href LIKE $${like} || '#%')`);
+  }
   const limit = Math.max(1, Math.min(options.limit ?? 20, MAX_PLACES));
   const { rows } = await catalog.db.query<Parameters<typeof toPlace>[0]>(
     `SELECT kind, key, title, sub, href, place, updated_at FROM auth.reading_place WHERE ${where.join(' AND ')} ORDER BY updated_at DESC LIMIT ${limit}`,

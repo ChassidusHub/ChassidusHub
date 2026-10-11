@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/places?within=/likkutei-sichos/12`: only the places that reopen at
+  that page of the site or under it, the latest first, so a volume's page
+  can offer "continue reading" where its reader stopped in it; the latest
+  place overall is `limit=1` (#71).
 - `GET /v1/mafteach/names?index=&sefer=&letter=`: one letter's topics of a
   subject index by name only, each with the `offset` that opens its page in
   `/v1/mafteach` and how many places it has, for a list to jump from (#195).
