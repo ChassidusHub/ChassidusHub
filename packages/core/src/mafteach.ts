@@ -218,6 +218,36 @@ async function build(catalog: Catalog, indexId: string, seferId: string | null):
   };
 }
 
+/** The built index, kept or built now (see `mafteach`); null when there is no such index. */
+async function builtIndex(
+  catalog: Catalog,
+  indexId: string,
+  options: { seferId?: string | null; kept?: MafteachKept; stale?: boolean; onBuild?: () => void },
+): Promise<Built | null> {
+  const seferId = options.seferId ?? null;
+  const stamp = await catalog.db.query<{ stamp: string | null }>(
+    `SELECT (SELECT max(e.main_rev) FROM entity e WHERE e.id = $1)::text || ':' ||
+            coalesce((SELECT max(e.main_rev) FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "default" WHERE p.work_id = ANY($2)), 0)::text AS stamp`,
+    [indexId, seferId ? [indexId, seferId] : [indexId]],
+  );
+  // The way it is built is part of the stamp: an index kept by an older build is built again.
+  const now = stamp.rows[0]?.stamp ? `${BUILD}:${stamp.rows[0].stamp}` : null;
+  if (!now) return null;
+  const at = `${indexId}-${seferId ?? 'none'}`;
+  let hit = cache.get(at);
+  if (!hit || hit.stamp !== now) {
+    const stored = (await options.kept?.get(at).catch(() => null)) as { stamp: string; built: Built } | null | undefined;
+    if (stored && (stored.stamp === now || options.stale)) hit = stored;
+    else {
+      options.onBuild?.();
+      hit = { stamp: now, built: await build(catalog, indexId, seferId) };
+      await options.kept?.put(at, hit);
+    }
+    cache.set(at, hit);
+  }
+  return hit.built;
+}
+
 /**
  * The index at `indexId` (a work whose units are its volumes' index pages),
  * each place linked to the sicha's page in `seferId` when there is one.
@@ -242,28 +272,8 @@ export async function mafteach(
     onBuild?: () => void;
   } = {},
 ): Promise<Mafteach | null> {
-  const seferId = options.seferId ?? null;
-  const stamp = await catalog.db.query<{ stamp: string | null }>(
-    `SELECT (SELECT max(e.main_rev) FROM entity e WHERE e.id = $1)::text || ':' ||
-            coalesce((SELECT max(e.main_rev) FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "default" WHERE p.work_id = ANY($2)), 0)::text AS stamp`,
-    [indexId, seferId ? [indexId, seferId] : [indexId]],
-  );
-  // The way it is built is part of the stamp: an index kept by an older build is built again.
-  const now = stamp.rows[0]?.stamp ? `${BUILD}:${stamp.rows[0].stamp}` : null;
-  if (!now) return null;
-  const at = `${indexId}-${seferId ?? 'none'}`;
-  let hit = cache.get(at);
-  if (!hit || hit.stamp !== now) {
-    const stored = (await options.kept?.get(at).catch(() => null)) as { stamp: string; built: Built } | null | undefined;
-    if (stored && (stored.stamp === now || options.stale)) hit = stored;
-    else {
-      options.onBuild?.();
-      hit = { stamp: now, built: await build(catalog, indexId, seferId) };
-      await options.kept?.put(at, hit);
-    }
-    cache.set(at, hit);
-  }
-  const { built } = hit;
+  const built = await builtIndex(catalog, indexId, options);
+  if (!built) return null;
   const letters: Mafteach['letters'] = [];
   for (const t of built.topics) {
     const last = letters[letters.length - 1];
@@ -298,4 +308,43 @@ export async function mafteach(
   }
   const letter = options.letter && letters.some((l) => l.letter === options.letter) ? options.letter : letters[0]?.letter;
   return page(built.topics.filter((t) => t.letter === letter));
+}
+
+/**
+ * A subject index's topics in short, for search to name an index entry
+ * without reading the whole index (#99): each topic's key (as `keyOf`
+ * compares it), its printed name, and how many places and volumes it has.
+ * The scheduled run keeps it beside the built index.
+ */
+export interface MafteachSubjects {
+  index: Mafteach['index'];
+  topics: Record<string, [topic: string, places: number, volumes: number]>;
+}
+
+export async function mafteachSubjects(
+  catalog: Catalog,
+  indexId: string,
+  options: { seferId?: string | null; kept?: MafteachKept; stale?: boolean; onBuild?: () => void } = {},
+): Promise<MafteachSubjects | null> {
+  const built = await builtIndex(catalog, indexId, options);
+  if (!built) return null;
+  const topics: MafteachSubjects['topics'] = {};
+  for (const t of built.topics) topics[t.key] = [t.topic, t.volumes.reduce((n, v) => n + v.places.length, 0), t.volumes.length];
+  return { index: built.index, topics };
+}
+
+/**
+ * The topics of a subject index a search names: the topic of that very name,
+ * then those that begin with it as a whole word (בטחון, then בטחון בה׳), up to `limit`.
+ */
+export function subjectsNamed(subjects: MafteachSubjects, query: string, limit = 3): Array<{ topic: string; places: number; volumes: number }> {
+  const q = keyOf(query);
+  if (!q) return [];
+  const exact = subjects.topics[q];
+  const out = exact ? [{ topic: exact[0], places: exact[1], volumes: exact[2] }] : [];
+  for (const [key, [topic, places, volumes]] of Object.entries(subjects.topics)) {
+    if (out.length >= limit) break;
+    if (key.startsWith(`${q} `)) out.push({ topic, places, volumes });
+  }
+  return out;
 }

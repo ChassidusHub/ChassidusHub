@@ -76,6 +76,21 @@ export interface SearchPage {
   works: SearchHit[];
   events: SearchHit[];
   words: SearchWordHit[];
+  /**
+   * Entries of a subject index the words name (בטחון: Likkutei Sichos' index entry, with how many places it lists),
+   * each opening that entry; from what the scheduled run keeps, so none when nothing is kept yet (#99).
+   */
+  subjects: SearchSubjectHit[];
+}
+
+export interface SearchSubjectHit {
+  /** The index's name, as the catalog has it. */
+  index: Local | null;
+  topic: string;
+  places: number;
+  volumes: number;
+  /** The site's page of that entry. */
+  path: string;
 }
 
 /**
@@ -306,7 +321,16 @@ function wordHitOf(moment: Moment, infos: Map<EntityId, Info>, words: readonly s
 }
 
 /** The search screen, ready to draw: see the comment at the top. */
-export async function searchPage(catalog: Catalog, query: string, options: { within?: string | null; language?: Language | null } = {}): Promise<SearchPage> {
+export async function searchPage(
+  catalog: Catalog,
+  query: string,
+  options: {
+    within?: string | null;
+    language?: Language | null;
+    /** The subject index entries the words name (the API reads them from what is kept; no statement). */
+    subjects?: (words: string) => Promise<SearchSubjectHit[]>;
+  } = {},
+): Promise<SearchPage> {
   const split = splitDate(query);
   const date = split.date;
   // "in English" is a filter, not words; so are the small words of a question.
@@ -320,6 +344,8 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
   // A subject in English letters (bitachon) is looked for as the texts write it (בטחון), names and words alike.
   const topic = rest && !parsha ? topicOf(rest) : null;
   const look = topic?.he ?? rest;
+  // An index entry names a subject, not a date: asked beside the statements, never with a date or language.
+  const subjects = look && !date && !language && options.subjects ? options.subjects(look).catch(() => []) : Promise.resolve([]);
   const named = look ? await namedInfo(catalog, look, NAME_HITS, language, topic ? look : said.typed) : [];
   const words = look ? queryWords(look) : [];
   const moments = look ? await searchMoments(catalog, look, { within }) : [];
@@ -364,6 +390,7 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
     works,
     events,
     words: wordHits,
+    subjects: await subjects,
   };
 }
 

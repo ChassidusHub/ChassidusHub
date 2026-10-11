@@ -2596,6 +2596,18 @@ export interface Operations {
         /** The words begin with the query (a maamar's opening words) */
         opening: boolean;
       }>;
+      /** Entries of a subject index the words name (בטחון), from what the scheduled run keeps */
+      subjects: Array<{
+        index: Record<string, unknown> | null;
+        /** The entry as the index prints it */
+        topic: string;
+        /** How many places the entry lists */
+        places: number;
+        /** In how many volumes */
+        volumes: number;
+        /** The site's page of that entry: /mafteach?q=… */
+        path: string;
+      }>;
     };
   };
   /** People to @mention: handles that start with, or names that contain, what is typed; those in the conversation first */

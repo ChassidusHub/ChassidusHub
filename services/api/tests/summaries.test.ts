@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
-import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts, SUMMARY_MAX_AGE_MS, type Kept, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
+import { forgetSubjects, refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts, SUMMARY_MAX_AGE_MS, type Kept, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -90,5 +90,25 @@ describe('the other kept answers (#104)', () => {
   it('builds no subject index the catalog does not have', async () => {
     expect(await refreshMafteach(catalog, kept)).toBe(0);
     expect(stored.size).toBe(0);
+  });
+
+  it("keeps the subject index's topics in short, and a search names the entry its words are (#99)", async () => {
+    await add(catalog, 'steward', 'steward', 'work', { title: { he: 'ספר בדיקה' }, slug: 'likkutei-sichos', authors: [], genre: 'sichos', levels: ['volume'] }, '/likkutei-sichos');
+    const index = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'מפתח בדיקה' }, slug: 'likkutei-sichos-mafteach-inyanim', authors: [], genre: 'sichos', levels: ['volume'] }, '/likkutei-sichos-mafteach-inyanim');
+    const body = { profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [
+      { id: 't1', kind: 'heading', level: 2, text: [{ text: 'מלה בדויה' }] },
+      { id: 't1.1', kind: 'paragraph', text: [{ text: '12' }, { text: '.' }, { text: ' ' }, { text: '14' }, { text: '.' }] },
+    ] }] };
+    await add(catalog, 'steward', 'steward', 'unit', { work: index, position: [{ level: 'volume', value: '1' }], order: '01', label: { he: 'חלק א' }, body } as never, '/likkutei-sichos-mafteach-inyanim/1');
+    expect(await refreshMafteach(catalog, kept)).toBe(1);
+    expect(stored.get('mafteach-subjects')).toMatchObject({ indexes: [{ page: '/mafteach', topics: { 'מלה בדויה': ['מלה בדויה', 2, 1] } }] });
+
+    forgetSubjects();
+    const page = async (q: string) => (await (await createApp({ catalog, kept }).request(`/v1/search/page?q=${encodeURIComponent(q)}`)).json()) as { subjects: unknown[] };
+    expect((await page('מלה בדויה')).subjects).toEqual([{ index: { he: 'מפתח בדיקה' }, topic: 'מלה בדויה', places: 2, volumes: 1, path: `/mafteach?q=${encodeURIComponent('מלה בדויה')}` }]);
+    expect((await page('מלה')).subjects).toHaveLength(1);
+    expect((await page('אחרת')).subjects).toEqual([]);
+    // Nothing kept (local work): no entries, and the rest of the page as always.
+    expect(((await (await createApp({ catalog }).request('/v1/search/page?q=x')).json()) as { subjects: unknown[] }).subjects).toEqual([]);
   });
 });

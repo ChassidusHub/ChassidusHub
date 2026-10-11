@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` names the subject index entries its words are
+  (`subjects`): `בטחון` lists Likkutei Sichos' index entry with how many places
+  and volumes it has, opening `/mafteach?q=בטחון`. Read from topics the
+  scheduled run keeps beside the built index, never a statement (#99).
 - Search by words is faster on a word nobody searched lately (#182): fewer
   sichos (40) and scan pages (300) are ranked, and only the sichos shown have
   their words read, the rest only when one of those shows nothing.

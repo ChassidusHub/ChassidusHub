@@ -232,7 +232,7 @@ export function createApp(options: ApiOptions): Hono {
   uploadRoutes(app, catalog, signedIn, options.uploads, filesBase);
   pageRoutes(app, catalog, { filesBase });
   driveRoutes(app, catalog, options.drive);
-  networkRoutes(app, catalog, { embedder: options.embedder });
+  networkRoutes(app, catalog, { embedder: options.embedder, kept: options.kept });
   statusRoutes(app, options.status);
   if (options.oai) oaiRoutes(app, catalog, options.oai);
   readingRoutes(app, catalog, signedIn, (status, message) => {

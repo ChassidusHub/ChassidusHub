@@ -76,7 +76,7 @@ export { adviceFor, advicePrompt, adviseSuggestions, type Advice, type Advisor }
 export { clashPrompt, proposeClashResolutions, readClashAnswer, type ClashProposal } from './clashAdvice.js';
 export { TAKEDOWN_RELATIONS, TAKEDOWN_RESPONSE_DAYS, requestTakedown, resolveTakedownTarget, takeDownFile, takedowns, type TakedownRelation, type TakedownView } from './takedown.js';
 export { topicOf } from './topics.js';
-export { SUGGEST_HITS, marksIn, searchPage, searchSuggest, splitDate, type SearchHit, type SearchPage, type SearchWordHit } from './searchPage.js';
+export { SUGGEST_HITS, marksIn, searchPage, searchSuggest, splitDate, type SearchHit, type SearchPage, type SearchSubjectHit, type SearchWordHit } from './searchPage.js';
 export { bestLine, matchingWords, MOMENT_CANDIDATES, MOMENT_RANKED, momentOf, queryWords, searchMoments, snippetOf, type Moment, type ParagraphMoment, type ScanLineMoment } from './moments.js';
 export {
   EMBEDDED_TYPES,
@@ -272,7 +272,7 @@ export { DAILY_WORKS, dailyLearning, dailyPathOf, dailyShiurim, shiurimWords, sp
 export { dailyRambam, type DailyRambam, type RambamShiur } from './rambam.js';
 export { combineSuggestions } from './combine.js';
 export { fillShaars, shaarFile, suggestShaar, type ShaarFile, type ShaarInput } from './shaar.js';
-export { driveId, mafteach, placesOf, type Mafteach, type MafteachKept, type MafteachPlace, type MafteachTopic, type MafteachVolume } from './mafteach.js';
+export { driveId, mafteach, mafteachSubjects, placesOf, subjectsNamed, type Mafteach, type MafteachSubjects, type MafteachKept, type MafteachPlace, type MafteachTopic, type MafteachVolume } from './mafteach.js';
 export { FIX_CHECK_MS, sendFix, shapeOf, wordsChanged, type FixInput, type FixJudge, type FixResult } from './fix.js';
 export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
 export { itemView, type HeardAt, type ItemView, type MachineShare, type ScanPlace, type ShownText } from './view.js';
