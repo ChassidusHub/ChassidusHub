@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `/v1/search/moments` finds a sefer's own words too (a unit's text, with
+  `textKind: "body"`, the paragraph's `segment`, `path` and `name`). A
+  maamar that opens with the words comes first (`opening: true`), and
+  words a person checked come before a machine's.
 - `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a

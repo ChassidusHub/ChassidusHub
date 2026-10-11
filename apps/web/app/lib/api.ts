@@ -178,6 +178,11 @@ export type Moment =
       id: string;
       text: string;
       textKind: string;
+      /** A sefer's own words (textKind body): the paragraph, the page and its name. */
+      segment?: string;
+      path?: string | null;
+      name?: unknown;
+      opening?: boolean;
       unit: string | null;
       recording: string | null;
       event: string | null;

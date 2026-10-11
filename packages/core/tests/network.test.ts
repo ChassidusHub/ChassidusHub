@@ -134,6 +134,27 @@ describe('search that lands on the moment', () => {
     expect(moments.find((m) => m.kind === 'scan-line')).toMatchObject({ scan, publication, page: 7, line: { id: 'l2' }, hits: ['אהבת', 'ישראל'], machine: true });
     expect(moments.find((m) => m.kind === 'paragraph')).toMatchObject({ id: segment, recording, event, startMs: 754_000, textKind: 'transcript', machine: true });
   });
+
+  it("finds a sefer's own words, a maamar that opens with them first, and checked words before a machine's (#88, #90)", async () => {
+    const { catalog, set } = await freshCatalog();
+    const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מאמרים' }, slug: 'maamarim', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });
+    const body = (...paragraphs: string[]) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'h1', kind: 'heading', text: [{ text: 'כותרת לדוגמה' }] }, ...paragraphs.map((p, i) => ({ id: `p${i + 1}`, kind: 'paragraph', text: [{ text: p }] }))] }] });
+    const maamar = (n: string, b: ReturnType<typeof body>, extra: Record<string, unknown> = {}) => add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'maamar', value: n }], order: n, label: { he: `מאמר ${n}` }, body: b, sets: [set], ...extra }, `/maamarim/${n}`);
+    const mentions = await maamar('1', body('פתיחה אחרת לגמרי', 'וכמו שכתוב פתח דבר לדוגמה בענין זה'));
+    const opens = await maamar('2', body('פתח דבר לדוגמה. ועוד מלים', 'המשך'));
+    await maamar('3', body('פתח דבר לדוגמה גם כאן'), { bodySource: { source: 'chabadlibrary', rights: 'link', licence: 'site-terms' } });
+    const text = await add(catalog, 'steward', 'steward', 'text', { kind: 'transcript', language: 'yi' });
+    await add(catalog, 'steward', 'steward', 'segment', { text, order: 'V', kind: 'paragraph', content: 'פתח דבר לדוגמה', proofread: 0, origin: { by: 'transcribe:fake@1' } });
+
+    const moments = await searchMoments(catalog, 'פתח דבר לדוגמה');
+    expect(moments.map((m) => [m.kind === 'paragraph' && m.textKind, m.id === opens || m.id === mentions ? m.id : '-'])).toEqual([
+      ['body', opens],
+      ['body', mentions],
+      ['transcript', '-'],
+    ]);
+    expect(moments[0]).toMatchObject({ unit: opens, path: '/maamarim/2', segment: 'p1', opening: true, machine: false, name: { he: 'מאמר 2' } });
+    expect(moments[1]).toMatchObject({ segment: 'p2', opening: false });
+  });
 });
 
 describe('search by meaning', () => {

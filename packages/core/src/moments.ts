@@ -1,5 +1,5 @@
 import { normalizeSearchText } from '@chassidushub/hebrew';
-import type { EntityId, RightsState, TextData, TextLine } from '@chassidushub/model';
+import { mayExport, type EntityId, type PageSegment, type PageText, type RightsState, type TextData, type TextLine } from '@chassidushub/model';
 import type { Catalog, EntityView } from './catalog.js';
 import { ExportGate } from './gate.js';
 import { toTsQuery } from './searchText.js';
@@ -30,13 +30,27 @@ export interface ScanLineMoment {
   machine: boolean;
 }
 
-/** A found paragraph of a text: a transcript's, with where it is heard, or a unit's. */
+/**
+ * A found paragraph of a text: a transcript's, with where it is heard, or a
+ * unit's. A paragraph of a sefer's own words (a unit's `body`: a maamar, a
+ * sicha, a letter, as the Chabad Library or Sichos-Kodesh gave it) has
+ * `textKind: 'body'`, the unit as its `id`, `text` and `unit`, and the
+ * paragraph's id within the body as `segment` (issue #88).
+ */
 export interface ParagraphMoment {
   kind: 'paragraph';
-  /** The segment found. */
+  /** The segment found; for a body, the unit. */
   id: EntityId;
   text: EntityId;
+  /** transcript, edition, hanacha, translation; or body. */
   textKind: string;
+  /** A body's paragraph, by its id within the body. */
+  segment?: string;
+  /** A body's unit: its page and its name. */
+  path?: string | null;
+  name?: unknown;
+  /** The query is how the unit's words begin, a maamar's ד"ה: shown first (issue #90). */
+  opening?: boolean;
   unit: EntityId | null;
   recording: EntityId | null;
   event: EntityId | null;
@@ -205,17 +219,25 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   if (!tsQuery) return [];
   const words = queryWords(query);
   const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
-  const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' }>(
-    `SELECT e.id, e.type FROM entity e
-     WHERE e.type IN ('text-page', 'segment') AND NOT e.deleted AND e.main_rev IS NOT NULL
+  // Checked words before what a machine read or heard and nobody checked: a scan's machine page, a machine paragraph.
+  const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit' }>(
+    `SELECT e.id, e.type FROM entity e JOIN revision r ON r.id = e.main_rev
+     LEFT JOIN entity l ON e.type = 'text-page' AND l.id = r.data->>'layer' LEFT JOIN revision lr ON lr.id = l.main_rev
+     WHERE e.type IN ('text-page', 'segment', 'unit') AND NOT e.deleted
        AND e.search_tsv @@ to_tsquery('simple', $1)
-     ORDER BY ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.id
+       AND (e.type <> 'unit' OR r.data ? 'body')
+     ORDER BY CASE
+                WHEN e.type = 'text-page' THEN (coalesce(lr.data->>'kind', '') <> 'community')
+                WHEN e.type = 'segment' THEN (r.data ? 'origin' AND coalesce((r.data->>'proofread')::int, 0) = 0 AND NOT coalesce((r.data->'origin'->>'checked')::boolean, FALSE))
+                ELSE FALSE END,
+              ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.id
      LIMIT ${limit * 2}`,
     [tsQuery],
   );
   const gate = new ExportGate(catalog);
   const pages = new Map((await pageRows(catalog, rows.filter((r) => r.type === 'text-page').map((r) => r.id))).map((r) => [r.id, r]));
   const segments = new Map((await segmentRows(catalog, rows.filter((r) => r.type === 'segment').map((r) => r.id))).map((r) => [r.id, r]));
+  const units = new Map((await unitRows(catalog, rows.filter((r) => r.type === 'unit').map((r) => r.id))).map((r) => [r.id, r]));
   // A scan read by the machine and fixed by people has two pages for one page of print: the people's is shown.
   const seenPage = new Set<string>();
   const out: Moment[] = [];
@@ -235,11 +257,71 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
       seenPage.add(key);
       const moment = await pageMoment(row, words, gate);
       if (moment) out.push(moment);
+    } else if (r.type === 'unit') {
+      const row = units.get(r.id);
+      const moment = row ? unitMoment(row, words) : null;
+      if (moment) out.push(moment);
     } else {
       const row = segments.get(r.id);
       const moment = row ? await segmentMoment(row, words, gate) : null;
       if (moment) out.push(moment);
     }
   }
-  return out;
+  // A maamar or sicha that opens with the words asked is what was looked for: first, in the order found.
+  const opens = (m: Moment) => m.kind === 'paragraph' && m.opening === true;
+  return [...out.filter(opens), ...out.filter((m) => !opens(m))];
+}
+
+interface UnitRow {
+  id: EntityId;
+  path: string | null;
+  label: unknown;
+  body: PageText | null;
+  rights: RightsState | null;
+}
+
+async function unitRows(catalog: Catalog, ids: readonly EntityId[]): Promise<UnitRow[]> {
+  if (ids.length === 0) return [];
+  const { rows } = await catalog.db.query<UnitRow>(
+    `SELECT e.id, e.path, r.data->'label' AS label, r.data->'body' AS body, r.data->'bodySource'->>'rights' AS rights
+     FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = ANY($1::text[]) AND e.type = 'unit' AND NOT e.deleted`,
+    [ids],
+  );
+  return rows;
+}
+
+/** The words of a body segment as one line, its children's too. */
+function segmentWords(segment: PageSegment): string {
+  const own = (segment.text ?? []).map((run) => ('text' in run && typeof run.text === 'string' ? run.text : '')).join('');
+  return [own, ...(segment.children ?? []).map(segmentWords)].filter(Boolean).join(' ');
+}
+
+/** The paragraph of a unit's words that holds the query best, or null when its words are withheld or none holds it. */
+function unitMoment(row: UnitRow, words: readonly string[]): ParagraphMoment | null {
+  if (!row.body || (row.rights && !mayExport(row.rights))) return null;
+  const version = row.body.versions?.[0];
+  if (!version) return null;
+  const lines = version.segments.map((s) => ({ id: s.id, text: segmentWords(s), origin: s.origin ?? version.origin, kind: s.kind }));
+  const best = bestLine(lines, words);
+  if (!best) return null;
+  // Opening: the first paragraph (after any heading) begins with the query's words.
+  const first = lines.find((l) => l.kind !== 'heading' && l.text.trim());
+  const opening = first?.id === best.line.id && normalizeSearchText(first.text).startsWith(words.join(' '));
+  return {
+    kind: 'paragraph',
+    id: row.id,
+    text: row.id,
+    textKind: 'body',
+    unit: row.id,
+    recording: null,
+    event: null,
+    startMs: null,
+    segment: best.line.id,
+    path: row.path,
+    name: row.label,
+    opening,
+    snippet: snippetOf(best.line.text, words),
+    hits: best.hits,
+    machine: Boolean(best.line.origin && !best.line.origin.checked),
+  };
 }
