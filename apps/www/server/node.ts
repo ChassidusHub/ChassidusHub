@@ -30,7 +30,14 @@ const types: Record<string, string> = {
 };
 
 createServer((req, res) => {
-  const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
+  } catch {
+    // A broken % escape is no file; the pages answer it.
+    void pages(req, res);
+    return;
+  }
   const file = path.join(client, pathname);
   if (file.startsWith(client + path.sep) && existsSync(file) && statSync(file).isFile()) {
     res.setHeader('Content-Type', types[path.extname(file)] ?? 'application/octet-stream');

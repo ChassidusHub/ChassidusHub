@@ -14,6 +14,7 @@ export function Row({
   start,
   to,
   onClick,
+  current,
   chevron = !!to,
 }: {
   title: ReactNode;
@@ -23,8 +24,12 @@ export function Row({
   start?: ReactNode;
   to?: string;
   onClick?: () => void;
+  /** The one the page or the player is on now. */
+  current?: boolean;
   chevron?: boolean;
 }) {
+  const className = current ? 'row cur' : 'row';
+  const now = current ? ('true' as const) : undefined;
   const inside = (
     <>
       {start}
@@ -36,11 +41,12 @@ export function Row({
       {chevron && <Icon name="chevron-left" className="chev" />}
     </>
   );
-  if (to) return <Link to={to} className="row">{inside}</Link>;
-  if (onClick) return <button type="button" className="row" onClick={onClick}>{inside}</button>;
-  return <div className="row">{inside}</div>;
+  if (to) return <Link to={to} className={className} aria-current={now}>{inside}</Link>;
+  if (onClick) return <button type="button" className={className} aria-current={now} onClick={onClick}>{inside}</button>;
+  return <div className={className}>{inside}</div>;
 }
 
-export function Rows({ children }: { children: ReactNode }) {
-  return <div className="rows">{children}</div>;
+/** A list of rows; `quiet` sets their titles in the normal weight, so the current one stands out (the player's chapters). */
+export function Rows({ children, quiet }: { children: ReactNode; quiet?: boolean }) {
+  return <div className={quiet ? 'rows quiet' : 'rows'}>{children}</div>;
 }

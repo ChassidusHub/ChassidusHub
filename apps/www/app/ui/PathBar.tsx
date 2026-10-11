@@ -25,11 +25,14 @@ export function PathBar({ levels }: { levels: PathLevel[] }) {
   const bar = useRef<HTMLElement>(null);
   const [open, setOpen] = useState<{ level: PathLevel; anchor: HTMLElement } | null>(null);
   const [items, setItems] = useState<MenuItem[] | null>(null);
+  const [fade, setFade] = useState(false);
 
   // The page's own level, at the end of the path, is what shows when the bar is too long for the screen.
   useEffect(() => {
     const crumbs = bar.current;
-    if (crumbs) crumbs.scrollLeft = -crumbs.scrollWidth;
+    if (!crumbs) return;
+    crumbs.scrollLeft = -crumbs.scrollWidth;
+    setFade(crumbs.scrollWidth > crumbs.clientWidth + 2);
   }, [levels]);
 
   const close = useCallback(() => setOpen(null), []);
@@ -46,7 +49,7 @@ export function PathBar({ levels }: { levels: PathLevel[] }) {
   };
 
   return (
-    <nav ref={bar} className={levels.length > 2 ? 'crumbs long' : 'crumbs'} aria-label="המקום באתר">
+    <nav ref={bar} className={['crumbs', levels.length > 2 && 'long', fade && 'fade'].filter(Boolean).join(' ')} aria-label="המקום באתר">
       <ol>
         {levels.map((level, at) => (
           <li key={level.key}>
