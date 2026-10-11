@@ -1,5 +1,6 @@
 import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor } from '../app/lib/api';
+import { pageContext } from '../app/serverOnly';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
 
@@ -19,6 +20,6 @@ const handler = createRequestHandler(build as unknown as ServerBuild);
 
 export default {
   fetch(request: Request, env: Env): Promise<Response> {
-    return handler(request, { api: apiFor({ binding: env.API, baseUrl: env.API_URL }) });
+    return handler(request, { api: apiFor({ binding: env.API, baseUrl: env.API_URL }), ...pageContext(request) });
   },
 };

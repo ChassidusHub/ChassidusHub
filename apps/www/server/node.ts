@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createRequestListener } from '@react-router/node';
 import type { ServerBuild } from 'react-router';
 import { apiFor } from '../app/lib/api';
+import { pageContext } from '../app/serverOnly';
 
 /**
  * The built site on Node, for the browser tests in CI and for trying a build
@@ -16,7 +17,7 @@ const client = path.join(root, 'build/client');
 // @ts-ignore - made by `react-router build`
 const build = (await import('../build/server/index.js')) as unknown as ServerBuild;
 const api = apiFor({ baseUrl: process.env.API_URL });
-const pages = createRequestListener({ build, getLoadContext: () => ({ api }) });
+const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, ...pageContext(request) }) });
 
 const types: Record<string, string> = {
   '.js': 'text/javascript',
@@ -30,7 +31,14 @@ const types: Record<string, string> = {
 };
 
 createServer((req, res) => {
-  const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
+  } catch {
+    // A broken % escape is no file; the pages answer it.
+    void pages(req, res);
+    return;
+  }
   const file = path.join(client, pathname);
   if (file.startsWith(client + path.sep) && existsSync(file) && statSync(file).isFile()) {
     res.setHeader('Content-Type', types[path.extname(file)] ?? 'application/octet-stream');

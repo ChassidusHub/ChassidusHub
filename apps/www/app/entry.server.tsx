@@ -1,15 +1,20 @@
 import { isbot } from 'isbot';
 import { renderToReadableStream } from 'react-dom/server';
-import { ServerRouter, type EntryContext } from 'react-router';
+import { ServerRouter, type AppLoadContext, type EntryContext } from 'react-router';
+import { ServerOnly } from './serverOnly';
 
 /**
  * Pages are rendered as web streams, which Workers and Node both speak, so the
  * same build runs on Cloudflare and in the local server the tests use. People
  * get the page as it renders; bots get it whole.
  */
-export default async function handleRequest(request: Request, status: number, headers: Headers, context: EntryContext) {
+export default async function handleRequest(request: Request, status: number, headers: Headers, context: EntryContext, loadContext: AppLoadContext) {
   let failed = false;
-  const body = await renderToReadableStream(<ServerRouter context={context} url={request.url} />, {
+  const body = await renderToReadableStream(
+    <ServerOnly.Provider value={loadContext?.serverOnly}>
+      <ServerRouter context={context} url={request.url} />
+    </ServerOnly.Provider>,
+    {
     signal: request.signal,
     onError(error: unknown) {
       failed = true;

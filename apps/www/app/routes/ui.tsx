@@ -17,8 +17,10 @@ import {
   Sheet,
   Tile,
   TopBar,
+  player,
   useToast,
   type PathLevel,
+  type Track,
 } from '../ui';
 import type { Route } from './+types/ui';
 
@@ -54,6 +56,46 @@ const path: PathLevel[] = [
   },
   { key: 'sicha', label: 'שמיני א', title: 'השיחות בחלק י״ב', items: [{ key: 'a', label: 'ויקרא א' }, { key: 'b', label: 'צו א' }, { key: 'c', label: 'שמיני א', current: true, to: '/ui' }, { key: 'd', label: 'תזריע א' }] },
 ];
+
+/** Silence as a WAV file, to try the player without a real recording. */
+function silence(seconds: number): string {
+  const rate = 8000;
+  const bytes = new Uint8Array(44 + seconds * rate);
+  const view = new DataView(bytes.buffer);
+  const text = (at: number, value: string) => [...value].forEach((c, i) => view.setUint8(at + i, c.charCodeAt(0)));
+  text(0, 'RIFF');
+  view.setUint32(4, bytes.length - 8, true);
+  text(8, 'WAVEfmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // one channel
+  view.setUint32(24, rate, true);
+  view.setUint32(28, rate, true);
+  view.setUint16(32, 1, true);
+  view.setUint16(34, 8, true); // 8-bit, where 128 is silence
+  text(36, 'data');
+  view.setUint32(40, seconds * rate, true);
+  bytes.fill(128, 44);
+  return URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
+}
+
+/** A made-up recording in three parts of 30 seconds, the first and last with words, to try the player. */
+function sample(): Track {
+  const words = ['זהו', 'משפט', 'לדוגמה', 'בלבד', 'כדי', 'לראות', 'איך', 'המילים', 'נדלקות', 'בזמן', 'השמיעה'];
+  const phrases = Array.from({ length: 10 }, (_, i) => ({ text: words.slice(0, 4 + (i % 6)).join(' '), start: i * 3000 }));
+  return {
+    id: 'sample',
+    title: 'הקלטה לדוגמה',
+    to: '/ui',
+    src: silence(90),
+    chapters: [
+      { title: 'שיחה א', start: 0, duration: 30_000 },
+      { title: 'ניגון', start: 30_000, duration: 30_000 },
+      { title: 'שיחה ב', start: 60_000, duration: 30_000 },
+    ],
+    words: async (chapter) => (chapter === 1 ? null : { phrases, checked: false }),
+  };
+}
 
 /**
  * Every piece of the design system on one page, in both themes, for the
@@ -136,6 +178,11 @@ export default function DesignSystem() {
         <Sheet open={sheet} title="הערה 12" onClose={() => setSheet(false)}>
           <p className="torah-face" style={{ fontSize: 18, lineHeight: 1.7, margin: 0 }}>ראה לקמן סעיף ה. ובכ״מ.</p>
         </Sheet>
+
+        <SectionHead title="נגן" />
+        <Button look="outline" icon="play" onClick={() => player.play(sample())}>
+          נגינת הקלטה לדוגמה
+        </Button>
 
         <SectionHead title="סמלים" />
         <div className="numgrid">

@@ -31,6 +31,11 @@ is asked of the foundation, never added in a screen.
 | `/signin`, `/about`, `/back` | routes/signin.tsx, about.tsx, backroom.tsx | 6. Back room and the rest |
 | `/ui` | routes/ui.tsx: every piece of the design system | foundation |
 
+An item's page is one read of `GET /v1/view` (routes/item.tsx). A sicha's
+words are drawn once, on the server, and left out of the hydration data
+(app/serverOnly.tsx, app/reader). The browser tests read made-up pages from a
+stand-in API (e2e/fixture-api.ts), which they start themselves.
+
 A page's loader reads the API as `context.api` (the typed client of
 packages/client; through the Worker's service binding on Cloudflare). A route
 names its place in the bar with `handle = { section }`; a page's top is

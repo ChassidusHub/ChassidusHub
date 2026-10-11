@@ -13,6 +13,8 @@ routes = [{ pattern = "new.chassidushub.org", custom_domain = true }]
 # The shared packages are used from source, as in vite.config.ts, so the deploy needs nothing built first.
 [alias]
 "@chassidushub/client" = "../../packages/client/src/index.ts"
+"@chassidushub/model" = "../../packages/model/src/index.ts"
+"@chassidushub/hebrew" = "../../packages/hebrew/src/index.ts"
 
 [observability]
 enabled = true
