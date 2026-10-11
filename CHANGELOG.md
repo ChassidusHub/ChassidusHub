@@ -10,6 +10,15 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A farbrengen's video shows as its still picture with a play button, and
+  YouTube's player (about 1 MB) is fetched only when someone taps it, so
+  the page's own recordings and words come first on a slow line. Without
+  script the picture links to the video on YouTube.
+- `GET /v1/entities/{id}/path-bar`: an item's whole path for the new site's
+  path bar, from the top of the tree down to the item (the Rebbe, his
+  shelf, the sefer, the volume, the sicha). Each level lists the other
+  choices at that level, and a volume says how many units it holds. It
+  takes three statements however deep the path is.
 - A shared sicha opens faster on a slow phone, and its words no longer
   jump as the fonts arrive: the reading fonts are served as WOFF2 (the
   words' face from 110 KB to 73 KB), the logo's face carries only its

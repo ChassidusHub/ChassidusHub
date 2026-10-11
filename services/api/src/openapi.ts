@@ -119,6 +119,7 @@ const OPERATIONS: Operation[] = [
   { method: 'get', path: '/v1/sitemap/{type}/{page}', operationId: 'sitemapPage', tag: 'Items', summary: "One sitemap's items: their ids, paths and when each last changed", access: 'public', params: [path('type', str('A kind of item with a page of its own', { enum: ['set', 'author', 'person', 'work', 'unit', 'event', 'publication', 'recording'] })), path('page', int('From 1', { minimum: 1 }))], ok: { description: 'The items', schema: obj({ type: str(), page: int(), items: arr(obj({ id: idSchema, path: nullable(str()), lastmod: nullable(str(undefined, { format: 'date-time' })) }, ['id', 'path', 'lastmod'])) }, ['type', 'page', 'items']) } },
   { method: 'get', path: '/v1/works/{id}/outline', operationId: 'workOutline', tag: 'Items', summary: "A work's volumes (its top-level parts), with how many units each holds", access: 'public', params: [idParam], ok: { description: 'Parts', schema: obj({ parts: arr(obj({ value: str(), label: nullable(any()), units: int() })) }, ['parts']) } },
   { method: 'get', path: '/v1/works/{id}/parts/{part}', operationId: 'workPart', tag: 'Items', summary: 'The units of one volume of a work', access: 'public', params: [idParam, path('part', str(), 'The volume, as the outline names it'), limitParam(1000, 1000)], ok: { description: 'Units', schema: obj({ items: arr(ref('Item')) }, ['items']) } },
+  { method: 'get', path: '/v1/entities/{id}/path-bar', operationId: 'pathBar', tag: 'Items', summary: "An item's whole path for the path bar: its shelves from the top of the tree, its sefer, the sefer's parts and the item, each level with the other choices there", description: 'For a set, a work or a unit; other items answer no levels. A work\'s parts (volumes) have no id: their `path` is the work\'s path and the part\'s place. At most 500 choices a level.', access: 'public', params: [idParam], ok: { description: 'The levels, from the top', schema: obj({ levels: arr(ref('PathLevel')) }, ['levels']) } },
   { method: 'get', path: '/v1/units/{id}/neighbours', operationId: 'unitNeighbours', tag: 'Items', summary: "The units just before and after a unit in its work's order, across volumes: a sicha's previous and next", access: 'public', params: [idParam], ok: { description: 'Each is null at its end of the work, and both for a unit of no work', schema: obj({ previous: nullable(ref('Item')), next: nullable(ref('Item')) }, ['previous', 'next']) } },
   { method: 'get', path: '/v1/missing', operationId: 'missing', tag: 'Projects', summary: 'The Missing board: farbrengens without a recording or a text, sefarim without a scan, files lost upstream', access: 'public', params: [query('kind', { enum: ['recordings', 'texts', 'scans', 'files'] }, 'What is missing', true), query('within', str(), 'For recordings and texts: a year or a month'), limitParam(500, 50)], ok: { description: 'What is missing', schema: obj({ kind: str(), total: int(), items: arr(any()) }, ['kind', 'total', 'items']) } },
   { method: 'get', path: '/v1/commits', operationId: 'listCommits', tag: 'Items', summary: 'Every merge to main after a given one, in order, with what each changed: the way to follow the catalog without webhooks', access: 'public', paged: true, params: [query('since', int(undefined, { minimum: 0 }), 'Start after this commit\'s seq (0: from the start)'), limitParam(100, 20), query('changes', int(undefined, { minimum: 0 }), 'Carry only so many of each commit\'s changes (an import\'s has thousands); `changed` and `types` still count them all')], ok: { description: 'Commits', schema: obj({ commits: arr(ref('Commit')), next: nullable(str()) }, ['commits', 'next']) } },
@@ -385,6 +386,25 @@ const SCHEMAS: Record<string, Schema> = {
       recordings: int('For events: how many recordings it has'),
     },
     ['id', 'type', 'path', 'rev', 'data'],
+  ),
+  PathChoice: obj(
+    {
+      id: idSchema,
+      path: nullable(str('The page; for a part, the work\'s path and the part\'s place (/likkutei-sichos/1)')),
+      name: nullable(any('Its name ({ he, en? }), as the item keeps it')),
+      value: str("A part's or unit's place in its work (1)"),
+      units: int('How many units a part holds'),
+    },
+    ['path', 'name'],
+  ),
+  PathLevel: obj(
+    {
+      kind: { enum: ['set', 'work', 'part', 'unit'] },
+      level: str("What the work calls this level (volume, sicha), for its parts and units"),
+      chosen: ref('PathChoice'),
+      choices: arr(ref('PathChoice'), 'Every choice at this level in the catalog\'s order, the chosen one among them'),
+    },
+    ['kind', 'chosen', 'choices'],
   ),
   ItemPage: obj({ items: arr(ref('Item')), next: nullable(str('Pass back as cursor for the next page; null on the last')) }, ['items', 'next']),
   AppCatalogManifest: obj(
