@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The site's own reads of `GET /v1/community`, `GET /v1/machine/to-check` and
+  `GET /v1/mafteach` read what the scheduled run keeps in the public bucket,
+  as the API's Worker does: on a cold page they summed or built it on the spot.
 - `GET /v1/mafteach`: a place in a volume kept page by page (Likkutei Sichos
   30-39) opens that page on the site (`text`), where most opened only the
   sicha's PDF; and whether the kept index is current is asked of each
