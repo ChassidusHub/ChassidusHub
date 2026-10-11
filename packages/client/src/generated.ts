@@ -2480,6 +2480,12 @@ export interface Operations {
     };
     output: {
       query: string;
+      topic: {
+        /** The subject as typed, normalized: bitachon */
+        key: string;
+        /** The Hebrew searched for instead: בטחון */
+        he: string;
+      } | null;
       date: {
         key?: string;
         he?: string;
@@ -2500,6 +2506,12 @@ export interface Operations {
     };
     output: {
       query: string;
+      topic: {
+        /** The subject as typed, normalized: bitachon */
+        key: string;
+        /** The Hebrew searched for instead: בטחון */
+        he: string;
+      } | null;
       moments: Array<Record<string, unknown>>;
     };
   };
@@ -2595,6 +2607,20 @@ export interface Operations {
         machine: boolean;
         /** The words begin with the query (a maamar's opening words) */
         opening: boolean;
+      }>;
+      /** Entries of a subject index the words name (בטחון), from what the scheduled run keeps */
+      subjects: Array<{
+        index: Record<string, unknown> | null;
+        /** The entry as the index prints it */
+        topic: string;
+        /** How many places the entry lists */
+        places: number;
+        /** In how many volumes */
+        volumes: number;
+        /** A machine read some of it from the printed index, and no person has checked it */
+        machine: boolean;
+        /** The site's page of that entry: /mafteach?q=… */
+        path: string;
       }>;
     };
   };

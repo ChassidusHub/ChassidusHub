@@ -10,6 +10,22 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A letter of the Likkutei Sichos subject index that runs over several
+  pages says so above its first entries ("1-30 of 217 entries", the letter
+  goes on in alphabetical order, or search for one entry), with the way to
+  the next page above the entries as well as below them.
+- The search page no longer offers "By idea" while its index is still
+  empty (it answered nothing for every question); a question sent by idea,
+  as the home page's box does, is searched by words. It comes back when the
+  index is filled.
+- `GET /v1/search` and `GET /v1/search/moments` also look for a subject typed
+  in English letters as the texts write it (`bitachon` as `בטחון`), and say so
+  in `topic`, as `/v1/search/page` does: chassidushub.org's /search uses them
+  and still found nothing for `bitachon` (#99).
+- `GET /v1/search/page` names the subject index entries its words are
+  (`subjects`): `בטחון` lists Likkutei Sichos' index entry with how many places
+  and volumes it has, opening `/mafteach?q=בטחון`. Read from topics the
+  scheduled run keeps beside the built index, never a statement (#99).
 - Search by words reads a scan page's layer from its link, not from the page's
   revision with all its lines, when it orders the best matches (#182).
 - The site's own reads of `GET /v1/community`, `GET /v1/machine/to-check` and

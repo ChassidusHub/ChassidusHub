@@ -18,6 +18,11 @@ export interface SiteOptions {
   showcases?: ShowcaseStore;
   /** Everyone may make showcases (the site on Node, for local work); else only a visitor who opened the lock. */
   anyoneShowcases?: boolean;
+  /**
+   * Offer search by idea. Off until its index is filled (#98: the Workers AI backfill waits on approval, and an empty
+   * index answered nothing for every question); turn it on in server/worker.ts once the backfill has run.
+   */
+  byIdea?: boolean;
 }
 
 /**
@@ -159,7 +164,7 @@ export function createSiteHandler(build: ServerBuild, options: SiteOptions, mode
       headers.set('Cache-Control', 'no-cache');
       return send(input, { ...init, headers });
     });
-    const response = withoutTrailingSlash(request) ?? withCachePolicy(request, await handle(request, { site: { api: hasSession(request) ? fresh : api, siteUrl: options.siteUrl, showcases: showcases(key) } }));
+    const response = withoutTrailingSlash(request) ?? withCachePolicy(request, await handle(request, { site: { api: hasSession(request) ? fresh : api, siteUrl: options.siteUrl, showcases: showcases(key), byIdea: options.byIdea === true } }));
     if (reader) meter.add(reader.cost);
     return secured(response, meter.header(started));
   };

@@ -54,7 +54,7 @@ beforeAll(async () => {
 
   handle = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(createApp({ catalog }).request(input, init)) });
   await embedItems(catalog, fake);
-  withMeaning = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(createApp({ catalog, embedder: fake }).request(input, init)) });
+  withMeaning = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(createApp({ catalog, embedder: fake }).request(input, init)), byIdea: true });
 }, 120_000);
 
 const get = async (path: string, handler = () => handle) => {
@@ -87,6 +87,12 @@ describe('phase 6 on the site', () => {
     expect(page.html).toContain('לפי רעיון');
     expect(page.html).toContain('נבחרו במכונה');
     expect(page.html).toContain('נמצא במכונה');
+  });
+
+  it('offers no search by idea while it is switched off, and answers a question sent by idea by words', async () => {
+    const page = await get(`/search?by=meaning&q=${encodeURIComponent('ניגון שמח')}&lang=he`);
+    expect(page.html).not.toContain('לפי רעיון');
+    expect(page.html).toContain('<mark>');
   });
 
   it('shows an item’s links both ways, marked when a machine found them', async () => {

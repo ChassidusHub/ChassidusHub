@@ -19,6 +19,10 @@ test('a search opens its results and keeps the words in the box', async ({ page 
   // The top answer, then each kind once: the top answer is not listed again.
   await expect(main.getByRole('region', { name: 'התשובה' })).toContainText('שיחה ראשונה');
   await expect(main.getByRole('link', { name: /שיחה ראשונה/ })).toHaveCount(1);
+  // The subject index entry the words name, read by a machine.
+  await expect(main.getByRole('heading', { name: 'במפתח הענינים' })).toBeVisible();
+  await expect(main.locator('a[href^="/mafteach?q="]')).toContainText('34 מקומות ב־12 חלקים · מפתח לדוגמה');
+  await expect(main.locator('a[href^="/mafteach?q="]')).toContainText('במכונה');
   await expect(main.getByRole('heading', { name: 'ספרים ומאמרים' })).toBeVisible();
   await expect(main.getByRole('link', { name: /מדף לדוגמה/ })).toBeVisible();
   await expect(main.getByRole('heading', { name: 'התוועדויות' })).toBeVisible();

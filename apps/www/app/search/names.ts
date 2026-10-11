@@ -24,11 +24,23 @@ export interface WordHit {
   machine: boolean;
 }
 
+/** A subject index entry the words name: how many places it lists, and where its page is. */
+export interface Subject {
+  topic: string;
+  /** The index it is in (מפתח ליקוטי שיחות), when known. */
+  index: string;
+  places: number;
+  volumes: number;
+  to: string;
+  machine: boolean;
+}
+
 export interface SearchPage {
   query: string;
   /** The Hebrew subject searched for, when what was typed is one in English letters (bitachon → בטחון). */
   topic?: string;
   top: Hit | null;
+  subjects: Subject[];
   works: Hit[];
   events: Hit[];
   words: WordHit[];
