@@ -4,6 +4,7 @@
  */
 import type { MenuItem, PathLevel } from '../ui';
 import type { Stopped } from './stopped';
+import type { TimedWord } from './timing';
 
 export { LISTEN_COOKIE, READ_COOKIE, readStopped, resumeLink, type Stopped } from './stopped';
 
@@ -36,10 +37,13 @@ export interface Paragraph {
   id: string;
   text: string;
   start: number | null;
+  end: number | null;
   machine: boolean;
+  /** When each word is heard, when the transcript times its words (only in the browser: the page itself carries no word times). */
+  timed?: TimedWord[];
 }
 
-/** A part of the event on its page: its name, where it starts in the whole, its sound, and its words when they came with the page. */
+/** A part of the event on its page: its name, where it starts in the whole, and its sound. */
 export interface Chapter {
   recording: string;
   title: string;
@@ -47,20 +51,34 @@ export interface Chapter {
   offset: number;
   durationMs: number;
   src: string;
-  /** No words: a niggun. Else the words come with the page (`words`) or are fetched when it nears the screen. */
+  /** No words: a niggun. */
   niggun: boolean;
-  words?: Paragraph[];
-  /** Whether `words` are all of them, or only the first that came with the page. */
-  complete?: boolean;
 }
 
 export interface ApiTranscript {
-  paragraphs: { id: string; content: string; startMs?: number | null; checked?: boolean }[];
+  paragraphs: { id: string; content: string; startMs?: number | null; endMs?: number | null; checked?: boolean; words?: TimedWord[] | null }[];
 }
 
-/** The words of a transcript as the page shows them: only text, where it is heard, and whether a person checked it. */
-export function paragraphsOf(transcript: ApiTranscript): Paragraph[] {
-  return transcript.paragraphs.map((p) => ({ id: p.id, text: p.content, start: p.startMs ?? null, machine: !p.checked }));
+/**
+ * The words of a transcript as the page shows them: the text, when it is
+ * heard, and whether a person checked it; with `timed`, also when each word
+ * is heard.
+ */
+export function paragraphsOf(transcript: ApiTranscript, { timed = false } = {}): Paragraph[] {
+  return transcript.paragraphs.map((p) => ({
+    id: p.id,
+    text: p.content,
+    start: p.startMs ?? null,
+    end: p.endMs ?? null,
+    machine: !p.checked,
+    ...(timed && p.words?.length ? { timed: p.words.map((w) => ({ from: w.from, to: w.to, startMs: w.startMs })) } : {}),
+  }));
+}
+
+/** A part's words from the API, from the browser, each word's time included; null when it has none. */
+export async function fetchWords(recording: string): Promise<Paragraph[] | null> {
+  const answer = await fetch(`${API}/v1/recordings/${encodeURIComponent(recording)}/transcript`);
+  return answer.ok ? paragraphsOf((await answer.json()) as ApiTranscript, { timed: true }) : null;
 }
 
 /* ---------- the ways in ---------- */
