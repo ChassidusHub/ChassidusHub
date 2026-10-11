@@ -3,6 +3,7 @@ import { Link, useMatches } from 'react-router';
 import { IconButton } from './Button';
 import { Icon, type IconName } from './Icon';
 import { Logo } from './Logo';
+import { PlayerDock } from './player/PlayerDock';
 import { PathBar, type PathLevel } from './PathBar';
 import { Sheet } from './Sheet';
 import { useTheme } from './theme';
@@ -45,7 +46,7 @@ function useSection(): Section | undefined {
  * desktop: the side rail at the start (the right), the column in the middle,
  * the player bar along the foot. `dock` is the player's place.
  */
-export function AppShell({ children, dock }: { children: ReactNode; dock?: ReactNode }) {
+export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactNode; dock?: ReactNode }) {
   const section = useSection();
   const [theme, toggleTheme] = useTheme();
   const [account, setAccount] = useState(false);

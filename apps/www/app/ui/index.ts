@@ -14,3 +14,4 @@ export { ToastProvider, useToast } from './Toast';
 export { useMedia, usePhone } from './useMedia';
 export { AppShell, TopBar, type Section } from './Shell';
 export { useTheme } from './theme';
+export { clock, lastPlayed, player, SPEEDS, useHeard, usePlayer, type Chapter, type Phrase, type PlayerState, type Speed, type Track } from './player/engine';
