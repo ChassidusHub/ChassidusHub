@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
 import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
-import { dailyLearning, dailyShiurim, peopleOf, shiurimWords } from '@chassidushub/core';
+import { dailyLearning, dailyShiurim, pathBar, peopleOf, shiurimWords } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
 import { authRoutes, sessionAuthenticator, type AuthOptions } from './auth.js';
@@ -346,6 +346,13 @@ export function createApp(options: ApiOptions): Hono {
   app.get('/v1/works/:id/parts/:part', async (c) => c.json({ items: await catalog.workPart(entityId(c.req.param('id')), c.req.param('part'), intParam(c.req.query('limit'), 'limit')) }));
   // The units before and after a unit in its work's order (across volumes): a sicha's page's back and forth, one read.
   app.get('/v1/units/:id/neighbours', async (c) => c.json(await catalog.unitNeighbours(entityId(c.req.param('id')))));
+  // The new site's path bar: an item's whole path, every level with the other choices there (sets, sefarim, units).
+  app.get('/v1/entities/:id/path-bar', async (c) => {
+    const id = entityId(c.req.param('id'));
+    const entity = await catalog.get(id);
+    if (!entity) throw new CatalogError('not-found', `${id} not found`);
+    return c.json({ levels: (await pathBar(catalog, entity)) ?? [] });
+  });
 
   // The day's learning, Chitas' Tanya and Hayom Yom, for a civil day: the daily page's one read (core/daily.ts).
   app.get('/v1/daily', async (c) => {
