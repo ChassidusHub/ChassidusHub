@@ -20,7 +20,11 @@ export default defineConfig({
     { name: 'phone', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, launchOptions: { executablePath } } },
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 }, launchOptions: { executablePath } } },
   ],
+  // The built site, reading its pages from a stand-in API with made-up pages (e2e/fixture-api.ts).
   webServer: process.env.BASE_URL
     ? undefined
-    : { command: 'npm run start', url: baseURL, reuseExistingServer: !process.env.CI, env: { PORT: '3001' } },
+    : [
+        { command: 'npx tsx e2e/fixture-api.ts', port: 3002, reuseExistingServer: !process.env.CI, env: { FIXTURE_PORT: '3002' } },
+        { command: 'npm run start', url: baseURL, reuseExistingServer: !process.env.CI, env: { PORT: '3001', API_URL: 'http://localhost:3002' } },
+      ],
 });

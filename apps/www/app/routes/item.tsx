@@ -39,6 +39,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const found = permanent ? { id: permanent, redirected: false, path: null } : await context.api.resolvePath({ path });
     if (found.redirected && found.path) throw redirect(found.path, 301);
     const item = await context.api.getItem({ id: found.id });
+    // An event, or one of its recordings, is heard on its listening page.
+    if (item.type === 'event' || item.type === 'recording') {
+      const fields = item.data as { date?: string; event?: string };
+      const event = item.type === 'event' ? { id: item.id, date: fields.date } : fields.event ? { id: fields.event, date: ((await context.api.getItem({ id: fields.event })).data as { date?: string }).date } : null;
+      const year = event?.date?.slice(0, 4);
+      if (event && year) throw redirect(`/listen/${year}/${event.id}${item.type === 'recording' ? `?r=${item.id}` : ''}`, 301);
+    }
     return { id: item.id, type: item.type, name: nameOf(item.data) ?? item.id };
   } catch (error) {
     // By its status, not its class: the server's API client and this page's can be two copies of the package.

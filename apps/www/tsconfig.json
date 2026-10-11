@@ -15,7 +15,8 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "paths": {
-      "@chassidushub/client": ["../../packages/client/src/index.ts"]
+      "@chassidushub/client": ["../../packages/client/src/index.ts"],
+      "@chassidushub/hebrew": ["../../packages/hebrew/src/index.ts"]
     }
   }
 }

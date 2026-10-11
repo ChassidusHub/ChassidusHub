@@ -455,6 +455,12 @@ svg.i.filled { fill: currentColor; stroke: none; }
   .fs { display: none; }
   .backnow { bottom: 100px; }
 }
+/* ---------- Home and listening ---------- */
+/* Home's opening: the site's line and the big search box. */
+.hero { padding-block: 30px 6px; text-align: center; }
+.hero h1 { font-family: var(--title); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
+.hero p { margin: 0 0 18px; color: var(--g600); font-size: 14px; }
+.hero + .tiles { margin-top: 16px; }
 /* ---------- search: the top answer, marked words, suggestions (the prototype's search screens) ---------- */
 .top-answer { display: block; border: 1px solid var(--g300); border-radius: 12px; padding: 16px; margin-top: 8px; }
 .top-answer .k { display: block; font-size: 12px; color: var(--g600); }
