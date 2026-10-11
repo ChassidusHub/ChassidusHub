@@ -1,5 +1,5 @@
+import type { PathLevel as ApiLevel } from '@chassidushub/client';
 import type { Pdf } from '../lib/pdfs';
-import type { PathStep } from '../path';
 
 /** A neighbour in the work's order: the sicha before or after this one. */
 export interface Neighbour {
@@ -39,10 +39,15 @@ export interface ReaderData {
   title: string;
   /** Under the title: the sefer and the volume ("לקוטי שיחות · חלק י״ב"). */
   sub: string;
-  pathBar: PathStep[];
+  /** The API's path to the page, drawn as the Library draws it (lib/catalog.ts). */
+  pathBar: ApiLevel[];
   previous: Neighbour | null;
   next: Neighbour | null;
   text: ReaderText;
+  /** The printing's scan where its file is served: the whole PDF, opened at the page's first page. */
+  scan: string | null;
+  /** The recordings of the farbrengens the page was said at, each heard on its listening page. */
+  recordings: { path: string; label: string; duration?: string }[];
   /** The page's PDFs, its own printing first. */
   pdfs: Pdf[];
   /** How the page is cited when its words are copied ("לקוטי שיחות, חלק י״ב, שמיני א"). */

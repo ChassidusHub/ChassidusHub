@@ -40,6 +40,11 @@ any time. `@chassidushub/client` carries the API's version.
   (the recordings of the farbrengens it was said at: id, path, name and
   length). A page with no words gives its PDF's `url` too. Still six
   statements at most.
+- On the English pages the day's shiurim are named in English, from
+  Sefaria's references (Genesis 6:9–22 with Rashi, Psalms 145–150, Robbery
+  and Lost Property chapters 4–6, 30 Tishrei), and a name that is only a
+  Hebrew month, such as Hayom Yom's volumes, is given its English name. The
+  Hebrew pages are as before.
 - `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a

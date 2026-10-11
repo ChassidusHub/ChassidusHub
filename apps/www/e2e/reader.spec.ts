@@ -91,3 +91,17 @@ test('a page with no words shows its PDF', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'תרגום לדוגמה' })).toBeVisible();
   await expect(page.getByText('אין עדיין טקסט או סריקה')).toHaveCount(0);
 });
+
+test('the corner menu opens the scan and lists the recordings', async ({ page, context }) => {
+  await context.route('https://files.example.org/**', (route) => route.fulfill({ contentType: 'text/plain', body: 'PDF' }));
+  await page.goto('/sample/1/1');
+  await page.getByRole('button', { name: 'עוד', exact: true }).click();
+  const popup = page.waitForEvent('popup');
+  await page.getByRole('dialog', { name: 'עוד' }).getByRole('button', { name: /הסריקה/ }).click();
+  expect((await popup).url()).toBe('https://files.example.org/sample.pdf#page=7');
+  await page.getByRole('button', { name: 'עוד', exact: true }).click();
+  await page.getByRole('dialog', { name: 'עוד' }).getByRole('button', { name: /לשמוע את הרבי/ }).click();
+  await expect(page.getByRole('link', { name: /הקלטה ראשונה/ })).toHaveAttribute('href', '/rh-aaaaaar1');
+  await expect(page.getByRole('link', { name: /הקלטה ראשונה/ })).toContainText('1:02:05');
+  await expect(page.getByRole('link', { name: /הקלטה שניה/ })).toHaveAttribute('href', '/rh-aaaaaar2');
+});
