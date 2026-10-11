@@ -1,6 +1,6 @@
 # RFC 0001: Small fixes go live after an AI check, and can be undone
 
-- Status: proposed
+- Status: accepted (the Director, 2026-10-11)
 - Issue: the new site's fixing (studio/briefs/www/4-fix-edit.md, DATA.md)
 - Author (lane or person): Data lane
 - Date: 2026-10-11
