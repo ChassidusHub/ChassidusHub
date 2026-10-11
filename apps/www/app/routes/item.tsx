@@ -6,9 +6,9 @@ import type { Route } from './+types/item';
 /** Recordings and the events they were said at belong to listening; every other item to the library. */
 const listening = new Set(['event', 'recording']);
 
-/** An item's name in Hebrew where it has one: its title or name, a plain string or one per language. */
+/** An item's name in Hebrew where it has one: its title, name or label (a volume's), a plain string or one per language. */
 function nameOf(fields: Record<string, unknown>): string | undefined {
-  for (const value of [fields.title, fields.name]) {
+  for (const value of [fields.title, fields.name, fields.label]) {
     if (typeof value === 'string') return value;
     if (value && typeof value === 'object') {
       const names = value as Record<string, unknown>;
@@ -27,7 +27,13 @@ function nameOf(fields: Record<string, unknown>): string | undefined {
  * Reader's, an event or a recording Home and listening's.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const path = decodeURIComponent(new URL(request.url).pathname);
+  let path: string;
+  try {
+    path = decodeURIComponent(new URL(request.url).pathname);
+  } catch {
+    // A broken % escape names no item.
+    throw data('not found', { status: 404 });
+  }
   try {
     const permanent = /^\/(rh-[\w-]+)\/?$/i.exec(path)?.[1];
     const found = permanent ? { id: permanent, redirected: false, path: null } : await context.api.resolvePath({ path });

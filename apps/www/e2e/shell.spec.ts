@@ -17,3 +17,8 @@ test('marks the page’s place, and keeps the theme the reader picks', async ({ 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
+
+test('a path with a broken % escape is a 404, not a crash', async ({ request }) => {
+  expect((await request.get('/%E0%A4%A')).status()).toBe(404);
+  expect((await request.get('/')).status()).toBe(200);
+});
