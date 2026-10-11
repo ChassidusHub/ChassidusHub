@@ -27,7 +27,11 @@ the 20 bodies takes 6,900 to 6,920 buffers for a common, a mid and a rare word
 alike. Every buffer is a disk read when the cache is cold.
 
 The other parts of a search are already small: the moments ranking after #215
-reads about 3,000 buffers, and the names (db3) about 2,900 after #209.
+reads about 3,000 buffers, and the names (db3) about 2,900 after #209. QA
+timed live after #215 deployed: a cold חסידות took 978 ms, of which 567 ms
+was the sichos' words (db5) and 145 ms the moments ranking (db4). A cold רבי
+took 1,452 ms, 593 ms of it db5. The words are now more than half of a cold
+search.
 
 ## Proposal
 
