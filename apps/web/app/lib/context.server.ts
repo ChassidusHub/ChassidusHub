@@ -12,6 +12,8 @@ export interface SiteContext {
   siteUrl: string;
   /** Where showcases are kept, and whether this visitor may make them (lib/showcase.ts); unset, there are none. */
   showcases?: { store: ShowcaseStore; owner: boolean };
+  /** Whether search by idea is offered (server/handler.ts, SiteOptions.byIdea). */
+  byIdea?: boolean;
 }
 
 declare module 'react-router' {

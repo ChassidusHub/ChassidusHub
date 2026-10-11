@@ -1,4 +1,4 @@
-import { machineToCheck, mafteach, transcribedRecordings, type Catalog, type CommunityPage, type MachineToCheck, type MafteachKept, type TranscribedRecording } from '@chassidushub/core';
+import { machineToCheck, mafteachSubjects, subjectsNamed, transcribedRecordings, type Catalog, type CommunityPage, type MachineToCheck, type MafteachKept, type MafteachSubjects, type SearchSubjectHit, type TranscribedRecording } from '@chassidushub/core';
 
 /**
  * Answers too costly to work out while someone waits, worked out by the
@@ -88,7 +88,7 @@ export function keptMafteach(kept: Kept): MafteachKept {
 }
 
 /** The subject indexes the site shows (/mafteach), built again by the scheduled run whenever one of their pages changed. */
-export const KEPT_INDEXES = [{ index: '/likkutei-sichos-mafteach-inyanim', sefer: '/likkutei-sichos' }];
+export const KEPT_INDEXES = [{ index: '/likkutei-sichos-mafteach-inyanim', sefer: '/likkutei-sichos', page: '/mafteach' }];
 
 interface KeptCommunity {
   at: string;
@@ -114,15 +114,49 @@ export async function refreshCommunity(catalog: Catalog, kept: Kept, now: Date):
   return true;
 }
 
-/** Builds each kept index again when its pages changed since it was kept; how many it built. */
+/** The kept indexes' topics in short (core/mafteach.ts, MafteachSubjects), for search to name an index entry (#99). */
+interface KeptSubjects {
+  indexes: Array<MafteachSubjects & { page: string }>;
+}
+
+/**
+ * Builds each kept index again when its pages changed since it was kept; how many it built. Its topics in short
+ * are kept beside it whenever it is built, or when they are missing.
+ */
 export async function refreshMafteach(catalog: Catalog, kept: Kept): Promise<number> {
   let built = 0;
-  for (const { index, sefer } of KEPT_INDEXES) {
+  const indexes: KeptSubjects['indexes'] = [];
+  for (const { index, sefer, page } of KEPT_INDEXES) {
     const [indexAt, seferAt] = await Promise.all([catalog.resolvePath(index), catalog.resolvePath(sefer)]);
     if (!indexAt) continue;
     let did = false;
-    await mafteach(catalog, indexAt.id, { seferId: seferAt?.id ?? null, kept: keptMafteach(kept), limit: 1, onBuild: () => void (did = true) });
+    const subjects = await mafteachSubjects(catalog, indexAt.id, { seferId: seferAt?.id ?? null, kept: keptMafteach(kept), onBuild: () => void (did = true) });
     if (did) built++;
+    if (subjects) indexes.push({ ...subjects, page });
   }
+  if (built > 0 || (indexes.length > 0 && !(await kept.get<KeptSubjects>('mafteach-subjects').catch(() => null)))) await kept.put('mafteach-subjects', { indexes } satisfies KeptSubjects);
   return built;
+}
+
+let subjectsRead: { at: number; value: KeptSubjects | null } | null = null;
+/** How long an isolate keeps the topics it read before reading them again. */
+const SUBJECTS_FOR_MS = 10 * 60_000;
+
+/** The index entries a search's words name, from the kept topics (read once per isolate every few minutes); none without. */
+export async function subjectsFor(kept: Kept, words: string): Promise<SearchSubjectHit[]> {
+  if (!subjectsRead || Date.now() - subjectsRead.at > SUBJECTS_FOR_MS) {
+    subjectsRead = { at: Date.now(), value: await kept.get<KeptSubjects>('mafteach-subjects').catch(() => null) };
+  }
+  return (subjectsRead.value?.indexes ?? []).flatMap(({ index, page, ...subjects }) =>
+    subjectsNamed({ index, topics: subjects.topics }, words).map((t) => ({
+      index: (index.title as SearchSubjectHit['index']) ?? null,
+      ...t,
+      path: `${page}?q=${encodeURIComponent(t.topic)}`,
+    })),
+  );
+}
+
+/** Forgets the topics an isolate read (tests). */
+export function forgetSubjects(): void {
+  subjectsRead = null;
 }

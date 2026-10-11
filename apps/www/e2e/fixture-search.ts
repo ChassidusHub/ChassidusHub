@@ -27,6 +27,7 @@ export function searchAnswer(url: URL): [number, unknown] | undefined {
       date: null,
       within: null,
       top: sicha,
+      subjects: [{ index: { he: 'מפתח לדוגמה' }, topic: 'פסקה', places: 34, volumes: 12, machine: true, path: '/mafteach?q=%D7%A4%D7%A1%D7%A7%D7%94' }],
       works: [sicha, sefer, shelf],
       events: [farbrengen],
       words: [
