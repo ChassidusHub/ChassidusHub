@@ -28,7 +28,8 @@ const transcripts: Record<string, unknown> = {
   },
 };
 
-const shelves = [
+/** Shelves of the library, two Rebbeim's and one under them; the library's own samples join them (fixture-library.ts). */
+export const shelves = [
   { id: 'rh-aaaaaas1', type: 'set', path: '/sets/alter-rebbe', data: { slug: 'alter-rebbe', name: he('אדמו״ר הזקן'), order: 'c' } },
   { id: 'rh-aaaaaas2', type: 'set', path: '/sets/alter-rebbe-sample', data: { slug: 'alter-rebbe-sample', name: he('ספר לדוגמה'), order: 'a', parent: 'rh-aaaaaas1' } },
   { id: 'rh-aaaaaas3', type: 'set', path: '/sets/the-rebbe', data: { slug: 'the-rebbe', name: he('הרבי'), order: 'i' } },

@@ -1,11 +1,13 @@
 import { createServer } from 'node:http';
-import { listenAnswer, paragraphWords } from './fixture-listen';
+import { libraryAnswer } from './fixture-library';
+import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
  * a few made-up pages, so the reading page is tested without a database,
- * and listening's reads (fixture-listen.ts), and POST /v1/fix as a signed-in
- * reader (the cookie rh_session=sample) or a signed-out one.
+ * listening's reads (fixture-listen.ts), the library's (fixture-library.ts),
+ * and POST /v1/fix as a signed-in reader (the cookie rh_session=sample) or a
+ * signed-out one.
  * Every word here is sample text written for the tests (לדוגמה), never a
  * sefer's own words. `FIXTURE_PORT` picks the port (default 3002).
  */
@@ -125,6 +127,8 @@ createServer((req, res) => {
     });
     return;
   }
+  // The browser reads some of it too (a sefer's printings).
+  res.setHeader('Access-Control-Allow-Origin', '*');
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
   if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
@@ -133,7 +137,7 @@ createServer((req, res) => {
     const found = byId(entity) as { item: unknown } | undefined;
     if (found) return res.end(JSON.stringify(found.item));
   }
-  const view = url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : listenAnswer(url);
+  const view = (url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : undefined) ?? libraryAnswer(url, shelves) ?? listenAnswer(url);
   if (!view) {
     res.statusCode = 404;
     return res.end(JSON.stringify({ error: 'not-found', message: 'not found' }));

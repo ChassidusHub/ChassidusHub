@@ -1,4 +1,6 @@
 import { data, redirect, type AppLoadContext } from 'react-router';
+import { loadSet, loadVolume, loadWork } from '../library/load';
+import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
 import { pathLevels } from '../path';
 import { nameOf, pathSteps, readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
@@ -9,14 +11,25 @@ import type { Route } from './+types/item';
 /** Recordings and the events they were said at belong to listening; every other item to the library. */
 const listening = new Set(['event', 'recording']);
 
+/** Whether the API answered "there is nothing there", by its status, not its class: the server's API client and this page's can be two copies of the package. */
+const notFound = (error: unknown) => [404, 400].includes((error as { status?: number } | null)?.status ?? 0);
+
+/** A read the API answered with 404, as nothing; any other failure stays one. */
+const orNothing = <T,>(read: Promise<T>): Promise<T | null> => read.catch((error) => (notFound(error) ? null : Promise.reject(error)));
+
 /**
  * Every item's page, at its readable path (/likkutei-sichos/12/3) or its
  * permanent one (/rh-7k2m9q4d), from one read of GET /v1/view: the item, its
  * path bar, the units before and after it and its best words. An old path
  * that moved answers with a permanent redirect to where it is now. The screen
  * depends on the kind of item: a sicha (a unit) is read here (app/reader); a
- * shelf, a sefer or a volume is the Library thread's, an event or a recording
- * Home and listening's.
+ * shelf, a sefer or a volume is the library's (app/library), an event or a
+ * recording Home and listening's.
+ *
+ * A path of two words may be a volume of a sefer, which is no item of its own
+ * (/likkutei-sichos/12), so its sefer's view is read beside it. Whatever else
+ * a library screen draws is read together after that, so it waits on two
+ * rounds of reads.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -27,27 +40,44 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // A broken % escape names no item.
     throw data('not found', { status: 404 });
   }
+  const words = path.split('/').filter(Boolean);
+  const api = context.api;
   const permanent = /^\/(rh-[\w-]+)$/i.exec(path)?.[1];
   const language = url.searchParams.get('language') ?? undefined;
-  let view;
+  const options = { scan: url.searchParams.has('scan'), apiBase: api.baseUrl };
+  const maybeVolume = !permanent && words.length === 2 && words[0] !== 'sets';
   try {
-    view = await context.api.itemView(permanent ? { id: permanent, language } : { path, language });
+    const [view, parent] = await Promise.all([
+      orNothing(api.itemView(permanent ? { id: permanent, language } : { path, language })),
+      maybeVolume ? orNothing(api.itemView({ path: `/${words[0]}` })) : null,
+    ]);
+    if (!view) {
+      // Nothing at the path: it may be a volume of a sefer.
+      if (parent?.movedTo) throw redirect(`${parent.movedTo}/${words[1]}${url.search}`, 301);
+      const volume = parent ? await loadVolume(api, parent.item, parent.pathBar, words[1]!, options) : null;
+      if (volume) return volume;
+      throw data('not found', { status: 404 });
+    }
+    if (view.movedTo) throw redirect(`${view.movedTo}${url.search}`, 301);
+    const item = view.item;
+    // An event, or one of its recordings, is heard on its listening page.
+    if (item.type === 'event' || item.type === 'recording') {
+      const to = await listeningPage(item, api);
+      if (to) throw redirect(to, 301);
+    }
+    if (item.type === 'set') return await loadSet(api, item, view.pathBar);
+    if (item.type === 'work') {
+      const work = await loadWork(api, item, view.pathBar, options);
+      if (work) return work;
+    }
+    const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
+    const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
+    if (item.type === 'unit') return { screen: 'reader' as const, type: item.type, name, reader: await readerData(view, context, url.origin) };
+    return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: pathSteps(view.pathBar) };
   } catch (error) {
-    // By its status, not its class: the server's API client and this page's can be two copies of the package.
-    const status = (error as { status?: number } | null)?.status;
-    if (status === 404 || status === 400) throw data('not found', { status: 404 });
+    if (notFound(error)) throw data('not found', { status: 404 });
     throw error;
   }
-  if (view.movedTo) throw redirect(`${view.movedTo}${url.search}`, 301);
-  // An event, or one of its recordings, is heard on its listening page.
-  if (view.item.type === 'event' || view.item.type === 'recording') {
-    const to = await listeningPage(view.item, context.api);
-    if (to) throw redirect(to, 301);
-  }
-  const fields = view.item.data as { label?: unknown; title?: unknown; name?: unknown };
-  const name = nameOf(fields.label ?? fields.title ?? fields.name) || view.item.id;
-  if (view.item.type === 'unit') return { kind: 'reader' as const, type: view.item.type, name, reader: await readerData(view, context, url.origin) };
-  return { kind: 'item' as const, id: view.item.id, type: view.item.type, name, pathBar: pathSteps(view.pathBar) };
 }
 
 /** Where an event or recording is heard: /listen/<year>/<event>, a recording picked with ?r=. */
@@ -58,20 +88,38 @@ async function listeningPage(item: { id: string; type: string; data: unknown }, 
   return event && year ? `/listen/${year}/${event.id}${item.type === 'recording' ? `?r=${item.id}` : ''}` : null;
 }
 
-export const handle = { section: (loaded: Awaited<ReturnType<typeof loader>> | undefined): Section => (loaded && listening.has(loaded.type) ? 'listen' : 'library') };
+type Loaded = Awaited<ReturnType<typeof loader>>;
+
+export const handle = { section: (loaded: Loaded | undefined): Section => (loaded && 'type' in loaded && listening.has(loaded.type) ? 'listen' : 'library') };
+
+function titleOf(loaded: Loaded): string {
+  if (loaded.screen === 'item' || loaded.screen === 'reader') return loaded.name;
+  if (loaded.screen === 'volume') return `${loaded.title} · ${loaded.label}`;
+  return loaded.title;
+}
 
 export function meta({ data: loaded }: Route.MetaArgs) {
-  return [{ title: loaded ? `${loaded.name} · ChassidusHub` : 'ChassidusHub' }];
+  return [{ title: loaded ? `${titleOf(loaded)} · ChassidusHub` : 'ChassidusHub' }];
 }
 
 export default function Item({ loaderData }: Route.ComponentProps) {
-  if (loaderData.kind === 'reader') return <Reader key={loaderData.reader.path} data={loaderData.reader} />;
-  // Shelves, sefarim, volumes, events and recordings: their threads' screens, until they are built.
-  return (
-    <Placeholder title={loaderData.name} path={loaderData.pathBar.length ? pathLevels(loaderData.pathBar) : undefined}>
-      <p className="faint sm">
-        {loaderData.type} · <bdi>{loaderData.id}</bdi>
-      </p>
-    </Placeholder>
-  );
+  switch (loaderData.screen) {
+    case 'reader':
+      return <Reader key={loaderData.reader.path} data={loaderData.reader} />;
+    case 'set':
+      return <SetScreen data={loaderData} />;
+    case 'work':
+      return <WorkScreen data={loaderData} />;
+    case 'volume':
+      return <VolumeScreen data={loaderData} />;
+    default:
+      // Events and recordings: their thread's screens, until they are built.
+      return (
+        <Placeholder title={loaderData.name} path={loaderData.pathBar.length ? pathLevels(loaderData.pathBar) : undefined}>
+          <p className="faint sm">
+            {loaderData.type} · <bdi>{loaderData.id}</bdi>
+          </p>
+        </Placeholder>
+      );
+  }
 }

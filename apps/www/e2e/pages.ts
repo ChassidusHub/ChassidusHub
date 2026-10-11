@@ -11,10 +11,14 @@ export const pages: { name: string; path: string }[] = [
   { name: 'Recording', path: '/listen/5732/rh-3dvjfkyc' },
   { name: 'Search', path: '/search' },
   { name: 'Design system', path: '/ui' },
-  // Reading pages come from the stand-in API (fixture-api.ts), so only on the local build.
+  // These pages come from the stand-in API (fixture-api.ts), so only on the local build.
   ...(process.env.BASE_URL
     ? []
     : [
+        { name: 'Library: other shelves', path: '/library?more' },
+        { name: 'A Rebbe', path: '/sets/the-rebbe' },
+        { name: 'A sefer', path: '/sample-sichos' },
+        { name: 'A volume', path: '/sample-sichos/12' },
         { name: 'Reader', path: '/sample/1/1' },
         { name: 'Reader, machine words', path: '/sample/1/2' },
       ]),
