@@ -55,7 +55,11 @@ class PoolDb implements Db {
   }
 }
 
-/** A database over node-postgres: `postgres://…` (Neon, a local server) or a Hyperdrive connection string. */
-export function connectPostgres(connectionString: string, options: { max?: number } = {}): Db {
-  return new PoolDb(new pg.Pool({ connectionString, max: options.max ?? 10 }));
+/**
+ * A database over node-postgres: `postgres://…` (Neon, a local server) or a Hyperdrive connection string.
+ * `name` is the connection's application_name, so the database's own list of sessions (pg_stat_activity)
+ * says who holds each one: a job, a local API. Hyperdrive's connections are shared, so they go unnamed.
+ */
+export function connectPostgres(connectionString: string, options: { max?: number; name?: string } = {}): Db {
+  return new PoolDb(new pg.Pool({ connectionString, max: options.max ?? 10, ...(options.name ? { application_name: options.name.slice(0, 63) } : {}) }));
 }

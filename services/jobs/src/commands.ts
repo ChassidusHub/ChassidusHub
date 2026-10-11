@@ -57,12 +57,17 @@ export interface Context {
   database?: string;
 }
 
+/** At most this many connections for one job (an import, a backup, upkeep). */
+export const JOB_CONNECTIONS = 5;
+
 export async function openDatabase(database?: string): Promise<Db> {
   // On a build server (CI is set there), a missing DATABASE_URL is a mistake, never a cue to use a local database.
   if (!database && !process.env.DATABASE_URL && process.env.CI) throw new Error('DATABASE_URL is not set: add it to this build as a secret (docs/deploy.md)');
   const target = database ?? process.env.DATABASE_URL ?? '.data/pglite';
-  // A job's writes wait while an import holds the catalog, rather than fail (packages/db/src/hold.ts).
-  return /^postgres(ql)?:\/\//.test(target) ? waitingWhileHeld(connectPostgres(target), { log: (line) => console.log(line) }) : openPGlite(target);
+  // A job's writes wait while an import holds the catalog, rather than fail (packages/db/src/hold.ts). A few connections
+  // are enough for a job, and named, so they never crowd out the site's and the database shows whose they are (#117).
+  const name = `chassidushub-jobs ${process.argv[2] ?? ''}`.trim();
+  return /^postgres(ql)?:\/\//.test(target) ? waitingWhileHeld(connectPostgres(target, { max: JOB_CONNECTIONS, name }), { log: (line) => console.log(line) }) : openPGlite(target);
 }
 
 export async function withCatalog<T>(ctx: Context, fn: (catalog: Catalog) => Promise<T>): Promise<T> {
