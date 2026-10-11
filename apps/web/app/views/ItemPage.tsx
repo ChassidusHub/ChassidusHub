@@ -33,6 +33,7 @@ import { tracksOf } from '../lib/tracks.js';
 import { ps } from '../lib/pageStrings.js';
 import { href, itemPath, shortLabel, SOURCE_NAMES, sourceUrl } from '../lib/links.js';
 import { useLang } from '../lib/useLang.js';
+import { noTextFor, unitKind } from '../lib/unitKind.js';
 import { readHref } from '../routes/read.js';
 import { readable } from './EventPage.js';
 import { Icon } from '../ui/Icon.js';
@@ -86,7 +87,6 @@ const W = {
   pagesCount: { he: 'עמודים', en: 'pages' },
   recording: { he: 'הקלטה', en: 'Recording' },
   play: { he: 'השמעה', en: 'Play' },
-  noText: { he: 'לשיחה הזאת עוד אין טקסט כאן.', en: 'This sicha has no text here yet.' },
   addText: { he: 'הוספת טקסט', en: 'Add its text' },
   shaarOf: { he: 'שער', en: 'Title page' },
 } as const;
@@ -465,7 +465,7 @@ function UnitBody({ entity, view, lang, draft }: { entity: Entity; view: ItemVie
         <UnitTexts unit={entity} texts={texts} segments={view.segments} lang={lang} />
       ) : hasWords ? null : (
         <div className="box">
-          <EmptyState icon="file" title={w(lang, 'noText')} actions={<Link className="btn sm" to={href('/add', lang, { what: 'hanacha', for: entity.id })}>{ps(lang, 'addHanacha')}</Link>} />
+          <EmptyState icon="file" title={noTextFor(unitKind(view.refs[(entity.data as { work?: string }).work ?? '']?.data as Record<string, unknown> | undefined), lang)} actions={<Link className="btn sm" to={href('/add', lang, { what: 'hanacha', for: entity.id })}>{ps(lang, 'addHanacha')}</Link>} />
         </div>
       )}
       {/* The chapter's own words come first; where they and other copies are from, after. A day of Hayom Yom is set as the book prints it. */}

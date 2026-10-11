@@ -2,6 +2,7 @@ import { describeDateKey, normalizeSearchText, parseDateText } from '@chassidush
 import type { EntityId, EntityType } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 import { matchingWords, queryWords, searchMoments, type Moment } from './moments.js';
+import { parshaDays, parshaHe, parshaOf } from './parsha.js';
 import { searchTierSql, toTsQuery } from './searchText.js';
 
 /**
@@ -12,8 +13,10 @@ import { searchTierSql, toTsQuery } from './searchText.js';
  * each opening at its paragraph, line or moment. A date in the query
  * ("תשי"א", "יו"ד שבט תשי"א") is taken as the date, not as words: it
  * narrows the words to that year, month or day, and alone it finds that
- * day's farbrengen. Titles and the line under them are in Hebrew, as the
- * site shows them.
+ * day's farbrengen. Words that are a parsha's name and nothing else
+ * ("תצוה", "פרשת בשלח תשמ"ב") are also the farbrengens of its weeks, in the
+ * year given or in every year. Titles and the line under them are in
+ * Hebrew, as the site shows them.
  */
 
 /** A thing found by its name: a sefer, a shelf, a sicha, a farbrengen, a recording. */
@@ -53,6 +56,8 @@ export interface SearchPage {
   query: string;
   /** The date the query names, when it names one. */
   date: { key: string; he: string } | null;
+  /** The parsha the words are, when they are a parsha's name and nothing else: hebcal's name and the Hebrew. */
+  parsha: { key: string; he: string } | null;
   /** The date the words are narrowed to: the `within` asked for, else the query's date. */
   within: string | null;
   /** What the person most likely wants: the day's farbrengen, a maamar that opens with the words, else the best name. */
@@ -70,6 +75,8 @@ export interface SearchPage {
 const NAMED: EntityType[] = ['set', 'work', 'event', 'recording', 'publication', 'author'];
 const NAME_HITS = 30;
 const DATED_HITS = 20;
+/** A parsha's farbrengens over all the years are many: more of them are listed. */
+const PARSHA_HITS = 60;
 export const SUGGEST_HITS = 6;
 
 interface Info {
@@ -124,16 +131,21 @@ async function namedInfo(catalog: Catalog, query: string, limit: number): Promis
   return rows;
 }
 
-/** Items by id (what the found words belong to), and the events on a date, with their facts: one statement. */
-async function infoOf(catalog: Catalog, ids: readonly EntityId[], date: string | null): Promise<Info[]> {
-  if (ids.length === 0 && !date) return [];
+/**
+ * Items by id (what the found words belong to), and the events on a date or on a parsha's days, with their
+ * facts: one statement.
+ */
+async function infoOf(catalog: Catalog, ids: readonly EntityId[], date: string | null, days: readonly string[] = []): Promise<Info[]> {
+  if (ids.length === 0 && !date && days.length === 0) return [];
   const { rows } = await catalog.db.query<Info>(
     `(SELECT ${INFO}, FALSE AS dated FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.id = ANY($1::text[]) AND NOT e.deleted)
      UNION ALL
      (SELECT ${INFO}, TRUE AS dated FROM entity e JOIN revision r ON r.id = e.main_rev
-      WHERE $2::text IS NOT NULL AND e.type = 'event' AND NOT e.deleted AND (r.data->>'date' || '-') LIKE $2 || '-%'
-      ORDER BY (r.data->>'kind' <> 'farbrengen'), r.data->>'date' COLLATE "C", coalesce((r.data->>'order')::int, 0), e.id LIMIT ${DATED_HITS})`,
-    [[...new Set(ids)], date],
+      WHERE e.type = 'event' AND NOT e.deleted
+        AND (${days.length > 0 ? `r.data->>'date' = ANY($2::text[])` : `$2::text IS NOT NULL AND (r.data->>'date' || '-') LIKE $2 || '-%'`})
+      ORDER BY (r.data->>'kind' <> 'farbrengen'), r.data->>'date' COLLATE "C", coalesce((r.data->>'order')::int, 0), e.id
+      LIMIT ${days.length > 0 ? PARSHA_HITS : DATED_HITS})`,
+    [[...new Set(ids)], days.length > 0 ? [...days] : date],
   );
   return rows;
 }
@@ -256,6 +268,9 @@ function wordHitOf(moment: Moment, infos: Map<EntityId, Info>, words: readonly s
 export async function searchPage(catalog: Catalog, query: string, options: { within?: string | null } = {}): Promise<SearchPage> {
   const { date, rest } = splitDate(query);
   const within = options.within ?? date;
+  // A parsha is its weeks within the date given (a year, a month), else in every year.
+  const parsha = rest ? parshaOf(rest) : null;
+  const days = parsha ? parshaDays(parsha, within ? Number(within.slice(0, 4)) : null).filter((d) => !within || `${d}-`.startsWith(`${within}-`)) : [];
   const named = rest ? await namedInfo(catalog, rest, NAME_HITS) : [];
   const words = rest ? queryWords(rest) : [];
   const moments = rest ? await searchMoments(catalog, rest, { within }) : [];
@@ -267,15 +282,17 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
       for (const id of [m.unit, m.event, m.recording]) if (id) wanted.push(id);
     }
   }
-  const found = await infoOf(catalog, wanted, date);
+  const found = await infoOf(catalog, wanted, date, days);
   const infos = new Map(found.filter((i) => !i.dated).map((i) => [i.id, i]));
   const dated = found.filter((i) => i.dated);
 
   const isEvent = (i: Info) => i.type === 'event' || i.type === 'recording';
   const works = named.filter((i) => !isEvent(i)).map(hitOf);
-  // With words and a date, the farbrengens named that were on the date; with a date alone, the date's own.
+  // With words and a date, the farbrengens named that were on the date; with a date alone, the date's own;
+  // with a parsha, its weeks' farbrengens, then any others named.
   const namedEvents = named.filter(isEvent).filter((i) => !within || (i.date !== null && `${i.date}-`.startsWith(`${within}-`)));
-  const events = (rest ? namedEvents : dated).map(hitOf);
+  const ofParsha = new Set(dated.map((i) => i.id));
+  const events = (days.length > 0 ? [...dated, ...namedEvents.filter((i) => !ofParsha.has(i.id))] : rest ? namedEvents : dated).map(hitOf);
   const wordHits = moments.map((m) => wordHitOf(m, infos, words)).filter((w): w is SearchWordHit => w !== null);
 
   let top: SearchHit | null = null;
@@ -285,11 +302,12 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
     const unit = opening?.kind === 'paragraph' && opening.unit ? infos.get(opening.unit) : undefined;
     if (unit) top = hitOf(unit);
   }
-  top ??= works[0] ?? events[0] ?? null;
+  top ??= (days.length > 0 ? events[0] : undefined) ?? works[0] ?? events[0] ?? null;
 
   return {
     query,
     date: date ? { key: date, he: describeDateKey(date, 'he') } : null,
+    parsha: parsha && days.length > 0 ? { key: parsha, he: parshaHe(parsha) } : null,
     within,
     top,
     works,

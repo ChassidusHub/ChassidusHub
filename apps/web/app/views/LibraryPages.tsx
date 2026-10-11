@@ -29,6 +29,7 @@ import { isEditing } from '../lib/editMode.js';
 import { EditTray } from '../ui/page/EditTray.js';
 import { Field } from '../ui/page/Field.js';
 import { EditHint, PageBar } from '../ui/page/PageBar.js';
+import { nounFor, unitKind } from '../lib/unitKind.js';
 import '../styles/pages/volume.css';
 
 /**
@@ -60,7 +61,6 @@ const GENRES: Record<string, { he: string; en: string }> = {
 const W = {
   firstPrinted: { he: 'נדפס לראשונה', en: 'First printed' },
   pages: { he: 'עמודים', en: 'pages' },
-  printings: { he: 'הדפסות', en: 'printings' },
   printingsTab: { he: 'הדפסות', en: 'Printings' },
   withAudio: { he: 'שיחות עם הקלטה', en: 'sichos with a recording' },
   checked: { he: 'טקסט נבדק מול הסריקה', en: 'Text checked against the scan' },
@@ -92,8 +92,6 @@ const W = {
   machineCover: { he: 'השער נבחר במכונה', en: 'Title page chosen by a machine' },
   noMatch: { he: 'אין שיחה שמתאימה לסינון.', en: 'No sicha matches the filter.' },
   clear: { he: 'ניקוי', en: 'Clear' },
-  sichos: { he: 'שיחות', en: 'sichos' },
-  letters: { he: 'אגרות', en: 'letters' },
   noRecordings: { he: 'לאף שיחה כאן עוד לא קושרה הקלטה.', en: 'No sicha here has a recording linked yet.' },
   noSuggestions: { he: 'אין הצעות פתוחות על הספר הזה.', en: 'No open suggestions about this sefer.' },
   allSuggestions: { he: 'כל ההצעות', en: 'All suggestions' },
@@ -561,7 +559,7 @@ export function WorkPage({ entity, view, lang }: { entity: Entity; view: ItemVie
     additionTo ? { icon: 'book' as const, children: <>{w(lang, 'additionTo')}{lang === 'he' ? '' : ' '}<Link to={href(itemPath(additionTo), lang)}>{nameOf((additionTo.data as D).title, lang)}</Link></> } : null,
     first ? { icon: 'cal' as const, children: <>{w(lang, 'firstPrinted')} <b>{[fd.publisher, firstYear].filter(Boolean).join(', ')}</b></> } : null,
     toc?.stats.pages ? { icon: 'file' as const, children: <><b>{num(toc.stats.pages, lang)}</b> {w(lang, 'pages')}</> } : null,
-    ofPart.length ? { icon: 'layers' as const, children: <><b>{num(ofPart.length, lang)}</b> {w(lang, 'printings')}</> } : null,
+    ofPart.length ? { icon: 'layers' as const, children: <><b>{num(ofPart.length, lang)}</b> {nounFor('printing', ofPart.length, lang)}</> } : null,
     volumes ? { icon: 'book' as const, children: <><b>{num(outline.length, lang)}</b> {t(lang, 'volumes')} · <b>{num(total, lang)}</b> {t(lang, 'unitsShort')}</> } : null,
     toc?.stats.withAudio ? { icon: 'audio' as const, children: <><b>{num(toc.stats.withAudio, lang)}</b> {w(lang, 'withAudio')}</> } : null,
     toc && toc.stats.checked !== null ? { icon: 'check' as const, children: <>{w(lang, 'checked')}: <b>{toc.stats.checked}%</b></> } : null,
@@ -700,7 +698,7 @@ export function WorkPage({ entity, view, lang }: { entity: Entity; view: ItemVie
                     <span className="row-main">
                       <span className="row-title torah">{x.label ? nameOf(x.label, lang) : `${w(lang, 'volumeRow')} ${x.value}`}</span>
                       <span className="row-sub">
-                        {[x.units ? `${num(x.units, lang)} ${w(lang, (entity.data as D).genre === 'igros' ? 'letters' : 'sichos')}` : null, printings ? `${num(printings, lang)} ${w(lang, 'printings')}` : null].filter(Boolean).join(' · ')}
+                        {[x.units ? `${num(x.units, lang)} ${nounFor(unitKind(entity.data as D), x.units, lang)}` : null, printings ? `${num(printings, lang)} ${nounFor('printing', printings, lang)}` : null].filter(Boolean).join(' · ')}
                       </span>
                     </span>
                     <Icon name="chev" className="subtle flip-ltr" />
