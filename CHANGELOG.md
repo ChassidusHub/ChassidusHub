@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `/v1/community` answers its sums (people, farbrengens without recordings
+  or texts) from what the scheduled run keeps, at most 15 minutes behind;
+  the latest merges and what waits are read on the request. Summing every
+  farbrengen on a cold database made `/contribute` time out after a deploy
+  (#171).
 - `/v1/machine/to-check` and `/v1/mafteach` answer from what the scheduled
   run keeps, as `/v1/transcripts` does: working them out took longer than
   a request may run, so `/help` and `/mafteach` waited 30 s and failed
