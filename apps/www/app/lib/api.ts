@@ -10,6 +10,12 @@ declare module 'react-router' {
      * page, so no page is ever drawn for one person and kept for another.
      */
     visitor?: ChassidusHub;
+    /**
+     * A request sent on to the API as it came (its method, body, cookie and
+     * Origin), for signing in only (routes/auth.ts): the API sets the session
+     * cookie on its answer, and the site hands that to the browser as its own.
+     */
+    forward?: (path: string, request: Request) => Promise<Response>;
   }
 }
 
@@ -36,4 +42,24 @@ export function apiFor({ binding, baseUrl, cookie }: { binding?: Binding; baseUr
 export function visitorApi(request: Request, make: (cookie: string) => ChassidusHub): ChassidusHub | undefined {
   const cookie = request.headers.get('cookie');
   return cookie ? make(cookie) : undefined;
+}
+
+/** The headers a request to sign in carries on to the API; nothing else of the browser's goes. */
+const FORWARDED = ['accept', 'content-type', 'cookie', 'origin', 'user-agent'];
+
+/** Sends a browser's request on to the API's `path`, through the binding when there is one (AppLoadContext.forward). */
+export function forwardFor({ binding, baseUrl = 'https://api.chassidushub.org' }: { binding?: Binding; baseUrl?: string }) {
+  return async (path: string, request: Request): Promise<Response> => {
+    const headers = new Headers();
+    for (const name of FORWARDED) {
+      const value = request.headers.get(name);
+      if (value) headers.set(name, value);
+    }
+    // The API sets a Secure cookie only for a request it knows came over HTTPS.
+    if (new URL(request.url).protocol === 'https:') headers.set('x-forwarded-proto', 'https');
+    const query = new URL(request.url).search;
+    const init: RequestInit = { method: request.method, headers, redirect: 'manual', ...(request.method === 'GET' || request.method === 'HEAD' ? {} : { body: await request.text() }) };
+    const url = `${baseUrl.replace(/\/+$/, '')}${path}${query}`;
+    return binding ? binding.fetch(url, init) : fetch(url, init);
+  };
 }

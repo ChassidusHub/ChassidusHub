@@ -82,3 +82,12 @@ test('remembers the page for Home’s "continue learning"', async ({ page, conte
   const cookie = (await context.cookies()).find((c) => c.name === 'ch_read');
   expect(JSON.parse(decodeURIComponent(cookie?.value ?? '{}'))).toEqual({ to: '/sample/1/2', title: 'שיחה שניה', sub: 'ספר לדוגמה · חלק א׳' });
 });
+
+test('a page with no words shows its PDF', async ({ page }) => {
+  await page.route('https://drive.google.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<p>PDF</p>' }));
+  await page.goto('/sample/1/4');
+  await expect(page.locator('iframe.scan-frame')).toHaveAttribute('src', 'https://drive.google.com/file/d/sample-printed/preview');
+  await expect(page.getByRole('link', { name: 'לפתוח בחלון חדש' })).toHaveAttribute('href', 'https://drive.google.com/file/d/sample-printed/view');
+  await expect(page.getByRole('link', { name: 'תרגום לדוגמה' })).toBeVisible();
+  await expect(page.getByText('אין עדיין טקסט או סריקה')).toHaveCount(0);
+});

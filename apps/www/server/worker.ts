@@ -1,5 +1,5 @@
 import { createRequestHandler, type ServerBuild } from 'react-router';
-import { apiFor, visitorApi } from '../app/lib/api';
+import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
@@ -23,6 +23,7 @@ export default {
     return handler(request, {
       api: apiFor({ binding: env.API, baseUrl: env.API_URL }),
       visitor: visitorApi(request, (cookie) => apiFor({ binding: env.API, baseUrl: env.API_URL, cookie })),
+      forward: forwardFor({ binding: env.API, baseUrl: env.API_URL }),
       ...pageContext(request),
     });
   },

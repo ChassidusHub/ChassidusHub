@@ -7,7 +7,7 @@ import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
  * a few made-up pages, so the reading page is tested without a database,
  * listening's reads (fixture-listen.ts), the library's (fixture-library.ts),
  * and POST /v1/fix as a signed-in reader (the cookie rh_session=sample) or a
- * signed-out one.
+ * signed-out one; and signing in and the account (/v1/auth/*) the same way.
  * Every word here is sample text written for the tests (לדוגמה), never a
  * sefer's own words. `FIXTURE_PORT` picks the port (default 3002).
  */
@@ -78,6 +78,25 @@ const views: Record<string, unknown> = {
       versions: [{ version: 'he', from: 'body', language: 'he' }],
     },
   },
+  '/sample/1/4': {
+    item: {
+      id: 'rh-aaaaaab4',
+      type: 'unit',
+      path: '/sample/1/4',
+      rev: 1,
+      data: {
+        label: name('שיחה רביעית'),
+        editions: [
+          { kind: 'pdf', role: 'translated', label: 'תרגום לדוגמה', url: 'https://drive.google.com/file/d/sample-translated/view' },
+          { kind: 'pdf', role: 'sicha', label: 'drive', url: 'https://drive.google.com/file/d/sample-printed/view' },
+        ],
+      },
+    },
+    pathBar: bar(2),
+    previous: null,
+    next: null,
+    text: null,
+  },
   '/sample/1/3': {
     item: { id: 'rh-aaaaaab3', type: 'unit', path: '/sample/1/3', rev: 1, data: { label: name('שיחה שלישית') } },
     pathBar: bar(2),
@@ -106,9 +125,59 @@ function fix(body: { item?: string; segment?: string; before?: unknown; after?: 
   return [201, changed <= 5 ? { changeset: 100 + fixes.length, live: true, undo: `/v1/fix/${100 + fixes.length}/undo` } : { changeset: 100 + fixes.length, live: false, reason: 'more than 5 words changed; a reviewer looks first' }];
 }
 
+const signedIn = (cookie: string) => /(?:^|; )rh_session=sample(?:;|$)/.test(cookie);
+/** The sample reader's name, as changed on the account page; and the addresses sign-in links were sent to (GET /_mails). */
+let displayName = 'קורא לדוגמה';
+const mails: string[] = [];
+
+/** /v1/auth/*, as the API answers it, for the sign-in and account pages: signed in by the sample cookie. */
+function auth(method: string, path: string, body: Record<string, unknown>, cookie: string, url: URL): [number, unknown, string[]?] {
+  if (method === 'GET' && path === 'me') {
+    if (!signedIn(cookie)) return [200, { person: null, google: true, email: true }];
+    return [200, {
+      person: { id: 'u-sample', displayName, username: 'sample-reader' },
+      passkeys: [{ credentialId: 'k1', deviceType: 'multiDevice', backedUp: true, createdAt: '2026-10-01T10:00:00Z', lastUsedAt: '2026-10-10T10:00:00Z' }],
+      googleAccounts: [],
+      emails: [{ email: 'reader@example.org', createdAt: '2026-10-01T10:00:00Z', google: false }],
+      notifications: { mode: 'off', email: null, lang: 'he' },
+      google: true,
+      email: true,
+    }];
+  }
+  if (method === 'GET' && path === 'username') {
+    const name = url.searchParams.get('name') ?? '';
+    return [200, { name: name || null, available: name !== 'taken', reason: name === 'taken' ? 'taken' : null, suggestion: 'sample-reader' }];
+  }
+  if (path === 'email/start') {
+    if (typeof body.email !== 'string' || !/@.+\./.test(body.email)) return [400, { error: 'bad-request', message: 'an email address, like name@example.com' }];
+    mails.push(body.email);
+    return [200, { sent: true }];
+  }
+  if (path === 'sign-out') return [200, { signedOut: true }, ['rh_session=; Path=/; Max-Age=0']];
+  if (path === 'name') {
+    if (!signedIn(cookie)) return [401, { error: 'unauthorized', message: 'sign in first' }];
+    displayName = String(body.name);
+    return [200, { person: { id: 'u-sample', displayName } }];
+  }
+  if (path === 'passkey/sign-in/options') return [200, { challengeId: 'c1', options: { challenge: 'Y2hhbGxlbmdl', rpId: 'localhost', allowCredentials: [] } }];
+  return [404, { error: 'not-found', message: 'not found' }];
+}
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
   res.setHeader('Content-Type', 'application/json');
+  const authPath = /^\/v1\/auth\/([a-z/-]+)$/.exec(url.pathname)?.[1];
+  if (authPath) {
+    let raw = '';
+    req.on('data', (chunk) => (raw += chunk));
+    req.on('end', () => {
+      const [status, answer, cookies] = auth(req.method ?? 'GET', authPath, JSON.parse(raw || '{}'), req.headers.cookie ?? '', url);
+      if (cookies) res.setHeader('Set-Cookie', cookies);
+      res.statusCode = status;
+      res.end(JSON.stringify(answer));
+    });
+    return;
+  }
   if (req.method === 'POST') {
     let raw = '';
     req.on('data', (chunk) => (raw += chunk));
@@ -131,6 +200,7 @@ createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
   if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
+  if (url.pathname === '/_mails') return res.end(JSON.stringify(mails));
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
   const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
   if (entity) {

@@ -1,3 +1,4 @@
+import type { Pdf } from '../lib/pdfs';
 import type { PathStep } from '../path';
 
 /** A neighbour in the work's order: the sicha before or after this one. */
@@ -42,6 +43,8 @@ export interface ReaderData {
   previous: Neighbour | null;
   next: Neighbour | null;
   text: ReaderText;
+  /** The page's PDFs, its own printing first. */
+  pdfs: Pdf[];
   /** How the page is cited when its words are copied ("לקוטי שיחות, חלק י״ב, שמיני א"). */
   citation: string;
   url: string;
