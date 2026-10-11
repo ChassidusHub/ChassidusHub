@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
-import { refreshMafteach, refreshToCheck, refreshTranscripts, SUMMARY_MAX_AGE_MS, type Kept, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
+import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts, SUMMARY_MAX_AGE_MS, type Kept, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -69,6 +69,22 @@ describe('the other kept answers (#104)', () => {
     expect(answer.totals.transcripts).toBe(3);
     // Nothing kept (local work): counted on the request.
     expect((await toCheck(createApp({ catalog }))).totals.transcripts).toBe(1);
+  });
+
+  it("keeps the community page's sums; the latest merges and what waits are read on the request (#171)", async () => {
+    const now = new Date('2026-10-11T16:00:00Z');
+    expect(await refreshCommunity(catalog, kept, now)).toBe(true);
+    expect(stored.get('community')).toMatchObject({ at: now.toISOString(), totals: { gaps: { events: 1, eventsWithoutRecordings: 0 } } });
+    expect(await refreshCommunity(catalog, kept, new Date(now.getTime() + SUMMARY_MAX_AGE_MS - 1))).toBe(false);
+
+    // Kept sums are answered as kept, without summing again; the rest is now.
+    stored.set('community', { at: now.toISOString(), totals: { people: 7, gaps: { events: 99, eventsWithoutRecordings: 98, eventsWithoutTexts: 97 } } });
+    const community = async (app: ReturnType<typeof createApp>) => (await (await app.request('/v1/community?limit=1')).json()) as { people: number; gaps: { events: number }; recent: unknown[] };
+    const answer = await community(createApp({ catalog, kept }));
+    expect(answer).toMatchObject({ people: 7, gaps: { events: 99 } });
+    expect(answer.recent).toHaveLength(1);
+    // Nothing kept (local work): summed on the request.
+    expect((await community(createApp({ catalog }))).gaps.events).toBe(1);
   });
 
   it('builds no subject index the catalog does not have', async () => {

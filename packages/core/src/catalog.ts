@@ -346,6 +346,15 @@ const BASE_REV_SQL = `(SELECT f.parent_rev FROM revision f WHERE f.changeset_id 
 const PROPOSALS_SQL = `SELECT DISTINCT ON (r.entity_id) r.*, ${BASE_REV_SQL} AS base_rev
   FROM revision r WHERE r.changeset_id = $1 AND r.merge_rev IS NULL ORDER BY r.entity_id, r.id DESC`;
 
+/** The community page in numbers (GET /v1/community). */
+export interface CommunityPage {
+  recent: Array<{ seq: number; at: string; message: string; author: string; authorName: string; authorIsBot: boolean; via: Via | null; mergedBy: string; mergedByName: string | null; changes: number }>;
+  openReports: number;
+  openSuggestions: number;
+  people: number;
+  gaps: { events: number; eventsWithoutRecordings: number; eventsWithoutTexts: number };
+}
+
 export class Catalog {
   private registryCache: { seq: number; registry: SchemaRegistry } | null = null;
 
@@ -667,14 +676,14 @@ export class Catalog {
    * people have suggested anything, and what the catalog still lacks that
    * anyone could help with. Counts only: reports themselves stay private.
    */
-  async community(limit = 8): Promise<{
-    recent: Array<{ seq: number; at: string; message: string; author: string; authorName: string; authorIsBot: boolean; via: Via | null; mergedBy: string; mergedByName: string | null; changes: number }>;
-    openReports: number;
-    openSuggestions: number;
-    people: number;
-    gaps: { events: number; eventsWithoutRecordings: number; eventsWithoutTexts: number };
-  }> {
-    const [recent, reports, suggestions, people, gaps] = await Promise.all([
+  async community(limit = 8): Promise<CommunityPage> {
+    const [live, totals] = await Promise.all([this.communityLive(limit), this.communityTotals()]);
+    return { ...live, ...totals };
+  }
+
+  /** What the community page shows that changes by the minute and is cheap to read: the latest merges, and what waits. */
+  async communityLive(limit = 8): Promise<Pick<CommunityPage, 'recent' | 'openReports' | 'openSuggestions'>> {
+    const [recent, reports, suggestions] = await Promise.all([
       this.db.query<{ seq: string; at: Date | string; message: string; author: string; author_name: string; author_is_bot: boolean; via: Via | null; merged_by: string; merged_by_name: string | null; changes: number }>(
         `SELECT c.seq, c.at, c.message, cs.author, a.display_name AS author_name, a.is_bot AS author_is_bot, cs.via, c.merged_by, m.display_name AS merged_by_name,
                 (SELECT count(*)::int FROM commit_change cc WHERE cc.commit_seq = c.seq) AS changes
@@ -683,14 +692,6 @@ export class Catalog {
       ),
       one<{ n: number }>(this.db, "SELECT count(*)::int AS n FROM report WHERE status = 'open'"),
       one<{ n: number }>(this.db, "SELECT count(*)::int AS n FROM changeset WHERE status = 'open'"),
-      one<{ n: number }>(this.db, "SELECT count(DISTINCT cs.author)::int AS n FROM changeset cs JOIN account a ON a.id = cs.author WHERE NOT a.is_bot AND cs.author <> 'system'"),
-      one<{ events: number; without_recordings: number; without_texts: number }>(
-        this.db,
-        `SELECT count(*)::int AS events,
-                count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM entity_ref x JOIN entity f ON f.id = x.from_id AND f.type = 'recording' AND NOT f.deleted WHERE x.to_id = e.id AND x.field = 'event'))::int AS without_recordings,
-                count(*) FILTER (WHERE coalesce(jsonb_array_length(r.data->'links'), 0) = 0)::int AS without_texts
-         FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'event' AND NOT e.deleted`,
-      ),
     ]);
     return {
       recent: recent.rows.map((r) => ({
@@ -707,6 +708,25 @@ export class Catalog {
       })),
       openReports: reports?.n ?? 0,
       openSuggestions: suggestions?.n ?? 0,
+    };
+  }
+
+  /**
+   * What the community page sums over the whole catalog: people, and the farbrengens without recordings or
+   * texts. Reading every farbrengen's version is slow on a cold database (#171), so the scheduled run keeps it.
+   */
+  async communityTotals(): Promise<Pick<CommunityPage, 'people' | 'gaps'>> {
+    const [people, gaps] = await Promise.all([
+      one<{ n: number }>(this.db, "SELECT count(DISTINCT cs.author)::int AS n FROM changeset cs JOIN account a ON a.id = cs.author WHERE NOT a.is_bot AND cs.author <> 'system'"),
+      one<{ events: number; without_recordings: number; without_texts: number }>(
+        this.db,
+        `SELECT count(*)::int AS events,
+                count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM entity_ref x JOIN entity f ON f.id = x.from_id AND f.type = 'recording' AND NOT f.deleted WHERE x.to_id = e.id AND x.field = 'event'))::int AS without_recordings,
+                count(*) FILTER (WHERE coalesce(jsonb_array_length(r.data->'links'), 0) = 0)::int AS without_texts
+         FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'event' AND NOT e.deleted`,
+      ),
+    ]);
+    return {
       people: people?.n ?? 0,
       gaps: { events: gaps?.events ?? 0, eventsWithoutRecordings: gaps?.without_recordings ?? 0, eventsWithoutTexts: gaps?.without_texts ?? 0 },
     };
