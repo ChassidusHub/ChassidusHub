@@ -138,7 +138,7 @@ const INFO = `e.id, e.type, e.path,
   (SELECT x.data->'name' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = r.data->>'parent') AS parent,
   (SELECT x.data->'title' FROM entity o JOIN revision x ON x.id = o.main_rev WHERE o.id = r.data->>'event') AS event,
   CASE e.type WHEN 'recording' THEN TRUE
-    WHEN 'event' THEN EXISTS (SELECT 1 FROM revision g JOIN entity ge ON ge.main_rev = g.id WHERE g.data->>'event' = e.id AND ge.type = 'recording' AND NOT ge.deleted)
+    WHEN 'event' THEN EXISTS (SELECT 1 FROM entity_ref y JOIN entity ge ON ge.id = y.from_id WHERE y.to_id = e.id AND y.field = 'event' AND ge.type = 'recording' AND NOT ge.deleted)
     ELSE FALSE END AS listen,
   CASE e.type WHEN 'unit' THEN r.data ? 'body'
     WHEN 'event' THEN coalesce(r.data->'links' @> '[{"kind":"mugah"}]' OR r.data->'links' @> '[{"kind":"bilti-mugah"}]', FALSE)
@@ -162,12 +162,15 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
   if (!tsQuery) return [];
   const typedAt = language ? '$6' : '$4';
   const { rows } = await catalog.db.query<Info>(
-    // Ranked first, then the facts read for the few kept.
+    // Ranked first, then the facts read for the few kept. Only a sefer's or shelf's revision is read while ranking (its
+    // names' tier, and whether it is an addition): a common word is in thousands of farbrengens and recordings, and
+    // reading each one's revision to rank it was most of a first search (#182). OFFSET 0 keeps the planner from joining
+    // every match's revision anyway.
     `WITH named AS (
        SELECT e.id, CASE WHEN e.type NOT IN ('work', 'set') THEN 3 ELSE ${nameTierSql(NAMES.map(normalizedSql), '$2', '$1', typedAt)} END AS tier,
               (e.type = 'work' AND r.data ? 'addition') AS addition, 0 AS src, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank,
               e.path COLLATE "C" AS k1, ''::text COLLATE "C" AS k2
-       FROM entity e JOIN revision r ON r.id = e.main_rev
+       FROM entity e LEFT JOIN LATERAL (SELECT r.data FROM revision r WHERE r.id = e.main_rev AND ${language ? 'TRUE' : `e.type IN ('work', 'set')`} OFFSET 0) r ON TRUE
        WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
          ${language ? `AND ${languageSql('$4::text', '$5', NAME_SQL)}` : ''}
        ORDER BY tier, addition, rank DESC, e.path LIMIT ${limit}),

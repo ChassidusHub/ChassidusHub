@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by name reads only a sefer's or shelf's revision while ranking, and
+  finds a farbrengen's recordings through its links (#182): a common word in
+  thousands of farbrengens and recordings no longer reads each one's
+  revision, nor every recording's, to list thirty names.
 - The MCP connector's `suggest_items` takes `set` in place of `data`: only
   those fields of an existing item change (a maamar's label, say), and the
   rest, its words too, is left as it is, so many labels go in one small
