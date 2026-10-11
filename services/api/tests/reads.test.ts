@@ -44,4 +44,22 @@ describe("the site's own reads (reads.ts)", () => {
   it('has no reader without a database: every read goes through the service binding', () => {
     expect(readerFor({ API_URL: API }, () => undefined)).toBeNull();
   });
+
+  it('reads what the scheduled run keeps, as the API\'s Worker does, rather than summing it on a cold page', async () => {
+    const lists = { transcripts: [{ id: 'rh-kept' }], scans: [], texts: [], totals: { transcripts: 1, scans: 0, texts: 0 } };
+    const objects = new Map([['summaries/to-check.json', JSON.stringify({ at: new Date().toISOString(), lists })]]);
+    const bucket = {
+      get: async (key: string) => {
+        const text = objects.get(key);
+        return text === undefined ? null : { body: new Response(text).body!, size: text.length, text: async () => text };
+      },
+      put: async () => undefined,
+    };
+    // No database answers here: had the kept lists been missed, the read would have failed.
+    const reader = readerFor({ API_URL: API, HYPERDRIVE: { connectionString: 'postgres://nobody@127.0.0.1:1/none' }, FILES_PUBLIC: bucket }, () => undefined)!;
+    const response = await reader.answer(`${API}/v1/machine/to-check?limit=5`);
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as typeof lists).transcripts).toEqual([{ id: 'rh-kept' }]);
+    await reader.close();
+  });
 });

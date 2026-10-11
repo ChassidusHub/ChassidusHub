@@ -1,8 +1,9 @@
 /**
  * The stand-in API's search (GET /v1/search/page and /v1/search/suggest) for
  * the browser tests: "פסקה" finds a few made-up things of every kind,
- * "תקלה" is a search that fails, and anything else finds nothing. Every word
- * is sample text written for the tests (לדוגמה).
+ * "piska" is a subject in English letters, "תקלה" is a search that fails,
+ * and anything else finds nothing. Every word is sample text written for the
+ * tests (לדוגמה).
  */
 const sicha = { id: 'rh-aaaaaab1', type: 'unit', kind: 'sicha', title: 'שיחה ראשונה', sub: 'ספר לדוגמה · חלק א׳', path: '/sample/1/1', read: true };
 const sefer = { id: 'rh-aaaaaaa2', type: 'work', kind: 'sefer', title: 'ספר לדוגמה', sub: 'מחבר לדוגמה', path: '/sample' };
@@ -16,6 +17,8 @@ export function searchAnswer(url: URL): [number, unknown] | undefined {
   if (url.pathname === '/v1/search/suggest') return [200, { query: q, hits: q.startsWith('פס') ? [sicha, sefer, shelf] : [] }];
   if (url.pathname !== '/v1/search/page') return undefined;
   if (q === 'תקלה') return [500, { error: 'internal', message: 'sample failure' }];
+  // A subject typed in English letters is searched in Hebrew, and the page says so.
+  if (q === 'piska') return [200, { query: q, date: null, within: null, topic: { key: 'piska', he: 'פסקה' }, top: sicha, works: [], events: [], words: [] }];
   if (!q.startsWith('פסקה')) return [200, { query: q, date: null, within: null, top: null, works: [], events: [], words: [] }];
   return [
     200,

@@ -46,6 +46,7 @@ export async function searchPage(api: ChassidusHub, query: string): Promise<Sear
   const rest = (found: Found[]) => rows(found).filter((hit) => hit.to !== top?.to);
   return {
     query,
+    topic: answer.topic?.he,
     top,
     works: rest(answer.works),
     events: rest(answer.events),
