@@ -77,3 +77,10 @@ test('an unknown path is a 404', async ({ page }) => {
   const response = await page.goto('/sample/9/9');
   expect(response?.status()).toBe(404);
 });
+
+test('remembers the page for Home’s "continue learning"', async ({ page, context }) => {
+  await page.goto('/sample/1/2');
+  await page.waitForLoadState('networkidle');
+  const cookie = (await context.cookies()).find((c) => c.name === 'ch_read');
+  expect(JSON.parse(decodeURIComponent(cookie?.value ?? '{}'))).toEqual({ to: '/sample/1/2', title: 'שיחה שניה', sub: 'ספר לדוגמה · חלק א׳' });
+});

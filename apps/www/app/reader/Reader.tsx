@@ -31,6 +31,12 @@ export function Reader({ data }: { data: ReaderData }) {
     event.preventDefault();
     setOpen({ note: mark.dataset.n });
   };
+  // Home's "continue learning" draws the last page opened from this cookie, without waiting for script.
+  useEffect(() => {
+    const value = encodeURIComponent(JSON.stringify({ to: data.path, title: data.title.slice(0, 40), sub: data.sub.slice(0, 40) }));
+    if (value.length <= 300) document.cookie = `ch_read=${value}; path=/; max-age=31536000; SameSite=Lax`;
+  }, [data.path, data.title, data.sub]);
+
   const note = open && typeof open === 'object' ? open.note : null;
   useEffect(() => {
     const marks = torah.current?.querySelectorAll<HTMLElement>('a.nm') ?? [];
