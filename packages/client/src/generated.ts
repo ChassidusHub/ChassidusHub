@@ -2503,7 +2503,7 @@ export interface Operations {
       moments: Array<Record<string, unknown>>;
     };
   };
-  /** The search screen in one read: sefarim and shelves the words name, farbrengens and recordings, and the places in the words, each ready to draw */
+  /** The search screen in one read: sefarim, shelves and sichos the words name, farbrengens and recordings, and the places in the words, each ready to draw */
   searchPage: {
     input: {
       /** The words, a date, or both */
@@ -4126,7 +4126,7 @@ export abstract class GeneratedMethods {
     return this.call('searchMoments', input ?? {} as Operations['searchMoments']['input']);
   }
 
-  /** The search screen in one read: sefarim and shelves the words name, farbrengens and recordings, and the places in the words, each ready to draw (GET /v1/search/page) */
+  /** The search screen in one read: sefarim, shelves and sichos the words name, farbrengens and recordings, and the places in the words, each ready to draw (GET /v1/search/page) */
   searchPage(input: Operations['searchPage']['input']): Promise<Operations['searchPage']['output']> {
     return this.call('searchPage', input ?? {} as Operations['searchPage']['input']);
   }

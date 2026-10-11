@@ -27,6 +27,10 @@ beforeAll(async () => {
     label: { he: 'שיחה ראשונה' },
     editions: [{ kind: 'pdf', role: 'sicha', url: 'https://drive.google.com/file/d/AAAAAAAAAAAA/view', source: 'mafteiach', sourceId: 'AAAAAAAAAAAA', licence: 'facts-and-links' }],
   } as unknown as Json, '/sefer-bdika/1/5');
+  // Volume 2 is page by page, each page a unit named by its number (as Chabad Library's volumes 30-39).
+  for (const page of ['39', '40']) {
+    await add(catalog, 'steward', 'steward', 'unit', { work: ids.sefer, position: [{ level: 'volume', value: '2' }, { level: 'sicha', value: '1' }, { level: 'unit', value: page }], order: `02${page}`, label: { he: page } } as unknown as Json, `/sefer-bdika/2/1/${page}`);
+  }
   ids.index = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'מפתח בדיקה' }, slug: 'mafteach-bdika', authors: [], genre: 'sichos', levels: ['volume'] }, '/mafteach-bdika');
   await add(catalog, 'steward', 'steward', 'unit', {
     work: ids.index,
@@ -77,6 +81,8 @@ describe('mafteach', () => {
     ]);
     expect(light!.volumes[0]!.places[0]).toMatchObject({ page: 7, context: 'האור דוחה החושך', sicha: 'ח"א ע\' 5 (בדיקה)', text: '/sefer-bdika/1/5' });
     expect(light!.volumes[0]!.places[1]).toEqual({ page: 9, to: 10 });
+    // No sicha has its PDF, but the volume is page by page: the place opens its page (#100).
+    expect(light!.volumes[1]!.places[0]).toMatchObject({ page: 40, text: '/sefer-bdika/2/1/40' });
   });
 
   it('finds topics by name first, then by a place\'s context', async () => {
