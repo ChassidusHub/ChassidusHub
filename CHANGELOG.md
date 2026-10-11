@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/moments` and `/v1/search/page` answer a common word (שבת,
+  גאולה) faster: each match's words are ranked once, where it is found, and
+  fewer are ranked (1000 pages, 1000 paragraphs, 100 sichos) (#172).
 - `/v1/community` answers its sums (people, farbrengens without recordings
   or texts) from what the scheduled run keeps, at most 15 minutes behind;
   the latest merges and what waits are read on the request. Summing every
