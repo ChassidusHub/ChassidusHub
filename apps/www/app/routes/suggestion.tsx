@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { data, Link, redirect, useSearchParams } from 'react-router';
 import { useAccount } from '../lib/account';
-import { Area, Button, Field, IconButton, Say, SectionHead, Segmented, TopBar } from '../ui';
+import { Button, Field, IconButton, Say, SectionHead, Segmented, TopBar } from '../ui';
+import { Area } from '../ui/Writing';
 import { call, failed } from '../suggestions/api';
 import { EntryCard, type FieldComment } from '../suggestions/Changes';
 import { Merge, type Resolutions } from '../suggestions/Merge';

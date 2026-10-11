@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { trimmed, type Piece } from '../back/words';
-import { Area, Button } from '../ui';
+import { Button } from '../ui';
+import { Area } from '../ui/Writing';
 import type { EntryView, FieldView } from './view';
 
 /** A comment on one field of one item, kept to go with the review (or sent at once). */

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Area, Button } from '../ui';
+import { Button } from '../ui';
+import { Area } from '../ui/Writing';
 import { eventWords, linkParts, momentOf, personName, verdictWords, type EntryView, type People, type TimelineItem } from './view';
 
 type Comment = Extract<TimelineItem, { type: 'comment' }>;
