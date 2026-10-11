@@ -1,0 +1,79 @@
+import { expect, test } from '@playwright/test';
+
+// The reading pages come from the stand-in API (fixture-api.ts).
+test.skip(!!process.env.BASE_URL, 'made-up pages exist only on the local build');
+
+test('draws the words once, on the server, and keeps them through hydration', async ({ page }) => {
+  const response = await page.goto('/sample/1/1');
+  const html = (await response?.text()) ?? '';
+  // The words are in the page once: not again in the data the browser hydrates from.
+  expect(html.split('פסקה ראשונה לדוגמה').length - 1).toBe(1);
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('.torah p')).toHaveCount(4);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('שיחה ראשונה');
+  // The print's own heading repeats the title, so it is not shown twice.
+  await expect(page.locator('.torah .hd.first')).toBeHidden();
+});
+
+test('opens a footnote in a sheet, and steps to the next one', async ({ page }) => {
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('link', { name: 'הערה 1' }).click();
+  const sheet = page.getByRole('dialog', { name: 'הערה 1' });
+  await expect(sheet).toContainText('הערה ראשונה לדוגמה.');
+  await sheet.getByRole('button', { name: 'הערה 2' }).click();
+  await expect(page.getByRole('dialog', { name: 'הערה 2' })).toContainText('הערה שניה לדוגמה.');
+});
+
+test('goes to the next sicha and back, with its words', async ({ page }) => {
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('link', { name: /שיחה שניה/ }).last().click();
+  await expect(page).toHaveURL(/\/sample\/1\/2$/);
+  await expect(page.locator('.torah p')).toHaveCount(2);
+  await page.goBack();
+  await expect(page.locator('.torah p')).toHaveCount(4);
+});
+
+test('labels words a machine read', async ({ page }) => {
+  await page.goto('/sample/1/2');
+  await expect(page.getByText('נקרא במכונה, עוד לא נבדק בידי אדם')).toBeVisible();
+  await expect(page.locator('.torah.unchecked')).toHaveCount(1);
+});
+
+test('keeps the text size the reader picks', async ({ page }) => {
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  const size = () => page.locator('.torah').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  const before = await size();
+  await page.getByRole('button', { name: 'גודל ומראה' }).click();
+  await page.getByRole('button', { name: 'גדול יותר' }).click();
+  expect(await size()).toBe(before + 2);
+  await page.reload();
+  expect(await size()).toBe(before + 2);
+});
+
+test('the corner menu: versions, and reporting a problem', async ({ page }) => {
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'עוד', exact: true }).click();
+  await page.getByRole('dialog', { name: 'עוד' }).getByRole('button', { name: /נוסח/ }).click();
+  await expect(page.getByRole('dialog', { name: 'נוסח' }).getByRole('link', { name: 'אנגלית' })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('button', { name: 'עוד', exact: true }).click();
+  await page.getByRole('button', { name: 'משהו לא בסדר כאן' }).click();
+  await page.getByRole('textbox', { name: 'מה לא בסדר' }).fill('בדיקה לדוגמה');
+  await page.getByRole('button', { name: 'שליחה' }).click();
+  await expect(page.getByRole('status')).toContainText('תודה');
+});
+
+test('a page with nothing to show yet says so', async ({ page }) => {
+  await page.goto('/sample/1/3');
+  await expect(page.getByText('אין עדיין טקסט או סריקה לדף הזה.')).toBeVisible();
+});
+
+test('an unknown path is a 404', async ({ page }) => {
+  const response = await page.goto('/sample/9/9');
+  expect(response?.status()).toBe(404);
+});

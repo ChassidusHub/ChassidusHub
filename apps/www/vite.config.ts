@@ -7,6 +7,6 @@ const src = (pkg: string) => fileURLToPath(new URL(`../../packages/${pkg}/src/in
 export default defineConfig({
   plugins: [reactRouter()],
   // The shared packages are used from source, so nothing needs building first.
-  resolve: { alias: { '@chassidushub/client': src('client') } },
+  resolve: { alias: { '@chassidushub/client': src('client'), '@chassidushub/model': src('model') } },
   server: { port: 5174 },
 });

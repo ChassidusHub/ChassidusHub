@@ -319,6 +319,8 @@ svg.i.filled { fill: currentColor; stroke: none; }
 .opt .t { flex: 1; }
 .opt .r { font-size: 13px; color: var(--g600); }
 .opt.quiet { color: var(--g700); font-size: 14px; }
+.opt.off { color: var(--g600); cursor: default; }
+.opt[aria-current='true'] { font-weight: 600; }
 @media (min-width: 900px) {
   .sheet { bottom: 24px; border-radius: 14px; }
 }
@@ -383,3 +385,48 @@ svg.i.filled { fill: currentColor; stroke: none; }
   .dock { inset-inline-start: var(--rail); }
   .top .homelogo { display: none; }
 }
+
+/* ---------- reader: the words and their footnotes, as the prototype sets them ---------- */
+.reader { max-width: 36em; margin-inline: auto; padding-inline: 4px; }
+.stitle { font-family: var(--title); font-weight: 500; font-size: 32px; text-align: center; margin: 20px 0 0; line-height: 1.2; }
+.ssub { text-align: center; color: var(--g600); font-size: 13px; margin: 4px 0 14px; }
+.mach { display: flex; justify-content: center; margin: 0 0 18px; }
+.torah {
+  font-family: var(--torah); font-size: calc(var(--torah-size) + var(--torah-step, 0) * 2px);
+  line-height: 1.85; text-align: justify; hyphens: none;
+}
+.torah p { margin: 0 0 0.9em; }
+.torah .hd { font-weight: 700; text-align: center; margin: 1.2em 0 0.5em; }
+.torah .hd.first { display: none; }
+.torah .end { text-align: end; }
+/* Words a machine read and nobody checked yet: a faint dotted underline, all of them or only those. */
+.torah.unchecked p, .torah p.m, .fn.m .nt {
+  text-decoration: underline dotted color-mix(in srgb, var(--machine-line) 45%, transparent);
+  text-decoration-thickness: 1px; text-underline-offset: 0.32em;
+}
+.ois { font-weight: 700; }
+.mk { font-family: var(--ui); font-size: 0.6em; color: var(--g600); padding-inline: 0.2em; }
+.nm {
+  font-family: var(--ui); font-size: 0.55em; vertical-align: super; line-height: 0; color: var(--g700);
+  display: inline-block; min-width: 1.6em; padding: 0.6em 0.15em; margin: -0.6em 0; border-radius: 4px; text-align: center;
+}
+.nm:hover, .nm.on { color: var(--g900); background: var(--g200); }
+.notes { margin-top: 32px; border-top: 1px solid var(--g300); }
+.notes h2 { font-size: 13px; color: var(--g700); margin: 14px 0 8px; }
+.notes ol { list-style: none; margin: 0; padding: 0; font-family: var(--torah); font-size: calc(16px + var(--torah-step, 0) * 1px); line-height: 1.7; }
+.fn { display: flex; gap: 8px; margin-bottom: 6px; scroll-margin-top: 64px; }
+.fn .fl { flex: none; min-width: 1.6em; font-family: var(--ui); font-size: 12px; color: var(--g600); padding-top: 0.25em; }
+.fn:target { background: var(--g100); border-radius: 6px; }
+.notetext { font-family: var(--torah); font-size: 18px; line-height: 1.7; }
+.endnav { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--g300); margin-top: 28px; padding-top: 14px; }
+.endnav a, .endnav button { display: flex; align-items: center; gap: 6px; font-size: 14px; min-height: 44px; }
+.endnav button[disabled] { color: var(--g500); cursor: default; }
+.missing { text-align: center; margin: 40px 0; }
+.scan { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.scan img { width: 100%; height: auto; border: 1px solid var(--g300); border-radius: 4px; background: var(--g50); }
+.fixbox textarea {
+  width: 100%; min-height: 96px; border: 1px solid var(--g400); border-radius: 8px; padding: 10px 12px;
+  font: inherit; font-size: 16px; line-height: 1.6; background: var(--g0); color: var(--g900); resize: vertical;
+}
+.fixbox textarea:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--g0), 0 0 0 4px var(--g900); }
+.fixbox .actions { display: flex; gap: 8px; margin-top: 12px; }

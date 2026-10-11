@@ -15,10 +15,11 @@ export const links: Route.LinksFunction = () => [
 ];
 
 /**
- * A reader's light or dark choice (kept in this browser), set before the page
- * paints so it never flashes the other one. With no choice the system's wins.
+ * A reader's light or dark choice and text size (kept in this browser), set
+ * before the page paints so it never flashes the other one or jumps to
+ * another size. With no choice the system's theme wins.
  */
-const theme = `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}`;
+const theme = `try{var d=document.documentElement,t=localStorage.getItem('theme'),s=localStorage.getItem('size');if(t==='light'||t==='dark')d.dataset.theme=t;if(/^(-[12]|[0-5])$/.test(s))d.style.setProperty('--torah-step',s)}catch(e){}`;
 
 /**
  * The whole site is Hebrew and right to left from the first byte, so nothing

@@ -1,4 +1,7 @@
 import { data, redirect } from 'react-router';
+import { pathLevels } from '../path';
+import { nameOf, pathSteps, readerData } from '../reader/load.server';
+import { Reader } from '../reader/Reader';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
 import type { Route } from './+types/item';
@@ -6,38 +9,52 @@ import type { Route } from './+types/item';
 /** Recordings and the events they were said at belong to listening; every other item to the library. */
 const listening = new Set(['event', 'recording']);
 
-/** An item's name in Hebrew where it has one: its title or name, a plain string or one per language. */
-function nameOf(fields: Record<string, unknown>): string | undefined {
-  for (const value of [fields.title, fields.name]) {
-    if (typeof value === 'string') return value;
-    if (value && typeof value === 'object') {
-      const names = value as Record<string, unknown>;
-      const found = names.he ?? names.en ?? Object.values(names)[0];
-      if (typeof found === 'string') return found;
-    }
-  }
-  return undefined;
-}
-
 /**
  * Every item's page, at its readable path (/likkutei-sichos/12/3) or its
- * permanent one (/rh-7k2m9q4d). An old path that moved answers with a
- * permanent redirect to where it is now. The screen depends on the kind of
- * item: a shelf, a sefer or a volume is the Library thread's, a sicha the
- * Reader's, an event or a recording Home and listening's.
+ * permanent one (/rh-7k2m9q4d), from one read of GET /v1/view: the item, its
+ * path bar, the units before and after it and its best words. An old path
+ * that moved answers with a permanent redirect to where it is now. The screen
+ * depends on the kind of item: a sicha (a unit) is read here (app/reader); a
+ * shelf, a sefer or a volume is the Library thread's, an event or a recording
+ * Home and listening's.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const path = decodeURIComponent(new URL(request.url).pathname);
+  const url = new URL(request.url);
+  const path = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
+  const permanent = /^\/(rh-[\w-]+)$/i.exec(path)?.[1];
+  const language = url.searchParams.get('language') ?? undefined;
+  let view;
   try {
-    const permanent = /^\/(rh-[\w-]+)\/?$/i.exec(path)?.[1];
-    const found = permanent ? { id: permanent, redirected: false, path: null } : await context.api.resolvePath({ path });
-    if (found.redirected && found.path) throw redirect(found.path, 301);
-    const item = await context.api.getItem({ id: found.id });
-    return { id: item.id, type: item.type, name: nameOf(item.data) ?? item.id };
+    view = await context.api.itemView(permanent ? { id: permanent, language } : { path, language });
   } catch (error) {
     // By its status, not its class: the server's API client and this page's can be two copies of the package.
-    if ((error as { status?: number } | null)?.status === 404) throw data('not found', { status: 404 });
+    const status = (error as { status?: number } | null)?.status;
+    if (status === 404 || status === 400) throw data('not found', { status: 404 });
     throw error;
+  }
+  if (view.movedTo) throw redirect(`${view.movedTo}${url.search}`, 301);
+  const fields = view.item.data as { label?: unknown; title?: unknown; name?: unknown };
+  const name = nameOf(fields.label ?? fields.title ?? fields.name) || view.item.id;
+  if (view.item.type === 'unit') return { kind: 'reader' as const, type: view.item.type, name, reader: await readerData(view, context, url.origin) };
+  return { kind: 'item' as const, id: view.item.id, type: view.item.type, name, pathBar: pathSteps(view.pathBar) };
+}
+
+/** "Something is wrong here", from the reader's corner menu. */
+export async function action({ request, context }: Route.ActionArgs) {
+  const form = await request.formData();
+  const note = String(form.get('note') ?? '')
+    .trim()
+    .slice(0, 2000);
+  const entityId = String(form.get('id') ?? '');
+  if (form.get('intent') !== 'report' || !note) return { error: 'כתבו מה לא בסדר.' };
+  try {
+    await context.api.report({ body: { entityId, reason: 'other', note } });
+    return { ok: true };
+  } catch (error) {
+    const status = (error as { status?: number } | null)?.status;
+    if (status === 403) return { error: 'כדי לדווח צריך להיכנס לחשבון.' };
+    if (status === 429) return { error: 'נשלחו מכאן הרבה דיווחים בשעה האחרונה. נסו שוב מאוחר יותר.' };
+    return { error: 'השליחה לא הצליחה. נסו שוב.' };
   }
 }
 
@@ -48,8 +65,10 @@ export function meta({ data: loaded }: Route.MetaArgs) {
 }
 
 export default function Item({ loaderData }: Route.ComponentProps) {
+  if (loaderData.kind === 'reader') return <Reader key={loaderData.reader.path} data={loaderData.reader} />;
+  // Shelves, sefarim, volumes, events and recordings: their threads' screens, until they are built.
   return (
-    <Placeholder title={loaderData.name}>
+    <Placeholder title={loaderData.name} path={loaderData.pathBar.length ? pathLevels(loaderData.pathBar) : undefined}>
       <p className="faint sm">
         {loaderData.type} · <bdi>{loaderData.id}</bdi>
       </p>
