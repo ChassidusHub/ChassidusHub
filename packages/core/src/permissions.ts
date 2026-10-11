@@ -104,3 +104,34 @@ export function mayGoLive(author: Account, change: { types: ReadonlySet<string>;
   for (const type of change.types) if (!LIVE_TYPES.has(type as EntityType)) return false;
   return change.sets.every((s) => s.policy === 'open');
 }
+
+/**
+ * Small fixes that go live for anyone (RFC 0001): a few words of a text
+ * corrected, after the API's AI check has said it looks like a typo or a
+ * misreading fixed. Bounded so that a bad one does little: so many a day,
+ * none in an account's first day before a suggestion of theirs is approved,
+ * only in open sets, and only the words (a unit's body, a segment, a page's
+ * lines, a sync span). Each is reviewed after, on the keep-or-undo list.
+ */
+export const LIVE_FIX_WORDS = 5;
+export const LIVE_FIX_LIMITS = { contributor: 50, trusted: 500 } as const;
+/** How long the author may undo their own live fix themselves. */
+export const LIVE_FIX_UNDO_HOURS = 24;
+
+export function mayFixLive(
+  author: Account,
+  change: { types: ReadonlySet<string>; sets: SetInfo[]; onlyWords: boolean },
+  seen: { accountAgeHours: number | null; liveToday: number },
+): { ok: true } | { ok: false; reason: 'suspended' | 'bot' | 'hold' | 'limit' | 'kind' | 'set'; message: string } {
+  if (author.suspended_at !== null) return { ok: false, reason: 'suspended', message: 'this account is suspended' };
+  if (author.is_bot) return { ok: false, reason: 'bot', message: "a bot's changes are reviewed first" };
+  if (!author.is_steward && seen.accountAgeHours !== null && seen.accountAgeHours < UPLOAD_HOLD_HOURS && author.approved_count === 0) {
+    return { ok: false, reason: 'hold', message: `a new account's fixes are reviewed first for ${UPLOAD_HOLD_HOURS} hours, or until a suggestion of theirs is approved` };
+  }
+  const limit = LIVE_FIX_LIMITS[author.trust];
+  if (!author.is_steward && seen.liveToday >= limit) return { ok: false, reason: 'limit', message: `at most ${limit} fixes go live a day; this one waits for a reviewer` };
+  if (!change.onlyWords) return { ok: false, reason: 'kind', message: 'only the words go live; this changes more than that' };
+  for (const type of change.types) if (!LIVE_TYPES.has(type as EntityType) && type !== 'unit') return { ok: false, reason: 'kind', message: `changes to ${type} are reviewed first` };
+  if (change.sets.length === 0 || !change.sets.every((s) => s.policy === 'open')) return { ok: false, reason: 'set', message: 'this set reviews every change first' };
+  return { ok: true };
+}
