@@ -1,4 +1,4 @@
-export { measured, one, type Db, type DbCost, type QueryResult } from './db.js';
+export { measured, one, STATEMENT_TIMES, type Db, type DbCost, type QueryResult } from './db.js';
 export { connectPostgres } from './pg.js';
 // PGlite is its own entry point (`@chassidushub/db/pglite`), so bundles for
 // Workers never carry Postgres-in-WebAssembly they cannot use.

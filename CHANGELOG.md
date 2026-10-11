@@ -15,6 +15,9 @@ any time. `@chassidushub/client` carries the API's version.
   (`בטחון`), names and words alike, and says so in the new `topic` field.
   The subjects are a small list people keep (packages/core/src/topics.ts)
   (#99).
+- Every API answer's `Server-Timing` also gives each statement's own time,
+  in order (`db1;dur=…`, `db2;dur=…`, the first 16): which read a slow
+  answer waited on.
 - `GET /v1/mafteach`: a place in a volume kept page by page (Likkutei Sichos
   30-39) opens that page on the site (`text`), where most opened only the
   sicha's PDF; and whether the kept index is current is asked of each

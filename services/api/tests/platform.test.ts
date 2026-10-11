@@ -68,10 +68,13 @@ describe('errors, CORS and caching', () => {
     const read = await counted.request(`/v1/entities/${event}`);
     expect(read.status).toBe(200);
     const timing = read.headers.get('Server-Timing')!;
-    expect(timing).toMatch(/^db;dur=\d+(\.\d)?;desc="\d+ statements", total;dur=\d+(\.\d)?$/);
+    expect(timing).toMatch(/^db;dur=\d+(\.\d)?;desc="\d+ statements", total;dur=\d+(\.\d)?(, db\d+;dur=\d+(\.\d)?)+$/);
     const statements = Number(/"(\d+) statements"/.exec(timing)![1]);
     expect(statements).toBeGreaterThan(0);
     expect(statements).toBe(db.cost.statements);
+    // Then each statement's own time, in order: which one a slow answer waited on.
+    expect(timing.match(/db\d+;dur=/g)).toHaveLength(statements);
+    expect(timing).toContain(`db${statements};dur=`);
     // A write's transaction counts its BEGIN and COMMIT, as Hyperdrive does.
     const before = db.cost.statements;
     await db.transaction(async (tx) => {

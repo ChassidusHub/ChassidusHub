@@ -3,10 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../lib/catalog';
-import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
+import { Button, Icon, IconButton, ServerHtml, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';
-import { ServerHtml } from './Words';
 
 type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string };
 
