@@ -359,7 +359,10 @@ export function createApp(options: ApiOptions): Hono {
     if (!path === !id) throw new CatalogError('invalid', 'give a path or an id');
     const view = await itemView(catalog, id ? { id: entityId(id) } : { path: path! }, { language: c.req.query('language') || undefined });
     if (!view) throw new CatalogError('not-found', `${id ?? path} not found`);
-    return c.json(view);
+    // The scan's PDF as it is served from here, whole; null where files are not served.
+    const base = filesBase(c);
+    const whole = <T extends { url: string | null }>(place: T): T => ({ ...place, url: base && place.url ? `${base}${place.url}` : null });
+    return c.json({ ...view, scan: view.scan && whole(view.scan), text: view.text?.kind === 'pages' ? whole(view.text) : view.text });
   });
   // The new site's path bar: an item's whole path, every level with the other choices there (sets, sefarim, units).
   app.get('/v1/entities/:id/path-bar', async (c) => {

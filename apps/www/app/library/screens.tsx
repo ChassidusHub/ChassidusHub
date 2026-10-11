@@ -1,5 +1,6 @@
 import { Fragment, Suspense, useState } from 'react';
-import { Await, Link, useSearchParams } from 'react-router';
+import { Await, Link, useNavigate, useSearchParams } from 'react-router';
+import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { libraryLevel, pathLevels } from '../lib/catalog';
 import { Icon, IconButton, Row, Rows, SearchField, SectionHead, Sheet, TopBar, useToast, type PathLevel } from '../ui';
 import type { Line, SetData, VolumeData, WorkData } from './load';
@@ -72,11 +73,20 @@ export function OtherShelvesScreen({ others }: { others: Promise<Line[]> }) {
 
 /** A Rebbe or a shelf: its sefarim and shelves, then the books on it that are additions. */
 export function SetScreen({ data }: { data: SetData }) {
+  const edit = useEdit(data.path ?? '');
   return (
     <>
-      <TopBar path={pathLevels(data.levels)} />
+      <TopBar path={pathLevels(data.levels)} end={<Corner title={data.title} printings={[]} onEdit={edit.start} />} />
+      {edit.editing && <EditBar done={edit.done} />}
       <main id="content" className="view">
         <h1>{data.title}</h1>
+        {edit.editing && (
+          <EditFields>
+            <Names item={data.id} rev={data.rev} names={data.names} />
+            {data.inside && <InsideLink inside={data.inside} kind="מדף" />}
+            <Linked action="בדף של כל אחד">הספרים והמדפים שבו</Linked>
+          </EditFields>
+        )}
         {data.lines.length > 0 && (
           <>
             <h2>ספרים</h2>
@@ -110,8 +120,34 @@ function useShare() {
   };
 }
 
-/** The corner menu of a sefer or a volume: share, and the printings and their scans. */
-function Corner({ title, printings }: { title: string; printings: Printing[] }) {
+/**
+ * Edit is the same page, with ?edit: only its own fields. `start` opens it
+ * from the corner menu; `done` is the page without it.
+ */
+function useEdit(path: string) {
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  const without = new URLSearchParams(search);
+  without.delete('edit');
+  const start = () => {
+    const next = new URLSearchParams(search);
+    next.set('edit', '');
+    navigate(`?${next}`, { replace: true, preventScrollReset: true });
+  };
+  return { editing: search.has('edit'), done: `${path}${without.size ? `?${without}` : ''}`, start };
+}
+
+/** The shelf (or sefer) a page is in, edited on its own page. */
+function InsideLink({ inside, kind }: { inside: { path: string; label: string }; kind: string }) {
+  return (
+    <Linked to={`${inside.path}?edit`} action="לערוך שם">
+      נמצא ב{kind}: {inside.label}
+    </Linked>
+  );
+}
+
+/** The corner menu of a shelf, a sefer or a volume: share, the printings and their scans, and Edit. */
+function Corner({ title, printings, onEdit }: { title: string; printings: Printing[]; onEdit: () => void }) {
   const [open, setOpen] = useState<'menu' | 'printings' | null>(null);
   const share = useShare();
   return (
@@ -129,6 +165,10 @@ function Corner({ title, printings }: { title: string; printings: Printing[] }) 
             <span className="r">{printings.length}</span>
           </button>
         )}
+        <button type="button" className="opt quiet" onClick={() => (setOpen(null), onEdit())}>
+          <Icon name="pen" />
+          <span className="t">עריכה</span>
+        </button>
       </Sheet>
       <Sheet open={open === 'printings'} title="דפוסים וסריקות" onClose={() => setOpen(null)}>
         <Printings printings={printings} />
@@ -219,12 +259,21 @@ export function WorkScreen({ data }: { data: WorkData }) {
   const printings = usePrintings(data.api, data.id, data.printings);
   const scan = useScan(printings);
   const subtitle = [data.author, data.parts.length > 1 ? `${data.parts.length} חלקים` : ''].filter(Boolean).join(' · ');
+  const edit = useEdit(data.path ?? '');
   return (
     <>
-      <TopBar path={pathLevels(data.levels)} end={<Corner title={data.title} printings={printings} />} />
+      <TopBar path={pathLevels(data.levels)} end={<Corner title={data.title} printings={printings} onEdit={edit.start} />} />
+      {edit.editing && <EditBar done={edit.done} />}
       <main id="content" className="view">
         <h1>{data.title}</h1>
         {subtitle && <p className="faint sm lede">{subtitle}</p>}
+        {edit.editing && (
+          <EditFields>
+            <Names item={data.id} rev={data.rev} names={data.names} />
+            {data.inside && <InsideLink inside={data.inside} kind="מדף" />}
+            <Linked action="בדף של כל אחת">השיחות שבו</Linked>
+          </EditFields>
+        )}
         {scan ? (
           <ScanView printing={scan.printing} scan={scan.scan} back={data.path ?? '.'} />
         ) : (
@@ -286,13 +335,22 @@ export function VolumeScreen({ data }: { data: VolumeData }) {
   const scan = useScan(printings);
   const about = printings.map((p) => aboutOf(p.title)).find(Boolean);
   let group: string | undefined;
+  const edit = useEdit(data.path);
   return (
     <>
-      <TopBar path={pathLevels(data.levels)} end={<Corner title={`${data.title} · ${data.label}`} printings={printings} />} />
+      <TopBar path={pathLevels(data.levels)} end={<Corner title={`${data.title} · ${data.label}`} printings={printings} onEdit={edit.start} />} />
+      {edit.editing && <EditBar done={edit.done} />}
       <main id="content" className="view">
         <h1>
           {data.title} · {data.label}
         </h1>
+        {edit.editing && (
+          <EditFields>
+            {/* A volume is no item of its own: what it is called is part of its sefer. */}
+            {data.workPath && <InsideLink inside={{ path: data.workPath, label: data.title }} kind="ספר" />}
+            <Linked action="בדף של כל אחת">השיחות שבו</Linked>
+          </EditFields>
+        )}
         {/* The line is kept while the printings that name it are read, so nothing below it moves. */}
         <p className="faint sm lede">{about ?? '\u00a0'}</p>
         {scan ? (

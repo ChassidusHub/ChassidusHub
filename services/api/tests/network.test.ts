@@ -39,6 +39,18 @@ describe('search that lands on the moment, and by meaning', () => {
     const app = createApp({ catalog });
     const { body } = await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}`);
     expect(body.moments).toMatchObject([{ kind: 'paragraph', id: segment, event, recording, startMs: 61_000, machine: true }]);
+    // Narrowed to when it was said: the farbrengen's year keeps it, another year does not, and a date must be a date key.
+    expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=5742`)).body.moments).toHaveLength(1);
+    expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=5711`)).body.moments).toEqual([]);
+    expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=${encodeURIComponent('57%')}`)).status).toBe(422);
+
+    // The new site's screen: the transcript opens at its farbrengen at the moment heard; a date alone is that day's farbrengen.
+    const page = (await json(app, `/v1/search/page?q=${encodeURIComponent('אהבת')}`)).body;
+    expect(page.words).toMatchObject([{ id: segment, kind: 'paragraph', title: 'יו״ד שבט תשמ״ב', path: '/events/5742-05-10?t=61', machine: true }]);
+    const day = (await json(app, `/v1/search/page?q=${encodeURIComponent('יו"ד שבט תשמ"ב')}`)).body;
+    expect(day).toMatchObject({ date: { key: '5742-05-10' }, within: '5742-05-10', top: { id: event, kind: 'farbrengen', listen: true }, words: [] });
+    expect((await json(app, `/v1/search/page?q=x&within=${encodeURIComponent('57%')}`)).status).toBe(422);
+    expect((await json(app, `/v1/search/suggest?q=${encodeURIComponent('יו״ד שבט')}`)).body.hits).toMatchObject([{ id: event, type: 'event', kind: 'farbrengen' }]);
   });
 
   it("gives a farbrengen's parts their synced hanachos in one request, and each part its own", async () => {

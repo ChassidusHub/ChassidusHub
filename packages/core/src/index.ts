@@ -75,7 +75,8 @@ export { NOTIFICATION_MODES, digestMessage, notificationSetting, sendNotificatio
 export { adviceFor, advicePrompt, adviseSuggestions, type Advice, type Advisor } from './advice.js';
 export { clashPrompt, proposeClashResolutions, readClashAnswer, type ClashProposal } from './clashAdvice.js';
 export { TAKEDOWN_RELATIONS, TAKEDOWN_RESPONSE_DAYS, requestTakedown, resolveTakedownTarget, takeDownFile, takedowns, type TakedownRelation, type TakedownView } from './takedown.js';
-export { bestLine, matchingWords, momentOf, queryWords, searchMoments, snippetOf, type Moment, type ParagraphMoment, type ScanLineMoment } from './moments.js';
+export { SUGGEST_HITS, marksIn, searchPage, searchSuggest, splitDate, type SearchHit, type SearchPage, type SearchWordHit } from './searchPage.js';
+export { bestLine, matchingWords, MOMENT_CANDIDATES, momentOf, queryWords, searchMoments, snippetOf, type Moment, type ParagraphMoment, type ScanLineMoment } from './moments.js';
 export {
   EMBEDDED_TYPES,
   EMBEDDING_DIMENSIONS,
@@ -273,4 +274,4 @@ export { fillShaars, shaarFile, suggestShaar, type ShaarFile, type ShaarInput } 
 export { driveId, mafteach, placesOf, type Mafteach, type MafteachPlace, type MafteachTopic, type MafteachVolume } from './mafteach.js';
 export { FIX_CHECK_MS, sendFix, shapeOf, wordsChanged, type FixInput, type FixJudge, type FixResult } from './fix.js';
 export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
-export { itemView, type ItemView, type MachineShare, type ShownText } from './view.js';
+export { itemView, type HeardAt, type ItemView, type MachineShare, type ScanPlace, type ShownText } from './view.js';

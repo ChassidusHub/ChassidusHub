@@ -57,6 +57,7 @@ describe('migrations', () => {
       'takedown',
       'thread_event',
       'thread_link',
+      'unit_place',
       'webhook',
     ]);
     await db.close();

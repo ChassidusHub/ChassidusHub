@@ -124,19 +124,19 @@ async function parts(catalog: Catalog, work: EntityId, unit: EntityId, position:
   const params: unknown[] = [work];
   const values = position.map((p) => String(p.value ?? ''));
   /** The units that share the first `n` places of this unit's position. */
-  const sharing = (n: number) => values.slice(0, n).map((v, i) => `AND r.data->'position'->${i}->>'value' = $${params.push(v)}`).join(' ');
-  const from = `FROM entity_ref x JOIN entity e ON e.id = x.from_id AND e.type = 'unit' AND NOT e.deleted JOIN revision r ON r.id = e.main_rev
-                WHERE x.to_id = $1 AND x.field = 'work'`;
+  const sharing = (n: number) => values.slice(0, n).map((v, i) => `AND p.position->${i}->>'value' = $${params.push(v)}`).join(' ');
+  // Each unit's place (unit_place, migration 0030): the work's units are listed without reading any of their words.
+  const from = `FROM unit_place p WHERE p.work_id = $1`;
   const selects = values.slice(0, -1).map(
-    (_, i) => `(SELECT ${i} AS depth, NULL AS id, NULL AS path, r.data->'position'->${i}->>'value' AS value,
-                  (array_agg(r.data->'position'->${i}->'label' ORDER BY r.data->>'order' COLLATE "C"))[1] AS name,
-                  count(*)::int AS units, min(r.data->>'order' COLLATE "C") AS ord
+    (_, i) => `(SELECT ${i} AS depth, NULL AS id, NULL AS path, p.position->${i}->>'value' AS value,
+                  (array_agg(p.position->${i}->'label' ORDER BY p.ord))[1] AS name,
+                  count(*)::int AS units, min(p.ord) AS ord
                 ${from} ${sharing(i)} GROUP BY 4 ORDER BY 7 LIMIT ${PATH_CHOICES_MAX})`,
   );
   const last = values.length - 1;
   selects.push(
-    `(SELECT ${last} AS depth, e.id, e.path, r.data->'position'->${last}->>'value' AS value, r.data->'label' AS name, NULL::int AS units, r.data->>'order' AS ord
-      ${from} ${sharing(last)} ORDER BY r.data->>'order' COLLATE "C", e.id LIMIT ${PATH_CHOICES_MAX})`,
+    `(SELECT ${last} AS depth, p.unit_id::text AS id, p.path, p.position->${last}->>'value' AS value, p.label AS name, NULL::int AS units, p.ord
+      ${from} ${sharing(last)} ORDER BY p.ord, p.unit_id LIMIT ${PATH_CHOICES_MAX})`,
   );
   const { rows } = await catalog.db.query<{ depth: number; id: EntityId | null; path: string | null; value: string; name: Json | null; units: number | null }>(
     `SELECT * FROM (${selects.join(' UNION ALL ')}) x ORDER BY depth, ord COLLATE "C", id`,

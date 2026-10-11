@@ -11,6 +11,7 @@ import {
   registerFile,
   relationsOf,
   searchMoments,
+  MOMENT_CANDIDATES,
   searchSimilar,
   snippetOf,
   type Embedder,
@@ -133,6 +134,70 @@ describe('search that lands on the moment', () => {
     expect(moments).toHaveLength(2);
     expect(moments.find((m) => m.kind === 'scan-line')).toMatchObject({ scan, publication, page: 7, line: { id: 'l2' }, hits: ['אהבת', 'ישראל'], machine: true });
     expect(moments.find((m) => m.kind === 'paragraph')).toMatchObject({ id: segment, recording, event, startMs: 754_000, textKind: 'transcript', machine: true });
+  });
+
+  it("finds a sefer's own words, a maamar that opens with them first, and checked words before a machine's (#88, #90)", async () => {
+    const { catalog, set } = await freshCatalog();
+    const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מאמרים' }, slug: 'maamarim', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });
+    const body = (...paragraphs: string[]) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'h1', kind: 'heading', text: [{ text: 'כותרת לדוגמה' }] }, ...paragraphs.map((p, i) => ({ id: `p${i + 1}`, kind: 'paragraph', text: [{ text: p }] }))] }] });
+    const maamar = (n: string, b: ReturnType<typeof body>, extra: Record<string, unknown> = {}) => add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'maamar', value: n }], order: n, label: { he: `מאמר ${n}` }, body: b, sets: [set], ...extra }, `/maamarim/${n}`);
+    const mentions = await maamar('1', body('פתיחה אחרת לגמרי', 'וכמו שכתוב פתח דבר לדוגמה בענין זה'));
+    const opens = await maamar('2', body('פתח דבר לדוגמה. ועוד מלים', 'המשך'));
+    await maamar('3', body('פתח דבר לדוגמה גם כאן'), { bodySource: { source: 'chabadlibrary', rights: 'link', licence: 'site-terms' } });
+    const text = await add(catalog, 'steward', 'steward', 'text', { kind: 'transcript', language: 'yi' });
+    await add(catalog, 'steward', 'steward', 'segment', { text, order: 'V', kind: 'paragraph', content: 'פתח דבר לדוגמה', proofread: 0, origin: { by: 'transcribe:fake@1' } });
+
+    const moments = await searchMoments(catalog, 'פתח דבר לדוגמה');
+    expect(moments.map((m) => [m.kind === 'paragraph' && m.textKind, m.id === opens || m.id === mentions ? m.id : '-'])).toEqual([
+      ['body', opens],
+      ['body', mentions],
+      ['transcript', '-'],
+    ]);
+    expect(moments[0]).toMatchObject({ unit: opens, path: '/maamarim/2', segment: 'p1', opening: true, machine: false, name: { he: 'מאמר 2' } });
+    expect(moments[1]).toMatchObject({ segment: 'p2', opening: false });
+  });
+
+  it('picks its candidates by rank from the index alone, so the best match is found among many (#124)', async () => {
+    const { catalog } = await freshCatalog();
+    const text = await add(catalog, 'steward', 'steward', 'text', { kind: 'transcript', language: 'yi' });
+    // More matches than are read: each says the words once among many others; one says just them.
+    const cs = await catalog.createChangeset('steward', { title: 'Add segments' });
+    const filler = Array.from({ length: 40 }, (_, i) => `מלה${i}`).join(' ');
+    for (let i = 0; i < MOMENT_CANDIDATES + 5; i++) {
+      await catalog.putRevision(cs.id, 'steward', { type: 'segment', data: { text, order: `A${String(i).padStart(4, '0')}`, kind: 'paragraph', content: `${filler} פתח דבר ${filler}`, proofread: 1 } });
+    }
+    const best = await catalog.putRevision(cs.id, 'steward', { type: 'segment', data: { text, order: 'Z', kind: 'paragraph', content: 'פתח דבר פתח דבר', proofread: 1 } });
+    await catalog.submit(cs.id, 'steward');
+    if ((await catalog.changeset(cs.id)).status !== 'merged') await catalog.merge(cs.id, 'steward');
+
+    const sql: string[] = [];
+    const query = catalog.db.query.bind(catalog.db);
+    catalog.db.query = ((q: string, params?: unknown[]) => (sql.push(q), query(q, params))) as typeof catalog.db.query;
+    const moments = await searchMoments(catalog, 'פתח דבר', { limit: 3 });
+    catalog.db.query = query;
+    expect(moments[0]!.id).toBe(best);
+    // Without a date to narrow by, the candidates come from the entity row alone; no revision is read before the limit.
+    const inner = sql[0]!.slice(0, sql[0]!.indexOf(') c'));
+    expect(inner).not.toMatch(/revision/);
+  });
+
+  it('narrows to the year, month or day the words were said: a text by its own date or its farbrengen, a transcript by its farbrengen (#90)', async () => {
+    const { catalog, set } = await freshCatalog();
+    const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מאמרים' }, slug: 'maamarim', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });
+    const body = (p: string) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: p }] }] }] });
+    const event = await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set));
+    const early = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'maamar', value: '1' }], order: '1', label: { he: 'מאמר 1' }, date: '5711-05-10', body: body('פתח דבר לדוגמה'), sets: [set] });
+    const late = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'maamar', value: '2' }], order: '2', label: { he: 'מאמר 2' }, events: [event], body: body('פתח דבר לדוגמה'), sets: [set] });
+    const recording = await add(catalog, 'mendy', 'keeper', 'recording', { event, title: { he: 'חלק א' }, url: 'https://example.org/a.mp3', sets: [set] });
+    const text = await add(catalog, 'mendy', 'keeper', 'text', { kind: 'transcript', recording, language: 'yi' });
+    const heard = await add(catalog, 'mendy', 'keeper', 'segment', { text, order: 'V', kind: 'paragraph', content: 'פתח דבר לדוגמה', proofread: 0, origin: { by: 'transcribe:fake@1' } });
+
+    const ids = async (within: string | null) => (await searchMoments(catalog, 'פתח דבר לדוגמה', { within })).map((m) => m.id).sort();
+    expect(await ids(null)).toEqual([early, late, heard].sort());
+    expect(await ids('5711')).toEqual([early]);
+    expect(await ids('5742-05')).toEqual([late, heard].sort());
+    expect(await ids('5742-05-11')).toEqual([]);
+    expect(await ids('574')).toEqual([]);
   });
 });
 
