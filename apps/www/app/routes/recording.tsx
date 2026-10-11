@@ -1,12 +1,13 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactElement, type RefObject } from 'react';
-import { Await, data as answer, redirect, useLoaderData, useSearchParams } from 'react-router';
+import { Await, data as answer, redirect, useLoaderData, useNavigate, useSearchParams } from 'react-router';
+import { EditBar, EditFields, Names } from '../edit/Edit';
 import { YEARS, yearLabel } from '../listen/data.server';
 import { firstWords, recordedEvent, type FirstWords } from '../listen/recording.server';
 import { clock, eventLevel, fetchWords, LISTEN_COOKIE, listening, yearLevel, writeStopped, type Chapter, type Paragraph } from '../listen/common';
 import { wordAt, wordHolding, wordTimes, wordsOf } from '../listen/timing';
 import { Fixing } from '../fix/Fixing';
 import { replaceInText } from '../fix/replace';
-import { Button, IconButton, player, TopBar, usePlayer, type Track } from '../ui';
+import { Button, Icon, IconButton, player, Sheet, TopBar, usePlayer, type Track } from '../ui';
 import { chapterAt } from '../ui/player/engine';
 import type { Route } from './+types/recording';
 
@@ -41,6 +42,18 @@ export default function Recording() {
   const { id, year, yearName, date, title, totalMs, chapters } = data;
   const to = `/listen/${year}/${id}`;
   const [search] = useSearchParams();
+  // Edit is the same page, with ?edit: only the event's own fields (its name), opened from the corner menu.
+  const navigate = useNavigate();
+  const [menu, setMenu] = useState(false);
+  const editing = search.has('edit');
+  const without = new URLSearchParams(search);
+  without.delete('edit');
+  const startEdit = () => {
+    setMenu(false);
+    const next = new URLSearchParams(search);
+    next.set('edit', '');
+    navigate(`?${next}`, { replace: true, preventScrollReset: true });
+  };
 
   const track = useMemo<Track>(
     () => ({
@@ -98,9 +111,21 @@ export default function Recording() {
 
   return (
     <>
-      <TopBar path={[listening, yearLevel(data.years, year), eventLevel(year, yearName, { id, label: date })]} end={<IconButton icon="more" label="עוד" />} />
+      <TopBar path={[listening, yearLevel(data.years, year), eventLevel(year, yearName, { id, label: date })]} end={<IconButton icon="more" label="עוד" onClick={() => setMenu(true)} />} />
+      <Sheet open={menu} title="עוד" onClose={() => setMenu(false)}>
+        <button type="button" className="opt quiet" onClick={startEdit}>
+          <Icon name="pen" />
+          <span className="t">עריכה</span>
+        </button>
+      </Sheet>
+      {editing && <EditBar done={`${to}${without.size ? `?${without}` : ''}`} />}
       <main id="content" className="view">
         <h1>{date}</h1>
+        {editing && (
+          <EditFields>
+            <Names item={id} rev={data.rev} names={data.names} />
+          </EditFields>
+        )}
         <p className="faint sm">{[title, parts > 1 ? `${parts} חלקים` : undefined, totalMs ? clock(totalMs) : undefined].filter(Boolean).join(' · ')}</p>
         <div className="rec-acts">
           {mine ? (

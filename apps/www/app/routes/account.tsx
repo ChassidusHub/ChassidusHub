@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
+import { ApiKeys, ConnectedApps } from '../account/Tokens';
 import { UsernameField, useUsername } from '../account/Username';
 import { authPost, failureOf, refreshAccount, signOut, useSignIn, type SignedIn } from '../lib/account';
 import { Button, Field, Panel, Row, Rows, Say, Segmented, TopBar } from '../ui';
@@ -20,7 +21,8 @@ const when = (iso: string | null) => (iso ? day.format(new Date(iso)) : '');
 /**
  * The signed-in person's account (thread 6): the name and handle others see,
  * the ways they sign in (passkeys, Google, email addresses), email updates
- * of what they follow, and signing out. Drawn in the browser, from
+ * of what they follow, the AI apps they connected and their API keys, and
+ * signing out. Drawn in the browser, from
  * /_/auth/me: the page itself is the same for everyone.
  */
 export default function Screen() {
@@ -51,6 +53,8 @@ export default function Screen() {
               {(answer.google || account.googleAccounts.length > 0) && <Google account={account} canAdd={answer.google} />}
               {answer.email && <Emails account={account} />}
               {answer.email && <Updates account={account} />}
+              <ConnectedApps />
+              <ApiKeys />
               <div className="btns">
                 <Button
                   look="outline"

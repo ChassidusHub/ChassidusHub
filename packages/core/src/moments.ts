@@ -230,6 +230,14 @@ const DATE_OF = `CASE e.type
 export const MOMENT_CANDIDATES = 200;
 
 /**
+ * How many matches of each kind are ranked at most. Ranking reads each
+ * match's words whole: a page or a paragraph is short, but a sicha's are
+ * all its text, and a common word (שבת, גאולה) over every sicha took eight
+ * to ten seconds. Past these, the first matches found are ranked.
+ */
+export const MOMENT_RANKED = { 'text-page': 2000, segment: 2000, unit: 400 } as const;
+
+/**
  * The places in scans and texts where the query's words are: lines on
  * scans' pages and paragraphs of texts and transcripts, best first.
  */
@@ -241,19 +249,20 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   // Ranked in two steps, so a common word does not unpack every page that has it: the best matches by rank, read
   // from the entity row and its index alone (MOMENT_CANDIDATES); then, for those only, the revision says whether a
   // machine read or heard it and nobody checked, and checked words come first. A date to narrow by needs each
-  // match's revision, so only a narrowed search reads it before the limit.
+  // match's revision, so only a narrowed search reads it before the limit. Only MOMENT_RANKED of each kind are ranked.
   const within = options.within ?? null;
-  const narrowed = within
-    ? `JOIN revision r ON r.id = e.main_rev
-       WHERE e.type IN ('text-page', 'segment', 'unit') AND NOT e.deleted
-         AND e.search_tsv @@ to_tsquery('simple', $1)
-         AND ((${DATE_OF}) || '-') LIKE $2 || '-%'`
-    : `WHERE e.type IN ('text-page', 'segment', 'unit') AND NOT e.deleted
-         AND e.search_tsv @@ to_tsquery('simple', $1)`;
+  const matched = (type: keyof typeof MOMENT_RANKED) =>
+    within
+      ? `(SELECT e.id FROM entity e JOIN revision r ON r.id = e.main_rev
+          WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1)
+            AND ((${DATE_OF}) || '-') LIKE $2 || '-%' LIMIT ${MOMENT_RANKED[type]})`
+      : `(SELECT e.id FROM entity e
+          WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED[type]})`;
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit' }>(
     `SELECT c.id, c.type FROM (
        SELECT e.id, e.type, e.main_rev, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank
-       FROM entity e ${narrowed}
+       FROM (${matched('text-page')} UNION ALL ${matched('segment')} UNION ALL ${matched('unit')}) m
+       JOIN entity e ON e.id = m.id
        ORDER BY rank DESC, e.id LIMIT ${MOMENT_CANDIDATES}
      ) c
      JOIN revision r ON r.id = c.main_rev
