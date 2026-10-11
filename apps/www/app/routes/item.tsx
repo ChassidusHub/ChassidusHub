@@ -23,11 +23,11 @@ const orNothing = <T,>(read: Promise<T>): Promise<T | null> => read.catch((error
  * item: a shelf, a sefer or a volume is the library's, a sicha the Reader's,
  * an event or a recording Home and listening's.
  *
- * Reads go out together wherever the path tells enough to guess: a shelf is
- * under /sets/, a sefer's path is one word (/likkutei-sichos), and a path of
- * two words may be a volume of a sefer, which is no item of its own
- * (/likkutei-sichos/12): its sefer is resolved beside it. So a library page
- * waits on two rounds of reads, not four.
+ * The first read is the page's view (GET /v1/view): the item at the path and
+ * its path bar, in one. A path of two words may be a volume of a sefer, which
+ * is no item of its own (/likkutei-sichos/12), so its sefer's view is read
+ * beside it. Whatever else the screen draws is read together after that, so
+ * a library page waits on two rounds of reads.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -37,29 +37,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const options = { scan: url.searchParams.has('scan'), apiBase: api.baseUrl };
   try {
     const permanent = /^\/(rh-[\w-]+)$/i.exec(path)?.[1];
-    const shelf = path.startsWith('/sets/');
-    const maybeVolume = !permanent && !shelf && words.length === 2;
-    const [found, parent] = await Promise.all([
-      permanent ? { id: permanent, redirected: false, path: null } : orNothing(api.resolvePath({ path })),
-      maybeVolume ? orNothing(api.resolvePath({ path: `/${words[0]}` })) : null,
+    const maybeVolume = !permanent && words.length === 2 && words[0] !== 'sets';
+    const [view, parent] = await Promise.all([
+      orNothing(api.itemView(permanent ? { id: permanent } : { path })),
+      maybeVolume ? orNothing(api.itemView({ path: `/${words[0]}` })) : null,
     ]);
-    if (!found) {
+    if (!view) {
       // Nothing at the path: it may be a volume of a sefer.
-      if (parent?.redirected && parent.path) throw redirect(`${parent.path}/${words[1]}`, 301);
-      const volume = parent ? await loadVolume(api, parent.id, words[1]!, options) : null;
+      if (parent?.movedTo) throw redirect(`${parent.movedTo}/${words[1]}`, 301);
+      const volume = parent ? await loadVolume(api, parent.item, parent.pathBar, words[1]!, options) : null;
       if (volume) return volume;
       throw data('not found', { status: 404 });
     }
-    if (found.redirected && found.path) throw redirect(found.path, 301);
-    if (shelf) return await loadSet(api, found.id);
-    if (words.length === 1 && !permanent) {
-      const work = await loadWork(api, found.id, options);
-      if (work) return work;
-    }
-    const item = await api.getItem({ id: found.id });
-    if (item.type === 'set') return await loadSet(api, item.id);
+    if (view.movedTo) throw redirect(view.movedTo, 301);
+    const item = view.item;
+    if (item.type === 'set') return await loadSet(api, item, view.pathBar);
     if (item.type === 'work') {
-      const work = await loadWork(api, item.id, { ...options, item });
+      const work = await loadWork(api, item, view.pathBar, options);
       if (work) return work;
     }
     return { screen: 'item' as const, id: item.id, type: item.type, name: nameOf(item.data.title ?? item.data.label ?? item.data.name, item.id) };

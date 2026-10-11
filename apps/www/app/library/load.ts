@@ -6,9 +6,10 @@ import { isRebbe, nameOf, partLabel, rebbeimFirst } from '../lib/catalog';
 /**
  * What the library's pages read from the API, cut down on the server to what
  * they draw, so a page carries no more than it shows. Each page reads in two
- * rounds: where its path is, then everything about it at once. Shelves come
- * from one list of every shelf (a few statements) rather than the catalog tree,
- * which costs the database dozens of statements a level; the tree is not read.
+ * rounds: the page's item and its path bar (GET /v1/view), then everything
+ * else about it at once. Shelves come from one list of every shelf (a few
+ * statements) rather than the catalog tree, which costs the database dozens
+ * of statements a level; the tree is not read.
  */
 
 /** One line of a list: a name, a quiet line under it, where it goes. */
@@ -78,10 +79,9 @@ export async function loadOtherShelves(api: ChassidusHub): Promise<Line[]> {
  * page). A shelf with one official sefer and no shelves, other than a
  * Rebbe's, sends its page on to that sefer.
  */
-export async function loadSet(api: ChassidusHub, id: string) {
-  const [sets, works, bar] = await Promise.all([allShelves(api), api.listLinked({ id, field: 'sets', type: 'work', limit: 500 }), api.pathBar({ id })]);
-  const root = sets.find((set) => set.id === id);
-  if (!root) throw new Response('not found', { status: 404 });
+export async function loadSet(api: ChassidusHub, root: Item, levels: ApiLevel[]) {
+  const id = root.id;
+  const [sets, works] = await Promise.all([allShelves(api), api.listLinked({ id, field: 'sets', type: 'work', limit: 500 })]);
   const shelves = shelvesIn(sets, id);
   const official = works.items.filter((work) => !isAdditionItem(work)).sort(inOrder);
   if (!shelves.length && official.length === 1 && !isRebbe(root.path) && official[0]!.path) throw redirect(official[0]!.path);
@@ -92,7 +92,7 @@ export async function loadSet(api: ChassidusHub, id: string) {
     id,
     title: shelfName(root),
     rebbe: isRebbe(root.path),
-    levels: bar.levels,
+    levels,
     lines: [...shelves.map((set) => shelfLine(sets, set)), ...official.map(workLine)],
     additions: works.items
       .filter((work) => {
@@ -125,31 +125,30 @@ const orNothing = <T>(read: Promise<T>): Promise<T | null> => read.catch((error)
 const printingsFor = (api: ChassidusHub, work: string, scan: boolean) => (scan ? api.listLinked({ id: work, field: 'work', type: 'publication', limit: 500 }).then((page) => page.items) : Promise.resolve(null));
 
 /**
- * A sefer's page: its volumes, its additions, and its printings (read by the
- * browser unless a scan was asked for). Everything is read at once, the item
- * itself among them when it was not read already; null when the id is not a
- * sefer's.
+ * A sefer's page, for the sefer and its path bar already read: its volumes
+ * and its additions, read together, and its printings (read by the browser
+ * unless a scan was asked for). Null when the item is not a sefer.
  */
-export async function loadWork(api: ChassidusHub, id: string, options: { item?: Item; scan?: boolean; apiBase: string }) {
-  const [item, bar, outline, additions, publications] = await Promise.all([
-    options.item ?? api.getItem({ id }),
-    api.pathBar({ id }),
+export async function loadWork(api: ChassidusHub, item: Item, levels: ApiLevel[], options: { scan?: boolean; apiBase: string }) {
+  if (item.type !== 'work') return null;
+  const id = item.id;
+  const [outline, additions, publications] = await Promise.all([
     orNothing(api.workOutline({ id })),
     orNothing(api.listLinked({ id, field: 'addition.to', type: 'work', limit: 100 })),
     printingsFor(api, id, !!options.scan),
   ]);
-  if (item.type !== 'work' || !outline) return null;
+  if (!outline) return null;
   const data = item.data as { title?: unknown };
-  const author = bar.levels.find((level) => level.kind === 'set' && isRebbe(level.chosen.path));
+  const author = levels.find((level) => level.kind === 'set' && isRebbe(level.chosen.path));
   const parts = outline.parts.map((part) => ({ value: part.value ?? '', label: partLabel(part.label, part.value ?? ''), units: part.units ?? 0 }));
   return {
     screen: 'work' as const,
-    id: item.id,
+    id,
     path: item.path,
     api: options.apiBase,
-    title: nameOf(data.title, item.id),
+    title: nameOf(data.title, id),
     author: author ? nameOf(author.chosen.name) : undefined,
-    levels: bar.levels,
+    levels,
     grid: asGrid(outline.parts),
     parts,
     printings: publications ? printingsFrom(publications) : null,
@@ -175,19 +174,20 @@ function groupOf(position: unknown): string | undefined {
 
 /**
  * A volume of a sefer, which is no item of its own: its path is the sefer's
- * path and its place (/likkutei-sichos/12). Its units, its path bar (the
- * sefer's, and the volume with the other volumes), and its printings.
+ * path and its place (/likkutei-sichos/12). For the sefer and its path bar
+ * already read: its units, its path bar (the sefer's, and the volume with the
+ * other volumes), and its printings.
  */
-export async function loadVolume(api: ChassidusHub, workId: string, value: string, options: { scan?: boolean; apiBase: string }) {
-  const [work, bar, outline, part, publications] = await Promise.all([
-    api.getItem({ id: workId }),
-    api.pathBar({ id: workId }),
+export async function loadVolume(api: ChassidusHub, work: Item, levels: ApiLevel[], value: string, options: { scan?: boolean; apiBase: string }) {
+  if (work.type !== 'work') return null;
+  const workId = work.id;
+  const [outline, part, publications] = await Promise.all([
     orNothing(api.workOutline({ id: workId })),
     orNothing(api.workPart({ id: workId, part: value, limit: 1000 })),
     printingsFor(api, workId, !!options.scan),
   ]);
   const here = outline?.parts.find((p) => p.value === value);
-  if (work.type !== 'work' || !here || !part) return null;
+  if (!here || !part) return null;
   const label = partLabel(here.label, value);
   const title = nameOf((work.data as { title?: unknown }).title, work.id);
   const level: ApiLevel = {
@@ -204,7 +204,7 @@ export async function loadVolume(api: ChassidusHub, workId: string, value: strin
     title,
     value,
     label,
-    levels: [...bar.levels, level],
+    levels: [...levels, level],
     units: part.items.map((unit) => ({
       key: unit.id,
       title: nameOf(unit.data.label, unit.path ?? unit.id),
