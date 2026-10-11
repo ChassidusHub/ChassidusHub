@@ -13,6 +13,7 @@ describe('where the site answers from', () => {
     const robots = robotsTxt('https://chassidushub.org', true);
     expect(robots).toContain('Allow: /');
     expect(robots).toContain('Disallow: /account');
+    expect(robots).toContain('Disallow: /back$');
     expect(robots).toContain('Sitemap: https://chassidushub.org/sitemap.xml');
     expect(robotsTxt('https://new.chassidushub.org', false)).toContain('Disallow: /\n');
   });

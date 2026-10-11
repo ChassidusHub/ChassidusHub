@@ -8,7 +8,7 @@ import { siteOf, fileResponse } from '../lib/site.js';
  * passages to the API (/_/), and search, which has no end to it and says
  * nothing an item's page does not.
  */
-export const DISALLOWED = ['/_/', '/account', '/me/', '/back', '/signin', '/oauth/', '/search'] as const;
+export const DISALLOWED = ['/_/', '/account', '/me/', '/back$', '/back?', '/signin', '/oauth/', '/search'] as const;
 
 export function robotsTxt(origin: string, indexed: boolean): string {
   if (!indexed) return ['# This address stays out of search engines; the site itself is chassidushub.org.', 'User-agent: *', 'Disallow: /', ''].join('\n');
