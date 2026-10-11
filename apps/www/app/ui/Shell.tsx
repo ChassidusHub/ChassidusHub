@@ -118,7 +118,7 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
 
 /**
  * The account sheet's own lines: signed out, Sign in; signed in, their name,
- * their account, their fixes and Sign out.
+ * their account, their fixes, their inbox, their public page and Sign out.
  */
 function AccountOptions({ close }: { close: () => void }) {
   const account = useAccount();
@@ -150,6 +150,14 @@ function AccountOptions({ close }: { close: () => void }) {
       <Link className="opt" to="/me/fixes" onClick={close}>
         <span className="t">התיקונים שלי</span>
       </Link>
+      <Link className="opt" to="/inbox" onClick={close}>
+        <span className="t">התיבה שלי</span>
+      </Link>
+      {account.person.username ? (
+        <Link className="opt" to={`/u/${account.person.username}`} onClick={close}>
+          <span className="t">הדף שלי</span>
+        </Link>
+      ) : null}
       <button
         type="button"
         className="opt"

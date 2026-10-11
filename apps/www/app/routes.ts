@@ -26,6 +26,12 @@ export default [
     route('suggestions', 'routes/suggestions.tsx'),
     route('suggestions/:number', 'routes/suggestion.tsx'),
     route('ui', 'routes/ui.tsx'),
+    // Reports, the inbox and people's pages (thread 6, rebuilt from the old site).
+    route('issues', 'routes/issues.tsx'),
+    route('issues/new', 'routes/issue-new.tsx'),
+    route('issues/:number', 'routes/issue.tsx'),
+    route('inbox', 'routes/inbox.tsx'),
+    route('u/:username', 'routes/profile.tsx'),
     route('*', 'routes/item.tsx'),
   ]),
   route('listen/:year/menu', 'routes/listen-menu.ts'),
@@ -54,4 +60,7 @@ export default [
   route('review', 'routes/review.ts'),
   // One suggestion as the person: whether they may approve it, and what they do on it.
   route('_/suggestions/*', 'routes/suggestions-pass.ts'),
+  // Reports, the inbox and people as the person, passed on to the API's /v1/*; and where the reader app's links land.
+  route('_/people/*', 'routes/people-pass.ts'),
+  route('_/app/:action', 'routes/from-app.ts'),
 ] satisfies RouteConfig;
