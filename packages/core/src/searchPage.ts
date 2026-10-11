@@ -62,8 +62,12 @@ export interface SearchPage {
   words: SearchWordHit[];
 }
 
-/** The kinds of item a name search lists; the words themselves come as `words`. */
-const NAMED: EntityType[] = ['set', 'work', 'unit', 'event', 'recording', 'publication', 'author'];
+/**
+ * The kinds of item a name search lists; the words themselves come as `words`. A sicha or maamar is not
+ * among them: what it is found by holds all its words, so ranking it here would unpack every one that
+ * has a common word (#124). It comes as `words`, and first when it opens with them.
+ */
+const NAMED: EntityType[] = ['set', 'work', 'event', 'recording', 'publication', 'author'];
 const NAME_HITS = 30;
 const DATED_HITS = 20;
 export const SUGGEST_HITS = 6;
@@ -108,10 +112,13 @@ async function namedInfo(catalog: Catalog, query: string, limit: number): Promis
   const tsQuery = toTsQuery(query);
   if (!tsQuery) return [];
   const { rows } = await catalog.db.query<Info>(
-    `SELECT ${INFO} FROM entity e JOIN revision r ON r.id = e.main_rev
-     WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
-     ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path
-     LIMIT ${limit}`,
+    // Ranked first, then the facts read for the few kept.
+    `WITH hit AS (
+       SELECT e.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
+       FROM entity e JOIN revision r ON r.id = e.main_rev
+       WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
+       ORDER BY n LIMIT ${limit})
+     SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ORDER BY hit.n`,
     [tsQuery, normalizeSearchText(query), NAMED],
   );
   return rows;
