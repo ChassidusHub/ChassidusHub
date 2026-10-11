@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { marksIn, searchPage, searchSuggest, splitDate, type Catalog } from '@chassidushub/core';
+import { marksIn, searchPage, searchSuggest, splitDate, topicOf, type Catalog } from '@chassidushub/core';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 /** How many statements a read takes. */
@@ -174,6 +174,25 @@ describe('the search screen in one read', () => {
     expect((await searchPage(catalog, 'דברים')).works.map((w) => w.id)).toEqual([first, second, shabbos]);
     expect((await searchSuggest(catalog, 'שבת חזון')).map((h) => h.id)).toEqual([shabbos]);
     expect((await searchPage(catalog, 'שיחות לדוגמה')).works[0]).toMatchObject({ id: ls, kind: 'sefer' });
+  });
+
+  it('looks for a subject typed in English letters as the texts write it: bitachon is בטחון (#99)', async () => {
+    const { catalog, maamar, body } = await sample();
+    const about = await maamar('5', body('ענין הבטחון לדוגמה', 'בטחון בה׳ לדוגמה'));
+    expect(topicOf('Bitachon')).toEqual({ key: 'bitachon', he: 'בטחון' });
+    expect(topicOf("ahavas Yisro'el")).toEqual({ key: 'ahavas yisroel', he: 'אהבת ישראל' });
+    // A letter off still counts; a word that is no subject does not.
+    expect(topicOf('bitochen')?.he).toBe('בטחון');
+    expect(topicOf('Tanya')).toBeNull();
+    expect(topicOf('בטחון')).toBeNull();
+
+    const { result: page, statements } = await counted(catalog, () => searchPage(catalog, 'bitachon'));
+    expect(statements).toBeLessThanOrEqual(6);
+    expect(page.topic).toEqual({ key: 'bitachon', he: 'בטחון' });
+    expect(page.words.map((w) => w.id)).toEqual([about]);
+    expect(page.words[0]!.marks.length).toBeGreaterThan(0);
+    // A parsha's name stays a parsha.
+    expect((await searchPage(catalog, 'Beshalach')).topic).toBeNull();
   });
 
   it('suggests names as someone types, up to six, in one statement', async () => {

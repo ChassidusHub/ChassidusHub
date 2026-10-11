@@ -2525,6 +2525,12 @@ export interface Operations {
         key: string;
         he: string;
       } | null;
+      topic: {
+        /** The subject as typed, normalized: bitachon */
+        key: string;
+        /** The Hebrew searched for instead: בטחון */
+        he: string;
+      } | null;
       within: string | null;
       top: {
         /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */

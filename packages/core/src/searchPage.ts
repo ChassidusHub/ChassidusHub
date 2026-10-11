@@ -4,6 +4,7 @@ import type { Catalog } from './catalog.js';
 import { matchingWords, queryWords, searchMoments, type Moment } from './moments.js';
 import { languageSql, languageTitleWords, splitLanguage } from './language.js';
 import { parshaDays, parshaHe, parshaOf } from './parsha.js';
+import { topicOf } from './topics.js';
 import { nameTierSql, NAMES, normalizedSql, toTsQuery } from './searchText.js';
 
 /**
@@ -63,6 +64,11 @@ export interface SearchPage {
   language: string | null;
   /** The parsha the words are, when they are a parsha's name and nothing else: hebcal's name and the Hebrew. */
   parsha: { key: string; he: string } | null;
+  /**
+   * The subject the words are in English letters (`bitachon`), and the Hebrew searched for instead (`בטחון`), from a
+   * small list people keep (topics.ts); else null.
+   */
+  topic: { key: string; he: string } | null;
   /** The date whose words come first: the `within` asked for, else the query's date. */
   within: string | null;
   /** What the person most likely wants: the day's farbrengen, a maamar that opens with the words, else the best name. */
@@ -311,9 +317,12 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
   // A parsha is its weeks within the date given (a year, a month), else in every year.
   const parsha = rest ? parshaOf(rest) : null;
   const days = parsha ? parshaDays(parsha, within ? Number(within.slice(0, 4)) : null).filter((d) => !within || `${d}-`.startsWith(`${within}-`)) : [];
-  const named = rest ? await namedInfo(catalog, rest, NAME_HITS, language, said.typed) : [];
-  const words = rest ? queryWords(rest) : [];
-  const moments = rest ? await searchMoments(catalog, rest, { within }) : [];
+  // A subject in English letters (bitachon) is looked for as the texts write it (בטחון), names and words alike.
+  const topic = rest && !parsha ? topicOf(rest) : null;
+  const look = topic?.he ?? rest;
+  const named = look ? await namedInfo(catalog, look, NAME_HITS, language, topic ? look : said.typed) : [];
+  const words = look ? queryWords(look) : [];
+  const moments = look ? await searchMoments(catalog, look, { within }) : [];
   const wanted: EntityId[] = [];
   for (const m of moments) {
     if (m.kind === 'scan-line') {
@@ -349,6 +358,7 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
     date: date ? { key: date, he: describeDateKey(date, 'he') } : null,
     language,
     parsha: parsha && days.length > 0 ? { key: parsha, he: parshaHe(parsha) } : null,
+    topic,
     within,
     top,
     works,
