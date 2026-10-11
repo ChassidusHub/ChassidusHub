@@ -1,9 +1,10 @@
 import { describeDateKey, normalizeSearchText, parseDateText } from '@chassidushub/hebrew';
-import type { EntityId, EntityType } from '@chassidushub/model';
+import type { EntityId, EntityType, Language } from '@chassidushub/model';
 import type { Catalog } from './catalog.js';
 import { matchingWords, queryWords, searchMoments, type Moment } from './moments.js';
+import { languageSql, languageTitleWords, splitLanguage } from './language.js';
 import { parshaDays, parshaHe, parshaOf } from './parsha.js';
-import { searchTierSql, toTsQuery } from './searchText.js';
+import { normalizedSql, searchTierSql, toTsQuery } from './searchText.js';
 
 /**
  * The new site's search screen in one read (apps/www): everything the page
@@ -33,6 +34,8 @@ export interface SearchHit {
   listen?: true;
   /** It has words to read (a unit's own text, or a farbrengen's hanacha). */
   read?: true;
+  /** The languages it is in, when any is not Hebrew (a translation, a sefer in English): for a language mark. */
+  languages?: string[];
 }
 
 /** A place in the words: a paragraph of a sefer or a transcript, or a line on a scan's page. */
@@ -56,6 +59,8 @@ export interface SearchPage {
   query: string;
   /** The date the query names, when it names one. */
   date: { key: string; he: string } | null;
+  /** The language asked for: "in English" in the words, or `language`. Names are only those in it. */
+  language: string | null;
   /** The parsha the words are, when they are a parsha's name and nothing else: hebcal's name and the Hebrew. */
   parsha: { key: string; he: string } | null;
   /** The date the words are narrowed to: the `within` asked for, else the query's date. */
@@ -94,6 +99,7 @@ interface Info {
   event: Local | null;
   listen: boolean;
   read: boolean;
+  languages: string[] | null;
   dated?: boolean;
 }
 
@@ -112,10 +118,17 @@ const INFO = `e.id, e.type, e.path,
     ELSE FALSE END AS listen,
   CASE e.type WHEN 'unit' THEN r.data ? 'body'
     WHEN 'event' THEN coalesce(r.data->'links' @> '[{"kind":"mugah"}]' OR r.data->'links' @> '[{"kind":"bilti-mugah"}]', FALSE)
-    ELSE FALSE END AS read`;
+    ELSE FALSE END AS read,
+  ARRAY(SELECT DISTINCT l FROM (
+      SELECT x->>'language' AS l FROM jsonb_array_elements(CASE jsonb_typeof(r.data->'sourceCopies') WHEN 'array' THEN r.data->'sourceCopies' ELSE '[]' END) x
+      UNION ALL SELECT x->>'language' FROM jsonb_array_elements(CASE jsonb_typeof(r.data->'editions') WHEN 'array' THEN r.data->'editions' ELSE '[]' END) x
+      UNION ALL SELECT r.data->>'language') ls WHERE l IS NOT NULL ORDER BY l) AS languages`;
 
-/** Items found by name, best first, with their facts: one statement. */
-async function namedInfo(catalog: Catalog, query: string, limit: number): Promise<Info[]> {
+/** An item's names in Hebrew and English together, as the search compares them. */
+const NAME_SQL = normalizedSql("concat_ws(' ', r.data->'title'->>'he', r.data->'title'->>'en', r.data->'name'->>'he', r.data->'name'->>'en')");
+
+/** Items found by name, best first, with their facts: one statement. With a language, only those in it. */
+async function namedInfo(catalog: Catalog, query: string, limit: number, language: Language | null = null): Promise<Info[]> {
   const tsQuery = toTsQuery(query);
   if (!tsQuery) return [];
   const { rows } = await catalog.db.query<Info>(
@@ -124,9 +137,10 @@ async function namedInfo(catalog: Catalog, query: string, limit: number): Promis
        SELECT e.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
        FROM entity e JOIN revision r ON r.id = e.main_rev
        WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
+         ${language ? `AND ${languageSql('$4::text', '$5', NAME_SQL)}` : ''}
        ORDER BY n LIMIT ${limit})
      SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ORDER BY hit.n`,
-    [tsQuery, normalizeSearchText(query), NAMED],
+    language ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language)] : [tsQuery, normalizeSearchText(query), NAMED],
   );
   return rows;
 }
@@ -202,6 +216,7 @@ function hitOf(info: Info): SearchHit {
     path: info.path,
     ...(info.listen ? { listen: true as const } : {}),
     ...(info.read ? { read: true as const } : {}),
+    ...(info.languages?.some((l) => l !== 'he') ? { languages: info.languages } : {}),
   };
 }
 
@@ -265,13 +280,18 @@ function wordHitOf(moment: Moment, infos: Map<EntityId, Info>, words: readonly s
 }
 
 /** The search screen, ready to draw: see the comment at the top. */
-export async function searchPage(catalog: Catalog, query: string, options: { within?: string | null } = {}): Promise<SearchPage> {
-  const { date, rest } = splitDate(query);
+export async function searchPage(catalog: Catalog, query: string, options: { within?: string | null; language?: Language | null } = {}): Promise<SearchPage> {
+  const split = splitDate(query);
+  const date = split.date;
+  // "in English" is a filter, not words; so are the small words of a question.
+  const said = splitLanguage(split.rest);
+  const rest = said.rest;
+  const language = options.language ?? said.language;
   const within = options.within ?? date;
   // A parsha is its weeks within the date given (a year, a month), else in every year.
   const parsha = rest ? parshaOf(rest) : null;
   const days = parsha ? parshaDays(parsha, within ? Number(within.slice(0, 4)) : null).filter((d) => !within || `${d}-`.startsWith(`${within}-`)) : [];
-  const named = rest ? await namedInfo(catalog, rest, NAME_HITS) : [];
+  const named = rest ? await namedInfo(catalog, rest, NAME_HITS, language) : [];
   const words = rest ? queryWords(rest) : [];
   const moments = rest ? await searchMoments(catalog, rest, { within }) : [];
   const wanted: EntityId[] = [];
@@ -307,6 +327,7 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
   return {
     query,
     date: date ? { key: date, he: describeDateKey(date, 'he') } : null,
+    language,
     parsha: parsha && days.length > 0 ? { key: parsha, he: parshaHe(parsha) } : null,
     within,
     top,
@@ -318,5 +339,6 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
 
 /** What to offer while someone types: names only, best first, up to six, in one statement. */
 export async function searchSuggest(catalog: Catalog, query: string): Promise<SearchHit[]> {
-  return (await namedInfo(catalog, query, SUGGEST_HITS)).map(hitOf);
+  const { language, rest } = splitLanguage(query);
+  return (await namedInfo(catalog, rest, SUGGEST_HITS, language)).map(hitOf);
 }

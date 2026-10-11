@@ -10,6 +10,12 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` reads a language in the words (`Tanya in English`,
+  `תניא באנגלית`) or takes `language=en` (the Language chip): only names in
+  that language are listed, as `language`. Each hit in another language
+  than Hebrew says which, as `languages`. Small question words (`what is`,
+  `the`) no longer decide the results. `/v1/search/suggest` reads the
+  language the same way (#123).
 - `GET /v1/search/page` understands a parsha: words that are a parsha's
   name and nothing else (`בשלח`, `פרשת בשלח תשמ"ב`, `Beshalach`) come back
   as `parsha` with the farbrengens of its weeks, in the year given or in
@@ -42,7 +48,6 @@ any time. `@chassidushub/client` carries the API's version.
   maamar that opens with the words comes first (`opening: true`), and
   words a person checked come before a machine's. `within` (a year, month
   or day, like `5711`) keeps only what was said then.
-  words a person checked come before a machine's.
 - `GET /v1/view` for a sicha, maamar or letter now has `scan` (the scan
   it is printed on and its PDF pages, even when it has words of its own,
   with the PDF's `url` where it is served from here) and `recordings`
