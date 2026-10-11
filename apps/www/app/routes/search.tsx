@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Form, Link, useFetcher, useNavigation } from 'react-router';
 import { Button, Chips, Row, Rows, SearchField, TopAnswer, TopBar } from '../ui';
-import { markWords, type Hit, type SearchPage, type WordHit } from '../search/names';
+import { markWords, placesIn, type Hit, type SearchPage, type WordHit } from '../search/names';
 import { searchPage } from '../search/search.server';
 import type { Route } from './+types/search';
 
@@ -145,7 +145,7 @@ function Results({ page }: { page: SearchPage }) {
               <Row
                 key={subject.to}
                 title={subject.topic}
-                sub={[`${subject.places} מקומות ב־${subject.volumes} חלקים`, subject.index].filter(Boolean).join(' · ')}
+                sub={[placesIn(subject.places, subject.volumes), subject.index].filter(Boolean).join(' · ')}
                 to={subject.to}
                 end={subject.machine ? <span className="machine">במכונה</span> : undefined}
               />
