@@ -17,7 +17,7 @@ import { tokenGate, tokenGrantOf, tokenRoutes } from './tokens.js';
 import { ERROR_CODES, PUBLIC_SUMMARY, caching, cors, cursor, nextLink, serverTiming, type RateLimits } from './platform.js';
 import { mcpRoutes } from './mcp.js';
 import { statusRoutes, type StatusStore } from './status.js';
-import { transcriptsFor, type Kept, type SummaryStore } from './summaries.js';
+import { communityFor, transcriptsFor, type Kept, type SummaryStore } from './summaries.js';
 import { oauthRoutes } from './oauth.js';
 import { pageRoutes } from './pages.js';
 import { driveRoutes, type DriveOptions } from './drive.js';
@@ -396,7 +396,7 @@ export function createApp(options: ApiOptions): Hono {
   });
 
   // The community page in numbers: the latest merges, reports waiting (a count), people, and what the catalog lacks.
-  app.get('/v1/community', async (c) => c.json(await catalog.community(intParam(c.req.query('limit'), 'limit')), 200, { 'Cache-Control': PUBLIC_SUMMARY }));
+  app.get('/v1/community', async (c) => c.json(await communityFor(catalog, options.kept, intParam(c.req.query('limit'), 'limit')), 200, { 'Cache-Control': PUBLIC_SUMMARY }));
 
   // The Missing board (the plan, section 7): farbrengens without recordings or texts (of a year), sefarim without a scan.
   app.get('/v1/missing', async (c) => {

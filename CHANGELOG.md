@@ -13,6 +13,11 @@ any time. `@chassidushub/client` carries the API's version.
 - `GET /v1/search/moments` and `/v1/search/page` answer a common word (שבת,
   גאולה) faster: each match's words are ranked once, where it is found, and
   fewer are ranked (1000 pages, 1000 paragraphs, 100 sichos) (#172).
+- `/v1/community` answers its sums (people, farbrengens without recordings
+  or texts) from what the scheduled run keeps, at most 15 minutes behind;
+  the latest merges and what waits are read on the request. Summing every
+  farbrengen on a cold database made `/contribute` time out after a deploy
+  (#171).
 - `GET /v1/search/page` and `/v1/search/suggest` compare a title whole with
   the words as typed, small words and all: `Letters from the Rebbe` finds
   that title first again, after small question words were dropped (#123).
