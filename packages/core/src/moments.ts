@@ -274,11 +274,12 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
     type === 'unit'
       ? `coalesce((SELECT ts_rank(p.lead, to_tsquery('simple', $1)) FROM unit_place p WHERE p.unit_id = e.id COLLATE "C"), 0)`
       : `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
-  // Each kind's own rows only are tested for the words: `@@` reads an item's words, and left free the planner tested
-  // it before the type, reading every page and paragraph's words to find forty sichos (#182). Inside the CASE it comes
-  // after; the type and the live rows are also what the type index (entity_type) holds, so it can find them.
+  // Each kind's own live rows are tested for the words, and in plain sight: a word few items have is then found through
+  // the words' index (entity_search_tsv), a common one through the type index (entity_type, which holds the live rows
+  // only, hence main_rev IS NOT NULL). Hidden in a CASE, as #204 had it, the words' index could not be used, and a rare
+  // word read every page's words to find its few (#182).
   const has = (type: keyof typeof MOMENT_RANKED, query = '$1') =>
-    `e.type = '${type}' AND NOT e.deleted AND e.main_rev IS NOT NULL AND CASE WHEN e.type = '${type}' THEN e.search_tsv @@ to_tsquery('simple', ${query}) END`;
+    `e.type = '${type}' AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', ${query})`;
   const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, ${tier} AS tier FROM entity e
           WHERE ${has(type)} LIMIT ${MOMENT_RANKED[type]})`;
