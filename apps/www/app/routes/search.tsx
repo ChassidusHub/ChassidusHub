@@ -110,8 +110,8 @@ function Suggestions({ hits }: { hits: Hit[] }) {
 
 function Results({ page }: { page: SearchPage }) {
   if (page.failed) return <p className="faint">החיפוש לא ענה כרגע. נסו שוב בעוד רגע.</p>;
-  const { top, works, events, words } = page;
-  if (!top && works.length + events.length + words.length === 0)
+  const { top, subjects, works, events, words } = page;
+  if (!top && subjects.length + works.length + events.length + words.length === 0)
     return (
       <p className="faint">
         לא נמצא דבר עבור „{page.query}”. נסו מילה אחת פחות, או את שם הספר והחלק (ליקוטי שיחות יב).
@@ -136,6 +136,22 @@ function Results({ page }: { page: SearchPage }) {
             </Button>
           )}
         </TopAnswer>
+      )}
+      {subjects.length > 0 && (
+        <>
+          <h2>במפתח הענינים</h2>
+          <Rows>
+            {subjects.map((subject) => (
+              <Row
+                key={subject.to}
+                title={subject.topic}
+                sub={[`${subject.places} מקומות ב־${subject.volumes} חלקים`, subject.index].filter(Boolean).join(' · ')}
+                to={subject.to}
+                end={subject.machine ? <span className="machine">במכונה</span> : undefined}
+              />
+            ))}
+          </Rows>
+        </>
       )}
       {works.length > 0 && (
         <>
