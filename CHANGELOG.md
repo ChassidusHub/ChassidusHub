@@ -15,6 +15,11 @@ any time. `@chassidushub/client` carries the API's version.
   (made again every fifteen minutes) instead of counting every
   transcript's paragraphs on the request. The list can be up to about
   twenty minutes behind.
+- A sample catalog for local work: `npm run sample` loads a small made-up
+  catalog into the local database (the Rebbeim's shelves, sefarim and
+  additions, a sefer's words, a farbrengen with a recording and transcript,
+  open suggestions), and with `DEV_ACCOUNT` the site now shows you signed in
+  (`/v1/auth/me` answers for that account). See docs/local-sample.md.
 - One record per volume: `chassidushub merge-printings` merges the printings
   of a sefer that are the same volume (HebrewBooks, אוצרות הרבי, a text) into
   one, with all their scans and sources, a Suggestion per sefer.

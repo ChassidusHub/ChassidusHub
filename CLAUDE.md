@@ -8,8 +8,19 @@ docs/plans/chassidushub.md; what is built and what is next is docs/roadmap.md.
 - `npm run check` before every push (typecheck, tests, schema check). Tests
   run on PGlite; set CHASSIDUSHUB_TEST_DATABASE_URL to an empty Postgres
   database to run them on a server too (`--no-file-parallelism`).
-- Branch from main (`fix/…`, `feat/…`, `docs/…`, `chore/…`), open a PR
-  using the template; CODEOWNERS review.
+- Every merge to main is a live deploy and runs migrations. Nothing
+  reaches main without a comment `APPROVE <head sha>` from a reviewer on
+  that exact commit (a later push cancels it), and only the QA lane
+  merges, one PR at a time. Never merge your own PR.
+- Branches `claude/<lane>-<subject>` (people: `fix/…`, `feat/…`, `docs/…`,
+  `chore/…`); open a draft PR at once using the template, with
+  `Closes #N` and the milestone. The board is this repo's issues
+  (labels own:<lane>, P1-P3, type:…, ready, claimed, blocked).
+- Stop switch: before any push or merge, check for an open issue titled
+  `studio-stop` (and the studio's STOP file); if either exists, commit
+  locally and stop.
+- A migration ships in its own PR, first and alone, and is never reverted
+  (fixed forward). A core change starts as an RFC in docs/rfc/.
 - Migrations in packages/db/src/migrations are never edited once released;
   add a new one.
 - packages/model/src/works.ts is Sichos-Kodesh's works contract, kept

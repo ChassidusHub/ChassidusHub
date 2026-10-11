@@ -112,6 +112,10 @@ npm run dev:api                    # http://127.0.0.1:8787/v1
 npm run dev:web                    # http://localhost:5173 (reads the API above)
 ```
 
+Without a Sichos-Kodesh checkout, `npm run sample` loads a small made-up
+catalog instead, with `DEV_ACCOUNT=dev` to see the signed-in screens
+([docs/local-sample.md](docs/local-sample.md)).
+
 Set `DATABASE_URL=postgres://…` to use a Postgres server instead. See
 [docs/operations.md](docs/operations.md) for the mirror, editions and dumps,
 [docs/deploy.md](docs/deploy.md) for going live on Cloudflare, and

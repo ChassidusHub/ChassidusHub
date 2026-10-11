@@ -432,8 +432,10 @@ It runs from the **Upkeep (manual)** workflow ([deploy](deploy.md)),
 ## The API
 
 - Local: `npm run dev:api` (PGlite, or `DATABASE_URL`). `DEV_ACCOUNT=me`
-  signs every request in as `me` - for local testing only; refused unless
-  the server listens on localhost.
+  signs every request in as `me`, and the site shows `me` signed in - for
+  local testing only; refused unless the server listens on localhost.
+  `npm run sample` loads a small made-up catalog to test against
+  ([local-sample.md](local-sample.md)).
 - Cloudflare Workers: deployed on every merge to `main`; see
   [deploy.md](deploy.md).
 - `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN` switch on search by
