@@ -18,4 +18,6 @@ export default [
     route('ui', 'routes/ui.tsx'),
     route('*', 'routes/item.tsx'),
   ]),
+  // The rows under the search box while typing, as JSON (thread 5, Search).
+  route('search/suggest', 'routes/search.suggest.ts'),
 ] satisfies RouteConfig;

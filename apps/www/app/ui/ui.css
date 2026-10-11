@@ -392,3 +392,16 @@ form[role='search'] { margin-block: 8px 4px; }
   .dock { inset-inline-start: var(--rail); }
   .top .homelogo { display: none; }
 }
+
+/* ---------- search: the top answer, marked words, suggestions (the prototype's search screens) ---------- */
+.top-answer { display: block; border: 1px solid var(--g300); border-radius: 12px; padding: 16px; margin-top: 8px; }
+.top-answer .k { display: block; font-size: 12px; color: var(--g600); }
+.top-answer b { display: block; font-size: 20px; font-weight: 600; margin: 2px 0; }
+.top-answer .faint { display: block; }
+.top-answer .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+mark { background: none; color: var(--g900); font-weight: 700; }
+.row .t .snip { font-weight: 400; }
+.search-form { margin-top: 8px; }
+.sugg { margin-top: 6px; }
+.sugg .row { min-height: 52px; }
+h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }

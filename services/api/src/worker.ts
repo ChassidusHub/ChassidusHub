@@ -10,6 +10,7 @@ import { authFor } from './auth.js';
 import { LOCKED_HEADER, lockOf, openedBy, ownersFrom, unlocked, type LockEnv } from './lock.js';
 import { githubDispatch } from './machine.js';
 import { cloudflareMailer, resendMailer, workersAiAdvisor, type SendEmailBinding } from './mail.js';
+import { workersAiFixJudge } from './fixes.js';
 import {
   FREE_CPU_MS,
   FREE_DAILY_QUERIES,
@@ -83,6 +84,8 @@ interface Env extends LockEnv {
   /** Workers AI (secrets), for the reviewer's advice on suggestions and search by meaning (a token allowed only Workers AI); without both, neither. */
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_AI_TOKEN?: string;
+  /** `off` keeps every small fix for a reviewer (RFC 0001). */
+  LIVE_FIXES?: string;
   /** The address OAI-PMH names for the repository's administrators; without it, /oai is not offered. */
   OAI_ADMIN_EMAIL?: string;
   /** Mirrors (docs/mirrors.md), all public values in [vars]: where the git mirror is cloned from (several, comma separated), */
@@ -226,6 +229,8 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
     transcripts: env.FILES_PUBLIC ? transcriptsStore(env.FILES_PUBLIC) : undefined,
     embedder: embedderFromEnv({ CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_AI_TOKEN: env.CLOUDFLARE_AI_TOKEN }),
     advisor: env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN ? workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_AI_TOKEN }) : null,
+    fixJudge: env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN ? workersAiFixJudge({ accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_AI_TOKEN }) : null,
+    liveFixes: env.LIVE_FIXES !== 'off',
     oai: env.OAI_ADMIN_EMAIL ? { adminEmail: env.OAI_ADMIN_EMAIL, siteUrl: env.SITE_URL } : undefined,
     mirrors: { gitUrls: list(env.CATALOG_GIT_URL), publicKeys: list(env.RELEASE_PUBLIC_KEYS), dumpsBaseUrl: env.DUMPS_BASE_URL || undefined },
     siteUrl: env.SITE_URL,
