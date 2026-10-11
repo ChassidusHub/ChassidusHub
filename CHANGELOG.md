@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search's moments read a third less (#214): the sichos whose opening has
+  the words are looked up one by one by id instead of joined over every
+  sicha, and only a paragraph's revision is read (to say whether a machine
+  wrote it unchecked), never a page's or a sicha's, which hold all their
+  words.
 - Names keep no folder numbers or contact details (#125): the Otzros
   library import drops a folder's number in front (`יד.1.`) and a phone
   number or email someone wrote into a folder's or file's name, and

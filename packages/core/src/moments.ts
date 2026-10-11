@@ -294,13 +294,14 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
             AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
   // The sichos that open on the words, found through the lead's index without reading their words (#182). The first
   // MOMENT_LEADS leads found are taken before the join, so a word in most leads stops there rather than sorting them all
-  // for a join; then each sicha is found by its own id (entity's collation, so its key finds it).
+  // for a join; then each sicha is found by its own id (entity's collation, so its key finds it), one lookup a lead:
+  // as a plain join the planner merged the leads with every sicha in the type index instead (#214).
   const leads = (tier: number) =>
     `(SELECT e.id, e.type, e.main_rev, p.rank, ${tier} AS tier
           FROM (SELECT unit_id, ts_rank(lead, to_tsquery('simple', $1)) AS rank FROM unit_place
                 WHERE lead @@ to_tsquery('simple', $1) LIMIT ${MOMENT_LEADS}) p
-          JOIN entity e ON e.id = p.unit_id COLLATE "default"
-          WHERE e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL)`;
+          CROSS JOIN LATERAL (SELECT e.id, e.type, e.main_rev FROM entity e
+                WHERE e.id = p.unit_id COLLATE "default" AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL OFFSET 0) e)`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1)), leads(1)] : [...kinds.map((k) => all(k, 0)), leads(0)];
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
@@ -309,7 +310,8 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
        FROM (${matched.join(' UNION ALL ')}) u GROUP BY id, type, main_rev
        ORDER BY tier, rank DESC, id LIMIT ${MOMENT_CANDIDATES}
      ) c
-     JOIN revision r ON r.id = c.main_rev
+     -- Only a paragraph's revision says whether a machine wrote it unchecked; a page's and a sicha's are not read (#214).
+     LEFT JOIN LATERAL (SELECT r.data FROM revision r WHERE r.id = c.main_rev AND c.type = 'segment' OFFSET 0) r ON TRUE
      LEFT JOIN entity_ref y ON c.type = 'text-page' AND y.from_id = c.id AND y.field = 'layer'
      LEFT JOIN entity l ON l.id = y.to_id LEFT JOIN revision lr ON lr.id = l.main_rev
      ORDER BY c.tier,

@@ -188,13 +188,16 @@ describe('search that lands on the moment', () => {
     for (const kind of ['text-page', 'segment', 'unit']) expect(inner).toContain(`e.type = ANY ('{${kind}}'::text[]) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', $1)`);
     expect(inner).not.toContain('CASE WHEN e.type');
     // Sichos that open on the words are found through their lead's index, the first MOMENT_LEADS of them, then each sicha
-    // by its own id (entity's collation, so its key finds it) (#182).
+    // by its own id (entity's collation, so its key finds it), one by one, never a join over every sicha (#182, #214).
     expect(inner).toContain(`WHERE lead @@ to_tsquery('simple', $1) LIMIT ${MOMENT_LEADS}) p`);
-    expect(inner).toContain(`JOIN entity e ON e.id = p.unit_id COLLATE "default"`);
+    expect(inner).toMatch(/CROSS JOIN LATERAL \(SELECT e.id, e.type, e.main_rev FROM entity e\s+WHERE e.id = p.unit_id COLLATE "default"/);
     // Each match is ranked where it is found, its words read once: one rank per kind and one for the leads, none after (#172).
     expect(inner.match(/ts_rank/g)).toHaveLength(4);
     // A scan page's layer is read from its link, never from its revision, which holds all its lines (#182).
     expect(sql[0]).not.toContain("r.data->>'layer'");
+    // Only a paragraph's revision is read, to say whether a machine wrote it unchecked; a page's and a sicha's hold all
+    // their words and are never read (#214).
+    expect(sql[0]).toContain(`WHERE r.id = c.main_rev AND c.type = 'segment'`);
   });
 
   it("reads the words of only as many sichos as it shows, and more only when one of those shows nothing (#182)", async () => {
