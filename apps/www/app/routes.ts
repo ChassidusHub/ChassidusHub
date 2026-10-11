@@ -37,6 +37,13 @@ export default [
     route('developers/reference', 'routes/developers-reference.tsx', { id: 'reference' }),
     route('developers/reference/:group', 'routes/developers-reference.tsx', { id: 'reference-group' }),
     route('developers/:page?', 'routes/developers.tsx'),
+    // The stewards' and contributors' pages (thread 6, rebuilt from the old site).
+    route('organize', 'routes/organize.tsx'),
+    route('admin', 'routes/admin.tsx'),
+    route('add', 'routes/add.tsx'),
+    route('new', 'routes/new.tsx'),
+    route('showcase', 'routes/showcase.tsx'),
+    route('show/:token', 'routes/show.tsx'),
     route('ui', 'routes/ui.tsx'),
     // Reports, the inbox and people's pages (thread 6, rebuilt from the old site).
     route('issues', 'routes/issues.tsx'),
@@ -90,4 +97,16 @@ export default [
   // The old site's /edit/<id> and /all/<id>: a permanent redirect to the item's own page.
   route('edit/:id', 'routes/to-item.ts', { id: 'edit-redirect' }),
   route('all/:id', 'routes/to-item.ts', { id: 'all-redirect' }),
+  // Organizing the catalog, the stewards' tools, adding what is missing and showcases, as the person, never kept.
+  route('_/organize/*', 'routes/organize-pass.ts'),
+  route('_/steward/*', 'routes/steward-pass.ts'),
+  route('_/uploads/*', 'routes/uploads-pass.ts'),
+  route('_/hanachos/text', 'routes/hanachos-text.ts'),
+  route('_/showcases', 'routes/showcases-pass.ts'),
+  // A few items by name, for the pickers; the same for everyone.
+  route('_/find', 'routes/find.ts', { id: 'find' }),
+  route('_/lookup', 'routes/find.ts', { id: 'lookup' }),
+  // A showcase's transcripts and files, only those it lists (stewards/showcase.ts).
+  route('show/:token/t/:recording', 'routes/show-transcript.ts'),
+  route('show/:token/m/:n', 'routes/show-media.ts'),
 ] satisfies RouteConfig;

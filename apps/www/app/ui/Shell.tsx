@@ -158,6 +158,17 @@ function AccountOptions({ close }: { close: () => void }) {
           <span className="t">הדף שלי</span>
         </Link>
       ) : null}
+      {(account.person.steward || account.person.admin) && (
+        <>
+          <Link className="opt" to="/organize" onClick={close}>
+            <span className="t">סידור הקטלוג</span>
+          </Link>
+          <Link className="opt" to="/admin" onClick={close}>
+            <span className="t">כלי השומרים</span>
+            <Icon name="shield" />
+          </Link>
+        </>
+      )}
       <button
         type="button"
         className="opt"
