@@ -4,6 +4,7 @@ import type { ServerBuild } from 'react-router';
 import { crawlBudget, crawlLater, edgeCacheable, forEdge, mayBeFile } from './cachePolicy.js';
 import { createSiteHandler } from './handler.js';
 import { door, privately, type DoorEnv } from './lock.js';
+import { toNewSite, type NewSiteEnv } from './newSite.js';
 import { guestRequest, r2Showcases, readSichaScan, showcaseMedia, type ShowcaseBucket } from './showcase.js';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
@@ -30,7 +31,7 @@ import * as build from '../build/server/index.js';
  * crawler's pages are counted against its budget (cachePolicy.ts,
  * crawlBudget): what is already at the edge is free and never counted.
  */
-interface Env extends ReadsEnv, DoorEnv {
+interface Env extends ReadsEnv, DoorEnv, NewSiteEnv {
   API_URL: string;
   SITE_URL: string;
   /** Sichos-Kodesh's media proxy (JEM's audio), reached only from here while ChassidusHub is private (wrangler.toml). */
@@ -140,6 +141,8 @@ export class CachedSite extends WorkerEntrypoint<Env> {
 
 export default {
   async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
+    // The switch-over: the addresses NEW_SITE_HOSTS names are the new site's (apps/www), handed on whole (newSite.ts).
+    if (toNewSite(request, env)) return env.NEW_SITE!.fetch(request);
     // A showcase's guest is let in to that page alone, before the lock (showcase.ts).
     const guest = await asGuest(request, env, ctx);
     if (guest) return guest;

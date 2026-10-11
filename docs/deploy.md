@@ -15,8 +15,13 @@ the repository through its GitHub app.
 | `chassidushub-www` | `npm run build:www` | `npx wrangler deploy -c apps/www/wrangler.toml` |
 
 `chassidushub-www` is the new site (apps/www), built fresh from the approved
-prototype. Until the switch-over it lives at **https://new.chassidushub.org**,
-hidden from search engines, while chassidushub.org keeps the old site.
+prototype, at **https://new.chassidushub.org** (hidden from search engines).
+chassidushub.org stays attached to `chassidushub-web`, which hands every
+request for the hosts in its `NEW_SITE_HOSTS` setting to the new site through
+a service binding (apps/web/server/newSite.ts); only chassidushub.org itself
+is indexed (apps/www/app/lib/site.ts). To roll back, empty `NEW_SITE_HOSTS` in
+apps/web/wrangler.toml (or in the dashboard, at once): the old site answers
+again.
 
 Both Workers bind the same Hyperdrive config and the public and archive
 buckets (`[[hyperdrive]]`, `[[r2_buckets]]` in each `wrangler.toml`): the
