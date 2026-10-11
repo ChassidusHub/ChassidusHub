@@ -104,6 +104,25 @@ describe('the search screen in one read', () => {
     expect(opening.top).toMatchObject({ id: tetzaveh, kind: 'maamar' });
   });
 
+  it('"in English" is a filter on the names, not words; small question words do not decide (#123)', async () => {
+    const { catalog, set, work } = await sample();
+    const named = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר המאמרים באנגלית', en: 'Sefer HaMaamarim in English' }, slug: 'maamarim-en', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });
+    const copied = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר המאמרים המבואר', en: 'Sefer HaMaamarim Explained' }, slug: 'maamarim-explained', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set], sourceCopies: [{ kind: 'text', source: 'sefaria', licence: 'cc0', language: 'en', sourceId: 'Example' }] });
+
+    const { result: english, statements } = await counted(catalog, () => searchPage(catalog, 'ספר המאמרים in English'));
+    expect(statements).toBeLessThanOrEqual(6);
+    expect(english.language).toBe('en');
+    expect(english.works.map((w) => w.id).sort()).toEqual([named, copied].sort());
+    expect(english.works.find((w) => w.id === copied)).toMatchObject({ languages: ['en'] });
+    expect((await searchPage(catalog, 'ספר המאמרים', { language: 'en' })).works.map((w) => w.id)).not.toContain(work);
+    // Hebrew is also what says no language at all.
+    expect((await searchPage(catalog, 'ספר המאמרים בעברית')).works.map((w) => w.id)).toContain(work);
+    expect((await searchPage(catalog, 'what is the ספר המאמרים לדוגמה')).works[0]).toMatchObject({ id: work });
+    expect((await searchSuggest(catalog, 'ספר המאמרים באנגלית')).map((h) => h.id).sort()).toEqual([named, copied].sort());
+    // A language alone is still a word.
+    expect(await searchPage(catalog, 'English')).toMatchObject({ language: null });
+  });
+
   it('suggests names as someone types, up to six, in one statement', async () => {
     const { catalog, work } = await sample();
     const { result: hits, statements } = await counted(catalog, () => searchSuggest(catalog, 'ספר המאמ'));

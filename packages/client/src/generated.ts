@@ -2510,6 +2510,8 @@ export interface Operations {
       q: string;
       /** Only words said in this year, month or day (a date key); else the date in q */
       within?: string;
+      /** Only names in this language; else the language the words ask for ("in English", "באנגלית") */
+      language?: "he" | "en" | "yi" | "ar" | "ru" | "fr" | "es";
     };
     output: {
       query: string;
@@ -2517,6 +2519,7 @@ export interface Operations {
         key: string;
         he: string;
       } | null;
+      language: string | null;
       parsha: {
         /** hebcal's name: Beshalach */
         key: string;
@@ -2536,6 +2539,8 @@ export interface Operations {
         path: string | null;
         listen?: true;
         read?: true;
+        /** The languages it is in, when any is not Hebrew: for a language mark */
+        languages?: Array<string>;
       } | null;
       works: Array<{
         /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
@@ -2550,6 +2555,8 @@ export interface Operations {
         path: string | null;
         listen?: true;
         read?: true;
+        /** The languages it is in, when any is not Hebrew: for a language mark */
+        languages?: Array<string>;
       }>;
       events: Array<{
         /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
@@ -2564,6 +2571,8 @@ export interface Operations {
         path: string | null;
         listen?: true;
         read?: true;
+        /** The languages it is in, when any is not Hebrew: for a language mark */
+        languages?: Array<string>;
       }>;
       words: Array<{
         /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
@@ -2638,6 +2647,8 @@ export interface Operations {
         path: string | null;
         listen?: true;
         read?: true;
+        /** The languages it is in, when any is not Hebrew: for a language mark */
+        languages?: Array<string>;
       }>;
     };
   };
@@ -3317,7 +3328,7 @@ export const OPERATIONS = {
   scanText: {"method":"GET","path":"/v1/scans/{id}/text","pathParams":["id"],"query":["page"],"body":null,"answer":"json"},
   search: {"method":"GET","path":"/v1/search","pathParams":[],"query":["q","type","work","limit"],"body":null,"answer":"json"},
   searchMoments: {"method":"GET","path":"/v1/search/moments","pathParams":[],"query":["q","within","limit"],"body":null,"answer":"json"},
-  searchPage: {"method":"GET","path":"/v1/search/page","pathParams":[],"query":["q","within"],"body":null,"answer":"json"},
+  searchPage: {"method":"GET","path":"/v1/search/page","pathParams":[],"query":["q","within","language"],"body":null,"answer":"json"},
   searchPeople: {"method":"GET","path":"/v1/people","pathParams":[],"query":["q","ids","thread","limit"],"body":null,"answer":"json"},
   searchSimilar: {"method":"GET","path":"/v1/search/similar","pathParams":[],"query":["q","types","limit"],"body":null,"answer":"json"},
   searchSuggest: {"method":"GET","path":"/v1/search/suggest","pathParams":[],"query":["q"],"body":null,"answer":"json"},

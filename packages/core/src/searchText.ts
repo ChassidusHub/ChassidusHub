@@ -39,7 +39,7 @@ export function toTsQuery(query: string): string | null {
  * (niqqud, gershayim and quotes dropped, lower case, whatever is not a
  * letter or a digit a space), so `תניא` is the title `תַּנְיָא`.
  */
-const normalizedSql = (expr: string) =>
+export const normalizedSql = (expr: string) =>
   `btrim(regexp_replace(lower(regexp_replace(coalesce(${expr}, ''), '[֑-ׇ׳״"''\`‘’“”]', '', 'g')), '[^0-9a-zÀ-ɏא-תװ-ײ]+', ' ', 'g'))`;
 
 /** The names a sefer or a set is found by first: its title or name, in Hebrew and in English. */

@@ -10,6 +10,12 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` reads a language in the words (`Tanya in English`,
+  `תניא באנגלית`) or takes `language=en` (the Language chip): only names in
+  that language are listed, as `language`. Each hit in another language
+  than Hebrew says which, as `languages`. Small question words (`what is`,
+  `the`) no longer decide the results. `/v1/search/suggest` reads the
+  language the same way (#123).
 - `GET /v1/search/page` understands a parsha: words that are a parsha's
   name and nothing else (`בשלח`, `פרשת בשלח תשמ"ב`, `Beshalach`) come back
   as `parsha` with the farbrengens of its weeks, in the year given or in
