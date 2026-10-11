@@ -1,5 +1,7 @@
 import { Form, useActionData, useNavigation } from 'react-router';
-import { Area, Button, Choice, Field, Say, TopBar } from '../ui';
+import { Button, Field, Say, TopBar } from '../ui';
+// Only this page asks for writing, so these come straight from their file and stay out of the bundle every page loads.
+import { Area, Choice } from '../ui/Writing';
 import type { Route } from './+types/takedown';
 
 export function meta(_: Route.MetaArgs) {

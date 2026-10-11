@@ -87,13 +87,13 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
         <ul className="links">
           <li>
             <a href={REPO}>
-              <Icon name="code" />
+              <Icon name="text" />
               <span>הקוד ב-GitHub</span>
             </a>
           </li>
           <li>
             <a href={`${REPO}/blob/main/CONTRIBUTING.md`}>
-              <Icon name="people" />
+              <Icon name="pen" />
               <span>איך תורמים קוד</span>
             </a>
           </li>

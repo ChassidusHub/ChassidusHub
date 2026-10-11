@@ -37,8 +37,6 @@ const shapes = {
   mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
   globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.5 5.2 3.5 8.5s-1.1 6.2-3.5 8.5c-2.4-2.3-3.5-5.2-3.5-8.5s1.1-6.2 3.5-8.5z"/>',
   exit: '<path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/>',
-  code: '<path d="m8.5 7-5 5 5 5M15.5 7l5 5-5 5"/>',
-  people: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c1-3 3.3-4.6 6-4.6s5 1.6 6 4.6"/><path d="M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 15.2c1.6.6 2.8 2 3.5 4.3"/>',
   play: '<path d="M7 4.5v15l12.5-7.5z"/>',
   pause: '<rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/>',
 } as const;
