@@ -1,0 +1,42 @@
+name: Main audit
+
+# The studio's rule is that nothing reaches main without "APPROVE <head sha>" (approval.yml). GitHub can't require
+# that check on a private repository on the free plan, so after every push to main this looks at what arrived: each
+# commit must be a pull request merged at a head a reviewer approved. Anything else opens (or adds to) one issue
+# labelled `audit`, which the QA lane logs in studio/OPS.md.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: main-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Approved before it reached main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const { audit } = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/approval.cjs`);
+            const { owner, repo } = context.repo;
+            const shas = context.payload.commits.map((c) => c.id);
+            const findings = await audit({ github, owner, repo, shas });
+            if (!findings.length) return core.info(`All ${shas.length} commits were approved before they reached main.`);
+            const body = findings.map((f) => `- ${f}`).join('\n');
+            const open = (await github.paginate(github.rest.issues.listForRepo, { owner, repo, state: 'open', labels: 'audit', per_page: 100 }))
+              .find((i) => !i.pull_request);
+            if (open) await github.rest.issues.createComment({ owner, repo, issue_number: open.number, body });
+            else await github.rest.issues.create({ owner, repo, title: 'Main audit: commits reached main without an approval', labels: ['audit', 'own:qa'], body: `${body}\n\nThe QA lane looks into each one and logs it in studio/OPS.md.` });
+            core.setFailed(body);

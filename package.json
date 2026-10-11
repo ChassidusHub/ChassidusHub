@@ -22,10 +22,10 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && npm run typecheck -w @chassidushub/web",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && npm run typecheck -w @chassidushub/web && npm run typecheck -w @chassidushub/www",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run build:web && npm test && npm run catalog:check",
+    "check": "npm run typecheck && npm run build:web && npm run build:www && npm test && npm run catalog:check",
     "catalog:check": "tsx services/jobs/src/bin/chassidushub.ts schema-check",
     "db:migrate": "tsx services/jobs/src/bin/chassidushub.ts migrate",
     "dev:api": "tsx services/api/src/node.ts",
@@ -33,6 +33,8 @@
     "sample": "tsx services/jobs/src/bin/chassidushub.ts sample",
     "dev:web": "npm run dev -w @chassidushub/web",
     "build:web": "npm run build -w @chassidushub/web",
+    "dev:www": "npm run dev -w @chassidushub/www",
+    "build:www": "npm run build -w @chassidushub/www",
     "cloudflare:setup": "scripts/cloudflare-setup.sh"
   },
   "devDependencies": {

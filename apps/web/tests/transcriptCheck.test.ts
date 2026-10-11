@@ -8,9 +8,10 @@ import { aroundChanges, wordDiff } from '../app/lib/wordDiff.js';
 import { PlayerProvider } from '../app/player/PlayerProvider.js';
 
 /**
- * Checking a transcript (design/system, board 6): the paragraph being
- * worked on has three answers, Right, Fix and Not sure, at the thumb, and
- * its words carry where they sit, so a tap chooses the words to fix.
+ * Checking a transcript (design/system, board 6), a screen of its own:
+ * the paragraph being worked on has three answers, Right, Fix and Not
+ * sure, in the foot at the thumb, and its words carry where they sit, so
+ * a tap chooses the words to fix.
  */
 
 const content = 'alpha beta gamma';
@@ -32,7 +33,7 @@ const draw = (account: unknown) =>
 describe('checking a transcript', () => {
   it('gives the open paragraph, and only it, the three answers', () => {
     const html = draw({ person: { id: 'p1' } });
-    expect(html.match(/class="tx-answers"/g)).toHaveLength(1);
+    expect(html.match(/class="txc-answers"/g)).toHaveLength(1);
     expect(html).toContain('>Right</button>');
     expect(html).toContain('>Fix</button>');
     expect(html).toContain('>Not sure</button>');
@@ -46,9 +47,17 @@ describe('checking a transcript', () => {
     expect(html).toContain('data-from="11" data-to="16"');
   });
 
+  it('is a screen of its own, with the player in its head', () => {
+    const html = draw({ person: { id: 'p1' } });
+    expect(html).toContain('class="txc"');
+    expect(html).toContain('Check the transcript');
+    expect(html).toContain('aria-label="Play"');
+    expect(html).toContain('Again 5s');
+  });
+
   it('gives no answers to someone not signed in, who may still listen', () => {
     const html = draw(null);
-    expect(html).not.toContain('tx-answers');
+    expect(html).not.toContain('txc-answers');
     expect(html).toContain('Sign in to fix');
   });
 });
@@ -78,6 +87,6 @@ describe('"Your fixes": only what changed', () => {
   });
 
   it('draws no tray while nothing waits in it', () => {
-    expect(draw({ person: { id: 'p1' } })).not.toContain('tx-tray');
+    expect(draw({ person: { id: 'p1' } })).not.toContain('txc-tray');
   });
 });

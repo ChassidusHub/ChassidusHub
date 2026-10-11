@@ -32,7 +32,7 @@ export const links: LinksFunction = () => [
   { rel: 'preload', href: '/fonts/noto-sans-hebrew-400.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
   { rel: 'preload', href: '/fonts/noto-sans-hebrew-700.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
   // The logo's name is in every header.
-  { rel: 'preload', href: '/fonts/newsreader-latin-600.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
+  { rel: 'preload', href: '/fonts/newsreader-logo-600.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
   { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
   // Installable as an app, with an offline shell (public/sw.js, registered in lib/pwa.ts).
   { rel: 'manifest', href: '/manifest.webmanifest' },

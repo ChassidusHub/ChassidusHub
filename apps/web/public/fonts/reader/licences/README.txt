@@ -1,5 +1,8 @@
-The reading fonts, served unchanged, the same files Sichos-Kodesh's reader
-serves (its apps/web/public/fonts/reader).
+The reading fonts, the same files Sichos-Kodesh's reader serves (its
+apps/web/public/fonts/reader). The site serves each as WOFF2 beside it
+(made with fontTools; the outlines are unchanged): Frank Ruehl CLM cut to
+Hebrew, Latin and their marks, the rest whole. The OpenType files stay as
+the sources.
 
 FrankRuehlCLM.otf, FrankRuehlCLM_bold.otf   Frank Ruehl CLM Medium and Bold
 DavidCLM.otf, DavidCLM_bold.otf             David CLM Medium and Bold
