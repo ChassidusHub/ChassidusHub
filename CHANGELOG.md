@@ -48,7 +48,6 @@ any time. `@chassidushub/client` carries the API's version.
   maamar that opens with the words comes first (`opening: true`), and
   words a person checked come before a machine's. `within` (a year, month
   or day, like `5711`) keeps only what was said then.
-  words a person checked come before a machine's.
 - `GET /v1/view` for a sicha, maamar or letter now has `scan` (the scan
   it is printed on and its PDF pages, even when it has words of its own,
   with the PDF's `url` where it is served from here) and `recordings`
