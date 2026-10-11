@@ -819,10 +819,38 @@ export function TranscriptEditor({
   // The foot of the screen, which the open paragraph fills with its answers; the page under this one is held still while it is open.
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  const screen = useRef<HTMLDivElement>(null);
   useEffect(() => {
     document.documentElement.classList.add('txc-on');
-    return () => document.documentElement.classList.remove('txc-on');
+    // The screen is all there is while it is open: everything around it (the page under it, the site's
+    // header and sidebar, the player bar) is made inert, so Tab stays on the screen, its head first.
+    const held: HTMLElement[] = [];
+    for (let el: HTMLElement | null = screen.current; el && el !== document.body; el = el.parentElement) {
+      for (const sibling of Array.from(el.parentElement?.children ?? [])) {
+        if (sibling === el || !(sibling instanceof HTMLElement) || sibling.inert || sibling.tagName === 'SCRIPT') continue;
+        sibling.inert = true;
+        held.push(sibling);
+      }
+    }
+    screen.current?.querySelector<HTMLElement>('.txc-head button')?.focus({ preventScroll: true });
+    return () => {
+      document.documentElement.classList.remove('txc-on');
+      for (const el of held) el.inert = false;
+    };
   }, []);
+  // Escape closes the screen, back to listening, unless it is closing something on it first (a sheet, the fix box).
+  useEffect(() => {
+    if (!onBack) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (e.key !== 'Escape' || e.defaultPrevented || target?.closest('textarea, input, .ds-sheet-backdrop') || screen.current?.querySelector('.ds-sheet-backdrop')) return;
+      // A browser's own Escape stops what is loading, and leaving loads the listening view's data: leave after it.
+      e.preventDefault();
+      setTimeout(onBack, 0);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onBack]);
 
   // The player, in the page's own head: play from the paragraph open, hear again, and the speed (design/system, board 6).
   const openIn = transcripts.find((tr) => tr.paragraphs.some((p) => p.id === open)) ?? transcripts[0];
@@ -840,7 +868,7 @@ export function TranscriptEditor({
   const showTray = tray.length > 0;
 
   return (
-    <div className="txc" lang={lang} dir={lang === 'he' ? 'rtl' : 'ltr'}>
+    <div className="txc" ref={screen} lang={lang} dir={lang === 'he' ? 'rtl' : 'ltr'}>
       <header className="txc-head">
         <div className="txc-bar">
           {onBack ? (

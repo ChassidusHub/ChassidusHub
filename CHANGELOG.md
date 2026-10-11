@@ -18,7 +18,8 @@ any time. `@chassidushub/client` carries the API's version.
   Fix and Not sure in the foot of the screen, where the box to fix the
   words opens too, with "Your fixes" under them; a word after each answer
   with Undo; when all is checked, the question whether the highlight
-  followed the speech.
+  followed the speech. With a keyboard, Tab stays on the screen (its head
+  first) and Escape closes it; History on a paragraph opens again.
 - One record per volume: `chassidushub merge-printings` merges the printings
   of a sefer that are the same volume (HebrewBooks, אוצרות הרבי, a text) into
   one, with all their scans and sources, a Suggestion per sefer.
