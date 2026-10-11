@@ -11,6 +11,7 @@ import {
   registerFile,
   relationsOf,
   searchMoments,
+  MOMENT_CANDIDATES,
   searchSimilar,
   snippetOf,
   type Embedder,
@@ -154,6 +155,30 @@ describe('search that lands on the moment', () => {
     ]);
     expect(moments[0]).toMatchObject({ unit: opens, path: '/maamarim/2', segment: 'p1', opening: true, machine: false, name: { he: 'מאמר 2' } });
     expect(moments[1]).toMatchObject({ segment: 'p2', opening: false });
+  });
+
+  it('picks its candidates by rank from the index alone, so the best match is found among many (#124)', async () => {
+    const { catalog } = await freshCatalog();
+    const text = await add(catalog, 'steward', 'steward', 'text', { kind: 'transcript', language: 'yi' });
+    // More matches than are read: each says the words once among many others; one says just them.
+    const cs = await catalog.createChangeset('steward', { title: 'Add segments' });
+    const filler = Array.from({ length: 40 }, (_, i) => `מלה${i}`).join(' ');
+    for (let i = 0; i < MOMENT_CANDIDATES + 5; i++) {
+      await catalog.putRevision(cs.id, 'steward', { type: 'segment', data: { text, order: `A${String(i).padStart(4, '0')}`, kind: 'paragraph', content: `${filler} פתח דבר ${filler}`, proofread: 1 } });
+    }
+    const best = await catalog.putRevision(cs.id, 'steward', { type: 'segment', data: { text, order: 'Z', kind: 'paragraph', content: 'פתח דבר פתח דבר', proofread: 1 } });
+    await catalog.submit(cs.id, 'steward');
+    if ((await catalog.changeset(cs.id)).status !== 'merged') await catalog.merge(cs.id, 'steward');
+
+    const sql: string[] = [];
+    const query = catalog.db.query.bind(catalog.db);
+    catalog.db.query = ((q: string, params?: unknown[]) => (sql.push(q), query(q, params))) as typeof catalog.db.query;
+    const moments = await searchMoments(catalog, 'פתח דבר', { limit: 3 });
+    catalog.db.query = query;
+    expect(moments[0]!.id).toBe(best);
+    // Without a date to narrow by, the candidates come from the entity row alone; no revision is read before the limit.
+    const inner = sql[0]!.slice(0, sql[0]!.indexOf(') c'));
+    expect(inner).not.toMatch(/revision/);
   });
 
   it('narrows to the year, month or day the words were said: a text by its own date or its farbrengen, a transcript by its farbrengen (#90)', async () => {

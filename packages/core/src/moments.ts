@@ -226,7 +226,7 @@ const DATE_OF = `CASE e.type
     WHERE t.id = r.data->>'text')
   END`;
 
-/** How many matches are ranked by how well they match; the rest are not read at all. */
+/** How many of the best-ranked matches are read; the rest are not read at all. */
 export const MOMENT_CANDIDATES = 200;
 
 /**
@@ -238,25 +238,33 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   if (!tsQuery) return [];
   const words = queryWords(query);
   const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
-  // Checked words before what a machine read or heard and nobody checked: a scan's machine page, a machine paragraph.
-  // Ranked in two steps, so a common word does not unpack every page that has it: the first matches, checked words
-  // first, straight from the index (MOMENT_CANDIDATES); then only those ranked by how well they match.
-  const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit' }>(
-    `SELECT c.id, c.type FROM (
-       SELECT e.id, e.type, e.search_tsv, CASE
-                WHEN e.type = 'text-page' THEN (coalesce(lr.data->>'kind', '') <> 'community')
-                WHEN e.type = 'segment' THEN (r.data ? 'origin' AND coalesce((r.data->>'proofread')::int, 0) = 0 AND NOT coalesce((r.data->'origin'->>'checked')::boolean, FALSE))
-                ELSE FALSE END AS machine
-       FROM entity e JOIN revision r ON r.id = e.main_rev
-       LEFT JOIN entity l ON e.type = 'text-page' AND l.id = r.data->>'layer' LEFT JOIN revision lr ON lr.id = l.main_rev
+  // Ranked in two steps, so a common word does not unpack every page that has it: the best matches by rank, read
+  // from the entity row and its index alone (MOMENT_CANDIDATES); then, for those only, the revision says whether a
+  // machine read or heard it and nobody checked, and checked words come first. A date to narrow by needs each
+  // match's revision, so only a narrowed search reads it before the limit.
+  const within = options.within ?? null;
+  const narrowed = within
+    ? `JOIN revision r ON r.id = e.main_rev
        WHERE e.type IN ('text-page', 'segment', 'unit') AND NOT e.deleted
          AND e.search_tsv @@ to_tsquery('simple', $1)
-         AND ($2::text IS NULL OR ((${DATE_OF}) || '-') LIKE $2 || '-%')
-       ORDER BY machine, e.id LIMIT ${MOMENT_CANDIDATES}
+         AND ((${DATE_OF}) || '-') LIKE $2 || '-%'`
+    : `WHERE e.type IN ('text-page', 'segment', 'unit') AND NOT e.deleted
+         AND e.search_tsv @@ to_tsquery('simple', $1)`;
+  const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit' }>(
+    `SELECT c.id, c.type FROM (
+       SELECT e.id, e.type, e.main_rev, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank
+       FROM entity e ${narrowed}
+       ORDER BY rank DESC, e.id LIMIT ${MOMENT_CANDIDATES}
      ) c
-     ORDER BY c.machine, ts_rank(c.search_tsv, to_tsquery('simple', $1)) DESC, c.id
+     JOIN revision r ON r.id = c.main_rev
+     LEFT JOIN entity l ON c.type = 'text-page' AND l.id = r.data->>'layer' LEFT JOIN revision lr ON lr.id = l.main_rev
+     ORDER BY CASE
+                WHEN c.type = 'text-page' THEN (coalesce(lr.data->>'kind', '') <> 'community')
+                WHEN c.type = 'segment' THEN (r.data ? 'origin' AND coalesce((r.data->>'proofread')::int, 0) = 0 AND NOT coalesce((r.data->'origin'->>'checked')::boolean, FALSE))
+                ELSE FALSE END,
+              c.rank DESC, c.id
      LIMIT ${limit * 2}`,
-    [tsQuery, options.within ?? null],
+    within ? [tsQuery, within] : [tsQuery],
   );
   const gate = new ExportGate(catalog);
   const pages = new Map((await pageRows(catalog, rows.filter((r) => r.type === 'text-page').map((r) => r.id))).map((r) => [r.id, r]));
