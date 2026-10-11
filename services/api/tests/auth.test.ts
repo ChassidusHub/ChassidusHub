@@ -49,6 +49,23 @@ async function register(name = 'Mendy', credential = 'cred-1') {
   return call('POST', '/v1/auth/passkey/register/verify', { body: { challengeId: body.challengeId, name, response: { id: credential } } });
 }
 
+describe('DEV_ACCOUNT on a local API', () => {
+  it('shows the site signed in as that account when the browser has no session, and only then', async () => {
+    await catalog.createAccount({ id: 'dev', displayName: 'Dev' });
+    app = createApp({ catalog, authenticate: () => 'dev', auth: { rpId: 'chassidushub.test', rpName: 'ChassidusHub', origins: [SITE], verify, devPerson: 'dev' } });
+    const me = await call('GET', '/v1/auth/me');
+    expect(me.body.person).toEqual({ id: 'dev', displayName: 'Dev' });
+    // A real sign-in still wins, and the account routes still want one.
+    const created = await register();
+    expect((await call('GET', '/v1/auth/me', { cookie: created.cookie })).body.person).toEqual(created.body.person);
+    expect((await call('POST', '/v1/auth/passkey/add/options')).status).toBe(401);
+  });
+
+  it('shows nobody signed in without it', async () => {
+    expect((await call('GET', '/v1/auth/me')).body.person).toBeNull();
+  });
+});
+
 describe('passkey sign-in', () => {
   it('makes an account with a passkey and signs it in, with a secure cookie', async () => {
     const options = await call('POST', '/v1/auth/passkey/register/options', { body: { name: '  Mendy   Cohen ' } });

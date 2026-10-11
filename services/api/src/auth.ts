@@ -44,6 +44,7 @@ import {
   renamePerson,
   saveChallenge,
   sessionPerson,
+  type Person,
   startSession,
   takeChallenge,
   type Catalog,
@@ -69,6 +70,12 @@ export interface AuthOptions {
   google?: GoogleOptions;
   /** Sends sign-in links by email, once the site can send email (RESEND_API_KEY); without it, no email sign-in and no notifications. */
   mailer?: Mailer;
+  /**
+   * DEV_ACCOUNT on a local API (node.ts): the catalog account every request
+   * is signed in as, shown to the site as signed in too when the browser
+   * has no session of its own. Never set on the live site.
+   */
+  devPerson?: string;
   /** Replaces the WebAuthn verification, for tests; everything else runs as in production. */
   verify?: {
     registration: (input: { response: RegistrationResponseJSON; challenge: string }) => Promise<{ credentialId: string; publicKey: string; counter: number; transports: string[]; deviceType?: string; backedUp?: boolean } | null>;
@@ -233,9 +240,18 @@ export function authRoutes(app: Hono, catalog: Catalog, auth: AuthOptions): void
     c.header('Cache-Control', 'no-store');
   });
 
-  app.get('/v1/auth/me', async (c) => {
+  // The browser's session, or else, on a local API with DEV_ACCOUNT, that account; it has no person of its own, so the
+  // account routes below (passkeys, handles, emails) still need a real sign-in.
+  const shownAs = async (c: Context): Promise<Person | null> => {
     const token = readSession(c);
     const person = token ? await sessionPerson(db, token) : null;
+    if (person || !auth.devPerson) return person;
+    const account = await catalog.account(auth.devPerson);
+    return account ? { id: account.id, displayName: account.display_name, ...(account.is_steward ? { steward: true } : {}) } : null;
+  };
+
+  app.get('/v1/auth/me', async (c) => {
+    const person = await shownAs(c);
     const google = Boolean(auth.google);
     const email = Boolean(auth.mailer);
     if (!person) return c.json({ person: null, google, email });

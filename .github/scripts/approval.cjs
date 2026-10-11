@@ -29,22 +29,26 @@ function stopped(issues) {
   return issues.some((issue) => !issue.pull_request && issue.state === 'open' && issue.title.trim().toLowerCase() === 'studio-stop');
 }
 
+/** How many QA merges of main may follow an approval before the head needs approving again. */
+const MAX_MERGES = 20;
+
 /**
- * Whether the commits after an approved one (oldest first, as GitHub's compare lists them) are all the QA lane's
- * merges from main: two parents, the first the commit before it, the second already on main, and the QA line.
- * onMain(sha) says whether a commit is on main; mainFiles are the files main changed since the approved commit.
- * Returns null when they are, or the reason they are not.
+ * Whether the head's first-parent line back to the approved commit is all the QA lane's merges from main: two
+ * parents, the second already on main, and the QA line. Main's own commits come in through the second parents and
+ * are not walked. getCommit(sha) gives a commit as GitHub's API does; onMain(sha) says whether a commit is on main;
+ * mainFiles are the files main changed since the approved commit. Returns null when they are, or the reason not.
  */
-async function onlyQaMerges(approved, commits, onMain, changedFiles, mainFiles) {
-  let previous = approved;
-  for (const commit of commits) {
+async function onlyQaMerges(approved, head, getCommit, onMain, changedFiles, mainFiles) {
+  let sha = head;
+  for (let steps = 0; sha !== approved; steps++) {
+    if (steps >= MAX_MERGES) return `More than ${MAX_MERGES} merges since the approved commit; approve the head.`;
+    const commit = await getCommit(sha);
     const parents = commit.parents.map((p) => p.sha);
-    const message = commit.commit.message;
-    if (parents.length !== 2 || parents[0] !== previous || !QA_MERGE.test(message)) {
-      return `${commit.sha.slice(0, 7)} came after the approved commit and is not the QA lane merging main.`;
+    if (parents.length !== 2 || !QA_MERGE.test(commit.commit.message)) {
+      return `${sha.slice(0, 7)} came after the approved commit and is not the QA lane merging main.`;
     }
-    if (!(await onMain(parents[1]))) return `${commit.sha.slice(0, 7)} merges a commit that is not on main.`;
-    previous = commit.sha;
+    if (!(await onMain(parents[1]))) return `${sha.slice(0, 7)} merges a commit that is not on main.`;
+    sha = parents[0];
   }
   const extra = changedFiles.filter((file) => !mainFiles.has(file));
   if (extra.length) return `Since the approved commit, files main never changed were changed too: ${extra.slice(0, 5).join(', ')}.`;
@@ -52,12 +56,12 @@ async function onlyQaMerges(approved, commits, onMain, changedFiles, mainFiles) 
 }
 
 /** Decides one pull request. Returns { ok, summary }. */
-async function decide({ github, owner, repo, pr }) {
+async function decide({ github, owner, repo, pr, ignoreStop = false }) {
   const head = pr.head.sha.toLowerCase();
   const base = pr.base.ref;
 
   const issues = await github.paginate(github.rest.issues.listForRepo, { owner, repo, state: 'open', per_page: 100 });
-  if (stopped(issues)) return { ok: false, summary: 'The studio is stopped: an issue titled studio-stop is open. Nothing merges until it is closed.' };
+  if (!ignoreStop && stopped(issues)) return { ok: false, summary: 'The studio is stopped: an issue titled studio-stop is open. Nothing merges until it is closed.' };
 
   const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: pr.number, per_page: 100 });
   const reviews = await github.paginate(github.rest.pulls.listReviews, { owner, repo, pull_number: pr.number, per_page: 100 });
@@ -78,15 +82,16 @@ async function decide({ github, owner, repo, pr }) {
       reasons.push(`${approved.slice(0, 7)} is not a commit of this pull request.`);
       continue;
     }
-    // The approved commit must be in the head's history, and no further back than GitHub lists.
-    if (compared.status !== 'ahead' || compared.behind_by !== 0 || compared.total_commits > compared.commits.length) {
+    // The approved commit must be in the head's history.
+    if (compared.status !== 'ahead' || compared.behind_by !== 0) {
       reasons.push(`${approved.slice(0, 7)} is not an earlier commit of this pull request's head.`);
       continue;
     }
-    const last = compared.commits[compared.commits.length - 1];
+    // What main changed since the approved commit, up to the commit the latest merge brought in.
+    const { data: top } = await github.rest.repos.getCommit({ owner, repo, ref: head });
     let mainFiles = new Set();
-    if (last && last.parents.length === 2) {
-      const { data: fromMain } = await github.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${approved}...${last.parents[1].sha}` });
+    if (top.parents.length === 2) {
+      const { data: fromMain } = await github.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${approved}...${top.parents[1].sha}` });
       mainFiles = new Set((fromMain.files ?? []).map((f) => f.filename));
     }
     // GitHub lists at most 300 changed files; past that nobody can tell what else changed.
@@ -95,7 +100,8 @@ async function decide({ github, owner, repo, pr }) {
       continue;
     }
     const changed = (compared.files ?? []).map((f) => f.filename);
-    const reason = await onlyQaMerges(approved, compared.commits, onMain, changed, mainFiles);
+    const getCommit = async (ref) => (ref === head ? top : (await github.rest.repos.getCommit({ owner, repo, ref })).data);
+    const reason = await onlyQaMerges(approved, head, getCommit, onMain, changed, mainFiles);
     if (!reason) return { ok: true, summary: `Approved at ${approved.slice(0, 7)}; every commit since is the QA lane merging main.` };
     reasons.push(reason);
   }
@@ -112,4 +118,25 @@ async function run({ github, context, core }) {
   else core.setFailed(summary);
 }
 
-module.exports = { run, decide, approvedShas, stopped, onlyQaMerges };
+/**
+ * The audit of main (.github/workflows/main-audit.yml): every commit that reaches main must be a pull request
+ * merged at a head a reviewer approved. GitHub can't require the Approval check on a private repository on the free
+ * plan, so this looks after the fact. Returns one finding per commit that was not.
+ */
+async function audit({ github, owner, repo, shas }) {
+  const findings = [];
+  for (const sha of shas) {
+    const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({ owner, repo, commit_sha: sha });
+    const pr = pulls.find((p) => p.merged_at && p.merge_commit_sha === sha);
+    if (!pr) {
+      findings.push(`${sha.slice(0, 7)} reached main without a pull request.`);
+      continue;
+    }
+    // Whether the studio was stopped then can't be told now; the approval can.
+    const { ok, summary } = await decide({ github, owner, repo, pr, ignoreStop: true });
+    if (!ok) findings.push(`${sha.slice(0, 7)} is #${pr.number}, merged without an approval of its head: ${summary}`);
+  }
+  return findings;
+}
+
+module.exports = { run, decide, audit, approvedShas, stopped, onlyQaMerges };

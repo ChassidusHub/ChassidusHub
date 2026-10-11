@@ -432,8 +432,10 @@ It runs from the **Upkeep (manual)** workflow ([deploy](deploy.md)),
 ## The API
 
 - Local: `npm run dev:api` (PGlite, or `DATABASE_URL`). `DEV_ACCOUNT=me`
-  signs every request in as `me` - for local testing only; refused unless
-  the server listens on localhost.
+  signs every request in as `me`, and the site shows `me` signed in - for
+  local testing only; refused unless the server listens on localhost.
+  `npm run sample` loads a small made-up catalog to test against
+  ([local-sample.md](local-sample.md)).
 - Cloudflare Workers: deployed on every merge to `main`; see
   [deploy.md](deploy.md).
 - `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_TOKEN` switch on search by
@@ -456,6 +458,13 @@ ninety days of it and the latest incidents.
   Hyperdrive never caches): 288 a day. When the database does not answer,
   the run's jobs (webhooks, email updates, the reviewer's advice) wait
   for the next run rather than spend queries failing.
+- The run also keeps the transcripts summary at
+  `summaries/transcripts.json` in the same bucket, made again when it is
+  over fifteen minutes old (`services/api/src/summaries.ts`): counting
+  every transcript's paragraphs takes tens of seconds on a cold database,
+  so `/v1/transcripts` (which the home page waits on) reads the kept list
+  and never counts while someone waits. A new transcript shows there
+  within about twenty minutes.
 - The site is asked for `/about` through the `SITE` service binding (it
   needs neither the API nor the database); the API and the MCP server are
   this Worker's own answers to `/openapi.json` and `initialize`.

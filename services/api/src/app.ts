@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
-import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, transcribedRecordings, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
+import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
 import { dailyLearning, dailyShiurim, peopleOf, shiurimWords } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
@@ -17,6 +17,7 @@ import { tokenGate, tokenGrantOf, tokenRoutes } from './tokens.js';
 import { ERROR_CODES, PUBLIC_SUMMARY, caching, cors, cursor, nextLink, serverTiming, type RateLimits } from './platform.js';
 import { mcpRoutes } from './mcp.js';
 import { statusRoutes, type StatusStore } from './status.js';
+import { transcriptsFor, type SummaryStore } from './summaries.js';
 import { oauthRoutes } from './oauth.js';
 import { pageRoutes } from './pages.js';
 import { driveRoutes, type DriveOptions } from './drive.js';
@@ -85,6 +86,8 @@ export interface ApiOptions {
   fetchClientMetadata?: MetadataFetch;
   /** Where the scheduled checks keep their last report (status.ts), for GET /v1/status; unset, it answers that there is none yet. */
   status?: StatusStore;
+  /** Where the scheduled run keeps the transcripts summary (summaries.ts), for GET /v1/transcripts; unset, it is worked out on each request. */
+  transcripts?: SummaryStore;
   /** Starts the free machine jobs when someone asks for OCR or a transcript (GitHub Actions); unset, the nightly run takes the request. */
   machineDispatch?: MachineDispatch;
   /** Lets work finish after the answer is sent (Workers' waitUntil); unset, the answer waits for it. */
@@ -520,7 +523,8 @@ export function createApp(options: ApiOptions): Hono {
   });
 
   // Every recording that has a transcript, the most checked first: for choosing the best to show.
-  app.get('/v1/transcripts', async (c) => c.json({ recordings: await transcribedRecordings(catalog, { limit: intParam(c.req.query('limit'), 'limit') }) }, 200, { 'Cache-Control': PUBLIC_SUMMARY }));
+  // Kept by the scheduled run (summaries.ts): counting every paragraph is too slow to do while a page waits.
+  app.get('/v1/transcripts', async (c) => c.json({ recordings: await transcriptsFor(catalog, options.transcripts, intParam(c.req.query('limit'), 'limit')) }, 200, { 'Cache-Control': PUBLIC_SUMMARY }));
 
   // A recording's transcript, paragraph by paragraph with where each is heard; machine paragraphs are marked until checked.
   // Every transcript fix waiting for approval, to go through together: for the person asking, which each may approve.

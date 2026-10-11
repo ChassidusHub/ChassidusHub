@@ -2,7 +2,8 @@ import { WorkerEntrypoint } from 'cloudflare:workers';
 import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, sendNotifications } from '@chassidushub/core';
 import { connectPostgres, isCatalogHeld, measured } from '@chassidushub/db';
 import { createApp, turnstileVerifier } from './app.js';
-import { r2Store, r2Writer, statusStore, type R2Bucket } from './r2.js';
+import { r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
+import { refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
@@ -130,7 +131,8 @@ const list = (value: string | undefined) => (value ?? '').split(',').map((s) => 
 export default {
   /**
    * Every few minutes (wrangler.toml, [triggers]): the status checks (status.ts) first; then, when the database
-   * answered, webhooks get the merges they have not had yet, people who asked are emailed what changed in what
+   * answered, webhooks get the merges they have not had yet, the transcripts summary is made again when it is
+   * old (summaries.ts), people who asked are emailed what changed in what
    * they follow, and suggestions waiting for review get the reviewer's advice. When it did not answer, those
    * wait for the next run rather than spend queries failing.
    */
@@ -148,6 +150,7 @@ export default {
           failed.push(name);
         });
       await job('webhooks', () => deliverWebhooks(catalog));
+      if (env.FILES_PUBLIC) await job('transcripts summary', () => refreshTranscripts(catalog, transcriptsStore(env.FILES_PUBLIC!), new Date()));
       if (mailer && env.SITE_URL) await job('email updates', () => sendNotifications(catalog, mailer, { siteUrl: new URL(env.SITE_URL!).origin }));
       if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN) {
         await job("the reviewer's advice", () => adviseSuggestions(catalog, workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID!, token: env.CLOUDFLARE_AI_TOKEN! })));
@@ -220,6 +223,7 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
     texts: env.FILES_PUBLIC ? { store: r2Store(env.FILES_PUBLIC), writer: r2Writer(env.FILES_PUBLIC), from: env.SK_ARCHIVE ? r2Store(env.SK_ARCHIVE) : undefined } : undefined,
     uploads: env.FILES_PUBLIC && env.FILES_PRESERVATION ? { public: r2Writer(env.FILES_PUBLIC), preservation: r2Writer(env.FILES_PRESERVATION) } : undefined,
     status: env.FILES_PUBLIC ? statusStore(env.FILES_PUBLIC) : undefined,
+    transcripts: env.FILES_PUBLIC ? transcriptsStore(env.FILES_PUBLIC) : undefined,
     embedder: embedderFromEnv({ CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_AI_TOKEN: env.CLOUDFLARE_AI_TOKEN }),
     advisor: env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN ? workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_AI_TOKEN }) : null,
     oai: env.OAI_ADMIN_EMAIL ? { adminEmail: env.OAI_ADMIN_EMAIL, siteUrl: env.SITE_URL } : undefined,

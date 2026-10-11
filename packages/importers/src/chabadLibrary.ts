@@ -347,6 +347,21 @@ function volumeNumber(text: string): number | null {
   return n && bare(toHebrewNumeral(n)) === bare(text) ? n : null;
 }
 
+/**
+ * A page's name from its library heading, without what the print adds to
+ * it: the `בס"ד` that opens every maamar's dateline and the `*` that points
+ * to its footnote (issue #89). `בס"ד, יו"ד שבט, תשי"ב*` is named
+ * `יו"ד שבט, תשי"ב`. Anything else is kept as printed.
+ */
+export function pageName(heading: string): string {
+  const name = heading
+    .trim()
+    .replace(/^ב(?:ס"ד|ס״ד|סייעתא דשמיא)\s*[.,:]?\s*/, '')
+    .replace(/\s*\*+\s*$/, '')
+    .trim();
+  return name || heading.trim();
+}
+
 export function chabadLibraryImporter(input: ChabadLibraryInput | (() => Promise<ChabadLibraryInput>)): Importer {
   return {
     id: 'chabadlibrary',
@@ -370,7 +385,7 @@ export function chabadLibraryImporter(input: ChabadLibraryInput | (() => Promise
         const orders = orderKeys(placed.length);
         for (const [i, { id, position }] of placed.entries()) {
           const node = tree.nodes[id]!;
-          const heading = node.heading || position.map((p) => p.value).join('.');
+          const heading = (node.heading && pageName(node.heading)) || position.map((p) => p.value).join('.');
           const url = `${CHABAD_LIBRARY}/${id}`;
           // The page's words, where the crawl kept them.
           const html = node.sha256 && text ? await text(node.sha256) : null;
