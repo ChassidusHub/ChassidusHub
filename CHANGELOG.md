@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A farbrengen's video shows as its still picture with a play button, and
+  YouTube's player (about 1 MB) is fetched only when someone taps it, so
+  the page's own recordings and words come first on a slow line. Without
+  script the picture links to the video on YouTube.
+
 - A maamar's name no longer carries what the print adds to its dateline:
   the Chabad Library importer leaves out the opening `בס"ד` and the footnote
   `*` (`בס"ד, יו"ד שבט, תשי"ב*` is named `יו"ד שבט, תשי"ב`). It takes effect
