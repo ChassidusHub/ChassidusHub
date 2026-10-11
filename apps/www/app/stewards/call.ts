@@ -44,3 +44,24 @@ export async function call<T>(path: string, method: 'GET' | 'POST' = 'GET', body
 
 const day = new Intl.DateTimeFormat('he', { day: 'numeric', month: 'long', year: 'numeric' });
 export const dayOf = (iso: string | null | undefined) => (iso ? day.format(new Date(iso)) : '');
+
+/**
+ * An item's name in Hebrew, as lib/catalog.ts's nameOf gives it (a plain
+ * string, or one per language; markup some imports left in names dropped).
+ * The stewards' pages keep their own copy here: importing lib/catalog.ts made
+ * it a script of its own on every reading page, and a file of its own made
+ * one more on /add, each over the budget of 10 scripts.
+ */
+export function nameOf(name: unknown, fallback = ''): string {
+  return plainName(name) || fallback;
+}
+
+function plainName(name: unknown): string {
+  if (typeof name === 'string') return name.replace(/<[^>]*>/g, '').trim();
+  if (name && typeof name === 'object') {
+    const names = name as Record<string, unknown>;
+    const found = names.he ?? names.en ?? Object.values(names).find((v) => typeof v === 'string');
+    if (typeof found === 'string') return plainName(found);
+  }
+  return '';
+}

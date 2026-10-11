@@ -2,7 +2,7 @@ import { allSegments, inlineText, isPageText } from '@chassidushub/model';
 import { describeDateKey } from '@chassidushub/hebrew';
 import { useState } from 'react';
 import { data, Link } from 'react-router';
-import { nameOf } from '../lib/catalog';
+import { nameOf } from '../stewards/call';
 import { PlayRow } from '../listen/play';
 import { PRIVATE } from '../stewards/showcase';
 import { Button, Icon, Row, Rows, Say, SectionHead, TopBar } from '../ui';

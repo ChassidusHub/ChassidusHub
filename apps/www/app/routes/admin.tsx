@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useAccount } from '../lib/account';
-import { nameOf } from '../lib/catalog';
-import { call, dayOf } from '../stewards/call';
+import { call, dayOf, nameOf } from '../stewards/call';
 import { Button, Field, Icon, Panel, Row, Rows, Say, Segmented, TopBar } from '../ui';
 import type { Route } from './+types/admin';
 

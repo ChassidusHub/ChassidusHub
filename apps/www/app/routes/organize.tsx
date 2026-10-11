@@ -1,8 +1,7 @@
 import { Fragment, useEffect, useMemo, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from 'react';
 import { data, Link, useRevalidator } from 'react-router';
 import { useAccount } from '../lib/account';
-import { nameOf } from '../lib/catalog';
-import { call } from '../stewards/call';
+import { call, nameOf } from '../stewards/call';
 import { dropAt, groupsOf, holds, KINDS, pick, planOf, said, slugOf, step, type Group, type Operation, type Preview, type Sent, type TreeNode } from '../stewards/organize';
 import { Picker } from '../stewards/Picker';
 import { Button, Field, Icon, IconButton, Panel, Say, SectionHead, Sheet, TopBar, type MenuItem, type PathLevel } from '../ui';
