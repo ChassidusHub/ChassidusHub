@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` looks for a subject typed in English letters
+  (`bitachon`, `ahavas yisroel`, `hashgacha pratis`) as the texts write it
+  (`בטחון`), names and words alike, and says so in the new `topic` field.
+  The subjects are a small list people keep (packages/core/src/topics.ts)
+  (#99).
 - Every API answer's `Server-Timing` also gives each statement's own time,
   in order (`db1;dur=…`, `db2;dur=…`, the first 16): which read a slow
   answer waited on.
