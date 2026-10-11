@@ -91,6 +91,9 @@ describe('the search screen in one read', () => {
     expect(week.top).toMatchObject({ id: event, kind: 'farbrengen' });
     expect((await searchPage(catalog, 'פרשת בשלח תשמ"ב')).events.map((e) => e.id)).toEqual([event]);
     expect((await searchPage(catalog, 'Beshalah')).parsha?.key).toBe('Beshalach');
+    expect((await searchPage(catalog, 'תצווה')).parsha?.key).toBe('Tetzaveh');
+    // In Hebrew a letter apart is another word: a mitzvah is not Tetzaveh.
+    expect((await searchPage(catalog, 'מצוה')).parsha).toBeNull();
     expect(await searchPage(catalog, 'בשלח תשמ"א')).toMatchObject({ parsha: { key: 'Beshalach' }, events: [] });
     expect(await searchPage(catalog, 'יתרו')).toMatchObject({ parsha: { key: 'Yitro' }, events: [] });
 

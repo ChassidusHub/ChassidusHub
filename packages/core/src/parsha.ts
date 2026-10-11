@@ -13,7 +13,8 @@ import { dateKeyFromHDate, normalizeSearchText, unfinal } from '@chassidushub/he
 export const FIRST_YEAR = 5710;
 export const LAST_YEAR = 5752;
 
-const norm = (s: string) => unfinal(normalizeSearchText(s));
+/** As a search compares words, with a doubled vav or yud as one (תצווה is תצוה): full and plain spelling are one word. */
+const norm = (s: string) => unfinal(normalizeSearchText(s)).replace(/וו/g, 'ו').replace(/יי/g, 'י');
 
 /** Words said before a parsha's name that are not part of it. */
 const PREFIXES = new Set(['פרשת', 'פרשה', 'parshas', 'parshat', 'parsha', 'parashat', 'שבת', 'shabbos']);
@@ -39,14 +40,18 @@ function distance(a: string, b: string): number {
   return row[b.length]!;
 }
 
-/** The one parsha a mistyped word is closest to, within a third of its letters; none if two are as close. */
+/**
+ * The one parsha a mistyped Latin spelling is closest to, within a third of its letters; none if two are as close.
+ * Only Latin: there are many ways to spell a parsha in English (Beshalah, Noah), but in Hebrew a letter apart is
+ * another word (מצוה is not תצוה).
+ */
 function nearest(word: string): string | null {
-  if (word.length < 4) return null;
+  if (word.length < 4 || !/^[a-z]+$/.test(word)) return null;
   const budget = Math.floor(word.length * 0.34);
   let best: { name: string; d: number } | null = null;
   let tie = false;
   for (const [spelling, name] of SPELLINGS) {
-    if (spelling.includes(' ')) continue;
+    if (!/^[a-z]+$/.test(spelling)) continue;
     const d = distance(word, spelling);
     if (d > budget) continue;
     if (!best || d < best.d) {
