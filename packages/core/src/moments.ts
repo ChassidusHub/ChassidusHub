@@ -290,11 +290,15 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
           WHERE ${has(type)}
             AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
-  // The sichos that open on the words, found through the lead's index without reading their words (#182).
+  // The sichos that open on the words, found through the lead's index without reading their words (#182). The first
+  // MOMENT_LEADS leads found are taken before the join, so a word in most leads stops there rather than sorting them all
+  // for a join; then each sicha is found by its own id (entity's collation, so its key finds it).
   const leads = (tier: number) =>
-    `(SELECT e.id, e.type, e.main_rev, ts_rank(p.lead, to_tsquery('simple', $1)) AS rank, ${tier} AS tier
-          FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "C"
-          WHERE p.lead @@ to_tsquery('simple', $1) AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL LIMIT ${MOMENT_LEADS})`;
+    `(SELECT e.id, e.type, e.main_rev, p.rank, ${tier} AS tier
+          FROM (SELECT unit_id, ts_rank(lead, to_tsquery('simple', $1)) AS rank FROM unit_place
+                WHERE lead @@ to_tsquery('simple', $1) LIMIT ${MOMENT_LEADS}) p
+          JOIN entity e ON e.id = p.unit_id COLLATE "default"
+          WHERE e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL)`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1)), leads(1)] : [...kinds.map((k) => all(k, 0)), leads(0)];
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
