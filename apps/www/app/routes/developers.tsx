@@ -2,8 +2,7 @@ import { data, Link } from 'react-router';
 import { drawDoc } from '../developers/docs.server';
 import { DocsFrame } from '../developers/Frame';
 import { API, DOC_PAGES, docAddress } from '../developers/pages';
-import { ServerHtml } from '../reader/Words';
-import { Icon, Row, Rows, SectionHead } from '../ui';
+import { Icon, Row, Rows, SectionHead, ServerHtml } from '../ui';
 import type { Route } from './+types/developers';
 
 /**

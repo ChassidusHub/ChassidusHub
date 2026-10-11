@@ -2,7 +2,8 @@ import { Form, Link, redirect, useActionData, useNavigation } from 'react-router
 import { Progress, SeeAlso } from '../community/parts';
 import { capped, count, dayName, focusText, GAP_NAME, STATE_NAME, type Gap, type Project } from '../community/data';
 import { useAccount } from '../lib/account';
-import { Area, Button, Choice, Field, Panel, Say, SectionHead, TopBar } from '../ui';
+import { Button, Field, Panel, Say, SectionHead, TopBar } from '../ui';
+import { Area, Choice } from '../ui/Writing';
 import { fromThisSite } from './fix';
 import type { Route } from './+types/projects';
 

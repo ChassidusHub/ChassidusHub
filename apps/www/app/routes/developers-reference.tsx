@@ -1,7 +1,7 @@
 import { data, Link } from 'react-router';
 import { DocsFrame } from '../developers/Frame';
 import { baseOf, groupHtml, groupsOf, indexHtml, operationsOf, type OpenApiDocument } from '../developers/reference.server';
-import { ServerHtml } from '../reader/Words';
+import { ServerHtml } from '../ui';
 import type { Route } from './+types/developers-reference';
 
 /**

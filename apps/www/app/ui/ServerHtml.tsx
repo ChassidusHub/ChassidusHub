@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useServerOnly } from '../serverOnly';
 
 /**
- * HTML drawn on the server (words.server.ts) that the page's hydration data
+ * HTML drawn on the server (the reader's words.server.ts, the developer docs) that the page's hydration data
  * leaves out. On the server it comes from the request (serverOnly.tsx); in the
  * browser, on the first render, it is read back from the element the server
  * drew, so React hydrates the same markup and nothing is sent twice. After a
