@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by words tests the words only on pages, paragraphs and sichos, each
+  kind on its own rows (#182): before, the database could test every page and
+  paragraph's words while looking for sichos, reading many times more than it
+  needed on a first search.
 - Search by words ranks a sicha on its lead, its name and first few hundred
   words, not on all its words (#182): a first search for a common word reads
   a few KB per sicha instead of about 80 KB, and the sicha that opens on the
