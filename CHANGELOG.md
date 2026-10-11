@@ -10,6 +10,8 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by words reads a scan page's layer from its link, not from the page's
+  revision with all its lines, when it orders the best matches (#182).
 - Search by words is faster on a word nobody searched lately (#182): fewer
   sichos (40) and scan pages (300) are ranked, and only the sichos shown have
   their words read, the rest only when one of those shows nothing.

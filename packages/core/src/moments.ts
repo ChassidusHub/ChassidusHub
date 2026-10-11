@@ -266,6 +266,7 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   // machine read or heard it and nobody checked, and checked words come first. Only MOMENT_RANKED of each kind are
   // ranked. A date (`within`) puts first the matches said then, or whose own words name its year (a maamar's heading),
   // then the rest: that needs each such match's revision, so only a search with a date reads it before the limit.
+  // A scan page's layer comes from its link (entity_ref), not its revision, which holds all the page's lines (#182).
   const within = options.within ?? null;
   const RANK = `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
   const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
@@ -284,7 +285,8 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
        ORDER BY tier, rank DESC, id LIMIT ${MOMENT_CANDIDATES}
      ) c
      JOIN revision r ON r.id = c.main_rev
-     LEFT JOIN entity l ON c.type = 'text-page' AND l.id = r.data->>'layer' LEFT JOIN revision lr ON lr.id = l.main_rev
+     LEFT JOIN entity_ref y ON c.type = 'text-page' AND y.from_id = c.id AND y.field = 'layer'
+     LEFT JOIN entity l ON l.id = y.to_id LEFT JOIN revision lr ON lr.id = l.main_rev
      ORDER BY c.tier,
               CASE
                 WHEN c.type = 'text-page' THEN (coalesce(lr.data->>'kind', '') <> 'community')
