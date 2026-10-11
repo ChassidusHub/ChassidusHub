@@ -30,6 +30,7 @@ import * as catalogHold from './migrations/0028_catalog_hold.js';
 import * as drafts from './migrations/0029_drafts.js';
 import * as unitPlace from './migrations/0030_unit_place.js';
 import * as jitOff from './migrations/0031_jit_off.js';
+import * as unitPlaceNames from './migrations/0032_unit_place_names.js';
 import { HOLD_EVERY_TABLE_SQL } from './hold.js';
 
 export interface Migration {
@@ -71,6 +72,7 @@ export const MIGRATIONS: readonly Migration[] = [
   { version: 29, name: 'drafts', up: drafts.up },
   { version: 30, name: 'unit-place', up: unitPlace.up },
   { version: 31, name: 'jit-off', up: jitOff.up },
+  { version: 32, name: 'unit-place-names', up: unitPlaceNames.up },
 ];
 
 /** Applies the migrations `db` has not had yet, each in its own transaction. Returns the versions applied. */
