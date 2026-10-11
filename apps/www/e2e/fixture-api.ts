@@ -1,11 +1,13 @@
 import { createServer } from 'node:http';
 import { libraryAnswer } from './fixture-library';
 import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
+import { searchAnswer } from './fixture-search';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
  * a few made-up pages, so the reading page is tested without a database,
  * listening's reads (fixture-listen.ts), the library's (fixture-library.ts),
+ * search's (fixture-search.ts),
  * and POST /v1/fix as a signed-in reader (the cookie rh_session=sample) or a
  * signed-out one; and signing in and the account (/v1/auth/*) the same way.
  * Every word here is sample text written for the tests (לדוגמה), never a
@@ -242,6 +244,11 @@ createServer((req, res) => {
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
   if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
   if (url.pathname === '/_mails') return res.end(JSON.stringify(mails));
+  const searched = searchAnswer(url);
+  if (searched) {
+    res.statusCode = searched[0];
+    return res.end(JSON.stringify(searched[1]));
+  }
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
   const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
   if (entity) {
