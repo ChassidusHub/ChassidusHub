@@ -1,13 +1,18 @@
-import { Placeholder } from './placeholder';
+import { loadLibrary } from '../library/load';
+import { LibraryScreen } from '../library/screens';
 import type { Route } from './+types/library';
 
 export const handle = { section: 'library' };
 
-export function meta(_: Route.MetaArgs) {
-  return [{ title: 'ספרייה · ChassidusHub' }];
+export function meta({ location }: Route.MetaArgs) {
+  return [{ title: `${location.search.includes('more') ? 'ספרים נוספים' : 'ספרייה'} · ChassidusHub` }];
 }
 
-/** The library: the Rebbeim and their sefarim, from the fixed catalog tree (thread 2, Library). */
-export default function Screen() {
-  return <Placeholder title="ספרייה" />;
+export async function loader({ context }: Route.LoaderArgs) {
+  return loadLibrary(context.api);
+}
+
+/** The library: the Rebbeim and their sefarim, from the fixed catalog tree, then the other shelves. */
+export default function Screen({ loaderData }: Route.ComponentProps) {
+  return <LibraryScreen data={loaderData} />;
 }

@@ -323,6 +323,15 @@ svg.i.filled { fill: currentColor; stroke: none; }
   .sheet { bottom: 24px; border-radius: 14px; }
 }
 
+/* ---------- library: a page's line under its title, the search in a sefer, a scan read on the page ---------- */
+.lede { margin: 0 0 14px; }
+.row .quiet-title { font-weight: 400; color: var(--g700); }
+form[role='search'] { margin-block: 8px 4px; }
+.in-sefer { margin-block: 16px 20px; }
+.numgrid + .opt { margin-top: 18px; border: 0; }
+.scan-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-block: 8px 10px; }
+.scan-frame { display: block; width: 100%; height: calc(100dvh - 220px); min-height: 420px; border: 0; border-radius: 10px; background: var(--g100); box-shadow: 0 0 0 1px var(--g300); }
+
 /* ---------- toast ---------- */
 .toast {
   position: fixed; inset-inline: 16px; bottom: calc(140px + env(safe-area-inset-bottom, 0px)); z-index: 90;
