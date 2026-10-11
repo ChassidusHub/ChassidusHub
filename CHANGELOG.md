@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The English home page has a "New here?" for someone who reads only
+  English: who the Rebbe is, what Chassidus is, where to start (Tanya,
+  Hayom Yom with English, Sichos In English, Books in English) and the
+  words met everywhere (sicha, maamar, farbrengen, hanacha, kvius, Rosh
+  Chodesh). Its search examples are ones a newcomer knows.
 - `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a
