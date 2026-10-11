@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `/v1/machine/to-check` and `/v1/mafteach` answer from what the scheduled
+  run keeps, as `/v1/transcripts` does: working them out took longer than
+  a request may run, so `/help` and `/mafteach` waited 30 s and failed
+  (#104). What to check is at most 15 minutes behind; the subject index is
+  built again within a run of one of its pages changing.
 - `GET /v1/search/page` understands a parsha: words that are a parsha's
   name and nothing else (`בשלח`, `פרשת בשלח תשמ"ב`, `Beshalach`) come back
   as `parsha` with the farbrengens of its weeks, in the year given or in

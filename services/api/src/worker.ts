@@ -2,8 +2,8 @@ import { WorkerEntrypoint } from 'cloudflare:workers';
 import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, sendNotifications } from '@chassidushub/core';
 import { connectPostgres, isCatalogHeld, measured } from '@chassidushub/db';
 import { createApp, turnstileVerifier } from './app.js';
-import { r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
-import { refreshTranscripts } from './summaries.js';
+import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
+import { refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
@@ -156,6 +156,8 @@ export default {
         });
       await job('webhooks', () => deliverWebhooks(catalog));
       if (env.FILES_PUBLIC) await job('transcripts summary', () => refreshTranscripts(catalog, transcriptsStore(env.FILES_PUBLIC!), new Date()));
+      if (env.FILES_PUBLIC) await job('to-check summary', () => refreshToCheck(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
+      if (env.FILES_PUBLIC) await job('subject index', () => refreshMafteach(catalog, keptStore(env.FILES_PUBLIC!)));
       if (mailer && env.SITE_URL) await job('email updates', () => sendNotifications(catalog, mailer, { siteUrl: new URL(env.SITE_URL!).origin }));
       if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN) {
         await job("the reviewer's advice", () => adviseSuggestions(catalog, workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID!, token: env.CLOUDFLARE_AI_TOKEN! })));
@@ -229,6 +231,7 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
     uploads: env.FILES_PUBLIC && env.FILES_PRESERVATION ? { public: r2Writer(env.FILES_PUBLIC), preservation: r2Writer(env.FILES_PRESERVATION) } : undefined,
     status: env.FILES_PUBLIC ? statusStore(env.FILES_PUBLIC) : undefined,
     transcripts: env.FILES_PUBLIC ? transcriptsStore(env.FILES_PUBLIC) : undefined,
+    kept: env.FILES_PUBLIC ? keptStore(env.FILES_PUBLIC) : undefined,
     embedder: embedderFromEnv({ CLOUDFLARE_ACCOUNT_ID: env.CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_AI_TOKEN: env.CLOUDFLARE_AI_TOKEN }),
     advisor: env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN ? workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_AI_TOKEN }) : null,
     fixJudge: env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN ? workersAiFixJudge({ accountId: env.CLOUDFLARE_ACCOUNT_ID, token: env.CLOUDFLARE_AI_TOKEN }) : null,
