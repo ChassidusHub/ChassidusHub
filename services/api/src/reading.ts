@@ -7,7 +7,7 @@ import { readId, type EntityId } from '@chassidushub/model';
  * (packages/core/src/places.ts), and translations of a unit, added and
  * fixed as Suggestions (packages/core/src/translations.ts).
  *
- *   GET    /v1/places?kind=&key=&limit=     where the signed-in person stopped lately
+ *   GET    /v1/places?kind=&key=&within=&limit=  where the signed-in person stopped lately (within: under one page)
  *   PUT    /v1/places                       keeps a place { kind, key, title, sub, href, place }
  *   DELETE /v1/places?kind=&key=            forgets one
  *   POST   /v1/units/<id>/translations      { language, credit, licence?, translationOf?, content, machine? }
@@ -43,7 +43,7 @@ export function readingRoutes(app: Hono, catalog: Catalog, signedIn: (c: Context
   app.get('/v1/places', async (c) => {
     const by = await signedIn(c);
     const limit = Number(c.req.query('limit') ?? 20);
-    const places = await listPlaces(catalog, by, { kind: kindOf(c.req.query('kind')), key: c.req.query('key') || undefined, limit: Number.isFinite(limit) ? limit : 20 });
+    const places = await listPlaces(catalog, by, { kind: kindOf(c.req.query('kind')), key: c.req.query('key') || undefined, within: c.req.query('within') || undefined, limit: Number.isFinite(limit) ? limit : 20 });
     return c.json({ places }, 200, { 'Cache-Control': 'no-store' });
   });
 

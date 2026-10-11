@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/places?within=/likkutei-sichos/12`: only the places that reopen at
+  that page of the site or under it, the latest first, so a volume's page
+  can offer "continue reading" where its reader stopped in it; the latest
+  place overall is `limit=1` (#71).
 - Search by words ranks a sicha on its lead, its name and first few hundred
   words, not on all its words (#182): a first search for a common word reads
   a few KB per sicha instead of about 80 KB, so ten times as many sichos (400)

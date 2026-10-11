@@ -1696,6 +1696,8 @@ export interface Operations {
       kind?: "read" | "listen";
       /** One thing only */
       key?: string;
+      /** Only places that reopen at this page of the site or under it (a volume, /likkutei-sichos/12): where its reader stopped in it */
+      within?: string;
       /** How many (at most 60) */
       limit?: number;
     };
@@ -3300,7 +3302,7 @@ export const OPERATIONS = {
   listItems: {"method":"GET","path":"/v1/entities","pathParams":[],"query":["type","set","shelf","official","additions-of","after","limit","cursor"],"body":null,"answer":"json","items":"items"},
   listLabels: {"method":"GET","path":"/v1/labels","pathParams":[],"query":[],"body":null,"answer":"json"},
   listLinked: {"method":"GET","path":"/v1/entities/{id}/linked","pathParams":["id"],"query":["field","type","after","limit","cursor"],"body":null,"answer":"json","items":"items"},
-  listPlaces: {"method":"GET","path":"/v1/places","pathParams":[],"query":["kind","key","limit"],"body":null,"answer":"json"},
+  listPlaces: {"method":"GET","path":"/v1/places","pathParams":[],"query":["kind","key","within","limit"],"body":null,"answer":"json"},
   listProjects: {"method":"GET","path":"/v1/projects","pathParams":[],"query":["status"],"body":null,"answer":"json"},
   listReports: {"method":"GET","path":"/v1/reports","pathParams":[],"query":["set","status"],"body":null,"answer":"json"},
   listSuggestions: {"method":"GET","path":"/v1/suggestions","pathParams":[],"query":["status","state","author","reviewer","q","about","postReview","limit","cursor"],"body":null,"answer":"json","items":"suggestions"},
