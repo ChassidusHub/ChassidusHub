@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useFetcher, useNavigate, useSearchParams } from 'react-router';
 import type { Route } from './+types/issue-new';
 import { Composer } from '../components/threads/Composer.js';
+import { ApiError } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';
 import { langFrom, type Lang } from '../lib/i18n.js';
 import { labelOf } from '../lib/labels.js';
 import { href, itemPath } from '../lib/links.js';
+import { issueAfterReport, type SignedOutReport } from '../lib/reportAnswer.js';
 import { pageMeta } from '../lib/seo.js';
 import { questionsOf } from '../lib/issueTokens.js';
 import { LABELS } from '../lib/suggestions.js';
@@ -26,7 +28,10 @@ import { Breadcrumbs, ChoiceList, Label, RelativeTime, StateIcon } from '../ui/p
  * offensive content are private; every other one is public.
  *
  * The kinds and the item are read on the server, so the page is whole
- * before script; sending it needs a signed-in reader.
+ * before script. Anyone may send one, as every page promises: signed in it
+ * opens under their name; signed out it goes through the action below as a
+ * report with no account (the API's hourly limit per address), and is shown
+ * as an issue all the same.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { api, siteUrl } = siteOf(context);
@@ -39,6 +44,20 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   ]);
   const item = entity ? { id: entity.id, path: itemPath(entity), name: labelOf(entity, lang) || entity.id } : null;
   return { lang, siteUrl, templates, item, open: open?.items ?? [] };
+}
+
+/** A report from someone not signed in: sent from the server, so the API sees who asked only as an address for its hourly limit. */
+export async function action({ request, context }: Route.ActionArgs): Promise<SignedOutReport> {
+  const { api } = siteOf(context);
+  const form = await request.formData();
+  const field = (name: string) => String(form.get(name) ?? '').trim();
+  const forwardedFor = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? undefined;
+  try {
+    const { number } = await api.report({ reason: field('type'), title: field('title') || undefined, note: field('body') || undefined, entityId: field('entityId') || undefined }, forwardedFor);
+    return { number };
+  } catch (error) {
+    return { error: error instanceof ApiError ? error.message : 'the server did not answer' };
+  }
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -58,7 +77,9 @@ const W = {
   details: { he: 'פרטים', en: 'Details' },
   send: { he: 'פתיחת הדיווח', en: 'Open the report' },
   pickKind: { he: 'בחרו קודם מה הבעיה', en: 'Pick what it is about first' },
-  signIn: { he: 'כדי לפתוח דיווח צריך להתחבר', en: 'Sign in to open a report' },
+  noAccount: { he: 'בלי חשבון: הדיווח נשלח בלי שמכם.', en: 'No account needed: it goes without your name.' },
+  signInToFollow: { he: 'התחברו כדי לקבל תשובות', en: 'Sign in to get answers' },
+  sent: { he: 'תודה! הדיווח נשלח לאחראי האוסף.', en: "Thank you! The report went to the set's keepers." },
   already: { he: 'דיווחים פתוחים על הפריט', en: 'Open reports on this item' },
   noneOpen: { he: 'אין דיווחים פתוחים על הפריט.', en: 'No open reports on this item.' },
   before: { he: 'לפני שפותחים', en: 'Before you open one' },
@@ -74,6 +95,7 @@ export default function NewIssue({ loaderData }: Route.ComponentProps) {
   const lang = useLang();
   const account = useAccount();
   const navigate = useNavigate();
+  const fetcher = useFetcher<SignedOutReport>();
   const [params, setParams] = useSearchParams();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -96,11 +118,25 @@ export default function NewIssue({ loaderData }: Route.ComponentProps) {
     setParams(next, { replace: true, preventScrollReset: true });
   };
 
+  // A signed-out report's answer: to the issue it became (a private one is thanked here), or the reason it was not sent.
+  const answer = fetcher.data;
+  const after = issueAfterReport(answer, Boolean(template?.private));
+  useEffect(() => {
+    if (answer && 'error' in answer) {
+      setError(answer.error);
+      setBusy(false);
+    } else if (typeof after === 'number') navigate(href(`/issues/${after}`, lang));
+  }, [answer, after, lang, navigate]);
+
   async function send() {
     setBusy(true);
     setError(null);
+    const entityId = item?.id ?? /rh-[0-9a-z]{6,16}/.exec(itemText.trim().toLowerCase())?.[0];
+    if (!account) {
+      void fetcher.submit({ type: type ?? '', title: title.trim(), body: body.trim(), entityId: entityId ?? '' }, { method: 'post' });
+      return;
+    }
     try {
-      const entityId = item?.id ?? /rh-[0-9a-z]{6,16}/.exec(itemText.trim().toLowerCase())?.[0];
       const issue = await threads<Issue>('issues', { body: { title: title.trim(), body: body.trim(), type, entityId } });
       navigate(href(`/issues/${issue.number}`, lang));
     } catch (e) {
@@ -193,18 +229,24 @@ export default function NewIssue({ loaderData }: Route.ComponentProps) {
                 <Icon name="lock" size={14} /> {tt(lang, 'privateType')}
               </p>
             ) : null}
-            <div className="form-actions">
-              {account === null ? (
-                <Link className="btn primary" to={href('/signin', lang, { return: back })}>
-                  <Icon name="lock" /> {w(lang, 'signIn')}
-                </Link>
-              ) : (
-                <button type="submit" className="btn primary" disabled={busy || !title.trim() || !template || !account}>
+            {after === 'thanks' ? (
+              <p className="alert positive" role="status">
+                <Icon name="check" /> {w(lang, 'sent')}
+              </p>
+            ) : (
+              <div className="form-actions">
+                <button type="submit" className="btn primary" disabled={busy || !title.trim() || !template || account === undefined}>
                   {w(lang, 'send')}
                 </button>
-              )}
-              {!template ? <span className="hint">{w(lang, 'pickKind')}</span> : null}
-            </div>
+                {!template ? (
+                  <span className="hint">{w(lang, 'pickKind')}</span>
+                ) : account === null ? (
+                  <span className="hint">
+                    {w(lang, 'noAccount')} <Link to={href('/signin', lang, { return: back })}>{w(lang, 'signInToFollow')}</Link>
+                  </span>
+                ) : null}
+              </div>
+            )}
           </section>
         </form>
         <aside className="side" aria-label={w(lang, 'before')}>
