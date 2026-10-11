@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/mafteach/names?index=&sefer=&letter=`: one letter's topics of a
+  subject index by name only, each with the `offset` that opens its page in
+  `/v1/mafteach` and how many places it has, for a list to jump from (#195).
+  A few kB where `/v1/mafteach` with every topic was some 3 kB a topic.
 - Search by words ranks a sicha on its lead, its name and first few hundred
   words, not on all its words (#182): a first search for a common word reads
   a few KB per sicha instead of about 80 KB, and the sicha that opens on the

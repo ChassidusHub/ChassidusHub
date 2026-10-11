@@ -111,4 +111,20 @@ describe('the other kept answers (#104)', () => {
     // Nothing kept (local work): no entries, and the rest of the page as always.
     expect(((await (await createApp({ catalog }).request('/v1/search/page?q=x')).json()) as { subjects: unknown[] }).subjects).toEqual([]);
   });
+
+  it("answers one letter's topic names from the kept index, without their places (#195)", async () => {
+    const index = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'מפתח בדיקה' }, slug: 'likkutei-sichos-mafteach-inyanim', authors: [], genre: 'sichos', levels: ['volume'] }, '/likkutei-sichos-mafteach-inyanim');
+    const body = { profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [
+      { id: 't1', kind: 'heading', level: 2, text: [{ text: 'מלה בדויה' }] },
+      { id: 't1.1', kind: 'paragraph', text: [{ text: '12' }, { text: '.' }, { text: ' ' }, { text: '14' }, { text: '.' }] },
+      { id: 't2', kind: 'heading', level: 2, text: [{ text: 'מלה שניה' }] },
+      { id: 't2.1', kind: 'paragraph', text: [{ text: '3' }, { text: '.' }] },
+    ] }] };
+    await add(catalog, 'steward', 'steward', 'unit', { work: index, position: [{ level: 'volume', value: '1' }], order: '01', label: { he: 'חלק א' }, body } as never, '/likkutei-sichos-mafteach-inyanim/1');
+    const res = await createApp({ catalog, kept }).request(`/v1/mafteach/names?index=/likkutei-sichos-mafteach-inyanim&letter=${encodeURIComponent('מ')}`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ letter: 'מ', names: [{ topic: 'מלה בדויה', offset: 0, places: 2, machine: false }, { topic: 'מלה שניה', offset: 1, places: 1, machine: false }] });
+    expect((await createApp({ catalog, kept }).request('/v1/mafteach/names')).status).toBe(400);
+    expect((await createApp({ catalog, kept }).request('/v1/mafteach/names?index=/nowhere')).status).toBe(404);
+  });
 });

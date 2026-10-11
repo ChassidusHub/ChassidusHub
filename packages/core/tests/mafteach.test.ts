@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { driveId, mafteach, mafteachSubjects, placesOf, subjectsNamed, type Catalog, type Json } from '@chassidushub/core';
+import { driveId, mafteach, mafteachNames, mafteachSubjects, placesOf, subjectsNamed, type Catalog, type Json } from '@chassidushub/core';
 import type { EntityId, PageText } from '@chassidushub/model';
 import { add, freshCatalog } from './helpers.js';
 
@@ -81,6 +81,18 @@ describe('mafteach', () => {
     expect(subjectsNamed(subjects!, 'אור')).toEqual([{ topic: 'אור וחושך', places: 3, volumes: 2, machine: true }]);
     // Part of a word is not the word.
     expect(subjectsNamed(subjects!, 'או')).toEqual([]);
+  });
+
+  it("lists one letter's topics by name only, each with the offset that opens it, for a list to jump from (#195)", async () => {
+    const names = await mafteachNames(catalog, ids.index!, { seferId: ids.sefer, letter: 'א' });
+    expect(names).toMatchObject({ letters: [{ letter: 'א', topics: 1 }, { letter: 'מ', topics: 1 }], letter: 'א', names: [{ topic: 'אור וחושך', offset: 0, places: 3, machine: true }] });
+    // No places, only names: the offset is the one /v1/mafteach takes.
+    expect(Object.keys(names!.names[0]!)).toEqual(['topic', 'offset', 'places', 'machine']);
+    const page = await mafteach(catalog, ids.index!, { seferId: ids.sefer, letter: 'א', offset: names!.names[0]!.offset, limit: 1 });
+    expect(page!.topics[0]!.topic).toBe('אור וחושך');
+    // A letter the index has not: its first letter, as /v1/mafteach.
+    expect((await mafteachNames(catalog, ids.index!, { letter: 'ת' }))!.letter).toBe('א');
+    expect((await mafteachNames(catalog, ids.index!, { letter: 'מ' }))!.names.map((n) => n.topic)).toEqual(['מים']);
   });
 
   it('gathers every volume under each topic, the machine-read labelled, each place linked to its sicha', async () => {
