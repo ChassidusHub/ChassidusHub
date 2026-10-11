@@ -472,6 +472,29 @@ form[role='search'] { margin-block: 8px 4px; }
 .hero h1 { font-family: var(--title); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
 .hero p { margin: 0 0 18px; color: var(--g600); font-size: 14px; }
 .hero + .tiles { margin-top: 16px; }
+/* A recording's page: the play button and the machine label under the title. */
+.rec-acts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0 8px; }
+/*
+ * A recording's words, a paragraph at a time, each with the time it is heard
+ * beside it (tap it to hear from there). The part being heard follows word by
+ * word: what was said is dark, the word being said is lit, what is still to
+ * come is lighter.
+ */
+.tr { max-width: 40em; margin-inline: auto; font-family: var(--ui); font-size: 17px; line-height: 1.85; color: var(--g700); }
+.tr .chh { margin: 30px 0 4px; padding-bottom: 6px; border-bottom: 1px solid var(--g200); }
+.tp { display: grid; grid-template-columns: 3.4em 1fr; gap: 10px; padding-block: 8px; }
+.tt {
+  align-self: start; margin-top: 0.35em; padding: 1px 4px; border-radius: 6px; direction: ltr; text-align: end;
+  font-size: 12px; line-height: 1.6; color: var(--g600); font-variant-numeric: tabular-nums;
+}
+.tt:hover { color: var(--g900); background: var(--g100); }
+.tx { margin: 0; cursor: pointer; }
+.tx:hover { color: var(--g900); }
+.tp.now .tt { color: var(--g900); font-weight: 600; }
+.tp.now .tx { color: var(--g600); }
+.tp.now .w.said, .tp.now .w.on { color: var(--g900); }
+.tp.now .w.on { background: var(--g200); border-radius: 4px; box-shadow: 0 0 0 2px var(--g200); }
+.tr .wait { font-size: 14px; color: var(--g600); padding-block: 8px; }
 /* ---------- search: the top answer, marked words, suggestions (the prototype's search screens) ---------- */
 .top-answer { display: block; border: 1px solid var(--g300); border-radius: 12px; padding: 16px; margin-top: 8px; }
 .top-answer .k { display: block; font-size: 12px; color: var(--g600); }
@@ -580,3 +603,14 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .panel .chips { margin-top: 10px; }
 .auth { max-width: 420px; margin-inline: auto; }
 .auth .lede { color: var(--g700); }
+
+/* ---------- the back room: a live change's words, before and after (thread 6) ---------- */
+.panel.live > h2 a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.panel.live > p { margin: 0 0 8px; }
+.diff { font-size: 18px; line-height: 1.7; margin: 8px 0; padding: 8px 12px; background: var(--g50); border-radius: 8px; }
+.diff del { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.diff del + ins { margin-inline-start: 0.3em; }
+.diff ins { text-decoration: none; background: var(--g200); color: var(--g900); font-weight: 600; border-radius: 3px; padding-inline: 2px; }
+.view > .seg { margin-block: 6px 14px; }
+.fixbox .was { margin: 0 0 4px; }
+.fixbox .was q { font-family: var(--torah); font-size: 17px; quotes: '„' '”'; }

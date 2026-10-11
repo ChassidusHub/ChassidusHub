@@ -612,24 +612,22 @@ export class Catalog {
    * has one part per unit.
    */
   async workOutline(work: EntityId): Promise<Array<{ value: string; label: Json | null; units: number }>> {
+    // From each unit's place (unit_place, migration 0030), never its words.
     const { rows } = await this.db.query<{ value: string; label: Json | null; units: number }>(
-      `SELECT r.data->'position'->0->>'value' AS value,
-              (array_agg(r.data->'position'->0->'label' ORDER BY r.data->>'order' COLLATE "C"))[1] AS label,
-              count(*)::int AS units
-       FROM entity_ref x JOIN entity e ON e.id = x.from_id AND e.type = 'unit' AND NOT e.deleted JOIN revision r ON r.id = e.main_rev
-       WHERE x.to_id = $1 AND x.field = 'work'
-       GROUP BY 1 ORDER BY min(r.data->>'order' COLLATE "C")`,
+      `SELECT p.part AS value, (array_agg(p.position->0->'label' ORDER BY p.ord))[1] AS label, count(*)::int AS units
+       FROM unit_place p WHERE p.work_id = $1
+       GROUP BY 1 ORDER BY min(p.ord)`,
       [work],
     );
     return rows;
   }
 
-  /** The units of one top-level part of a work (a volume), in order. */
+  /** The units of one top-level part of a work (a volume), in order: found by their places, and only they are read. */
   async workPart(work: EntityId, part: string, limit = 1000): Promise<EntityView[]> {
     const { rows } = await this.db.query<RevisionRow>(
-      `SELECT ${FACTS} FROM entity_ref x JOIN entity e ON e.id = x.from_id AND e.type = 'unit' AND NOT e.deleted JOIN revision r ON r.id = e.main_rev
-       WHERE x.to_id = $1 AND x.field = 'work' AND r.data->'position'->0->>'value' = $2
-       ORDER BY r.data->>'order' COLLATE "C" LIMIT ${Math.min(Math.max(limit, 1), 2000)}`,
+      `SELECT ${FACTS} FROM unit_place p JOIN entity e ON e.id = p.unit_id JOIN revision r ON r.id = e.main_rev
+       WHERE p.work_id = $1 AND p.part = $2
+       ORDER BY p.ord, p.unit_id LIMIT ${Math.min(Math.max(limit, 1), 2000)}`,
       [work, part],
     );
     return rows.map((r) => ({ id: r.entity_id, type: r.entity_type, path: r.path, rev: r.id, data: r.data! }));
@@ -639,17 +637,17 @@ export class Catalog {
    * The units just before and just after a unit in its work, in the order
    * the work's contents use (`order`, then id, as `children` pages them),
    * across volumes: a sicha's page's "previous" and "next" in one statement.
-   * Null at either end, and both for a unit of no work.
+   * Null at either end, and both for a unit of no work. Each side is one
+   * step along unit_place's index (migration 0030); only the two found are read.
    */
   async unitNeighbours(unit: EntityId): Promise<{ previous: EntityView | null; next: EntityView | null }> {
     const side = (dir: '<' | '>', sort: 'ASC' | 'DESC') =>
-      `(SELECT '${dir}' AS side, ${FACTS} FROM me JOIN entity_ref x ON x.to_id = me.work AND x.field = 'work'
-         JOIN entity e ON e.id = x.from_id AND e.type = 'unit' AND NOT e.deleted JOIN revision r ON r.id = e.main_rev
-        WHERE (coalesce(r.data->>'order', '') COLLATE "C", e.id COLLATE "C") ${dir} (me.ord COLLATE "C", $1::text COLLATE "C")
-        ORDER BY coalesce(r.data->>'order', '') COLLATE "C" ${sort}, e.id COLLATE "C" ${sort} LIMIT 1)`;
+      `(SELECT '${dir}' AS side, ${FACTS} FROM (
+          SELECT p.unit_id FROM me JOIN unit_place p ON p.work_id = me.work_id AND (p.ord, p.unit_id) ${dir} (me.ord, me.unit_id)
+          ORDER BY p.ord ${sort}, p.unit_id ${sort} LIMIT 1
+        ) n JOIN entity e ON e.id = n.unit_id JOIN revision r ON r.id = e.main_rev)`;
     const { rows } = await this.db.query<RevisionRow & { side: '<' | '>' }>(
-      `WITH me AS (SELECT r.data->>'work' AS work, coalesce(r.data->>'order', '') AS ord FROM entity e JOIN revision r ON r.id = e.main_rev
-                   WHERE e.id = $1 AND e.type = 'unit' AND NOT e.deleted)
+      `WITH me AS (SELECT work_id, ord, unit_id FROM unit_place WHERE unit_id = $1)
        ${side('<', 'DESC')} UNION ALL ${side('>', 'ASC')}`,
       [unit],
     );
@@ -770,11 +768,16 @@ export class Catalog {
     const where = ["e.search_tsv @@ to_tsquery('simple', $1)", 'NOT e.deleted', 'e.main_rev IS NOT NULL'];
     if (options.type) where.push(`e.type = $${params.push(options.type)}`);
     // One sefer's items alone: its many printings share its name, so a search over the whole catalog fills its limit before it reaches them all.
-    if (options.work) where.push(`r.data->>'work' = $${params.push(options.work)}`);
+    if (options.work) where.push(`EXISTS (SELECT 1 FROM entity_ref w WHERE w.from_id = e.id AND w.field = 'work' AND w.to_id = $${params.push(options.work)})`);
+    // Ranked first, by what the entity row keeps, and only the few that are shown are then read: a common word matches
+    // thousands of sichos, and carrying each one's facts through the sort unpacked all their words (seven to twenty seconds).
     const { rows } = await this.db.query<RevisionRow>(
-      `SELECT ${FACTS} FROM entity e JOIN revision r ON r.id = e.main_rev WHERE ${where.join(' AND ')}
-       ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path
-       LIMIT ${Math.min(options.limit ?? 20, 100)}`,
+      `SELECT ${FACTS} FROM (
+         SELECT e.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
+         FROM entity e JOIN revision r ON r.id = e.main_rev WHERE ${where.join(' AND ')}
+         ORDER BY n LIMIT ${Math.min(options.limit ?? 20, 100)}
+       ) hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev
+       ORDER BY hit.n`,
       params,
     );
     return rows.map((r) => ({ id: r.entity_id, type: r.entity_type, path: r.path, rev: r.id, data: r.data! }));

@@ -21,6 +21,7 @@ export const pages: { name: string; path: string }[] = [
         { name: 'A Rebbe', path: '/sets/the-rebbe' },
         { name: 'A sefer', path: '/sample-sichos' },
         { name: 'A volume', path: '/sample-sichos/12' },
+        { name: 'Back room', path: '/back' },
         { name: 'Reader', path: '/sample/1/1' },
         { name: 'Reader, machine words', path: '/sample/1/2' },
       ]),

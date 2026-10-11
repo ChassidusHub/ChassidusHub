@@ -32,4 +32,6 @@ export default [
   route('_/edit', 'routes/edit.ts'),
   // Signing in, passed on to the API's /v1/auth/* so the session cookie is this site's own (thread 6).
   route('_/auth/*', 'routes/auth.ts'),
+  // One live change in the back room: its words (GET), and keeping or undoing it as the person (POST).
+  route('_/back/:id', 'routes/back-item.ts'),
 ] satisfies RouteConfig;
