@@ -6,6 +6,7 @@ import { nameOf, pathSteps, readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
+import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
 import type { Route } from './+types/item';
 
 /** Recordings and the events they were said at belong to listening; every other item to the library. */
@@ -105,8 +106,13 @@ function titleOf(loaded: Loaded): string {
   return loaded.title;
 }
 
+/** A sicha's words are set in the Torah face, so a page that shows them fetches it with the page instead of after it has drawn. */
 export function meta({ data: loaded }: Route.MetaArgs) {
-  return [{ title: loaded ? `${titleOf(loaded)} · ChassidusHub` : 'ChassidusHub' }];
+  const words = loaded?.screen === 'reader' && loaded.reader.text.kind === 'words';
+  return [
+    { title: loaded ? `${titleOf(loaded)} · ChassidusHub` : 'ChassidusHub' },
+    ...(words ? [{ tagName: 'link', rel: 'preload', href: torahFont, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' }] : []),
+  ];
 }
 
 export default function Item({ loaderData }: Route.ComponentProps) {
