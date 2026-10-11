@@ -2,7 +2,8 @@ import { Fragment, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { libraryLevel, pathLevels } from '../lib/catalog';
 import { Icon, IconButton, Row, Rows, SearchField, SectionHead, Sheet, TopBar, useToast, type PathLevel } from '../ui';
-import type { LibraryData, Line, Printing, SetData, VolumeData, WorkData } from './load';
+import type { LibraryData, Line, SetData, VolumeData, WorkData } from './load';
+import { aboutOf, usePrintings, type Printing } from './printings';
 
 /**
  * The library's screens, as the approved prototype draws them: the library
@@ -203,11 +204,12 @@ function SeferSearch({ id, title }: { id: string; title: string }) {
 
 /** A sefer: its volumes as a grid of numbers (or a list of named parts), a search in it, its printings and additions. */
 export function WorkScreen({ data }: { data: WorkData }) {
-  const scan = useScan(data.printings);
+  const printings = usePrintings(data.api, data.id, data.printings);
+  const scan = useScan(printings);
   const subtitle = [data.author, data.parts.length > 1 ? `${data.parts.length} חלקים` : ''].filter(Boolean).join(' · ');
   return (
     <>
-      <TopBar path={pathLevels(data.levels)} end={<Corner title={data.title} printings={data.printings} />} />
+      <TopBar path={pathLevels(data.levels)} end={<Corner title={data.title} printings={printings} />} />
       <main id="content" className="view">
         <h1>{data.title}</h1>
         {subtitle && <p className="faint sm lede">{subtitle}</p>}
@@ -233,9 +235,9 @@ export function WorkScreen({ data }: { data: WorkData }) {
                 </Rows>
               )
             )}
-            {!data.parts.length && (data.printings.length ? <h2>סריקות</h2> : <p className="faint">אין כאן תוכן עדיין.</p>)}
-            {!data.parts.length && <Printings printings={data.printings} />}
-            {data.parts.length > 0 && data.printings.length > 0 && <PrintingsLink printings={data.printings} />}
+            {!data.parts.length && (printings.length ? <h2>סריקות</h2> : <p className="faint">אין כאן תוכן עדיין.</p>)}
+            {!data.parts.length && <Printings printings={printings} />}
+            {data.parts.length > 0 && printings.length > 0 && <PrintingsLink printings={printings} />}
             {data.additions.length > 0 && (
               <>
                 <SectionHead title="הוספות" />
@@ -268,16 +270,19 @@ function PrintingsLink({ printings }: { printings: Printing[] }) {
 
 /** A volume: its sichos (under the volume's own headings where it has them), then its printings' scans. */
 export function VolumeScreen({ data }: { data: VolumeData }) {
-  const scan = useScan(data.printings);
+  const printings = usePrintings(data.api, data.id, data.printings, data);
+  const scan = useScan(printings);
+  const about = printings.map((p) => aboutOf(p.title)).find(Boolean);
   let group: string | undefined;
   return (
     <>
-      <TopBar path={pathLevels(data.levels)} end={<Corner title={`${data.title} · ${data.label}`} printings={data.printings} />} />
+      <TopBar path={pathLevels(data.levels)} end={<Corner title={`${data.title} · ${data.label}`} printings={printings} />} />
       <main id="content" className="view">
         <h1>
           {data.title} · {data.label}
         </h1>
-        {data.about && <p className="faint sm lede">{data.about}</p>}
+        {/* The line is kept while the printings that name it are read, so nothing below it moves. */}
+        <p className="faint sm lede">{about ?? '\u00a0'}</p>
         {scan ? (
           <ScanView printing={scan.printing} scan={scan.scan} back={data.path} />
         ) : (
@@ -294,10 +299,10 @@ export function VolumeScreen({ data }: { data: VolumeData }) {
                 );
               })}
             </Rows>
-            {data.printings.length > 0 && (
+            {printings.length > 0 && (
               <>
                 <h2>{data.units.length ? 'הסריקה' : 'סריקות'}</h2>
-                <Printings printings={data.printings} />
+                <Printings printings={printings} />
               </>
             )}
           </>
