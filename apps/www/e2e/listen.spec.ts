@@ -13,8 +13,18 @@ test('Home shows where the reader stopped, drawn by the server', async ({ page, 
 test('a recording is one text with a heading for each part, and its path bar lists the year’s other events', async ({ page }) => {
   await page.goto('/listen/5732/rh-3dvjfkyc');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('כ׳ אב תשל״ב');
-  await expect(page.locator('.yi .chh')).not.toHaveCount(0);
-  await expect(page.locator('.yi .p').first()).toBeVisible();
+  await expect(page.locator('.tr .chh')).not.toHaveCount(0);
+  await expect(page.locator('.tr .tx').first()).toBeVisible();
   await page.getByRole('button', { name: 'כ׳ אב תשל״ב' }).click();
   await expect(page.getByRole('menuitem').or(page.getByRole('option')).or(page.locator('.mi')).first()).toBeVisible();
+});
+
+test('tapping words plays from there, and lights the paragraph and the word being said', async ({ page }) => {
+  await page.goto('/listen/5732/rh-3dvjfkyc');
+  const second = page.locator('.tp').nth(1);
+  await second.locator('.tt').click();
+  await expect(second).toHaveClass(/now/);
+  await expect(second.locator('.w.on')).toHaveCount(1);
+  // Its text is still the paragraph's text, word by word, so fixing a word finds it.
+  await expect(second.locator('.tx')).toHaveText('פסקה שניה לדוגמה, ועוד כמה מילים.');
 });
