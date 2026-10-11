@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link, useMatches } from 'react-router';
+import { Link, useLocation, useMatches } from 'react-router';
+import { signOut, useAccount } from '../lib/account';
 import { IconButton } from './Button';
 import { Icon, type IconName } from './Icon';
 import { Logo } from './Logo';
@@ -50,7 +51,11 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
   const section = useSection();
   const [theme, toggleTheme] = useTheme();
   const [account, setAccount] = useState(false);
-  const openAccount = useCallback(() => setAccount(true), []);
+  const [asked, setAsked] = useState(false);
+  const openAccount = useCallback(() => {
+    setAsked(true);
+    setAccount(true);
+  }, []);
   return (
     <AccountContext.Provider value={openAccount}>
       <div className="app">
@@ -75,7 +80,7 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
             {theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}
           </button>
-          <button type="button" className="nav" onClick={() => setAccount(true)}>
+          <button type="button" className="nav" onClick={openAccount}>
             <Icon name="user" />
             החשבון שלי
           </button>
@@ -93,12 +98,8 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
           </nav>
         </div>
         <Sheet open={account} title="החשבון שלי" onClose={() => setAccount(false)}>
-          <Link className="opt" to="/signin" onClick={() => setAccount(false)}>
-            <span className="t">כניסה</span>
-          </Link>
-          <Link className="opt" to="/me/fixes" onClick={() => setAccount(false)}>
-            <span className="t">התיקונים שלי</span>
-          </Link>
+          {/* Who is signed in is asked only once the sheet has been opened, never on every page. */}
+          {asked ? <AccountOptions close={() => setAccount(false)} /> : null}
           <button type="button" className="opt" onClick={toggleTheme}>
             <span className="t">{theme === 'dark' ? 'מצב בהיר' : 'מצב כהה'}</span>
             <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
@@ -109,6 +110,54 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
         </Sheet>
       </div>
     </AccountContext.Provider>
+  );
+}
+
+/**
+ * The account sheet's own lines: signed out, Sign in; signed in, their name,
+ * their account, their fixes and Sign out.
+ */
+function AccountOptions({ close }: { close: () => void }) {
+  const account = useAccount();
+  const location = useLocation();
+  if (account === undefined) return <div className="opt off" aria-busy="true"><span className="t">…</span></div>;
+  if (!account) {
+    const back = location.pathname === '/signin' ? '' : `?return=${encodeURIComponent(location.pathname + location.search)}`;
+    return (
+      <Link className="opt" to={`/signin${back}`} onClick={close}>
+        <span className="t">כניסה</span>
+        <Icon name="user" />
+      </Link>
+    );
+  }
+  return (
+    <>
+      <Link className="opt" to="/account" onClick={close}>
+        <span className="t">
+          {account.person.displayName}
+          {account.person.username ? (
+            <span className="faint sm">
+              {' '}
+              <bdi>@{account.person.username}</bdi>
+            </span>
+          ) : null}
+        </span>
+        <span className="r">הגדרות</span>
+      </Link>
+      <Link className="opt" to="/me/fixes" onClick={close}>
+        <span className="t">התיקונים שלי</span>
+      </Link>
+      <button
+        type="button"
+        className="opt"
+        onClick={async () => {
+          await signOut();
+          close();
+        }}
+      >
+        <span className="t">יציאה</span>
+      </button>
+    </>
   );
 }
 
