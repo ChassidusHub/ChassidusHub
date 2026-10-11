@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { EditBar, EditFields, Linked, NameField } from '../edit/Edit';
 import { Fixing } from '../fix/Fixing';
-import { pathLevels } from '../path';
+import { pathLevels } from '../lib/catalog';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';

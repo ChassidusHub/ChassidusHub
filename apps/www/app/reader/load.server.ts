@@ -1,50 +1,15 @@
-import type { ChassidusHub, ItemView, PathLevel as ApiLevel } from '@chassidushub/client';
+import type { ChassidusHub, ItemView } from '@chassidushub/client';
 import type { PageSegment } from '@chassidushub/model';
 import type { AppLoadContext } from 'react-router';
+import { nameOf } from '../lib/catalog';
 import { pdfsOf } from '../lib/pdfs';
-import type { PathStep } from '../path';
 import type { ReaderData, ReaderText } from './types';
 import { notesHtml, wordsHtml } from './words.server';
-
-/** A name in Hebrew, else in whatever language it has. */
-export const nameOf = (name: unknown): string => {
-  if (typeof name === 'string') return name;
-  const names = (name ?? {}) as Record<string, unknown>;
-  return String(names.he ?? names.en ?? Object.values(names)[0] ?? '');
-};
 
 /** A page's own names, Hebrew and English, as Edit shows them. */
 function namesOf(label: unknown): { he: string; en: string } {
   const names = (typeof label === 'string' ? { he: label } : (label ?? {})) as Record<string, unknown>;
   return { he: typeof names.he === 'string' ? names.he : '', en: typeof names.en === 'string' ? names.en : '' };
-}
-
-/** What the menu at each level of the path is called. */
-function titleOf(level: ApiLevel, above: string, first: boolean): string {
-  if (level.kind === 'set') return first ? 'רבותינו נשיאינו' : `המדפים של ${above}`;
-  if (level.kind === 'work') return `הספרים ב${above}`;
-  if (level.kind === 'part') return `חלקי ${above}`;
-  return `ב${above}`;
-}
-
-/** The API's path bar, as the page's path bar draws it: names in Hebrew, the page's own choice marked. */
-export function pathSteps(bar: ApiLevel[]): PathStep[] {
-  let above = '';
-  return bar.map((level, at) => {
-    const chosen = level.chosen.path ?? level.chosen.id ?? '';
-    const step: PathStep = {
-      key: `${level.kind}-${at}`,
-      title: titleOf(level, above, at === 0),
-      label: nameOf(level.chosen.name),
-      choices: level.choices.map((choice) => ({
-        path: choice.path,
-        label: nameOf(choice.name),
-        ...((choice.path ?? choice.id) === chosen ? { current: true } : {}),
-      })),
-    };
-    above = step.label;
-    return step;
-  });
 }
 
 const languages: Record<string, string> = { he: 'עברית', en: 'אנגלית', yi: 'אידיש', ru: 'רוסית', fr: 'צרפתית', es: 'ספרדית' };
@@ -57,7 +22,6 @@ const languages: Record<string, string> = { he: 'עברית', en: 'אנגלית'
 export async function readerData(view: ItemView, context: AppLoadContext, origin: string): Promise<ReaderData> {
   const title = nameOf((view.item.data as { label?: unknown }).label) || nameOf(view.pathBar.at(-1)?.chosen.name);
   const path = view.item.path ?? `/${view.item.id}`;
-  const steps = pathSteps(view.pathBar);
   // The sefer and its parts, between the shelves above and the page itself.
   const fromWork = view.pathBar.findIndex((level) => level.kind === 'work');
   const middle = (fromWork >= 0 ? view.pathBar.slice(fromWork, -1) : []).map((level) => nameOf(level.chosen.name));
@@ -68,7 +32,7 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     path,
     title,
     sub: middle.join(' · '),
-    pathBar: steps,
+    pathBar: view.pathBar,
     previous: neighbour(view.previous),
     next: neighbour(view.next),
     text,

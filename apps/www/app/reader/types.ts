@@ -1,5 +1,5 @@
+import type { PathLevel as ApiLevel } from '@chassidushub/client';
 import type { Pdf } from '../lib/pdfs';
-import type { PathStep } from '../path';
 
 /** A neighbour in the work's order: the sicha before or after this one. */
 export interface Neighbour {
@@ -39,7 +39,8 @@ export interface ReaderData {
   title: string;
   /** Under the title: the sefer and the volume ("לקוטי שיחות · חלק י״ב"). */
   sub: string;
-  pathBar: PathStep[];
+  /** The API's path to the page, drawn as the Library draws it (lib/catalog.ts). */
+  pathBar: ApiLevel[];
   previous: Neighbour | null;
   next: Neighbour | null;
   text: ReaderText;
