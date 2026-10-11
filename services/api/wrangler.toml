@@ -107,6 +107,8 @@ enabled = true
 [vars]
 # The site people sign in on: passkeys are bound to its domain, and changes are taken only from its pages.
 SITE_URL = "https://chassidushub.org"
+# The new site's beta signs in too, with the same passkeys, until the switch-over gives it chassidushub.org.
+ALSO_SITE_URLS = "https://new.chassidushub.org"
 RATE_LIMIT_ADDRESS_PER_MINUTE = "300"
 # The status page counts today's queries through this Hyperdrive config (keep it equal to [[hyperdrive]]'s id),
 # against its daily allowance: 100000 on the free plan; "0" on a plan without one. Counting needs the secret

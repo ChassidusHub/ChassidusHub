@@ -581,3 +581,25 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .linked { display: flex; align-items: center; gap: 10px; border: 1px solid var(--g300); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-top: 8px; }
 .linked .t { flex: 1; min-width: 0; }
 .linked a { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; min-height: 40px; }
+
+/* ---------- forms and messages: signing in and the account (thread 6) ---------- */
+.field .hint { font-size: 12px; color: var(--g600); }
+.field input[aria-invalid='true'] { border-color: var(--g900); }
+.panel { border: 1px solid var(--g300); border-radius: 10px; padding: 4px 16px 16px; margin-block: 14px; }
+.panel > h2 { font-size: 16px; margin: 14px 0 4px; }
+.panel > p { margin: 0 0 10px; color: var(--g700); }
+.btn.block { display: flex; width: 100%; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.say {
+  display: flex; align-items: flex-start; gap: 10px; margin-block: 10px; padding: 10px 12px;
+  border-radius: 8px; background: var(--g100); color: var(--g900); font-size: 14px;
+  border-inline-start: 3px solid var(--g400);
+}
+.say.bad { border-inline-start-color: var(--g900); }
+.say svg.i { margin-top: 2px; }
+.or { display: flex; align-items: center; gap: 10px; margin: 16px 0 6px; font-size: 13px; color: var(--g600); }
+.or::before, .or::after { content: ''; flex: 1; border-top: 1px solid var(--g300); }
+.panel .chips, .panel .seg { margin-top: 4px; }
+.panel .chips { margin-top: 10px; }
+.auth { max-width: 420px; margin-inline: auto; }
+.auth .lede { color: var(--g700); }

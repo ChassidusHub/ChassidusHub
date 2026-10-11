@@ -15,6 +15,7 @@ export default [
     route('listen/:year/:event', 'routes/recording.tsx'),
     route('search', 'routes/search.tsx'),
     route('signin', 'routes/signin.tsx'),
+    route('account', 'routes/account.tsx'),
     route('me/fixes', 'routes/fixes.tsx'),
     route('about', 'routes/about.tsx'),
     route('back', 'routes/backroom.tsx'),
@@ -29,4 +30,6 @@ export default [
   route('_/fix/:changeset/undo', 'routes/fix-undo.ts'),
   // One field of a page saved from Edit, as the person.
   route('_/edit', 'routes/edit.ts'),
+  // Signing in, passed on to the API's /v1/auth/* so the session cookie is this site's own (thread 6).
+  route('_/auth/*', 'routes/auth.ts'),
 ] satisfies RouteConfig;

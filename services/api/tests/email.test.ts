@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
 import { linkGoogle, createPerson, sendNotifications, type EmailMessage, type Mailer } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
+import { authFor } from '../src/auth.js';
 import { cloudflareMailer, emailAddress, resendMailer } from '../src/mail.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
@@ -40,6 +41,18 @@ async function signUp(email: string, name: string) {
 }
 
 describe('signing in by email link', () => {
+  it('sends the link to the site address it was asked from, when that is one of the site\'s own', async () => {
+    const BETA = 'https://new.chassidushub.test';
+    const two = createApp({ catalog: fresh.catalog, mailer, auth: authFor(SITE, undefined, undefined, [BETA, 'https://elsewhere.test']) });
+    const ask = (origin: string) => two.request(`${SITE}/v1/auth/email/start`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify({ email: 'a@b.org' }) });
+    expect((await ask(BETA)).status).toBe(200);
+    expect(outbox.at(-1)!.text).toContain(`${BETA}/signin?email-token=`);
+    expect((await ask(SITE)).status).toBe(200);
+    expect(outbox.at(-1)!.text).toContain(`${SITE}/signin?email-token=`);
+    // An address on another domain is never one of the site's own.
+    expect((await ask('https://elsewhere.test')).status).toBe(403);
+  });
+
   it('is hidden while the site cannot send email', async () => {
     const off = createApp({ catalog: fresh.catalog, auth: { rpId: 'chassidushub.test', rpName: 'ChassidusHub', origins: [SITE] } });
     const me = await off.request(`${SITE}/v1/auth/me`);

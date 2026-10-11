@@ -72,6 +72,8 @@ interface Env extends LockEnv {
   FILES_BASE_URL?: string;
   /** The site's address (`https://chassidushub.org`): passkeys are bound to its domain, and sign-in happens on its pages. */
   SITE_URL?: string;
+  /** More of the site's own addresses under SITE_URL's domain where people sign in, comma-separated (the new site's beta). */
+  ALSO_SITE_URLS?: string;
   /** Google sign-in's client (secrets); without both, sign-in is by passkey alone. */
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
@@ -243,7 +245,7 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
       searchPerMinute: Number(env.RATE_LIMIT_SEARCH_PER_MINUTE) || DEFAULT_SEARCH_PER_MINUTE,
     },
     drive: { limiter: env.RATE_LIMIT_DRIVE, ...(Number(env.DRIVE_MAX_MB) > 0 ? { maxBytes: Number(env.DRIVE_MAX_MB) * 1024 * 1024 } : {}) },
-    auth: env.SITE_URL ? authFor(env.SITE_URL, { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }) : undefined,
+    auth: env.SITE_URL ? authFor(env.SITE_URL, { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }, undefined, list(env.ALSO_SITE_URLS)) : undefined,
     mailer: mailerOf(env),
     appReleases,
     readerCatalog: env.READER_CATALOG ? (path) => env.READER_CATALOG!.fetch(new Request(`https://reader-catalog${path}`)) : undefined,
