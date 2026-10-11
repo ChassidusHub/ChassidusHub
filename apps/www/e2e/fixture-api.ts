@@ -181,7 +181,8 @@ const liveOne = (cookie: string) => ({
   changeset: { id: 301, title: 'A fix to the words', status: 'merged', post_review: 'pending' },
   entries: [{ entityId: 'rh-aaaaaab1', type: 'unit', before: { path: '/sample/1/1' }, after: { path: '/sample/1/1' }, changes: [{ path: '/body/versions/he/segments/p2/text', before: [{ text: 'פסקה שניה לדוגמה, עם הערה נוספת' }], after: [{ text: 'פסקה שנייה לדוגמה, עם הערה נוספת' }] }], conflicts: [] }],
   total: 1,
-  mayApprove: signedIn(cookie) ? { ok: true } : { ok: false, reason: 'sign in to review' },
+  mayApprove: signedIn(cookie),
+  mayApproveReason: signedIn(cookie) ? null : 'sign in to review',
 });
 const toCheck = {
   transcripts: [{ event: 'rh-3dvjfkyc', path: '/listen/5732/rh-3dvjfkyc', title: { he: 'התוועדות לדוגמה' }, date: null, paragraphs: 40, checked: 3, made: '2026-10-10T00:00:00Z' }],
@@ -190,9 +191,64 @@ const toCheck = {
   totals: { transcripts: 1, paragraphs: 40, scans: 0, pages: 0, texts: 1, segments: 2 },
 };
 
+/** Takedown requests asked for (GET /_takedowns), checked as core's takedown.ts checks them. */
+const takedowns: unknown[] = [];
+function takedown(input: Record<string, string>, from: string | string[] | undefined): [number, unknown] {
+  if (!input.name) return [400, { error: 'invalid', message: 'your name, up to 200 characters' }];
+  if ((input.statement ?? '').length < 10) return [400, { error: 'invalid', message: 'say in a few words why (10 to 4000 characters)' }];
+  takedowns.push({ ...input, from: from ?? null });
+  return [201, { id: 40 + takedowns.length, answerWithinDays: 14 }];
+}
+
+/** The sample reader's API keys and connected app (GET /_tokens), and the one request to connect (oar-sample), answered once. */
+let tokens: Record<string, unknown>[] = [];
+const tokensReset = () =>
+  (tokens = [{ id: 'oac-sample', kind: 'oauth', name: 'Claude', prefix: 'cho_', scopes: ['read', 'write'], createdAt: '2026-10-01T00:00:00Z', lastUsedAt: null, expiresAt: null, revokedAt: null, client: { id: 'https://claude.ai/oauth/claude-code-client-metadata', name: 'Claude', uri: null, host: 'claude.ai' } }]);
+tokensReset();
+let consentAnswered: unknown = null;
+function tokensAnswer(method: string, path: string, input: Record<string, unknown>, cookie: string): [number, unknown] {
+  if (!signedIn(cookie)) return [401, { error: 'unauthorized', message: 'sign in first' }];
+  if (method === 'GET') return [200, { tokens }];
+  if (method === 'POST') {
+    if (typeof input.name !== 'string' || !input.name) return [400, { error: 'invalid', message: 'give the token a name of 1 to 80 characters (what uses it)' }];
+    const id = `tok-${tokens.length}`;
+    tokens.unshift({ id, kind: 'personal', name: input.name, prefix: 'chp_abcd', scopes: input.scopes, createdAt: '2026-10-11T00:00:00Z', lastUsedAt: null, expiresAt: null, revokedAt: null });
+    return [201, { token: 'chp_abcdSECRETsample', id }];
+  }
+  if (method === 'DELETE') return (tokens = tokens.filter((token) => `/${token.id}` !== path)), [200, { ok: true }];
+  return [404, { error: 'not-found', message: 'not found' }];
+}
+const consentRequest = { id: 'oar-sample', client: { id: 'https://claude.ai/oauth/claude-code-client-metadata', name: 'Claude', uri: null, kind: 'metadata', host: 'claude.ai' }, redirectUri: 'https://claude.ai/api/mcp/auth_callback', redirectHost: 'claude.ai', loopback: false, scopes: ['read', 'write'], resource: 'https://api.chassidushub.org/mcp', expiresAt: '2026-10-11T12:00:00Z' };
+
 createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://local');
   res.setHeader('Content-Type', 'application/json');
+  const tokensPath = /^\/v1\/tokens(\/[\w-]+)?$/.exec(url.pathname);
+  const consent = url.pathname === '/v1/oauth/requests/oar-sample';
+  if (tokensPath || consent) {
+    let raw = '';
+    req.on('data', (chunk) => (raw += chunk));
+    req.on('end', () => {
+      const cookie = req.headers.cookie ?? '';
+      const input = JSON.parse(raw || '{}');
+      const [status, answer]: [number, unknown] = tokensPath
+        ? tokensAnswer(req.method ?? 'GET', tokensPath[1] ?? '', input, cookie)
+        : !signedIn(cookie)
+          ? [401, { error: 'unauthorized', message: 'sign in first' }]
+          : consentAnswered
+            ? [404, { error: 'not-found', message: 'this request to connect is over' }]
+            : req.method === 'POST'
+              ? ((consentAnswered = input), [200, { redirect: `http://localhost:3002/_callback?approve=${input.approve}` }])
+              : [200, consentRequest];
+      res.statusCode = status;
+      res.end(JSON.stringify(answer));
+    });
+    return;
+  }
+  if (url.pathname === '/_tokens') return res.end(JSON.stringify(tokens));
+  if (url.pathname === '/_tokens/reset') return (tokensReset(), (consentAnswered = null), res.end('{}'));
+  if (url.pathname === '/_consent') return res.end(JSON.stringify(consentAnswered));
+  if (url.pathname === '/_callback') return res.end(JSON.stringify({ back: true }));
   const authPath = /^\/v1\/auth\/([a-z/-]+)$/.exec(url.pathname)?.[1];
   if (authPath) {
     let raw = '';
@@ -236,6 +292,8 @@ createServer((req, res) => {
           ? fix(JSON.parse(raw || '{}'), cookie)
           : url.pathname === '/v1/organize'
             ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { suggestion: { id: 200 + edits.length, status: 'open', title: 'edit' }, merged: false, mayApprove: false, preview: {} }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
+          : url.pathname === '/v1/takedowns'
+            ? takedown(JSON.parse(raw || '{}'), req.headers['x-forwarded-for'])
           : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
             ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
             : [404, { error: 'not-found', message: 'not found' }];
@@ -249,6 +307,7 @@ createServer((req, res) => {
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
   if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
   if (url.pathname === '/_mails') return res.end(JSON.stringify(mails));
+  if (url.pathname === '/_takedowns') return res.end(JSON.stringify(takedowns));
   const searched = searchAnswer(url);
   if (searched) {
     res.statusCode = searched[0];

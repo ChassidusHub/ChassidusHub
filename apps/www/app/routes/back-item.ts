@@ -26,10 +26,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   try {
     const view = (await (context.visitor ?? context.api).getSuggestion({ id, brief: '1', limit: 5 })) as {
       entries?: { entityId: string; changes?: FieldChange[]; after?: { path?: string } | null; before?: { path?: string } | null }[];
-      mayApprove?: { ok: boolean };
+      /** Whether the viewer may decide it: true or false, as GET /v1/suggestions/:id answers. */
+      mayApprove?: boolean;
     };
     const items = (view.entries ?? []).map((entry) => ({ id: entry.entityId, path: entry.after?.path ?? entry.before?.path ?? null, words: wordsOf(entry.changes ?? []) }));
-    return answer({ ok: true, items, may: Boolean(view.mayApprove?.ok) });
+    return answer({ ok: true, items, may: view.mayApprove === true });
   } catch (error) {
     const status = (error as { status?: number } | null)?.status;
     if (status === 404) return answer({ ok: false, why: 'refused' }, 404);

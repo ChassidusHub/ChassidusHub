@@ -124,6 +124,8 @@ function LiveCard({ row, who }: { row: LiveRow; who?: People[string] }) {
   }
 
   const when = row.submitted_at ?? row.created_at;
+  // Pressed only once the words have come and say this person may decide; if they did not come, the API still refuses anyone who may not.
+  const mayDecide = !busy && change !== null && (change === 'failed' || change.may);
   const first = change && change !== 'failed' ? change.items[0] : undefined;
   return (
     <article className="panel live" aria-busy={change === null}>
@@ -145,10 +147,10 @@ function LiveCard({ row, who }: { row: LiveRow; who?: People[string] }) {
           {decided && !decided.ok && <Say tone="bad">{DECIDE_SAID[decided.why]}</Say>}
           {change && change !== 'failed' && !change.may && !decided && <p className="faint sm">רק שומרי הספר הזה יכולים להשאיר או לבטל.</p>}
           <div className="btns">
-            <Button small icon="check" onClick={() => decide('approve')} disabled={busy || (change !== null && change !== 'failed' && !change.may)}>
+            <Button small icon="check" onClick={() => decide('approve')} disabled={!mayDecide}>
               להשאיר
             </Button>
-            <Button small look="outline" onClick={() => decide('revert')} disabled={busy || (change !== null && change !== 'failed' && !change.may)}>
+            <Button small look="outline" onClick={() => decide('revert')} disabled={!mayDecide}>
               לבטל
             </Button>
           </div>
