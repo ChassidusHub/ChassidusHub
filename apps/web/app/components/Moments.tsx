@@ -30,6 +30,8 @@ export function momentHref(moment: Moment, refs: Record<string, Entity>, lang: L
   if (moment.kind === 'scan-line') return `${href(`/text/${moment.scan}`, lang, { page: String(moment.page), line: moment.line.id })}#line-${moment.line.id}`;
   const event = moment.event ? refs[moment.event] : undefined;
   if (moment.recording && event) return `${href(itemPath(event), lang, { at: moment.id })}#p-${moment.id}`;
+  // A sefer's own words carry their page's path and name, so the item need not be read for them.
+  if (moment.segment && moment.unit) return `${href(moment.path ?? `/${moment.unit}`, lang)}#${moment.segment}`;
   const unit = moment.unit ? refs[moment.unit] : undefined;
   if (unit) return `${href(itemPath(unit), lang)}#${moment.id}`;
   return `${href(`/${moment.text}`, lang)}#${moment.id}`;
@@ -37,7 +39,7 @@ export function momentHref(moment: Moment, refs: Record<string, Entity>, lang: L
 
 /** The ids a list of moments names, whose names it shows. */
 export const momentRefs = (moments: readonly Moment[]): string[] =>
-  moments.flatMap((m) => (m.kind === 'scan-line' ? [m.publication ?? m.scan] : [m.event, m.unit, m.recording].filter((x): x is string => Boolean(x))));
+  moments.flatMap((m) => (m.kind === 'scan-line' ? [m.publication ?? m.scan] : [m.event, m.segment ? null : m.unit, m.recording].filter((x): x is string => Boolean(x))));
 
 function where(moment: Moment, refs: Record<string, Entity>, lang: Lang): string {
   if (moment.kind === 'scan-line') {
@@ -45,7 +47,7 @@ function where(moment: Moment, refs: Record<string, Entity>, lang: Lang): string
     return `${publication ? labelOf(publication, lang) : moment.scan} · ${tn(lang, 'onScanPage')} ${moment.page}`;
   }
   const owner = (moment.event && refs[moment.event]) || (moment.unit && refs[moment.unit]) || null;
-  const name = owner ? labelOf(owner, lang) : tn(lang, moment.textKind === 'transcript' ? 'transcriptOf' : 'textOf');
+  const name = owner ? labelOf(owner, lang) : moment.name && moment.unit ? labelOf({ type: 'unit', id: moment.unit, data: { label: moment.name } }, lang) : tn(lang, moment.textKind === 'transcript' ? 'transcriptOf' : 'textOf');
   const recording = moment.recording ? refs[moment.recording] : undefined;
   return [name, recording ? labelOf(recording, lang) : null, moment.startMs !== null ? `${tn(lang, 'heardAt')}${clockOf(moment.startMs)}` : null].filter(Boolean).join(' · ');
 }
