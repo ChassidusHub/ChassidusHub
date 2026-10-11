@@ -129,3 +129,33 @@ test('a transcript\'s words are fixed the same way, and Undo takes them back', a
   await page.getByRole('status').getByRole('button', { name: 'בטל' }).click();
   await expect(page.locator('#w-p2')).toHaveText('פסקה שניה לדוגמה, ועוד כמה מילים.');
 });
+
+test('a double-clicked word that a footnote mark follows can still be fixed, and the sheet shows what it replaces', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  // "והערה" is written right before the mark "1": a double-click selects "והערה1".
+  await select(page, '#s-p1', 'והערה');
+  await page.evaluate(() => {
+    const range = getSelection()!.getRangeAt(0);
+    range.setEnd(document.querySelector('#s-p1 a.nm')!.firstChild!, 1);
+  });
+  const bar = page.getByRole('toolbar', { name: 'המילים שסומנו' });
+  await bar.getByRole('button', { name: 'תקן' }).click();
+  const sheet = page.getByRole('dialog', { name: 'תיקון' });
+  await expect(sheet.locator('.was q')).toHaveText('והערה');
+  await expect(sheet.getByLabel('המילים הנכונות')).toHaveValue('והערה');
+});
+
+test('signed out, nothing is sent to the API', async ({ page }) => {
+  const before = ((await (await page.request.get('http://localhost:3002/_fixes')).json()) as unknown[]).length;
+  await page.goto('/sample/1/2');
+  await page.waitForLoadState('networkidle');
+  await select(page, '#s-p1', 'מכונה');
+  await page.getByRole('button', { name: 'תקן' }).click();
+  const sheet = page.getByRole('dialog', { name: 'תיקון' });
+  await sheet.getByLabel('המילים הנכונות').fill('המכונה');
+  await sheet.getByRole('button', { name: 'שמירה' }).click();
+  await expect(sheet.getByRole('alert')).toContainText('צריך להיכנס');
+  expect(((await (await page.request.get('http://localhost:3002/_fixes')).json()) as unknown[]).length).toBe(before);
+});
