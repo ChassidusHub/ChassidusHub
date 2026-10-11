@@ -340,3 +340,46 @@ svg.i.filled { fill: currentColor; stroke: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }
+
+/* ---------- the app shell: phone = top bar, one column, docked player, bottom bar;
+   desktop = side rail (at the start, the right), centred column, player bar at the foot ---------- */
+.app { display: flex; min-height: 100%; }
+.rail { display: none; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 100%; }
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; height: 52px;
+  display: flex; align-items: center; gap: 4px; padding-inline: 8px; background: var(--g0); transition: transform 0.2s;
+}
+.top.scrolled { box-shadow: 0 1px 0 var(--g300); }
+.top.hide { transform: translateY(-110%); }
+.top .homelogo { padding-inline: 8px; }
+.top .mid { flex: 1; min-width: 0; text-align: center; line-height: 1.2; }
+.top .mid b { display: block; font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top .mid small { color: var(--g600); font-size: 12px; }
+.dock { position: fixed; inset-inline: 0; bottom: 0; z-index: 40; background: var(--g0); }
+.tabs { display: flex; border-top: 1px solid var(--g300); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.tabs a {
+  flex: 1; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 11px; color: var(--g600);
+}
+.tabs a[aria-current='page'] { color: var(--g900); font-weight: 600; }
+.nav {
+  width: 100%; height: 36px; display: flex; align-items: center; gap: 10px; padding-inline: 10px;
+  border-radius: 8px; color: var(--g700); font-size: 14px; text-align: start;
+}
+.nav:hover { background: var(--g100); }
+.nav[aria-current='page'] { background: var(--g200); color: var(--g900); font-weight: 500; }
+.nav svg.i { width: 18px; height: 18px; }
+.skip { position: absolute; inset-inline-start: 8px; top: -60px; z-index: 100; padding: 8px 14px; border-radius: 8px; background: var(--g900); color: var(--g0); }
+.skip:focus { top: 8px; }
+@media (min-width: 900px) {
+  .rail {
+    position: sticky; top: 0; height: 100vh; width: var(--rail); flex: none;
+    display: flex; flex-direction: column; gap: 2px; padding: 14px 12px; background: var(--g50);
+  }
+  .rail .logo { padding: 6px 10px 16px; }
+  .rail .sp { flex: 1; }
+  .tabs { display: none; }
+  .dock { inset-inline-start: var(--rail); }
+  .top .homelogo { display: none; }
+}
