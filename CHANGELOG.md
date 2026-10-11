@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search's moments read a third less (#214): the sichos whose opening has
+  the words are looked up one by one by id instead of joined over every
+  sicha, and only a paragraph's revision is read (to say whether a machine
+  wrote it unchecked), never a page's or a sicha's, which hold all their
+  words.
 - A sefer in several sets has its own place in each (RFC 0002, #78):
   `orderIn` keeps its place by set, and ordering one set leaves the others
   as they were. Organize writes it only for an item in more than one set; a
