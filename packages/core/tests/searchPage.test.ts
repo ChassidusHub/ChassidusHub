@@ -64,7 +64,15 @@ describe('the search screen in one read', () => {
 
     const sefer = (await searchPage(catalog, 'ספר המאמרים')).works[0];
     expect(sefer).toMatchObject({ id: work, type: 'work', kind: 'sefer', title: 'ספר המאמרים לדוגמה', sub: 'הרבי', path: '/maamarim' });
+    const sql: string[] = [];
+    const query = catalog.db.query.bind(catalog.db);
+    catalog.db.query = ((q: string, params?: unknown[]) => (sql.push(q), query(q, params))) as typeof catalog.db.query;
     expect((await searchPage(catalog, 'יו״ד שבט')).events[0]).toMatchObject({ id: event, kind: 'farbrengen', listen: true });
+    catalog.db.query = query;
+    // Ranking by name reads only a sefer's or shelf's revision, and a farbrengen's recordings come from its links (#182).
+    const named = sql.find((q) => q.includes('WITH named'))!;
+    expect(named).toContain(`WHERE r.id = e.main_rev AND e.type IN ('work', 'set') OFFSET 0) r ON TRUE`);
+    expect(named).not.toContain("g.data->>'event'");
   });
 
   it('a year puts its words first, then the rest; a date alone is that day, its farbrengen first, in one statement', async () => {
