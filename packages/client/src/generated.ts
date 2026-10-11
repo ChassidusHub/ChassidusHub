@@ -110,6 +110,64 @@ export type Item = {
   recordings?: number;
 };
 
+export type ItemView = {
+  item: Item;
+  /** Set when the path asked was an old one: the item's path now */
+  movedTo?: string;
+  pathBar: Array<PathLevel>;
+  previous: {
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    id: string;
+    path: string | null;
+    name: Record<string, unknown> | null;
+  } | null;
+  next: {
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    id: string;
+    path: string | null;
+    name: Record<string, unknown> | null;
+  } | null;
+  text: ShownText | null;
+};
+
+export type ShownText = {
+  kind: "words" | "pages" | "withheld";
+  from?: "body" | "text";
+  /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+  text?: string;
+  /** words: the version shown (a body's version id, or the text's id) */
+  version?: string;
+  language?: string;
+  /** How the words are drawn (sichos-kodesh, sefaria, chabad-library, plain...) */
+  profile?: string;
+  title?: string;
+  credit?: string;
+  licence?: string;
+  /** Where the words are read at their source */
+  url?: string;
+  segments?: Array<Record<string, unknown>>;
+  notes?: Array<Record<string, unknown>>;
+  machine?: "none" | "some" | "all";
+  versions?: Array<{
+    version: string;
+    from: "body" | "text";
+    language: string;
+    title?: string;
+  }>;
+  /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+  scan?: string;
+  /** pages: the scan's file, served at /v1/files/{sha256} */
+  file?: string;
+  /** pages: the first PDF page */
+  firstPage?: number;
+  /** pages: the last PDF page */
+  lastPage?: number;
+  /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+  publication?: string;
+  /** withheld: why */
+  reason?: string;
+};
+
 export type PathChoice = {
   /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
   id?: string;
@@ -1410,6 +1468,17 @@ export interface Operations {
     output: {
       talk: Array<Comment>;
     };
+  };
+  /** One page of the new site in one read: an item's facts, its path bar, the units before and after it, and the best words there are for it */
+  itemView: {
+    input: {
+      path?: string;
+      /** Or the item's id */
+      id?: string;
+      /** The version wanted (he, en...), when there are several */
+      language?: string;
+    };
+    output: ItemView;
   };
   /** What points at an item, by type and field, with how many of each */
   linkedCounts: {
@@ -3050,6 +3119,7 @@ export const OPERATIONS = {
   itemHistory: {"method":"GET","path":"/v1/entities/{id}/history","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   itemRelations: {"method":"GET","path":"/v1/entities/{id}/relations","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   itemTalk: {"method":"GET","path":"/v1/entities/{id}/talk","pathParams":["id"],"query":[],"body":null,"answer":"json"},
+  itemView: {"method":"GET","path":"/v1/view","pathParams":[],"query":["path","id","language"],"body":null,"answer":"json"},
   linkedCounts: {"method":"GET","path":"/v1/entities/{id}/linked/counts","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   linkedOfEach: {"method":"GET","path":"/v1/entities/batch/linked","pathParams":[],"query":["ids","field","type","limit"],"body":null,"answer":"json"},
   listChildren: {"method":"GET","path":"/v1/entities/{id}/children","pathParams":["id"],"query":["field","type","after","limit","cursor"],"body":null,"answer":"json","items":"items"},
@@ -3555,6 +3625,11 @@ export abstract class GeneratedMethods {
   /** An item's talk page: the conversation about it (GET /v1/entities/{id}/talk) */
   itemTalk(input: Operations['itemTalk']['input']): Promise<Operations['itemTalk']['output']> {
     return this.call('itemTalk', input ?? {} as Operations['itemTalk']['input']);
+  }
+
+  /** One page of the new site in one read: an item's facts, its path bar, the units before and after it, and the best words there are for it (GET /v1/view) */
+  itemView(input?: Operations['itemView']['input']): Promise<Operations['itemView']['output']> {
+    return this.call('itemView', input ?? {} as Operations['itemView']['input']);
   }
 
   /** What points at an item, by type and field, with how many of each (GET /v1/entities/{id}/linked/counts) */

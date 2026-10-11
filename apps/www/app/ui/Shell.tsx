@@ -24,13 +24,16 @@ const AccountContext = createContext<() => void>(() => {});
 
 /**
  * Which place a page belongs to: a route says so with `handle: { section }`
- * (a sicha belongs to the library, a recording to listening); the deepest
+ * (a sicha belongs to the library, a recording to listening), or with a
+ * function of its loader's data when that depends on the item; the deepest
  * route that says wins.
  */
 function useSection(): Section | undefined {
   const matches = useMatches();
   for (let at = matches.length - 1; at >= 0; at--) {
-    const section = (matches[at]?.handle as { section?: Section } | undefined)?.section;
+    const match = matches[at]!;
+    const section = (match.handle as { section?: Section | ((data: never) => Section) } | undefined)?.section;
+    if (typeof section === 'function') return section(match.loaderData as never);
     if (section) return section;
   }
   return undefined;

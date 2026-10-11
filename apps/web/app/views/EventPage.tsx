@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { dateKeyToGregorian, dateKeyToHDate, monthByToken } from '@chassidushub/hebrew';
 import type { LocalName } from '@chassidushub/model';
@@ -758,10 +758,16 @@ export function EventPage({ entity, view, lang }: { entity: Entity; view: ItemVi
  */
 function Video({ id, lang }: { id: string; lang: Lang }) {
   const [playing, setPlaying] = useState(false);
+  const frame = useRef<HTMLIFrameElement>(null);
+  // The still picture had the focus; once the player takes its place, give
+  // the focus to the player so a keyboard reader stays where they were.
+  useEffect(() => {
+    if (playing) frame.current?.focus();
+  }, [playing]);
   return (
     <div className="video-embed">
       {playing ? (
-        <iframe src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1`} title="YouTube" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerPolicy="strict-origin-when-cross-origin" />
+        <iframe ref={frame} src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1`} title="YouTube" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerPolicy="strict-origin-when-cross-origin" />
       ) : (
         <a
           className="video-still"

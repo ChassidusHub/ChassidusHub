@@ -21,10 +21,17 @@ any time. `@chassidushub/client` carries the API's version.
   level, none is marked checked. Anything else is a suggestion, with the
   reason. `LIVE_FIXES=off` turns going live
   off.
+- `GET /v1/view?path=…` (or `?id=`): one page of the new site in one read.
+  It returns the item's facts, its path bar, the units before and after
+  it, and the best words there are for it. Those are its own words, else
+  a text of it, else the PDF pages of a scan it is printed on, else why
+  they are held back. Machine words are marked: `machine` is none, some
+  or all. It takes six database statements at most.
 - A farbrengen's video shows as its still picture with a play button, and
   YouTube's player (about 1 MB) is fetched only when someone taps it, so
   the page's own recordings and words come first on a slow line. Without
-  script the picture links to the video on YouTube.
+  script the picture links to the video on YouTube. Opened from the
+  keyboard, the player takes the focus, so the reader keeps their place.
 - `GET /v1/entities/{id}/path-bar`: an item's whole path for the new site's
   path bar, from the top of the tree down to the item (the Rebbe, his
   shelf, the sefer, the volume, the sicha). Each level lists the other

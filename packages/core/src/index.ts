@@ -273,3 +273,4 @@ export { fillShaars, shaarFile, suggestShaar, type ShaarFile, type ShaarInput } 
 export { driveId, mafteach, placesOf, type Mafteach, type MafteachPlace, type MafteachTopic, type MafteachVolume } from './mafteach.js';
 export { FIX_CHECK_MS, sendFix, shapeOf, wordsChanged, type FixInput, type FixJudge, type FixResult } from './fix.js';
 export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
+export { itemView, type ItemView, type MachineShare, type ShownText } from './view.js';
