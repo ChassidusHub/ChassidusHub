@@ -2483,6 +2483,81 @@ export interface Operations {
       moments: Array<Record<string, unknown>>;
     };
   };
+  /** The search screen in one read: sefarim and shelves the words name, farbrengens and recordings, and the places in the words, each ready to draw */
+  searchPage: {
+    input: {
+      /** The words, a date, or both */
+      q: string;
+      /** Only words said in this year, month or day (a date key); else the date in q */
+      within?: string;
+    };
+    output: {
+      query: string;
+      date: {
+        key: string;
+        he: string;
+      } | null;
+      within: string | null;
+      top: {
+        /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+        id: string;
+        type: string;
+        /** sefer, shelf, sicha, maamar, farbrengen, recording, book, … */
+        kind: string;
+        /** In Hebrew */
+        title: string;
+        /** The line under the title, in Hebrew: the sefer and volume, the author, the date */
+        sub: string;
+        path: string | null;
+        listen?: true;
+        read?: true;
+      } | null;
+      works: Array<{
+        /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+        id: string;
+        type: string;
+        /** sefer, shelf, sicha, maamar, farbrengen, recording, book, … */
+        kind: string;
+        /** In Hebrew */
+        title: string;
+        /** The line under the title, in Hebrew: the sefer and volume, the author, the date */
+        sub: string;
+        path: string | null;
+        listen?: true;
+        read?: true;
+      }>;
+      events: Array<{
+        /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+        id: string;
+        type: string;
+        /** sefer, shelf, sicha, maamar, farbrengen, recording, book, … */
+        kind: string;
+        /** In Hebrew */
+        title: string;
+        /** The line under the title, in Hebrew: the sefer and volume, the author, the date */
+        sub: string;
+        path: string | null;
+        listen?: true;
+        read?: true;
+      }>;
+      words: Array<{
+        /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+        id: string;
+        kind: "paragraph" | "scan-line";
+        title: string;
+        sub: string;
+        /** Opens at the place: path#segment, /text/{scan}?page=&line=, or ?t=<seconds> */
+        path: string;
+        snippet: string;
+        /** Where the words are in snippet, [start, end) offsets */
+        marks: Array<Array<number>>;
+        /** A machine read or heard it and nobody has checked it */
+        machine: boolean;
+        /** The words begin with the query (a maamar's opening words) */
+        opening: boolean;
+      }>;
+    };
+  };
   /** People to @mention: handles that start with, or names that contain, what is typed; those in the conversation first */
   searchPeople: {
     input: {
@@ -2515,6 +2590,30 @@ export interface Operations {
       machine?: true;
       model?: string;
       results: Array<Record<string, unknown>>;
+    };
+  };
+  /** Names as someone types: up to six sefarim, shelves, sichos and farbrengens, best first */
+  searchSuggest: {
+    input: {
+      /** What has been typed */
+      q: string;
+    };
+    output: {
+      query: string;
+      hits: Array<{
+        /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+        id: string;
+        type: string;
+        /** sefer, shelf, sicha, maamar, farbrengen, recording, book, … */
+        kind: string;
+        /** In Hebrew */
+        title: string;
+        /** The line under the title, in Hebrew: the sefer and volume, the author, the date */
+        sub: string;
+        path: string | null;
+        listen?: true;
+        read?: true;
+      }>;
     };
   };
   /** Suggestions and issues to #mention, by number or words */
@@ -3193,8 +3292,10 @@ export const OPERATIONS = {
   scanText: {"method":"GET","path":"/v1/scans/{id}/text","pathParams":["id"],"query":["page"],"body":null,"answer":"json"},
   search: {"method":"GET","path":"/v1/search","pathParams":[],"query":["q","type","work","limit"],"body":null,"answer":"json"},
   searchMoments: {"method":"GET","path":"/v1/search/moments","pathParams":[],"query":["q","within","limit"],"body":null,"answer":"json"},
+  searchPage: {"method":"GET","path":"/v1/search/page","pathParams":[],"query":["q","within"],"body":null,"answer":"json"},
   searchPeople: {"method":"GET","path":"/v1/people","pathParams":[],"query":["q","ids","thread","limit"],"body":null,"answer":"json"},
   searchSimilar: {"method":"GET","path":"/v1/search/similar","pathParams":[],"query":["q","types","limit"],"body":null,"answer":"json"},
+  searchSuggest: {"method":"GET","path":"/v1/search/suggest","pathParams":[],"query":["q"],"body":null,"answer":"json"},
   searchThreads: {"method":"GET","path":"/v1/threads","pathParams":[],"query":["q","limit"],"body":null,"answer":"json"},
   seedScanText: {"method":"POST","path":"/v1/scans/{id}/text/seed","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   sendBackSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/send-back","pathParams":["id"],"query":[],"body":"json","answer":"json"},
@@ -3989,6 +4090,11 @@ export abstract class GeneratedMethods {
     return this.call('searchMoments', input ?? {} as Operations['searchMoments']['input']);
   }
 
+  /** The search screen in one read: sefarim and shelves the words name, farbrengens and recordings, and the places in the words, each ready to draw (GET /v1/search/page) */
+  searchPage(input: Operations['searchPage']['input']): Promise<Operations['searchPage']['output']> {
+    return this.call('searchPage', input ?? {} as Operations['searchPage']['input']);
+  }
+
   /** People to @mention: handles that start with, or names that contain, what is typed; those in the conversation first (GET /v1/people) */
   searchPeople(input?: Operations['searchPeople']['input']): Promise<Operations['searchPeople']['output']> {
     return this.call('searchPeople', input ?? {} as Operations['searchPeople']['input']);
@@ -3997,6 +4103,11 @@ export abstract class GeneratedMethods {
   /** Search by meaning (embeddings); every result is the machine's guess (GET /v1/search/similar) */
   searchSimilar(input: Operations['searchSimilar']['input']): Promise<Operations['searchSimilar']['output']> {
     return this.call('searchSimilar', input ?? {} as Operations['searchSimilar']['input']);
+  }
+
+  /** Names as someone types: up to six sefarim, shelves, sichos and farbrengens, best first (GET /v1/search/suggest) */
+  searchSuggest(input: Operations['searchSuggest']['input']): Promise<Operations['searchSuggest']['output']> {
+    return this.call('searchSuggest', input ?? {} as Operations['searchSuggest']['input']);
   }
 
   /** Suggestions and issues to #mention, by number or words (GET /v1/threads) */

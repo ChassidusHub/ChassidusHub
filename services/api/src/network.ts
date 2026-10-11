@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchSimilar, type Catalog, type Embedder } from '@chassidushub/core';
+import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchPage, searchSimilar, searchSuggest, type Catalog, type Embedder } from '@chassidushub/core';
 import { isValidDateKey } from '@chassidushub/hebrew';
 import { readId, type EntityType } from '@chassidushub/model';
 import { HttpError } from './app.js';
@@ -25,6 +25,20 @@ export function networkRoutes(app: Hono, catalog: Catalog, options: { embedder?:
     const within = c.req.query('within') || null;
     if (within !== null && !isValidDateKey(within)) throw new HttpError(422, 'within must be a date key, like 5711 or 5711-11-10');
     return c.json({ query: q, moments: await searchMoments(catalog, q, { limit: whole(c.req.query('limit'), 'limit', 100), within }) });
+  });
+
+  // The new site's search screen, ready to draw, in one read; a date in q narrows the words and alone is that day's farbrengen.
+  app.get('/v1/search/page', async (c) => {
+    const q = (c.req.query('q') ?? '').trim();
+    const within = c.req.query('within') || null;
+    if (within !== null && !isValidDateKey(within)) throw new HttpError(422, 'within must be a date key, like 5711 or 5711-11-10');
+    return c.json(await searchPage(catalog, q, { within }));
+  });
+
+  // Names as someone types: up to six, one statement.
+  app.get('/v1/search/suggest', async (c) => {
+    const q = (c.req.query('q') ?? '').trim();
+    return c.json({ query: q, hits: await searchSuggest(catalog, q) });
   });
 
   // Search by meaning: off (available: false) until the embeddings' keys are set. Every result is the machine's guess, and says so.

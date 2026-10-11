@@ -75,6 +75,7 @@ export { NOTIFICATION_MODES, digestMessage, notificationSetting, sendNotificatio
 export { adviceFor, advicePrompt, adviseSuggestions, type Advice, type Advisor } from './advice.js';
 export { clashPrompt, proposeClashResolutions, readClashAnswer, type ClashProposal } from './clashAdvice.js';
 export { TAKEDOWN_RELATIONS, TAKEDOWN_RESPONSE_DAYS, requestTakedown, resolveTakedownTarget, takeDownFile, takedowns, type TakedownRelation, type TakedownView } from './takedown.js';
+export { SUGGEST_HITS, marksIn, searchPage, searchSuggest, splitDate, type SearchHit, type SearchPage, type SearchWordHit } from './searchPage.js';
 export { bestLine, matchingWords, momentOf, queryWords, searchMoments, snippetOf, type Moment, type ParagraphMoment, type ScanLineMoment } from './moments.js';
 export {
   EMBEDDED_TYPES,

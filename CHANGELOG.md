@@ -10,6 +10,15 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page`: the new site's search screen in one read, at most
+  six statements. Sefarim and shelves the words name, farbrengens and
+  recordings, and the places in the words (a sefer's paragraph, a line on
+  a scan, the moment in a recording), each with its title and the line
+  under it in Hebrew, a path that opens at the place, and where to mark
+  the words. A date in the query is taken out of the words and narrows
+  them to then; a date alone lists that day's farbrengens. `top` is what
+  was most likely looked for. `GET /v1/search/suggest` gives up to six
+  names as someone types, in one statement.
 - `/v1/search/moments` finds a sefer's own words too (a unit's text, with
   `textKind: "body"`, the paragraph's `segment`, `path` and `name`). A
   maamar that opens with the words comes first (`opening: true`), and
