@@ -26,6 +26,14 @@ export default [
     route('*', 'routes/item.tsx'),
   ]),
   route('listen/:year/menu', 'routes/listen-menu.ts'),
+  // For crawlers, agents and browsers (lib/site.ts: only chassidushub.org itself is indexed).
+  route('robots.txt', 'routes/robots.ts'),
+  route('sitemap.xml', 'routes/sitemap-index.ts'),
+  route('sitemaps/:name.xml', 'routes/sitemap.ts'),
+  route('llms.txt', 'routes/llms.ts', { id: 'llms' }),
+  route('llms-full.txt', 'routes/llms.ts', { id: 'llms-full' }),
+  route('opensearch.xml', 'routes/opensearch.ts'),
+  route('.well-known/security.txt', 'routes/security-txt.ts'),
   // The rows under the search box while typing, as JSON (thread 5, Search).
   route('search/suggest', 'routes/search.suggest.ts'),
   // A fix and its undo, sent as the person (thread 4, Fixing and Edit). `_` is never in an item's path.

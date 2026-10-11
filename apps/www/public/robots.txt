@@ -1,3 +1,0 @@
-# The beta at new.chassidushub.org stays out of search engines until the switch-over.
-User-agent: *
-Disallow: /

@@ -245,6 +245,9 @@ createServer((req, res) => {
     });
     return;
   }
+  if (url.pathname === '/v1/sitemap') return res.end(JSON.stringify({ pageSize: 10000, sitemaps: [{ type: 'unit', page: 1, count: 2, lastmod: '2026-10-10T00:00:00Z' }] }));
+  if (url.pathname === '/v1/sitemap/unit/1') return res.end(JSON.stringify({ type: 'unit', page: 1, items: [{ id: 'rh-aaaaaab1', path: '/sample/1/1', lastmod: '2026-10-10T00:00:00Z' }, { id: 'rh-aaaaaab2', path: null, lastmod: null }] }));
+  if (url.pathname === '/openapi.json') return res.end(JSON.stringify({ info: { title: 'ChassidusHub API', version: '1' }, paths: { '/v1/search': { get: { operationId: 'search', summary: 'Search the catalog' } } } }));
   if (url.pathname === '/_tokens') return res.end(JSON.stringify(tokens));
   if (url.pathname === '/_tokens/reset') return (tokensReset(), (consentAnswered = null), res.end('{}'));
   if (url.pathname === '/_consent') return res.end(JSON.stringify(consentAnswered));
