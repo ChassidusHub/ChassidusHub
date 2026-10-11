@@ -86,6 +86,18 @@ export function NameField({ item, rev, language, label, value: start, onSaved }:
   );
 }
 
+/** A page's names, Hebrew and English, each saved as the person leaves it; a saved name moves the page's revision on. */
+export function Names({ item, rev: start, names, label = 'שם' }: { item: string; rev: number; names: { he: string; en: string }; label?: string }) {
+  const [rev, setRev] = useState(start);
+  const saved = (next?: number) => next && setRev(next);
+  return (
+    <>
+      <NameField item={item} rev={rev} language="he" label={label} value={names.he} onSaved={saved} />
+      <NameField item={item} rev={rev} language="en" label={`${label} באנגלית`} value={names.en} onSaved={saved} />
+    </>
+  );
+}
+
 /** Something the page links to, edited on its own page. */
 export function Linked({ children, to, action }: { children: ReactNode; to?: string; action: string }) {
   return (
