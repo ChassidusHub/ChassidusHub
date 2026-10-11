@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A report can be opened without an account, as every page says: signed
+  out, "Open the report" sends it without a name (the same hourly limit as
+  the quick report on an item's page) and opens it as an issue. Before,
+  the form ended in "Sign in to open a report" after it was written.
 - The English home page has a "New here?" for someone who reads only
   English: who the Rebbe is, what Chassidus is, where to start (Tanya,
   Hayom Yom with English, Sichos In English, Books in English) and the
