@@ -134,7 +134,9 @@ export function suggestionsAnswer(req: IncomingMessage, res: ServerResponse): bo
     const n = Number(thread[1]);
     if (n === 45) return send(res, 200, { kind: 'issue', number: 45, id: 9 }), true;
     const s = samples.find((x) => x.number === n);
-    return s ? send(res, 200, { kind: 'suggestion', number: n, id: s.id }) : send(res, 404, { error: 'not-found', message: `#${n} not found` }), true;
+    // A number that is not one of these goes on to the reports' stand-in (fixture-people.ts), which says not found.
+    if (s) return send(res, 200, { kind: 'suggestion', number: n, id: s.id }), true;
+    return false;
   }
   if (path === '/v1/suggestions' && url.searchParams.get('state')) {
     const closed = url.searchParams.get('state') === 'closed';
