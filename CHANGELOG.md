@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by words ranks a sicha on its lead, its name and first few hundred
+  words, not on all its words (#182): a first search for a common word reads
+  a few KB per sicha instead of about 80 KB, so ten times as many sichos (400)
+  are ranked, and the sicha that opens on the words comes before one that
+  only says them further in.
 - Search by words reads a scan page's layer from its link, not from the page's
   revision with all its lines, when it orders the best matches (#182).
 - The site's own reads of `GET /v1/community`, `GET /v1/machine/to-check` and
