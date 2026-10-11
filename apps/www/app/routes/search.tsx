@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Form, Link, useFetcher, useNavigation } from 'react-router';
 import { Button, Chips, Row, Rows, SearchField, TopAnswer, TopBar } from '../ui';
 import { markWords, type Hit, type SearchPage, type WordHit } from '../search/names';
@@ -34,9 +34,16 @@ export default function Search({ loaderData: page }: Route.ComponentProps) {
   const [typed, setTyped] = useState(page?.query ?? '');
   const suggest = useFetcher<Hit[]>();
   const navigation = useNavigation();
+  const form = useRef<HTMLFormElement>(null);
 
-  // A new search (a chip, Back) puts its words in the box.
-  useEffect(() => setTyped(page?.query ?? ''), [page?.query]);
+  // The box is left to the browser (uncontrolled), so words typed before the
+  // script has loaded are kept: on a slow phone they would otherwise be
+  // wiped when the page comes alive. Here the page picks them up; a new
+  // search (an example, Back) starts the box afresh with its own words.
+  useEffect(() => {
+    const box = form.current?.elements.namedItem('q');
+    setTyped(box instanceof HTMLInputElement ? box.value : (page?.query ?? ''));
+  }, [page?.query]);
   // Suggestions follow the typing, a moment after it pauses.
   useEffect(() => {
     const q = typed.trim();
@@ -54,12 +61,13 @@ export default function Search({ loaderData: page }: Route.ComponentProps) {
       <TopBar title="חיפוש" />
       <main id="content" className="view" aria-busy={searching}>
         <h1 className="sr-only">חיפוש</h1>
-        <Form method="get" action="/search" role="search" className="search-form">
+        <Form ref={form} method="get" action="/search" role="search" className="search-form">
           <SearchField
+            key={page?.query ?? ''}
             name="q"
             autoFocus={!page}
             label="ד״ה, ספר וחלק, פרשה, תאריך, או מילים במרכאות"
-            value={typed}
+            defaultValue={page?.query ?? ''}
             onChange={(event) => setTyped(event.currentTarget.value)}
           />
         </Form>
