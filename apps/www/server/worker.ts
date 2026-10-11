@@ -1,6 +1,14 @@
 import { createRequestHandler, type ServerBuild } from 'react-router';
+import { apiFor } from '../app/lib/api';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
+
+interface Env {
+  /** The API Worker, reached inside Cloudflare (wrangler.toml). */
+  API?: { fetch(input: string, init?: RequestInit): Promise<Response> };
+  /** The API's public address, used only when the binding is absent. */
+  API_URL?: string;
+}
 
 /**
  * The new site on Cloudflare Workers. Built files (build/client) are answered
@@ -10,7 +18,7 @@ import * as build from '../build/server/index.js';
 const handler = createRequestHandler(build as unknown as ServerBuild);
 
 export default {
-  fetch(request: Request): Promise<Response> {
-    return handler(request);
+  fetch(request: Request, env: Env): Promise<Response> {
+    return handler(request, { api: apiFor({ binding: env.API, baseUrl: env.API_URL }) });
   },
 };

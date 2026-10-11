@@ -3,17 +3,20 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { createRequestListener } from '@react-router/node';
 import type { ServerBuild } from 'react-router';
+import { apiFor } from '../app/lib/api';
 
 /**
  * The built site on Node, for the browser tests in CI and for trying a build
  * locally: the same server build the Worker runs, and build/client served as
- * Workers assets would serve it. `PORT` picks the port (default 3001).
+ * Workers assets would serve it. `PORT` picks the port (default 3001);
+ * `API_URL` the API pages read from (default https://api.chassidushub.org).
  */
 const root = path.resolve(import.meta.dirname, '..');
 const client = path.join(root, 'build/client');
 // @ts-ignore - made by `react-router build`
 const build = (await import('../build/server/index.js')) as unknown as ServerBuild;
-const pages = createRequestListener({ build });
+const api = apiFor({ baseUrl: process.env.API_URL });
+const pages = createRequestListener({ build, getLoadContext: () => ({ api }) });
 
 const types: Record<string, string> = {
   '.js': 'text/javascript',

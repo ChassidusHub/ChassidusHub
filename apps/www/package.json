@@ -18,6 +18,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@chassidushub/client": "^1.0.0",
     "@react-router/node": "^7.18.4",
     "isbot": "^5.1.0",
     "react": "^19.2.3",
