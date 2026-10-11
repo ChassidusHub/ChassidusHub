@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { drafts, type Draft, type DraftOp } from './draft.js';
+import { useAccount } from './useAccount.js';
 
 const EMPTY = new Map<string, Draft>();
 
@@ -15,10 +16,13 @@ export function useDraft(place: string) {
       return kept;
     },
   );
-  // A draft started on another device is picked up here.
+  // A draft started on another device is picked up here. Only an account has one: a signed-out
+  // reader's page asks for nothing it would be refused (smoke counts a 401 as a broken page, #93).
+  const account = useAccount();
+  const signedIn = Boolean(account);
   useEffect(() => {
-    void drafts.pull(place);
-  }, [place]);
+    if (signedIn) void drafts.pull(place);
+  }, [place, signedIn]);
   return useMemo(
     () => ({
       draft,
