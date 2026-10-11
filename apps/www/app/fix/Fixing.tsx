@@ -21,7 +21,26 @@ type Sending = null | 'sending' | Exclude<FixAnswer, { ok: true }>['why'];
  * `root` is the part of the page whose words may be selected; the words that
  * can be fixed are inside it, in a box saying their item (fix/place.ts).
  */
-export function Fixing({ root, path, citation, url, title }: { root: RefObject<HTMLElement | null>; path: string; citation: string; url: string; title: string }) {
+export function Fixing({
+  root,
+  path,
+  citation,
+  url,
+  title,
+  onLive,
+}: {
+  root: RefObject<HTMLElement | null>;
+  path: string;
+  citation: string;
+  url: string;
+  title: string;
+  /**
+   * A page whose words React draws (a transcript) shows a live fix itself, and
+   * gives back how to take it away again on Undo. Without it, the new words
+   * are put in place in the page as it was drawn on the server.
+   */
+  onLive?: (place: Place, words: string) => () => void;
+}) {
   const toast = useToast();
   const [bar, setBar] = useState<{ x: number; y: number; place: Place | null; text: string } | null>(null);
   const [fixing, setFixing] = useState<Place | null>(null);
@@ -118,11 +137,14 @@ export function Fixing({ root, path, citation, url, title }: { root: RefObject<H
 
   const close = useCallback(() => setFixing(null), []);
 
+  // The page's address, whole: a page may give only its path.
+  const href = () => new URL(url, location.href).href;
+
   const copy = async () => {
     const text = bar?.text ?? '';
     setBar(null);
     try {
-      await navigator.clipboard.writeText(`${text}\n(${citation})\n${url}`);
+      await navigator.clipboard.writeText(`${text}\n(${citation})\n${href()}`);
       toast('הועתק עם המקור');
     } catch {
       toast('ההעתקה לא הצליחה בדפדפן הזה');
@@ -132,7 +154,8 @@ export function Fixing({ root, path, citation, url, title }: { root: RefObject<H
     const text = bar?.text ?? '';
     setBar(null);
     // The link opens the page at these very words, where the browser can (a text fragment).
-    const to = text.length <= 120 ? `${url}#:~:text=${encodeURIComponent(text)}` : url;
+    // A dash would be read as the directive's own separator, so it is escaped too.
+    const to = text.length <= 120 ? `${href()}#:~:text=${encodeURIComponent(text).replace(/-/g, '%2D')}` : href();
     try {
       if (navigator.share) return await navigator.share({ title, text: `„${text}” (${citation})`, url: to });
       await navigator.clipboard.writeText(to);
@@ -170,11 +193,16 @@ export function Fixing({ root, path, citation, url, title }: { root: RefObject<H
     getSelection()?.removeAllRanges();
     if (!answer.live) return toast('נשלח. עין שנייה תבדוק לפני שזה עולה');
     // Live: the new words in place, lightly marked, until the page is next opened.
-    const was = where.extractContents();
-    const fixed = document.createElement('span');
-    fixed.className = 'fixed';
-    fixed.textContent = typed;
-    where.insertNode(fixed);
+    let restore: () => void;
+    if (onLive) restore = onLive(fixing, typed);
+    else {
+      const was = where.extractContents();
+      const fixed = document.createElement('span');
+      fixed.className = 'fixed';
+      fixed.textContent = typed;
+      where.insertNode(fixed);
+      restore = () => fixed.replaceWith(was);
+    }
     const changeset = answer.changeset;
     toast('תוקן. תודה', {
       label: 'בטל',
@@ -183,7 +211,7 @@ export function Fixing({ root, path, citation, url, title }: { root: RefObject<H
           .then((r) => r.json() as Promise<UndoAnswer>)
           .catch((): UndoAnswer => ({ ok: false, why: 'down' }));
         if (undone.ok) {
-          fixed.replaceWith(was);
+          restore();
           toast('בוטל');
         } else toast(undone.why === 'late' ? 'כבר אי אפשר לבטל מכאן; עין שנייה תחליט' : 'הביטול לא הצליח. נסו שוב');
       },

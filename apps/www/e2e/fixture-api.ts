@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { listenAnswer } from './fixture-listen';
+import { listenAnswer, paragraphWords } from './fixture-listen';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
@@ -87,6 +87,8 @@ const views: Record<string, unknown> = {
 
 /** The fixes sent, newest last, for the tests to read back (GET /_fixes). The pages' words never change. */
 const fixes: unknown[] = [];
+/** The same for what was saved in Edit (GET /_edits). */
+const edits: unknown[] = [];
 
 const plain = (runs: unknown) => (Array.isArray(runs) ? runs.map((r: { text?: string }) => r.text ?? '').join('') : String(runs));
 
@@ -94,7 +96,8 @@ const plain = (runs: unknown) => (Array.isArray(runs) ? runs.map((r: { text?: st
 function fix(body: { item?: string; segment?: string; before?: unknown; after?: unknown }, cookie: string): [number, unknown] {
   if (!/(?:^|; )rh_session=sample(?:;|$)/.test(cookie)) return [401, { error: 'unauthorized', message: 'sign in first' }];
   const view = Object.values(views).find((v) => (v as { item: { id: string } }).item.id === body.item) as { text: { segments: { id: string; text: unknown }[]; notes: { id: string; text: unknown }[] } } | undefined;
-  const segment = view && [...view.text.segments, ...view.text.notes].find((s) => s.id === body.segment);
+  const heard = paragraphWords(body.item ?? '', body.segment ?? '');
+  const segment = heard !== undefined ? { text: heard } : view && [...view.text.segments, ...view.text.notes].find((s) => s.id === body.segment);
   if (!segment || JSON.stringify(segment.text) !== JSON.stringify(body.before)) return [409, { error: 'conflict', message: 'the words changed' }];
   fixes.push(body);
   const changed = plain(body.after).split(' ').filter((w, i) => w !== plain(body.before).split(' ')[i]).length;
@@ -112,6 +115,8 @@ createServer((req, res) => {
       const [status, answer] =
         url.pathname === '/v1/fix'
           ? fix(JSON.parse(raw || '{}'), cookie)
+          : url.pathname === '/v1/organize'
+            ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { suggestion: { id: 200 + edits.length, status: 'open', title: 'edit' }, merged: false, mayApprove: false, preview: {} }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
           : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
             ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
             : [404, { error: 'not-found', message: 'not found' }];
@@ -121,7 +126,13 @@ createServer((req, res) => {
     return;
   }
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
+  if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
+  const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
+  if (entity) {
+    const found = byId(entity) as { item: unknown } | undefined;
+    if (found) return res.end(JSON.stringify(found.item));
+  }
   const view = url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : listenAnswer(url);
   if (!view) {
     res.statusCode = 404;

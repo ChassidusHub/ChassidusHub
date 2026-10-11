@@ -113,3 +113,19 @@ test('a footnote\'s words can be fixed too', async ({ page }) => {
   await sheet.getByRole('button', { name: 'שמירה' }).click();
   await expect(page.locator('#n-n2 .fixed')).toHaveText('שנייה');
 });
+
+test('a transcript\'s words are fixed the same way, and Undo takes them back', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/listen/5732/rh-3dvjfkyc');
+  await page.waitForLoadState('networkidle');
+  await select(page, '#w-p2', 'שניה');
+  await page.getByRole('toolbar', { name: 'המילים שסומנו' }).getByRole('button', { name: 'תקן' }).click();
+  const sheet = page.getByRole('dialog', { name: 'תיקון' });
+  await sheet.getByLabel('המילים הנכונות').fill('שנייה');
+  await sheet.getByRole('button', { name: 'שמירה' }).click();
+  await expect(page.locator('#w-p2')).toHaveText('פסקה שנייה לדוגמה, ועוד כמה מילים.');
+  const sent = (await (await page.request.get('http://localhost:3002/_fixes')).json()) as { item: string; segment: string; before: unknown; after: unknown }[];
+  expect(sent.find((f) => f.segment === 'p2' && f.item === 'rh-1awcd7t9')).toMatchObject({ before: 'פסקה שניה לדוגמה, ועוד כמה מילים.', after: 'פסקה שנייה לדוגמה, ועוד כמה מילים.' });
+  await page.getByRole('status').getByRole('button', { name: 'בטל' }).click();
+  await expect(page.locator('#w-p2')).toHaveText('פסקה שניה לדוגמה, ועוד כמה מילים.');
+});

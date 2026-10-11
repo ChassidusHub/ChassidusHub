@@ -54,3 +54,8 @@ export function listenAnswer(url: URL): unknown {
   if (transcript) return transcripts[transcript[1]!];
   return undefined;
 }
+
+/** A transcript paragraph's words, for the stand-in's POST /v1/fix on a recording. */
+export function paragraphWords(recording: string, id: string): string | undefined {
+  return (transcripts[recording] as { paragraphs: { id: string; content: string }[] } | undefined)?.paragraphs.find((p) => p.id === id)?.content;
+}

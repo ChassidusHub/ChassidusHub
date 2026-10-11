@@ -31,3 +31,9 @@ export function apiFor({ binding, baseUrl, cookie }: { binding?: Binding; baseUr
     : undefined;
   return new ChassidusHub({ baseUrl, fetch: asPerson ?? send, userAgent: 'chassidushub-www' });
 }
+
+/** The API as the person asking, only when their browser sent a cookie: without one, nobody is signed in and there is nothing to send as them. */
+export function visitorApi(request: Request, make: (cookie: string) => ChassidusHub): ChassidusHub | undefined {
+  const cookie = request.headers.get('cookie');
+  return cookie ? make(cookie) : undefined;
+}

@@ -45,4 +45,8 @@ export interface ReaderData {
   /** How the page is cited when its words are copied ("לקוטי שיחות, חלק י״ב, שמיני א"). */
   citation: string;
   url: string;
+  /** For Edit: the revision shown, the page's own names, and the sefer it is in (edited on its own page). */
+  rev: number;
+  names: { he: string; en: string };
+  work: { path: string; label: string } | null;
 }

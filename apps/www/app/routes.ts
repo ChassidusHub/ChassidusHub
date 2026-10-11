@@ -27,4 +27,6 @@ export default [
   // A fix and its undo, sent as the person (thread 4, Fixing and Edit). `_` is never in an item's path.
   route('_/fix', 'routes/fix.ts'),
   route('_/fix/:changeset/undo', 'routes/fix-undo.ts'),
+  // One field of a page saved from Edit, as the person.
+  route('_/edit', 'routes/edit.ts'),
 ] satisfies RouteConfig;
