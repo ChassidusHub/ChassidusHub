@@ -87,6 +87,8 @@ const views: Record<string, unknown> = {
 
 /** The fixes sent, newest last, for the tests to read back (GET /_fixes). The pages' words never change. */
 const fixes: unknown[] = [];
+/** The same for what was saved in Edit (GET /_edits). */
+const edits: unknown[] = [];
 
 const plain = (runs: unknown) => (Array.isArray(runs) ? runs.map((r: { text?: string }) => r.text ?? '').join('') : String(runs));
 
@@ -112,6 +114,8 @@ createServer((req, res) => {
       const [status, answer] =
         url.pathname === '/v1/fix'
           ? fix(JSON.parse(raw || '{}'), cookie)
+          : url.pathname === '/v1/suggestions/quick'
+            ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { id: 200 + edits.length, status: 'open', title: 'edit' }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
           : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
             ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
             : [404, { error: 'not-found', message: 'not found' }];
@@ -121,7 +125,13 @@ createServer((req, res) => {
     return;
   }
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
+  if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
+  const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
+  if (entity) {
+    const found = byId(entity) as { item: unknown } | undefined;
+    if (found) return res.end(JSON.stringify(found.item));
+  }
   const view = url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : listenAnswer(url);
   if (!view) {
     res.statusCode = 404;
