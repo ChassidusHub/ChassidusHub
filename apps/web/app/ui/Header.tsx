@@ -78,6 +78,15 @@ function usePhoneHead(): PhoneHead {
   return {};
 }
 
+/**
+ * The phone's You tab lights only on the reader's own pages (their account,
+ * inbox, profile, signing in), not on every page outside the four tabs: a
+ * search is not "You" (#91).
+ */
+export function isYours(pathname: string): boolean {
+  return ['/account', '/inbox', '/u/', '/signin', '/admin'].some((p) => pathname.startsWith(p));
+}
+
 function otherLangHref(lang: Lang, pathname: string, search: string): string {
   const params = new URLSearchParams(search);
   if (lang === 'en') params.set('lang', 'he');
@@ -484,7 +493,7 @@ export function Header({ lang }: { lang: Lang }) {
         ))}
         <button
           type="button"
-          aria-current={TABS.includes(section) ? undefined : 'page'}
+          aria-current={isYours(pathname) ? 'page' : undefined}
           onClick={() => {
             if (sheet.current) sheet.current.open = true;
           }}
