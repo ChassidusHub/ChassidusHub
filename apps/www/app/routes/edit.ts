@@ -5,11 +5,12 @@ import type { Route } from './+types/edit';
 const answer = (body: EditAnswer, status = 200) => Response.json(body, { status, headers: { 'cache-control': 'no-store' } });
 
 /**
- * One field of a page, saved from Edit as the person leaves it: the item as
- * it is now, with that field changed, sent as a suggestion in one step
- * (POST /v1/suggestions/quick). It goes live at once for someone the site
- * trusts; anyone else's waits for a second look. If the item changed since
- * the page was opened, nothing is sent.
+ * One field of a page, saved from Edit as the person leaves it. A name is
+ * changed by a rename (POST /v1/organize): only the name is sent, never the
+ * item's whole data, so nothing else on the page (its words, whatever a
+ * public read leaves out) can be lost by it. It is approved at once where
+ * the person may approve it themselves; anyone else's waits for a second
+ * look. If the name changed since the page was opened, nothing is sent.
  */
 export async function action({ request, context }: Route.ActionArgs) {
   if (!fromThisSite(request)) return answer({ ok: false, why: 'refused' }, 403);
@@ -23,15 +24,13 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!context.visitor) return answer({ ok: false, why: 'signin' }, 401);
   try {
     const item = await context.api.getItem({ id: ask.item });
-    const label = { ...((item.data as { label?: Record<string, string> }).label ?? {}) };
+    const label = (item.data as { label?: Record<string, string> }).label ?? {};
     if ((label[ask.language] ?? '') !== ask.before || (typeof ask.rev === 'number' && item.rev !== ask.rev)) return answer({ ok: false, why: 'changed' }, 409);
-    if (value) label[ask.language] = value;
-    else delete label[ask.language];
-    const sent = await context.visitor.suggestFix({
-      body: { entityId: ask.item, data: { ...(item.data as Record<string, unknown>), label }, title: `השם של הדף: ${value || ask.before}`.slice(0, 200) },
+    const sent = await context.visitor.organize({
+      body: { operations: [{ op: 'rename', item: ask.item, name: { [ask.language]: value } }], title: `השם של הדף: ${value || ask.before}`.slice(0, 200), apply: true },
     });
-    const live = (sent as { status?: string }).status === 'merged';
-    return answer({ ok: true, live, suggestion: (sent as { id: number }).id, ...(live ? { rev: item.rev + 1 } : {}) });
+    const live = sent.merged;
+    return answer({ ok: true, live, suggestion: sent.suggestion.id, ...(live ? { rev: item.rev + 1 } : {}) });
   } catch (error) {
     const status = (error as { status?: number } | null)?.status;
     if (status === 401) return answer({ ok: false, why: 'signin' }, 401);

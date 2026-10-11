@@ -17,8 +17,11 @@ test('Edit opens the same page with only its own fields, and saves a name on lea
   await name.fill('שיחה א׳');
   await name.press('Enter');
   await expect(page.getByRole('status')).toContainText('נשמר. עין שנייה תבדוק');
-  const sent = (await (await page.request.get('http://localhost:3002/_edits')).json()) as { entityId: string; data: { label: unknown } }[];
-  expect(sent.at(-1)).toMatchObject({ entityId: 'rh-aaaaaab1', data: { label: { he: 'שיחה א׳' } } });
+  // A rename, and only the name: the item's other data (its words) is never sent, so it cannot be lost.
+  const sent = (await (await page.request.get('http://localhost:3002/_edits')).json()) as { operations: unknown[]; apply: boolean; data?: unknown }[];
+  expect(sent.at(-1)!.operations).toEqual([{ op: 'rename', item: 'rh-aaaaaab1', name: { he: 'שיחה א׳' } }]);
+  expect(sent.at(-1)!.apply).toBe(true);
+  expect(sent.at(-1)!.data).toBeUndefined();
 
   // The sefer it is in is edited on its own page.
   await expect(page.getByRole('link', { name: /לערוך שם/ })).toHaveAttribute('href', '/sample?edit');

@@ -115,8 +115,8 @@ createServer((req, res) => {
       const [status, answer] =
         url.pathname === '/v1/fix'
           ? fix(JSON.parse(raw || '{}'), cookie)
-          : url.pathname === '/v1/suggestions/quick'
-            ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { id: 200 + edits.length, status: 'open', title: 'edit' }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
+          : url.pathname === '/v1/organize'
+            ? cookie.includes('rh_session=sample') ? (edits.push(JSON.parse(raw || '{}')), [201, { suggestion: { id: 200 + edits.length, status: 'open', title: 'edit' }, merged: false, mayApprove: false, preview: {} }]) : [401, { error: 'unauthorized', message: 'sign in first' }]
           : /^\/v1\/fix\/\d+\/undo$/.test(url.pathname)
             ? cookie.includes('rh_session=sample') ? [201, { changeset: 999, commit: 1 }] : [401, { error: 'unauthorized', message: 'sign in first' }]
             : [404, { error: 'not-found', message: 'not found' }];
