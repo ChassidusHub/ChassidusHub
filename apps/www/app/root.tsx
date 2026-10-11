@@ -1,6 +1,6 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse } from 'react-router';
 import type { Route } from './+types/root';
-import { IconSprite, ToastProvider } from './ui';
+import { ToastProvider } from './ui';
 import uiFont from './ui/fonts/noto-sans-hebrew.woff2?url';
 import uiCss from './ui/ui.css?url';
 
@@ -37,7 +37,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <IconSprite />
         {children}
         <ScrollRestoration />
         <Scripts />
