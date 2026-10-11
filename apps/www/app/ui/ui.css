@@ -580,3 +580,12 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .panel .chips { margin-top: 10px; }
 .auth { max-width: 420px; margin-inline: auto; }
 .auth .lede { color: var(--g700); }
+
+/* ---------- the back room: a live change's words, before and after (thread 6) ---------- */
+.panel.live > h2 a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.panel.live > p { margin: 0 0 8px; }
+.diff { font-size: 18px; line-height: 1.7; margin: 8px 0; padding: 8px 12px; background: var(--g50); border-radius: 8px; }
+.diff del { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.diff del + ins { margin-inline-start: 0.3em; }
+.diff ins { text-decoration: none; background: var(--g200); color: var(--g900); font-weight: 600; border-radius: 3px; padding-inline: 2px; }
+.view > .seg { margin-block: 6px 14px; }
