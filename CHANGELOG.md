@@ -13,7 +13,8 @@ any time. `@chassidushub/client` carries the API's version.
 - A farbrengen's video shows as its still picture with a play button, and
   YouTube's player (about 1 MB) is fetched only when someone taps it, so
   the page's own recordings and words come first on a slow line. Without
-  script the picture links to the video on YouTube.
+  script the picture links to the video on YouTube. Opened from the
+  keyboard, the player takes the focus, so the reader keeps their place.
 - `GET /v1/view?path=…` (or `?id=`): one page of the new site in one read.
   It returns the item's facts, its path bar, the units before and after
   it, and the best words there are for it. Those are its own words, else
