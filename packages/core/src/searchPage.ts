@@ -127,20 +127,25 @@ const INFO = `e.id, e.type, e.path,
 /** An item's names in Hebrew and English together, as the search compares them. */
 const NAME_SQL = normalizedSql("concat_ws(' ', r.data->'title'->>'he', r.data->'title'->>'en', r.data->'name'->>'he', r.data->'name'->>'en')");
 
-/** Items found by name, best first, with their facts: one statement. With a language, only those in it. */
-async function namedInfo(catalog: Catalog, query: string, limit: number, language: Language | null = null): Promise<Info[]> {
+/**
+ * Items found by name, best first, with their facts: one statement. With a language, only those in it.
+ * `typed` is the words as typed, filler and all, that a name is compared whole with (splitLanguage).
+ */
+async function namedInfo(catalog: Catalog, query: string, limit: number, language: Language | null = null, typed: string = query): Promise<Info[]> {
   const tsQuery = toTsQuery(query);
   if (!tsQuery) return [];
   const { rows } = await catalog.db.query<Info>(
     // Ranked first, then the facts read for the few kept.
     `WITH hit AS (
-       SELECT e.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
+       SELECT e.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1', language ? '$6' : '$4')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
        FROM entity e JOIN revision r ON r.id = e.main_rev
        WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
          ${language ? `AND ${languageSql('$4::text', '$5', NAME_SQL)}` : ''}
        ORDER BY n LIMIT ${limit})
      SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ORDER BY hit.n`,
-    language ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language)] : [tsQuery, normalizeSearchText(query), NAMED],
+    language
+      ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language), normalizeSearchText(typed)]
+      : [tsQuery, normalizeSearchText(query), NAMED, normalizeSearchText(typed)],
   );
   return rows;
 }
@@ -291,7 +296,7 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
   // A parsha is its weeks within the date given (a year, a month), else in every year.
   const parsha = rest ? parshaOf(rest) : null;
   const days = parsha ? parshaDays(parsha, within ? Number(within.slice(0, 4)) : null).filter((d) => !within || `${d}-`.startsWith(`${within}-`)) : [];
-  const named = rest ? await namedInfo(catalog, rest, NAME_HITS, language) : [];
+  const named = rest ? await namedInfo(catalog, rest, NAME_HITS, language, said.typed) : [];
   const words = rest ? queryWords(rest) : [];
   const moments = rest ? await searchMoments(catalog, rest, { within }) : [];
   const wanted: EntityId[] = [];
@@ -339,6 +344,6 @@ export async function searchPage(catalog: Catalog, query: string, options: { wit
 
 /** What to offer while someone types: names only, best first, up to six, in one statement. */
 export async function searchSuggest(catalog: Catalog, query: string): Promise<SearchHit[]> {
-  const { language, rest } = splitLanguage(query);
-  return (await namedInfo(catalog, rest, SUGGEST_HITS, language)).map(hitOf);
+  const { language, rest, typed } = splitLanguage(query);
+  return (await namedInfo(catalog, rest, SUGGEST_HITS, language, typed)).map(hitOf);
 }
