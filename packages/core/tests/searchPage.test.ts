@@ -120,6 +120,20 @@ describe('the search screen in one read', () => {
     expect(opening.top).toMatchObject({ id: tetzaveh, kind: 'maamar' });
   });
 
+  it('a title with small words in it is still its own name: "Letters from the Rebbe" first (#160 follow-up)', async () => {
+    const { catalog, set } = await sample();
+    const english = [{ kind: 'text', source: 'sefaria', licence: 'cc0', language: 'en', sourceId: 'Example' }];
+    const work = (slug: string, en: string) => add(catalog, 'mendy', 'keeper', 'work', { title: { he: en, en }, slug, authors: [], genre: 'igros', levels: ['letter'], sets: [set], sourceCopies: english }, `/${slug}`);
+    // Its name starts with the words once "the" is dropped, so without the whole title it would lead.
+    const other = await work('letters-from-rebbe-rayatz', 'Letters from Rebbe Rayatz');
+    const letters = await work('z-letters-from-the-rebbe', 'Letters from the Rebbe');
+    const { result: page, statements } = await counted(catalog, () => searchPage(catalog, 'Letters from the Rebbe'));
+    expect(statements).toBeLessThanOrEqual(6);
+    expect(page.works.map((w) => w.id).slice(0, 2)).toEqual([letters, other]);
+    // Taking the language out leaves the small words for the title.
+    expect((await searchPage(catalog, 'Letters from the Rebbe in English')).works.map((w) => w.id).slice(0, 2)).toEqual([letters, other]);
+  });
+
   it('"in English" is a filter on the names, not words; small question words do not decide (#123)', async () => {
     const { catalog, set, work } = await sample();
     const named = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר המאמרים באנגלית', en: 'Sefer HaMaamarim in English' }, slug: 'maamarim-en', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });

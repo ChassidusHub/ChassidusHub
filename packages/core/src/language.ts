@@ -27,8 +27,12 @@ const FILLER = new Set(['what', 'whats', 'is', 'are', 'was', 'the', 'a', 'an', '
 /** The words a language's name has in a title: a sefer called "… in English" is in English. */
 export const languageTitleWords = (language: Language): string[] => SAID.find((s) => s.language === language)?.inTitle ?? [];
 
-/** The language the words ask for, if any, and the words left; filler words dropped while others remain. */
-export function splitLanguage(query: string): { language: Language | null; rest: string } {
+/**
+ * The language the words ask for, if any, and the words left; filler words dropped while others remain.
+ * `typed` is the words with only the language taken out, filler and all: a title is compared whole with
+ * them, so "Letters from the Rebbe" is still that title's own name.
+ */
+export function splitLanguage(query: string): { language: Language | null; rest: string; typed: string } {
   let words = normalizeSearchText(query).split(' ').filter(Boolean);
   let language: Language | null = null;
   for (const p of PHRASES) {
@@ -38,11 +42,12 @@ export function splitLanguage(query: string): { language: Language | null; rest:
     words = [...words.slice(0, at), ...words.slice(at + p.words.length)];
     break;
   }
+  const typed = language ? words.join(' ') : query.trim();
   const kept = words.filter((w) => !FILLER.has(w));
   const left = kept.length > 0 ? kept : words;
   // Nothing taken out: the words as typed, quotes and all.
-  if (!language && left.length === normalizeSearchText(query).split(' ').filter(Boolean).length) return { language, rest: query.trim() };
-  return { language, rest: left.join(' ') };
+  if (!language && left.length === normalizeSearchText(query).split(' ').filter(Boolean).length) return { language, rest: query.trim(), typed };
+  return { language, rest: left.join(' '), typed };
 }
 
 /**

@@ -15,6 +15,9 @@ any time. `@chassidushub/client` carries the API's version.
   the latest merges and what waits are read on the request. Summing every
   farbrengen on a cold database made `/contribute` time out after a deploy
   (#171).
+- `GET /v1/search/page` and `/v1/search/suggest` compare a title whole with
+  the words as typed, small words and all: `Letters from the Rebbe` finds
+  that title first again, after small question words were dropped (#123).
 - `/v1/machine/to-check` and `/v1/mafteach` answer from what the scheduled
   run keeps, as `/v1/transcripts` does: working them out took longer than
   a request may run, so `/help` and `/mafteach` waited 30 s and failed

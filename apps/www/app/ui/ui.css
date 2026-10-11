@@ -650,3 +650,68 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .choice label .hint { display: inline; }
 .choice label > span { padding-block: 10px; }
 .token { margin: 10px 0; }
+
+/* ---------- suggestions (thread 6) ---------- */
+/* The list: open or closed beside the way to what waits for review; whose, under the search. */
+.sg-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-block: 12px 8px; }
+.sg-link { font-size: 14px; color: var(--g700); text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.view > .chips { margin-block: 4px 8px; }
+.sg-agent { margin-inline-start: 6px; padding-block: 1px; }
+.sg-more { text-align: center; margin-top: 16px; }
+.sg-more a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 14px; border: 1px solid var(--g300); border-radius: 8px; }
+/* One suggestion: where it stands, its title, its changes word by word, its conversation. */
+.sg-state { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; font-weight: 500; color: var(--g700); }
+.sg-state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--g500); }
+.sg-state.sg-open::before, .sg-state.sg-live::before { border-color: var(--g900); }
+.sg-state.sg-merged::before { background: var(--g900); border-color: var(--g900); }
+.sg-title { display: flex; align-items: flex-start; gap: 6px; }
+.sg-title h1 { flex: 1; min-width: 0; }
+.sg-title .ib { margin-top: 4px; }
+.sg-desc { margin-top: 16px; }
+.sg-said { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sg-said a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.sg-entry { border: 1px solid var(--g300); border-radius: 10px; padding: 4px 14px 10px; margin-block: 10px; }
+.sg-entry h3 { font-size: 15px; font-weight: 600; margin: 10px 0 4px; }
+.sg-entry h3 a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.sg-field { margin-block: 8px; }
+.sg-field .diff { margin: 4px 0; }
+.sg-before, .sg-after { margin: 2px 0; padding: 4px 10px; border-radius: 6px; background: var(--g50); overflow-wrap: anywhere; }
+.sg-before del { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.sg-after ins { text-decoration: none; font-weight: 600; }
+.sg-toggle { min-height: 32px; font-size: 13px; color: var(--g700); text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.sg-compose { margin-block: 6px; }
+.sg-compose .btns { margin-top: 0; }
+.sg-checks, .sg-list, .sg-people, .sg-timeline { list-style: none; padding: 0; margin: 0; }
+.sg-checks li { display: flex; align-items: baseline; gap: 8px; padding-block: 6px; border-bottom: 1px solid var(--g200); font-size: 14px; }
+.sg-checks li:last-child { border-bottom: 0; }
+.sg-checks li::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--g500); }
+.sg-checks li.ok::before { background: var(--g900); border-color: var(--g900); }
+.sg-checks li.fail::before { border-color: var(--g900); }
+.sg-checks li.fail { font-weight: 600; }
+.sg-list li { padding-block: 6px; border-bottom: 1px solid var(--g200); font-size: 14px; }
+.sg-list li:last-child { border-bottom: 0; }
+.sg-list a, .sg-people a, .sg-by a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.sg-merge h3 { font-size: 14px; margin: 14px 0 4px; }
+.sg-merge > p { margin: 0 0 6px; }
+.sg-clash { border-top: 1px solid var(--g200); padding-top: 10px; margin-top: 10px; }
+.sg-clash > p { margin: 0 0 6px; }
+.sg-sides { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 0 0 6px; }
+.sg-sides div { padding: 6px 10px; border-radius: 6px; background: var(--g50); min-width: 0; }
+.sg-sides dt { font-size: 12px; color: var(--g600); }
+.sg-sides dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+@media (min-width: 720px) {
+  .sg-sides { grid-template-columns: repeat(3, 1fr); }
+}
+.sg-review .btns { margin-top: 4px; }
+.sg-timeline > li { border-bottom: 1px solid var(--g200); padding-block: 10px; }
+.sg-timeline > li:last-child { border-bottom: 0; }
+.sg-timeline .sg-event { padding-block: 6px; }
+.sg-by { margin: 0 0 4px; }
+.sg-by b { font-weight: 600; }
+.sg-answers { margin-top: 8px; padding-inline-start: 14px; border-inline-start: 2px solid var(--g200); }
+.sg-answers .sg-c + .sg-c { margin-top: 10px; }
+.sg-people li { display: flex; align-items: center; gap: 10px; min-height: 44px; border-bottom: 1px solid var(--g200); }
+.sg-people li > span:first-child { flex: 1; }
+.sg-people li:last-child { border-bottom: 0; }
+.sg-ask { display: flex; align-items: flex-end; gap: 8px; }
+.sg-ask .field { flex: 1; margin-bottom: 0; }

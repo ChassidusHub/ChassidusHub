@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { libraryAnswer } from './fixture-library';
 import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
 import { searchAnswer } from './fixture-search';
+import { suggestionsAnswer } from './fixture-suggestions';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
@@ -221,6 +222,7 @@ function tokensAnswer(method: string, path: string, input: Record<string, unknow
 const consentRequest = { id: 'oar-sample', client: { id: 'https://claude.ai/oauth/claude-code-client-metadata', name: 'Claude', uri: null, kind: 'metadata', host: 'claude.ai' }, redirectUri: 'https://claude.ai/api/mcp/auth_callback', redirectHost: 'claude.ai', loopback: false, scopes: ['read', 'write'], resource: 'https://api.chassidushub.org/mcp', expiresAt: '2026-10-11T12:00:00Z' };
 
 createServer((req, res) => {
+  if (suggestionsAnswer(req, res)) return;
   const url = new URL(req.url ?? '/', 'http://local');
   res.setHeader('Content-Type', 'application/json');
   const tokensPath = /^\/v1\/tokens(\/[\w-]+)?$/.exec(url.pathname);
