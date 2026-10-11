@@ -3,6 +3,7 @@ import { libraryAnswer } from './fixture-library';
 import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
 import { searchAnswer } from './fixture-search';
 import { suggestionsAnswer } from './fixture-suggestions';
+import { servePeople } from './fixture-people';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
@@ -254,6 +255,7 @@ createServer((req, res) => {
   if (url.pathname === '/_tokens/reset') return (tokensReset(), (consentAnswered = null), res.end('{}'));
   if (url.pathname === '/_consent') return res.end(JSON.stringify(consentAnswered));
   if (url.pathname === '/_callback') return res.end(JSON.stringify({ back: true }));
+  if (servePeople(req, res, url)) return;
   const authPath = /^\/v1\/auth\/([a-z/-]+)$/.exec(url.pathname)?.[1];
   if (authPath) {
     let raw = '';

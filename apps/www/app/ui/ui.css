@@ -715,3 +715,61 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .sg-people li:last-child { border-bottom: 0; }
 .sg-ask { display: flex; align-items: flex-end; gap: 8px; }
 .sg-ask .field { flex: 1; margin-bottom: 0; }
+/* ---------- people: reports, the inbox and people's pages (thread 6) ---------- */
+.people .phead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.people .phead h1 { margin-block: 8px 2px; }
+.people .lede { font-size: 14px; }
+.people .chips { margin-block: 8px; }
+.people .chips .faint { font-weight: 400; }
+.people .chip[aria-current='true'] { background: var(--g200); color: var(--g900); border-color: var(--g400); font-weight: 600; }
+.pfilter { margin-block: 4px 8px; }
+.pfilter summary { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; font-size: 13px; color: var(--g700); cursor: pointer; list-style: none; }
+.pfilter summary::-webkit-details-marker { display: none; }
+.pfilter[open] summary svg.i { transform: rotate(180deg); }
+.threads { list-style: none; margin: 8px 0 0; padding: 0; }
+.threads > li { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--g300); }
+.threads > li:last-child { border-bottom: 0; }
+.thread { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 56px; padding-block: 8px; }
+a.thread:hover { background: linear-gradient(var(--g50), var(--g50)); }
+.thread .t { flex: 1; min-width: 0; }
+.thread .t b { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.thread .t > span { display: block; font-size: 13px; color: var(--g600); }
+.thread .r { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; font-size: 13px; color: var(--g600); font-variant-numeric: tabular-nums; }
+.inbox > li.unread .t b { font-weight: 700; }
+.inbox > li.unread { border-inline-start: 3px solid var(--g900); padding-inline-start: 8px; }
+.tag { display: inline-flex; align-items: center; height: 22px; padding-inline: 8px; border-radius: 6px; border: 1px solid var(--g300); font-size: 12px; font-weight: 400; color: var(--g700); white-space: nowrap; }
+a.tag:hover { background: var(--g100); }
+.tag.strong { background: var(--g200); color: var(--g900); border-color: var(--g400); font-weight: 600; }
+.pempty { margin-block: 24px; color: var(--g600); }
+.pmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-block: 6px 12px; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 12px 0 8px; padding: 12px 0; border-block: 1px solid var(--g300); font-size: 14px; }
+.facts dt { color: var(--g600); }
+.facts dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.facts a:not(.tag) { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--g400); }
+.facts .block { display: block; flex-basis: 100%; }
+.linkish { font-size: 13px; color: var(--g700); text-decoration: underline; text-underline-offset: 3px; min-height: 32px; }
+.linkish[disabled] { opacity: 0.4; cursor: default; }
+.talk { list-style: none; margin: 16px 0; padding: 0; }
+.talk .said { border: 1px solid var(--g300); border-radius: 10px; padding: 10px 14px; margin-block: 10px; }
+.talk .who { margin: 0 0 4px; font-size: 13px; }
+.talk .did { padding-block: 6px; padding-inline-start: 14px; border-inline-start: 2px solid var(--g300); margin-inline-start: 14px; }
+.words p { margin: 0 0 0.6em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.words p:last-child { margin-bottom: 0; }
+.words a, .people .say a { text-decoration: underline; text-underline-offset: 3px; }
+.person { font-weight: 600; }
+.person:hover { text-decoration: underline; text-underline-offset: 3px; }
+.field .flabel { font-size: 12px; color: var(--g600); }
+.field .about { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; margin: 0; }
+.field .about a:first-child { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.kinds { border: 0; margin: 12px 0; padding: 0; }
+.kinds legend { font-size: 15px; font-weight: 600; margin-bottom: 6px; padding: 0; }
+.kinds label { display: flex; align-items: center; gap: 10px; min-height: 44px; border-bottom: 1px solid var(--g300); cursor: pointer; }
+.kinds label:last-child { border-bottom: 0; }
+.kinds input { width: 18px; height: 18px; margin: 0; accent-color: var(--g900); }
+.kinds label span:first-of-type { flex: 1; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-block: 16px; }
+.stats a { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--g300); border-radius: 10px; padding: 10px 12px; }
+.stats a:hover { background: var(--g50); }
+.stats b { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 12px; color: var(--g600); }
+.people h3.month { font-size: 13px; font-weight: 600; color: var(--g700); margin: 18px 0 0; }
