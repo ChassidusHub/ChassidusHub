@@ -2480,6 +2480,12 @@ export interface Operations {
     };
     output: {
       query: string;
+      topic: {
+        /** The subject as typed, normalized: bitachon */
+        key: string;
+        /** The Hebrew searched for instead: בטחון */
+        he: string;
+      } | null;
       date: {
         key?: string;
         he?: string;
@@ -2500,6 +2506,12 @@ export interface Operations {
     };
     output: {
       query: string;
+      topic: {
+        /** The subject as typed, normalized: bitachon */
+        key: string;
+        /** The Hebrew searched for instead: בטחון */
+        he: string;
+      } | null;
       moments: Array<Record<string, unknown>>;
     };
   };

@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
 import { Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
-import { dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords } from '@chassidushub/core';
+import { dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords, topicOf } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
 import { authRoutes, sessionAuthenticator, type AuthOptions } from './auth.js';
@@ -880,8 +880,10 @@ export function createApp(options: ApiOptions): Hono {
     if (type && !(await catalog.registry()).has(type)) throw new HttpError(400, `unknown type "${type}"`);
     const date = parseDateText(q);
     const work = c.req.query('work');
-    const results = await catalog.search(q, { type: type as EntityType | undefined, work: work ? entityId(work) : undefined, limit: intParam(c.req.query('limit'), 'limit') });
-    return c.json({ query: q, date: date.ok ? { key: date.key, he: describeDateKey(date.key, 'he'), en: describeDateKey(date.key, 'en') } : null, results: await redact(results) });
+    // A subject in English letters (bitachon) is looked for as the texts write it (בטחון), as /v1/search/page does (#99).
+    const topic = date.ok ? null : topicOf(q);
+    const results = await catalog.search(topic?.he ?? q, { type: type as EntityType | undefined, work: work ? entityId(work) : undefined, limit: intParam(c.req.query('limit'), 'limit') });
+    return c.json({ query: q, topic, date: date.ok ? { key: date.key, he: describeDateKey(date.key, 'he'), en: describeDateKey(date.key, 'en') } : null, results: await redact(results) });
   });
 
   app.get('/v1/dates/parse', (c) => {

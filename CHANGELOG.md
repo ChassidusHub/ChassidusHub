@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search` and `GET /v1/search/moments` also look for a subject typed
+  in English letters as the texts write it (`bitachon` as `בטחון`), and say so
+  in `topic`, as `/v1/search/page` does: chassidushub.org's /search uses them
+  and still found nothing for `bitachon` (#99).
 - `GET /v1/search/page` names the subject index entries its words are
   (`subjects`): `בטחון` lists Likkutei Sichos' index entry with how many places
   and volumes it has, opening `/mafteach?q=בטחון`. Read from topics the

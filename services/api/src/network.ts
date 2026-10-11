@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchPage, searchSimilar, searchSuggest, type Catalog, type Embedder } from '@chassidushub/core';
+import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchPage, searchSimilar, searchSuggest, topicOf, type Catalog, type Embedder } from '@chassidushub/core';
 import { isValidDateKey } from '@chassidushub/hebrew';
 import { LANGUAGES, readId, type EntityType, type Language } from '@chassidushub/model';
 import { HttpError } from './app.js';
@@ -25,7 +25,9 @@ export function networkRoutes(app: Hono, catalog: Catalog, options: { embedder?:
     // A year, month or day the words were said in (a date key: 5711, 5711-11, 5711-11-10); the caller takes it out of q.
     const within = c.req.query('within') || null;
     if (within !== null && !isValidDateKey(within)) throw new HttpError(422, 'within must be a date key, like 5711 or 5711-11-10');
-    return c.json({ query: q, moments: await searchMoments(catalog, q, { limit: whole(c.req.query('limit'), 'limit', 100), within }) });
+    // A subject in English letters (bitachon) is looked for as the texts write it (בטחון), as /v1/search/page does (#99).
+    const topic = topicOf(q);
+    return c.json({ query: q, topic, moments: await searchMoments(catalog, topic?.he ?? q, { limit: whole(c.req.query('limit'), 'limit', 100), within }) });
   });
 
   // The new site's search screen, ready to draw, in one read; a date in q puts its words first and alone is that day's farbrengen.
