@@ -244,14 +244,18 @@ export const MOMENT_CANDIDATES = 200;
  * match's words: a page's are some 4 KB, a paragraph's 1, and a sicha is
  * ranked on its lead (unit_place.lead, migration 0033: its name and its
  * first few hundred words), never on all its 80 KB. Finding the matches
- * reads words too: the first sichos found that hold the query are found by
- * reading each one's words whole (a common word is in most of them, so the
- * database reads them in turn rather than through the index), so only 40
- * sichos are found, as before the lead; 400 read 30 MB on a first search
- * (#182). Past these, the first matches found are ranked. Each match is
- * ranked where it is found, so its words are read once.
+ * reads words too: sichos are found first by their lead, through its index
+ * (MOMENT_LEADS, migration 0035), reading no sicha's words; then only 20
+ * that say the words further in are found by reading each one's words whole
+ * (a common word is in most of them, so the database reads them in turn
+ * rather than through the index; 400 read 30 MB on a first search, #182).
+ * Past these, the first matches found are ranked. Each match is ranked where
+ * it is found, so its words are read once.
  */
-export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 40 } as const;
+export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 20 } as const;
+
+/** How many sichos whose lead holds the query are found through the lead's index, and ranked on it. */
+export const MOMENT_LEADS = 40;
 
 /**
  * The places in scans and texts where the query's words are: lines on
@@ -286,8 +290,13 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
           WHERE ${has(type)}
             AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
+  // The sichos that open on the words, found through the lead's index without reading their words (#182).
+  const leads = (tier: number) =>
+    `(SELECT e.id, e.type, e.main_rev, ts_rank(p.lead, to_tsquery('simple', $1)) AS rank, ${tier} AS tier
+          FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "C"
+          WHERE p.lead @@ to_tsquery('simple', $1) AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL LIMIT ${MOMENT_LEADS})`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
-  const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1))] : kinds.map((k) => all(k, 0));
+  const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1)), leads(1)] : [...kinds.map((k) => all(k, 0)), leads(0)];
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
     `SELECT c.id, c.type, c.tier FROM (
        SELECT id, type, main_rev, min(tier) AS tier, max(rank) AS rank

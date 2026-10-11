@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by words finds sichos first by their lead, their name and opening
+  words, through its index (#182): up to 40 sichos that open on the words are
+  found without reading any sicha's words, and only 20 more that say them
+  further in are found by reading each one's words whole.
 - Search by words tests the words only on pages, paragraphs and sichos, each
   kind on its own rows (#182): before, the database could test every page and
   paragraph's words while looking for sichos, reading many times more than it

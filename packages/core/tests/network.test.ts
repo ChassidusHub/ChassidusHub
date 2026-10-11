@@ -12,6 +12,7 @@ import {
   relationsOf,
   searchMoments,
   MOMENT_CANDIDATES,
+  MOMENT_LEADS,
   MOMENT_RANKED,
   searchSimilar,
   snippetOf,
@@ -184,8 +185,10 @@ describe('search that lands on the moment', () => {
     expect(inner).toContain(`THEN e.search_tsv @@ to_tsquery('simple', $1) END LIMIT ${MOMENT_RANKED.unit}`);
     // The words are tested only on each kind's own live rows, never before the type (#182).
     for (const kind of ['text-page', 'segment', 'unit']) expect(inner).toContain(`e.type = '${kind}' AND NOT e.deleted AND e.main_rev IS NOT NULL AND CASE WHEN e.type = '${kind}' THEN`);
-    // Each match is ranked where it is found, its words read once: one rank per kind, none after (#172).
-    expect(inner.match(/ts_rank/g)).toHaveLength(3);
+    // Sichos that open on the words are found through their lead's index, as many as MOMENT_LEADS (#182).
+    expect(inner).toContain(`WHERE p.lead @@ to_tsquery('simple', $1) AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL LIMIT ${MOMENT_LEADS}`);
+    // Each match is ranked where it is found, its words read once: one rank per kind and one for the leads, none after (#172).
+    expect(inner.match(/ts_rank/g)).toHaveLength(4);
     // A scan page's layer is read from its link, never from its revision, which holds all its lines (#182).
     expect(sql[0]).not.toContain("r.data->>'layer'");
   });
@@ -223,6 +226,20 @@ describe('search that lands on the moment', () => {
     await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '1' }], order: '1', label: { he: 'שיחה 1' }, body: body(`${filler} פתח דבר פתח דבר פתח דבר`), sets: [set] });
     const opens = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '2' }], order: '2', label: { he: 'שיחה 2' }, body: body(`לפני פתח דבר ${filler}`), sets: [set] });
     // One asked for: the best ranked is the one shown (neither opens with the words, which would put it first anyway).
+    const moments = await searchMoments(catalog, 'פתח דבר', { limit: 1 });
+    expect(moments.map((m) => (m as { unit?: string }).unit)).toEqual([opens]);
+  });
+
+  it('finds a sicha that opens on the words through its lead, however many say them further in (#182)', async () => {
+    const { catalog, set } = await freshCatalog();
+    const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'שיחות' }, slug: 'sichos', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] });
+    const body = (p: string) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: p }] }] }] });
+    // Made-up words: more sichos than are read whole say them only past their lead; the first added opens on them.
+    const filler = Array.from({ length: 400 }, (_, i) => `מלה${i}`).join(' ');
+    const opens = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '99' }], order: '99', label: { he: 'שיחה 99' }, body: body(`לפני פתח דבר ${filler}`), sets: [set] });
+    for (let i = 1; i <= MOMENT_RANKED.unit * 3; i++) {
+      await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: String(i) }], order: String(i), label: { he: `שיחה ${i}` }, body: body(`${filler} פתח דבר`), sets: [set] });
+    }
     const moments = await searchMoments(catalog, 'פתח דבר', { limit: 1 });
     expect(moments.map((m) => (m as { unit?: string }).unit)).toEqual([opens]);
   });
