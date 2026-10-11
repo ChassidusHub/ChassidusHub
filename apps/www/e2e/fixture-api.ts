@@ -1,11 +1,13 @@
 import { createServer } from 'node:http';
 import { libraryAnswer } from './fixture-library';
 import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
+import { searchAnswer } from './fixture-search';
 
 /**
  * A stand-in for the ChassidusHub API in the browser tests: GET /v1/view for
  * a few made-up pages, so the reading page is tested without a database,
  * listening's reads (fixture-listen.ts), the library's (fixture-library.ts),
+ * search's (fixture-search.ts),
  * and POST /v1/fix as a signed-in reader (the cookie rh_session=sample) or a
  * signed-out one; and signing in and the account (/v1/auth/*) the same way.
  * Every word here is sample text written for the tests (לדוגמה), never a
@@ -35,6 +37,11 @@ const views: Record<string, unknown> = {
     pathBar: bar(1),
     previous: null,
     next: { id: 'rh-aaaaaab2', path: '/sample/1/2', name: name('שיחה שניה') },
+    scan: { scan: 'rh-aaaaaas1', file: 'f'.repeat(64), firstPage: 7, lastPage: 9, publication: 'rh-aaaaaap1', url: 'https://files.example.org/sample.pdf' },
+    recordings: [
+      { id: 'rh-aaaaaar1', path: null, name: name('הקלטה ראשונה'), durationMs: 3_725_000 },
+      { id: 'rh-aaaaaar2', path: null, name: name('הקלטה שניה'), durationMs: null },
+    ],
     text: {
       kind: 'words',
       from: 'body',
@@ -242,6 +249,11 @@ createServer((req, res) => {
   if (url.pathname === '/_fixes') return res.end(JSON.stringify(fixes));
   if (url.pathname === '/_edits') return res.end(JSON.stringify(edits));
   if (url.pathname === '/_mails') return res.end(JSON.stringify(mails));
+  const searched = searchAnswer(url);
+  if (searched) {
+    res.statusCode = searched[0];
+    return res.end(JSON.stringify(searched[1]));
+  }
   const byId = (id: string | null) => Object.values(views).find((v) => (v as { item: { id: string } }).item.id === id);
   const entity = /^\/v1\/entities\/(rh-[\w-]+)$/.exec(url.pathname)?.[1];
   if (entity) {

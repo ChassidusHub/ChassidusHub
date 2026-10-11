@@ -121,21 +121,14 @@ function Results({ page }: { page: SearchPage }) {
     <>
       {top && (
         <TopAnswer kind={top.kind} title={top.title} sub={top.sub}>
-          {top.listen && top.listen === top.to ? (
+          {top.listen ? (
             <Button small icon="listen" to={top.listen}>
               שמיעה
             </Button>
           ) : (
-            <>
-              <Button small to={top.to}>
-                קריאה
-              </Button>
-              {top.listen && (
-                <Button small look="outline" icon="listen" to={top.listen}>
-                  שמיעה
-                </Button>
-              )}
-            </>
+            <Button small to={top.to}>
+              קריאה
+            </Button>
           )}
         </TopAnswer>
       )}
@@ -177,7 +170,7 @@ function Results({ page }: { page: SearchPage }) {
 function Snippet({ hit }: { hit: WordHit }) {
   return (
     <bdi className="snip">
-      {markWords(hit.snippet, hit.hits).map((run, at) => (run.marked ? <mark key={at}>{run.text}</mark> : run.text))}
+      {markWords(hit.snippet, hit.marks).map((run, at) => (run.marked ? <mark key={at}>{run.text}</mark> : run.text))}
     </bdi>
   );
 }

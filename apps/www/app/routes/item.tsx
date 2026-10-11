@@ -1,8 +1,8 @@
 import { data, redirect, type AppLoadContext } from 'react-router';
+import { nameOf, pathLevels } from '../lib/catalog';
 import { loadSet, loadVolume, loadWork } from '../library/load';
 import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
-import { pathLevels } from '../path';
-import { nameOf, pathSteps, readerData } from '../reader/load.server';
+import { readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
@@ -73,7 +73,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') return { screen: 'reader' as const, type: item.type, name, reader: await readerData(view, context, url.origin) };
-    return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: pathSteps(view.pathBar) };
+    return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: view.pathBar };
   } catch (error) {
     if (notFound(error)) throw data('not found', { status: 404 });
     throw error;
