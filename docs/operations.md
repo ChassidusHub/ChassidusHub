@@ -707,7 +707,9 @@ Every answer says what it cost, in production too, in a `Server-Timing`
 header (the Timing tab of a browser's DevTools shows it; so does
 `curl -sI https://chassidushub.org/ | grep -i server-timing`). The API's
 says `db;dur=<ms>;desc="<n> statements"` (its request's own connection,
-counted: `measured` in `@chassidushub/db`) and `total`; a page's says `api`
+counted: `measured` in `@chassidushub/db`) and `total`, then each
+statement's own time in the order it ran (`db1;dur=…`, `db2;dur=…`, the
+first 16), so a slow first visit says which read it waited on; a page's says `api`
 (how many times it asked the API and how long it waited, summed, so side
 by side asks can exceed the whole), `db` (the statements and time those
 answers report, an answer the edge already had counted as from the edge)

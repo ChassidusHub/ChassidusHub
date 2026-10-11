@@ -113,7 +113,9 @@ export function cors(): MiddlewareHandler {
  * What answering cost, said on every answer for whoever looks (the Timing
  * tab of a browser's DevTools, or `curl -sI`): how many statements the
  * database was sent and how long it took to answer them (`db`), and the
- * whole (`total`), in milliseconds. `cost` is the request's own database's
+ * whole (`total`), in milliseconds; then each statement's own time in
+ * order (`db1`, `db2`, …), so a slow first visit says which read it waited
+ * on. `cost` is the request's own database's
  * count (db.ts, `measured`), exact on Workers, where each request has its
  * own; over a shared one (tests) it counts what ran meanwhile too. Other
  * sites' pages may read it (Timing-Allow-Origin).
@@ -121,7 +123,7 @@ export function cors(): MiddlewareHandler {
 export function serverTiming(cost?: () => DbCost): MiddlewareHandler {
   return async (c, next) => {
     const started = performance.now();
-    const before = cost ? { ...cost() } : null;
+    const before = cost ? { ...cost(), each: cost().each?.length ?? 0 } : null;
     await next();
     const parts: string[] = [];
     if (cost && before) {
@@ -129,6 +131,7 @@ export function serverTiming(cost?: () => DbCost): MiddlewareHandler {
       parts.push(`db;dur=${(after.ms - before.ms).toFixed(1)};desc="${after.statements - before.statements} statements"`);
     }
     parts.push(`total;dur=${(performance.now() - started).toFixed(1)}`);
+    if (cost && before) (cost().each ?? []).slice(before.each).forEach((ms, i) => parts.push(`db${i + 1};dur=${ms.toFixed(1)}`));
     c.header('Server-Timing', parts.join(', '));
     c.header('Timing-Allow-Origin', '*');
   };
