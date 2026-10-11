@@ -57,12 +57,14 @@ for (const { name, path } of pages) {
       }
     });
 
-    test('is right to left, hidden from search engines, unframeable and accessible', async ({ page }) => {
+    test('is right to left, hidden from search engines, unframeable (but an embed) and accessible', async ({ page }) => {
       const response = await page.goto(path);
       expect(response?.headers()['x-robots-tag']).toBe('noindex');
       // No other site may frame it (clickjacking on Approve, keys and fixes).
-      expect(response?.headers()['content-security-policy']).toBe("frame-ancestors 'self'");
-      expect(response?.headers()['x-frame-options']).toBe('SAMEORIGIN');
+      // Only an embed is made to sit in other sites' frames (lib/safety.ts).
+      const embed = path.startsWith('/embed/');
+      expect(response?.headers()['content-security-policy']).toBe(embed ? 'frame-ancestors *' : "frame-ancestors 'self'");
+      expect(response?.headers()['x-frame-options']).toBe(embed ? undefined : 'SAMEORIGIN');
       await expect(page.locator('html')).toHaveAttribute('lang', 'he');
       await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
       // Both themes: the dark one has its own contrasts.

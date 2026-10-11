@@ -182,6 +182,8 @@ export function Reader({ data }: { data: ReaderData }) {
         />
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
+        <Option icon="history" label="היסטוריה" quiet onSelect={() => (close(), navigate(`/history/${data.id}`))} />
+        <Option icon="talk" label="שיחה על הדף" quiet onSelect={() => (close(), navigate(`/talk/${data.id}`))} />
         <Option
           icon="pen"
           label="עריכה"

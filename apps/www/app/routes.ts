@@ -32,6 +32,14 @@ export default [
     route('issues/:number', 'routes/issue.tsx'),
     route('inbox', 'routes/inbox.tsx'),
     route('u/:username', 'routes/profile.tsx'),
+    // An item's tools, a file's page, a scan's text and the subject index (thread 6, item tools).
+    route('history/:id', 'routes/history.tsx'),
+    route('talk/:id', 'routes/talk.tsx'),
+    route('compare/:unit', 'routes/compare.tsx'),
+    route('shaar/:id', 'routes/shaar.tsx'),
+    route('text/:scan', 'routes/text.tsx'),
+    route('files/:sha256', 'routes/file.tsx'),
+    route('mafteach', 'routes/mafteach.tsx'),
     route('*', 'routes/item.tsx'),
   ]),
   route('listen/:year/menu', 'routes/listen-menu.ts'),
@@ -63,4 +71,11 @@ export default [
   // Reports, the inbox and people as the person, passed on to the API's /v1/*; and where the reader app's links land.
   route('_/people/*', 'routes/people-pass.ts'),
   route('_/app/:action', 'routes/from-app.ts'),
+  // The item tools' writes, as the person: a comment, a restore, a line of a scan, a shaar.
+  route('_/tools/:what', 'routes/tools-act.ts'),
+  // The one page other sites may frame: no shell, no menus.
+  route('embed/:id', 'routes/embed.tsx'),
+  // The old site's /edit/<id> and /all/<id>: a permanent redirect to the item's own page.
+  route('edit/:id', 'routes/to-item.ts', { id: 'edit-redirect' }),
+  route('all/:id', 'routes/to-item.ts', { id: 'all-redirect' }),
 ] satisfies RouteConfig;
