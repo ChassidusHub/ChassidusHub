@@ -181,7 +181,9 @@ describe('search that lands on the moment', () => {
     const inner = sql[0]!.slice(0, sql[0]!.indexOf(') c'));
     expect(inner).not.toMatch(/revision/);
     // A sicha's words are long to rank: only so many sichos are, however many have the words.
-    expect(inner).toContain(`e.type = 'unit' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED.unit}`);
+    expect(inner).toContain(`THEN e.search_tsv @@ to_tsquery('simple', $1) END LIMIT ${MOMENT_RANKED.unit}`);
+    // The words are tested only on each kind's own live rows, never before the type (#182).
+    for (const kind of ['text-page', 'segment', 'unit']) expect(inner).toContain(`e.type = '${kind}' AND NOT e.deleted AND e.main_rev IS NOT NULL AND CASE WHEN e.type = '${kind}' THEN`);
     // Each match is ranked where it is found, its words read once: one rank per kind, none after (#172).
     expect(inner.match(/ts_rank/g)).toHaveLength(3);
     // A scan page's layer is read from its link, never from its revision, which holds all its lines (#182).

@@ -274,12 +274,17 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
     type === 'unit'
       ? `coalesce((SELECT ts_rank(p.lead, to_tsquery('simple', $1)) FROM unit_place p WHERE p.unit_id = e.id COLLATE "C"), 0)`
       : `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
+  // Each kind's own rows only are tested for the words: `@@` reads an item's words, and left free the planner tested
+  // it before the type, reading every page and paragraph's words to find forty sichos (#182). Inside the CASE it comes
+  // after; the type and the live rows are also what the type index (entity_type) holds, so it can find them.
+  const has = (type: keyof typeof MOMENT_RANKED, query = '$1') =>
+    `e.type = '${type}' AND NOT e.deleted AND e.main_rev IS NOT NULL AND CASE WHEN e.type = '${type}' THEN e.search_tsv @@ to_tsquery('simple', ${query}) END`;
   const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, ${tier} AS tier FROM entity e
-          WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED[type]})`;
+          WHERE ${has(type)} LIMIT ${MOMENT_RANKED[type]})`;
   const ofDate = (type: keyof typeof MOMENT_RANKED) =>
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
-          WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1)
+          WHERE ${has(type)}
             AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1))] : kinds.map((k) => all(k, 0));

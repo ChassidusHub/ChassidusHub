@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by words tests the words only on pages, paragraphs and sichos, each
+  kind on its own rows (#182): before, the database could test every page and
+  paragraph's words while looking for sichos, reading many times more than it
+  needed on a first search.
 - `GET /v1/places?within=/likkutei-sichos/12`: only the places that reopen at
   that page of the site or under it, the latest first, so a volume's page
   can offer "continue reading" where its reader stopped in it; the latest
