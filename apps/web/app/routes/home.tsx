@@ -2,7 +2,7 @@ import { dateKeyToHDate } from '@chassidushub/hebrew';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { Route } from './+types/home';
-import { shiurRows, useLearned } from '../components/DailyShiurim.js';
+import { dayOfMonth, shiurRows, useLearned } from '../components/DailyShiurim.js';
 import { PlayEventButton } from '../components/EventRow.js';
 import type { DailyLearning, Entity } from '../lib/api.js';
 import { siteOf } from '../lib/context.server.js';
@@ -163,7 +163,7 @@ const w = (lang: Lang, key: keyof typeof W) => W[key][lang];
 function DailyCard({ day, lang }: { day: DailyLearning; lang: Lang }) {
   const rows = shiurRows(day, lang, { rambam: ['three'] }).map((r) => (r.key === 'three' ? { ...r, name: w(lang, 'rambam') } : r));
   const hayomYom = day.hayomYom[0];
-  if (hayomYom) rows.push({ key: 'hayom-yom', name: w(lang, 'hayomYom'), pieces: [{ text: dateLabel(day.hebrew, 'he', { civil: false }).replace(/\s\S+$/, ''), to: `${href('/daily', lang)}#daily-hayom-yom`, external: false }] });
+  if (hayomYom) rows.push({ key: 'hayom-yom', name: w(lang, 'hayomYom'), pieces: [{ text: dayOfMonth(day.hebrew, lang), to: `${href('/daily', lang)}#daily-hayom-yom`, external: false }], english: lang === 'en' });
   const { ticked, toggle } = useLearned(day.date, rows);
   if (!rows.length) return null;
   const count = rows.filter((r) => ticked.has(r.key)).length;
@@ -192,7 +192,7 @@ function DailyCard({ day, lang }: { day: DailyLearning; lang: Lang }) {
                 {done ? <Icon name="check" size={14} /> : null}
               </button>
               <span className="hm-shiur-name">{row.name}</span>
-              <span className="hm-shiur-what torah" lang="he" dir="rtl">
+              <span className={row.english ? 'hm-shiur-what' : 'hm-shiur-what torah'} lang={row.english ? 'en' : 'he'} dir={row.english ? 'ltr' : 'rtl'}>
                 {first?.to ? (
                   first.external ? (
                     <a href={first.to} target="_blank" rel="noopener">
