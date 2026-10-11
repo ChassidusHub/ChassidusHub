@@ -97,11 +97,24 @@ export const GOOGLE_COOKIE = '__Host-rh_google';
 const GOOGLE_AUTHORIZE = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN = 'https://oauth2.googleapis.com/token';
 
-/** Sign-in for a site at `siteUrl`: its host is the passkeys' domain, its origin the only place sign-in happens. */
-export function authFor(siteUrl: string, google?: { clientId?: string; clientSecret?: string }, mailer?: Mailer): AuthOptions {
+/**
+ * Sign-in for a site at `siteUrl`: its host is the passkeys' domain, its
+ * origin the first place sign-in happens. `alsoOn` are more of the site's
+ * own addresses under that domain (the new site's beta,
+ * new.chassidushub.org, until the switch-over): a passkey made on one works
+ * on all of them, and each keeps its own session cookie.
+ */
+export function authFor(siteUrl: string, google?: { clientId?: string; clientSecret?: string }, mailer?: Mailer, alsoOn: string[] = []): AuthOptions {
   const url = new URL(siteUrl);
   const withGoogle = google?.clientId && google.clientSecret ? { google: { clientId: google.clientId, clientSecret: google.clientSecret } } : {};
-  return { rpId: url.hostname, rpName: 'ChassidusHub', origins: [url.origin], ...withGoogle, ...(mailer ? { mailer } : {}) };
+  const more = alsoOn.map((address) => new URL(address)).filter((other) => other.hostname.endsWith(`.${url.hostname}`)).map((other) => other.origin);
+  return { rpId: url.hostname, rpName: 'ChassidusHub', origins: [url.origin, ...more], ...withGoogle, ...(mailer ? { mailer } : {}) };
+}
+
+/** The site's own address a request came from, so a link sent by email leads back there; else its first. */
+function siteOf(c: Context, origins: string[]): string {
+  const origin = c.req.header('Origin');
+  return origin && origins.includes(origin) ? origin : origins[0]!;
 }
 
 /** Plain `http://localhost` cannot keep a `__Host-` (Secure) cookie in every browser; local development uses a plain name. */
@@ -493,7 +506,7 @@ export function authRoutes(app: Hono, catalog: Catalog, auth: AuthOptions): void
       if (started.refused === 'taken') return refuse(c, 400, 'that address already signs into another account');
       return c.json({ error: 'rate-limited', message: 'too many links for this address in the last hour; please try again later' }, 429);
     }
-    await mailer.send(signInMessage({ to: email, siteUrl: auth.origins[0]!, token: started.token, lang: langOf(input.lang), adding: Boolean(current), returnTo: safeReturn(input.return) }));
+    await mailer.send(signInMessage({ to: email, siteUrl: siteOf(c, auth.origins), token: started.token, lang: langOf(input.lang), adding: Boolean(current), returnTo: safeReturn(input.return) }));
     // The same answer whether or not the address has an account here: nobody learns who does.
     return c.json({ sent: true });
   });
