@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chabadLibraryImporter, crawlChabadLibrary, htmlToPageVersion, libraryHtml, type LibraryTree } from '@chassidushub/importers';
+import { chabadLibraryImporter, crawlChabadLibrary, htmlToPageVersion, libraryHtml, pageName, type LibraryTree } from '@chassidushub/importers';
 
 /** A little library: a work with two parts, the first with two pages, the second with one. */
 const SITE: Record<number, { type: string; data: unknown }> = {
@@ -150,5 +150,12 @@ describe('chabadlibrary.org', () => {
       { id: 'n1', kind: 'note', n: 1, text: [{ text: 'ראה ' }, { text: 'שם', href: 'https://chabadlibrary.org/books/5' }, { text: '.' }, { br: true }, { text: 'המשך ההערה.' }] },
       { id: 'n2', kind: 'note', n: 2, text: [{ text: 'ועוד.' }] },
     ]);
+  });
+
+  it('names a maamar by its date, without the print\'s בס"ד and footnote star (#89)', () => {
+    expect(pageName('בס"ד, יו"ד שבט, תשי"ב*')).toBe('יו"ד שבט, תשי"ב');
+    expect(pageName('בס"ד. ש"פ ויצא, ט\' כסלו ה\'תשכ"ט')).toBe('ש"פ ויצא, ט\' כסלו ה\'תשכ"ט');
+    expect(pageName('הערות לד"ה באתי לגני, תשי"ג')).toBe('הערות לד"ה באתי לגני, תשי"ג');
+    expect(pageName('בס"ד')).toBe('בס"ד');
   });
 });
