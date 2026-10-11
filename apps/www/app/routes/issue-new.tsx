@@ -54,11 +54,23 @@ const REFUSED: [RegExp, string][] = [
 const said = (message: string | undefined, fallback = 'הדיווח לא נשלח. בדקו את מה שכתבתם ונסו שוב.') => REFUSED.find(([pattern]) => message && pattern.test(message))?.[1] ?? fallback;
 
 /**
+ * Whether a kind of report is private (rights, offensive). The report page
+ * hides a private report from anyone not signed in, so a guest sent there
+ * would read it as never arrived; they are thanked on the form instead. When
+ * the kinds cannot be read, count it as private: thanks is never wrong.
+ */
+async function isPrivate(api: Route.ActionArgs['context']['api'], type: string): Promise<boolean> {
+  const templates = await api.issueTemplates().then((r) => r.templates as unknown as IssueTemplate[], () => null);
+  return !templates || templates.some((t) => t.type === type && !!t.private);
+}
+
+/**
  * Sending a report, as a plain form post (it works without JavaScript).
  * Signed in, it opens an issue as the person and goes to its page. Without
  * an account it goes to the API's /v1/reports, which takes reports from
  * anyone (an hourly limit; a captcha when the API asks for one, which this
- * site cannot give, so then the person is asked to sign in).
+ * site cannot give, so then the person is asked to sign in). A report that
+ * became a public issue goes to its page; a private one is thanked here.
  */
 export async function action({ request, context }: Route.ActionArgs): Promise<Sent> {
   if (!fromThisSite(request)) return { said: 'אפשר לדווח רק מדפי האתר עצמו.' };
@@ -82,7 +94,7 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Se
   }
   try {
     const sent = await context.api.report({ body: { reason: type as never, title, ...(body ? { note: body } : {}), ...(entityId ? { entityId } : {}) } });
-    if (sent.number) throw redirect(`/issues/${sent.number}`);
+    if (sent.number && !(await isPrivate(context.api, type))) throw redirect(`/issues/${sent.number}`);
     return { said: '', sent: null };
   } catch (error) {
     if (error instanceof Response) throw error;

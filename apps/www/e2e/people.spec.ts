@@ -115,6 +115,25 @@ test('without an account a report is sent too, and a captcha the site cannot giv
   await expect(page.getByRole('alert').getByRole('link', { name: 'כניסה' })).toHaveAttribute('href', '/signin?return=%2Fissues%2Fnew');
 });
 
+test('without an account a public report goes to its page, and a private one is thanked on the form', async ({ page }) => {
+  changesReports();
+  await page.request.get('http://localhost:3002/_people_reset');
+  await page.goto('/issues/new');
+  await page.getByLabel('עמוד חסר').check();
+  await page.getByLabel('כותרת: במשפט אחד, מה לא בסדר').fill('דיווח אורח עם מספר');
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+  await expect(page).toHaveURL(/\/issues\/\d+$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('דיווח אורח עם מספר');
+
+  await page.goto('/issues/new');
+  await page.getByLabel('זכויות').check();
+  await page.getByLabel('כותרת: במשפט אחד, מה לא בסדר').fill('בקשה פרטית של אורח עם מספר');
+  await page.getByRole('button', { name: 'שליחת הדיווח' }).click();
+  await expect(page).toHaveURL(/\/issues\/new$/);
+  await expect(page.getByText('הדיווח התקבל')).toBeVisible();
+  await page.request.get('http://localhost:3002/_people_reset');
+});
+
 test('the inbox asks to sign in, and signed in shows the lines and marks them read', async ({ page }) => {
   await page.goto('/inbox');
   await expect(page.getByRole('link', { name: 'כניסה' }).last()).toHaveAttribute('href', '/signin?return=%2Finbox');

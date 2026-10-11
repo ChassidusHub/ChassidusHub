@@ -132,7 +132,11 @@ function answer(method: string, url: URL, body: Record<string, unknown>, cookie:
   if (method === 'POST' && path === '/v1/reports') {
     guestReports.push(body);
     if (String(body.title).includes('captcha')) return [403, { error: 'forbidden', message: 'the captcha was not solved' }];
-    return [201, { id: 900, number: null }];
+    if (!String(body.title).includes('עם מספר')) return [201, { id: 900, number: null }];
+    const kind = templates.find((t) => t.type === body.reason);
+    const made = issue(20 + issues.length, { title: String(body.title), body: String(body.note ?? ''), type: String(body.reason), private: !!kind?.private, author: 'u-guest', createdAt: '2026-10-11T10:00:00Z' });
+    issues.push(made);
+    return [201, { id: 900 + made.number, number: made.number }];
   }
   const thread = /^\/v1\/threads\/(\d+)$/.exec(path);
   if (thread) return Number(thread[1]) === 50 ? [200, { kind: 'suggestion', number: 50, id: 50 }] : issues.some((i) => i.number === Number(thread[1])) ? [200, { kind: 'issue', number: Number(thread[1]), id: 1 }] : [404, { error: 'not-found', message: 'not found' }];
