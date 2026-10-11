@@ -2493,7 +2493,7 @@ export interface Operations {
     input: {
       /** The words */
       q: string;
-      /** Only what was said in this year, month or day (a date key); leave the date out of q */
+      /** Put first what was said in this year, month or day (a date key); leave the date out of q */
       within?: string;
       /** How many (at most 100) */
       limit?: number;
@@ -2508,7 +2508,7 @@ export interface Operations {
     input: {
       /** The words, a date, or both */
       q: string;
-      /** Only words said in this year, month or day (a date key); else the date in q */
+      /** Put first the words said in this year, month or day (a date key); else the date in q */
       within?: string;
       /** Only names in this language; else the language the words ask for ("in English", "באנגלית") */
       language?: "he" | "en" | "yi" | "ar" | "ru" | "fr" | "es";

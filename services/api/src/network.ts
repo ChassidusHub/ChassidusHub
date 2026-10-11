@@ -27,7 +27,7 @@ export function networkRoutes(app: Hono, catalog: Catalog, options: { embedder?:
     return c.json({ query: q, moments: await searchMoments(catalog, q, { limit: whole(c.req.query('limit'), 'limit', 100), within }) });
   });
 
-  // The new site's search screen, ready to draw, in one read; a date in q narrows the words and alone is that day's farbrengen.
+  // The new site's search screen, ready to draw, in one read; a date in q puts its words first and alone is that day's farbrengen.
   app.get('/v1/search/page', async (c) => {
     const q = (c.req.query('q') ?? '').trim();
     const within = c.req.query('within') || null;

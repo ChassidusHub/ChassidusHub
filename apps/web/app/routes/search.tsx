@@ -81,7 +81,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       : null;
   // By words: the moments, the names and the farbrengens of a date the words name, asked at once.
   const askByWords = () => {
-    const moments = api.moments(words, 20).catch(() => [] as Moment[]);
+    // A year beyond the words puts what was said that year first, then the rest; the year is not a word to find (#167).
+    const moments = (smart.year && smart.rest ? api.moments(smart.rest, 20, String(smart.year)) : api.moments(words, 20)).catch(() => [] as Moment[]);
     // Words beyond a date narrow the farbrengens found, and are searched in names too; words read as a date may be a name
     // too, so the names they match are found as well (a sefer named so first: the API's search puts it there).
     const search = api.search(understood && smart.rest ? smart.rest : words, { limit: 50 });
