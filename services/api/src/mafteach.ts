@@ -2,6 +2,7 @@ import type { Hono } from 'hono';
 import { mafteach, type Catalog } from '@chassidushub/core';
 import { readId } from '@chassidushub/model';
 import { HttpError } from './app.js';
+import { keptMafteach, type Kept } from './summaries.js';
 import { edgeCached } from './machine.js';
 
 /**
@@ -14,9 +15,11 @@ import { edgeCached } from './machine.js';
  *       q      the topics whose name, context or sicha holds these words
  *
  * Kept five minutes at the edge; the index is built once and kept until
- * one of its pages changes.
+ * one of its pages changes. With `kept` (R2), the built index is read from
+ * there, as the scheduled run last built it: building it takes longer than
+ * a request may run (issue #104).
  */
-export function mafteachRoutes(app: Hono, catalog: Catalog): void {
+export function mafteachRoutes(app: Hono, catalog: Catalog, kept?: Kept): void {
   const item = async (raw: string | undefined, name: string) => {
     if (!raw) return null;
     const id = readId(raw);
@@ -41,7 +44,7 @@ export function mafteachRoutes(app: Hono, catalog: Catalog): void {
     return edgeCached(c.req.raw, 300, async () => {
       const index = await item(c.req.query('index'), 'index');
       if (!index) throw new HttpError(400, 'say which index (index=/likkutei-sichos-mafteach-inyanim)');
-      const answer = await mafteach(catalog, index, { seferId: await item(c.req.query('sefer'), 'sefer'), letter, q, limit: Math.max(limit, 1), places: Math.max(places, 1), offset });
+      const answer = await mafteach(catalog, index, { seferId: await item(c.req.query('sefer'), 'sefer'), letter, q, limit: Math.max(limit, 1), places: Math.max(places, 1), offset, ...(kept ? { kept: keptMafteach(kept), stale: true } : {}) });
       if (!answer) throw new HttpError(404, 'no such index');
       return Response.json(answer);
     });

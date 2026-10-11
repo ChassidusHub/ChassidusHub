@@ -17,7 +17,7 @@ import { tokenGate, tokenGrantOf, tokenRoutes } from './tokens.js';
 import { ERROR_CODES, PUBLIC_SUMMARY, caching, cors, cursor, nextLink, serverTiming, type RateLimits } from './platform.js';
 import { mcpRoutes } from './mcp.js';
 import { statusRoutes, type StatusStore } from './status.js';
-import { transcriptsFor, type SummaryStore } from './summaries.js';
+import { transcriptsFor, type Kept, type SummaryStore } from './summaries.js';
 import { oauthRoutes } from './oauth.js';
 import { pageRoutes } from './pages.js';
 import { driveRoutes, type DriveOptions } from './drive.js';
@@ -93,6 +93,8 @@ export interface ApiOptions {
   status?: StatusStore;
   /** Where the scheduled run keeps the transcripts summary (summaries.ts), for GET /v1/transcripts; unset, it is worked out on each request. */
   transcripts?: SummaryStore;
+  /** Other answers the scheduled run keeps (summaries.ts): what to check, the built subject index; unset, worked out on each request. */
+  kept?: Kept;
   /** Starts the free machine jobs when someone asks for OCR or a transcript (GitHub Actions); unset, the nightly run takes the request. */
   machineDispatch?: MachineDispatch;
   /** Lets work finish after the answer is sent (Workers' waitUntil); unset, the answer waits for it. */
@@ -241,8 +243,8 @@ export function createApp(options: ApiOptions): Hono {
   organizeRoutes(app, catalog, signedIn);
   fixRoutes(app, catalog, signedIn, { judge: options.fixJudge ?? null, liveFixes: options.liveFixes ?? false });
   appCatalogRoutes(app, catalog, options.appReleases, options.readerCatalog);
-  mafteachRoutes(app, catalog);
-  machineRoutes(app, catalog, signedIn, { dispatch: options.machineDispatch, waitUntil: options.waitUntil ? (_c, work) => options.waitUntil!(work) : undefined });
+  mafteachRoutes(app, catalog, options.kept);
+  machineRoutes(app, catalog, signedIn, { kept: options.kept, dispatch: options.machineDispatch, waitUntil: options.waitUntil ? (_c, work) => options.waitUntil!(work) : undefined });
   scanRoutes(app, catalog, {
     filesBase,
     siteUrl,
