@@ -128,6 +128,27 @@ export type ItemView = {
     name: Record<string, unknown> | null;
   } | null;
   text: ShownText | null;
+  scan: {
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    scan: string;
+    /** The scan's file, at /v1/files/{sha256} */
+    file: string;
+    /** The first PDF page */
+    firstPage: number;
+    /** The last PDF page */
+    lastPage: number;
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    publication: string;
+    url: string | null;
+  } | null;
+  /** The recordings of the farbrengens a unit was said at */
+  recordings: Array<{
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    id: string;
+    path: string | null;
+    name: Record<string, unknown> | null;
+    durationMs: number | null;
+  }>;
 };
 
 export type ShownText = {
@@ -143,8 +164,7 @@ export type ShownText = {
   title?: string;
   credit?: string;
   licence?: string;
-  /** Where the words are read at their source */
-  url?: string;
+  url?: string | null;
   segments?: Array<Record<string, unknown>>;
   notes?: Array<Record<string, unknown>>;
   machine?: "none" | "some" | "all";

@@ -25,6 +25,12 @@ any time. `@chassidushub/client` carries the API's version.
   words a person checked come before a machine's. `within` (a year, month
   or day, like `5711`) keeps only what was said then.
   words a person checked come before a machine's.
+- `GET /v1/view` for a sicha, maamar or letter now has `scan` (the scan
+  it is printed on and its PDF pages, even when it has words of its own,
+  with the PDF's `url` where it is served from here) and `recordings`
+  (the recordings of the farbrengens it was said at: id, path, name and
+  length). A page with no words gives its PDF's `url` too. Still six
+  statements at most.
 - `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a

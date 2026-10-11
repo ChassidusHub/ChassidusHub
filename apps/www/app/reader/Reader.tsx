@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { EditBar, EditFields, Linked, NameField } from '../edit/Edit';
+import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../path';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
@@ -33,7 +33,6 @@ export function Reader({ data }: { data: ReaderData }) {
   const without = new URLSearchParams(search);
   without.delete('edit');
   const reading = `${data.path}${without.size ? `?${without}` : ''}`;
-  const [rev, setRev] = useState(data.rev);
 
   // A footnote's mark opens the note; without script it is a link to the note at the end of the page.
   const onWords = (event: MouseEvent) => {
@@ -94,8 +93,7 @@ export function Reader({ data }: { data: ReaderData }) {
           {data.sub && <p className="ssub">{data.sub}</p>}
           {editing && (
             <EditFields>
-              <NameField item={data.id} rev={rev} language="he" label="שם" value={data.names.he} onSaved={(next) => next && setRev(next)} />
-              <NameField item={data.id} rev={rev} language="en" label="שם באנגלית" value={data.names.en} onSaved={(next) => next && setRev(next)} />
+              <Names item={data.id} rev={data.rev} names={data.names} />
               {data.work && (
                 <Linked to={`${data.work.path}?edit`} action="לערוך שם">
                   נמצא בספר: {data.sub || data.work.label}
@@ -121,7 +119,8 @@ export function Reader({ data }: { data: ReaderData }) {
               )}
             </div>
           )}
-          {text.kind === 'pages' && <Scan text={text} />}
+          {text.kind === 'pages' && (text.images.length || !data.pdfs.length) && <Scan text={text} />}
+          {(text.kind === 'none' || (text.kind === 'pages' && !text.images.length)) && data.pdfs.length > 0 && <Pdf pdfs={data.pdfs} />}
           {text.kind === 'withheld' && (
             <Missing>
               המילים של הדף הזה לא מוצגות כאן{text.reason ? ` (${text.reason})` : ''}.
@@ -135,7 +134,7 @@ export function Reader({ data }: { data: ReaderData }) {
               )}
             </Missing>
           )}
-          {text.kind === 'none' && <Missing>אין עדיין טקסט או סריקה לדף הזה.</Missing>}
+          {text.kind === 'none' && !data.pdfs.length && <Missing>אין עדיין טקסט או סריקה לדף הזה.</Missing>}
 
           {(data.previous || data.next) && (
             <nav className="endnav" aria-label="הקודם והבא">
@@ -169,7 +168,12 @@ export function Reader({ data }: { data: ReaderData }) {
           end={words?.versions.length ? (words.versions.find((v) => v.version === words.version)?.label ?? '') + (words.versions.length > 1 ? ` · ועוד ${words.versions.length - 1}` : '') : 'אין נוסח אחר'}
           onSelect={words && words.versions.length > 1 ? () => setOpen('versions') : undefined}
         />
-        <Option icon="scan" label="הסריקה" end={text.kind === 'pages' ? 'מוצגת' : 'בקרוב'} />
+        <Option
+          icon="scan"
+          label="הסריקה"
+          end={text.kind === 'pages' || (text.kind === 'none' && data.pdfs.length) ? 'מוצגת' : data.pdfs.length ? 'PDF' : 'בקרוב'}
+          onSelect={words && data.pdfs[0] ? () => (close(), window.open(data.pdfs[0]!.url, '_blank', 'noopener')) : undefined}
+        />
         <Option icon="listen" label="לשמוע את הרבי" end="אין הקלטה מקושרת" />
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
@@ -222,6 +226,24 @@ function Scan({ text }: { text: Extract<ReaderData['text'], { kind: 'pages' }> }
         </Button>
       )}
     </div>
+  );
+}
+
+/** No words yet: the page as it was printed, read on the page from where it is kept (Google Drive), as the Library shows a scan. */
+function Pdf({ pdfs }: { pdfs: ReaderData['pdfs'] }) {
+  const shown = pdfs.find((pdf) => pdf.embed);
+  return (
+    <>
+      <div className="scan-head">
+        <span className="faint sm">אין עדיין טקסט לדף הזה; זה הדף כפי שנדפס.</span>
+        {pdfs.map((pdf) => (
+          <a key={pdf.url} className="faint sm" href={pdf.url} target="_blank" rel="noopener noreferrer">
+            {pdf === shown ? 'לפתוח בחלון חדש' : pdf.label}
+          </a>
+        ))}
+      </div>
+      {shown && <iframe className="scan-frame" src={shown.embed!} title={`הדף כפי שנדפס: ${shown.label}`} allow="fullscreen" loading="lazy" referrerPolicy="no-referrer" />}
+    </>
   );
 }
 

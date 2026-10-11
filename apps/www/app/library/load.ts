@@ -1,5 +1,6 @@
 import type { ChassidusHub, Item, PathLevel as ApiLevel } from '@chassidushub/client';
 import { redirect } from 'react-router';
+import { namesOf } from '../edit/names';
 import { printingsFrom } from './printings';
 import { isRebbe, nameOf, partLabel, rebbeimFirst } from '../lib/catalog';
 
@@ -19,6 +20,19 @@ export interface Line {
   sub?: string;
   end?: string;
   to?: string;
+}
+
+/**
+ * For Edit: the revision shown, the page's own names, and the shelf it is on
+ * (the level above it in its path bar), which is edited on its own page.
+ */
+function ownFields(item: Item, levels: ApiLevel[]) {
+  const above = levels.filter((level) => level.chosen.path && level.chosen.path !== item.path).at(-1);
+  return {
+    rev: (item as { rev?: number }).rev ?? 0,
+    names: namesOf(item.data),
+    inside: above ? { path: above.chosen.path!, label: nameOf(above.chosen.name) } : null,
+  };
 }
 
 /** Every shelf in the catalog, in one cheap read (a few statements, where the tree costs dozens a level). */
@@ -90,9 +104,11 @@ export async function loadSet(api: ChassidusHub, root: Item, levels: ApiLevel[])
   return {
     screen: 'set' as const,
     id,
+    path: root.path,
     title: shelfName(root),
     rebbe: isRebbe(root.path),
     levels,
+    ...ownFields(root, levels),
     lines: [...shelves.map((set) => shelfLine(sets, set)), ...official.map(workLine)],
     additions: works.items
       .filter((work) => {
@@ -149,6 +165,7 @@ export async function loadWork(api: ChassidusHub, item: Item, levels: ApiLevel[]
     title: nameOf(data.title, id),
     author: author ? nameOf(author.chosen.name) : undefined,
     levels,
+    ...ownFields(item, levels),
     grid: asGrid(outline.parts),
     parts,
     printings: publications ? printingsFrom(publications) : null,
@@ -200,6 +217,8 @@ export async function loadVolume(api: ChassidusHub, work: Item, levels: ApiLevel
     screen: 'volume' as const,
     id: work.id,
     path: `${work.path}/${value}`,
+    // A volume is no item of its own: its name is the sefer's, edited on the sefer's page.
+    workPath: work.path,
     api: options.apiBase,
     title,
     value,

@@ -1,3 +1,4 @@
+import { nameField } from '../edit/names';
 import type { EditAnswer, EditAsk } from '../edit/types';
 import { fromThisSite } from './fix';
 import type { Route } from './+types/edit';
@@ -24,8 +25,8 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!context.visitor) return answer({ ok: false, why: 'signin' }, 401);
   try {
     const item = await context.api.getItem({ id: ask.item });
-    const label = (item.data as { label?: Record<string, string> }).label ?? {};
-    if ((label[ask.language] ?? '') !== ask.before || (typeof ask.rev === 'number' && item.rev !== ask.rev)) return answer({ ok: false, why: 'changed' }, 409);
+    const name = nameField(item.data);
+    if ((typeof name[ask.language] === 'string' ? name[ask.language] : '') !== ask.before || (typeof ask.rev === 'number' && item.rev !== ask.rev)) return answer({ ok: false, why: 'changed' }, 409);
     const sent = await context.visitor.organize({
       body: { operations: [{ op: 'rename', item: ask.item, name: { [ask.language]: value } }], title: `השם של הדף: ${value || ask.before}`.slice(0, 200), apply: true },
     });
