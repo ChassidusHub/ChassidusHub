@@ -54,11 +54,14 @@ const NAMES = ["r.data->'title'->>'he'", "r.data->'title'->>'en'", "r.data->'nam
  * each, an official sefer before an addition to one (WorkData.addition).
  * Everything else follows, by how well its words match. Without this a
  * sefer's own title was crowded out by the sichos that mention it.
+ * `typed`, when given, is a second form of the query a name may be: the
+ * words as typed, small words and all ("Letters from the Rebbe").
  */
-export function searchTierSql(query: string, tsQuery: string): string {
+export function searchTierSql(query: string, tsQuery: string, typed: string = query): string {
   const names = NAMES.map(normalizedSql);
-  const exact = names.map((n) => `${n} = ${query}`).join(' OR ');
-  const prefix = names.map((n) => `${n} LIKE ${query} || '%'`).join(' OR ');
+  const forms = typed === query ? [query] : [query, typed];
+  const exact = names.flatMap((n) => forms.map((q) => `${n} = ${q}`)).join(' OR ');
+  const prefix = names.flatMap((n) => forms.map((q) => `${n} LIKE ${q} || '%'`)).join(' OR ');
   const words = names.map((n) => `to_tsvector('simple', ${n}) @@ to_tsquery('simple', ${tsQuery})`).join(' OR ');
   const tier = `CASE WHEN e.type NOT IN ('work', 'set') THEN 3 WHEN ${exact} THEN 0 WHEN ${prefix} THEN 1 WHEN ${words} THEN 2 ELSE 3 END`;
   return `${tier}, (e.type = 'work' AND r.data ? 'addition')`;
