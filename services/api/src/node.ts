@@ -28,7 +28,7 @@ import { sendNotifications, type Mailer } from '@chassidushub/core';
  *                  Worker does (in this process's memory)
  */
 const url = process.env.DATABASE_URL;
-const db = url ? connectPostgres(url) : await openPGlite(process.env.PGLITE_DIR ?? '.data/pglite');
+const db = url ? connectPostgres(url, { max: 4, name: 'chassidushub-api local' }) : await openPGlite(process.env.PGLITE_DIR ?? '.data/pglite');
 const catalog = new Catalog(db);
 await catalog.init();
 
