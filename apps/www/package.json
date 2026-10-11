@@ -1,0 +1,35 @@
+{
+  "name": "@chassidushub/www",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The new ChassidusHub site, built fresh from the approved prototype: the library, listening and reading, right to left. React Router 7 with server rendering on its own Cloudflare Worker; beta at new.chassidushub.org.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChassidusHub/ChassidusHub.git",
+    "directory": "apps/www"
+  },
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "react-router dev",
+    "build": "react-router build",
+    "start": "NODE_ENV=production tsx server/node.ts",
+    "typecheck": "react-router typegen && tsc -p tsconfig.json",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@react-router/node": "^7.18.4",
+    "isbot": "^5.1.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router": "^7.18.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.64.0",
+    "@react-router/dev": "^7.18.4",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "vite": "^8.3.2"
+  }
+}

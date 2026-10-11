@@ -107,11 +107,11 @@
    * the words of the Torah in Frank Ruehl CLM, or the face the reader chose
    * (`data-text-font` on <html>). Numbers stay in the UI face, tabular.
    */
-  --ui: 'Noto Sans Hebrew', 'Noto Sans', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
-  --display: 'Frank Ruhl Libre', 'FrankRuehlCLM', 'Noto Serif Hebrew', Georgia, serif;
+  --ui: 'Noto Sans Hebrew', 'Noto Sans', 'Noto Sans Hebrew stand-in', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  --display: 'Frank Ruhl Libre', 'Frank Ruhl Libre stand-in', 'Frank Ruhl Libre stand-in 2', 'FrankRuehlCLM', 'Noto Serif Hebrew', Georgia, serif;
   /* The name in the logo, and only there (design/ChassidusHub Logo Guidelines.dc.html). */
   --brand: 'Newsreader', 'Frank Ruhl Libre', Georgia, serif;
-  --torah: 'FrankRuehlCLM', 'Frank Ruhl Libre', 'Noto Serif Hebrew', Georgia, serif;
+  --torah: 'FrankRuehlCLM', 'FrankRuehlCLM stand-in', 'FrankRuehlCLM stand-in 2', 'Frank Ruhl Libre', 'Noto Serif Hebrew', Georgia, serif;
   --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   --fs-xs: 11.5px;
   --fs-sm: 12.5px;
@@ -316,7 +316,7 @@
 }
 
 html[lang='en'] {
-  --ui: 'Noto Sans', 'Noto Sans Hebrew', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  --ui: 'Noto Sans', 'Noto Sans Hebrew', 'Noto Sans Hebrew stand-in', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
 }
 
 html[data-text-font='david'] {

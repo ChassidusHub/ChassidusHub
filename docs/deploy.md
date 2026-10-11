@@ -12,6 +12,11 @@ the repository through its GitHub app.
 | --- | --- | --- |
 | `chassidushub-api` | `npm run build && npm run chassidushub -- migrate` | `npx wrangler deploy -c services/api/wrangler.toml` |
 | `chassidushub-web` | `npm run build && npm run build:web` | `npx wrangler deploy -c apps/web/wrangler.toml` |
+| `chassidushub-www` | `npm run build:www` | `npx wrangler deploy -c apps/www/wrangler.toml` |
+
+`chassidushub-www` is the new site (apps/www), built fresh from the approved
+prototype. Until the switch-over it lives at **https://new.chassidushub.org**,
+hidden from search engines, while chassidushub.org keeps the old site.
 
 Both Workers bind the same Hyperdrive config and the public and archive
 buckets (`[[hyperdrive]]`, `[[r2_buckets]]` in each `wrangler.toml`): the

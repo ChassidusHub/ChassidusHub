@@ -13,6 +13,7 @@
   },
   "license": "AGPL-3.0-only",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -28,6 +29,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@hebcal/core": "^6.11.1"
+    "@hebcal/core": "^6.11.1",
+    "@hebcal/hdate": "^0.22.8"
   }
 }

@@ -56,12 +56,12 @@ async function onlyQaMerges(approved, head, getCommit, onMain, changedFiles, mai
 }
 
 /** Decides one pull request. Returns { ok, summary }. */
-async function decide({ github, owner, repo, pr }) {
+async function decide({ github, owner, repo, pr, ignoreStop = false }) {
   const head = pr.head.sha.toLowerCase();
   const base = pr.base.ref;
 
   const issues = await github.paginate(github.rest.issues.listForRepo, { owner, repo, state: 'open', per_page: 100 });
-  if (stopped(issues)) return { ok: false, summary: 'The studio is stopped: an issue titled studio-stop is open. Nothing merges until it is closed.' };
+  if (!ignoreStop && stopped(issues)) return { ok: false, summary: 'The studio is stopped: an issue titled studio-stop is open. Nothing merges until it is closed.' };
 
   const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: pr.number, per_page: 100 });
   const reviews = await github.paginate(github.rest.pulls.listReviews, { owner, repo, pull_number: pr.number, per_page: 100 });
@@ -118,4 +118,25 @@ async function run({ github, context, core }) {
   else core.setFailed(summary);
 }
 
-module.exports = { run, decide, approvedShas, stopped, onlyQaMerges };
+/**
+ * The audit of main (.github/workflows/main-audit.yml): every commit that reaches main must be a pull request
+ * merged at a head a reviewer approved. GitHub can't require the Approval check on a private repository on the free
+ * plan, so this looks after the fact. Returns one finding per commit that was not.
+ */
+async function audit({ github, owner, repo, shas }) {
+  const findings = [];
+  for (const sha of shas) {
+    const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({ owner, repo, commit_sha: sha });
+    const pr = pulls.find((p) => p.merged_at && p.merge_commit_sha === sha);
+    if (!pr) {
+      findings.push(`${sha.slice(0, 7)} reached main without a pull request.`);
+      continue;
+    }
+    // Whether the studio was stopped then can't be told now; the approval can.
+    const { ok, summary } = await decide({ github, owner, repo, pr, ignoreStop: true });
+    if (!ok) findings.push(`${sha.slice(0, 7)} is #${pr.number}, merged without an approval of its head: ${summary}`);
+  }
+  return findings;
+}
+
+module.exports = { run, decide, audit, approvedShas, stopped, onlyQaMerges };

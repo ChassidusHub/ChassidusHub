@@ -6,6 +6,7 @@ import { eventRow } from '../components/EventRow.js';
 import type { Backlink, Cover, Entity, FileInfo, LinkGroup, ChassidusHubApi, RelationLink, ScanPages, WorkCover } from './api.js';
 import { workVolumes } from './volumes.js';
 import { langOfUrl } from './i18n.js';
+import { parshaOf } from './week.js';
 
 /**
  * What an item's page needs beyond the item itself, by type: a work's
@@ -53,6 +54,8 @@ export interface ItemView {
   talk: number;
   /** A farbrengen's: what was said there, and its words synced to its recordings. */
   event?: EventView;
+  /** A farbrengen's: the parsha of its week, worked out here so the page's script needs no full calendar (#109). */
+  parsha?: string | null;
   /** A day of Hayom Yom's: the head the book prints over it (weekday, year, shiurim), to set it as printed. */
   hayomYom?: HayomYomShiurim | null;
   /** A sicha's: the units before and after it in its sefer, for its back and forth buttons. */
@@ -198,6 +201,7 @@ export async function loadItemView(api: ChassidusHubApi, entity: Entity, url: UR
       recordings.forEach((r) => (view.files[r.id] = files.get(String((r.data as { file?: string }).file ?? '')) ?? null));
       view.event = await orNone(eventView(api, view.lists.units, recordings, langOfUrl(url)), { said: [], texts: [] });
       const date = typeof d.date === 'string' ? d.date : '';
+      view.parsha = date ? parshaOf(date, langOfUrl(url)) : null;
       const day = /^\d{4}-(\w{2,3}-\d{2})$/.exec(date)?.[1];
       const [otherYears, sameYear] = await Promise.all([day ? api.events({ day, limit: 50, brief: true }) : [], date ? api.events({ within: date.slice(0, 4), limit: 2000, brief: true }) : []]);
       view.lists.otherYears = otherYears.filter((e) => e.id !== entity.id).map(eventRow);
