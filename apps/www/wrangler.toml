@@ -7,7 +7,7 @@ compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 
-# The beta address, hidden from search engines (public/robots.txt, X-Robots-Tag).
+# The beta address, hidden from search engines: only chassidushub.org itself is indexed (app/lib/site.ts).
 routes = [{ pattern = "new.chassidushub.org", custom_domain = true }]
 
 # The shared packages are used from source, as in vite.config.ts, so the deploy needs nothing built first.
