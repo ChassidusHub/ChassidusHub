@@ -191,8 +191,29 @@ function Times({ track, below }: { track: Track; below?: boolean }) {
 
 function FullPlayer({ track, open, onClose, onChapters }: { track: Track; open: boolean; onClose: () => void; onChapters: () => void }) {
   const playing = usePlayer((s) => s.playing);
+  const box = useRef<HTMLElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  // Like a sheet: focus moves in, Escape closes, and focus goes back to what opened it.
+  useEffect(() => {
+    if (!open) return;
+    const opener = document.activeElement as HTMLElement | null;
+    box.current?.querySelector<HTMLElement>('.ph button')?.focus({ preventScroll: true });
+    const keys = (event: globalThis.KeyboardEvent) => {
+      // The chapters sheet over the player closes first.
+      if (event.key === 'Escape' && !document.querySelector('.sheet.on')) {
+        event.preventDefault();
+        close.current();
+      }
+    };
+    document.addEventListener('keydown', keys);
+    return () => {
+      document.removeEventListener('keydown', keys);
+      opener?.focus({ preventScroll: true });
+    };
+  }, [open]);
   return (
-    <section className={open ? 'fs on' : 'fs'} role="dialog" aria-modal="true" aria-label="נגן" inert={!open}>
+    <section ref={box} className={open ? 'fs on' : 'fs'} role="dialog" aria-modal="true" aria-label="נגן" inert={!open}>
       <div className="ph">
         <IconButton icon="chevron-down" label="הקטנת הנגן" onClick={onClose} />
         <div className="mid">
@@ -259,7 +280,11 @@ function Words({ track }: { track: Track }) {
                   role="button"
                   tabIndex={0}
                   onClick={() => getSelection()?.isCollapsed !== false && player.seek(start + phrase.start)}
-                  onKeyDown={(event) => event.key === 'Enter' && player.seek(start + phrase.start)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    player.seek(start + phrase.start);
+                  }}
                 >
                   {phrase.text}
                 </span>{' '}

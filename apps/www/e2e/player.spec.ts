@@ -33,3 +33,24 @@ test('keeps playing across pages, switches parts and speed, and follows the word
   await page.getByRole('button', { name: /^מהירות/ }).filter({ visible: true }).first().click();
   await expect(page.getByRole('button', { name: /^מהירות 1.25/ }).filter({ visible: true }).first()).toBeVisible();
 });
+
+test('the player and its words work from the keyboard', async ({ page }, info) => {
+  test.skip(info.project.name !== 'phone', 'the full-screen player is the phone’s');
+  await page.goto('/ui');
+  await page.getByRole('button', { name: 'נגינת הקלטה לדוגמה' }).click();
+  const open = page.getByRole('button', { name: /פתיחת הנגן/ });
+  await open.focus();
+  await page.keyboard.press('Enter');
+  const full = page.getByRole('dialog', { name: 'נגן' });
+  await expect(page.getByRole('button', { name: 'הקטנת הנגן' })).toBeFocused();
+
+  // Space on a phrase plays from it, without scrolling the words.
+  const phrase = full.locator('.yi .p').nth(2);
+  await phrase.focus();
+  await page.keyboard.press(' ');
+  await expect(phrase).toHaveClass(/now/);
+
+  await page.keyboard.press('Escape');
+  await expect(full).toHaveAttribute('inert', '');
+  await expect(open).toBeFocused();
+});
