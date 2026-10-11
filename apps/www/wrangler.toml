@@ -1,0 +1,20 @@
+# The new site (apps/www) on its own Worker, beside the old one (apps/web), until
+# the switch-over gives it chassidushub.org. Cloudflare builds and deploys it from
+# main (Workers Builds; docs/deploy.md).
+name = "chassidushub-www"
+main = "server/worker.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+# The beta address, hidden from search engines (public/robots.txt, X-Robots-Tag).
+routes = [{ pattern = "new.chassidushub.org", custom_domain = true }]
+
+[observability]
+enabled = true
+
+# build/client: the built files, answered before the Worker runs; public/_headers
+# gives them their cache and noindex headers.
+[assets]
+directory = "build/client"
+binding = "ASSETS"
