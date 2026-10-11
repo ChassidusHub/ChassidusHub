@@ -8,7 +8,6 @@ import {
   IconButton,
   iconNames,
   Logo,
-  PathBar,
   PlayButton,
   Row,
   Rows,
@@ -17,10 +16,13 @@ import {
   Segmented,
   Sheet,
   Tile,
+  TopBar,
   useToast,
   type PathLevel,
 } from '../ui';
 import type { Route } from './+types/ui';
+
+export const handle = { section: 'library' };
 
 export function meta(_: Route.MetaArgs) {
   return [{ title: 'רכיבי העיצוב · ChassidusHub' }];
@@ -66,10 +68,8 @@ export default function DesignSystem() {
   const [filter, setFilter] = useState('הכול');
   return (
     <>
-      <header style={{ display: 'flex', alignItems: 'center', height: 52, paddingInline: 8 }}>
-        <PathBar levels={path} />
-      </header>
-      <main className="view">
+      <TopBar path={path} />
+      <main id="content" className="view">
         <h1>רכיבי העיצוב</h1>
         <p className="faint">כל חלקי העיצוב של האתר החדש, כפי שהם באב־הטיפוס. מסכים נבנים רק מהם.</p>
 
