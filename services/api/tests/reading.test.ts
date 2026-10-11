@@ -42,6 +42,23 @@ describe('where a person stopped', () => {
     expect((await call('GET', '/v1/places', { as: 'chaim' })).body.places).toHaveLength(1);
   });
 
+  it('gives the latest place under one page of the site, for a volume\'s continue reading (#71)', async () => {
+    const at = (key: string, href: string) => call('PUT', '/v1/places', { as: 'chaim', body: { kind: 'read', key, title: key, href, place: { page: 1 } } });
+    await at('a', '/likkutei-sichos/12/3');
+    await at('b', '/likkutei-sichos/12?page=40');
+    await at('c', '/likkutei-sichos/120/1');
+    await at('d', '/likkutei-sichos/13/2#p4');
+    const within = async (page: string) => (await call('GET', `/v1/places?within=${encodeURIComponent(page)}`, { as: 'chaim' })).body.places.map((p: { key: string }) => p.key);
+    // Under the volume's page, the latest first; volume 120 is not under volume 12.
+    expect(await within('/likkutei-sichos/12')).toEqual(['b', 'a']);
+    expect(await within('/likkutei-sichos/12/')).toEqual(['b', 'a']);
+    expect(await within('/likkutei-sichos/13')).toEqual(['d']);
+    expect(await within('/likkutei-sichos')).toEqual(['d', 'c', 'b', 'a']);
+    // A LIKE wildcard in the page is only a letter.
+    expect(await within('/likkutei_sichos')).toEqual([]);
+    expect((await call('GET', '/v1/places?within=https://elsewhere.example/', { as: 'chaim' })).status).toBe(422);
+  });
+
   it('takes only places on the site, of a sensible size, and keeps the latest few', async () => {
     expect((await call('PUT', '/v1/places', { as: 'chaim', body: { ...reading, href: 'https://elsewhere.example/' } })).status).toBe(422);
     expect((await call('PUT', '/v1/places', { as: 'chaim', body: { ...reading, href: '//elsewhere.example/' } })).status).toBe(422);
