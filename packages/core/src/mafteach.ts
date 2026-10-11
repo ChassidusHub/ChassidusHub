@@ -274,12 +274,7 @@ export async function mafteach(
 ): Promise<Mafteach | null> {
   const built = await builtIndex(catalog, indexId, options);
   if (!built) return null;
-  const letters: Mafteach['letters'] = [];
-  for (const t of built.topics) {
-    const last = letters[letters.length - 1];
-    if (last?.letter === t.letter) last.topics++;
-    else letters.push({ letter: t.letter, topics: 1 });
-  }
+  const letters = lettersOf(built);
   const strip = ({ key: _key, words: _words, ...t }: Built['topics'][number]): MafteachTopic => t;
   const limit = options.limit ?? 60;
   const offset = options.offset ?? 0;
@@ -306,8 +301,51 @@ export async function mafteach(
     const named = built.topics.filter((t) => has(t.key)).sort((a, b) => rank(a) - rank(b));
     return page([...named, ...built.topics.filter((t) => !has(t.key) && has(t.words))]);
   }
-  const letter = options.letter && letters.some((l) => l.letter === options.letter) ? options.letter : letters[0]?.letter;
+  const letter = letterOf(letters, options.letter);
   return page(built.topics.filter((t) => t.letter === letter));
+}
+
+/** Each first letter and how many topics under it, in order. */
+function lettersOf(built: Built): Mafteach['letters'] {
+  const letters: Mafteach['letters'] = [];
+  for (const t of built.topics) {
+    const last = letters[letters.length - 1];
+    if (last?.letter === t.letter) last.topics++;
+    else letters.push({ letter: t.letter, topics: 1 });
+  }
+  return letters;
+}
+
+/** The letter asked for when the index has it, else its first. */
+const letterOf = (letters: Mafteach['letters'], asked?: string) => (asked && letters.some((l) => l.letter === asked) ? asked : letters[0]?.letter);
+
+/**
+ * One letter's topics by name only, for a list to jump from (#195): each
+ * topic's printed name, its offset in the letter (the `offset` that opens
+ * the page beginning with it) and how many places it has. A letter of the
+ * Likkutei Sichos index holds over two hundred topics, and reading their
+ * places to list their names was some 3 kB a topic.
+ */
+export interface MafteachNames {
+  index: Mafteach['index'];
+  letters: Mafteach['letters'];
+  letter: string | null;
+  names: Array<{ topic: string; offset: number; places: number; machine: boolean }>;
+}
+
+export async function mafteachNames(
+  catalog: Catalog,
+  indexId: string,
+  options: { letter?: string; seferId?: string | null; kept?: MafteachKept; stale?: boolean; onBuild?: () => void } = {},
+): Promise<MafteachNames | null> {
+  const built = await builtIndex(catalog, indexId, options);
+  if (!built) return null;
+  const letters = lettersOf(built);
+  const letter = letterOf(letters, options.letter) ?? null;
+  const names = built.topics
+    .filter((t) => t.letter === letter)
+    .map((t, offset) => ({ topic: t.topic, offset, places: t.volumes.reduce((n, v) => n + v.places.length, 0), machine: t.volumes.some((v) => v.machine) }));
+  return { index: built.index, letters, letter, names };
 }
 
 /**
