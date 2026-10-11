@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import type { Decided, LiveChange } from './back-item';
 import type { Piece } from '../back/words';
+import { Waiting, type Stage, type WaitingRow } from '../suggestions/Waiting';
 import { Button, Row, Rows, Say, SectionHead, Segmented, TopBar } from '../ui';
 import type { Route } from './+types/backroom';
 
@@ -31,11 +32,18 @@ type ToCheck = Awaited<ReturnType<Route.LoaderArgs['context']['api']['machineToC
  * said so; the other still shows.
  */
 export async function loader({ context }: Route.LoaderArgs) {
-  const [live, machine] = await Promise.all([
+  const [live, machine, open] = await Promise.all([
     context.api.listSuggestions({ postReview: 'true', limit: 30 }).catch(() => null),
     context.api.machineToCheck({ limit: 50 }).catch(() => null),
+    context.api.listSuggestions({ status: 'open', limit: 100 }).catch(() => null),
   ]);
+  // What waits for a keeper (the old /review), and where each stands on its way in, read for them all at once.
+  const rows: WaitingRow[] = ((open?.suggestions ?? []) as unknown as (LiveRow & { status?: string })[])
+    .filter((row) => row.status === 'open')
+    .map(({ id, number, title, author, submitted_at, created_at, items }) => ({ id, number: number ?? null, title, author, at: submitted_at ?? created_at ?? null, items: items ?? 0 }));
+  const stages = rows.length ? await context.api.suggestionStages({ ids: rows.map((row) => row.id).join(',') }).then((answer) => answer.stages as Record<string, Stage>).catch(() => ({})) : {};
   return {
+    waiting: open ? { rows, people: (open.people ?? {}) as People, stages } : null,
     live: live ? { rows: (live.suggestions as LiveRow[]).map(({ id, number, title, author, submitted_at, created_at, items }) => ({ id, number, title, author, submitted_at, created_at, items })), people: (live.people ?? {}) as People } : null,
     machine,
   };
@@ -54,25 +62,31 @@ const day = new Intl.DateTimeFormat('he', { day: 'numeric', month: 'long', hour:
  * listening never come here; it is linked from the account sheet.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { live, machine } = loaderData;
-  const [tab, setTab] = useState<'live' | 'machine'>('live');
+  const { live, machine, waiting: queue } = loaderData;
+  // The old /review comes here as ?tab=waiting; the tab chosen stays in the address, so it can be linked.
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('tab');
+  const tab: 'waiting' | 'live' | 'machine' = asked === 'waiting' || asked === 'machine' ? asked : 'live';
+  const setTab = (next: typeof tab) => setParams(next === 'live' ? {} : { tab: next }, { replace: true, preventScrollReset: true });
   const waiting = live?.rows.length ?? 0;
+  const toReview = queue?.rows.length ?? 0;
   return (
     <>
       <TopBar title="החדר האחורי" />
       <main id="content" className="view">
         <h1>החדר האחורי</h1>
-        <p className="lede">כאן בודקים את מה שעלה לאתר בלי לחכות, ואת מה שמכונה כתבה ועוד אף אחד לא בדק.</p>
+        <p className="lede">כאן בודקים את מה שעלה לאתר בלי לחכות, הצעות שמחכות לשומרי הספר, ואת מה שמכונה כתבה ועוד אף אחד לא בדק.</p>
         <Segmented
           label="מה לבדוק"
           value={tab}
           onChange={setTab}
           options={[
             { value: 'live', label: `עלו לאתר${waiting ? ` (${waiting})` : ''}` },
+            { value: 'waiting', label: `לבדיקה${toReview ? ` (${toReview})` : ''}` },
             { value: 'machine', label: 'כתב מכונה' },
           ]}
         />
-        {tab === 'live' ? <Live live={live} /> : <Machine machine={machine} />}
+        {tab === 'live' ? <Live live={live} /> : tab === 'waiting' ? <Waiting waiting={queue} /> : <Machine machine={machine} />}
       </main>
     </>
   );
