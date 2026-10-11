@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { Button, Icon, Panel, Row, Rows, SectionHead, TopBar, type IconName } from '../ui';
 import type { Route } from './+types/about';
 
@@ -23,7 +24,6 @@ export function headers() {
 }
 
 const REPO = 'https://github.com/ChassidusHub/ChassidusHub';
-const API = 'https://api.chassidushub.org';
 
 /** How a change gets in, in the plan's words: a Report, a Suggestion, Approve, and the history keeps every version. */
 const STEPS: { icon: IconName; title: string; text: string }[] = [
@@ -42,8 +42,9 @@ const LICENCES = [
 /**
  * About, help and for developers, on one page (thread 6): what
  * ChassidusHub is, how a change gets in, the ways anyone helps (with how
- * much machine text waits for a person), where the code and the API are,
- * asking for a takedown, and the licences. Linked from the account sheet.
+ * much machine text waits for a person), the pages about the catalog as a
+ * whole, where the code, the docs and the API are, asking for a takedown,
+ * and the licences. Linked from the account sheet.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
   const { toCheck } = loaderData;
@@ -81,7 +82,37 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
           />
           <Row start={<Icon name="pen" />} title="תיקון טעות" sub="בכל טקסט באתר: מסמנים את המילים ומתקנים. צריך להיכנס לחשבון." />
           <Row to="/back" start={<Icon name="check" />} title="בדיקת תיקונים שעלו" sub="שומרי הספר משאירים או מבטלים את מה שעלה לאתר בלי לחכות." />
+          <Row to="/missing" start={<Icon name="search" />} title="הוספת מה שחסר" sub="התוועדויות בלי הקלטה או הנחה, ספרים בלי סריקה. יש לכם אחד מהם? מוסיפים אותו בדף שלו." />
+          <Row to="/projects" start={<Icon name="people" />} title="פרויקטים" sub="עובדים יחד על חוסר אחד, פריט אחרי פריט." />
         </Rows>
+
+        <SectionHead title="הקטלוג כולו" />
+        <ul className="links">
+          <li>
+            <Link to="/health">
+              <Icon name="library" />
+              <span>מצב הקטלוג: כמה הוא מלא, ואיפה צריך עזרה</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/status">
+              <Icon name="check" />
+              <span>מצב האתר: האם הכל עובד עכשיו</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/mirrors">
+              <Icon name="download" />
+              <span>הורדת כל הקטלוג ואתרי מראה</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/models">
+              <Icon name="scan" />
+              <span>המודלים שקוראים וכותבים, ומדדי הביצוע שלהם</span>
+            </Link>
+          </li>
+        </ul>
 
         <SectionHead title="למפתחים" />
         <ul className="links">
@@ -104,18 +135,32 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
             </a>
           </li>
           <li>
-            <a href={`${API}/openapi.json`}>
-              <Icon name="globe" />
-              <span>
-                ה-API הפתוח (<bdi>OpenAPI</bdi>)
-              </span>
-            </a>
+            <Link to="/developers">
+              <Icon name="book" />
+              <span>התיעוד למפתחים</span>
+            </Link>
           </li>
           <li>
-            <a href={`${REPO}/tree/main/docs/developers`}>
-              <Icon name="book" />
-              <span>מדריכים למפתחים</span>
-            </a>
+            <Link to="/developers/getting-started">
+              <Icon name="next" />
+              <span>איך מתחילים לעבוד עם ה-API</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/developers/reference">
+              <Icon name="globe" />
+              <span>
+                מדריך ה-API, כל הנתיבים (<bdi>OpenAPI</bdi>)
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/developers/agents">
+              <Icon name="link" />
+              <span>
+                לסוכני AI: <bdi>MCP</bdi> ו-<bdi>llms.txt</bdi>
+              </span>
+            </Link>
           </li>
         </ul>
 

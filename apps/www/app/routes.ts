@@ -25,6 +25,18 @@ export default [
     // Suggestions as pull requests: the list and one suggestion's page (thread 6, the rebuild); the old /review is the back room's.
     route('suggestions', 'routes/suggestions.tsx'),
     route('suggestions/:number', 'routes/suggestion.tsx'),
+    // The catalog as a whole: its health, the site's status, what is missing, projects, downloads and the models' scores (thread 6, rebuilt).
+    route('health', 'routes/health.tsx'),
+    route('status', 'routes/status.tsx'),
+    route('missing', 'routes/missing.tsx'),
+    route('projects', 'routes/projects.tsx'),
+    route('projects/:slug', 'routes/project.tsx'),
+    route('mirrors', 'routes/mirrors.tsx'),
+    route('models', 'routes/models.tsx'),
+    // The developer docs from docs/*.md, and the API reference from the OpenAPI document (in English, in the Hebrew frame).
+    route('developers/reference', 'routes/developers-reference.tsx', { id: 'reference' }),
+    route('developers/reference/:group', 'routes/developers-reference.tsx', { id: 'reference-group' }),
+    route('developers/:page?', 'routes/developers.tsx'),
     route('ui', 'routes/ui.tsx'),
     // Reports, the inbox and people's pages (thread 6, rebuilt from the old site).
     route('issues', 'routes/issues.tsx'),
