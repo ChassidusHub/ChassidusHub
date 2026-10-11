@@ -1,4 +1,4 @@
-import type { PathChoice, PathLevel as ApiLevel, TreeNode } from '@chassidushub/client';
+import type { PathChoice, PathLevel as ApiLevel } from '@chassidushub/client';
 import type { MenuItem, PathLevel } from '../ui';
 
 /**
@@ -49,29 +49,6 @@ export function rebbeimFirst<T extends { path: string | null }>(items: T[]): T[]
     return at < 0 ? REBBEIM.length : at;
   };
   return items.map((item, at) => ({ item, at })).sort((a, b) => rank(a.item) - rank(b.item) || a.at - b.at).map(({ item }) => item);
-}
-
-/** A shelf with nothing on it (old shelves the catalog has emptied): not shown. */
-export const isEmpty = (node: TreeNode) => node.type === 'set' && !node.counts.sets && !node.counts.items;
-
-/** A sefer that belongs to another one (a commentary, an index, a collection) rather than standing on the shelf itself. */
-export const isAddition = (node: TreeNode) => !!node.addition;
-
-/** The official sefarim and shelves under a shelf, in the catalog's order: what its row lists. */
-export function officialChildren(node: TreeNode): TreeNode[] {
-  return (node.children ?? []).filter((child) => !isAddition(child) && !isEmpty(child));
-}
-
-/**
- * A shelf that holds exactly one official sefer and no shelves (the Rebbe's
- * "לקוטי שיחות" shelf, holding Likkutei Sichos and its additions) is that
- * sefer: its row, its menu choice and its page go straight to the sefer.
- * A Rebbe's own shelf never is, even with one sefer on it.
- */
-export function onlySefer(node: TreeNode): TreeNode | null {
-  if (node.type !== 'set' || node.counts.sets || isRebbe(node.path)) return null;
-  const works = officialChildren(node).filter((child) => child.type === 'work');
-  return works.length === 1 && (node.children ?? []).every((child) => child.type === 'work') ? works[0]! : null;
 }
 
 /** The first level of every library page's path: the library itself, beside listening. */

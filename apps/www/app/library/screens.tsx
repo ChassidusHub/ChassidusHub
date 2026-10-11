@@ -1,8 +1,8 @@
-import { Fragment, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Fragment, Suspense, useState } from 'react';
+import { Await, Link, useSearchParams } from 'react-router';
 import { libraryLevel, pathLevels } from '../lib/catalog';
 import { Icon, IconButton, Row, Rows, SearchField, SectionHead, Sheet, TopBar, useToast, type PathLevel } from '../ui';
-import type { LibraryData, Line, SetData, VolumeData, WorkData } from './load';
+import type { Line, SetData, VolumeData, WorkData } from './load';
 import { aboutOf, usePrintings, type Printing } from './printings';
 
 /**
@@ -22,37 +22,49 @@ function Lines({ lines }: { lines: Line[] }) {
   );
 }
 
-/** The library: the Rebbeim, then a row to the other shelves (`?more`), which lists them on the same page. */
-export function LibraryScreen({ data }: { data: LibraryData }) {
-  const [params] = useSearchParams();
-  const more = params.has('more');
-  const path: PathLevel[] = more
-    ? [libraryLevel(), { key: 'more', label: 'ספרים נוספים', title: 'ספרייה', items: [{ key: 'rebbeim', label: 'רבותינו נשיאינו', to: '/library' }, { key: 'more', label: 'ספרים נוספים', to: '/library?more', current: true }] }]
-    : [libraryLevel()];
+/** The library: the Rebbeim, then a row to the other shelves (`?more`). */
+export function LibraryScreen({ rebbeim }: { rebbeim: Line[] }) {
+  return (
+    <>
+      <TopBar path={[libraryLevel()]} />
+      <main id="content" className="view">
+        <LibrarySearch />
+        <h1 className="sr-only">ספרייה</h1>
+        <h2>רבותינו נשיאינו</h2>
+        <Rows>
+          {rebbeim.map((line) => (
+            <Row key={line.key} title={line.title} sub={line.sub} to={line.to} chevron />
+          ))}
+          <Row title={<span className="quiet-title">ספרים נוספים</span>} to="/library?more" />
+        </Rows>
+      </main>
+    </>
+  );
+}
+
+function LibrarySearch() {
+  return (
+    <form action="/search" role="search">
+      <SearchField name="q" label="חיפוש בספרייה" />
+    </form>
+  );
+}
+
+/** The other top shelves, beside the Rebbeim: they come in as they are read, below the page that is already there. */
+export function OtherShelvesScreen({ others }: { others: Promise<Line[]> }) {
+  const path: PathLevel[] = [
+    libraryLevel(),
+    { key: 'more', label: 'ספרים נוספים', title: 'ספרייה', items: [{ key: 'rebbeim', label: 'רבותינו נשיאינו', to: '/library' }, { key: 'more', label: 'ספרים נוספים', to: '/library?more', current: true }] },
+  ];
   return (
     <>
       <TopBar path={path} />
       <main id="content" className="view">
-        <form action="/search" role="search">
-          <SearchField name="q" label="חיפוש בספרייה" />
-        </form>
-        {more ? (
-          <>
-            <h1>ספרים נוספים</h1>
-            <Lines lines={data.more} />
-          </>
-        ) : (
-          <>
-            <h1 className="sr-only">ספרייה</h1>
-            <h2>רבותינו נשיאינו</h2>
-            <Rows>
-              {data.rebbeim.map((line) => (
-                <Row key={line.key} title={line.title} sub={line.sub} to={line.to} chevron />
-              ))}
-              {data.more.length > 0 && <Row title={<span className="quiet-title">ספרים נוספים</span>} to="/library?more" />}
-            </Rows>
-          </>
-        )}
+        <LibrarySearch />
+        <h1>ספרים נוספים</h1>
+        <Suspense fallback={<p className="faint sm">טוען…</p>}>
+          <Await resolve={others} errorElement={<p className="faint">לא הצלחנו לקרוא את המדפים. נסו שוב.</p>}>{(lines) => <Lines lines={lines} />}</Await>
+        </Suspense>
       </main>
     </>
   );

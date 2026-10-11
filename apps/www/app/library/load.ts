@@ -1,15 +1,14 @@
-import type { ChassidusHub, Item, PathLevel as ApiLevel, TreeNode } from '@chassidushub/client';
+import type { ChassidusHub, Item, PathLevel as ApiLevel } from '@chassidushub/client';
 import { redirect } from 'react-router';
 import { printingsFrom } from './printings';
-import { isEmpty, isRebbe, nameOf, officialChildren, onlySefer, partLabel, rebbeimFirst } from '../lib/catalog';
+import { isRebbe, nameOf, partLabel, rebbeimFirst } from '../lib/catalog';
 
 /**
  * What the library's pages read from the API, cut down on the server to what
  * they draw, so a page carries no more than it shows. Each page reads in two
- * rounds: where its path is, then everything about it at once. The tree is
- * read one level deep only: each level further costs the database hundreds of
- * statements (GET /v1/tree reads child by child), so a shelf's row has no line
- * of its sefarim under it until the API gives a shelf's page in one read.
+ * rounds: where its path is, then everything about it at once. Shelves come
+ * from one list of every shelf (a few statements) rather than the catalog tree,
+ * which costs the database dozens of statements a level; the tree is not read.
  */
 
 /** One line of a list: a name, a quiet line under it, where it goes. */
@@ -21,59 +20,87 @@ export interface Line {
   to?: string;
 }
 
-/** The quiet line under a shelf: its first few sefarim. */
-const subOf = (node: TreeNode) =>
-  officialChildren(node)
-    .slice(0, 3)
-    .map((child) => nameOf(child.name))
-    .join(' · ') || undefined;
-
-/** A shelf's or sefer's row: a shelf with one sefer goes straight to the sefer. */
-function lineOf(node: TreeNode): Line {
-  const sefer = isRebbe(node.path) ? null : onlySefer(node);
-  if (sefer) return { key: node.id, title: nameOf(sefer.name), to: sefer.path ?? undefined };
-  return { key: node.id, title: nameOf(node.name), sub: node.type === 'set' ? subOf(node) : undefined, to: node.path ?? undefined };
+/** Every shelf in the catalog, in one cheap read (a few statements, where the tree costs dozens a level). */
+async function allShelves(api: ChassidusHub): Promise<Item[]> {
+  const { items } = await api.listItems({ type: 'set', limit: 500 });
+  return items;
 }
 
-/** Lines without repeats: a sefer on two of a Rebbe's shelves (or on his shelf and in a shelf of it) is listed once. */
-function once(lines: Line[]): Line[] {
-  const seen = new Set<string>();
-  return lines.filter((line) => {
-    const key = line.to ?? line.key;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+const parentOf = (set: Item) => (set.data as { parent?: string }).parent ?? null;
+const orderOf = (item: Item) => String((item.data as { order?: unknown }).order ?? '');
+/** The catalog's order: by `order`, then by path. */
+const inOrder = (a: Item, b: Item) => (orderOf(a) < orderOf(b) ? -1 : orderOf(a) > orderOf(b) ? 1 : (a.path ?? '').localeCompare(b.path ?? ''));
+const shelfName = (set: Item) => nameOf((set.data as { name?: unknown }).name, set.id);
+const seferName = (work: Item) => nameOf((work.data as { title?: unknown }).title, work.id);
+const isAdditionItem = (work: Item) => !!(work.data as { addition?: unknown }).addition;
+
+/** The shelves inside a shelf, in order. */
+const shelvesIn = (sets: Item[], id: string) => sets.filter((set) => parentOf(set) === id).sort(inOrder);
+
+/** A shelf's row: its name, and the shelves inside it as the quiet line under it. */
+function shelfLine(sets: Item[], set: Item): Line {
+  const inside = shelvesIn(sets, set.id).slice(0, 3).map(shelfName).join(' · ');
+  return { key: set.id, title: shelfName(set), sub: inside || undefined, to: set.path ?? undefined };
 }
 
-/** The library: the Rebbeim, each with his first sefarim, and the other top shelves. */
+/** The library: the Rebbeim, each with the first shelves of his sefarim. */
 export async function loadLibrary(api: ChassidusHub) {
-  const tree = await api.catalogTree({ depth: 1, limit: 40 });
-  const shelves = rebbeimFirst(tree.children.filter((node) => !isEmpty(node)));
-  return {
-    rebbeim: shelves.filter((node) => isRebbe(node.path)).map(lineOf),
-    more: shelves.filter((node) => !isRebbe(node.path)).map(lineOf),
-  };
+  const sets = await allShelves(api);
+  const rebbeim = sets.filter((set) => !parentOf(set) && isRebbe(set.path));
+  return { rebbeim: rebbeimFirst(rebbeim).map((set) => shelfLine(sets, set)) };
 }
 
-/** A Rebbe's or a shelf's page: its shelves and sefarim, then the books that are additions on it. */
+/**
+ * The other top shelves (`/library?more`). A shelf with no shelves in it is
+ * asked for the first two things on it, a few shelves at a time so the database is
+ * not asked for them all at once: one with none is left out (old shelves the
+ * catalog has emptied), one with a single sefer goes straight to it. It takes
+ * a round of reads more than any other page, so the page streams it in.
+ */
+export async function loadOtherShelves(api: ChassidusHub): Promise<Line[]> {
+  const sets = await allShelves(api);
+  const others = sets.filter((set) => !parentOf(set) && !isRebbe(set.path)).sort(inOrder);
+  const lineOf = async (set: Item): Promise<Line | null> => {
+    if (shelvesIn(sets, set.id).length) return shelfLine(sets, set);
+    const { items } = await api.listLinked({ id: set.id, field: 'sets', limit: 2 });
+    if (!items.length) return null;
+    const only = items.length === 1 && items[0]!.type === 'work' && !isAdditionItem(items[0]!) ? items[0]! : null;
+    return only?.path ? { key: set.id, title: seferName(only), to: only.path } : shelfLine(sets, set);
+  };
+  const lines: Array<Line | null> = [];
+  for (let at = 0; at < others.length; at += 6) lines.push(...(await Promise.all(others.slice(at, at + 6).map(lineOf))));
+  return lines.filter((line): line is Line => !!line);
+}
+
+/**
+ * A Rebbe's or a shelf's page: its shelves and official sefarim, then the
+ * books on it that are additions (those to a sefer here are on that sefer's
+ * page). A shelf with one official sefer and no shelves, other than a
+ * Rebbe's, sends its page on to that sefer.
+ */
 export async function loadSet(api: ChassidusHub, id: string) {
-  const [tree, bar] = await Promise.all([api.catalogTree({ root: id, depth: 1, limit: 100 }), api.pathBar({ id })]);
-  const root = tree.root;
+  const [sets, works, bar] = await Promise.all([allShelves(api), api.listLinked({ id, field: 'sets', type: 'work', limit: 500 }), api.pathBar({ id })]);
+  const root = sets.find((set) => set.id === id);
   if (!root) throw new Response('not found', { status: 404 });
-  const sefer = onlySefer(root);
-  if (sefer?.path) throw redirect(sefer.path);
-  const children = root.children ?? [];
-  const here = new Set(children.map((child) => child.id));
+  const shelves = shelvesIn(sets, id);
+  const official = works.items.filter((work) => !isAdditionItem(work)).sort(inOrder);
+  if (!shelves.length && official.length === 1 && !isRebbe(root.path) && official[0]!.path) throw redirect(official[0]!.path);
+  const here = new Set(official.map((work) => work.id));
+  const workLine = (work: Item): Line => ({ key: work.id, title: seferName(work), to: work.path ?? undefined });
   return {
     screen: 'set' as const,
     id,
-    title: nameOf(root.name, id),
+    title: shelfName(root),
     rebbe: isRebbe(root.path),
     levels: bar.levels,
-    lines: once(officialChildren(root).map(lineOf)),
-    // Additions to a sefer on this shelf are on that sefer's page; the rest are listed here.
-    additions: once(children.filter((child) => child.addition && !(child.addition.to && here.has(child.addition.to))).map(lineOf)),
+    lines: [...shelves.map((set) => shelfLine(sets, set)), ...official.map(workLine)],
+    additions: works.items
+      .filter((work) => {
+        const to = (work.data as { addition?: { to?: string } }).addition?.to;
+        return isAdditionItem(work) && !(to && here.has(to));
+      })
+      .sort(inOrder)
+      .map(workLine),
   };
 }
 
@@ -190,7 +217,6 @@ export async function loadVolume(api: ChassidusHub, workId: string, value: strin
 }
 
 type Loaded<T extends (...args: never[]) => Promise<unknown>> = NonNullable<Awaited<ReturnType<T>>>;
-export type LibraryData = Loaded<typeof loadLibrary>;
 export type SetData = Loaded<typeof loadSet>;
 export type WorkData = Loaded<typeof loadWork>;
 export type VolumeData = Loaded<typeof loadVolume>;
