@@ -27,9 +27,21 @@ sefer's own words: the repository holds no texts, scans or recordings.
 ## Running it
 
 ```sh
+npm run build                      # once after a fresh checkout: the command runs the built packages
 npm run sample                     # once; again does nothing
 DEV_ACCOUNT=dev FILES_DIR=.data/files npm run dev:api
 npm run dev:web                    # http://localhost:5173
+```
+
+Without `npm run build` first, `npm run sample` stops with
+`ERR_MODULE_NOT_FOUND` for `@chassidushub/core/dist`.
+
+If `DATABASE_URL` is set in your shell, the API uses that database and
+migrates it, not `.data/pglite`. In a cloud session it is the live
+database, so start the API without it:
+
+```sh
+env -u DATABASE_URL DEV_ACCOUNT=dev FILES_DIR=.data/files npm run dev:api
 ```
 
 On Windows (PowerShell), set the two settings first:
