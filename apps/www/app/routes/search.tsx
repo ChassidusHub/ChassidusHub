@@ -119,6 +119,11 @@ function Results({ page }: { page: SearchPage }) {
     );
   return (
     <>
+      {page.topic && (
+        <p className="faint">
+          תוצאות עבור <bdi>{page.topic}</bdi>
+        </p>
+      )}
       {top && (
         <TopAnswer kind={top.kind} title={top.title} sub={top.sub}>
           {top.listen ? (
