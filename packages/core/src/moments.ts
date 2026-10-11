@@ -243,9 +243,10 @@ export const MOMENT_CANDIDATES = 200;
  * How many matches of each kind are ranked at most. Ranking reads each
  * match's words whole: a page or a paragraph is short, but a sicha's are
  * all its text, and a common word (שבת, גאולה) over every sicha took eight
- * to ten seconds. Past these, the first matches found are ranked.
+ * to ten seconds. Past these, the first matches found are ranked. Each
+ * match is ranked where it is found, so its words are read once (#172).
  */
-export const MOMENT_RANKED = { 'text-page': 2000, segment: 2000, unit: 400 } as const;
+export const MOMENT_RANKED = { 'text-page': 1000, segment: 1000, unit: 100 } as const;
 
 /**
  * The places in scans and texts where the query's words are: lines on
@@ -262,21 +263,21 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   // ranked. A date (`within`) puts first the matches said then, or whose own words name its year (a maamar's heading),
   // then the rest: that needs each such match's revision, so only a search with a date reads it before the limit.
   const within = options.within ?? null;
+  const RANK = `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
   const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
-    `(SELECT e.id, ${tier} AS tier FROM entity e
+    `(SELECT e.id, e.type, e.main_rev, ${RANK} AS rank, ${tier} AS tier FROM entity e
           WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED[type]})`;
   const ofDate = (type: keyof typeof MOMENT_RANKED) =>
-    `(SELECT e.id, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
+    `(SELECT e.id, e.type, e.main_rev, ${RANK} AS rank, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
           WHERE e.type = '${type}' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1)
             AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1))] : kinds.map((k) => all(k, 0));
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
     `SELECT c.id, c.type, c.tier FROM (
-       SELECT e.id, e.type, e.main_rev, m.tier, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank
-       FROM (SELECT id, min(tier) AS tier FROM (${matched.join(' UNION ALL ')}) u GROUP BY id) m
-       JOIN entity e ON e.id = m.id
-       ORDER BY m.tier, rank DESC, e.id LIMIT ${MOMENT_CANDIDATES}
+       SELECT id, type, main_rev, min(tier) AS tier, max(rank) AS rank
+       FROM (${matched.join(' UNION ALL ')}) u GROUP BY id, type, main_rev
+       ORDER BY tier, rank DESC, id LIMIT ${MOMENT_CANDIDATES}
      ) c
      JOIN revision r ON r.id = c.main_rev
      LEFT JOIN entity l ON c.type = 'text-page' AND l.id = r.data->>'layer' LEFT JOIN revision lr ON lr.id = l.main_rev

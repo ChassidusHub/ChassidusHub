@@ -182,6 +182,8 @@ describe('search that lands on the moment', () => {
     expect(inner).not.toMatch(/revision/);
     // A sicha's words are long to rank: only so many sichos are, however many have the words.
     expect(inner).toContain(`e.type = 'unit' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED.unit}`);
+    // Each match is ranked where it is found, its words read once: one rank per kind, none after (#172).
+    expect(inner.match(/ts_rank/g)).toHaveLength(3);
   });
 
   it('puts first what was said in the year, month or day: a text by its own date, its farbrengen or its own words naming the year, a transcript by its farbrengen; then the rest (#90, #167)', async () => {

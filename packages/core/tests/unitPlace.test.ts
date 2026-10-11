@@ -57,4 +57,13 @@ describe('unit_place', () => {
     await catalog.merge(gone.id, 'keeper');
     expect((await places()).map((p) => p.unit_id)).toEqual([one]);
   });
+
+  it('keeps each unit\'s name as the search compares it, its words indexed (migration 0032)', async () => {
+    const one = await add(catalog, 'mendy', 'keeper', 'unit', unit(1, { label: { he: 'דברים-שבת חָזוֹן', en: "Va'eschanan 2" } }), '/ls/1/1');
+    const { rows } = await catalog.db.query<{ name_he: string; name_en: string; found: boolean }>(
+      `SELECT name_he, name_en, names @@ to_tsquery('simple', 'חזון:* & vaeschanan:*') AS found FROM unit_place WHERE unit_id = $1`,
+      [one],
+    );
+    expect(rows).toEqual([{ name_he: 'דברים שבת חזון', name_en: 'vaeschanan 2', found: true }]);
+  });
 });
