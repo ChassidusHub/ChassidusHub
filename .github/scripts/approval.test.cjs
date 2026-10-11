@@ -1,16 +1,17 @@
 // The approval gate's decisions, with GitHub played by a fake: node --test .github/scripts/approval.test.cjs
 const test = require('node:test');
 const assert = require('node:assert');
-const { decide } = require('./approval.cjs');
+const { decide, audit } = require('./approval.cjs');
 
 const A = 'a'.repeat(40), B = 'b'.repeat(40), M = 'c'.repeat(40), X = 'd'.repeat(40);
 
 /** A fake GitHub: issues, comments, and compare answers by "base...head". */
-function fake({ issues = [], comments = [], reviews = [], compare = {}, commits = [] }) {
+function fake({ issues = [], comments = [], reviews = [], compare = {}, commits = [], pulls = [] }) {
   const rest = {
     issues: { listForRepo: () => issues, listComments: () => comments },
     pulls: { listReviews: () => reviews },
     repos: {
+      listPullRequestsAssociatedWithCommit: async ({ commit_sha }) => ({ data: pulls.filter((p) => p.merge_commit_sha === commit_sha) }),
       getCommit: async ({ ref }) => {
         const commit = commits.find((c) => c.sha === ref);
         if (!commit) throw new Error(`no commit ${ref}`);
@@ -174,4 +175,19 @@ test('two QA merges in a row pass', async () => {
     commits: [merge(B, A, M), merge(C, B, M2)],
   });
   assert.equal((await decide({ github, owner: 'o', repo: 'r', pr: pr(C) })).ok, true);
+});
+
+test('the audit passes a merge whose head was approved', async () => {
+  const merged = { ...pr(A), merged_at: '2026-10-10T22:10:00Z', merge_commit_sha: M };
+  const github = fake({ pulls: [merged], comments: [said(`APPROVE ${A}`)], issues: [{ title: 'studio-stop', state: 'open' }] });
+  assert.deepEqual(await audit({ github, owner: 'o', repo: 'r', shas: [M] }), []);
+});
+
+test('the audit finds a merge without an approval, and a push without a pull request', async () => {
+  const merged = { ...pr(A), merged_at: '2026-10-10T22:10:00Z', merge_commit_sha: M };
+  const github = fake({ pulls: [merged], comments: [said('Looks good')] });
+  const findings = await audit({ github, owner: 'o', repo: 'r', shas: [M, X] });
+  assert.equal(findings.length, 2);
+  assert.match(findings[0], /#7, merged without an approval/);
+  assert.match(findings[1], /without a pull request/);
 });
