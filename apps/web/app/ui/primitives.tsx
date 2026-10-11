@@ -71,7 +71,8 @@ const AGENT_WORDS = {
 
 /**
  * Work an agent sent for a person, shown as the agent's, never as the
- * person typing: "Claude · for @steward", with the agent mark, in the
+ * person typing: "agent Claude · for @steward", with the agent mark and
+ * the word itself (the mark alone read as a blank name, #141), in the
  * machine's amber (like machine output, it reads as the agent's until a
  * person reviews it). `children` is the person. Without `via`, the person
  * alone.
@@ -83,7 +84,7 @@ export function AgentBy({ via, lang, children, who }: { via: AgentVia | null | u
     <span className="agent-by" title={`${via.kind === 'oauth' ? w.oauth : w.token} ${who ?? ''}`.trim()}>
       <span className="machine-label sm agent-mark">
         <Icon name="bot" size={12} />
-        <bdi>{via.name}</bdi>
+        {w.agent} <bdi>{via.name}</bdi>
       </span>
       <span className="muted"> · {w.for} </span>
       {children}

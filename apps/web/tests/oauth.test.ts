@@ -103,5 +103,20 @@ describe("an agent's work, on the site", () => {
     expect(he).toContain('בשביל');
     const list = await (await handle(new Request(`${SITE}/suggestions`))).text();
     expect(list).toContain('agent-mark');
+    // The mark says "agent" in words, not only an icon (#141).
+    expect(list).toMatch(/agent(<!-- -->)? <bdi>Claude<\/bdi>/);
+  });
+
+  it("labels a machine's own suggestion as a machine's in the list (#141)", async () => {
+    const { catalog, set: own } = await freshCatalog();
+    await catalog.createAccount({ id: 'bot:transcribe', displayName: 'Machine transcription', isBot: true });
+    const cs = await catalog.createChangeset('bot:transcribe', { title: 'Machine transcript', kind: 'suggestion' });
+    await catalog.putRevision(cs.id, 'bot:transcribe', { type: 'event', data: yudShvat(own as never) as never });
+    await catalog.submit(cs.id, 'bot:transcribe');
+    const local = createApp({ catalog, siteUrl: SITE, authenticate: () => null });
+    const build = (await import(`${webRoot}/build/server/index.js`)) as ServerBuild;
+    const site = createSiteHandler(build, { apiUrl: 'http://api.test', siteUrl: SITE, fetch: (input, init) => Promise.resolve(local.request(input, init)) });
+    const list = await (await site(new Request(`${SITE}/suggestions`))).text();
+    expect(list).toMatch(/machine-label sm[^>]*>.*?Machine transcription/s);
   });
 });

@@ -5,6 +5,7 @@ import { siteOf } from '../lib/context.server.js';
 import { langFrom, type Lang } from '../lib/i18n.js';
 import { num, tu } from '../lib/i18nUi.js';
 import { href } from '../lib/links.js';
+import { personName } from '../lib/people.js';
 import { pageMeta } from '../lib/seo.js';
 import { personPath, threads, type People, type SuggestionListItem } from '../lib/threads.js';
 import { parseTokens, tokenText, withToken, type TokenKey } from '../lib/tokens.js';
@@ -12,7 +13,7 @@ import { useAccount } from '../lib/useAccount.js';
 import { useLang } from '../lib/useLang.js';
 import { Icon } from '../ui/Icon.js';
 import { TokenSearch } from '../ui/TokenSearch.js';
-import { AgentBy, Avatar, EmptyState, RelativeTime, Skeleton, cx } from '../ui/primitives.js';
+import { AgentBy, Avatar, EmptyState, MachineLabel, RelativeTime, Skeleton, cx } from '../ui/primitives.js';
 
 /**
  * Suggestions as pull requests are listed: open (waiting for review, or
@@ -283,7 +284,16 @@ const filtered = Object.keys(query.parsed.filters).some((k) => k !== 'state') ||
                       <div className="row-sub">
                         <span className="num">#{s.number}</span> · {w(lang, 'opened')} <RelativeTime at={s.submittedAt ?? s.createdAt} lang={lang} /> {w(lang, 'by')}{' '}
                         <AgentBy via={s.via} lang={lang} who={author?.username ? `@${author.username}` : author?.name}>
-                          {author?.username ? <Link to={href(personPath(author.username), lang)}>{author.name}</Link> : <span>{author?.name ?? s.author}</span>}
+                          {author?.username ? (
+                            <Link to={href(personPath(author.username), lang)}>{author.name}</Link>
+                          ) : author?.bot || s.author.startsWith('bot:') ? (
+                            // A machine's own work is labelled as a machine's, like its output (#141).
+                            <MachineLabel lang={lang} size="sm">
+                              {personName(s.author, author?.name, lang)}
+                            </MachineLabel>
+                          ) : (
+                            <span>{personName(s.author, author?.name, lang)}</span>
+                          )}
                         </AgentBy>
                         {s.approvals ? (
                           <span className="st-approved">
