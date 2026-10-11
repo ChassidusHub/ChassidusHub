@@ -13,7 +13,8 @@ any time. `@chassidushub/client` carries the API's version.
 - A farbrengen's video shows as its still picture with a play button, and
   YouTube's player (about 1 MB) is fetched only when someone taps it, so
   the page's own recordings and words come first on a slow line. Without
-  script the picture links to the video on YouTube.
+  script the picture links to the video on YouTube. Opened from the
+  keyboard, the player takes the focus, so the reader keeps their place.
 - `GET /v1/entities/{id}/path-bar`: an item's whole path for the new site's
   path bar, from the top of the tree down to the item (the Rebbe, his
   shelf, the sefer, the volume, the sicha). Each level lists the other
