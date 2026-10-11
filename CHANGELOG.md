@@ -14,6 +14,10 @@ any time. `@chassidushub/client` carries the API's version.
   out, "Open the report" sends it without a name (the same hourly limit as
   the quick report on an item's page) and opens it as an issue. Before,
   the form ended in "Sign in to open a report" after it was written.
+- On a phone the You tab lights only on your own pages, not on search.
+  A sefer's pieces are counted in their own word (52 maamarim, letters,
+  sichos), one printing is "1 printing", and a maamar with no text says
+  "This maamar has no text here yet".
 - The English home page has a "New here?" for someone who reads only
   English: who the Rebbe is, what Chassidus is, where to start (Tanya,
   Hayom Yom with English, Sichos In English, Books in English) and the
