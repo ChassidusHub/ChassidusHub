@@ -252,12 +252,23 @@ function ContinueButton({ lang }: { lang: Lang }) {
   );
 }
 
-/** The question, the one box and the buttons under it. Without script the box is a plain form to the search page. */
-const TRY: Array<{ q: string; meaning?: boolean; he: string; en: string }> = [
-  { q: 'בשלח תשל״ו', he: 'בשלח תשל״ו', en: 'Beshalach 5736' },
-  { q: 'יו״ד שבט', he: 'יו״ד שבט', en: 'Yud Shevat' },
-  { q: 'אהבת ישראל', meaning: true, he: 'אהבת ישראל', en: 'ahavas Yisroel' },
-];
+/**
+ * The question, the one box and the buttons under it. Without script the box is a plain form to the search page.
+ * The examples differ by language: in Hebrew a parsha and year, a Chabad day and an idea; in English, what someone
+ * new knows the names of, and an idea in plain words.
+ */
+const TRY: Record<Lang, Array<{ q: string; label: string; meaning?: boolean }>> = {
+  he: [
+    { q: 'בשלח תשל״ו', label: 'בשלח תשל״ו' },
+    { q: 'יו״ד שבט', label: 'יו״ד שבט' },
+    { q: 'אהבת ישראל', label: 'אהבת ישראל', meaning: true },
+  ],
+  en: [
+    { q: 'Hayom Yom', label: 'Hayom Yom' },
+    { q: 'Chanukah', label: 'Chanukah' },
+    { q: 'love of a fellow Jew', label: 'love of a fellow Jew', meaning: true },
+  ],
+};
 
 function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasListen: boolean }) {
   return (
@@ -276,9 +287,9 @@ function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasLis
       </form>
       <p className="hm-try">
         <span>{w(lang, 'tryLabel')}</span>
-        {TRY.map((x) => (
+        {TRY[lang].map((x) => (
           <Link key={x.q} to={href('/search', lang, { q: x.q, ...(x.meaning ? { by: 'meaning' } : {}) })} dir="auto">
-            {x[lang]}
+            {x.label}
           </Link>
         ))}
       </p>
@@ -406,6 +417,63 @@ function WhatsNew({ lang }: { lang: Lang }) {
   );
 }
 
+/** Where an English reader new to all this can begin. The two inside a collection go by permanent id, so a move in the catalog does not break them. */
+const START: Array<{ to: string; title: string; what: string }> = [
+  { to: '/tanya', title: 'Tanya', what: 'The Alter Rebbe’s basic book of Chassidus, in Hebrew, in English, or side by side.' },
+  { to: '/rh-ahryne41', title: 'Hayom Yom with English', what: 'A short teaching for each day of the year, with the English beside it.' },
+  { to: '/rh-009ksk07', title: 'Sichos In English', what: 'The Rebbe’s talks, translated.' },
+  { to: '/sets/english', title: 'Books in English', what: 'Everything here that is in English.' },
+];
+
+/** The words a newcomer meets everywhere on the site, each in a line. */
+const GLOSSARY: Array<[string, string]> = [
+  ['Sicha (plural sichos)', 'A talk of the Rebbe, most often given at a farbrengen.'],
+  ['Maamar (plural maamarim)', 'A discourse of Chassidus in its formal style, most often said at a farbrengen.'],
+  ['Farbrengen', 'A gathering where the Rebbe spoke, between songs, for hours at a time.'],
+  ['Hanacha', 'A listener’s written record of what was said, before the Rebbe edited it.'],
+  ['Kvius', 'The years whose calendar falls the same way as this one, so their farbrengens came in the same week.'],
+  ['Rosh Chodesh', 'The first day of a Hebrew month.'],
+];
+
+/**
+ * "New here?", for the English page only: who the Rebbe is, what Chassidus is, where to start, and the common
+ * words, so a newcomer who reads only English has a way in (#122). The Hebrew page's readers know all this.
+ */
+function NewHere() {
+  return (
+    <section className="hm-start" aria-labelledby="hm-start">
+      <h2 className="hm-h" id="hm-start">
+        New here?
+      </h2>
+      <p className="hm-sub">
+        The Rebbe is Rabbi Menachem Mendel Schneerson (1902–1994), the seventh leader of Chabad-Lubavitch. Chassidus is the teaching of the Baal Shem Tov and the Chabad Rebbeim on the inner side of the Torah, to be understood and lived. ChassidusHub gathers their words and
+        recordings. To start in English:
+      </p>
+      <ul className="hm-start-list">
+        {START.map((x) => (
+          <li key={x.to}>
+            <Link to={href(x.to, 'en')}>
+              <b>{x.title}</b>
+              <span>{x.what}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <details className="hm-words">
+        <summary>Words you will meet</summary>
+        <dl>
+          {GLOSSARY.map(([word, meaning]) => (
+            <div key={word}>
+              <dt>{word}</dt>
+              <dd>{meaning}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
+    </section>
+  );
+}
+
 /** What ChassidusHub is for, in Shmuly's words, and the way in: built together, with modern technology and AI, open to all. */
 function Mission({ lang }: { lang: Lang }) {
   return (
@@ -476,6 +544,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <div className="wrap">
         <Ask lang={lang} dayLine={`${week.todayLabel} · ${named}`} hasListen={listen.length > 0} />
       </div>
+      {lang === 'en' ? (
+        <div className="wrap">
+          <NewHere />
+        </div>
+      ) : null}
       <div className="wrap">
         <WhatsNew lang={lang} />
       </div>

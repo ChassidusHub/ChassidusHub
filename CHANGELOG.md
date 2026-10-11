@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The English home page has a "New here?" for someone who reads only
+  English: who the Rebbe is, what Chassidus is, where to start (Tanya,
+  Hayom Yom with English, Sichos In English, Books in English) and the
+  words met everywhere (sicha, maamar, farbrengen, hanacha, kvius, Rosh
+  Chodesh). Its search examples are ones a newcomer knows.
 - `GET /v1/search/page`: the new site's search screen in one read, at most
   six statements. Sefarim and shelves the words name, farbrengens and
   recordings, and the places in the words (a sefer's paragraph, a line on
