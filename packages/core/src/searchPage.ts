@@ -4,7 +4,7 @@ import type { Catalog } from './catalog.js';
 import { matchingWords, queryWords, searchMoments, type Moment } from './moments.js';
 import { languageSql, languageTitleWords, splitLanguage } from './language.js';
 import { parshaDays, parshaHe, parshaOf } from './parsha.js';
-import { normalizedSql, searchTierSql, toTsQuery } from './searchText.js';
+import { nameTierSql, NAMES, normalizedSql, toTsQuery } from './searchText.js';
 
 /**
  * The new site's search screen in one read (apps/www): everything the page
@@ -75,7 +75,8 @@ export interface SearchPage {
 /**
  * The kinds of item a name search lists; the words themselves come as `words`. A sicha or maamar is not
  * among them: what it is found by holds all its words, so ranking it here would unpack every one that
- * has a common word (#124). It comes as `words`, and first when it opens with them.
+ * has a common word (#124). It comes as `words`, and first when it opens with them; and by its own name
+ * (namedInfo), from its place.
  */
 const NAMED: EntityType[] = ['set', 'work', 'event', 'recording', 'publication', 'author'];
 const NAME_HITS = 30;
@@ -130,18 +131,32 @@ const NAME_SQL = normalizedSql("concat_ws(' ', r.data->'title'->>'he', r.data->'
 /**
  * Items found by name, best first, with their facts: one statement. With a language, only those in it.
  * `typed` is the words as typed, filler and all, that a name is compared whole with (splitLanguage).
+ * A sicha or maamar is found by its own name too (`דברים ב`, `Devarim 2`), from its place (unit_place's
+ * indexed names, migration 0032) and never its words; a sefer's name comes before a sicha's as good.
  */
 async function namedInfo(catalog: Catalog, query: string, limit: number, language: Language | null = null, typed: string = query): Promise<Info[]> {
   const tsQuery = toTsQuery(query);
   if (!tsQuery) return [];
+  const typedAt = language ? '$6' : '$4';
   const { rows } = await catalog.db.query<Info>(
     // Ranked first, then the facts read for the few kept.
-    `WITH hit AS (
-       SELECT e.id, row_number() OVER (ORDER BY ${searchTierSql('$2', '$1', language ? '$6' : '$4')}, ts_rank(e.search_tsv, to_tsquery('simple', $1)) DESC, e.path) AS n
+    `WITH named AS (
+       SELECT e.id, CASE WHEN e.type NOT IN ('work', 'set') THEN 3 ELSE ${nameTierSql(NAMES.map(normalizedSql), '$2', '$1', typedAt)} END AS tier,
+              (e.type = 'work' AND r.data ? 'addition') AS addition, 0 AS src, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank,
+              e.path COLLATE "C" AS k1, ''::text COLLATE "C" AS k2
        FROM entity e JOIN revision r ON r.id = e.main_rev
        WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
          ${language ? `AND ${languageSql('$4::text', '$5', NAME_SQL)}` : ''}
-       ORDER BY n LIMIT ${limit})
+       ORDER BY tier, addition, rank DESC, e.path LIMIT ${limit}),
+     unit AS (
+       SELECT p.unit_id COLLATE "default" AS id, ${nameTierSql(['p.name_he', 'p.name_en'], '$2', '$1', typedAt)} AS tier,
+              FALSE AS addition, 1 AS src, 0::real AS rank, p.work_id COLLATE "C" AS k1, p.ord AS k2
+       FROM unit_place p
+       WHERE ${language ? 'FALSE' : `p.names @@ to_tsquery('simple', $1)`}
+       ORDER BY tier, p.work_id, p.ord LIMIT ${limit}),
+     hit AS (
+       SELECT id, row_number() OVER (ORDER BY tier, addition, src, rank DESC, k1, k2) AS n
+       FROM (SELECT * FROM named UNION ALL SELECT * FROM unit) u ORDER BY n LIMIT ${limit})
      SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ORDER BY hit.n`,
     language
       ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language), normalizeSearchText(typed)]

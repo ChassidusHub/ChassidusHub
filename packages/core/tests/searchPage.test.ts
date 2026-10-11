@@ -153,6 +153,29 @@ describe('the search screen in one read', () => {
     expect(await searchPage(catalog, 'English')).toMatchObject({ language: null });
   });
 
+  it('finds a sicha by its own name, from its place and never its words: "דברים ב", "Devarim 2"', async () => {
+    const { catalog, set } = await sample();
+    const ls = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'שיחות לדוגמה' }, slug: 'sichos', authors: [], genre: 'sichos', levels: ['volume', 'sicha'], sets: [set] }, '/sichos');
+    const sicha = (order: string, he: string, en: string, words = 'לדוגמה') =>
+      add(catalog, 'mendy', 'keeper', 'unit', { work: ls, position: [{ level: 'volume', value: '9', label: { he: 'חלק ט׳' } }, { level: 'sicha', value: order }], order, label: { he, en }, body: { profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: words }] }] }] }, sets: [set] }, `/sichos/9/${order}`);
+    const first = await sicha('1', 'דברים א', 'Devarim 1');
+    const second = await sicha('2', 'דברים ב', 'Devarim 2');
+    const shabbos = await sicha('3', 'דברים-שבת חזון', 'Devarim-Shabbos Chazon');
+    // Its words name another sicha: that is a place in the words, not this sicha's name.
+    const mentions = await sicha('4', 'ואתחנן א', "Va'eschanan 1", 'כמו שכתוב בשיחת דברים ב');
+
+    const { result: page, statements } = await counted(catalog, () => searchPage(catalog, 'דברים ב'));
+    expect(statements).toBeLessThanOrEqual(6);
+    expect(page.works[0]).toMatchObject({ id: second, kind: 'sicha', title: 'דברים ב', path: '/sichos/9/2' });
+    expect(page.top).toMatchObject({ id: second });
+    expect(page.works.map((w) => w.id)).not.toContain(mentions);
+    expect((await searchPage(catalog, 'Devarim 2')).works[0]).toMatchObject({ id: second });
+    // A name that starts with the words, in the sefer's order; a sefer's name comes first.
+    expect((await searchPage(catalog, 'דברים')).works.map((w) => w.id)).toEqual([first, second, shabbos]);
+    expect((await searchSuggest(catalog, 'שבת חזון')).map((h) => h.id)).toEqual([shabbos]);
+    expect((await searchPage(catalog, 'שיחות לדוגמה')).works[0]).toMatchObject({ id: ls, kind: 'sefer' });
+  });
+
   it('suggests names as someone types, up to six, in one statement', async () => {
     const { catalog, work } = await sample();
     const { result: hits, statements } = await counted(catalog, () => searchSuggest(catalog, 'ספר המאמ'));
