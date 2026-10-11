@@ -10,6 +10,16 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Checking a transcript has a screen of its own, as the design draws it
+  (design/system, board 6): Close, the recording's name and "…" at the
+  top with a calm player (play, hear the last five seconds again, speed,
+  how much is checked); the paragraph being checked large in a red frame,
+  each paragraph with its state (machine, partly fixed, checked); Right,
+  Fix and Not sure in the foot of the screen, where the box to fix the
+  words opens too, with "Your fixes" under them; a word after each answer
+  with Undo; when all is checked, the question whether the highlight
+  followed the speech. With a keyboard, Tab stays on the screen (its head
+  first) and Escape closes it; History on a paragraph opens again.
 - A signed-out reader's page no longer asks for an account's draft it would be
   refused (a 401 that smoke counted as a broken page).
 - A maamar's name no longer carries what the print adds to its dateline:
