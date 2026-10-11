@@ -42,6 +42,9 @@ export function toTsQuery(query: string): string | null {
 export const normalizedSql = (expr: string) =>
   `btrim(regexp_replace(lower(regexp_replace(coalesce(${expr}, ''), '[֑-ׇ׳״"''\`‘’“”]', '', 'g')), '[^0-9a-zÀ-ɏא-תװ-ײ]+', ' ', 'g'))`;
 
+/** An item's names (title or name, Hebrew and English) as one normalized string, in SQL, from its revision `r`. */
+export const NAME_SQL = normalizedSql("concat_ws(' ', r.data->'title'->>'he', r.data->'title'->>'en', r.data->'name'->>'he', r.data->'name'->>'en')");
+
 /** The names a sefer or a set is found by first: its title or name, in Hebrew and in English. */
 export const NAMES = ["r.data->'title'->>'he'", "r.data->'title'->>'en'", "r.data->'name'->>'he'", "r.data->'name'->>'en'"];
 

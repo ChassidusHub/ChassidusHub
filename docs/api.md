@@ -11,7 +11,10 @@ route's examples and a reference to try them in, are at
 ## Reading
 
 - `GET /v1/entities/<id>`, `/v1/resolve?path=…`, `/v1/search?q=…`,
-  `/v1/events?within=5742`: items, by id, path, words or date.
+  `/v1/events?within=5742`: items, by id, path, words or date. Search
+  narrows with `work`, `author`, `set` (with the sets under it), `topic`
+  (with the narrower ones) and `language`, which combine; an item counts
+  when it or its sefer matches.
 - `GET /v1/entities/<id>/history`: every version, who made it and what
   changed.
 - `GET /v1/commits?since=<seq>`: every merge after `seq`, in order: the

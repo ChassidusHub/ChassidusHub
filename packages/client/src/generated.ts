@@ -2504,6 +2504,14 @@ export interface Operations {
       type?: string;
       /** Only items of this sefer (its printings, its sichos) */
       work?: string;
+      /** Only sefarim by this author (rh-…) and their items */
+      author?: string;
+      /** Only items in this set (a series, a shelf) or the sets under it, or whose sefer is */
+      set?: string;
+      /** Only items on this topic (rh-…) or a narrower one, or whose sefer is */
+      topic?: string;
+      /** Only what is in this language, a sicha or a paragraph by its sefer's or text's; Hebrew also takes what names none */
+      language?: "he" | "en" | "yi" | "ar" | "ru" | "fr" | "es";
       /** How many (at most 100) */
       limit?: number;
     };
@@ -3388,7 +3396,7 @@ export const OPERATIONS = {
   scanPages: {"method":"GET","path":"/v1/scans/{id}/pages","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   scanProgress: {"method":"GET","path":"/v1/scans/{id}/progress","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   scanText: {"method":"GET","path":"/v1/scans/{id}/text","pathParams":["id"],"query":["page"],"body":null,"answer":"json"},
-  search: {"method":"GET","path":"/v1/search","pathParams":[],"query":["q","type","work","limit"],"body":null,"answer":"json"},
+  search: {"method":"GET","path":"/v1/search","pathParams":[],"query":["q","type","work","author","set","topic","language","limit"],"body":null,"answer":"json"},
   searchMoments: {"method":"GET","path":"/v1/search/moments","pathParams":[],"query":["q","within","limit"],"body":null,"answer":"json"},
   searchPage: {"method":"GET","path":"/v1/search/page","pathParams":[],"query":["q","within","language"],"body":null,"answer":"json"},
   searchPeople: {"method":"GET","path":"/v1/people","pathParams":[],"query":["q","ids","thread","limit"],"body":null,"answer":"json"},
