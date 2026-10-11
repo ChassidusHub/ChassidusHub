@@ -50,6 +50,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run catalog:check
+      # The approval gate's own decisions (approval.yml).
+      - run: node --test .github/scripts/*.test.cjs
 
   tests:
     name: Tests (PGlite) ${{ matrix.shard }}/3
