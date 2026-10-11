@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/search/page` looks for a subject typed in English letters
+  (`bitachon`, `ahavas yisroel`, `hashgacha pratis`) as the texts write it
+  (`בטחון`), names and words alike, and says so in the new `topic` field.
+  The subjects are a small list people keep (packages/core/src/topics.ts)
+  (#99).
 - `GET /v1/mafteach`: a place in a volume kept page by page (Likkutei Sichos
   30-39) opens that page on the site (`text`), where most opened only the
   sicha's PDF; and whether the kept index is current is asked of each
