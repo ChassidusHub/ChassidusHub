@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `GET /v1/entities/{id}/path-bar`: an item's whole path for the new site's
+  path bar, from the top of the tree down to the item (the Rebbe, his
+  shelf, the sefer, the volume, the sicha). Each level lists the other
+  choices at that level, and a volume says how many units it holds. It
+  takes three statements however deep the path is.
 - The home page no longer waits half a minute after a quiet spell:
   `/v1/transcripts` answers from a list the API's scheduled run keeps
   (made again every fifteen minutes) instead of counting every
