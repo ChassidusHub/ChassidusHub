@@ -2,6 +2,7 @@ import { ADDITION_KINDS, isEntityId, isEntityPath, isOrderKey, newId, orderBetwe
 import type { Catalog, ChangesetRow, EntityView } from './catalog.js';
 import { invalid, notFound } from './errors.js';
 import { diffData, type FieldChange, type Json } from './merge.js';
+import { orderOf, setOrderOf, tidyOrderIn } from './setOrder.js';
 
 /**
  * Organizing the catalog by hand: moving sefarim between sets, sets under
@@ -416,9 +417,10 @@ class Workspace {
     for (const e of this.entries.values()) if (e.type === ctx.type) ids.add(e.id);
     const all = await this.loadMany([...ids]);
     const under = all.filter((e) => this.pointsAt(e, ctx));
+    // In a set, each by its own place in that set (RFC 0002), else by its one order.
     return under.sort((a, b) => {
-      const ka = typeof a.data!.order === 'string' ? (a.data!.order as string) : '~';
-      const kb = typeof b.data!.order === 'string' ? (b.data!.order as string) : '~';
+      const ka = orderOf(a.data!, ctx.parent, ctx.field) ?? '~';
+      const kb = orderOf(b.data!, ctx.parent, ctx.field) ?? '~';
       if (ka !== kb) return ka < kb ? -1 : 1;
       const pa = a.path ?? '';
       const pb = b.path ?? '';
@@ -474,13 +476,14 @@ class Workspace {
       sequence = [...rest.slice(0, at), ...items, ...rest.slice(at)];
     }
     // Siblings that never had an order (sets and sefarim listed by path) are given one only when the order matters.
-    const anyOrdered = siblings.some((s) => typeof s.data!.order === 'string');
+    const anyOrdered = siblings.some((s) => orderOf(s.data!, ctx.parent, ctx.field) !== undefined);
     if (!anyOrdered && !ORDER_REQUIRED.has(ctx.type) && position === 'end') return;
-    const keys = rekey(sequence.map((e) => ({ id: e.id, order: e.data!.order as string | undefined })));
+    const keys = rekey(sequence.map((e) => ({ id: e.id, order: orderOf(e.data!, ctx.parent, ctx.field) })));
     this.limit(keys.size);
+    // A sefer that sits in several sets gets its place in this one alone; ordering one set leaves the others as they are.
     for (const e of sequence) {
       const key = keys.get(e.id);
-      if (key !== undefined) e.data!.order = key;
+      if (key !== undefined) setOrderOf(e.data!, ctx.parent, ctx.field, key);
     }
   }
 }
@@ -491,6 +494,8 @@ export async function previewOrganize(catalog: Catalog, plan: OrganizePlan): Pro
   if (plan.operations.length > MAX_OPERATIONS) throw invalid(`at most ${MAX_OPERATIONS} operations in one plan`);
   const ws = new Workspace(catalog);
   for (const operation of plan.operations) await run(ws, operation);
+  // An item moved out of a set keeps no place in it.
+  for (const e of ws.entries.values()) if (e.data) tidyOrderIn(e.data);
 
   const items: OrganizeItem[] = [];
   const revisions: OrganizePreview['revisions'] = [];
@@ -811,13 +816,14 @@ async function merge(ws: Workspace, op: Extract<OrganizeOperation, { op: 'merge'
       }
     }
   }
-  const byOrder = (a: Entry, b: Entry) => {
-    const ka = String(a.data!.order ?? '~');
-    const kb = String(b.data!.order ?? '~');
+  // In the order they had under the duplicate (in a set, their place in that set).
+  const byOrder = (field: string) => (a: Entry, b: Entry) => {
+    const ka = orderOf(a.data!, from.id, field) ?? '~';
+    const kb = orderOf(b.data!, from.id, field) ?? '~';
     if (ka !== kb) return ka < kb ? -1 : 1;
     return (a.path ?? '') < (b.path ?? '') ? -1 : 1;
   };
-  for (const group of children.values()) group.items.sort(byOrder);
+  for (const group of children.values()) group.items.sort(byOrder(group.ctx.field));
   const fromPath = from.path;
   for (const r of referrers) {
     if (r.id === into.id) {
@@ -829,7 +835,7 @@ async function merge(ws: Workspace, op: Extract<OrganizeOperation, { op: 'merge'
   }
   for (const { ctx, items } of children.values()) {
     const ordered = items.filter((i) => ws.pointsAt(i, ctx));
-    if (ordered.length > 0 && (ORDER_REQUIRED.has(ctx.type) || ordered.some((i) => typeof i.data!.order === 'string'))) await ws.place(ordered, ctx, 'end');
+    if (ordered.length > 0 && (ORDER_REQUIRED.has(ctx.type) || ordered.some((i) => orderOf(i.data!, from.id, ctx.field) !== undefined))) await ws.place(ordered, ctx, 'end');
   }
   from.data = null;
   ws.forwards.push({ from: from.id, to: into.id });
@@ -945,6 +951,8 @@ export async function catalogTree(catalog: Catalog, options: { root?: EntityId |
   const rows = async (sql: string, params: unknown[]) =>
     (await db.query<{ entity_id: EntityId; entity_type: EntityType; path: string | null; data: unknown }>(sql, params)).rows.map((r) => nodeOf({ id: r.entity_id, type: r.entity_type, path: r.path, data: r.data }));
   const ORDER = `ORDER BY coalesce(r.data->>'order', '~') COLLATE "C", coalesce(e.path, '') || e.id`;
+  // A set's items each by their own place in it (RFC 0002), else their one order; unordered ones last.
+  const IN_SET = `coalesce(r.data->'orderIn'->>$1, r.data->>'order', '~')`;
 
   async function fill(node: TreeNode, level: number): Promise<void> {
     if (node.type === 'set') {
@@ -953,7 +961,7 @@ export async function catalogTree(catalog: Catalog, options: { root?: EntityId |
       if (level >= depth) return;
       const sets = await rows(`SELECT r.entity_id, r.entity_type, e.path, r.data FROM entity_ref x JOIN entity e ON e.id = x.from_id AND ${LIVE} JOIN revision r ON r.id = e.main_rev WHERE x.to_id = $1 AND x.field = 'parent' AND e.type = 'set' ${ORDER} LIMIT ${limit}`, [node.id]);
       const items = await rows(
-        `SELECT r.entity_id, r.entity_type, e.path, r.data FROM entity_ref x JOIN entity e ON e.id = x.from_id AND ${LIVE} JOIN revision r ON r.id = e.main_rev WHERE x.to_id = $1 AND x.field = 'sets' ORDER BY (e.type <> 'work'), (r.data ? 'addition'), coalesce(r.data->>'order', '~') COLLATE "C", coalesce(e.path, '') || e.id LIMIT ${limit}`,
+        `SELECT r.entity_id, r.entity_type, e.path, r.data FROM entity_ref x JOIN entity e ON e.id = x.from_id AND ${LIVE} JOIN revision r ON r.id = e.main_rev WHERE x.to_id = $1 AND x.field = 'sets' ORDER BY (e.type <> 'work'), (r.data ? 'addition'), ${IN_SET} COLLATE "C", coalesce(e.path, '') || e.id LIMIT ${limit}`,
         [node.id],
       );
       node.children = [...sets, ...items];

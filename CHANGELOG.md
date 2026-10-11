@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A sefer in several sets has its own place in each (RFC 0002, #78):
+  `orderIn` keeps its place by set, and ordering one set leaves the others
+  as they were. Organize writes it only for an item in more than one set; a
+  set's lists (children, the tree, linked pages, the path bar) read it, else
+  `order`. Schemas version 17.
 - `/v1/search` takes filters that combine (#72): `author`, `set` (with the
   sets under it), `topic` (with the narrower topics), `language`, beside
   `work`. A sicha counts when its sefer matches, so an author's or a

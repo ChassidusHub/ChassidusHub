@@ -2,6 +2,7 @@ import { one, type Db } from '@chassidushub/db';
 import type { EntityId, EntityType } from '@chassidushub/model';
 import { FACTS, type EntityView, type RevisionRow } from './catalog.js';
 import { invalid } from './errors.js';
+import { orderSql } from './setOrder.js';
 
 /**
  * What belongs to an item, all of it (the plan's promise "one permanent
@@ -33,8 +34,8 @@ export async function linkedCounts(db: Db, id: EntityId): Promise<LinkGroup[]> {
   return rows;
 }
 
-/** The sort key: order, date, part, page, path, id - each padded so text order is their order. */
-const SORT_KEY = `(coalesce(r.data->>'order', '') || chr(1) || coalesce(r.data->>'date', '') || chr(1) || lpad(coalesce(r.data->>'part', ''), 6, '0') || chr(1)
+/** The sort key: order (in a set, its place in that set: RFC 0002), date, part, page, path, id - each padded so text order is their order. */
+const SORT_KEY = `(${orderSql('x.to_id', 'x.field')} || chr(1) || coalesce(r.data->>'date', '') || chr(1) || lpad(coalesce(r.data->>'part', ''), 6, '0') || chr(1)
   || lpad(coalesce(r.data->'pages'->>'from', r.data->>'page', ''), 6, '0') || chr(1) || coalesce(e.path, '') || chr(1) || e.id) COLLATE "C"`;
 
 /** A field, or a field inside one (`addition.to`, the official sefer an addition belongs under). */
