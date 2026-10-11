@@ -271,3 +271,4 @@ export { dailyRambam, type DailyRambam, type RambamShiur } from './rambam.js';
 export { combineSuggestions } from './combine.js';
 export { fillShaars, shaarFile, suggestShaar, type ShaarFile, type ShaarInput } from './shaar.js';
 export { driveId, mafteach, placesOf, type Mafteach, type MafteachPlace, type MafteachTopic, type MafteachVolume } from './mafteach.js';
+export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
