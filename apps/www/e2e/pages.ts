@@ -57,5 +57,11 @@ export const pages: { name: string; path: string }[] = [
         { name: 'Projects', path: '/projects' },
         { name: 'A project', path: '/projects/sample-5745' },
         { name: 'API reference, a group', path: '/developers/reference/search' },
+        { name: 'Organize', path: '/organize' },
+        { name: 'Organize a set', path: '/organize?root=rh-org0a1' },
+        { name: 'Stewards’ tools', path: '/admin' },
+        { name: 'Add what is missing', path: '/add' },
+        { name: 'What is new', path: '/new' },
+        { name: 'Showcases', path: '/showcase' },
       ]),
 ];

@@ -26,6 +26,8 @@ export interface WordHit {
 
 export interface SearchPage {
   query: string;
+  /** The Hebrew subject searched for, when what was typed is one in English letters (bitachon → בטחון). */
+  topic?: string;
   top: Hit | null;
   works: Hit[];
   events: Hit[];

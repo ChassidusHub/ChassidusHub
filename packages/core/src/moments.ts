@@ -245,8 +245,12 @@ export const MOMENT_CANDIDATES = 200;
  * all its text, and a common word (שבת, גאולה) over every sicha took eight
  * to ten seconds. Past these, the first matches found are ranked. Each
  * match is ranked where it is found, so its words are read once (#172).
+ * Reading them is most of a first search's time (a word nobody searched
+ * lately is read from disk): a sicha's words are some 80 KB, a page's 4,
+ * a paragraph's 1, so fewer sichos and pages are ranked than paragraphs
+ * (#182: תניא took 1.9 s cold to rank 100 sichos and 1,000 pages).
  */
-export const MOMENT_RANKED = { 'text-page': 1000, segment: 1000, unit: 100 } as const;
+export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 40 } as const;
 
 /**
  * The places in scans and texts where the query's words are: lines on
@@ -293,7 +297,11 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   const gate = new ExportGate(catalog);
   const pages = new Map((await pageRows(catalog, rows.filter((r) => r.type === 'text-page').map((r) => r.id))).map((r) => [r.id, r]));
   const segments = new Map((await segmentRows(catalog, rows.filter((r) => r.type === 'segment').map((r) => r.id))).map((r) => [r.id, r]));
-  const units = new Map((await unitRows(catalog, rows.filter((r) => r.type === 'unit').map((r) => r.id))).map((r) => [r.id, r]));
+  // A sicha's words are all its text: those of the first `limit` matches are read now, the rest only if some of those
+  // show nothing (withheld, or no paragraph holds the words), so a common word reads twenty sichos, not forty (#182).
+  const unitIds = (from: typeof rows) => from.filter((r) => r.type === 'unit').map((r) => r.id);
+  const units = new Map((await unitRows(catalog, unitIds(rows.slice(0, limit)))).map((r) => [r.id, r]));
+  let unitsRead = Math.min(limit, rows.length);
   // A scan read by the machine and fixed by people has two pages for one page of print: the people's is shown.
   const seenPage = new Set<string>();
   const out: Moment[] = [];
@@ -303,8 +311,12 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
     const key = `${p.scan}:${p.page}`;
     if (!shownPage.has(key)) shownPage.set(key, p.id);
   }
-  for (const r of rows) {
+  for (const [i, r] of rows.entries()) {
     if (out.length >= limit) break;
+    if (i >= unitsRead) {
+      for (const row of await unitRows(catalog, unitIds(rows.slice(i)))) units.set(row.id, row);
+      unitsRead = rows.length;
+    }
     if (r.type === 'text-page') {
       const row = pages.get(r.id);
       if (!row) continue;

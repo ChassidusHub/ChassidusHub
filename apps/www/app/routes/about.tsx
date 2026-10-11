@@ -81,6 +81,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
             end={toCheck ? toCheck.toLocaleString('he') : undefined}
           />
           <Row start={<Icon name="pen" />} title="תיקון טעות" sub="בכל טקסט באתר: מסמנים את המילים ומתקנים. צריך להיכנס לחשבון." />
+          <Row to="/add" start={<Icon name="upload" />} title="הוספת חומר חסר" sub="הנחה, הקלטה, ספר או מכתב שאין עדיין באתר. המכונה מציעה לאן זה שייך, ושומרי האוסף בודקים." />
           <Row to="/back" start={<Icon name="check" />} title="בדיקת תיקונים שעלו" sub="שומרי הספר משאירים או מבטלים את מה שעלה לאתר בלי לחכות." />
           <Row to="/missing" start={<Icon name="search" />} title="הוספת מה שחסר" sub="התוועדויות בלי הקלטה או הנחה, ספרים בלי סריקה. יש לכם אחד מהם? מוסיפים אותו בדף שלו." />
           <Row to="/projects" start={<Icon name="people" />} title="פרויקטים" sub="עובדים יחד על חוסר אחד, פריט אחרי פריט." />

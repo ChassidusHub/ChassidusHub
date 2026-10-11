@@ -186,6 +186,30 @@ describe('search that lands on the moment', () => {
     expect(inner.match(/ts_rank/g)).toHaveLength(3);
   });
 
+  it("reads the words of only as many sichos as it shows, and more only when one of those shows nothing (#182)", async () => {
+    const { catalog, set } = await freshCatalog();
+    const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'שיחות' }, slug: 'sichos', authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] });
+    const body = (p: string) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: p }] }] }] });
+    for (let i = 1; i <= 5; i++) {
+      await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: String(i) }], order: String(i), label: { he: `שיחה ${i}` }, body: body('פתח דבר לדוגמה'), sets: [set] });
+    }
+    const read: number[] = [];
+    const query = catalog.db.query.bind(catalog.db);
+    catalog.db.query = ((q: string, params?: unknown[]) => {
+      if (q.includes("r.data->'body' AS body")) read.push((params![0] as string[]).length);
+      return query(q, params);
+    }) as typeof catalog.db.query;
+    // Five sichos have the words and two are asked for: two are read, not the four the candidates hold.
+    expect(await searchMoments(catalog, 'פתח דבר', { limit: 2 })).toHaveLength(2);
+    expect(read).toEqual([2]);
+    // A sicha named by the words whose text holds none of them shows nothing: the rest are read for the one missing.
+    read.length = 0;
+    await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '0' }], order: '0', label: { he: 'פתח דבר פתח דבר פתח דבר' }, body: body('מלים אחרות'), sets: [set] });
+    expect(await searchMoments(catalog, 'פתח דבר', { limit: 2 })).toHaveLength(2);
+    expect(read).toEqual([2, 2]);
+    catalog.db.query = query;
+  });
+
   it('puts first what was said in the year, month or day: a text by its own date, its farbrengen or its own words naming the year, a transcript by its farbrengen; then the rest (#90, #167)', async () => {
     const { catalog, set } = await freshCatalog();
     const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מאמרים' }, slug: 'maamarim', authors: [], genre: 'maamarim', levels: ['maamar'], sets: [set] });
