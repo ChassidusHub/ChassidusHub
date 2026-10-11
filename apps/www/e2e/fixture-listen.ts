@@ -21,7 +21,21 @@ const recordings = [
 const transcripts: Record<string, unknown> = {
   'rh-1awcd7t9': {
     paragraphs: [
-      { id: 'p1', content: 'פסקה ראשונה לדוגמה, שנשמעה בהקלטה.', startMs: 0, checked: false },
+      {
+        id: 'p1',
+        content: 'פסקה ראשונה לדוגמה, שנשמעה בהקלטה.',
+        startMs: 0,
+        endMs: 40_000,
+        checked: false,
+        // This paragraph times each of its words; the others are spread over their time.
+        words: [
+          { from: 0, to: 4, startMs: 0 },
+          { from: 5, to: 11, startMs: 8_000 },
+          { from: 12, to: 19, startMs: 16_000 },
+          { from: 20, to: 26, startMs: 24_000 },
+          { from: 27, to: 34, startMs: 32_000 },
+        ],
+      },
       { id: 'p2', content: 'פסקה שניה לדוגמה, ועוד כמה מילים.', startMs: 40_000, checked: false },
       { id: 'p3', content: 'פסקה שלישית לדוגמה.', startMs: 90_000, checked: true },
     ],
