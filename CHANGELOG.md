@@ -14,6 +14,11 @@ any time. `@chassidushub/client` carries the API's version.
   subject index by name only, each with the `offset` that opens its page in
   `/v1/mafteach` and how many places it has, for a list to jump from (#195).
   A few kB where `/v1/mafteach` with every topic was some 3 kB a topic.
+- Search by words ranks a sicha on its lead, its name and first few hundred
+  words, not on all its words (#182): a first search for a common word reads
+  a few KB per sicha instead of about 80 KB, and the sicha that opens on the
+  words comes before one that only says them further in. As before, the
+  first 40 sichos found are ranked: finding more read each one's words whole.
 - A letter of the Likkutei Sichos subject index that runs over several
   pages says so above its first entries ("1-30 of 217 entries", the letter
   goes on in alphabetical order, or search for one entry), with the way to
