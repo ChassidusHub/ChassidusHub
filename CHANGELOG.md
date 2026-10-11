@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The search page no longer offers "By idea" while its index is still
+  empty (it answered nothing for every question); a question sent by idea,
+  as the home page's box does, is searched by words. It comes back when the
+  index is filled.
 - Search by words is faster on a word nobody searched lately (#182): fewer
   sichos (40) and scan pages (300) are ranked, and only the sichos shown have
   their words read, the rest only when one of those shows nothing.
