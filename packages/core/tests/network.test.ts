@@ -12,6 +12,7 @@ import {
   relationsOf,
   searchMoments,
   MOMENT_CANDIDATES,
+  MOMENT_RANKED,
   searchSimilar,
   snippetOf,
   type Embedder,
@@ -179,6 +180,8 @@ describe('search that lands on the moment', () => {
     // Without a date to narrow by, the candidates come from the entity row alone; no revision is read before the limit.
     const inner = sql[0]!.slice(0, sql[0]!.indexOf(') c'));
     expect(inner).not.toMatch(/revision/);
+    // A sicha's words are long to rank: only so many sichos are, however many have the words.
+    expect(inner).toContain(`e.type = 'unit' AND NOT e.deleted AND e.search_tsv @@ to_tsquery('simple', $1) LIMIT ${MOMENT_RANKED.unit}`);
   });
 
   it('narrows to the year, month or day the words were said: a text by its own date or its farbrengen, a transcript by its farbrengen (#90)', async () => {
