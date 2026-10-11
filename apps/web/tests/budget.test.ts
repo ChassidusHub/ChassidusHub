@@ -194,7 +194,8 @@ describe("each page's statements and API calls stay within its ceiling", () => {
   // The day's learning, this week in the kvius year, these days' farbrengens in any year, and which recordings have a
   // transcript: four reads (what waits to be checked left the home page, design/system board 29).
   // 37 kB: Home now carries the three cards of what is new (lib/whatsNew.ts), about a kilobyte of words and no API call.
-  it('the home page', async () => within(await page('/'), 'home', { statements: 14, calls: 4, kB: 37 }));
+  // 39 kB: the English page also has "New here?" (who, what, where to start, the common words; #122), words only, no API call.
+  it('the home page', async () => within(await page('/'), 'home', { statements: 14, calls: 4, kB: 39 }));
   it('the sets, and one set', async () => {
     within(await page('/sets'), '/sets', { statements: 13, calls: 7, kB: 30 });
     // A set lists its sefarim and the first sixty of each other kind in it, one request a kind: this one holds four kinds.

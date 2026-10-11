@@ -84,6 +84,13 @@ describe('search', () => {
     expect(found).toHaveLength(5);
     expect((await catalog.search('tanya', { limit: 3 }))[0]!.id).toBe(tanya);
   });
+
+  it("finds one sefer's items alone, each with its facts and in the order found", async () => {
+    const found = await catalog.search('תניא פרק', { work: tanya, limit: 50 });
+    expect(found).toHaveLength(40);
+    expect(found.every((r) => (r.data as { work?: string }).work === tanya)).toBe(true);
+    expect(await catalog.search('תניא פרק', { work: kadisha })).toEqual([]);
+  });
 });
 
 describe('organizing additions', () => {

@@ -10,6 +10,36 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A report can be opened without an account, as every page says: signed
+  out, "Open the report" sends it without a name (the same hourly limit as
+  the quick report on an item's page) and opens it as an issue. Before,
+  the form ended in "Sign in to open a report" after it was written.
+- The English home page has a "New here?" for someone who reads only
+  English: who the Rebbe is, what Chassidus is, where to start (Tanya,
+  Hayom Yom with English, Sichos In English, Books in English) and the
+  words met everywhere (sicha, maamar, farbrengen, hanacha, kvius, Rosh
+  Chodesh). Its search examples are ones a newcomer knows.
+- `GET /v1/search/page`: the new site's search screen in one read, at most
+  six statements. Sefarim and shelves the words name, farbrengens and
+  recordings, and the places in the words (a sefer's paragraph, a line on
+  a scan, the moment in a recording), each with its title and the line
+  under it in Hebrew, a path that opens at the place, and where to mark
+  the words. A date in the query is taken out of the words and narrows
+  them to then; a date alone lists that day's farbrengens. `top` is what
+  was most likely looked for. `GET /v1/search/suggest` gives up to six
+  names as someone types, in one statement.
+- `/v1/search/moments` finds a sefer's own words too (a unit's text, with
+  `textKind: "body"`, the paragraph's `segment`, `path` and `name`). A
+  maamar that opens with the words comes first (`opening: true`), and
+  words a person checked come before a machine's. `within` (a year, month
+  or day, like `5711`) keeps only what was said then.
+  words a person checked come before a machine's.
+- `GET /v1/view` for a sicha, maamar or letter now has `scan` (the scan
+  it is printed on and its PDF pages, even when it has words of its own,
+  with the PDF's `url` where it is served from here) and `recordings`
+  (the recordings of the farbrengens it was said at: id, path, name and
+  length). A page with no words gives its PDF's `url` too. Still six
+  statements at most.
 - `POST /v1/fix` fixes words in any text the one way: a sefer's own words,
   a transcript's paragraph, a line on a scan. A fix of up to 5 words goes
   live at once when the automatic check says it looks like a typo or a

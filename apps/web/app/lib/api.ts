@@ -178,6 +178,11 @@ export type Moment =
       id: string;
       text: string;
       textKind: string;
+      /** A sefer's own words (textKind body): the paragraph, the page and its name. */
+      segment?: string;
+      path?: string | null;
+      name?: unknown;
+      opening?: boolean;
       unit: string | null;
       recording: string | null;
       event: string | null;
@@ -756,13 +761,13 @@ export class ChassidusHubApi {
     return this.maybe(this.get<PageFixInfo>(`/v1/page-fixes/drive/${encodeURIComponent(driveFileId)}`));
   }
 
-  async report(input: { entityId?: string; reason: string; note?: string }, forwardedFor?: string): Promise<{ id: number }> {
+  async report(input: { entityId?: string; reason: string; note?: string; title?: string }, forwardedFor?: string): Promise<{ id: number; number: number | null }> {
     const headers: Record<string, string> = { 'content-type': 'application/json', accept: 'application/json' };
     if (forwardedFor) headers['x-forwarded-for'] = forwardedFor;
     const response = await this.fetcher(`${this.baseUrl}/v1/reports`, { method: 'POST', headers, body: JSON.stringify(input) });
-    const body = (await response.json().catch(() => ({}))) as { id?: number; message?: string };
+    const body = (await response.json().catch(() => ({}))) as { id?: number; number?: number | null; message?: string };
     if (!response.ok) throw new ApiError(response.status, body.message ?? response.statusText);
-    return { id: body.id! };
+    return { id: body.id!, number: body.number ?? null };
   }
 
   /** A takedown request from the public form (no account), with the asker's address for rate limits. */
