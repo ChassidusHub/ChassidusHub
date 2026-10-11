@@ -82,3 +82,21 @@ test('a volume has no name of its own: Edit sends to its sefer', async ({ page }
   await expect(page.getByLabel('שם', { exact: true })).toHaveCount(0);
   await expect(page.locator('.linked', { hasText: 'נמצא בספר' }).getByRole('link')).toHaveAttribute('href', '/sample-sichos?edit');
 });
+
+test('an event\'s Edit, from its corner menu, renames it', async ({ page }) => {
+  await page.context().addCookies([{ name: 'rh_session', value: 'sample', url: 'http://localhost:3001' }]);
+  await page.goto('/listen/5732/rh-3dvjfkyc');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'עוד', exact: true }).click();
+  await page.getByRole('dialog', { name: 'עוד' }).getByRole('button', { name: 'עריכה' }).click();
+  await expect(page).toHaveURL(/\?edit/);
+  const name = page.getByLabel('שם', { exact: true });
+  await expect(name).toHaveValue('התוועדות לדוגמה');
+  await name.fill('התוועדות לדוגמה, מתוקן');
+  await name.press('Enter');
+  await expect(page.getByRole('status')).toContainText('נשמר');
+  const sent = (await (await page.request.get('http://localhost:3002/_edits')).json()) as { operations: unknown[] }[];
+  expect(sent.at(-1)!.operations).toEqual([{ op: 'rename', item: 'rh-3dvjfkyc', name: { he: 'התוועדות לדוגמה, מתוקן' } }]);
+  await page.getByRole('link', { name: 'סיום' }).click();
+  await expect(page).toHaveURL(/\/listen\/5732\/rh-3dvjfkyc$/);
+});
