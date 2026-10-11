@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import { mafteach, type Catalog } from '@chassidushub/core';
+import { mafteach, mafteachNames, type Catalog } from '@chassidushub/core';
 import { readId } from '@chassidushub/model';
 import { HttpError } from './app.js';
 import { keptMafteach, type Kept } from './summaries.js';
@@ -13,6 +13,10 @@ import { edgeCached } from './machine.js';
  *       sefer  the sefer it indexes, for each place's link to the sicha's page (an id, or its path)
  *       letter one first letter's topics, or
  *       q      the topics whose name, context or sicha holds these words
+ *
+ *   GET /v1/mafteach/names?index=&sefer=&letter=
+ *       one letter's topics by name only, each with the offset that opens
+ *       its page and how many places it has: a list to jump from (#195)
  *
  * Kept five minutes at the edge; the index is built once and kept until
  * one of its pages changes. With `kept` (R2), the built index is read from
@@ -49,5 +53,15 @@ export function mafteachRoutes(app: Hono, catalog: Catalog, kept?: Kept): void {
       return Response.json(answer);
     });
   });
-}
 
+  app.get('/v1/mafteach/names', async (c) => {
+    const letter = c.req.query('letter')?.trim() || undefined;
+    return edgeCached(c.req.raw, 300, async () => {
+      const index = await item(c.req.query('index'), 'index');
+      if (!index) throw new HttpError(400, 'say which index (index=/likkutei-sichos-mafteach-inyanim)');
+      const answer = await mafteachNames(catalog, index, { seferId: await item(c.req.query('sefer'), 'sefer'), letter, ...(kept ? { kept: keptMafteach(kept), stale: true } : {}) });
+      if (!answer) throw new HttpError(404, 'no such index');
+      return Response.json(answer);
+    });
+  });
+}
