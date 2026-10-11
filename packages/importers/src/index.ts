@@ -15,7 +15,7 @@ export { driveLink, proxiedDriveFile, relinkDrive, type DriveFileRef } from './d
 export { articleOf, htmlToPageVersion, sourceFooter, type HtmlToPageOptions, type SourceFooter } from './htmlToPageText.js';
 export { CHASSIDUSHUB_API, textUrl, fetchTexts } from './sichosKodeshTexts.js';
 export { MAFTEIACH, driveFileId, mafteiachBody, mafteiachLinks, mafteiachPage, readMafteiachCrawl, type MafteiachRecord } from './mafteiachIndex.js';
-export { CHABAD_LIBRARY, LIBRARY_CREDIT, chabadLibraryImporter, crawlChabadLibrary, libraryHtml, libraryWorks, readChabadLibrary, renderLibraryPage, type LibraryTree } from './chabadLibrary.js';
+export { CHABAD_LIBRARY, LIBRARY_CREDIT, chabadLibraryImporter, crawlChabadLibrary, libraryHtml, libraryWorks, pageName, readChabadLibrary, renderLibraryPage, type LibraryTree } from './chabadLibrary.js';
 export { TYPED_VOLUMES, likkuteiSichosImporter, readLikkuteiSichos, type LikkuteiSichosItem } from './likkuteiSichos.js';
 export { OTZROS_FOLDER, OTZROS_SET, driveLibraryImporter, otzrosFolderSetKey, driveViewUrl, listDriveFolder, parseFolderView, type DriveFolder } from './driveLibrary.js';
 export { HEBREWBOOKS, HEBREWBOOKS_SET, genreOfTitle, hebrewBooksImporter, placeLikeCommitted, printedAt, readHebrewBooks, type HebrewBooksInput, type HebrewBooksShelf } from './hebrewBooks.js';

@@ -5,6 +5,7 @@ import { checkLinksCommand, citationsCommand, embedCommand } from '../networkCom
 import { machineCommand } from '../machineCommand.js';
 import { trainingClipsCommand } from '../trainingClipsCommand.js';
 import { ocrCommand } from '../ocrCommand.js';
+import { sampleCommand } from '../sample.js';
 import { alignCommand, mendSplitsCommand, restoreWordTimesCommand, transcribeCommand, transcriptsImportCommand, translationsRemoveCommand } from '../transcribeCommand.js';
 import { coversCommand, fingerprintsCommand, pageImagesCommand } from '../scanPagesCommand.js';
 import {
@@ -60,6 +61,10 @@ const HELP = `chassidushub - ChassidusHub's command line
                                                 links to JEM's player in the older form as the
                                                 Ashreinu app's own, the same way
   chassidushub account --id <id> --name <name> [--steward] [--bot]
+  chassidushub sample [--as <account>] [--files <dir>]
+                                                a small made-up catalog for local work, into a PGlite
+                                                database only; <account> (dev) is a steward and keeper
+                                                (docs/local-sample.md)
   chassidushub merge-printings [--work <id>] [--approve-as <steward>] [--dry-run]
                                                 the printings that are one volume of a sefer (HebrewBooks,
                                                 אוצרות הרבי, a text) made one record, a suggestion per sefer
@@ -269,6 +274,9 @@ try {
       break;
     case 'relink-jem':
       await relinkJemCommand(ctx, { chunk: number(values.chunk), dryRun: values['dry-run'] });
+      break;
+    case 'sample':
+      await sampleCommand(ctx, { account: values.as, files: values.files });
       break;
     case 'account':
       await accountCommand(ctx, { id: need(values.id, 'id'), name: need(values.name, 'name'), steward: values.steward, bot: values.bot });
