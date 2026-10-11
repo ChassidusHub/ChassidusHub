@@ -28,9 +28,10 @@ docs/plans/chassidushub.md; what is built and what is next is docs/roadmap.md.
   (docs/sichos-kodesh.md). ChassidusHub keeps no copy of Sichos-Kodesh's
   content: importers read a checkout at run time.
 - Never commit texts, scans or recordings, or any signing key or secret.
-- ocr/ is the OCR engines (Python, moved from shmuky/RebbeHub-OCR): its own
-  README and plan (ocr/docs/plans/ocr-engines.md). Scans, line images and
-  models stay out of git, in the ocr-training R2 bucket.
+- The OCR engines and their training code live in the private
+  ChassidusHub/RebbeHub-OCR repo, never here: this repo is public, and model
+  and training code stay private. Scans, line images and models stay out of
+  git, in the ocr-training R2 bucket.
 - reader/ is the ChassidusHub app for readers, Android and web (formerly the
   Sichos Kodesh app, moved from shmuky/Sichos-Kodesh; docs/plans/reader-app.md):
   its own npm workspace and lockfile, its own rules (reader/CLAUDE.md: no

@@ -22,4 +22,6 @@ export default [
     route('*', 'routes/item.tsx'),
   ]),
   route('listen/:year/menu', 'routes/listen-menu.ts'),
+  // The rows under the search box while typing, as JSON (thread 5, Search).
+  route('search/suggest', 'routes/search.suggest.ts'),
 ] satisfies RouteConfig;

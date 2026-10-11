@@ -25,7 +25,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       www: ${{ steps.www.outputs.www }}
     steps:
-      # Sichos Kodesh, the OCR engines and the docs have none of these checks: a pull request changing only them skips the rest.
+      # Sichos Kodesh and the docs have none of these checks: a pull request changing only them skips the rest.
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -34,7 +34,6 @@ jobs:
             code:
               - '**'
               - '!sichos-kodesh/**'
-              - '!ocr/**'
               - '!docs/**'
               - '!design/**'
               - '!**/*.md'
