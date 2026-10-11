@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { nameOf } from '../reader/load.server';
+import { nameOf } from '../lib/catalog';
 import { Pieces } from '../tools/Changes';
 import type { Piece } from '../tools/common';
 import { itemHead, orNothing } from '../tools/item.server';

@@ -1,7 +1,7 @@
 import type { ChassidusHub, PathLevel as ApiLevel } from '@chassidushub/client';
 import { data } from 'react-router';
-import type { PathStep } from '../path';
-import { nameOf, pathSteps } from '../reader/load.server';
+import { nameOf, pathLevels } from '../lib/catalog';
+import type { PathLevel } from '../ui';
 
 /** What an item's tool page knows of the item: what it is, its name, its own page, and its path for the path bar. */
 export interface ItemHead {
@@ -10,7 +10,8 @@ export interface ItemHead {
   name: string;
   /** The item's own page: its readable path, else its permanent one. */
   to: string;
-  steps: PathStep[];
+  /** Its path bar, drawn here on the server so the tool pages do not carry lib/catalog.ts to the browser. */
+  path: PathLevel[];
   rev: number;
   /** Its words are held back for rights: listed, not shown, and not edited here. */
   withheld: boolean;
@@ -39,10 +40,9 @@ export async function itemHead(api: ChassidusHub, id: string, types?: string[]):
   if (!item || (types && !types.includes(item.type))) throw data('not found', { status: 404 });
   const name = itemName(item);
   const to = item.path ?? `/${item.id}`;
-  const steps = pathSteps(bar.levels ?? []);
-  // An item the path bar does not reach (a scan, a recording) still ends the path, as itself.
-  if (!steps.length || !steps.at(-1)!.choices.some((c) => c.current && c.path === to)) {
-    steps.push({ key: 'item', title: 'הדף', label: name, choices: [{ path: to, label: name, current: true }] });
-  }
-  return { id: item.id, type: item.type, name, to, steps, rev: item.rev, withheld: !!item.withheld };
+  const levels = bar.levels ?? [];
+  const path = pathLevels(levels);
+  // A scan or a recording is not on the path bar: the path then ends at it, as itself.
+  if (levels.at(-1)?.chosen.path !== to) path.push({ key: 'item', label: name, title: 'הדף', items: [{ key: 'item', label: name, to, current: true }] });
+  return { id: item.id, type: item.type, name, to, path, rev: item.rev, withheld: !!item.withheld };
 }
