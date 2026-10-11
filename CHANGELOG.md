@@ -14,10 +14,11 @@ any time. `@chassidushub/client` carries the API's version.
   words, through its index (#182): up to 40 sichos that open on the words are
   found without reading any sicha's words, and only 20 more that say them
   further in are found by reading each one's words whole.
-- Search by words tests the words only on pages, paragraphs and sichos, each
-  kind on its own rows (#182): before, the database could test every page and
-  paragraph's words while looking for sichos, reading many times more than it
-  needed on a first search.
+- Search by words finds a rare word through the words' index again (#182):
+  #204 hid the words' test from the database, so a word few items have read
+  every page's words to find them. Each kind's live rows are still what is
+  searched, the kind tested before the words, so a common word does not read
+  the words of other kinds' rows either.
 - `GET /v1/places?within=/likkutei-sichos/12`: only the places that reopen at
   that page of the site or under it, the latest first, so a volume's page
   can offer "continue reading" where its reader stopped in it; the latest
