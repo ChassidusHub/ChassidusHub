@@ -2,6 +2,7 @@ import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { cachedPage, type PageStore } from './pageCache';
+import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
 
@@ -10,6 +11,8 @@ interface Env {
   API?: { fetch(input: string, init?: RequestInit): Promise<Response> };
   /** The API's public address, used only when the binding is absent. */
   API_URL?: string;
+  /** The public bucket, where showcases are kept (app/stewards/showcase.ts). */
+  FILES_PUBLIC?: ShowcaseBucket;
 }
 
 /**
@@ -29,6 +32,7 @@ export default {
         api: apiFor({ binding: env.API, baseUrl: env.API_URL }),
         visitor: visitorApi(asked, (cookie) => apiFor({ binding: env.API, baseUrl: env.API_URL, cookie })),
         forward: forwardFor({ binding: env.API, baseUrl: env.API_URL }),
+        showcases: env.FILES_PUBLIC ? bucketShowcases(env.FILES_PUBLIC) : undefined,
         ...pageContext(asked),
       });
     // A page anyone may have is kept at the edge (server/pageCache.ts).

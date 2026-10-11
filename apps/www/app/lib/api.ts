@@ -62,7 +62,8 @@ export function forwardFor({ binding, baseUrl = 'https://api.chassidushub.org' }
     const address = request.headers.get('cf-connecting-ip');
     if (address) headers.set('x-forwarded-for', address);
     const query = new URL(request.url).search;
-    const init: RequestInit = { method: request.method, headers, redirect: 'manual', ...(request.method === 'GET' || request.method === 'HEAD' ? {} : { body: await request.text() }) };
+    // The body as bytes, so a file added on /add (a PDF, a recording) goes on as it came.
+    const init: RequestInit = { method: request.method, headers, redirect: 'manual', ...(request.method === 'GET' || request.method === 'HEAD' ? {} : { body: await request.arrayBuffer() }) };
     const url = `${baseUrl.replace(/\/+$/, '')}${path}${query}`;
     return binding ? binding.fetch(url, init) : fetch(url, init);
   };
