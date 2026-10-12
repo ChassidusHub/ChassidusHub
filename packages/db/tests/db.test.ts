@@ -102,13 +102,13 @@ describe('migrations', () => {
     await db.close();
   });
 
-  it("indexes the words of pages, paragraphs and sichos each apart, over their live rows only, built CONCURRENTLY (migrations 0039-0041)", async () => {
+  it("indexes the words of pages, paragraphs, sichos and the items found by name each apart, over their live rows only, built CONCURRENTLY (migrations 0039-0042)", async () => {
     const db = await openPGlite();
     await migrate(db);
     const { rows } = await db.query<{ indexname: string; indexdef: string }>("SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'entity' AND indexname LIKE 'entity_tsv_%' ORDER BY indexname");
-    expect(rows.map((r) => r.indexname)).toEqual(['entity_tsv_page', 'entity_tsv_segment', 'entity_tsv_unit']);
+    expect(rows.map((r) => r.indexname)).toEqual(['entity_tsv_named', 'entity_tsv_page', 'entity_tsv_segment', 'entity_tsv_unit']);
     for (const { indexdef } of rows) expect(indexdef).toMatch(/USING gin \(search_tsv\) WHERE .*NOT deleted.*main_rev IS NOT NULL/);
-    expect(MIGRATIONS.filter((m) => m.version >= 39 && m.version <= 41).every((m) => m.outside)).toBe(true);
+    expect(MIGRATIONS.filter((m) => m.version >= 39 && m.version <= 42).every((m) => m.outside)).toBe(true);
     await db.close();
   });
 

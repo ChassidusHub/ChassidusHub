@@ -19,7 +19,8 @@ function serverReads(page: import('@playwright/test').Page): string[] {
 }
 
 test('the library is clicked through with no server round trip', async ({ page }) => {
-  const tree = page.waitForResponse((response) => /\/_\/catalog\/tree\.[\w.-]+\.json$/.test(response.url()));
+  // The library reads the small cut's top file, then the Rebbeim's shelves, the Rebbe's first.
+  const tree = page.waitForResponse((response) => /\/_\/catalog\/shelf-rh-aaaaaas3\.[\w.-]+\.json$/.test(response.url()));
   await page.goto('/library');
   await tree;
   const asked = serverReads(page);
@@ -45,8 +46,30 @@ test('the library is clicked through with no server round trip', async ({ page }
   expect(asked.length).toBeGreaterThan(0);
 });
 
+test('a page opened from a link reads its own shelf, and the next tap under it is drawn here', async ({ page }) => {
+  const shelf = page.waitForResponse((response) => /\/_\/catalog\/shelf-rh-aaaaaas3\.[\w.-]+\.json$/.test(response.url()));
+  await page.goto('/sample-sichos');
+  await shelf;
+  const asked = serverReads(page);
+  await page.getByRole('navigation', { name: 'חלקים' }).getByRole('link', { name: 'חלק י״ב' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('חלק י״ב');
+  expect(asked).toEqual([]);
+});
+
+test('the small cut never reads the whole tree', async ({ page }) => {
+  const read: string[] = [];
+  page.on('request', (request) => {
+    if (/\/_\/catalog\//.test(request.url())) read.push(new URL(request.url()).pathname);
+  });
+  const shelf = page.waitForResponse((response) => /\/_\/catalog\/shelf-/.test(response.url()));
+  await page.goto('/library');
+  await shelf;
+  expect(read.filter((path) => /manifest|tree/.test(path))).toEqual([]);
+});
+
 test('a year of listening is drawn from the snapshot, with which events can be followed', async ({ page }) => {
-  const tree = page.waitForResponse((response) => /\/_\/catalog\/tree\.[\w.-]+\.json$/.test(response.url()));
+  // Listening reads the small cut's years file.
+  const tree = page.waitForResponse((response) => /\/_\/catalog\/years\.[\w.-]+\.json$/.test(response.url()));
   await page.goto('/listen/5747');
   await tree;
   const asked = serverReads(page);
