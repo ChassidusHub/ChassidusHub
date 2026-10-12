@@ -1,0 +1,1 @@
+New site: a page whose later part failed after it began to stream (a search that did not answer) is forgotten by the edge once it has gone out, instead of being kept for everyone for up to ten minutes (#342).

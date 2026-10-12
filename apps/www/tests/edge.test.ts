@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BRIEF_SECONDS, forEdge, idsIn, inGroups, mayUseEdge, Seen, seenIn, tagged } from '../server/edge.js';
+import { BRIEF_SECONDS, forEdge, idsIn, inGroups, mayUseEdge, MOST_TAGS, pageTag, Seen, seenIn, tagged, whenSent } from '../server/edge.js';
 import { KEPT_PAGE, todaysPage } from '../app/lib/caching.js';
 
 const page = (cacheControl: string, init: ResponseInit = {}) => new Response('<p>page</p>', { status: 200, ...init, headers: { 'Cache-Control': cacheControl, ...(init.headers as Record<string, string>) } });
@@ -80,6 +80,47 @@ describe("the site's pages at the edge", () => {
     seen.ids.add('rh-aaaaaaaa');
     const moved = await tagged(new Response(null, { status: 301, headers: { Location: '/new', 'Cache-Control': KEPT_PAGE } }), seen);
     expect(moved.headers.get('Cache-Tag')).toBe('rh-aaaaaaaa');
+  });
+
+  it('tags a kept page with its own tag too, so it alone can be forgotten when a streamed part fails (#342)', async () => {
+    const asked = (url: string, build = 'b1') => forEdge(new Request(url), build);
+    const tag = pageTag(asked('https://new.chassidushub.org/search?q=1'));
+    expect(tag).toMatch(/^page-[0-9a-z]+$/);
+    expect(pageTag(asked('https://new.chassidushub.org/search?q=1'))).toBe(tag);
+    expect(pageTag(asked('https://new.chassidushub.org/search?q=2'))).not.toBe(tag);
+    expect(pageTag(asked('https://new.chassidushub.org/search?q=1', 'b2'))).not.toBe(tag);
+    const seen = new Seen();
+    seen.ids.add('rh-aaaaaaaa');
+    seen.page = tag;
+    expect((await tagged(page(KEPT_PAGE), seen)).headers.get('Cache-Tag')).toBe(`rh-aaaaaaaa,${tag}`);
+    // Its tag takes one of the places: a page about as many items as there are places keeps only its own, briefly.
+    const crowded = new Seen();
+    crowded.page = tag;
+    for (let i = 0; i < MOST_TAGS; i++) crowded.ids.add(fakeId(i));
+    const kept = await tagged(page(KEPT_PAGE), crowded);
+    expect(kept.headers.get('Cache-Tag')).toBe(tag);
+    expect(kept.headers.get('Cache-Control')).toContain(`s-maxage=${BRIEF_SECONDS}`);
+  });
+
+  it('says when a page has all gone out, and not before', async () => {
+    let sent = false;
+    let finish!: () => void;
+    const body = new ReadableStream<Uint8Array>({
+      async start(stream) {
+        stream.enqueue(new TextEncoder().encode('<p>page'));
+        await new Promise<void>((done) => (finish = done));
+        stream.enqueue(new TextEncoder().encode('</p>'));
+        stream.close();
+      },
+    });
+    const response = whenSent(new Response(body, { headers: { 'Cache-Control': KEPT_PAGE } }), () => (sent = true));
+    const reading = response.text();
+    await new Promise((done) => setTimeout(done, 10));
+    expect(sent).toBe(false);
+    finish();
+    expect(await reading).toBe('<p>page</p>');
+    expect(sent).toBe(true);
+    expect(response.headers.get('Cache-Control')).toBe(KEPT_PAGE);
   });
 
   it('forgets in groups Cloudflare takes, ids only', () => {
