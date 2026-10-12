@@ -1,0 +1,1 @@
+- New site: a sicha's words show at once on a slow phone, no longer hidden for up to 3 seconds while the Torah face comes. They are drawn first in a stand-in, the interface face sized to Frank Ruehl CLM's width, and hardly move when the face arrives (layout shift at most 0.023, budget 0.05) (#267).

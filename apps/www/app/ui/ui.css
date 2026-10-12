@@ -50,6 +50,18 @@
   unicode-range: U+0020-0040, U+005B-0060, U+007B-007E, U+00A0, U+0591-05C7, U+05D0-05EA, U+05F0-05F4, U+2013-2014, U+2018-201E, U+2026, U+25CC;
 }
 
+/* The Torah text's stand-in while its face is still coming on a slow phone: the
+   interface face, already preloaded, drawn at Frank Ruehl CLM's width (85%, measured
+   on Likkutei Sichos text), so the words show at once and hardly rewrap when the
+   face comes (#267). */
+@font-face {
+  font-family: 'Torah stand-in';
+  src: url('./fonts/noto-sans-hebrew.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+  size-adjust: 85%;
+}
+
 /* ---------- tokens (the prototype's :root, light and dark) ---------- */
 :root {
   --g0: #ffffff; --g50: #fafafa; --g100: #f4f4f4; --g200: #ededed; --g300: #e5e5e5; --g400: #d4d4d4;
@@ -62,7 +74,7 @@
   --scrim: rgb(0 0 0 / 0.28);
   --ui: 'Noto Sans Hebrew', 'Noto Sans', system-ui, sans-serif;
   --title: 'Frank Ruhl Libre', 'FrankRuehlCLM', serif;
-  --torah: 'FrankRuehlCLM', 'Frank Ruhl Libre', 'David', serif;
+  --torah: 'FrankRuehlCLM', 'Torah stand-in', 'Frank Ruhl Libre', 'David', serif;
   --torah-size: 20px;
   /* Layout: the desktop side rail, the docked player's height, the reading column. */
   --rail: 248px;
@@ -573,8 +585,6 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
   line-height: 1.85; text-align: justify; hyphens: none;
 }
 .torah p { margin: 0 0 0.9em; }
-/* Until the Torah face has come (root.tsx, FACE_WAIT): the words keep their place but are not drawn in a stand-in face. */
-.face-wait .torah, .face-wait .notes ol { visibility: hidden; }
 .torah .hd { font-weight: 700; text-align: center; margin: 1.2em 0 0.5em; }
 .torah .hd.first { display: none; }
 .torah .end { text-align: end; }
