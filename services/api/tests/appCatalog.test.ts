@@ -4,7 +4,7 @@ import type { Hono } from 'hono';
 import { Catalog } from '@chassidushub/core';
 import { idForKey, runImport, sichosKodeshOccasionsImporter, sichosKodeshWorksImporter, type CatalogEntry, type SichosKodeshWorksInput } from '@chassidushub/importers';
 import { createApp } from '../src/app.js';
-import { AppReleases, appWorks, driveFileOf, occasionDateKey } from '../src/appCatalog.js';
+import { AppReleases, appWorks, driveFileOf, occasionDateKey, readParts, releaseOf } from '../src/appCatalog.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -205,6 +205,9 @@ describe("the apps' manifests", () => {
     const v1 = await releases.get(new Catalog(db), 1);
     expect(v1.manifest).toMatchObject({ schemaVersion: 1, occasions: 3 });
     expect(seen.some((sql) => /e\.type = '(work|unit|author)'/.test(sql))).toBe(false);
+    // A schema-1 app gets the very bytes it got when everything was read: schema 1 never carried the sefarim.
+    expect(v1.body).toBe((await releaseOf(await readParts(catalog, true), 1)).body);
+    expect(v1.manifest).toEqual((await releaseOf(await readParts(catalog, true), 1)).manifest);
     // Schema 3 reads them, once, and schema 1 is still served from what was read for it.
     const v3 = await releases.get(new Catalog(db), 3);
     expect(v3.manifest.works).toEqual({ works: 3, units: 4 });
