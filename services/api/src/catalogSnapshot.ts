@@ -1,5 +1,5 @@
-import type { Context, Hono, MiddlewareHandler } from 'hono';
-import { CatalogError, SNAPSHOT_CLAIM_KEY, SNAPSHOT_FILE_NAME, readIndex, readManifest, refreshSnapshot, snapshotFileKey, snapshotSeq, type Catalog, type SnapshotIndex, type SnapshotManifest, type SnapshotStore } from '@chassidushub/core';
+import type { Context, Hono } from 'hono';
+import { CatalogError, SNAPSHOT_CLAIM_KEY, SNAPSHOT_FILE_NAME, readIndex, readManifest, refreshSnapshot, snapshotFileKey, type Catalog, type SnapshotIndex, type SnapshotManifest, type SnapshotStore } from '@chassidushub/core';
 import type { R2Bucket } from './r2.js';
 
 /**
@@ -13,21 +13,24 @@ import type { R2Bucket } from './r2.js';
  *   GET /v1/catalog/files/<file>       one file, named by its content (kept for good)
  *
  * The files live in the public bucket under `catalog/`. A new snapshot is
- * built in the background, never while someone waits (with none built yet the
- * manifest answers 503 and Retry-After until it is): after any change that may have merged
- * something (an Approve, a live fix, an organize), when a manifest is asked
- * for and the catalog has moved on since, and by the scheduled run every
- * minute. Each of those costs one cheap statement when nothing changed.
+ * built by the scheduled run every minute (worker.ts), never behind a request:
+ * what a request leaves running is cut off 30 s after its answer, and a build
+ * on live takes 13-27 s, longer while the database is busy. Built behind every
+ * write, as it was, the builds were cut off 527 times in a day (12 October
+ * 2026), each holding the build's claim for 90 s and the database for up to
+ * 30 s, so that the scheduled run found the claim held and built nothing.
+ * With none built yet the manifest answers 503 and Retry-After until it is.
+ * Each run costs one cheap statement when nothing changed.
  */
 
 export interface SnapshotOptions {
   store: SnapshotStore;
   /**
-   * Builds a new snapshot if main moved on, on a connection of its own (a
-   * request's connection closes when its answer is sent). Unset, it is built
-   * on the request's own catalog, and the answer waits (local work, tests).
+   * The scheduled run builds each new snapshot (worker.ts), so a request only
+   * serves the one kept. Unset, it is built on the request's own catalog when
+   * main moved on, and the answer waits (local work, tests).
    */
-  rebuild?: () => Promise<unknown>;
+  scheduled?: boolean;
 }
 
 /** The manifest moves with the catalog: kept a minute at the edge and in the browser. */
@@ -88,67 +91,23 @@ export function r2SnapshotStore(bucket: R2Bucket): SnapshotStore {
   };
 }
 
-/**
- * One build at a time in an isolate, and one more after it when asked again
- * meanwhile: a burst of Approves is one build, then one to catch the last.
- */
-export function singleFlight(build: () => Promise<unknown>): () => Promise<void> {
-  let running: Promise<void> | null = null;
-  let again = false;
-  const run = async (): Promise<void> => {
-    try {
-      do {
-        again = false;
-        await build().catch((error) => console.error('catalog snapshot', error));
-      } while (again);
-    } finally {
-      running = null;
-    }
-  };
-  return () => {
-    if (running) {
-      again = true;
-      return running;
-    }
-    running = run();
-    return running;
-  };
-}
-
-/**
- * A write that went through may have merged something into main (an Approve,
- * a live fix, an organize, through the site, a token or the MCP server alike):
- * the snapshot catches up behind the answer. Registered before every route.
- */
-export function snapshotAfterWrites(options: SnapshotOptions | undefined, waitUntil?: (work: Promise<unknown>) => void): MiddlewareHandler {
-  const rebuild = options?.rebuild;
-  return async (c, next) => {
-    await next();
-    if (rebuild && waitUntil && c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.method !== 'OPTIONS' && c.res.status < 400) waitUntil(rebuild());
-  };
-}
-
-export function catalogSnapshotRoutes(app: Hono, catalog: Catalog, options: SnapshotOptions | undefined, waitUntil?: (work: Promise<unknown>) => void): void {
+export function catalogSnapshotRoutes(app: Hono, catalog: Catalog, options: SnapshotOptions | undefined): void {
   if (!options) return;
   const { store } = options;
   const base = (c: Context) => `${new URL(c.req.url).origin}/v1/catalog/files/`;
 
   /**
-   * The snapshot kept now, as the manifest or the index. With none yet (an empty bucket) it is never built while
-   * someone waits, since a whole build on live runs past a request's 30 s: 503, and the build starts behind the
-   * answer (the every-minute run builds it too). Behind the catalog, the answer serves what there is and the next
-   * one has the new snapshot. With no background (local work, tests) it is built now.
+   * The snapshot kept now, as the manifest or the index. With the scheduled run building them it is never built
+   * while someone waits: with none yet (an empty bucket) 503 until the run has built one, and behind the catalog the
+   * answer serves what there is (the next run, within a minute, has the new snapshot). With no scheduled run (local
+   * work, tests) it is built now.
    */
   const latest = async <T extends { version: string }>(c: Context, read: () => Promise<T | null>, answer: (kept: T) => object) => {
     let kept = await read();
-    if (!kept && options.rebuild && waitUntil) {
-      waitUntil(options.rebuild());
-      return c.json({ error: 'busy', message: 'the catalog snapshot is being built; try again shortly' }, 503, { 'Retry-After': '30', 'Cache-Control': 'no-store' });
+    if (!kept && options.scheduled) {
+      return c.json({ error: 'busy', message: 'the catalog snapshot is being built; try again shortly' }, 503, { 'Retry-After': '60', 'Cache-Control': 'no-store' });
     }
-    if (kept && options.rebuild && waitUntil) {
-      const { seq } = await snapshotSeq(catalog.db);
-      if (seq > Number(kept.version)) waitUntil(options.rebuild());
-    } else {
+    if (!options.scheduled) {
       await refreshSnapshot(catalog.db, store);
       kept = await read();
     }

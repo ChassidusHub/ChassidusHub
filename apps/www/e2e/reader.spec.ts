@@ -189,3 +189,34 @@ test('reads Hayom Yom as a book: a strip of the month’s days, the day after at
   await expect(page.locator('.daybook .hy-head')).toHaveText(/יום ראשון\s*כ כסלו\s*ה׳תש״ג/);
   await expect(page.getByRole('link', { name: 'יט כסלו' }).last()).toHaveAttribute('rel', 'prev');
 });
+
+test('reads an index as printed: entries, letters, find, ע"ע and a page that opens its sicha', async ({ page }) => {
+  await page.goto('/sample-sichos-index/12');
+  await page.waitForLoadState('networkidle');
+  const entries = page.locator('.ix .torah .ix-e');
+  await expect(entries).toHaveCount(3);
+  await expect(entries.first().locator('.ix-h')).toHaveText('אהבה לדוגמה');
+  expect(await entries.first().locator('.ix-h').evaluate((el) => getComputedStyle(el).fontWeight)).toBe('700');
+  // The letters on top jump to their first entries; a letter with none is not a link.
+  const letters = page.getByRole('navigation', { name: 'לפי אות' });
+  await expect(letters.getByRole('link')).toHaveText(['א', 'ב', 'ת']);
+  await expect(letters.getByRole('link', { name: 'ב' })).toHaveAttribute('href', '#s-t2');
+  // ע"ע jumps to the entry on this page.
+  await expect(page.locator('.see')).toHaveAttribute('href', '#s-t3');
+  // Find looks in this index only, among its entries.
+  await page.getByRole('searchbox', { name: 'חיפוש במפתח הזה' }).fill('בריאה');
+  await expect(entries.filter({ visible: true })).toHaveCount(1);
+  await page.getByRole('searchbox', { name: 'חיפוש במפתח הזה' }).fill('אין כזה');
+  await expect(page.getByText('אין ערך כזה במפתח הזה.')).toBeVisible();
+  await page.getByRole('searchbox', { name: 'חיפוש במפתח הזה' }).fill('');
+  await expect(entries.filter({ visible: true })).toHaveCount(3);
+  // A page names its sicha, then opens it at that page: page 25 is in the sicha that starts on 20.
+  await page.locator('.ref', { hasText: '25' }).click();
+  const pop = page.getByRole('dialog', { name: 'עמוד 25' });
+  await expect(pop).toContainText('חלק יב, עמ׳ 25');
+  await expect(pop).toContainText('שיחה לדוגמה');
+  await expect(pop.getByRole('link', { name: 'לשיחה, בעמוד הזה' })).toHaveAttribute('href', '/sample-sichos/12/2');
+  // A page the catalog does not have offers the index's own scan, never a broken link.
+  await page.locator('.ref', { hasText: '90' }).click();
+  await expect(page.getByRole('dialog', { name: 'עמוד 90' }).getByRole('link', { name: 'הסריקה של השיחה' })).toHaveAttribute('href', 'https://drive.google.com/file/d/sample-drive-file-2/view');
+});
