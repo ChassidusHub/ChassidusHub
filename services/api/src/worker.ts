@@ -137,11 +137,28 @@ const appReleases = new AppReleases();
  * answer is sent, and the build runs on behind it. One build at a time in this isolate.
  */
 let snapshotBuild: (() => Promise<void>) | null = null;
-/** Refreshes the snapshot, and logs how long a build took: whether a build fits behind an answer (waitUntil) at all. */
+/**
+ * Refreshes the snapshot, and logs how long a build took and its slowest statement: whether a build fits behind an
+ * answer (waitUntil) at all, and how long one read keeps its tables from a migration.
+ */
 async function timedSnapshot(db: Parameters<typeof refreshSnapshot>[0], store: SnapshotStore, from: string): Promise<void> {
   const started = Date.now();
-  const { manifest, built } = await refreshSnapshot(db, store);
-  if (built) console.log(`catalog snapshot ${manifest.version} built ${from} in ${Date.now() - started} ms (${manifest.counts.units} units, ${manifest.counts.events} events)`);
+  let slowest = 0;
+  const cost = { statements: 0, ms: 0 };
+  const counted = measured(db, cost);
+  const timed: typeof db = {
+    ...counted,
+    async query(sql, params) {
+      const at = performance.now();
+      try {
+        return await counted.query(sql, params);
+      } finally {
+        slowest = Math.max(slowest, performance.now() - at);
+      }
+    },
+  };
+  const { manifest, built } = await refreshSnapshot(timed, store);
+  if (built) console.log(`catalog snapshot ${manifest.version} built ${from} in ${Date.now() - started} ms (${manifest.counts.units} units, ${manifest.counts.events} events; ${cost.statements} statements, ${Math.round(cost.ms)} ms in all, slowest ${Math.round(slowest)} ms)`);
 }
 
 function catalogSnapshotOf(env: Env): SnapshotOptions | undefined {
