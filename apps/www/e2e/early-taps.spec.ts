@@ -63,3 +63,25 @@ test('words selected before the scripts come get their Fix bar once they come', 
   await release();
   await expect(page.getByRole('toolbar', { name: 'המילים שסומנו' })).toBeVisible();
 });
+
+test('a link tapped before the scripts come shows its page at once, and opens it once they come', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => message.type() === 'error' && errors.push(message.text()));
+  page.on('pageerror', (error) => errors.push(error.message));
+  const release = await slowScripts(page);
+  await page.goto('/library', { waitUntil: 'domcontentloaded' });
+  const rebbe = page.locator('main').getByRole('link', { name: /^הרבי/ });
+  const href = (await rebbe.getAttribute('href'))!;
+  await rebbe.click();
+  // Its frame is drawn now, at its address, with no new page asked for.
+  await expect(page.locator('.first-frame h1')).toHaveText('הרבי');
+  expect(await page.evaluate(() => location.pathname)).toBe(href);
+  await release();
+  await expect(page.locator('main h1')).toHaveText('הרבי');
+  await expect(page.locator('.first-frame')).toHaveCount(0);
+  expect(await page.evaluate(() => location.pathname)).toBe(href);
+  // The library came to life as it was drawn, and Back goes to it.
+  expect(errors).toEqual([]);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/library$/);
+});

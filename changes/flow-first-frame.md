@@ -1,0 +1,1 @@
+New site: a link tapped before a page's scripts have come (the first 2 to 3 s on a slow phone) shows the next page's frame at once, its title over quiet lines, and opens that page in the browser once the scripts come, instead of loading a whole new page over the slow line (#322).
