@@ -1,0 +1,1 @@
+- A search's first read is faster: it ranks at most 300 paragraphs, not 1000, and reads 80 candidates, not 200, the two reads a cold search spent most on (#214). Cold, over 16 common words, the moments read went from a median of 310 ms to 204 ms. The first results stay; some further down change (before and after for רבי, תורה and חסידות in the pull request).
