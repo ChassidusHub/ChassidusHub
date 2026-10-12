@@ -34,6 +34,21 @@
   font-display: swap;
   unicode-range: U+0020-0040, U+005B-0060, U+007B-007E, U+00A0, U+0591-05C7, U+05D0-05EA, U+05F0-05F4, U+2013-2014, U+2018-201E, U+2026, U+25CC;
 }
+/* The Igros' face, as the reader app opens them (app/views/letters.tsx): fetched only by a letter's page. */
+@font-face {
+  font-family: 'DavidCLM';
+  src: url('./fonts/david-clm.woff2') format('woff2');
+  font-weight: 400 500;
+  font-display: swap;
+  unicode-range: U+0020-0040, U+005B-0060, U+007B-007E, U+00A0, U+0591-05C7, U+05D0-05EA, U+05F0-05F4, U+2013-2014, U+2018-201E, U+2026, U+25CC;
+}
+@font-face {
+  font-family: 'DavidCLM';
+  src: url('./fonts/david-clm-bold.woff2') format('woff2');
+  font-weight: 600 700;
+  font-display: swap;
+  unicode-range: U+0020-0040, U+005B-0060, U+007B-007E, U+00A0, U+0591-05C7, U+05D0-05EA, U+05F0-05F4, U+2013-2014, U+2018-201E, U+2026, U+25CC;
+}
 
 /* ---------- tokens (the prototype's :root, light and dark) ---------- */
 :root {
@@ -590,6 +605,27 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .endnav { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--g300); margin-top: 28px; padding-top: 14px; }
 .endnav a, .endnav button { display: flex; align-items: center; gap: 6px; font-size: 14px; min-height: 44px; }
 .endnav button[disabled] { color: var(--g500); cursor: default; }
+/*
+ * A letter (app/views/letters.tsx), set as app.chassidushub.org sets it
+ * (Sichos-Kodesh apps/web/src/index.css, .reader-letter-*): the date line at
+ * the start side, the city indented under it, the addressee indented further
+ * with its lines broken evenly, the greeting back at the start, the body's
+ * first lines indented, the signature at the end side. Its volume sits small
+ * over its number.
+ */
+.eyebrow { text-align: center; color: var(--g600); font-size: 12px; letter-spacing: 0.06em; margin: 20px 0 0; }
+.eyebrow + .stitle { margin-top: 4px; }
+.igros { margin-top: 22px; }
+.igros .torah { font-family: 'DavidCLM', var(--torah); font-size: calc(var(--torah-size) + 1px + var(--torah-step, 0) * 2px); line-height: 1.7; }
+.igros .torah p { margin-bottom: 0.7em; }
+.igros .l-dateline, .igros .l-place, .igros .l-addressee, .igros .l-greeting { text-align: start; }
+.igros .torah .l-dateline { margin-bottom: 0.1em; }
+.igros .torah .l-place { margin-inline-start: 2em; margin-bottom: 1em; }
+.igros .torah .l-addressee { margin-inline-start: 16%; margin-bottom: 0; text-wrap: balance; }
+.igros .torah .l-greeting { margin-top: 1em; margin-bottom: 0.6em; }
+.igros .l-body { text-indent: 1.5em; }
+.igros .torah .l-signature { text-align: end; margin-top: 1em; margin-bottom: 0.15em; }
+.igros .notes ol { font-family: 'DavidCLM', var(--torah); }
 .missing { text-align: center; margin: 40px 0; }
 .scan { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .scan img { width: 100%; height: auto; border: 1px solid var(--g300); border-radius: 4px; background: var(--g50); }

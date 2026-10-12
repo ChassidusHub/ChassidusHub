@@ -3,11 +3,12 @@ import { data, isRouteErrorResponse, redirect, type AppLoadContext } from 'react
 import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
-import { readerData } from '../reader/load.server';
+import { isLetter, readerData } from '../reader/load.server';
 import { farbrengenOf } from '../reader/farbrengen.server';
 import { Placeholder } from './placeholder';
 import type { Section } from '../ui';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
+import letterFont from '../ui/fonts/david-clm.woff2?url';
 import type { Route } from './+types/item';
 import { KEPT_PAGE } from '../lib/caching';
 
@@ -44,15 +45,21 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') {
-      // A farbrengen read as one page (reader/farbrengen.server.ts): its other sichos lead to their place on the first one's page.
+      // A farbrengen read as one page (reader/farbrengen.server.ts): its other sichos lead to their place on the first one's page
+      // (?sicha says which, by its place), unless they are asked for alone (?alone).
       const farbrengen = farbrengenOf(view);
-      if (farbrengen && item.path && farbrengen.sichos[0]!.path !== item.path) throw redirect(`${farbrengen.sichos[0]!.path}#u-${item.id}`, 302);
+      const at = farbrengen ? farbrengen.sichos.findIndex((s) => s.path === item.path) : -1;
+      if (farbrengen && at > 0 && !url.searchParams.has('alone')) throw redirect(`${farbrengen.sichos[0]!.path}?sicha=${at}#u-${item.id}`, 302);
       const reader = await readerData(view, context, url.origin, url.searchParams.get('language') ?? undefined);
+      // The farbrengen could not be read whole (a sicha's read failed): the sicha that was asked for, alone, not the first one.
+      const asked = farbrengen && !reader.farbrengen ? farbrengen.sichos[Number(url.searchParams.get('sicha'))] : undefined;
+      if (asked && asked.path !== item.path) throw redirect(`${asked.path}?alone`, 302);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
-      // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
-      // Said in a header, on the server, so it costs the reader's script nothing.
+      // A sicha's words are set in the Torah face, a letter's in David (app/views/letters.tsx): the page asks for it
+      // with its first bytes, not once it has drawn. Said in a header, on the server, so it costs the reader's script nothing.
       if (reader.text.kind !== 'words') return loaded;
-      return data(loaded, { headers: { Link: `<${torahFont}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
+      const font = isLetter(reader) ? letterFont : torahFont;
+      return data(loaded, { headers: { Link: `<${font}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
     }
     return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: view.pathBar };
   } catch (error) {

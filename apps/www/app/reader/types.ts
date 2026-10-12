@@ -7,6 +7,17 @@ export interface Neighbour {
   label: string;
 }
 
+/** A fact about a unit, in the corner menu: what it is, as printed, and where it leads. */
+export interface Fact {
+  kind: 'date' | 'place' | 'to' | 'manuscript';
+  label: string;
+  value: string;
+  /** Inside the site (what else shares it), or the handwritten copy's own address. */
+  href: string;
+  /** A machine's guess nobody checked yet (the unit's `labelOrigin`): shown as the machine's until a person checks it. */
+  machine?: true;
+}
+
 /** The words a reading page shows, as its loader sends them. */
 export type ReaderText =
   | {
@@ -47,6 +58,14 @@ export interface ReaderData {
   level?: string;
   /** Under the title: the sefer and the volume ("לקוטי שיחות · חלק י״ב"). */
   sub: string;
+  /** The parts of the sefer the page is in, without the sefer ("חלק ג"): a letter's small line over its number. */
+  within?: string;
+  /**
+   * What the catalog knows about the unit, each a line of the corner menu that
+   * opens what else shares it: a letter's date, place and addressee, its
+   * handwritten copy (docs/rfc/0004-view-kinds.md). Only those set are here.
+   */
+  facts?: Fact[];
   /** The API's path to the page, drawn as the Library draws it (lib/catalog.ts). */
   pathBar: ApiLevel[];
   previous: Neighbour | null;
@@ -65,4 +84,6 @@ export interface ReaderData {
   rev: number;
   names: { he: string; en: string };
   work: { path: string; label: string } | null;
+  /** A farbrengen read as one page, all its sichos on it (farbrengen.server.ts). */
+  farbrengen?: true;
 }
