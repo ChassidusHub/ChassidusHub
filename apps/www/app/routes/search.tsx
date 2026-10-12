@@ -1,7 +1,7 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Await, Form, Link, useFetcher } from 'react-router';
 import { Button, Chips, Row, Rows, SearchField, TopAnswer, TopBar } from '../ui';
-import { findNames, loadNames, type NameIndex } from '../search/instant';
+import { loadNames, type NameFinder } from '../search/instant';
 import { markWords, placesIn, type Hit, type SearchPage, type WordHit } from '../search/names';
 import { searchPage } from '../search/search.server';
 import type { Route } from './+types/search';
@@ -42,8 +42,8 @@ export function meta({ data }: Route.MetaArgs) {
 }
 
 /** The catalog's names, once the browser has them (search/instant.ts); null until then, or when there is no snapshot. */
-function useNames(): NameIndex | null {
-  const [names, setNames] = useState<NameIndex | null>(null);
+function useNames(): NameFinder | null {
+  const [names, setNames] = useState<NameFinder | null>(null);
   useEffect(() => {
     let alive = true;
     loadNames().then((index) => alive && setNames(index));
@@ -52,6 +52,24 @@ function useNames(): NameIndex | null {
     };
   }, []);
   return names;
+}
+
+/**
+ * The names found for a query, answered by the names worker: null when there
+ * are no names or no query. While the next answer is on its way, the last
+ * one stays, so the rows don't flicker at each letter.
+ */
+function useFound(names: NameFinder | null, query: string): Hit[] | null {
+  const [found, setFound] = useState<{ query: string; hits: Hit[] } | null>(null);
+  useEffect(() => {
+    if (!names || !query) return;
+    let alive = true;
+    names.find(query).then((hits) => alive && setFound({ query, hits }));
+    return () => {
+      alive = false;
+    };
+  }, [names, query]);
+  return names && query ? (found?.hits ?? []) : null;
 }
 
 /**
@@ -87,8 +105,8 @@ export default function Search({ loaderData }: Route.ComponentProps) {
     return () => clearTimeout(wait);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, typing, names]);
-  const typedNames = useMemo(() => (names && typing ? findNames(names, q) : null), [names, typing, q]);
-  const askedNames = useMemo(() => (names && query ? findNames(names, query) : []), [names, query]);
+  const typedNames = useFound(names, typing ? q : '');
+  const askedNames = useFound(names, query) ?? [];
 
   return (
     <>

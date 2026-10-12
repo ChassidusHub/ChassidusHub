@@ -32,6 +32,19 @@ test('walks down the library and across by the path bar', async ({ page }) => {
   await expect(page).toHaveURL(/\/sample-sichos$/);
 });
 
+test("a Rebbe's page lists his sefarim themselves, then the shelves with more on them (#268)", async ({ page }) => {
+  await page.goto('/sets/the-rebbe');
+  const sefarim = page.getByRole('heading', { name: 'ספרים', exact: true });
+  await expect(sefarim).toBeVisible();
+  // His sefarim are one tap away, whatever shelf they are on.
+  await expect(page.getByRole('link', { name: /^שיחות לדוגמה/ })).toHaveAttribute('href', '/sample-sichos');
+  await expect(page.getByRole('link', { name: /^אגרות לדוגמה/ }).first()).toHaveAttribute('href', '/sample-letters');
+  // A shelf is listed when it holds more than those sefarim: the letters' shelf, for its book of more; not the sichos' shelf.
+  await expect(page.getByRole('heading', { name: 'מדפים' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /^אגרות לדוגמה/ }).nth(1)).toHaveAttribute('href', '/sets/the-rebbe-sample-letters');
+  await expect(page.locator('a[href="/sets/the-rebbe-sample-sichos"]')).toHaveCount(0);
+});
+
 test('the other shelves leave out an empty one', async ({ page }) => {
   await page.goto('/library?more');
   await expect(page.getByRole('link', { name: /^ספרים נוספים לדוגמה/ })).toBeVisible();

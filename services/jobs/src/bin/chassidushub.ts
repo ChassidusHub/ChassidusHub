@@ -2,6 +2,7 @@
 import '../privateKey.js';
 import { parseArgs } from 'node:util';
 import { checkLinksCommand, citationsCommand, embedCommand } from '../networkCommands.js';
+import { catalogHealthCommand } from '../catalogHealthCommand.js';
 import { machineCommand } from '../machineCommand.js';
 import { trainingClipsCommand } from '../trainingClipsCommand.js';
 import { ocrCommand } from '../ocrCommand.js';
@@ -133,6 +134,10 @@ const HELP = `chassidushub - ChassidusHub's command line
   chassidushub citations [--approve-as <steward>] [--limit <n>]
                                                 citations found in texts, proposed as links for review
   chassidushub check-links [--limit <n>]            whether the catalog's links still answer, for /health
+  chassidushub catalog-health [--from <api or folder>] [--out <folder>] [--previous <report.json>]
+                                                the catalog's health from its snapshot (unlabelled units, items
+                                                with no place, additions without a sefer, duplicate printings,
+                                                shelves out of order), read-only: report.json and report.md
   chassidushub align --approve-as <steward> [--recording <id>] [--limit <n>] [--linked] [--files <url>]
                   [--engine workers-ai|local]
                                                 word timings for transcripts that have none, and the
@@ -236,6 +241,7 @@ const { values, positionals } = parseArgs({
     daily: { type: 'boolean' },
     db: { type: 'string' },
     'preservation-bucket': { type: 'string' },
+    previous: { type: 'string' },
     help: { type: 'boolean', short: 'h' },
   },
 });
@@ -328,6 +334,9 @@ try {
       break;
     case 'citations':
       await citationsCommand(ctx, { approveAs: values['approve-as'], limit: number(values.limit) });
+      break;
+    case 'catalog-health':
+      await catalogHealthCommand(ctx, { from: values.from, out: values.out, previous: values.previous });
       break;
     case 'check-links':
       await checkLinksCommand(ctx, { limit: number(values.limit) });

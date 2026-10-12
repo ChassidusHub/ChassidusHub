@@ -131,25 +131,79 @@ async function jsonOf<T>(answer: Response): Promise<T | null> {
   return null;
 }
 
-let loading: Promise<NameIndex | null> | null = null;
+/**
+ * The names, read and indexed: the manifest, then the names file it points
+ * to (immutable, so the browser and the service worker keep it). Null when
+ * there is no snapshot yet or it did not come. Run in the names worker
+ * (names.worker.ts), never on the page itself: the file is about 8 MB of
+ * JSON (#272), and reading it on a phone's main thread would freeze the box.
+ */
+export async function readNames(): Promise<NameIndex | null> {
+  try {
+    const manifest = await fetch(MANIFEST).then((answer) => jsonOf<Manifest>(answer));
+    // A format this page does not know is left alone: the box asks the server, as before.
+    if (manifest?.format !== 1 || !manifest.names?.file) return null;
+    const file = await fetch(fileAt(manifest.names.file)).then((answer) => jsonOf<NamesFile>(answer));
+    return file?.format === 1 && Array.isArray(file.names) ? namesOf(file, manifest.version) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The names, as the page asks them: each search answered in the names worker. */
+export interface NameFinder {
+  version: string;
+  find(query: string, limit?: number): Promise<Hit[]>;
+}
+
+/** What the page and the names worker say to each other. */
+export type ToNames = { find: number; query: string; limit?: number };
+export type FromNames = { ready: string | null } | { found: number; hits: Hit[] };
+
+let loading: Promise<NameFinder | null> | null = null;
 
 /**
- * The names, read once a visit: the manifest, then the names file it
- * points to (immutable, so the browser and the service worker keep it).
- * Null when there is no snapshot yet or it did not come; the box then asks
- * the server, as before.
+ * The names, once a visit, read and searched in a worker of their own so the
+ * page stays free to answer the person while 8 MB arrive and are indexed.
+ * Asked for only once the page is idle, so the names never hold up its
+ * frame or its first answers. Null when there is no snapshot (or no worker);
+ * until the names are ready, the box asks the server, as before.
  */
-export function loadNames(): Promise<NameIndex | null> {
-  loading ??= (async () => {
-    try {
-      const manifest = await fetch(MANIFEST).then((answer) => jsonOf<Manifest>(answer));
-      // A format this page does not know is left alone: the box asks the server, as before.
-      if (manifest?.format !== 1 || !manifest.names?.file) return null;
-      const file = await fetch(fileAt(manifest.names.file)).then((answer) => jsonOf<NamesFile>(answer));
-      return file?.format === 1 && Array.isArray(file.names) ? namesOf(file, manifest.version) : null;
-    } catch {
-      return null;
-    }
-  })();
+export function loadNames(): Promise<NameFinder | null> {
+  loading ??= new Promise<NameFinder | null>((resolve) => {
+    if (typeof Worker === 'undefined') return resolve(null);
+    const idle = (start: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 2000 }) : setTimeout(start, 500));
+    idle(() => {
+      let worker: Worker;
+      try {
+        worker = new Worker(new URL('./names.worker.ts', import.meta.url), { type: 'module' });
+      } catch {
+        return resolve(null);
+      }
+      const waiting = new Map<number, (hits: Hit[]) => void>();
+      let next = 0;
+      worker.onerror = () => resolve(null);
+      worker.onmessage = ({ data }: MessageEvent<FromNames>) => {
+        if ('ready' in data) {
+          if (data.ready === null) {
+            worker.terminate();
+            return resolve(null);
+          }
+          const version = data.ready;
+          return resolve({
+            version,
+            find: (query, limit) =>
+              new Promise((found) => {
+                const id = ++next;
+                waiting.set(id, found);
+                worker.postMessage({ find: id, query, limit } satisfies ToNames);
+              }),
+          });
+        }
+        waiting.get(data.found)?.(data.hits);
+        waiting.delete(data.found);
+      };
+    });
+  });
   return loading;
 }

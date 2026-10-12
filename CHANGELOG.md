@@ -10,6 +10,10 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `chassidushub catalog-health`: the catalog's health from its snapshot
+  (unlabelled units, items with no place, additions without a sefer,
+  duplicate printings, shelves out of order), read-only, every night into
+  one issue (docs/operations.md, "Catalog health").
 - `GET /v1/suggestions/:id/tree` (client: `suggestionTree`): a suggestion's
   catalog tree before and after. Each shelf, sefer or farbrengen it changes
   what is in, its items now and once approved, each marked same, out, in,
