@@ -11,6 +11,7 @@ export const VIEWS: readonly ReaderView[] = Object.values(import.meta.glob<Reade
 
 /**
  * The view a reading page is drawn with (view.ts, `pickView`). Until the API
- * says which view a sefer names (RFC 0004, step 3), it is picked by the unit's own level.
+ * says which view a sefer names (RFC 0004, step 3), it is the one the reader's
+ * loader knows a sefer by (load.server.ts, `seferViews`), else by the unit's own level.
  */
-export const viewFor = (data: Pick<ReaderData, 'level'> & { view?: string }): ReaderView => pickView(VIEWS, data);
+export const viewFor = (data: Pick<ReaderData, 'level' | 'view'>): ReaderView => pickView(VIEWS, data);

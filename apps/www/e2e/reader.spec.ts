@@ -151,3 +151,37 @@ test('draws a sicha without the letter’s layout', async ({ page }) => {
   await expect(page.locator('.igros')).toHaveCount(0);
   await expect(page.locator('.torah p.end')).toHaveText('חתימה לדוגמה');
 });
+
+test('sets a day of Hayom Yom as the book prints it: its head, its notices, its shiurim, its sayings', async ({ page }) => {
+  await page.goto('/hayom-yom/1/1');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('יט כסלו');
+  await expect(page.locator('.eyebrow')).toHaveText('היום יום · כסלו');
+  const day = page.locator('.daybook .torah');
+  await expect(day.locator('.hy-head')).toHaveText(/שבת\s*יט כסלו\s*ה׳תש״ג/);
+  await expect(day.locator('.hy-lead #s-lead-1.m')).toHaveText('מכתב לדוגמה שלפני היום הראשון.');
+  await expect(day.locator('.hy-pre p')).toHaveText('הודעה לדוגמה לפני השיעורים.');
+  expect(await day.locator('.hy-pre').evaluate((el) => getComputedStyle(el).fontStyle)).toBe('italic');
+  // Each shiur opens its words on the site; the Tanya line is the print's, marked as read by a machine.
+  await expect(day.locator('.hy-shiurim a').first()).toHaveAttribute('href', /^\/chumash\/genesis\/\d+/);
+  await expect(day.getByRole('link', { name: 'צ-צו.' })).toHaveAttribute('href', '/tehillim/90');
+  await expect(day.locator('.hy-tanya a')).toHaveAttribute('href', /^\/tanya\//);
+  await expect(day.locator('#s-tanya')).toHaveClass(/\bm\b/);
+  // The sayings come after the shiurim; there are no rules above or under the text, no today and nothing to tick.
+  expect(await day.locator('.hy-shiurim').evaluate((el) => el.compareDocumentPosition(document.getElementById('s-p1')!) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
+  expect(await day.locator('.hy-head').evaluate((el) => getComputedStyle(el).borderTopStyle)).toBe('none');
+  await expect(page.getByText('היום', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+});
+
+test('reads Hayom Yom as a book: a strip of the month’s days, the day after at the foot', async ({ page }) => {
+  await page.goto('/hayom-yom/1/1');
+  await page.waitForLoadState('networkidle');
+  const strip = page.getByRole('navigation', { name: 'ימי החודש' });
+  await expect(strip.getByRole('link', { name: 'יט כסלו' })).toHaveAttribute('aria-current', 'page');
+  await strip.getByRole('link', { name: 'כ כסלו' }).click();
+  await expect(page).toHaveURL(/\/hayom-yom\/1\/2$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('כ כסלו');
+  await expect(page.locator('.daybook .hy-head')).toHaveText(/יום ראשון\s*כ כסלו\s*ה׳תש״ג/);
+  await expect(page.getByRole('link', { name: 'יט כסלו' }).last()).toHaveAttribute('rel', 'prev');
+});
