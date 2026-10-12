@@ -11,5 +11,5 @@
 - [ ] `npm run check` passes (types, tests, schemas)
 - [ ] New behaviour has tests
 - [ ] Data model or API changes are reflected in `docs/` and, for the model, agreed with Sichos-Kodesh (see `docs/sichos-kodesh.md`)
-- [ ] API changes are in `services/api/src/openapi.ts`, the client is regenerated (`npm run generate -w @chassidushub/client`), and CHANGELOG.md says what changed
+- [ ] API changes are in `services/api/src/openapi.ts`, the client is regenerated (`npm run generate -w @chassidushub/client`), and a new `changes/<subject>.md` says what changed (not an edit to CHANGELOG.md)
 - [ ] No rights-restricted content (texts, scans, recordings) is added to this repository

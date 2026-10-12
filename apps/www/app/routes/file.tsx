@@ -1,8 +1,10 @@
-import { data } from 'react-router';
+import { Suspense } from 'react';
+import { Await, data } from 'react-router';
 import { dayOf, KINDS, sizeOf } from '../tools/common';
 import { itemName, orNothing } from '../tools/item.server';
 import { Row, Rows, SectionHead, TopBar } from '../ui';
 import type { Route } from './+types/file';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** A file as GET /v1/files/{sha256}/about tells of it. */
 interface FileAbout {
@@ -62,8 +64,19 @@ const short = (sha: string) => sha.slice(0, 12);
 export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   const sha = params.sha256.toLowerCase();
   if (!/^[0-9a-f]{64}$/.test(sha)) throw data('not found', { status: 404 });
+  // A whole page waits for the file itself, so one that is not kept here is a 404; the names of what it is the cover of come after.
   const file = (await orNothing(api.fileAbout({ sha256: sha, limit: 200 }))) as FileAbout | null;
   if (!file) throw data('not found', { status: 404 });
+  return { sha256: sha, data: about(api, file) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the file follows. */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  return { sha256: params.sha256.toLowerCase(), data: serverLoader().then((d) => d.data) };
+}
+
+/** What the page shows of a file, with the names of the items it is the cover of. */
+async function about(api: Route.LoaderArgs['context']['api'], file: FileAbout) {
   const ids = [...new Set(file.covers.map((c) => c.entity))];
   const covered = ids.length ? (await api.getItems({ ids: ids.join(',') }).catch(() => ({ items: [] }))).items : [];
   const names = Object.fromEntries(covered.map((item) => [item.id, { name: itemName(item), to: item.path ?? `/${item.id}` }]));
@@ -86,13 +99,43 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
+type Described = Awaited<ReturnType<typeof about>>;
 
-export function meta({ data: file }: Route.MetaArgs) {
-  return [{ title: file ? `${kindOf(file.mime)} ${short(file.sha256)} · ChassidusHub` : 'ChassidusHub' }];
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
+
+/** Only what the address says: what kind of file it is comes with the file. */
+export function meta({ loaderData }: Route.MetaArgs) {
+  return [{ title: loaderData ? `קובץ ${short(loaderData.sha256)} · ChassidusHub` : 'ChassidusHub' }];
 }
 
-export default function FilePage({ loaderData: file }: Route.ComponentProps) {
+export default function FilePage({ loaderData: { sha256, data } }: Route.ComponentProps) {
+  // No errorElement: a file that is not there (after a click) goes to the route's error page, as on a whole page.
+  return (
+    <Suspense key={sha256} fallback={<Waiting sha256={sha256} />}>
+      <Await resolve={data}>{(file) => <About file={file} />}</Await>
+    </Suspense>
+  );
+}
+
+/** The frame while the file comes: the page's title and its fingerprint, from the address. */
+function Waiting({ sha256 }: { sha256: string }) {
+  return (
+    <>
+      <TopBar title="קובץ" />
+      <main id="content" className="view it-text">
+        <h1>
+          קובץ{' '}
+          <bdi className="it-hash" dir="ltr">
+            {short(sha256)}
+          </bdi>
+        </h1>
+        <p className="faint" aria-busy="true">רגע…</p>
+      </main>
+    </>
+  );
+}
+
+function About({ file }: { file: Described }) {
   const measured = [file.pages ? `${file.pages} עמודים` : null, file.minutes ? `${file.minutes} דק׳` : null, file.pageImages ? `${file.pageImages} תמונות עמודים` : null].filter(Boolean).join(' · ');
   return (
     <>

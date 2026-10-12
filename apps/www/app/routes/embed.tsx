@@ -7,6 +7,7 @@ import { clock, Logo, PlayButton, player, Row, Rows, usePlayer, type Track } fro
 import { chapterAt } from '../ui/player/engine';
 import { PlayerDock } from '../ui/player/PlayerDock';
 import type { Route } from './+types/embed';
+import { KEPT_PAGE } from '../lib/caching';
 
 /**
  * An item as other sites embed it, and the one page they may frame: its
@@ -39,7 +40,7 @@ export async function loader({ request, params, context: { api } }: Route.Loader
 }
 
 // Framed by any site (lib/safety.ts keeps every other page from being framed), and kept like any page.
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600', 'Content-Security-Policy': 'frame-ancestors *' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE, 'Content-Security-Policy': 'frame-ancestors *' });
 
 export function meta({ data: embed }: Route.MetaArgs) {
   return [{ title: embed ? `${embed.title} · ChassidusHub` : 'ChassidusHub' }];

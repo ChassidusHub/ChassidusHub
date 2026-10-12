@@ -19,6 +19,8 @@ docs/plans/chassidushub.md; what is built and what is next is docs/roadmap.md.
 - Stop switch: before any push or merge, check for an open issue titled
   `studio-stop` (and the studio's STOP file); if either exists, commit
   locally and stop.
+- Changelog entries go in a new file changes/<subject>.md, never an edit to
+  CHANGELOG.md (edits there conflict with every other open PR).
 - A migration ships in its own PR, first and alone, and is never reverted
   (fixed forward). A core change starts as an RFC in docs/rfc/.
 - Migrations in packages/db/src/migrations are never edited once released;

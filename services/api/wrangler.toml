@@ -30,6 +30,13 @@ id = "6cb8c1e512574ef9a9872eb5d6dece3b"
 binding = "SITE"
 service = "chassidushub-web"
 
+# The new site's kept pages (apps/www/server/worker.ts, CachedPage): told each minute which items merges changed, so
+# it forgets the pages about them (src/sitePages.ts). Deploy the site with that entrypoint first.
+[[services]]
+binding = "SITE_PAGES"
+service = "chassidushub-www"
+entrypoint = "CachedPage"
+
 # The reader app's own catalog (reader/services/catalog-api), for the app's catalog requests while ChassidusHub's
 # release lacks a part the app shows (src/appCatalog.ts). Deploy that Worker first.
 [[services]]
@@ -59,11 +66,12 @@ bucket_name = "sichos-kodesh-archive"
 [[send_email]]
 name = "EMAIL"
 
+# Every minute (src/worker.ts, scheduled; src/sitePages.ts): the new site forgets its kept pages about what merged.
 # Every five minutes (src/worker.ts, scheduled): the status checks (src/status.ts, the site's /status), then
 # webhooks, email updates (through EMAIL above) and the reviewer's advice on suggestions (once
 # CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_AI_TOKEN are set).
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["*/5 * * * *", "* * * * *"]
 
 # Rate limits (docs/developers/rate-limits.md): per caller's address, and per API token. The namespace ids
 # only tell the two counters apart within this account; they are not secrets. Keep the per-minute vars below

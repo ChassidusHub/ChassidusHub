@@ -1,12 +1,13 @@
 import { SHAAR_SECTIONS } from '@chassidushub/model';
-import { useId, useState } from 'react';
-import { data, Link } from 'react-router';
+import { Suspense, useId, useState } from 'react';
+import { Await, data, Link } from 'react-router';
 import { useAccount } from '../lib/account';
 import { act, said } from '../tools/common';
 import { itemHead, orNothing } from '../tools/item.server';
 import { ItemTop } from '../tools/ItemTop';
-import { Button, Field, Say, SectionHead } from '../ui';
+import { Button, Field, Say, SectionHead, TopBar } from '../ui';
 import type { Route } from './+types/shaar';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** The header's fields, and what each holds (docs/shaar.md). */
 const FIELDS: Array<[string, string]> = [
@@ -25,22 +26,58 @@ const FIELDS: Array<[string, string]> = [
  * line the catalog cannot read is named before it is sent, and it goes for
  * review as a Suggestion of its own. One the catalog made from its data is
  * labelled so until a person sends it.
+ *
+ * A whole page waits for the sefer and its shaar, since either one missing
+ * is a 404; opened from inside the site, the frame is drawn at once and
+ * they follow.
  */
 export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   const [head, file] = await Promise.all([itemHead(api, params.id, ['work']), orNothing(api.getShaar({ id: params.id }))]);
   if (!file) throw data('not found', { status: 404 });
-  return { head, text: file.text, machine: file.machine, sections: SHAAR_SECTIONS.map((s) => `## ${s.he} | ${s.en}`) };
+  const shown = { head, text: file.text, machine: file.machine, sections: SHAAR_SECTIONS.map((s) => `## ${s.he} | ${s.en}`) };
+  return { id: params.id, name: head.name as string | null, data: Promise.resolve(shown) };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=60, s-maxage=300' });
+/** Opened from inside the site, the frame is drawn at once; the shaar follows. */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  return { id: params.id, name: null as string | null, data: serverLoader().then((d) => d.data) };
+}
+
+/** The shaar as the page receives it. */
+type Shown = Awaited<Route.ComponentProps['loaderData']['data']>;
+
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export const handle = { section: 'library' };
 
-export function meta({ data: shaar }: Route.MetaArgs) {
-  return [{ title: shaar ? `שער: ${shaar.head.name} · ChassidusHub` : 'ChassidusHub' }];
+/** The sefer's name is known on a whole page; after a click the title says only what the page is. */
+export function meta({ loaderData }: Route.MetaArgs) {
+  return [{ title: loaderData?.name ? `שער: ${loaderData.name} · ChassidusHub` : 'שער · ChassidusHub' }];
 }
 
-export default function Shaar({ loaderData: { head, text: written, machine, sections } }: Route.ComponentProps) {
+export default function Shaar({ loaderData: { id, data } }: Route.ComponentProps) {
+  // No errorElement: a shaar that is not there (after a click) goes to the route's error page, as on a whole page.
+  return (
+    <Suspense key={id} fallback={<Waiting />}>
+      <Await resolve={data}>{(shown) => <ShaarPage {...shown} />}</Await>
+    </Suspense>
+  );
+}
+
+/** The frame while the shaar comes. */
+function Waiting() {
+  return (
+    <>
+      <TopBar title="שער" />
+      <main id="content" className="view it-text">
+        <h1>השער</h1>
+        <p className="faint" aria-busy="true">רגע…</p>
+      </main>
+    </>
+  );
+}
+
+function ShaarPage({ head, text: written, machine, sections }: Shown) {
   const account = useAccount();
   const id = useId();
   const [editing, setEditing] = useState(false);

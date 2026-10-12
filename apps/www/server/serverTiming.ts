@@ -8,8 +8,10 @@
  *   it made in how many rounds (a round is calls made side by side; each one
  *   after another is a round more, and each round is a trip to the API).
  * - `db`: what the API said those calls cost the database, summed.
- * - `edge`: the page came from the edge's kept pages (server/pageCache.ts),
- *   and how old it was; nothing was asked of the API.
+ * - `drawn`: on a page kept at the edge (server/edge.ts), when it was drawn
+ *   and how long that took; the `api` and `db` after it are of that drawing.
+ *   A page whose `drawn` is older than this request came from the edge, and
+ *   nothing was asked of the API for it now.
  */
 
 type Send = (input: string, init?: RequestInit) => Promise<Response>;
@@ -17,8 +19,8 @@ type Send = (input: string, init?: RequestInit) => Promise<Response>;
 export interface PageTiming {
   /** The API's fetch, timed: what a page's API calls go through. */
   timed(send: Send): Send;
-  /** The header for a page drawn now, `total` milliseconds after it was asked for. */
-  header(total: number): string;
+  /** The header for a page drawn in `total` milliseconds; `name` is `page`, or `drawn` for a page the edge will keep. */
+  header(total: number, name?: 'page' | 'drawn'): string;
 }
 
 /** The milliseconds a Server-Timing header gives for one of its names. */
@@ -52,8 +54,8 @@ export function pageTiming(now: () => number = () => performance.now()): PageTim
         if (--inFlight === 0) waited += now() - since;
       }
     },
-    header(total) {
-      const parts = [`page;dur=${ms(total)}`];
+    header(total, name = 'page') {
+      const parts = [name === 'drawn' ? `drawn;dur=${ms(total)};desc="${new Date().toISOString()}"` : `page;dur=${ms(total)}`];
       if (calls) {
         parts.push(`api;dur=${ms(waited)};desc="${calls} call${calls === 1 ? '' : 's'}, ${rounds} round${rounds === 1 ? '' : 's'}"`);
         if (db) parts.push(`db;dur=${ms(db)}`);
@@ -63,7 +65,7 @@ export function pageTiming(now: () => number = () => performance.now()): PageTim
   };
 }
 
-/** A response with its Server-Timing header set, whatever headers it came with (a kept page's may not be changed in place). */
+/** A response with its Server-Timing header set, whatever headers it came with (one from the edge may not be changed in place). */
 export function withTiming(response: Response, header: string): Response {
   const headers = new Headers(response.headers);
   headers.set('Server-Timing', header);

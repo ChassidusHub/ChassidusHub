@@ -10,15 +10,22 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
-- A sefer's page and a volume's on the new site are one read of the API,
-  never two rounds: `/v1/view` brings a sefer's `outline` (its volumes) and
-  `additions`, and answers a volume's path (/likkutei-sichos/12) as the
-  sefer with `volume`, its units in order; a volume of a sefer that moved
-  answers with `movedTo`. Every new-site page says in `Server-Timing` how
-  long it took, how many API calls in how many rounds it waited on, or
-  that it came from the edge. The API and the old site run in Ashburn,
-  next to the database, instead of where Smart Placement put them
-  (Atlanta, Toronto): a few ms a statement instead of about 25.
+- `GET /v1/suggestions/:id/tree` (client: `suggestionTree`): a suggestion's
+  catalog tree before and after. Each shelf, sefer or farbrengen it changes
+  what is in, its items now and once approved, each marked same, out, in,
+  new, gone, renamed or moved; long runs fold into counts. The back room's
+  new catalog queue (`/back?tab=catalog`, `/back/batch/<id>`) draws it, with
+  the batch's research note and Approve or Send back (#244).
+The newest entries wait as one file each in [changes/](changes/) until
+`npm run changelog` moves them in below.
+
+- Searching a sefer's or set's own name puts it first (#233): on the All
+  tab, the sefarim and sets named just what was typed, in any language,
+  come above the words in the texts and the farbrengens. A language asked
+  for ("Tanya in English") is taken off the name when the whole words name
+  nothing. When nothing has every word ("the Rebbe talks in English"), the
+  page shows what the other words name, in any language, and says so
+  (#123).
 
 - The web app's catalog (`/v1/app/v1/catalog/…`) answers again: it is built
   from the farbrengens alone, without reading every sefer's units, which

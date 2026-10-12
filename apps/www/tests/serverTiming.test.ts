@@ -33,6 +33,10 @@ describe("a page's Server-Timing", () => {
     expect(pageTiming(() => 0).header(4.25)).toBe('page;dur=4.3, api;desc="no calls"');
   });
 
+  it('says when a page the edge keeps was drawn', () => {
+    expect(pageTiming(() => 0).header(12, 'drawn')).toMatch(/^drawn;dur=12;desc="\d{4}-\d\d-\d\dT[^"]+", api;desc="no calls"$/);
+  });
+
   it('is set on any response, whatever headers it came with', async () => {
     const kept = new Response('page', { headers: { 'Server-Timing': 'old', 'Cache-Control': 'public' } });
     const timed = withTiming(kept, 'page;dur=1');

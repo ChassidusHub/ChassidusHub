@@ -1,15 +1,14 @@
 import type { ChassidusHub, Item, ItemView, PathLevel as ApiLevel } from '@chassidushub/client';
 import { redirect } from 'react-router';
 import { namesOf } from '../edit/names';
-import { printingsFrom } from './printings';
+import type { printingsFrom } from './printings';
 import { isRebbe, nameOf, partLabel, rebbeimFirst } from '../lib/catalog';
 
 /**
  * What the library's pages read from the API, cut down on the server to what
- * they draw, so a page carries no more than it shows. A sefer's page and a
- * volume's are one read (GET /v1/view brings their volumes, additions and
- * units with the item); a shelf's reads the rest of it at once after that.
- * Shelves come from one list of every shelf (a few
+ * they draw, so a page carries no more than it shows. Each page reads in two
+ * rounds: the page's item and its path bar (GET /v1/view), then everything
+ * else about it at once. Shelves come from one list of every shelf (a few
  * statements) rather than the catalog tree, which costs the database dozens
  * of statements a level; the tree is not read.
  */
@@ -138,39 +137,51 @@ function asGrid(parts: Array<{ value?: string; label?: unknown }>): boolean {
 /** Nothing, where the API answers that a read does not apply (an outline of something that is not a sefer). */
 const orNothing = <T>(read: Promise<T>): Promise<T | null> => read.catch((error) => ((error as { status?: number }).status && (error as { status: number }).status < 500 ? null : Promise.reject(error)));
 
-/** The printings of a sefer, read on the server only for a page asked to show a scan (`?scan=`). */
-const printingsFor = (api: ChassidusHub, work: string, scan: boolean) => (scan ? api.listLinked({ id: work, field: 'work', type: 'publication', limit: 500 }).then((page) => page.items) : Promise.resolve(null));
+/**
+ * What a library page is drawn with: the API's address (the browser reads a
+ * sefer's printings from it), and for a page asked to show a scan (`?scan=`),
+ * the server's `printingsFrom` (app/library/printings.ts), passed in so that
+ * the browser's clicks (app/catalog/clicks.ts) need not load it.
+ */
+export interface LoadOptions {
+  apiBase: string;
+  scan?: typeof printingsFrom;
+}
 
-/** The rows of a sefer's additions. */
-const additionLines = (additions: NonNullable<ItemView['additions']>): Line[] =>
-  additions.map((addition) => ({ key: addition.id, title: nameOf(addition.name, addition.id), sub: additionKinds[addition.kind ?? ''] || undefined, to: addition.path ?? undefined }));
+/** The printings of a sefer, read on the server only for a page asked to show a scan (`?scan=`). */
+const printingsFor = (api: ChassidusHub, work: string, scan: unknown) => (scan ? api.listLinked({ id: work, field: 'work', type: 'publication', limit: 500 }).then((page) => page.items) : Promise.resolve(null));
 
 /**
- * A sefer's volumes and additions as its view brought them; read here only
- * from an API older than the one that brings them (for the minute a deploy
- * of the two takes).
+ * A sefer's volumes and additions as its view brought them (GET /v1/view),
+ * read here only where the view did not: from the catalog snapshot
+ * (app/catalog/localApi.ts), whose reads cost nothing, or from an older API.
  */
 async function outlineOf(api: ChassidusHub, view: ItemView) {
   if (view.outline) return view.outline;
-  return (await orNothing(api.workOutline({ id: view.item.id })))?.parts.map((part) => ({ value: part.value ?? '', label: part.label ?? null, units: part.units ?? 0 })) ?? null;
+  const outline = await orNothing(api.workOutline({ id: view.item.id }));
+  return outline?.parts.map((part) => ({ value: part.value ?? '', label: (part.label ?? null) as Record<string, unknown> | null, units: part.units ?? 0 })) ?? null;
 }
-async function additionsOf(api: ChassidusHub, view: ItemView) {
+
+async function additionsOf(api: ChassidusHub, view: ItemView): Promise<NonNullable<ItemView['additions']>> {
   if (view.additions) return view.additions;
   const page = await orNothing(api.listLinked({ id: view.item.id, field: 'addition.to', type: 'work', limit: 100 }));
-  return (page?.items ?? []).map((a) => ({ id: a.id, path: a.path, name: ((a.data as { title?: Record<string, unknown> }).title ?? null), kind: (a.data as { addition?: { kind?: string } }).addition?.kind ?? null }));
+  return (page?.items ?? []).map((a) => {
+    const data = a.data as { title?: Record<string, unknown>; addition?: { kind?: string } };
+    return { id: a.id, path: a.path, name: data.title ?? null, kind: data.addition?.kind ?? null };
+  });
 }
 
 /**
- * A sefer's page, from its view: its volumes and its additions, and its
- * printings (read by the browser unless a scan was asked for). Null when the
- * item is not a sefer.
+ * A sefer's page, from its view: its volumes and its additions (which the
+ * view brings), and its printings (read by the browser unless a scan was
+ * asked for). Null when the item is not a sefer.
  */
-export async function loadWork(api: ChassidusHub, view: ItemView, options: { scan?: boolean; apiBase: string }) {
+export async function loadWork(api: ChassidusHub, view: ItemView, options: LoadOptions) {
   const item = view.item;
+  const levels = view.pathBar;
   if (item.type !== 'work') return null;
   const id = item.id;
-  const levels = view.pathBar;
-  const [outline, additions, publications] = await Promise.all([outlineOf(api, view), additionsOf(api, view), printingsFor(api, id, !!options.scan)]);
+  const [outline, additions, publications] = await Promise.all([outlineOf(api, view), additionsOf(api, view), printingsFor(api, id, options.scan)]);
   if (!outline) return null;
   const data = item.data as { title?: unknown };
   const author = levels.find((level) => level.kind === 'set' && isRebbe(level.chosen.path));
@@ -186,8 +197,8 @@ export async function loadWork(api: ChassidusHub, view: ItemView, options: { sca
     ...ownFields(item, levels),
     grid: asGrid(outline),
     parts,
-    printings: publications ? printingsFrom(publications) : null,
-    additions: additionLines(additions),
+    printings: publications && options.scan ? options.scan(publications) : null,
+    additions: additions.map((addition): Line => ({ key: addition.id, title: nameOf(addition.name, addition.id), sub: additionKinds[addition.kind ?? ''] || undefined, to: addition.path ?? undefined })),
   };
 }
 
@@ -211,14 +222,14 @@ function groupOf(position: unknown): string | undefined {
  * units, its path bar (the sefer's, and the volume with the other volumes),
  * and its printings.
  */
-export async function loadVolume(api: ChassidusHub, view: ItemView, value: string, options: { scan?: boolean; apiBase: string }) {
+export async function loadVolume(api: ChassidusHub, view: ItemView, value: string, options: LoadOptions) {
   const work = view.item;
   if (work.type !== 'work') return null;
   const workId = work.id;
   const [outline, units, publications] = await Promise.all([
     outlineOf(api, view),
     view.volume?.value === value ? view.volume.units : orNothing(api.workPart({ id: workId, part: value, limit: 1000 })).then((part) => part?.items ?? null),
-    printingsFor(api, workId, !!options.scan),
+    printingsFor(api, workId, options.scan),
   ]);
   const here = outline?.find((p) => p.value === value);
   if (!here || !units) return null;
@@ -248,7 +259,7 @@ export async function loadVolume(api: ChassidusHub, view: ItemView, value: strin
       group: groupOf(unit.data.position),
       to: unit.path ?? `/${unit.id}`,
     })),
-    printings: publications ? printingsFrom(publications, { value, label }) : null,
+    printings: publications && options.scan ? options.scan(publications, { value, label }) : null,
   };
 }
 
