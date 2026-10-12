@@ -6,6 +6,7 @@ import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Buc
 import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
 import { r2SnapshotStore, singleFlight, type SnapshotOptions } from './catalogSnapshot.js';
+import type { SnapshotStore } from '@chassidushub/core';
 import { forgetChangedPages, type SitePages } from './sitePages.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
@@ -136,13 +137,20 @@ const appReleases = new AppReleases();
  * answer is sent, and the build runs on behind it. One build at a time in this isolate.
  */
 let snapshotBuild: (() => Promise<void>) | null = null;
+/** Refreshes the snapshot, and logs how long a build took: whether a build fits behind an answer (waitUntil) at all. */
+async function timedSnapshot(db: Parameters<typeof refreshSnapshot>[0], store: SnapshotStore, from: string): Promise<void> {
+  const started = Date.now();
+  const { manifest, built } = await refreshSnapshot(db, store);
+  if (built) console.log(`catalog snapshot ${manifest.version} built ${from} in ${Date.now() - started} ms (${manifest.counts.units} units, ${manifest.counts.events} events)`);
+}
+
 function catalogSnapshotOf(env: Env): SnapshotOptions | undefined {
   if (!env.FILES_PUBLIC) return undefined;
   const store = r2SnapshotStore(env.FILES_PUBLIC);
   snapshotBuild ??= singleFlight(async () => {
     const db = connectPostgres(env.HYPERDRIVE.connectionString, { max: 1 });
     try {
-      await refreshSnapshot(db, store);
+      await timedSnapshot(db, store, 'after a change');
     } finally {
       await db.close();
     }
@@ -178,7 +186,7 @@ export default {
         if (env.SITE_PAGES && files) {
           await forgetChangedPages(catalog, keptStore(files), env.SITE_PAGES).catch((error) => void (isCatalogHeld(error) || console.error('site pages', error)));
         }
-        if (files) await refreshSnapshot(db, r2SnapshotStore(files)).catch((error) => void (isCatalogHeld(error) || console.error('catalog snapshot', error)));
+        if (files) await timedSnapshot(db, r2SnapshotStore(files), 'by the scheduled run').catch((error) => void (isCatalogHeld(error) || console.error('catalog snapshot', error)));
       };
       ctx.waitUntil(minute().finally(() => db.close()));
       return;

@@ -1,4 +1,4 @@
-import { data, redirect, type AppLoadContext } from 'react-router';
+import { data, isRouteErrorResponse, redirect, type AppLoadContext } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
@@ -117,4 +117,15 @@ export default function Item({ loaderData }: Route.ComponentProps) {
         </Placeholder>
       );
   }
+}
+
+/**
+ * A path with nothing at it inside the site's frame like every other page
+ * (this route is inside the shell), so the top bar and the library,
+ * listening and search are a tap away, never a bare page (#264). Any other
+ * failure goes on to the site's own page for it (root.tsx).
+ */
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (!isRouteErrorResponse(error) || error.status !== 404) throw error;
+  return <Placeholder title="הדף לא נמצא" note="" />;
 }

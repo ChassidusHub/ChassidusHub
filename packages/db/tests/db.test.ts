@@ -93,6 +93,15 @@ describe('migrations', () => {
     await db.close();
   });
 
+  it("keeps a suggestion's client key once for each author, so a retried send finds the first (migration 0038)", async () => {
+    const db = await openPGlite();
+    await migrate(db);
+    await db.exec("INSERT INTO account (id, display_name) VALUES ('u-a', 'A'), ('u-b', 'B')");
+    await db.exec("INSERT INTO changeset (title, author, client_key) VALUES ('One', 'u-a', 'k1'), ('Same key, someone else', 'u-b', 'k1'), ('No key', 'u-a', NULL), ('No key', 'u-a', NULL)");
+    await expect(db.exec("INSERT INTO changeset (title, author, client_key) VALUES ('Again', 'u-a', 'k1')")).rejects.toThrow();
+    await db.close();
+  });
+
   it('rolls a failed transaction back', async () => {
     const db = await openPGlite();
     await migrate(db);

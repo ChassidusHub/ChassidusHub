@@ -82,4 +82,43 @@ describe('the path bar', () => {
     const top = await pathBar(catalog, (await catalog.get(rebbe))!);
     expect(top!.map((l) => [l.chosen.path, l.choices.length])).toEqual([['/sets/the-rebbe', 4]]);
   });
+
+  it("opens a page for every choice at every level, a part inside a volume at its first unit (#264)", async () => {
+    // Likkutei Sichos 30-39: a volume, a parsha, a sicha, and the sicha's אותיות as the units; a sicha has no page of its own.
+    const deep = await add(catalog, 'steward', 'steward', 'work', { title: name('לקוטי שיחות ל-לט'), slug: 'ls-deep', authors: [], genre: 'sichos', levels: ['volume', 'parsha', 'sicha', 'ois'], sets: [sichos], order: 'd' }, '/ls-deep');
+    const units: EntityId[] = [];
+    let n = 0;
+    for (const [volume, parsha, sicha, oisos] of [['31', '1', '1', 3], ['31', '1', '2', 2], ['31', '2', '1', 2], ['32', '1', '1', 1]] as const) {
+      for (let ois = 1; ois <= oisos; ois++) {
+        const position: Json[] = [
+          { level: 'volume', value: volume },
+          { level: 'parsha', value: parsha },
+          { level: 'sicha', value: sicha, label: name(`שיחה ${sicha}`) },
+          { level: 'ois', value: String(ois) },
+        ];
+        units.push(await add(catalog, 'steward', 'steward', 'unit', { work: deep, position, order: String(n++).padStart(3, '0'), label: name(`${ois}`) }, `/ls-deep/${volume}/${parsha}/${sicha}/${ois}`));
+      }
+    }
+    const bar = (await pathBar(catalog, (await catalog.get(units[1]!))!))!;
+    const sichaLevel = bar.find((l) => l.level === 'sicha')!;
+    expect(sichaLevel.choices.map((c) => c.path)).toEqual(['/ls-deep/31/1/1/1', '/ls-deep/31/1/2/1']);
+    expect(bar.find((l) => l.level === 'parsha')!.choices.map((c) => c.path)).toEqual(['/ls-deep/31/1/1/1', '/ls-deep/31/2/1/1']);
+    expect(bar.find((l) => l.level === 'volume')!.choices.map((c) => c.path)).toEqual(['/ls-deep/31', '/ls-deep/32']);
+
+    // Walk every level of every unit's path bar, in this sefer and in Likkutei Sichos: each choice is an item's page,
+    // or a volume (a sefer's path and one more word), which the site draws from the sefer.
+    const volumes = new Set(['/likkutei-sichos', '/ls-deep']);
+    const missing: string[] = [];
+    for (const id of [...units, sicha]) {
+      for (const level of (await pathBar(catalog, (await catalog.get(id))!))!) {
+        for (const choice of level.choices) {
+          const path = choice.path;
+          if (!path) missing.push(`${level.kind} ${choice.value ?? choice.id}: no path`);
+          else if (level.kind === 'part' && level.level === 'volume' && volumes.has(path.split('/').slice(0, -1).join('/'))) continue;
+          else if (!(await catalog.resolvePath(path))) missing.push(path);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
 });
