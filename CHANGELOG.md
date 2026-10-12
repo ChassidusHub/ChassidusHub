@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A sicha's place joins its item by a plain id (migration 0036): unit_place
+  keeps unit ids in the same collation as entity, so no query has to name
+  one for its key to be used.
 - Search reads each hit's facts with its record unpacked once (#214): a
   sicha's name, place and sefer each unpacked its whole record again, words
   and all. Twenty sichos' facts now read about a seventh as much.
