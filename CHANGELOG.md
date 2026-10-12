@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Search by idea says it is not available while it has nothing to search
+  (#98): `/v1/search/similar` answers `available: false` until the items'
+  vectors are made, so the site answers by words instead of "Nothing
+  found", and the home page's box and its idea example ask by meaning only
+  where search by idea is offered.
 - A sicha's place joins its item by a plain id (migration 0036): unit_place
   keeps unit ids in the same collation as entity, so no query has to name
   one for its key to be used.

@@ -97,6 +97,15 @@ export function embeddingInput(view: Pick<EntityView, 'type' | 'data'>): string 
   return text.length >= 3 ? clip(text) : null;
 }
 
+/**
+ * Whether any item has a vector made by `model`. Search by meaning is not available while none has: it would answer
+ * every question with nothing, as it did after the move to the new database before the vectors were made (#98).
+ * Asked each time rather than remembered, so it comes on once the vectors are made; with none it reads nothing.
+ */
+export async function hasEmbeddings(db: Db, model: string): Promise<boolean> {
+  return Boolean((await one<{ any: boolean }>(db, 'SELECT EXISTS (SELECT 1 FROM embedding WHERE model = $1) AS any', [model]))?.any);
+}
+
 /** The machine_pass job that remembers items with nothing to embed. */
 const passJob = (model: string) => `embed:${model}`;
 

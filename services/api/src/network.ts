@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import { catalogHealth, EMBEDDED_TYPES, relationsOf, searchMoments, searchPage, searchSimilar, searchSuggest, topicOf, type Catalog, type Embedder } from '@chassidushub/core';
+import { catalogHealth, EMBEDDED_TYPES, hasEmbeddings, relationsOf, searchMoments, searchPage, searchSimilar, searchSuggest, topicOf, type Catalog, type Embedder } from '@chassidushub/core';
 import { isValidDateKey } from '@chassidushub/hebrew';
 import { LANGUAGES, readId, type EntityType, type Language } from '@chassidushub/model';
 import { HttpError } from './app.js';
@@ -52,6 +52,8 @@ export function networkRoutes(app: Hono, catalog: Catalog, options: { embedder?:
     const q = (c.req.query('q') ?? '').trim();
     const embedder = options.embedder ?? null;
     if (!embedder) return c.json({ query: q, available: false, machine: true, results: [] });
+    // Set up but with no vectors made yet, it would find nothing for every question: not available until they are (#98).
+    if (!(await hasEmbeddings(catalog.db, embedder.model))) return c.json({ query: q, available: false, model: embedder.model, machine: true, results: [] });
     const types = (c.req.query('types') ?? '').split(',').filter(Boolean);
     for (const t of types) if (!EMBEDDED_TYPES.includes(t as EntityType)) throw new HttpError(400, `types are some of ${EMBEDDED_TYPES.join(', ')}`);
     if (!q) return c.json({ query: q, available: true, model: embedder.model, machine: true, results: [] });

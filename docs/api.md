@@ -55,7 +55,8 @@ route's examples and a reference to try them in, are at
   paragraph of a text or transcript, with `startMs`, when it is heard.
   `machine: true` until a person has checked it.
 - `GET /v1/search/similar?q=…&types=unit,event`: search by meaning.
-  `available: false` until it is set up; every result is the machine's
+  `available: false` until it is set up and the items' vectors are made
+  (`chassidushub embed`); every result is the machine's
   choice, and says so (`machine: true`), with its `score`.
 - `GET /v1/entities/<id>/relations`: an item's links both ways (cites,
   printed in, based on, cited by), each `machine: true` while a machine

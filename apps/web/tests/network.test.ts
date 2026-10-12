@@ -87,6 +87,10 @@ describe('phase 6 on the site', () => {
     expect(page.html).toContain('לפי רעיון');
     expect(page.html).toContain('נבחרו במכונה');
     expect(page.html).toContain('נמצא במכונה');
+    // Where it is offered, the home page's box and its idea example ask by meaning (#98).
+    const home = await get('/?lang=he', () => withMeaning);
+    expect(home.html).toContain('<input type="hidden" name="by" value="meaning"/>');
+    expect(home.html).toContain('by=meaning');
   });
 
   it('offers no search by idea while it is switched off, and answers a question sent by idea by words', async () => {
