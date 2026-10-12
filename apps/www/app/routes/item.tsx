@@ -90,25 +90,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 /**
- * A click to a sicha: its page's data comes without the words, which are
- * fetched from their own address, kept for good by the browser and the
- * service worker (app/offline/sw.ts), so a sicha read once opens again with
- * only its small page data, and with none of its words over the network.
- * A whole page keeps the words the server drew. With no network, a page whose
- * click data was never kept is opened whole, from what the worker kept.
+ * A click to a sicha: its page's data comes without the words, and the page
+ * shows at once while the words come from their own address (`coming`),
+ * kept for good by the browser and the service worker (public/sw.js), so a
+ * sicha read once opens again with only its small page data, and none of its
+ * words over the network. A whole page keeps the words the server drew.
+ * With no network, a page whose click data or words were never kept is
+ * opened whole, from what the worker kept.
  */
 export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  const loaded = await serverLoader().catch((error: unknown) => {
-    // No network, and no data kept for this click: the whole page may still be kept (app/offline/sw.ts), so open that.
-    if (error instanceof TypeError) {
-      window.location.assign(request.url);
-      return new Promise<never>(() => {});
-    }
-    throw error;
-  });
+  const whole = () => {
+    window.location.assign(request.url);
+    return new Promise<never>(() => {});
+  };
+  const loaded = await serverLoader().catch((error: unknown) => (error instanceof TypeError ? whole() : Promise.reject(error)));
   if (loaded.screen !== 'reader' || loaded.reader.text.kind !== 'words' || loaded.reader.text.body !== null) return loaded;
-  const text = loaded.reader.text;
-  return { ...loaded, reader: { ...loaded.reader, text: { ...text, ...(await keptWords(text.url)) } } };
+  return { ...loaded, coming: keptWords(loaded.reader.text.url).catch(whole) };
 }
 
 /** Where an event or recording is heard: /listen/<year>/<event>, a recording picked with ?r=. */
@@ -146,7 +143,7 @@ export function meta({ data: loaded }: Route.MetaArgs) {
 export default function Item({ loaderData }: Route.ComponentProps) {
   switch (loaderData.screen) {
     case 'reader':
-      return <Reader key={loaderData.reader.path} data={loaderData.reader} />;
+      return <Reader key={loaderData.reader.path} data={loaderData.reader} coming={'coming' in loaderData ? loaderData.coming : undefined} />;
     case 'set':
       return <SetScreen data={loaderData} />;
     case 'work':

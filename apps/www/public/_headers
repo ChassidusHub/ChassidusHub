@@ -2,10 +2,10 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-# The service worker: always checked for a newer one (app/offline/sw.ts).
-/sw.js
-  Cache-Control: no-cache
-
 # The built files themselves are never pages to find.
 /*
   X-Robots-Tag: noindex
+
+# The service worker is checked for a new version on every visit.
+/sw.js
+  Cache-Control: no-cache
