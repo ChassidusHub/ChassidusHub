@@ -3,7 +3,7 @@ import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { serverCatalog } from '../app/catalog/onServer';
-import { forEdge, inGroups, mayUseEdge, Seen, seenIn, tagged } from './edge';
+import { forEdge, inGroups, mayUseEdge, pageTag, Seen, seenIn, tagged, whenSent } from './edge';
 import { apiFiles, bucketFiles, catalogFile, indexKeeper, keptAtEdge, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
 import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
 import { pageTiming, withTiming } from './serverTiming';
@@ -41,15 +41,17 @@ type Binding = NonNullable<Env['API']>;
  * A page drawn now. `binding` is how its loaders reach the API (as nobody: no
  * cookie goes with a page's reads). `later` keeps the catalog snapshot's
  * index fresh behind the page (the Worker's waitUntil); `shows` notes the
- * items a page drawn from the snapshot shows, for its edge tags.
+ * items a page drawn from the snapshot shows, for its edge tags, and `failed`
+ * that a part of it streamed later failed.
  */
-function draw(request: Request, env: Env, binding: Binding | undefined, later: (work: Promise<unknown>) => void, shows?: (ids: Iterable<string>) => void): Promise<Response> {
+function draw(request: Request, env: Env, binding: Binding | undefined, later: (work: Promise<unknown>) => void, shows?: (ids: Iterable<string>) => void, failed?: () => void): Promise<Response> {
   const api = apiFor({ binding, baseUrl: env.API_URL });
   const catalog = catalogReads(env);
   return handler(request, {
     api,
     ...(catalog ? { catalog: catalog(api) } : {}),
     shows,
+    failed,
     visitor: visitorApi(request, (cookie) => apiFor({ binding: env.API, baseUrl: env.API_URL, cookie })),
     forward: forwardFor({ binding: env.API, baseUrl: env.API_URL }),
     showcases: env.FILES_PUBLIC ? bucketShowcases(env.FILES_PUBLIC) : undefined,
@@ -79,8 +81,13 @@ export class CachedPage extends WorkerEntrypoint<Env> {
     const shows = (ids: Iterable<string>) => {
       for (const id of ids) seen.ids.add(id);
     };
-    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }, (work) => this.ctx.waitUntil(work), shows), seen);
-    return withTiming(page, timing.header(performance.now() - started, 'drawn'));
+    seen.page = pageTag(request);
+    const failed = () => void (seen.failed = true);
+    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }, (work) => this.ctx.waitUntil(work), shows, failed), seen);
+    // A part that failed after the page said it may be kept: once it has all gone (and so been kept), it is forgotten (#342).
+    return whenSent(withTiming(page, timing.header(performance.now() - started, 'drawn')), () => {
+      if (seen.failed && this.ctx.cache) this.ctx.waitUntil(forgetSoon(this.ctx.cache, seen.page!));
+    });
   }
 
   /**
@@ -98,6 +105,12 @@ export class CachedPage extends WorkerEntrypoint<Env> {
     const errors = results.flatMap((r) => (r.success ? [] : (r.errors ?? [{ code: 0, message: 'refused' }]).map((e) => `${e.code} ${e.message}`)));
     return { ok: errors.length === 0, purges: results.length, errors };
   }
+}
+
+/** Forgets one kept page a moment after it went out, when the edge has kept it. */
+async function forgetSoon(cache: { purge(options: { tags: string[] }): Promise<unknown> }, tag: string): Promise<void> {
+  await new Promise((done) => setTimeout(done, 1000));
+  await cache.purge({ tags: [tag] }).catch(() => undefined);
 }
 
 /** The catalog snapshot's files, read once per isolate (server/catalog.ts). */

@@ -20,7 +20,9 @@ const asked = (request: Request) => new URL(request.url).searchParams.get('q')?.
  */
 export function loader({ request, context }: Route.LoaderArgs) {
   const query = asked(request);
-  return { query, page: query ? searchPage(context.api, query) : null };
+  // A search that did not answer is not kept at the edge (#342).
+  const page = query ? searchPage(context.api, query).then((found) => (found.failed && context.failed?.(), found)) : null;
+  return { query, page };
 }
 
 /**
