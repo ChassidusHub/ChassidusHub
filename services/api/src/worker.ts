@@ -1,10 +1,11 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
-import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, sendNotifications } from '@chassidushub/core';
+import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, refreshSnapshot, sendNotifications } from '@chassidushub/core';
 import { connectPostgres, isCatalogHeld, measured } from '@chassidushub/db';
 import { createApp, turnstileVerifier } from './app.js';
 import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
 import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
+import { r2SnapshotStore, singleFlight, type SnapshotOptions } from './catalogSnapshot.js';
 import { forgetChangedPages, type SitePages } from './sitePages.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
@@ -130,6 +131,25 @@ const EVERY_MINUTE = '* * * * *';
 /** The apps' catalog as last built, kept for this isolate's life: each request asks only whether anything changed. */
 const appReleases = new AppReleases();
 
+/**
+ * The catalog snapshot (catalogSnapshot.ts), built on a connection of its own: a request's closes as soon as its
+ * answer is sent, and the build runs on behind it. One build at a time in this isolate.
+ */
+let snapshotBuild: (() => Promise<void>) | null = null;
+function catalogSnapshotOf(env: Env): SnapshotOptions | undefined {
+  if (!env.FILES_PUBLIC) return undefined;
+  const store = r2SnapshotStore(env.FILES_PUBLIC);
+  snapshotBuild ??= singleFlight(async () => {
+    const db = connectPostgres(env.HYPERDRIVE.connectionString, { max: 1 });
+    try {
+      await refreshSnapshot(db, store);
+    } finally {
+      await db.close();
+    }
+  });
+  return { store, rebuild: snapshotBuild };
+}
+
 const mailerOf = (env: Env) =>
   env.EMAIL
     ? cloudflareMailer({ binding: env.EMAIL, from: env.EMAIL_FROM })
@@ -150,15 +170,17 @@ export default {
   async scheduled(event: { cron?: string }, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<void> {
     const db = connectPostgres(env.HYPERDRIVE.connectionString, { max: 1 });
     const catalog = new Catalog(db);
-    // Every minute: the new site forgets its pages about what merged (sitePages.ts). Nothing else runs then.
+    // Every minute: the new site forgets its pages about what merged (sitePages.ts), and the catalog snapshot catches
+    // up with main (catalogSnapshot.ts; one statement when nothing changed). Nothing else runs then.
     if (event.cron === EVERY_MINUTE) {
-      if (env.SITE_PAGES && env.FILES_PUBLIC) {
-        ctx.waitUntil(
-          forgetChangedPages(catalog, keptStore(env.FILES_PUBLIC), env.SITE_PAGES)
-            .catch((error) => void (isCatalogHeld(error) || console.error('site pages', error)))
-            .finally(() => db.close()),
-        );
-      } else ctx.waitUntil(db.close());
+      const files = env.FILES_PUBLIC;
+      const minute = async () => {
+        if (env.SITE_PAGES && files) {
+          await forgetChangedPages(catalog, keptStore(files), env.SITE_PAGES).catch((error) => void (isCatalogHeld(error) || console.error('site pages', error)));
+        }
+        if (files) await refreshSnapshot(db, r2SnapshotStore(files)).catch((error) => void (isCatalogHeld(error) || console.error('catalog snapshot', error)));
+      };
+      ctx.waitUntil(minute().finally(() => db.close()));
       return;
     }
     const mailer = mailerOf(env);
@@ -269,6 +291,7 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
     auth: env.SITE_URL ? authFor(env.SITE_URL, { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }, undefined, list(env.ALSO_SITE_URLS)) : undefined,
     mailer: mailerOf(env),
     appReleases,
+    catalogSnapshot: catalogSnapshotOf(env),
     readerCatalog: env.READER_CATALOG ? (path) => env.READER_CATALOG!.fetch(new Request(`https://reader-catalog${path}`)) : undefined,
     machineDispatch: env.GITHUB_DISPATCH_TOKEN ? githubDispatch({ token: env.GITHUB_DISPATCH_TOKEN, repo: env.GITHUB_REPO }) : undefined,
     waitUntil: (work) => ctx.waitUntil(work),

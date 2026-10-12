@@ -28,6 +28,7 @@ import { appCatalogRoutes, type AppReleases, type ReaderCatalog } from './appCat
 import { machineRoutes, type MachineDispatch } from './machine.js';
 import { mafteachRoutes } from './mafteach.js';
 import { ownersOnly } from './private.js';
+import { catalogSnapshotRoutes, snapshotAfterWrites, type SnapshotOptions } from './catalogSnapshot.js';
 
 /**
  * The ChassidusHub API, version 1 (docs/developers/api.md). Reading needs
@@ -50,6 +51,8 @@ export interface ApiOptions {
   auth?: AuthOptions;
   /** The Sichos Kodesh apps' catalog as last built (appCatalog.ts): a Worker keeps one for its isolate's life, across its requests. */
   appReleases?: AppReleases;
+  /** The catalog snapshot the new site draws its catalog pages from (catalogSnapshot.ts): where its files are kept, and how a new one is built. Unset, it is not served. */
+  catalogSnapshot?: SnapshotOptions;
   /** The reader app's own catalog, for the parts ChassidusHub's does not hold yet (appCatalog.ts). */
   readerCatalog?: ReaderCatalog;
   /** Salt for hashing reporters' addresses (only the hash is kept, for rate limits). */
@@ -222,6 +225,7 @@ export function createApp(options: ApiOptions): Hono {
   app.use('*', caching());
   app.use('*', tokenGate(catalog, options.rateLimits));
   if (options.privateTo) app.use('*', ownersOnly(catalog, options.privateTo.owners, authenticate));
+  if (options.catalogSnapshot) app.use('*', snapshotAfterWrites(options.catalogSnapshot, options.waitUntil));
 
   if (options.auth) authRoutes(app, catalog, options.mailer && !options.auth.mailer ? { ...options.auth, mailer: options.mailer } : options.auth);
   adminRoutes(app, catalog, signedIn);
@@ -243,6 +247,7 @@ export function createApp(options: ApiOptions): Hono {
   organizeRoutes(app, catalog, signedIn);
   fixRoutes(app, catalog, signedIn, { judge: options.fixJudge ?? null, liveFixes: options.liveFixes ?? false });
   appCatalogRoutes(app, catalog, options.appReleases, options.readerCatalog);
+  catalogSnapshotRoutes(app, catalog, options.catalogSnapshot, options.waitUntil);
   mafteachRoutes(app, catalog, options.kept);
   machineRoutes(app, catalog, signedIn, { kept: options.kept, dispatch: options.machineDispatch, waitUntil: options.waitUntil ? (_c, work) => options.waitUntil!(work) : undefined });
   scanRoutes(app, catalog, {
