@@ -73,12 +73,12 @@ const isObject = (value: unknown): value is Data => !!value && typeof value === 
 const WORDS: ReadonlySet<string> = new Set(['text', 'segment', 'text-page', 'text-layer', 'alignment', 'alignment-span']);
 
 /** Where an item hangs: each parent and the field it points through. A set's sets and items are one list. */
-interface Link {
+export interface Link {
   parent: EntityId;
   field: string;
 }
 
-function linksOf(type: EntityType, data: Data | null): Link[] {
+export function linksOf(type: EntityType, data: Data | null): Link[] {
   if (!data || WORDS.has(type)) return [];
   const out: Link[] = [];
   if (type === 'set' && isEntityId(data.parent)) out.push({ parent: data.parent as EntityId, field: 'set' });

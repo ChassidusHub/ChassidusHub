@@ -12,7 +12,7 @@ import type { Route } from './+types/suggestions-pass';
  */
 const pass = passTo(
   '/v1/suggestions',
-  /^\d{1,9}(\/(conversation|comments|reviews|withdraw|reopen|revert|update|merge-check|review-requests(\/[A-Za-z0-9-]{1,39})?))?$/,
+  /^\d{1,9}(\/(conversation|comments|reviews|withdraw|reopen|revert|update|merge-check|batch|review-requests(\/[A-Za-z0-9-]{1,39})?))?$/,
 );
 
 export const loader = (args: Route.LoaderArgs) => pass(args);
