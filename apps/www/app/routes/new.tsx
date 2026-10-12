@@ -1,5 +1,6 @@
+import { Suspense } from 'react';
+import { Await, Link } from 'react-router';
 import { eventRow, eventsOn, eventsWithWords, yearLabel } from '../listen/data.server';
-import { Link } from 'react-router';
 import { PlayRow } from '../listen/play';
 import { Icon, Row, Rows, SectionHead, TopBar } from '../ui';
 import type { Route } from './+types/new';
@@ -28,19 +29,27 @@ const TEXTS = [
  * the latest year first, each to play at once; whether its words are there to
  * follow. The same for everyone.
  */
-export async function loader({ context: { api } }: Route.LoaderArgs) {
+async function monthsOf(api: Route.LoaderArgs['context']['api']) {
   const [withWords, ...months] = await Promise.all([eventsWithWords(api), ...MONTHS.map((m) => eventsOn(api, daysOf(m.month)).catch(() => []))]);
-  return {
-    months: MONTHS.map((m, at) => {
-      const events = months[at]!.sort((a, b) => b.data.date.slice(0, 4).localeCompare(a.data.date.slice(0, 4)) || a.data.date.localeCompare(b.data.date));
-      const years = [...new Set(events.map((e) => Number(e.data.date.slice(0, 4))))];
-      return {
-        ...m,
-        count: events.length,
-        years: years.map((year) => ({ label: yearLabel(year), rows: events.filter((e) => e.data.date.startsWith(String(year))).map((e) => eventRow(e, withWords)) })),
-      };
-    }),
-  };
+  return MONTHS.map((m, at) => {
+    const events = months[at]!.sort((a, b) => b.data.date.slice(0, 4).localeCompare(a.data.date.slice(0, 4)) || a.data.date.localeCompare(b.data.date));
+    const years = [...new Set(events.map((e) => Number(e.data.date.slice(0, 4))))];
+    return {
+      ...m,
+      count: events.length,
+      years: years.map((year) => ({ label: yearLabel(year), rows: events.filter((e) => e.data.date.startsWith(String(year))).map((e) => eventRow(e, withWords)) })),
+    };
+  });
+}
+
+/** The page never waits for the farbrengens: the frame and the new texts show at once, the months come after. */
+export function loader({ context: { api } }: Route.LoaderArgs) {
+  return { months: monthsOf(api) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the months follow. */
+export function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  return { months: serverLoader().then((data) => data.months) };
 }
 
 export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
@@ -69,22 +78,34 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
           ))}
         </Rows>
 
-        {months.map((month) => (
-          <section key={month.month} aria-label={`התוועדויות ${month.name}`}>
-            <SectionHead title={`התוועדויות ${month.name} (${month.count})`} />
-            {month.years.length === 0 && <p className="faint">אין עדיין הקלטות מהחודש הזה.</p>}
-            {month.years.map((year) => (
-              <div key={year.label}>
-                <h3 className="newyear">{year.label}</h3>
-                <div className="rows">
-                  {year.rows.map((row) => (
-                    <PlayRow key={row.id} row={row} />
+        <Suspense
+          fallback={
+            <p className="faint" aria-busy="true">
+              רגע…
+            </p>
+          }
+        >
+          <Await resolve={months} errorElement={<p className="faint">ההתוועדויות לא נטענו כרגע. נסו שוב בעוד רגע.</p>}>
+            {(found) =>
+              found.map((month) => (
+                <section key={month.month} aria-label={`התוועדויות ${month.name}`}>
+                  <SectionHead title={`התוועדויות ${month.name} (${month.count})`} />
+                  {month.years.length === 0 && <p className="faint">אין עדיין הקלטות מהחודש הזה.</p>}
+                  {month.years.map((year) => (
+                    <div key={year.label}>
+                      <h3 className="newyear">{year.label}</h3>
+                      <div className="rows">
+                        {year.rows.map((row) => (
+                          <PlayRow key={row.id} row={row} />
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                </div>
-              </div>
-            ))}
-          </section>
-        ))}
+                </section>
+              ))
+            }
+          </Await>
+        </Suspense>
       </main>
     </>
   );

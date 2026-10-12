@@ -121,4 +121,41 @@ describe('an item view', () => {
     expect((await itemView(catalog, { id: empty }))!.text).toBeNull();
     expect(await itemView(catalog, { path: '/nothing/here' })).toBeNull();
   });
+
+  it("draws a sefer with its volumes and its additions, in five statements, so its page needs no second read", async () => {
+    await unit('1');
+    await unit('2');
+    const index = await add(catalog, 'steward', 'steward', 'work', { title: { he: 'מפתח' }, slug: 'mafteach', authors: [], genre: 'sichos', levels: ['volume'], sets: [set], addition: { to: work, kind: 'index' } }, '/mafteach');
+    const { db, catalog: c } = counted();
+    const view = (await itemView(c, { path: '/sefer' }))!;
+    expect(db.cost.statements).toBe(5);
+    expect(view.item.id).toBe(work);
+    expect(view.outline).toEqual([{ value: '1', label: null, units: 2 }]);
+    expect(view.additions).toEqual([{ id: index, path: '/mafteach', name: { he: 'מפתח' }, kind: 'index' }]);
+    expect(view.volume).toBeUndefined();
+  });
+
+  it('answers a volume of a sefer at its path, as the sefer with that volume\'s units, in four statements', async () => {
+    await unit('2');
+    await unit('1');
+    const { db, catalog: c } = counted();
+    const view = (await itemView(c, { path: '/sefer/1' }))!;
+    expect(db.cost.statements).toBe(4);
+    expect(view.item.id).toBe(work);
+    expect(view.item.data).not.toHaveProperty('body');
+    expect(view.pathBar.map((l) => l.kind)).toEqual(['set', 'work']);
+    expect(view.outline?.map((p) => p.value)).toEqual(['1']);
+    expect(view.volume?.value).toBe('1');
+    expect(view.volume?.units.map((u) => u.path)).toEqual(['/sefer/1/1', '/sefer/1/2']);
+    expect(await itemView(catalog, { path: '/sefer/9' })).toBeNull();
+  });
+
+  it('sends a volume of a sefer that moved to the volume at its path now', async () => {
+    await unit('1');
+    await catalog.db.query('INSERT INTO path_redirect (path, entity_id) VALUES ($1, $2)', ['/old-sefer', work]);
+    const view = (await itemView(catalog, { path: '/old-sefer/1' }))!;
+    expect(view.movedTo).toBe('/sefer/1');
+    expect(view.volume?.units.map((u) => u.path)).toEqual(['/sefer/1/1']);
+  });
 });
+

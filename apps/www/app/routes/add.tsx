@@ -1,6 +1,6 @@
 import { describeDateKey } from '@chassidushub/hebrew';
-import { useId, useState, type FormEvent, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Suspense, useId, useState, type FormEvent } from 'react';
+import { Await, Link } from 'react-router';
 import { useAccount } from '../lib/account';
 import { call, hebrewOf, nameOf } from '../stewards/call';
 import { KINDS } from '../stewards/organize';
@@ -16,27 +16,38 @@ type What = 'hanacha' | 'recording' | 'document';
 type Rights = 'mine' | 'public-domain' | 'free' | 'unsure';
 type DocumentAs = 'sefer' | 'letter' | 'document';
 
-/**
- * What the page starts from, the same for everyone: what is added
- * (`?what=`; a sefer or a letter is a document), the page it was asked from
- * (`?for=`), and the library's top sets, where a new sefer may go.
- */
-export async function loader({ request, context }: Route.LoaderArgs) {
+/** What the address says: what is added (`?what=`; a sefer or a letter is a document), and the page it was asked from (`?for=`). */
+function fromAddress(request: Request) {
   const url = new URL(request.url);
   const asked = url.searchParams.get('what') ?? '';
   const what: What = asked === 'sefer' || asked === 'letter' || asked === 'document' ? 'document' : asked === 'recording' ? 'recording' : 'hanacha';
-  const target = url.searchParams.get('for') ?? '';
-  const [place, tree] = await Promise.all([
+  return { what, asked: asked === 'letter' ? ('letter' as const) : ('sefer' as const), target: url.searchParams.get('for') ?? '' };
+}
+
+/**
+ * What the page starts from, the same for everyone: what the address says,
+ * at once, and after it the page it was asked from and the library's top
+ * sets, where a new sefer may go. The page never waits for those two.
+ */
+export function loader({ request, context }: Route.LoaderArgs) {
+  const { target, ...frame } = fromAddress(request);
+  const data = Promise.all([
     /^rh-[0-9a-z]+$/.test(target) ? context.api.getItem({ id: target }).catch(() => null) : null,
     context.api.catalogTree({ depth: 1, limit: 100 }).catch(() => null),
-  ]);
-  const placeData = place?.data as { name?: unknown; title?: unknown; label?: unknown } | undefined;
-  return {
-    what,
-    asked: asked === 'letter' ? ('letter' as const) : ('sefer' as const),
-    given: place ? { id: place.id, type: place.type, label: nameOf(placeData?.name ?? placeData?.title ?? placeData?.label, place.id) } : null,
-    sets: (tree?.children ?? []).filter((c) => c.type === 'set').map((c) => ({ id: c.id, label: nameOf(c.name, c.id) })),
-  };
+  ]).then(([place, tree]) => {
+    const placeData = place?.data as { name?: unknown; title?: unknown; label?: unknown } | undefined;
+    return {
+      given: place ? { id: place.id, type: place.type, label: nameOf(placeData?.name ?? placeData?.title ?? placeData?.label, place.id) } : null,
+      sets: (tree?.children ?? []).filter((c) => c.type === 'set').map((c) => ({ id: c.id, label: nameOf(c.name, c.id) })),
+    };
+  });
+  return { ...frame, data };
+}
+
+/** Opened from inside the site, the page is drawn at once; the place and the sets follow. */
+export function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  const { what, asked } = fromAddress(request);
+  return { what, asked, data: serverLoader().then((d) => d.data) };
 }
 
 export function headers() {
@@ -115,9 +126,40 @@ const sizeOf = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 / 102
  * as a Suggestion, for the keepers to approve, like every change.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { given, sets } = loaderData;
   const account = useAccount();
-  const [what, setWhat] = useState<What>(loaderData.what);
+  const waiting = (
+    <p className="faint" aria-busy="true">
+      רגע…
+    </p>
+  );
+  return (
+    <>
+      <TopBar title="הוספת חומר חסר" />
+      <main id="content" className="view">
+        <h1>הוספת חומר חסר</h1>
+        <p className="lede">הנחה, הקלטה, ספר או מכתב שאין עדיין באתר. המכונה מציעה לאן זה שייך, אתם מאשרים, ושומרי האוסף בודקים לפני שזה עולה.</p>
+        {account === undefined ? (
+          waiting
+        ) : account === null ? (
+          <>
+            <Say>כדי להוסיף צריך להיכנס. כל מה שמוסיפים נשלח לבדיקה בשמכם.</Say>
+            <Button to="/signin?return=%2Fadd">כניסה</Button>
+          </>
+        ) : (
+          <Suspense fallback={waiting}>
+            <Await resolve={loaderData.data} errorElement={<Say>הדף לא נטען כרגע. נסו שוב בעוד רגע.</Say>}>
+              {({ given, sets }) => <Adding first={loaderData.what} asked={loaderData.asked} given={given} sets={sets} />}
+            </Await>
+          </Suspense>
+        )}
+      </main>
+    </>
+  );
+}
+
+/** The steps themselves, once the page it was asked from and the sets are known (they are where it may go). */
+function Adding({ first, asked, given, sets }: { first: What; asked: DocumentAs; given: { id: string; type: string; label: string } | null; sets: { id: string; label: string }[] }) {
+  const [what, setWhat] = useState<What>(first);
   const [asText, setAsText] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [content, setContent] = useState('');
@@ -126,7 +168,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
   const [place, setPlace] = useState(given?.id ?? '');
   const [eventTitle, setEventTitle] = useState('');
   const [eventDate, setEventDate] = useState('');
-  const [as, setAs] = useState<DocumentAs>(loaderData.asked);
+  const [as, setAs] = useState<DocumentAs>(asked);
   const [set, setSet] = useState('');
   const [year, setYear] = useState('');
   const [kind, setKind] = useState('bilti-mugah');
@@ -139,33 +181,8 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
   const [over, setOver] = useState(false);
   const fileId = useId();
 
-  const frame = (body: ReactNode) => (
-    <>
-      <TopBar title="הוספת חומר חסר" />
-      <main id="content" className="view">
-        <h1>הוספת חומר חסר</h1>
-        <p className="lede">הנחה, הקלטה, ספר או מכתב שאין עדיין באתר. המכונה מציעה לאן זה שייך, אתם מאשרים, ושומרי האוסף בודקים לפני שזה עולה.</p>
-        {body}
-      </main>
-    </>
-  );
-
-  if (account === undefined)
-    return frame(
-      <p className="faint" aria-busy="true">
-        רגע…
-      </p>,
-    );
-  if (account === null)
-    return frame(
-      <>
-        <Say>כדי להוסיף צריך להיכנס. כל מה שמוסיפים נשלח לבדיקה בשמכם.</Say>
-        <Button to="/signin?return=%2Fadd">כניסה</Button>
-      </>,
-    );
-
   if (sent !== null)
-    return frame(
+    return (
       <>
         <Say tone="good">
           נשלח לבדיקה (הצעה #{sent}). ההצעה מחכה לשומרי האוסף, ועד שתאושר היא לא מופיעה באתר.
@@ -175,7 +192,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
             להוסיף עוד
           </Button>
         </div>
-      </>,
+      </>
     );
 
   const textMode = what === 'hanacha' && asText;
@@ -249,7 +266,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
     }
   }
 
-  return frame(
+  return (
     <>
       {given && (
         <p className="faint sm">
@@ -427,6 +444,6 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
         </ol>
         {error && <Say tone="bad">{error}</Say>}
       </form>
-    </>,
+    </>
   );
 }

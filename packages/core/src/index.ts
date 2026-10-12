@@ -266,6 +266,7 @@ export {
   type OrganizeRef,
   type TreeNode,
 } from './organize.js';
+export { batchTree, fold as foldTreeRows, readableName, type BatchTree, type BatchTreeGap, type BatchTreeGroup, type BatchTreeLine, type BatchTreeRow, type TreeMark } from './batchTree.js';
 export { duplicateVolumes, loadPrintings, planPrintingMerges, volumeKey, type PrintingRow } from './printings.js';
 export { MACHINE_KINDS, MACHINE_REQUESTS_PER_DAY, checkMachineWork, finishMachineWork, machineRequest, machineRequests, machineSummary, notRecentlyFailedSql, releaseMachineRequests, requestMachineWork, settleMachineWork, SWEEP_RETRY_DAYS, takeMachineRequests, type MachineKind, type MachineRequest, type MachineRequestStatus } from './machineWork.js';
 export { CLIP_MAX_SECONDS, HELD_OUT_AUDIO, REBBE_TALK_KINDS, TRAINING_GOAL, isLatin, isRebbeTalk, piecesOf, splitOf, summariseTraining, trainingClips, trainingGoal, type ClipQuality, type ClipReview, type GoalFarbrengen, type TrainingClip, type TrainingGoal, type TrainingSkip, type TrainingSummary } from './trainingClips.js';
@@ -279,3 +280,4 @@ export { driveId, mafteach, mafteachNames, mafteachSubjects, placesOf, subjectsN
 export { FIX_CHECK_MS, sendFix, shapeOf, wordsChanged, type FixInput, type FixJudge, type FixResult } from './fix.js';
 export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
 export { itemView, type HeardAt, type ItemView, type MachineShare, type ScanPlace, type ShownText } from './view.js';
+export { type SnapshotNameRow, type SnapshotNamesFile, SNAPSHOT_FILE_NAME, SNAPSHOT_FORMAT, SNAPSHOT_MANIFEST_KEY, SNAPSHOT_REBBEIM, SNAPSHOT_TYPES, memorySnapshotStore, readManifest, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot, type SnapshotEvent, type SnapshotFile, type SnapshotManifest, type SnapshotName, type SnapshotPart, type SnapshotParts, type SnapshotSet, type SnapshotStore, type SnapshotTree, type SnapshotUnit, type SnapshotWork, type SnapshotWorkFile, type SnapshotYearFile } from './catalogSnapshot.js';

@@ -14,7 +14,10 @@ enabled = true
 # round trips are short from there. Reads anyone may have are still answered from the
 # cache near the reader (docs/operations.md, "Traffic and crawlers").
 [placement]
-mode = "smart"
+# Pinned next to the database rather than left to Smart Placement, which put this Worker in Atlanta or
+# Toronto (cf-placement, 2026-10-12): about 25 ms a statement from there, a few from Ashburn. The
+# database is DigitalOcean's nyc3; aws:us-east-1 is the nearest region Cloudflare takes as a hint.
+region = "aws:us-east-1"
 
 # Postgres at DigitalOcean, pooled by Hyperdrive. The id names the config; it is not a secret
 # (the connection string lives only in Cloudflare).

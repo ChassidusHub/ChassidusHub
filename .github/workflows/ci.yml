@@ -24,6 +24,8 @@ jobs:
     outputs:
       code: ${{ steps.filter.outputs.code }}
       www: ${{ steps.www.outputs.www }}
+      api: ${{ steps.entry.outputs.api }}
+      entry: ${{ steps.entry.outputs.entry }}
     steps:
       # Sichos Kodesh and the docs have none of these checks: a pull request changing only them skips the rest.
       - uses: dorny/paths-filter@v3
@@ -47,6 +49,28 @@ jobs:
               - 'apps/www/**'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
+      # An API change and whether the pull request adds its changelog entry (changes/README.md).
+      - uses: dorny/paths-filter@v3
+        id: entry
+        with:
+          filters: |
+            api:
+              - 'services/api/src/openapi.ts'
+            # A CHANGELOG.md edit still counts, for pull requests opened before changes/ existed.
+            entry:
+              - added: 'changes/*.md'
+              - 'CHANGELOG.md'
+
+  changelog:
+    name: Changelog entry
+    needs: changes
+    # The API's routes are what programs depend on, so a change to them says so in the changelog.
+    if: needs.changes.outputs.api == 'true' && needs.changes.outputs.entry != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::error file=services/api/src/openapi.ts::This pull request changes the API: add changes/<subject>.md saying what changed (changes/README.md)."
+          exit 1
 
   types:
     name: Types and schemas
@@ -64,6 +88,8 @@ jobs:
       - run: npm run catalog:check
       # The approval gate's own decisions (approval.yml).
       - run: node --test .github/scripts/*.test.cjs
+      # Folding changes/ into CHANGELOG.md (npm run changelog).
+      - run: node --test scripts/*.test.cjs
 
   tests:
     name: Tests (PGlite) ${{ matrix.shard }}/3

@@ -1,5 +1,6 @@
 import { toHebrewNumeral } from '@chassidushub/hebrew';
-import { Form, Link } from 'react-router';
+import { Suspense } from 'react';
+import { Await, Form, Link, useLocation } from 'react-router';
 import { Icon, SearchField, TopBar } from '../ui';
 import type { Route } from './+types/mafteach';
 
@@ -52,37 +53,54 @@ function linesOf(topic: Topics[number]) {
  * it is kept here: it is gathered from the volumes' index pages
  * (GET /v1/mafteach), so a fix made there shows here. A letter at a time, or
  * what a search finds. What a machine read from the printed indexes is
- * labelled until it is checked.
+ * labelled until it is checked. The page never waits for the index: its
+ * frame and search box show at once, and the topics come after.
  */
-export async function loader({ request, context: { api } }: Route.LoaderArgs) {
-  const url = new URL(request.url);
-  const q = url.searchParams.get('q')?.trim().slice(0, 200) ?? '';
-  const letter = url.searchParams.get('letter') ?? undefined;
-  const from = Math.max(0, Math.floor(Number(url.searchParams.get('from')) || 0));
-  const back = (url.searchParams.get('back')?.split(',').map(Number) ?? []).filter((n) => Number.isInteger(n) && n >= 0).slice(-50);
+export function loader({ request, context: { api } }: Route.LoaderArgs) {
+  const { q, letter, from, back } = asked(request);
   // Before the index's pages are in the catalog (a fresh copy of the site), the page says so rather than failing.
-  const index = await api.mafteach({ index: INDEX, sefer: SEFER, q: q || undefined, letter: q ? undefined : letter, limit: PER_PAGE, places: PLACES, offset: from }).catch((error: { status?: number }) => {
-    if (error.status === 404) return null;
-    throw error;
-  });
-  if (!index) return { q, index: null };
-  const shown = q ? null : (index.topics[0]?.letter ?? index.letters[0]?.letter ?? null);
+  const data = api
+    .mafteach({ index: INDEX, sefer: SEFER, q: q || undefined, letter: q ? undefined : letter, limit: PER_PAGE, places: PLACES, offset: from })
+    .catch((error: { status?: number }) => {
+      if (error.status === 404) return null;
+      throw error;
+    })
+    .then((index) => {
+      if (!index) return null;
+      const shown = q ? null : (index.topics[0]?.letter ?? index.letters[0]?.letter ?? null);
+      return {
+        letters: index.letters,
+        letter: shown,
+        inLetter: shown ? (index.letters.find((l) => l.letter === shown)?.topics ?? null) : null,
+        totals: index.totals,
+        found: index.found,
+        offset: index.offset,
+        next: index.next,
+        back,
+        machine: index.topics.some((t) => t.volumes.some((v) => v.machine)),
+        topics: index.topics.map((t) => ({ topic: t.topic, lines: linesOf(t) })),
+      };
+    });
+  return { q, data };
+}
+
+/** Opened from inside the site, the page and its search box are drawn at once; the topics follow. */
+export function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  return { q: asked(request).q, data: serverLoader().then((d) => d.data) };
+}
+
+/** What the address asks for: a search, or a letter, and how far into it (with the offsets walked so far, for the way back). */
+function asked(request: Request) {
+  const url = new URL(request.url);
   return {
-    q,
-    index: {
-      letters: index.letters,
-      letter: shown,
-      inLetter: shown ? (index.letters.find((l) => l.letter === shown)?.topics ?? null) : null,
-      totals: index.totals,
-      found: index.found,
-      offset: index.offset,
-      next: index.next,
-      back,
-      machine: index.topics.some((t) => t.volumes.some((v) => v.machine)),
-      topics: index.topics.map((t) => ({ topic: t.topic, lines: linesOf(t) })),
-    },
+    q: url.searchParams.get('q')?.trim().slice(0, 200) ?? '',
+    letter: url.searchParams.get('letter') ?? undefined,
+    from: Math.max(0, Math.floor(Number(url.searchParams.get('from')) || 0)),
+    back: (url.searchParams.get('back')?.split(',').map(Number) ?? []).filter((n) => Number.isInteger(n) && n >= 0).slice(-50),
   };
 }
+
+type Index = NonNullable<Awaited<ReturnType<typeof loader>['data']>>;
 
 export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
 
@@ -92,18 +110,41 @@ export function meta() {
   return [{ title: 'מפתח ענינים ללקוטי שיחות · ChassidusHub' }];
 }
 
-export default function Mafteach({ loaderData: { q, index } }: Route.ComponentProps) {
-  const top = <TopBar title="מפתח ענינים" sub="לקוטי שיחות" />;
-  if (!index)
-    return (
-      <>
-        {top}
-        <main id="content" className="view it-text">
-          <h1>מפתח ענינים ללקוטי שיחות</h1>
-          <p className="faint">המפתחות עדיין לא נמצאים באתר.</p>
-        </main>
-      </>
-    );
+export default function Mafteach({ loaderData: { q, data } }: Route.ComponentProps) {
+  // Another letter, search or page shows its own frame at once rather than the last topics.
+  const { search } = useLocation();
+  return (
+    <>
+      <TopBar title="מפתח ענינים" sub="לקוטי שיחות" />
+      <main id="content" className="view it-text">
+        <h1>מפתח ענינים ללקוטי שיחות</h1>
+        <p className="lede muted">
+          כל הנושאים שבמפתחות כל החלקים, יחד. לכל נושא, בכל חלק, העמודים, מה נאמר שם, וקישור לשיחה.
+          <Suspense fallback={null}>
+            <Await resolve={data} errorElement={null}>
+              {(index) => index && ` ${index.totals.topics} נושאים · ${index.totals.places} מראי מקומות · ${index.totals.volumes} חלקים.`}
+            </Await>
+          </Suspense>
+        </p>
+        <Form method="get" role="search" className="search-form">
+          <SearchField name="q" defaultValue={q} placeholder="חיפוש נושא, או מילה מתוך ההקשר" label="חיפוש במפתח" />
+        </Form>
+        <p className="faint sm">
+          <Link to="/likkutei-sichos-mafteach-sfarim">המפתחות כפי שנדפסו</Link>
+        </p>
+
+        {/* No errorElement: an index that fails to come (not merely missing) goes to the route's error page, as before. */}
+        <Suspense key={search} fallback={<p className="faint" aria-busy="true">רגע…</p>}>
+          <Await resolve={data}>{(index) => (index ? <Topics q={q} index={index} /> : <p className="faint">המפתחות עדיין לא נמצאים באתר.</p>)}</Await>
+        </Suspense>
+        <p className="note">למפתחות חלקים כו-כט עדיין לא נמצא מקור.</p>
+      </main>
+    </>
+  );
+}
+
+/** The letters, the topics of one letter (or what a search found) with their references, and the pages of them. */
+function Topics({ q, index }: { q: string; index: Index }) {
   const here = (from: number, trail: number[]) => {
     const query = new URLSearchParams();
     if (q) query.set('q', q);
@@ -117,100 +158,85 @@ export default function Mafteach({ loaderData: { q, index } }: Route.ComponentPr
   const next = index.next !== null ? here(index.next, [...index.back, index.offset]) : null;
   return (
     <>
-      {top}
-      <main id="content" className="view it-text">
-        <h1>מפתח ענינים ללקוטי שיחות</h1>
-        <p className="lede muted">
-          כל הנושאים שבמפתחות כל החלקים, יחד. לכל נושא, בכל חלק, העמודים, מה נאמר שם, וקישור לשיחה. {index.totals.topics} נושאים · {index.totals.places} מראי מקומות · {index.totals.volumes} חלקים.
+      <nav aria-label="לפי אות" className="it-letters">
+        {index.letters.map((l) => (
+          <Link key={l.letter} to={`/mafteach?letter=${encodeURIComponent(l.letter)}`} aria-current={!q && l.letter === index.letter ? 'page' : undefined} title={`${l.topics} נושאים`}>
+            {l.letter}
+          </Link>
+        ))}
+      </nav>
+
+      {index.machine && (
+        <p className="mach">
+          <span className="machine">חלק מהמפתחות נקראו במכונה מתוך הספרים ועוד לא נבדקו. טעות? מתקנים בעמוד המפתח של אותו חלק, והתיקון מופיע כאן.</span>
         </p>
-        <Form method="get" role="search" className="search-form">
-          <SearchField name="q" defaultValue={q} placeholder="חיפוש נושא, או מילה מתוך ההקשר" label="חיפוש במפתח" />
-        </Form>
-        <p className="faint sm">
-          <Link to="/likkutei-sichos-mafteach-sfarim">המפתחות כפי שנדפסו</Link>
+      )}
+      {q ? (
+        <p>
+          נמצאו {index.found} נושאים עבור ״{q}״. <Link to="/mafteach">ניקוי החיפוש</Link>
         </p>
+      ) : index.letter ? (
+        <h2 className="it-big">
+          {index.letter}
+          {index.inLetter !== null && <span className="faint sm"> · {index.inLetter} ערכים</span>}
+        </h2>
+      ) : null}
 
-        <nav aria-label="לפי אות" className="it-letters">
-          {index.letters.map((l) => (
-            <Link key={l.letter} to={`/mafteach?letter=${encodeURIComponent(l.letter)}`} aria-current={!q && l.letter === index.letter ? 'page' : undefined} title={`${l.topics} נושאים`}>
-              {l.letter}
-            </Link>
-          ))}
-        </nav>
-
-        {index.machine && (
-          <p className="mach">
-            <span className="machine">חלק מהמפתחות נקראו במכונה מתוך הספרים ועוד לא נבדקו. טעות? מתקנים בעמוד המפתח של אותו חלק, והתיקון מופיע כאן.</span>
-          </p>
-        )}
-        {q ? (
-          <p>
-            נמצאו {index.found} נושאים עבור ״{q}״. <Link to="/mafteach">ניקוי החיפוש</Link>
-          </p>
-        ) : index.letter ? (
-          <h2 className="it-big">
-            {index.letter}
-            {index.inLetter !== null && <span className="faint sm"> · {index.inLetter} ערכים</span>}
-          </h2>
-        ) : null}
-
-        {index.topics.length ? (
-          <div className="it-topics-index">
-            {index.topics.map((topic, at) => (
-              <article key={`${at}-${topic.topic}`} className="it-entry">
-                <h3>{topic.topic}</h3>
-                {topic.lines.map((line) => (
-                  <p key={line.context || '-'} className="it-entry-line">
-                    {line.context && <span className="ctx">{line.context}</span>}
-                    {line.refs.map((ref, at) =>
-                      ref.link ? (
-                        ref.link.outside ? (
-                          <a key={at} className={ref.machine ? 'chip it-ref mach' : 'chip it-ref'} href={ref.link.to} target="_blank" rel="noopener" title={ref.title}>
-                            {ref.label}
-                          </a>
-                        ) : (
-                          <Link key={at} className={ref.machine ? 'chip it-ref mach' : 'chip it-ref'} to={ref.link.to} title={ref.title}>
-                            {ref.label}
-                          </Link>
-                        )
-                      ) : (
-                        <span key={at} className={ref.machine ? 'chip it-ref mach' : 'chip it-ref'} title={ref.title}>
+      {index.topics.length ? (
+        <div className="it-topics-index">
+          {index.topics.map((topic, at) => (
+            <article key={`${at}-${topic.topic}`} className="it-entry">
+              <h3>{topic.topic}</h3>
+              {topic.lines.map((line) => (
+                <p key={line.context || '-'} className="it-entry-line">
+                  {line.context && <span className="ctx">{line.context}</span>}
+                  {line.refs.map((ref, at) =>
+                    ref.link ? (
+                      ref.link.outside ? (
+                        <a key={at} className={ref.machine ? 'chip it-ref mach' : 'chip it-ref'} href={ref.link.to} target="_blank" rel="noopener" title={ref.title}>
                           {ref.label}
-                        </span>
-                      ),
-                    )}
-                  </p>
-                ))}
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="faint">לא נמצא נושא כזה. נסו מילה אחרת, או עיינו לפי האות.</p>
-        )}
+                        </a>
+                      ) : (
+                        <Link key={at} className={ref.machine ? 'chip it-ref mach' : 'chip it-ref'} to={ref.link.to} title={ref.title}>
+                          {ref.label}
+                        </Link>
+                      )
+                    ) : (
+                      <span key={at} className={ref.machine ? 'chip it-ref mach' : 'chip it-ref'} title={ref.title}>
+                        {ref.label}
+                      </span>
+                    ),
+                  )}
+                </p>
+              ))}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="faint">לא נמצא נושא כזה. נסו מילה אחרת, או עיינו לפי האות.</p>
+      )}
 
-        {(prev || next) && (
-          <nav className="endnav" aria-label="עמודי התוצאות">
-            {prev ? (
-              <Link to={prev}>
-                <Icon name="chevron-right" />
-                הקודמים
-              </Link>
-            ) : (
-              <span />
-            )}
-            <span className="faint sm">{`${index.offset + 1}-${index.offset + index.topics.length} מתוך ${index.found}`}</span>
-            {next ? (
-              <Link to={next}>
-                הבאים
-                <Icon name="chevron-left" />
-              </Link>
-            ) : (
-              <span />
-            )}
-          </nav>
-        )}
-        <p className="note">למפתחות חלקים כו-כט עדיין לא נמצא מקור.</p>
-      </main>
+      {(prev || next) && (
+        <nav className="endnav" aria-label="עמודי התוצאות">
+          {prev ? (
+            <Link to={prev}>
+              <Icon name="chevron-right" />
+              הקודמים
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="faint sm">{`${index.offset + 1}-${index.offset + index.topics.length} מתוך ${index.found}`}</span>
+          {next ? (
+            <Link to={next}>
+              הבאים
+              <Icon name="chevron-left" />
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
     </>
   );
 }

@@ -149,6 +149,29 @@ export type ItemView = {
     name: Record<string, unknown> | null;
     durationMs: number | null;
   }>;
+  /** A sefer's volumes, on a sefer's page and a volume's */
+  outline?: Array<{
+    /** The volume's place (1) */
+    value: string;
+    label: Record<string, unknown> | null;
+    /** How many units it holds */
+    units: number;
+  }>;
+  /** The books that are additions to a sefer, on its page (at most 100) */
+  additions?: Array<{
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    id: string;
+    path: string | null;
+    name: Record<string, unknown> | null;
+    kind: string | null;
+  }>;
+  /** Set when the path was a volume of a sefer (/likkutei-sichos/12): `item` is the sefer */
+  volume?: {
+    /** The volume's place (12) */
+    value: string;
+    /** Its units in order, without their words */
+    units: Array<Item>;
+  };
 };
 
 export type ShownText = {
@@ -762,6 +785,18 @@ export interface Operations {
   };
   /** Authorization Server Metadata (RFC 8414): the endpoints, scopes read and write, PKCE S256, registration and Client ID Metadata Documents */
   authorizationServer: {
+    input: Record<string, never>;
+    output: Record<string, unknown>;
+  };
+  /** One file of the catalog snapshot, as the manifest names it */
+  catalogSnapshotFile: {
+    input: {
+      file: string;
+    };
+    output: Record<string, unknown>;
+  };
+  /** The catalog snapshot: which files hold the whole tree now (every shelf and sefer, each sefer's units by volume, each year's events), with their sizes and sha256 */
+  catalogSnapshotManifest: {
     input: Record<string, never>;
     output: Record<string, unknown>;
   };
@@ -2937,6 +2972,34 @@ export interface Operations {
       }>;
     };
   };
+  /** A suggestion's catalog tree before and after: each shelf, sefer or farbrengen it changes what is in (the most changed first, at most twelve), with its children as main holds them now and once it is approved, each marked same, out, in, new, gone, renamed or moved; long runs fold into gaps. For reviewing a catalog batch */
+  suggestionTree: {
+    input: {
+      id: number;
+    };
+    output: {
+      groups: Array<{
+        parent: {
+          id: string;
+          type: string;
+          name: string;
+          path: string | null;
+          isNew: boolean;
+          gone: boolean;
+        };
+        before: Array<Record<string, unknown>>;
+        after: Array<Record<string, unknown>>;
+        counts: {
+          before: number;
+          after: number;
+        };
+        changes: number;
+      }>;
+      more: number;
+      items: number;
+      elsewhere: number;
+    };
+  };
   /** A sefer's shaar, the whole file, sent for review; a file the catalog cannot read is refused with each line that is wrong (`detail.problems`) */
   suggestShaar: {
     input: {
@@ -3262,6 +3325,8 @@ export const OPERATIONS = {
   approveSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/approve","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   appSourceText: {"method":"GET","path":"/v1/app/v3/texts/{sha256}","pathParams":["sha256"],"query":[],"body":null,"answer":"text"},
   authorizationServer: {"method":"GET","path":"/.well-known/oauth-authorization-server","pathParams":[],"query":[],"body":null,"answer":"json"},
+  catalogSnapshotFile: {"method":"GET","path":"/v1/catalog/files/{file}","pathParams":["file"],"query":[],"body":null,"answer":"json"},
+  catalogSnapshotManifest: {"method":"GET","path":"/v1/catalog/manifest.json","pathParams":[],"query":[],"body":null,"answer":"json"},
   catalogTree: {"method":"GET","path":"/v1/tree","pathParams":[],"query":["root","depth","limit"],"body":null,"answer":"json"},
   checkUpload: {"method":"POST","path":"/v1/uploads/check","pathParams":[],"query":[],"body":"json","answer":"json"},
   claimNext: {"method":"POST","path":"/v1/projects/{slug}/next","pathParams":["slug"],"query":[],"body":null,"answer":"json"},
@@ -3420,6 +3485,7 @@ export const OPERATIONS = {
   suggestFix: {"method":"POST","path":"/v1/suggestions/quick","pathParams":[],"query":[],"body":"json","answer":"json"},
   suggestionConversation: {"method":"GET","path":"/v1/suggestions/{id}/conversation","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   suggestionStages: {"method":"GET","path":"/v1/suggestions/stages","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
+  suggestionTree: {"method":"GET","path":"/v1/suggestions/{id}/tree","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   suggestShaar: {"method":"POST","path":"/v1/suggestions/shaar","pathParams":[],"query":[],"body":"json","answer":"json"},
   suggestWords: {"method":"POST","path":"/v1/suggestions/words","pathParams":[],"query":[],"body":"json","answer":"json"},
   textsProgress: {"method":"GET","path":"/v1/texts/batch/progress","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
@@ -3519,6 +3585,16 @@ export abstract class GeneratedMethods {
   /** Authorization Server Metadata (RFC 8414): the endpoints, scopes read and write, PKCE S256, registration and Client ID Metadata Documents (GET /.well-known/oauth-authorization-server) */
   authorizationServer(): Promise<Operations['authorizationServer']['output']> {
     return this.call('authorizationServer', {} as Operations['authorizationServer']['input']);
+  }
+
+  /** One file of the catalog snapshot, as the manifest names it (GET /v1/catalog/files/{file}) */
+  catalogSnapshotFile(input: Operations['catalogSnapshotFile']['input']): Promise<Operations['catalogSnapshotFile']['output']> {
+    return this.call('catalogSnapshotFile', input ?? {} as Operations['catalogSnapshotFile']['input']);
+  }
+
+  /** The catalog snapshot: which files hold the whole tree now (every shelf and sefer, each sefer's units by volume, each year's events), with their sizes and sha256 (GET /v1/catalog/manifest.json) */
+  catalogSnapshotManifest(): Promise<Operations['catalogSnapshotManifest']['output']> {
+    return this.call('catalogSnapshotManifest', {} as Operations['catalogSnapshotManifest']['input']);
   }
 
   /** The catalog as a tree: the top sets (or one set or sefer), the sets and items under them, and how much each holds (GET /v1/tree) */
@@ -4309,6 +4385,11 @@ export abstract class GeneratedMethods {
   /** Where each of several suggestions stands on its way in, for a list's rows in one read: how many items it changes, how many the site changed since it was written (`behind`: they may clash), how many other open suggestions change some of the same items, and whether a failed check stops it (GET /v1/suggestions/stages) */
   suggestionStages(input: Operations['suggestionStages']['input']): Promise<Operations['suggestionStages']['output']> {
     return this.call('suggestionStages', input ?? {} as Operations['suggestionStages']['input']);
+  }
+
+  /** A suggestion's catalog tree before and after: each shelf, sefer or farbrengen it changes what is in (the most changed first, at most twelve), with its children as main holds them now and once it is approved, each marked same, out, in, new, gone, renamed or moved; long runs fold into gaps. For reviewing a catalog batch (GET /v1/suggestions/{id}/tree) */
+  suggestionTree(input: Operations['suggestionTree']['input']): Promise<Operations['suggestionTree']['output']> {
+    return this.call('suggestionTree', input ?? {} as Operations['suggestionTree']['input']);
   }
 
   /** A sefer's shaar, the whole file, sent for review; a file the catalog cannot read is refused with each line that is wrong (`detail.problems`) (POST /v1/suggestions/shaar) */

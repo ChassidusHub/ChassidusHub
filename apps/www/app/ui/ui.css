@@ -632,6 +632,60 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .fixbox .was { margin: 0 0 4px; }
 .fixbox .was q { font-family: var(--torah); font-size: 17px; quotes: '„' '”'; }
 
+/* ---------- the back room's catalog queue: one batch, its note, its tree before and after (Flow) ---------- */
+.bq-place { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.bq-place > a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.bq-step { display: inline-flex; gap: 4px; margin-inline-start: auto; }
+.bq-wait { background: var(--g100); border-radius: 8px; }
+h1.bq-wait { width: 70%; }
+.bq-wait-note { height: 120px; }
+.bq-wait-tree { height: 320px; }
+.bq-note.bq-cut .sg-said { max-height: 11.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 70%, transparent); }
+/* The decision stays within reach of a thumb: at the foot of the screen, over the phone's bottom bar, while the batch is read. */
+.bq-decide {
+  position: sticky; bottom: calc(59px + env(safe-area-inset-bottom, 0px)); z-index: 2; margin: 18px -16px 0; padding: 8px 16px 10px;
+  background: var(--g0); border-top: 1px solid var(--g300);
+}
+.bq-decide .field textarea { min-height: 64px; }
+.bq-decide .sg-toggle { margin-bottom: 2px; }
+.bq-decide .say { margin-block: 6px; }
+.bq-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.bq-btns .btn { min-height: 48px; justify-content: center; }
+.bt-group { border: 1px solid var(--g300); border-radius: 10px; padding: 4px 14px 10px; margin-block: 10px; }
+.bt-group h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 16px; margin: 10px 0 2px; }
+.bt-group h3 a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.bt-group > p { margin: 0 0 6px; }
+.bt-cols { display: grid; gap: 14px; }
+.bt-col h4 { font-size: 12px; font-weight: 500; color: var(--g600); letter-spacing: 0.04em; margin: 6px 0 2px; }
+.bt-col ol { list-style: none; margin: 0; padding: 0; }
+.bt-row, .bt-gap { display: flex; align-items: center; gap: 8px; min-height: 36px; padding-inline: 10px; border-inline-start: 3px solid transparent; border-bottom: 1px solid var(--g200); font-size: 15px; }
+.bt-row:last-child, .bt-gap:last-child { border-bottom: 0; }
+.bt-name { flex: 1; min-width: 0; overflow-wrap: anywhere; padding-block: 6px; }
+.bt-name a { color: inherit; }
+.bt-was { display: block; }
+.bt-gap { color: var(--g600); font-size: 13px; }
+.bt-mark { flex: none; font-size: 12px; font-weight: 500; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--g500); color: var(--g700); }
+.bt-in, .bt-new { border-inline-start-color: var(--g900); background: var(--g50); }
+.bt-in .bt-name, .bt-new .bt-name { font-weight: 600; }
+.bt-row.bt-in .bt-mark, .bt-row.bt-new .bt-mark { background: var(--g900); border-color: var(--g900); color: var(--on-accent); }
+.bt-out, .bt-gone { border-inline-start: 3px dashed var(--g500); }
+.bt-out .bt-name, .bt-gone .bt-name { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.bt-renamed, .bt-moved { border-inline-start-color: var(--g500); }
+/* A phone shows one side at a time (the switch above the tree); a wide screen both, side by side. */
+.bt-sides .seg { margin-block: 4px 2px; }
+.bt-show-after .bt-before, .bt-show-before .bt-after { display: none; }
+.bt-col h4 { display: none; }
+@media (min-width: 700px) {
+  .bt-sides { display: none; }
+  .bt-cols { grid-template-columns: 1fr 1fr; }
+  .bt .bt-before, .bt .bt-after { display: block; }
+  .bt-col h4 { display: block; }
+  .bq-decide { margin-inline: 0; border-radius: 10px 10px 0 0; border: 1px solid var(--g300); border-bottom: 0; }
+}
+@media (min-width: 900px) {
+  .bq-decide { bottom: 0; }
+}
+
 /* ---------- about, help and asking for a takedown (thread 6) ---------- */
 .field textarea { min-height: 120px; border: 1px solid var(--g300); border-radius: 6px; padding: 8px 10px; font: inherit; line-height: 1.5; background: var(--g0); color: var(--g900); resize: vertical; }
 .field textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--g0), 0 0 0 4px var(--g900); }

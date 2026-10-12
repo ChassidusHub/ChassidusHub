@@ -19,7 +19,7 @@ import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Buc
  * What a page cannot answer here goes on to the API's Worker: anything
  * signed in (a cookie or a token, whose sessions and passkeys live
  * there), anything that is not a read, search by meaning (Workers AI),
- * the apps' catalog and Drive files, and what needs a bucket this Worker
+ * the apps' catalog, the catalog snapshot (built there, behind its answers) and Drive files, and what needs a bucket this Worker
  * is not given.
  */
 export interface ReadsEnv {
@@ -50,7 +50,7 @@ export interface Reader {
  * search by meaning (Workers AI), and what needs settings only it is given: sign-in (`/v1/auth/me` asked as nobody still
  * says whether Google sign-in is on), and the mirrors' git addresses and keys.
  */
-const ELSEWHERE = /^\/v1\/(app|drive|search\/similar|auth|mirrors)(\/|$)/;
+const ELSEWHERE = /^\/v1\/(app|catalog|drive|search\/similar|auth|mirrors)(\/|$)/;
 /** What reads a bucket: answered here only with FILES_PUBLIC. */
 const NEEDS_FILES = /^\/v1\/(status|texts)(\/|$)/;
 

@@ -14,6 +14,14 @@ any time. `@chassidushub/client` carries the API's version.
   (unlabelled units, items with no place, additions without a sefer,
   duplicate printings, shelves out of order), read-only, every night into
   one issue (docs/operations.md, "Catalog health").
+- `GET /v1/suggestions/:id/tree` (client: `suggestionTree`): a suggestion's
+  catalog tree before and after. Each shelf, sefer or farbrengen it changes
+  what is in, its items now and once approved, each marked same, out, in,
+  new, gone, renamed or moved; long runs fold into counts. The back room's
+  new catalog queue (`/back?tab=catalog`, `/back/batch/<id>`) draws it, with
+  the batch's research note and Approve or Send back (#244).
+The newest entries wait as one file each in [changes/](changes/) until
+`npm run changelog` moves them in below.
 
 - Searching a sefer's or set's own name puts it first (#233): on the All
   tab, the sefarim and sets named just what was typed, in any language,
