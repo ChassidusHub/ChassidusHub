@@ -1,0 +1,1 @@
+- New site: the catalog snapshot starts loading as soon as a page has painted, not three seconds later, so catalog taps after the first one draw at once more often. On a phone on slow 4G, Likkutei Sichos vol. 31 opens in 0.85 s instead of 2.3 s, and Toras Menachem vol. 32 in 0.17 s instead of 1.4 s (#265).
