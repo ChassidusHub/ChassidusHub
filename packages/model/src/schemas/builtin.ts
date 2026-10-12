@@ -1,4 +1,4 @@
-import { ADDITION_KINDS, EVENT_LINK_KINDS, type EntityType, type LocalName } from '../entities.js';
+import { ADDITION_KINDS, EVENT_LINK_KINDS, MUGA_STATES, UNIT_KINDS, WORK_VIEWS, type EntityType, type LocalName } from '../entities.js';
 import { PAGE_HREF_PATTERN, PAGE_ID_PATTERN, PAGE_LINE_END_KINDS, PAGE_MARKS, PAGE_SEGMENT_KINDS, TEXT_PROFILES } from '../pageText.js';
 import { SHAAR_SECTIONS, SHAAR_SECTION_MAX } from '../shaar.js';
 import { EDITION_KINDS, GENRES, LICENCES, SOURCE_IDS } from '../works.js';
@@ -271,8 +271,10 @@ const fractionalOrder = str({ pattern: '^[0-9A-Za-z]+$', maxLength: 64 });
  * printed over a hundred lines and more, each with its own box, and the machine reading of vols 6-24 was refused.
  * 17: `orderIn`, an item's own place in each set it sits in (RFC 0002, #78).
  * 18: a set's `liveFixes`, a moderated set that takes small fixes live (RFC 0001).
+ * 19: a sefer's `view`, a unit's facts (kind, heading, number, to, place, occasion, parsha, muga, labelOrigin)
+ * and the page segment kind `stage` (RFC 0004, step 2, #343).
  */
-export const BUILTIN_SCHEMA_VERSION = 18;
+export const BUILTIN_SCHEMA_VERSION = 19;
 
 export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
   set: entitySchema(
@@ -342,6 +344,7 @@ export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
         required: ['kind'],
         additionalProperties: false,
       },
+      view: enumOf(WORK_VIEWS),
     },
     ['title', 'slug', 'authors', 'genre', 'levels'],
   ),
@@ -356,6 +359,15 @@ export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
       date: ref('dateKey'),
       events: arrayOf(ref('entityId'), { uniqueItems: true }),
       editions: arrayOf(edition),
+      kind: enumOf(UNIT_KINDS),
+      heading: ref('localName'),
+      number: str({ minLength: 1, maxLength: 50 }),
+      to: ref('localName'),
+      place: ref('localName'),
+      occasion: str({ pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' }),
+      parsha: str({ pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' }),
+      muga: enumOf(MUGA_STATES),
+      labelOrigin: ref('machineOrigin'),
     },
     ['work', 'position', 'order', 'label'],
   ),
