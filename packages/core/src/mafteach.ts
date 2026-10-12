@@ -227,7 +227,7 @@ async function builtIndex(
   const seferId = options.seferId ?? null;
   const stamp = await catalog.db.query<{ stamp: string | null }>(
     `SELECT (SELECT max(e.main_rev) FROM entity e WHERE e.id = $1)::text || ':' ||
-            coalesce((SELECT max(e.main_rev) FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "default" WHERE p.work_id = ANY($2)), 0)::text AS stamp`,
+            coalesce((SELECT max(e.main_rev) FROM unit_place p JOIN entity e ON e.id = p.unit_id WHERE p.work_id = ANY($2)), 0)::text AS stamp`,
     [indexId, seferId ? [indexId, seferId] : [indexId]],
   );
   // The way it is built is part of the stamp: an index kept by an older build is built again.

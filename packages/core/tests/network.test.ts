@@ -188,9 +188,11 @@ describe('search that lands on the moment', () => {
     for (const kind of ['text-page', 'segment', 'unit']) expect(inner).toContain(`e.type = ANY ('{${kind}}'::text[]) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', $1)`);
     expect(inner).not.toContain('CASE WHEN e.type');
     // Sichos that open on the words are found through their lead's index, the first MOMENT_LEADS of them, then each sicha
-    // by its own id (entity's collation, so its key finds it), one by one, never a join over every sicha (#182, #214).
+    // by its own id (one collation since migration 0036, so either key finds it), one by one, never a join over every sicha (#182, #214).
     expect(inner).toContain(`WHERE lead @@ to_tsquery('simple', $1) LIMIT ${MOMENT_LEADS}) p`);
-    expect(inner).toMatch(/CROSS JOIN LATERAL \(SELECT e.id, e.type, e.main_rev FROM entity e\s+WHERE e.id = p.unit_id COLLATE "default"/);
+    expect(inner).toMatch(/CROSS JOIN LATERAL \(SELECT e.id, e.type, e.main_rev FROM entity e\s+WHERE e.id = p.unit_id AND /);
+    // unit_place and entity share a collation (migration 0036): a join that named one could not use the other's key.
+    expect(inner).not.toContain('COLLATE');
     // Each match is ranked where it is found, its words read once: one rank per kind and one for the leads, none after (#172).
     expect(inner.match(/ts_rank/g)).toHaveLength(4);
     // A scan page's layer is read from its link, never from its revision, which holds all its lines (#182).
