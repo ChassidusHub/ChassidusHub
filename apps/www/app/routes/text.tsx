@@ -5,6 +5,7 @@ import { act, said } from '../tools/common';
 import { itemName, orNothing } from '../tools/item.server';
 import { Button, Field, Icon, IconButton, Say, SectionHead, TopBar } from '../ui';
 import type { Route } from './+types/text';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** One page of a scan's text (GET /v1/scans/{id}/text). */
 interface ScanPage {
@@ -65,7 +66,7 @@ export async function loader({ request, params, context: { api } }: Route.Loader
   };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=60, s-maxage=300' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export const handle = { section: 'library' };
 

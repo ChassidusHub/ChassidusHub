@@ -63,13 +63,13 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
           לתוכן
         </a>
         <nav className="rail" aria-label="ראשי">
-          <Link to="/" className="nav-logo" aria-label="ChassidusHub, דף הבית">
+          <Link to="/" prefetch="intent" className="nav-logo" aria-label="ChassidusHub, דף הבית">
             <Logo />
           </Link>
           {railOrder.map((key) => {
             const place = sections.find((s) => s.key === key)!;
             return (
-              <Link key={key} to={place.to} className="nav" aria-current={section === key ? 'page' : undefined}>
+              <Link key={key} to={place.to} prefetch="intent" className="nav" aria-current={section === key ? 'page' : undefined}>
                 <Icon name={place.icon} />
                 {place.label}
               </Link>
@@ -90,7 +90,7 @@ export function AppShell({ children, dock = <PlayerDock /> }: { children: ReactN
           {dock}
           <nav className="tabs" aria-label="ראשי">
             {sections.map((place) => (
-              <Link key={place.key} to={place.to} aria-current={section === place.key ? 'page' : undefined}>
+              <Link key={place.key} to={place.to} prefetch="intent" aria-current={section === place.key ? 'page' : undefined}>
                 <Icon name={place.icon} />
                 {place.label}
               </Link>
@@ -222,7 +222,7 @@ export function TopBar({
         <PathBar levels={path} />
       ) : (
         <>
-          <Link to="/" className="homelogo" aria-label="ChassidusHub, דף הבית">
+          <Link to="/" prefetch="intent" className="homelogo" aria-label="ChassidusHub, דף הבית">
             <Logo />
           </Link>
           <div className="mid">

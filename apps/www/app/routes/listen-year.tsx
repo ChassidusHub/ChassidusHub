@@ -4,6 +4,7 @@ import { listening, yearLevel, type EventRow } from '../listen/common';
 import { PlayRow } from '../listen/play';
 import { TopBar } from '../ui';
 import type { Route } from './+types/listen-year';
+import { KEPT_PAGE } from '../lib/caching';
 
 export const handle = { section: 'listen' };
 
@@ -25,7 +26,7 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   return { year, name: yearLabel(year), months, years: YEARS.map((y) => ({ year: y, label: yearLabel(y) })) };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export default function ListenYear() {
   const { year, name, months, years } = useLoaderData<typeof loader>();

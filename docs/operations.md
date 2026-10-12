@@ -564,6 +564,45 @@ answer), and to everyone else within about five minutes, an item's own
 page within about an hour. A new deploy starts with an empty cache (each version has its
 own).
 
+### The new site's pages at the edge
+
+The new site (apps/www, new.chassidushub.org) keeps its catalog pages at
+Cloudflare's edge for a week, not minutes, and forgets a page as soon as
+a merge changes something it shows:
+
+- Pages for anyone go through the site Worker's `CachedPage` entrypoint,
+  behind the Workers cache (`apps/www/wrangler.toml`, `[exports]`), which is
+  tiered: a page drawn once anywhere is answered from an upper tier to every
+  other data centre. Someone signed in, a hard reload and everything that is
+  not a GET are drawn fresh (`server/edge.ts`, `mayUseEdge`).
+- A catalog page says `KEPT_PAGE` (`app/lib/caching.ts`): a week at the edge,
+  a day more while it is drawn again, and `max-age=0` in browsers. Home and
+  Listen are kept until the day turns, an hour at most, since they show what
+  fits the coming days; where the reader stopped is drawn in the browser from
+  its cookies, its place held open from the first paint (`listen/stopped.ts`).
+- While `CachedPage` draws a page it reads the API fresh (`no-cache`, past
+  the API's own cache) and notes the id of every item the API's answers name.
+  The page is kept with those ids as its `Cache-Tag` (`tagged`). It goes out
+  streaming, never held back: a page still reading the API when its first
+  bytes go (`<Await>`), or about more than 1000 items, is kept 10 minutes
+  instead, since its tags cannot name everything it shows.
+- Once a minute the API reads what merged since last time, takes the
+  changed items and what they point at, and calls `CachedPage.forget` through
+  the `SITE_PAGES` binding, which purges those tags
+  (`services/api/src/sitePages.ts`; its mark is
+  `summaries/site-pages.json` in the public bucket). A merge waits 90
+  seconds first, so Hyperdrive's minute of kept answers cannot draw the page
+  from before it. Past 2000 items at once (an import) every page is forgotten.
+- The kept pages outlive deploys (`cross_version_cache`) and are kept apart
+  by the site's address and its browser build (`forEdge`), so a merge that
+  changes no script keeps them warm, and a page never names scripts the
+  deployed build no longer has.
+- Catalog links prefetch their next page when hovered or touched
+  (`prefetch="intent"` in `app/ui`).
+
+To see it: `curl -sI -A 'Mozilla/5.0' https://new.chassidushub.org/library`
+and read `cf-cache-status` (`HIT`, `MISS`, `EXPIRED`) and `age`.
+
 ### What reaches Postgres
 
 - A page's first view after it expired at the edge: its API reads that

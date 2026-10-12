@@ -8,6 +8,7 @@ import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
 import type { Route } from './+types/item';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** Recordings and the events they were said at belong to listening; every other item to the library. */
 const listening = new Set(['event', 'recording']);
@@ -98,11 +99,11 @@ async function listeningPage(item: { id: string; type: string; data: unknown }, 
 
 /**
  * The same page for everyone (who is signed in is asked by the browser), so
- * the edge keeps it (server/pageCache.ts): fresh for two minutes, as the
- * API's own answers are, then shown while it is drawn again behind it.
+ * the edge keeps it until something it shows changes (lib/caching.ts,
+ * server/edge.ts).
  */
 export const headers = ({ loaderHeaders }: Route.HeadersArgs) => ({
-  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600',
+  'Cache-Control': KEPT_PAGE,
   ...(loaderHeaders.has('Link') ? { Link: loaderHeaders.get('Link')! } : {}),
 });
 

@@ -5,6 +5,7 @@ import { createApp, turnstileVerifier } from './app.js';
 import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
 import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
+import { forgetChangedPages, type SitePages } from './sitePages.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
 import { LOCKED_HEADER, lockOf, openedBy, ownersFrom, unlocked, type LockEnv } from './lock.js';
@@ -49,6 +50,8 @@ interface Env extends LockEnv {
   HYPERDRIVE: { connectionString: string };
   /** The site's Worker (a service binding), for the status checks; without it they ask SITE_URL over the internet. */
   SITE?: { fetch(request: Request): Promise<Response> };
+  /** The new site's kept pages (its `CachedPage` entrypoint, a service binding): told each minute which items changed (sitePages.ts). */
+  SITE_PAGES?: SitePages;
   /** The reader app's own catalog (reader/services/catalog-api), passed the app's catalog requests while ChassidusHub's lacks a part (appCatalog.ts). */
   READER_CATALOG?: { fetch(request: Request): Promise<Response> };
   /** The Hyperdrive config's id (wrangler.toml), for counting its queries today. */
@@ -121,6 +124,9 @@ interface Ctx {
   exports?: { CachedApi?: { fetch(request: Request): Promise<Response> } };
 }
 
+/** The cron that runs each minute (wrangler.toml, [triggers]); the other, every five, runs everything else. */
+const EVERY_MINUTE = '* * * * *';
+
 /** The apps' catalog as last built, kept for this isolate's life: each request asks only whether anything changed. */
 const appReleases = new AppReleases();
 
@@ -141,9 +147,20 @@ export default {
    * they follow, and suggestions waiting for review get the reviewer's advice. When it did not answer, those
    * wait for the next run rather than spend queries failing.
    */
-  async scheduled(_event: unknown, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<void> {
+  async scheduled(event: { cron?: string }, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<void> {
     const db = connectPostgres(env.HYPERDRIVE.connectionString, { max: 1 });
     const catalog = new Catalog(db);
+    // Every minute: the new site forgets its pages about what merged (sitePages.ts). Nothing else runs then.
+    if (event.cron === EVERY_MINUTE) {
+      if (env.SITE_PAGES && env.FILES_PUBLIC) {
+        ctx.waitUntil(
+          forgetChangedPages(catalog, keptStore(env.FILES_PUBLIC), env.SITE_PAGES)
+            .catch((error) => void (isCatalogHeld(error) || console.error('site pages', error)))
+            .finally(() => db.close()),
+        );
+      } else ctx.waitUntil(db.close());
+      return;
+    }
     const mailer = mailerOf(env);
     const jobs = async (): Promise<string[]> => {
       const failed: string[] = [];
