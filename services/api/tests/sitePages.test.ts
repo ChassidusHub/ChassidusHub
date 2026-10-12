@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
-import { forgetChangedPages, type Kept, type SitePages } from '../src/sitePages.js';
+import { forgetChangedPages, TODAYS_PAGES, warmTodaysPages, type Kept, type SitePages } from '../src/sitePages.js';
 
 /** The kept mark in memory. */
 function memory(): Kept & { values: Map<string, unknown> } {
@@ -52,5 +52,19 @@ describe("forgetting the new site's pages about what merged", () => {
     const again = site();
     await forgetChangedPages(catalog, kept, again);
     expect(again.told).toHaveLength(1);
+  });
+});
+
+describe("drawing today's pages just after midnight", () => {
+  it('draws Home and Listen at 00:01 UTC as a reader would, and at no other minute', async () => {
+    const asked: string[] = [];
+    const site = { fetch: async (request: Request) => (asked.push(new URL(request.url).pathname), new Response('page')) };
+    expect(await warmTodaysPages(site, new Date('2026-10-13T00:00:30Z'))).toBe(0);
+    expect(await warmTodaysPages(site, new Date('2026-10-13T12:01:00Z'))).toBe(0);
+    expect(asked).toEqual([]);
+    expect(await warmTodaysPages(site, new Date('2026-10-13T00:01:10Z'))).toBe(TODAYS_PAGES.length);
+    expect(asked.sort()).toEqual(['/', '/listen']);
+    // A site with no way to draw pages: nothing to do.
+    expect(await warmTodaysPages({}, new Date('2026-10-13T00:01:10Z'))).toBe(0);
   });
 });
