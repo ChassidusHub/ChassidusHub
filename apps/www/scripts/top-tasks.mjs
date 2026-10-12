@@ -14,6 +14,7 @@
 //   RUNS          runs per task (default 3)
 //   OUT           where results.json, report.md and the screenshots go (default top-tasks)
 //   THROTTLE=off  no network or CPU slowdown, to check the walk itself quickly
+//   THINK_MS      how long the person looks at a page before tapping on (default 1000)
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -23,6 +24,7 @@ const base = (process.env.BASE_URL ?? 'https://new.chassidushub.org').replace(/\
 const runs = Number(process.env.RUNS ?? 3);
 const out = process.env.OUT ?? 'top-tasks';
 const throttle = process.env.THROTTLE !== 'off';
+const think = Number(process.env.THINK_MS ?? 1000);
 const only = process.argv.slice(2).map(Number).filter(Boolean);
 
 /**
@@ -52,6 +54,12 @@ const pageScript = () => {
       for (const entry of list.getEntries()) if (!entry.hadRecentInput) total += entry.value;
       sessionStorage.setItem(key, JSON.stringify({ path: location.pathname, total }));
     }).observe({ type: 'layout-shift', buffered: true });
+    // The longest time the page could not answer a tap or a key: its longest task on the main thread.
+    let longest = 0;
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) longest = Math.max(longest, entry.duration);
+      sessionStorage.setItem(key.replace('cls', 'block'), JSON.stringify({ path: location.pathname, longest: Math.round(longest) }));
+    }).observe({ type: 'longtask', buffered: true });
   } catch {}
   const play = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function (...args) {
@@ -78,7 +86,18 @@ class Walk {
     this.errors = [];
     this.failed = [];
     this.notes = [];
-    page.on('console', (m) => m.type() === 'error' && this.errors.push(m.text().slice(0, 200)));
+    // A fetch the browser cuts off because the person is leaving for a new page (a tap before the
+    // page's scripts came, say) is logged as "Failed to fetch" as the page goes: no person sees it, so
+    // it is noted, not counted. That is React Router asking which routes the links lead to (#281).
+    let leaving = false;
+    page.on('request', (r) => r.isNavigationRequest() && r.frame() === page.mainFrame() && (leaving = true));
+    page.on('domcontentloaded', () => (leaving = false));
+    page.on('console', (m) => {
+      if (m.type() !== 'error') return;
+      const text = m.text().slice(0, 200);
+      if (leaving && /Failed to fetch/.test(text)) this.notes.push(`cut off by leaving the page: ${text.split('\n')[0]}`);
+      else this.errors.push(text);
+    });
     page.on('pageerror', (e) => this.errors.push(`page error: ${String(e.message).slice(0, 200)}`));
     page.on('response', (r) => r.status() >= 400 && this.failed.push(`${r.status()} ${r.url().replace(base, '')}`));
     page.on('response', (r) => r.request().resourceType() === 'media' && r.status() < 400 && (this.audioAt ??= performance.now()));
@@ -110,6 +129,9 @@ class Walk {
         step.frameMs = await wait(frame ?? content, 1500).catch(() => null);
         if (step.frameMs) break;
         if (performance.now() - start > stepTimeout) throw new Error(`nothing happened after ${step.tries} taps`);
+        // What the first tap opened may have come just now: look once more before tapping again.
+        step.frameMs = await wait(frame ?? content, 50).catch(() => null);
+        if (step.frameMs) break;
         step.tries++;
         // The first tap may have taken the person elsewhere (a link without its script); then there is nothing to tap again.
         await action().catch(() => {});
@@ -123,15 +145,19 @@ class Walk {
     return this.step(`open ${pathname}`, () => this.page.goto(base + pathname, { waitUntil: 'commit' }), { frame, content, arg, kind: 'open' });
   }
 
-  /** A tap that leads somewhere: counted, then timed like any step. */
-  tap(name, locator, wait) {
+  /** A tap that leads somewhere, after a moment's look: counted, then timed like any step. */
+  async tap(name, locator, wait) {
     let tapped = false;
+    // A person looks at what came before tapping on; the time is not counted.
+    await this.page.waitForTimeout(think);
     return this.step(name, async () => {
       // Again: only if the thing is still there to tap.
       if (tapped && !(await locator.isVisible())) return;
+      // A tap again is a quick one: if a sheet the first tap opened now covers the thing, there is nothing to tap.
+      const again = tapped;
       tapped = true;
       this.taps++;
-      await locator.tap({ timeout: stepTimeout });
+      await locator.tap({ timeout: again ? 1000 : stepTimeout });
     }, wait);
   }
 
@@ -161,6 +187,13 @@ class Walk {
       this.keys++;
       await this.page.keyboard.press('Enter');
     }, wait);
+  }
+
+  /** The longest main-thread task of any page the run opened. */
+  async longestBlock() {
+    const all = await this.page.evaluate(() => Object.keys(sessionStorage).filter((k) => k.startsWith('walk.block.')).map((k) => JSON.parse(sessionStorage.getItem(k)))).catch(() => []);
+    const worst = all.reduce((a, b) => (b.longest > a.longest ? b : a), { longest: 0, path: '' });
+    return { ms: worst.longest, path: worst.path };
   }
 
   /** The worst layout shift of any page the run opened. */
@@ -251,8 +284,8 @@ const tasks = [
     catalog: true,
     async run(w) {
       await w.open('/library', { frame: pageFrame, content: shown('main a[href="/sets/the-rebbe"]') });
-      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/sets/the-rebbe-likkutei-sichos"]') });
-      await w.tap('Likkutei Sichos', link(w.page, '/sets/the-rebbe-likkutei-sichos'), { frame: both(at('/likkutei-sichos'), pageFrame), content: shown('main a[href="/likkutei-sichos/31"]') });
+      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/likkutei-sichos"]') });
+      await w.tap('Likkutei Sichos', link(w.page, '/likkutei-sichos'), { frame: both(at('/likkutei-sichos'), pageFrame), content: shown('main a[href="/likkutei-sichos/31"]') });
       await w.tap('volume 31', link(w.page, '/likkutei-sichos/31'), { frame: both(at('/likkutei-sichos/31'), pageFrame), content: shown(`main a[href="${sicha}"]`) });
       await w.tap('the first sicha', link(w.page, sicha), { frame: both(at(sicha), pageFrame), content: words });
     },
@@ -296,11 +329,14 @@ const tasks = [
     catalog: true,
     async run(w) {
       await w.open('/library', { frame: pageFrame, content: shown('main a[href="/sets/the-rebbe"]') });
-      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/sets/the-rebbe-sichos"]') });
-      await w.tap('Toras Menachem and sichos', link(w.page, '/sets/the-rebbe-sichos'), { frame: both(at('/sets/the-rebbe-sichos'), pageFrame), content: shown('main a[href="/toras-menachem"]') });
+      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/toras-menachem"]') });
       await w.tap('Toras Menachem', link(w.page, '/toras-menachem'), { frame: both(at('/toras-menachem'), pageFrame), content: shown('main a[href="/toras-menachem/32"]') });
       await w.tap('volume 32, תשכ"ב', link(w.page, '/toras-menachem/32'), { frame: both(at('/toras-menachem/32'), pageFrame), content: shown('main a[href^="/toras-menachem/32/"]') });
-      const day = w.page.locator('main a[href^="/toras-menachem/32/"]').filter({ hasText: /^בס"ד\. י"ט כסלו, ה'תשכ"ב$/ }).first();
+      const day = w.page
+        .locator('main a[href^="/toras-menachem/32/"]')
+        // The day's farbrengen, under its title then (בס"ד) or now (שיחת), as the catalog is relabelled.
+        .filter({ hasText: /^(בס"ד\.|שיחת) י"ט כסלו, ה'תשכ"ב$/ })
+        .first();
       const href = await day.getAttribute('href');
       await w.tap('י"ט כסלו', day, { frame: both(at(href), pageFrame), content: words });
     },
@@ -312,8 +348,7 @@ const tasks = [
     catalog: true,
     async run(w) {
       await w.open('/library', { frame: pageFrame, content: shown('main a[href="/sets/the-rebbe"]') });
-      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/sets/the-rebbe-igros-kodesh"]') });
-      await w.tap('Igros Kodesh (shelf)', link(w.page, '/sets/the-rebbe-igros-kodesh'), { frame: both(at('/sets/the-rebbe-igros-kodesh'), pageFrame), content: shown('main a[href="/igros-kodesh-rebbe"]') });
+      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/igros-kodesh-rebbe"]') });
       await w.tap('Igros Kodesh', link(w.page, '/igros-kodesh-rebbe'), { frame: both(at('/igros-kodesh-rebbe'), pageFrame), content: shown('main a[href="/igros-kodesh-rebbe/5"]') });
       await w.tap('volume 5', link(w.page, '/igros-kodesh-rebbe/5'), { frame: both(at('/igros-kodesh-rebbe/5'), pageFrame), content: shown('main a[href^="/igros-kodesh-rebbe/5/"]') });
       const letter = w.page.locator('main a[href^="/igros-kodesh-rebbe/5/"]').filter({ hasText: /^אגרת א'רנ$/ }).first();
@@ -379,6 +414,24 @@ const tasks = [
       await w.step('reopen offline', () => w.page.reload({ waitUntil: 'commit' }).catch(() => {}), { frame: pageFrame, content: reading(earlier), kind: 'open' });
     },
   },
+  {
+    n: 11,
+    slug: 'search-as-you-type',
+    name: 'On the search page, type a sefer\'s name and see it under the box',
+    async run(w) {
+      await w.open('/search', { frame: pageFrame, content: shown('main input[type=search]') });
+      // A person reads the page for a while first, long enough on slow 4G for the catalog's names to arrive (#272).
+      await w.page.waitForTimeout(8000);
+      w.taps++;
+      await w.page.locator('main input[type=search]').tap();
+      w.keys += 3;
+      await w.page.keyboard.type('תני', { delay: 150 });
+      await w.step('type the last letter of תניא', () => {
+        w.keys++;
+        return w.page.keyboard.type('א');
+      }, { content: shown('main a[href="/tanya"]') });
+    },
+  },
 ];
 
 async function runOnce(browser, task, run, shots) {
@@ -407,6 +460,7 @@ async function runOnce(browser, task, run, shots) {
   const totalMs = Math.round(performance.now() - started);
   await context.setOffline(false).catch(() => {});
   const shift = await walk.layoutShift();
+  const block = await walk.longestBlock();
   if (shots) await page.screenshot({ path: path.join(shots, `${String(task.n).padStart(2, '0')}-${task.slug}.png` ) }).catch(() => {});
   await context.close();
   const opens = walk.steps.filter((s) => s.kind === 'open');
@@ -424,6 +478,8 @@ async function runOnce(browser, task, run, shots) {
     keys: walk.keys,
     layoutShift: shift.value,
     layoutShiftPage: shift.path,
+    longestBlockMs: block.ms,
+    longestBlockPage: block.path,
     requests: walk.requests,
     kB: Math.round(walk.bytes / 1024),
     consoleErrors: [...new Set(walk.errors)],
@@ -460,15 +516,15 @@ function report(summary, meta) {
   const lines = [
     `# Top-task walk, ${meta.date}`,
     '',
-    `${meta.base}, a phone 390 px wide, ${meta.throttle ? 'slow 4G (562 ms, 1.4 Mb/s) and a 4x slower CPU' : 'no throttling'}, ${meta.runs} runs per task from a fresh profile; the median run.`,
+    `${meta.base}, a phone 390 px wide, ${meta.throttle ? 'slow 4G (562 ms, 1.4 Mb/s) and a 4x slower CPU' : 'no throttling'}, ${meta.runs} runs per task from a fresh profile, ${meta.think} ms looking at each page before a tap (not counted); the median run.`,
     `Budgets: frame after a tap ≤ ${budgets.tapFrameMs} ms, first frame of a page opened cold ≤ ${budgets.openFrameMs} ms, content ≤ ${budgets.contentMs} ms per step, ≤ ${budgets.catalogTaps} taps for a catalog task, layout shift < ${budgets.layoutShift}, no console errors.`,
     '',
-    '| # | Task | Done | First frame | Frame after tap | Content (worst step) | Whole task | Taps | Keys | Shift | Requests | kB | Console errors | Within budget |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| # | Task | Done | First frame | Frame after tap | Content (worst step) | Whole task | Taps | Keys | Shift | Longest block | Requests | kB | Console errors | Within budget |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const s of summary) {
     const m = s.median;
-    lines.push(`| ${s.n} | ${s.name} | ${s.finishedRuns}/${s.runs} | ${fmt(m.openFrameMs)} | ${fmt(m.tapFrameMs)} | ${fmt(m.contentMs)} | ${fmt(m.totalMs)} | ${m.taps} | ${m.keys} | ${m.layoutShift} | ${m.requests} | ${m.kB} | ${m.consoleErrors.length} | ${s.misses.length ? `no: ${s.misses.join('; ')}` : 'yes'} |`);
+    lines.push(`| ${s.n} | ${s.name} | ${s.finishedRuns}/${s.runs} | ${fmt(m.openFrameMs)} | ${fmt(m.tapFrameMs)} | ${fmt(m.contentMs)} | ${fmt(m.totalMs)} | ${m.taps} | ${m.keys} | ${m.layoutShift} | ${fmt(m.longestBlockMs)} | ${m.requests} | ${m.kB} | ${m.consoleErrors.length} | ${s.misses.length ? `no: ${s.misses.join('; ')}` : 'yes'} |`);
   }
   lines.push('', '## Steps of the median run', '');
   for (const s of summary) {
@@ -497,7 +553,7 @@ for (const task of tasks.filter((t) => !only.length || only.includes(t.n))) {
   summary.push(summarize(task, results));
 }
 await browser.close();
-const meta = { date: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', base, runs, throttle, budgets };
+const meta = { date: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', base, runs, throttle, think, budgets };
 writeFileSync(path.join(out, 'results.json'), JSON.stringify({ meta, summary }, null, 2));
 writeFileSync(path.join(out, 'report.md'), report(summary, meta));
 console.log(`\n${path.join(out, 'report.md')}`);

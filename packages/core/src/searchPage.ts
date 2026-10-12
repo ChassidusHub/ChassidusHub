@@ -5,7 +5,7 @@ import { matchingWords, queryWords, searchMoments, type Moment } from './moments
 import { languageSql, languageTitleWords, splitLanguage } from './language.js';
 import { parshaDays, parshaHe, parshaOf } from './parsha.js';
 import { topicOf } from './topics.js';
-import { NAME_SQL, nameTierSql, NAMES, normalizedSql, toTsQuery } from './searchText.js';
+import { foldSpelling, NAME_SQL, nameTierSql, NAMES, normalizedSql, toNameTsQuery, toTsQuery } from './searchText.js';
 
 /**
  * The new site's search screen in one read (apps/www): everything the page
@@ -168,17 +168,21 @@ const INFO = `e.id, e.type, e.path,
  * indexed names, migration 0032) and never its words; a sefer's name comes before a sicha's as good.
  */
 async function namedInfo(catalog: Catalog, query: string, limit: number, language: Language | null = null, typed: string = query): Promise<Info[]> {
-  const tsQuery = toTsQuery(query);
+  // A name is found spelled full or short (toNameTsQuery), and is the query all the same when only that differs (#293).
+  // Ranked on the words as typed: ranking on every spelling too took twice as long for a common word.
+  const tsQuery = toNameTsQuery(query);
   if (!tsQuery) return [];
   const typedAt = language ? '$6' : '$4';
+  const foldedAt = language ? '$7' : '$5';
+  const rankAt = language ? '$8' : '$6';
   const { rows } = await catalog.db.query<Info>(
     // Ranked first, then the facts read for the few kept. Only a sefer's or shelf's revision is read while ranking (its
     // names' tier, and whether it is an addition): a common word is in thousands of farbrengens and recordings, and
     // reading each one's revision to rank it was most of a first search (#182). OFFSET 0 keeps the planner from joining
     // every match's revision anyway.
     `WITH named AS (
-       SELECT e.id, CASE WHEN e.type NOT IN ('work', 'set') THEN 3 ELSE ${nameTierSql(NAMES.map(normalizedSql), '$2', '$1', typedAt)} END AS tier,
-              (e.type = 'work' AND r.data ? 'addition') AS addition, 0 AS src, ts_rank(e.search_tsv, to_tsquery('simple', $1)) AS rank,
+       SELECT e.id, CASE WHEN e.type NOT IN ('work', 'set') THEN 3 ELSE ${nameTierSql(NAMES.map(normalizedSql), '$2', '$1', typedAt, foldedAt)} END AS tier,
+              (e.type = 'work' AND r.data ? 'addition') AS addition, 0 AS src, ts_rank(e.search_tsv, to_tsquery('simple', ${rankAt})) AS rank,
               e.path COLLATE "C" AS k1, ''::text COLLATE "C" AS k2
        FROM entity e LEFT JOIN LATERAL (SELECT r.data FROM revision r WHERE r.id = e.main_rev AND ${language ? 'TRUE' : `e.type IN ('work', 'set')`} OFFSET 0) r ON TRUE
        WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
@@ -195,8 +199,8 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
        FROM (SELECT * FROM named UNION ALL SELECT * FROM unit) u ORDER BY n LIMIT ${limit})
      SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ${UNPACKED} ORDER BY hit.n`,
     language
-      ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language), normalizeSearchText(typed)]
-      : [tsQuery, normalizeSearchText(query), NAMED, normalizeSearchText(typed)],
+      ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language), normalizeSearchText(typed), foldSpelling(normalizeSearchText(query)), toTsQuery(query)]
+      : [tsQuery, normalizeSearchText(query), NAMED, normalizeSearchText(typed), foldSpelling(normalizeSearchText(query)), toTsQuery(query)],
   );
   return rows;
 }

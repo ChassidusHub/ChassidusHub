@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Catalog, SnapshotManifest, SnapshotNamesFile, SnapshotTree, SnapshotWorkFile, SnapshotYearFile } from '@chassidushub/core';
-import { SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_MANIFEST_KEY, memorySnapshotStore, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot } from '@chassidushub/core';
+import type { Catalog, SnapshotIndex, SnapshotManifest, SnapshotNamesFile, SnapshotShelfFile, SnapshotTopFile, SnapshotTree, SnapshotWorkFile, SnapshotYearFile, SnapshotYearsFile } from '@chassidushub/core';
+import { SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_INDEX_KEY, SNAPSHOT_MANIFEST_KEY, memorySnapshotStore, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot } from '@chassidushub/core';
 import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
@@ -117,7 +117,7 @@ describe('catalog snapshot', () => {
     expect(first.built).toBe(true);
     expect((await refreshSnapshot(catalog.db, store)).built).toBe(false);
 
-    // A new event: the tree and the sefer keep their files; a new year file, new names and a new manifest.
+    // A new event: the tree, the sefer, the top and the shelves keep their files; a new year file, new names and years, a new manifest and index.
     await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set), '/events/5742-05-10');
     const before = store.keys();
     const second = await refreshSnapshot(catalog.db, store);
@@ -125,7 +125,7 @@ describe('catalog snapshot', () => {
     expect(second.manifest.seq).toBeGreaterThan(first.manifest.seq);
     expect(second.manifest.tree.file).toBe(first.manifest.tree.file);
     expect(second.manifest.works[ls]!.file).toBe(first.manifest.works[ls]!.file);
-    expect(store.keys().filter((k) => !before.includes(k))).toEqual([snapshotFileKey(second.manifest.names.file), snapshotFileKey(second.manifest.years['5742']!.file)].sort());
+    expect(store.keys().filter((k) => !before.includes(k))).toEqual([snapshotFileKey(second.manifest.names.file), snapshotFileKey(second.manifest.years['5742']!.file), snapshotFileKey((JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!) as SnapshotIndex).years)].sort());
 
     // A sefer renamed: a new tree file; the old one stays for readers holding the old manifest.
     const cs = await catalog.createChangeset('mendy', { title: 'Rename' });
@@ -135,6 +135,71 @@ describe('catalog snapshot', () => {
     const third = await refreshSnapshot(catalog.db, store);
     expect(third.manifest.tree.file).not.toBe(second.manifest.tree.file);
     expect(await store.get(snapshotFileKey(second.manifest.tree.file))).not.toBeNull();
+  });
+
+  it('cuts the tree small for a slow first tap: an index of names, the top, one file per top shelf', async () => {
+    const other = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'עוד' }, slug: 'other', policy: 'moderated', keepers: ['keeper'] }, '/sets/other');
+    const elsewhere = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'מפתח' }, slug: 'ls-index', authors: [], genre: 'chassidus', levels: [], sets: [other], addition: { kind: 'index', to: ls } }, '/ls-index');
+    await add(catalog, 'mendy', 'keeper', 'unit', unit(ls, 1, 1), '/likkutei-sichos/1/1');
+    await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set), '/events/5742-05-10');
+    const store = memorySnapshotStore();
+    const { manifest } = await writeSnapshot(catalog.db, store);
+    const index = JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!) as SnapshotIndex;
+    const read = async <T>(file: string) => JSON.parse((await store.get(snapshotFileKey(file)))!) as T;
+
+    expect(index).toEqual({ format: 2, version: manifest.version, top: expect.stringMatching(SNAPSHOT_FILE_NAME), shelves: expect.any(Object), years: expect.stringMatching(SNAPSHOT_FILE_NAME), names: manifest.names.file });
+    const tree = await read<SnapshotTree>(manifest.tree.file);
+    expect(Object.keys(index.shelves)).toEqual(tree.top);
+
+    // The Rebbe's page draws from the top file alone; another top shelf is its name and path.
+    const top = await read<SnapshotTopFile>(index.top);
+    expect(top.top.map((s) => s.id)).toEqual(tree.top);
+    expect(top.top[0]).toEqual({
+      id: rebbe,
+      path: '/sets/the-rebbe',
+      name: { he: 'הרבי', en: 'The Rebbe' },
+      rev: tree.sets[rebbe]!.rev,
+      rebbe: 9,
+      // Each of his shelves with its sefarim, so his page draws them with no other file.
+      sets: [{ id: shelf, path: '/sets/sichos', name: { he: 'שיחות' }, works: [{ id: ls, path: '/likkutei-sichos', name: { he: 'ליקוטי שיחות' } }], inner: [] }],
+      works: [],
+      additions: [],
+    });
+    expect(top.top.find((s) => s.id === other)).toEqual({ id: other, path: '/sets/other', name: { he: 'עוד' }, rev: tree.sets[other]!.rev });
+
+    // A top shelf's file holds what is under it, as in the tree, and the work file of each sefer with units.
+    const mine = await read<SnapshotShelfFile>(index.shelves[rebbe]!);
+    expect(Object.keys(mine.sets).sort()).toEqual([rebbe, shelf].sort());
+    expect(mine.sets[shelf]).toEqual(tree.sets[shelf]);
+    expect(mine.works[ls]).toEqual({ ...tree.works[ls], file: manifest.works[ls]!.file });
+    // An addition to it on another shelf comes along, so the sefer's page can list it.
+    expect(mine.works[elsewhere]).toEqual(tree.works[elsewhere]);
+    const theirs = await read<SnapshotShelfFile>(index.shelves[other]!);
+    expect(Object.keys(theirs.works).sort()).toEqual([elsewhere, ls].sort());
+
+    const years = await read<SnapshotYearsFile>(index.years);
+    expect(years.years).toEqual({ '5742': { file: manifest.years['5742']!.file, events: 1 } });
+    expect(new TextEncoder().encode(JSON.stringify(index)).byteLength).toBeLessThan(1000);
+  });
+
+  it('names a Rebbe’s shelf’s first shelves inside, and says when it has loose additions', async () => {
+    const names = ['א', 'ב', 'ג', 'ד'];
+    for (const [i, he] of names.entries()) await add(catalog, 'steward', 'steward', 'set', { name: { he }, slug: `inner-${i}`, policy: 'moderated', keepers: ['keeper'], parent: shelf, order: String(i) }, `/sets/inner-${i}`);
+    await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ליקוט' }, slug: 'loose', authors: [], genre: 'chassidus', levels: [], sets: [shelf], addition: { kind: 'collection' } }, '/loose');
+    const store = memorySnapshotStore();
+    await writeSnapshot(catalog.db, store);
+    const index = JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!) as SnapshotIndex;
+    const top = JSON.parse((await store.get(snapshotFileKey(index.top)))!) as SnapshotTopFile;
+    expect(top.top[0]!.sets![0]).toMatchObject({ id: shelf, inner: [{ he: 'א' }, { he: 'ב' }, { he: 'ג' }], loose: true });
+  });
+
+  it('builds the index for a manifest written before it existed', async () => {
+    const store = memorySnapshotStore();
+    await writeSnapshot(catalog.db, store);
+    await store.put(SNAPSHOT_INDEX_KEY, '', 'manifest');
+    expect((await refreshSnapshot(catalog.db, store)).built).toBe(true);
+    expect(JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!).format).toBe(2);
+    expect((await refreshSnapshot(catalog.db, store)).built).toBe(false);
   });
 
   it('builds one change once across isolates, and catches what merged while it built (#288)', async () => {

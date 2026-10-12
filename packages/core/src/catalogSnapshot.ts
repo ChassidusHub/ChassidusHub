@@ -18,6 +18,14 @@ import type { EntityId } from '@chassidushub/model';
  *   year-<yyyy>.<hash>.json  one Hebrew year's farbrengens and other events, with how many recordings each has
  *   names.<hash>.json        every name above as one flat list, for finding a name as the person types
  *
+ * And the same tree cut smaller still, for a first tap that cannot wait for
+ * the whole tree on a slow phone (#265):
+ *
+ *   index.json               tiny, changes with the catalog: only the names of the files below
+ *   top.<hash>.json          a few kB: the top shelves, and the Rebbeim's shelves and sefarim
+ *   shelf-<id>.<hash>.json   one top shelf and everything under it, as in the tree, with each sefer's work file
+ *   years.<hash>.json        each Hebrew year's file
+ *
  * A file is named by its content's sha256, so a file that did not change in a
  * new snapshot keeps its address, and browsers, the edge and a service worker
  * keep it for good. Only the manifest moves.
@@ -194,10 +202,81 @@ export interface SnapshotNamesFile {
   names: SnapshotNameRow[];
 }
 
+/** The format of index.json and of the files only it names (top, shelf, years). */
+export const SNAPSHOT_INDEX_FORMAT = 2;
+
+/**
+ * index.json: only the names of the files, so it stays a few hundred bytes
+ * however large the catalog grows. A file's address is the same folder as
+ * the manifest's files (the API's /v1/catalog/files/, the site's /_/catalog/).
+ */
+export interface SnapshotIndex {
+  format: typeof SNAPSHOT_INDEX_FORMAT;
+  /** The same version as the manifest's: the last commit that changed what the snapshot shows. */
+  version: string;
+  top: string;
+  /** Each top shelf's file, by the shelf's id. */
+  shelves: Record<EntityId, string>;
+  years: string;
+  names: string;
+}
+
+/** A shelf or a sefer as the top file lists it: enough to draw its name and link it. */
+export interface SnapshotTopEntry {
+  id: EntityId;
+  path: string | null;
+  name: SnapshotName;
+}
+
+/** A top shelf. A Rebbe's shelf carries its shelves, sefarim and additions, so his page draws with no other file. */
+/**
+ * A shelf on a Rebbe's shelf, with what his page shows of it: its official
+ * sefarim, the names of its first shelves inside, and whether it has loose
+ * additions (ones that belong to none of its sefarim).
+ */
+export interface SnapshotTopInner extends SnapshotTopEntry {
+  works: SnapshotTopEntry[];
+  inner: SnapshotName[];
+  loose?: true;
+}
+
+export interface SnapshotTopShelf extends SnapshotTopEntry {
+  /** Its revision on main, for an edit form to start from. */
+  rev: number;
+  rebbe?: number;
+  sets?: SnapshotTopInner[];
+  works?: SnapshotTopEntry[];
+  additions?: SnapshotTopEntry[];
+}
+
+export interface SnapshotTopFile {
+  format: typeof SNAPSHOT_INDEX_FORMAT;
+  /** In order: the Rebbeim in their line, then the others. */
+  top: SnapshotTopShelf[];
+}
+
+/**
+ * One top shelf and everything under it, in the tree's own shapes: its
+ * shelves, its sefarim and their additions (wherever those sit). A sefer with
+ * units names its work file, so a sefer page needs this file and that one.
+ */
+export interface SnapshotShelfFile {
+  format: typeof SNAPSHOT_INDEX_FORMAT;
+  shelf: EntityId;
+  sets: Record<EntityId, SnapshotSet>;
+  works: Record<EntityId, SnapshotWork & { file?: string }>;
+}
+
+export interface SnapshotYearsFile {
+  format: typeof SNAPSHOT_INDEX_FORMAT;
+  /** Each Hebrew year with events, by year (`"5742"`): its file and how many events it holds. */
+  years: Record<string, { file: string; events: number }>;
+}
+
 /** Where a snapshot's files are kept: R2 on Workers, memory in tests and local work. */
 export interface SnapshotStore {
   get(key: string): Promise<string | null>;
-  /** `immutable` for a file named by its content, `manifest` for the manifest. */
+  /** `immutable` for a file named by its content, `manifest` for the manifest and the index. */
   put(key: string, text: string, kind: 'immutable' | 'manifest'): Promise<void>;
   /**
    * Takes the one build there may be at a time across every Worker isolate,
@@ -219,6 +298,7 @@ export const SNAPSHOT_CLAIM_KEY = 'catalog/building.json';
 const BUILDS_IN_A_ROW = 3;
 
 export const SNAPSHOT_MANIFEST_KEY = 'catalog/manifest.json';
+export const SNAPSHOT_INDEX_KEY = 'catalog/index.json';
 export const snapshotFileKey = (file: string) => `catalog/files/${file}`;
 /** A file name as the manifest gives it: a few lowercase words, then 16 hex of its sha256. */
 export const SNAPSHOT_FILE_NAME = /^[a-z0-9][a-z0-9-]{0,80}\.[0-9a-f]{16}\.json$/;
@@ -566,6 +646,45 @@ export async function readSnapshot(db: Db): Promise<SnapshotParts> {
   return { seq, changedAt: at, tree, works: units, years, names: namesOf(tree, units, years, kinds) };
 }
 
+/** The top file: every top shelf, and on the Rebbeim's shelves what is on them, with names and paths only. */
+function topOf(tree: SnapshotTree): SnapshotTopFile {
+  const entry = (id: EntityId): SnapshotTopEntry => {
+    const item = tree.sets[id] ?? tree.works[id]!;
+    return { id, path: item.path, name: 'name' in item ? item.name : item.title };
+  };
+  const top = tree.top.map((id): SnapshotTopShelf => {
+    const set = tree.sets[id]!;
+    if (!set.rebbe) return { ...entry(id), rev: set.rev };
+    const inner = (s: EntityId): SnapshotTopInner => {
+      const shelf = tree.sets[s]!;
+      return { ...entry(s), works: shelf.works.map(entry), inner: shelf.sets.slice(0, 3).map((i) => tree.sets[i]!.name), ...(shelf.additions.length ? { loose: true as const } : {}) };
+    };
+    return { ...entry(id), rev: set.rev, rebbe: set.rebbe, sets: set.sets.map(inner), works: set.works.map(entry), additions: set.additions.map(entry) };
+  });
+  return { format: SNAPSHOT_INDEX_FORMAT, top };
+}
+
+/** One top shelf's file: its shelves under it, their sefarim and those sefarim's additions, with each sefer's work file. */
+function shelfOf(tree: SnapshotTree, shelf: EntityId, workFiles: Record<EntityId, { file: string }>): SnapshotShelfFile {
+  const out: SnapshotShelfFile = { format: SNAPSHOT_INDEX_FORMAT, shelf, sets: {}, works: {} };
+  const addWork = (id: EntityId) => {
+    if (out.works[id] || !tree.works[id]) return;
+    const work = tree.works[id]!;
+    out.works[id] = workFiles[id] ? { ...work, file: workFiles[id]!.file } : work;
+    for (const a of work.additions) addWork(a);
+    if (work.addition?.to) addWork(work.addition.to);
+  };
+  const walk = (id: EntityId) => {
+    const set = tree.sets[id];
+    if (!set || out.sets[id]) return;
+    out.sets[id] = set;
+    for (const w of [...set.works, ...set.additions]) addWork(w);
+    for (const s of set.sets) walk(s);
+  };
+  walk(shelf);
+  return out;
+}
+
 // ------------------------------------------------------------------ writing it
 
 async function sha256Hex(text: string): Promise<{ hex: string; bytes: number }> {
@@ -577,6 +696,17 @@ async function sha256Hex(text: string): Promise<{ hex: string; bytes: number }> 
 /** A file's name: a stem safe in a URL, and the start of its sha256. */
 const safeStem = (stem: string) => stem.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'file';
 
+
+export async function readIndex(store: SnapshotStore): Promise<SnapshotIndex | null> {
+  const text = await store.get(SNAPSHOT_INDEX_KEY);
+  if (!text) return null;
+  try {
+    const index = JSON.parse(text) as SnapshotIndex;
+    return index.format === SNAPSHOT_INDEX_FORMAT ? index : null;
+  } catch {
+    return null;
+  }
+}
 
 export async function readManifest(store: SnapshotStore): Promise<SnapshotManifest | null> {
   const text = await store.get(SNAPSHOT_MANIFEST_KEY);
@@ -591,12 +721,13 @@ export async function readManifest(store: SnapshotStore): Promise<SnapshotManife
 
 /**
  * Writes a snapshot of main to `store`: each file not already written under
- * its name, then the manifest that lists them. A file is never written over
+ * its name, then the manifest and the index that list them. A file is never written over
  * and never removed, so a reader holding an older manifest still finds its
  * files. Returns the manifest written, or the one kept when it was as new.
  */
 export async function writeSnapshot(db: Db, store: SnapshotStore, options: { base?: string; now?: Date } = {}): Promise<{ manifest: SnapshotManifest; written: number }> {
   const previous = await readManifest(store);
+  const previousIndex = await readIndex(store);
   const parts = await readSnapshot(db);
   const had = new Set<string>();
   if (previous) {
@@ -604,6 +735,11 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
     if (previous.names) had.add(previous.names.file);
     for (const f of Object.values(previous.works)) had.add(f.file);
     for (const f of Object.values(previous.years)) had.add(f.file);
+  }
+  if (previousIndex) {
+    had.add(previousIndex.top);
+    had.add(previousIndex.years);
+    for (const f of Object.values(previousIndex.shelves)) had.add(f);
   }
   let written = 0;
   const put = async (stem: string, value: unknown): Promise<SnapshotFile> => {
@@ -645,7 +781,19 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
       events: Object.values(years).reduce((n, y) => n + y.events, 0),
     },
   };
-  // Another build that finished first with a newer catalog wins: a manifest never goes back.
+  const shelves: SnapshotIndex['shelves'] = {};
+  for (const id of parts.tree.top) shelves[id] = (await put(`shelf-${id}`, shelfOf(parts.tree, id, works))).file;
+  const index: SnapshotIndex = {
+    format: SNAPSHOT_INDEX_FORMAT,
+    version: manifest.version,
+    top: (await put('top', topOf(parts.tree))).file,
+    shelves,
+    years: (await put('years', { format: SNAPSHOT_INDEX_FORMAT, years: Object.fromEntries(Object.entries(years).map(([y, f]) => [y, { file: f.file, events: f.events }])) } satisfies SnapshotYearsFile)).file,
+    names: names.file,
+  };
+  // Another build that finished first with a newer catalog wins: a manifest never goes back, nor the index.
+  const latestIndex = await readIndex(store);
+  if (!latestIndex || Number(latestIndex.version) <= parts.seq) await store.put(SNAPSHOT_INDEX_KEY, JSON.stringify(index), 'manifest');
   const latest = await readManifest(store);
   if (latest && latest.seq > manifest.seq) return { manifest: latest, written };
   await store.put(SNAPSHOT_MANIFEST_KEY, JSON.stringify(manifest), 'manifest');
@@ -654,23 +802,26 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
 
 /**
  * Builds a new snapshot when main has changed since the one kept (one cheap
- * statement when it has not), unless another build holds the store's claim:
+ * statement, and two reads of the bucket, when it has not), unless another build holds the store's claim:
  * then that build brings it up to date, and catches what merged while it ran.
  * Returns the manifest kept now, and whether it was built this time.
  */
 export async function refreshSnapshot(db: Db, store: SnapshotStore, options: { base?: string; now?: Date } = {}): Promise<{ manifest: SnapshotManifest; built: boolean }> {
   let kept = await readManifest(store);
+  // Built again when the index is missing (it came later than the manifest), or main moved on.
+  let index = await readIndex(store);
   let built = false;
   for (let round = 0; round < BUILDS_IN_A_ROW; round++) {
-    if (kept) {
+    if (kept && index) {
       const { seq } = await snapshotSeq(db);
-      if (seq <= kept.seq) break;
+      if (seq <= Math.min(kept.seq, Number(index.version))) break;
     }
     // The very first build has nothing to serve meanwhile, so it never waits on a claim.
     const token = kept && store.claim ? await store.claim(new Date(Date.now() + SNAPSHOT_CLAIM_MS)) : undefined;
     if (token === null) break;
     try {
       kept = (await writeSnapshot(db, store, options)).manifest;
+      index = await readIndex(store);
       built = true;
     } finally {
       if (token) await store.release?.(token);

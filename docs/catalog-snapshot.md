@@ -18,6 +18,7 @@ bucket, building it again).
 | Path | What | Cache-Control |
 | --- | --- | --- |
 | `GET https://api.chassidushub.org/v1/catalog/manifest.json` | which files make up the snapshot now | `public, max-age=60, s-maxage=60` |
+| `GET https://api.chassidushub.org/v1/catalog/index.json` | the same snapshot as the names of its files only (a few hundred bytes) | `public, max-age=60, s-maxage=60` |
 | `GET https://api.chassidushub.org/v1/catalog/files/<file>` | one file, as the manifest names it | `public, max-age=31536000, immutable` |
 
 A file's address is the manifest's `base` followed by its `file`. A file is
@@ -28,7 +29,9 @@ keeps its name. Files are never removed, so a reader holding an older
 manifest still finds every file it names.
 
 The files are kept in the public bucket (`chassidushub-public`) under
-`catalog/manifest.json` and `catalog/files/<file>`. The site's Worker may
+`catalog/manifest.json`, `catalog/index.json` and `catalog/files/<file>`.
+The new site serves the same at its own address: `/_/catalog/manifest.json`,
+`/_/catalog/index.json` and `/_/catalog/<file>`. The site's Worker may
 read them straight from the bucket, with no request to the API, if it binds
 that bucket.
 
@@ -202,8 +205,86 @@ A unit's kind is its own level (`sicha`, `maamar`, `letter`, `chapter`,
 `siman`…); `parent` is what it is in, so a search may spend words on the
 sefer's name; `date` is an event's Hebrew date in words.
 
+## The small cut: index.json, top, shelves, years
+
+On a slow phone the first tap comes before the manifest (about 29 kB
+compressed) and the tree (about 64 kB) have arrived (#265). The same
+snapshot is also cut smaller: an index that names files and nothing else, a
+top file of a few kB, and one file per top shelf, asked for when that shelf
+is opened. The work, year and names files are the same files the manifest
+names. Both ways stay; a reader may use either.
+
+```jsonc
+// index.json: about 600 bytes compressed on live (30 top shelves)
+{
+  "format": 2,
+  "version": "48213",                        // the same as the manifest's
+  "top": "top.1a2b3c4d5e6f7a8b.json",
+  "shelves": {                               // one per top shelf, by id, in the top's order
+    "rh-…": "shelf-rh-….9c8d7e6f5a4b3c2d.json"
+  },
+  "years": "years.0f1e2d3c4b5a6978.json",
+  "names": "names.7e6d5c4b3a291807.json"     // the manifest's names file
+}
+```
+
+A file's address is the same folder as the manifest's files: the API's
+`/v1/catalog/files/<name>`, the site's `/_/catalog/<name>`.
+
+```jsonc
+// top.<hash>.json: about 6 kB compressed on live
+{
+  "format": 2,
+  "top": [                                   // the Rebbeim in their line, then the other top shelves
+    {
+      "id": "rh-…", "path": "/sets/the-rebbe", "name": { "he": "הרבי", "en": "The Rebbe" },
+      "rev": 1234,                           // its revision on main, for an edit form
+      "rebbe": 9,                            // a Rebbe's shelf only, and with it what is on it:
+      "sets": [{
+        "id": "rh-…", "path": "/sets/…", "name": { "he": "…" },
+        "works": [{ "id": "rh-…", "path": "/likkutei-sichos", "name": { "he": "ליקוטי שיחות" } }],  // its official sefarim
+        "inner": [{ "he": "…" }],            // the names of its first 3 shelves inside, or []
+        "loose": true                        // only when it has additions that belong to none of its sefarim
+      }],
+      "works":     [{ "id": "rh-…", "path": "/likkutei-sichos", "name": { "he": "ליקוטי שיחות" } }],
+      "additions": [{ "id": "rh-…", "path": "/…", "name": { "he": "…" } }]
+    },
+    { "id": "rh-…", "path": "/sets/chitas-rambam", "name": { "he": "…" }, "rev": 99 }   // another top shelf: name, path, rev
+  ]
+}
+```
+
+Everything here is in the order the tree gives (`sets`, `works`,
+`additions` of tree.json). A sefer's `name` is its `title` in the tree.
+
+```jsonc
+// shelf-<id>.<hash>.json: one top shelf and everything under it, 1-11 kB compressed on live
+{
+  "format": 2,
+  "shelf": "rh-…",
+  "sets":  { "rh-…": { /* as in tree.json */ } },   // the top shelf and every shelf under it
+  "works": {                                         // their sefarim and additions, and the additions to those sefarim wherever they sit
+    "rh-…": { /* as in tree.json */, "file": "work-rh-….0d1e2f3a4b5c6d7e.json" }   // `file` when it has units
+  }
+}
+```
+
+A sefer on two top shelves is in both files. An addition on this shelf to a
+sefer elsewhere brings that sefer along, so its link can be drawn.
+
+```jsonc
+// years.<hash>.json
+{ "format": 2, "years": { "5742": { "file": "year-5742.9a8b7c6d5e4f3a2b.json", "events": 212 } } }
+```
+
+A file named here changes only when what it holds changes: a new event
+changes the years file, not the top or a shelf; a new unit changes its
+shelf's file (its sefer's work file has a new name), not the top.
+
 ## Changing the format
 
 Add a field freely: readers ignore what they do not know. Removing or
 changing the meaning of one bumps `format` (`SNAPSHOT_FORMAT`), and a reader
-that finds a format it does not know falls back to the API.
+that finds a format it does not know falls back to the API. The index and
+the files only it names (top, shelf, years) are format 2 (`SNAPSHOT_INDEX_FORMAT`);
+the work, year and names files they share with the manifest stay format 1.

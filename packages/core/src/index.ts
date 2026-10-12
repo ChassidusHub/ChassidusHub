@@ -6,7 +6,7 @@ export { derivedRights, fileFromDrive, getDerivations, getDerivationsOf, isCover
 export { driveFileOf, driveFilesOf, knownDriveFile, type DriveFileLink } from './driveFiles.js';
 export { diffData, mergeText, resolveConflicts, threeWayMerge, UnresolvedConflictError, type Conflict, type FieldChange, type Json, type MergeResult, type Resolution } from './merge.js';
 export { LIVE_FIX_LIMITS, LIVE_FIX_UNDO_HOURS, LIVE_FIX_WORDS, LIVE_TYPES, STEWARD_TYPES, TRUST_THRESHOLD, UPLOAD_HOLD_HOURS, UPLOAD_LIMITS, canApprove, canSuggest, earnedTrust, mayFixLive, mayGoLive, uploadAllowance, type Account, type SetInfo } from './permissions.js';
-export { searchTextOf, searchTierSql, toTsQuery } from './searchText.js';
+export { foldSpelling, searchTextOf, searchTierSql, spellingsOf, toNameTsQuery, toTsQuery } from './searchText.js';
 export type { SearchFilters } from './searchFilters.js';
 export {
   CHALLENGE_MINUTES,
@@ -280,4 +280,4 @@ export { driveId, mafteach, mafteachNames, mafteachSubjects, placesOf, subjectsN
 export { FIX_CHECK_MS, sendFix, shapeOf, wordsChanged, type FixInput, type FixJudge, type FixResult } from './fix.js';
 export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
 export { itemView, type HeardAt, type ItemView, type MachineShare, type ScanPlace, type ShownText } from './view.js';
-export { type SnapshotNameRow, type SnapshotNamesFile, SNAPSHOT_CLAIM_KEY, SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_FORMAT, SNAPSHOT_MANIFEST_KEY, SNAPSHOT_REBBEIM, SNAPSHOT_TYPES, memorySnapshotStore, readManifest, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot, type SnapshotEvent, type SnapshotFile, type SnapshotManifest, type SnapshotName, type SnapshotPart, type SnapshotParts, type SnapshotSet, type SnapshotStore, type SnapshotTree, type SnapshotUnit, type SnapshotWork, type SnapshotWorkFile, type SnapshotYearFile } from './catalogSnapshot.js';
+export { type SnapshotNameRow, type SnapshotNamesFile, SNAPSHOT_CLAIM_KEY, SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_FORMAT, SNAPSHOT_INDEX_FORMAT, SNAPSHOT_INDEX_KEY, SNAPSHOT_MANIFEST_KEY, SNAPSHOT_REBBEIM, SNAPSHOT_TYPES, memorySnapshotStore, readIndex, readManifest, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot, type SnapshotEvent, type SnapshotFile, type SnapshotIndex, type SnapshotShelfFile, type SnapshotTopEntry, type SnapshotTopFile, type SnapshotTopInner, type SnapshotTopShelf, type SnapshotYearsFile, type SnapshotManifest, type SnapshotName, type SnapshotPart, type SnapshotParts, type SnapshotSet, type SnapshotStore, type SnapshotTree, type SnapshotUnit, type SnapshotWork, type SnapshotWorkFile, type SnapshotYearFile } from './catalogSnapshot.js';
