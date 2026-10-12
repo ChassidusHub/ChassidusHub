@@ -5,7 +5,7 @@ import { createApp, turnstileVerifier } from './app.js';
 import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
 import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
-import { r2SnapshotStore, singleFlight, type SnapshotOptions } from './catalogSnapshot.js';
+import { r2SnapshotStore, type SnapshotOptions } from './catalogSnapshot.js';
 import type { SnapshotStore } from '@chassidushub/core';
 import { forgetChangedPages, warmTodaysPages, type SitePages } from './sitePages.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
@@ -133,11 +133,6 @@ const EVERY_MINUTE = '* * * * *';
 const appReleases = new AppReleases();
 
 /**
- * The catalog snapshot (catalogSnapshot.ts), built on a connection of its own: a request's closes as soon as its
- * answer is sent, and the build runs on behind it. One build at a time in this isolate.
- */
-let snapshotBuild: (() => Promise<void>) | null = null;
-/**
  * Refreshes the snapshot, and logs how long a build took and its slowest statement: whether a build fits behind an
  * answer (waitUntil) at all, and how long one read keeps its tables from a migration.
  */
@@ -161,18 +156,10 @@ async function timedSnapshot(db: Parameters<typeof refreshSnapshot>[0], store: S
   if (built) console.log(`catalog snapshot ${manifest.version} built ${from} in ${Date.now() - started} ms (${manifest.counts.units} units, ${manifest.counts.events} events; ${cost.statements} statements, ${Math.round(cost.ms)} ms in all, slowest ${Math.round(slowest)} ms)`);
 }
 
+/** The catalog snapshot (catalogSnapshot.ts): served by requests, built only by the every-minute run below. */
 function catalogSnapshotOf(env: Env): SnapshotOptions | undefined {
   if (!env.FILES_PUBLIC) return undefined;
-  const store = r2SnapshotStore(env.FILES_PUBLIC);
-  snapshotBuild ??= singleFlight(async () => {
-    const db = connectPostgres(env.HYPERDRIVE.connectionString, { max: 1 });
-    try {
-      await timedSnapshot(db, store, 'after a change');
-    } finally {
-      await db.close();
-    }
-  });
-  return { store, rebuild: snapshotBuild };
+  return { store: r2SnapshotStore(env.FILES_PUBLIC), scheduled: true };
 }
 
 const mailerOf = (env: Env) =>
