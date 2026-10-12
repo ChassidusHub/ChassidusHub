@@ -42,6 +42,12 @@ describe('a day of Hayom Yom', () => {
     expect(html).toContain('<p id="s-p1">');
   });
 
+  it('never nests a link: a Tanya line with a note mark of its own is left unwrapped', () => {
+    const tanya = { id: 'tanya', kind: 'paragraph', text: [{ text: 'שורה לדוגמה' }, { note: 'n1' }], origin: machine } as PageSegment;
+    const html = wordsHtml([tanya, p('p1', 'פסקה לדוגמה.')], [p('n1', 'הערה לדוגמה.', { kind: 'note' })], 'יט כסלו', daybookLayout, day('יט כסלו', 'כסלו'));
+    expect(html).toMatch(/<div class="hy-v hy-tanya"><p id="s-tanya" class="m">שורה לדוגמה<a class="nm"/);
+  });
+
   it('names the day’s chapter of Tanya when the print’s line is not there', () => {
     const html = wordsHtml([p('p1', 'פסקה לדוגמה.')], [], 'כ כסלו', daybookLayout, day('כ כסלו', 'כסלו'));
     expect(html).toMatch(/<span class="hy-n">תניא:<\/span><div class="hy-v hy-tanya"><a href="\/tanya\/[^"]+"><p>[^<]+\.<\/p><\/a>/);

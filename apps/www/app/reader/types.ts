@@ -56,7 +56,7 @@ export interface ReaderData {
   title: string;
   /** What the unit is, by its own level (`sicha`, `letter`, `chapter`): the last level of its position. Picks its view (views.ts). */
   level?: string;
-  /** The view its sefer names (`daybook` for Hayom Yom), or `index` for an index's words (load.server.ts): picks its view before its level does. */
+  /** The view its sefer names (`daybook` for Hayom Yom), or `index` for an index's words (load.server.ts), which picks its view before its level does (views.ts). */
   view?: string;
   /** Under the title: the sefer and the volume ("לקוטי שיחות · חלק י״ב"). */
   sub: string;

@@ -72,7 +72,8 @@ function shiurimHtml(shiurim: HayomYomShiurim, tanya: string): string {
   const rows = [
     `<span class="hy-k">שיעורים.</span><span class="hy-n">חומש:</span><div class="hy-v">${shiur(shiurim.chumash, shiurPath(shiurim.chumashRef))}</div>`,
     `<span class="hy-n">תהלים:</span><div class="hy-v">${tehillim}</div>`,
-    tanyaLine ? `<span class="hy-n">תניא:</span><div class="hy-v hy-tanya">${tanyaPath ? `<a href="${escape(tanyaPath)}">${tanyaLine}</a>` : tanyaLine}</div>` : '',
+    // A line that carries a link of its own (a note's mark) is not wrapped in another: links never nest.
+    tanyaLine ? `<span class="hy-n">תניא:</span><div class="hy-v hy-tanya">${tanyaPath && !tanyaLine.includes('<a ') ? `<a href="${escape(tanyaPath)}">${tanyaLine}</a>` : tanyaLine}</div>` : '',
   ];
   return `<div class="hy-shiurim">${rows.join('')}</div>`;
 }
