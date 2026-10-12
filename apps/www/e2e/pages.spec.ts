@@ -33,8 +33,11 @@ for (const { name, path } of pages) {
         const [nav] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
         return nav ? nav.responseStart - nav.requestStart : 0;
       });
-      const sizes = await Promise.all(responses.map(async (r) => ({ type: r.request().resourceType(), url: r.url(), bytes: await sentBytes(r) })));
-      const of = (type: string) => sizes.filter((s) => s.type === type);
+      // The page's own load ends at its load event; what starts after it (the catalog snapshot read behind
+      // the page, app/routes/shell.tsx, like the service worker) is the next click's, not this page's.
+      const loaded = await page.evaluate(() => performance.timeOrigin + (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming).loadEventEnd);
+      const sizes = await Promise.all(responses.map(async (r) => ({ type: r.request().resourceType(), url: r.url(), bytes: await sentBytes(r), atLoad: r.request().timing().startTime <= loaded })));
+      const of = (type: string) => sizes.filter((s) => s.type === type && (type !== 'script' || s.atLoad));
       const sum = (list: { bytes: number }[]) => list.reduce((total, s) => total + s.bytes, 0);
       const shift = await page.evaluate(() => (window as unknown as { shift: number }).shift);
       const preloaded = await page.evaluate(() => [...document.querySelectorAll<HTMLLinkElement>('link[rel=preload][as=font]')].map((link) => link.href));
