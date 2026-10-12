@@ -62,6 +62,24 @@ test('nothing found, and a search that failed, each say so', async ({ page }) =>
   await expect(page.locator('main')).toContainText('החיפוש לא ענה');
 });
 
+test('a slow search on a slow phone keeps what it found and brings the rest when it comes (#338)', async ({ page, context }) => {
+  // Slow 4G, as the top-task walk has it, and a search the API answers only after 6 s.
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 562.5, downloadThroughput: (1474.56 * 1024) / 8, uploadThroughput: (675 * 1024) / 8 });
+  await page.goto('/search?q=' + encodeURIComponent('פסקה איטית'), { waitUntil: 'commit' });
+  // The frame comes at once, the answers while the page is still coming.
+  await expect(page.locator('main')).toContainText('מחפשים בתוך הטקסטים');
+  await expect(page.getByRole('heading', { name: 'בתוך הטקסטים' })).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('main')).not.toContainText('לא ענה');
+});
+
+test('a search that failed once is asked again by itself (#338)', async ({ page }) => {
+  await page.goto('/search?q=' + encodeURIComponent('פסקה פעם'));
+  await expect(page.getByRole('heading', { name: 'בתוך הטקסטים' })).toBeVisible();
+  await expect(page.locator('main')).not.toContainText('לא ענה');
+});
+
 test('the examples are searches', async ({ page }) => {
   await page.goto('/search');
   await page.getByRole('link', { name: 'שמיני א' }).click();
