@@ -1,4 +1,4 @@
-import { data, isRouteErrorResponse, redirect, type AppLoadContext } from 'react-router';
+import { data, isRouteErrorResponse, redirect, useLocation, type AppLoadContext } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
@@ -97,16 +97,23 @@ export function meta({ data: loaded }: Route.MetaArgs) {
   return [{ title: loaded ? `${titleOf(loaded)} · ChassidusHub` : 'ChassidusHub' }];
 }
 
+/**
+ * Each page is drawn afresh, keyed by its address: going from one shelf to
+ * another, React would otherwise move the first page's headings and rows to
+ * where the second page has them, which the browser counts as the page
+ * shifting when the tap took longer than half a second (#280).
+ */
 export default function Item({ loaderData }: Route.ComponentProps) {
+  const { pathname } = useLocation();
   switch (loaderData.screen) {
     case 'reader':
       return <Reader key={loaderData.reader.path} data={loaderData.reader} />;
     case 'set':
-      return <SetScreen data={loaderData} />;
+      return <SetScreen key={pathname} data={loaderData} />;
     case 'work':
-      return <WorkScreen data={loaderData} />;
+      return <WorkScreen key={pathname} data={loaderData} />;
     case 'volume':
-      return <VolumeScreen data={loaderData} />;
+      return <VolumeScreen key={pathname} data={loaderData} />;
     default:
       // Events and recordings: their thread's screens, until they are built.
       return (
