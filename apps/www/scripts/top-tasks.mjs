@@ -86,7 +86,18 @@ class Walk {
     this.errors = [];
     this.failed = [];
     this.notes = [];
-    page.on('console', (m) => m.type() === 'error' && this.errors.push(m.text().slice(0, 200)));
+    // A fetch the browser cuts off because the person is leaving for a new page (a tap before the
+    // page's scripts came, say) is logged as "Failed to fetch" as the page goes: no person sees it, so
+    // it is noted, not counted. That is React Router asking which routes the links lead to (#281).
+    let leaving = false;
+    page.on('request', (r) => r.isNavigationRequest() && r.frame() === page.mainFrame() && (leaving = true));
+    page.on('domcontentloaded', () => (leaving = false));
+    page.on('console', (m) => {
+      if (m.type() !== 'error') return;
+      const text = m.text().slice(0, 200);
+      if (leaving && /Failed to fetch/.test(text)) this.notes.push(`cut off by leaving the page: ${text.split('\n')[0]}`);
+      else this.errors.push(text);
+    });
     page.on('pageerror', (e) => this.errors.push(`page error: ${String(e.message).slice(0, 200)}`));
     page.on('response', (r) => r.status() >= 400 && this.failed.push(`${r.status()} ${r.url().replace(base, '')}`));
     page.on('response', (r) => r.request().resourceType() === 'media' && r.status() < 400 && (this.audioAt ??= performance.now()));
