@@ -1,4 +1,4 @@
-export { Catalog, PRIVATE_REASONS, isoWeekTag, type ArchiveGapRow, type ChangeEntry, type ChangesetKind, type ChangesetRow, type ChangesetStatus, type Check, type CommunityPage, type EntityView, type HistoryEntry, type MergeCheck, type MergeClash, type MergeOverlap, type MergeProblem, type MergeStage, type NewRevision, type ProjectFocus, type ProjectView, type Proposal, type ReportReason, type RevisionRow } from './catalog.js';
+export { Catalog, PRIVATE_REASONS, isoWeekTag, type ArchiveGapRow, type ChangeEntry, type ChangesetKind, type ChangesetRow, type ChangesetStatus, type Check, type CommunityPage, type EntityView, type FieldsRevision, type HistoryEntry, type MergeCheck, type MergeClash, type MergeOverlap, type MergeProblem, type MergeStage, type NewRevision, type ProjectFocus, type ProjectView, type Proposal, type ReportReason, type RevisionRow } from './catalog.js';
 export { summarizeChanges, type ChangeGroup } from './changeSummary.js';
 export { CatalogError, type CatalogErrorCode } from './errors.js';
 export { ExportGate } from './gate.js';
