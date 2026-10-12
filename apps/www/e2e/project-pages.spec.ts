@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { shown } from './streamed';
 
 // The catalog as a whole and the developer docs. The docs are the repository's own files; the rest comes from the stand-in API (fixture-project-pages.ts).
 
@@ -55,6 +56,7 @@ test.describe('from the stand-in API', () => {
 
   test('the health of the catalog, year by year, folds a long list until asked', async ({ page }) => {
     await page.goto('/health');
+    await shown(page);
     await expect(page.getByRole('link', { name: 'תשמ״ה' })).toHaveAttribute('href', '/listen/5745');
     await expect(page.locator('.figure').first()).toContainText('83%');
     const fold = page.locator('details.fold', { hasText: 'הצגת הכל (12)' });
@@ -66,6 +68,7 @@ test.describe('from the stand-in API', () => {
 
   test('the status says everything works, part by part, and the last incident', async ({ page }) => {
     await page.goto('/status');
+    await shown(page);
     await expect(page.locator('.banner')).toContainText('הכל עובד');
     await expect(page.locator('.checks > li')).toHaveCount(7);
     await expect(page.locator('.days').first().locator('li')).toHaveCount(90);
@@ -74,6 +77,7 @@ test.describe('from the stand-in API', () => {
 
   test('the Missing board by kind and by year', async ({ page }) => {
     await page.goto('/missing');
+    await shown(page);
     await expect(page.locator('.chip.on')).toContainText('הקלטות');
     await page.locator('details.years summary').click();
     await page.getByRole('link', { name: /^תשמ״ו/ }).click();
@@ -86,10 +90,13 @@ test.describe('from the stand-in API', () => {
 
   test('projects: open and closed, and one project’s progress', async ({ page }) => {
     await page.goto('/projects');
+    await shown(page);
     await expect(page.locator('.projects li')).toHaveCount(1);
     await page.getByRole('link', { name: /סגורים/ }).click();
+    await shown(page);
     await expect(page.locator('.projects')).toContainText('פרויקט שהושלם לדוגמה');
     await page.goto('/projects/sample-5745');
+    await shown(page);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('הקלטות תשמ״ה לדוגמה');
     await expect(page.locator('.figure.big')).toContainText('75%');
     await expect(page.getByRole('link', { name: 'כניסה כדי לקחת פריט' })).toBeVisible();
@@ -101,6 +108,7 @@ test.describe('from the stand-in API', () => {
     await page.request.get('http://localhost:3002/_projects/reset');
     await signIn(page);
     await page.goto('/projects/sample-5745');
+    await shown(page);
     await expect(page.getByText('שמור לכם')).toBeVisible();
     await page.getByRole('button', { name: 'שחרור' }).click();
     await expect.poll(async () => (await (await page.request.get('http://localhost:3002/_projects')).json()) as unknown[]).toEqual([{ slug: 'sample-5745', what: 'release', item: 'e1' }]);

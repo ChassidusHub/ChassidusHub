@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
-import { data, Link, redirect } from 'react-router';
+import { Suspense, useCallback, useEffect, useId, useState, type ReactNode } from 'react';
+import { Await, data, Link, redirect, useAsyncError, useNavigate } from 'react-router';
 import { useAccount } from '../lib/account';
 import { asPerson, day, itemHref, kindName, labelName, nameOf, PeopleError, pieces, saidOf, titleOf, type IssueDetail, type IssueRights, type People, type TimelineItem } from '../people/talk';
 import { Button, Chips, Panel, Say, Sheet, TopBar } from '../ui';
@@ -9,20 +9,24 @@ import type { Route } from './+types/issue';
  * One report as everyone sees it, read here so the page is whole before the
  * script loads. A suggestion's number (they share numbers, #12) goes on to
  * the suggestion's page. A private report reads as not found here; the
- * browser asks again as the person, who may be one of its readers.
+ * browser asks again as the person, who may be one of its readers. Whether
+ * it is a report at all is waited for here, so a search engine gets the
+ * right status; the labels to sort by come after the frame.
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   if (!/^\d{1,9}$/.test(params.number)) throw data('not found', { status: 404 });
   const number = Number(params.number);
   const api = context.api;
-  const [thread, detail, labels] = await Promise.all([
-    api.threadByNumber({ number }).catch(() => null),
-    api.getIssue({ number }).then((d) => d as unknown as IssueDetail, () => null),
-    api.listLabels().then((r) => (r.labels as unknown as { name: string }[]).map((l) => l.name), () => [] as string[]),
-  ]);
+  const labels = api.listLabels().then((r) => (r.labels as unknown as { name: string }[]).map((l) => l.name), () => [] as string[]);
+  const [thread, detail] = await Promise.all([api.threadByNumber({ number }).catch(() => null), api.getIssue({ number }).then((d) => d as unknown as IssueDetail, () => null)]);
   if (thread?.kind === 'suggestion') throw redirect(`/suggestions/${number}`);
-  const page = { number, detail, labels };
+  const page = { number, data: labels.then((all) => ({ detail, labels: all })) };
   return detail ? page : data(page, { status: 404 });
+}
+
+/** Opened from inside the site, the frame (its #number) is drawn at once; the report follows. */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  return { number: Number(params.number), data: serverLoader().then((loaded) => loaded.data) };
 }
 
 export function headers() {
@@ -30,11 +34,56 @@ export function headers() {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  const issue = loaderData?.detail?.issue;
-  return [{ title: issue ? `${titleOf(issue)} · #${issue.number} · ChassidusHub` : 'דיווח · ChassidusHub' }];
+  return [{ title: loaderData ? `דיווח #${loaderData.number} · ChassidusHub` : 'דיווח · ChassidusHub' }];
 }
 
 const NOBODY: IssueRights = { read: true, comment: false, edit: false, close: false, triage: false, moderate: false };
+
+type Loaded = Awaited<Route.ComponentProps['loaderData']['data']>;
+
+/** The page's frame (its #number) at once; the report where it will be, when it comes. */
+export default function Screen({ loaderData }: Route.ComponentProps) {
+  const { number } = loaderData;
+  return (
+    <>
+      <TopBar title={`דיווח #${number}`} />
+      <main id="content" className="view people">
+        {/* Keyed by the number, so going to another report shows its frame at once rather than this one until the next has come. */}
+        <Suspense
+          key={number}
+          fallback={
+            <>
+              <h1>דיווח #{number}</h1>
+              <p className="faint" aria-busy="true">
+                רגע…
+              </p>
+            </>
+          }
+        >
+          <Await resolve={loaderData.data} errorElement={<Elsewhere />}>
+            {(loaded) => <IssuePage number={number} loaded={loaded} />}
+          </Await>
+        </Suspense>
+      </main>
+    </>
+  );
+}
+
+/**
+ * When the report did not come from inside the site: a #number that is a
+ * suggestion goes on to its page, as the server would have sent it; any
+ * other failure is the site's own error page, as before.
+ */
+function Elsewhere() {
+  const error = useAsyncError();
+  const navigate = useNavigate();
+  const to = error instanceof Response && error.status >= 300 && error.status < 400 ? error.headers.get('Location') : null;
+  useEffect(() => {
+    if (to) navigate(to, { replace: true });
+  }, [to, navigate]);
+  if (!to) throw error;
+  return null;
+}
 
 /**
  * One Report (thread 6): its title and state, who opened it about which
@@ -44,14 +93,14 @@ const NOBODY: IssueRights = { read: true, comment: false, edit: false, close: fa
  * reports), who is on it (anyone who may comment can take it on), and the
  * suggestions that will close it.
  */
-export default function IssuePage({ loaderData }: Route.ComponentProps) {
-  const { number, labels } = loaderData;
+function IssuePage({ number, loaded }: { number: number; loaded: Loaded }) {
+  const { labels } = loaded;
   const account = useAccount();
-  const [detail, setDetail] = useState<IssueDetail | null>(loaderData.detail);
+  const [detail, setDetail] = useState<IssueDetail | null>(loaded.detail);
   const [missing, setMissing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => setDetail(loaderData.detail), [loaderData.detail]);
+  useEffect(() => setDetail(loaded.detail), [loaded.detail]);
 
   const load = useCallback(async () => {
     try {
@@ -66,30 +115,27 @@ export default function IssuePage({ loaderData }: Route.ComponentProps) {
   // Once it is known who reads: a private report opens to its readers, and the buttons to those who may press them.
   useEffect(() => {
     if (account) void load();
-    else if (account === null && !loaderData.detail) setMissing(true);
-  }, [account, load, loaderData.detail]);
+    else if (account === null && !loaded.detail) setMissing(true);
+  }, [account, load, loaded.detail]);
 
   if (!detail)
     return (
       <>
-        <TopBar title="דיווח" />
-        <main id="content" className="view people">
-          <h1>דיווח #{number}</h1>
-          {missing ? (
-            <>
-              <p>אין דיווח גלוי במספר הזה. אולי הוא פרטי: דיווחים על זכויות ועל תוכן פוגע רואים רק אחראי האוסף ומנהלי האתר.</p>
-              <Button look="outline" small to="/issues">
-                לכל הדיווחים
-              </Button>
-            </>
-          ) : error ? (
-            <Say tone="bad">{error}</Say>
-          ) : (
-            <p className="faint" aria-busy="true">
-              רגע…
-            </p>
-          )}
-        </main>
+        <h1>דיווח #{number}</h1>
+        {missing ? (
+          <>
+            <p>אין דיווח גלוי במספר הזה. אולי הוא פרטי: דיווחים על זכויות ועל תוכן פוגע רואים רק אחראי האוסף ומנהלי האתר.</p>
+            <Button look="outline" small to="/issues">
+              לכל הדיווחים
+            </Button>
+          </>
+        ) : error ? (
+          <Say tone="bad">{error}</Say>
+        ) : (
+          <p className="faint" aria-busy="true">
+            רגע…
+          </p>
+        )}
       </>
     );
 
@@ -121,109 +167,106 @@ export default function IssuePage({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <TopBar title={`דיווח #${number}`} />
-      <main id="content" className="view people">
-        <h1 dir="auto">
-          {titleOf(issue)} <span className="faint">#{number}</span>
-        </h1>
-        <p className="pmeta">
-          <span className="tag strong">{!closed ? 'פתוח' : issue.stateReason === 'not_planned' ? 'לא יטופל' : 'טופל'}</span>
-          {issue.private && <span className="tag">פרטי</span>}
-          {author?.bot && <span className="machine">מכונה</span>}
-          <span className="faint sm">
-            <Person id={issue.author} people={people} /> פתח ב־{day(issue.createdAt)} · {issue.comments ?? 0} תגובות
-          </span>
-        </p>
+      <h1 dir="auto">
+        {titleOf(issue)} <span className="faint">#{number}</span>
+      </h1>
+      <p className="pmeta">
+        <span className="tag strong">{!closed ? 'פתוח' : issue.stateReason === 'not_planned' ? 'לא יטופל' : 'טופל'}</span>
+        {issue.private && <span className="tag">פרטי</span>}
+        {author?.bot && <span className="machine">מכונה</span>}
+        <span className="faint sm">
+          <Person id={issue.author} people={people} /> פתח ב־{day(issue.createdAt)} · {issue.comments ?? 0} תגובות
+        </span>
+      </p>
 
-        <dl className="facts">
-          {issue.entity && (
-            <>
-              <dt>על</dt>
-              <dd>
-                <Link to={itemHref(issue.entity)}>
-                  <bdi>{nameOf(issue.entity.name) || issue.entity.id}</bdi>
-                </Link>
-              </dd>
-            </>
+      <dl className="facts">
+        {issue.entity && (
+          <>
+            <dt>על</dt>
+            <dd>
+              <Link to={itemHref(issue.entity)}>
+                <bdi>{nameOf(issue.entity.name) || issue.entity.id}</bdi>
+              </Link>
+            </dd>
+          </>
+        )}
+        <dt>סוג</dt>
+        <dd>
+          <Link to={`/issues?type=${encodeURIComponent(issue.type)}`}>{kindName(issue)}</Link>
+        </dd>
+        <dt>תוויות</dt>
+        <dd>
+          {issue.labels.length ? (
+            issue.labels.map((label) => (
+              <Link key={label.name} className="tag" to={`/issues?label=${encodeURIComponent(label.name)}`}>
+                {labelName(label.name)}
+              </Link>
+            ))
+          ) : (
+            <span className="faint">אין</span>
           )}
-          <dt>סוג</dt>
-          <dd>
-            <Link to={`/issues?type=${encodeURIComponent(issue.type)}`}>{kindName(issue)}</Link>
-          </dd>
-          <dt>תוויות</dt>
-          <dd>
-            {issue.labels.length ? (
-              issue.labels.map((label) => (
-                <Link key={label.name} className="tag" to={`/issues?label=${encodeURIComponent(label.name)}`}>
-                  {labelName(label.name)}
-                </Link>
-              ))
-            ) : (
-              <span className="faint">אין</span>
-            )}
-            {rights.triage && <LabelsSheet all={labels} chosen={issue.labels.map((l) => l.name)} busy={busy} save={(list) => act(() => asPerson(`issues/${number}/labels`, { method: 'PUT', body: { labels: list } }))} />}
-          </dd>
-          <dt>אחראים</dt>
-          <dd>
-            {issue.assignees.length ? (
-              issue.assignees.map((id, at) => (
-                <span key={id}>
-                  {at > 0 && ', '}
-                  <Person id={id} people={people} />
+          {rights.triage && <LabelsSheet all={labels} chosen={issue.labels.map((l) => l.name)} busy={busy} save={(list) => act(() => asPerson(`issues/${number}/labels`, { method: 'PUT', body: { labels: list } }))} />}
+        </dd>
+        <dt>אחראים</dt>
+        <dd>
+          {issue.assignees.length ? (
+            issue.assignees.map((id, at) => (
+              <span key={id}>
+                {at > 0 && ', '}
+                <Person id={id} people={people} />
+              </span>
+            ))
+          ) : (
+            <span className="faint">אין עדיין</span>
+          )}
+          {me && rights.comment && (
+            <button type="button" className="linkish" disabled={busy} onClick={() => void setAssignees(mine ? issue.assignees.filter((id) => id !== me.id).map(handleOf) : [...issue.assignees.map(handleOf), me.username ?? me.id])}>
+              {mine ? 'הסרה ממני' : 'לקחת על עצמי'}
+            </button>
+          )}
+        </dd>
+        {detail.fixedBy && detail.fixedBy.length > 0 && (
+          <>
+            <dt>הצעות שיתקנו</dt>
+            <dd>
+              {detail.fixedBy.map((s) => (
+                <span key={s.number} className="block">
+                  <Link to={`/suggestions/${s.number}`}>#{s.number}</Link> <bdi>{s.title}</bdi>
+                  {s.status !== 'merged' && s.status !== 'withdrawn' && <span className="faint sm"> · ייסגר כשההצעה תאושר</span>}
                 </span>
-              ))
-            ) : (
-              <span className="faint">אין עדיין</span>
-            )}
-            {me && rights.comment && (
-              <button type="button" className="linkish" disabled={busy} onClick={() => void setAssignees(mine ? issue.assignees.filter((id) => id !== me.id).map(handleOf) : [...issue.assignees.map(handleOf), me.username ?? me.id])}>
-                {mine ? 'הסרה ממני' : 'לקחת על עצמי'}
-              </button>
-            )}
-          </dd>
-          {detail.fixedBy && detail.fixedBy.length > 0 && (
-            <>
-              <dt>הצעות שיתקנו</dt>
-              <dd>
-                {detail.fixedBy.map((s) => (
-                  <span key={s.number} className="block">
-                    <Link to={`/suggestions/${s.number}`}>#{s.number}</Link> <bdi>{s.title}</bdi>
-                    {s.status !== 'merged' && s.status !== 'withdrawn' && <span className="faint sm"> · ייסגר כשההצעה תאושר</span>}
-                  </span>
-                ))}
-              </dd>
-            </>
-          )}
-        </dl>
+              ))}
+            </dd>
+          </>
+        )}
+      </dl>
 
-        <ol className="talk" aria-label="שיחה">
-          <li className="said">
-            <p className="who">
-              <Person id={issue.author} people={people} /> <span className="faint">כתב ב־{day(issue.createdAt)}</span>
-            </p>
-            {issue.body ? <Words text={issue.body} /> : <p className="faint">אין פרטים.</p>}
-          </li>
-          {(detail.timeline ?? []).filter((item) => !(item.type === 'event' && item.kind === 'opened')).map((item) => (
-            <Entry key={`${item.type}-${item.id}`} item={item} people={people} />
-          ))}
-        </ol>
+      <ol className="talk" aria-label="שיחה">
+        <li className="said">
+          <p className="who">
+            <Person id={issue.author} people={people} /> <span className="faint">כתב ב־{day(issue.createdAt)}</span>
+          </p>
+          {issue.body ? <Words text={issue.body} /> : <p className="faint">אין פרטים.</p>}
+        </li>
+        {(detail.timeline ?? []).filter((item) => !(item.type === 'event' && item.kind === 'opened')).map((item) => (
+          <Entry key={`${item.type}-${item.id}`} item={item} people={people} />
+        ))}
+      </ol>
 
-        {error && <Say tone="bad">{error}</Say>}
-        {me && rights.comment ? (
-          <Reply closed={closed} mayClose={rights.close} busy={busy} send={(choice, note) =>
-            act(async () => {
-              // The words first, then the state, as GitHub does it.
-              if (note) await asPerson(`issues/${number}/comments`, { body: { body: note } });
-              if (choice !== 'comment') await asPerson(`issues/${number}/state`, { body: { state: choice } });
-            })
-          } />
-        ) : account === null ? (
-          <Say>
-            כדי להגיב צריך <Link to={`/signin?return=${encodeURIComponent(`/issues/${number}`)}`}>להיכנס</Link>.
-          </Say>
-        ) : null}
-        {me && <Follow id={issue.id} on={!!detail.subscribed} />}
-      </main>
+      {error && <Say tone="bad">{error}</Say>}
+      {me && rights.comment ? (
+        <Reply closed={closed} mayClose={rights.close} busy={busy} send={(choice, note) =>
+          act(async () => {
+            // The words first, then the state, as GitHub does it.
+            if (note) await asPerson(`issues/${number}/comments`, { body: { body: note } });
+            if (choice !== 'comment') await asPerson(`issues/${number}/state`, { body: { state: choice } });
+          })
+        } />
+      ) : account === null ? (
+        <Say>
+          כדי להגיב צריך <Link to={`/signin?return=${encodeURIComponent(`/issues/${number}`)}`}>להיכנס</Link>.
+        </Say>
+      ) : null}
+      {me && <Follow id={issue.id} on={!!detail.subscribed} />}
     </>
   );
 }
