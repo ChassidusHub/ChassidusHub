@@ -6,9 +6,11 @@
  * them to when the Worker binds it, else from the API. Files never change, so
  * they are kept at the edge once read.
  *
- * The server draws no page from the snapshot: a page is read from the API,
- * so the edge can tag it with what it shows and forget it when that changes
- * (server/edge.ts). The browser draws its clicks from it (app/catalog).
+ * The server draws its pages from the API, so the edge can tag each with
+ * what it shows and forget it when that changes (server/edge.ts); the one
+ * exception is the Listen year page (#321, app/catalog/onServer.ts), kept at
+ * the edge ten minutes only. The browser draws its clicks from the snapshot
+ * (app/catalog).
  */
 
 /** The Workers cache's reads and writes this uses (`caches.default`). */
