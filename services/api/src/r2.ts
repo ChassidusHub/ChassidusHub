@@ -11,8 +11,9 @@ import type { Kept, SummaryStore, TranscriptsSummary } from './summaries.js';
  * site's, which answers its own reads (reads.ts).
  */
 export interface R2Bucket {
-  get(key: string, options?: { range?: { offset: number; length?: number } }): Promise<({ body: ReadableStream; size: number } & { text(): Promise<string> }) | null>;
-  put(key: string, value: ArrayBuffer | string, options?: { httpMetadata?: { contentType?: string; cacheControl?: string } }): Promise<unknown>;
+  get(key: string, options?: { range?: { offset: number; length?: number } }): Promise<({ body: ReadableStream; size: number; etag?: string } & { text(): Promise<string> }) | null>;
+  /** With `onlyIf`, null when the object is no longer the one with that etag (another writer came first). */
+  put(key: string, value: ArrayBuffer | string, options?: { httpMetadata?: { contentType?: string; cacheControl?: string }; onlyIf?: { etagMatches: string } }): Promise<unknown>;
 }
 
 export function r2Writer(bucket: R2Bucket): { put(key: string, bytes: ArrayBuffer, mime: string): Promise<void> } {
