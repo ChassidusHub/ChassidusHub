@@ -32,7 +32,12 @@ describe('the transcripts summary', () => {
     expect(await refreshTranscripts(catalog, store, now)).toBe(true);
     expect(kept?.recordings).toMatchObject([{ paragraphs: 2, checked: 1 }]);
     expect(await refreshTranscripts(catalog, store, new Date(now.getTime() + SUMMARY_MAX_AGE_MS - 1))).toBe(false);
+    // Old, but main has not moved since: not made again (#338). Once it moves, it is.
+    expect(await refreshTranscripts(catalog, store, new Date(now.getTime() + SUMMARY_MAX_AGE_MS))).toBe(false);
+    const text = (await catalog.db.query<{ id: string }>(`SELECT id FROM entity WHERE type = 'text'`)).rows[0]!.id;
+    await add(catalog, 'mendy', 'keeper', 'segment', { text, order: 'a9', kind: 'paragraph', content: 'ג', proofread: 0 });
     expect(await refreshTranscripts(catalog, store, new Date(now.getTime() + SUMMARY_MAX_AGE_MS))).toBe(true);
+    expect(kept?.recordings).toMatchObject([{ paragraphs: 3, checked: 1 }]);
   });
 
   it('answers GET /v1/transcripts from the kept list, cut to the limit, without counting again', async () => {
@@ -58,6 +63,10 @@ describe('the other kept answers (#104)', () => {
     expect(await refreshToCheck(catalog, kept, now)).toBe(true);
     expect(stored.get('to-check')).toMatchObject({ at: now.toISOString(), lists: { totals: { transcripts: 1 } } });
     expect(await refreshToCheck(catalog, kept, new Date(now.getTime() + SUMMARY_MAX_AGE_MS - 1))).toBe(false);
+    // Old, but main has not moved since: not made again (#338).
+    expect(await refreshToCheck(catalog, kept, new Date(now.getTime() + SUMMARY_MAX_AGE_MS))).toBe(false);
+    const text = (await catalog.db.query<{ id: string }>(`SELECT id FROM entity WHERE type = 'text'`)).rows[0]!.id;
+    await add(catalog, 'mendy', 'keeper', 'segment', { text, order: 'a9', kind: 'paragraph', content: 'ג', proofread: 0 });
     expect(await refreshToCheck(catalog, kept, new Date(now.getTime() + SUMMARY_MAX_AGE_MS))).toBe(true);
   });
 

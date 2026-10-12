@@ -19,11 +19,11 @@ describe('a chapter of Tanya', () => {
     expect(html).toBe('<p id="s-1"><span class="mk">[מ: כד כסלו]</span> <b>פתיחה</b> לדוגמה.</p><p id="s-2">פסקה לדוגמה.</p>');
   });
 
-  it('sets each paragraph beside its translation, matched by id, the translation only read', () => {
+  it('sets each paragraph beside its translation, matched by id, each numbered in its own margin, the translation only read', () => {
     const english = [verse('1', [{ text: 'An opening, for example.' }, { note: 'tn1' }]), verse('2', [{ text: 'A paragraph.' }])];
     const notes = [{ id: 'tn1', kind: 'note', text: [{ text: 'A note.' }] } as PageSegment];
     const html = wordsHtml(words, notes, 'פרק א׳', chaptersLayout, tanya, { beside: { segments: english, language: 'en' } });
-    expect(html).toContain('<div class="pair"><p id="s-2">פסקה לדוגמה.</p><p class="tr" id="t-2" lang="en" dir="ltr">A paragraph.</p></div>');
+    expect(html).toContain('<div class="pair"><p data-v="ב" id="s-2">פסקה לדוגמה.</p><p class="tr" id="t-2" lang="en" dir="ltr" data-v="2">A paragraph.</p></div>');
     expect(html).toContain('<a class="nm" href="#n-tn1" data-n="tn1" aria-label="הערה 1">1</a>');
   });
 

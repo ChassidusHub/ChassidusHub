@@ -72,17 +72,21 @@ function seifim(segments: readonly PageSegment[], draw: (segments: readonly Page
 /**
  * A chapter read in two languages side by side (Tanya with its English
  * translation, ?language=both): each paragraph beside the same paragraph in
- * the other language, matched by the segment's id. The page's own words keep
+ * the other language, matched by the segment's id, each numbered in its own
+ * margin and a quiet rule between them, as the old site set them (its daily
+ * learning page). The page's own words keep
  * their ids (`s-`), so fixing them works as on any page; the translation's
  * paragraphs are only read (`t-`).
  */
 function paired(segments: readonly PageSegment[], draw: (segments: readonly PageSegment[]) => string, context: WordsContext): string {
   const beside = new Map((context.beside?.segments ?? []).map((segment) => [segment.id, segment]));
   return segments
-    .map((segment) => {
+    .map((segment, at) => {
+      const n = segment.n ?? at + 1;
       const other = beside.get(segment.id);
-      const translation = other ? `<p class="tr" id="t-${escape(other.id)}" lang="${escape(context.beside!.language)}" dir="ltr">${context.run(other.text ?? [])}</p>` : '<p class="tr"></p>';
-      return `<div class="pair">${draw([segment])}${translation}</div>`;
+      const translation = other ? `<p class="tr" id="t-${escape(other.id)}" lang="${escape(context.beside!.language)}" dir="ltr" data-v="${n}">${context.run(other.text ?? [])}</p>` : '<p class="tr"></p>';
+      // Each paragraph's number in its own margin, as the old site set them: Hebrew letters beside the Hebrew, digits beside the English.
+      return `<div class="pair">${draw([segment]).replace(/^<p /, `<p data-v="${numeral(n)}" `)}${translation}</div>`;
     })
     .join('');
 }

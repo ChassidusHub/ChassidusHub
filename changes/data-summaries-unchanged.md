@@ -1,0 +1,1 @@
+- The kept transcripts and to-check lists are made again only when main moved since they were made, not every quarter hour by the clock. Each reads the whole catalog for about 30 s (27 s and 35 s in the job logs), and main often stands still for hours (07:10 to 11:35 UTC on 12 October), so most of that work was for nothing while readers waited (#338).
