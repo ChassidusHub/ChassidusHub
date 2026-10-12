@@ -46,6 +46,18 @@ const sent = await rh.submitSuggestion({ id: draft.id });
 Schema (`GET /v1/types`); a failing check is in `checks`, and the keepers
 see it.
 
+For many items, `putSuggestionItems` writes up to 500 in one call, all of
+them or none when one is wrong, and answers their ids in order. A send of
+hundreds of items one by one can outlast the 30 seconds a caller waits
+while the server goes on and finishes it.
+
+Give the draft a `key` of your own (`createSuggestion({ body: { title, key
+} })`) when a run may be tried again: the same key answers the suggestion
+made then (status 200, as it stands) instead of starting another, so a
+retry never puts the same suggestion twice in the keepers' queue. Each
+author's keys are their own. The MCP server's `suggest_items` takes the
+same `key`.
+
 ## Organizing the catalog
 
 Moving, renaming, ordering, merging and splitting are plans of operations,
