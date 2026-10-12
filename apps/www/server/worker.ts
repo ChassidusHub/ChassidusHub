@@ -2,6 +2,7 @@ import { WorkerEntrypoint } from 'cloudflare:workers';
 import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
+import { serverCatalog } from '../app/catalog/onServer';
 import { forEdge, inGroups, mayUseEdge, Seen, seenIn, tagged } from './edge';
 import { apiFiles, bucketFiles, catalogFile, indexKeeper, keptAtEdge, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
 import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
@@ -39,11 +40,16 @@ type Binding = NonNullable<Env['API']>;
 /**
  * A page drawn now. `binding` is how its loaders reach the API (as nobody: no
  * cookie goes with a page's reads). `later` keeps the catalog snapshot's
- * index fresh behind the page (the Worker's waitUntil).
+ * index fresh behind the page (the Worker's waitUntil); `shows` notes the
+ * items a page drawn from the snapshot shows, for its edge tags.
  */
-function draw(request: Request, env: Env, binding: Binding | undefined, later: (work: Promise<unknown>) => void): Promise<Response> {
+function draw(request: Request, env: Env, binding: Binding | undefined, later: (work: Promise<unknown>) => void, shows?: (ids: Iterable<string>) => void): Promise<Response> {
+  const api = apiFor({ binding, baseUrl: env.API_URL });
+  const catalog = catalogReads(env);
   return handler(request, {
-    api: apiFor({ binding, baseUrl: env.API_URL }),
+    api,
+    ...(catalog ? { catalog: catalog(api) } : {}),
+    shows,
     visitor: visitorApi(request, (cookie) => apiFor({ binding: env.API, baseUrl: env.API_URL, cookie })),
     forward: forwardFor({ binding: env.API, baseUrl: env.API_URL }),
     showcases: env.FILES_PUBLIC ? bucketShowcases(env.FILES_PUBLIC) : undefined,
@@ -70,7 +76,10 @@ export class CachedPage extends WorkerEntrypoint<Env> {
     // Said in its Server-Timing as `drawn`, with when: the edge keeps the header with the page (server/serverTiming.ts).
     const started = performance.now();
     const timing = pageTiming();
-    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }, (work) => this.ctx.waitUntil(work)), seen);
+    const shows = (ids: Iterable<string>) => {
+      for (const id of ids) seen.ids.add(id);
+    };
+    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }, (work) => this.ctx.waitUntil(work), shows), seen);
     return withTiming(page, timing.header(performance.now() - started, 'drawn'));
   }
 
@@ -105,6 +114,16 @@ function catalogFiles(env: Env): SnapshotFiles | null {
   );
   return snapshotFiles;
 }
+
+/** The snapshot's reads for the pages drawn from it on the server (app/catalog/onServer.ts), made once per isolate. */
+let keptReads: ((api: ReturnType<typeof apiFor>) => ReturnType<typeof apiFor>) | null | undefined;
+const catalogReads = (env: Env) => {
+  if (keptReads === undefined) {
+    const files = catalogFiles(env);
+    keptReads = files ? serverCatalog(files) : null;
+  }
+  return keptReads;
+};
 
 /** The catalog snapshot's index for pages' HTML, kept in this isolate (server/catalog.ts). */
 let keptIndex: ReturnType<typeof indexKeeper> | null = null;
