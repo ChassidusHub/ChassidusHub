@@ -771,16 +771,23 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 @media (max-width: 640px) { .ch-row { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 4px; scrollbar-width: none; } .ch-row .chip { flex: none; } }
 .chapters .mk { display: none; }
 .chapters.en .torah, .chapters.en .notes ol, .chapters.paired .notes ol, .chapters .tr { direction: ltr; text-align: left; font-family: var(--title); }
-.chapters.en .torah, .chapters .tr { line-height: 1.7; }
+.chapters.en .torah { line-height: 1.7; }
 .chapters.paired .notes h2 { text-align: start; }
-.reader:has(.chapters.paired) { max-width: 68em; }
-.chapters .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 32px; }
-.chapters .pair > p { margin: 0 0 0.9em; }
-.chapters .tr { font-size: 0.85em; color: var(--g700); }
+.view.wide:has(.chapters.paired), .reader:has(.chapters.paired) { max-width: 1040px; }
+.chapters .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 40px; padding: 0.7em 0; border-bottom: 1px solid var(--g200); }
+.chapters .pair:last-child { border-bottom: 0; }
+.chapters .pair > p { margin: 0; position: relative; }
+.chapters .tr { font-size: 0.8em; line-height: 1.75; }
+.chapters .pair > [data-v]::before {
+  content: attr(data-v); position: absolute; inset-inline-start: -28px; top: 0.6em; width: 22px;
+  font-family: var(--ui); font-size: 11px; line-height: 1.4; color: var(--g600); text-align: center;
+}
+.chapters.paired .torah { padding-inline: 28px; }
+/* The translation's notes under its own column, as the old site set them. */
+@media (min-width: 761px) { .chapters.paired .notes { margin-inline-start: calc(50% + 20px); } }
+.chapters.paired .notes ol, .chapters.en .notes ol { font-size: calc(14px + var(--torah-step, 0) * 1px); line-height: 1.6; }
 @media (max-width: 760px) {
-  .chapters .pair { grid-template-columns: minmax(0, 1fr); }
-  .chapters .pair > p:first-child { margin-bottom: 0.3em; }
-  .chapters .pair { margin-bottom: 0.6em; }
+  .chapters .pair { grid-template-columns: minmax(0, 1fr); gap: 0.4em; }
 }
 .chapters .torah:has([data-seif]) { padding-inline-start: 46px; }
 .chapters [data-seif] { position: relative; scroll-margin-top: 64px; }

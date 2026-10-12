@@ -35,13 +35,20 @@ async function keptWords(url: string): Promise<DrawnWords> {
   return (await response.json()) as DrawnWords;
 }
 
-/** Draws the words into the page at `path` once it is on screen; if another page is shown by then, there is nothing to do. */
+/**
+ * Draws the words into the page at `path` once it is on screen; if another
+ * page is shown by then, there is nothing to do. It waits for the notes'
+ * place too when there are notes: on the same page in another language
+ * (Tanya's ?language=both), the body's place is already on screen while the
+ * notes' comes a frame later, with the page that has notes.
+ */
 async function drawInto(path: string, words: DrawnWords) {
+  const at = (part: string) => document.querySelector(`[data-html="${CSS.escape(`${part}:${path}`)}"]`);
   for (let frame = 0; frame < 120; frame++) {
-    const body = document.querySelector(`[data-html="${CSS.escape(`body:${path}`)}"]`);
-    if (body) {
+    const body = at('body');
+    const notes = at('notes');
+    if (body && (notes || !words.notes)) {
       body.innerHTML = words.body;
-      const notes = document.querySelector(`[data-html="${CSS.escape(`notes:${path}`)}"]`);
       if (notes) notes.innerHTML = words.notes;
       return;
     }

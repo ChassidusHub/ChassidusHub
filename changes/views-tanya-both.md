@@ -1,0 +1,1 @@
+- New site: Tanya in Hebrew and English side by side reads as the old site set it: each paragraph numbered in its margin, a rule between paragraphs, the page wider, and the translation's notes under the English column. (#255)
