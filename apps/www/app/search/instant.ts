@@ -1,4 +1,4 @@
-import { KIND, type Hit } from './names';
+import { KIND, type Hit } from './names.js';
 
 /**
  * Names found as the person types, from the catalog snapshot the browser
