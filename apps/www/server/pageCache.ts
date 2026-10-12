@@ -85,6 +85,8 @@ export async function cachedPage(
     headers.delete(ROUTE_CACHE);
     headers.set('Cache-Control', routeCache);
     headers.set('Age', String(Math.max(0, Math.floor(age))));
+    // Drawn earlier, so the API was not asked now: its timing then would mislead (server/serverTiming.ts).
+    headers.set('Server-Timing', `edge;desc="kept, ${Math.max(0, Math.floor(age))}s old"`);
     return new Response(kept.body, { status: kept.status, headers });
   }
   const response = await draw(request);

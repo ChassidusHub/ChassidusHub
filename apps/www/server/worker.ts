@@ -2,6 +2,7 @@ import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { cachedPage, type PageStore } from './pageCache';
+import { pageTiming, withTiming } from './serverTiming';
 import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
@@ -26,17 +27,27 @@ const handler = createRequestHandler(build as unknown as ServerBuild);
 const edge = (): PageStore | undefined => (globalThis as { caches?: { default?: PageStore } }).caches?.default;
 
 export default {
-  fetch(request: Request, env: Env, ctx: { waitUntil(work: Promise<unknown>): void }): Promise<Response> {
-    const draw = (asked: Request) =>
-      handler(asked, {
-        api: apiFor({ binding: env.API, baseUrl: env.API_URL }),
-        visitor: visitorApi(asked, (cookie) => apiFor({ binding: env.API, baseUrl: env.API_URL, cookie })),
+  async fetch(request: Request, env: Env, ctx: { waitUntil(work: Promise<unknown>): void }): Promise<Response> {
+    const started = performance.now();
+    // Every page says how long it took and what it waited on, in its Server-Timing (server/serverTiming.ts).
+    const timing = pageTiming();
+    const send = env.API ? env.API.fetch.bind(env.API) : (input: string, init?: RequestInit) => fetch(input, init);
+    const binding = { fetch: timing.timed(send) };
+    const draw = async (asked: Request) => {
+      const page = await handler(asked, {
+        api: apiFor({ binding, baseUrl: env.API_URL }),
+        visitor: visitorApi(asked, (cookie) => apiFor({ binding, baseUrl: env.API_URL, cookie })),
         forward: forwardFor({ binding: env.API, baseUrl: env.API_URL }),
         showcases: env.FILES_PUBLIC ? bucketShowcases(env.FILES_PUBLIC) : undefined,
         ...pageContext(asked),
       });
-    // A page anyone may have is kept at the edge (server/pageCache.ts).
+      return withTiming(page, timing.header(performance.now() - started));
+    };
+    // A page anyone may have is kept at the edge (server/pageCache.ts), which says so in its timing.
     const store = edge();
-    return store ? cachedPage(request, store, draw, (work) => ctx.waitUntil(work)) : draw(request);
+    if (!store) return draw(request);
+    const page = await cachedPage(request, store, draw, (work) => ctx.waitUntil(work));
+    const kept = page.headers.get('Server-Timing');
+    return kept?.startsWith('edge') ? withTiming(page, `page;dur=${Math.round(performance.now() - started)}, ${kept}`) : page;
   },
 };

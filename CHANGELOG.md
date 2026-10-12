@@ -10,6 +10,16 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- A sefer's page and a volume's on the new site are one read of the API,
+  never two rounds: `/v1/view` brings a sefer's `outline` (its volumes) and
+  `additions`, and answers a volume's path (/likkutei-sichos/12) as the
+  sefer with `volume`, its units in order; a volume of a sefer that moved
+  answers with `movedTo`. Every new-site page says in `Server-Timing` how
+  long it took, how many API calls in how many rounds it waited on, or
+  that it came from the edge. The API and the old site run in Ashburn,
+  next to the database, instead of where Smart Placement put them
+  (Atlanta, Toronto): a few ms a statement instead of about 25.
+
 - The first sicha opened in a volume no longer waits about 2 s for its
   path bar (#221): a sefer's volumes are counted from the unit_place_part
   index (migration 0037) and a volume's sichos found by it, instead of

@@ -149,6 +149,29 @@ export type ItemView = {
     name: Record<string, unknown> | null;
     durationMs: number | null;
   }>;
+  /** A sefer's volumes, on a sefer's page and a volume's */
+  outline?: Array<{
+    /** The volume's place (1) */
+    value: string;
+    label: Record<string, unknown> | null;
+    /** How many units it holds */
+    units: number;
+  }>;
+  /** The books that are additions to a sefer, on its page (at most 100) */
+  additions?: Array<{
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    id: string;
+    path: string | null;
+    name: Record<string, unknown> | null;
+    kind: string | null;
+  }>;
+  /** Set when the path was a volume of a sefer (/likkutei-sichos/12): `item` is the sefer */
+  volume?: {
+    /** The volume's place (12) */
+    value: string;
+    /** Its units in order, without their words */
+    units: Array<Item>;
+  };
 };
 
 export type ShownText = {

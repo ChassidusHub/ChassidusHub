@@ -28,9 +28,9 @@ const orNothing = <T,>(read: Promise<T>): Promise<T | null> => read.catch((error
  * recording Home and listening's.
  *
  * A path of two words may be a volume of a sefer, which is no item of its own
- * (/likkutei-sichos/12), so its sefer's view is read beside it. Whatever else
- * a library screen draws is read together after that, so it waits on two
- * rounds of reads.
+ * (/likkutei-sichos/12): the view answers it as the sefer with that volume's
+ * units. A sefer's page and a volume's are that one read; a shelf's reads
+ * the rest of it together after it.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -46,20 +46,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const permanent = /^\/(rh-[\w-]+)$/i.exec(path)?.[1];
   const language = url.searchParams.get('language') ?? undefined;
   const options = { scan: url.searchParams.has('scan'), apiBase: api.baseUrl };
+  // A volume of a sefer has no item of its own: an API older than the view that answers volumes still needs its sefer read beside it.
   const maybeVolume = !permanent && words.length === 2 && words[0] !== 'sets';
   try {
-    const [view, parent] = await Promise.all([
-      orNothing(api.itemView(permanent ? { id: permanent, language } : { path, language })),
-      maybeVolume ? orNothing(api.itemView({ path: `/${words[0]}` })) : null,
-    ]);
-    if (!view) {
-      // Nothing at the path: it may be a volume of a sefer.
+    const view = await orNothing(api.itemView(permanent ? { id: permanent, language } : { path, language }));
+    if (!view && maybeVolume) {
+      const parent = await orNothing(api.itemView({ path: `/${words[0]}` }));
       if (parent?.movedTo) throw redirect(`${parent.movedTo}/${words[1]}${url.search}`, 301);
-      const volume = parent ? await loadVolume(api, parent.item, parent.pathBar, words[1]!, options) : null;
+      const volume = parent ? await loadVolume(api, parent, words[1]!, options) : null;
+      if (volume) return volume;
+    }
+    if (!view) throw data('not found', { status: 404 });
+    if (view.movedTo) throw redirect(`${view.movedTo}${url.search}`, 301);
+    if (view.volume) {
+      const volume = await loadVolume(api, view, view.volume.value, options);
       if (volume) return volume;
       throw data('not found', { status: 404 });
     }
-    if (view.movedTo) throw redirect(`${view.movedTo}${url.search}`, 301);
     const item = view.item;
     // An event, or one of its recordings, is heard on its listening page.
     if (item.type === 'event' || item.type === 'recording') {
@@ -68,7 +71,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
     if (item.type === 'set') return await loadSet(api, item, view.pathBar);
     if (item.type === 'work') {
-      const work = await loadWork(api, item, view.pathBar, options);
+      const work = await loadWork(api, view, options);
       if (work) return work;
     }
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };

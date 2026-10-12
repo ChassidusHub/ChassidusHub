@@ -1,4 +1,4 @@
-import type { ChassidusHub, Item, PathLevel as ApiLevel } from '@chassidushub/client';
+import type { ChassidusHub, Item, ItemView, PathLevel as ApiLevel } from '@chassidushub/client';
 import { redirect } from 'react-router';
 import { namesOf } from '../edit/names';
 import { printingsFrom } from './printings';
@@ -6,9 +6,10 @@ import { isRebbe, nameOf, partLabel, rebbeimFirst } from '../lib/catalog';
 
 /**
  * What the library's pages read from the API, cut down on the server to what
- * they draw, so a page carries no more than it shows. Each page reads in two
- * rounds: the page's item and its path bar (GET /v1/view), then everything
- * else about it at once. Shelves come from one list of every shelf (a few
+ * they draw, so a page carries no more than it shows. A sefer's page and a
+ * volume's are one read (GET /v1/view brings their volumes, additions and
+ * units with the item); a shelf's reads the rest of it at once after that.
+ * Shelves come from one list of every shelf (a few
  * statements) rather than the catalog tree, which costs the database dozens
  * of statements a level; the tree is not read.
  */
@@ -140,23 +141,40 @@ const orNothing = <T>(read: Promise<T>): Promise<T | null> => read.catch((error)
 /** The printings of a sefer, read on the server only for a page asked to show a scan (`?scan=`). */
 const printingsFor = (api: ChassidusHub, work: string, scan: boolean) => (scan ? api.listLinked({ id: work, field: 'work', type: 'publication', limit: 500 }).then((page) => page.items) : Promise.resolve(null));
 
+/** The rows of a sefer's additions. */
+const additionLines = (additions: NonNullable<ItemView['additions']>): Line[] =>
+  additions.map((addition) => ({ key: addition.id, title: nameOf(addition.name, addition.id), sub: additionKinds[addition.kind ?? ''] || undefined, to: addition.path ?? undefined }));
+
 /**
- * A sefer's page, for the sefer and its path bar already read: its volumes
- * and its additions, read together, and its printings (read by the browser
- * unless a scan was asked for). Null when the item is not a sefer.
+ * A sefer's volumes and additions as its view brought them; read here only
+ * from an API older than the one that brings them (for the minute a deploy
+ * of the two takes).
  */
-export async function loadWork(api: ChassidusHub, item: Item, levels: ApiLevel[], options: { scan?: boolean; apiBase: string }) {
+async function outlineOf(api: ChassidusHub, view: ItemView) {
+  if (view.outline) return view.outline;
+  return (await orNothing(api.workOutline({ id: view.item.id })))?.parts.map((part) => ({ value: part.value ?? '', label: part.label ?? null, units: part.units ?? 0 })) ?? null;
+}
+async function additionsOf(api: ChassidusHub, view: ItemView) {
+  if (view.additions) return view.additions;
+  const page = await orNothing(api.listLinked({ id: view.item.id, field: 'addition.to', type: 'work', limit: 100 }));
+  return (page?.items ?? []).map((a) => ({ id: a.id, path: a.path, name: ((a.data as { title?: Record<string, unknown> }).title ?? null), kind: (a.data as { addition?: { kind?: string } }).addition?.kind ?? null }));
+}
+
+/**
+ * A sefer's page, from its view: its volumes and its additions, and its
+ * printings (read by the browser unless a scan was asked for). Null when the
+ * item is not a sefer.
+ */
+export async function loadWork(api: ChassidusHub, view: ItemView, options: { scan?: boolean; apiBase: string }) {
+  const item = view.item;
   if (item.type !== 'work') return null;
   const id = item.id;
-  const [outline, additions, publications] = await Promise.all([
-    orNothing(api.workOutline({ id })),
-    orNothing(api.listLinked({ id, field: 'addition.to', type: 'work', limit: 100 })),
-    printingsFor(api, id, !!options.scan),
-  ]);
+  const levels = view.pathBar;
+  const [outline, additions, publications] = await Promise.all([outlineOf(api, view), additionsOf(api, view), printingsFor(api, id, !!options.scan)]);
   if (!outline) return null;
   const data = item.data as { title?: unknown };
   const author = levels.find((level) => level.kind === 'set' && isRebbe(level.chosen.path));
-  const parts = outline.parts.map((part) => ({ value: part.value ?? '', label: partLabel(part.label, part.value ?? ''), units: part.units ?? 0 }));
+  const parts = outline.map((part) => ({ value: part.value, label: partLabel(part.label, part.value), units: part.units }));
   return {
     screen: 'work' as const,
     id,
@@ -166,13 +184,10 @@ export async function loadWork(api: ChassidusHub, item: Item, levels: ApiLevel[]
     author: author ? nameOf(author.chosen.name) : undefined,
     levels,
     ...ownFields(item, levels),
-    grid: asGrid(outline.parts),
+    grid: asGrid(outline),
     parts,
     printings: publications ? printingsFrom(publications) : null,
-    additions: (additions?.items ?? []).map((addition): Line => {
-      const kind = (addition.data as { addition?: { kind?: string } }).addition?.kind ?? '';
-      return { key: addition.id, title: nameOf((addition.data as { title?: unknown }).title, addition.id), sub: additionKinds[kind] || undefined, to: addition.path ?? undefined };
-    }),
+    additions: additionLines(additions),
   };
 }
 
@@ -191,27 +206,29 @@ function groupOf(position: unknown): string | undefined {
 
 /**
  * A volume of a sefer, which is no item of its own: its path is the sefer's
- * path and its place (/likkutei-sichos/12). For the sefer and its path bar
- * already read: its units, its path bar (the sefer's, and the volume with the
- * other volumes), and its printings.
+ * path and its place (/likkutei-sichos/12). From the sefer's view, which
+ * brings the volume's units when it was read at the volume's path: its
+ * units, its path bar (the sefer's, and the volume with the other volumes),
+ * and its printings.
  */
-export async function loadVolume(api: ChassidusHub, work: Item, levels: ApiLevel[], value: string, options: { scan?: boolean; apiBase: string }) {
+export async function loadVolume(api: ChassidusHub, view: ItemView, value: string, options: { scan?: boolean; apiBase: string }) {
+  const work = view.item;
   if (work.type !== 'work') return null;
   const workId = work.id;
-  const [outline, part, publications] = await Promise.all([
-    orNothing(api.workOutline({ id: workId })),
-    orNothing(api.workPart({ id: workId, part: value, limit: 1000 })),
+  const [outline, units, publications] = await Promise.all([
+    outlineOf(api, view),
+    view.volume?.value === value ? view.volume.units : orNothing(api.workPart({ id: workId, part: value, limit: 1000 })).then((part) => part?.items ?? null),
     printingsFor(api, workId, !!options.scan),
   ]);
-  const here = outline?.parts.find((p) => p.value === value);
-  if (!here || !part) return null;
+  const here = outline?.find((p) => p.value === value);
+  if (!here || !units) return null;
   const label = partLabel(here.label, value);
   const title = nameOf((work.data as { title?: unknown }).title, work.id);
   const level: ApiLevel = {
     kind: 'part',
-    level: (part.items[0]?.data.position as Array<{ level?: string }> | undefined)?.[0]?.level,
+    level: (units[0]?.data.position as Array<{ level?: string }> | undefined)?.[0]?.level,
     chosen: { path: `${work.path}/${value}`, name: { he: label }, value },
-    choices: outline!.parts.map((p) => ({ path: `${work.path}/${p.value}`, name: { he: partLabel(p.label, p.value ?? '') }, value: p.value ?? '', units: p.units ?? 0 })),
+    choices: outline!.map((p) => ({ path: `${work.path}/${p.value}`, name: { he: partLabel(p.label, p.value) }, value: p.value, units: p.units })),
   };
   return {
     screen: 'volume' as const,
@@ -223,8 +240,8 @@ export async function loadVolume(api: ChassidusHub, work: Item, levels: ApiLevel
     title,
     value,
     label,
-    levels: [...levels, level],
-    units: part.items.map((unit) => ({
+    levels: [...view.pathBar, level],
+    units: units.map((unit) => ({
       key: unit.id,
       title: nameOf(unit.data.label, unit.path ?? unit.id),
       sub: placeOf(unit.data.position),

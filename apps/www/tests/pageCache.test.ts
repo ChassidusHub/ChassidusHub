@@ -54,6 +54,7 @@ describe('the page cache', () => {
     expect(second.body).toBe('drawn 1');
     expect(second.response.headers.get('Cache-Control')).toBe(PUBLIC);
     expect(second.response.headers.get('Age')).toBe('60');
+    expect(second.response.headers.get('Server-Timing')).toBe('edge;desc="kept, 60s old"');
     expect(drawn).toBe(1);
 
     // Past two minutes: the kept page at once, a fresh one drawn behind it for the next reader.
