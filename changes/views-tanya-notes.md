@@ -1,0 +1,1 @@
+- New site: a chapter switched to both languages on the page itself now always shows the translation's notes; they were sometimes left empty, drawn before their place was on screen. (#255)
