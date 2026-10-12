@@ -6,6 +6,7 @@ import { namesOf } from '../edit/names';
 import { nameOf } from '../lib/catalog';
 import { clock } from '../listen/common';
 import { pdfsOf } from '../lib/pdfs';
+import { farbrengenMachine, farbrengenOf, farbrengenViews, farbrengenWords } from './farbrengen.server';
 import type { Fact, ReaderData, ReaderText } from './types';
 import { letterLayout } from '../views/letters.layout';
 import { viewFor } from './views';
@@ -62,6 +63,18 @@ export function drawnWords(view: ItemView, title: string): DrawnWords | null {
 }
 
 /**
+ * A page's words as the reader draws them: a sicha's own, or, on a farbrengen
+ * read as one page (farbrengen.server.ts), all its sichos'. The words route
+ * draws them the same way, so their address matches.
+ */
+export async function pageWords(view: ItemView, api: ChassidusHub, language?: string): Promise<{ words: DrawnWords | null; sichos: ItemView[] | null; title: string }> {
+  const farbrengen = farbrengenOf(view);
+  const sichos = farbrengen ? await farbrengenViews(view, farbrengen.sichos, api, language) : null;
+  if (!farbrengen || !sichos) return { words: drawnWords(view, readerTitle(view)), sichos: null, title: readerTitle(view) };
+  return { words: farbrengenWords(sichos, farbrengen.label), sichos, title: farbrengen.label };
+}
+
+/**
  * The reading page's data from the one read of /v1/view. The words are drawn
  * here, on the server, and are never in the page's data: on a whole page they
  * go to `serverOnly`, so a phone gets them once, not twice; a click to the page
@@ -70,14 +83,16 @@ export function drawnWords(view: ItemView, title: string): DrawnWords | null {
  * `language` is the version asked for, if any.
  */
 export async function readerData(view: ItemView, context: AppLoadContext, origin: string, language?: string): Promise<ReaderData> {
-  const title = readerTitle(view);
+  const page = await pageWords(view, context.api, language);
+  const { title, sichos } = page;
   const path = view.item.path ?? `/${view.item.id}`;
-  // The sefer and its parts, between the shelves above and the page itself.
+  // The sefer and its parts, between the shelves above and the page itself (on a farbrengen's page, the farbrengen is its title).
   const fromWork = view.pathBar.findIndex((level) => level.kind === 'work');
-  const middle = (fromWork >= 0 ? view.pathBar.slice(fromWork, -1) : []).map((level) => nameOf(level.chosen.name));
-  const text = await shownText(view, context.api, context, path, title, language);
+  const middle = (fromWork >= 0 ? view.pathBar.slice(fromWork, sichos ? -2 : -1) : []).map((level) => nameOf(level.chosen.name));
+  const text = await shownText(view, context.api, context, path, title, language, page.words, sichos ? farbrengenMachine(sichos) : undefined);
   const level = levelOf(view);
-  const neighbour = (n: ItemView['previous']) => (n?.path ? { path: n.path, label: nameOf(n.name) } : null);
+  // On a farbrengen's page, the farbrengens before and after it, by their own names.
+  const neighbour = (n: ItemView['previous']) => (n?.path ? { path: n.path, label: sichos ? nameOf(n.name).replace(/, [^,]*$/, '') : nameOf(n.name) } : null);
   return {
     id: view.item.id,
     path,
@@ -87,8 +102,8 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     ...(middle.length > 1 ? { within: middle.slice(1).join(' · ') } : {}),
     ...withFacts(view.item.data),
     pathBar: view.pathBar,
-    previous: neighbour(view.previous),
-    next: neighbour(view.next),
+    previous: neighbour((sichos?.[0] ?? view).previous),
+    next: neighbour((sichos?.at(-1) ?? view).next),
     text,
     scan: view.scan?.url ? `${view.scan.url}#page=${view.scan.firstPage}` : null,
     recordings: (view.recordings ?? []).map((r) => ({
@@ -101,14 +116,14 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     url: `${origin}${path}`,
     rev: (view.item as { rev?: number }).rev ?? 0,
     names: namesOf(view.item.data),
+    ...(sichos ? { farbrengen: true as const } : {}),
     work: fromWork >= 0 && view.pathBar[fromWork]!.chosen.path ? { path: view.pathBar[fromWork]!.chosen.path!, label: nameOf(view.pathBar[fromWork]!.chosen.name) } : null,
   };
 }
 
-async function shownText(view: ItemView, api: ChassidusHub, context: AppLoadContext, path: string, title: string, language?: string): Promise<ReaderText> {
+async function shownText(view: ItemView, api: ChassidusHub, context: AppLoadContext, path: string, title: string, language: string | undefined, drawn: DrawnWords | null, machine?: 'none' | 'some' | 'all'): Promise<ReaderText> {
   const text = view.text;
   if (!text) return { kind: 'none' };
-  const drawn = drawnWords(view, title);
   if (text.kind === 'words' && drawn) {
     const url = wordsAddress(view.item.id, await wordsKey(drawn), language);
     // Without serverOnly (a test drawing the page alone) the words stay in the data.
@@ -123,7 +138,7 @@ async function shownText(view: ItemView, api: ChassidusHub, context: AppLoadCont
       notes: inData ? drawn.notes : null,
       url,
       hasNotes: drawn.notes !== '',
-      machine: text.machine ?? 'none',
+      machine: machine ?? text.machine ?? 'none',
       version: text.version ?? '',
       versions: (text.versions ?? []).map((v) => ({ version: v.version, label: v.title ?? languages[v.language] ?? v.language })),
       ...(text.credit ? { credit: text.credit } : {}),
