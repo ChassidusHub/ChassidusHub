@@ -241,6 +241,12 @@ describe('the public site', () => {
         if (page.html.includes(later)) expect(page.html.indexOf('id="named-so"')).toBeLessThan(page.html.indexOf(later));
       }
     }
+    // Nothing has every word and the language too: what the other words name, saying so (#123).
+    const english = await get(`/search?q=${encodeURIComponent('sample farbrengen in English')}`);
+    expect(english.html).toContain('id="in-events"');
+    expect(english.html).toContain('href="/events/5742-05-10"');
+    expect(english.html).toContain('id="any-language"');
+    expect((await get(`/search?q=${encodeURIComponent('Sample Sefer')}`)).html).not.toContain('id="any-language"');
     // Words that are only part of a name find it as before, with nothing put above.
     expect((await get(`/search?q=${encodeURIComponent('Sample')}`)).html).not.toContain('id="named-so"');
   });

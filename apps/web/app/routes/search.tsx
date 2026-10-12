@@ -122,6 +122,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     results: [] as Entity[],
     /** The sefarim and sets named just what was typed: shown first, above the words and the farbrengens (#233). */
     named: [] as Entity[],
+    /** The Library is what the words name without the language asked for: nothing had them all (#123). */
+    anyLanguage: false,
     date: null as { key: string } | null,
     moments: [] as Moment[],
     similar: [] as SimilarItem[],
@@ -139,7 +141,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let date: { key: string } | null = null;
   const found = await byWords.search;
   let results: Entity[] = found.results;
-  const named = understood ? [] : namedSo([...results, ...((await byWords.bare?.catch(() => null))?.results ?? [])], words);
+  const bare = (await byWords.bare?.catch(() => null))?.results ?? [];
+  const named = understood ? [] : namedSo([...results, ...bare], words);
+  // Nothing has every word, the language too ("the Rebbe talks in English"): what the other words name, in any language,
+  // rather than nothing (#123). The page says so.
+  const anyLanguage = results.length === 0 && bare.length > 0;
+  if (anyLanguage) results = bare;
   results = [...named.filter((n) => !results.some((r) => r.id === n.id)), ...results];
   if (understood) {
     if (smart.rest) {
@@ -164,7 +171,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const moreEvents = results.filter((r) => r.type === 'event') as EventItem[];
   // Pages and paragraphs show as the moments they are, above.
   const inText = new Set(['text-page', 'segment']);
-  return { ...empty, moments, refs, understood, events: [...events, ...moreEvents], results: results.filter((r) => r.type !== 'event' && !inText.has(r.type)), named, date };
+  return { ...empty, moments, refs, understood, events: [...events, ...moreEvents], results: results.filter((r) => r.type !== 'event' && !inText.has(r.type)), named, anyLanguage, date };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -200,6 +207,7 @@ const W = {
   showAll: { he: 'הצגת כל הסוגים', en: 'Show every kind' },
   inCalendar: { he: 'בלוח', en: 'In the calendar' },
   namedSo: { he: 'בשם הזה', en: 'By that name' },
+  anyLanguage: { he: 'לא נמצא דבר שמסומן בשפה הזאת. אלה נמצאו לפי שאר המילים, בכל שפה.', en: 'Nothing is marked as in that language. These have the other words, in any language.' },
 } as const;
 
 const w = (lang: Lang, key: keyof typeof W) => W[key][lang];
@@ -214,7 +222,7 @@ const yearOf = (e: EventItem) => Number(String(eventData(e).date ?? '').slice(0,
 const TYPE_ICON: Record<string, IconName> = { work: 'book', unit: 'file', publication: 'layers', scan: 'scan', recording: 'audio', author: 'user', set: 'book', text: 'file' };
 
 export default function Search({ loaderData }: Route.ComponentProps) {
-  const { lang, q, kind, by, meaningAvailable, understood, events, results, named, date, moments, similar, refs } = loaderData;
+  const { lang, q, kind, by, meaningAvailable, understood, events, results, named, anyLanguage, date, moments, similar, refs } = loaderData;
   const hasQuery = q.trim() !== '';
   const total = events.length + results.length + moments.length;
   const tab = by === 'meaning' ? 'meaning' : (kind ?? 'all');
@@ -287,6 +295,8 @@ export default function Search({ loaderData }: Route.ComponentProps) {
           ) : (
             <>
               {understood || date ? <Understood lang={lang} understood={understood} date={date} /> : null}
+
+              {by === 'words' && anyLanguage ? <p className="section-hint" id="any-language">{w(lang, 'anyLanguage')}</p> : null}
 
               {by === 'words' && kind === null && named.length ? (
                 <section aria-labelledby="named-so">
