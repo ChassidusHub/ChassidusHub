@@ -36,8 +36,15 @@ export function noteLabels(notes: readonly PageSegment[], unmarked?: ReadonlySet
  * its notes nothing points to go unnumbered. From the page's view (app/views).
  */
 export interface WordsLayout {
-  classes: (segments: readonly PageSegment[]) => Map<string, string>;
+  classes?: (segments: readonly PageSegment[]) => Map<string, string>;
   unmarkedNotes?: boolean;
+  /**
+   * A kind that sets its words among parts of its own (a day of Hayom Yom:
+   * the head the print sets over it, its notices, its shiurim) draws the
+   * whole body here, from the item's data, its segments and `draw`, which
+   * draws any of them as every page draws its paragraphs.
+   */
+  body?: (segments: readonly PageSegment[], item: unknown, draw: (segments: readonly PageSegment[]) => string) => string;
 }
 
 /** The notes nothing in the words points to. */
@@ -97,11 +104,12 @@ function segment(s: PageSegment, labels: Map<string, string>, first: boolean, ti
   return `<p id="${sid(s.id)}"${classes.length ? ` class="${classes.join(' ')}"` : ''}>${words}</p>`;
 }
 
-/** The body: every segment in reading order. `title` is the page's own title; `layout`, how its kind of page sets it. */
-export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string, layout?: WordsLayout): string {
+/** The body: every segment in reading order. `title` is the page's own title; `layout`, how its kind of page sets it; `item`, the item's data, for a layout that reads it. */
+export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string, layout?: WordsLayout, item?: unknown): string {
   const labels = noteLabels(notes, layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined);
-  const placed = layout?.classes(segments);
-  return segments.map((s, at) => segment(s, labels, at === 0, title, placed)).join('');
+  const placed = layout?.classes?.(segments);
+  const draw = (list: readonly PageSegment[]) => list.map((s, at) => segment(s, labels, at === 0 && list[0] === segments[0], title, placed)).join('');
+  return layout?.body ? layout.body(segments, item, draw) : draw(segments);
 }
 
 /**
