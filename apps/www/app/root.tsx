@@ -29,19 +29,39 @@ const RESUME_SCRIPT = `var c=document.cookie,r=[];if(/(?:^|;\\s*)ch_listen=/.tes
 
 /**
  * A tap that comes before the page's scripts (2 to 3 s in on a slow phone)
- * is kept, not lost: the button or footnote mark tapped shows it is waiting
- * (ui.css, [data-wait]) and is tapped again for the person once the page has
- * come to life (App, below). Links and forms work without script and go
- * through as they are; a footnote mark's no-script link to the note at the
- * end of the page is held, so the reader keeps their place and the note opens
- * where they are. Only the last tap is kept, and taps still waiting in the
- * browser while the page came to life count as that same tap (so a second
- * tap never closes what the first opened). If the page has loaded and its
- * scripts still have not come to life 5 s later (one failed), the mark's link
- * is followed after all, so the note can still be read.
+ * is kept, not lost, and made for the person once the page has come to life
+ * (App, below). A link tapped shows the next page's frame at once (#322):
+ * its title, from the link, over a quiet stand-in for what comes under it
+ * (ui.css, .first-frame), with its address in the address bar; the page then
+ * opens in the browser, from the catalog it keeps, rather than as a whole
+ * new page over a slow line. The address is put back just before the
+ * scripts take over the page (when React Router names its route modules),
+ * so they come to life on the page that was drawn, and the frame goes once
+ * the tapped page is there. A button or footnote mark tapped shows it is
+ * waiting (ui.css, [data-wait]); a footnote mark's no-script link to the note
+ * at the end of the page is held, so the reader keeps their place and the
+ * note opens where they are. Forms go through as they are. Only the last tap
+ * is kept, and taps still waiting in the browser while the page came to life
+ * count as that same tap (so a second tap never closes what the first
+ * opened). If the page has loaded and its scripts still have not come to
+ * life 5 s later (one failed), the link is followed after all.
  * Written out here, not imported, so it runs before any script arrives.
  */
-const EARLY_TAPS = import.meta.env.SSR ? `(function(){var w=window,q=null;function k(e){var t=e.target&&e.target.closest&&e.target.closest('a.nm,button');if(!t||t.disabled||(t.type==='submit'&&t.form))return;e.preventDefault();e.stopPropagation();if(q&&q!==t)q.removeAttribute('data-wait');q=t;t.setAttribute('data-wait','');var n=0,i=setInterval(function(){if(q!==t)return clearInterval(i);if(document.readyState==='complete'&&++n>5&&t.href){clearInterval(i);q=null;t.removeAttribute('data-wait');location.href=t.href}},1000)}w.addEventListener('click',k,true);w.__taps=function(){setTimeout(function(){w.removeEventListener('click',k,true);var t=q;q=null;if(t){t.removeAttribute('data-wait');if(t.isConnected)t.click()}})}})()` : '';
+const EARLY_TAPS = import.meta.env.SSR
+  ? `(function(){var w=window,d=document,h=history,q=null,o=null,f=null,u=0,R='__reactRouterRouteModules';` +
+    // The next page's frame, drawn over this page's column under its top bar.
+    `function frame(t){if(!f){f=d.createElement('div');f.className='first-frame';f.setAttribute('aria-busy','true');f.innerHTML='<div class="view"><h1></h1><p class="ff-line"></p><p class="ff-line"></p><p class="ff-line ff-short"></p></div>';var m=d.querySelector('.main'),b=d.querySelector('header'),r=m&&m.getBoundingClientRect();if(r){f.style.left=r.left+'px';f.style.width=r.width+'px'}f.style.top=(b?Math.max(0,b.getBoundingClientRect().bottom):0)+'px';d.body.appendChild(f)}f.querySelector('h1').textContent=(t.querySelector('b')||t).textContent.trim()}` +
+    `function back(){if(o){h.replaceState(o.s,'',o.u);o=null}}` +
+    `function drop(){back();if(f){f.remove();f=null}}` +
+    `function k(e){var t=e.target&&e.target.closest&&e.target.closest('a[href],button');if(!t||t.disabled||(t.type==='submit'&&t.form))return;` +
+    `if(t.tagName==='A'&&!t.matches('.nm')){if(e.button||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||t.target||t.hasAttribute('download')||t.origin!==location.origin||(t.pathname===location.pathname&&t.hash))return;frame(t);if(!u){o=o||{u:location.href,s:h.state};h.replaceState(null,'',t.href)}}else drop();` +
+    `e.preventDefault();e.stopPropagation();if(q&&q!==t)q.removeAttribute('data-wait');q=t;t.setAttribute('data-wait','');var n=0,i=setInterval(function(){if(q!==t)return clearInterval(i);if(document.readyState==='complete'&&++n>5&&t.href){clearInterval(i);q=null;t.removeAttribute('data-wait');location.href=t.href}},1000)}` +
+    `w.addEventListener('click',k,true);w.addEventListener('pageshow',function(e){if(e.persisted)drop()});` +
+    // React Router names its route modules just before it hydrates: the address drawn goes back first.
+    `Object.defineProperty(w,R,{configurable:true,set:function(v){u=1;back();delete w[R];w[R]=v}});` +
+    `w.__taps=function(){setTimeout(function(){w.removeEventListener('click',k,true);var t=q;q=null;if(t){t.removeAttribute('data-wait');if(t.isConnected)t.click()}` +
+    `if(f){var a=location.pathname,p=t&&t.pathname,s=0,n=0,i=setInterval(function(){if(location.pathname!==a||p===a)s++;if(s>2||++n>200||!p){clearInterval(i);drop()}},50)}})}})()`
+  : '';
 
 /** The service worker (public/sw.js), once the page has loaded, so it never competes with the page itself. */
 const worker = import.meta.env.SSR ? `if('serviceWorker'in navigator)addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})` : '';

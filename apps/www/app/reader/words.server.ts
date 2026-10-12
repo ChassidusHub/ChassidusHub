@@ -55,6 +55,8 @@ export interface WordsContext {
   volume?: number;
   /** The pages beside it at its own level, as the path bar lists them (an index kept one letter a page). */
   siblings?: { path: string; label: string; current: boolean }[];
+  /** The same words in another language, to set beside them (a chapter of Tanya with its translation). */
+  beside?: { segments: readonly PageSegment[]; language: string };
 }
 
 /** The notes nothing in the words points to. */
