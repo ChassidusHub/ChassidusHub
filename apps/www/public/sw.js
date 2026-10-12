@@ -108,7 +108,8 @@ self.addEventListener('fetch', (event) => {
  * the network, so it is always the newest; the last copy is kept, and shown
  * when there is no network, or when the network is slower than PATIENCE_MS.
  * Never kept: what is one person's own or sent as them (the account, the
- * inbox, signing in, the back room, /_/…) and Edit (?edit).
+ * inbox, signing in, the back room, /_/…), Edit (?edit), and search, whose
+ * answers are drawn for each question and are not reading.
  */
 
 const WORDS = 'texts-words-v1';
@@ -121,8 +122,8 @@ const KEEP_PAGES = 300;
 /** How long a page waits on the network before showing the copy kept of it, if there is one. */
 const PATIENCE_MS = 4000;
 
-/** Pages that are one person's own, or a step of signing in. */
-const PERSONAL = /^\/(?:account|me|inbox|signin|connect|oauth|back|review|admin|organize|add|new|showcase|show|edit)(?:\/|\.data$|$)/;
+/** Pages that are one person's own, a step of signing in, or a search. */
+const PERSONAL = /^\/(?:search|account|me|inbox|signin|connect|oauth|back|review|admin|organize|add|new|showcase|show|edit)(?:\/|\.data$|$)/;
 
 /** What this section does with a request: 'words', 'page', or nothing. */
 function textsAnswer(request, url) {

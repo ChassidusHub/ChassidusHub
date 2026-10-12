@@ -16,8 +16,8 @@ describe('what the service worker keeps of what is read', () => {
     expect(ask('/likkutei-sichos/12/3.data?_routes=routes%2Fitem', 'cors')).toBe('page');
   });
 
-  it('never keeps what is one person’s, sent as them, or Edit', () => {
-    for (const path of ['/account', '/account.data', '/me/fixes', '/inbox', '/signin', '/back', '/_/fix', '/_/auth/session', '/sw.js', '/likkutei-sichos/12/3?edit']) {
+  it('never keeps what is one person’s, sent as them, Edit, or a search', () => {
+    for (const path of ['/account', '/account.data', '/me/fixes', '/inbox', '/signin', '/back', '/_/fix', '/_/auth/session', '/sw.js', '/likkutei-sichos/12/3?edit', '/search?q=שמיני', '/search.data?q=שמיני']) {
       expect(ask(path), path).toBe(null);
     }
     // A path that only starts like a personal one is a page like any other.
