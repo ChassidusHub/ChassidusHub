@@ -3,7 +3,7 @@ import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { forEdge, inGroups, mayUseEdge, Seen, seenIn, tagged } from './edge';
-import { apiFiles, bucketFiles, catalogFile, keptAtEdge, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
+import { apiFiles, bucketFiles, catalogFile, corePreload, isPage, keptAtEdge, withPreload, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
 import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
@@ -97,13 +97,18 @@ function catalogFiles(env: Env): SnapshotFiles | null {
   return snapshotFiles;
 }
 
+/** The snapshot's core, named in each page's `Link` header (server/catalog.ts). */
+let preload: ReturnType<typeof corePreload> | null = null;
+
 export default {
   async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
     // The catalog snapshot's files, for the browser to keep (/_/ is never a kept page).
     const file = await catalogFile(request, catalogFiles(env), () => apiFor({ binding: env.API, baseUrl: env.API_URL }).transcribedRecordings({ limit: 1000 }));
     if (file) return file;
+    preload ??= corePreload(catalogFiles(env));
+    ctx.waitUntil(preload.refresh());
     const cached = ctx.exports?.CachedPage;
-    if (cached && mayUseEdge(request)) return cached.fetch(forEdge(request, serverBuild.assets.version));
-    return draw(request, env, env.API);
+    const page = cached && mayUseEdge(request) ? await cached.fetch(forEdge(request, serverBuild.assets.version)) : await draw(request, env, env.API);
+    return isPage(request, page) ? withPreload(page, preload.link()) : page;
   },
 };

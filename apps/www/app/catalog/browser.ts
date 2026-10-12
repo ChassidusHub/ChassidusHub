@@ -32,13 +32,15 @@ const storage = (): CacheStorage | undefined => {
 /**
  * A part from Cache Storage, else from the site, kept for next time. The
  * manifest kept is answered at once while the site is asked for a newer one
- * behind it, which the next check (a minute on) picks up.
+ * behind it, which the next check (a minute on) picks up. Fetched as the
+ * page's `Link` preload asks for them (server/catalog.ts, `corePreload`), so
+ * the browser hands over what it already fetched with the page.
  */
 async function cached(url: string): Promise<Response> {
   const cache = await storage()?.open(CACHE).catch(() => undefined);
   const kept = await cache?.match(url).catch(() => undefined);
   if (url === MANIFEST) {
-    const asking = fetch(url, { credentials: 'omit' }).then((answer) => {
+    const asking = fetch(url).then((answer) => {
       if (answer.ok) void tidy(answer.clone());
       return answer;
     });
@@ -49,7 +51,7 @@ async function cached(url: string): Promise<Response> {
     return asking;
   }
   if (kept) return kept;
-  const answer = await fetch(url, { credentials: 'omit' });
+  const answer = await fetch(url);
   if (answer.ok && cache) await cache.put(url, answer.clone()).catch(() => undefined);
   return answer;
 }

@@ -6,7 +6,7 @@ import type { ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { memoryShowcases } from '../app/stewards/showcase';
-import { apiFiles, catalogFile } from './catalog';
+import { apiFiles, catalogFile, corePreload } from './catalog';
 
 /**
  * The built site on Node, for the browser tests in CI and for trying a build
@@ -24,10 +24,18 @@ const forward = forwardFor({ baseUrl: process.env.API_URL });
 const showcases = memoryShowcases();
 // The catalog snapshot's files for the browser, from the API (server/catalog.ts); CATALOG_SNAPSHOT=off hands it none.
 const snapshotFiles = process.env.CATALOG_SNAPSHOT === 'off' ? null : apiFiles(api.baseUrl, (url) => fetch(url));
-const pages = createRequestListener({
+// The page's `Link` header that fetches the snapshot's core alongside it, as the Worker sends.
+const preload = corePreload(snapshotFiles);
+const listener = createRequestListener({
   build,
   getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, ...pageContext(request) }),
 });
+const pages: typeof listener = (req, res) => {
+  void preload.refresh();
+  const link = preload.link();
+  if (link && req.method === 'GET' && req.headers.accept?.includes('text/html')) res.setHeader('Link', link);
+  return listener(req, res);
+};
 
 const types: Record<string, string> = {
   '.js': 'text/javascript',

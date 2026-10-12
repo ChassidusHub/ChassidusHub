@@ -92,3 +92,65 @@ export async function catalogFile(request: Request, files: SnapshotFiles | null,
   headers.set('Cache-Control', name === 'manifest.json' ? 'public, max-age=60, s-maxage=60' : 'public, max-age=31536000, immutable');
   return new Response(answer.body, { status: 200, headers });
 }
+
+/** How long the tree's name, read from the manifest, is used before it is read again (as the browser's manifest, a minute). */
+const PRELOAD_SECONDS = 60;
+
+/**
+ * The `Link` header that has the browser fetch the snapshot's core (the
+ * manifest and the tree, app/catalog/browser.ts `warm`) alongside the page,
+ * so the first catalog tap of a visit finds it there (#265). The tree's name
+ * changes with each snapshot, so it is read from the manifest and kept for a
+ * minute in this isolate; reading it never holds a page back: until it is
+ * known (a new isolate, or a manifest that cannot be read), the page names
+ * the manifest only, and `refresh` reads it behind the page.
+ *
+ * The header is added to a page as it goes out, never to the page the edge
+ * keeps (server/edge.ts), so a page kept for days still names today's tree.
+ * `crossorigin` makes them the same requests as the browser's own fetches,
+ * which carry no `credentials` option of their own for that reason.
+ */
+export function corePreload(files: SnapshotFiles | null, now: () => number = Date.now) {
+  let tree: string | null = null;
+  let readAt = -Infinity;
+  let reading: Promise<void> | null = null;
+  const at = (name: string) => `</_/catalog/${encodeURIComponent(name)}>; rel=preload; as=fetch; crossorigin=anonymous`;
+  return {
+    /** The header's value, or null when the site hands out no snapshot. */
+    link(): string | null {
+      if (!files) return null;
+      return [at('manifest.json'), ...(tree ? [at(tree)] : [])].join(', ');
+    },
+    /** Reads the tree's name again if it is a minute old; answers at once when it is not. */
+    refresh(): Promise<void> {
+      if (!files || now() - readAt < PRELOAD_SECONDS * 1000) return Promise.resolve();
+      reading ??= files
+        .manifest()
+        .then(async (answer) => {
+          if (!answer.ok) return;
+          const name = ((await answer.json()) as { tree?: { file?: unknown } } | null)?.tree?.file;
+          tree = typeof name === 'string' && FILE.test(name) ? name : null;
+        })
+        // A manifest that cannot be read keeps the name known, and is asked again a minute on.
+        .catch(() => undefined)
+        .finally(() => {
+          readAt = now();
+          reading = null;
+        });
+      return reading;
+    },
+  };
+}
+
+/** Whether a response is a page (HTML), the only kind that names the snapshot's core to preload. */
+export function isPage(request: Request, response: Response): boolean {
+  return request.method === 'GET' && response.ok && (response.headers.get('Content-Type') ?? '').startsWith('text/html');
+}
+
+/** The page with the core's `Link` header added (`corePreload`), its body untouched. */
+export function withPreload(response: Response, link: string | null): Response {
+  if (!link) return response;
+  const page = new Response(response.body, response);
+  page.headers.append('Link', link);
+  return page;
+}

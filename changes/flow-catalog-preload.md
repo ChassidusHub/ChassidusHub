@@ -1,0 +1,1 @@
+- New site: each page asks the browser to fetch the catalog snapshot's manifest and tree alongside it (a `Link` preload), so the second catalog tap of a visit is drawn from it more often. On a phone on slow 4G, Likkutei Sichos opens from the library in 1.5 s instead of 2.4 s, and the Toras Menachem and Igros Kodesh shelves in 0.85-0.9 s instead of 1.0-1.6 s (#265).
