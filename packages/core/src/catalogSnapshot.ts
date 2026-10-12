@@ -229,9 +229,22 @@ export interface SnapshotTopEntry {
 }
 
 /** A top shelf. A Rebbe's shelf carries its shelves, sefarim and additions, so his page draws with no other file. */
+/**
+ * A shelf on a Rebbe's shelf, with what his page shows of it: its official
+ * sefarim, the names of its first shelves inside, and whether it has loose
+ * additions (ones that belong to none of its sefarim).
+ */
+export interface SnapshotTopInner extends SnapshotTopEntry {
+  works: SnapshotTopEntry[];
+  inner: SnapshotName[];
+  loose?: true;
+}
+
 export interface SnapshotTopShelf extends SnapshotTopEntry {
+  /** Its revision on main, for an edit form to start from. */
+  rev: number;
   rebbe?: number;
-  sets?: SnapshotTopEntry[];
+  sets?: SnapshotTopInner[];
   works?: SnapshotTopEntry[];
   additions?: SnapshotTopEntry[];
 }
@@ -641,8 +654,12 @@ function topOf(tree: SnapshotTree): SnapshotTopFile {
   };
   const top = tree.top.map((id): SnapshotTopShelf => {
     const set = tree.sets[id]!;
-    if (!set.rebbe) return entry(id);
-    return { ...entry(id), rebbe: set.rebbe, sets: set.sets.map(entry), works: set.works.map(entry), additions: set.additions.map(entry) };
+    if (!set.rebbe) return { ...entry(id), rev: set.rev };
+    const inner = (s: EntityId): SnapshotTopInner => {
+      const shelf = tree.sets[s]!;
+      return { ...entry(s), works: shelf.works.map(entry), inner: shelf.sets.slice(0, 3).map((i) => tree.sets[i]!.name), ...(shelf.additions.length ? { loose: true as const } : {}) };
+    };
+    return { ...entry(id), rev: set.rev, rebbe: set.rebbe, sets: set.sets.map(inner), works: set.works.map(entry), additions: set.additions.map(entry) };
   });
   return { format: SNAPSHOT_INDEX_FORMAT, top };
 }
