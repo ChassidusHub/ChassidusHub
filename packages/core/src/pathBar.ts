@@ -29,7 +29,11 @@ export interface PathLevel {
 export interface PathChoice {
   /** The item; a work's part has none (it is the units that share it). */
   id?: EntityId;
-  /** The item's page, or for a part, the work's path and the part's place (`/likkutei-sichos/1`). */
+  /**
+   * The item's page. For a volume, the work's path and the volume's place
+   * (`/likkutei-sichos/1`), the volume's page; for a part inside a volume
+   * (a sicha whose units are its אותיות), which has no page, its first unit's.
+   */
   path: string | null;
   name: Json | null;
   /** A part's place in its work (`1`). */
@@ -134,7 +138,8 @@ async function parts(catalog: Catalog, work: EntityId, unit: EntityId, position:
         `(SELECT 0 AS depth, NULL AS id, NULL AS path, v.part AS value, f.name, v.units, v.ord
           FROM (SELECT p.part, count(*)::int AS units, min(p.ord) AS ord ${from} GROUP BY 1 ORDER BY 3 LIMIT ${PATH_CHOICES_MAX}) v
           LEFT JOIN LATERAL (SELECT p.position->0->'label' AS name ${from} AND p.part = v.part AND p.ord = v.ord ORDER BY p.unit_id LIMIT 1) f ON TRUE)`
-      : `(SELECT ${i} AS depth, NULL AS id, NULL AS path, p.position->${i}->>'value' AS value,
+      : // A part inside a volume (a parsha, a sicha of אותיות) has no page of its own: its choice opens its first unit.
+        `(SELECT ${i} AS depth, NULL AS id, (array_agg(p.path ORDER BY p.ord, p.unit_id))[1] AS path, p.position->${i}->>'value' AS value,
                   (array_agg(p.position->${i}->'label' ORDER BY p.ord))[1] AS name,
                   count(*)::int AS units, min(p.ord) AS ord
                 ${from} ${sharing(i)} GROUP BY 4 ORDER BY 7 LIMIT ${PATH_CHOICES_MAX})`,
@@ -148,14 +153,14 @@ async function parts(catalog: Catalog, work: EntityId, unit: EntityId, position:
     `SELECT * FROM (${selects.join(' UNION ALL ')}) x ORDER BY depth, ord COLLATE "C", id`,
     params,
   );
-  const workPath = rows.find((r) => r.path)?.path?.split('/').slice(0, -values.length).join('/') ?? null;
+  const workPath = rows.find((r) => r.depth === last && r.path)?.path?.split('/').slice(0, -values.length).join('/') ?? null;
   return values.map((value, i) => {
     const level = position[i]?.level;
     const at = rows.filter((r) => r.depth === i);
     const choices: PathChoice[] =
       i === last
         ? at.map((r) => ({ id: r.id!, path: r.path, name: r.name, value: r.value }))
-        : at.map((r) => ({ path: workPath === null ? null : [workPath, ...values.slice(0, i), r.value].join('/'), name: r.name, value: r.value, units: r.units ?? 0 }));
+        : at.map((r) => ({ path: i > 0 ? r.path : workPath === null ? null : [workPath, r.value].join('/'), name: r.name, value: r.value, units: r.units ?? 0 }));
     const chosen = i === last ? choices.find((c) => c.id === unit) : choices.find((c) => c.value === value);
     return { kind: i === last ? 'unit' : 'part', ...(level ? { level } : {}), chosen: chosen ?? { path: null, name: null, value }, choices };
   });

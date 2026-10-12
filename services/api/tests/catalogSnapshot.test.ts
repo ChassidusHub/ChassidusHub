@@ -50,6 +50,10 @@ describe('GET /v1/catalog', () => {
       await refreshSnapshot(catalog.db, store);
     });
     const app = createApp({ catalog, catalogSnapshot: { store, rebuild }, waitUntil: (work) => void background.push(work) });
+    // None yet: 503, and the first snapshot is built behind it.
+    expect((await app.request('/v1/catalog/manifest.json')).status).toBe(503);
+    await Promise.all(background);
+    builds = 0;
     const first = (await (await app.request('/v1/catalog/manifest.json')).json()) as SnapshotManifest;
 
     // A change: the next manifest is still the old one, and starts the build.
@@ -61,6 +65,23 @@ describe('GET /v1/catalog', () => {
     const fresh = (await (await app.request('/v1/catalog/manifest.json')).json()) as SnapshotManifest;
     expect(fresh.seq).toBeGreaterThan(first.seq);
     expect(fresh.counts.works).toBe(first.counts.works + 1);
+  });
+
+  it('never builds while someone waits: with none yet, 503 and a build behind the answer', async () => {
+    const { catalog, set } = await freshCatalog();
+    await add(catalog, 'mendy', 'keeper', 'work', work(set, 'ספר', 'sefer'), '/sefer');
+    const store = memorySnapshotStore();
+    const background: Array<Promise<unknown>> = [];
+    const rebuild = singleFlight(() => refreshSnapshot(catalog.db, store));
+    const app = createApp({ catalog, catalogSnapshot: { store, rebuild }, waitUntil: (w) => void background.push(w) });
+
+    const first = await app.request('/v1/catalog/manifest.json');
+    expect(first.status).toBe(503);
+    expect(first.headers.get('Retry-After')).toBe('30');
+    expect(first.headers.get('Cache-Control')).toBe('no-store');
+    expect(background).toHaveLength(1);
+    await Promise.all(background);
+    expect((await app.request('/v1/catalog/manifest.json')).status).toBe(200);
   });
 
   it('is asked of the API, not answered in the site’s Worker', () => {

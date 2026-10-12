@@ -1,0 +1,1 @@
+- New site: in Likkutei Sichos 30-39, choosing another sicha or parsha in the path bar opens its first ois; it went to an address with no page (#264). A path with nothing at it now shows "הדף לא נמצא" inside the site's frame, with the top bar and the library, listening and search a tap away.

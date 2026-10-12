@@ -38,7 +38,11 @@ test('the other shelves leave out an empty one', async ({ page }) => {
   await expect(page.getByText('מדף ריק לדוגמה')).toHaveCount(0);
 });
 
-test('a path with nothing at it is not found', async ({ page }) => {
+test('a path with nothing at it is not found, in the site\'s frame with a way on (#264)', async ({ page }) => {
   const response = await page.goto('/sample-sichos/999');
   expect(response?.status()).toBe(404);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('הדף לא נמצא');
+  await expect(page.locator('header.top')).toBeVisible();
+  await page.getByRole('navigation', { name: 'ראשי' }).getByRole('link', { name: 'ספרייה' }).filter({ visible: true }).click();
+  await expect(page).toHaveURL(/\/library$/);
 });
