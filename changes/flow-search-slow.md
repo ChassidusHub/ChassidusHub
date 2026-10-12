@@ -1,0 +1,1 @@
+New site: a search that is slow to answer on a slow phone is waited for (15 s, not 5 s), what was already found stays on the page, and a search that did not answer is asked again by itself, then offers "נסו שוב" (#338).

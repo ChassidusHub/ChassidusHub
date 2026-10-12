@@ -573,6 +573,8 @@ mark { background: none; color: var(--g900); font-weight: 700; }
 .search-form { margin-top: 8px; }
 .sugg { margin-top: 6px; }
 .sugg .row { min-height: 52px; }
+/* A search that did not answer: what was found stays, and a quiet way to ask again (routes/search.tsx, Again). */
+.again button { color: var(--g900); text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
 h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 
 /* ---------- reader: the words and their footnotes, as the prototype sets them ---------- */
