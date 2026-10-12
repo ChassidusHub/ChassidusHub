@@ -6,27 +6,43 @@ import { nameOf } from '../lib/catalog';
 import { clock } from '../listen/common';
 import { pdfsOf } from '../lib/pdfs';
 import type { ReaderData, ReaderText } from './types';
-import { notesHtml, wordsHtml } from './words.server';
+import { notesHtml, wordsAddress, wordsHtml, wordsKey, type DrawnWords } from './words.server';
 
 const languages: Record<string, string> = { he: 'עברית', en: 'אנגלית', yi: 'אידיש', ru: 'רוסית', fr: 'צרפתית', es: 'ספרדית' };
 
+/** A reading page's title: the unit's own label, else its name in the path bar. */
+export const readerTitle = (view: ItemView) => nameOf((view.item.data as { label?: unknown }).label) || nameOf(view.pathBar.at(-1)?.chosen.name);
+
+/** A page's words drawn as the reader shows them, or null when the view has no words. */
+export function drawnWords(view: ItemView, title: string): DrawnWords | null {
+  if (view.text?.kind !== 'words') return null;
+  const segments = (view.text.segments ?? []) as unknown as PageSegment[];
+  const notes = (view.text.notes ?? []) as unknown as PageSegment[];
+  return { body: wordsHtml(segments, notes, title), notes: notes.length ? notesHtml(notes) : '' };
+}
+
 /**
  * The reading page's data from the one read of /v1/view. The words are drawn
- * here, on the server; on a whole page they go to `serverOnly` and are left
- * out of the data, so a phone gets them once, not twice.
+ * here, on the server, and are never in the page's data: on a whole page they
+ * go to `serverOnly`, so a phone gets them once, not twice; a click to the page
+ * gets their address instead (`url`), where they are kept for good, so a sicha
+ * read once opens again without fetching its words (routes/words.ts).
+ * `language` is the version asked for, if any.
  */
-export async function readerData(view: ItemView, context: AppLoadContext, origin: string): Promise<ReaderData> {
-  const title = nameOf((view.item.data as { label?: unknown }).label) || nameOf(view.pathBar.at(-1)?.chosen.name);
+export async function readerData(view: ItemView, context: AppLoadContext, origin: string, language?: string): Promise<ReaderData> {
+  const title = readerTitle(view);
   const path = view.item.path ?? `/${view.item.id}`;
   // The sefer and its parts, between the shelves above and the page itself.
   const fromWork = view.pathBar.findIndex((level) => level.kind === 'work');
   const middle = (fromWork >= 0 ? view.pathBar.slice(fromWork, -1) : []).map((level) => nameOf(level.chosen.name));
-  const text = await shownText(view, context.api, context, path, title);
+  const text = await shownText(view, context.api, context, path, title, language);
+  const level = ((view.item.data as { position?: { level?: unknown }[] }).position ?? []).at(-1)?.level;
   const neighbour = (n: ItemView['previous']) => (n?.path ? { path: n.path, label: nameOf(n.name) } : null);
   return {
     id: view.item.id,
     path,
     title,
+    ...(typeof level === 'string' && level ? { level } : {}),
     sub: middle.join(' · '),
     pathBar: view.pathBar,
     previous: neighbour(view.previous),
@@ -47,25 +63,24 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
   };
 }
 
-async function shownText(view: ItemView, api: ChassidusHub, context: AppLoadContext, path: string, title: string): Promise<ReaderText> {
+async function shownText(view: ItemView, api: ChassidusHub, context: AppLoadContext, path: string, title: string, language?: string): Promise<ReaderText> {
   const text = view.text;
   if (!text) return { kind: 'none' };
-  if (text.kind === 'words') {
-    const segments = (text.segments ?? []) as unknown as PageSegment[];
-    const notes = (text.notes ?? []) as unknown as PageSegment[];
-    let body: string | null = wordsHtml(segments, notes, title);
-    let notesDrawn: string | null = notes.length ? notesHtml(notes) : '';
+  const drawn = drawnWords(view, title);
+  if (text.kind === 'words' && drawn) {
+    const url = wordsAddress(view.item.id, await wordsKey(drawn), language);
+    // Without serverOnly (a test drawing the page alone) the words stay in the data.
+    const inData = !context.serverOnly;
     if (context.document && context.serverOnly) {
-      context.serverOnly.set(`body:${path}`, body);
-      context.serverOnly.set(`notes:${path}`, notesDrawn);
-      body = null;
-      notesDrawn = null;
+      context.serverOnly.set(`body:${path}`, drawn.body);
+      context.serverOnly.set(`notes:${path}`, drawn.notes);
     }
     return {
       kind: 'words',
-      body,
-      notes: notesDrawn,
-      hasNotes: notes.length > 0,
+      body: inData ? drawn.body : null,
+      notes: inData ? drawn.notes : null,
+      url,
+      hasNotes: drawn.notes !== '',
       machine: text.machine ?? 'none',
       version: text.version ?? '',
       versions: (text.versions ?? []).map((v) => ({ version: v.version, label: v.title ?? languages[v.language] ?? v.language })),

@@ -86,3 +86,25 @@ export function notesHtml(notes: readonly PageSegment[]): string {
     })
     .join('');
 }
+
+/** A page's words as the reader shows them: the body and the notes, drawn. */
+export interface DrawnWords {
+  body: string;
+  notes: string;
+}
+
+/**
+ * The key of a page's drawn words: the first 20 hex digits of their SHA-256.
+ * The same words always give the same key and other words never do, so the
+ * words can be kept at an address made from it for good (routes/words.ts).
+ */
+export async function wordsKey(words: DrawnWords): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([words.body, words.notes])));
+  return [...new Uint8Array(digest)]
+    .slice(0, 10)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** Where a page's words are kept: by the item, the key of its words and the version asked for. */
+export const wordsAddress = (id: string, key: string, language?: string) => `/_/words/${encodeURIComponent(id)}/${key}${language ? `?language=${encodeURIComponent(language)}` : ''}`;
