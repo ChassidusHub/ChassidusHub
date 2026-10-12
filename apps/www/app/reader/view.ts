@@ -25,8 +25,8 @@ export interface ReaderView {
   levels?: readonly string[];
   /** Under the title: the facts this kind shows (a letter's number, date and addressee). */
   Head?: ComponentType<{ data: ReaderData }>;
-  /** The words and their footnotes. A view without them draws them as the sichos view does. */
-  Words?: ComponentType<{ data: ReaderData; words: ReaderWords }>;
+  /** The words and their footnotes; a view that changes only the facts above them uses the sichos view's (`SichaWords`). */
+  Words: ComponentType<{ data: ReaderData; words: ReaderWords }>;
 }
 
 /** The kind every page falls back to: a sicha's words and footnotes. */
@@ -39,11 +39,5 @@ export const DEFAULT_VIEW = 'sichos';
  * so a page always has a view.
  */
 export function pickView(views: readonly ReaderView[], page: { view?: string; level?: string }): ReaderView {
-  const named = page.view ? views.find((view) => view.kind === page.view) : undefined;
-  if (named) return named;
-  const byLevel = page.level ? views.find((view) => view.levels?.includes(page.level!)) : undefined;
-  if (byLevel) return byLevel;
-  const fallback = views.find((view) => view.kind === DEFAULT_VIEW);
-  if (!fallback) throw new Error(`the reader has no ${DEFAULT_VIEW} view`);
-  return fallback;
+  return (page.view && views.find((view) => view.kind === page.view)) || (page.level && views.find((view) => view.levels?.includes(page.level!))) || views.find((view) => view.kind === DEFAULT_VIEW)!;
 }

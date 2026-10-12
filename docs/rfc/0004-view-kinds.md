@@ -177,6 +177,15 @@ Nothing a reader sees changes with this pull request.
 
 - Work: Views (registry, then a view at a time), Catalog (labels, by
   suggestion), Studio Data (schema 18, `/v1/view`, the snapshot's builder).
+- Page budget: the reader's code ships with every library page (one route
+  draws shelves, sefarim and sichos), and those pages sit at the 130 kB
+  JavaScript budget: about 129,980 bytes with this registry, which was
+  trimmed to 49 bytes for that reason. Every view after sichos must keep
+  its code out of that first load: a view file stays small (its kind and
+  levels) and loads its `Head` and `Words` in their own chunk, which the
+  page asks for in its first bytes (a `Link` preload, as the Torah font
+  is), so it still draws without a wait. How, is the first view's PR to
+  settle with Flow, who owns the budgets.
 - Running cost: none new. The snapshot grows by the facts Catalog adds,
   about 60 bytes for a labelled letter, nothing for an unlabelled unit.
 - Live site: step 1 changes no output. Step 2 adds optional fields only; an

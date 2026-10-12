@@ -7,7 +7,6 @@ import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconN
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';
 import { viewFor } from './views';
-import { SichaWords } from '../views/sichos';
 
 type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string };
 
@@ -29,7 +28,7 @@ export function Reader({ data }: { data: ReaderData }) {
   const text = data.text;
   const words = text.kind === 'words' ? text : null;
   // What differs by the kind of sefer (a letter's facts, how a farbrengen's words are laid out) is its view's (app/views).
-  const { Head, Words = SichaWords } = viewFor(data);
+  const { Head, Words } = viewFor(data);
   // Edit is the same page, with ?edit: only its own fields, and words fixed by selecting them.
   const [search] = useSearchParams();
   const navigate = useNavigate();

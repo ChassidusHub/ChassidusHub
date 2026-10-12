@@ -4,7 +4,12 @@ import { DEFAULT_VIEW, pickView, type ReaderView } from '../app/reader/view.js';
 
 /** The reader's views, one per kind of sefer (docs/rfc/0004-view-kinds.md, app/reader/views.ts). */
 describe('the reader’s views', () => {
-  const views: ReaderView[] = [{ kind: 'sichos', levels: ['sicha', 'maamar'] }, { kind: 'letters', levels: ['letter'] }, { kind: 'chapters' }];
+  const Words = () => null;
+  const views: ReaderView[] = [
+    { kind: 'sichos', levels: ['sicha', 'maamar'], Words },
+    { kind: 'letters', levels: ['letter'], Words },
+    { kind: 'chapters', Words },
+  ];
 
   it('draws a page with the view its sefer names', () => {
     expect(pickView(views, { view: 'chapters', level: 'letter' }).kind).toBe('chapters');
@@ -18,7 +23,6 @@ describe('the reader’s views', () => {
   it('falls back to the sichos view', () => {
     expect(pickView(views, {}).kind).toBe(DEFAULT_VIEW);
     expect(pickView(views, { view: 'siddur', level: 'tefila' }).kind).toBe(DEFAULT_VIEW);
-    expect(() => pickView([{ kind: 'letters' }], {})).toThrow();
   });
 
   it('has the sichos view, and every view file names its own kind', () => {
