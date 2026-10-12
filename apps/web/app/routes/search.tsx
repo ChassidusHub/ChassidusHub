@@ -11,6 +11,7 @@ import { tn } from '../lib/i18nNetwork.js';
 import { num } from '../lib/i18nUi.js';
 import { labelOf } from '../lib/labels.js';
 import { href, itemPath } from '../lib/links.js';
+import { namedSo, withoutLanguage } from '../lib/searchName.js';
 import { pageMeta } from '../lib/seo.js';
 import { datesOf, parseSmartQuery, parshaLabel } from '../lib/smartSearch.js';
 import { parseTokens, withToken, type TokenKey } from '../lib/tokens.js';
@@ -87,6 +88,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Words beyond a date narrow the farbrengens found, and are searched in names too; words read as a date may be a name
     // too, so the names they match are found as well (a sefer named so first: the API's search puts it there).
     const search = api.search(understood && smart.rest ? smart.rest : words, { limit: 50 });
+    // A language asked for ("Tanya in English") is not part of the sefer's name: its name alone is asked too, to put it first (#233).
+    const bare = !understood && withoutLanguage(words) ? api.search(withoutLanguage(words)!, { limit: 10 }) : null;
     const dates = understood ? datesOf(smart) : null;
     const events = !understood
       ? null
@@ -100,7 +103,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Each is waited on below; until then, one that fails is not an unhandled rejection.
     search.catch(() => undefined);
     events?.catch(() => undefined);
-    return { moments, search, events };
+    bare?.catch(() => undefined);
+    return { moments, search, events, bare };
   };
   // Asked by meaning, they wait to see whether search by meaning is set up; else they start now. Words that name a parsha,
   // a day or a year (the home page's box asks by meaning) are a date to find, so they are searched by words whatever was asked.
@@ -116,6 +120,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     understood: null as { parsha: string | null; day: string | null; year: number | null; month: string | null } | null,
     events: [] as EventItem[],
     results: [] as Entity[],
+    /** The sefarim and sets named just what was typed: shown first, above the words and the farbrengens (#233). */
+    named: [] as Entity[],
     date: null as { key: string } | null,
     moments: [] as Moment[],
     similar: [] as SimilarItem[],
@@ -133,6 +139,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   let date: { key: string } | null = null;
   const found = await byWords.search;
   let results: Entity[] = found.results;
+  const named = understood ? [] : namedSo([...results, ...((await byWords.bare?.catch(() => null))?.results ?? [])], words);
+  results = [...named.filter((n) => !results.some((r) => r.id === n.id)), ...results];
   if (understood) {
     if (smart.rest) {
       const rest = smart.rest.split(' ');
@@ -156,7 +164,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const moreEvents = results.filter((r) => r.type === 'event') as EventItem[];
   // Pages and paragraphs show as the moments they are, above.
   const inText = new Set(['text-page', 'segment']);
-  return { ...empty, moments, refs, understood, events: [...events, ...moreEvents], results: results.filter((r) => r.type !== 'event' && !inText.has(r.type)), date };
+  return { ...empty, moments, refs, understood, events: [...events, ...moreEvents], results: results.filter((r) => r.type !== 'event' && !inText.has(r.type)), named, date };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -191,6 +199,7 @@ const W = {
   nothingOfKind: { he: 'אין תוצאות מהסוג הזה.', en: 'No results of this kind.' },
   showAll: { he: 'הצגת כל הסוגים', en: 'Show every kind' },
   inCalendar: { he: 'בלוח', en: 'In the calendar' },
+  namedSo: { he: 'בשם הזה', en: 'By that name' },
 } as const;
 
 const w = (lang: Lang, key: keyof typeof W) => W[key][lang];
@@ -205,7 +214,7 @@ const yearOf = (e: EventItem) => Number(String(eventData(e).date ?? '').slice(0,
 const TYPE_ICON: Record<string, IconName> = { work: 'book', unit: 'file', publication: 'layers', scan: 'scan', recording: 'audio', author: 'user', set: 'book', text: 'file' };
 
 export default function Search({ loaderData }: Route.ComponentProps) {
-  const { lang, q, kind, by, meaningAvailable, understood, events, results, date, moments, similar, refs } = loaderData;
+  const { lang, q, kind, by, meaningAvailable, understood, events, results, named, date, moments, similar, refs } = loaderData;
   const hasQuery = q.trim() !== '';
   const total = events.length + results.length + moments.length;
   const tab = by === 'meaning' ? 'meaning' : (kind ?? 'all');
@@ -218,6 +227,26 @@ export default function Search({ loaderData }: Route.ComponentProps) {
     ...(meaningAvailable ? [{ key: 'meaning', label: tn(lang, 'byMeaning'), icon: 'sparkle' as const, to: href('/search', lang, { q: q || undefined, by: 'meaning' }) }] : []),
   ];
   const show = (k: Kind) => by === 'words' && (kind === null || kind === k);
+  const namedIds = new Set(named.map((n) => n.id));
+  // A sefer or set as one row: what it is, an addition says to which sefer, then its name.
+  const libraryRow = (r: Entity) => {
+    // An addition to a sefer says so, and to which: the official sefarim are what the tree is built of.
+    const addition = r.type === 'work' ? (r.data as { addition?: { to?: string } }).addition : undefined;
+    const to = addition?.to ? (refs as Record<string, Entity>)[addition.to] : undefined;
+    return (
+      <li key={r.id}>
+        <Link className="row hover" to={href(itemPath(r), lang)}>
+          <span className="row-main">
+            <span className="row-kicker">
+              <Icon name={TYPE_ICON[r.type] ?? 'file'} size={13} />
+              {[typeName(r.type, lang), addition ? (to ? `${w(lang, 'additionTo')} ${labelOf(to, lang)}` : w(lang, 'addition')) : null].filter(Boolean).join(' · ')}
+            </span>
+            <span className="row-title torah">{labelOf(r, lang)}</span>
+          </span>
+        </Link>
+      </li>
+    );
+  };
   const shownCount = (kind === 'event' ? events.length : 0) + (kind === 'library' ? results.length : 0) + (kind === 'text' ? moments.length : 0);
   return (
     <div className="search-page">
@@ -259,6 +288,15 @@ export default function Search({ loaderData }: Route.ComponentProps) {
             <>
               {understood || date ? <Understood lang={lang} understood={understood} date={date} /> : null}
 
+              {by === 'words' && kind === null && named.length ? (
+                <section aria-labelledby="named-so">
+                  <h2 className="h-block" id="named-so">
+                    {w(lang, 'namedSo')}
+                  </h2>
+                  <ul className="box search-rows">{named.map(libraryRow)}</ul>
+                </section>
+              ) : null}
+
               {show('text') && moments.length ? (
                 <section aria-labelledby="in-texts">
                   <h2 className="h-block" id="in-texts">
@@ -279,30 +317,13 @@ export default function Search({ loaderData }: Route.ComponentProps) {
                 </section>
               ) : null}
 
-              {show('library') && results.length ? (
+              {show('library') && (kind === null ? results.length > named.length : results.length) ? (
                 <section aria-labelledby="in-library">
                   <h2 className="h-block" id="in-library">
                     {t(lang, 'tabLibrary')} <span className="count">{num(results.length, lang)}</span>
                   </h2>
                   <ul className="box search-rows">
-                    {(results as Entity[]).map((r) => {
-                      // An addition to a sefer says so, and to which: the official sefarim are what the tree is built of.
-                      const addition = r.type === 'work' ? (r.data as { addition?: { to?: string } }).addition : undefined;
-                      const to = addition?.to ? (refs as Record<string, Entity>)[addition.to] : undefined;
-                      return (
-                        <li key={r.id}>
-                          <Link className="row hover" to={href(itemPath(r), lang)}>
-                            <span className="row-main">
-                              <span className="row-kicker">
-                                <Icon name={TYPE_ICON[r.type] ?? 'file'} size={13} />
-                                {[typeName(r.type, lang), addition ? (to ? `${w(lang, 'additionTo')} ${labelOf(to, lang)}` : w(lang, 'addition')) : null].filter(Boolean).join(' · ')}
-                              </span>
-                              <span className="row-title torah">{labelOf(r, lang)}</span>
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
+                    {(kind === null ? results.filter((r) => !namedIds.has(r.id)) : results).map(libraryRow)}
                   </ul>
                 </section>
               ) : null}
