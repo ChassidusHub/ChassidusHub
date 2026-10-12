@@ -37,7 +37,12 @@ describe('a farbrengen’s words', () => {
     expect(parts.classes.get('p7')).toBe('stage');
     expect(parts.classes.get('p5')).toBeUndefined();
     expect(parts.classes.get('p6')).toBeUndefined();
-    expect(parts.classes.get('p4')).toBeUndefined();
+  });
+
+  it('draws the print’s row of stars as a divider', () => {
+    expect(parts.classes.get('p4')).toBe('divider');
+    expect(hisvaaduyosParts([p('a', '* * *')]).classes.get('a')).toBe('divider');
+    expect(hisvaaduyosParts([p('a', '**')]).classes.get('a')).toBeUndefined();
   });
 
   it('leaves the print’s ב"ס"ד heading and its בלתי מוגה line to the title and the chip', () => {

@@ -234,6 +234,10 @@ test('reads a farbrengen as it was said: its occasion, its stage lines, its maam
   await expect(page.locator('#s-p2')).toHaveClass(/stage/);
   await expect(page.locator('#s-g1')).toHaveClass(/stage/);
   await expect(page.locator('#s-s0')).not.toHaveClass(/stage/);
+  // The print's *** between the parts is a short rule, not three stars.
+  const divider = page.locator('#s-x1');
+  await expect(divider).toHaveClass(/divider/);
+  expect(await divider.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(4);
   // The maamar said there: a chip under the title, and a card where the words say it was said.
   await expect(page.locator('.hv-head').getByRole('link', { name: /מאמר: ד"ה מאמר לדוגמה/ })).toHaveAttribute('href', '/sample-hisvaaduyos/11/3');
   await expect(page.locator('#s-p2 + a.hv-said')).toHaveAttribute('href', '/sample-hisvaaduyos/11/3');

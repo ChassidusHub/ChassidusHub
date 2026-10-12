@@ -68,10 +68,13 @@ function isStage(segment: PageSegment): boolean {
   return named >= 0 && named <= 40 && !/^[[(]/.test(words) && SUNG.test(words);
 }
 
+/** The print's row of stars between the parts of a farbrengen ("***", "* * *", "⁂"), drawn as a divider. */
+const DIVIDER = /^(\*\s*){3,}$|^⁂$/;
+
 /** The print's own line saying the words are unedited, "בלתי מוגה" or "(הנחה בלתי מוגה)", among the first few. */
 const MUGA_LINE = /^\(?(הנחה )?בלתי מוגה\)?\.?$/;
 
-/** What the hisvaaduyos view finds in a farbrengen's words: each paragraph's place, its sections, and whether it is edited. */
+/** What the hisvaaduyos view finds in a farbrengen's words: each paragraph's place (a stage line, a divider), its sections, and whether it is edited. */
 export function hisvaaduyosParts(segments: readonly PageSegment[]): { classes: Map<string, string>; sections: FarbrengenSection[]; muga?: Muga } {
   const classes = new Map<string, string>();
   const sections: FarbrengenSection[] = [];
@@ -86,6 +89,10 @@ export function hisvaaduyosParts(segments: readonly PageSegment[]): { classes: M
     if (at < 4 && !muga && MUGA_LINE.test(words)) {
       muga = words.includes('הנחה') ? 'hanacha' : 'bilti-mugah';
       classes.set(segment.id, 'hv-muga');
+      return;
+    }
+    if (segment.kind === 'paragraph' && DIVIDER.test(words)) {
+      classes.set(segment.id, 'divider');
       return;
     }
     // Sections run א, ב, ג in order; a paragraph opening with other letters and a dot is not one.

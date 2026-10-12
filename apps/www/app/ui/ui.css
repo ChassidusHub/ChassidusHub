@@ -718,6 +718,8 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .hv .torah p.stage { font-family: var(--ui); font-size: 14px; line-height: 1.55; text-align: start; color: var(--g600); background: var(--g100); border-radius: 8px; padding: 6px 12px; }
 .hv .torah p.stage b { font-weight: 600; }
 .hv .torah .hv-muga { display: none; }
+/* The print's *** between the parts: a short rule in the middle. The stars stay in the paragraph, hidden, so a fix still finds them. */
+.hv .torah p.divider { font-size: 0; line-height: 0; height: 1px; width: 96px; margin: 28px auto; background: var(--g400); }
 .hv .torah [id^='s-'], .hv .fsicha { scroll-margin-top: 64px; }
 .hv-said { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 0 1em; padding: 10px 14px; border: 1px solid var(--g300); border-radius: 10px; font-family: var(--ui); font-size: 13px; color: var(--g600); text-align: start; }
 .hv-said:hover { background: var(--g50); }

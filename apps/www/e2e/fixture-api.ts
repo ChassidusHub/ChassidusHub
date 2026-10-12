@@ -287,6 +287,7 @@ const views: Record<string, unknown> = {
           { id: `s${at}`, kind: 'paragraph', text: [{ text: `${letter}.`, marks: ['b'] }, { text: ` פסקה ראשונה של סעיף ${letter} לדוגמה. ${'מילים לדוגמה בתוך הסעיף. '.repeat(30)}` }] },
           { id: `t${at}`, kind: 'paragraph', text: words(`${'עוד מילים לדוגמה בסעיף. '.repeat(30)}`) },
           ...(at === 1 ? [{ id: 'g1', kind: 'paragraph', text: words('(וסיים כ"ק אדמו"ר שליט"א:)') }] : []),
+          ...(at === 2 ? [{ id: 'x1', kind: 'paragraph', text: words('***') }] : []),
         ]),
       ],
       notes: [],
