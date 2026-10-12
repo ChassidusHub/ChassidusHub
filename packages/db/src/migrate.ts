@@ -34,6 +34,7 @@ import * as unitPlaceNames from './migrations/0032_unit_place_names.js';
 import * as unitLead from './migrations/0033_unit_lead.js';
 import * as unitLeadFill from './migrations/0034_unit_lead_fill.js';
 import * as unitLeadIndex from './migrations/0035_unit_lead_index.js';
+import * as unitPlaceIdCollation from './migrations/0036_unit_place_id_collation.js';
 import { HOLD_EVERY_TABLE_SQL } from './hold.js';
 
 export interface Migration {
@@ -79,6 +80,7 @@ export const MIGRATIONS: readonly Migration[] = [
   { version: 33, name: 'unit-lead', up: unitLead.up },
   { version: 34, name: 'unit-lead-fill', up: unitLeadFill.up },
   { version: 35, name: 'unit-lead-index', up: unitLeadIndex.up },
+  { version: 36, name: 'unit-place-id-collation', up: unitPlaceIdCollation.up },
 ];
 
 /** Applies the migrations `db` has not had yet, each in its own transaction. Returns the versions applied. */
