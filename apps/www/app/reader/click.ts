@@ -1,4 +1,3 @@
-import { itemClick } from '../catalog/clicks';
 import type { ReaderData } from './types';
 import type { DrawnWords } from './words.server';
 
@@ -22,6 +21,7 @@ export async function sichaClick<T>(request: Request, serverLoader: () => Promis
     window.location.assign(request.url);
     return new Promise<never>(() => {});
   };
+  const { itemClick } = await import('../catalog/clicks');
   const loaded = await itemClick(request, () => serverLoader().catch((error: unknown) => (error instanceof TypeError ? whole() : Promise.reject(error))));
   const reader = (loaded as { reader?: ReaderData }).reader;
   if (reader?.text.kind === 'words' && reader.text.body === null) void keptWords(reader.text.url).then((words) => drawInto(reader.path, words), whole);
