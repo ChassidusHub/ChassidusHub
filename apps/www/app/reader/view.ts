@@ -23,6 +23,8 @@ export interface ReaderView {
    * catalog snapshot's names give a unit's kind.
    */
   levels?: readonly string[];
+  /** The title, when the kind sets it its own way (a letter: its volume small over its number); else the title and the sefer under it. */
+  Title?: ComponentType<{ data: ReaderData }>;
   /** Under the title: the facts this kind shows (a letter's number, date and addressee). */
   Head?: ComponentType<{ data: ReaderData }>;
   /** The words and their footnotes; a view that changes only the facts above them uses the sichos view's (`SichaWords`). */

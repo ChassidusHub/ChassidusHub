@@ -102,6 +102,16 @@ describe('migrations', () => {
     await db.close();
   });
 
+  it("indexes the words of pages, paragraphs and sichos each apart, over their live rows only, built CONCURRENTLY (migrations 0039-0041)", async () => {
+    const db = await openPGlite();
+    await migrate(db);
+    const { rows } = await db.query<{ indexname: string; indexdef: string }>("SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'entity' AND indexname LIKE 'entity_tsv_%' ORDER BY indexname");
+    expect(rows.map((r) => r.indexname)).toEqual(['entity_tsv_page', 'entity_tsv_segment', 'entity_tsv_unit']);
+    for (const { indexdef } of rows) expect(indexdef).toMatch(/USING gin \(search_tsv\) WHERE .*NOT deleted.*main_rev IS NOT NULL/);
+    expect(MIGRATIONS.filter((m) => m.version >= 39 && m.version <= 41).every((m) => m.outside)).toBe(true);
+    await db.close();
+  });
+
   it('runs a migration marked outside a transaction a statement at a time, so an index can be built CONCURRENTLY', async () => {
     const db = await openPGlite();
     await migrate(db);
@@ -137,7 +147,8 @@ CREATE INDEX CONCURRENTLY entity_try_concurrently ON entity (updated_seq) WHERE 
   it('tries a migration again when it gave up waiting for a lock, and gives up after its tries', async () => {
     const db = await openPGlite();
     await migrate(db);
-    const last = MIGRATIONS.at(-1)!;
+    // The last migration run in a transaction: lock_timeout only stops those.
+    const last = MIGRATIONS.filter((m) => !m.outside).at(-1)!;
     await db.exec(`DELETE FROM schema_migration WHERE version = ${last.version}`);
     // A read held the table: the first two tries give up on the lock, as lock_timeout makes them.
     let refused = 2;

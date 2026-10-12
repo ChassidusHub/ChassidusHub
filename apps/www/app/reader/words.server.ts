@@ -20,9 +20,35 @@ const tags: Record<Exclude<PageMark, 'ois'>, string> = { b: 'b', i: 'i', u: 'u',
 /** The id a segment's element gets: safe in a URL fragment, as segment ids are (PAGE_ID_PATTERN). */
 const sid = (id: string) => `s-${escape(id)}`;
 
-/** How a note's mark reads: the source's own label (a star), its number, else its place among the notes. */
-export function noteLabels(notes: readonly PageSegment[]): Map<string, string> {
-  return new Map(notes.map((note, at) => [note.id, note.label ?? String(note.n ?? at + 1)]));
+/**
+ * How a note's mark reads: the source's own label (a star), its number, else
+ * its place among the notes. In a letter (`unmarked`), a note nothing in the
+ * words points to has no label at all: the Igros' notes on a whole letter
+ * follow it unnumbered, as app.chassidushub.org shows them (`notesAfterText`).
+ */
+export function noteLabels(notes: readonly PageSegment[], unmarked?: ReadonlySet<string>): Map<string, string> {
+  return new Map(notes.map((note, at) => [note.id, note.label ?? (unmarked?.has(note.id) ? '' : String(note.n ?? at + 1))]));
+}
+
+/**
+ * How a kind of page sets its paragraphs, beyond the words: a class for each
+ * segment it places (a letter's date line, addressee, signature), and whether
+ * its notes nothing points to go unnumbered. From the page's view (app/views).
+ */
+export interface WordsLayout {
+  classes: (segments: readonly PageSegment[]) => Map<string, string>;
+  unmarkedNotes?: boolean;
+}
+
+/** The notes nothing in the words points to. */
+export function unmarkedNotes(segments: readonly PageSegment[], notes: readonly PageSegment[]): Set<string> {
+  const marked = new Set<string>();
+  const visit = (s: PageSegment) => {
+    for (const inline of s.text ?? []) if ('note' in inline) marked.add(inline.note);
+    for (const child of s.children ?? []) visit(child);
+  };
+  segments.forEach(visit);
+  return new Set(notes.filter((note) => !marked.has(note.id)).map((note) => note.id));
 }
 
 function run(inline: PageInline, labels: Map<string, string>): string {
@@ -50,10 +76,13 @@ const runs = (text: readonly PageInline[] | undefined, labels: Map<string, strin
 const letters = (text: string) => text.replace(/[^א-תA-Za-z0-9]/g, '');
 const plain = (text: readonly PageInline[] | undefined) => (text ?? []).map((r) => ('text' in r ? r.text : '')).join('');
 
-function segment(s: PageSegment, labels: Map<string, string>, first: boolean, title: string): string {
+function segment(s: PageSegment, labels: Map<string, string>, first: boolean, title: string, placed?: Map<string, string>): string {
   const classes: string[] = [];
   if (s.origin && !s.origin.checked) classes.push('m');
-  if (s.end) classes.push('end');
+  // A paragraph its layout places is set by its place, not by its own side.
+  const place = placed?.get(s.id);
+  if (place) classes.push(place);
+  else if (s.end) classes.push('end');
   const words = runs(s.text, labels);
   if (s.kind === 'section') {
     const head = words ? `<p class="hd" id="${sid(s.id)}">${words}</p>` : '';
@@ -68,21 +97,26 @@ function segment(s: PageSegment, labels: Map<string, string>, first: boolean, ti
   return `<p id="${sid(s.id)}"${classes.length ? ` class="${classes.join(' ')}"` : ''}>${words}</p>`;
 }
 
-/** The body: every segment in reading order. `title` is the page's own title. */
-export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string): string {
-  const labels = noteLabels(notes);
-  return segments.map((s, at) => segment(s, labels, at === 0, title)).join('');
+/** The body: every segment in reading order. `title` is the page's own title; `layout`, how its kind of page sets it. */
+export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string, layout?: WordsLayout): string {
+  const labels = noteLabels(notes, layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined);
+  const placed = layout?.classes(segments);
+  return segments.map((s, at) => segment(s, labels, at === 0, title, placed)).join('');
 }
 
-/** The notes, at the end of the page: each with its mark, its words, and a way back up to where it is marked. */
-export function notesHtml(notes: readonly PageSegment[]): string {
-  const labels = noteLabels(notes);
+/**
+ * The notes, at the end of the page: each with its mark, its words, and a way
+ * back up to where it is marked. `unmarked`: the notes nothing points to, drawn
+ * with no label (a letter's).
+ */
+export function notesHtml(notes: readonly PageSegment[], unmarked?: ReadonlySet<string>): string {
+  const labels = noteLabels(notes, unmarked);
   return notes
     .map((note) => {
       const label = labels.get(note.id)!;
       const machine = note.origin && !note.origin.checked ? ' m' : '';
       const body = runs(note.text, labels) + (note.children ?? []).map((child) => ` ${runs(child.text, labels)}`).join('');
-      return `<li id="n-${escape(note.id)}" class="fn${machine}"><span class="fl">${escape(label)}</span><span class="nt">${body}</span></li>`;
+      return `<li id="n-${escape(note.id)}" class="fn${machine}">${label ? `<span class="fl">${escape(label)}</span>` : ''}<span class="nt">${body}</span></li>`;
     })
     .join('');
 }
