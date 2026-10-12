@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog, SnapshotIndex, SnapshotManifest, SnapshotNamesFile, SnapshotShelfFile, SnapshotTopFile, SnapshotTree, SnapshotWorkFile, SnapshotYearFile, SnapshotYearsFile } from '@chassidushub/core';
-import { SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_INDEX_KEY, SNAPSHOT_MANIFEST_KEY, memorySnapshotStore, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot } from '@chassidushub/core';
+import { SNAPSHOT_BUILD, SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_INDEX_KEY, SNAPSHOT_MANIFEST_KEY, memorySnapshotStore, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot } from '@chassidushub/core';
 import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
@@ -147,7 +147,7 @@ describe('catalog snapshot', () => {
     const index = JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!) as SnapshotIndex;
     const read = async <T>(file: string) => JSON.parse((await store.get(snapshotFileKey(file)))!) as T;
 
-    expect(index).toEqual({ format: 2, version: manifest.version, top: expect.stringMatching(SNAPSHOT_FILE_NAME), shelves: expect.any(Object), years: expect.stringMatching(SNAPSHOT_FILE_NAME), names: manifest.names.file });
+    expect(index).toEqual({ format: 2, version: manifest.version, build: SNAPSHOT_BUILD, top: expect.stringMatching(SNAPSHOT_FILE_NAME), shelves: expect.any(Object), years: expect.stringMatching(SNAPSHOT_FILE_NAME), names: manifest.names.file });
     const tree = await read<SnapshotTree>(manifest.tree.file);
     expect(Object.keys(index.shelves)).toEqual(tree.top);
 
@@ -199,6 +199,13 @@ describe('catalog snapshot', () => {
     await store.put(SNAPSHOT_INDEX_KEY, '', 'manifest');
     expect((await refreshSnapshot(catalog.db, store)).built).toBe(true);
     expect(JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!).format).toBe(2);
+    expect((await refreshSnapshot(catalog.db, store)).built).toBe(false);
+
+    // Written by an older build: built again with main unchanged, so a new field is there at once.
+    const index = JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!) as SnapshotIndex;
+    await store.put(SNAPSHOT_INDEX_KEY, JSON.stringify({ ...index, build: SNAPSHOT_BUILD - 1 }), 'manifest');
+    expect((await refreshSnapshot(catalog.db, store)).built).toBe(true);
+    expect((JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!) as SnapshotIndex).build).toBe(SNAPSHOT_BUILD);
     expect((await refreshSnapshot(catalog.db, store)).built).toBe(false);
   });
 
