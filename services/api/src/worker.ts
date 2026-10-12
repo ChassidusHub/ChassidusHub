@@ -7,7 +7,7 @@ import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts }
 import { AppReleases } from './appCatalog.js';
 import { r2SnapshotStore, singleFlight, type SnapshotOptions } from './catalogSnapshot.js';
 import type { SnapshotStore } from '@chassidushub/core';
-import { forgetChangedPages, type SitePages } from './sitePages.js';
+import { forgetChangedPages, warmTodaysPages, type SitePages } from './sitePages.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
 import { LOCKED_HEADER, lockOf, openedBy, ownersFrom, unlocked, type LockEnv } from './lock.js';
@@ -203,6 +203,7 @@ export default {
         if (env.SITE_PAGES && files) {
           await forgetChangedPages(catalog, keptStore(files), env.SITE_PAGES).catch((error) => void (isCatalogHeld(error) || console.error('site pages', error)));
         }
+        if (env.SITE_PAGES) await warmTodaysPages(env.SITE_PAGES, new Date()).catch((error) => console.error('warming today\'s pages', error));
         if (files) await timedSnapshot(db, r2SnapshotStore(files), 'by the scheduled run').catch((error) => void (isCatalogHeld(error) || console.error('catalog snapshot', error)));
       };
       ctx.waitUntil(minute().finally(() => db.close()));
