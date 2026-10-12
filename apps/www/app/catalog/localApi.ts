@@ -183,19 +183,3 @@ export function localApi(snapshot: Snapshot, api: ChassidusHub): ChassidusHub {
     },
   }) as unknown as ChassidusHub;
 }
-
-/**
- * Runs a page's reads from the snapshot when there is one, and from the API
- * when there is none or it cannot answer them. A redirect or a 404 from the
- * snapshot stands.
- */
-export async function fromSnapshotOr<T>(local: ChassidusHub | undefined, api: ChassidusHub, read: (api: ChassidusHub) => Promise<T>): Promise<T> {
-  if (local) {
-    try {
-      return await read(local);
-    } catch (error) {
-      if (!(error as { notLocal?: boolean } | null)?.notLocal) throw error;
-    }
-  }
-  return read(api);
-}

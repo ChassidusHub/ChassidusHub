@@ -1,8 +1,7 @@
-import type { ChassidusHub } from '@chassidushub/client';
-import { fromSnapshotOr } from '../catalog/localApi';
 import { loadLibrary, loadOtherShelves } from '../library/load';
 import { LibraryScreen, OtherShelvesScreen } from '../library/screens';
 import type { Route } from './+types/library';
+import { KEPT_PAGE } from '../lib/caching';
 
 export const handle = { section: 'library' };
 
@@ -12,13 +11,11 @@ export function meta({ location }: Route.MetaArgs) {
 
 /**
  * The other shelves are not waited for: the page goes out at once and they
- * follow in it. Both are drawn from the catalog snapshot when the server
- * holds it (app/catalog), with no API call.
+ * follow in it.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const read = <T,>(load: (api: ChassidusHub) => Promise<T>) => fromSnapshotOr(context.catalog, context.api, load);
-  if (new URL(request.url).searchParams.has('more')) return { screen: 'more' as const, others: read(loadOtherShelves) };
-  return { screen: 'library' as const, ...(await read(loadLibrary)) };
+  if (new URL(request.url).searchParams.has('more')) return { screen: 'more' as const, others: loadOtherShelves(context.api) };
+  return { screen: 'library' as const, ...(await loadLibrary(context.api)) };
 }
 
 /** A click to the library, drawn in the browser from the catalog snapshot it keeps (app/catalog/clicks.ts). */
@@ -26,10 +23,10 @@ export const clientLoader = ({ request, serverLoader }: Route.ClientLoaderArgs) 
 
 /**
  * The same page for everyone (who is signed in is asked by the browser), so
- * the edge keeps it (server/pageCache.ts): fresh for two minutes, as the
- * API's own answers are, then shown while it is drawn again behind it.
+ * the edge keeps it until something it shows changes (lib/caching.ts,
+ * server/edge.ts).
  */
-export const headers = () => ({ 'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 /** The library: the Rebbeim and their sefarim, from the fixed catalog tree, then the other shelves. */
 export default function Screen({ loaderData }: Route.ComponentProps) {

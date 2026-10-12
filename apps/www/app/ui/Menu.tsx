@@ -95,7 +95,7 @@ export function Menu({ open, anchor, title, items, onClose }: { open: boolean; a
           );
           const common = { id: `mi-${item.key}`, className, role: 'menuitemradio', 'aria-checked': !!item.current };
           return item.to ? (
-            <Link key={item.key} to={item.to} {...common} onClick={() => pick(item)}>
+            <Link key={item.key} to={item.to} prefetch="intent" {...common} onClick={() => pick(item)}>
               {inside}
             </Link>
           ) : (

@@ -1,17 +1,21 @@
-import { snapshotFrom, type Snapshot } from '../app/catalog/snapshot';
-import type { PageStore } from './pageCache';
 
 /**
- * The catalog snapshot on the server (app/catalog/snapshot.ts,
- * docs/catalog-snapshot.md): read from the public bucket the API writes it
- * to when the Worker binds it, else from the API, and kept in the isolate's
- * memory for as long as it lives, so a catalog page is drawn from memory with
- * no API call. Files never change, so they are also kept at the edge, where
- * a new isolate finds them at once.
+ * The catalog snapshot's files (docs/catalog-snapshot.md), handed to the
+ * browser from this site's own address (`/_/catalog/…`, `catalogFile`), so it
+ * needs nothing of another origin: read from the public bucket the API writes
+ * them to when the Worker binds it, else from the API. Files never change, so
+ * they are kept at the edge once read.
  *
- * The browser is handed the same files from this site's own address
- * (`/_/catalog/…`, `catalogFile`), so it needs nothing of another origin.
+ * The server draws no page from the snapshot: a page is read from the API,
+ * so the edge can tag it with what it shows and forget it when that changes
+ * (server/edge.ts). The browser draws its clicks from it (app/catalog).
  */
+
+/** The Workers cache's reads and writes this uses (`caches.default`). */
+export interface EdgeStore {
+  match(request: Request): Promise<Response | undefined>;
+  put(request: Request, response: Response): Promise<void>;
+}
 
 /** The bucket's reads this uses (an R2 binding). */
 export interface SnapshotBucket {
@@ -48,7 +52,7 @@ export function apiFiles(apiUrl: string, get: (url: string) => Promise<Response>
 }
 
 /** The same files, each file (never the manifest) kept at the edge for good once read. */
-export function keptAtEdge(files: SnapshotFiles, edge: PageStore | undefined): SnapshotFiles {
+export function keptAtEdge(files: SnapshotFiles, edge: EdgeStore | undefined): SnapshotFiles {
   if (!edge) return files;
   return {
     manifest: () => files.manifest(),
@@ -63,22 +67,6 @@ export function keptAtEdge(files: SnapshotFiles, edge: PageStore | undefined): S
       await edge.put(key, new Response(body, { headers })).catch(() => undefined);
       return new Response(body, { headers });
     },
-  };
-}
-
-/**
- * The server's snapshot, at most `waitMs` late: a page in an isolate that has
- * not read the snapshot yet does not wait for it, it is drawn from the API
- * while the snapshot is read behind it for the next page.
- */
-export function serverSnapshot(files: SnapshotFiles, waitMs = 250): Snapshot {
-  const snapshot = snapshotFrom(files);
-  const inTime = <T>(read: Promise<T | null>): Promise<T | null> => Promise.race([read, new Promise<null>((done) => setTimeout(() => done(null), waitMs))]);
-  return {
-    core: () => inTime(snapshot.core()),
-    units: (work) => inTime(snapshot.units(work)),
-    year: (year) => inTime(snapshot.year(year)),
-    hasYear: (year) => inTime(snapshot.hasYear(year)),
   };
 }
 

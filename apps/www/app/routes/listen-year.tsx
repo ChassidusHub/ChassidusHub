@@ -1,10 +1,10 @@
 import { useLoaderData } from 'react-router';
-import { fromSnapshotOr } from '../catalog/localApi';
 import { yearPage } from '../listen/data.server';
 import { listening, yearLevel } from '../listen/common';
 import { PlayRow } from '../listen/play';
 import { TopBar } from '../ui';
 import type { Route } from './+types/listen-year';
+import { KEPT_PAGE } from '../lib/caching';
 
 export const handle = { section: 'listen' };
 
@@ -12,15 +12,15 @@ export function meta({ data }: Route.MetaArgs) {
   return [{ title: `${data?.name ?? 'שמיעה'} · ChassidusHub` }];
 }
 
-/** One year: every event with recordings, month by month (app/listen/events.ts), from the catalog snapshot when the server holds it. */
+/** One year: every event with recordings, month by month (app/listen/events.ts). */
 export async function loader({ params, context }: Route.LoaderArgs) {
-  return fromSnapshotOr(context.catalog, context.api, (api) => yearPage(api, Number(params.year)));
+  return yearPage(context.api, Number(params.year));
 }
 
 /** A click here, drawn in the browser from the catalog snapshot it keeps (app/listen/clicks.ts). */
 export const clientLoader = ({ params, serverLoader }: Route.ClientLoaderArgs) => import('../listen/clicks').then((clicks) => clicks.yearClick(params.year, serverLoader));
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export default function ListenYear() {
   const { year, name, months, years } = useLoaderData<typeof loader>();

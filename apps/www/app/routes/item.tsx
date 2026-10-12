@@ -1,6 +1,5 @@
 import { data, redirect, type AppLoadContext } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
-import { isNotLocal } from '../catalog/snapshot';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
 import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
@@ -10,6 +9,7 @@ import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
 import type { Route } from './+types/item';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** Recordings and the events they were said at belong to listening; every other item to the library. */
 const listening = new Set(['event', 'recording']);
@@ -23,22 +23,15 @@ const listening = new Set(['event', 'recording']);
  * shelf, a sefer or a volume is the library's (app/library/page.ts), an event
  * or a recording Home and listening's.
  *
- * The library's pages are drawn from the catalog snapshot when the Worker
- * holds it (app/catalog), with no API call; anything it cannot answer is
- * read from the API.
+ * On the server every page is read from the API, so the edge can tag it with
+ * what it shows and forget it when that changes (server/edge.ts); a click in
+ * the browser to a shelf, a sefer or a volume is drawn from the catalog
+ * snapshot instead (`clientLoader`).
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const api = context.api;
   try {
-    if (context.catalog) {
-      try {
-        const page = await libraryPage(context.catalog, url, { scan: printingsFrom });
-        if (page.screen !== 'view') return page;
-      } catch (error) {
-        if (!isNotLocal(error)) throw error;
-      }
-    }
     const page = await libraryPage(api, url, { scan: printingsFrom });
     if (page.screen !== 'view') return page;
     const view = page.view;
@@ -78,11 +71,11 @@ async function listeningPage(item: { id: string; type: string; data: unknown }, 
 
 /**
  * The same page for everyone (who is signed in is asked by the browser), so
- * the edge keeps it (server/pageCache.ts): fresh for two minutes, as the
- * API's own answers are, then shown while it is drawn again behind it.
+ * the edge keeps it until something it shows changes (lib/caching.ts,
+ * server/edge.ts).
  */
 export const headers = ({ loaderHeaders }: Route.HeadersArgs) => ({
-  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600',
+  'Cache-Control': KEPT_PAGE,
   ...(loaderHeaders.has('Link') ? { Link: loaderHeaders.get('Link')! } : {}),
 });
 

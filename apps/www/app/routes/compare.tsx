@@ -6,6 +6,7 @@ import { itemHead, orNothing } from '../tools/item.server';
 import { ItemTop } from '../tools/ItemTop';
 import { Row, Rows, SectionHead } from '../ui';
 import type { Route } from './+types/compare';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** A printing of a unit whose text the catalog has (GET /v1/units/{id}/printings). */
 interface Printing {
@@ -80,7 +81,7 @@ export async function loader({ request, params, context: { api } }: Route.Loader
   };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export const handle = { section: 'library' };
 

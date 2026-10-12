@@ -6,8 +6,7 @@ import type { ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { memoryShowcases } from '../app/stewards/showcase';
-import { localApi } from '../app/catalog/localApi';
-import { apiFiles, catalogFile, serverSnapshot } from './catalog';
+import { apiFiles, catalogFile } from './catalog';
 
 /**
  * The built site on Node, for the browser tests in CI and for trying a build
@@ -23,12 +22,11 @@ const api = apiFor({ baseUrl: process.env.API_URL });
 const forward = forwardFor({ baseUrl: process.env.API_URL });
 // Showcases are kept in memory here: this is the site for local work and the browser tests.
 const showcases = memoryShowcases();
-// The catalog snapshot, from the API (server/catalog.ts); CATALOG_SNAPSHOT=off draws every page from the API.
+// The catalog snapshot's files for the browser, from the API (server/catalog.ts); CATALOG_SNAPSHOT=off hands it none.
 const snapshotFiles = process.env.CATALOG_SNAPSHOT === 'off' ? null : apiFiles(api.baseUrl, (url) => fetch(url));
-const catalog = snapshotFiles ? localApi(serverSnapshot(snapshotFiles), api) : undefined;
 const pages = createRequestListener({
   build,
-  getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, catalog, ...pageContext(request) }),
+  getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, ...pageContext(request) }),
 });
 
 const types: Record<string, string> = {
