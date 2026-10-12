@@ -254,6 +254,9 @@ export const MOMENT_CANDIDATES = 200;
  */
 export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 20 } as const;
 
+/** With `lean` (temporary): how many paragraphs are ranked, and how many candidates' revisions are read. */
+export const MOMENT_LEAN = { segment: 300, candidates: 80 } as const;
+
 /** How many sichos whose lead holds the query are found through the lead's index, and ranked on it. */
 export const MOMENT_LEADS = 40;
 
@@ -261,7 +264,7 @@ export const MOMENT_LEADS = 40;
  * The places in scans and texts where the query's words are: lines on
  * scans' pages and paragraphs of texts and transcripts, best first.
  */
-export async function searchMoments(catalog: Catalog, query: string, options: { limit?: number; within?: string | null; probe?: boolean } = {}): Promise<Moment[]> {
+export async function searchMoments(catalog: Catalog, query: string, options: { limit?: number; within?: string | null; lean?: boolean } = {}): Promise<Moment[]> {
   const tsQuery = toTsQuery(query);
   if (!tsQuery) return [];
   const words = queryWords(query);
@@ -273,6 +276,11 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   // then the rest: that needs each such match's revision, so only a search with a date reads it before the limit.
   // A scan page's layer comes from its link (entity_ref), not its revision, which holds all the page's lines (#182).
   const within = options.within ?? null;
+  // TEMPORARY (Director, 12 October 2026): `lean` ranks fewer paragraphs and reads fewer candidates' revisions, the two
+  // reads a cold search spends most on (#337: ranking 1000 paragraphs 125-335 ms, 200 revisions 100-200 ms), so the
+  // answers and timings of both can be compared live before one becomes the rule.
+  const ranked = options.lean ? { ...MOMENT_RANKED, segment: MOMENT_LEAN.segment } : MOMENT_RANKED;
+  const candidates = options.lean ? MOMENT_LEAN.candidates : MOMENT_CANDIDATES;
   // A sicha is ranked on its lead, a sicha outside a sefer (no unit_place row) last; the rest on their words.
   const rank = (type: keyof typeof MOMENT_RANKED) =>
     type === 'unit'
@@ -287,11 +295,11 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
     `e.type = ANY ('{${type}}'::text[]) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.search_tsv @@ to_tsquery('simple', ${query})`;
   const all = (type: keyof typeof MOMENT_RANKED, tier: number) =>
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, ${tier} AS tier FROM entity e
-          WHERE ${has(type)} LIMIT ${MOMENT_RANKED[type]})`;
+          WHERE ${has(type)} LIMIT ${ranked[type]})`;
   const ofDate = (type: keyof typeof MOMENT_RANKED) =>
     `(SELECT e.id, e.type, e.main_rev, ${rank(type)} AS rank, 0 AS tier FROM entity e JOIN revision r ON r.id = e.main_rev
           WHERE ${has(type)}
-            AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
+            AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${ranked[type]})`;
   // The sichos that open on the words, found through the lead's index without reading their words (#182). The first
   // MOMENT_LEADS leads found are taken before the join, so a word in most leads stops there rather than sorting them all
   // for a join; then each sicha is found by its own id (one collation since migration 0036, so either key finds it), one lookup a lead:
@@ -304,23 +312,11 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
                 WHERE e.id = p.unit_id AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL OFFSET 0) e)`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1)), leads(1)] : [...kinds.map((k) => all(k, 0)), leads(0)];
-  // TEMPORARY, to find the slow part of a cold search (Director, 12 October 2026; comes out with the fix): with `probe`,
-  // each part is first read alone, so the answer's Server-Timing names it: pages, paragraphs, sichos and leads, each
-  // ranked (the rank is asked for, so it is worked out: a count alone let the database skip it), then the best
-  // candidates of all of them without their revisions. Finding the words alone, as prefixes or as whole words, was
-  // measured first (#335): 15-75 ms a part, whole words no faster. Changes nothing in the answer.
-  if (options.probe && !within) {
-    for (const part of [...kinds.map((k) => all(k, 0)), leads(0)]) await catalog.db.query(`SELECT count(*), max(b.rank) FROM ${part} b`, [tsQuery]);
-    await catalog.db.query(
-      `SELECT count(*), max(c.rank) FROM (SELECT id, max(rank) AS rank FROM (${matched.join(' UNION ALL ')}) u GROUP BY id ORDER BY rank DESC LIMIT ${MOMENT_CANDIDATES}) c`,
-      [tsQuery],
-    );
-  }
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
     `SELECT c.id, c.type, c.tier FROM (
        SELECT id, type, main_rev, min(tier) AS tier, max(rank) AS rank
        FROM (${matched.join(' UNION ALL ')}) u GROUP BY id, type, main_rev
-       ORDER BY tier, rank DESC, id LIMIT ${MOMENT_CANDIDATES}
+       ORDER BY tier, rank DESC, id LIMIT ${candidates}
      ) c
      -- Only a paragraph's revision says whether a machine wrote it unchecked; a page's and a sicha's are not read (#214).
      LEFT JOIN LATERAL (SELECT r.data FROM revision r WHERE r.id = c.main_rev AND c.type = 'segment' OFFSET 0) r ON TRUE
