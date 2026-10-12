@@ -79,10 +79,41 @@ export function idsIn(json: string, into: Set<string> = new Set()): Set<string> 
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
-/** The items a page's reads of the API answered about, and how many of its reads have not yet been read through. */
+/**
+ * The items a page's reads of the API answered about, and how many of its
+ * reads have not yet been read through. `page` is the page's own tag
+ * (`pageTag`), and `failed` is set when a part of it streamed after its
+ * first bytes failed (#342).
+ */
 export class Seen {
   readonly ids = new Set<string>();
   open = 0;
+  page?: string;
+  failed = false;
+}
+
+/**
+ * A tag naming one kept page (its address as the edge keeps it, and its
+ * build), so that page alone can be forgotten: one whose streamed part
+ * failed after its first bytes went out, and so after it said it may be
+ * kept (#342).
+ */
+export function pageTag(request: Request): string {
+  const key = `${request.headers.get('Cloudflare-Workers-Version-Key') ?? ''} ${request.url}`;
+  // FNV-1a, 32 bits: a short tag is enough to tell one page from another.
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) hash = Math.imul(hash ^ key.charCodeAt(i), 0x01000193) >>> 0;
+  return `page-${hash.toString(36)}`;
+}
+
+/** The response, calling `done` once its whole body has gone out (not if it was cut off). */
+export function whenSent(response: Response, done: () => void): Response {
+  if (!response.body) {
+    done();
+    return response;
+  }
+  const body = response.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({ flush: () => done() }));
+  return new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers });
 }
 
 /**
@@ -132,10 +163,13 @@ export async function tagged(response: Response, seen: Seen): Promise<Response> 
   // A copy of an answer the page has already read through is read in a moment; wait for those, not for the page's open reads.
   await new Promise((done) => setTimeout(done, 0));
   const headers = new Headers(response.headers);
-  if (seen.open > 0 || seen.ids.size > MOST_TAGS) {
+  // The page's own tag takes one of the places.
+  const room = seen.page ? MOST_TAGS - 1 : MOST_TAGS;
+  if (seen.open > 0 || seen.ids.size > room) {
     headers.set('Cache-Control', headers.get('Cache-Control')!.replace(/s-maxage=(\d+)/i, (_, s: string) => `s-maxage=${Math.min(Number(s), BRIEF_SECONDS)}`));
   }
-  if (seen.ids.size > 0 && seen.ids.size <= MOST_TAGS) headers.set('Cache-Tag', [...seen.ids].join(','));
+  const tags = [...(seen.ids.size <= room ? seen.ids : []), ...(seen.page ? [seen.page] : [])];
+  if (tags.length > 0) headers.set('Cache-Tag', tags.join(','));
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 

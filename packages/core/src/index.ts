@@ -78,7 +78,7 @@ export { clashPrompt, proposeClashResolutions, readClashAnswer, type ClashPropos
 export { TAKEDOWN_RELATIONS, TAKEDOWN_RESPONSE_DAYS, requestTakedown, resolveTakedownTarget, takeDownFile, takedowns, type TakedownRelation, type TakedownView } from './takedown.js';
 export { topicOf } from './topics.js';
 export { SUGGEST_HITS, marksIn, searchPage, searchSuggest, splitDate, type SearchHit, type SearchPage, type SearchSubjectHit, type SearchWordHit } from './searchPage.js';
-export { bestLine, matchingWords, MOMENT_CANDIDATES, MOMENT_LEADS, MOMENT_LEAN, MOMENT_RANKED, momentOf, queryWords, searchMoments, snippetOf, type Moment, type ParagraphMoment, type ScanLineMoment } from './moments.js';
+export { bestLine, matchingWords, MOMENT_CANDIDATES, MOMENT_LEADS, MOMENT_RANKED, momentOf, queryWords, searchMoments, snippetOf, type Moment, type ParagraphMoment, type ScanLineMoment } from './moments.js';
 export {
   EMBEDDED_TYPES,
   EMBEDDING_DIMENSIONS,

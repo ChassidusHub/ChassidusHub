@@ -29,6 +29,8 @@ export default async function handleRequest(request: Request, status: number, he
     signal: request.signal,
     onError(error: unknown) {
       failed = true;
+      // After the first bytes the status has gone out: the edge is told to forget the page instead (#342).
+      loadContext?.failed?.();
       console.error(error);
     },
   });

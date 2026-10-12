@@ -100,3 +100,37 @@ test('an event\'s Edit, from its corner menu, renames it', async ({ page }) => {
   await page.getByRole('link', { name: 'סיום' }).click();
   await expect(page).toHaveURL(/\/listen\/5732\/rh-3dvjfkyc$/);
 });
+
+test('a name waiting for a second look can be changed again in the same Edit', async ({ page }) => {
+  await page.context().addCookies([{ name: 'rh_session', value: 'sample', url: 'http://localhost:3001' }]);
+  await page.goto('/sample-sichos?edit');
+  await page.waitForLoadState('networkidle');
+  const name = page.getByLabel('שם', { exact: true });
+  await name.fill('שיחות לדוגמה, א');
+  await name.press('Enter');
+  await expect(page.getByRole('status')).toContainText('עין שנייה תבדוק');
+  await name.fill('שיחות לדוגמה, ב');
+  await name.press('Enter');
+  await expect(page.getByRole('status').last()).toContainText('עין שנייה תבדוק');
+  // Each says what it replaces as the site still has it, so neither is refused as "the page changed".
+  const sent = (await (await page.request.get('http://localhost:3002/_edits')).json()) as { operations: unknown[] }[];
+  expect(sent.at(-1)!.operations).toEqual([{ op: 'rename', item: 'rh-aaaaaaw1', name: { he: 'שיחות לדוגמה, ב' } }]);
+});
+
+test('opening Edit draws the same page at once, without reading it again', async ({ page }) => {
+  await page.context().addCookies([{ name: 'rh_session', value: 'sample', url: 'http://localhost:3001' }]);
+  for (const path of ['/sample-sichos', '/listen/5732/rh-3dvjfkyc']) {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    const reads: string[] = [];
+    const count = (r: { url: () => string }) => new URL(r.url()).origin === 'http://localhost:3001' && reads.push(r.url());
+    page.on('request', count);
+    await page.getByRole('button', { name: 'עוד', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'עריכה' }).click();
+    await expect(page.getByRole('region', { name: 'עריכה' })).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    page.off('request', count);
+    // Files and the routes' map (for the links Edit shows) may come; the page's data may not.
+    expect(reads.filter((url) => !/\.(js|css|svg|woff2)$|^\/__manifest$/.test(new URL(url).pathname))).toEqual([]);
+  }
+});

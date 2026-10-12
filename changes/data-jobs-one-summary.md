@@ -1,0 +1,1 @@
+- The five-minute run makes again at most one kept summary (transcripts, to-check, community sums) and leaves the next for the run after. Together they held the database for a minute and more every quarter hour, and searches and pages waited behind them (a search took 6.2 s, a sefer page 19.5 s, #338). Each job of the run now logs how long it took.
