@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The first sicha opened in a volume no longer waits about 2 s for its
+  path bar (#221): a sefer's volumes are counted from the unit_place_part
+  index (migration 0037) and a volume's sichos found by it, instead of
+  reading every unit's place, leads and all.
+
 - Search by idea says it is not available while it has nothing to search
   (#98): `/v1/search/similar` answers `available: false` until the items'
   vectors are made, so the site answers by words instead of "Nothing
