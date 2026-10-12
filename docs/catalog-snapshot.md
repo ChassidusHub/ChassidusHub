@@ -81,6 +81,7 @@ item's own key in that shelf (`orderIn`), else its `order`, then its path.
   "sets": {
     "rh-…": {
       "id": "rh-…", "path": "/sets/the-rebbe",
+      "rev": 1234,             // its revision on main, for an edit form
       "name": { "he": "הרבי", "en": "The Rebbe" },
       "slug": "the-rebbe",
       "parent": "rh-…",        // absent on a top shelf
@@ -93,13 +94,16 @@ item's own key in that shelf (`orderIn`), else its `order`, then its path.
   "works": {
     "rh-…": {
       "id": "rh-…", "path": "/likkutei-sichos",
+      "rev": 5678,
       "title": { "he": "ליקוטי שיחות" },
       "slug": "likkutei-sichos",
       "sets": ["rh-…"],        // the shelves it is on
       "addition": { "kind": "index", "to": "rh-…" },   // only on an addition; `to` when it belongs to a sefer
       "additions": ["rh-…"],   // the additions to it
       "parts": [{ "value": "12", "label": { "he": "חלק יב" }, "units": 48 }],  // its volumes, from its units
-      "units": 1530
+      "units": 1530,
+      "level": "volume",       // what its first level is called, from its first unit (absent with no units)
+      "depth": 3               // how many levels its units' positions have: 1 means /sefer/3 is a unit, not a volume
     }
   }
 }
@@ -116,6 +120,8 @@ One sefer's units, by volume, in the sefer's order.
 {
   "format": 1,
   "work": "rh-…",
+  "level": "volume",
+  "depth": 3,
   "parts": [
     {
       "value": "12", "label": { "he": "חלק יב" }, "units": 48,
@@ -136,6 +142,10 @@ One sefer's units, by volume, in the sefer's order.
 
 One Hebrew year's events, in date order and their order that day. Letters
 are left to their sefer (Igros Kodesh), and an event with no year is left out.
+Events with no recording are kept (a hanacha alone is worth listing); the
+listening pages show those with `recordings` above 0. Whether a recording's
+words can be followed is not here: it changes with every checked transcript,
+and `/v1/transcripts` keeps that list.
 
 ```jsonc
 {

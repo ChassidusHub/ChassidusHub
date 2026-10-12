@@ -74,6 +74,8 @@ describe('catalog snapshot', () => {
     expect(tree.works[ls]).toMatchObject({
       path: '/likkutei-sichos',
       units: 3,
+      level: 'volume',
+      depth: 3,
       additions: [index],
       parts: [
         { value: '1', label: { he: 'חלק 1' }, units: 2 },
@@ -81,6 +83,8 @@ describe('catalog snapshot', () => {
       ],
     });
     expect(tree.works[index]!.addition).toEqual({ kind: 'index', to: ls });
+    expect(tree.works[index]!.depth).toBeUndefined();
+    expect(tree.works[ls]!.rev).toBeGreaterThan(0);
 
     expect(Object.keys(manifest.works)).toEqual([ls]);
     const sefer = await read<SnapshotWorkFile>(manifest.works[ls]!.file);

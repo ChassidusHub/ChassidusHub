@@ -84,6 +84,8 @@ export interface SnapshotManifest {
 export interface SnapshotSet {
   id: EntityId;
   path: string | null;
+  /** Its revision on main, for an edit form to start from. */
+  rev: number;
   name: SnapshotName;
   slug?: string;
   parent?: EntityId;
@@ -108,6 +110,8 @@ export interface SnapshotPart {
 export interface SnapshotWork {
   id: EntityId;
   path: string | null;
+  /** Its revision on main, for an edit form to start from. */
+  rev: number;
   title: SnapshotName;
   slug?: string;
   /** The shelves it sits on. */
@@ -118,6 +122,10 @@ export interface SnapshotWork {
   additions: EntityId[];
   /** Its volumes in order, from its units' places; empty for a sefer with no units (a scan only). */
   parts: SnapshotPart[];
+  /** What it calls its first level (`volume`), from its first unit's position, for the path bar; absent with no units. */
+  level?: string;
+  /** How many levels its units' positions have: 1 when its units sit right under it (/sefer/3 is a unit, not a volume). */
+  depth?: number;
   units: number;
 }
 
@@ -143,6 +151,8 @@ export interface SnapshotUnit {
 export interface SnapshotWorkFile {
   format: typeof SNAPSHOT_FORMAT;
   work: EntityId;
+  level?: string;
+  depth: number;
   parts: Array<SnapshotPart & { items: SnapshotUnit[] }>;
 }
 
@@ -230,21 +240,22 @@ const nameOrNull = (value: unknown): SnapshotName | null => {
 interface Picked<T> {
   id: EntityId;
   path: string | null;
+  rev: number;
   data: T;
 }
 
 /** Items of one type on main, with only `fields` of each, its revision unpacked once (not once per field). */
 async function picked<T>(db: Db, type: string, fields: string[], where = 'TRUE'): Promise<Array<Picked<T>>> {
   const pairs = fields.map((f) => `'${f}', d.x->'${f}'`).join(', ');
-  const { rows } = await db.query<{ id: EntityId; path: string | null; data: T }>(
-    `SELECT e.id, e.path, jsonb_strip_nulls(jsonb_build_object(${pairs})) AS data
+  const { rows } = await db.query<{ id: EntityId; path: string | null; rev: number | string; data: T }>(
+    `SELECT e.id, e.path, e.main_rev AS rev, jsonb_strip_nulls(jsonb_build_object(${pairs})) AS data
      FROM entity e JOIN revision r ON r.id = e.main_rev
      CROSS JOIN LATERAL (SELECT y.x FROM (SELECT r.data || '{}'::jsonb AS x OFFSET 0) y OFFSET 0) d
      WHERE e.type = $1 AND e.main_rev IS NOT NULL AND NOT e.deleted AND r.data IS NOT NULL AND (${where}) AND ${FRESH}
      ORDER BY e.id`,
     [type],
   );
-  return rows;
+  return rows.map((row) => ({ ...row, rev: Number(row.rev) }));
 }
 
 interface SetFields {
@@ -275,7 +286,7 @@ interface PlaceRow {
   unit_id: EntityId;
   work_id: EntityId;
   part: string | null;
-  position: Array<{ value?: string; label?: unknown }> | null;
+  position: Array<{ level?: string; value?: string; label?: unknown }> | null;
   label: unknown;
   path: string | null;
 }
@@ -331,9 +342,12 @@ async function unitsByWork(db: Db): Promise<Map<EntityId, SnapshotWorkFile>> {
     for (const row of rows) {
       let file = out.get(row.work_id);
       if (!file) {
-        file = { format: SNAPSHOT_FORMAT, work: row.work_id, parts: [] };
+        file = { format: SNAPSHOT_FORMAT, work: row.work_id, depth: 0, parts: [] };
+        const level = row.position?.[0]?.level;
+        if (typeof level === 'string') file.level = level;
         out.set(row.work_id, file);
       }
+      file.depth = Math.max(file.depth, Array.isArray(row.position) ? row.position.length : 0);
       const value = row.part ?? '';
       // A volume is where its first unit is, in the sefer's order (as workOutline counts them).
       let part = file.parts.find((p) => p.value === value);
@@ -393,8 +407,8 @@ function treeOf(sets: Array<Picked<SetFields>>, works: Array<Picked<WorkFields>>
   const pathOf = new Map([...sets, ...works].map((x) => [x.id, x.path ?? '']));
   const bySetOrder = (a: EntityId, b: EntityId) => cmp(setOrder.get(a) ?? '', setOrder.get(b) ?? '') || cmp(pathOf.get(a) ?? '', pathOf.get(b) ?? '') || cmp(a, b);
 
-  for (const { id, path, data } of sets) {
-    const set: SnapshotSet = { id, path, name: nameOf(data.name, data.slug ?? id), sets: [], works: [], additions: [] };
+  for (const { id, path, rev, data } of sets) {
+    const set: SnapshotSet = { id, path, rev, name: nameOf(data.name, data.slug ?? id), sets: [], works: [], additions: [] };
     if (data.slug) set.slug = data.slug;
     if (typeof data.parent === 'string') set.parent = data.parent;
     const rebbe = path ? SNAPSHOT_REBBEIM.indexOf(path) : -1;
@@ -410,11 +424,12 @@ function treeOf(sets: Array<Picked<SetFields>>, works: Array<Picked<WorkFields>>
   tree.top.sort((a, b) => (tree.sets[a]!.rebbe ?? 99) - (tree.sets[b]!.rebbe ?? 99) || bySetOrder(a, b));
 
   const workData = new Map(works.map((w) => [w.id, w.data]));
-  for (const { id, path, data } of works) {
+  for (const { id, path, rev, data } of works) {
     const file = units.get(id);
     const work: SnapshotWork = {
       id,
       path,
+      rev,
       title: nameOf(data.title, data.slug ?? id),
       sets: (Array.isArray(data.sets) ? data.sets : []).filter((s) => typeof s === 'string' && tree.sets[s]),
       additions: [],
@@ -422,6 +437,8 @@ function treeOf(sets: Array<Picked<SetFields>>, works: Array<Picked<WorkFields>>
       units: file ? file.parts.reduce((n, p) => n + p.units, 0) : 0,
     };
     if (data.slug) work.slug = data.slug;
+    if (file?.level) work.level = file.level;
+    if (file) work.depth = file.depth;
     if (data.addition && typeof data.addition === 'object') {
       const to = typeof data.addition.to === 'string' && workData.has(data.addition.to) ? data.addition.to : undefined;
       work.addition = { kind: data.addition.kind ?? 'other', ...(to ? { to } : {}) };
