@@ -44,7 +44,7 @@ A new optional field on a work, one of:
 | --- | --- | --- | --- | --- |
 | `sichos` | sichos and maamarim; the default | a sicha, a maamar | date and occasion; a maamar's ד"ה | Likkutei Sichos, Sefer HaSichos, Sefer HaMaamarim |
 | `letters` | letters | a letter | number, date, addressee, place | Igros Kodesh (each Rebbe's) |
-| `hisvaaduyos` | farbrengens as said | a sicha or a maamar, grouped under its farbrengen | the farbrengen's date and occasion, mugah or not, its אותיות, its recording | Toras Menachem Hisvaaduyos, Sichos Kodesh |
+| `hisvaaduyos` | farbrengens as said | one printed piece: a farbrengen's sichos (in sections א, ב, …) or its maamar, grouped by the farbrengen | the farbrengen's date and occasion, mugah or not, its sections, its recording | Toras Menachem Hisvaaduyos, Sichos Kodesh |
 | `index` | indexes (maftechos) | a letter of the index, holding its entries | the sefer it indexes; whether it is one volume's or the merged one | the Likkutei Sichos indexes (#195) |
 | `daybook` | a book of days, read as printed | a day | the day's date | Hayom Yom (#104, #105) |
 | `chapters` | a book of chapters or simanim | a chapter, a siman | number; glosses and Kuntres Acharon apart | Tanya, Shulchan Aruch HaRav |
@@ -85,14 +85,18 @@ gives its recordings), `editions` (a letter's handwritten copy is an
 edition with `role: "manuscript"` and its `url`) and `position` (its place;
 the last level is its kind when `kind` is unset).
 
-**A farbrengen is a level above its sichos, not a unit** (Catalog's rule:
-text is split per sicha, never a whole farbrengen or volume as one unit).
-In Toras Menachem Hisvaaduyos each sicha and maamar is a unit, under a
-`farbrengen` level of its position whose label is the farbrengen's date
-and occasion, and its `events` names the farbrengen's event (its date,
-occasion and recordings). The live sefer is still one unit per farbrengen
-(levels `["volume", "farbrengen"]`); Catalog's Toras Menachem worker
-(#241) splits it.
+**In Toras Menachem a unit is one printed piece, grouped by its
+farbrengen** (Catalog's Toras Menachem worker, #241, 2026-10-12). Each unit
+is one chabadlibrary page: "שיחת ש"פ …" is all of a farbrengen's sichos, in
+sections א, ב, … (12 at the median), which the print does not title as
+separate sichos; a maamar said there is its own unit with the same date
+(589 dates are a maamar and a sicha; others two sichos or two maamarim);
+telegrams, blessings, letters and רשימות are one unit each. So the
+farbrengen is not a unit but what groups units: by `date` and `occasion`,
+both in the labels once suggestions #3654-#3666 are approved, and by
+`events` where the farbrengen's event is known. The hisvaaduyos view draws
+the sections from the `ois` marks in the words, and links the maamar and
+the sichos of one farbrengen to each other through that grouping.
 
 A machine's labels show as the machine's (the "machine output is always
 labelled" rule) until `labelOrigin.checked` is set. People check them on
@@ -108,10 +112,10 @@ slot.
 | --- | --- | --- |
 | letters | number, date, place, addressee | unit fields (snapshot) |
 | letters | handwritten copy | an edition with `role: "manuscript"` (`/v1/view`) |
-| hisvaaduyos | date, occasion, mugah or not | the farbrengen level's label and its event; unit `muga` (snapshot) |
+| hisvaaduyos | date, occasion, mugah or not | unit `date`, `occasion` and `muga` (snapshot); its event where known |
 | hisvaaduyos | section letters (אותיות) | the `ois` page mark in the words (#152); their labels in the snapshot as `osios` for the volume's grid |
 | hisvaaduyos | stage directions ("ניגנו", "אמר לחיים") | a paragraph with the `small` mark today; a segment kind `stage` in schema 18 so a view can set it apart |
-| hisvaaduyos | a maamar said there, as a link | the maamar's own unit, by the same farbrengen level (snapshot) |
+| hisvaaduyos | a maamar said there, as a link | the unit of the same sefer with the same date and occasion and `kind: maamar` (snapshot) |
 | hisvaaduyos | the recording, and the time each section starts | `events` to the recording; the alignment's spans at each `ois` (`/v1/view`, after the words) |
 | index | entry headings, page references | the index's words: one `item` segment per entry, its pages as links (packages/core/src/mafteach.ts) |
 | index | a page reference as unit and page | the sefer's contents maps (a printing's page ranges per unit), resolved when the index is read |
@@ -200,9 +204,10 @@ Nothing a reader sees changes with this pull request.
 
 - **Pick the view from `genre`.** Genre is the reader app's shelf, not a
   layout: Hayom Yom is `minhagim`, Toras Menachem `sichos`. Kept as it is.
-- **A farbrengen as one unit.** Simpler to show, but it breaks Catalog's
-  rule of one unit per sicha: a sicha could not be found, fixed, cited or
-  linked to its recording on its own.
+- **A level of the position for each farbrengen.** It would give the
+  grouping a place in the path, but Toras Menachem's volumes are printed
+  piece by piece, and date and occasion already group them without moving
+  every unit's path.
 - **Pick the view from `levels` alone.** Close (`day`, `farbrengen`,
   `letter`), and it is the fallback here, but levels are named by
   importers (`volume`, `part`, `chapter` mean different things in different
