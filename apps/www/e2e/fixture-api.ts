@@ -110,6 +110,47 @@ const views: Record<string, unknown> = {
     next: null,
     text: null,
   },
+  // A letter (app/views/letters.tsx): its unit's level is `letter`, and the catalog knows its date, place and addressee.
+  '/sample/1/5': {
+    item: {
+      id: 'rh-aaaaaab5',
+      type: 'unit',
+      path: '/sample/1/5',
+      rev: 1,
+      data: {
+        label: name('אגרת לדוגמה'),
+        position: [{ level: 'volume', value: '1' }, { level: 'letter', value: '5' }],
+        date: '5709-01-09',
+        place: name('עיר לדוגמה'),
+        to: name('נמען לדוגמה'),
+        editions: [{ kind: 'scan', role: 'manuscript', source: 'sample', sourceId: 'x', licence: 'free-to-read', url: 'https://files.example.org/letter.jpg' }],
+      },
+    },
+    pathBar: bar(2),
+    previous: { id: 'rh-aaaaaab2', path: '/sample/1/2', name: name('שיחה שניה') },
+    next: null,
+    text: {
+      kind: 'words',
+      from: 'body',
+      version: 'he',
+      language: 'he',
+      profile: 'sichos-kodesh',
+      segments: [
+        { id: 'p1', kind: 'paragraph', end: true, text: words('ב"ה, תאריך לדוגמה') },
+        { id: 'p2', kind: 'paragraph', text: words('כבוד הנמען לדוגמה') },
+        { id: 'p3', kind: 'paragraph', text: words('שלום וברכה!') },
+        { id: 'p4', kind: 'paragraph', text: [{ text: 'גוף המכתב לדוגמה, ובו הערה' }, { note: 'n2' }, { text: '.' }] },
+        { id: 'p5', kind: 'paragraph', text: words('עוד פסקה לדוגמה.') },
+        { id: 'p6', kind: 'paragraph', end: true, text: words('חתימה לדוגמה') },
+      ],
+      notes: [
+        { id: 'n1', kind: 'note', text: words('הערה על המכתב כולו לדוגמה.') },
+        { id: 'n2', kind: 'note', text: words('הערה מסומנת לדוגמה.') },
+      ],
+      machine: 'none',
+      versions: [{ version: 'he', from: 'body', language: 'he' }],
+    },
+  },
   '/sample/1/3': {
     item: { id: 'rh-aaaaaab3', type: 'unit', path: '/sample/1/3', rev: 1, data: { label: name('שיחה שלישית') } },
     pathBar: bar(2),

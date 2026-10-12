@@ -5,9 +5,11 @@ import { printingsFrom } from '../library/printings';
 import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
 import { readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
+import { viewFor } from '../reader/views';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
+import letterFont from '../ui/fonts/david-clm.woff2?url';
 import type { Route } from './+types/item';
 import { KEPT_PAGE } from '../lib/caching';
 
@@ -46,10 +48,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (item.type === 'unit') {
       const reader = await readerData(view, context, url.origin, url.searchParams.get('language') ?? undefined);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
-      // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
-      // Said in a header, on the server, so it costs the reader's script nothing.
+      // A sicha's words are set in the Torah face, a letter's in David (app/views/letters.tsx): the page asks for it
+      // with its first bytes, not once it has drawn. Said in a header, on the server, so it costs the reader's script nothing.
       if (reader.text.kind !== 'words') return loaded;
-      return data(loaded, { headers: { Link: `<${torahFont}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
+      const font = viewFor(reader).kind === 'letters' ? letterFont : torahFont;
+      return data(loaded, { headers: { Link: `<${font}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
     }
     return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: view.pathBar };
   } catch (error) {
