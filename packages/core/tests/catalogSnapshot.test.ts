@@ -154,8 +154,18 @@ describe('catalog snapshot', () => {
     // The Rebbe's page draws from the top file alone; another top shelf is its name and path.
     const top = await read<SnapshotTopFile>(index.top);
     expect(top.top.map((s) => s.id)).toEqual(tree.top);
-    expect(top.top[0]).toEqual({ id: rebbe, path: '/sets/the-rebbe', name: { he: 'הרבי', en: 'The Rebbe' }, rebbe: 9, sets: [{ id: shelf, path: '/sets/sichos', name: { he: 'שיחות' } }], works: [], additions: [] });
-    expect(top.top.find((s) => s.id === other)).toEqual({ id: other, path: '/sets/other', name: { he: 'עוד' } });
+    expect(top.top[0]).toEqual({
+      id: rebbe,
+      path: '/sets/the-rebbe',
+      name: { he: 'הרבי', en: 'The Rebbe' },
+      rev: tree.sets[rebbe]!.rev,
+      rebbe: 9,
+      // Each of his shelves with its sefarim, so his page draws them with no other file.
+      sets: [{ id: shelf, path: '/sets/sichos', name: { he: 'שיחות' }, works: [{ id: ls, path: '/likkutei-sichos', name: { he: 'ליקוטי שיחות' } }], inner: [] }],
+      works: [],
+      additions: [],
+    });
+    expect(top.top.find((s) => s.id === other)).toEqual({ id: other, path: '/sets/other', name: { he: 'עוד' }, rev: tree.sets[other]!.rev });
 
     // A top shelf's file holds what is under it, as in the tree, and the work file of each sefer with units.
     const mine = await read<SnapshotShelfFile>(index.shelves[rebbe]!);
@@ -170,6 +180,17 @@ describe('catalog snapshot', () => {
     const years = await read<SnapshotYearsFile>(index.years);
     expect(years.years).toEqual({ '5742': { file: manifest.years['5742']!.file, events: 1 } });
     expect(new TextEncoder().encode(JSON.stringify(index)).byteLength).toBeLessThan(1000);
+  });
+
+  it('names a Rebbe’s shelf’s first shelves inside, and says when it has loose additions', async () => {
+    const names = ['א', 'ב', 'ג', 'ד'];
+    for (const [i, he] of names.entries()) await add(catalog, 'steward', 'steward', 'set', { name: { he }, slug: `inner-${i}`, policy: 'moderated', keepers: ['keeper'], parent: shelf, order: String(i) }, `/sets/inner-${i}`);
+    await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ליקוט' }, slug: 'loose', authors: [], genre: 'chassidus', levels: [], sets: [shelf], addition: { kind: 'collection' } }, '/loose');
+    const store = memorySnapshotStore();
+    await writeSnapshot(catalog.db, store);
+    const index = JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!) as SnapshotIndex;
+    const top = JSON.parse((await store.get(snapshotFileKey(index.top)))!) as SnapshotTopFile;
+    expect(top.top[0]!.sets![0]).toMatchObject({ id: shelf, inner: [{ he: 'א' }, { he: 'ב' }, { he: 'ג' }], loose: true });
   });
 
   it('builds the index for a manifest written before it existed', async () => {

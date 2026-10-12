@@ -232,18 +232,24 @@ A file's address is the same folder as the manifest's files: the API's
 `/v1/catalog/files/<name>`, the site's `/_/catalog/<name>`.
 
 ```jsonc
-// top.<hash>.json: about 4 kB compressed on live
+// top.<hash>.json: about 6 kB compressed on live
 {
   "format": 2,
   "top": [                                   // the Rebbeim in their line, then the other top shelves
     {
       "id": "rh-…", "path": "/sets/the-rebbe", "name": { "he": "הרבי", "en": "The Rebbe" },
+      "rev": 1234,                           // its revision on main, for an edit form
       "rebbe": 9,                            // a Rebbe's shelf only, and with it what is on it:
-      "sets":      [{ "id": "rh-…", "path": "/sets/…", "name": { "he": "…" } }],
+      "sets": [{
+        "id": "rh-…", "path": "/sets/…", "name": { "he": "…" },
+        "works": [{ "id": "rh-…", "path": "/likkutei-sichos", "name": { "he": "ליקוטי שיחות" } }],  // its official sefarim
+        "inner": [{ "he": "…" }],            // the names of its first 3 shelves inside, or []
+        "loose": true                        // only when it has additions that belong to none of its sefarim
+      }],
       "works":     [{ "id": "rh-…", "path": "/likkutei-sichos", "name": { "he": "ליקוטי שיחות" } }],
       "additions": [{ "id": "rh-…", "path": "/…", "name": { "he": "…" } }]
     },
-    { "id": "rh-…", "path": "/sets/chitas-rambam", "name": { "he": "…" } }   // another top shelf: name and path
+    { "id": "rh-…", "path": "/sets/chitas-rambam", "name": { "he": "…" }, "rev": 99 }   // another top shelf: name, path, rev
   ]
 }
 ```
