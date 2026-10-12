@@ -8,7 +8,7 @@ import { isPageHref, type PageInline, type PageMark, type PageSegment } from '@c
  *
  * Each segment keeps its id (`s-<id>`), so a link can point at it and a fix
  * knows where it is; words a machine made and nobody checked yet carry `m`,
- * the faint dotted underline. Footnote marks are links to the note at the
+ * the quiet dot at their start. Footnote marks are links to the note at the
  * end of the page, so they work before any script has arrived; with script
  * a mark opens the note in a sheet.
  */
