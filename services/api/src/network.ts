@@ -27,11 +27,7 @@ export function networkRoutes(app: Hono, catalog: Catalog, options: { embedder?:
     if (within !== null && !isValidDateKey(within)) throw new HttpError(422, 'within must be a date key, like 5711 or 5711-11-10');
     // A subject in English letters (bitachon) is looked for as the texts write it (בטחון), as /v1/search/page does (#99).
     const topic = topicOf(q);
-    // lean=1 (temporary): ranks fewer paragraphs, to compare its answers and speed with the rule's (moments.ts); never kept at the edge.
-    const lean = c.req.query('lean') === '1';
-    const answer = c.json({ query: q, topic, moments: await searchMoments(catalog, topic?.he ?? q, { limit: whole(c.req.query('limit'), 'limit', 100), within, lean }) });
-    if (lean) answer.headers.set('Cache-Control', 'no-store');
-    return answer;
+    return c.json({ query: q, topic, moments: await searchMoments(catalog, topic?.he ?? q, { limit: whole(c.req.query('limit'), 'limit', 100), within }) });
   });
 
   // The new site's search screen, ready to draw, in one read; a date in q puts its words first and alone is that day's farbrengen.
