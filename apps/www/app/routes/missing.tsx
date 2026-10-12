@@ -1,5 +1,6 @@
 import { describeDateKey } from '@chassidushub/hebrew';
-import { Link } from 'react-router';
+import { Suspense, type ReactNode } from 'react';
+import { Await, Link } from 'react-router';
 import { SeeAlso } from '../community/parts';
 import { capped, count, dayName, hebrewName, itemName, yearName, type ArchiveGap, type CatalogHealth, type Name } from '../community/data';
 import { Button, Icon, Row, Rows, Say, SectionHead, TopBar } from '../ui';
@@ -29,14 +30,8 @@ const DEEPEST = 500;
 
 type Event = { id: string; path: string | null; type: string; data: Record<string, unknown> };
 
-/**
- * The Missing board is the same for everyone: the list of one kind (of one
- * year, for farbrengens), each kind's count for the tabs, and each year's
- * gaps for the years beside the list (from the health of the catalog).
- * `?kind=`, `?year=` and `?page=` choose; plain links, so it works without
- * script.
- */
-export async function loader({ request, context }: Route.LoaderArgs) {
+/** What the address asks for: the kind, the year (for farbrengens) and the page; plain links, so it works without script. */
+function asked(request: Request) {
   const url = new URL(request.url);
   const asked = url.searchParams.get('kind') ?? '';
   const kind: Kind = (KINDS as readonly string[]).includes(asked) ? (asked as Kind) : 'recordings';
@@ -44,17 +39,36 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const yearAsked = url.searchParams.get('year') ?? '';
   const year = byYear && /^\d{4}$/.test(yearAsked) ? yearAsked : undefined;
   const page = Math.min(Math.max(1, Number(url.searchParams.get('page')) || 1), DEEPEST / PAGE);
+  return { kind, year, page };
+}
+
+/**
+ * The Missing board is the same for everyone: the list of one kind (of one
+ * year, for farbrengens), each kind's count for the tabs, and each year's
+ * gaps for the years beside the list (from the health of the catalog).
+ * `?kind=`, `?year=` and `?page=` choose. The page never waits for the
+ * lists: its frame (the tabs, the heading) shows at once, and they come after.
+ */
+export function loader({ request, context }: Route.LoaderArgs) {
+  const frame = asked(request);
+  return { ...frame, data: board(context.api, frame) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the lists follow. */
+export function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  return { ...asked(request), data: serverLoader().then((d) => d.data) };
+}
+
+async function board(api: Route.LoaderArgs['context']['api'], { kind, year, page }: ReturnType<typeof asked>) {
+  const byYear = kind === 'recordings' || kind === 'texts';
   const [list, counts, health] = await Promise.all([
-    context.api.missing({ kind, within: year, limit: page * PAGE }).catch(() => null),
-    Promise.all(KINDS.map((k) => context.api.missing({ kind: k, within: k === 'recordings' || k === 'texts' ? year : undefined, limit: 1 }).then((r) => r.total, () => null))),
-    byYear ? (context.api.health({ limit: 1 }).catch(() => null) as Promise<CatalogHealth | null>) : null,
+    api.missing({ kind, within: year, limit: page * PAGE }).catch(() => null),
+    Promise.all(KINDS.map((k) => api.missing({ kind: k, within: k === 'recordings' || k === 'texts' ? year : undefined, limit: 1 }).then((r) => r.total, () => null))),
+    byYear ? (api.health({ limit: 1 }).catch(() => null) as Promise<CatalogHealth | null>) : null,
   ]);
   const from = (page - 1) * PAGE;
   const rows = (list?.items ?? []).slice(from);
   return {
-    kind,
-    year,
-    page,
     total: list?.total ?? null,
     events: kind === 'files' ? [] : (rows as Event[]).map((e) => ({ id: e.id, path: e.path, type: e.type, data: { title: e.data.title, label: e.data.label, name: e.data.name, date: e.data.date } })),
     files: kind === 'files' ? (rows as unknown as ArchiveGap[]) : [],
@@ -62,6 +76,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     years: (health?.years ?? []).map((y) => ({ year: y.year, missing: y.events - (kind === 'texts' ? y.withText : y.withRecording) })).reverse(),
   };
 }
+
+type Board = Awaited<ReturnType<typeof board>>;
 
 export function headers() {
   return { 'Cache-Control': 'public, max-age=300, s-maxage=600' };
@@ -83,10 +99,10 @@ const address = (kind: Kind, year?: string, page?: number) => {
  * page, where the thing can be added.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { kind, year, page, total, events, files, counts, years } = loaderData;
+  const { kind, year, page, data } = loaderData;
   const byYear = kind === 'recordings' || kind === 'texts';
-  const pages = Math.max(1, Math.ceil(Math.min(total ?? 0, DEEPEST) / PAGE));
-  const shown = events.length + files.length;
+  const head = `${HEAD[kind]}${byYear && year ? ` בשנת ${yearName(Number(year))}` : ''}`;
+  const here = address(kind, year, page);
   return (
     <>
       <TopBar title="מה חסר" />
@@ -98,89 +114,142 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
           {KINDS.map((k) => (
             <Link key={k} to={address(k, year)} className={k === kind ? 'chip on' : 'chip'} aria-current={k === kind ? 'page' : undefined}>
               {TAB[k]}
-              {counts[k] !== null && <span className="faint">{capped(counts[k]!)}</span>}
+              <Suspense key={here} fallback={null}>
+                <Await resolve={data} errorElement={null}>
+                  {(board) => board.counts[k] !== null && <span className="faint">{capped(board.counts[k]!)}</span>}
+                </Await>
+              </Suspense>
             </Link>
           ))}
         </nav>
 
-        {byYear && years.length > 0 && (
-          <details className="fold years" open={!!year}>
-            <summary>
-              <span>{year ? `שנת ${yearName(Number(year))}` : 'בחירת שנה'}</span>
-              <Icon name="chevron-down" size="s" />
-            </summary>
-            <div className="numgrid">
-              {year && (
-                <Link to={address(kind)} className="all">
-                  כל השנים
-                </Link>
-              )}
-              {years.map((y) => (
-                <Link key={y.year} to={address(kind, String(y.year))} className={y.missing ? 'has' : undefined} aria-current={year === String(y.year) ? 'page' : undefined} aria-label={`${yearName(y.year)}: ${count(y.missing)} חסרות`}>
-                  <span>{yearName(y.year)}</span>
-                  <small>{count(y.missing)}</small>
-                </Link>
-              ))}
-            </div>
-          </details>
-        )}
-
-        <SectionHead title={`${HEAD[kind]}${byYear && year ? ` בשנת ${yearName(Number(year))}` : ''}${total !== null ? ` (${capped(total)})` : ''}`} />
-        <p className="faint sm">{HOW[kind]}</p>
-        {total === null ? (
-          <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>
-        ) : shown === 0 ? (
-          <Say tone="good">{kind === 'files' ? 'הארכיון קיבל כל קובץ שחיפש.' : year ? 'בשנה הזאת לא חסר כלום.' : 'לא חסר כאן כלום.'}</Say>
-        ) : kind === 'files' ? (
-          <Rows>
-            {files.map((gap) => (
-              <FileRow key={`${gap.collection}/${gap.item_id}/${gap.kind}/${gap.role}/${gap.url}`} gap={gap} />
-            ))}
-          </Rows>
-        ) : (
-          <Rows>
-            {events.map((item) =>
-              kind === 'scans' ? (
-                <Row key={item.id} to={item.path ?? `/${item.id}`} start={<Icon name="book" className="faint" />} title={itemName(item)} />
-              ) : (
-                <Row
-                  key={item.id}
-                  to={item.path ?? `/${item.id}`}
-                  title={typeof item.data.date === 'string' ? describeDateKey(item.data.date) || item.data.date : itemName(item)}
-                  sub={hebrewName(item.data.title as Name) || undefined}
-                />
-              ),
+        {/* Keyed by the address, so another kind, year or page shows its own frame at once rather than the last list. */}
+        <Suspense key={here} fallback={<Waiting head={head} kind={kind} />}>
+          <Await
+            resolve={data}
+            errorElement={
+              <Waiting head={head} kind={kind}>
+                <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>
+                <Help />
+              </Waiting>
+            }
+          >
+            {(board) => (
+              <>
+                <List kind={kind} year={year} page={page} head={head} board={board} />
+                <Help />
+              </>
             )}
-          </Rows>
-        )}
-
-        {pages > 1 && (
-          <div className="btns pager">
-            {page > 1 && (
-              <Button small look="outline" to={address(kind, year, page - 1)}>
-                הקודמים
-              </Button>
-            )}
-            <span className="faint sm">
-              עמוד {page} מתוך {pages}
-            </span>
-            {page < pages && (
-              <Button small look="outline" to={address(kind, year, page + 1)}>
-                הבאים
-              </Button>
-            )}
-          </div>
-        )}
-        {total !== null && total > DEEPEST && page === pages && <p className="faint sm">{byYear && !year ? 'מוצגים 500 הראשונים; בחרו שנה כדי לראות את כולם.' : 'מוצגים 500 הראשונים.'}</p>}
-
-        <SectionHead title="איך עוזרים" />
-        <SeeAlso
-          links={[
-            { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על שנה שלמה, פריט אחרי פריט' },
-            { to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, שנה אחרי שנה' },
-          ]}
-        />
+          </Await>
+        </Suspense>
       </main>
+    </>
+  );
+}
+
+/** Where else to help. It comes in after the list, never before it: shown under the waiting line, it would be pushed down when the list arrives. */
+function Help() {
+  return (
+    <>
+      <SectionHead title="איך עוזרים" />
+      <SeeAlso
+        links={[
+          { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על שנה שלמה, פריט אחרי פריט' },
+          { to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, שנה אחרי שנה' },
+        ]}
+      />
+    </>
+  );
+}
+
+/** The list's heading, with a quiet line where the list will come (or what went wrong). */
+function Waiting({ head, kind, children = <p className="faint" aria-busy="true">רגע…</p> }: { head: string; kind: Kind; children?: ReactNode }) {
+  return (
+    <>
+      <SectionHead title={head} />
+      <p className="faint sm">{HOW[kind]}</p>
+      {children}
+    </>
+  );
+}
+
+/** The years to choose from, the list of one kind with its count, and the pages of it. */
+function List({ kind, year, page, head, board }: { kind: Kind; year: string | undefined; page: number; head: string; board: Board }) {
+  const { total, events, files, years } = board;
+  const byYear = kind === 'recordings' || kind === 'texts';
+  const pages = Math.max(1, Math.ceil(Math.min(total ?? 0, DEEPEST) / PAGE));
+  const shown = events.length + files.length;
+  return (
+    <>
+      {byYear && years.length > 0 && (
+        <details className="fold years" open={!!year}>
+          <summary>
+            <span>{year ? `שנת ${yearName(Number(year))}` : 'בחירת שנה'}</span>
+            <Icon name="chevron-down" size="s" />
+          </summary>
+          <div className="numgrid">
+            {year && (
+              <Link to={address(kind)} className="all">
+                כל השנים
+              </Link>
+            )}
+            {years.map((y) => (
+              <Link key={y.year} to={address(kind, String(y.year))} className={y.missing ? 'has' : undefined} aria-current={year === String(y.year) ? 'page' : undefined} aria-label={`${yearName(y.year)}: ${count(y.missing)} חסרות`}>
+                <span>{yearName(y.year)}</span>
+                <small>{count(y.missing)}</small>
+              </Link>
+            ))}
+          </div>
+        </details>
+      )}
+
+      <SectionHead title={`${head}${total !== null ? ` (${capped(total)})` : ''}`} />
+      <p className="faint sm">{HOW[kind]}</p>
+      {total === null ? (
+        <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>
+      ) : shown === 0 ? (
+        <Say tone="good">{kind === 'files' ? 'הארכיון קיבל כל קובץ שחיפש.' : year ? 'בשנה הזאת לא חסר כלום.' : 'לא חסר כאן כלום.'}</Say>
+      ) : kind === 'files' ? (
+        <Rows>
+          {files.map((gap) => (
+            <FileRow key={`${gap.collection}/${gap.item_id}/${gap.kind}/${gap.role}/${gap.url}`} gap={gap} />
+          ))}
+        </Rows>
+      ) : (
+        <Rows>
+          {events.map((item) =>
+            kind === 'scans' ? (
+              <Row key={item.id} to={item.path ?? `/${item.id}`} start={<Icon name="book" className="faint" />} title={itemName(item)} />
+            ) : (
+              <Row
+                key={item.id}
+                to={item.path ?? `/${item.id}`}
+                title={typeof item.data.date === 'string' ? describeDateKey(item.data.date) || item.data.date : itemName(item)}
+                sub={hebrewName(item.data.title as Name) || undefined}
+              />
+            ),
+          )}
+        </Rows>
+      )}
+
+      {pages > 1 && (
+        <div className="btns pager">
+          {page > 1 && (
+            <Button small look="outline" to={address(kind, year, page - 1)}>
+              הקודמים
+            </Button>
+          )}
+          <span className="faint sm">
+            עמוד {page} מתוך {pages}
+          </span>
+          {page < pages && (
+            <Button small look="outline" to={address(kind, year, page + 1)}>
+              הבאים
+            </Button>
+          )}
+        </div>
+      )}
+      {total !== null && total > DEEPEST && page === pages && <p className="faint sm">{byYear && !year ? 'מוצגים 500 הראשונים; בחרו שנה כדי לראות את כולם.' : 'מוצגים 500 הראשונים.'}</p>}
     </>
   );
 }

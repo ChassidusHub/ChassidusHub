@@ -1,11 +1,11 @@
-import { useId, useState } from 'react';
-import { Link, useRevalidator } from 'react-router';
+import { Suspense, useId, useState } from 'react';
+import { Await, Link, useRevalidator } from 'react-router';
 import { useAccount, type SignedIn } from '../lib/account';
 import { act, dayOf, said } from '../tools/common';
 import { itemHead } from '../tools/item.server';
 import { ItemTop } from '../tools/ItemTop';
 import { PlainWords } from '../tools/PlainWords';
-import { Button, Say } from '../ui';
+import { Button, Say, TopBar } from '../ui';
 import type { Route } from './+types/talk';
 
 /** One comment on a talk page (GET /v1/entities/{id}/talk). */
@@ -25,12 +25,20 @@ interface Comment {
  * person opens a topic, answers one, or hides their own. Comments are plain
  * words: web addresses, item ids, site paths, @people and #numbers in them
  * become links. Who is signed in is asked by the browser; the page itself
- * is the same for everyone.
+ * is the same for everyone. Whether the item exists is the one thing
+ * waited for, so a wrong address is a real 404; the talk comes after the
+ * frame.
  */
 export async function loader({ params, context: { api } }: Route.LoaderArgs) {
-  const [head, talk] = await Promise.all([itemHead(api, params.id), api.itemTalk({ id: params.id }).catch(() => ({ talk: [] }))]);
-  const comments = (talk.talk as Partial<Comment>[]).map((c) => ({ id: c.id!, parent: c.parent ?? null, author: c.author!, authorName: c.authorName || 'מישהו', body: c.body ?? null, at: c.at!, hidden: !!c.hidden }));
-  return { head, comments };
+  const talk = api.itemTalk({ id: params.id }).catch(() => ({ talk: [] }));
+  const head = await itemHead(api, params.id);
+  const comments = talk.then((found) => (found.talk as Partial<Comment>[]).map((c) => ({ id: c.id!, parent: c.parent ?? null, author: c.author!, authorName: c.authorName || 'מישהו', body: c.body ?? null, at: c.at!, hidden: !!c.hidden })));
+  return { id: params.id, data: comments.then((all) => ({ head, comments: all })) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the item and its talk follow. */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  return { id: params.id, data: serverLoader().then((loaded) => loaded.data) };
 }
 
 // Read again on every visit, so a comment just written shows at once.
@@ -38,8 +46,8 @@ export const headers = () => ({ 'Cache-Control': 'public, no-cache' });
 
 export const handle = { section: 'library' };
 
-export function meta({ data }: Route.MetaArgs) {
-  return [{ title: data ? `שיחה: ${data.head.name} · ChassidusHub` : 'ChassidusHub' }];
+export function meta(_: Route.MetaArgs) {
+  return [{ title: 'שיחה · ChassidusHub' }];
 }
 
 /** Every answer under a topic, in the order written, however deep it was nested. */
@@ -55,7 +63,39 @@ function answersOf(comments: Comment[], root: number): Comment[] {
   return out.sort((a, b) => a.at.localeCompare(b.at) || a.id - b.id);
 }
 
-export default function Talk({ loaderData: { head, comments } }: Route.ComponentProps) {
+type Loaded = Awaited<Route.ComponentProps['loaderData']['data']>;
+
+/**
+ * The page's frame at once: the top bar (the item's path once it has come)
+ * and the heading; the talk where it will be. No such item is the site's own
+ * not-found page, as before. Keyed by the item, so going to another item's
+ * talk shows its frame at once; written here, the talk is read again in place.
+ */
+export default function Talk({ loaderData: { id, data } }: Route.ComponentProps) {
+  return (
+    <>
+      <Suspense key={id} fallback={<TopBar title="שיחה" />}>
+        <Await resolve={data}>{({ head }) => <ItemTop head={head} tool="talk" />}</Await>
+      </Suspense>
+      <main id="content" className="view it-text">
+        <h1>שיחה</h1>
+        <Suspense
+          key={id}
+          fallback={
+            <p className="faint" aria-busy="true">
+              רגע…
+            </p>
+          }
+        >
+          <Await resolve={data}>{(loaded) => <Topics loaded={loaded} />}</Await>
+        </Suspense>
+      </main>
+    </>
+  );
+}
+
+/** The topics, each with its answers, and the box for a new one. */
+function Topics({ loaded: { head, comments } }: { loaded: Loaded }) {
   const account = useAccount();
   const revalidator = useRevalidator();
   const refresh = () => void revalidator.revalidate();
@@ -63,31 +103,27 @@ export default function Talk({ loaderData: { head, comments } }: Route.Component
   const shown = comments.filter((c) => !c.hidden);
   return (
     <>
-      <ItemTop head={head} tool="talk" />
-      <main id="content" className="view it-text">
-        <h1>שיחה</h1>
+      <p className="faint sm">
+        <Link to={head.to}>{head.name}</Link> · {topics.length} נושאים · {shown.length} תגובות
+      </p>
+      <p className="lede muted">כאן מדברים על הדף: מה חסר בו, מה צריך לתקן, ומה עוד כדאי לדעת.</p>
+      {topics.length === 0 && <p className="faint">עוד אין כאן נושאים.</p>}
+      <ol className="it-topics">
+        {topics.map((topic) => (
+          <Topic key={topic.id} topic={topic} answers={answersOf(comments, topic.id)} item={head.id} me={account ?? null} onChange={refresh} />
+        ))}
+      </ol>
+      {account ? (
+        <section className="panel" aria-labelledby="new-topic">
+          <h2 id="new-topic">נושא חדש</h2>
+          <Composer item={head.id} label="מה רציתם לומר?" send="לפרסם" onDone={refresh} />
+        </section>
+      ) : account === null ? (
         <p className="faint sm">
-          <Link to={head.to}>{head.name}</Link> · {topics.length} נושאים · {shown.length} תגובות
+          כדי לכתוב כאן צריך <Link to={`/signin?return=${encodeURIComponent(`/talk/${head.id}`)}`}>להיכנס</Link>.
         </p>
-        <p className="lede muted">כאן מדברים על הדף: מה חסר בו, מה צריך לתקן, ומה עוד כדאי לדעת.</p>
-        {topics.length === 0 && <p className="faint">עוד אין כאן נושאים.</p>}
-        <ol className="it-topics">
-          {topics.map((topic) => (
-            <Topic key={topic.id} topic={topic} answers={answersOf(comments, topic.id)} item={head.id} me={account ?? null} onChange={refresh} />
-          ))}
-        </ol>
-        {account ? (
-          <section className="panel" aria-labelledby="new-topic">
-            <h2 id="new-topic">נושא חדש</h2>
-            <Composer item={head.id} label="מה רציתם לומר?" send="לפרסם" onDone={refresh} />
-          </section>
-        ) : account === null ? (
-          <p className="faint sm">
-            כדי לכתוב כאן צריך <Link to={`/signin?return=${encodeURIComponent(`/talk/${head.id}`)}`}>להיכנס</Link>.
-          </p>
-        ) : null}
-        <p className="note">אפשר לכתוב ‎@שם כדי להזכיר מישהו, ‎#12 כדי לקשר להצעה, וכתובת או מזהה של דף הופכים לקישור.</p>
-      </main>
+      ) : null}
+      <p className="note">אפשר לכתוב ‎@שם כדי להזכיר מישהו, ‎#12 כדי לקשר להצעה, וכתובת או מזהה של דף הופכים לקישור.</p>
     </>
   );
 }

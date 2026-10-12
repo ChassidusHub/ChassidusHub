@@ -1,10 +1,10 @@
 import { allSegments, inlineText, isPageText } from '@chassidushub/model';
 import { describeDateKey } from '@chassidushub/hebrew';
-import { useState } from 'react';
-import { data, Link } from 'react-router';
+import { Suspense, useState } from 'react';
+import { Await, data, Link } from 'react-router';
 import { nameOf } from '../stewards/call';
 import { PlayRow } from '../listen/play';
-import { PRIVATE } from '../stewards/showcase';
+import { PRIVATE, type Showcase } from '../stewards/showcase';
 import { Button, Icon, Row, Rows, Say, SectionHead, TopBar } from '../ui';
 import type { Route } from './+types/show';
 
@@ -35,11 +35,29 @@ const COUNTED: [string, string][] = [
  * transcripts can be read here, through the showcase's own address; the
  * sichos open on their pages, their scans through the showcase's address.
  * Never kept, never indexed, never framed (lib/showcase.ts).
+ *
+ * The token is checked before the page answers, so a wrong one is a 404;
+ * the page's frame (its title and the owner's note) comes with that answer,
+ * and what it shows is read after, never waited for.
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   const showcase = await context.showcases?.get(params.token).catch(() => null);
   if (!showcase) throw data('not found', { status: 404, headers: PRIVATE });
-  const { api } = context;
+  return { token: showcase.token, head: { title: showcase.title, note: showcase.note }, data: contentOf(context.api, showcase) };
+}
+
+/**
+ * Opened from inside the site (Back from a farbrengen's page), nothing is
+ * waited for: the frame follows the server's answer, and a wrong token says
+ * so where the page's content would be.
+ */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  const server = serverLoader();
+  return { token: params.token, head: server.then((d) => d.head), data: server.then((d) => d.data) };
+}
+
+/** What the showcase shows, read from the catalog: its farbrengens and their parts, its sichos, the pages read, the numbers. */
+async function contentOf(api: Route.LoaderArgs['context']['api'], showcase: Showcase) {
   const { token } = showcase;
   const ids = [...showcase.farbrengens, ...showcase.sichos];
   const [items, linked, stats] = await Promise.all([
@@ -78,7 +96,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     return { key: at, title: r.title, scan: r.media !== null ? `/show/${token}/m/${r.media}` : null, paragraphs };
   });
   const counts = stats?.counts ? COUNTED.flatMap(([type, label]) => (stats.counts[type] ? [{ label, count: stats.counts[type]! }] : [])) : [];
-  return { token, title: showcase.title, note: showcase.note, farbrengens, sichos, readings, counts };
+  return { farbrengens, sichos, readings, counts };
 }
 
 export function headers() {
@@ -86,7 +104,9 @@ export function headers() {
 }
 
 export function meta({ data: page }: Route.MetaArgs) {
-  return [{ title: `${page?.title ?? 'ChassidusHub'} · ChassidusHub` }, { name: 'robots', content: 'noindex, nofollow' }, { name: 'referrer', content: 'no-referrer' }];
+  // The title is known when the server answered the address; opened from inside the site it comes after.
+  const head = page && !(page.head instanceof Promise) ? page.head : null;
+  return [{ title: `${head?.title ?? 'ChassidusHub'} · ChassidusHub` }, { name: 'robots', content: 'noindex, nofollow' }, { name: 'referrer', content: 'no-referrer' }];
 }
 
 /**
@@ -96,93 +116,118 @@ export function meta({ data: page }: Route.MetaArgs) {
  * a machine heard or read and nobody checked is said to be so.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { token, title, note, farbrengens, sichos, readings, counts } = loaderData;
+  const { token, head, data: page } = loaderData;
+  const waiting = (
+    <p className="faint" aria-busy="true">
+      רגע…
+    </p>
+  );
   return (
     <>
-      <TopBar title={title} />
+      <Suspense fallback={<TopBar title="ChassidusHub" />}>
+        <Await resolve={head} errorElement={<TopBar title="ChassidusHub" />}>
+          {({ title }) => <TopBar title={title} />}
+        </Await>
+      </Suspense>
       <main id="content" className="view">
-        <h1>{title}</h1>
-        {note && <p className="lede">{note}</p>}
+        <Suspense fallback={waiting}>
+          <Await resolve={head} errorElement={<Say>הדף הזה לא נמצא.</Say>}>
+            {({ title, note }) => (
+              <>
+                <h1>{title}</h1>
+                {note && <p className="lede">{note}</p>}
+              </>
+            )}
+          </Await>
+        </Suspense>
         <p>ChassidusHub הוא המפתח הפתוח לתורת חב״ד ולהקלטותיה, שנבנה בידי הקהל: כל ספר וכל הוצאה שלו, כל סריקה והטקסט שלה, כל התוועדות וכל הקלטה. מכונות קוראות את הסריקות ושומעות את ההקלטות, ואנשים בודקים ומתקנים.</p>
 
-        {farbrengens.length > 0 && (
-          <>
-            <SectionHead title="התוועדויות" />
-            <p className="faint sm">לוחצים לנגן, והמילים מוארות בזמן השמיעה בדף ההתוועדות.</p>
-            {farbrengens.map((f) => (
-              <Farbrengen key={f.id} token={token} farbrengen={f} />
-            ))}
-          </>
-        )}
+        <Suspense fallback={waiting}>
+          <Await resolve={page} errorElement={<p className="faint">מה שבדף לא נטען כרגע. נסו שוב בעוד רגע.</p>}>
+            {({ farbrengens, sichos, readings, counts }) => (
+              <>
+                {farbrengens.length > 0 && (
+                  <>
+                    <SectionHead title="התוועדויות" />
+                    <p className="faint sm">לוחצים לנגן, והמילים מוארות בזמן השמיעה בדף ההתוועדות.</p>
+                    {farbrengens.map((f) => (
+                      <Farbrengen key={f.id} token={token} farbrengen={f} />
+                    ))}
+                  </>
+                )}
 
-        {sichos.length > 0 && (
-          <>
-            <SectionHead title="שיחות והסריקה שלהן" />
-            <Rows>
-              {sichos.map((s) => (
-                <Row
-                  key={s.id}
-                  start={<Icon name="book" />}
-                  title={s.title}
-                  sub={s.machine ? 'הטקסט נקרא בידי מכונה' : undefined}
-                  to={s.to}
-                  end={s.machine ? <span className="machine">מכונה</span> : undefined}
-                />
-              ))}
-            </Rows>
-            {sichos.some((s) => s.scan) && (
-              <p className="faint sm">
-                הסריקות:{' '}
-                {sichos
-                  .filter((s) => s.scan)
-                  .map((s, at) => (
-                    <span key={s.id}>
-                      {at > 0 && ' · '}
-                      <a href={s.scan!} target="_blank" rel="noreferrer">
-                        {s.title}
-                      </a>
-                    </span>
-                  ))}
-              </p>
+                {sichos.length > 0 && (
+                  <>
+                    <SectionHead title="שיחות והסריקה שלהן" />
+                    <Rows>
+                      {sichos.map((s) => (
+                        <Row
+                          key={s.id}
+                          start={<Icon name="book" />}
+                          title={s.title}
+                          sub={s.machine ? 'הטקסט נקרא בידי מכונה' : undefined}
+                          to={s.to}
+                          end={s.machine ? <span className="machine">מכונה</span> : undefined}
+                        />
+                      ))}
+                    </Rows>
+                    {sichos.some((s) => s.scan) && (
+                      <p className="faint sm">
+                        הסריקות:{' '}
+                        {sichos
+                          .filter((s) => s.scan)
+                          .map((s, at) => (
+                            <span key={s.id}>
+                              {at > 0 && ' · '}
+                              <a href={s.scan!} target="_blank" rel="noreferrer">
+                                {s.title}
+                              </a>
+                            </span>
+                          ))}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {readings.map((r) => (
+                  <section key={r.key} aria-label={r.title}>
+                    <SectionHead title={r.title} />
+                    <p className="faint sm">
+                      <span className="machine">מכונה</span> נקרא מהסריקה בידי הקורא שלנו, ועוד לא נבדק.
+                      {r.scan && (
+                        <>
+                          {' '}
+                          <a href={r.scan} target="_blank" rel="noreferrer">
+                            הסריקה
+                          </a>
+                        </>
+                      )}
+                    </p>
+                    <div className="torah showwords">
+                      {r.paragraphs.map((p, at) => (
+                        <p key={at}>{p}</p>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+
+                {counts.length > 0 && (
+                  <>
+                    <SectionHead title="האוסף במספרים" />
+                    <dl className="terms">
+                      {counts.map((c) => (
+                        <div key={c.label}>
+                          <dt>{c.label}</dt>
+                          <dd>{c.count.toLocaleString('he')}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </>
+                )}
+              </>
             )}
-          </>
-        )}
-
-        {readings.map((r) => (
-          <section key={r.key} aria-label={r.title}>
-            <SectionHead title={r.title} />
-            <p className="faint sm">
-              <span className="machine">מכונה</span> נקרא מהסריקה בידי הקורא שלנו, ועוד לא נבדק.
-              {r.scan && (
-                <>
-                  {' '}
-                  <a href={r.scan} target="_blank" rel="noreferrer">
-                    הסריקה
-                  </a>
-                </>
-              )}
-            </p>
-            <div className="torah showwords">
-              {r.paragraphs.map((p, at) => (
-                <p key={at}>{p}</p>
-              ))}
-            </div>
-          </section>
-        ))}
-
-        {counts.length > 0 && (
-          <>
-            <SectionHead title="האוסף במספרים" />
-            <dl className="terms">
-              {counts.map((c) => (
-                <div key={c.label}>
-                  <dt>{c.label}</dt>
-                  <dd>{c.count.toLocaleString('he')}</dd>
-                </div>
-              ))}
-            </dl>
-          </>
-        )}
+          </Await>
+        </Suspense>
         <p className="faint sm">
           <Link to="/about">אודות ChassidusHub</Link>
         </p>
@@ -191,7 +236,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
   );
 }
 
-type Shown = Awaited<ReturnType<typeof loader>>['farbrengens'][number];
+type Shown = Awaited<ReturnType<typeof contentOf>>['farbrengens'][number];
 type Words = { id: string; paragraphs: { id: string; content: string; checked?: boolean }[] };
 
 /** One farbrengen: play it, and read its words here (through the showcase's address) when it has them. */
