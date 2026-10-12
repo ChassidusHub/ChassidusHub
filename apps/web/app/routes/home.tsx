@@ -39,8 +39,8 @@ import '../styles/pages/home.css';
  *
  * The redesign (docs/plans/redesign.md, Shmuly's words): the question is
  * "find anything with AI, in seconds", and the box asks the search page
- * by meaning, which answers by words (reading a parsha, a day and a year
- * out of them) while search by meaning is not set up; under it, what ChassidusHub is for: the
+ * by meaning while search by idea is offered, else by words (reading a
+ * parsha, a day and a year out of them); under it, what ChassidusHub is for: the
  * biggest open library of Chabad's Torah, built together, using modern
  * technology and AI to make all of it accessible, לכשיפוצו מעינותיך חוצה.
  * Listening leads with the AI transcript, labelled as a machine's.
@@ -50,7 +50,7 @@ import '../styles/pages/home.css';
 const todayInNewYork = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { api, siteUrl } = siteOf(context);
+  const { api, siteUrl, byIdea } = siteOf(context);
   const lang = langFrom(request);
   const week = thisWeek(lang);
   const year = Number(week.today.slice(0, 4));
@@ -77,6 +77,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     kviusYear,
     kvius: [...kviusEvents].sort(byDate).map((e) => feedCard(e, withWords)),
     listen: listen.map((e) => feedCard(e, withWords)),
+    // Whether the box and the idea example ask by meaning: only while search by idea is offered (#98).
+    byIdea: byIdea === true,
   };
 }
 
@@ -270,7 +272,7 @@ const TRY: Record<Lang, Array<{ q: string; label: string; meaning?: boolean }>> 
   ],
 };
 
-function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasListen: boolean }) {
+function Ask({ lang, dayLine, hasListen, byIdea }: { lang: Lang; dayLine: string; hasListen: boolean; byIdea: boolean }) {
   return (
     <section className="hm-ask">
       <p className="hm-dayline">{dayLine}</p>
@@ -279,8 +281,8 @@ function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasLis
         <Icon name="search" />
         <input name="q" type="search" placeholder={w(lang, 'box')} aria-label={w(lang, 'box')} enterKeyHint="search" />
         {lang === 'he' ? <input type="hidden" name="lang" value="he" /> : null}
-        {/* By meaning: the search page answers by words instead while search by meaning is not set up, so the home page asks nothing more of the API. */}
-        <input type="hidden" name="by" value="meaning" />
+        {/* By meaning only while search by idea is offered; else by words, and the idea example below is searched by its words too (#98). */}
+        {byIdea ? <input type="hidden" name="by" value="meaning" /> : null}
         <button type="submit" className="hm-box-go" aria-label={w(lang, 'searchGo')}>
           <Icon name={lang === 'he' ? 'chev' : 'chevr'} size={18} />
         </button>
@@ -288,7 +290,7 @@ function Ask({ lang, dayLine, hasListen }: { lang: Lang; dayLine: string; hasLis
       <p className="hm-try">
         <span>{w(lang, 'tryLabel')}</span>
         {TRY[lang].map((x) => (
-          <Link key={x.q} to={href('/search', lang, { q: x.q, ...(x.meaning ? { by: 'meaning' } : {}) })} dir="auto">
+          <Link key={x.q} to={href('/search', lang, { q: x.q, ...(x.meaning && byIdea ? { by: 'meaning' } : {}) })} dir="auto">
             {x.label}
           </Link>
         ))}
@@ -535,14 +537,14 @@ function Browse({ lang }: { lang: Lang }) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { lang, week, weekday, day, kviusYear, kvius, listen } = loaderData;
+  const { lang, week, weekday, day, kviusYear, kvius, listen, byIdea } = loaderData;
   const named = week.holidays[0] ?? (week.parsha ? `${w(lang, 'parsha')} ${week.parsha}` : WEEKDAYS[lang][weekday]!);
   const kvYear = kviusYear ? yearLabel(kviusYear, lang) : '';
   const words = listen.some((c) => c.transcript);
   return (
     <div className="hm-page">
       <div className="wrap">
-        <Ask lang={lang} dayLine={`${week.todayLabel} · ${named}`} hasListen={listen.length > 0} />
+        <Ask lang={lang} dayLine={`${week.todayLabel} · ${named}`} hasListen={listen.length > 0} byIdea={byIdea} />
       </div>
       {lang === 'en' ? (
         <div className="wrap">

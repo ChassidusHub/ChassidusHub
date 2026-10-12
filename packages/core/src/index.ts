@@ -87,6 +87,7 @@ export {
   embedderFromEnv,
   embeddingCoverage,
   embeddingInput,
+  hasEmbeddings,
   hasPgvector,
   itemsToEmbed,
   nearest,

@@ -119,6 +119,10 @@ describe('the public site', () => {
     expect(page.html).toContain('לימוד יומי');
     expect(page.html).toContain('href="/daily?lang=he"');
     expect(page.html).toContain('<input type="hidden" name="lang" value="he"/>');
+    // Search by idea is not offered here: the box and the idea example ask by words (#98).
+    expect(page.html).not.toContain('name="by"');
+    expect(page.html).not.toContain('by=meaning');
+    expect(page.html).toContain('אהבת ישראל');
   });
 
   it('draws the library as levels: on a phone the first is a list, a shelf its sets as rows of title pages', async () => {

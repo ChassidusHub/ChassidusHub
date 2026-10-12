@@ -103,8 +103,10 @@ describe('search that lands on the moment, and by meaning', () => {
     expect((await json(app, '/v1/recordings/batch/hanacha?ids=')).body).toEqual({ items: {} });
   });
 
-  it('says search by meaning is not available until it is set up, and labels what it finds', async () => {
+  it('says search by meaning is not available until it is set up and its vectors are made, and labels what it finds', async () => {
     expect((await json(createApp({ catalog }), '/v1/search/similar?q=x')).body).toEqual({ query: 'x', available: false, machine: true, results: [] });
+    // Set up with no vectors made yet, it says so rather than finding nothing for every question (#98).
+    expect((await json(createApp({ catalog, embedder: fake }), '/v1/search/similar?q=x')).body).toEqual({ query: 'x', available: false, model: fake.model, machine: true, results: [] });
     await embedItems(catalog, fake);
     const app = createApp({ catalog, embedder: fake });
     const { body } = await json(app, `/v1/search/similar?q=${encodeURIComponent('יו״ד שבט')}&types=event`);
