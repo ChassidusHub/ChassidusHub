@@ -1,5 +1,5 @@
 import type { Context, Hono, MiddlewareHandler } from 'hono';
-import { CatalogError, SNAPSHOT_FILE_NAME, readManifest, refreshSnapshot, snapshotFileKey, snapshotSeq, type Catalog, type SnapshotManifest, type SnapshotStore } from '@chassidushub/core';
+import { CatalogError, SNAPSHOT_CLAIM_KEY, SNAPSHOT_FILE_NAME, readManifest, refreshSnapshot, snapshotFileKey, snapshotSeq, type Catalog, type SnapshotManifest, type SnapshotStore } from '@chassidushub/core';
 import type { R2Bucket } from './r2.js';
 
 /**
@@ -34,9 +34,49 @@ const MANIFEST_CACHE = 'public, max-age=60, s-maxage=60';
 /** A file never changes once written: its name carries its sha256. */
 const FILE_CACHE = 'public, max-age=31536000, s-maxage=31536000, immutable';
 
-/** The public bucket as a snapshot store. */
+interface Claim {
+  token: string;
+  until: string;
+}
+
+/**
+ * The public bucket as a snapshot store. Its claim is one small object
+ * written only over the very copy just read (R2's etag condition), so of the
+ * isolates that hear of one change at once, one builds it.
+ */
 export function r2SnapshotStore(bucket: R2Bucket): SnapshotStore {
+  const claimMeta = { contentType: 'application/json; charset=utf-8', cacheControl: 'no-store' };
+  const readClaim = async () => {
+    const object = await bucket.get(SNAPSHOT_CLAIM_KEY);
+    if (!object) return null;
+    let held: Claim | null = null;
+    try {
+      held = JSON.parse(await object.text()) as Claim;
+    } catch {
+      // Unreadable: as good as none, and written over.
+    }
+    return { held, etag: object.etag };
+  };
   return {
+    async claim(until) {
+      const now = await readClaim();
+      if (now?.held && Date.parse(now.held.until) > Date.now()) return null;
+      const token = crypto.randomUUID();
+      const text = JSON.stringify({ token, until: until.toISOString() } satisfies Claim);
+      const written = await bucket.put(SNAPSHOT_CLAIM_KEY, text, { httpMetadata: claimMeta, ...(now?.etag ? { onlyIf: { etagMatches: now.etag } } : {}) });
+      if (written === null) return null;
+      if (!now?.etag) {
+        // The first claim ever has no copy to write over: whoever's is there when read back holds it.
+        const after = await readClaim();
+        if (after?.held?.token !== token) return null;
+      }
+      return token;
+    },
+    async release(token) {
+      const now = await readClaim();
+      if (!now || now.held?.token !== token) return;
+      await bucket.put(SNAPSHOT_CLAIM_KEY, JSON.stringify({ token, until: new Date(0).toISOString() } satisfies Claim), { httpMetadata: claimMeta, ...(now.etag ? { onlyIf: { etagMatches: now.etag } } : {}) });
+    },
     async get(key) {
       const object = await bucket.get(key);
       return object ? object.text() : null;
