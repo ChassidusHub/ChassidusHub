@@ -114,6 +114,8 @@ export interface ChangesetRow {
   closed_at: string | null;
   /** Sent by an agent for its author: which token or connected app (via.ts); null when by the person's own hands. */
   via: Via | null;
+  /** The caller's own key for it, unique for its author, so sending it again finds this one (migration 0038, #270). */
+  client_key: string | null;
 }
 
 export interface Check {
@@ -829,7 +831,7 @@ export class Catalog {
   // ------------------------------------------------------------ suggestions
 
   /** Starts a suggestion (a draft), written against main as it is now, or within a project. */
-  async createChangeset(author: string, input: { title: string; description?: string; kind?: ChangesetKind; project?: number }): Promise<ChangesetRow> {
+  async createChangeset(author: string, input: { title: string; description?: string; kind?: ChangesetKind; project?: number; clientKey?: string }): Promise<ChangesetRow> {
     return this.db.transaction(async (tx) => {
       const account = await this.requireAccount(author, tx);
       if (!canSuggest(account)) throw forbidden('this account cannot make suggestions');
@@ -842,13 +844,22 @@ export class Catalog {
       const kind = input.kind ?? (account.is_bot ? 'import' : 'suggestion');
       const row = await one<ChangesetRow>(
         tx,
-        `INSERT INTO changeset (title, description, author, kind, project_id, base_commit, via)
-         VALUES ($1, $2, $3, $4, $5, (SELECT coalesce(max(seq), 0) FROM commit), $6) RETURNING *`,
-        [input.title.trim(), input.description ?? null, author, kind, input.project ?? null, viaColumn()],
+        `INSERT INTO changeset (title, description, author, kind, project_id, base_commit, via, client_key)
+         VALUES ($1, $2, $3, $4, $5, (SELECT coalesce(max(seq), 0) FROM commit), $6, $7) RETURNING *`,
+        [input.title.trim(), input.description ?? null, author, kind, input.project ?? null, viaColumn(), input.clientKey ?? null],
       );
       await suggestionStarted(tx, { id: row!.id, author, description: row!.description, number: row!.number === null ? null : Number(row!.number) });
       return row!;
     });
+  }
+
+  /**
+   * The suggestion its author made with this key, if any: a caller told a
+   * big send failed while it went on and finished (#270) sends it again
+   * with the same key, and goes on with the first instead of making a second.
+   */
+  async changesetByKey(author: string, clientKey: string): Promise<ChangesetRow | null> {
+    return one<ChangesetRow>(this.db, 'SELECT * FROM changeset WHERE author = $1 AND client_key = $2', [author, clientKey]);
   }
 
   async changeset(id: number, db: Db = this.db): Promise<ChangesetRow> {

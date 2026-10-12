@@ -1,6 +1,7 @@
 /**
  * The library in the stand-in API (fixture-api.ts): a made-up shelf of the
- * Rebbe's with one sefer of thirteen volumes and an index to it, and two other
+ * Rebbe's with one sefer of thirteen volumes and an index to it, a shelf of
+ * his letters with a sefer and a book of more, and two other
  * top shelves (one empty), so the library's screens are tested without the
  * live catalog. Listening's shelves (fixture-listen.ts) are the top of it.
  * Every name here is sample text written for the tests (לדוגמה).
@@ -13,6 +14,8 @@ const shelves = [
   { id: 'rh-aaaaaal1', type: 'set', path: '/sets/the-rebbe-sample-sichos', data: { slug: 'the-rebbe-sample-sichos', name: he('שיחות לדוגמה'), order: 'a', parent: 'rh-aaaaaas3' } },
   { id: 'rh-aaaaaal2', type: 'set', path: '/sets/sample-more', data: { slug: 'sample-more', name: he('ספרים נוספים לדוגמה'), order: 'm' } },
   { id: 'rh-aaaaaal3', type: 'set', path: '/sets/sample-empty', data: { slug: 'sample-empty', name: he('מדף ריק לדוגמה'), order: 'n' } },
+  // A shelf of the Rebbe's with a sefer and a book that is an addition to no sefer on it, as Igros Kodesh's is.
+  { id: 'rh-aaaaaal4', type: 'set', path: '/sets/the-rebbe-sample-letters', data: { slug: 'the-rebbe-sample-letters', name: he('אגרות לדוגמה'), order: 'b', parent: 'rh-aaaaaas3' } },
 ];
 
 const sefer = { id: 'rh-aaaaaaw1', type: 'work', path: '/sample-sichos', rev: 1, data: { title: he('שיחות לדוגמה'), sets: ['rh-aaaaaal1'], levels: ['volume', 'sicha'] } };
@@ -21,7 +24,11 @@ const others = [
   { id: 'rh-aaaaaaw3', type: 'work', path: '/sample-one', rev: 1, data: { title: he('ספר ראשון לדוגמה'), sets: ['rh-aaaaaal2'] } },
   { id: 'rh-aaaaaaw4', type: 'work', path: '/sample-two', rev: 1, data: { title: he('ספר שני לדוגמה'), sets: ['rh-aaaaaal2'] } },
 ];
-const works: Array<{ id: string; path: string; data: { title: unknown; sets: string[]; addition?: { to: string } } }> = [sefer, index, ...others];
+const letterBooks = [
+  { id: 'rh-aaaaaaw5', type: 'work', path: '/sample-letters', rev: 1, data: { title: he('אגרות לדוגמה'), sets: ['rh-aaaaaal4'] } },
+  { id: 'rh-aaaaaaw6', type: 'work', path: '/sample-letters-more', rev: 1, data: { title: he('מכתבים נוספים לדוגמה'), sets: ['rh-aaaaaal4'], addition: { kind: 'collection' } } },
+];
+const works: Array<{ id: string; path: string; data: { title: unknown; sets: string[]; addition?: { to?: string } } }> = [sefer, index, ...others, ...letterBooks];
 
 const parts = letters.map((_, at) => ({ value: String(at + 1), label: he(`חלק ${gershayim(at + 1)}`), units: 3 }));
 const choice = (item: { id: string; path: string | null; data: { name?: unknown; title?: unknown } }) => ({ id: item.id, path: item.path, name: item.data.name ?? item.data.title });
@@ -34,7 +41,7 @@ export function libraryAnswer(url: URL, top: Array<{ id: string; path: string; d
   const rebbe = sets.find((set) => set.id === 'rh-aaaaaas3')!;
   const tops = sets.filter((set) => !set.data.parent);
   const topLevel = (set: (typeof sets)[number]) => ({ kind: 'set', chosen: choice(set), choices: tops.map(choice) });
-  const shelfLevel = { kind: 'set', chosen: choice(shelves[0]!), choices: [choice(shelves[0]!)] };
+  const shelfLevel = { kind: 'set', chosen: choice(shelves[0]!), choices: shelves.filter((set) => set.data.parent === rebbe.id).map(choice) };
   const seferLevel = { kind: 'work', chosen: choice(sefer), choices: [choice(sefer)] };
   if (path === '/v1/entities' && query('type') === 'set') return { items: sets };
   // One item, as Edit reads it before a rename.

@@ -99,6 +99,7 @@ export {
 } from './semantic.js';
 export { CITATIONS_BOT, findCitations, proposeCitations, relationsOf, resolveCitation, type Citation, type CitationTarget, type RelationView } from './citations.js';
 export { catalogHealth, type CatalogHealth } from './health.js';
+export { firstOutOfOrder, healthMarkdown, HEALTH_FORMAT, numberedName, snapshotHealth, startsWithBh, unlabelledReason, type CatalogHealthReport, type HealthCounts, type HealthTree, type HealthWorkFile, type UnlabelledReason } from './snapshotHealth.js';
 export { MAX_PLACES, forgetPlace, listPlaces, savePlace, type PlaceKind, type ReadingPlace } from './places.js';
 export { MAX_TRANSLATION_PARAGRAPHS, TRANSLATION_LICENCES, addTranslation, fixTranslation, paragraphsOf, type NewTranslation } from './translations.js';
 export {
@@ -279,4 +280,4 @@ export { driveId, mafteach, mafteachNames, mafteachSubjects, placesOf, subjectsN
 export { FIX_CHECK_MS, sendFix, shapeOf, wordsChanged, type FixInput, type FixJudge, type FixResult } from './fix.js';
 export { PATH_CHOICES_MAX, pathBar, type PathChoice, type PathLevel } from './pathBar.js';
 export { itemView, type HeardAt, type ItemView, type MachineShare, type ScanPlace, type ShownText } from './view.js';
-export { type SnapshotNameRow, type SnapshotNamesFile, SNAPSHOT_FILE_NAME, SNAPSHOT_FORMAT, SNAPSHOT_MANIFEST_KEY, SNAPSHOT_REBBEIM, SNAPSHOT_TYPES, memorySnapshotStore, readManifest, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot, type SnapshotEvent, type SnapshotFile, type SnapshotManifest, type SnapshotName, type SnapshotPart, type SnapshotParts, type SnapshotSet, type SnapshotStore, type SnapshotTree, type SnapshotUnit, type SnapshotWork, type SnapshotWorkFile, type SnapshotYearFile } from './catalogSnapshot.js';
+export { type SnapshotNameRow, type SnapshotNamesFile, SNAPSHOT_CLAIM_KEY, SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_FORMAT, SNAPSHOT_MANIFEST_KEY, SNAPSHOT_REBBEIM, SNAPSHOT_TYPES, memorySnapshotStore, readManifest, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot, type SnapshotEvent, type SnapshotFile, type SnapshotManifest, type SnapshotName, type SnapshotPart, type SnapshotParts, type SnapshotSet, type SnapshotStore, type SnapshotTree, type SnapshotUnit, type SnapshotWork, type SnapshotWorkFile, type SnapshotYearFile } from './catalogSnapshot.js';
