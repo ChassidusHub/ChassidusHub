@@ -10,6 +10,13 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The catalog snapshot (#228, docs/catalog-snapshot.md): `GET /v1/catalog/manifest.json`
+  names a few files that hold the whole tree (every shelf and sefer, each
+  sefer's units by volume, each year's events), each at
+  `/v1/catalog/files/<file>`, named by its sha256 and kept for good. Built
+  from main behind the answers after a change, so a page can draw the
+  catalog from memory with no read of the database.
+
 - The first sicha opened in a volume no longer waits about 2 s for its
   path bar (#221): a sefer's volumes are counted from the unit_place_part
   index (migration 0037) and a volume's sichos found by it, instead of

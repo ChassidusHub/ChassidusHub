@@ -20,6 +20,7 @@ const app = createApp({
   files: store,
   texts: { store, writer },
   mirrors: { gitUrls: [], publicKeys: [] },
+  catalogSnapshot: { store: { get: async () => null, put: async () => {} } },
 });
 
 /** Hono's `/v1/entities/:id` and `/x/:file{rh-[0-9a-z]+\.json}` as OpenAPI's `/v1/entities/{id}` and `/x/{file}`. */

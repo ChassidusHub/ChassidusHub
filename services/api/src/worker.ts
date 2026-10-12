@@ -1,10 +1,11 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
-import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, sendNotifications } from '@chassidushub/core';
+import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, refreshSnapshot, sendNotifications } from '@chassidushub/core';
 import { connectPostgres, isCatalogHeld, measured } from '@chassidushub/db';
 import { createApp, turnstileVerifier } from './app.js';
 import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
 import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
+import { r2SnapshotStore, singleFlight, type SnapshotOptions } from './catalogSnapshot.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
 import { LOCKED_HEADER, lockOf, openedBy, ownersFrom, unlocked, type LockEnv } from './lock.js';
@@ -124,6 +125,25 @@ interface Ctx {
 /** The apps' catalog as last built, kept for this isolate's life: each request asks only whether anything changed. */
 const appReleases = new AppReleases();
 
+/**
+ * The catalog snapshot (catalogSnapshot.ts), built on a connection of its own: a request's closes as soon as its
+ * answer is sent, and the build runs on behind it. One build at a time in this isolate.
+ */
+let snapshotBuild: (() => Promise<void>) | null = null;
+function catalogSnapshotOf(env: Env): SnapshotOptions | undefined {
+  if (!env.FILES_PUBLIC) return undefined;
+  const store = r2SnapshotStore(env.FILES_PUBLIC);
+  snapshotBuild ??= singleFlight(async () => {
+    const db = connectPostgres(env.HYPERDRIVE.connectionString, { max: 1 });
+    try {
+      await refreshSnapshot(db, store);
+    } finally {
+      await db.close();
+    }
+  });
+  return { store, rebuild: snapshotBuild };
+}
+
 const mailerOf = (env: Env) =>
   env.EMAIL
     ? cloudflareMailer({ binding: env.EMAIL, from: env.EMAIL_FROM })
@@ -159,6 +179,7 @@ export default {
       if (env.FILES_PUBLIC) await job('to-check summary', () => refreshToCheck(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
       if (env.FILES_PUBLIC) await job('community sums', () => refreshCommunity(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
       if (env.FILES_PUBLIC) await job('subject index', () => refreshMafteach(catalog, keptStore(env.FILES_PUBLIC!)));
+      if (env.FILES_PUBLIC) await job('catalog snapshot', () => refreshSnapshot(db, r2SnapshotStore(env.FILES_PUBLIC!)));
       if (mailer && env.SITE_URL) await job('email updates', () => sendNotifications(catalog, mailer, { siteUrl: new URL(env.SITE_URL!).origin }));
       if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN) {
         await job("the reviewer's advice", () => adviseSuggestions(catalog, workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID!, token: env.CLOUDFLARE_AI_TOKEN! })));
@@ -252,6 +273,7 @@ async function answer(request: Request, env: Env, ctx: { waitUntil(promise: Prom
     auth: env.SITE_URL ? authFor(env.SITE_URL, { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }, undefined, list(env.ALSO_SITE_URLS)) : undefined,
     mailer: mailerOf(env),
     appReleases,
+    catalogSnapshot: catalogSnapshotOf(env),
     readerCatalog: env.READER_CATALOG ? (path) => env.READER_CATALOG!.fetch(new Request(`https://reader-catalog${path}`)) : undefined,
     machineDispatch: env.GITHUB_DISPATCH_TOKEN ? githubDispatch({ token: env.GITHUB_DISPATCH_TOKEN, repo: env.GITHUB_REPO }) : undefined,
     waitUntil: (work) => ctx.waitUntil(work),
