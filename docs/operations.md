@@ -168,6 +168,37 @@ Workers AI secrets are set; `citations` only when started.
 - The whole-catalog copy (`scripts/import-catalog.sh`) replaces these
   tables with the build's, which has none: run the jobs again after it.
 
+## Catalog health
+
+```sh
+chassidushub catalog-health --out health                  # from api.chassidushub.org's catalog snapshot
+chassidushub catalog-health --from <folder> --previous health/report.json
+```
+
+What in the catalog still needs a person, counted from the catalog
+snapshot ([catalog-snapshot.md](catalog-snapshot.md)) with no database and
+no write (`packages/core/src/snapshotHealth.ts`):
+
+- **units with no real label**: named only ב"ה, a bare number (a page,
+  א, קכ"ב), a dateline (י"ט כסלו תשכ"ב), a kind or a place with at most a number ("אגרת קכז",
+  "סימן ה", "פתח דבר"), its sefer's or volume's own name, or a file name.
+  A unit whose own level is a place in a book (chapter, siman, mitzvah) is
+  rightly named by its number. Names that start with ב"ה or בס"ד (a scan's
+  first line in front of the real name) are counted apart, for tidying;
+- **items with no place**: sefarim on no shelf and on no sefer, top
+  shelves that are not a Rebbe's, empty shelves;
+- **additions that belong to no sefer**;
+- **duplicate printings**: sefarim with one name under one Rebbe (the same
+  name on two Rebbeim's shelves is two sefarim);
+- **shelves out of order**: a shelf whose names alike but for a number
+  (חלק, כרך, a year) are listed out of that number's order, and sefarim
+  whose volumes are.
+
+The *Catalog health* workflow runs it every night and keeps the counts, each
+with its change since the night before and the worst of each, in one open
+issue, "Catalog health (nightly)", edited in place; report.json (every item
+behind every count) is the run's artifact.
+
 ## The Sichos Kodesh scans and their reading copies
 
 Sichos-Kodesh's archive holds every hanacha scan its catalog links to, in

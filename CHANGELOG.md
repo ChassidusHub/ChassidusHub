@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- `chassidushub catalog-health`: the catalog's health from its snapshot
+  (unlabelled units, items with no place, additions without a sefer,
+  duplicate printings, shelves out of order), read-only, every night into
+  one issue (docs/operations.md, "Catalog health").
+
 - Searching a sefer's or set's own name puts it first (#233): on the All
   tab, the sefarim and sets named just what was typed, in any language,
   come above the words in the texts and the farbrengens. A language asked
