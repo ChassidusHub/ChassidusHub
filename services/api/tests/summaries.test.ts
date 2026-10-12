@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
-import { forgetSubjects, refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts, SUMMARY_MAX_AGE_MS, type Kept, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
+import { forgetSubjects, oneSummaryARun, refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts, SUMMARY_MAX_AGE_MS, type Kept, type SummaryStore, type TranscriptsSummary } from '../src/summaries.js';
 import { add, freshCatalog, yudShvat } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -126,5 +126,25 @@ describe('the other kept answers (#104)', () => {
     expect(await res.json()).toMatchObject({ letter: 'מ', names: [{ topic: 'מלה בדויה', offset: 0, places: 2, machine: false }, { topic: 'מלה שניה', offset: 1, places: 1, machine: false }] });
     expect((await createApp({ catalog, kept }).request('/v1/mafteach/names')).status).toBe(400);
     expect((await createApp({ catalog, kept }).request('/v1/mafteach/names?index=/nowhere')).status).toBe(404);
+  });
+});
+
+describe('the scheduled run', () => {
+  it('makes again one kept summary a run, the first that is due, so they never hold the database together (#338)', async () => {
+    const ran: string[] = [];
+    const run = async (name: string, work: () => Promise<unknown>) => {
+      ran.push(name);
+      await work().catch(() => undefined);
+    };
+    const due = (yes: boolean) => async () => yes;
+    expect(await oneSummaryARun([['a', due(false)], ['b', due(true)], ['c', due(true)]], run)).toBe('b');
+    expect(ran).toEqual(['a', 'b']);
+    // One that fails is passed over, as one that was not due.
+    ran.length = 0;
+    const fails = async (): Promise<boolean> => {
+      throw new Error('down');
+    };
+    expect(await oneSummaryARun([['a', fails], ['b', due(false)]], run)).toBeNull();
+    expect(ran).toEqual(['a', 'b']);
   });
 });
