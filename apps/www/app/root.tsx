@@ -49,11 +49,13 @@ const worker = import.meta.env.SSR ? `if('serviceWorker'in navigator)addEventLis
  * A sicha's words wait, hidden, for their Torah face (ui.css, .face-wait):
  * drawn first in a stand-in face, they would wrap to other lines and move the
  * page when the face came (#267). Shown once the face has loaded or failed,
- * or 3 s after it was asked for, as a browser holds text for its font. Only
+ * or 3 s after the page's faces were first asked for (or after the page has
+ * loaded, if none were), as a browser holds text for its font: a 'loading'
+ * event names no faces, so any face starting the wait starts the clock. Only
  * the Torah text and the notes are held; on a page without them the mark
  * hides nothing.
  */
-const FACE_WAIT = `d.classList.add('face-wait');var f=document.fonts,u=function(){d.classList.remove('face-wait')},c=function(n){return function(e){for(var i=0;i<e.fontfaces.length;i++)if(/FrankRuehlCLM/.test(e.fontfaces[i].family))n()}};if(f&&f.addEventListener){f.addEventListener('loading',c(function(){setTimeout(u,3000)}));f.addEventListener('loadingdone',c(u));f.addEventListener('loadingerror',c(u))}else u();`;
+const FACE_WAIT = `d.classList.add('face-wait');var f=document.fonts,u=function(){d.classList.remove('face-wait')},w=function(){w=function(){};setTimeout(u,3000)},c=function(n){return function(e){for(var i=0;i<e.fontfaces.length;i++)if(/FrankRuehlCLM/.test(e.fontfaces[i].family))n()}};if(f&&f.addEventListener){f.addEventListener('loading',function(){w()});addEventListener('load',function(){w()});f.addEventListener('loadingdone',c(u));f.addEventListener('loadingerror',c(u))}else u();`;
 
 /**
  * A reader's light or dark choice and text size (kept in this browser), set

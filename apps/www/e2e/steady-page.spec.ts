@@ -35,3 +35,11 @@ test('a sicha shows its words without the face if the face cannot come', async (
   await page.goto('/sample/1/1');
   await expect(page.locator('.torah')).toBeVisible();
 });
+
+test('a sicha shows its words without the face if the face never comes', async ({ page }) => {
+  // The face's request hangs: the words wait no longer than a browser holds text for its font.
+  await page.route('**/frank-ruehl-clm-*.woff2', () => new Promise(() => {}));
+  await page.goto('/sample/1/1', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.torah')).toBeHidden();
+  await expect(page.locator('.torah')).toBeVisible({ timeout: 4500 });
+});
