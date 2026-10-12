@@ -786,7 +786,8 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .bq-place > a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
 .bq-step { display: inline-flex; gap: 4px; margin-inline-start: auto; }
 .bq-wait { background: var(--g100); border-radius: 8px; }
-h1.bq-wait { width: 70%; }
+/* The title's place while it comes: not a heading (an empty one is no use to a screen reader), the height of one line of h1. */
+.bq-wait-h1 { width: 70%; height: 30px; margin: 8px 0 2px; }
 .bq-wait-note { height: 120px; }
 .bq-wait-tree { height: 320px; }
 .bq-note.bq-cut .sg-said { max-height: 7.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 70%, transparent); }

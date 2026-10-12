@@ -110,7 +110,7 @@ function Frame() {
   return (
     <div aria-busy="true">
       <p className="bq-place faint sm">תור הקטלוג</p>
-      <h1 className="bq-wait">&nbsp;</h1>
+      <div className="bq-wait bq-wait-h1" />
       <p className="faint sm">רגע…</p>
       <SectionHead title="הערת המחקר" />
       <div className="bq-wait bq-wait-note" />
