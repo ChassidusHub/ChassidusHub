@@ -3,7 +3,7 @@ import { Catalog, adviseSuggestions, deliverWebhooks, embedderFromEnv, refreshSn
 import { connectPostgres, isCatalogHeld, measured } from '@chassidushub/db';
 import { createApp, turnstileVerifier } from './app.js';
 import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Bucket } from './r2.js';
-import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
+import { oneSummaryARun, refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
 import { r2SnapshotStore, type SnapshotOptions } from './catalogSnapshot.js';
 import type { SnapshotStore } from '@chassidushub/core';
@@ -212,9 +212,18 @@ export default {
           .finally(() => console.log(`job ${name} took ${Date.now() - started} ms`));
       };
       await job('webhooks', () => deliverWebhooks(catalog));
-      if (env.FILES_PUBLIC) await job('transcripts summary', () => refreshTranscripts(catalog, transcriptsStore(env.FILES_PUBLIC!), new Date()));
-      if (env.FILES_PUBLIC) await job('to-check summary', () => refreshToCheck(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
-      if (env.FILES_PUBLIC) await job('community sums', () => refreshCommunity(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
+      // At most one kept summary is made again in a run (summaries.ts, oneSummaryARun).
+      if (env.FILES_PUBLIC) {
+        const files = env.FILES_PUBLIC;
+        await oneSummaryARun(
+          [
+            ['transcripts summary', () => refreshTranscripts(catalog, transcriptsStore(files), new Date())],
+            ['to-check summary', () => refreshToCheck(catalog, keptStore(files), new Date())],
+            ['community sums', () => refreshCommunity(catalog, keptStore(files), new Date())],
+          ],
+          job,
+        );
+      }
       if (env.FILES_PUBLIC) await job('subject index', () => refreshMafteach(catalog, keptStore(env.FILES_PUBLIC!)));
       if (mailer && env.SITE_URL) await job('email updates', () => sendNotifications(catalog, mailer, { siteUrl: new URL(env.SITE_URL!).origin }));
       if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN) {
