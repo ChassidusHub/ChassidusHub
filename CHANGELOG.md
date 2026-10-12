@@ -10,6 +10,9 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+The newest entries wait as one file each in [changes/](changes/) until
+`npm run changelog` moves them in below.
+
 - Searching a sefer's or set's own name puts it first (#233): on the All
   tab, the sefarim and sets named just what was typed, in any language,
   come above the words in the texts and the farbrengens. A language asked
