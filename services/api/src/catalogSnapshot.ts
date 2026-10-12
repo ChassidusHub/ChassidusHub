@@ -12,8 +12,8 @@ import type { R2Bucket } from './r2.js';
  *   GET /v1/catalog/files/<file>       one file, named by its content (kept for good)
  *
  * The files live in the public bucket under `catalog/`. A new snapshot is
- * built in the background, never while someone waits (except the very first,
- * when there is none to serve): after any change that may have merged
+ * built in the background, never while someone waits (with none built yet the
+ * manifest answers 503 and Retry-After until it is): after any change that may have merged
  * something (an Approve, a live fix, an organize), when a manifest is asked
  * for and the catalog has moved on since, and by the scheduled run every
  * minute. Each of those costs one cheap statement when nothing changed.
@@ -94,8 +94,14 @@ export function catalogSnapshotRoutes(app: Hono, catalog: Catalog, options: Snap
 
   app.get('/v1/catalog/manifest.json', async (c) => {
     let manifest: SnapshotManifest | null = await readManifest(store);
+    if (!manifest && options.rebuild && waitUntil) {
+      // None yet (an empty bucket): never built while someone waits, since a whole build on live runs past a
+      // request's 30 s. It starts behind this answer, and the every-minute run builds it too.
+      waitUntil(options.rebuild());
+      return c.json({ error: 'busy', message: 'the catalog snapshot is being built; try again shortly' }, 503, { 'Retry-After': '30', 'Cache-Control': 'no-store' });
+    }
     if (!manifest) {
-      // None yet (a first deploy, local work): built now, once.
+      // Local work and tests, with no background: built now.
       manifest = (await refreshSnapshot(catalog.db, store)).manifest;
     } else if (options.rebuild && waitUntil) {
       // Behind the catalog: this answer serves what there is, and the next one has the new snapshot.
