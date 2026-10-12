@@ -123,12 +123,18 @@ async function shelves(catalog: Catalog, from: { set: EntityId } | { work: Entit
 async function parts(catalog: Catalog, work: EntityId, unit: EntityId, position: Array<{ level?: string; value?: string }>): Promise<PathLevel[]> {
   const params: unknown[] = [work];
   const values = position.map((p) => String(p.value ?? ''));
-  /** The units that share the first `n` places of this unit's position. */
-  const sharing = (n: number) => values.slice(0, n).map((v, i) => `AND p.position->${i}->>'value' = $${params.push(v)}`).join(' ');
+  /** The units that share the first `n` places of this unit's position: the first is its volume, `part`, which unit_place_part (migration 0037) holds. */
+  const sharing = (n: number) => values.slice(0, n).map((v, i) => (i === 0 ? `AND p.part = $${params.push(v)}` : `AND p.position->${i}->>'value' = $${params.push(v)}`)).join(' ');
   // Each unit's place (unit_place, migration 0030): the work's units are listed without reading any of their words.
+  // Each row also holds its sicha's lead (0033), a few KB, so a level is read from the index where it can be, never every row.
   const from = `FROM unit_place p WHERE p.work_id = $1`;
-  const selects = values.slice(0, -1).map(
-    (_, i) => `(SELECT ${i} AS depth, NULL AS id, NULL AS path, p.position->${i}->>'value' AS value,
+  const selects = values.slice(0, -1).map((_, i) =>
+    i === 0
+      ? // The volumes, counted from the index; each one's name from its first unit alone.
+        `(SELECT 0 AS depth, NULL AS id, NULL AS path, v.part AS value, f.name, v.units, v.ord
+          FROM (SELECT p.part, count(*)::int AS units, min(p.ord) AS ord ${from} GROUP BY 1 ORDER BY 3 LIMIT ${PATH_CHOICES_MAX}) v
+          LEFT JOIN LATERAL (SELECT p.position->0->'label' AS name ${from} AND p.part = v.part AND p.ord = v.ord ORDER BY p.unit_id LIMIT 1) f ON TRUE)`
+      : `(SELECT ${i} AS depth, NULL AS id, NULL AS path, p.position->${i}->>'value' AS value,
                   (array_agg(p.position->${i}->'label' ORDER BY p.ord))[1] AS name,
                   count(*)::int AS units, min(p.ord) AS ord
                 ${from} ${sharing(i)} GROUP BY 4 ORDER BY 7 LIMIT ${PATH_CHOICES_MAX})`,

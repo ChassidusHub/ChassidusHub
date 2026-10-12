@@ -60,6 +60,18 @@ describe('the path bar', () => {
     expect(unit!.choices.map((c) => c.path)).toEqual(['/likkutei-sichos/1/1', '/likkutei-sichos/1/2']);
   });
 
+  it("counts a sefer's volumes by `part`, which the index holds, never by every row's position (#221)", async () => {
+    const seen: string[] = [];
+    const db = { ...catalog.db, query: (sql: string, params?: readonly unknown[]) => (seen.push(sql), catalog.db.query(sql, params)) } as typeof catalog.db;
+    const bar = await pathBar(new Catalog(db), (await catalog.get(sicha))!);
+    // Each volume's name is its first unit's label for it.
+    expect(bar![3]!.choices.map((c) => c.name)).toEqual([{ he: 'חלק 1' }, { he: 'חלק 2' }]);
+    const levels = seen.find((sql) => sql.includes('unit_place'))!;
+    // Each unit_place row holds its sicha's lead (migration 0033): reading every row's position to find its volume read the whole table, 2 s cold on live.
+    expect(levels).toContain('AND p.part = $');
+    expect(levels).not.toMatch(/position->0->>'value'/);
+  });
+
   it('ends a sefer\'s path at the sefer, and a shelf\'s at the shelf, in one statement', async () => {
     const db = measured(catalog.db);
     const work = await pathBar(new Catalog(db), (await catalog.get(ls))!);
