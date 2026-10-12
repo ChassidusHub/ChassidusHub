@@ -6,7 +6,10 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
  * the live catalog. #42 waits for review and clashes with the site on one
  * field; #43 is in, sent by the sample reader; #44 is the sample reader's own,
  * still open; an import with no #number waits too; #45 is an issue. The sample
- * reader (cookie rh_session=sample) may approve. Every word here is sample text
+ * reader (cookie rh_session=sample) may approve. #46 is a catalog batch (a
+ * sicha moved between two sample sefarim, with its research note and its
+ * tree before and after, GET /v1/suggestions/405/tree); #47 is another,
+ * the sample reader's own, so the queue has a next one. Every word here is sample text
  * written for the tests (לדוגמה). What was done is read back at GET /_suggestions.
  */
 const people = {
@@ -90,6 +93,30 @@ const fresh = (): Sample[] => [
     reviewRequests: [],
   },
   {
+    id: 405,
+    number: 46,
+    title: 'סידור שיחות בספר לדוגמה',
+    description: 'הערת מחקר לדוגמה.\nהשיחה השנייה שייכת לספר השני לפי הדפוס. בדקתי את תוכן העניינים בכרך לדוגמה.',
+    author: 'u-other',
+    status: 'open',
+    at: '2026-10-11T08:00:00Z',
+    entries: [{ entityId: 'rh-aaaaaac2', type: 'unit', before: { label: { he: 'שיחה ב' }, work: 'rh-aaaaaaw1' }, after: { label: { he: 'שיחה ב' }, work: 'rh-aaaaaaw2' }, changes: [{ path: '/work', before: 'rh-aaaaaaw1', after: 'rh-aaaaaaw2' }], conflicts: [] }],
+    timeline: [{ type: 'event', id: 'opened', at: '2026-10-11T08:00:00Z', actor: 'u-other', kind: 'opened', detail: {} }],
+    reviewRequests: [],
+  },
+  {
+    id: 406,
+    number: 47,
+    title: 'שם חדש לשיחה בספר לדוגמה',
+    description: 'הערת מחקר שנייה לדוגמה.',
+    author: 'u-sample',
+    status: 'open',
+    at: '2026-10-11T09:00:00Z',
+    entries: [{ entityId: 'rh-aaaaaac1', type: 'unit', before: { label: { he: 'שיחה א' } }, after: { label: { he: 'שיחה א לדוגמה' } }, changes: [{ path: '/label', before: { he: 'שיחה א' }, after: { he: 'שיחה א לדוגמה' } }], conflicts: [] }],
+    timeline: [{ type: 'event', id: 'opened', at: '2026-10-11T09:00:00Z', actor: 'u-sample', kind: 'opened', detail: {} }],
+    reviewRequests: [],
+  },
+  {
     id: 404,
     number: null,
     title: 'ייבוא לדוגמה',
@@ -112,7 +139,9 @@ const send = (res: ServerResponse, status: number, body: unknown) => {
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify(body));
 };
-const listed = (s: Sample) => ({ id: s.id, number: s.number, title: s.title, status: s.status, author: s.author, createdAt: s.at, submittedAt: s.at, comments: s.timeline.filter((i) => i.type === 'comment').length, reviewers: s.reviewRequests.map((r) => r.reviewer), approvals: s.status === 'merged' ? 1 : 0, fixes: [] });
+/** The kinds of items each changes, as the conversation list says them. */
+const typesOf = (s: Sample) => [...new Set(s.entries.map((e) => (e as { type: string }).type))];
+const listed = (s: Sample) => ({ types: s.id === 405 || s.id === 406 ? typesOf(s) : ['segment'], id: s.id, number: s.number, title: s.title, status: s.status, author: s.author, createdAt: s.at, submittedAt: s.at, comments: s.timeline.filter((i) => i.type === 'comment').length, reviewers: s.reviewRequests.map((r) => r.reviewer), approvals: s.status === 'merged' ? 1 : 0, fixes: [] });
 const handleOf = (id: string) => people[id as keyof typeof people]?.username;
 
 /** The merge check: #42 clashes on its name until a choice is made for it. */
@@ -158,6 +187,8 @@ export function suggestionsAnswer(req: IncomingMessage, res: ServerResponse): bo
     const ids = (url.searchParams.get('ids') ?? '').split(',');
     return send(res, 200, { stages: Object.fromEntries(ids.map((id) => [id, { items: 1, behind: id === '401' ? 1 : 0, overlaps: 0, blocked: false }])) }), true;
   }
+  const tree = /^\/v1\/suggestions\/(\d+)\/tree$/.exec(path);
+  if (tree) return send(res, 200, treeOf(Number(tree[1]))), true;
   const one = /^\/v1\/suggestions\/(\d+)(?:\/([a-z-]+)(?:\/([\w-]+))?)?$/.exec(path);
   const s = one && samples.find((x) => x.id === Number(one[1]));
   if (!one || !s) return false;
@@ -225,4 +256,22 @@ export function suggestionsAnswer(req: IncomingMessage, res: ServerResponse): bo
     return send(res, 404, { error: 'not-found', message: 'not found' });
   });
   return true;
+}
+
+/** The trees of the two sample batches: a sicha moving from one sample sefer to another; a sicha renamed in its place. */
+function treeOf(id: number) {
+  const row = (n: string, name: string, mark: string, extra: Record<string, unknown> = {}) => ({ id: `rh-aaaaaac${n}`, type: 'unit', name, path: `/sample/1/${n}`, mark, ...extra });
+  if (id === 405)
+    return {
+      groups: [
+        { parent: { id: 'rh-aaaaaaw1', type: 'work', name: 'ספר ראשון לדוגמה', path: '/sample-sichos', isNew: false, gone: false }, before: [row('1', 'שיחה א', 'same'), row('2', 'שיחה ב', 'out'), row('3', 'שיחה ג', 'same'), { gap: 12 }], after: [row('1', 'שיחה א', 'same'), row('3', 'שיחה ג', 'same'), { gap: 12 }], counts: { before: 15, after: 14 }, changes: 1 },
+        { parent: { id: 'rh-aaaaaaw2', type: 'work', name: 'ספר שני לדוגמה', path: null, isNew: false, gone: false }, before: [row('4', 'שיחה ד', 'same')], after: [row('4', 'שיחה ד', 'same'), row('2', 'שיחה ב', 'in')], counts: { before: 1, after: 2 }, changes: 1 },
+      ],
+      more: 0,
+      items: 1,
+      elsewhere: 0,
+    };
+  if (id === 406)
+    return { groups: [{ parent: { id: 'rh-aaaaaaw1', type: 'work', name: 'ספר ראשון לדוגמה', path: '/sample-sichos', isNew: false, gone: false }, before: [row('1', 'שיחה א', 'renamed')], after: [row('1', 'שיחה א לדוגמה', 'renamed', { was: 'שיחה א' })], counts: { before: 15, after: 15 }, changes: 1 }], more: 0, items: 1, elsewhere: 0 };
+  return { groups: [], more: 0, items: 0, elsewhere: 0 };
 }

@@ -3,3 +3,4 @@ export { OPENAPI } from './openapi.js';
 export { answeredHere, readerFor, type Reader, type ReadsEnv } from './reads.js';
 export { type R2Bucket } from './r2.js';
 export { LOCK_COOKIE, LOCK_HEADER, LOCKED_HEADER, keyOf, lockOf, openedBy, opens, type LockEnv } from './lock.js';
+export { catalogSnapshotRoutes, r2SnapshotStore, singleFlight, snapshotAfterWrites, type SnapshotOptions } from './catalogSnapshot.js';
