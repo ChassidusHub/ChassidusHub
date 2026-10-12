@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
-import { batchTree, Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
+import { batchReview, batchTree, CHANGE_KINDS, Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangeKind, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
 import { type FieldsRevision, type NewRevision, dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords, topicOf } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, LANGUAGES, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
@@ -1340,6 +1340,18 @@ export function createApp(options: ApiOptions): Hono {
   // A catalog batch's tree before and after (batchTree.ts): each shelf, sefer or farbrengen it changes, its children now
   // and once approved, each marked. Names and places only, never words. Short at the edge: a keeper reads it right after a push.
   app.get('/v1/suggestions/:id/tree', async (c) => c.json(await batchTree(catalog, intParam(c.req.param('id'), 'id')!), 200, { 'Cache-Control': 'public, max-age=0, s-maxage=10' }));
+  // The same batch counted, sampled and listed (batchReview.ts), for checking a big one on a phone. Names, places, facts
+  // and first words; a source's withheld words are left out.
+  app.get('/v1/suggestions/:id/batch', async (c) => {
+    const kind = c.req.query('kind');
+    const review = await batchReview(catalog, intParam(c.req.param('id'), 'id')!, {
+      kind: (CHANGE_KINDS as readonly string[]).includes(kind ?? '') ? (kind as ChangeKind) : null,
+      q: c.req.query('q') ?? '',
+      offset: Math.max(intParam(c.req.query('offset'), 'offset') ?? 0, 0),
+      limit: Math.min(Math.max(intParam(c.req.query('limit'), 'limit') ?? 30, 1), 100),
+    });
+    return c.json(review, 200, { 'Cache-Control': 'public, max-age=0, s-maxage=10' });
+  });
   app.post('/v1/suggestions/:id/merge-check', async (c) => {
     const viewer = (await authenticate?.(c)) ?? null;
     const input = await body<{ resolutions?: unknown }>(c).catch(() => ({}) as { resolutions?: unknown });

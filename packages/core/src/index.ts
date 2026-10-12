@@ -266,6 +266,7 @@ export {
   type OrganizeRef,
   type TreeNode,
 } from './organize.js';
+export { batchReview, CHANGE_KINDS, factLine, type BatchFact, type BatchFlow, type BatchItem, type BatchPlace, type BatchReview, type BatchReviewQuery, type ChangeKind } from './batchReview.js';
 export { batchTree, fold as foldTreeRows, readableName, type BatchTree, type BatchTreeGap, type BatchTreeGroup, type BatchTreeLine, type BatchTreeRow, type TreeMark } from './batchTree.js';
 export { duplicateVolumes, loadPrintings, planPrintingMerges, volumeKey, type PrintingRow } from './printings.js';
 export { MACHINE_KINDS, MACHINE_REQUESTS_PER_DAY, checkMachineWork, finishMachineWork, machineRequest, machineRequests, machineSummary, notRecentlyFailedSql, releaseMachineRequests, requestMachineWork, settleMachineWork, SWEEP_RETRY_DAYS, takeMachineRequests, type MachineKind, type MachineRequest, type MachineRequestStatus } from './machineWork.js';
