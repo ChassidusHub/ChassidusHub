@@ -191,6 +191,19 @@ export function Reader({ data }: { data: ReaderData }) {
         {data.facts?.map((fact) => (
           <Option key={fact.kind} icon={factIcons[fact.kind]} label={fact.label} end={fact.value} machine={fact.machine} onSelect={() => (close(), fact.kind === 'manuscript' ? window.open(fact.href, '_blank', 'noopener') : navigate(fact.href))} />
         ))}
+        {data.sections && data.sections.length > 1 && (
+          <nav className="opt jump" aria-label="סעיפים">
+            <Icon name="list" />
+            <span className="t">סעיף</span>
+            <span className="jumps">
+              {data.sections.map((section) => (
+                <a key={section.id} href={`#${section.id}`} onClick={close}>
+                  {section.label}
+                </a>
+              ))}
+            </span>
+          </nav>
+        )}
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
         <Option icon="history" label="היסטוריה" quiet onSelect={() => (close(), navigate(`/history/${data.id}`))} />

@@ -698,6 +698,41 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .ix .torah .ix-v b { font-family: var(--ui); font-size: 0.75em; font-weight: 600; color: var(--g700); }
 .ix .ref { font-family: var(--ui); font-size: 0.72em; font-weight: 500; color: var(--g900); white-space: nowrap; text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
 .ix span.ref { text-decoration: none; }
+/*
+ * A farbrengen (app/views/hisvaaduyos.tsx): what happened between the words
+ * in a quiet grey line, the section letters down the side (on a phone, in the
+ * corner menu), a maamar said there as a card, בלתי מוגה as a small chip, and
+ * the recording a tap away under the title.
+ */
+.hv-head { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 0 0 18px; }
+.hv-head .chips { justify-content: center; }
+.chip.hv-flag { background: var(--machine-soft); border-color: transparent; color: var(--machine-ink); }
+.hv-listen { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; max-width: 100%; padding: 4px 14px 4px 6px; border: 1px solid var(--g300); border-radius: 999px; font-size: 13px; color: var(--g700); }
+.hv-listen:hover { background: var(--g100); }
+.hv-play { width: 28px; height: 28px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--g900); color: var(--g0); }
+.hv .torah p.stage { font-family: var(--ui); font-size: 14px; line-height: 1.55; text-align: start; color: var(--g600); background: var(--g100); border-radius: 8px; padding: 6px 12px; }
+.hv .torah p.stage b { font-weight: 600; }
+.hv .torah .hv-muga { display: none; }
+.hv .torah [id^='s-'], .hv .fsicha { scroll-margin-top: 64px; }
+.hv-said { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 0 1em; padding: 10px 14px; border: 1px solid var(--g300); border-radius: 10px; font-family: var(--ui); font-size: 13px; color: var(--g600); text-align: start; }
+.hv-said:hover { background: var(--g50); }
+.hv-said b { display: block; font-family: var(--title); font-weight: 500; font-size: 18px; color: var(--g900); }
+.hv-said small { font-size: 13px; }
+.hv-said .chip { flex: none; }
+.hv-rail { display: none; }
+@media (min-width: 900px) {
+  /* The letters sit outside the column, so the words keep their width. */
+  .hv.with-rail { display: grid; grid-template-columns: minmax(0, 1fr) 36px; column-gap: 20px; margin-inline-end: -56px; }
+  .hv-rail { position: sticky; top: 72px; align-self: start; display: flex; flex-direction: column; gap: 2px; max-height: calc(100dvh - 96px); overflow-y: auto; scrollbar-width: none; }
+  .hv-rail a { min-height: 26px; display: grid; place-items: center; border-radius: 6px; font-size: 13px; color: var(--g600); }
+  .hv-rail a:hover { background: var(--g100); color: var(--g900); }
+  .hv-rail a[aria-current] { background: var(--g900); color: var(--g0); }
+}
+.opt.jump { align-items: flex-start; padding-block: 12px; }
+.opt.jump .t { flex: none; }
+.jumps { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; }
+.jumps a { min-width: 36px; height: 32px; padding-inline: 6px; display: grid; place-items: center; border-radius: 6px; border: 1px solid var(--g300); font-size: 14px; }
+.jumps a:hover { background: var(--g100); }
 .ix .see { color: var(--g900); text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
 .ix-pop {
   display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;

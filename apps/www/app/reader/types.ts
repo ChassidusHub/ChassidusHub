@@ -1,5 +1,6 @@
 import type { PathLevel as ApiLevel } from '@chassidushub/client';
 import type { Pdf } from '../lib/pdfs';
+import type { FarbrengenSection, Muga, SaidThere } from '../views/hisvaaduyos.layout';
 
 /** A neighbour in the work's order: the sicha before or after this one. */
 export interface Neighbour {
@@ -88,4 +89,10 @@ export interface ReaderData {
   work: { path: string; label: string } | null;
   /** A farbrengen read as one page, all its sichos on it (farbrengen.server.ts). */
   farbrengen?: true;
+  /** A farbrengen's (views/hisvaaduyos.tsx): whether the Rebbe edited it, as the catalog or the print says. */
+  muga?: Muga;
+  /** A farbrengen's sections (א, ב, ג), to jump to: down the side, and in the corner menu. */
+  sections?: FarbrengenSection[];
+  /** The other pieces said at the same farbrengen: a sicha's maamar, a maamar's sichos. */
+  said?: SaidThere[];
 }
