@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactElement, type RefObject } from 'react';
-import { Await, data as answer, redirect, useLoaderData, useNavigate, useSearchParams, type ShouldRevalidateFunctionArgs } from 'react-router';
-import { EditBar, EditFields, Names } from '../edit/Edit';
+import { Await, data as answer, redirect, useLoaderData, useSearchParams, type ShouldRevalidateFunctionArgs } from 'react-router';
+import { EditBar, EditFields, Names, useEditMode } from '../edit/Edit';
 import { YEARS, yearLabel } from '../listen/data.server';
 import { firstWords, recordedEvent, type FirstWords } from '../listen/recording.server';
 import { clock, eventLevel, fetchWords, LISTEN_COOKIE, listening, yearLevel, writeStopped, type Chapter, type Paragraph } from '../listen/common';
@@ -57,16 +57,12 @@ export default function Recording() {
   const to = `/listen/${year}/${id}`;
   const [search] = useSearchParams();
   // Edit is the same page, with ?edit: only the event's own fields (its name), opened from the corner menu.
-  const navigate = useNavigate();
   const [menu, setMenu] = useState(false);
-  const editing = search.has('edit');
-  const without = new URLSearchParams(search);
-  without.delete('edit');
+  const edit = useEditMode(to);
+  const editing = edit.editing;
   const startEdit = () => {
     setMenu(false);
-    const next = new URLSearchParams(search);
-    next.set('edit', '');
-    navigate(`?${next}`, { replace: true, preventScrollReset: true });
+    edit.start();
   };
 
   const track = useMemo<Track>(
@@ -133,7 +129,7 @@ export default function Recording() {
           <span className="t">עריכה</span>
         </button>
       </Sheet>
-      {editing && <EditBar done={`${to}${without.size ? `?${without}` : ''}`} />}
+      {editing && <EditBar done={edit.done} />}
       <main id="content" className="view">
         <h1 className="stitle">{date}</h1>
         {editing && (

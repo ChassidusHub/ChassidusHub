@@ -1,6 +1,6 @@
 import { Fragment, Suspense, useState } from 'react';
-import { Await, Link, useNavigate, useSearchParams } from 'react-router';
-import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
+import { Await, Link, useSearchParams } from 'react-router';
+import { EditBar, EditFields, Linked, Names, useEditMode } from '../edit/Edit';
 import { libraryLevel, pathLevels } from '../lib/catalog';
 import { Icon, IconButton, Row, Rows, SearchField, SectionHead, Sheet, TopBar, useToast, type PathLevel } from '../ui';
 import type { Line, SetData, VolumeData, WorkData } from './load';
@@ -73,7 +73,7 @@ export function OtherShelvesScreen({ others }: { others: Promise<Line[]> }) {
 
 /** A Rebbe or a shelf: its sefarim and shelves (a Rebbe's sefarim first, then his shelves), then the books on it that are additions. */
 export function SetScreen({ data }: { data: SetData }) {
-  const edit = useEdit(data.path ?? '');
+  const edit = useEditMode(data.path ?? '');
   return (
     <>
       <TopBar path={pathLevels(data.levels)} end={<Corner title={data.title} printings={[]} onEdit={edit.start} />} />
@@ -124,23 +124,6 @@ function useShare() {
       // The reader closed the share sheet.
     }
   };
-}
-
-/**
- * Edit is the same page, with ?edit: only its own fields. `start` opens it
- * from the corner menu; `done` is the page without it.
- */
-function useEdit(path: string) {
-  const [search] = useSearchParams();
-  const navigate = useNavigate();
-  const without = new URLSearchParams(search);
-  without.delete('edit');
-  const start = () => {
-    const next = new URLSearchParams(search);
-    next.set('edit', '');
-    navigate(`?${next}`, { replace: true, preventScrollReset: true });
-  };
-  return { editing: search.has('edit'), done: `${path}${without.size ? `?${without}` : ''}`, start };
 }
 
 /** The shelf (or sefer) a page is in, edited on its own page. */
@@ -265,7 +248,7 @@ export function WorkScreen({ data }: { data: WorkData }) {
   const printings = usePrintings(data.api, data.id, data.printings);
   const scan = useScan(printings);
   const subtitle = [data.author, data.parts.length > 1 ? `${data.parts.length} חלקים` : ''].filter(Boolean).join(' · ');
-  const edit = useEdit(data.path ?? '');
+  const edit = useEditMode(data.path ?? '');
   return (
     <>
       <TopBar path={pathLevels(data.levels)} end={<Corner title={data.title} printings={printings} onEdit={edit.start} />} />
@@ -341,7 +324,7 @@ export function VolumeScreen({ data }: { data: VolumeData }) {
   const scan = useScan(printings);
   const about = printings.map((p) => aboutOf(p.title)).find(Boolean);
   let group: string | undefined;
-  const edit = useEdit(data.path);
+  const edit = useEditMode(data.path);
   return (
     <>
       <TopBar path={pathLevels(data.levels)} end={<Corner title={`${data.title} · ${data.label}`} printings={printings} onEdit={edit.start} />} />
