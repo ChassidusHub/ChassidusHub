@@ -172,6 +172,9 @@ describe('search that lands on the moment', () => {
     await catalog.submit(cs.id, 'steward');
     if ((await catalog.changeset(cs.id)).status !== 'merged') await catalog.merge(cs.id, 'steward');
 
+    // A search that asks for more than MOMENT_CANDIDATES gets them all: it reads twice what it asks.
+    expect(await searchMoments(catalog, 'פתח דבר', { limit: 100 })).toHaveLength(MOMENT_CANDIDATES + 6);
+
     const sql: string[] = [];
     const query = catalog.db.query.bind(catalog.db);
     catalog.db.query = ((q: string, params?: unknown[]) => (sql.push(q), query(q, params))) as typeof catalog.db.query;

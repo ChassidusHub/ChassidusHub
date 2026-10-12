@@ -239,6 +239,7 @@ export function yearWordsQuery(within: string): string {
 /**
  * How many of the best-ranked matches are read; the rest are not read at all. Each one's revision is read from disk
  * on a cold search, to put checked words first: 80 is four pages of results, and took 100 ms less than 200 (#214).
+ * A search that asks for more (up to 100) reads twice what it asks, as it did before, so it gets all it asked for.
  */
 export const MOMENT_CANDIDATES = 80;
 
@@ -312,7 +313,7 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
     `SELECT c.id, c.type, c.tier FROM (
        SELECT id, type, main_rev, min(tier) AS tier, max(rank) AS rank
        FROM (${matched.join(' UNION ALL ')}) u GROUP BY id, type, main_rev
-       ORDER BY tier, rank DESC, id LIMIT ${MOMENT_CANDIDATES}
+       ORDER BY tier, rank DESC, id LIMIT ${Math.max(MOMENT_CANDIDATES, limit * 2)}
      ) c
      -- Only a paragraph's revision says whether a machine wrote it unchecked; a page's and a sicha's are not read (#214).
      LEFT JOIN LATERAL (SELECT r.data FROM revision r WHERE r.id = c.main_rev AND c.type = 'segment' OFFSET 0) r ON TRUE

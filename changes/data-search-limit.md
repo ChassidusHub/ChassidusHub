@@ -1,0 +1,1 @@
+- Search: a search for more than 80 places in the texts (up to 100) gets all it asked for again; since #352 it got at most 80.
