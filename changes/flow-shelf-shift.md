@@ -1,0 +1,1 @@
+- New site: going from one shelf, sefer or volume to another no longer makes the page jump. Each page is now drawn afresh instead of reusing the last page's rows, which the browser counted as a layout shift of 0.227 on "Toras Menachem and sichos" when the tap took over half a second (#280).
