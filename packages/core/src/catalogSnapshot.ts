@@ -206,6 +206,14 @@ export interface SnapshotNamesFile {
 export const SNAPSHOT_INDEX_FORMAT = 2;
 
 /**
+ * Bumped when a build writes something new from the same catalog (a field
+ * added to a file, like the shelves' sefarim in the top file, #301): the next
+ * check builds again though main has not changed, so the new field is there
+ * at once and not only after the next Approve.
+ */
+export const SNAPSHOT_BUILD = 2;
+
+/**
  * index.json: only the names of the files, so it stays a few hundred bytes
  * however large the catalog grows. A file's address is the same folder as
  * the manifest's files (the API's /v1/catalog/files/, the site's /_/catalog/).
@@ -214,6 +222,8 @@ export interface SnapshotIndex {
   format: typeof SNAPSHOT_INDEX_FORMAT;
   /** The same version as the manifest's: the last commit that changed what the snapshot shows. */
   version: string;
+  /** What wrote it (SNAPSHOT_BUILD); an older one is built again. */
+  build?: number;
   top: string;
   /** Each top shelf's file, by the shelf's id. */
   shelves: Record<EntityId, string>;
@@ -228,7 +238,6 @@ export interface SnapshotTopEntry {
   name: SnapshotName;
 }
 
-/** A top shelf. A Rebbe's shelf carries its shelves, sefarim and additions, so his page draws with no other file. */
 /**
  * A shelf on a Rebbe's shelf, with what his page shows of it: its official
  * sefarim, the names of its first shelves inside, and whether it has loose
@@ -240,6 +249,7 @@ export interface SnapshotTopInner extends SnapshotTopEntry {
   loose?: true;
 }
 
+/** A top shelf. A Rebbe's shelf carries its shelves, sefarim and additions, so his page draws with no other file. */
 export interface SnapshotTopShelf extends SnapshotTopEntry {
   /** Its revision on main, for an edit form to start from. */
   rev: number;
@@ -786,6 +796,7 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
   const index: SnapshotIndex = {
     format: SNAPSHOT_INDEX_FORMAT,
     version: manifest.version,
+    build: SNAPSHOT_BUILD,
     top: (await put('top', topOf(parts.tree))).file,
     shelves,
     years: (await put('years', { format: SNAPSHOT_INDEX_FORMAT, years: Object.fromEntries(Object.entries(years).map(([y, f]) => [y, { file: f.file, events: f.events }])) } satisfies SnapshotYearsFile)).file,
@@ -808,11 +819,11 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
  */
 export async function refreshSnapshot(db: Db, store: SnapshotStore, options: { base?: string; now?: Date } = {}): Promise<{ manifest: SnapshotManifest; built: boolean }> {
   let kept = await readManifest(store);
-  // Built again when the index is missing (it came later than the manifest), or main moved on.
+  // Built again when the index is missing (it came later than the manifest) or was written by an older build, or main moved on.
   let index = await readIndex(store);
   let built = false;
   for (let round = 0; round < BUILDS_IN_A_ROW; round++) {
-    if (kept && index) {
+    if (kept && index && index.build === SNAPSHOT_BUILD) {
       const { seq } = await snapshotSeq(db);
       if (seq <= Math.min(kept.seq, Number(index.version))) break;
     }
