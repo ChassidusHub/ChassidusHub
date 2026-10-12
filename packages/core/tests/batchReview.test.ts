@@ -186,4 +186,17 @@ describe('a batch counted and listed', () => {
     expect((await batchReview(catalog, suggestion.id, { q: 'נ"ח' })).list.total).toBe(1);
     expect((await batchReview(catalog, suggestion.id, { q: 'פרשת סיחה' })).list.total).toBe(1);
   });
+
+  it('never shows the words of a paragraph, only that they change', async () => {
+    const text = await add(catalog, 'mendy', 'keeper', 'text', { kind: 'edition', unit: units[0]!, language: 'he' });
+    const segment = await add(catalog, 'mendy', 'keeper', 'segment', { text, order: 'V', kind: 'paragraph', content: 'בראשית ברא', proofread: 0 });
+    const cs = await catalog.createChangeset('mendy', { title: 'Fix a line' });
+    await catalog.putRevision(cs.id, 'mendy', { id: segment, type: 'segment', data: { text, order: 'V', kind: 'paragraph', content: 'מילים שאסור להראות', proofread: 1 } });
+    const review = await batchReview(catalog, cs.id);
+    expect(review.counts).toEqual({ words: 1 });
+    expect(review.list.rows[0]).toMatchObject({ kinds: ['words'], words: { first: null } });
+    expect(review.list.rows[0]!.facts).toBeUndefined();
+    expect(JSON.stringify(review)).not.toContain('מילים שאסור');
+    expect(JSON.stringify(review)).not.toContain('בראשית ברא');
+  });
 });

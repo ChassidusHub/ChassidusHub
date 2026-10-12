@@ -117,6 +117,12 @@ const PLACE_FIELDS: ReadonlySet<string> = new Set(['parent', 'sets', 'order', 'o
 /** Words, and where they came from, are said as words. */
 const WORD_FIELDS: ReadonlySet<string> = new Set(['body', 'bodySource']);
 const NAME_FIELDS: ReadonlySet<string> = new Set(['name', 'title', 'label']);
+/**
+ * Items that are words themselves (a paragraph, a scanned page's lines, a
+ * transcript's spans): whatever changes in them is said as words changed,
+ * never shown, since their source's terms may withhold them (gate.ts).
+ */
+const WORD_TYPES: ReadonlySet<string> = new Set(['text', 'segment', 'text-page', 'text-layer', 'alignment', 'alignment-span']);
 
 interface Row {
   id: EntityId;
@@ -248,6 +254,12 @@ async function itemsOf(catalog: Catalog, changesetId: number): Promise<BatchItem
         item.into = place(row.forward);
       } else item.kinds.push('deleted');
       item.from = place(was[0]?.parent);
+      return item;
+    }
+    if (WORD_TYPES.has(row.type)) {
+      if (!before) item.kinds.push('new');
+      item.kinds.push('words');
+      item.words = { paragraphs: 1, first: null, added: !before, machine: false };
       return item;
     }
     if (!before) {

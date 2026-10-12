@@ -255,7 +255,7 @@ function Line({ item, marks }: { item: BatchItem; marks: boolean }) {
         <p className="br-words">
           <span className="faint">{`${item.words.added ? 'טקסט חדש' : 'הטקסט משתנה'} · ${item.words.paragraphs === 1 ? 'פסקה אחת' : `${item.words.paragraphs.toLocaleString('he')} פסקאות`}`}</span>
           {item.words.machine && <span className="machine">קריאת מכונה, לא נבדקה</span>}
-          {item.words.first ? <q className="br-first">{item.words.first}</q> : <span className="faint">{' · המילים לא מוצגות כאן לפי תנאי המקור'}</span>}
+          {item.words.first ? <q className="br-first">{item.words.first}</q> : <span className="faint">{' · המילים עצמן בדף ההצעה'}</span>}
         </p>
       )}
     </li>
