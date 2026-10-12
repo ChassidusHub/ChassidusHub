@@ -487,29 +487,49 @@ form[role='search'] { margin-block: 8px 4px; }
 @media (max-width: 540px) {
   :root[data-resume~="listen"][data-resume~="read"] .tiles.resume { min-height: calc(2 * var(--resume-tile) + 10px); }
 }
-/* A recording's page: the play button and the machine label under the title. */
-.rec-acts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0 8px; }
+/* A recording's page: its date set as a sefer's title is, the play button and the machine label centred under it. */
+.rec-acts { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 4px 0 8px; }
 /*
- * A recording's words, a paragraph at a time, each with the time it is heard
- * beside it (tap it to hear from there). The part being heard follows word by
- * word: what was said is dark, the word being said is lit, what is still to
- * come is lighter.
+ * A recording's words, set as the reader sets a sicha: the Torah face,
+ * justified, a paragraph at a time. Each part opens with its name centred and
+ * the time it starts under it; a part with no words (a niggun) is one quiet
+ * line. The time each paragraph is heard sits in the margin on wide screens
+ * (tap it, or any word, to hear from there). The part being heard follows
+ * word by word: what was said is dark, the word being said is lit, what is
+ * still to come is lighter.
  */
-.tr { max-width: 40em; margin-inline: auto; font-family: var(--ui); font-size: 17px; line-height: 1.85; color: var(--g700); }
-.tr .chh { margin: 30px 0 4px; padding-bottom: 6px; border-bottom: 1px solid var(--g200); }
-.tp { display: grid; grid-template-columns: 3.4em 1fr; gap: 10px; padding-block: 8px; }
+.tr {
+  font-family: var(--torah); font-size: var(--torah-size); line-height: 1.85; color: var(--g900);
+  text-align: justify; hyphens: none;
+}
+.tr section { margin-block-start: 1.4em; }
+.tr .chh {
+  display: flex; flex-direction: column; align-items: center; gap: 0; margin: 0 0 0.6em;
+  font-family: var(--title); font-size: 21px; font-weight: 500; color: var(--g900); text-align: center;
+}
+.tr .chh span:last-child { font-family: var(--ui); font-size: 12px; font-weight: 400; color: var(--g600); line-height: 1.6; }
+/* A niggun: its name and time on one quiet line, close to the next one (· between them). */
+.tr .nig .chh span:last-child::before { content: '· '; }
+.tr section.nig { margin-block-start: 0.9em; }
+.tr section.nig + section.nig { margin-block-start: 0.2em; }
+.tr .nig .chh { flex-direction: row; justify-content: center; gap: 8px; margin: 0; font-family: var(--ui); font-size: 13px; font-weight: 400; color: var(--g600); }
+.tp { position: relative; margin-block-end: 0.9em; }
 .tt {
-  align-self: start; margin-top: 0.35em; padding: 1px 4px; border-radius: 6px; direction: ltr; text-align: end;
-  font-size: 12px; line-height: 1.6; color: var(--g600); font-variant-numeric: tabular-nums;
+  position: absolute; inset-inline-end: calc(100% + 14px); top: 0.55em; padding: 1px 4px; border-radius: 6px; direction: ltr;
+  font-family: var(--ui); font-size: 11px; line-height: 1.6; color: var(--g500); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .tt:hover { color: var(--g900); background: var(--g100); }
+/* No margin to spare: the time is not shown (the part's time is in its heading, and a tap on the words plays from them). */
+@media (max-width: 1099px) {
+  .tt { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+}
 .tx { margin: 0; cursor: pointer; }
-.tx:hover { color: var(--g900); }
+.tx:hover { color: var(--g700); }
 .tp.now .tt { color: var(--g900); font-weight: 600; }
-.tp.now .tx { color: var(--g600); }
+.tp.now .tx { color: var(--g500); }
 .tp.now .w.said, .tp.now .w.on { color: var(--g900); }
 .tp.now .w.on { background: var(--g200); border-radius: 4px; box-shadow: 0 0 0 2px var(--g200); }
-.tr .wait { font-size: 14px; color: var(--g600); padding-block: 8px; }
+.tr .wait { font-family: var(--ui); font-size: 14px; color: var(--g600); padding-block: 8px; text-align: center; }
 /* ---------- search: the top answer, marked words, suggestions (the prototype's search screens) ---------- */
 .top-answer { display: block; border: 1px solid var(--g300); border-radius: 12px; padding: 16px; margin-top: 8px; }
 .top-answer .k { display: block; font-size: 12px; color: var(--g600); }
