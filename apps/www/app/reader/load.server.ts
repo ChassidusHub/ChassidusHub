@@ -1,12 +1,50 @@
 import type { ChassidusHub, ItemView } from '@chassidushub/client';
+import { describeDateKey, isValidDateKey } from '@chassidushub/hebrew';
 import type { PageSegment } from '@chassidushub/model';
 import type { AppLoadContext } from 'react-router';
 import { namesOf } from '../edit/names';
 import { nameOf } from '../lib/catalog';
 import { clock } from '../listen/common';
 import { pdfsOf } from '../lib/pdfs';
-import type { ReaderData, ReaderText } from './types';
-import { notesHtml, wordsAddress, wordsHtml, wordsKey, type DrawnWords } from './words.server';
+import type { Fact, ReaderData, ReaderText } from './types';
+import { letterLayout } from '../views/letters.layout';
+import { viewFor } from './views';
+import { notesHtml, unmarkedNotes, wordsAddress, wordsHtml, wordsKey, type DrawnWords, type WordsLayout } from './words.server';
+
+/** How each kind of page sets its words beyond the words themselves, by its view (app/views); a kind not named here is drawn as a sicha. */
+const layouts: Record<string, WordsLayout> = { letters: letterLayout };
+
+/** Whether a reading page is drawn as a letter (app/views/letters.tsx), so it asks for the letters' face with its first bytes. */
+export const isLetter = (data: Pick<ReaderData, 'level'>) => viewFor(data).kind === 'letters';
+
+/** What the unit is by its own level: the last level of its position (`letter`), which picks its view. */
+const levelOf = (view: ItemView) => {
+  const level = ((view.item.data as { position?: { level?: unknown }[] }).position ?? []).at(-1)?.level;
+  return typeof level === 'string' && level ? level : undefined;
+};
+
+/**
+ * The facts the catalog keeps on a unit, for the corner menu (RFC 0004): its
+ * date, place and addressee, each opening a search for what else shares it,
+ * and its handwritten copy (an edition with `role: "manuscript"`). A fact not
+ * set is left out; a page with none has none.
+ */
+function withFacts(data: unknown): { facts?: Fact[] } {
+  const fields = data as { date?: unknown; place?: unknown; to?: unknown; labelOrigin?: { checked?: unknown }; editions?: { role?: string; url?: string }[] };
+  // The labels a machine guessed are the machine's until a person checks them (CLAUDE.md, RFC 0004 `labelOrigin`).
+  const machine = fields.labelOrigin && fields.labelOrigin.checked !== true ? { machine: true as const } : {};
+  const found = (q: string) => `/search?q=${encodeURIComponent(q)}`;
+  const facts: Fact[] = [];
+  const date = typeof fields.date === 'string' && isValidDateKey(fields.date) ? describeDateKey(fields.date) : '';
+  if (date) facts.push({ kind: 'date', label: 'תאריך', value: date, href: found(date), ...machine });
+  const place = nameOf(fields.place);
+  if (place) facts.push({ kind: 'place', label: 'מקום', value: place, href: found(place), ...machine });
+  const to = nameOf(fields.to);
+  if (to) facts.push({ kind: 'to', label: 'אל', value: to, href: found(to), ...machine });
+  const manuscript = fields.editions?.find((edition) => edition.role === 'manuscript' && edition.url?.startsWith('https://'));
+  if (manuscript) facts.push({ kind: 'manuscript', label: 'כתב יד', value: 'צילום', href: manuscript.url! });
+  return facts.length ? { facts } : {};
+}
 
 const languages: Record<string, string> = { he: 'עברית', en: 'אנגלית', yi: 'אידיש', ru: 'רוסית', fr: 'צרפתית', es: 'ספרדית' };
 
@@ -18,7 +56,9 @@ export function drawnWords(view: ItemView, title: string): DrawnWords | null {
   if (view.text?.kind !== 'words') return null;
   const segments = (view.text.segments ?? []) as unknown as PageSegment[];
   const notes = (view.text.notes ?? []) as unknown as PageSegment[];
-  return { body: wordsHtml(segments, notes, title), notes: notes.length ? notesHtml(notes) : '' };
+  const layout = layouts[viewFor({ level: levelOf(view) }).kind];
+  const unmarked = layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined;
+  return { body: wordsHtml(segments, notes, title, layout), notes: notes.length ? notesHtml(notes, unmarked) : '' };
 }
 
 /**
@@ -36,14 +76,16 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
   const fromWork = view.pathBar.findIndex((level) => level.kind === 'work');
   const middle = (fromWork >= 0 ? view.pathBar.slice(fromWork, -1) : []).map((level) => nameOf(level.chosen.name));
   const text = await shownText(view, context.api, context, path, title, language);
-  const level = ((view.item.data as { position?: { level?: unknown }[] }).position ?? []).at(-1)?.level;
+  const level = levelOf(view);
   const neighbour = (n: ItemView['previous']) => (n?.path ? { path: n.path, label: nameOf(n.name) } : null);
   return {
     id: view.item.id,
     path,
     title,
-    ...(typeof level === 'string' && level ? { level } : {}),
+    ...(level ? { level } : {}),
     sub: middle.join(' · '),
+    ...(middle.length > 1 ? { within: middle.slice(1).join(' · ') } : {}),
+    ...withFacts(view.item.data),
     pathBar: view.pathBar,
     previous: neighbour(view.previous),
     next: neighbour(view.next),

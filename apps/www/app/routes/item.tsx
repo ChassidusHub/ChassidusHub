@@ -1,12 +1,13 @@
 import { lazy } from 'react';
-import { data, isRouteErrorResponse, redirect, type AppLoadContext } from 'react-router';
+import { data, isRouteErrorResponse, redirect, useLocation, type AppLoadContext } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
-import { readerData } from '../reader/load.server';
+import { isLetter, readerData } from '../reader/load.server';
 import { Placeholder } from './placeholder';
 import type { Section } from '../ui';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
+import letterFont from '../ui/fonts/david-clm.woff2?url';
 import type { Route } from './+types/item';
 import { KEPT_PAGE } from '../lib/caching';
 
@@ -45,10 +46,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (item.type === 'unit') {
       const reader = await readerData(view, context, url.origin, url.searchParams.get('language') ?? undefined);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
-      // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
-      // Said in a header, on the server, so it costs the reader's script nothing.
+      // A sicha's words are set in the Torah face, a letter's in David (app/views/letters.tsx): the page asks for it
+      // with its first bytes, not once it has drawn. Said in a header, on the server, so it costs the reader's script nothing.
       if (reader.text.kind !== 'words') return loaded;
-      return data(loaded, { headers: { Link: `<${torahFont}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
+      const font = isLetter(reader) ? letterFont : torahFont;
+      return data(loaded, { headers: { Link: `<${font}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
     }
     return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: view.pathBar };
   } catch (error) {
@@ -115,16 +117,23 @@ export function meta({ data: loaded }: Route.MetaArgs) {
   return [{ title: loaded ? `${titleOf(loaded)} · ChassidusHub` : 'ChassidusHub' }];
 }
 
+/**
+ * Each page is drawn afresh, keyed by its address: going from one shelf to
+ * another, React would otherwise move the first page's headings and rows to
+ * where the second page has them, which the browser counts as the page
+ * shifting when the tap took longer than half a second (#280).
+ */
 export default function Item({ loaderData }: Route.ComponentProps) {
+  const { pathname } = useLocation();
   switch (loaderData.screen) {
     case 'reader':
       return <Reader key={loaderData.reader.path} data={loaderData.reader} />;
     case 'set':
-      return <SetScreen data={loaderData} />;
+      return <SetScreen key={pathname} data={loaderData} />;
     case 'work':
-      return <WorkScreen data={loaderData} />;
+      return <WorkScreen key={pathname} data={loaderData} />;
     case 'volume':
-      return <VolumeScreen data={loaderData} />;
+      return <VolumeScreen key={pathname} data={loaderData} />;
     default:
       // Events and recordings: their thread's screens, until they are built.
       return (

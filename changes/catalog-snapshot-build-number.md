@@ -1,0 +1,1 @@
+- The catalog snapshot is built again when the code that writes it adds something, not only when the catalog changes: the index records which build wrote it (`build`), and an older one is rebuilt at the next check. So the shelves' sefarim in the top file (#301) are there right after the deploy.
