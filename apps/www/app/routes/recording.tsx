@@ -65,7 +65,8 @@ export default function Recording() {
       // The player's own words panel: the same words, a paragraph at a time.
       words: async (index) => {
         const chapter = chapters[index];
-        const words = chapter && !chapter.niggun ? await fetchWords(chapter.recording).catch(() => null) : null;
+        // A niggun's part too: some have a few words said over them.
+        const words = chapter ? await fetchWords(chapter.recording).catch(() => null) : null;
         return words?.length ? { phrases: words.map((p) => ({ text: p.text, start: p.start ?? 0 })), checked: words.every((p) => !p.machine) } : null;
       },
     }),
@@ -121,13 +122,13 @@ export default function Recording() {
       </Sheet>
       {editing && <EditBar done={`${to}${without.size ? `?${without}` : ''}`} />}
       <main id="content" className="view">
-        <h1>{date}</h1>
+        <h1 className="stitle">{date}</h1>
         {editing && (
           <EditFields>
             <Names item={id} rev={data.rev} names={data.names} />
           </EditFields>
         )}
-        <p className="faint sm">{[title, parts > 1 ? `${parts} חלקים` : undefined, totalMs ? clock(totalMs) : undefined].filter(Boolean).join(' · ')}</p>
+        <p className="ssub">{[title, parts > 1 ? `${parts} חלקים` : undefined, totalMs ? clock(totalMs) : undefined].filter(Boolean).join(' · ')}</p>
         <div className="rec-acts">
           {mine ? (
             <Button icon={playing ? 'pause' : 'play'} onClick={() => player.toggle()}>
@@ -172,7 +173,8 @@ function Words({ chapters, track, first, fixed, onMachine }: { chapters: Chapter
   const [loaded, setLoaded] = useState<Loaded>({});
   const asked = useRef(new Set<string>());
   const load = useCallback((chapter: Chapter | undefined) => {
-    if (!chapter || chapter.niggun || asked.current.has(chapter.recording)) return;
+    // A part named for a niggun is asked too: some have words said over the singing, and all the words are shown.
+    if (!chapter || asked.current.has(chapter.recording)) return;
     asked.current.add(chapter.recording);
     setLoaded((w) => ({ ...w, [chapter.recording]: w[chapter.recording] ?? null }));
     fetchWords(chapter.recording)
@@ -277,15 +279,23 @@ function Words({ chapters, track, first, fixed, onMachine }: { chapters: Chapter
       {chapters.map((c, index) => {
         const ps = drawnWords(c);
         const all = loaded[c.recording] != null || (first?.recording === c.recording && first.complete);
+        // A niggun with no words (or none yet): its name and time on one quiet line.
+        if (c.niggun && !ps?.length)
+          return (
+            <section key={c.recording} className="nig" data-load={ps ? undefined : c.recording}>
+              <h2 className="chh">
+                <span>{c.title}</span>
+                <span>{clock(c.offset)}</span>
+              </h2>
+            </section>
+          );
         return (
           <section key={c.recording} data-fix-item={c.recording} data-load={ps ? undefined : c.recording}>
             <h2 className="chh">
               <span>{c.title}</span>
               <span>{clock(c.offset)}</span>
             </h2>
-            {c.niggun ? (
-              <p className="wait">ניגון, בלי מילים.</p>
-            ) : ps === undefined || ps === null ? (
+            {ps === undefined || ps === null ? (
               <p className="wait">המילים נטענות…</p>
             ) : ps.length === 0 ? (
               <p className="wait">אין עדיין מילים לחלק הזה.</p>
