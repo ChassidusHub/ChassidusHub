@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ItemView } from '@chassidushub/client';
-import { farbrengenMachine, farbrengenOf, farbrengenWords } from '../app/reader/farbrengen.server.js';
+import { farbrengenMachine, farbrengenOf, farbrengenViews, farbrengenWords, MOST_SICHOS } from '../app/reader/farbrengen.server.js';
 
 const he = (text: string) => ({ he: text });
 const sicha = (id: string, n: number, machine = 'all', note = false) =>
@@ -44,5 +44,21 @@ describe('a farbrengen read as one page', () => {
     expect(farbrengenMachine([sicha('rh-a', 1), sicha('rh-b', 2)])).toBe('all');
     expect(farbrengenMachine([sicha('rh-a', 1), sicha('rh-b', 2, 'none')])).toBe('some');
     expect(farbrengenMachine([sicha('rh-a', 1, 'none'), sicha('rh-b', 2, 'none')])).toBe('none');
+  });
+
+  it('is read a sicha at a time when it has more sichos than one page reads', () => {
+    const long = sicha('rh-a', 1);
+    const choices = Array.from({ length: MOST_SICHOS + 1 }, (_, k) => ({ name: he(`שיחה ${k + 1}`), path: `/sichos-kodesh/5720/5720-01-02/${k + 1}` }));
+    (long.pathBar[0] as unknown as { choices: unknown[] }).choices = choices;
+    expect(farbrengenOf(long)).toBeNull();
+  });
+
+  it('is the sicha\u2019s own page when any other sicha cannot be read, never one with a sicha missing', async () => {
+    const own = sicha('rh-a', 1);
+    const sichos = farbrengenOf(own)!.sichos;
+    const failing = { itemView: async () => Promise.reject(Object.assign(new Error('down'), { status: 503 })) } as never;
+    expect(await farbrengenViews(own, sichos, failing)).toBeNull();
+    const working = { itemView: async () => sicha('rh-b', 2) } as never;
+    expect((await farbrengenViews(own, sichos, working))?.map((v) => v.item.id)).toEqual(['rh-a', 'rh-b']);
   });
 });

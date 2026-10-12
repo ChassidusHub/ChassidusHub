@@ -29,8 +29,8 @@ export function drawnWords(view: ItemView, title: string): DrawnWords | null {
  */
 export async function pageWords(view: ItemView, api: ChassidusHub, language?: string): Promise<{ words: DrawnWords | null; sichos: ItemView[] | null; title: string }> {
   const farbrengen = farbrengenOf(view);
-  if (!farbrengen) return { words: drawnWords(view, readerTitle(view)), sichos: null, title: readerTitle(view) };
-  const sichos = await farbrengenViews(view, farbrengen.sichos, api, language);
+  const sichos = farbrengen ? await farbrengenViews(view, farbrengen.sichos, api, language) : null;
+  if (!farbrengen || !sichos) return { words: drawnWords(view, readerTitle(view)), sichos: null, title: readerTitle(view) };
   return { words: farbrengenWords(sichos, farbrengen.label), sichos, title: farbrengen.label };
 }
 

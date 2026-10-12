@@ -14,20 +14,31 @@ import { notesHtml, wordsHtml, type DrawnWords } from './words.server';
  * names it (`data-fix-item`), so a fix goes to the sicha it is in.
  */
 
-/** The sichos of the farbrengen a unit is in, in order, when it is one; else null. */
+/**
+ * The most sichos read for one page: each is its own read of the API (and the
+ * words route reads them again), and a Worker has only so many reads a
+ * request. A longer farbrengen is read a sicha at a time, as before.
+ */
+export const MOST_SICHOS = 20;
+
+/** The sichos of the farbrengen a unit is in, in order, when it is one that is read as one page; else null. */
 export function farbrengenOf(view: ItemView): { label: string; sichos: { path: string }[] } | null {
   const position = (view.item.data as { position?: { level?: unknown; label?: unknown }[] }).position ?? [];
   const parent = position.at(-2);
   if (parent?.level !== 'farbrengen') return null;
   const sichos = (view.pathBar.at(-1)?.choices ?? []).flatMap((choice) => (choice.path ? [{ path: choice.path }] : []));
-  if (sichos.length < 2) return null;
+  if (sichos.length < 2 || sichos.length > MOST_SICHOS) return null;
   return { label: nameOf(parent.label), sichos };
 }
 
-/** Every sicha of the farbrengen read at once (the page's own from the view already read); a sicha that cannot be read is left out. */
-export async function farbrengenViews(view: ItemView, sichos: { path: string }[], api: ChassidusHub, language?: string): Promise<ItemView[]> {
+/**
+ * Every sicha of the farbrengen read at once (the page's own from the view
+ * already read). If any one cannot be read, null: the page is then the sicha's
+ * own, never a farbrengen with a sicha silently missing.
+ */
+export async function farbrengenViews(view: ItemView, sichos: { path: string }[], api: Pick<ChassidusHub, 'itemView'>, language?: string): Promise<ItemView[] | null> {
   const read = await Promise.all(sichos.map((s) => (s.path === view.item.path ? view : api.itemView({ path: s.path, ...(language ? { language } : {}) }).catch(() => null))));
-  return read.filter((v): v is ItemView => !!v);
+  return read.every((v): v is ItemView => !!v) ? read : null;
 }
 
 /** A sicha's own name on the farbrengen's page: its label without the farbrengen's name before it ("שיחה א"). */
