@@ -17,6 +17,14 @@
 /** The format this site reads. A manifest of another format is not read, and pages read the API. */
 export const SNAPSHOT_FORMAT = 1;
 
+/**
+ * The format of the small cut (index.json, and the top, shelf and years files
+ * only it names): the same snapshot in a few small files, so a first tap on a
+ * slow phone is not left waiting on the whole tree (#265). An index of
+ * another format is not read, and the snapshot is read through the manifest.
+ */
+export const SNAPSHOT_INDEX_FORMAT = 2;
+
 export interface SnapshotName {
   he: string;
   en?: string;
@@ -112,12 +120,60 @@ export interface YearFile {
   events: SnapshotEvent[];
 }
 
+/** index.json: the small cut's files by name. */
+export interface SnapshotIndex {
+  format: number;
+  version: string;
+  top: string;
+  /** Each top shelf's file, by the shelf's id. */
+  shelves: Record<string, string>;
+  years: string;
+}
+
+/** A shelf or a sefer as the top file names it. */
+export interface TopEntry {
+  id: string;
+  path: string | null;
+  name: SnapshotName;
+}
+
+export interface TopFile {
+  format: number;
+  /** Every top shelf, in order; a Rebbe's also with the shelves, sefarim and additions on it. */
+  top: Array<TopEntry & { rebbe?: number; sets?: TopEntry[]; works?: TopEntry[]; additions?: TopEntry[] }>;
+}
+
+/** One top shelf and everything under it, as in the tree; a sefer with units names its file. */
+export interface ShelfFile {
+  format: number;
+  shelf: string;
+  sets: Record<string, SnapshotSet>;
+  works: Record<string, SnapshotWork & { file?: string }>;
+}
+
+export interface YearsFile {
+  format: number;
+  years: Record<string, { file: string; events: number }>;
+}
+
+/**
+ * A shelf the top file only names: enough for the library's page and a path
+ * bar's choices, not for the shelf's own page. A page that needs more of it
+ * waits for its shelf's file (`Core.whole`), or is read from the API.
+ */
+type NamedOnly = SnapshotSet & { named: true };
+
 /** The tree, with what a page looks up in it. */
 export class Core {
   /** Every work on each set, the official ones first in the set's order, then its additions in theirs, then the rest. */
   readonly worksOn = new Map<string, SnapshotWork[]>();
   readonly byPath = new Map<string, SnapshotSet | SnapshotWork>();
 
+  /**
+   * `tree` is the whole tree (the manifest's), or as much of it as the small
+   * cut has brought: the top file's shelves, named only, and the shelves'
+   * files read so far, whole.
+   */
   constructor(readonly tree: Tree) {
     for (const set of Object.values(tree.sets)) if (set.path) this.byPath.set(set.path, set);
     for (const work of Object.values(tree.works)) {
@@ -152,11 +208,48 @@ export class Core {
   isWork(item: SnapshotSet | SnapshotWork): item is SnapshotWork {
     return this.tree.works[item.id] === item;
   }
+
+  /** Whether everything under this shelf is here (its shelf's file has been read), not only its name. */
+  whole(id: string): boolean {
+    const set = this.tree.sets[id];
+    return !!set && !(set as Partial<NamedOnly>).named;
+  }
+}
+
+/** The tree as far as the small cut has brought it: the top file's shelves, named only, then each shelf's file read, whole. */
+export function treeOf(top: TopFile, shelves: ShelfFile[]): Tree {
+  const tree: Tree = { format: SNAPSHOT_FORMAT, top: top.top.map((shelf) => shelf.id), sets: {}, works: {} };
+  const named = (entry: TopEntry, parent?: string, inside: string[] = []): NamedOnly => ({
+    id: entry.id,
+    path: entry.path,
+    rev: 0,
+    name: entry.name,
+    ...(parent ? { parent } : {}),
+    sets: inside,
+    works: [],
+    additions: [],
+    named: true,
+  });
+  for (const shelf of top.top) {
+    tree.sets[shelf.id] = named(shelf, undefined, (shelf.sets ?? []).map((inner) => inner.id));
+    for (const inner of shelf.sets ?? []) tree.sets[inner.id] ??= named(inner, shelf.id);
+  }
+  for (const file of shelves) {
+    Object.assign(tree.sets, file.sets);
+    Object.assign(tree.works, file.works);
+  }
+  return tree;
 }
 
 /** Where a snapshot's files come from: the Worker's bucket or the API, or the browser's cache. */
 export interface Snapshot {
   core(): Promise<Core | null>;
+  /**
+   * Reads one top shelf's file into the core (the small cut), so the pages
+   * under it are drawn here; true once it is there. False when the snapshot
+   * has no small cut, or the file cannot be read.
+   */
+  shelf(id: string): Promise<boolean>;
   units(work: string): Promise<UnitsFile | null>;
   /** One year's events; null when the snapshot has none for it or cannot be read. */
   year(year: number): Promise<SnapshotEvent[] | null>;
@@ -184,23 +277,28 @@ interface Kept<T> {
  * of a file by its name), each file read once and kept. The manifest is asked
  * again at most every `recheckMs`; until the new one has come, pages keep the
  * one they have. Only the sefarim and years opened last are kept in memory.
+ *
+ * With `index`, the small cut is read first: the index and the top file (a
+ * few kB) make the core at once, and each top shelf's file is added to it
+ * when `shelf` asks for it; the manifest and the tree are then never read.
+ * A site with no index, or one of a format this site does not know, is read
+ * through the manifest as before.
  */
 export function snapshotFrom({
   manifest: getManifest,
+  index: getIndex,
   file: getFile,
   recheckMs = 60_000,
   keep = 24,
   now = Date.now,
 }: {
   manifest: () => Promise<Response>;
+  index?: () => Promise<Response>;
   file: (name: string) => Promise<Response>;
   recheckMs?: number;
   keep?: number;
   now?: () => number;
 }): Snapshot {
-  let manifest: Promise<Manifest | null> | null = null;
-  let asked = 0;
-  let current: Manifest | null = null;
   let tree: Kept<Core> | null = null;
   const files = new Map<string, Kept<unknown>>();
 
@@ -209,21 +307,38 @@ export function snapshotFrom({
     return answer.ok ? ((await answer.json()) as T) : null;
   };
 
-  const readManifest = (): Promise<Manifest | null> => {
-    if (manifest && now() - asked < recheckMs) return manifest;
-    asked = now();
-    const asking = json<Manifest>(getManifest())
-      .then((found) => {
-        // A format this site does not know is not read: pages read the API.
-        if (found?.format === SNAPSHOT_FORMAT && found.tree?.file) current = found;
-        return current;
-      })
-      .catch(() => current);
-    // The first time, a page waits for it; after that, pages keep the one they have while the next is asked.
-    if (!current) manifest = asking;
-    else void asking.then((found) => (manifest = Promise.resolve(found)));
-    return manifest ?? asking;
+  /**
+   * A small file that changes (the manifest, the index), asked again at most
+   * every `recheckMs`. The first time, a page waits for it; after that, pages
+   * keep the one they have while the next is asked.
+   */
+  const rechecked = <T>(ask: () => Promise<T | null>): (() => Promise<T | null>) => {
+    let kept: Promise<T | null> | null = null;
+    let asked = 0;
+    let current: T | null = null;
+    return () => {
+      if (kept && now() - asked < recheckMs) return kept;
+      asked = now();
+      const asking = ask()
+        .then((found) => (found ? (current = found) : current))
+        .catch(() => current);
+      if (!current) kept = asking;
+      else void asking.then((found) => (kept = Promise.resolve(found)));
+      return kept ?? asking;
+    };
   };
+
+  // A format this site does not know is not read: pages read the API.
+  const readManifest = rechecked(async () => {
+    const found = await json<Manifest>(getManifest());
+    return found?.format === SNAPSHOT_FORMAT && found.tree?.file ? found : null;
+  });
+  const readIndex = getIndex
+    ? rechecked(async () => {
+        const found = await json<SnapshotIndex>(getIndex());
+        return found?.format === SNAPSHOT_INDEX_FORMAT && found.top ? found : null;
+      })
+    : () => Promise.resolve(null);
 
   /** A file by name, read once; a file that failed is asked again next time. */
   const read = <T>(name: string, made: (value: unknown) => T | null): Promise<T | null> => {
@@ -241,30 +356,81 @@ export function snapshotFrom({
     void entry.value.then((found) => !found && files.get(name) === entry && files.delete(name));
     return entry.value;
   };
+  const ofFormat =
+    <T extends { format: number }>(format: number) =>
+    (file: unknown): T | null =>
+      (file as T).format === format ? (file as T) : null;
+
+  // The small cut: the top shelves' files read so far, kept for the visit (the top file and they are the core).
+  const shelves = new Map<string, ShelfFile>();
+  const reading = new Map<string, Promise<void>>();
+  let small: { key: string; core: Core } | null = null;
+
+  /** The core from the small cut: the top file and the shelves' files read so far; null without them. */
+  const smallCore = async (index: SnapshotIndex): Promise<Core | null> => {
+    const top = await read(index.top, ofFormat<TopFile>(SNAPSHOT_INDEX_FORMAT));
+    if (!top) return null;
+    const named = new Set(Object.values(index.shelves));
+    for (const name of shelves.keys()) if (!named.has(name)) shelves.delete(name);
+    const key = [index.top, ...shelves.keys()].join(' ');
+    if (small?.key !== key) small = { key, core: new Core(treeOf(top, [...shelves.values()])) };
+    return small.core;
+  };
+
+  const readYears = async (): Promise<YearsFile | null> => {
+    const index = await readIndex();
+    return index ? read(index.years, ofFormat<YearsFile>(SNAPSHOT_INDEX_FORMAT)) : null;
+  };
+
+  const manifestCore = async (): Promise<Core | null> => {
+    const found = await readManifest();
+    if (!found) return null;
+    if (tree?.file !== found.tree.file) {
+      const value = json<Tree>(getFile(found.tree.file))
+        .then((part) => (part?.format === SNAPSHOT_FORMAT ? new Core(part) : null))
+        .catch(() => null);
+      const entry = { file: found.tree.file, value };
+      tree = entry;
+      void value.then((done) => !done && tree === entry && (tree = null));
+    }
+    return tree.value;
+  };
 
   return {
     async core() {
-      const found = await readManifest();
-      if (!found) return null;
-      if (tree?.file !== found.tree.file) {
-        const value = json<Tree>(getFile(found.tree.file))
-          .then((part) => (part?.format === SNAPSHOT_FORMAT ? new Core(part) : null))
-          .catch(() => null);
-        const entry = { file: found.tree.file, value };
-        tree = entry;
-        void value.then((done) => !done && tree === entry && (tree = null));
+      const index = await readIndex();
+      return (index && (await smallCore(index))) || manifestCore();
+    },
+    async shelf(id) {
+      const index = await readIndex();
+      const name = index?.shelves[id];
+      if (!name) return false;
+      if (!shelves.has(name)) {
+        let asking = reading.get(name);
+        if (!asking) {
+          asking = json<ShelfFile>(getFile(name))
+            .then((found) => void (found?.format === SNAPSHOT_INDEX_FORMAT && shelves.set(name, found)))
+            .catch(() => undefined)
+            .finally(() => reading.delete(name));
+          reading.set(name, asking);
+        }
+        await asking;
       }
-      return tree.value;
+      return shelves.has(name);
     },
     async units(work) {
-      const name = (await readManifest())?.works[work]?.file;
-      return name ? read(name, (file) => ((file as UnitsFile).format === SNAPSHOT_FORMAT ? (file as UnitsFile) : null)) : null;
+      const index = await readIndex();
+      const name = index ? ((await smallCore(index))?.work(work) as { file?: string } | undefined)?.file : (await readManifest())?.works[work]?.file;
+      return name ? read(name, ofFormat<UnitsFile>(SNAPSHOT_FORMAT)) : null;
     },
     async year(year) {
-      const name = (await readManifest())?.years[String(year)]?.file;
-      return name ? read(name, (file) => ((file as YearFile).format === SNAPSHOT_FORMAT ? (file as YearFile).events : null)) : null;
+      const years = await readYears();
+      const name = years ? years.years[String(year)]?.file : (await readManifest())?.years[String(year)]?.file;
+      return name ? ((await read(name, ofFormat<YearFile>(SNAPSHOT_FORMAT)))?.events ?? null) : null;
     },
     async hasYear(year) {
+      const years = await readYears();
+      if (years) return String(year) in years.years;
       const found = await readManifest();
       return found ? String(year) in found.years : null;
     },
