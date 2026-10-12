@@ -738,9 +738,13 @@ packages/core/src/merge.ts walks the two values instead.
 
 Latency comes from the same place: each API read is a Worker call and its
 statements are round trips to Postgres in Virginia, one after the other.
-Smart Placement (`[placement]` in each `wrangler.toml`) runs the Workers
-next to the database; pages and the API's public reads stay cached at
-the edge near the reader.
+A placement hint (`[placement] region` in the API's and the old site's
+`wrangler.toml`) runs those Workers next to the database: Smart Placement
+had put them in Atlanta and Toronto, about 25 ms a statement, where
+Ashburn is a few. The new site (apps/www) stays near the reader, and each
+of its pages asks the API once, in one round (GET /v1/view brings a
+sefer's volumes and a volume's units with the item); pages and the API's
+public reads stay cached at the edge near the reader.
 
 Every answer says what it cost, in production too, in a `Server-Timing`
 header (the Timing tab of a browser's DevTools shows it; so does
@@ -755,7 +759,14 @@ answers report, an answer the edge already had counted as from the edge)
 and `total`. An answer the edge serves carries the header of the time it
 was made, with `cf-cache-status: HIT`. When a page is slow, this says
 whether the time is in the database, in the trips to the API, or in
-making the page.
+making the page. The new site's pages say `page` (the whole page), `api`
+(the time spent waiting on the API, with how many calls in how many
+rounds: calls side by side are one round, and each round is a trip),
+`db` (what those calls said they cost). A page anyone may have also says
+`drawn` with when it was drawn: the edge keeps the header with the page,
+so a `drawn` older than the request means it came from the edge and the
+`api` and `db` beside it are of that first drawing
+(apps/www/server/serverTiming.ts).
 
 ### Crawlers
 
