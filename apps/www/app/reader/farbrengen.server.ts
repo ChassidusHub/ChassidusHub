@@ -1,7 +1,7 @@
 import type { ChassidusHub, ItemView } from '@chassidushub/client';
 import type { PageInline, PageSegment } from '@chassidushub/model';
 import { nameOf } from '../lib/catalog';
-import { notesHtml, wordsHtml, type DrawnWords } from './words.server';
+import { notesHtml, wordsHtml, type DrawnWords, type WordsLayout } from './words.server';
 
 /**
  * A farbrengen whose sichos are separate units (Sichos Kodesh: a unit per
@@ -58,8 +58,8 @@ function renamed(segments: readonly PageSegment[], at: number): PageSegment[] {
 }
 const renamedNotes = (notes: readonly PageSegment[], at: number) => renamed(notes, at).map((n) => ({ ...n, id: `${at}-${n.id}` }));
 
-/** The farbrengen's words, drawn: each sicha in its own section, under its name; the notes of all of them at the end. */
-export function farbrengenWords(views: readonly ItemView[], farbrengen: string): DrawnWords | null {
+/** The farbrengen's words, drawn: each sicha in its own section, under its name, set by `layout` (views/hisvaaduyos.layout.ts); the notes of all of them at the end. */
+export function farbrengenWords(views: readonly ItemView[], farbrengen: string, layout?: WordsLayout): DrawnWords | null {
   let body = '';
   let notes = '';
   views.forEach((view, at) => {
@@ -68,7 +68,7 @@ export function farbrengenWords(views: readonly ItemView[], farbrengen: string):
     const ownNotes = renamedNotes((view.text.notes ?? []) as unknown as PageSegment[], at);
     const segments = renamed((view.text.segments ?? []) as unknown as PageSegment[], at);
     const version = view.text.version ? ` data-fix-version="${escape(view.text.version)}"` : '';
-    body += `<section class="fsicha" id="u-${escape(view.item.id)}" data-fix-item="${escape(view.item.id)}"${version}><h2 class="fh">${escape(name)}</h2>${wordsHtml(segments, ownNotes, name)}</section>`;
+    body += `<section class="fsicha" id="u-${escape(view.item.id)}" data-fix-item="${escape(view.item.id)}"${version}><h2 class="fh">${escape(name)}</h2>${wordsHtml(segments, ownNotes, name, layout, view.item.data)}</section>`;
     if (ownNotes.length) notes += notesHtml(ownNotes);
   });
   return body ? { body, notes } : null;

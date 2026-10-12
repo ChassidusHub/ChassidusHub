@@ -221,6 +221,51 @@ test('reads an index as printed: entries, letters, find, ע"ע and a page that o
   await expect(page.getByRole('dialog', { name: 'עמוד 90' }).getByRole('link', { name: 'הסריקה של השיחה' })).toHaveAttribute('href', 'https://drive.google.com/file/d/sample-drive-file-2/view');
 });
 
+test('reads a farbrengen as it was said: its occasion, its stage lines, its maamar, its recording, unedited', async ({ page }) => {
+  await page.goto('/sample-hisvaaduyos/11/4');
+  await page.waitForLoadState('networkidle');
+  // The occasion and the day, without the print's ב"ס"ד and "שיחת"; the Hebrew date under it.
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('יום לדוגמה, יו"ד שבט ה\'תשי"ד');
+  await expect(page.locator('.ssub')).toContainText('שבט');
+  // The print's own בלתי מוגה line is the chip under the title.
+  await expect(page.locator('.hv-head .hv-flag')).toHaveText('בלתי מוגה');
+  await expect(page.locator('.torah .hv-muga')).toBeHidden();
+  // What happened between the words, in a quiet line; the talk itself is not.
+  await expect(page.locator('#s-p2')).toHaveClass(/stage/);
+  await expect(page.locator('#s-g1')).toHaveClass(/stage/);
+  await expect(page.locator('#s-s0')).not.toHaveClass(/stage/);
+  // The print's *** between the parts is a short rule, not three stars.
+  const divider = page.locator('#s-x1');
+  await expect(divider).toHaveClass(/divider/);
+  expect(await divider.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(4);
+  // The maamar said there: a chip under the title, and a card where the words say it was said.
+  await expect(page.locator('.hv-head').getByRole('link', { name: /מאמר: ד"ה מאמר לדוגמה/ })).toHaveAttribute('href', '/sample-hisvaaduyos/11/3');
+  await expect(page.locator('#s-p2 + a.hv-said')).toHaveAttribute('href', '/sample-hisvaaduyos/11/3');
+  await expect(page.getByRole('link', { name: /לשמוע את ההתוועדות/ })).toHaveAttribute('href', '/listen/5714/rh-aaaaaave?r=rh-aaaaaavr');
+});
+
+test('jumps to a farbrengen’s sections: down the side on a wide screen, in the corner menu on a phone', async ({ page }, info) => {
+  await page.goto('/sample-hisvaaduyos/11/4');
+  await page.waitForLoadState('networkidle');
+  if (info.project.name === 'desktop') {
+    const rail = page.locator('.hv-rail');
+    await expect(rail.getByRole('link')).toHaveText(['א', 'ב', 'ג', 'ד', 'ה']);
+    await expect(rail.getByRole('link', { name: 'א' })).toHaveAttribute('aria-current', 'location');
+    await rail.getByRole('link', { name: 'ד' }).click();
+    await expect(page).toHaveURL(/#s-s2$/);
+    await expect(rail.getByRole('link', { name: 'ד' })).toHaveAttribute('aria-current', 'location');
+  } else {
+    await expect(page.locator('.hv-rail')).toBeHidden();
+    await page.getByRole('button', { name: 'עוד', exact: true }).click();
+    const jumps = page.getByRole('dialog', { name: 'עוד' }).getByRole('navigation', { name: 'סעיפים' });
+    await expect(jumps.getByRole('link')).toHaveText(['א', 'ב', 'ג', 'ד', 'ה']);
+    await jumps.getByRole('link', { name: 'ג' }).click();
+    await expect(page).toHaveURL(/#s-s1$/);
+    await expect(page.getByRole('dialog', { name: 'עוד' })).toBeHidden();
+    await expect(page.locator('#s-s1')).toBeInViewport();
+  }
+});
+
 test('reads a chapter of Tanya: its own name, its part’s chapters, bold openings, no shiur markers', async ({ page }) => {
   await page.goto('/tanya/1/4');
   await page.waitForLoadState('networkidle');
