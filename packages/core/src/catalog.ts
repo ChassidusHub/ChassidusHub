@@ -628,11 +628,15 @@ export class Catalog {
    * has one part per unit.
    */
   async workOutline(work: EntityId): Promise<Array<{ value: string; label: Json | null; units: number }>> {
-    // From each unit's place (unit_place, migration 0030), never its words.
+    // From each unit's place (unit_place, migration 0030), never its words. The volumes are counted from the index
+    // (unit_place_part, 0037) and each one's name read from its first unit alone, as the path bar does: each row holds
+    // its sicha's lead (0033), a few KB, and reading every row of Likkutei Sichos to name its volumes took 2.7 s cold.
     const { rows } = await this.db.query<{ value: string; label: Json | null; units: number }>(
-      `SELECT p.part AS value, (array_agg(p.position->0->'label' ORDER BY p.ord))[1] AS label, count(*)::int AS units
-       FROM unit_place p WHERE p.work_id = $1
-       GROUP BY 1 ORDER BY min(p.ord)`,
+      `SELECT v.part AS value, f.label, v.units
+       FROM (SELECT p.part, count(*)::int AS units, min(p.ord) AS ord FROM unit_place p WHERE p.work_id = $1 GROUP BY 1) v
+       LEFT JOIN LATERAL (SELECT p.position->0->'label' AS label FROM unit_place p
+                          WHERE p.work_id = $1 AND p.part = v.part AND p.ord = v.ord ORDER BY p.unit_id LIMIT 1) f ON TRUE
+       ORDER BY v.ord`,
       [work],
     );
     return rows;
