@@ -1,6 +1,6 @@
 import type { Context, Hono } from 'hono';
 import { parseHebrewNumeral } from '@chassidushub/hebrew';
-import { ENTITY_TYPES, allSegments, inlineText, isPageText } from '@chassidushub/model';
+import { ENTITY_TYPES, allSegments, idFromSeed, inlineText, isPageText } from '@chassidushub/model';
 import { mcpChallenge } from './oauth.js';
 import { mcpInnerCalls, tokenGrantOf } from './tokens.js';
 
@@ -460,7 +460,7 @@ function tools(siteUrl: string): Tool[] {
       name: 'suggest_items',
       title: 'Add or change items',
       description:
-        "Add new items, or change or delete several at once, as one suggestion: what the site's editor does, many items at a time. Each item is its type and its whole data (as get_item shows data; schemas are at /schemas/<type>), with id to change an existing one (data null deletes it) and path for a new item's readable path. To change only some fields of an existing item (its label, say), give set in place of data: those fields replace its own, a field set to null is removed, and the rest of its data (its words too) is left as it is, so only the change is sent. Up to 200 items a call: pass the suggestion id back as `suggestion` with submit false to keep adding to one suggestion, and submit it with the last call. New items get their ids here, in the order given. Reviewed by the keepers like any suggestion; a steward may approve it with approve_suggestion. Needs a ChassidusHub API token with the write scope.",
+        "Add new items, or change or delete several at once, as one suggestion: what the site's editor does, many items at a time. Each item is its type and its whole data (as get_item shows data; schemas are at /schemas/<type>), with id to change an existing one (data null deletes it) and path for a new item's readable path. To change only some fields of an existing item (its label, say), give set in place of data: those fields replace its own, a field set to null is removed, and the rest of its data (its words too) is left as it is, so only the change is sent. Up to 200 items a call, written all at once (a call adds all its items, or none when one is wrong): pass the suggestion id back as `suggestion` with submit false to keep adding to one suggestion, and submit it with the last call. Give a `key` so a call tried again never makes a second suggestion. New items get their ids here, in the order given. Reviewed by the keepers like any suggestion; a steward may approve it with approve_suggestion. Needs a ChassidusHub API token with the write scope.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -482,6 +482,7 @@ function tools(siteUrl: string): Tool[] {
             },
           },
           suggestion: { type: 'integer', description: 'A suggestion made by an earlier call, still a draft, to add these items to' },
+          key: { type: 'string', maxLength: 200, description: "Your own name for this suggestion (a batch's name, say). Give it on every call that starts one: if a call is told it failed but went on, the same call again goes on with the suggestion made then, writes its new items over themselves rather than adding them twice, and once it was sent only answers its result" },
           submit: { type: 'boolean', default: true, description: 'Send it for review after these items; false keeps it a draft to add more' },
           ...SUGGESTION_WORDS,
         },
@@ -492,35 +493,73 @@ function tools(siteUrl: string): Tool[] {
       async run(args, call) {
         if (!Array.isArray(args.items) || args.items.length === 0) throw new ToolError('give items: a list of { type, data, id?, path? }');
         if (args.items.length > 200) throw new ToolError('at most 200 items a call; keep adding to the same suggestion');
+        if (args.key !== undefined && (typeof args.key !== 'string' || !args.key.trim() || args.key.length > 200)) throw new ToolError('key: a string of your own, at most 200 characters');
+        const key = typeof args.key === 'string' ? args.key.trim() : null;
+        const items = args.items as any[];
+        // Nothing is written until every item reads right: a call adds all its items or none.
+        for (const [i, item] of items.entries()) {
+          if (!item || typeof item !== 'object' || typeof item.type !== 'string' || (item.data === undefined && item.set === undefined)) throw new ToolError(`item ${i + 1}: give type and data (nothing in this call was added)`);
+          if (item.set !== undefined) {
+            if (item.data !== undefined) throw new ToolError(`item ${i + 1}: give data or set, not both (nothing in this call was added)`);
+            if (typeof item.id !== 'string' || !item.set || typeof item.set !== 'object' || Array.isArray(item.set)) throw new ToolError(`item ${i + 1}: set changes an existing item: give its id, and set as an object of fields (nothing in this call was added)`);
+          }
+        }
         let suggestion = typeof args.suggestion === 'number' ? args.suggestion : null;
         if (suggestion === null) {
-          const title = typeof args.title === 'string' && args.title.trim() ? args.title.trim() : `Add ${args.items.length} item${args.items.length === 1 ? '' : 's'}`;
-          suggestion = (await need(call, 'POST', '/v1/suggestions', { title, description: typeof args.note === 'string' ? args.note : undefined })).id as number;
+          const title = typeof args.title === 'string' && args.title.trim() ? args.title.trim() : `Add ${items.length} item${items.length === 1 ? '' : 's'}`;
+          const answer = await call('POST', '/v1/suggestions', { title, description: typeof args.note === 'string' ? args.note : undefined, ...(key ? { key } : {}) });
+          if (answer.status >= 400) throw new ToolError(`${answer.body?.message ?? `the API answered ${answer.status}`} (${answer.body?.error ?? answer.status})`);
+          suggestion = answer.body.id as number;
+          // The same key again, after the first call went on and sent it (#270): its result, and nothing added twice.
+          if (answer.status === 200 && answer.body.status !== 'draft' && answer.body.status !== 'sent_back') {
+            const url = `${site}/review?s=${suggestion}`;
+            return {
+              text: `Suggestion ${suggestion} was already made with key "${key}" and sent (${answer.body.status}); nothing was added again. ${url}`,
+              structured: { suggestion, status: answer.body.status, items: [], checks: answer.body.checks ?? [], url, already: true },
+            };
+          }
         }
-        const made: { id: string; type: string; path: string | null }[] = [];
         // An item given as `set` is read as it stands and only those fields change, so a label is changed without sending
-        // back the item's words (a maamar's are some 26 kB).
-        const kept = (i: number) => `(suggestion ${suggestion} keeps the ${i} before it)`;
-        for (const [i, item] of (args.items as any[]).entries()) {
-          if (!item || typeof item !== 'object' || typeof item.type !== 'string' || (item.data === undefined && item.set === undefined)) throw new ToolError(`item ${i + 1}: give type and data ${kept(i)}`);
+        // back the item's words (a maamar's are some 26 kB). All of them in one read.
+        const setIds = [...new Set(items.filter((item) => item.set !== undefined).map((item) => item.id as string))];
+        const live = new Map<string, any>();
+        for (let at = 0; at < setIds.length; at += 200) {
+          const page = await need(call, 'GET', `/v1/entities/batch?ids=${setIds.slice(at, at + 200).map(encodeURIComponent).join(',')}`);
+          for (const found of page.items as any[]) live.set(found.id, found);
+        }
+        const writes: { id?: string; type: string; data: any; path?: string }[] = [];
+        for (const [i, item] of items.entries()) {
           let data = item.data;
           if (item.set !== undefined) {
-            if (item.data !== undefined) throw new ToolError(`item ${i + 1}: give data or set, not both ${kept(i)}`);
-            if (typeof item.id !== 'string' || !item.set || typeof item.set !== 'object' || Array.isArray(item.set)) throw new ToolError(`item ${i + 1}: set changes an existing item: give its id, and set as an object of fields ${kept(i)}`);
-            const live = await call('GET', `/v1/entities/${encodeURIComponent(item.id)}`);
-            if (live.status >= 400) throw new ToolError(`item ${i + 1}: ${live.body?.message ?? `the API answered ${live.status}`} ${kept(i)}`);
-            if (live.body.withheld) throw new ToolError(`item ${i + 1}: ${live.body.id} is withheld for its rights; suggest on the site ${kept(i)}`);
-            if (live.body.type !== item.type) throw new ToolError(`item ${i + 1}: ${live.body.id} is a ${live.body.type}, not a ${item.type} ${kept(i)}`);
-            data = structuredClone(live.body.data ?? {});
+            const found = live.get(item.id);
+            if (!found) throw new ToolError(`item ${i + 1}: no item ${item.id} (nothing in this call was added)`);
+            if (found.withheld) throw new ToolError(`item ${i + 1}: ${found.id} is withheld for its rights; suggest on the site (nothing in this call was added)`);
+            if (found.type !== item.type) throw new ToolError(`item ${i + 1}: ${found.id} is a ${found.type}, not a ${item.type} (nothing in this call was added)`);
+            data = structuredClone(found.data ?? {});
             for (const [field, value] of Object.entries(item.set as Record<string, unknown>)) {
               if (value === null) delete data[field];
               else data[field] = value;
             }
           }
-          const answer = await call('PUT', `/v1/suggestions/${suggestion}/items`, { type: item.type, data, id: item.id, path: item.path });
-          if (answer.status >= 400) throw new ToolError(`item ${i + 1}: ${answer.body?.message ?? `the API answered ${answer.status}`} (suggestion ${suggestion} keeps the ${i} before it; fix it and call again with suggestion ${suggestion})`);
-          made.push({ id: answer.body.id, type: item.type, path: item.path ?? null });
+          // With a key, a new item's id comes from its suggestion, the key and the item, so the same call again writes it
+          // over itself (and someone else's same key and item, in their own suggestion, is another item).
+          const id = item.id ?? (key ? await idFromSeed('suggest-items', `${suggestion}\n${key}\n${item.type}\n${item.path ?? JSON.stringify(data)}`) : undefined);
+          writes.push({ id, type: item.type, data, path: item.path });
         }
+        const answer = await call('POST', `/v1/suggestions/${suggestion}/items`, { items: writes });
+        if (answer.status === 409 && key) {
+          // The last call again, naming its suggestion, after it went on and sent it: its result, as above.
+          const view = await need(call, 'GET', `/v1/suggestions/${suggestion}?limit=1`);
+          if (view.changeset.status !== 'draft' && view.changeset.status !== 'sent_back') {
+            const url = `${site}/review?s=${suggestion}`;
+            return {
+              text: `Suggestion ${suggestion} was already sent (${view.changeset.status}); nothing was added again. ${url}`,
+              structured: { suggestion, status: view.changeset.status, items: [], checks: view.changeset.checks ?? [], url, already: true },
+            };
+          }
+        }
+        if (answer.status >= 400) throw new ToolError(`${answer.body?.message ?? `the API answered ${answer.status}`} (nothing in this call was added to suggestion ${suggestion}; fix it and call again with suggestion ${suggestion})`);
+        const made = (answer.body.ids as string[]).map((id, i) => ({ id, type: items[i].type as string, path: (items[i].path as string | undefined) ?? null }));
         const url = `${site}/review?s=${suggestion}`;
         if (args.submit === false) return { text: `Suggestion ${suggestion}: ${made.length} item${made.length === 1 ? '' : 's'} added, still a draft. ${url}`, structured: { suggestion, status: 'draft', items: made, url } };
         const sent = await need(call, 'POST', `/v1/suggestions/${suggestion}/submit`);
@@ -612,10 +651,9 @@ function tools(siteUrl: string): Tool[] {
           const title = typeof args.title === 'string' && args.title.trim() ? args.title.trim() : `Add words to ${changed.length} page${changed.length === 1 ? '' : 's'}`;
           suggestion = (await need(call, 'POST', '/v1/suggestions', { title, description: typeof args.note === 'string' ? args.note : undefined })).id as number;
         }
-        for (const [i, item] of changed.entries()) {
-          const answer = await call('PUT', `/v1/suggestions/${suggestion}/items`, item);
-          if (answer.status >= 400) throw new ToolError(`item ${i + 1}: ${answer.body?.message ?? `the API answered ${answer.status}`} (suggestion ${suggestion} keeps the ${i} before it; fix it and call again with suggestion ${suggestion})`);
-        }
+        // All the pages in one write, as suggest_items (#270).
+        const answer = await call('POST', `/v1/suggestions/${suggestion}/items`, { items: changed });
+        if (answer.status >= 400) throw new ToolError(`${answer.body?.message ?? `the API answered ${answer.status}`} (nothing in this call was added to suggestion ${suggestion}; fix it and call again with suggestion ${suggestion})`);
         const url = `${site}/review?s=${suggestion}`;
         if (args.submit === false) return { text: `Suggestion ${suggestion}: ${changed.length} page${changed.length === 1 ? '' : 's'} changed, still a draft. ${url}`, structured: { suggestion, status: 'draft', items: changed.map((c) => c.id), url } };
         const sent = await need(call, 'POST', `/v1/suggestions/${suggestion}/submit`);
