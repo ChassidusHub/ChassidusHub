@@ -12,7 +12,7 @@ async function sentBytes(response: Response): Promise<number> {
   return brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 5 } }).length;
 }
 
-for (const { name, path } of pages) {
+for (const { name, path, budgets: own } of pages) {
   test.describe(name, () => {
     test('stays within the page budgets', async ({ page }) => {
       const responses: Response[] = [];
@@ -55,8 +55,10 @@ for (const { name, path } of pages) {
       };
       test.info().annotations.push({ type: 'budgets', description: JSON.stringify(report) });
       console.log(`${name} on ${test.info().project.name}: ${JSON.stringify(report)}`);
-      for (const key of Object.keys(budgets) as (keyof typeof budgets & string)[]) {
-        expect.soft(report[key], `${key} (budget ${budgets[key]})`).toBeLessThanOrEqual(budgets[key]);
+      // A page may carry its own budget for a while, named with the issue that brings it back (pages.ts).
+      const limits = { ...budgets, ...own };
+      for (const key of Object.keys(limits) as (keyof typeof budgets & string)[]) {
+        expect.soft(report[key], `${key} (budget ${limits[key]})`).toBeLessThanOrEqual(limits[key]);
       }
     });
 
