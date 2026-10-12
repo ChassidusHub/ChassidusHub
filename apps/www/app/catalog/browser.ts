@@ -48,9 +48,11 @@ async function cached(url: string): Promise<Response> {
       if (answer.ok) void keepNamer(url, answer.clone(), url === INDEX ? ['tree'] : []);
       return answer;
     });
-    if (kept) {
+    // On a first visit the page itself carries the index (app/root.tsx): no wait for it.
+    const carried = !kept && url === INDEX ? inPage() : null;
+    if (kept || carried) {
       asking.catch(() => undefined);
-      return kept;
+      return kept ?? new Response(carried, { headers: { 'Content-Type': 'application/json' } });
     }
     return asking;
   }
@@ -62,6 +64,12 @@ async function cached(url: string): Promise<Response> {
     if (/^\/_\/catalog\/shelf-/.test(url)) void answer.clone().json().then((shelf: { works?: Record<string, { file?: string }> }) => dropOlder(Object.values(shelf.works ?? {}).flatMap((work) => (work.file ? [work.file] : []))), () => undefined);
   }
   return answer;
+}
+
+/** The index the page was drawn with (app/root.tsx), or null. */
+export function inPage(): string | null {
+  const text = typeof document === 'undefined' ? '' : (document.getElementById('catalog-index')?.textContent ?? '');
+  return text.trim() ? text : null;
 }
 
 /** The files the manifest or the index names. */
@@ -141,14 +149,16 @@ export function browserApi(): ChassidusHub {
  * the top shelf this page is under (`shelf`, the first level of the page's
  * path bar, else found in the core), so every page under it is drawn here;
  * on a sefer's page, also that sefer's units, so one of its volumes opens at
- * once. Listening's pages read the years file instead, so another year
+ * once. On the page's first call (`first`), also the code a click draws
+ * with (`clickCode`). Listening's pages read the years file instead, so another year
  * needs only its own file. A page under no shelf (the library, Home,
  * search) reads the Rebbe's shelf, where most people go from it: the other
  * Rebbeim's are read when one is opened, so they never hold up the files a
  * page asks for next. Not on a connection that asks to save data.
  */
-export function warm(shelf?: string | null): void {
+export function warm(shelf?: string | null, first = false): void {
   if (saveData()) return;
+  if (first) clickCode();
   const snapshot = browserSnapshot();
   const path = decodeURIComponent(location.pathname).replace(/\/+$/, '') || '/';
   void (async () => {
@@ -167,6 +177,23 @@ export function warm(shelf?: string | null): void {
     const here = now?.byPath.get(path);
     if (here && now!.isWork(here)) warmUnits(here.id);
   })().catch(() => undefined);
+}
+
+/**
+ * The code a click draws with, read once the page has loaded rather than on
+ * the first tap: the item page's clicks, and the item page's own code
+ * (routes/item.tsx: a shelf, a sefer, a volume, a sicha), where most taps go.
+ * React Router learns of that route from the links the page shows
+ * (/__manifest), a moment after load: it is looked for a few times.
+ */
+function clickCode(tries = 6) {
+  if (tries === 6) {
+    void import('../reader/click').catch(() => undefined);
+    void import('./clicks').catch(() => undefined);
+  }
+  const route = (window as { __reactRouterManifest?: { routes?: Record<string, { module?: string; imports?: string[] } | undefined> } }).__reactRouterManifest?.routes?.['routes/item'];
+  if (route?.module) for (const file of [route.module, ...(route.imports ?? [])]) void import(/* @vite-ignore */ file).catch(() => undefined);
+  else if (tries > 0) setTimeout(() => clickCode(tries - 1), 300);
 }
 
 /** The top shelf an item is under: up from its shelf (a sefer's first shelf) to the one with no parent. */
