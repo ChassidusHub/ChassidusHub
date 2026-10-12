@@ -86,4 +86,6 @@ export interface ReaderData {
   rev: number;
   names: { he: string; en: string };
   work: { path: string; label: string } | null;
+  /** A farbrengen read as one page, all its sichos on it (farbrengen.server.ts). */
+  farbrengen?: true;
 }
