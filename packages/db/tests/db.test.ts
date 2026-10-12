@@ -85,6 +85,14 @@ describe('migrations', () => {
     await db.close();
   });
 
+  it("indexes a sefer's units by volume, so its volumes are counted from the index (migration 0037)", async () => {
+    const db = await openPGlite();
+    await migrate(db);
+    const { rows } = await db.query<{ indexdef: string }>("SELECT indexdef FROM pg_indexes WHERE tablename = 'unit_place' AND indexname = 'unit_place_part'");
+    expect(rows[0]?.indexdef).toMatch(/\(work_id, part, ord, unit_id\)$/);
+    await db.close();
+  });
+
   it('rolls a failed transaction back', async () => {
     const db = await openPGlite();
     await migrate(db);
