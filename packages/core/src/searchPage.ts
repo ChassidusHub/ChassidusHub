@@ -185,7 +185,7 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
          ${language ? `AND ${languageSql('$4::text', '$5', NAME_SQL)}` : ''}
        ORDER BY tier, addition, rank DESC, e.path LIMIT ${limit}),
      unit AS (
-       SELECT p.unit_id COLLATE "default" AS id, ${nameTierSql(['p.name_he', 'p.name_en'], '$2', '$1', typedAt)} AS tier,
+       SELECT p.unit_id AS id, ${nameTierSql(['p.name_he', 'p.name_en'], '$2', '$1', typedAt)} AS tier,
               FALSE AS addition, 1 AS src, 0::real AS rank, p.work_id COLLATE "C" AS k1, p.ord AS k2
        FROM unit_place p
        WHERE ${language ? 'FALSE' : `p.names @@ to_tsquery('simple', $1)`}

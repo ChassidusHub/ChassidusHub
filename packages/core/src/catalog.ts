@@ -639,7 +639,7 @@ export class Catalog {
   /** The units of one top-level part of a work (a volume), in order: found by their places, and only they are read. */
   async workPart(work: EntityId, part: string, limit = 1000): Promise<EntityView[]> {
     const { rows } = await this.db.query<RevisionRow>(
-      `SELECT ${FACTS} FROM unit_place p JOIN entity e ON e.id = p.unit_id COLLATE "default" JOIN revision r ON r.id = e.main_rev
+      `SELECT ${FACTS} FROM unit_place p JOIN entity e ON e.id = p.unit_id JOIN revision r ON r.id = e.main_rev
        WHERE p.work_id = $1 AND p.part = $2
        ORDER BY p.ord, p.unit_id LIMIT ${Math.min(Math.max(limit, 1), 2000)}`,
       [work, part],
@@ -659,7 +659,7 @@ export class Catalog {
       `(SELECT '${dir}' AS side, ${FACTS} FROM (
           SELECT p.unit_id FROM me JOIN unit_place p ON p.work_id = me.work_id AND (p.ord, p.unit_id) ${dir} (me.ord, me.unit_id)
           ORDER BY p.ord ${sort}, p.unit_id ${sort} LIMIT 1
-        ) n JOIN entity e ON e.id = n.unit_id COLLATE "default" JOIN revision r ON r.id = e.main_rev)`;
+        ) n JOIN entity e ON e.id = n.unit_id JOIN revision r ON r.id = e.main_rev)`;
     const { rows } = await this.db.query<RevisionRow & { side: '<' | '>' }>(
       `WITH me AS (SELECT work_id, ord, unit_id FROM unit_place WHERE unit_id = $1)
        ${side('<', 'DESC')} UNION ALL ${side('>', 'ASC')}`,

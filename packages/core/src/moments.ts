@@ -276,7 +276,7 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   // A sicha is ranked on its lead, a sicha outside a sefer (no unit_place row) last; the rest on their words.
   const rank = (type: keyof typeof MOMENT_RANKED) =>
     type === 'unit'
-      ? `coalesce((SELECT ts_rank(p.lead, to_tsquery('simple', $1)) FROM unit_place p WHERE p.unit_id = e.id COLLATE "C"), 0)`
+      ? `coalesce((SELECT ts_rank(p.lead, to_tsquery('simple', $1)) FROM unit_place p WHERE p.unit_id = e.id), 0)`
       : `ts_rank(e.search_tsv, to_tsquery('simple', $1))`;
   // Each kind's own live rows are tested for the words, and in plain sight: a word few items have is then found through
   // the words' index (entity_search_tsv), a common one through the type index (entity_type, which holds the live rows
@@ -294,14 +294,14 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
             AND (((${DATE_OF}) || '-') LIKE $2 || '-%' OR e.search_tsv @@ to_tsquery('simple', $3)) LIMIT ${MOMENT_RANKED[type]})`;
   // The sichos that open on the words, found through the lead's index without reading their words (#182). The first
   // MOMENT_LEADS leads found are taken before the join, so a word in most leads stops there rather than sorting them all
-  // for a join; then each sicha is found by its own id (entity's collation, so its key finds it), one lookup a lead:
+  // for a join; then each sicha is found by its own id (one collation since migration 0036, so either key finds it), one lookup a lead:
   // as a plain join the planner merged the leads with every sicha in the type index instead (#214).
   const leads = (tier: number) =>
     `(SELECT e.id, e.type, e.main_rev, p.rank, ${tier} AS tier
           FROM (SELECT unit_id, ts_rank(lead, to_tsquery('simple', $1)) AS rank FROM unit_place
                 WHERE lead @@ to_tsquery('simple', $1) LIMIT ${MOMENT_LEADS}) p
           CROSS JOIN LATERAL (SELECT e.id, e.type, e.main_rev FROM entity e
-                WHERE e.id = p.unit_id COLLATE "default" AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL OFFSET 0) e)`;
+                WHERE e.id = p.unit_id AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL OFFSET 0) e)`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1)), leads(1)] : [...kinds.map((k) => all(k, 0)), leads(0)];
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
