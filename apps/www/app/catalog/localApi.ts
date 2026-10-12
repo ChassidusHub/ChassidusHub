@@ -8,9 +8,10 @@ import { Core, NotLocal, type Snapshot, type SnapshotName, type SnapshotSet, typ
  * drawn by the same code from either. Anything else, and anything the
  * snapshot does not hold (a sicha, a path that moved, a scan's printings,
  * events by day across the years), throws NotLocal, and the page is drawn
- * from the API instead. Which recordings can be followed is not in the
- * snapshot (it changes with every checked transcript): that one read goes to
- * `api`, and is kept for a few minutes.
+ * from the API instead. So does a shelf the small cut has only named, until
+ * its top shelf's file is read (snapshot.ts, `Core.whole`). Which recordings
+ * can be followed is not in the snapshot (it changes with every checked
+ * transcript): that one read goes to `api`, and is kept for a few minutes.
  */
 
 /** How many choices one level of the path bar lists at most, as the API's (packages/core/src/pathBar.ts). */
@@ -106,6 +107,8 @@ export function localApi(snapshot: Snapshot, api: ChassidusHub): ChassidusHub {
     async listLinked({ id, field, type, limit = 50 }: { id: string; field: string; type?: string; limit?: number }) {
       if ((type && type !== 'work') || (field !== 'sets' && field !== 'addition.to')) throw new NotLocal(`linked ${type ?? ''} by ${field}`);
       const found = await core();
+      // A shelf the small cut has only named: what is on it is in its shelf's file, not read yet.
+      if (field === 'sets' ? !found.whole(id) : !found.work(id)) throw new NotLocal(`what is on ${id}`);
       const works = field === 'sets' ? (found.worksOn.get(id) ?? []) : (found.work(id)?.additions ?? []).map((w) => found.work(w)).filter((w): w is SnapshotWork => !!w);
       return { items: works.slice(0, limit).map(workItem), total: works.length, next: null };
     },
@@ -121,6 +124,7 @@ export function localApi(snapshot: Snapshot, api: ChassidusHub): ChassidusHub {
       }
       const work = found.isWork(item) ? item : null;
       const set = work ? null : (item as SnapshotSet);
+      if (set && !found.whole(set.id)) throw new NotLocal(`the shelf ${set.id}`);
       return {
         item: work ? workItem(work) : setItem(set!, 0),
         pathBar: work ? shelvesOf(found, { work }) : shelvesOf(found, { set: set! }),

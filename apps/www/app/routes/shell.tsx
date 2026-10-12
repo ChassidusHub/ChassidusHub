@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Outlet } from 'react-router';
+import { useEffect, useRef } from 'react';
+import { Outlet, useLocation, useMatches } from 'react-router';
 import { AppShell } from '../ui';
 
 /**
@@ -13,12 +13,28 @@ import { AppShell } from '../ui';
  * then (#265). Not before the load event, so it never competes with the
  * page's own scripts (and stays outside the page budgets, e2e/pages.spec.ts).
  * A tap before it has arrived is read from the server, as before.
+ *
+ * It reads the small cut: the index and the top file, then the file of the
+ * top shelf this page is under, the first level of its path bar (`topShelf`).
+ * Each page a person moves to asks again, so a cold link (from search, say)
+ * that the server drew still has its shelf read for the next tap.
  */
 export default function Shell() {
+  const { pathname } = useLocation();
+  const shelf = topShelf(useMatches());
+  const loaded = useRef(false);
+  // A move within the site: the snapshot's core is read already, only the page's shelf (if new) is fetched.
+  useEffect(() => {
+    if (!loaded.current) return;
+    void import('../catalog/browser').then((browser) => browser.warm(shelf)).catch(() => undefined);
+  }, [pathname, shelf]);
   useEffect(() => {
     const idle = (globalThis as { requestIdleCallback?: (run: () => void, options?: { timeout: number }) => number }).requestIdleCallback ?? ((run: () => void) => setTimeout(run, 0));
     let frame: number | undefined;
-    const start = () => void import('../catalog/browser').then((browser) => browser.warm()).catch(() => undefined);
+    const start = () => {
+      loaded.current = true;
+      void import('../catalog/browser').then((browser) => browser.warm(shelf)).catch(() => undefined);
+    };
     // After the next frame is painted, and once the browser has a moment (at most half a second on).
     const begin = () => (frame = requestAnimationFrame(() => idle(start, { timeout: 500 })));
     if (document.readyState === 'complete') begin();
@@ -33,4 +49,25 @@ export default function Shell() {
       <Outlet />
     </AppShell>
   );
+}
+
+/** A route's path bar, as its data carries it: `pathBar` (item, reader) or `levels` (library), at the top of the data or one down. */
+type Level = { kind?: string; chosen?: { id?: string } };
+function levelsIn(data: unknown): Level[] | null {
+  if (!data || typeof data !== 'object') return null;
+  for (const from of [data, ...Object.values(data)]) {
+    if (!from || typeof from !== 'object') continue;
+    const found = (from as { pathBar?: unknown }).pathBar ?? (from as { levels?: unknown }).levels;
+    if (Array.isArray(found) && found.length && typeof found[0] === 'object') return found as Level[];
+  }
+  return null;
+}
+
+/** The id of the top shelf the page is under: the first level of the deepest route's path bar, if a shelf. */
+function topShelf(matches: ReturnType<typeof useMatches>): string | null {
+  for (const match of [...matches].reverse()) {
+    const first = levelsIn(match.data)?.[0];
+    if (first) return first.kind === 'set' ? (first.chosen?.id ?? null) : null;
+  }
+  return null;
 }
