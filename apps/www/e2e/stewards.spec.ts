@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { shown } from './streamed';
 
 // The steward, the tree, the people and the files come from the stand-in API (fixture-stewards.ts).
 test.skip(!!process.env.BASE_URL, 'the sample steward exists only on the local build');
@@ -13,6 +14,8 @@ test.describe('organizing the catalog', () => {
   test('signed out, the tree shows and sending asks to sign in', async ({ page }) => {
     await page.goto('/organize');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('סידור הקטלוג');
+    // The tree streams in after the frame (routes/organize.tsx): wait until React shows it, not its hidden copy.
+    await shown(page);
     await expect(page.getByText('ספרי חסידות לדוגמה')).toBeVisible();
     await expect(page.getByText('כדי לסדר את הקטלוג צריך להיכנס.')).toBeVisible();
   });

@@ -22,9 +22,10 @@ export interface SnapshotBucket {
   get(key: string): Promise<{ body: ReadableStream | null; text(): Promise<string> } | null>;
 }
 
-/** Where the snapshot's files are read from: the manifest, and a file by its name. */
+/** Where the snapshot's files are read from: the manifest, the index (the files' names only, #265), and a file by its name. */
 export interface SnapshotFiles {
   manifest(): Promise<Response>;
+  index?(): Promise<Response>;
   file(name: string): Promise<Response>;
 }
 
@@ -39,7 +40,7 @@ export function bucketFiles(bucket: SnapshotBucket): SnapshotFiles {
     const found = await bucket.get(key);
     return found ? json(await found.text()) : json(null, 404);
   };
-  return { manifest: () => read('catalog/manifest.json'), file: (name) => (FILE.test(name) ? read(`catalog/files/${name}`) : Promise.resolve(json(null, 404))) };
+  return { manifest: () => read('catalog/manifest.json'), index: () => read('catalog/index.json'), file: (name) => (FILE.test(name) ? read(`catalog/files/${name}`) : Promise.resolve(json(null, 404))) };
 }
 
 /** The snapshot's files from the API (GET /v1/catalog/manifest.json and /v1/catalog/files/<file>), through `get`. */
@@ -47,6 +48,7 @@ export function apiFiles(apiUrl: string, get: (url: string) => Promise<Response>
   const base = apiUrl.replace(/\/+$/, '');
   return {
     manifest: () => get(`${base}/v1/catalog/manifest.json`),
+    index: () => get(`${base}/v1/catalog/index.json`),
     file: (name) => (FILE.test(name) ? get(`${base}/v1/catalog/files/${encodeURIComponent(name)}`) : Promise.resolve(json(null, 404))),
   };
 }
@@ -56,6 +58,7 @@ export function keptAtEdge(files: SnapshotFiles, edge: EdgeStore | undefined): S
   if (!edge) return files;
   return {
     manifest: () => files.manifest(),
+    ...(files.index ? { index: () => files.index!() } : {}),
     async file(name) {
       const key = new Request(`https://catalog.snapshot/${encodeURIComponent(name)}`);
       const kept = await edge.match(key).catch(() => undefined);
@@ -71,8 +74,8 @@ export function keptAtEdge(files: SnapshotFiles, edge: EdgeStore | undefined): S
 }
 
 /**
- * `/_/catalog/<file>` for the browser: the manifest, asked again every
- * minute, and the files, kept for a year. Also `transcripts.json`, the one
+ * `/_/catalog/<file>` for the browser: the manifest and the index, asked
+ * again every minute, and the files, kept for a year. Also `transcripts.json`, the one
  * read the snapshot leaves to the API (which recordings can be followed,
  * app/catalog/localApi.ts), asked of `transcripts` and kept a minute. Null
  * for any other address.
@@ -86,9 +89,11 @@ export async function catalogFile(request: Request, files: SnapshotFiles | null,
     return new Response(JSON.stringify(answer), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=60, s-maxage=60', 'X-Robots-Tag': 'noindex' } });
   }
   if (!files || !FILE.test(name)) return new Response('not found', { status: 404 });
-  const answer = await (name === 'manifest.json' ? files.manifest() : files.file(name)).catch(() => null);
+  const moving = name === 'manifest.json' || name === 'index.json';
+  const read = name === 'manifest.json' ? files.manifest() : name === 'index.json' ? (files.index?.() ?? Promise.resolve(json(null, 404))) : files.file(name);
+  const answer = await read.catch(() => null);
   if (!answer?.ok) return new Response('not found', { status: answer?.status === 404 ? 404 : 502 });
   const headers = new Headers({ 'Content-Type': 'application/json; charset=utf-8', 'X-Robots-Tag': 'noindex' });
-  headers.set('Cache-Control', name === 'manifest.json' ? 'public, max-age=60, s-maxage=60' : 'public, max-age=31536000, immutable');
+  headers.set('Cache-Control', moving ? 'public, max-age=60, s-maxage=60' : 'public, max-age=31536000, immutable');
   return new Response(answer.body, { status: 200, headers });
 }

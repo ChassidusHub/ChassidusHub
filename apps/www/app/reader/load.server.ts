@@ -14,6 +14,9 @@ import { notesHtml, unmarkedNotes, wordsAddress, wordsHtml, wordsKey, type Drawn
 /** How each kind of page sets its words beyond the words themselves, by its view (app/views); a kind not named here is drawn as a sicha. */
 const layouts: Record<string, WordsLayout> = { letters: letterLayout };
 
+/** Whether a reading page is drawn as a letter (app/views/letters.tsx), so it asks for the letters' face with its first bytes. */
+export const isLetter = (data: Pick<ReaderData, 'level'>) => viewFor(data).kind === 'letters';
+
 /** What the unit is by its own level: the last level of its position (`letter`), which picks its view. */
 const levelOf = (view: ItemView) => {
   const level = ((view.item.data as { position?: { level?: unknown }[] }).position ?? []).at(-1)?.level;

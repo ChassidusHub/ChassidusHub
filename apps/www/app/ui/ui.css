@@ -367,8 +367,13 @@ form[role='search'] { margin-block: 8px 4px; }
   .toast { bottom: 100px; }
 }
 
+/* A button or footnote mark tapped before the page's scripts came: kept, and made once they come (root.tsx, EARLY_TAPS). */
+[data-wait] { cursor: progress; animation: wait 0.7s ease-in-out infinite alternate; }
+@keyframes wait { to { opacity: 0.4; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
+  [data-wait] { animation: none; opacity: 0.5; }
 }
 
 /* ---------- the app shell: phone = top bar, one column, docked player, bottom bar;

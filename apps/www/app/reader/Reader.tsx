@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../lib/catalog';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
@@ -10,6 +9,10 @@ import { viewFor } from './views';
 
 /** A fact's icon in the corner menu (types.ts, `Fact`). */
 const factIcons: Record<Fact['kind'], IconName> = { date: 'list', place: 'globe', to: 'user', manuscript: 'scan' };
+
+/** Edit's parts, read only when the page is edited (./Editing.tsx). */
+const EditBar = lazy(() => import('./Editing').then((file) => ({ default: file.EditBar })));
+const SichaFields = lazy(() => import('./Editing').then((file) => ({ default: file.SichaFields })));
 
 type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string };
 
@@ -92,7 +95,11 @@ export function Reader({ data }: { data: ReaderData }) {
           </>
         }
       />
-      {editing && <EditBar done={reading} />}
+      {editing && (
+        <Suspense>
+          <EditBar done={reading} />
+        </Suspense>
+      )}
       <main id="content" className="view wide">
         <article className="reader">
           {Title ? (
@@ -105,15 +112,9 @@ export function Reader({ data }: { data: ReaderData }) {
           )}
           {Head && <Head data={data} />}
           {editing && (
-            <EditFields>
-              <Names item={data.id} rev={data.rev} names={data.names} />
-              {data.work && (
-                <Linked to={`${data.work.path}?edit`} action="לערוך שם">
-                  נמצא בספר: {data.sub || data.work.label}
-                </Linked>
-              )}
-              <Linked action="בקרוב">הקלטה: לא מקושרת</Linked>
-            </EditFields>
+            <Suspense>
+              <SichaFields data={data} />
+            </Suspense>
           )}
           {words && words.machine !== 'none' && (
             <p className="mach">

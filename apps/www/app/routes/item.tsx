@@ -1,13 +1,11 @@
+import { lazy } from 'react';
 import { data, isRouteErrorResponse, redirect, type AppLoadContext } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
-import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
-import { readerData } from '../reader/load.server';
-import { Reader } from '../reader/Reader';
-import { viewFor } from '../reader/views';
-import type { Section } from '../ui';
+import { isLetter, readerData } from '../reader/load.server';
 import { Placeholder } from './placeholder';
+import type { Section } from '../ui';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
 import letterFont from '../ui/fonts/david-clm.woff2?url';
 import type { Route } from './+types/item';
@@ -51,7 +49,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       // A sicha's words are set in the Torah face, a letter's in David (app/views/letters.tsx): the page asks for it
       // with its first bytes, not once it has drawn. Said in a header, on the server, so it costs the reader's script nothing.
       if (reader.text.kind !== 'words') return loaded;
-      const font = viewFor(reader).kind === 'letters' ? letterFont : torahFont;
+      const font = isLetter(reader) ? letterFont : torahFont;
       return data(loaded, { headers: { Link: `<${font}>; rel=preload; as=font; type="font/woff2"; crossorigin` } });
     }
     return { screen: 'item' as const, id: item.id, type: item.type, name, pathBar: view.pathBar };
@@ -62,11 +60,30 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 /**
+ * The reader and the library's screens are each their own file, read with
+ * the page that shows one, so a sicha's page never downloads the library's
+ * screens nor a shelf's page the reader, and each page reads as few files as
+ * before (#277).
+ */
+const readerScreen = () => import('../reader/Reader');
+const libraryScreens = () => import('../library/screens');
+const Reader = lazy(() => readerScreen().then((file) => ({ default: file.Reader })));
+const SetScreen = lazy(() => libraryScreens().then((file) => ({ default: file.SetScreen })));
+const WorkScreen = lazy(() => libraryScreens().then((file) => ({ default: file.WorkScreen })));
+const VolumeScreen = lazy(() => libraryScreens().then((file) => ({ default: file.VolumeScreen })));
+
+/**
  * A click to an item's page: a shelf, a sefer or a volume is drawn in the
  * browser from the catalog snapshot; a sicha shows at once and its words come
- * after, from where they are kept (app/reader/click.ts).
+ * after, from where they are kept (app/reader/click.ts). The screen's file is
+ * read with the page's data, so it is there when the page draws.
  */
-export const clientLoader = ({ request, serverLoader }: Route.ClientLoaderArgs) => import('../reader/click').then((click) => click.sichaClick(request, serverLoader));
+export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  const page = await import('../reader/click').then((click) => click.sichaClick(request, serverLoader));
+  const screen = (page as { screen?: string }).screen;
+  await (screen === 'reader' ? readerScreen() : screen === 'set' || screen === 'work' || screen === 'volume' ? libraryScreens() : null);
+  return page;
+}
 
 /** Where an event or recording is heard: /listen/<year>/<event>, a recording picked with ?r=. */
 async function listeningPage(item: { id: string; type: string; data: unknown }, api: AppLoadContext['api']): Promise<string | null> {
