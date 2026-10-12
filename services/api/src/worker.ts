@@ -199,13 +199,18 @@ export default {
     const mailer = mailerOf(env);
     const jobs = async (): Promise<string[]> => {
       const failed: string[] = [];
-      const job = (name: string, work: () => Promise<unknown>) =>
-        work().catch((error) => {
-          // While an import holds the catalog the job waits for the next round; it has not failed.
-          if (isCatalogHeld(error)) return;
-          console.error(name, error);
-          failed.push(name);
-        });
+      // Each job says how long it took, so a slow one, which holds the small database while readers wait (#338), is found.
+      const job = (name: string, work: () => Promise<unknown>) => {
+        const started = Date.now();
+        return work()
+          .catch((error) => {
+            // While an import holds the catalog the job waits for the next round; it has not failed.
+            if (isCatalogHeld(error)) return;
+            console.error(name, error);
+            failed.push(name);
+          })
+          .finally(() => console.log(`job ${name} took ${Date.now() - started} ms`));
+      };
       await job('webhooks', () => deliverWebhooks(catalog));
       if (env.FILES_PUBLIC) await job('transcripts summary', () => refreshTranscripts(catalog, transcriptsStore(env.FILES_PUBLIC!), new Date()));
       if (env.FILES_PUBLIC) await job('to-check summary', () => refreshToCheck(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
