@@ -1,4 +1,4 @@
-import { Form, useActionData, useNavigation } from 'react-router';
+import { Form, useActionData, useNavigation, useSearchParams } from 'react-router';
 import { Button, Field, Say, TopBar } from '../ui';
 // Only this page asks for writing, so these come straight from their file and stay out of the bundle every page loads.
 import { Area, Choice } from '../ui/Writing';
@@ -8,10 +8,6 @@ export function meta(_: Route.MetaArgs) {
   return [{ title: 'בקשת הסרה · ChassidusHub' }];
 }
 
-/** What an item's page fills in (`?what=`), so the person does not have to copy its address. */
-export function loader({ request }: Route.LoaderArgs) {
-  return { what: new URL(request.url).searchParams.get('what')?.slice(0, 1000) ?? '' };
-}
 
 const RELATIONS = [
   { value: 'rights-holder', label: 'בעלי הזכויות' },
@@ -63,7 +59,9 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Se
  * account. Stewards answer within two weeks; a file taken down stops being
  * served at once, and nothing is deleted (docs/rights.md).
  */
-export default function Screen({ loaderData }: Route.ComponentProps) {
+export default function Screen() {
+  // What an item's page fills in (`?what=`), so the person does not have to copy its address; read here, so the page needs no server read.
+  const what = useSearchParams()[0].get('what')?.slice(0, 1000) ?? '';
   const sent = useActionData<typeof action>();
   const busy = useNavigation().state === 'submitting';
   return (
@@ -81,7 +79,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
           ) : (
             <Form method="post">
               {sent && !sent.sent && <Say tone="bad">{sent.said}</Say>}
-              <Field label="מה להסיר: כתובת הדף באתר, או של הקובץ" name="target" defaultValue={loaderData.what} required maxLength={1000} dir="ltr" placeholder="https://chassidushub.org/…" />
+              <Field label="מה להסיר: כתובת הדף באתר, או של הקובץ" name="target" defaultValue={what} required maxLength={1000} dir="ltr" placeholder="https://chassidushub.org/…" />
               <Field label="השם שלכם" name="name" required maxLength={200} autoComplete="name" dir="auto" />
               <Field label="כתובת מייל לתשובה" name="email" type="email" required maxLength={254} autoComplete="email" dir="ltr" />
               <Choice legend="אתם" name="relation" options={RELATIONS} required />

@@ -231,6 +231,26 @@ describe('the public site', () => {
     expect(date.html).toContain('href="/events/5742-05-10"');
   });
 
+  it("puts a sefer named just what was typed first, above the words and farbrengens (#233)", async () => {
+    const block = (html: string) => html.slice(html.indexOf('id="named-so"'), html.indexOf('</section>', html.indexOf('id="named-so"')));
+    for (const q of ['Sample Sefer', 'sample sefer in English', 'ספר לדוגמה']) {
+      const page = await get(`/search?q=${encodeURIComponent(q)}`);
+      expect(page.html).toContain('id="named-so"');
+      expect(block(page.html)).toContain('href="/sample"');
+      for (const later of ['id="in-texts"', 'id="in-events"', 'id="in-library"']) {
+        if (page.html.includes(later)) expect(page.html.indexOf('id="named-so"')).toBeLessThan(page.html.indexOf(later));
+      }
+    }
+    // Nothing has every word and the language too: what the other words name, saying so (#123).
+    const english = await get(`/search?q=${encodeURIComponent('sample farbrengen in English')}`);
+    expect(english.html).toContain('id="in-events"');
+    expect(english.html).toContain('href="/events/5742-05-10"');
+    expect(english.html).toContain('id="any-language"');
+    expect((await get(`/search?q=${encodeURIComponent('Sample Sefer')}`)).html).not.toContain('id="any-language"');
+    // Words that are only part of a name find it as before, with nothing put above.
+    expect((await get(`/search?q=${encodeURIComponent('Sample')}`)).html).not.toContain('id="named-so"');
+  });
+
   it('keeps a history of every item', async () => {
     const page = await get(`/history/${ids.teshura}?lang=he`);
     expect(page.html).toContain('Better path');

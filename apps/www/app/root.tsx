@@ -25,6 +25,9 @@ export const links: Route.LinksFunction = () => [
  */
 const RESUME_SCRIPT = `var c=document.cookie,r=[];if(/(?:^|;\\s*)ch_listen=/.test(c))r.push('listen');if(/(?:^|;\\s*)ch_read=/.test(c))r.push('read');if(r.length)d.dataset.resume=r.join(' ');`;
 
+/** The service worker (public/sw.js), once the page has loaded, so it never competes with the page itself. */
+const worker = `if('serviceWorker'in navigator)addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})`;
+
 /**
  * A reader's light or dark choice and text size (kept in this browser), set
  * before the page paints so it never flashes the other one or jumps to
@@ -50,6 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <script dangerouslySetInnerHTML={{ __html: worker }} />
         <ScrollRestoration />
         <Scripts />
       </body>

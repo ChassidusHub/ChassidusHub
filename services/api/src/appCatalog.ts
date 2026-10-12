@@ -512,14 +512,19 @@ const UNIT_FIELDS = `jsonb_strip_nulls(jsonb_build_object(
   'bodySource', jsonb_build_object('source', r.data->'bodySource'->'source', 'rights', r.data->'bodySource'->'rights', 'copy', r.data->'bodySource'->'copy')
 ))`;
 
-/** Everything the three schemas are made of, read from main. */
-export async function readParts(catalog: Catalog): Promise<Parts> {
+/**
+ * Everything a schema is made of, read from main. The sefarim and their
+ * units (`withWorks`) are schema 3's alone: reading every unit of every
+ * sefer is most of the work, and more than a request has time for, so the
+ * web app's schema 1 (farbrengens only) never waits on it.
+ */
+export async function readParts(catalog: Catalog, withWorks = true): Promise<Parts> {
   const { seq, at } = await lastChange(catalog);
   const events = await rows<EventData>(catalog, `e.type = 'event' AND r.data->'externalIds'->>'mafteiach' IS NOT NULL`);
   const recordings = await rows<RecordingData>(catalog, `e.type = 'recording' AND r.data->>'event' IS NOT NULL`);
-  const works = await rows<WorkData>(catalog, `e.type = 'work' AND r.data->'externalIds'->>'sichos-kodesh-work' IS NOT NULL`);
+  const works = withWorks ? await rows<WorkData>(catalog, `e.type = 'work' AND r.data->'externalIds'->>'sichos-kodesh-work' IS NOT NULL`) : [];
   const units = works.length ? await rows<UnitData>(catalog, `e.type = 'unit' AND r.data->>'work' = ANY($1)`, [works.map((w) => w.id)], UNIT_FIELDS) : [];
-  const authors = await rows<AuthorRow>(catalog, `e.type = 'author'`);
+  const authors = withWorks ? await rows<AuthorRow>(catalog, `e.type = 'author'`) : [];
   return { seq, releasedAt: at, byYear: farbrengensByYear(events, recordings), library: emptyLibrary(), works: appWorks(authors, works, units) };
 }
 
@@ -533,22 +538,27 @@ export async function readParts(catalog: Catalog): Promise<Parts> {
  * whether anything changed (one statement) before serving what was built.
  */
 export class AppReleases {
-  private built: { seq: number; parts: Promise<Parts>; schemas: Map<AppSchema, Promise<AppRelease>> } | null = null;
+  /** The parts as of commit `seq`: with the sefarim (`true`, schema 3) and without them (`false`), each read once when first asked. */
+  private built: { seq: number; parts: Map<boolean, Promise<Parts>>; schemas: Map<AppSchema, Promise<AppRelease>> } | null = null;
 
   async get(catalog: Catalog, schema: AppSchema): Promise<AppRelease> {
     const { seq } = await lastChange(catalog);
-    if (!this.built || this.built.seq !== seq) {
-      const parts = readParts(catalog);
-      this.built = { seq, parts, schemas: new Map() };
-      parts.catch(() => {
-        if (this.built?.parts === parts) this.built = null;
-      });
-    }
+    if (!this.built || this.built.seq !== seq) this.built = { seq, parts: new Map(), schemas: new Map() };
     const built = this.built;
     let release = built.schemas.get(schema);
     if (!release) {
-      release = built.parts.then((p) => releaseOf(p, schema));
+      const withWorks = schema >= 3;
+      let parts = built.parts.get(withWorks);
+      if (!parts) {
+        parts = readParts(catalog, withWorks);
+        built.parts.set(withWorks, parts);
+      }
+      release = parts.then((p) => releaseOf(p, schema));
       built.schemas.set(schema, release);
+      // A failed read is asked again next time, not kept.
+      release.catch(() => {
+        if (this.built === built) this.built = null;
+      });
     }
     return release;
   }
