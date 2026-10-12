@@ -1,0 +1,1 @@
+- New site: a sicha's words no longer jump when its Torah face arrives. On a slow phone the words used to be drawn first in a stand-in face, wrap to other lines, and move up a line once the face came (layout shift 0.085). They now keep their place, hidden, until the face has come, or failed, or 3 seconds have passed, and then appear set in it (shift 0.0002) (#267).
