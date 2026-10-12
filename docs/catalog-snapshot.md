@@ -42,7 +42,10 @@ From main, never from anyone's words: units from `unit_place` (migration
 - When a manifest is asked for and main has changed since the one kept: that
   answer still serves the kept one, and the build runs behind it.
 - By the scheduled run, every minute.
-- The very first time, when there is none yet, while the first request waits.
+Never while someone waits: a whole build on live runs longer than a request
+may (30 s). With none built yet (an empty bucket), the manifest answers `503`
+with `Retry-After: 30` and starts a build behind the answer; a reader falls
+back to the API until it answers. Each build logs how long it took.
 
 Each check costs one statement when nothing changed. One build runs at a time
 in a Worker; a burst of Approves is one build, then one more to catch the
