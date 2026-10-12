@@ -37,6 +37,27 @@ const bar = (unit: 1 | 2) => [
 const words = (text: string) => [{ text }];
 const machine = { by: 'ocr', model: 'sample', checked: false };
 
+/** Hayom Yom's path bar (app/views/daybook.tsx): the sefer, the month, and the month's days. */
+const dayBar = (day: 1 | 2) => [
+  { kind: 'set', chosen: { id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }, choices: [{ id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }] },
+  { kind: 'work', chosen: { id: 'rh-aaaaaah1', path: '/hayom-yom', name: name('היום יום') }, choices: [{ id: 'rh-aaaaaah1', path: '/hayom-yom', name: name('היום יום') }] },
+  { kind: 'part', level: 'day', chosen: { path: '/hayom-yom/1', name: name('<h2>כסלו</h2>'), value: '1' }, choices: [{ path: '/hayom-yom/1', name: name('<h2>כסלו</h2>'), value: '1' }] },
+  {
+    kind: 'unit',
+    level: 'unit',
+    chosen: { id: `rh-aaaaaah${day + 1}`, path: `/hayom-yom/1/${day}`, name: name(day === 1 ? '<h3>יט כסלו</h3>' : '<h3>כ כסלו</h3>') },
+    choices: [
+      { id: 'rh-aaaaaah2', path: '/hayom-yom/1/1', name: name('<h3>יט כסלו</h3>') },
+      { id: 'rh-aaaaaah3', path: '/hayom-yom/1/2', name: name('<h3>כ כסלו</h3>') },
+    ],
+  },
+];
+const hayomYomDay = (day: 1 | 2) => ({
+  label: name(day === 1 ? '<h3>יט כסלו</h3>' : '<h3>כ כסלו</h3>'),
+  position: [{ label: name('<h2>כסלו</h2>'), level: 'day', value: '1' }, { level: 'unit', value: String(day) }],
+});
+const scanned = { by: 'ocr:tesseract-heb+claude' };
+
 const views: Record<string, unknown> = {
   '/sample/1/1': {
     item: { id: 'rh-aaaaaab1', type: 'unit', path: '/sample/1/1', rev: 1, data: { label: name('שיחה ראשונה') } },
@@ -164,6 +185,84 @@ const views: Record<string, unknown> = {
     previous: null,
     next: null,
     text: { kind: 'words', from: 'body', version: 'he', language: 'he', profile: 'sichos-kodesh', segments: [{ id: 'p1', kind: 'paragraph', text: words('גוף המכתב לדוגמה.') }], notes: [], machine: 'none', versions: [{ version: 'he', from: 'body', language: 'he' }] },
+  },
+  // A day of Hayom Yom (app/views/daybook.tsx), with what the print has that its text source lacks, read off the scan.
+  '/hayom-yom/1/1': {
+    item: { id: 'rh-aaaaaah2', type: 'unit', path: '/hayom-yom/1/1', rev: 1, data: hayomYomDay(1) },
+    pathBar: dayBar(1),
+    previous: null,
+    next: { id: 'rh-aaaaaah3', path: '/hayom-yom/1/2', name: name('<h3>כ כסלו</h3>') },
+    text: {
+      kind: 'words',
+      from: 'body',
+      version: 'he',
+      language: 'he',
+      profile: 'chabad-library',
+      segments: [
+        { id: 'lead-h', kind: 'heading', text: words('כותרת המכתב לדוגמה'), origin: scanned },
+        { id: 'lead-1', kind: 'paragraph', text: words('מכתב לדוגמה שלפני היום הראשון.'), origin: scanned },
+        { id: 'tanya', kind: 'paragraph', text: words('שורת תניא לדוגמה\nועוד שורה לדוגמה'), origin: scanned },
+        { id: 'pre-1', kind: 'paragraph', text: words('הודעה לדוגמה לפני השיעורים.'), origin: scanned },
+        { id: 'p1', kind: 'paragraph', text: words('פתגם ראשון לדוגמה.') },
+        { id: 'p2', kind: 'paragraph', text: words('פתגם שני לדוגמה.') },
+      ],
+      notes: [],
+      machine: 'some',
+      versions: [{ version: 'he', from: 'body', language: 'he' }],
+    },
+  },
+  '/hayom-yom/1/2': {
+    item: { id: 'rh-aaaaaah3', type: 'unit', path: '/hayom-yom/1/2', rev: 1, data: hayomYomDay(2) },
+    pathBar: dayBar(2),
+    previous: { id: 'rh-aaaaaah2', path: '/hayom-yom/1/1', name: name('<h3>יט כסלו</h3>') },
+    next: null,
+    text: { kind: 'words', from: 'body', version: 'he', language: 'he', profile: 'chabad-library', segments: [{ id: 'p1', kind: 'paragraph', text: words('פתגם היום השני לדוגמה.') }], notes: [], machine: 'none', versions: [{ version: 'he', from: 'body', language: 'he' }] },
+  },
+  // A subject index (app/views/index.tsx): the index of one volume of the sample sefer (fixture-library.ts, /sample-sichos-index).
+  '/sample-sichos-index/12': {
+    item: { id: 'rh-aaaaaax1', type: 'unit', path: '/sample-sichos-index/12', rev: 1, data: { label: name('חלק יב'), position: [{ level: 'volume', value: '12' }] } },
+    pathBar: [
+      { kind: 'set', chosen: { id: 'rh-aaaaaas3', path: '/sets/the-rebbe', name: name('הרבי') }, choices: [] },
+      { kind: 'set', chosen: { id: 'rh-aaaaaal1', path: '/sets/the-rebbe-sample-sichos', name: name('שיחות לדוגמה') }, choices: [] },
+      { kind: 'work', chosen: { id: 'rh-aaaaaaw2', path: '/sample-sichos-index', name: name('מפתח לדוגמה') }, choices: [] },
+      { kind: 'unit', level: 'volume', chosen: { id: 'rh-aaaaaax1', path: '/sample-sichos-index/12', name: name('חלק יב') }, choices: [{ id: 'rh-aaaaaax1', path: '/sample-sichos-index/12', name: name('חלק יב') }] },
+    ],
+    previous: null,
+    next: null,
+    text: {
+      kind: 'words',
+      from: 'body',
+      version: 'he',
+      language: 'he',
+      profile: 'sichos-kodesh',
+      segments: [
+        { id: 't1', kind: 'heading', level: 2, text: words('אהבה לדוגמה') },
+        {
+          id: 't1.1',
+          kind: 'paragraph',
+          text: [
+            { href: "/read?page=2&title=חי\"ב+ע'+20+(שיחה+לדוגמה)&src=https://drive.google.com/open?id=sample-drive-file-1", text: '25' },
+            { text: ' (הערה קצרה לדוגמה)' },
+            { text: '.' },
+            { text: '.\r\nע"ע תורה לדוגמה' },
+            { text: '.' },
+          ],
+        },
+        // A volume the catalog has no sichos of yet, led by its name as the merged index leads each volume.
+        {
+          id: 't1.2',
+          kind: 'paragraph',
+          text: [{ text: 'חלק צט', marks: ['b'] }, { text: ': ' }, { href: "/read?page=1&title=חצ\"ט+ע'+90+(שיחה+שאינה+באתר)&src=https://drive.google.com/open?id=sample-drive-file-2", text: '90' }, { text: '.' }],
+        },
+        { id: 't2', kind: 'heading', level: 2, text: words('בריאה לדוגמה') },
+        { id: 't2.1', kind: 'paragraph', text: [{ href: "/read?title=חי\"ב+ע'+10+(שיחה+לדוגמה)&src=https://drive.google.com/open?id=sample-drive-file-3", text: '12' }, { text: ' (עוד הערה)' }, { text: '.' }] },
+        { id: 't3', kind: 'heading', level: 2, text: words('תורה לדוגמה') },
+        { id: 't3.1', kind: 'paragraph', text: [{ href: "/read?title=חי\"ב+ע'+30+(שיחה+לדוגמה)&src=https://drive.google.com/open?id=sample-drive-file-4", text: '31' }, { text: ' (הערה שלישית)' }, { text: '.' }] },
+      ],
+      notes: [],
+      machine: 'none',
+      versions: [{ version: 'he', from: 'body', language: 'he' }],
+    },
   },
   '/sample/1/3': {
     item: { id: 'rh-aaaaaab3', type: 'unit', path: '/sample/1/3', rev: 1, data: { label: name('שיחה שלישית') } },
