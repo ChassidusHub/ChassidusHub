@@ -1,0 +1,1 @@
+- New site: the browser reads the catalog snapshot in its small cut, the index and the top file (a few kB) at load, then only the file of the shelf a page is under, so the first taps into the library are drawn at once on a slow phone (#265).
