@@ -16,14 +16,14 @@ export function Tile({ icon, kicker, title, sub, to, onClick }: { icon: IconName
       </span>
     </>
   );
-  if (to) return <Link to={to} className="tile">{inside}</Link>;
+  if (to) return <Link to={to} prefetch="intent" className="tile">{inside}</Link>;
   return <button type="button" className="tile" onClick={onClick}>{inside}</button>;
 }
 
 /** A box in a grid of boxes: a title in the title face and a line under it (the Rebbeim on Home and in the library). */
 export function Box({ title, sub, to }: { title: ReactNode; sub?: ReactNode; to: string }) {
   return (
-    <Link to={to} className="box">
+    <Link to={to} prefetch="intent" className="box">
       <b>{title}</b>
       {sub && <span>{sub}</span>}
     </Link>
@@ -35,7 +35,7 @@ export function SectionHead({ title, more }: { title: ReactNode; more?: { label:
   return (
     <div className="shead">
       <h2>{title}</h2>
-      {more && <Link to={more.to}>{more.label}</Link>}
+      {more && <Link to={more.to} prefetch="intent">{more.label}</Link>}
     </div>
   );
 }

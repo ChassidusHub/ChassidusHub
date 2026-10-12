@@ -4,6 +4,7 @@ import { DAYS, listening } from '../listen/common';
 import { PlayRow } from '../listen/play';
 import { TopBar, type PathLevel } from '../ui';
 import type { Route } from './+types/listen-day';
+import { KEPT_PAGE } from '../lib/caching';
 
 export const handle = { section: 'listen' };
 
@@ -20,7 +21,7 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   return { day: day.day, label: day.label, rows };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export default function ListenDay() {
   const { day, label, rows } = useLoaderData<typeof loader>();
