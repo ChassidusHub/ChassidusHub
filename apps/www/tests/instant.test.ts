@@ -12,7 +12,7 @@ const rows: NameRow[] = [
   ['farbrengen', 'י״ט כסלו', null, null, '/farbrengens/5747-03-19', 'י״ט כסלו תשמ״ז'],
   ['farbrengen', '', null, null, '/farbrengens/5747-01-01', 'ש״פ בראשית תשמ״ז'],
 ];
-const index = namesOf({ version: 'test', names: rows });
+const index = namesOf({ format: 1, names: rows }, 'test');
 const paths = (query: string) => findNames(index, query).map((hit) => hit.to);
 
 describe('names as the person types', () => {

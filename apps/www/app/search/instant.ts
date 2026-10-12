@@ -8,14 +8,18 @@ import { KIND, type Hit } from './names.js';
  * server, below them.
  *
  * The snapshot is "Fast site: catalog snapshot"'s (studio/plans/www-instant.md,
- * item A). Until it is served, its manifest answers 404 and the box asks the
- * server for its suggestions, as before. Everything this file knows of the
+ * item A; its format is studio/plans/catalog-snapshot-format.md). When there
+ * is none, or it does not come, the box asks the server for its
+ * suggestions, as before. Everything this file knows of the
  * snapshot's shape is in `namesOf`, so a change to the format is a change
  * there only.
  */
 
-/** The snapshot's small manifest: its version, and where its names are. Never cached long; the names file is. */
-export const MANIFEST = '/catalog/manifest.json';
+/** The snapshot's small manifest, at the site's own address (server/catalog.ts): its version, and which file holds its names. Kept a minute; the names file for good. */
+export const MANIFEST = '/_/catalog/manifest.json';
+
+/** Where a file the manifest names is read, at the site's own address. */
+export const fileAt = (file: string) => `/_/catalog/${encodeURIComponent(file)}`;
 
 /**
  * One row of the snapshot's names: what it is, its Hebrew and English
@@ -24,10 +28,17 @@ export const MANIFEST = '/catalog/manifest.json';
  */
 export type NameRow = [kind: string, title: string, titleEn: string | null, parent: string | null, path: string, date?: string | null];
 
-/** The names part of the snapshot, as this file reads it. */
+/** The names part of the snapshot (names.<hash>.json), as this file reads it. */
 export interface NamesFile {
-  version: string;
+  format: number;
   names: NameRow[];
+}
+
+/** The parts of the manifest this file reads. */
+interface Manifest {
+  format: number;
+  version: string;
+  names?: { file: string };
 }
 
 interface Entry {
@@ -61,10 +72,10 @@ export function normalize(text: string): string {
     .trim();
 }
 
-const RANK: Record<string, number> = { sefer: 0, shelf: 0, book: 1, volume: 1, maamar: 2, sicha: 2, letter: 2, chapter: 2, siman: 2, farbrengen: 3, event: 3 };
+const RANK: Record<string, number> = { sefer: 0, shelf: 0, volume: 1, maamar: 2, sicha: 2, letter: 2, chapter: 2, siman: 2, farbrengen: 3, event: 3 };
 
 /** The snapshot's names as an index; built once a version. */
-export function namesOf(file: NamesFile): NameIndex {
+export function namesOf(file: NamesFile, version: string): NameIndex {
   const entries = file.names.map(([kind, title, titleEn, parent, path, date]): Entry => {
     const own = normalize([title, titleEn, date].filter(Boolean).join(' '));
     const up = normalize(parent ?? '');
@@ -78,7 +89,7 @@ export function namesOf(file: NamesFile): NameIndex {
       rank: RANK[kind] ?? 2,
     };
   });
-  return { version: file.version, entries };
+  return { version, entries };
 }
 
 /** A word of the query found in a name: a whole word when it is short (a volume's letter, א or יב), else anywhere in it. */
@@ -113,6 +124,13 @@ export function findNames(index: NameIndex, query: string, limit = 8): Hit[] {
   return found.slice(0, limit).map(({ entry }) => entry.hit);
 }
 
+/** An answer's JSON, or null when it is not one; the body of a refusal is let go, not left hanging. */
+async function jsonOf<T>(answer: Response): Promise<T | null> {
+  if (answer.ok) return answer.json() as Promise<T>;
+  await answer.body?.cancel();
+  return null;
+}
+
 let loading: Promise<NameIndex | null> | null = null;
 
 /**
@@ -124,10 +142,11 @@ let loading: Promise<NameIndex | null> | null = null;
 export function loadNames(): Promise<NameIndex | null> {
   loading ??= (async () => {
     try {
-      const manifest = await fetch(MANIFEST).then((answer) => (answer.ok ? (answer.json() as Promise<{ names?: string }>) : null));
-      if (!manifest?.names) return null;
-      const file = await fetch(manifest.names).then((answer) => (answer.ok ? (answer.json() as Promise<NamesFile>) : null));
-      return file?.names ? namesOf(file) : null;
+      const manifest = await fetch(MANIFEST).then((answer) => jsonOf<Manifest>(answer));
+      // A format this page does not know is left alone: the box asks the server, as before.
+      if (manifest?.format !== 1 || !manifest.names?.file) return null;
+      const file = await fetch(fileAt(manifest.names.file)).then((answer) => jsonOf<NamesFile>(answer));
+      return file?.format === 1 && Array.isArray(file.names) ? namesOf(file, manifest.version) : null;
     } catch {
       return null;
     }
