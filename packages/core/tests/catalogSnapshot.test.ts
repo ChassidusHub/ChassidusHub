@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Catalog, SnapshotIndex, SnapshotManifest, SnapshotNamesFile, SnapshotShelfFile, SnapshotTopFile, SnapshotTree, SnapshotWorkFile, SnapshotYearFile, SnapshotYearsFile } from '@chassidushub/core';
-import { SNAPSHOT_FILE_NAME, SNAPSHOT_INDEX_KEY, SNAPSHOT_MANIFEST_KEY, memorySnapshotStore, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot } from '@chassidushub/core';
+import { SNAPSHOT_CLAIM_MS, SNAPSHOT_FILE_NAME, SNAPSHOT_INDEX_KEY, SNAPSHOT_MANIFEST_KEY, memorySnapshotStore, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot } from '@chassidushub/core';
 import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
@@ -179,6 +179,40 @@ describe('catalog snapshot', () => {
     expect((await refreshSnapshot(catalog.db, store)).built).toBe(true);
     expect(JSON.parse((await store.get(SNAPSHOT_INDEX_KEY))!).format).toBe(2);
     expect((await refreshSnapshot(catalog.db, store)).built).toBe(false);
+  });
+
+  it('builds one change once across isolates, and catches what merged while it built (#288)', async () => {
+    const store = memorySnapshotStore({ shared: true });
+    const first = await refreshSnapshot(catalog.db, store);
+    expect(first.built).toBe(true);
+
+    // Two isolates hear of one change together: the one holding the claim builds it, the other serves what there is.
+    await add(catalog, 'mendy', 'keeper', 'unit', unit(ls, 1, 1), '/likkutei-sichos/1/1');
+    const held = (await store.claim!(new Date(Date.now() + SNAPSHOT_CLAIM_MS)))!;
+    expect(held).toBeTruthy();
+    const refused = await refreshSnapshot(catalog.db, store);
+    expect(refused).toEqual({ manifest: first.manifest, built: false });
+    await store.release!(held);
+
+    // Handed back, the next ask builds; a change merged during a build is built in the same refresh.
+    let merged = false;
+    const busy = {
+      ...store,
+      async put(key: string, text: string, kind: 'immutable' | 'manifest') {
+        await store.put(key, text, kind);
+        if (kind === 'manifest' && !merged) {
+          merged = true;
+          await add(catalog, 'mendy', 'keeper', 'unit', unit(ls, 1, 2), '/likkutei-sichos/1/2');
+        }
+      },
+    };
+    const caught = await refreshSnapshot(catalog.db, busy);
+    expect(caught.built).toBe(true);
+    expect(caught.manifest.seq).toBe((await snapshotSeq(catalog.db)).seq);
+    expect(caught.manifest.counts.units).toBe(2);
+    // And the claim is free again.
+    const again = await store.claim!(new Date(Date.now() + SNAPSHOT_CLAIM_MS));
+    expect(again).toBeTruthy();
   });
 
   it('leaves a deleted unit out, and never reads a manifest back older', async () => {

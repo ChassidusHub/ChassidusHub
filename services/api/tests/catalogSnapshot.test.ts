@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { memorySnapshotStore, refreshSnapshot, type SnapshotIndex, type SnapshotManifest, type SnapshotTopFile, type SnapshotTree } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { answeredHere } from '../src/reads.js';
-import { singleFlight } from '../src/catalogSnapshot.js';
+import { r2SnapshotStore, singleFlight } from '../src/catalogSnapshot.js';
+import type { R2Bucket } from '../src/r2.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -117,5 +118,51 @@ describe('singleFlight', () => {
     release();
     await Promise.all([a, b, c]);
     expect(runs).toBe(2);
+  });
+});
+
+/** A bucket in memory that keeps etags and honours `onlyIf`, as R2 does. */
+function etagBucket(): R2Bucket {
+  const kept = new Map<string, { text: string; etag: string }>();
+  let n = 0;
+  return {
+    async get(key) {
+      const object = kept.get(key);
+      return object ? { body: new Response(object.text).body!, size: object.text.length, etag: object.etag, text: async () => object.text } : null;
+    },
+    async put(key, value, options) {
+      if (options?.onlyIf && kept.get(key)?.etag !== options.onlyIf.etagMatches) return null;
+      kept.set(key, { text: String(value), etag: `e${++n}` });
+      return {};
+    },
+  };
+}
+
+describe('r2SnapshotStore claim', () => {
+  it('lets one isolate build at a time, and a dead build go after its time (#288)', async () => {
+    const bucket = etagBucket();
+    const a = r2SnapshotStore(bucket);
+    const b = r2SnapshotStore(bucket);
+    const soon = () => new Date(Date.now() + 60_000);
+    const token = await a.claim!(soon());
+    expect(token).toBeTruthy();
+    expect(await b.claim!(soon())).toBeNull();
+    // Only its holder hands it back.
+    await b.release!('someone else');
+    expect(await b.claim!(soon())).toBeNull();
+    await a.release!(token!);
+    const next = await b.claim!(new Date(Date.now() - 1));
+    expect(next).toBeTruthy();
+    // A claim whose time is up is taken over, though never handed back.
+    expect(await a.claim!(soon())).toBeTruthy();
+
+    // Two isolates that ask together, before any claim was ever written and after one was handed back: one gets it.
+    const used = etagBucket();
+    const once = r2SnapshotStore(used);
+    await once.release!((await once.claim!(soon()))!);
+    for (const shared of [etagBucket(), used]) {
+      const won = await Promise.all([r2SnapshotStore(shared).claim!(soon()), r2SnapshotStore(shared).claim!(soon())]);
+      expect(won.filter(Boolean)).toHaveLength(1);
+    }
   });
 });

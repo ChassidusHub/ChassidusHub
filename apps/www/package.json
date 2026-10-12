@@ -15,7 +15,8 @@
     "build": "react-router build",
     "start": "NODE_ENV=production tsx server/node.ts",
     "typecheck": "react-router typegen && tsc -p tsconfig.json",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "walk:top-tasks": "node scripts/top-tasks.mjs"
   },
   "dependencies": {
     "@chassidushub/client": "^1.0.0",

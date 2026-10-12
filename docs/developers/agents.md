@@ -44,7 +44,7 @@ stream. It has one address, `https://api.chassidushub.org/mcp`:
 | `suggest_fix` | a correction to one item, as a suggestion for review, under your name (`write`) |
 | `get_shaar` | a sefer's shaar file, the README of a sefer ([the shaar](../shaar.md)); one the catalog made is marked `[machine]` |
 | `suggest_shaar` | a sefer's whole shaar file, changed, as a suggestion for review; a file that cannot be read is refused line by line (`write`) |
-| `suggest_items` | add new items, or change or delete many, as one suggestion; `set` in place of `data` changes only those fields of an existing item (a label, say) and leaves its words as they are; 200 items a call, added to the same draft over several calls (`write`) |
+| `suggest_items` | add new items, or change or delete many, as one suggestion; `set` in place of `data` changes only those fields of an existing item (a label, say) and leaves its words as they are; 200 items a call, written all at once, added to the same draft over several calls; a `key` makes a call tried again go on with the suggestion it made, never a second one (`write`) |
 | `add_segments` | add or replace a few segments in many pages' words (a line a source left out, a machine's reading of a scan) without sending the rest of each page; 200 pages a call, one suggestion (`write`) |
 | `list_suggestions` | suggestions sent, newest first: open ones by default, by author, reviewer, item or words in the title |
 | `get_suggestion` | one suggestion: whether you may approve it, its failed checks, and what it changes, a page of items at a time |

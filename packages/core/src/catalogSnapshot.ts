@@ -265,7 +265,24 @@ export interface SnapshotStore {
   get(key: string): Promise<string | null>;
   /** `immutable` for a file named by its content, `manifest` for the manifest and the index. */
   put(key: string, text: string, kind: 'immutable' | 'manifest'): Promise<void>;
+  /**
+   * Takes the one build there may be at a time across every Worker isolate,
+   * until `until`: a token when taken, null when another build holds it. An
+   * Approve's answer, a manifest asked for and the every-minute run each hear
+   * of the same change, often in several isolates at once; on live as many as
+   * nine built the same snapshot together, each read slowing the others to
+   * 20-43 s (#288). Optional: a store in one process has no one to share with.
+   */
+  claim?(until: Date): Promise<string | null>;
+  /** Hands back a claim when its build is done, so the next change needs no wait. */
+  release?(token: string): Promise<void>;
 }
+
+/** How long a build's claim holds, should its isolate die mid-build: a lone build on live takes 5-20 s. */
+export const SNAPSHOT_CLAIM_MS = 90_000;
+export const SNAPSHOT_CLAIM_KEY = 'catalog/building.json';
+/** How many builds one refresh runs back to back for changes merged while it built, before leaving the rest to the next ask. */
+const BUILDS_IN_A_ROW = 3;
 
 export const SNAPSHOT_MANIFEST_KEY = 'catalog/manifest.json';
 export const SNAPSHOT_INDEX_KEY = 'catalog/index.json';
@@ -273,14 +290,27 @@ export const snapshotFileKey = (file: string) => `catalog/files/${file}`;
 /** A file name as the manifest gives it: a few lowercase words, then 16 hex of its sha256. */
 export const SNAPSHOT_FILE_NAME = /^[a-z0-9][a-z0-9-]{0,80}\.[0-9a-f]{16}\.json$/;
 
-/** A store in memory. */
-export function memorySnapshotStore(): SnapshotStore & { keys(): string[] } {
+/** A store in memory; with `shared`, builds take its claim as they would in R2 (tests). */
+export function memorySnapshotStore(options: { shared?: boolean } = {}): SnapshotStore & { keys(): string[] } {
   const kept = new Map<string, string>();
-  return {
+  let held: { token: string; until: number } | null = null;
+  let tokens = 0;
+  const store: SnapshotStore & { keys(): string[] } = {
     get: async (key) => kept.get(key) ?? null,
     put: async (key, text) => void kept.set(key, text),
     keys: () => [...kept.keys()].sort(),
   };
+  if (options.shared) {
+    store.claim = async (until) => {
+      if (held && held.until > Date.now()) return null;
+      held = { token: `build-${++tokens}`, until: until.getTime() };
+      return held.token;
+    };
+    store.release = async (token) => {
+      if (held?.token === token) held = null;
+    };
+  }
+  return store;
 }
 
 // ------------------------------------------------------------------ reading main
@@ -755,17 +785,32 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
 
 /**
  * Builds a new snapshot when main has changed since the one kept (one cheap
- * statement, and two reads of the bucket, when it has not). Returns the manifest kept now, and whether it
- * was built this time.
+ * statement, and two reads of the bucket, when it has not), unless another build holds the store's claim:
+ * then that build brings it up to date, and catches what merged while it ran.
+ * Returns the manifest kept now, and whether it was built this time.
  */
 export async function refreshSnapshot(db: Db, store: SnapshotStore, options: { base?: string; now?: Date } = {}): Promise<{ manifest: SnapshotManifest; built: boolean }> {
-  const kept = await readManifest(store);
-  const index = await readIndex(store);
-  // Built again when either is missing (the index came later than the manifest), or main moved on.
-  if (kept && index) {
-    const { seq } = await snapshotSeq(db);
-    if (seq <= Math.min(kept.seq, Number(index.version))) return { manifest: kept, built: false };
+  let kept = await readManifest(store);
+  // Built again when the index is missing (it came later than the manifest), or main moved on.
+  let index = await readIndex(store);
+  let built = false;
+  for (let round = 0; round < BUILDS_IN_A_ROW; round++) {
+    if (kept && index) {
+      const { seq } = await snapshotSeq(db);
+      if (seq <= Math.min(kept.seq, Number(index.version))) break;
+    }
+    // The very first build has nothing to serve meanwhile, so it never waits on a claim.
+    const token = kept && store.claim ? await store.claim(new Date(Date.now() + SNAPSHOT_CLAIM_MS)) : undefined;
+    if (token === null) break;
+    try {
+      kept = (await writeSnapshot(db, store, options)).manifest;
+      index = await readIndex(store);
+      built = true;
+    } finally {
+      if (token) await store.release?.(token);
+    }
+    // Without a shared claim every isolate that heard of a later change builds it itself.
+    if (!store.claim) break;
   }
-  const { manifest } = await writeSnapshot(db, store, options);
-  return { manifest, built: true };
+  return { manifest: kept!, built };
 }

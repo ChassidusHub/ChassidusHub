@@ -48,11 +48,19 @@ From main, never from anyone's words: units from `unit_place` (migration
 Never while someone waits: a whole build on live runs longer than a request
 may (30 s). With none built yet (an empty bucket), the manifest answers `503`
 with `Retry-After: 30` and starts a build behind the answer; a reader falls
-back to the API until it answers. Each build logs how long it took.
+back to the API until it answers. Each build logs how long it took, how many
+statements it sent and its slowest one.
 
 Each check costs one statement when nothing changed. One build runs at a time
-in a Worker; a burst of Approves is one build, then one more to catch the
-last. A manifest never goes back to an older catalog.
+across all of the API's Workers: a build first takes a claim
+(`catalog/building.json` in the same bucket, written only over the copy just
+read, by its etag), and a Worker that finds it held serves the snapshot there
+is. The claim is handed back when the build is done, or lapses after 90 s if
+its Worker died. The build then checks main once more and builds again for
+what merged meanwhile (up to three in a row; the every-minute run catches the
+rest). Before this, as many as nine Workers built the same snapshot together,
+each slowing the others to 20-43 s (#288). A manifest never goes back to an
+older catalog.
 
 ## manifest.json
 
