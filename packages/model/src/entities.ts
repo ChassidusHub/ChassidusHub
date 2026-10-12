@@ -281,7 +281,25 @@ export interface WorkData extends CommonFields {
    * is no addition: it is merged into that sefer's page.
    */
   addition?: WorkAddition;
+  /**
+   * Which view the reader draws its pages with (RFC 0004): a fact about the
+   * book, set by a suggestion, never guessed. Unset, the reader picks one by
+   * the unit's own level, else `sichos`.
+   */
+  view?: WorkView;
 }
+
+/** The reader's views, one per kind of sefer (RFC 0004, section 1). */
+export const WORK_VIEWS = ['sichos', 'letters', 'hisvaaduyos', 'index', 'daybook', 'chapters', 'verses', 'diary', 'siddur'] as const;
+export type WorkView = (typeof WORK_VIEWS)[number];
+
+/** What a unit really is, when its position's level does not say it (RFC 0004, section 2). A Hosafa is never a sicha. */
+export const UNIT_KINDS = ['sicha', 'maamar', 'hosafa', 'letter', 'reshima', 'day', 'chapter', 'siman', 'entry', 'prayer'] as const;
+export type UnitKind = (typeof UNIT_KINDS)[number];
+
+/** Whether the Rebbe edited it: edited (mugah), not edited (bilti mugah), or a listener's notes (hanacha). */
+export const MUGA_STATES = ['mugah', 'bilti-mugah', 'hanacha'] as const;
+export type MugaState = (typeof MUGA_STATES)[number];
 
 /** What kind of addition to an official sefer a work is. */
 export const ADDITION_KINDS = ['commentary', 'index', 'about', 'collection', 'other'] as const;
@@ -338,6 +356,23 @@ export interface UnitData extends CommonFields {
   /** The events it belongs to (a sicha to its farbrengen, a letter to its date). */
   events?: EntityId[];
   editions?: EditionData[];
+  /** The facts its view shows under its title (RFC 0004, section 2), each set by a suggestion. */
+  kind?: UnitKind;
+  /** A maamar's ד"ה as printed (a few words, no date), a letter's opening words. */
+  heading?: LocalName;
+  /** A letter's number in its sefer, a siman's: as printed (`א'תתקמג`). */
+  number?: string;
+  /** A letter's addressee, as printed. */
+  to?: LocalName;
+  /** Where a letter was written, as printed. */
+  place?: LocalName;
+  /** The occasion, as an event names it (`EventData.occasion`): `yud-shvat`, `shabbos-parshas-bo`. */
+  occasion?: string;
+  /** The parsha a sicha is on, apart from its occasion: `bo`. */
+  parsha?: string;
+  muga?: MugaState;
+  /** A machine's guess at any of the facts above, shown as the machine's until a person checks it. */
+  labelOrigin?: MachineOrigin;
 }
 
 export type EventKind = 'farbrengen' | 'sicha' | 'maamar' | 'yechidus' | 'letter' | 'simcha' | 'kinus' | 'other';
