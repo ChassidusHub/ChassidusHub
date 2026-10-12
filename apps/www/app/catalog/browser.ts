@@ -143,8 +143,9 @@ export function browserApi(): ChassidusHub {
  * on a sefer's page, also that sefer's units, so one of its volumes opens at
  * once. Listening's pages read the years file instead, so another year
  * needs only its own file. A page under no shelf (the library, Home,
- * search) reads the Rebbeim's shelves, the Rebbe's first: where a person
- * goes from it. Not on a connection that asks to save data.
+ * search) reads the Rebbe's shelf, where most people go from it: the other
+ * Rebbeim's are read when one is opened, so they never hold up the files a
+ * page asks for next. Not on a connection that asks to save data.
  */
 export function warm(shelf?: string | null): void {
   if (saveData()) return;
@@ -158,9 +159,10 @@ export function warm(shelf?: string | null): void {
       return;
     }
     const top = shelf ?? topShelfOf(core, core.byPath.get(path));
-    const rebbeim = core.tree.top.filter((id) => isRebbe(core.set(id)?.path ?? null)).reverse();
-    // One at a time, so the shelf wanted first comes first.
-    for (const id of top ? [top] : rebbeim) await snapshot.shelf(id);
+    // The last of the Rebbeim in their line is the Rebbe.
+    const rebbe = core.tree.top.filter((id) => isRebbe(core.set(id)?.path ?? null)).at(-1);
+    const wanted = top ?? rebbe;
+    if (wanted) await snapshot.shelf(wanted);
     const now = await snapshot.core();
     const here = now?.byPath.get(path);
     if (here && now!.isWork(here)) warmUnits(here.id);
