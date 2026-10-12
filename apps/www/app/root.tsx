@@ -15,11 +15,23 @@ export const links: Route.LinksFunction = () => [
 ];
 
 /**
+ * When this browser has somewhere to continue (the cookies of
+ * listen/stopped.ts, LISTEN_COOKIE and READ_COOKIE), marks <html>
+ * `data-resume="listen read"`. Pages are kept at the edge for everyone alike
+ * (server/edge.ts), so Home's and Listen's "continue" is drawn in the
+ * browser after the page loads; the marks keep its place open from the first
+ * paint (ui.css, .resume), so nothing moves when it comes. Written out here,
+ * not imported, so the first page loads no script more for it.
+ */
+const RESUME_SCRIPT = `var c=document.cookie,r=[];if(/(?:^|;\\s*)ch_listen=/.test(c))r.push('listen');if(/(?:^|;\\s*)ch_read=/.test(c))r.push('read');if(r.length)d.dataset.resume=r.join(' ');`;
+
+/**
  * A reader's light or dark choice and text size (kept in this browser), set
  * before the page paints so it never flashes the other one or jumps to
- * another size. With no choice the system's theme wins.
+ * another size. With no choice the system's theme wins. Then whether there
+ * is somewhere to continue (RESUME_SCRIPT).
  */
-const theme = `try{var d=document.documentElement,t=localStorage.getItem('theme'),s=localStorage.getItem('size');if(t==='light'||t==='dark')d.dataset.theme=t;if(/^(-[12]|[0-5])$/.test(s))d.style.setProperty('--torah-step',s)}catch(e){}`;
+const theme = `try{var d=document.documentElement,t=localStorage.getItem('theme'),s=localStorage.getItem('size');if(t==='light'||t==='dark')d.dataset.theme=t;if(/^(-[12]|[0-5])$/.test(s))d.style.setProperty('--torah-step',s);${RESUME_SCRIPT}}catch(e){}`;
 
 /**
  * The whole site is Hebrew and right to left from the first byte, so nothing

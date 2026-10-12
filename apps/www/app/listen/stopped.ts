@@ -1,8 +1,9 @@
 /* Where a reader stopped: shared by the server (reading the cookie) and the browser (writing it). No imports, so a plain test reads it. */
 
 /**
- * Where a reader stopped, kept in a cookie so the server can draw Home's
- * "continue" tiles in the first paint, with nothing moving after it.
+ * Where a reader stopped, kept in a cookie. Home's and Listen's "continue"
+ * is drawn from it in the browser (useStopped.ts), its place held open from
+ * the first paint (root.tsx, RESUME_SCRIPT), so nothing moves after it.
  * `ch_listen` is written while a recording plays; `ch_read` by the reader.
  */
 export interface Stopped {
@@ -41,3 +42,4 @@ export function resumeLink(stopped: Stopped): string {
   if (!stopped.recording) return stopped.to;
   return `${stopped.to}?r=${encodeURIComponent(stopped.recording)}&t=${Math.floor((stopped.at ?? 0) / 1000)}`;
 }
+

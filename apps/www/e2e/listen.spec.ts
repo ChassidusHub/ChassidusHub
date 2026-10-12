@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 /** Home and listening: where the reader stopped, and a recording's page. */
-test('Home shows where the reader stopped, drawn by the server', async ({ page, context, baseURL }) => {
+test('Home shows where the reader stopped, drawn in the browser so the page is kept for everyone', async ({ page, context, baseURL }) => {
   const stopped = { to: '/listen/5732/rh-3dvjfkyc', title: 'כ׳ אב תשל״ב · שיחה ו׳', recording: 'rh-1awcd7t9', at: 120_000, durationMs: 600_000 };
   await context.addCookies([{ name: 'ch_listen', value: encodeURIComponent(JSON.stringify(stopped)), url: baseURL! }]);
   await page.goto('/');

@@ -41,7 +41,7 @@ export function Row({
       {chevron && <Icon name="chevron-left" className="chev" />}
     </>
   );
-  if (to) return <Link to={to} className={className} aria-current={now}>{inside}</Link>;
+  if (to) return <Link to={to} prefetch="intent" className={className} aria-current={now}>{inside}</Link>;
   if (onClick) return <button type="button" className={className} aria-current={now} onClick={onClick}>{inside}</button>;
   return <div className={className}>{inside}</div>;
 }
