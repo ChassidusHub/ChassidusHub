@@ -17,6 +17,12 @@ declare module 'react-router' {
      * to the browser as its own; connecting an app; API keys; a takedown.
      */
     forward?: (path: string, request: Request) => Promise<Response>;
+    /**
+     * Says a part of the page streamed after its first bytes failed (a
+     * search that did not answer), so the edge forgets the page it was told
+     * it may keep (server/worker.ts, CachedPage; #342).
+     */
+    failed?: () => void;
   }
 }
 

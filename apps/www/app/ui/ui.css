@@ -331,7 +331,7 @@ svg.i.filled { fill: currentColor; stroke: none; }
 }
 .scrim.on { opacity: 1; pointer-events: auto; }
 .sheet {
-  position: fixed; inset-inline: 0; bottom: 0; z-index: 80; max-width: 560px; max-height: 86%; margin-inline: auto;
+  position: fixed; inset-inline: 0; bottom: var(--kb, 0px); z-index: 80; max-width: 560px; max-height: calc(86% - var(--kb, 0px)); margin-inline: auto;
   display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--g0); border-radius: 14px 14px 0 0; box-shadow: var(--shadow);
   transform: translateY(calc(100% + 40px)); visibility: hidden;
@@ -578,6 +578,8 @@ mark { background: none; color: var(--g900); font-weight: 700; }
 .search-form { margin-top: 8px; }
 .sugg { margin-top: 6px; }
 .sugg .row { min-height: 52px; }
+/* A search that did not answer: what was found stays, and a quiet way to ask again (routes/search.tsx, Again). */
+.again button { color: var(--g900); text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
 h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 
 /* ---------- reader: the words and their footnotes, as the prototype sets them ---------- */

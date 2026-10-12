@@ -69,8 +69,9 @@ export const PAGE_LINE_END_KINDS: readonly PageLineEndKind[] = ['line', 'column'
 /** A printed line's end: a run that carries no words. */
 export const isLineEnd = (run: PageInline): run is PageLineEnd => 'eol' in run;
 
-export type PageSegmentKind = 'section' | 'heading' | 'paragraph' | 'verse' | 'item' | 'note';
-export const PAGE_SEGMENT_KINDS: readonly PageSegmentKind[] = ['section', 'heading', 'paragraph', 'verse', 'item', 'note'];
+/** `stage`: what was done at a farbrengen, not said (ניגנו, אמר לחיים), so a view can set it apart (RFC 0004). */
+export type PageSegmentKind = 'section' | 'heading' | 'paragraph' | 'verse' | 'item' | 'note' | 'stage';
+export const PAGE_SEGMENT_KINDS: readonly PageSegmentKind[] = ['section', 'heading', 'paragraph', 'verse', 'item', 'note', 'stage'];
 
 /** One segment of a version: a section (its title, and the segments in it), a heading, a paragraph, a numbered verse, an outline item, a footnote. */
 export interface PageSegment {

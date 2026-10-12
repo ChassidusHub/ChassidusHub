@@ -159,3 +159,47 @@ test('signed out, nothing is sent to the API', async ({ page }) => {
   await expect(sheet.getByRole('alert')).toContainText('צריך להיכנס');
   expect(((await (await page.request.get('http://localhost:3002/_fixes')).json()) as unknown[]).length).toBe(before);
 });
+
+test('Fix puts the words box in focus within the tap, so a phone raises its keyboard', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  await select(page, '#s-p1', 'ראשונה');
+  await page.getByRole('toolbar', { name: 'המילים שסומנו' }).getByRole('button', { name: 'תקן' }).click();
+  // At once, not after the sheet has slid up: iOS Safari shows no keyboard for a focus given later.
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('fix-words');
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('fix-words');
+});
+
+test('on a phone the bar sits under the selected words, clear of the handles that drag the selection', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'a touch screen');
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  await select(page, '#s-p2', 'נוספת');
+  const bar = page.getByRole('toolbar', { name: 'המילים שסומנו' });
+  await expect(bar).toBeVisible();
+  const gap = await page.evaluate(() => document.querySelector('.pop')!.getBoundingClientRect().top - getSelection()!.getRangeAt(0).getBoundingClientRect().bottom);
+  expect(gap).toBeGreaterThanOrEqual(30);
+});
+
+test('the fix sheet stands on a phone\'s keyboard, so Save is not under it', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'a phone: on a desktop the sheet floats above the foot of the window');
+  await signIn(page);
+  await page.goto('/sample/1/1');
+  await page.waitForLoadState('networkidle');
+  await select(page, '#s-p1', 'ראשונה');
+  await page.getByRole('toolbar', { name: 'המילים שסומנו' }).getByRole('button', { name: 'תקן' }).click();
+  // A keyboard 300 px tall laid over the page, as iOS Safari and Android Chrome do: the visible part of the window shrinks.
+  await page.evaluate(() => {
+    const view = window.visualViewport!;
+    const height = innerHeight - 300;
+    Object.defineProperty(view, 'height', { get: () => height });
+    Object.defineProperty(view, 'offsetTop', { get: () => 0 });
+    view.dispatchEvent(new Event('resize'));
+  });
+  const sheet = page.getByRole('dialog', { name: 'תיקון' });
+  await expect.poll(() => sheet.evaluate((el) => Math.round(innerHeight - el.getBoundingClientRect().bottom))).toBe(300);
+  const save = await sheet.getByRole('button', { name: 'שמירה' }).boundingBox();
+  expect(save!.y + save!.height).toBeLessThanOrEqual(page.viewportSize()!.height - 300);
+});

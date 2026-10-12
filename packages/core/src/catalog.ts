@@ -2551,7 +2551,7 @@ export class Catalog {
     const main = await this.mainRev(db, id, memo);
     if (!main || main.data === null || main.entity_type !== 'set') return null;
     const data = main.data as unknown as SetData;
-    return { id, policy: data.policy, keepers: data.keepers };
+    return { id, policy: data.policy, keepers: data.keepers, ...(data.liveFixes ? { liveFixes: true } : {}) };
   }
 
   /** The sets an item belongs to: its own `sets`, else its parent's (a segment's text's unit's work's). */

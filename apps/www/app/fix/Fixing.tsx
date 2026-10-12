@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { Button, Icon, Sheet, useToast } from '../ui';
 import { placeAgain, placeOf, type Place } from './place';
 import { LIVE_WORDS, wordsDiffering } from './replace';
 import type { FixAnswer, FixAsk, UndoAnswer } from './types';
+
+/** How far under the selected words the bar sits on a touch screen: below the selection handles (about 24 px on Android, less on iOS). */
+const HANDLES = 34;
 
 /** A fix kept while the person signs in, so their words are there when they come back. */
 const KEPT = 'ch_fix';
@@ -50,7 +53,8 @@ export function Fixing({
   const pop = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLTextAreaElement>(null);
 
-  // The bar follows the selection: shown over (on a phone, under, clear of the phone's own menu) words selected inside `root`.
+  // The bar follows the selection: shown over words selected inside `root`; on a phone, under them, clear of the
+  // phone's own menu (over the words) and of the handles it hangs under their ends for dragging the selection.
   const place = useCallback(() => {
     const selection = getSelection();
     const inside = selection?.rangeCount ? selection.getRangeAt(0) : null;
@@ -66,8 +70,9 @@ export function Fixing({
     const width = pop.current?.offsetWidth || 260;
     const height = pop.current?.offsetHeight || 42;
     const x = Math.max(8, Math.min(innerWidth - width - 8, rect.left + rect.width / 2 - width / 2));
-    const under = matchMedia('(pointer: coarse)').matches || rect.top - height - 10 < 60;
-    const y = under ? Math.min(rect.bottom + 10, innerHeight - height - 8) : rect.top - height - 10;
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    const under = coarse || rect.top - height - 10 < 60;
+    const y = under ? Math.min(rect.bottom + (coarse ? HANDLES : 10), innerHeight - height - 8) : rect.top - height - 10;
     setBar({ x, y, place: placeOf(inside), text });
   }, [root]);
 
@@ -108,16 +113,21 @@ export function Fixing({
     if (x !== bar.x) el.style.left = `${x}px`;
   }, [bar]);
 
-  const open = (at: Place, typed: string) => {
+  const show = (at: Place, typed: string) => {
     setFixing(at);
     setWords(typed);
     setSending(null);
     setBar(null);
-    // After the sheet has slid up: the words ready to type over.
-    setTimeout(() => {
-      box.current?.focus();
-      box.current?.select();
-    }, 280);
+  };
+  const ready = () => {
+    box.current?.focus({ preventScroll: true });
+    box.current?.select();
+  };
+  // From the Fix button: drawn at once, so the box takes focus inside the tap itself. A phone (iOS Safari above all)
+  // raises its keyboard only for a focus given during a tap, not for one given later, after the sheet has slid up.
+  const open = (at: Place, typed: string) => {
+    flushSync(() => show(at, typed));
+    ready();
   };
 
   // Back from signing in: the fix they started, with what they typed.
@@ -132,7 +142,11 @@ export function Fixing({
     if (!kept || kept.path !== path) return;
     const { words: typed, ...ask } = kept.ask;
     const again = placeAgain(ask);
-    if (again) open(again, typed);
+    // Not from a tap: no keyboard comes up for it anyway, so the box is made ready once the sheet is drawn.
+    if (again) {
+      show(again, typed);
+      setTimeout(ready);
+    }
     // Only when the page opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);

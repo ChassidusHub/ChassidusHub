@@ -747,12 +747,13 @@ async function createSet(ws: Workspace, op: Extract<OrganizeOperation, { op: 'cr
   const path = op.path ? op.path.toLowerCase() : `/sets/${slug}`;
   if (!isEntityPath(path)) throw invalid(`"${path}" is not a path`);
   if (!(await ws.pathFree(path, id))) throw invalid(`the path ${path} is taken; choose another slug`);
-  const parentData = parent?.data as { policy?: string; keepers?: string[] } | undefined;
+  const parentData = parent?.data as { policy?: string; liveFixes?: boolean; keepers?: string[] } | undefined;
   const data: Data = {
     name: { he: op.name.he.trim(), ...(op.name.en?.trim() ? { en: op.name.en.trim() } : {}) },
     slug,
     // A set made inside another is kept as that one is, by the same keepers.
     policy: parentData?.policy ?? 'moderated',
+    ...(parentData?.liveFixes ? { liveFixes: true } : {}),
     keepers: [...(parentData?.keepers ?? [])],
   };
   if (op.description?.he) data.description = op.description;

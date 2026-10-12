@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { data, isRouteErrorResponse, redirect, useLocation, type AppLoadContext } from 'react-router';
+import { data, isRouteErrorResponse, redirect, useLocation, type AppLoadContext, type ShouldRevalidateFunctionArgs } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
@@ -107,6 +107,19 @@ async function listeningPage(item: { id: string; type: string; data: unknown }, 
  * the edge keeps it until something it shows changes (lib/caching.ts,
  * server/edge.ts).
  */
+/**
+ * Opening Edit (`?edit` added to the address, nothing else changed) draws the same page at once with its own
+ * fields, without reading the page again first, which on a phone on slow 4G took seconds. Leaving Edit reads the
+ * page again, so a name just saved shows. Written out here and in routes/recording.tsx, not shared: a module of its own would be
+ * one more script file on the page.
+ */
+export function shouldRevalidate({ currentUrl, nextUrl, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
+  const opening = currentUrl.pathname === nextUrl.pathname && !currentUrl.searchParams.has('edit') && nextUrl.searchParams.has('edit');
+  const rest = new URLSearchParams(nextUrl.search);
+  rest.delete('edit');
+  return opening && rest.toString() === new URLSearchParams(currentUrl.search).toString() ? false : defaultShouldRevalidate;
+}
+
 export const headers = ({ loaderHeaders }: Route.HeadersArgs) => ({
   'Cache-Control': KEPT_PAGE,
   ...(loaderHeaders.has('Link') ? { Link: loaderHeaders.get('Link')! } : {}),

@@ -618,6 +618,7 @@ createServer((req, res) => {
   const searched = searchAnswer(url);
   if (searched) {
     res.statusCode = searched[0];
+    if (searched[2]) return void setTimeout(() => res.end(JSON.stringify(searched[1])), searched[2]);
     return res.end(JSON.stringify(searched[1]));
   }
   const tools = itemToolsAnswer('GET', url, {}, req.headers.cookie ?? '');

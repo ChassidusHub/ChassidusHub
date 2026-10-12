@@ -236,8 +236,11 @@ export function yearWordsQuery(within: string): string {
   return `${year} | ה${year}`;
 }
 
-/** How many of the best-ranked matches are read; the rest are not read at all. */
-export const MOMENT_CANDIDATES = 200;
+/**
+ * How many of the best-ranked matches are read; the rest are not read at all. Each one's revision is read from disk
+ * on a cold search, to put checked words first: 80 is four pages of results, and took 100 ms less than 200 (#214).
+ */
+export const MOMENT_CANDIDATES = 80;
 
 /**
  * How many matches of each kind are ranked at most. Ranking reads each
@@ -250,9 +253,10 @@ export const MOMENT_CANDIDATES = 200;
  * (a common word is in most of them, so the database reads them in turn
  * rather than through the index; 400 read 30 MB on a first search, #182).
  * Past these, the first matches found are ranked. Each match is ranked where
- * it is found, so its words are read once.
+ * it is found, so its words are read once. A paragraph's row is read from disk
+ * to rank it on a cold search: 300 took 100-200 ms less than 1000 (#214).
  */
-export const MOMENT_RANKED = { 'text-page': 300, segment: 1000, unit: 20 } as const;
+export const MOMENT_RANKED = { 'text-page': 300, segment: 300, unit: 20 } as const;
 
 /** How many sichos whose lead holds the query are found through the lead's index, and ranked on it. */
 export const MOMENT_LEADS = 40;
@@ -261,7 +265,7 @@ export const MOMENT_LEADS = 40;
  * The places in scans and texts where the query's words are: lines on
  * scans' pages and paragraphs of texts and transcripts, best first.
  */
-export async function searchMoments(catalog: Catalog, query: string, options: { limit?: number; within?: string | null; probe?: boolean } = {}): Promise<Moment[]> {
+export async function searchMoments(catalog: Catalog, query: string, options: { limit?: number; within?: string | null } = {}): Promise<Moment[]> {
   const tsQuery = toTsQuery(query);
   if (!tsQuery) return [];
   const words = queryWords(query);
@@ -304,18 +308,6 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
                 WHERE e.id = p.unit_id AND e.type = 'unit' AND NOT e.deleted AND e.main_rev IS NOT NULL OFFSET 0) e)`;
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1)), leads(1)] : [...kinds.map((k) => all(k, 0)), leads(0)];
-  // TEMPORARY, to find the slow part of a cold search (Director, 12 October 2026; comes out with the fix): with `probe`,
-  // each part is first read alone, so the answer's Server-Timing names it: pages, paragraphs, sichos and leads, each
-  // ranked (the rank is asked for, so it is worked out: a count alone let the database skip it), then the best
-  // candidates of all of them without their revisions. Finding the words alone, as prefixes or as whole words, was
-  // measured first (#335): 15-75 ms a part, whole words no faster. Changes nothing in the answer.
-  if (options.probe && !within) {
-    for (const part of [...kinds.map((k) => all(k, 0)), leads(0)]) await catalog.db.query(`SELECT count(*), max(b.rank) FROM ${part} b`, [tsQuery]);
-    await catalog.db.query(
-      `SELECT count(*), max(c.rank) FROM (SELECT id, max(rank) AS rank FROM (${matched.join(' UNION ALL ')}) u GROUP BY id ORDER BY rank DESC LIMIT ${MOMENT_CANDIDATES}) c`,
-      [tsQuery],
-    );
-  }
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
     `SELECT c.id, c.type, c.tier FROM (
        SELECT id, type, main_rev, min(tier) AS tier, max(rank) AS rank
