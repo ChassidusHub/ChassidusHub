@@ -43,7 +43,7 @@ test('a path bar level tapped before the scripts come opens its choices once the
   await expect(page.getByRole('menuitemradio', { name: /חלק י״ג/ })).toBeVisible();
 });
 
-test('words selected before the scripts come get their Fix bar once they come', async ({ page }) => {
+test('words selected before the scripts come get their Fix bar at once, and Fix tapped on it opens once they come', async ({ page }) => {
   const release = await slowScripts(page);
   await page.goto('/sample/1/1', { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => {
@@ -60,8 +60,15 @@ test('words selected before the scripts come get their Fix bar once they come', 
       return;
     }
   });
+  // Drawn by the page itself, before its scripts (#345), and held like any button.
+  const bar = page.getByRole('toolbar', { name: 'המילים שסומנו' });
+  await expect(bar).toBeVisible();
+  const fix = bar.getByRole('button', { name: 'תקן' });
+  await fix.click();
+  await expect(fix).toHaveAttribute('data-wait', '');
   await release();
-  await expect(page.getByRole('toolbar', { name: 'המילים שסומנו' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'תיקון' })).toContainText('ראשונה');
+  await expect(page.locator('.pop[data-early]')).toHaveCount(0);
 });
 
 test('a link tapped before the scripts come shows its page at once, and opens it once they come', async ({ page }) => {
