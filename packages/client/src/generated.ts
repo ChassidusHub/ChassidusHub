@@ -765,6 +765,18 @@ export interface Operations {
     input: Record<string, never>;
     output: Record<string, unknown>;
   };
+  /** One file of the catalog snapshot, as the manifest names it */
+  catalogSnapshotFile: {
+    input: {
+      file: string;
+    };
+    output: Record<string, unknown>;
+  };
+  /** The catalog snapshot: which files hold the whole tree now (every shelf and sefer, each sefer's units by volume, each year's events), with their sizes and sha256 */
+  catalogSnapshotManifest: {
+    input: Record<string, never>;
+    output: Record<string, unknown>;
+  };
   /** The catalog as a tree: the top sets (or one set or sefer), the sets and items under them, and how much each holds */
   catalogTree: {
     input: {
@@ -3290,6 +3302,8 @@ export const OPERATIONS = {
   approveSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/approve","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   appSourceText: {"method":"GET","path":"/v1/app/v3/texts/{sha256}","pathParams":["sha256"],"query":[],"body":null,"answer":"text"},
   authorizationServer: {"method":"GET","path":"/.well-known/oauth-authorization-server","pathParams":[],"query":[],"body":null,"answer":"json"},
+  catalogSnapshotFile: {"method":"GET","path":"/v1/catalog/files/{file}","pathParams":["file"],"query":[],"body":null,"answer":"json"},
+  catalogSnapshotManifest: {"method":"GET","path":"/v1/catalog/manifest.json","pathParams":[],"query":[],"body":null,"answer":"json"},
   catalogTree: {"method":"GET","path":"/v1/tree","pathParams":[],"query":["root","depth","limit"],"body":null,"answer":"json"},
   checkUpload: {"method":"POST","path":"/v1/uploads/check","pathParams":[],"query":[],"body":"json","answer":"json"},
   claimNext: {"method":"POST","path":"/v1/projects/{slug}/next","pathParams":["slug"],"query":[],"body":null,"answer":"json"},
@@ -3548,6 +3562,16 @@ export abstract class GeneratedMethods {
   /** Authorization Server Metadata (RFC 8414): the endpoints, scopes read and write, PKCE S256, registration and Client ID Metadata Documents (GET /.well-known/oauth-authorization-server) */
   authorizationServer(): Promise<Operations['authorizationServer']['output']> {
     return this.call('authorizationServer', {} as Operations['authorizationServer']['input']);
+  }
+
+  /** One file of the catalog snapshot, as the manifest names it (GET /v1/catalog/files/{file}) */
+  catalogSnapshotFile(input: Operations['catalogSnapshotFile']['input']): Promise<Operations['catalogSnapshotFile']['output']> {
+    return this.call('catalogSnapshotFile', input ?? {} as Operations['catalogSnapshotFile']['input']);
+  }
+
+  /** The catalog snapshot: which files hold the whole tree now (every shelf and sefer, each sefer's units by volume, each year's events), with their sizes and sha256 (GET /v1/catalog/manifest.json) */
+  catalogSnapshotManifest(): Promise<Operations['catalogSnapshotManifest']['output']> {
+    return this.call('catalogSnapshotManifest', {} as Operations['catalogSnapshotManifest']['input']);
   }
 
   /** The catalog as a tree: the top sets (or one set or sefer), the sets and items under them, and how much each holds (GET /v1/tree) */
