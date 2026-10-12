@@ -592,11 +592,6 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 /* A farbrengen read as one page: each sicha under its own name, a little apart from the one before. */
 .torah .fsicha + .fsicha { margin-block-start: 2.2em; }
 .torah .fh { font-family: var(--title); font-weight: 500; font-size: 1.15em; text-align: center; margin: 0 0 0.6em; }
-/* Words a machine read and nobody checked yet: a faint dotted underline, all of them or only those. */
-.torah.unchecked p, .torah p.m, .fn.m .nt {
-  text-decoration: underline dotted color-mix(in srgb, var(--machine-line) 45%, transparent);
-  text-decoration-thickness: 1px; text-underline-offset: 0.32em;
-}
 .ois { font-weight: 700; }
 .mk { font-family: var(--ui); font-size: 0.6em; color: var(--g600); padding-inline: 0.2em; }
 .nm {
