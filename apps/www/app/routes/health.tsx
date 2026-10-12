@@ -1,4 +1,5 @@
-import { data, Link } from 'react-router';
+import { Suspense } from 'react';
+import { Await, data, Link } from 'react-router';
 import { Folded, Figure, Meter, SeeAlso } from '../community/parts';
 import { count, dayName, hebrewName, itemName, percent, yearName, type CatalogHealth } from '../community/data';
 import { Row, Rows, Say, SectionHead, TopBar } from '../ui';
@@ -19,16 +20,29 @@ type Labelled = { id: string; path: string | null; type: string; data: Record<st
  * (what a dead link was found in, the farbrengen of a recording) are read in
  * one batch, for their names; when that fails the ids still show. The page
  * also answers when the API does not, saying so, with 503: /health is
- * watched from outside, and an outage must show there.
+ * watched from outside, and an outage must show there. So a whole page waits
+ * for the health itself (its status depends on it), but not for the names.
  */
 export async function loader({ context }: Route.LoaderArgs) {
   const health = (await context.api.health({ limit: 100 }).catch(() => null)) as CatalogHealth | null;
-  if (!health) return data({ health: null, items: {} as Record<string, Labelled> }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+  if (!health) return data({ data: Promise.resolve(null as Report | null) }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+  return { data: named(context.api, health) as Promise<Report | null> };
+}
+
+/** Opened from inside the site, the page is drawn at once, without waiting for the health either. */
+export function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  return { data: serverLoader().then((d) => d.data) };
+}
+
+/** The health with the names of the items its lists name only by id. */
+async function named(api: Route.LoaderArgs['context']['api'], health: CatalogHealth) {
   const ids = [...new Set([...health.deadLinks.flatMap((d) => d.entities.slice(0, 5)), ...health.unsynced.flatMap((r) => (r.event ? [r.event] : []))])].slice(0, 200);
-  const found = ids.length ? await context.api.getItems({ ids: ids.join(',') }).catch(() => null) : null;
+  const found = ids.length ? await api.getItems({ ids: ids.join(',') }).catch(() => null) : null;
   const items = Object.fromEntries(((found?.items ?? []) as Labelled[]).map((item) => [item.id, { id: item.id, path: item.path, type: item.type, data: { title: item.data.title, label: item.data.label, name: item.data.name, date: item.data.date } }]));
   return { health, items };
 }
+
+type Report = Awaited<ReturnType<typeof named>>;
 
 /** Kept a few minutes, unless it could not be read: then never. */
 export function headers({ loaderHeaders }: Route.HeadersArgs) {
@@ -58,28 +72,54 @@ const pathOf = (item: Labelled | undefined, id: string) => (item?.type === 'even
  * board, which lists the gaps themselves.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { health, items } = loaderData;
   return (
     <>
       <TopBar title="מצב הקטלוג" />
       <main id="content" className="view wide">
         <h1>מצב הקטלוג</h1>
         <p className="lede">כמה מלא הקטלוג, ואיפה צריך עזרה.</p>
-        {health ? <Report health={health} items={items} /> : <Say tone="bad">לא הצלחנו לקרוא את מצב הקטלוג כרגע. נסו שוב בעוד רגע.</Say>}
-        <SectionHead title="עוד" />
-        <SeeAlso
-          links={[
-            { to: '/missing', icon: 'search', label: 'מה חסר', sub: 'התוועדויות בלי הקלטה או הנחה, ספרים בלי סריקה' },
-            { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על חוסר אחד' },
-            { to: '/status', icon: 'check', label: 'מצב האתר', sub: 'האם הכל עובד עכשיו' },
-          ]}
-        />
+        <Suspense fallback={<p className="faint" aria-busy="true">רגע…</p>}>
+          <Await
+            resolve={loaderData.data}
+            errorElement={
+              <>
+                <Unread />
+                <More />
+              </>
+            }
+          >
+            {(report) => (
+              <>
+                {report ? <Figures health={report.health} items={report.items} /> : <Unread />}
+                <More />
+              </>
+            )}
+          </Await>
+        </Suspense>
       </main>
     </>
   );
 }
 
-function Report({ health, items }: { health: CatalogHealth; items: Record<string, Labelled> }) {
+/** Where else to look. It comes in after the figures, so nothing under the waiting line is pushed down when they arrive. */
+function More() {
+  return (
+    <>
+      <SectionHead title="עוד" />
+      <SeeAlso
+        links={[
+          { to: '/missing', icon: 'search', label: 'מה חסר', sub: 'התוועדויות בלי הקלטה או הנחה, ספרים בלי סריקה' },
+          { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על חוסר אחד' },
+          { to: '/status', icon: 'check', label: 'מצב האתר', sub: 'האם הכל עובד עכשיו' },
+        ]}
+      />
+    </>
+  );
+}
+
+const Unread = () => <Say tone="bad">לא הצלחנו לקרוא את מצב הקטלוג כרגע. נסו שוב בעוד רגע.</Say>;
+
+function Figures({ health, items }: { health: CatalogHealth; items: Record<string, Labelled> }) {
   const total = health.years.reduce((sum, y) => ({ events: sum.events + y.events, withRecording: sum.withRecording + y.withRecording, withText: sum.withText + y.withText, withTranscript: sum.withTranscript + y.withTranscript }), { events: 0, withRecording: 0, withText: 0, withTranscript: 0 });
   const unchecked = health.pages.total - health.pages.checked;
   const unsynced = health.recordings.total - health.recordings.synced;

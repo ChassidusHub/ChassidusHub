@@ -1,4 +1,5 @@
-import { data, Form, Link, redirect, useNavigation } from 'react-router';
+import { Suspense } from 'react';
+import { Await, data, Form, Link, redirect, useNavigation } from 'react-router';
 import { count, dayName, focusText, GAP_NAME, hebrewName, itemName, percent, STATE_NAME, yearName, type Project, type ProjectItem } from '../community/data';
 import { Progress, SeeAlso } from '../community/parts';
 import { useAccount } from '../lib/account';
@@ -12,17 +13,34 @@ type Entity = { id: string; path: string | null; type: string; data: Record<stri
  * One project is the same for everyone (who holds which item is shown to
  * all), so it is read here and kept a minute; the open projects are read
  * beside it for the path bar's menu. Which held item is the person's own,
- * and whether they may close the project, is asked in the browser.
+ * and whether they may close the project, is asked in the browser. A whole
+ * page waits for the project itself, so an unknown one is a 404; the open
+ * projects come after.
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
-  const [found, list] = await Promise.all([
-    context.api.getProject({ slug: params.slug }).catch((error: unknown) => {
-      if ((error as { status?: number } | null)?.status === 404) return null;
-      throw error;
-    }),
-    context.api.listProjects({ status: 'open' }).catch(() => null),
-  ]);
+  const others = context.api.listProjects({ status: 'open' }).catch(() => null);
+  const found = await context.api.getProject({ slug: params.slug }).catch((error: unknown) => {
+    if ((error as { status?: number } | null)?.status === 404) return null;
+    throw error;
+  });
   if (!found) throw data('not found', { status: 404 });
+  const project = found.project as unknown as Project;
+  return { slug: params.slug, named: { name: project.name, about: project.goal ?? focusText(project) } as Named | null, data: others.then((list) => shown(found, list)) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the project follows. */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  return { slug: params.slug, named: null as Named | null, data: serverLoader().then((d) => d.data) };
+}
+
+/** The project's name and what it is for, for the page's title: known on a whole page, not yet after a click. */
+type Named = { name: string; about: string };
+
+type Found = Awaited<ReturnType<Route.LoaderArgs['context']['api']['getProject']>>;
+type Open = Awaited<ReturnType<Route.LoaderArgs['context']['api']['listProjects']>>;
+
+/** What the page shows of a project: it, what is next to do with the names of their items, and the other open projects. */
+function shown(found: Found, list: Open | null) {
   const entities = Object.fromEntries((found.next as unknown as Entity[]).map((e) => [e.id, { id: e.id, path: e.path, type: e.type, data: { title: e.data.title, label: e.data.label, date: e.data.date } }]));
   return {
     project: found.project as unknown as Project,
@@ -32,13 +50,16 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   };
 }
 
+type Shown = ReturnType<typeof shown>;
+
 export function headers() {
   return { 'Cache-Control': 'public, max-age=60, s-maxage=60' };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: 'פרויקט · ChassidusHub' }];
-  return [{ title: `${loaderData.project.name} · ChassidusHub` }, { name: 'description', content: loaderData.project.goal ?? focusText(loaderData.project) }];
+  const named = loaderData?.named;
+  if (!named) return [{ title: 'פרויקט · ChassidusHub' }];
+  return [{ title: `${named.name} · ChassidusHub` }, { name: 'description', content: named.about }];
 }
 
 /** Where an item is worked on: a farbrengen's page, a recording's (under its farbrengen), or a page of a scan's text. */
@@ -95,27 +116,50 @@ const KIND_ICON = { event: 'listen', recording: 'listen', page: 'scan' } as cons
  * hours; they can let it go again, and a steward can close the project.
  */
 export default function Screen({ loaderData, actionData }: Route.ComponentProps) {
-  const { project, todo, entities, others } = loaderData;
+  // No errorElement: a project that is not there (after a click) goes to the route's error page, as on a whole page.
+  return (
+    <Suspense key={loaderData.slug} fallback={<Waiting />}>
+      <Await resolve={loaderData.data}>{(shown) => <ProjectPage shown={shown} done={actionData as Done | undefined} />}</Await>
+    </Suspense>
+  );
+}
+
+/** Where the projects are, in the path bar: the first level, known before the project comes. */
+const PLACE = {
+  key: 'place',
+  label: 'פרויקטים',
+  icon: 'people' as const,
+  title: 'עבודה על הקטלוג',
+  items: [
+    { key: 'projects', label: 'פרויקטים', to: '/projects', current: true },
+    { key: 'missing', label: 'מה חסר', to: '/missing' },
+    { key: 'health', label: 'מצב הקטלוג', to: '/health' },
+  ] satisfies MenuItem[],
+};
+
+/** The frame while the project comes: the path bar as far as it is known, and a quiet line. */
+function Waiting() {
+  return (
+    <>
+      <TopBar path={[PLACE]} />
+      <main id="content" className="view">
+        <p className="faint" aria-busy="true">רגע…</p>
+      </main>
+    </>
+  );
+}
+
+function ProjectPage({ shown, done }: { shown: Shown; done: Done | undefined }) {
+  const { project, todo, entities, others } = shown;
   const account = useAccount();
   const busy = useNavigation().state === 'submitting';
   const open = project.status === 'open';
   const left = Math.max(0, project.total - project.done);
-  const done = actionData as Done | undefined;
   const mine = (item: ProjectItem) => !!account && item.claimedBy === account.person.id;
   const here = `/projects/${project.slug}`;
 
   const path = [
-    {
-      key: 'place',
-      label: 'פרויקטים',
-      icon: 'people' as const,
-      title: 'עבודה על הקטלוג',
-      items: [
-        { key: 'projects', label: 'פרויקטים', to: '/projects', current: true },
-        { key: 'missing', label: 'מה חסר', to: '/missing' },
-        { key: 'health', label: 'מצב הקטלוג', to: '/health' },
-      ] satisfies MenuItem[],
-    },
+    PLACE,
     {
       key: 'project',
       label: project.name,

@@ -22,6 +22,8 @@ export default [
     route('connect', 'routes/connect.tsx'),
     route('oauth/consent', 'routes/oauth-consent.tsx'),
     route('back', 'routes/backroom.tsx'),
+    // One catalog batch in the back room's queue: its research note, its tree before and after, Approve or Send back (Flow).
+    route('back/batch/:id', 'routes/back-batch.tsx'),
     // Suggestions as pull requests: the list and one suggestion's page (thread 6, the rebuild); the old /review is the back room's.
     route('suggestions', 'routes/suggestions.tsx'),
     route('suggestions/:number', 'routes/suggestion.tsx'),
@@ -72,6 +74,8 @@ export default [
   route('.well-known/security.txt', 'routes/security-txt.ts'),
   // The rows under the search box while typing, as JSON (thread 5, Search).
   route('search/suggest', 'routes/search.suggest.ts'),
+  // A sicha's words at an address made from the words, kept for good (Texts cached and offline).
+  route('_/words/:id/:key', 'routes/words.ts'),
   // A fix and its undo, sent as the person (thread 4, Fixing and Edit). `_` is never in an item's path.
   route('_/fix', 'routes/fix.ts'),
   route('_/fix/:changeset/undo', 'routes/fix-undo.ts'),
