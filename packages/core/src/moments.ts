@@ -305,11 +305,16 @@ export async function searchMoments(catalog: Catalog, query: string, options: { 
   const kinds = ['text-page', 'segment', 'unit'] as const;
   const matched = within ? [...kinds.map(ofDate), ...kinds.map((k) => all(k, 1)), leads(1)] : [...kinds.map((k) => all(k, 0)), leads(0)];
   // TEMPORARY, to find the slow part of a cold search (Director, 12 October 2026; comes out with the fix): with `probe`,
-  // each part is first read alone, so the answer's Server-Timing names it: pages, paragraphs, sichos, leads, each with
-  // the words as prefixes (as searched) and then as whole words. Changes nothing in the answer.
+  // each part is first read alone, so the answer's Server-Timing names it: pages, paragraphs, sichos and leads, each
+  // ranked (the rank is asked for, so it is worked out: a count alone let the database skip it), then the best
+  // candidates of all of them without their revisions. Finding the words alone, as prefixes or as whole words, was
+  // measured first (#335): 15-75 ms a part, whole words no faster. Changes nothing in the answer.
   if (options.probe && !within) {
-    const exact = tsQuery.replace(/:\*/g, '');
-    for (const words of [tsQuery, exact]) for (const part of [...kinds.map((k) => all(k, 0)), leads(0)]) await catalog.db.query(`SELECT count(*) FROM ${part} b`, [words]);
+    for (const part of [...kinds.map((k) => all(k, 0)), leads(0)]) await catalog.db.query(`SELECT count(*), max(b.rank) FROM ${part} b`, [tsQuery]);
+    await catalog.db.query(
+      `SELECT count(*), max(c.rank) FROM (SELECT id, max(rank) AS rank FROM (${matched.join(' UNION ALL ')}) u GROUP BY id ORDER BY rank DESC LIMIT ${MOMENT_CANDIDATES}) c`,
+      [tsQuery],
+    );
   }
   const { rows } = await catalog.db.query<{ id: EntityId; type: 'text-page' | 'segment' | 'unit'; tier: number }>(
     `SELECT c.id, c.type, c.tier FROM (
