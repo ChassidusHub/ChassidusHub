@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react';
-import { Form, Link, redirect, useActionData, useNavigation } from 'react-router';
+import { Suspense, useEffect, useId, useRef, useState } from 'react';
+import { Await, Form, Link, redirect, useActionData, useLocation, useNavigation } from 'react-router';
 import { useAccount } from '../lib/account';
 import { day, itemHref, kindName, nameOf, titleOf, type IssueRow, type IssueTemplate } from '../people/talk';
 import { Button, Field, Icon, Say, TopBar } from '../ui';
@@ -18,10 +18,8 @@ const idIn = (text: string | null | undefined): string | null => /rh-[0-9a-z-]{6
  * ask), and the item `?item=` names, with the reports already open on it, so
  * nobody writes the same one twice. `?type=` picks the kind.
  */
-export async function loader({ request, context }: Route.LoaderArgs) {
-  const url = new URL(request.url);
+async function formOf(api: Route.LoaderArgs['context']['api'], url: URL) {
   const itemId = idIn(url.searchParams.get('item'));
-  const api = context.api;
   const [templates, entity, open] = await Promise.all([
     api.issueTemplates().then((r) => r.templates as unknown as IssueTemplate[], () => [] as IssueTemplate[]),
     itemId ? api.getItem({ id: itemId }).catch(() => null) : null,
@@ -37,6 +35,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     open: ((open?.items ?? []) as unknown as IssueRow[]).map((i) => ({ number: i.number, title: titleOf(i), createdAt: i.createdAt })),
   };
 }
+
+/** The page never waits for the kinds: its frame shows at once, and the form comes after it. */
+export function loader({ request, context }: Route.LoaderArgs) {
+  return { data: formOf(context.api, new URL(request.url)) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the form follows. */
+export function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  return { data: serverLoader().then((loaded) => loaded.data) };
+}
+
+type Loaded = Awaited<ReturnType<typeof formOf>>;
 
 export function headers() {
   return { 'Cache-Control': 'public, max-age=300, s-maxage=300' };
@@ -112,11 +122,42 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Se
  * Reports about rights or offensive content are private.
  */
 export default function NewIssue({ loaderData }: Route.ComponentProps) {
-  const { kinds, item, open } = loaderData;
   const sent = useActionData<typeof action>();
+  // Another item's form is its own wait; a report sent here keeps the form in place while the page is read again.
+  const { search } = useLocation();
+  return (
+    <>
+      <TopBar title="דיווח חדש" />
+      <main id="content" className="view people">
+        <h1>דיווח חדש</h1>
+        <p className="lede faint">מצאתם טעות, עמוד חסר או הקלטה שנקטעת? ספרו מה ראיתם ואיפה, ואחראי האוסף יבדקו.</p>
+        <Say>
+          טעות קטנה במילים אפשר לתקן ישירות בעמוד: מסמנים את המילים ולוחצים „תיקון”.
+        </Say>
+        {sent?.sent === null && <Say tone="good">הדיווח התקבל. תודה!</Say>}
+        <Suspense
+          key={search}
+          fallback={
+            <p className="faint" aria-busy="true">
+              רגע…
+            </p>
+          }
+        >
+          <Await resolve={loaderData.data} errorElement={<Say tone="bad">הטופס לא נטען. נסו שוב בעוד רגע.</Say>}>
+            {(loaded) => <Report loaded={loaded} sent={sent} />}
+          </Await>
+        </Suspense>
+      </main>
+    </>
+  );
+}
+
+/** The form, once the kinds have come (gone once the report is thanked), and the reports already open on the item. */
+function Report({ loaded, sent }: { loaded: Loaded; sent: Sent | undefined }) {
+  const { kinds, item, open } = loaded;
   const busy = useNavigation().state === 'submitting';
   const account = useAccount();
-  const [type, setType] = useState(loaderData.type ?? '');
+  const [type, setType] = useState(loaded.type ?? '');
   const kind = kinds.find((k) => k.type === type);
   const body = useRef<HTMLTextAreaElement>(null);
   const bodyId = useId();
@@ -131,95 +172,85 @@ export default function NewIssue({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <TopBar title="דיווח חדש" />
-      <main id="content" className="view people">
-        <h1>דיווח חדש</h1>
-        <p className="lede faint">מצאתם טעות, עמוד חסר או הקלטה שנקטעת? ספרו מה ראיתם ואיפה, ואחראי האוסף יבדקו.</p>
-        <Say>
-          טעות קטנה במילים אפשר לתקן ישירות בעמוד: מסמנים את המילים ולוחצים „תיקון”.
-        </Say>
-        {sent?.sent === null ? (
-          <Say tone="good">הדיווח התקבל. תודה!</Say>
-        ) : (
-          <Form method="post" className="pform">
-            {sent?.said && (
-              <Say tone="bad">
-                {sent.said}
-                {sent.signIn && (
-                  <>
-                    {' '}
-                    <Link to={`/signin?return=${encodeURIComponent(back)}`}>כניסה</Link>
-                  </>
-                )}
-              </Say>
-            )}
-            <fieldset className="kinds">
-              <legend>מה הבעיה?</legend>
-              {kinds.map((k) => (
-                <label key={k.type}>
-                  <input type="radio" name="type" value={k.type} required defaultChecked={type === k.type} onChange={() => setType(k.type)} />
-                  <span>{k.name}</span>
-                  {k.private && <span className="tag">פרטי</span>}
-                </label>
-              ))}
-            </fieldset>
-            {item ? (
-              <div className="field">
-                <span className="flabel">על</span>
-                <p className="about">
-                  <Link to={item.path}>
-                    <bdi>{item.name}</bdi>
-                  </Link>
-                  <input type="hidden" name="item" value={item.id} />
-                  <Link to="/issues/new" className="faint sm">
-                    לא על פריט מסוים
-                  </Link>
-                </p>
-              </div>
-            ) : (
-              <Field label="על פריט מסוים? הדביקו את הקישור או המזהה שלו" name="item" dir="ltr" maxLength={300} placeholder="https://chassidushub.org/…" />
-            )}
-            <Field label="כותרת: במשפט אחד, מה לא בסדר" name="title" required maxLength={200} dir="auto" />
+      {sent?.sent !== null && (
+        <Form method="post" className="pform">
+          {sent?.said && (
+            <Say tone="bad">
+              {sent.said}
+              {sent.signIn && (
+                <>
+                  {' '}
+                  <Link to={`/signin?return=${encodeURIComponent(back)}`}>כניסה</Link>
+                </>
+              )}
+            </Say>
+          )}
+          <fieldset className="kinds">
+            <legend>מה הבעיה?</legend>
+            {kinds.map((k) => (
+              <label key={k.type}>
+                <input type="radio" name="type" value={k.type} required defaultChecked={type === k.type} onChange={() => setType(k.type)} />
+                <span>{k.name}</span>
+                {k.private && <span className="tag">פרטי</span>}
+              </label>
+            ))}
+          </fieldset>
+          {item ? (
             <div className="field">
-              <label htmlFor={bodyId}>פרטים</label>
-              <textarea id={bodyId} ref={body} name="body" rows={7} maxLength={10000} dir="auto" defaultValue={kinds.find((k) => k.type === loaderData.type)?.template ?? ''} />
-              <span className="hint">@ לתייג אדם · # להפנות לדיווח או להצעה</span>
+              <span className="flabel">על</span>
+              <p className="about">
+                <Link to={item.path}>
+                  <bdi>{item.name}</bdi>
+                </Link>
+                <input type="hidden" name="item" value={item.id} />
+                <Link to="/issues/new" className="faint sm">
+                  לא על פריט מסוים
+                </Link>
+              </p>
             </div>
-            {kind?.private && (
-              <Say>
-                <Icon name="key" size="s" /> דיווח מהסוג הזה פרטי: רואים אותו רק אחראי האוסף ומנהלי האתר.
-              </Say>
-            )}
-            {account === null && <p className="faint sm">אפשר לדווח גם בלי חשבון. עם חשבון תקבלו תשובה בתיבה שלכם.</p>}
-            <Button type="submit" className="block" disabled={busy}>
-              {busy ? 'רגע…' : 'שליחת הדיווח'}
-            </Button>
-          </Form>
-        )}
-        {item && (
-          <section aria-labelledby="open-on-item">
-            <h2 id="open-on-item">דיווחים פתוחים על הפריט</h2>
-            {open.length ? (
-              <ul className="threads">
-                {open.map((issue) => (
-                  <li key={issue.number}>
-                    <Link to={`/issues/${issue.number}`} className="thread">
-                      <span className="t">
-                        <b dir="auto">{issue.title}</b>
-                        <span>
-                          #{issue.number} · {day(issue.createdAt)}
-                        </span>
+          ) : (
+            <Field label="על פריט מסוים? הדביקו את הקישור או המזהה שלו" name="item" dir="ltr" maxLength={300} placeholder="https://chassidushub.org/…" />
+          )}
+          <Field label="כותרת: במשפט אחד, מה לא בסדר" name="title" required maxLength={200} dir="auto" />
+          <div className="field">
+            <label htmlFor={bodyId}>פרטים</label>
+            <textarea id={bodyId} ref={body} name="body" rows={7} maxLength={10000} dir="auto" defaultValue={kinds.find((k) => k.type === loaded.type)?.template ?? ''} />
+            <span className="hint">@ לתייג אדם · # להפנות לדיווח או להצעה</span>
+          </div>
+          {kind?.private && (
+            <Say>
+              <Icon name="key" size="s" /> דיווח מהסוג הזה פרטי: רואים אותו רק אחראי האוסף ומנהלי האתר.
+            </Say>
+          )}
+          {account === null && <p className="faint sm">אפשר לדווח גם בלי חשבון. עם חשבון תקבלו תשובה בתיבה שלכם.</p>}
+          <Button type="submit" className="block" disabled={busy}>
+            {busy ? 'רגע…' : 'שליחת הדיווח'}
+          </Button>
+        </Form>
+      )}
+      {item && (
+        <section aria-labelledby="open-on-item">
+          <h2 id="open-on-item">דיווחים פתוחים על הפריט</h2>
+          {open.length ? (
+            <ul className="threads">
+              {open.map((issue) => (
+                <li key={issue.number}>
+                  <Link to={`/issues/${issue.number}`} className="thread">
+                    <span className="t">
+                      <b dir="auto">{issue.title}</b>
+                      <span>
+                        #{issue.number} · {day(issue.createdAt)}
                       </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="faint sm">אין דיווחים פתוחים על הפריט.</p>
-            )}
-          </section>
-        )}
-      </main>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="faint sm">אין דיווחים פתוחים על הפריט.</p>
+          )}
+        </section>
+      )}
     </>
   );
 }

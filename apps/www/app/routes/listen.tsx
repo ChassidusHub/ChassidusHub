@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useLoaderData } from 'react-router';
-import { clock, DAYS, LISTEN_COOKIE, listening, readStopped, resumeLink } from '../listen/common';
+import { clock, DAYS, LISTEN_COOKIE, listening, resumeLink } from '../listen/common';
+import { useStopped } from '../listen/useStopped';
+import { todaysPage } from '../lib/caching';
 import { eventRow, eventsOn, eventsWithWords, fitting, nextDays, yearLabel, YEARS } from '../listen/data.server';
 import { PlayRow } from '../listen/play';
 import { Row, Rows, SearchField, TopBar } from '../ui';
@@ -19,19 +21,20 @@ const SOME_YEARS = [5710, 5711, 5722, 5734, 5747, 5752];
  * Listening: where the reader stopped, the farbrengens of these days in
  * earlier years, and the way in by day of the year or by year.
  */
-export async function loader({ request, context: { api } }: Route.LoaderArgs) {
+export async function loader({ context: { api } }: Route.LoaderArgs) {
   const [withWords, upcoming] = await Promise.all([eventsWithWords(api), eventsOn(api, nextDays(14)).catch(() => [])]);
   return {
-    stopped: readStopped(request.headers.get('cookie'), LISTEN_COOKIE),
     these: fitting(upcoming, withWords, 5).map((e) => eventRow(e, withWords)),
     years: YEARS.map((year) => ({ year, label: yearLabel(year) })),
   };
 }
 
-export const headers = () => ({ 'Cache-Control': 'private, no-cache' });
+export const headers = () => ({ 'Cache-Control': todaysPage() });
 
 export default function Listen() {
-  const { stopped, these, years } = useLoaderData<typeof loader>();
+  const { these, years } = useLoaderData<typeof loader>();
+  // Drawn in the browser, so the page is the same for everyone and kept at the edge; its place is kept open (root.tsx).
+  const stopped = useStopped(LISTEN_COOKIE);
   const [allYears, setAllYears] = useState(false);
   const shown = allYears ? years : years.filter((y) => SOME_YEARS.includes(y.year));
   return (
@@ -43,18 +46,20 @@ export default function Listen() {
           <SearchField name="q" label="תאריך, מאורע או ד״ה" />
         </form>
 
-        {stopped && (
-          <>
-            <h2>להמשיך</h2>
-            <Rows>
-              <Row
-                title={stopped.title}
-                sub={[stopped.sub, stopped.durationMs && stopped.at != null ? `נשארו ${clock(stopped.durationMs - stopped.at)}` : undefined].filter(Boolean).join(' · ')}
-                to={resumeLink(stopped)}
-              />
-            </Rows>
-          </>
-        )}
+        <div className="resume resume-listen">
+          {stopped && (
+            <>
+              <h2>להמשיך</h2>
+              <Rows>
+                <Row
+                  title={stopped.title}
+                  sub={[stopped.sub, stopped.durationMs && stopped.at != null ? `נשארו ${clock(stopped.durationMs - stopped.at)}` : undefined].filter(Boolean).join(' · ')}
+                  to={resumeLink(stopped)}
+                />
+              </Rows>
+            </>
+          )}
+        </div>
 
         {these.length > 0 && (
           <>
@@ -70,7 +75,7 @@ export default function Listen() {
         <h2>מאורעות</h2>
         <div className="chips">
           {DAYS.map((d) => (
-            <Link key={d.day} className="chip" to={`/listen/day/${d.day}`}>
+            <Link key={d.day} prefetch="intent" className="chip" to={`/listen/day/${d.day}`}>
               {d.label}
             </Link>
           ))}
@@ -79,7 +84,7 @@ export default function Listen() {
         <h2>לפי שנה</h2>
         <div className="chips">
           {shown.map((y) => (
-            <Link key={y.year} className="chip" to={`/listen/${y.year}`}>
+            <Link key={y.year} prefetch="intent" className="chip" to={`/listen/${y.year}`}>
               {y.label}
             </Link>
           ))}

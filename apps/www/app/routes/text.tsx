@@ -1,10 +1,11 @@
-import { useId, useState } from 'react';
-import { data, Link } from 'react-router';
+import { Suspense, useId, useState } from 'react';
+import { Await, data, Link } from 'react-router';
 import { useAccount } from '../lib/account';
 import { act, said } from '../tools/common';
 import { itemName, orNothing } from '../tools/item.server';
 import { Button, Field, Icon, IconButton, Say, SectionHead, TopBar } from '../ui';
 import type { Route } from './+types/text';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** One page of a scan's text (GET /v1/scans/{id}/text). */
 interface ScanPage {
@@ -35,10 +36,28 @@ const level = (n: number | undefined) => Math.min(2, Math.max(0, n ?? 0)) as 0 |
  */
 export async function loader({ request, params, context: { api } }: Route.LoaderArgs) {
   if (!/^rh-[\w-]+$/i.test(params.scan)) throw data('not found', { status: 404 });
-  const url = new URL(request.url);
-  const page = Math.max(1, Math.floor(Number(url.searchParams.get('page'))) || 1);
+  const frame = asked(request, params.scan);
+  // A whole page waits for the scan itself, so what is not a scan is a 404; its text, pages and printing come after.
   const scan = await orNothing(api.getItem({ id: params.scan }));
   if (!scan || scan.type !== 'scan') throw data('not found', { status: 404 });
+  return { ...frame, data: scanPage(api, scan, frame.page) };
+}
+
+/** Opened from inside the site, the frame (the page's number, the way to the pages beside it) is drawn at once; the text follows. */
+export function clientLoader({ request, params, serverLoader }: Route.ClientLoaderArgs) {
+  return { ...asked(request, params.scan), data: serverLoader().then((d) => d.data) };
+}
+
+/** What the address says: the scan, its page, and the line a search hit opens at. */
+function asked(request: Request, id: string) {
+  const url = new URL(request.url);
+  return { id, page: Math.max(1, Math.floor(Number(url.searchParams.get('page'))) || 1), found: url.searchParams.get('line') };
+}
+
+type Api = Route.LoaderArgs['context']['api'];
+
+/** One page of the scan: its lines, its image, how far each page is proofread, and the printing it is of. */
+async function scanPage(api: Api, scan: Awaited<ReturnType<Api['getItem']>>, page: number) {
   const fields = scan.data as { publication?: string };
   const [text, progress, publication, images] = await Promise.all([
     orNothing(api.scanText({ id: scan.id, page })) as Promise<ScanPage | null>,
@@ -48,13 +67,10 @@ export async function loader({ request, params, context: { api } }: Route.Loader
   ]);
   const image = images?.pages?.find((p) => p.page === page) ?? null;
   return {
-    id: scan.id,
     name: publication ? itemName(publication) : 'טקסט של סריקה',
     to: publication ? (publication.path ?? `/${publication.id}`) : null,
-    page,
     pages: text?.pages ?? images?.pages?.length ?? progress?.levels.length ?? 0,
     levels: (progress?.levels ?? []).map(level),
-    found: url.searchParams.get('line'),
     image: image && { src: image.image, width: image.width, height: image.height },
     text: text && {
       level: level(text.level),
@@ -65,43 +81,77 @@ export async function loader({ request, params, context: { api } }: Route.Loader
   };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=60, s-maxage=300' });
+type Frame = ReturnType<typeof asked>;
+type Shown = Frame & Awaited<ReturnType<typeof scanPage>>;
+
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export const handle = { section: 'library' };
 
-export function meta({ data: text }: Route.MetaArgs) {
-  return [{ title: text ? `${text.name} · עמוד ${text.page} · ChassidusHub` : 'ChassidusHub' }];
+/** Only what the address says: the printing's name comes with the page. */
+export function meta({ loaderData }: Route.MetaArgs) {
+  return [{ title: loaderData ? `טקסט של סריקה · עמוד ${loaderData.page} · ChassidusHub` : 'ChassidusHub' }];
 }
 
-export default function Text({ loaderData: text }: Route.ComponentProps) {
+export default function Text({ loaderData: { data, ...frame } }: Route.ComponentProps) {
+  // No errorElement: a page that fails to come goes to the route's error page, as on a whole page.
+  return (
+    <Suspense key={`${frame.id}/${frame.page}`} fallback={<Waiting frame={frame} />}>
+      <Await resolve={data}>{(shown) => <ScanText text={{ ...frame, ...shown }} />}</Await>
+    </Suspense>
+  );
+}
+
+/** The top bar: the printing, the page, and the ways to the pages beside it (the next one too while the count is not known). */
+function Top({ id, name, page, pages }: { id: string; name: string; page: number; pages: number }) {
+  const to = (page: number) => `/text/${id}?page=${page}`;
+  return (
+    <TopBar
+      title={name}
+      sub={`עמוד ${page}${pages ? ` מתוך ${pages}` : ''}`}
+      end={
+        <nav className="it-pager" aria-label="עמודי הסריקה">
+          {page > 1 ? (
+            <Link className="ib" to={to(page - 1)} rel="prev" aria-label="העמוד הקודם" title="העמוד הקודם">
+              <Icon name="chevron-right" />
+            </Link>
+          ) : (
+            <IconButton icon="chevron-right" label="העמוד הקודם" disabled />
+          )}
+          {!pages || page < pages ? (
+            <Link className="ib" to={to(page + 1)} rel="next" aria-label="העמוד הבא" title="העמוד הבא">
+              <Icon name="chevron-left" />
+            </Link>
+          ) : (
+            <IconButton icon="chevron-left" label="העמוד הבא" disabled />
+          )}
+        </nav>
+      }
+    />
+  );
+}
+
+/** The frame while the page comes, from the address. */
+function Waiting({ frame }: { frame: Frame }) {
+  return (
+    <>
+      <Top id={frame.id} name="טקסט של סריקה" page={frame.page} pages={0} />
+      <main id="content" className="view wide it-text">
+        <h1>עמוד {frame.page}</h1>
+        <p className="faint" aria-busy="true">רגע…</p>
+      </main>
+    </>
+  );
+}
+
+function ScanText({ text }: { text: Shown }) {
   const account = useAccount();
   const to = (page: number) => `/text/${text.id}?page=${page}`;
   const lines = text.text?.lines ?? [];
   const unchecked = lines.filter((l) => l.level === 0).length;
   return (
     <>
-      <TopBar
-        title={text.name}
-        sub={`עמוד ${text.page}${text.pages ? ` מתוך ${text.pages}` : ''}`}
-        end={
-          <nav className="it-pager" aria-label="עמודי הסריקה">
-            {text.page > 1 ? (
-              <Link className="ib" to={to(text.page - 1)} rel="prev" aria-label="העמוד הקודם" title="העמוד הקודם">
-                <Icon name="chevron-right" />
-              </Link>
-            ) : (
-              <IconButton icon="chevron-right" label="העמוד הקודם" disabled />
-            )}
-            {!text.pages || text.page < text.pages ? (
-              <Link className="ib" to={to(text.page + 1)} rel="next" aria-label="העמוד הבא" title="העמוד הבא">
-                <Icon name="chevron-left" />
-              </Link>
-            ) : (
-              <IconButton icon="chevron-left" label="העמוד הבא" disabled />
-            )}
-          </nav>
-        }
-      />
+      <Top id={text.id} name={text.name} page={text.page} pages={text.pages} />
       <main id="content" className="view wide it-text">
         <h1>
           {text.name} · עמוד {text.page}

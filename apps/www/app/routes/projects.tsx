@@ -1,4 +1,5 @@
-import { Form, Link, redirect, useActionData, useNavigation } from 'react-router';
+import { Suspense } from 'react';
+import { Await, Form, Link, redirect, useActionData, useNavigation } from 'react-router';
 import { Progress, SeeAlso } from '../community/parts';
 import { capped, count, dayName, focusText, GAP_NAME, STATE_NAME, type Gap, type Project } from '../community/data';
 import { useAccount } from '../lib/account';
@@ -14,21 +15,31 @@ export function meta(_: Route.MetaArgs) {
   ];
 }
 
+/** Open or closed, from the address. */
+const stateOf = (request: Request): 'open' | 'closed' => (new URL(request.url).searchParams.get('state') === 'closed' ? 'closed' : 'open');
+
 /**
  * The projects and what the Missing board holds (the gaps a new project
  * could take on) are the same for everyone, so they are read here and kept
  * a few minutes. Whether the person may open a project is asked in the
- * browser, and the API decides again when they do.
+ * browser, and the API decides again when they do. The page never waits
+ * for the lists: its frame shows at once, and they come after it.
  */
-export async function loader({ request, context }: Route.LoaderArgs) {
-  const state = new URL(request.url).searchParams.get('state') === 'closed' ? 'closed' : 'open';
-  const [list, recordings, texts] = await Promise.all([
+export function loader({ request, context }: Route.LoaderArgs) {
+  const data = Promise.all([
     context.api.listProjects().catch(() => null),
     context.api.missing({ kind: 'recordings', limit: 1 }).then((r) => r.total, () => null),
     context.api.missing({ kind: 'texts', limit: 1 }).then((r) => r.total, () => null),
-  ]);
-  return { state, projects: list ? (list.projects as unknown as Project[]) : null, gaps: { recordings, texts } };
+  ]).then(([list, recordings, texts]) => ({ projects: list ? (list.projects as unknown as Project[]) : null, gaps: { recordings, texts } }));
+  return { state: stateOf(request), data };
 }
+
+/** Opened from inside the site (or after a project is opened), the frame is drawn at once; the lists follow. */
+export function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  return { state: stateOf(request), data: serverLoader().then((d) => d.data) };
+}
+
+type Lists = Awaited<ReturnType<typeof loader>['data']>;
 
 export function headers() {
   return { 'Cache-Control': 'public, max-age=300, s-maxage=600' };
@@ -75,11 +86,8 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Op
  * it has come. Open and closed are two views of one list.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { state, projects, gaps } = loaderData;
+  const { state, data } = loaderData;
   const account = useAccount();
-  const open = projects?.filter((p) => p.status === 'open') ?? [];
-  const closed = projects?.filter((p) => p.status !== 'open') ?? [];
-  const shown = state === 'closed' ? closed : open;
   return (
     <>
       <TopBar title="פרויקטים" />
@@ -89,59 +97,89 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
 
         <nav className="chips" aria-label="פרויקטים">
           <Link to="/projects" className={state === 'open' ? 'chip on' : 'chip'} aria-current={state === 'open' ? 'page' : undefined}>
-            פתוחים <span className="faint">{count(open.length)}</span>
+            פתוחים <Count data={data} open />
           </Link>
           <Link to="/projects?state=closed" className={state === 'closed' ? 'chip on' : 'chip'} aria-current={state === 'closed' ? 'page' : undefined}>
-            סגורים <span className="faint">{count(closed.length)}</span>
+            סגורים <Count data={data} open={false} />
           </Link>
         </nav>
 
-        {!projects ? (
-          <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>
-        ) : shown.length === 0 ? (
-          <Say>{state === 'closed' ? 'עוד לא נסגר שום פרויקט.' : 'אין כרגע פרויקט פתוח. אפשר להתחיל מלוח החוסרים: כל התוועדות שם מחכה למישהו.'}</Say>
-        ) : (
-          <ul className="projects">
-            {shown.map((p) => (
-              <li key={p.slug}>
-                <Link to={`/projects/${p.slug}`} className="card project">
-                  <span className="t">
-                    <b>{p.name}</b>
-                    <span>
-                      <span className="tag">{GAP_NAME[p.focus.missing]}</span> {focusText(p)}
-                      {p.status !== 'open' && ` · ${STATE_NAME[p.status]}`}
-                    </span>
-                    <span>
-                      נפתח ב־{dayName(p.createdAt)}
-                      {p.creatorName ? ` על ידי ${p.creatorName}` : ''}
-                    </span>
-                    <Progress project={p} />
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {account?.person.steward && <NewProject />}
-
-        <SectionHead title="איך זה עובד" />
-        <ol className="howto">
-          <li>כל פרויקט עובר על חוסר אחד: התוועדויות של שנה בלי הקלטה, הקלטות לסנכרון, עמודי סריקה להגהה.</li>
-          <li>״תנו לי את הבא״ מביא לכם פריט שאף אחד אחר לא עובד עליו, ושומר אותו לכם לשלוש שעות.</li>
-          <li>ההתקדמות זזה עם כל תוספת שאושרה.</li>
-        </ol>
-
-        <SectionHead title="מה עוד חסר" more={{ label: 'מה חסר', to: '/missing' }} />
-        <SeeAlso
-          links={[
-            ...(gaps.recordings !== null ? [{ to: '/missing', icon: 'listen' as const, label: 'התוועדויות בלי הקלטה', sub: capped(gaps.recordings) }] : []),
-            ...(gaps.texts !== null ? [{ to: '/missing?kind=texts', icon: 'scan' as const, label: 'התוועדויות בלי הנחה', sub: capped(gaps.texts) }] : []),
-            { to: '/health', icon: 'library', label: 'מצב הקטלוג' },
-          ]}
-        />
+        <Suspense key={state} fallback={<p className="faint" aria-busy="true">רגע…</p>}>
+          <Await
+            resolve={data}
+            errorElement={
+              <>
+                <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>
+                <Below data={data} steward={Boolean(account?.person.steward)} />
+              </>
+            }
+          >
+            {({ projects }) => (
+              <>
+                <List projects={projects} state={state} />
+                <Below data={data} steward={Boolean(account?.person.steward)} />
+              </>
+            )}
+          </Await>
+        </Suspense>
       </main>
     </>
+  );
+}
+
+const isOpen = (p: Project) => p.status === 'open';
+
+/** How many open or closed projects there are, in a chip, once the list has come. */
+function Count({ data, open }: { data: Promise<Lists>; open: boolean }) {
+  return (
+    <Suspense fallback={null}>
+      <Await resolve={data} errorElement={null}>
+        {({ projects }) => <span className="faint">{count((projects ?? []).filter((p) => isOpen(p) === open).length)}</span>}
+      </Await>
+    </Suspense>
+  );
+}
+
+/** The open or the closed projects, each with how far it has come. */
+function List({ projects, state }: { projects: Project[] | null; state: 'open' | 'closed' }) {
+  const shown = projects?.filter((p) => isOpen(p) === (state === 'open')) ?? [];
+  if (!projects) return <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>;
+  if (shown.length === 0)
+    return <Say>{state === 'closed' ? 'עוד לא נסגר שום פרויקט.' : 'אין כרגע פרויקט פתוח. אפשר להתחיל מלוח החוסרים: כל התוועדות שם מחכה למישהו.'}</Say>;
+  return (
+    <ul className="projects">
+      {shown.map((p) => (
+        <li key={p.slug}>
+          <Link to={`/projects/${p.slug}`} className="card project">
+            <span className="t">
+              <b>{p.name}</b>
+              <span>
+                <span className="tag">{GAP_NAME[p.focus.missing]}</span> {focusText(p)}
+                {p.status !== 'open' && ` · ${STATE_NAME[p.status]}`}
+              </span>
+              <span>
+                נפתח ב־{dayName(p.createdAt)}
+                {p.creatorName ? ` על ידי ${p.creatorName}` : ''}
+              </span>
+              <Progress project={p} />
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Where to start a project from: the gaps on the Missing board, with how many each holds (unknown while it is read: undefined; unread: null). */
+function Gaps({ gaps }: { gaps: { recordings: number | null | undefined; texts: number | null | undefined } }) {
+  return (
+    <SeeAlso
+      links={[
+        ...(gaps.recordings !== null ? [{ to: '/missing', icon: 'listen' as const, label: 'התוועדויות בלי הקלטה', sub: gaps.recordings === undefined ? undefined : capped(gaps.recordings) }] : []),
+        ...(gaps.texts !== null ? [{ to: '/missing?kind=texts', icon: 'scan' as const, label: 'התוועדויות בלי הנחה', sub: gaps.texts === undefined ? undefined : capped(gaps.texts) }] : []),
+        { to: '/health', icon: 'library', label: 'מצב הקטלוג' },
+      ]}
+    />
   );
 }
 
@@ -172,5 +210,29 @@ function NewProject() {
         </Button>
       </Form>
     </Panel>
+  );
+}
+
+/** How projects work and what else is missing. They come in after the list, so nothing under the waiting line is pushed down when it arrives. */
+function Below({ data, steward }: { data: Route.ComponentProps['loaderData']['data']; steward: boolean }) {
+  return (
+    <>
+      {steward && <NewProject />}
+
+      <SectionHead title="איך זה עובד" />
+      <ol className="howto">
+        <li>כל פרויקט עובר על חוסר אחד: התוועדויות של שנה בלי הקלטה, הקלטות לסנכרון, עמודי סריקה להגהה.</li>
+        <li>״תנו לי את הבא״ מביא לכם פריט שאף אחד אחר לא עובד עליו, ושומר אותו לכם לשלוש שעות.</li>
+        <li>ההתקדמות זזה עם כל תוספת שאושרה.</li>
+      </ol>
+
+      <SectionHead title="מה עוד חסר" more={{ label: 'מה חסר', to: '/missing' }} />
+      {/* The links are there at once; how much each holds is added when the counts come. */}
+      <Suspense fallback={<Gaps gaps={{ recordings: undefined, texts: undefined }} />}>
+        <Await resolve={data} errorElement={<Gaps gaps={{ recordings: null, texts: null }} />}>
+          {({ gaps }) => <Gaps gaps={gaps} />}
+        </Await>
+      </Suspense>
+    </>
   );
 }

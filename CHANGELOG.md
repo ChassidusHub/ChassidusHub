@@ -10,12 +10,16 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
-- The catalog snapshot (#228, docs/catalog-snapshot.md): `GET /v1/catalog/manifest.json`
-  names a few files that hold the whole tree (every shelf and sefer, each
-  sefer's units by volume, each year's events), each at
-  `/v1/catalog/files/<file>`, named by its sha256 and kept for good. Built
-  from main behind the answers after a change, so a page can draw the
-  catalog from memory with no read of the database.
+The newest entries wait as one file each in [changes/](changes/) until
+`npm run changelog` moves them in below.
+
+- Searching a sefer's or set's own name puts it first (#233): on the All
+  tab, the sefarim and sets named just what was typed, in any language,
+  come above the words in the texts and the farbrengens. A language asked
+  for ("Tanya in English") is taken off the name when the whole words name
+  nothing. When nothing has every word ("the Rebbe talks in English"), the
+  page shows what the other words name, in any language, and says so
+  (#123).
 
 - The web app's catalog (`/v1/app/v1/catalog/…`) answers again: it is built
   from the farbrengens alone, without reading every sefer's units, which

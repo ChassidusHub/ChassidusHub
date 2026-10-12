@@ -1,7 +1,7 @@
 import type { ChassidusHub, Item, PathLevel as ApiLevel } from '@chassidushub/client';
 import { redirect } from 'react-router';
 import { namesOf } from '../edit/names';
-import { printingsFrom } from './printings';
+import type { printingsFrom } from './printings';
 import { isRebbe, nameOf, partLabel, rebbeimFirst } from '../lib/catalog';
 
 /**
@@ -137,21 +137,32 @@ function asGrid(parts: Array<{ value?: string; label?: unknown }>): boolean {
 /** Nothing, where the API answers that a read does not apply (an outline of something that is not a sefer). */
 const orNothing = <T>(read: Promise<T>): Promise<T | null> => read.catch((error) => ((error as { status?: number }).status && (error as { status: number }).status < 500 ? null : Promise.reject(error)));
 
+/**
+ * What a library page is drawn with: the API's address (the browser reads a
+ * sefer's printings from it), and for a page asked to show a scan (`?scan=`),
+ * the server's `printingsFrom` (app/library/printings.ts), passed in so that
+ * the browser's clicks (app/catalog/clicks.ts) need not load it.
+ */
+export interface LoadOptions {
+  apiBase: string;
+  scan?: typeof printingsFrom;
+}
+
 /** The printings of a sefer, read on the server only for a page asked to show a scan (`?scan=`). */
-const printingsFor = (api: ChassidusHub, work: string, scan: boolean) => (scan ? api.listLinked({ id: work, field: 'work', type: 'publication', limit: 500 }).then((page) => page.items) : Promise.resolve(null));
+const printingsFor = (api: ChassidusHub, work: string, scan: unknown) => (scan ? api.listLinked({ id: work, field: 'work', type: 'publication', limit: 500 }).then((page) => page.items) : Promise.resolve(null));
 
 /**
  * A sefer's page, for the sefer and its path bar already read: its volumes
  * and its additions, read together, and its printings (read by the browser
  * unless a scan was asked for). Null when the item is not a sefer.
  */
-export async function loadWork(api: ChassidusHub, item: Item, levels: ApiLevel[], options: { scan?: boolean; apiBase: string }) {
+export async function loadWork(api: ChassidusHub, item: Item, levels: ApiLevel[], options: LoadOptions) {
   if (item.type !== 'work') return null;
   const id = item.id;
   const [outline, additions, publications] = await Promise.all([
     orNothing(api.workOutline({ id })),
     orNothing(api.listLinked({ id, field: 'addition.to', type: 'work', limit: 100 })),
-    printingsFor(api, id, !!options.scan),
+    printingsFor(api, id, options.scan),
   ]);
   if (!outline) return null;
   const data = item.data as { title?: unknown };
@@ -168,7 +179,7 @@ export async function loadWork(api: ChassidusHub, item: Item, levels: ApiLevel[]
     ...ownFields(item, levels),
     grid: asGrid(outline.parts),
     parts,
-    printings: publications ? printingsFrom(publications) : null,
+    printings: publications && options.scan ? options.scan(publications) : null,
     additions: (additions?.items ?? []).map((addition): Line => {
       const kind = (addition.data as { addition?: { kind?: string } }).addition?.kind ?? '';
       return { key: addition.id, title: nameOf((addition.data as { title?: unknown }).title, addition.id), sub: additionKinds[kind] || undefined, to: addition.path ?? undefined };
@@ -195,13 +206,13 @@ function groupOf(position: unknown): string | undefined {
  * already read: its units, its path bar (the sefer's, and the volume with the
  * other volumes), and its printings.
  */
-export async function loadVolume(api: ChassidusHub, work: Item, levels: ApiLevel[], value: string, options: { scan?: boolean; apiBase: string }) {
+export async function loadVolume(api: ChassidusHub, work: Item, levels: ApiLevel[], value: string, options: LoadOptions) {
   if (work.type !== 'work') return null;
   const workId = work.id;
   const [outline, part, publications] = await Promise.all([
     orNothing(api.workOutline({ id: workId })),
     orNothing(api.workPart({ id: workId, part: value, limit: 1000 })),
-    printingsFor(api, workId, !!options.scan),
+    printingsFor(api, workId, options.scan),
   ]);
   const here = outline?.parts.find((p) => p.value === value);
   if (!here || !part) return null;
@@ -231,7 +242,7 @@ export async function loadVolume(api: ChassidusHub, work: Item, levels: ApiLevel
       group: groupOf(unit.data.position),
       to: unit.path ?? `/${unit.id}`,
     })),
-    printings: publications ? printingsFrom(publications, { value, label }) : null,
+    printings: publications && options.scan ? options.scan(publications, { value, label }) : null,
   };
 }
 

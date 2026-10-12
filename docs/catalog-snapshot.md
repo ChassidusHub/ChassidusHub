@@ -41,7 +41,7 @@ From main, never from anyone's words: units from `unit_place` (migration
   organize, by the site, a token or the MCP server), behind its answer.
 - When a manifest is asked for and main has changed since the one kept: that
   answer still serves the kept one, and the build runs behind it.
-- By the scheduled run, every five minutes.
+- By the scheduled run, every minute.
 - The very first time, when there is none yet, while the first request waits.
 
 Each check costs one statement when nothing changed. One build runs at a time

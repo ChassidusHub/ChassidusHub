@@ -10,6 +10,7 @@ import { replaceInText } from '../fix/replace';
 import { Button, Icon, IconButton, player, Sheet, TopBar, usePlayer, type Track } from '../ui';
 import { chapterAt } from '../ui/player/engine';
 import type { Route } from './+types/recording';
+import { KEPT_PAGE } from '../lib/caching';
 
 export const handle = { section: 'listen' };
 
@@ -29,7 +30,7 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   return { ...found, years: YEARS.map((year) => ({ year, label: yearLabel(year) })), first: firstWords(api, found.chapters).catch(() => null) };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 /**
  * A recorded event: its words a paragraph at a time, a small heading where each

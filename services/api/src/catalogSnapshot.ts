@@ -16,7 +16,7 @@ import type { R2Bucket } from './r2.js';
  * when there is none to serve): after any change that may have merged
  * something (an Approve, a live fix, an organize), when a manifest is asked
  * for and the catalog has moved on since, and by the scheduled run every
- * five minutes. Each of those costs one cheap statement when nothing changed.
+ * minute. Each of those costs one cheap statement when nothing changed.
  */
 
 export interface SnapshotOptions {

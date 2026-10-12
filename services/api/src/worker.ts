@@ -6,6 +6,7 @@ import { keptStore, r2Store, r2Writer, statusStore, transcriptsStore, type R2Buc
 import { refreshCommunity, refreshMafteach, refreshToCheck, refreshTranscripts } from './summaries.js';
 import { AppReleases } from './appCatalog.js';
 import { r2SnapshotStore, singleFlight, type SnapshotOptions } from './catalogSnapshot.js';
+import { forgetChangedPages, type SitePages } from './sitePages.js';
 import { DEFAULT_IP_PER_MINUTE, DEFAULT_KEY_PER_MINUTE, DEFAULT_SEARCH_PER_MINUTE, mayUseEdgeCache, type RateLimiter } from './platform.js';
 import { authFor } from './auth.js';
 import { LOCKED_HEADER, lockOf, openedBy, ownersFrom, unlocked, type LockEnv } from './lock.js';
@@ -50,6 +51,8 @@ interface Env extends LockEnv {
   HYPERDRIVE: { connectionString: string };
   /** The site's Worker (a service binding), for the status checks; without it they ask SITE_URL over the internet. */
   SITE?: { fetch(request: Request): Promise<Response> };
+  /** The new site's kept pages (its `CachedPage` entrypoint, a service binding): told each minute which items changed (sitePages.ts). */
+  SITE_PAGES?: SitePages;
   /** The reader app's own catalog (reader/services/catalog-api), passed the app's catalog requests while ChassidusHub's lacks a part (appCatalog.ts). */
   READER_CATALOG?: { fetch(request: Request): Promise<Response> };
   /** The Hyperdrive config's id (wrangler.toml), for counting its queries today. */
@@ -122,6 +125,9 @@ interface Ctx {
   exports?: { CachedApi?: { fetch(request: Request): Promise<Response> } };
 }
 
+/** The cron that runs each minute (wrangler.toml, [triggers]); the other, every five, runs everything else. */
+const EVERY_MINUTE = '* * * * *';
+
 /** The apps' catalog as last built, kept for this isolate's life: each request asks only whether anything changed. */
 const appReleases = new AppReleases();
 
@@ -161,9 +167,22 @@ export default {
    * they follow, and suggestions waiting for review get the reviewer's advice. When it did not answer, those
    * wait for the next run rather than spend queries failing.
    */
-  async scheduled(_event: unknown, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<void> {
+  async scheduled(event: { cron?: string }, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<void> {
     const db = connectPostgres(env.HYPERDRIVE.connectionString, { max: 1 });
     const catalog = new Catalog(db);
+    // Every minute: the new site forgets its pages about what merged (sitePages.ts), and the catalog snapshot catches
+    // up with main (catalogSnapshot.ts; one statement when nothing changed). Nothing else runs then.
+    if (event.cron === EVERY_MINUTE) {
+      const files = env.FILES_PUBLIC;
+      const minute = async () => {
+        if (env.SITE_PAGES && files) {
+          await forgetChangedPages(catalog, keptStore(files), env.SITE_PAGES).catch((error) => void (isCatalogHeld(error) || console.error('site pages', error)));
+        }
+        if (files) await refreshSnapshot(db, r2SnapshotStore(files)).catch((error) => void (isCatalogHeld(error) || console.error('catalog snapshot', error)));
+      };
+      ctx.waitUntil(minute().finally(() => db.close()));
+      return;
+    }
     const mailer = mailerOf(env);
     const jobs = async (): Promise<string[]> => {
       const failed: string[] = [];
@@ -179,7 +198,6 @@ export default {
       if (env.FILES_PUBLIC) await job('to-check summary', () => refreshToCheck(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
       if (env.FILES_PUBLIC) await job('community sums', () => refreshCommunity(catalog, keptStore(env.FILES_PUBLIC!), new Date()));
       if (env.FILES_PUBLIC) await job('subject index', () => refreshMafteach(catalog, keptStore(env.FILES_PUBLIC!)));
-      if (env.FILES_PUBLIC) await job('catalog snapshot', () => refreshSnapshot(db, r2SnapshotStore(env.FILES_PUBLIC!)));
       if (mailer && env.SITE_URL) await job('email updates', () => sendNotifications(catalog, mailer, { siteUrl: new URL(env.SITE_URL!).origin }));
       if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_TOKEN) {
         await job("the reviewer's advice", () => adviseSuggestions(catalog, workersAiAdvisor({ accountId: env.CLOUDFLARE_ACCOUNT_ID!, token: env.CLOUDFLARE_AI_TOKEN! })));
