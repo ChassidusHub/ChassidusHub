@@ -60,7 +60,7 @@ describe('schemas', () => {
     expect(isAddition(EXAMPLES.work)).toBe(false);
   });
 
-  it("takes a sefer's `view` and a unit's facts (schema 18, RFC 0004), and refuses kinds it does not know", () => {
+  it("takes a sefer's `view` and a unit's facts (schema 19, RFC 0004), and refuses kinds it does not know", () => {
     expect(registry.validate('work', { ...EXAMPLES.work, view: 'hisvaaduyos' })).toEqual({ ok: true });
     expect(registry.validate('work', { ...EXAMPLES.work, view: 'gallery' }).ok).toBe(false);
     const letter = {
@@ -185,7 +185,7 @@ describe('page words', () => {
 
   it('takes structured words and nothing else: no markup, no unknown marks, no unsafe links', () => {
     expect(registry.validate('unit', page([{ text: 'שלום', marks: ['b', 'i'] }])).ok).toBe(true);
-    // A farbrengen's stage directions (ניגנו) are their own kind of segment (schema 18).
+    // A farbrengen's stage directions (ניגנו) are their own kind of segment (schema 19).
     const stage = { ...EXAMPLES.unit, body: { profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 's1', kind: 'stage', text: [{ text: 'ניגנו' }] }] }] } };
     expect(registry.validate('unit', stage)).toEqual({ ok: true });
     expect(registry.validate('unit', { ...EXAMPLES.unit, body: "'''wikitext'''" }).ok).toBe(false);

@@ -270,10 +270,11 @@ const fractionalOrder = str({ pattern: '^[0-9A-Za-z]+$', maxLength: 64 });
  * 16: a page segment's `printed` takes up to 1,000 places, not 50: a long note in Likkutei Sichos is
  * printed over a hundred lines and more, each with its own box, and the machine reading of vols 6-24 was refused.
  * 17: `orderIn`, an item's own place in each set it sits in (RFC 0002, #78).
- * 18: a sefer's `view`, a unit's facts (kind, heading, number, to, place, occasion, parsha, muga, labelOrigin)
+ * 18: a set's `liveFixes`, a moderated set that takes small fixes live (RFC 0001).
+ * 19: a sefer's `view`, a unit's facts (kind, heading, number, to, place, occasion, parsha, muga, labelOrigin)
  * and the page segment kind `stage` (RFC 0004, step 2, #343).
  */
-export const BUILTIN_SCHEMA_VERSION = 18;
+export const BUILTIN_SCHEMA_VERSION = 19;
 
 export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
   set: entitySchema(
@@ -284,6 +285,7 @@ export const BUILTIN_SCHEMAS: Record<EntityType, JsonSchema> = {
       slug: str({ pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' }),
       description: ref('localName'),
       policy: enumOf(['open', 'moderated', 'locked']),
+      liveFixes: { type: 'boolean' },
       keepers: arrayOf(str({ minLength: 1 }), { uniqueItems: true }),
       parent: ref('entityId'),
       order: fractionalOrder,

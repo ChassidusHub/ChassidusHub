@@ -617,6 +617,10 @@ a merge changes something it shows:
   streaming, never held back: a page still reading the API when its first
   bytes go (`<Await>`), or about more than 1000 items, is kept 10 minutes
   instead, since its tags cannot name everything it shows.
+- Each kept page also carries its own tag (`pageTag`). A part streamed after
+  the first bytes that fails (a search that did not answer, an error in the
+  render) cannot change the status already sent, so `CachedPage` purges that
+  one tag a second after the page has all gone out (#342).
 - Once a minute the API reads what merged since last time, takes the
   changed items and what they point at, and calls `CachedPage.forget` through
   the `SITE_PAGES` binding, which purges those tags

@@ -67,10 +67,6 @@ describe('search that lands on the moment, and by meaning', () => {
     expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=5742`)).body.moments).toHaveLength(1);
     expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=5711`)).body.moments).toHaveLength(1);
     expect((await json(app, `/v1/search/moments?q=${encodeURIComponent('אהבת')}&within=${encodeURIComponent('57%')}`)).status).toBe(422);
-    // probe=1 (temporary) times each part alone first, and answers the same, never kept.
-    const probed = await app.request(`/v1/search/moments?q=${encodeURIComponent('אהבת')}&probe=1`);
-    expect(probed.headers.get('Cache-Control')).toBe('no-store');
-    expect(((await probed.json()) as { moments: unknown[] }).moments).toEqual(body.moments);
 
     // A subject in English letters is looked for as the texts write it, by the older reads too (#99): the site's /search uses them.
     const english = (await json(app, `/v1/search/moments?q=${encodeURIComponent('ahavas yisroel')}`)).body;
