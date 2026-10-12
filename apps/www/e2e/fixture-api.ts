@@ -35,6 +35,24 @@ const bar = (unit: 1 | 2) => [
   },
 ];
 const words = (text: string) => [{ text }];
+
+/** A sefer of hisvaaduyos' path bar (app/views/hisvaaduyos.tsx): a volume's units, a maamar and the sichos of the same farbrengen. */
+const hvBar = (unit: 3 | 4) => [
+  { kind: 'set', chosen: { id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }, choices: [{ id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }] },
+  { kind: 'work', chosen: { id: 'rh-aaaaaav1', path: '/sample-hisvaaduyos', name: name('התוועדויות לדוגמה') }, choices: [{ id: 'rh-aaaaaav1', path: '/sample-hisvaaduyos', name: name('התוועדויות לדוגמה') }] },
+  { kind: 'part', level: 'volume', chosen: { path: '/sample-hisvaaduyos/11', name: name('כרך יא'), value: '11' }, choices: [{ path: '/sample-hisvaaduyos/11', name: name('כרך יא'), value: '11' }] },
+  {
+    kind: 'unit',
+    level: 'farbrengen',
+    chosen: unit === 3 ? { id: 'rh-aaaaaav3', path: '/sample-hisvaaduyos/11/3', name: name('מאמר לדוגמה · יו"ד שבט ה\'תשי"ד') } : { id: 'rh-aaaaaav4', path: '/sample-hisvaaduyos/11/4', name: name('שיחת יום לדוגמה, יו"ד שבט ה\'תשי"ד') },
+    choices: [
+      { id: 'rh-aaaaaav2', path: '/sample-hisvaaduyos/11/2', name: name('מברק לדוגמה, ה\'תשי"ד') },
+      { id: 'rh-aaaaaav3', path: '/sample-hisvaaduyos/11/3', name: name('מאמר לדוגמה · יו"ד שבט ה\'תשי"ד') },
+      { id: 'rh-aaaaaav4', path: '/sample-hisvaaduyos/11/4', name: name('שיחת יום לדוגמה, יו"ד שבט ה\'תשי"ד') },
+      { id: 'rh-aaaaaav5', path: '/sample-hisvaaduyos/11/5', name: name('שיחת שבת לדוגמה, י"ב שבט ה\'תשי"ד') },
+    ],
+  },
+];
 const machine = { by: 'ocr', model: 'sample', checked: false };
 
 /** Hayom Yom's path bar (app/views/daybook.tsx): the sefer, the month, and the month's days. */
@@ -247,6 +265,36 @@ const views: Record<string, unknown> = {
     previous: null,
     next: null,
     text: { kind: 'words', from: 'body', version: 'he', language: 'he', profile: 'sichos-kodesh', segments: [{ id: 'p1', kind: 'paragraph', text: words('גוף המכתב לדוגמה.') }], notes: [], machine: 'none', versions: [{ version: 'he', from: 'body', language: 'he' }] },
+  },
+  // A farbrengen of a sefer of hisvaaduyos (app/views/hisvaaduyos.tsx): a unit whose own level is `farbrengen`, the maamar said
+  // there printed before it, its sections א to ה, its stage lines, its print's בלתי מוגה line, and its recording.
+  '/sample-hisvaaduyos/11/4': {
+    item: { id: 'rh-aaaaaav4', type: 'unit', path: '/sample-hisvaaduyos/11/4', rev: 1, data: { label: name('שיחת יום לדוגמה, יו"ד שבט ה\'תשי"ד'), date: '5714-05-10', position: [{ level: 'volume', value: '11' }, { level: 'farbrengen', value: '4' }] } },
+    pathBar: hvBar(4),
+    previous: { id: 'rh-aaaaaav3', path: '/sample-hisvaaduyos/11/3', name: name('מאמר לדוגמה · יו"ד שבט ה\'תשי"ד') },
+    next: null,
+    text: {
+      kind: 'words',
+      from: 'body',
+      version: 'he',
+      language: 'he',
+      profile: 'chabad-library',
+      segments: [
+        { id: 'h1', kind: 'heading', level: 2, text: words('בס"ד. שיחת יום לדוגמה, יו"ד שבט ה\'תשי"ד.') },
+        { id: 'p1', kind: 'paragraph', text: words('בלתי מוגה') },
+        { id: 'p2', kind: 'paragraph', text: [{ text: 'א.', marks: ['b'] }, { text: ' כ"ק אדמו"ר שליט"א צוה לנגן ניגון לדוגמה, ואמר מאמר ד"ה לדוגמה.' }] },
+        ...['ב', 'ג', 'ד', 'ה'].flatMap((letter, at) => [
+          { id: `s${at}`, kind: 'paragraph', text: [{ text: `${letter}.`, marks: ['b'] }, { text: ` פסקה ראשונה של סעיף ${letter} לדוגמה. ${'מילים לדוגמה בתוך הסעיף. '.repeat(30)}` }] },
+          { id: `t${at}`, kind: 'paragraph', text: words(`${'עוד מילים לדוגמה בסעיף. '.repeat(30)}`) },
+          ...(at === 1 ? [{ id: 'g1', kind: 'paragraph', text: words('(וסיים כ"ק אדמו"ר שליט"א:)') }] : []),
+          ...(at === 2 ? [{ id: 'x1', kind: 'paragraph', text: words('***') }] : []),
+        ]),
+      ],
+      notes: [],
+      machine: 'none',
+      versions: [{ version: 'he', from: 'body', language: 'he' }],
+    },
+    recordings: [{ id: 'rh-aaaaaavr', path: '/listen/5714/rh-aaaaaave?r=rh-aaaaaavr', name: name('הקלטה לדוגמה'), durationMs: 3_720_000 }],
   },
   // A day of Hayom Yom (app/views/daybook.tsx), with what the print has that its text source lacks, read off the scan.
   '/hayom-yom/1/1': {

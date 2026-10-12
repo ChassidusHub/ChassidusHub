@@ -1,4 +1,5 @@
 import { isPageHref, type PageInline, type PageMark, type PageSegment } from '@chassidushub/model';
+import type { SaidThere } from '../views/hisvaaduyos.layout';
 
 /**
  * A page's words drawn as HTML, once, on the server. The words come as
@@ -55,6 +56,8 @@ export interface WordsContext {
   volume?: number;
   /** The pages beside it at its own level, as the path bar lists them (an index kept one letter a page). */
   siblings?: { path: string; label: string; current: boolean }[];
+  /** The other pieces said at the same farbrengen (a sicha's maamar), for a farbrengen's words (views/hisvaaduyos.layout.ts). */
+  said?: SaidThere[];
   /** The same words in another language, to set beside them (a chapter of Tanya with its translation). */
   beside?: { segments: readonly PageSegment[]; language: string };
 }

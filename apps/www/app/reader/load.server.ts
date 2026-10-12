@@ -6,17 +6,18 @@ import { namesOf } from '../edit/names';
 import { nameOf } from '../lib/catalog';
 import { clock } from '../listen/common';
 import { pdfsOf } from '../lib/pdfs';
-import { farbrengenMachine, farbrengenOf, farbrengenViews, farbrengenWords } from './farbrengen.server';
+import { farbrengenMachine, farbrengenOf, farbrengenViews, farbrengenWords, sichaName } from './farbrengen.server';
 import type { Fact, ReaderData, ReaderText } from './types';
 import { daybookLayout } from '../views/daybook.layout';
 import { letterLayout } from '../views/letters.layout';
 import { indexLayout, isIndexWords } from '../views/index.layout';
+import { hisvaaduyosLayout, hisvaaduyosParts, saidThere, type FarbrengenSection, type Muga } from '../views/hisvaaduyos.layout';
 import { chaptersLayout, simanChips } from '../views/chapters.layout';
 import { viewFor } from './views';
 import { notesHtml, unmarkedNotes, wordsAddress, wordsHtml, wordsKey, type DrawnWords, type WordsLayout } from './words.server';
 
 /** How each kind of page sets its words beyond the words themselves, by its view (app/views); a kind not named here is drawn as a sicha. */
-const layouts: Record<string, WordsLayout> = { letters: letterLayout, daybook: daybookLayout, index: indexLayout, chapters: chaptersLayout };
+const layouts: Record<string, WordsLayout> = { letters: letterLayout, daybook: daybookLayout, index: indexLayout, chapters: chaptersLayout, hisvaaduyos: hisvaaduyosLayout };
 
 /** The pseudo-version that reads a chapter beside its translation (views/chapters.tsx): the API gives the original for it. */
 export const BOTH = 'both';
@@ -35,6 +36,7 @@ function viewNamed(view: ItemView): string | undefined {
   if (typeof named === 'string' && named) return named;
   const bySefer = viewOf(view);
   if (bySefer) return bySefer;
+  if (inFarbrengen(view)) return 'hisvaaduyos';
   if (view.text?.kind === 'words' && isIndexWords((view.text.segments ?? []) as unknown as PageSegment[])) return 'index';
   return undefined;
 }
@@ -56,6 +58,13 @@ const viewOf = (view: ItemView) => {
   const work = view.pathBar.find((level) => level.kind === 'work')?.chosen.path;
   return work ? seferViews[work] : undefined;
 };
+
+/**
+ * A unit under a farbrengen (a Sichos Kodesh sicha) is read as a farbrengen,
+ * whole or a sicha at a time; a unit that is a farbrengen by its own level (a
+ * piece of Toras Menachem) picks the same view by its level (views/hisvaaduyos.tsx).
+ */
+const inFarbrengen = (view: ItemView) => ((view.item.data as { position?: { level?: unknown }[] }).position ?? []).at(-2)?.level === 'farbrengen';
 
 /** What the unit is by its own level: the last level of its position (`letter`), which picks its view. */
 const levelOf = (view: ItemView) => {
@@ -139,12 +148,14 @@ export function drawnWords(view: ItemView, title: string, beside?: ItemView | nu
   const translation = translationOf(beside ?? null);
   // Beside its translation, the notes under the words are the translation's (Tanya's Hebrew has none of its own).
   const notes = translation ? [...((view.text.notes ?? []) as unknown as PageSegment[]), ...translation.notes] : ((view.text.notes ?? []) as unknown as PageSegment[]);
-  const layout = layouts[kindOf(view)];
+  const kind = kindOf(view);
+  const layout = layouts[kind];
   const unmarked = layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined;
   const here = view.pathBar.at(-1);
   const around = {
     volume: volumeOf(view),
     siblings: here?.choices?.flatMap((c) => (c.path ? [{ path: c.path, label: nameOf(c.name), current: c.path === here.chosen.path }] : [])),
+    ...(kind === 'hisvaaduyos' ? { said: saidOf(view) } : {}),
     ...(translation ? { beside: { segments: translation.segments, language: translation.language } } : {}),
   };
   return { body: wordsHtml(segments, notes, title, layout, view.item.data, around), notes: notes.length ? notesHtml(notes, unmarked) : '' };
@@ -159,7 +170,34 @@ export async function pageWords(view: ItemView, api: ChassidusHub, language?: st
   const farbrengen = farbrengenOf(view);
   const sichos = farbrengen ? await farbrengenViews(view, farbrengen.sichos, api, language) : null;
   if (!farbrengen || !sichos) return { words: drawnWords(view, readerTitle(view), await besideOf(view, api, language)), sichos: null, title: readerTitle(view) };
-  return { words: farbrengenWords(sichos, farbrengen.label), sichos, title: farbrengen.label };
+  return { words: farbrengenWords(sichos, farbrengen.label, hisvaaduyosLayout), sichos, title: farbrengen.label };
+}
+
+/** The other pieces said at a unit's farbrengen, by the names of the units beside it (views/hisvaaduyos.layout.ts). */
+const saidOf = (view: ItemView) => {
+  const here = view.pathBar.at(-1);
+  if (!here) return [];
+  return saidThere({ path: here.chosen.path, name: nameOf(here.chosen.name) }, (here.choices ?? []).map((c) => ({ path: c.path, name: nameOf(c.name) })));
+};
+
+const MUGA: readonly string[] = ['mugah', 'bilti-mugah', 'hanacha'];
+
+/**
+ * What the hisvaaduyos view shows around a farbrengen's words (views/hisvaaduyos.tsx):
+ * whether it is edited (the unit's `muga`, else the print's own line, else
+ * what the hanacha's text says of itself), its sections, and the maamar said
+ * there. A farbrengen read as one page has a section for each of its sichos.
+ */
+function farbrengenParts(view: ItemView, sichos: ItemView[] | null): { muga?: Muga; sections?: FarbrengenSection[]; said?: ReturnType<typeof saidOf> } {
+  const fields = view.item.data as { muga?: unknown; note?: unknown };
+  const segments = view.text?.kind === 'words' ? ((view.text.segments ?? []) as unknown as PageSegment[]) : [];
+  const parts = hisvaaduyosParts(segments);
+  const says = [view.text?.kind === 'words' ? view.text.title : '', typeof fields.note === 'string' ? fields.note : ''].join(' ');
+  const muga = typeof fields.muga === 'string' && MUGA.includes(fields.muga) ? (fields.muga as Muga) : (parts.muga ?? (says.includes('בלתי מוגה') ? (says.includes('הנחה') ? 'hanacha' : 'bilti-mugah') : undefined));
+  const letters = sichos?.map((sicha, at) => ({ label: sichaName(sicha, '').split(/\s+/).at(-1) ?? '', id: `u-${sicha.item.id}`, at }));
+  const sections = letters ? (letters.every((s) => /^[א-ת]{1,3}$/.test(s.label)) ? letters.map(({ label, id }) => ({ label, id })) : []) : parts.sections;
+  const said = saidOf(view);
+  return { ...(muga ? { muga } : {}), ...(sections.length > 1 ? { sections } : {}), ...(said.length ? { said } : {}) };
 }
 
 /**
@@ -208,6 +246,7 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     rev: (view.item as { rev?: number }).rev ?? 0,
     names: namesOf(view.item.data),
     ...(sichos ? { farbrengen: true as const } : {}),
+    ...(viewFor({ view: named, level }).kind === 'hisvaaduyos' ? farbrengenParts(view, sichos) : {}),
     work: fromWork >= 0 && view.pathBar[fromWork]!.chosen.path ? { path: view.pathBar[fromWork]!.chosen.path!, label: nameOf(view.pathBar[fromWork]!.chosen.name) } : null,
   };
 }
