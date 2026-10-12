@@ -516,17 +516,17 @@ form[role='search'] { margin-block: 8px 4px; }
 .tp { position: relative; margin-block-end: 0.9em; }
 .tt {
   position: absolute; inset-inline-end: calc(100% + 14px); top: 0.55em; padding: 1px 4px; border-radius: 6px; direction: ltr;
-  font-family: var(--ui); font-size: 11px; line-height: 1.6; color: var(--g500); font-variant-numeric: tabular-nums; white-space: nowrap;
+  font-family: var(--ui); font-size: 11px; line-height: 1.6; color: var(--g600); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .tt:hover { color: var(--g900); background: var(--g100); }
-/* No margin to spare: the time is not shown (the part's time is in its heading, and a tap on the words plays from them). */
+/* No margin to spare: the time floats at the paragraph's end side, small, inside the text's width. */
 @media (max-width: 1099px) {
-  .tt { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+  .tt { position: static; float: inline-end; margin-inline-start: 8px; margin-block-start: 0.45em; }
 }
 .tx { margin: 0; cursor: pointer; }
 .tx:hover { color: var(--g700); }
 .tp.now .tt { color: var(--g900); font-weight: 600; }
-.tp.now .tx { color: var(--g500); }
+.tp.now .tx { color: var(--g600); }
 .tp.now .w.said, .tp.now .w.on { color: var(--g900); }
 .tp.now .w.on { background: var(--g200); border-radius: 4px; box-shadow: 0 0 0 2px var(--g200); }
 .tr .wait { font-family: var(--ui); font-size: 14px; color: var(--g600); padding-block: 8px; text-align: center; }
