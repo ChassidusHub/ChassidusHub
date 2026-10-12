@@ -22,6 +22,8 @@ export default [
     route('connect', 'routes/connect.tsx'),
     route('oauth/consent', 'routes/oauth-consent.tsx'),
     route('back', 'routes/backroom.tsx'),
+    // One catalog batch in the back room's queue: its research note, its tree before and after, Approve or Send back (Flow).
+    route('back/batch/:id', 'routes/back-batch.tsx'),
     // Suggestions as pull requests: the list and one suggestion's page (thread 6, the rebuild); the old /review is the back room's.
     route('suggestions', 'routes/suggestions.tsx'),
     route('suggestions/:number', 'routes/suggestion.tsx'),

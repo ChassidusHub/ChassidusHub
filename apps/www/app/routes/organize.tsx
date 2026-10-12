@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useMemo, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from 'react';
-import { data, Link, useRevalidator } from 'react-router';
+import { Fragment, Suspense, useEffect, useMemo, useState, type DragEvent, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import { Await, data, Link, useRevalidator } from 'react-router';
 import { useAccount } from '../lib/account';
 import { call, nameOf } from '../stewards/call';
 import { dropAt, groupsOf, holds, KINDS, pick, planOf, said, slugOf, step, type Group, type Operation, type Preview, type Sent, type TreeNode } from '../stewards/organize';
@@ -19,21 +19,23 @@ interface Crumb {
 
 const ID = /^rh-[0-9a-z]+$/;
 
-/**
- * One level of the tree, the same for everyone: the library's top sets, or a
- * set's sets and sefarim, or a sefer's sichos; and the sets above it, for the
- * path bar (a set's parent, a sefer's first set).
- */
-export async function loader({ request, context }: Route.LoaderArgs) {
-  const asked = new URL(request.url).searchParams.get('root')?.toLowerCase() ?? '';
-  if (asked && !ID.test(asked)) throw data(null, { status: 404 });
-  const tree = await context.api.catalogTree({ ...(asked ? { root: asked } : {}), depth: 1, limit: 500 }).catch((error: { status?: number }) => {
+/** The level the address asks for (`?root=`), or the top of the library (''). */
+const askedOf = (request: Request) => new URL(request.url).searchParams.get('root')?.toLowerCase() ?? '';
+
+type Api = Route.LoaderArgs['context']['api'];
+
+/** One level of the tree; a level that is not there is not found. */
+const treeOf = (api: Api, asked: string) =>
+  api.catalogTree({ ...(asked ? { root: asked } : {}), depth: 1, limit: 500 }).catch((error: { status?: number }) => {
     if (error.status === 400 || error.status === 404) throw data(null, { status: 404 });
     throw error;
   });
+
+/** The sets above a level, for the path bar (a set's parent, a sefer's first set), read one after another. */
+async function withCrumbs(api: Api, tree: Awaited<ReturnType<typeof treeOf>>) {
   const crumbs: Crumb[] = [];
   if (tree.root) {
-    const itemData = async (id: string) => ((await context.api.getItem({ id }).catch(() => null))?.data ?? null) as { name?: unknown; parent?: string; sets?: string[] } | null;
+    const itemData = async (id: string) => ((await api.getItem({ id }).catch(() => null))?.data ?? null) as { name?: unknown; parent?: string; sets?: string[] } | null;
     const own = await itemData(tree.root.id);
     let up = tree.root.type === 'set' ? own?.parent : own?.sets?.[0];
     for (let hop = 0; up && hop < 8; hop++) {
@@ -46,13 +48,34 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return { root: tree.root, children: tree.children, more: tree.more, crumbs };
 }
 
+/**
+ * One level of the tree, the same for everyone: the library's top sets, or a
+ * set's sets and sefarim, or a sefer's sichos; and the sets above it, for the
+ * path bar. A level asked for by id is read before the page answers, so one
+ * that is not there is a 404; the sets above it come after. The top of the
+ * library is always there, so its page never waits.
+ */
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const asked = askedOf(request);
+  if (asked && !ID.test(asked)) throw data(null, { status: 404 });
+  const tree = asked ? await treeOf(context.api, asked) : null;
+  return { asked, level: (tree ? Promise.resolve(tree) : treeOf(context.api, asked)).then((found) => withCrumbs(context.api, found)) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the level follows (a level that is not there says so). */
+export function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  return { asked: askedOf(request), level: serverLoader().then((d) => d.level) };
+}
+
+type Level = Awaited<ReturnType<typeof withCrumbs>>;
+
 /** The tree changes only when the catalog does. */
 export function headers() {
   return { 'Cache-Control': 'public, max-age=60, s-maxage=120' };
 }
 
 export function meta({ data: page }: Route.MetaArgs) {
-  return [{ title: `${page?.root ? `סידור: ${nodeName(page.root)}` : 'סידור הקטלוג'} · ChassidusHub` }, { name: 'robots', content: 'noindex' }];
+  return [{ title: `${page?.asked ? 'סידור' : 'סידור הקטלוג'} · ChassidusHub` }, { name: 'robots', content: 'noindex' }];
 }
 
 /** The sets (or sefarim) at a level of the tree, as a path bar menu; the one the page is on marked. */
@@ -83,9 +106,54 @@ type Dialog = { kind: 'move' | 'merge' } | { kind: 'rename'; id: string } | { ki
  * approve their own may put it in the catalog at once.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { crumbs, more } = loaderData;
-  const root = loaderData.root as TreeNode | null;
-  const children = loaderData.children as TreeNode[];
+  const { asked, level } = loaderData;
+  return (
+    // Another level starts afresh, its frame showing until it comes.
+    <Suspense
+      key={asked}
+      fallback={
+        <Frame asked={asked}>
+          <p className="faint" aria-busy="true">
+            רגע…
+          </p>
+        </Frame>
+      }
+    >
+      <Await
+        resolve={level}
+        errorElement={
+          <Frame asked={asked}>
+            <Say>{asked ? 'המקום הזה בקטלוג לא נמצא, או שלא נטען כרגע.' : 'הקטלוג לא נטען כרגע. נסו שוב בעוד רגע.'}</Say>
+          </Frame>
+        }
+      >
+        {(found) => <Organizer level={found} />}
+      </Await>
+    </Suspense>
+  );
+}
+
+/** A level's frame until it comes (or when it cannot): the path bar's top, the heading, what the page is for. */
+function Frame({ asked, children }: { asked: string; children: ReactNode }) {
+  return (
+    <>
+      <TopBar path={[levelOf('top', 'סידור', 'סטים בראש הספרייה', null, null)]} />
+      <main id="content" className="view wide">
+        <h1>{asked ? 'סידור' : 'סידור הקטלוג'}</h1>
+        <p className="lede">{LEDE}</p>
+        {children}
+      </main>
+    </>
+  );
+}
+
+const LEDE = 'בוחרים שורות, ומעבירים, משנים שם, מסדרים מחדש, יוצרים סט או ממזגים כפולים. כל השינויים יחד נשלחים כהצעה אחת, ונבדקים לפני שהם נכנסים. כתובות ישנות ממשיכות להוביל למקום החדש.';
+
+/** The level itself, once it came: its rows, the actions on them, and the changes waiting to be sent. */
+function Organizer({ level }: { level: Level }) {
+  const { crumbs, more } = level;
+  const root = level.root as TreeNode | null;
+  const children = level.children as TreeNode[];
   const account = useAccount();
   const revalidator = useRevalidator();
   const groups = useMemo(() => groupsOf(root, children), [root, children]);
@@ -210,7 +278,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
       <TopBar path={path} />
       <main id="content" className="view wide">
         <h1>{root ? `סידור: ${nodeName(root)}` : 'סידור הקטלוג'}</h1>
-        <p className="lede">בוחרים שורות, ומעבירים, משנים שם, מסדרים מחדש, יוצרים סט או ממזגים כפולים. כל השינויים יחד נשלחים כהצעה אחת, ונבדקים לפני שהם נכנסים. כתובות ישנות ממשיכות להוביל למקום החדש.</p>
+        <p className="lede">{LEDE}</p>
         <noscript>
           <Say>הסידור פועל עם JavaScript.</Say>
         </noscript>

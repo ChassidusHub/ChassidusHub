@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { data, Link, redirect, useSearchParams } from 'react-router';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Await, data, Link, redirect, useAsyncError, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useAccount } from '../lib/account';
 import { Button, Field, IconButton, Say, SectionHead, Segmented, TopBar } from '../ui';
 import { Area } from '../ui/Writing';
@@ -13,12 +13,17 @@ import type { Route } from './+types/suggestion';
 /** How many items a page of changes carries; the rest come a page at a time. */
 const PAGE = 20;
 
+/** The #number the address asks for, or null for an import's `i<id>`: the page's frame, known without a read. */
+const numberOf = (params: Route.LoaderArgs['params']) => (/^\d{1,9}$/.test(params.number) ? Number(params.number) : null);
+
 /**
  * One Suggestion, read as anyone reads it (so the page is whole before
  * script and may be kept at the edge a little): its changes, a page of them,
  * and its conversation. `/suggestions/12` is its #number; an import, which
  * has none, is `/suggestions/i<id>`. A #number that is an issue goes to the
- * issue.
+ * issue. Whether it exists (and where it lives) is the one thing waited for
+ * here, so a wrong address is a real 404 or redirect; its conversation comes
+ * after the frame.
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   const asked = params.number;
@@ -33,6 +38,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     id = thread.id;
   } else if (/^i\d{1,9}$/.test(asked)) id = Number(asked.slice(1));
   else throw data(null, { status: 404 });
+  // Only a #number has a conversation; it is asked for while the suggestion itself is read.
+  const conversation = /^\d/.test(asked) ? context.api.suggestionConversation({ id }).catch(() => null) : Promise.resolve(null);
   const raw = await context.api.getSuggestion({ id, brief: '1', limit: PAGE }).catch((error: { status?: number }) => {
     if (error?.status === 404) return null;
     throw error;
@@ -40,8 +47,12 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (!raw) throw data(null, { status: 404 });
   const view = suggestionView(raw);
   if (asked.startsWith('i') && view.number) throw redirect(`/suggestions/${view.number}`);
-  const talk = view.number ? conversationOf(await context.api.suggestionConversation({ id }).catch(() => null)) : null;
-  return { view, talk };
+  return { number: numberOf(params), data: conversation.then((talk) => ({ view, talk: view.number ? conversationOf(talk) : null })) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the suggestion follows. */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  return { number: numberOf(params), data: serverLoader().then((loaded) => loaded.data) };
 }
 
 /** What is said and decided changes it; the person's own view is read again in the browser, so a short while at the edge is enough. */
@@ -51,10 +62,54 @@ export function headers() {
 
 export function meta({ data: loaded }: Route.MetaArgs) {
   if (!loaded) return [{ title: 'הצעה · ChassidusHub' }];
-  return [{ title: `${loaded.view.title}${loaded.view.number ? ` #${loaded.view.number}` : ''} · הצעות · ChassidusHub` }, { name: 'robots', content: 'noindex' }];
+  return [{ title: `הצעה${loaded.number ? ` #${loaded.number}` : ''} · הצעות · ChassidusHub` }, { name: 'robots', content: 'noindex' }];
 }
 
 type Tab = 'talk' | 'changes';
+type Loaded = Awaited<Route.ComponentProps['loaderData']['data']>;
+
+/** The page's frame (its #number) at once; the suggestion itself where it will be, when it comes. */
+export default function Screen({ loaderData }: Route.ComponentProps) {
+  const { number } = loaderData;
+  const asked = useParams().number;
+  return (
+    <>
+      <TopBar title={number ? `הצעה #${number}` : 'הצעה'} sub="הצעות" />
+      <main id="content" className="view">
+        {/* Keyed by the address, so going to another suggestion shows its frame at once rather than this one until the next has come. */}
+        <Suspense
+          key={asked}
+          fallback={
+            <p className="faint" aria-busy="true">
+              רגע…
+            </p>
+          }
+        >
+          <Await resolve={loaderData.data} errorElement={<Elsewhere />}>
+            {(loaded) => <Suggestion loaded={loaded} />}
+          </Await>
+        </Suspense>
+      </main>
+    </>
+  );
+}
+
+/**
+ * When the suggestion did not come from inside the site: a #number that is
+ * an issue (or an import that has a number) goes on to its page, as the
+ * server would have sent it; no such suggestion, or a failure, is the site's
+ * own error page, as before.
+ */
+function Elsewhere() {
+  const error = useAsyncError();
+  const navigate = useNavigate();
+  const to = error instanceof Response && error.status >= 300 && error.status < 400 ? error.headers.get('Location') : null;
+  useEffect(() => {
+    if (to) navigate(to, { replace: true });
+  }, [to, navigate]);
+  if (!to) throw error;
+  return null;
+}
 
 /**
  * A Suggestion as a pull request's page (the plan: "a Suggestion is a PR"):
@@ -67,23 +122,23 @@ type Tab = 'talk' | 'changes';
  * date or undoes it once it is in. Who may do what is the API's to say, read
  * in the browser as the person.
  */
-export default function Screen({ loaderData }: Route.ComponentProps) {
+function Suggestion({ loaded }: { loaded: Loaded }) {
   const account = useAccount();
   const [params, setParams] = useSearchParams();
   const tab: Tab = params.get('tab') === 'changes' ? 'changes' : 'talk';
-  const [view, setView] = useState<SuggestionView>(loaderData.view);
-  const [talk, setTalk] = useState<Conversation | null>(loaderData.talk);
-  const [more, setMore] = useState<{ entries: EntryView[]; next: number | null }>({ entries: [], next: loaderData.view.next });
+  const [view, setView] = useState<SuggestionView>(loaded.view);
+  const [talk, setTalk] = useState<Conversation | null>(loaded.talk);
+  const [more, setMore] = useState<{ entries: EntryView[]; next: number | null }>({ entries: [], next: loaded.view.next });
   const [pending, setPending] = useState<FieldComment[]>([]);
   const [merge, setMerge] = useState<{ resolutions: Resolutions; ready: boolean }>({ resolutions: {}, ready: false });
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState<{ tone: 'good' | 'bad'; text: string } | null>(null);
   const id = view.id;
   useEffect(() => {
-    setView(loaderData.view);
-    setTalk(loaderData.talk);
-    setMore({ entries: [], next: loaderData.view.next });
-  }, [loaderData]);
+    setView(loaded.view);
+    setTalk(loaded.talk);
+    setMore({ entries: [], next: loaded.view.next });
+  }, [loaded]);
 
   // As the person: whether they may approve it, whether they wrote it, and what was said since the page was kept.
   const refresh = useCallback(async () => {
@@ -161,66 +216,63 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <TopBar title={view.number ? `הצעה #${view.number}` : 'הצעה'} sub="הצעות" />
-      <main id="content" className="view">
-        <p className={`sg-state sg-${view.live ? 'live' : view.status}`}>{statusWords(view.status, view.live)}</p>
-        <Title view={view} mayEdit={mayEdit} busy={busy} save={(title) => act(() => call(`${id}`, { method: 'PATCH', body: { title } }))} />
-        <p className="faint sm">
-          {personName(view.author, people)}
-          {view.via ? <span className="machine sg-agent">{`נשלחה בידי סוכן: ${view.via.name}`}</span> : null}
-          {` · ${dayOf(view.submittedAt ?? view.createdAt)} · `}
-          {view.total === 1 ? 'פריט אחד' : `${view.total} פריטים`}
-          {' · '}
-          <Link to="/suggestions">כל ההצעות</Link>
-        </p>
-        {view.via && open && <p className="faint sm">סוכן כתב את ההצעה הזאת בשביל המציע. עד שאדם יבדוק אותה, היא עבודה של מכונה.</p>}
-        <Segmented
-          label="חלקי ההצעה"
-          value={tab}
-          onChange={(next) => setParams(next === 'talk' ? {} : { tab: next }, { replace: true, preventScrollReset: true })}
-          options={[
-            { value: 'talk', label: talk ? `שיחה (${talk.timeline.filter((i) => i.type === 'comment').length})` : 'שיחה' },
-            { value: 'changes', label: `השינויים (${view.total})` },
-          ]}
-        />
-        {tab === 'talk' ? (
-          <>
-            <Description view={view} mayEdit={mayEdit} busy={busy} save={(description) => act(() => call(`${id}`, { method: 'PATCH', body: { description } }))} />
-            <SectionHead title="מה היא משנה" more={view.total > 2 ? { label: `כל ${view.total} השינויים`, to: '?tab=changes' } : undefined} />
-            {view.entries.slice(0, 2).map((entry) => (
-              <EntryCard key={entry.id} entry={entry} />
-            ))}
-            <Checks view={view} />
-            {account && open ? <Merge id={id} mayUpdate={view.mine || steward} onChoices={(resolutions, ready) => setMerge({ resolutions, ready })} onChanged={() => void refresh()} /> : null}
-            {view.mayApprove && open ? review : null}
-            <SectionHead title="השיחה" />
-            {talk ? (
-              <Timeline items={talk.timeline} people={people} entries={entries} reply={account ? (body, parent) => act(() => call(`${id}/comments`, { body: { body, parent } })) : undefined} />
-            ) : view.number ? (
-              <p className="faint">השיחה לא נטענה. נסו שוב בעוד רגע.</p>
-            ) : (
-              <p className="faint">להצעה שיובאה אין שיחה. בודקים את השינויים ומאשרים.</p>
-            )}
-            {view.mayApprove && open ? null : review}
-            <Details view={view} talk={talk} people={people} signedIn={Boolean(account)} busy={busy} act={act} />
-          </>
-        ) : (
-          <>
-            <SectionHead title={view.total === 1 ? 'השינוי' : `${view.total} השינויים`} />
-            {entries.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} onComment={account && view.number ? comment : undefined} onKeep={account && open ? (c) => setPending((now) => [...now, c]) : undefined} />
-            ))}
-            {more.next !== null && (
-              <div className="btns">
-                <Button look="outline" onClick={() => void loadMore()}>
-                  {`עוד שינויים (${view.total - entries.length})`}
-                </Button>
-              </div>
-            )}
-            {review}
-          </>
-        )}
-      </main>
+      <p className={`sg-state sg-${view.live ? 'live' : view.status}`}>{statusWords(view.status, view.live)}</p>
+      <Title view={view} mayEdit={mayEdit} busy={busy} save={(title) => act(() => call(`${id}`, { method: 'PATCH', body: { title } }))} />
+      <p className="faint sm">
+        {personName(view.author, people)}
+        {view.via ? <span className="machine sg-agent">{`נשלחה בידי סוכן: ${view.via.name}`}</span> : null}
+        {` · ${dayOf(view.submittedAt ?? view.createdAt)} · `}
+        {view.total === 1 ? 'פריט אחד' : `${view.total} פריטים`}
+        {' · '}
+        <Link to="/suggestions">כל ההצעות</Link>
+      </p>
+      {view.via && open && <p className="faint sm">סוכן כתב את ההצעה הזאת בשביל המציע. עד שאדם יבדוק אותה, היא עבודה של מכונה.</p>}
+      <Segmented
+        label="חלקי ההצעה"
+        value={tab}
+        onChange={(next) => setParams(next === 'talk' ? {} : { tab: next }, { replace: true, preventScrollReset: true })}
+        options={[
+          { value: 'talk', label: talk ? `שיחה (${talk.timeline.filter((i) => i.type === 'comment').length})` : 'שיחה' },
+          { value: 'changes', label: `השינויים (${view.total})` },
+        ]}
+      />
+      {tab === 'talk' ? (
+        <>
+          <Description view={view} mayEdit={mayEdit} busy={busy} save={(description) => act(() => call(`${id}`, { method: 'PATCH', body: { description } }))} />
+          <SectionHead title="מה היא משנה" more={view.total > 2 ? { label: `כל ${view.total} השינויים`, to: '?tab=changes' } : undefined} />
+          {view.entries.slice(0, 2).map((entry) => (
+            <EntryCard key={entry.id} entry={entry} />
+          ))}
+          <Checks view={view} />
+          {account && open ? <Merge id={id} mayUpdate={view.mine || steward} onChoices={(resolutions, ready) => setMerge({ resolutions, ready })} onChanged={() => void refresh()} /> : null}
+          {view.mayApprove && open ? review : null}
+          <SectionHead title="השיחה" />
+          {talk ? (
+            <Timeline items={talk.timeline} people={people} entries={entries} reply={account ? (body, parent) => act(() => call(`${id}/comments`, { body: { body, parent } })) : undefined} />
+          ) : view.number ? (
+            <p className="faint">השיחה לא נטענה. נסו שוב בעוד רגע.</p>
+          ) : (
+            <p className="faint">להצעה שיובאה אין שיחה. בודקים את השינויים ומאשרים.</p>
+          )}
+          {view.mayApprove && open ? null : review}
+          <Details view={view} talk={talk} people={people} signedIn={Boolean(account)} busy={busy} act={act} />
+        </>
+      ) : (
+        <>
+          <SectionHead title={view.total === 1 ? 'השינוי' : `${view.total} השינויים`} />
+          {entries.map((entry) => (
+            <EntryCard key={entry.id} entry={entry} onComment={account && view.number ? comment : undefined} onKeep={account && open ? (c) => setPending((now) => [...now, c]) : undefined} />
+          ))}
+          {more.next !== null && (
+            <div className="btns">
+              <Button look="outline" onClick={() => void loadMore()}>
+                {`עוד שינויים (${view.total - entries.length})`}
+              </Button>
+            </div>
+          )}
+          {review}
+        </>
+      )}
     </>
   );
 }
