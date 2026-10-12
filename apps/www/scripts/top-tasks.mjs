@@ -118,6 +118,9 @@ class Walk {
         step.frameMs = await wait(frame ?? content, 1500).catch(() => null);
         if (step.frameMs) break;
         if (performance.now() - start > stepTimeout) throw new Error(`nothing happened after ${step.tries} taps`);
+        // What the first tap opened may have come just now: look once more before tapping again.
+        step.frameMs = await wait(frame ?? content, 50).catch(() => null);
+        if (step.frameMs) break;
         step.tries++;
         // The first tap may have taken the person elsewhere (a link without its script); then there is nothing to tap again.
         await action().catch(() => {});
@@ -139,9 +142,11 @@ class Walk {
     return this.step(name, async () => {
       // Again: only if the thing is still there to tap.
       if (tapped && !(await locator.isVisible())) return;
+      // A tap again is a quick one: if a sheet the first tap opened now covers the thing, there is nothing to tap.
+      const again = tapped;
       tapped = true;
       this.taps++;
-      await locator.tap({ timeout: stepTimeout });
+      await locator.tap({ timeout: again ? 1000 : stepTimeout });
     }, wait);
   }
 
@@ -394,6 +399,24 @@ const tasks = [
       await w.tap('continue reading', link(w.page, earlier), { frame: both(at(earlier), pageFrame), content: words });
       await context.setOffline(true);
       await w.step('reopen offline', () => w.page.reload({ waitUntil: 'commit' }).catch(() => {}), { frame: pageFrame, content: reading(earlier), kind: 'open' });
+    },
+  },
+  {
+    n: 11,
+    slug: 'search-as-you-type',
+    name: 'On the search page, type a sefer\'s name and see it under the box',
+    async run(w) {
+      await w.open('/search', { frame: pageFrame, content: shown('main input[type=search]') });
+      // A person reads the page for a while first, long enough on slow 4G for the catalog's names to arrive (#272).
+      await w.page.waitForTimeout(8000);
+      w.taps++;
+      await w.page.locator('main input[type=search]').tap();
+      w.keys += 3;
+      await w.page.keyboard.type('תני', { delay: 150 });
+      await w.step('type the last letter of תניא', () => {
+        w.keys++;
+        return w.page.keyboard.type('א');
+      }, { content: shown('main a[href="/tanya"]') });
     },
   },
 ];
