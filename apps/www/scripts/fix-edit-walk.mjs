@@ -52,7 +52,12 @@ const pages = !local
   ? { sicha: '/likkutei-sichos/31/1/1/1', recording: '/listen/5740/rh-dc0cx5mm', shelf: '/sets/the-rebbe', sefer: '/likkutei-sichos', event: '/listen/5740/rh-dc0cx5mm' }
   : process.env.PAGES === 'fixture'
     ? { sicha: '/sample/1/1', recording: '/listen/5732/rh-3dvjfkyc', shelf: '/sets/the-rebbe', sefer: '/sample-sichos', event: '/listen/5732/rh-3dvjfkyc' }
-    : { sicha: '/tanya/1/1', recording: '/listen/5742/rh-dr715d9v', shelf: '/sets/the-rebbe', sefer: '/tanya', event: '/listen/5742/rh-dr715d9v' };
+    : { sicha: '/tanya/1/1', recording: '', shelf: '/sets/the-rebbe', sefer: '/tanya', event: '' };
+// The sample farbrengen's id is made afresh each time the sample is loaded: found from its year's page.
+if (local && !pages.event) {
+  const year = await (await fetch(`${base}/listen/5742`)).text();
+  pages.event = pages.recording = year.match(/href="(\/listen\/5742\/rh-[a-z0-9]+)"/)?.[1] ?? '/listen/5742';
+}
 
 // On screen: there, with a size, and styled. Before its stylesheet comes the page is not painted, though the
 // browser still lays it out (a sicha's first words thousands of pixels down, under an unstyled path bar).
