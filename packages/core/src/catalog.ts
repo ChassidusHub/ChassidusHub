@@ -369,7 +369,7 @@ export class Catalog {
 
   /** Migrates the database and, on an empty catalog, seeds the built-in schemas as `schema` items (commit 1). */
   async init(): Promise<void> {
-    await migrate(this.db);
+    await migrate(this.db, { log: (line) => console.log(line) });
     // The schema items as main has them, and which of them are older than the built-in ones.
     const { rows } = await this.db.query<{ id: EntityId; type: string; path: string | null; version: number }>(
       "SELECT e.id, r.data->>'entityType' AS type, r.path, (r.data->>'version')::int AS version FROM entity e JOIN revision r ON r.id = e.main_rev WHERE e.type = 'schema' AND NOT e.deleted",

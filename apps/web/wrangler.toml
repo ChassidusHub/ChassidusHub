@@ -13,7 +13,10 @@ enabled = true
 # made from many API reads one after the other, each a round trip. Built files (assets) and
 # pages already at the edge are still served from near the reader (docs/operations.md).
 [placement]
-mode = "smart"
+# Pinned next to the database rather than left to Smart Placement, which put this Worker in Atlanta or
+# Toronto (cf-placement, 2026-10-12): about 25 ms a statement from there, a few from Ashburn. The
+# database is DigitalOcean's nyc3; aws:us-east-1 is the nearest region Cloudflare takes as a hint.
+region = "aws:us-east-1"
 
 # build/client: the site's built files. While ChassidusHub is private the Worker runs first, so its lock covers them too
 # (server/lock.ts), and hands them out through the ASSETS binding.
