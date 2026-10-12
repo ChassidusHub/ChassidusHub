@@ -37,21 +37,21 @@ async function keptWords(url: string): Promise<DrawnWords> {
 
 /**
  * Draws the words into the page at `path` once it is on screen; if another
- * page is shown by then, there is nothing to do. The body and the notes are
- * each drawn when their place is there: on the same page in another language
+ * page is shown by then, there is nothing to do. It waits for the notes'
+ * place too when there are notes: on the same page in another language
  * (Tanya's ?language=both), the body's place is already on screen while the
  * notes' comes a frame later, with the page that has notes.
  */
 async function drawInto(path: string, words: DrawnWords) {
-  const left = new Map(([['body', words.body], ['notes', words.notes]] as const).filter(([, html]) => html));
-  for (let frame = 0; frame < 120 && left.size; frame++) {
-    for (const [part, html] of left) {
-      const place = document.querySelector(`[data-html="${CSS.escape(`${part}:${path}`)}"]`);
-      if (place) {
-        place.innerHTML = html;
-        left.delete(part);
-      }
+  const at = (part: string) => document.querySelector(`[data-html="${CSS.escape(`${part}:${path}`)}"]`);
+  for (let frame = 0; frame < 120; frame++) {
+    const body = at('body');
+    const notes = at('notes');
+    if (body && (notes || !words.notes)) {
+      body.innerHTML = words.body;
+      if (notes) notes.innerHTML = words.notes;
+      return;
     }
-    if (left.size) await new Promise((next) => requestAnimationFrame(next));
+    await new Promise((next) => requestAnimationFrame(next));
   }
 }
