@@ -1,4 +1,4 @@
-import { Suspense, use, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { Fixing } from '../fix/Fixing';
@@ -6,8 +6,6 @@ import { pathLevels } from '../lib/catalog';
 import { Button, Icon, IconButton, ServerHtml, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';
-import { keepWords } from './words';
-import type { DrawnWords } from './words.server';
 
 type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string };
 
@@ -18,30 +16,8 @@ type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string 
  * source, sharing, Edit, reporting) is in the corner menu. The sicha before
  * and after are at the foot. Selecting words opens a small bar to fix,
  * copy or share them (app/fix).
- *
- * After a click the page shows at once, and the words come into it from
- * their own address (`coming`, routes/item.tsx clientLoader), usually from
- * this browser.
  */
-type Words = Extract<ReaderData['text'], { kind: 'words' }>;
-
-/** The body and the notes: drawn by the server on a whole page, else the words that are `coming`. */
-function Words({ path, words, coming }: { path: string; words: Words; coming?: Promise<DrawnWords> }) {
-  const drawn = coming ? use(coming) : null;
-  return (
-    <>
-      <ServerHtml id={`body:${path}`} html={drawn?.body ?? words.body} className={words.machine === 'all' ? 'torah unchecked' : 'torah'} />
-      {words.hasNotes && (
-        <section className="notes" aria-labelledby="notes-h">
-          <h2 id="notes-h">הערות</h2>
-          <ServerHtml id={`notes:${path}`} html={drawn?.notes ?? words.notes} as="ol" />
-        </section>
-      )}
-    </>
-  );
-}
-
-export function Reader({ data, coming }: { data: ReaderData; coming?: Promise<DrawnWords> }) {
+export function Reader({ data }: { data: ReaderData }) {
   const [open, setOpen] = useState<Open>(null);
   const close = useCallback(() => setOpen(null), []);
   const toast = useToast();
@@ -69,10 +45,6 @@ export function Reader({ data, coming }: { data: ReaderData; coming?: Promise<Dr
     const value = encodeURIComponent(JSON.stringify({ to: data.path, title: data.title.slice(0, 40), sub: data.sub.slice(0, 40) }));
     if (value.length <= 300) document.cookie = `ch_read=${value}; path=/; max-age=31536000; SameSite=Lax`;
   }, [data.path, data.title, data.sub]);
-
-  // The words at their own address, so a click back here reads them from this browser (reader/words.ts).
-  const wordsUrl = words?.url;
-  useEffect(() => (wordsUrl ? keepWords(wordsUrl) : undefined), [wordsUrl]);
 
   const note = open && typeof open === 'object' ? open.note : null;
   useEffect(() => {
@@ -137,9 +109,13 @@ export function Reader({ data, coming }: { data: ReaderData; coming?: Promise<Dr
 
           {words && (
             <div ref={torah} onClick={onWords} data-fix-item={data.id} data-fix-version={words.version || undefined}>
-              <Suspense fallback={<div className="torah" aria-busy="true" style={{ minHeight: '60vh' }} />}>
-                <Words path={data.path} words={words} coming={coming} />
-              </Suspense>
+              <ServerHtml id={`body:${data.path}`} html={words.body} className={words.machine === 'all' ? 'torah unchecked' : 'torah'} />
+              {words.hasNotes && (
+                <section className="notes" aria-labelledby="notes-h">
+                  <h2 id="notes-h">הערות</h2>
+                  <ServerHtml id={`notes:${data.path}`} html={words.notes} as="ol" />
+                </section>
+              )}
             </div>
           )}
           {text.kind === 'pages' && (text.images.length || !data.pdfs.length) && <Scan text={text} />}

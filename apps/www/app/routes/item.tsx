@@ -5,7 +5,6 @@ import { printingsFrom } from '../library/printings';
 import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
 import { readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
-import type { DrawnWords } from '../reader/words.server';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
@@ -101,7 +100,7 @@ export function meta({ data: loaded }: Route.MetaArgs) {
 export default function Item({ loaderData }: Route.ComponentProps) {
   switch (loaderData.screen) {
     case 'reader':
-      return <Reader key={loaderData.reader.path} data={loaderData.reader} coming={'coming' in loaderData ? (loaderData.coming as Promise<DrawnWords>) : undefined} />;
+      return <Reader key={loaderData.reader.path} data={loaderData.reader} />;
     case 'set':
       return <SetScreen data={loaderData} />;
     case 'work':

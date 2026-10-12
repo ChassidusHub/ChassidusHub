@@ -14,7 +14,7 @@ export type ReaderText =
       /**
        * The body and the notes as HTML. Null as the server sends them: on a
        * whole page they are drawn on the server only (ui/ServerHtml.tsx); on a
-       * click the browser fetches them from `url` (routes/item.tsx clientLoader).
+       * click they are fetched from `url` and drawn into the page (reader/click.ts).
        */
       body: string | null;
       notes: string | null;
