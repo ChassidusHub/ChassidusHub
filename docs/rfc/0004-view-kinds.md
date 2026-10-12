@@ -44,13 +44,16 @@ A new optional field on a work, one of:
 | --- | --- | --- | --- | --- |
 | `sichos` | sichos and maamarim; the default | a sicha, a maamar | date and occasion; a maamar's ד"ה | Likkutei Sichos, Sefer HaSichos, Sefer HaMaamarim |
 | `letters` | letters | a letter | number, date, addressee, place | Igros Kodesh (each Rebbe's) |
-| `hisvaaduyos` | farbrengens as said | a farbrengen | date, occasion, its sichos and maamar as headings, its recordings | Toras Menachem Hisvaaduyos, Sichos Kodesh |
-| `index` | indexes (maftechos) | an entry or a letter of the index | the sefer it indexes; entries as links | the Likkutei Sichos indexes (#195) |
+| `hisvaaduyos` | farbrengens as said | a sicha or a maamar, grouped under its farbrengen | the farbrengen's date and occasion, mugah or not, its אותיות, its recording | Toras Menachem Hisvaaduyos, Sichos Kodesh |
+| `index` | indexes (maftechos) | a letter of the index, holding its entries | the sefer it indexes; whether it is one volume's or the merged one | the Likkutei Sichos indexes (#195) |
 | `daybook` | a book of days, read as printed | a day | the day's date | Hayom Yom (#104, #105) |
 | `chapters` | a book of chapters or simanim | a chapter, a siman | number; glosses and Kuntres Acharon apart | Tanya, Shulchan Aruch HaRav |
 | `verses` | a text with numbered verses or halachos and a commentary | a chapter, a perek | numbered verses, the commentary beside them | Chumash with Rashi, Tehillim, Rambam |
-| `diary` | dated entries | an entry | its date | Reshimos, Reshimas HaYoman |
+| `diary` | dated entries | an entry, a reshima | its date | Reshimos, Reshimas HaYoman |
 | `siddur` | prayers | a prayer, a section | instructions in small type, nusach notes | Siddur |
+
+Likkutei Sichos' Hosafos stay in `sichos` but as their own kind of unit
+(`hosafa`, below): a different layout, never mixed with sichos.
 
 Words of a page with no text yet (a scan, a PDF, withheld) are drawn the
 same in every view, as today: that is the text's kind, not the sefer's.
@@ -66,21 +69,55 @@ New optional fields on a unit, each set by Catalog through a suggestion:
 
 | Field | What | Example |
 | --- | --- | --- |
-| `kind` | what the unit really is, when its position's level does not say it | `sicha`, `maamar`, `letter`, `farbrengen`, `day`, `chapter`, `siman`, `entry`, `prayer` |
-| `heading` | a maamar's ד"ה, a letter's opening words; a localName | `{ "he": "ד\"ה באתי לגני" }` |
+| `kind` | what the unit really is, when its position's level does not say it | `sicha`, `maamar`, `hosafa`, `letter`, `reshima`, `day`, `chapter`, `siman`, `entry`, `prayer` |
+| `heading` | a maamar's ד"ה as printed, at most about four words and "גו'", with no date (the Melukat naming); a letter's opening words; a localName | `{ "he": "ד\"ה באתי לגני" }` |
 | `number` | a letter's number in its sefer, a siman's | `"א'תתקמג"` |
 | `to` | a letter's addressee, as printed; a localName | `{ "he": "הרה\"ח ... שי'" }` |
+| `place` | where a letter was written, as printed; a localName | `{ "he": "ברוקלין" }` |
 | `occasion` | the occasion, as an event names it (`EventData.occasion`) | `yud-shvat`, `shabbos-parshas-bo` |
+| `parsha` | the parsha a sicha is on, apart from its occasion (Likkutei Sichos and Sefer HaSichos go by parsha) | `bo` |
+| `muga` | whether the Rebbe edited it: `mugah`, `bilti-mugah` or `hanacha` | `bilti-mugah` |
 | `labelOrigin` | a machine's guess at any of the above, until a person checks it (`MachineOrigin`) | `{ "by": "catalog:labeller", "checked": false }` |
 
 Already there and read as they are: `label` (its name, which Catalog fixes
 from ב"ה to a real one), `date`, `events` (a sicha to its farbrengen, which
-gives its recordings) and `position` (its place; the last level is its kind
-when `kind` is unset).
+gives its recordings), `editions` (a letter's handwritten copy is an
+edition with `role: "manuscript"` and its `url`) and `position` (its place;
+the last level is its kind when `kind` is unset).
+
+**A farbrengen is a level above its sichos, not a unit** (Catalog's rule:
+text is split per sicha, never a whole farbrengen or volume as one unit).
+In Toras Menachem Hisvaaduyos each sicha and maamar is a unit, under a
+`farbrengen` level of its position whose label is the farbrengen's date
+and occasion, and its `events` names the farbrengen's event (its date,
+occasion and recordings). The live sefer is still one unit per farbrengen
+(levels `["volume", "farbrengen"]`); Catalog's Toras Menachem worker
+(#241) splits it.
 
 A machine's labels show as the machine's (the "machine output is always
 labelled" rule) until `labelOrigin.checked` is set. People check them on
 Flow's review queue, a batch at a time.
+
+### What each view reads, and where it comes from
+
+The first three views' mockups (Views manager, issues #251-#258) need these.
+Whatever a page lacks, it is drawn as the plain reader, never with an empty
+slot.
+
+| View | Reads | From |
+| --- | --- | --- |
+| letters | number, date, place, addressee | unit fields (snapshot) |
+| letters | handwritten copy | an edition with `role: "manuscript"` (`/v1/view`) |
+| hisvaaduyos | date, occasion, mugah or not | the farbrengen level's label and its event; unit `muga` (snapshot) |
+| hisvaaduyos | section letters (אותיות) | the `ois` page mark in the words (#152); their labels in the snapshot as `osios` for the volume's grid |
+| hisvaaduyos | stage directions ("ניגנו", "אמר לחיים") | a paragraph with the `small` mark today; a segment kind `stage` in schema 18 so a view can set it apart |
+| hisvaaduyos | a maamar said there, as a link | the maamar's own unit, by the same farbrengen level (snapshot) |
+| hisvaaduyos | the recording, and the time each section starts | `events` to the recording; the alignment's spans at each `ois` (`/v1/view`, after the words) |
+| index | entry headings, page references | the index's words: one `item` segment per entry, its pages as links (packages/core/src/mafteach.ts) |
+| index | a page reference as unit and page | the sefer's contents maps (a printing's page ranges per unit), resolved when the index is read |
+| index | see also | a link from an entry to another entry |
+| index | one volume's or the merged index | the sefer's `addition` (`kind: "index"`, `to`) and, for the merged one, its own sefer |
+| every view | "page N in the print" | the contents maps, as above, named in the snapshot as each unit's `pages` in its first printing |
 
 ### 3. In the catalog snapshot (docs/catalog-snapshot.md)
 
@@ -89,9 +126,10 @@ know):
 
 - `tree.json`: each work gets `view` when set.
 - `work-<id>.json`: each unit gets `kind`, `date`, `heading`, `number`,
-  `to`, `occasion` and `machine: true` (an unchecked guess) when set, and
-  only then. A letter's facts are about 60 bytes; a sicha with none adds
-  nothing.
+  `to`, `place`, `occasion`, `parsha`, `muga`, `osios` (its אותיות' labels),
+  `pages` (`"49-54"` in its first printing) and `machine: true` (an
+  unchecked guess) when set, and only then. A letter's facts are about 80
+  bytes; a sicha with none adds nothing.
 - `names.json`: a unit's `kind` column is its `kind` when set, else its own
   level, as now. A maamar is then found as a maamar under its ד"ה.
 
@@ -124,7 +162,8 @@ Nothing a reader sees changes with this pull request.
 ### Shipping order
 
 1. This RFC with the registry (no change to what anyone sees).
-2. Built-in schema 18 (packages/model): `work.view`, the unit fields above.
+2. Built-in schema 18 (packages/model): `work.view`, the unit fields above,
+   and the page segment kind `stage`.
    No SQL migration: the catalog takes new built-in schemas through its own
    system changeset at start (packages/core/src/catalog.ts). The MCP
    server's `suggest_items` accepts the new fields with no change, since it
@@ -152,6 +191,9 @@ Nothing a reader sees changes with this pull request.
 
 - **Pick the view from `genre`.** Genre is the reader app's shelf, not a
   layout: Hayom Yom is `minhagim`, Toras Menachem `sichos`. Kept as it is.
+- **A farbrengen as one unit.** Simpler to show, but it breaks Catalog's
+  rule of one unit per sicha: a sicha could not be found, fixed, cited or
+  linked to its recording on its own.
 - **Pick the view from `levels` alone.** Close (`day`, `farbrengen`,
   `letter`), and it is the fallback here, but levels are named by
   importers (`volume`, `part`, `chapter` mean different things in different
