@@ -1,4 +1,5 @@
-import { Form, Link, useNavigate } from 'react-router';
+import { Suspense } from 'react';
+import { Await, Form, Link, useLocation, useNavigate } from 'react-router';
 import { useAccount } from '../lib/account';
 import { Chip, Chips, Row, Rows, Say, SearchField, Segmented, TopBar } from '../ui';
 import { dayOf, personName, statusWords, suggestionPath, type People, type Status } from '../suggestions/view';
@@ -30,29 +31,23 @@ interface ListRow {
 /** A handle as the URL may carry it (`@name` or `name`): letters, digits and dashes only. */
 const handleOf = (value: string | null) => (value && /^@?[A-Za-z0-9-]{1,39}$/.test(value) ? value.replace(/^@/, '') : null);
 
-/**
- * Suggestions as pull requests are listed (the plan, section 7): open
- * (waiting for review, or sent back to their author) or closed (approved or
- * closed), newest first, each with its #number, who sent it and when, and
- * where it stands. Filtered by words or #number, by who sent it and by who is
- * asked to review it, all in the address, so the same address is the same
- * list for everyone and may be kept at the edge; "mine" is only a link the
- * browser makes with the person's handle.
- */
-export async function loader({ request, context }: Route.LoaderArgs) {
+/** What the list shows, as the address asks for it: the page's frame, worked out without waiting for anything. */
+function askedOf(request: Request) {
   const url = new URL(request.url);
-  const state = url.searchParams.get('state') === 'closed' ? 'closed' : 'open';
-  const q = url.searchParams.get('q')?.trim().slice(0, 200) || undefined;
+  const state: 'open' | 'closed' = url.searchParams.get('state') === 'closed' ? 'closed' : 'open';
+  const q = url.searchParams.get('q')?.trim().slice(0, 200) ?? '';
   const author = handleOf(url.searchParams.get('author'));
   const reviewer = handleOf(url.searchParams.get('reviewer'));
-  const cursor = url.searchParams.get('cursor') || undefined;
-  const list = await context.api.listSuggestions({ state, q, author: author ?? undefined, reviewer: reviewer ?? undefined, cursor, limit: 30 }).catch(() => null);
+  const cursor = url.searchParams.get('cursor') || null;
+  return { state, q, author, reviewer, cursor };
+}
+
+type Asked = ReturnType<typeof askedOf>;
+
+/** One page of the list, with how many are open and closed; null rows when the list did not come. */
+async function listOf(api: Route.LoaderArgs['context']['api'], { state, q, author, reviewer, cursor }: Asked) {
+  const list = await api.listSuggestions({ state, q: q || undefined, author: author ?? undefined, reviewer: reviewer ?? undefined, cursor: cursor ?? undefined, limit: 30 }).catch(() => null);
   return {
-    state,
-    q: q ?? '',
-    author,
-    reviewer,
-    cursor: cursor ?? null,
     rows: list
       ? (list.suggestions as unknown as ListRow[]).map(({ id, number, title, status, author, createdAt, submittedAt, comments, approvals, fixes, via }) => ({ id, number, title, status, author, at: submittedAt ?? createdAt ?? null, comments: comments ?? 0, approvals: approvals ?? 0, fixes: fixes ?? [], agent: via ? via.name : null }))
       : null,
@@ -62,7 +57,28 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   };
 }
 
-type Loaded = Awaited<ReturnType<typeof loader>>;
+/**
+ * Suggestions as pull requests are listed (the plan, section 7): open
+ * (waiting for review, or sent back to their author) or closed (approved or
+ * closed), newest first, each with its #number, who sent it and when, and
+ * where it stands. Filtered by words or #number, by who sent it and by who is
+ * asked to review it, all in the address, so the same address is the same
+ * list for everyone and may be kept at the edge; "mine" is only a link the
+ * browser makes with the person's handle. The page never waits for the
+ * list: the box and the filters come from the address and show at once.
+ */
+export function loader({ request, context }: Route.LoaderArgs) {
+  const asked = askedOf(request);
+  return { ...asked, data: listOf(context.api, asked) };
+}
+
+/** Opened from inside the site, the frame is drawn at once; the list follows. */
+export function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  return { ...askedOf(request), data: serverLoader().then((loaded) => loaded.data) };
+}
+
+type Listed = Awaited<ReturnType<typeof listOf>>;
+type Loaded = Asked & Listed;
 
 /** The list's address with one thing changed (and the page back to its start). */
 function addressOf(now: Pick<Loaded, 'state' | 'q' | 'author' | 'reviewer'>, change: Partial<Record<'state' | 'q' | 'author' | 'reviewer' | 'cursor', string | null>>): string {
@@ -78,7 +94,8 @@ export default function Screen({ loaderData: page }: Route.ComponentProps) {
   const account = useAccount();
   const me = account?.person.username ?? null;
   const filtered = Boolean(page.q || page.author || page.reviewer);
-  const count = (n: number | null) => (n === null ? '' : ` (${n.toLocaleString('he')})`);
+  // Each list its own wait: going to another one shows its frame at once, not the last list until the next has come.
+  const { search } = useLocation();
   return (
     <>
       <TopBar title="הצעות" />
@@ -92,15 +109,12 @@ export default function Screen({ loaderData: page }: Route.ComponentProps) {
           <SearchField key={page.q} name="q" label="חיפוש בהצעות: מילים מהכותרת, או #מספר" defaultValue={page.q} />
         </Form>
         <div className="sg-bar">
-          <Segmented
-            label="פתוחות או סגורות"
-            value={page.state}
-            onChange={(state) => navigate(addressOf(page, { state }))}
-            options={[
-              { value: 'open', label: `פתוחות${count(page.counts.open)}` },
-              { value: 'closed', label: `סגורות${count(page.counts.closed)}` },
-            ]}
-          />
+          {/* The counts come with the list; until then the tabs show without them. */}
+          <Suspense key={search} fallback={<States page={page} />}>
+            <Await resolve={page.data} errorElement={<States page={page} />}>
+              {(listed) => <States page={page} counts={listed.counts} />}
+            </Await>
+          </Suspense>
           <Link to="/back?tab=waiting" className="sg-link">
             מה מחכה לבדיקה
           </Link>
@@ -124,9 +138,37 @@ export default function Screen({ loaderData: page }: Route.ComponentProps) {
             {page.reviewer && page.reviewer !== me && <Chip on>{`לבדיקה של @${page.reviewer}`}</Chip>}
           </Chips>
         ) : null}
-        <List page={page} />
+        <Suspense
+          key={search}
+          fallback={
+            <p className="faint" aria-busy="true">
+              רגע…
+            </p>
+          }
+        >
+          <Await resolve={page.data} errorElement={<Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>}>
+            {(listed) => <List page={{ ...page, ...listed }} />}
+          </Await>
+        </Suspense>
       </main>
     </>
+  );
+}
+
+/** Open or closed, each with how many there are once the list has come. */
+function States({ page, counts }: { page: Asked; counts?: Listed['counts'] }) {
+  const navigate = useNavigate();
+  const count = (n: number | null | undefined) => (n == null ? '' : ` (${n.toLocaleString('he')})`);
+  return (
+    <Segmented
+      label="פתוחות או סגורות"
+      value={page.state}
+      onChange={(state) => navigate(addressOf(page, { state }))}
+      options={[
+        { value: 'open', label: `פתוחות${count(counts?.open)}` },
+        { value: 'closed', label: `סגורות${count(counts?.closed)}` },
+      ]}
+    />
   );
 }
 

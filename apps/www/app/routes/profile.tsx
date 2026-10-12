@@ -1,4 +1,5 @@
-import { data, Link, redirect } from 'react-router';
+import { Suspense, useEffect } from 'react';
+import { Await, data, Link, redirect, useAsyncError, useNavigate } from 'react-router';
 import { useAccount } from '../lib/account';
 import { day, month, threadHref, type Profile } from '../people/talk';
 import { Button, Say, TopBar } from '../ui';
@@ -7,7 +8,8 @@ import type { Route } from './+types/profile';
 /**
  * A person's page, by their handle (/u/mendy), read on the server: it is the
  * same for everyone. An old handle leads to the new one for good (301), as
- * GitHub's renamed accounts do.
+ * GitHub's renamed accounts do. That is why the read is waited for here, on
+ * a first visit: the status must be right for a search engine.
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   if (!/^[A-Za-z0-9-]{1,39}$/.test(params.username)) throw data('not found', { status: 404 });
@@ -19,7 +21,12 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     throw error;
   }
   if (profile.movedFrom || profile.person.username !== params.username) throw redirect(`/u/${profile.person.username}`, 301);
-  return profile;
+  return { username: params.username, data: Promise.resolve(profile) };
+}
+
+/** Opened from inside the site, the frame (the handle) is drawn at once; the person's page follows. */
+export function clientLoader({ params, serverLoader }: Route.ClientLoaderArgs) {
+  return { username: params.username, data: serverLoader().then((loaded) => loaded.data) };
 }
 
 export function headers() {
@@ -27,8 +34,7 @@ export function headers() {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  const person = loaderData?.person;
-  return [{ title: person ? `${person.displayName} (@${person.username}) · ChassidusHub` : 'ChassidusHub' }];
+  return [{ title: loaderData ? `@${loaderData.username} · ChassidusHub` : 'ChassidusHub' }];
 }
 
 /** What each kind of activity says before the conversation's name. */
@@ -39,13 +45,51 @@ const DID: Record<Profile['activity'][number]['kind'], string> = {
   comment: 'הגיב על',
 };
 
+/** The handle at once, as the top bar's title; the person's page where it will be, when it comes. */
+export default function Screen({ loaderData }: Route.ComponentProps) {
+  const frame = (
+    <>
+      <TopBar title={<bdi dir="ltr">@{loaderData.username}</bdi>} />
+      <main id="content" className="view people">
+        <p className="faint" aria-busy="true">
+          רגע…
+        </p>
+      </main>
+    </>
+  );
+  return (
+    // Keyed by the handle, so going to another person shows their frame at once rather than this page until theirs has come.
+    <Suspense key={loaderData.username} fallback={frame}>
+      <Await resolve={loaderData.data} errorElement={<Elsewhere />}>
+        {(profile) => <ProfilePage profile={profile} />}
+      </Await>
+    </Suspense>
+  );
+}
+
+/**
+ * When the page did not come from inside the site: an old handle goes on to
+ * the new one, as the server would have sent it; no such person, or a
+ * failure, is the site's own error page, as before.
+ */
+function Elsewhere() {
+  const error = useAsyncError();
+  const navigate = useNavigate();
+  const to = error instanceof Response && error.status >= 300 && error.status < 400 ? error.headers.get('Location') : null;
+  useEffect(() => {
+    if (to) navigate(to, { replace: true });
+  }, [to, navigate]);
+  if (!to) throw error;
+  return null;
+}
+
 /**
  * A person's public page (thread 6): who they are on ChassidusHub (steward,
  * trusted), how much they have done (fixes approved, reviews, reports), and
  * what they did lately, month by month. Nothing private shows: no email, no
  * private report. On their own page, a way to their account.
  */
-export default function ProfilePage({ loaderData: profile }: Route.ComponentProps) {
+function ProfilePage({ profile }: { profile: Profile }) {
   const { person, counts, activity } = profile;
   const account = useAccount();
   const mine = account?.person.id === person.id;
