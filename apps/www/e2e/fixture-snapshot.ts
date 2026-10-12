@@ -1,5 +1,6 @@
 import { libraryAnswer } from './fixture-library';
 import { listenAnswer, shelves } from './fixture-listen';
+import { isRebbe } from '../app/lib/catalog';
 
 /**
  * The catalog snapshot in the stand-in API (docs/catalog-snapshot.md), made
@@ -7,7 +8,9 @@ import { listenAnswer, shelves } from './fixture-listen';
  * fixture-listen.ts), so the library's and listening's pages are tested
  * drawn from the snapshot, on the server and in the browser, and must come
  * out as when they read the API. Served at /v1/catalog/manifest.json and
- * /v1/catalog/files/<file>, as the API serves it.
+ * /v1/catalog/files/<file>, as the API serves it, and in its small cut too
+ * (/v1/catalog/index.json, its top, shelf and years files), which the
+ * browser reads.
  */
 
 type Item = { id: string; path: string | null; data: Record<string, unknown>; rev?: number; recordings?: number };
@@ -105,7 +108,57 @@ function build() {
     kept.events.push({ id: event.id, path: event.path, kind: event.data.kind, date: event.data.date, title: event.data.title ?? null, recordings: event.recordings ?? 0 });
   }
   files['manifest.json'] = { format: 1, version: 'sample-1', seq: 1, base: '/v1/catalog/files/', tree: { file: 'tree.1.json' }, works: workFiles, years };
+  smallCut(files, tree, workFiles, years);
   return files;
+}
+
+type TreeSet = { id: string; path: string | null; name: unknown; parent?: unknown; sets: string[]; works: string[]; additions: string[] };
+type TreeWork = { id: string; path: string | null; title: unknown; sets: unknown; addition?: unknown };
+
+/** The same snapshot cut small (docs/catalog-snapshot.md, "The small cut"): the index, the top file, a file per top shelf, the years file. */
+function smallCut(files: Record<string, unknown>, tree: { top: string[]; sets: Record<string, TreeSet>; works: Record<string, TreeWork> }, workFiles: Record<string, { file: string }>, years: Record<string, { file: string }>) {
+  const entry = (item: { id: string; path: string | null }, name: unknown) => ({ id: item.id, path: item.path, name });
+  const set = (id: string) => tree.sets[id]!;
+  const work = (id: string) => tree.works[id]!;
+  const on = (w: TreeWork) => w.sets as string[];
+  const to = (w: TreeWork) => (w.addition as { to?: string } | undefined)?.to;
+  const top = tree.top.map((id) => {
+    const shelf = set(id);
+    if (!isRebbe(shelf.path)) return entry(shelf, shelf.name);
+    return {
+      ...entry(shelf, shelf.name),
+      rebbe: tree.top.filter((at) => isRebbe(set(at).path)).indexOf(id) + 1,
+      sets: shelf.sets.map((inner) => entry(set(inner), set(inner).name)),
+      works: shelf.works.map((w) => entry(work(w), work(w).title)),
+      additions: shelf.additions.map((w) => entry(work(w), work(w).title)),
+    };
+  });
+  files['top.1.json'] = { format: 2, top };
+  const shelves: Record<string, string> = {};
+  for (const id of tree.top) {
+    const under: string[] = [];
+    const walk = (at: string) => {
+      under.push(at);
+      set(at).sets.forEach(walk);
+    };
+    walk(id);
+    const works = new Set<string>();
+    for (const w of Object.values(tree.works)) if (on(w).some((s) => under.includes(s))) works.add(w.id);
+    // An addition here to a sefer elsewhere brings that sefer, and a sefer here its additions.
+    for (const w of [...works]) if (to(work(w)) && tree.works[to(work(w))!]) works.add(to(work(w))!);
+    for (const w of Object.values(tree.works)) if (to(w) && works.has(to(w)!)) works.add(w.id);
+    const file = `shelf-${id}.1.json`;
+    shelves[id] = file;
+    files[file] = {
+      format: 2,
+      shelf: id,
+      sets: Object.fromEntries(under.map((at) => [at, set(at)])),
+      works: Object.fromEntries([...works].map((w) => [w, { ...work(w), ...(workFiles[w] ? { file: workFiles[w]!.file } : {}) }])),
+    };
+  }
+  const events = (name: string) => (files[name] as { events: unknown[] }).events.length;
+  files['years.1.json'] = { format: 2, years: Object.fromEntries(Object.entries(years).map(([year, { file }]) => [year, { file, events: events(file) }])) };
+  files['index.json'] = { format: 2, version: 'sample-1', top: 'top.1.json', shelves, years: 'years.1.json' };
 }
 
 let files: Record<string, unknown> | null = null;
@@ -114,6 +167,7 @@ let files: Record<string, unknown> | null = null;
 export function snapshotAnswer(url: URL): unknown {
   files ??= build();
   if (url.pathname === '/v1/catalog/manifest.json') return files['manifest.json'];
+  if (url.pathname === '/v1/catalog/index.json') return files['index.json'];
   const name = /^\/v1\/catalog\/files\/([\w.-]+\.json)$/.exec(url.pathname)?.[1];
-  return name && name !== 'manifest.json' ? files[name] : undefined;
+  return name && name !== 'manifest.json' && name !== 'index.json' ? files[name] : undefined;
 }
