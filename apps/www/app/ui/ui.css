@@ -558,6 +558,8 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
   line-height: 1.85; text-align: justify; hyphens: none;
 }
 .torah p { margin: 0 0 0.9em; }
+/* Until the Torah face has come (root.tsx, FACE_WAIT): the words keep their place but are not drawn in a stand-in face. */
+.face-wait .torah, .face-wait .notes ol { visibility: hidden; }
 .torah .hd { font-weight: 700; text-align: center; margin: 1.2em 0 0.5em; }
 .torah .hd.first { display: none; }
 .torah .end { text-align: end; }

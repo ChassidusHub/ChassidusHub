@@ -46,12 +46,23 @@ const EARLY_TAPS = import.meta.env.SSR ? `(function(){var w=window,q=null;functi
 const worker = import.meta.env.SSR ? `if('serviceWorker'in navigator)addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})` : '';
 
 /**
+ * A sicha's words wait, hidden, for their Torah face (ui.css, .face-wait):
+ * drawn first in a stand-in face, they would wrap to other lines and move the
+ * page when the face came (#267). Shown once the face has loaded or failed,
+ * or 3 s after it was asked for, as a browser holds text for its font. Only
+ * the Torah text and the notes are held; on a page without them the mark
+ * hides nothing.
+ */
+const FACE_WAIT = `d.classList.add('face-wait');var f=document.fonts,u=function(){d.classList.remove('face-wait')},c=function(n){return function(e){for(var i=0;i<e.fontfaces.length;i++)if(/FrankRuehlCLM/.test(e.fontfaces[i].family))n()}};if(f&&f.addEventListener){f.addEventListener('loading',c(function(){setTimeout(u,3000)}));f.addEventListener('loadingdone',c(u));f.addEventListener('loadingerror',c(u))}else u();`;
+
+/**
  * A reader's light or dark choice and text size (kept in this browser), set
  * before the page paints so it never flashes the other one or jumps to
  * another size. With no choice the system's theme wins. Then whether there
- * is somewhere to continue (RESUME_SCRIPT).
+ * is somewhere to continue (RESUME_SCRIPT), and the Torah text's wait for
+ * its face (FACE_WAIT).
  */
-const theme = import.meta.env.SSR ? `try{var d=document.documentElement,t=localStorage.getItem('theme'),s=localStorage.getItem('size');if(t==='light'||t==='dark')d.dataset.theme=t;if(/^(-[12]|[0-5])$/.test(s))d.style.setProperty('--torah-step',s);${RESUME_SCRIPT}}catch(e){}` : '';
+const theme = import.meta.env.SSR ? `try{var d=document.documentElement,t=localStorage.getItem('theme'),s=localStorage.getItem('size');if(t==='light'||t==='dark')d.dataset.theme=t;if(/^(-[12]|[0-5])$/.test(s))d.style.setProperty('--torah-step',s);${RESUME_SCRIPT}${FACE_WAIT}}catch(e){}` : '';
 
 /**
  * The whole site is Hebrew and right to left from the first byte, so nothing
