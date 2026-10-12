@@ -102,6 +102,37 @@ describe('migrations', () => {
     await db.close();
   });
 
+  it('tries a migration again when it gave up waiting for a lock, and gives up after its tries', async () => {
+    const db = await openPGlite();
+    await migrate(db);
+    const last = MIGRATIONS.at(-1)!;
+    await db.exec(`DELETE FROM schema_migration WHERE version = ${last.version}`);
+    // A read held the table: the first two tries give up on the lock, as lock_timeout makes them.
+    let refused = 2;
+    const busy = (code: string) =>
+      Object.assign(Object.create(db) as typeof db, {
+        transaction: <T>(work: (tx: typeof db) => Promise<T>) => (refused-- > 0 ? Promise.reject(Object.assign(new Error('canceling statement due to lock timeout'), { code })) : db.transaction(work)),
+      });
+    const said: string[] = [];
+    // The migration is already in the tables, so the try that gets through only writes its row.
+    const realUp = last.up;
+    (last as { up: string }).up = 'SELECT 1';
+    try {
+      expect(await migrate(busy('55P03'), { lockPauseMs: 1, log: (line) => said.push(line) })).toEqual([last.version]);
+      expect(said).toHaveLength(2);
+      await db.exec(`DELETE FROM schema_migration WHERE version = ${last.version}`);
+      refused = 5;
+      await expect(migrate(busy('55P03'), { lockTries: 3, lockPauseMs: 1 })).rejects.toThrow('lock timeout');
+      // Any other error is not tried again.
+      refused = 1;
+      await expect(migrate(busy('42P01'), { lockPauseMs: 1 })).rejects.toThrow();
+      expect(refused).toBe(0);
+    } finally {
+      (last as { up: string }).up = realUp;
+      await db.close();
+    }
+  });
+
   it('rolls a failed transaction back', async () => {
     const db = await openPGlite();
     await migrate(db);

@@ -2,6 +2,7 @@ import { allSegments, mayServe, type EntityId, type MachineOrigin, type PageSegm
 import type { Catalog, EntityView } from './catalog.js';
 import { pdfPagesOf } from './compare.js';
 import { ExportGate } from './gate.js';
+import { linkedPage } from './linked.js';
 import type { Json } from './merge.js';
 import { pathBar, type PathLevel } from './pathBar.js';
 
@@ -10,9 +11,12 @@ import { pathBar, type PathLevel } from './pathBar.js';
  * everything its page draws, ready to draw. That is its path bar, the
  * units before and after it, and the best words there are for it: its
  * own words, else a text of it the catalog keeps, else the pages of a
- * scan it is printed on. Each part is marked machine or checked. The
- * site makes one request for a page and the database answers it in six
- * statements at most (a unit with words of its own takes four).
+ * scan it is printed on. Each part is marked machine or checked. A
+ * sefer's page also has its volumes and its additions, and a volume of a
+ * sefer (/likkutei-sichos/12, which is no item of its own) is answered at
+ * its path too, as the sefer with that volume's units. The site makes one
+ * request for a page, never a second round after it, and the database
+ * answers it in six statements at most.
  */
 
 /** Machine words shown, labelled until a person checks them: none, some or all of them. */
@@ -76,6 +80,19 @@ export interface ItemView {
   scan: ScanPlace | null;
   /** The recordings of the farbrengens a unit was said at, in their order. */
   recordings: HeardAt[];
+  /** A sefer's volumes (its top-level parts) with how many units each holds: on a sefer's page and a volume's. */
+  outline?: OutlinePart[];
+  /** The books that are additions to a sefer (a commentary, an index), on its page. */
+  additions?: Array<Brief & { kind: string | null }>;
+  /** Set when the path was a volume of a sefer: `item` is the sefer, this the volume and its units in order. */
+  volume?: { value: string; units: EntityView[] };
+}
+
+/** One volume in a sefer's outline. */
+export interface OutlinePart {
+  value: string;
+  label: Json | null;
+  units: number;
 }
 
 interface Brief {
@@ -106,16 +123,35 @@ function share(flags: boolean[]): MachineShare {
 
 /** The item at a path (or an id) and what its page draws; null when there is none. `language` picks a version. */
 export async function itemView(catalog: Catalog, at: { path: string } | { id: EntityId }, options: { language?: string } = {}): Promise<ItemView | null> {
-  let found: EntityView | null;
+  let found: EntityView | null = null;
   let movedTo: string | undefined;
+  /** For a path that may be a volume of a sefer: the sefer's path and the volume's place. */
+  let asVolume: { parent: string; value: string } | null = null;
   if ('id' in at) found = await catalog.get(at.id);
   else {
-    [found = null] = await catalog.getByPaths([at.path.replace(/\/+$/, '') || '/']);
+    const path = at.path.replace(/\/+$/, '') || '/';
+    const words = path.split('/').filter(Boolean);
+    if (words.length >= 2) asVolume = { parent: path.slice(0, path.lastIndexOf('/')), value: words.at(-1)! };
+    // The path and the sefer above it in one statement: a volume's page (no item of its own) costs no more than a sefer's.
+    const both = await catalog.getByPaths(asVolume ? [path, asVolume.parent] : [path]);
+    const byPath = (p: string) => both.find((e) => e.path?.toLowerCase() === p.toLowerCase()) ?? null;
+    found = byPath(path);
+    const parent = asVolume ? byPath(asVolume.parent) : null;
+    if (!found && parent?.type === 'work') return volumeView(catalog, parent, asVolume!.value);
     if (!found) {
       // An old path: the item it was moved to (one more statement, only then).
-      const moved = await catalog.resolvePath(at.path);
+      const moved = await catalog.resolvePath(path);
       found = moved ? await catalog.get(moved.id) : null;
       if (found?.path) movedTo = found.path;
+    }
+    if (!found && asVolume) {
+      // A volume of a sefer that moved: the volume at the sefer's path now.
+      const moved = await catalog.resolvePath(asVolume.parent);
+      const work = moved ? await catalog.get(moved.id) : null;
+      if (work?.type === 'work' && work.path) {
+        const view = await volumeView(catalog, work, asVolume.value);
+        return view && { ...view, movedTo: `${work.path}/${asVolume.value}` };
+      }
     }
   }
   if (!found) return null;
@@ -123,13 +159,16 @@ export async function itemView(catalog: Catalog, at: { path: string } | { id: En
   const shown = await gate.redact(found);
   const { body, ...facts } = shown.data as Record<string, unknown>;
   const isUnit = found.type === 'unit';
+  const isWork = found.type === 'work';
   const events = Array.isArray(facts.events) ? (facts.events as EntityId[]) : [];
   const media = isUnit ? unitMedia(catalog, found.id, events) : Promise.resolve({ scan: null, recordings: [] });
-  const [bar, around, text, { scan, recordings }] = await Promise.all([
+  const [bar, around, text, { scan, recordings }, outline, additions] = await Promise.all([
     pathBar(catalog, found),
     isUnit ? catalog.unitNeighbours(found.id) : Promise.resolve({ previous: null, next: null }),
     isUnit ? unitText(catalog, gate, found.id, body as PageText | undefined, facts, shown.withheld, options.language, media) : Promise.resolve(null),
     media,
+    isWork ? catalog.workOutline(found.id) : Promise.resolve(null),
+    isWork ? additionsOf(catalog, found.id) : Promise.resolve(null),
   ]);
   return {
     item: { ...found, data: facts as Json },
@@ -140,7 +179,30 @@ export async function itemView(catalog: Catalog, at: { path: string } | { id: En
     text,
     scan,
     recordings,
+    ...(outline ? { outline } : {}),
+    ...(additions ? { additions } : {}),
   };
+}
+
+/** A sefer's additions, as the rows of its page list them: two statements (the page of them and their count). */
+async function additionsOf(catalog: Catalog, work: EntityId): Promise<NonNullable<ItemView['additions']>> {
+  const { items } = await linkedPage(catalog.db, work, { field: 'addition.to', type: 'work', limit: 100 });
+  return items.map((addition) => {
+    const data = addition.data as { title?: Json; addition?: { kind?: string } };
+    return { id: addition.id, path: addition.path, name: data.title ?? null, kind: data.addition?.kind ?? null };
+  });
+}
+
+/**
+ * A volume of a sefer, for the sefer already found: the sefer and its path
+ * bar, its outline, and the volume's units in order. Null when the sefer has
+ * no volume there.
+ */
+async function volumeView(catalog: Catalog, work: EntityView, value: string): Promise<ItemView | null> {
+  const [shown, bar, outline, units] = await Promise.all([new ExportGate(catalog).redact(work), pathBar(catalog, work), catalog.workOutline(work.id), catalog.workPart(work.id, value)]);
+  if (!outline.some((part) => part.value === value)) return null;
+  const { body: _words, ...facts } = shown.data as Record<string, unknown>;
+  return { item: { ...work, data: facts as Json }, pathBar: bar ?? [], previous: null, next: null, text: null, scan: null, recordings: [], outline, volume: { value, units } };
 }
 
 interface TextRow {
