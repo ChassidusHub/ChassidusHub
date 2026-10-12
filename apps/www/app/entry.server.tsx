@@ -10,6 +10,15 @@ import { ServerOnly } from './serverOnly';
  * same build runs on Cloudflare and in the local server the tests use. People
  * get the page as it renders; bots get it whole.
  */
+/**
+ * How long a page's later parts (a search's answers, streamed after its
+ * frame) are waited for before React Router gives them up as failed. Its own
+ * 5 s is shorter than a cold search on a busy day takes: the page then said
+ * the search did not answer, though the answer was on its way, and the edge
+ * kept that page for everyone (#338).
+ */
+export const streamTimeout = 15_000;
+
 export default async function handleRequest(request: Request, status: number, headers: Headers, context: EntryContext, loadContext: AppLoadContext) {
   let failed = false;
   const body = await renderToReadableStream(

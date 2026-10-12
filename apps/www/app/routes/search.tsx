@@ -142,8 +142,8 @@ export default function Search({ loaderData }: Route.ComponentProps) {
           )
         ) : page ? (
           <Suspense key={query} fallback={<Waiting names={askedNames} />}>
-            <Await resolve={page} errorElement={<p className="faint">החיפוש לא ענה כרגע. נסו שוב בעוד רגע.</p>}>
-              {(found) => <Results page={found} />}
+            <Await resolve={page} errorElement={<Again query={query} names={askedNames} />}>
+              {(found) => (found && !found.failed ? <Results page={found} /> : <Again query={query} names={askedNames} />)}
             </Await>
           </Suspense>
         ) : (
@@ -170,9 +170,9 @@ export default function Search({ loaderData }: Route.ComponentProps) {
  * While the server searches: the names the browser found at once, then a
  * quiet line where the rest will come, so the page is never empty.
  */
-function Waiting({ names }: { names: Hit[] }) {
+function Waiting({ names, done }: { names: Hit[]; done?: boolean }) {
   return (
-    <div aria-busy="true">
+    <div aria-busy={!done}>
       {names.length > 0 && (
         <>
           <h2>ספרים ומאמרים</h2>
@@ -183,8 +183,44 @@ function Waiting({ names }: { names: Hit[] }) {
           </Rows>
         </>
       )}
-      <p className="faint">מחפשים בתוך הטקסטים…</p>
+      {!done && <p className="faint">מחפשים בתוך הטקסטים…</p>}
     </div>
+  );
+}
+
+/**
+ * The search's answers did not come (the API failed, or the page gave up
+ * waiting). What was found here stays, never replaced by an error: the
+ * server is asked once more by itself, past any copy the edge kept of the
+ * failed answer (`again` is in the address, not in what is searched); if
+ * that fails too, a quiet line offers to ask again (#338).
+ */
+function Again({ query, names }: { query: string; names: Hit[] }) {
+  const again = useFetcher<typeof clientLoader>();
+  const [tries, setTries] = useState(1);
+  useEffect(() => {
+    again.load(`/search?q=${encodeURIComponent(query)}&again=${tries}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, tries]);
+  const failed = (
+    <>
+      <Waiting names={names} done />
+      <p className="faint again">
+        החיפוש לא ענה כרגע.{' '}
+        <button type="button" onClick={() => setTries((n) => n + 1)}>
+          נסו שוב
+        </button>
+      </p>
+    </>
+  );
+  const page = again.state === 'idle' && again.data?.query === query ? again.data.page : null;
+  if (!page) return <Waiting names={names} />;
+  return (
+    <Suspense fallback={<Waiting names={names} />}>
+      <Await resolve={page} errorElement={failed}>
+        {(found) => (found && !found.failed ? <Results page={found} /> : failed)}
+      </Await>
+    </Suspense>
   );
 }
 
