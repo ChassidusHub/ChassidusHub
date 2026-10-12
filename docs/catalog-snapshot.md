@@ -219,6 +219,7 @@ names. Both ways stay; a reader may use either.
 {
   "format": 2,
   "version": "48213",                        // the same as the manifest's
+  "build": 2,                                // which build wrote it: a newer build writes it again at once
   "top": "top.1a2b3c4d5e6f7a8b.json",
   "shelves": {                               // one per top shelf, by id, in the top's order
     "rh-…": "shelf-rh-….9c8d7e6f5a4b3c2d.json"

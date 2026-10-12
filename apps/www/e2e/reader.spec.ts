@@ -105,3 +105,49 @@ test('the corner menu opens the scan and lists the recordings', async ({ page, c
   await expect(page.getByRole('link', { name: /הקלטה ראשונה/ })).toContainText('1:02:05');
   await expect(page.getByRole('link', { name: /הקלטה שניה/ })).toHaveAttribute('href', '/rh-aaaaaar2');
 });
+
+test('sets a letter as the reader app does: its head, its body, its signature, its notes unnumbered', async ({ page }) => {
+  await page.goto('/sample/1/5');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('אגרת לדוגמה');
+  await expect(page.locator('.eyebrow')).toHaveText('חלק א׳');
+  const role = (cls: string) => page.locator(`.igros .torah p.${cls}`);
+  await expect(role('l-dateline')).toHaveText('ב"ה, תאריך לדוגמה');
+  await expect(role('l-addressee')).toHaveText('כבוד הנמען לדוגמה');
+  await expect(role('l-greeting')).toHaveText('שלום וברכה!');
+  await expect(role('l-body')).toHaveCount(2);
+  await expect(role('l-signature')).toHaveCount(1);
+  expect(await role('l-signature').evaluate((el) => getComputedStyle(el).textAlign)).toBe('end');
+  expect(await role('l-body').first().evaluate((el) => getComputedStyle(el).textIndent)).not.toBe('0px');
+  expect(await page.locator('.igros .torah').evaluate((el) => getComputedStyle(el).fontFamily)).toContain('DavidCLM');
+  // The note on the whole letter has no number; the one the words point to keeps its own.
+  await expect(page.locator('#n-n1 .fl')).toHaveCount(0);
+  await expect(page.locator('#n-n2 .fl')).toHaveText('2');
+});
+
+test('keeps a letter’s date, place, addressee and handwritten copy in the corner menu', async ({ page }) => {
+  await page.goto('/sample/1/5');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'עוד' }).click();
+  const sheet = page.getByRole('dialog', { name: 'עוד' });
+  await expect(sheet.getByRole('button', { name: /מקום.*עיר לדוגמה/ })).toBeVisible();
+  await expect(sheet.getByRole('button', { name: /אל.*נמען לדוגמה/ })).toBeVisible();
+  await expect(sheet.getByRole('button', { name: /כתב יד/ })).toBeVisible();
+  // Labels a person set are not marked as a machine's.
+  await expect(sheet.getByText('במכונה, עוד לא נבדק בידי אדם')).toHaveCount(0);
+  await sheet.getByRole('button', { name: /מקום/ }).click();
+  await expect(page).toHaveURL(/\/search\?q=/);
+});
+
+test('marks a letter’s labels a machine guessed, until a person checks them', async ({ page }) => {
+  await page.goto('/sample/1/6');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'עוד' }).click();
+  await expect(page.getByRole('dialog', { name: 'עוד' }).getByRole('button', { name: /מקום.*עיר לדוגמה.*במכונה, עוד לא נבדק בידי אדם/ })).toBeVisible();
+});
+
+test('draws a sicha without the letter’s layout', async ({ page }) => {
+  await page.goto('/sample/1/1');
+  await expect(page.locator('.igros')).toHaveCount(0);
+  await expect(page.locator('.torah p.end')).toHaveText('חתימה לדוגמה');
+});
