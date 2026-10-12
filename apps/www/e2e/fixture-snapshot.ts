@@ -124,11 +124,18 @@ function smallCut(files: Record<string, unknown>, tree: { top: string[]; sets: R
   const to = (w: TreeWork) => (w.addition as { to?: string } | undefined)?.to;
   const top = tree.top.map((id) => {
     const shelf = set(id);
-    if (!isRebbe(shelf.path)) return entry(shelf, shelf.name);
+    if (!isRebbe(shelf.path)) return { ...entry(shelf, shelf.name), rev: 1 };
     return {
       ...entry(shelf, shelf.name),
+      rev: 1,
       rebbe: tree.top.filter((at) => isRebbe(set(at).path)).indexOf(id) + 1,
-      sets: shelf.sets.map((inner) => entry(set(inner), set(inner).name)),
+      // Each of his shelves with its official sefarim, its first 3 shelves' names, and whether it has additions to none of them (#301).
+      sets: shelf.sets.map((inner) => ({
+        ...entry(set(inner), set(inner).name),
+        works: set(inner).works.map((w) => entry(work(w), work(w).title)),
+        inner: set(inner).sets.slice(0, 3).map((at) => set(at).name),
+        ...(set(inner).additions.length ? { loose: true } : {}),
+      })),
       works: shelf.works.map((w) => entry(work(w), work(w).title)),
       additions: shelf.additions.map((w) => entry(work(w), work(w).title)),
     };

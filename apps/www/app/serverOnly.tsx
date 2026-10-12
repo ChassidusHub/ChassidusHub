@@ -12,9 +12,18 @@ declare module 'react-router' {
 /**
  * A request's part of the context: whether it is for a whole page, and a
  * fresh place for what that page draws on the server only (server/worker.ts,
- * server/node.ts). A click to another page asks for `<path>.data`.
+ * server/node.ts), with the catalog snapshot's index when the server has it.
+ * A click to another page asks for `<path>.data`.
  */
-export const pageContext = (request: Request) => ({ document: !new URL(request.url).pathname.endsWith('.data'), serverOnly: new Map<string, string>() });
+export const pageContext = (request: Request, catalogIndex?: string | null) => {
+  const document = !new URL(request.url).pathname.endsWith('.data');
+  const serverOnly = new Map<string, string>();
+  if (document && catalogIndex) serverOnly.set(CATALOG_INDEX, catalogIndex);
+  return { document, serverOnly };
+};
+
+/** Where a whole page carries the catalog snapshot's index (server/catalog.ts, `indexKeeper`; app/root.tsx). */
+export const CATALOG_INDEX = 'catalog-index';
 
 /**
  * What a page draws on the server but leaves out of its hydration data: a

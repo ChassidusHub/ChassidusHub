@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse } from 'react-router';
 import type { Route } from './+types/root';
+import { CATALOG_INDEX, useServerOnly } from './serverOnly';
 import { ToastProvider } from './ui';
 import uiFont from './ui/fonts/noto-sans-hebrew.woff2?url';
 import uiCss from './ui/ui.css?url';
@@ -71,6 +72,9 @@ const theme = import.meta.env.SSR ? `try{var d=document.documentElement,t=localS
  * flips after load. Play controls and progress bars set their own direction.
  */
 export function Layout({ children }: { children: React.ReactNode }) {
+  // The catalog snapshot's index, so the browser reads the catalog with no wait for it (#265, app/catalog/browser.ts).
+  // Only the server writes it; hydration keeps what was drawn.
+  const catalogIndex = useServerOnly(CATALOG_INDEX) ?? '';
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
@@ -86,6 +90,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <script type="application/json" id={CATALOG_INDEX} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: catalogIndex }} />
         <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: worker }} />
         <ScrollRestoration />
         <Scripts />
