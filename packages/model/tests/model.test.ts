@@ -60,6 +60,27 @@ describe('schemas', () => {
     expect(isAddition(EXAMPLES.work)).toBe(false);
   });
 
+  it("takes a sefer's `view` and a unit's facts (schema 18, RFC 0004), and refuses kinds it does not know", () => {
+    expect(registry.validate('work', { ...EXAMPLES.work, view: 'hisvaaduyos' })).toEqual({ ok: true });
+    expect(registry.validate('work', { ...EXAMPLES.work, view: 'gallery' }).ok).toBe(false);
+    const letter = {
+      ...EXAMPLES.unit,
+      kind: 'letter',
+      heading: { he: 'במענה על מכתבו' },
+      number: "א'תתקמג",
+      to: { he: 'הרה"ח ... שי\'' },
+      place: { he: 'ברוקלין' },
+      occasion: 'yud-shvat',
+      parsha: 'bo',
+      muga: 'bilti-mugah',
+      labelOrigin: { by: 'catalog:labeller', checked: false },
+    };
+    expect(registry.validate('unit', letter)).toEqual({ ok: true });
+    expect(registry.validate('unit', { ...EXAMPLES.unit, kind: 'farbrengen' }).ok).toBe(false);
+    expect(registry.validate('unit', { ...EXAMPLES.unit, muga: 'edited' }).ok).toBe(false);
+    expect(registry.validate('unit', { ...EXAMPLES.unit, occasion: 'Yud Shvat' }).ok).toBe(false);
+  });
+
   it('refuses an unknown type, and takes stored schemas over built-in ones', () => {
     expect(registry.validate('maaneh', {}).ok).toBe(false);
     const withMaaneh = SchemaRegistry.withOverrides([['maaneh', { type: 'object', required: ['text'] }]]);
@@ -164,6 +185,9 @@ describe('page words', () => {
 
   it('takes structured words and nothing else: no markup, no unknown marks, no unsafe links', () => {
     expect(registry.validate('unit', page([{ text: 'שלום', marks: ['b', 'i'] }])).ok).toBe(true);
+    // A farbrengen's stage directions (ניגנו) are their own kind of segment (schema 18).
+    const stage = { ...EXAMPLES.unit, body: { profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 's1', kind: 'stage', text: [{ text: 'ניגנו' }] }] }] } };
+    expect(registry.validate('unit', stage)).toEqual({ ok: true });
     expect(registry.validate('unit', { ...EXAMPLES.unit, body: "'''wikitext'''" }).ok).toBe(false);
     expect(registry.validate('unit', page([{ text: 'x', marks: ['script'] }])).ok).toBe(false);
     expect(registry.validate('unit', page([{ text: 'x', href: 'javascript:alert(1)' }])).ok).toBe(false);
