@@ -66,7 +66,7 @@ export class CachedPage extends WorkerEntrypoint<Env> {
     // Said in its Server-Timing as `drawn`, with when: the edge keeps the header with the page (server/serverTiming.ts).
     const started = performance.now();
     const timing = pageTiming();
-    const page = tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }), seen);
+    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }), seen);
     return withTiming(page, timing.header(performance.now() - started, 'drawn'));
   }
 
