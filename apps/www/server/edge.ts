@@ -30,11 +30,12 @@ const ITEM_ID = /"(rh-[0-9a-hjkmnp-tv-z]{6,16})"/g;
 
 /**
  * The most tags a kept page carries: Cloudflare keeps up to 1000 on a
- * response. A page that read about more items than that cannot be forgotten
- * item by item, so it is kept for `CROWDED_SECONDS` only.
+ * response. A page that read about more items than that, or was still
+ * reading when it went out, cannot be forgotten item by item, so it is kept
+ * for `BRIEF_SECONDS` only.
  */
 export const MOST_TAGS = 1000;
-export const CROWDED_SECONDS = 600;
+export const BRIEF_SECONDS = 600;
 
 /**
  * Whether a request may be answered from the kept pages: a GET or HEAD from
@@ -78,29 +79,35 @@ export function idsIn(json: string, into: Set<string> = new Set()): Set<string> 
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
-/** The items a page's reads of the API answered about, and the copies of those answers still being read. */
+/** The items a page's reads of the API answered about, and how many of its reads have not yet been read through. */
 export class Seen {
   readonly ids = new Set<string>();
-  readonly reading: Promise<unknown>[] = [];
+  open = 0;
 }
 
 /**
  * A fetch that notes, in `seen`, the id of every item the API's answers name.
  * It reads a copy of each JSON answer beside the page, so the page waits for
- * nothing more.
+ * nothing more. A read is open from when it is asked until its copy is read.
  */
 export function seenIn(send: Fetch, seen: Seen): Fetch {
   return async (input, init) => {
-    const response = await send(input, init);
-    if (response.ok && (response.headers.get('Content-Type') ?? '').includes('json')) {
-      seen.reading.push(
-        response
-          .clone()
-          .text()
-          .then((json) => void idsIn(json, seen.ids))
-          .catch(() => undefined),
-      );
+    seen.open++;
+    let response: Response;
+    try {
+      response = await send(input, init);
+    } catch (error) {
+      seen.open--;
+      throw error;
     }
+    if (response.ok && (response.headers.get('Content-Type') ?? '').includes('json')) {
+      void response
+        .clone()
+        .text()
+        .then((json) => void idsIn(json, seen.ids))
+        .catch(() => undefined)
+        .finally(() => seen.open--);
+    } else seen.open--;
     return response;
   };
 }
@@ -113,23 +120,23 @@ export function keepable(response: Response): boolean {
 
 /**
  * The page as it is kept, with its Cache-Tag: one tag for each item it read
- * about, so it is forgotten when one of them changes. Its whole body is read
- * first, so the reads a page streams in after its first bytes (`<Await>`) are
- * counted too; only the first reader of a page waits for that. A page that
- * read about too many items to tag is kept briefly instead; one that failed
- * or is missing is not kept at all.
+ * about, so it is forgotten when one of them changes. It goes out at once,
+ * streaming as it was drawn (pages load instantly, even for the first
+ * reader). A page still reading the API when its first bytes go (its
+ * `<Await>` parts) cannot name everything it will show, and a page that read
+ * about too many items to tag cannot be forgotten item by item: both are kept
+ * briefly instead. One that failed or is missing is not kept at all.
  */
 export async function tagged(response: Response, seen: Seen): Promise<Response> {
   if (!keepable(response)) return response.status >= 400 || !response.headers.has('Cache-Control') ? unkept(response) : response;
-  const body = await response.arrayBuffer();
-  await Promise.all(seen.reading);
+  // A copy of an answer the page has already read through is read in a moment; wait for those, not for the page's open reads.
+  await new Promise((done) => setTimeout(done, 0));
   const headers = new Headers(response.headers);
-  if (seen.ids.size > MOST_TAGS) {
-    headers.set('Cache-Control', headers.get('Cache-Control')!.replace(/s-maxage=(\d+)/i, (_, s: string) => `s-maxage=${Math.min(Number(s), CROWDED_SECONDS)}`));
-  } else if (seen.ids.size > 0) {
-    headers.set('Cache-Tag', [...seen.ids].join(','));
+  if (seen.open > 0 || seen.ids.size > MOST_TAGS) {
+    headers.set('Cache-Control', headers.get('Cache-Control')!.replace(/s-maxage=(\d+)/i, (_, s: string) => `s-maxage=${Math.min(Number(s), BRIEF_SECONDS)}`));
   }
-  return new Response(body, { status: response.status, statusText: response.statusText, headers });
+  if (seen.ids.size > 0 && seen.ids.size <= MOST_TAGS) headers.set('Cache-Tag', [...seen.ids].join(','));
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 /**

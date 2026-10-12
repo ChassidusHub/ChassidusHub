@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CROWDED_SECONDS, forEdge, idsIn, inGroups, mayUseEdge, Seen, seenIn, tagged } from '../server/edge.js';
+import { BRIEF_SECONDS, forEdge, idsIn, inGroups, mayUseEdge, Seen, seenIn, tagged } from '../server/edge.js';
 import { KEPT_PAGE, todaysPage } from '../app/lib/caching.js';
 
 const page = (cacheControl: string, init: ResponseInit = {}) => new Response('<p>page</p>', { status: 200, ...init, headers: { 'Cache-Control': cacheControl, ...(init.headers as Record<string, string>) } });
@@ -28,21 +28,35 @@ describe("the site's pages at the edge", () => {
     expect([...idsIn('{"id":"rh-7k2m9q4d","work":"rh-abcdefgh","title":"rh-not an id","n":"rh-ab"}')]).toEqual(['rh-7k2m9q4d', 'rh-abcdefgh']);
   });
 
-  it('tags a kept page with every item its reads were about, those streamed after its first bytes too', async () => {
+  it('tags a kept page with every item its reads were about', async () => {
     const seen = new Seen();
     const send = seenIn(async (url) => json(url.endsWith('/a') ? { id: 'rh-aaaaaaaa' } : { items: [{ id: 'rh-bbbbbbbb' }] }), seen);
+    await Promise.all([(await send('https://api/a')).json(), (await send('https://api/b')).json()]);
+    const response = await tagged(page(KEPT_PAGE), seen);
+    expect(response.headers.get('Cache-Tag')?.split(',').sort()).toEqual(['rh-aaaaaaaa', 'rh-bbbbbbbb']);
+    expect(response.headers.get('Cache-Control')).toBe(KEPT_PAGE);
+    expect(await response.text()).toBe('<p>page</p>');
+  });
+
+  it('sends a page that streams in later reads at once, and keeps it briefly', async () => {
+    const seen = new Seen();
+    let answer!: (r: Response) => void;
+    const send = seenIn((url) => (url.endsWith('/a') ? Promise.resolve(json({ id: 'rh-aaaaaaaa' })) : new Promise<Response>((done) => (answer = done))), seen);
     await (await send('https://api/a')).json();
-    // The page's first bytes go before its second read (<Await>); the page ends once that read is in.
+    const later = send('https://api/b');
+    // The page's first bytes go before its second read is in (<Await>); the page is answered without waiting for it.
     const body = new ReadableStream<Uint8Array>({
       async start(stream) {
         stream.enqueue(new TextEncoder().encode('<p>page'));
-        await (await send('https://api/b')).json();
+        await (await later).json();
         stream.enqueue(new TextEncoder().encode('</p>'));
         stream.close();
       },
     });
     const response = await tagged(new Response(body, { headers: { 'Cache-Control': KEPT_PAGE } }), seen);
-    expect(response.headers.get('Cache-Tag')?.split(',').sort()).toEqual(['rh-aaaaaaaa', 'rh-bbbbbbbb']);
+    expect(response.headers.get('Cache-Control')).toContain(`s-maxage=${BRIEF_SECONDS}`);
+    expect(response.headers.get('Cache-Tag')).toBe('rh-aaaaaaaa');
+    answer(json({ id: 'rh-bbbbbbbb' }));
     expect(await response.text()).toBe('<p>page</p>');
   });
 
@@ -55,7 +69,7 @@ describe("the site's pages at the edge", () => {
     for (let i = 0; i < 1001; i++) crowded.ids.add(fakeId(i));
     const kept = await tagged(page(KEPT_PAGE), crowded);
     expect(kept.headers.has('Cache-Tag')).toBe(false);
-    expect(kept.headers.get('Cache-Control')).toContain(`s-maxage=${CROWDED_SECONDS}`);
+    expect(kept.headers.get('Cache-Control')).toContain(`s-maxage=${BRIEF_SECONDS}`);
   });
 
   it('never keeps a page that failed, is missing, or did not say', async () => {

@@ -582,8 +582,10 @@ a merge changes something it shows:
   its cookies, its place held open from the first paint (`listen/stopped.ts`).
 - While `CachedPage` draws a page it reads the API fresh (`no-cache`, past
   the API's own cache) and notes the id of every item the API's answers name.
-  The page is kept with those ids as its `Cache-Tag` (`tagged`; a page about
-  more than 1000 items is kept 10 minutes instead).
+  The page is kept with those ids as its `Cache-Tag` (`tagged`). It goes out
+  streaming, never held back: a page still reading the API when its first
+  bytes go (`<Await>`), or about more than 1000 items, is kept 10 minutes
+  instead, since its tags cannot name everything it shows.
 - Once a minute the API reads what merged since last time, takes the
   changed items and what they point at, and calls `CachedPage.forget` through
   the `SITE_PAGES` binding, which purges those tags
