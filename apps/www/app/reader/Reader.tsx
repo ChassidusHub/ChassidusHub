@@ -3,9 +3,11 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../lib/catalog';
-import { Button, Icon, IconButton, ServerHtml, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
+import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';
+import { viewFor } from './views';
+import { SichaWords } from '../views/sichos';
 
 type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string };
 
@@ -15,7 +17,8 @@ type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string 
  * everything else (versions, the scan, the recording, copying with the
  * source, sharing, Edit, reporting) is in the corner menu. The sicha before
  * and after are at the foot. Selecting words opens a small bar to fix,
- * copy or share them (app/fix).
+ * copy or share them (app/fix). The facts under the title and the words are
+ * drawn by the view for the page's kind of sefer (reader/views.ts, app/views).
  */
 export function Reader({ data }: { data: ReaderData }) {
   const [open, setOpen] = useState<Open>(null);
@@ -25,6 +28,8 @@ export function Reader({ data }: { data: ReaderData }) {
 
   const text = data.text;
   const words = text.kind === 'words' ? text : null;
+  // What differs by the kind of sefer (a letter's facts, how a farbrengen's words are laid out) is its view's (app/views).
+  const { Head, Words = SichaWords } = viewFor(data);
   // Edit is the same page, with ?edit: only its own fields, and words fixed by selecting them.
   const [search] = useSearchParams();
   const navigate = useNavigate();
@@ -90,6 +95,7 @@ export function Reader({ data }: { data: ReaderData }) {
         <article className="reader">
           <h1 className="stitle">{data.title}</h1>
           {data.sub && <p className="ssub">{data.sub}</p>}
+          {Head && <Head data={data} />}
           {editing && (
             <EditFields>
               <Names item={data.id} rev={data.rev} names={data.names} />
@@ -109,13 +115,7 @@ export function Reader({ data }: { data: ReaderData }) {
 
           {words && (
             <div ref={torah} onClick={onWords} data-fix-item={data.id} data-fix-version={words.version || undefined}>
-              <ServerHtml id={`body:${data.path}`} html={words.body} className={words.machine === 'all' ? 'torah unchecked' : 'torah'} />
-              {words.hasNotes && (
-                <section className="notes" aria-labelledby="notes-h">
-                  <h2 id="notes-h">הערות</h2>
-                  <ServerHtml id={`notes:${data.path}`} html={words.notes} as="ol" />
-                </section>
-              )}
+              <Words data={data} words={words} />
             </div>
           )}
           {text.kind === 'pages' && (text.images.length || !data.pdfs.length) && <Scan text={text} />}
