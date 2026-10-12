@@ -9,11 +9,17 @@ export function meta({ location }: Route.MetaArgs) {
   return [{ title: `${location.search.includes('more') ? 'ספרים נוספים' : 'ספרייה'} · ChassidusHub` }];
 }
 
-/** The other shelves are not waited for: the page goes out at once and they follow in it. */
+/**
+ * The other shelves are not waited for: the page goes out at once and they
+ * follow in it.
+ */
 export async function loader({ request, context }: Route.LoaderArgs) {
   if (new URL(request.url).searchParams.has('more')) return { screen: 'more' as const, others: loadOtherShelves(context.api) };
   return { screen: 'library' as const, ...(await loadLibrary(context.api)) };
 }
+
+/** A click to the library, drawn in the browser from the catalog snapshot it keeps (app/catalog/clicks.ts). */
+export const clientLoader = ({ request, serverLoader }: Route.ClientLoaderArgs) => import('../catalog/clicks').then((clicks) => clicks.libraryClick(request, serverLoader));
 
 /**
  * The same page for everyone (who is signed in is asked by the browser), so

@@ -32,7 +32,9 @@ binding = "API"
 service = "chassidushub-api"
 
 # The public bucket, where showcases are kept (showcases/<token>.json), the same
-# files the old site wrote, so links already handed out keep working.
+# files the old site wrote, so links already handed out keep working; and where
+# the API writes the catalog snapshot (catalog/…), handed to the browser at
+# /_/catalog/… for its clicks (server/catalog.ts; CATALOG_SNAPSHOT = "off" hands none).
 [[r2_buckets]]
 binding = "FILES_PUBLIC"
 bucket_name = "chassidushub-public"

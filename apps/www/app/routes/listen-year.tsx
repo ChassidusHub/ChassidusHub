@@ -1,6 +1,6 @@
 import { useLoaderData } from 'react-router';
-import { eventRow, eventsIn, eventsWithWords, monthLabel, yearLabel, YEARS } from '../listen/data.server';
-import { listening, yearLevel, type EventRow } from '../listen/common';
+import { yearPage } from '../listen/data.server';
+import { listening, yearLevel } from '../listen/common';
 import { PlayRow } from '../listen/play';
 import { TopBar } from '../ui';
 import type { Route } from './+types/listen-year';
@@ -12,19 +12,13 @@ export function meta({ data }: Route.MetaArgs) {
   return [{ title: `${data?.name ?? 'שמיעה'} · ChassidusHub` }];
 }
 
-/** One year: every event with recordings, month by month. */
-export async function loader({ params, context: { api } }: Route.LoaderArgs) {
-  const year = Number(params.year);
-  if (!YEARS.includes(year)) throw new Response('not found', { status: 404 });
-  const [withWords, events] = await Promise.all([eventsWithWords(api), eventsIn(api, year)]);
-  const months: { name: string; rows: EventRow[] }[] = [];
-  for (const event of events) {
-    const name = monthLabel(event.data.date);
-    if (months.at(-1)?.name !== name) months.push({ name, rows: [] });
-    months.at(-1)!.rows.push(eventRow(event, withWords, { dateFirst: false }));
-  }
-  return { year, name: yearLabel(year), months, years: YEARS.map((y) => ({ year: y, label: yearLabel(y) })) };
+/** One year: every event with recordings, month by month (app/listen/events.ts). */
+export async function loader({ params, context }: Route.LoaderArgs) {
+  return yearPage(context.api, Number(params.year));
 }
+
+/** A click here, drawn in the browser from the catalog snapshot it keeps (app/listen/clicks.ts). */
+export const clientLoader = ({ params, serverLoader }: Route.ClientLoaderArgs) => import('../listen/clicks').then((clicks) => clicks.yearClick(params.year, serverLoader));
 
 export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
