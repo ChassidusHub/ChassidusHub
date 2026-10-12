@@ -579,6 +579,10 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .fn { display: flex; gap: 8px; margin-bottom: 6px; scroll-margin-top: 64px; }
 .fn .fl { flex: none; min-width: 1.6em; font-family: var(--ui); font-size: 12px; color: var(--g600); padding-top: 0.25em; }
 .fn:target { background: var(--g100); border-radius: 6px; }
+/* A sicha opened by a tap shows at once and its words come after (reader/click.ts): until they do, the
+   words keep a page's room and the notes and the links to the next sicha wait unseen, so nothing jumps (#296). */
+.torah:empty { min-height: 70vh; }
+.reader:has(.torah:empty) :is(.notes, .endnav) { visibility: hidden; }
 .notetext { font-family: var(--torah); font-size: 18px; line-height: 1.7; }
 .endnav { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--g300); margin-top: 28px; padding-top: 14px; }
 .endnav a, .endnav button { display: flex; align-items: center; gap: 6px; font-size: 14px; min-height: 44px; }
