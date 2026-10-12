@@ -322,7 +322,11 @@ const tasks = [
       await w.tap('Toras Menachem and sichos', link(w.page, '/sets/the-rebbe-sichos'), { frame: both(at('/sets/the-rebbe-sichos'), pageFrame), content: shown('main a[href="/toras-menachem"]') });
       await w.tap('Toras Menachem', link(w.page, '/toras-menachem'), { frame: both(at('/toras-menachem'), pageFrame), content: shown('main a[href="/toras-menachem/32"]') });
       await w.tap('volume 32, תשכ"ב', link(w.page, '/toras-menachem/32'), { frame: both(at('/toras-menachem/32'), pageFrame), content: shown('main a[href^="/toras-menachem/32/"]') });
-      const day = w.page.locator('main a[href^="/toras-menachem/32/"]').filter({ hasText: /^בס"ד\. י"ט כסלו, ה'תשכ"ב$/ }).first();
+      const day = w.page
+        .locator('main a[href^="/toras-menachem/32/"]')
+        // The day's farbrengen, under its title then (בס"ד) or now (שיחת), as the catalog is relabelled.
+        .filter({ hasText: /^(בס"ד\.|שיחת) י"ט כסלו, ה'תשכ"ב$/ })
+        .first();
       const href = await day.getAttribute('href');
       await w.tap('י"ט כסלו', day, { frame: both(at(href), pageFrame), content: words });
     },
