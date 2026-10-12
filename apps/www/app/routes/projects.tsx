@@ -105,25 +105,21 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
         </nav>
 
         <Suspense key={state} fallback={<p className="faint" aria-busy="true">רגע…</p>}>
-          <Await resolve={data} errorElement={<Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>}>
-            {({ projects }) => <List projects={projects} state={state} />}
-          </Await>
-        </Suspense>
-
-        {account?.person.steward && <NewProject />}
-
-        <SectionHead title="איך זה עובד" />
-        <ol className="howto">
-          <li>כל פרויקט עובר על חוסר אחד: התוועדויות של שנה בלי הקלטה, הקלטות לסנכרון, עמודי סריקה להגהה.</li>
-          <li>״תנו לי את הבא״ מביא לכם פריט שאף אחד אחר לא עובד עליו, ושומר אותו לכם לשלוש שעות.</li>
-          <li>ההתקדמות זזה עם כל תוספת שאושרה.</li>
-        </ol>
-
-        <SectionHead title="מה עוד חסר" more={{ label: 'מה חסר', to: '/missing' }} />
-        {/* The links are there at once; how much each holds is added when the counts come. */}
-        <Suspense fallback={<Gaps gaps={{ recordings: undefined, texts: undefined }} />}>
-          <Await resolve={data} errorElement={<Gaps gaps={{ recordings: null, texts: null }} />}>
-            {({ gaps }) => <Gaps gaps={gaps} />}
+          <Await
+            resolve={data}
+            errorElement={
+              <>
+                <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>
+                <Below data={data} steward={Boolean(account?.person.steward)} />
+              </>
+            }
+          >
+            {({ projects }) => (
+              <>
+                <List projects={projects} state={state} />
+                <Below data={data} steward={Boolean(account?.person.steward)} />
+              </>
+            )}
           </Await>
         </Suspense>
       </main>
@@ -214,5 +210,29 @@ function NewProject() {
         </Button>
       </Form>
     </Panel>
+  );
+}
+
+/** How projects work and what else is missing. They come in after the list, so nothing under the waiting line is pushed down when it arrives. */
+function Below({ data, steward }: { data: Route.ComponentProps['loaderData']['data']; steward: boolean }) {
+  return (
+    <>
+      {steward && <NewProject />}
+
+      <SectionHead title="איך זה עובד" />
+      <ol className="howto">
+        <li>כל פרויקט עובר על חוסר אחד: התוועדויות של שנה בלי הקלטה, הקלטות לסנכרון, עמודי סריקה להגהה.</li>
+        <li>״תנו לי את הבא״ מביא לכם פריט שאף אחד אחר לא עובד עליו, ושומר אותו לכם לשלוש שעות.</li>
+        <li>ההתקדמות זזה עם כל תוספת שאושרה.</li>
+      </ol>
+
+      <SectionHead title="מה עוד חסר" more={{ label: 'מה חסר', to: '/missing' }} />
+      {/* The links are there at once; how much each holds is added when the counts come. */}
+      <Suspense fallback={<Gaps gaps={{ recordings: undefined, texts: undefined }} />}>
+        <Await resolve={data} errorElement={<Gaps gaps={{ recordings: null, texts: null }} />}>
+          {({ gaps }) => <Gaps gaps={gaps} />}
+        </Await>
+      </Suspense>
+    </>
   );
 }

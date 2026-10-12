@@ -130,26 +130,39 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
             errorElement={
               <Waiting head={head} kind={kind}>
                 <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>
+                <Help />
               </Waiting>
             }
           >
-            {(board) => <List kind={kind} year={year} page={page} head={head} board={board} />}
+            {(board) => (
+              <>
+                <List kind={kind} year={year} page={page} head={head} board={board} />
+                <Help />
+              </>
+            )}
           </Await>
         </Suspense>
-
-        <SectionHead title="איך עוזרים" />
-        <SeeAlso
-          links={[
-            { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על שנה שלמה, פריט אחרי פריט' },
-            { to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, שנה אחרי שנה' },
-          ]}
-        />
       </main>
     </>
   );
 }
 
-/** The list's heading and how to help, with a quiet line where the list will come (or what went wrong). */
+/** Where else to help. It comes in after the list, never before it: shown under the waiting line, it would be pushed down when the list arrives. */
+function Help() {
+  return (
+    <>
+      <SectionHead title="איך עוזרים" />
+      <SeeAlso
+        links={[
+          { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על שנה שלמה, פריט אחרי פריט' },
+          { to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, שנה אחרי שנה' },
+        ]}
+      />
+    </>
+  );
+}
+
+/** The list's heading, with a quiet line where the list will come (or what went wrong). */
 function Waiting({ head, kind, children = <p className="faint" aria-busy="true">רגע…</p> }: { head: string; kind: Kind; children?: ReactNode }) {
   return (
     <>

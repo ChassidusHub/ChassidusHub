@@ -79,19 +79,40 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
         <h1>מצב הקטלוג</h1>
         <p className="lede">כמה מלא הקטלוג, ואיפה צריך עזרה.</p>
         <Suspense fallback={<p className="faint" aria-busy="true">רגע…</p>}>
-          <Await resolve={loaderData.data} errorElement={<Unread />}>
-            {(report) => (report ? <Figures health={report.health} items={report.items} /> : <Unread />)}
+          <Await
+            resolve={loaderData.data}
+            errorElement={
+              <>
+                <Unread />
+                <More />
+              </>
+            }
+          >
+            {(report) => (
+              <>
+                {report ? <Figures health={report.health} items={report.items} /> : <Unread />}
+                <More />
+              </>
+            )}
           </Await>
         </Suspense>
-        <SectionHead title="עוד" />
-        <SeeAlso
-          links={[
-            { to: '/missing', icon: 'search', label: 'מה חסר', sub: 'התוועדויות בלי הקלטה או הנחה, ספרים בלי סריקה' },
-            { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על חוסר אחד' },
-            { to: '/status', icon: 'check', label: 'מצב האתר', sub: 'האם הכל עובד עכשיו' },
-          ]}
-        />
       </main>
+    </>
+  );
+}
+
+/** Where else to look. It comes in after the figures, so nothing under the waiting line is pushed down when they arrive. */
+function More() {
+  return (
+    <>
+      <SectionHead title="עוד" />
+      <SeeAlso
+        links={[
+          { to: '/missing', icon: 'search', label: 'מה חסר', sub: 'התוועדויות בלי הקלטה או הנחה, ספרים בלי סריקה' },
+          { to: '/projects', icon: 'people', label: 'פרויקטים', sub: 'עובדים יחד על חוסר אחד' },
+          { to: '/status', icon: 'check', label: 'מצב האתר', sub: 'האם הכל עובד עכשיו' },
+        ]}
+      />
     </>
   );
 }

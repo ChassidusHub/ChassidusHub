@@ -115,20 +115,23 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
         <p className="lede">האם האתר, ה-API, שרת ה-MCP ומסד הנתונים עונים. נבדק כל חמש דקות.</p>
 
         <Suspense fallback={<p className="faint" aria-busy="true">רגע…</p>}>
-          <Await resolve={loaderData.data} errorElement={<p className="faint">לא הצלחנו לקרוא את תוצאות הבדיקות כרגע. נסו שוב בעוד רגע.</p>}>
-            {(answer) => <Report answer={answer} />}
+          <Await
+            resolve={loaderData.data}
+            errorElement={
+              <>
+                <p className="faint">לא הצלחנו לקרוא את תוצאות הבדיקות כרגע. נסו שוב בעוד רגע.</p>
+                <More />
+              </>
+            }
+          >
+            {(answer) => (
+              <>
+                <Report answer={answer} />
+                <More />
+              </>
+            )}
           </Await>
         </Suspense>
-
-        <p className="faint sm">
-          לתוכנות: אותו מידע ב-JSON, ב-
-          <a className="url" href={`${API}/v1/status`} dir="ltr">
-            {`${API}/v1/status`}
-          </a>
-        </p>
-
-        <SectionHead title="עוד" />
-        <SeeAlso links={[{ to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, ואיפה צריך עזרה' }]} />
       </main>
     </>
   );
@@ -272,5 +275,22 @@ function Days({ report, id, up }: { report: StatusReport; id: CheckId; up: numbe
         <span>היום</span>
       </p>
     </div>
+  );
+}
+
+/** The same for programs, and where else to look. They come in after the report, so nothing under the waiting line is pushed down when it arrives. */
+function More() {
+  return (
+    <>
+      <p className="faint sm">
+        לתוכנות: אותו מידע ב-JSON, ב-
+        <a className="url" href={`${API}/v1/status`} dir="ltr">
+          {`${API}/v1/status`}
+        </a>
+      </p>
+
+      <SectionHead title="עוד" />
+      <SeeAlso links={[{ to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, ואיפה צריך עזרה' }]} />
+    </>
   );
 }
