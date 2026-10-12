@@ -1,6 +1,6 @@
 import { libraryPage } from '../library/page';
 import { loadLibrary, loadOtherShelves } from '../library/load';
-import { drawn } from './browser';
+import { drawn, warmUnits } from './browser';
 // Already loaded with any library page: importing it keeps the helpers the screens share with these reads
 // (lib/catalog.ts) in the screens' file, rather than splitting them into a file of their own on a first visit.
 import '../library/screens';
@@ -21,6 +21,7 @@ import '../library/screens';
 export const itemClick = <T>(request: Request, serverLoader: () => Promise<T>) =>
   drawn(serverLoader, async (api) => {
     const page = await libraryPage(api, new URL(request.url));
+    if (page.screen === 'work') warmUnits(page.id);
     return page.screen === 'view' ? serverLoader() : page;
   });
 

@@ -16,6 +16,7 @@ import { isNotLocal, snapshotFrom, type Snapshot } from './snapshot';
  * visit's script nothing.
  */
 
+// public/sw.js keeps this cache by name when a new build takes over.
 const CACHE = 'chassidushub-catalog';
 const MANIFEST = '/_/catalog/manifest.json';
 
@@ -100,11 +101,20 @@ export function browserApi(): ChassidusHub {
 
 /**
  * Starts reading the snapshot's core, without waiting: the page that is open
- * calls this when the browser is idle, so the next click finds it ready. Not
- * on a connection that asks to save data.
+ * calls this when the browser is idle, so the next click finds it ready; on a
+ * sefer's page, also that sefer's units, so one of its volumes opens at once.
+ * Not on a connection that asks to save data.
  */
 export function warm(): void {
-  if (!saveData()) void browserSnapshot().core();
+  if (saveData()) return;
+  const snapshot = browserSnapshot();
+  void snapshot
+    .core()
+    .then((core) => {
+      const here = core?.byPath.get(decodeURIComponent(location.pathname).replace(/\/+$/, ''));
+      if (here && core!.isWork(here)) warmUnits(here.id);
+    })
+    .catch(() => undefined);
 }
 
 const saveData = () => !!(navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
@@ -122,7 +132,7 @@ export async function readyApi(waitMs = 60): Promise<ChassidusHub | null> {
 }
 
 
-/** Starts reading one sefer's units, without waiting: its page calls this, so opening one of its volumes is drawn at once. */
+/** Starts reading one sefer's units, without waiting, so opening one of its volumes is drawn at once. */
 export function warmUnits(work: string): void {
   if (!saveData()) void browserSnapshot().units(work);
 }
