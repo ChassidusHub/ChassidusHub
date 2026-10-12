@@ -18,6 +18,8 @@ export const SUMMARY_MAX_AGE_MS = 15 * 60_000;
 export interface TranscriptsSummary {
   /** When it was made (ISO). */
   at: string;
+  /** The head of main it was made at (Catalog.head): while main has not moved, it is not made again. */
+  seq?: number;
   recordings: TranscribedRecording[];
 }
 
@@ -34,12 +36,23 @@ export async function transcriptsFor(catalog: Catalog, store: SummaryStore | und
   return kept ? kept.recordings.slice(0, n) : transcribedRecordings(catalog, { limit: n });
 }
 
-/** Makes the kept list again when it is missing or older than SUMMARY_MAX_AGE_MS; whether it did. */
+/**
+ * Whether a kept summary is still good: made less than SUMMARY_MAX_AGE_MS ago, or at main's head, which has not moved
+ * since. Main often stands still for hours (07:10 to 11:35 UTC on 12 October), and each summary reads the whole
+ * catalog for half a minute, so made again only for the clock it held the small database for nothing (#338).
+ */
+function stillGood(kept: { at: string; seq?: number } | null, head: number, now: Date): boolean {
+  return Boolean(kept && (now.getTime() - Date.parse(kept.at) < SUMMARY_MAX_AGE_MS || kept.seq === head));
+}
+
+/** Makes the kept list again when it is missing, or older than SUMMARY_MAX_AGE_MS and main moved since; whether it did. */
 export async function refreshTranscripts(catalog: Catalog, store: SummaryStore, now: Date): Promise<boolean> {
   const kept = await store.read().catch(() => null);
   if (kept && now.getTime() - Date.parse(kept.at) < SUMMARY_MAX_AGE_MS) return false;
+  const seq = await catalog.head();
+  if (stillGood(kept, seq, now)) return false;
   const recordings = await transcribedRecordings(catalog, { limit: TRANSCRIPTS_KEPT });
-  await store.write({ at: now.toISOString(), recordings });
+  await store.write({ at: now.toISOString(), seq, recordings });
   return true;
 }
 
@@ -75,6 +88,8 @@ export const TO_CHECK_KEPT = 200;
 
 interface KeptToCheck {
   at: string;
+  /** The head of main it was made at, as TranscriptsSummary's. */
+  seq?: number;
   lists: MachineToCheck;
 }
 
@@ -86,11 +101,13 @@ export async function toCheckFor(catalog: Catalog, kept: Kept | undefined, limit
   return { transcripts: transcripts.slice(0, limit), scans: scans.slice(0, limit), texts: texts.slice(0, limit), totals };
 }
 
-/** Makes the kept to-check lists again when missing or older than SUMMARY_MAX_AGE_MS; whether it did. */
+/** Makes the kept to-check lists again when missing, or older than SUMMARY_MAX_AGE_MS and main moved since; whether it did. */
 export async function refreshToCheck(catalog: Catalog, kept: Kept, now: Date): Promise<boolean> {
   const got = await kept.get<KeptToCheck>('to-check').catch(() => null);
   if (got && now.getTime() - Date.parse(got.at) < SUMMARY_MAX_AGE_MS) return false;
-  await kept.put('to-check', { at: now.toISOString(), lists: await machineToCheck(catalog, { limit: TO_CHECK_KEPT }) } satisfies KeptToCheck);
+  const seq = await catalog.head();
+  if (stillGood(got, seq, now)) return false;
+  await kept.put('to-check', { at: now.toISOString(), seq, lists: await machineToCheck(catalog, { limit: TO_CHECK_KEPT }) } satisfies KeptToCheck);
   return true;
 }
 
