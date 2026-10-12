@@ -791,10 +791,11 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .bq-place > a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
 .bq-step { display: inline-flex; gap: 4px; margin-inline-start: auto; }
 .bq-wait { background: var(--g100); border-radius: 8px; }
-h1.bq-wait { width: 70%; }
+/* The title's place while it comes: not a heading (an empty one is no use to a screen reader), the height of one line of h1. */
+.bq-wait-h1 { width: 70%; height: 30px; margin: 8px 0 2px; }
 .bq-wait-note { height: 120px; }
 .bq-wait-tree { height: 320px; }
-.bq-note.bq-cut .sg-said { max-height: 11.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 70%, transparent); }
+.bq-note.bq-cut .sg-said { max-height: 7.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 70%, transparent); }
 /* The decision stays within reach of a thumb: at the foot of the screen, over the phone's bottom bar, while the batch is read. */
 .bq-decide {
   position: sticky; bottom: calc(59px + env(safe-area-inset-bottom, 0px)); z-index: 2; margin: 18px -16px 0; padding: 8px 16px 10px;
@@ -805,6 +806,40 @@ h1.bq-wait { width: 70%; }
 .bq-decide .say { margin-block: 6px; }
 .bq-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .bq-btns .btn { min-height: 48px; justify-content: center; }
+/* The batch counted, sampled and listed (#318): a big batch checked on a phone. */
+.bq-wait-sum { height: 168px; }
+.br-sum { border: 1px solid var(--g300); border-radius: 10px; padding: 10px 14px; }
+.br-total { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.br-counts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 15px; }
+.br-counts b { font-variant-numeric: tabular-nums; }
+.br-machine { margin: 8px 0 0; }
+.br-h { display: flex; align-items: baseline; gap: 6px; font-size: 14px; font-weight: 600; margin: 14px 0 4px; }
+.br-flows { list-style: none; margin: 0; padding: 0; }
+.br-flows li { display: flex; align-items: center; gap: 10px; min-height: 36px; border-bottom: 1px solid var(--g200); font-size: 15px; }
+.br-flows li:last-child { border-bottom: 0; }
+.br-flows li > b { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.br-way { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; min-width: 0; margin: 0; font-size: 14px; color: var(--g700); overflow-wrap: anywhere; }
+.br-way a, .br-name a { color: inherit; text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.br-way .i { flex: none; color: var(--g500); }
+.br-old { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.br-rows { list-style: none; margin: 0; padding: 0; border: 1px solid var(--g300); border-radius: 10px; }
+.br-samples .br-rows { margin-bottom: 4px; }
+.br-row { padding: 8px 12px; border-bottom: 1px solid var(--g200); }
+.br-row:last-child { border-bottom: 0; }
+.br-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.br-name { flex: 1 1 60%; min-width: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.br-gone .br-name { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.br-words { margin: 2px 0 0; font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.br-first { display: block; width: 100%; font-family: var(--torah); font-size: 16px; line-height: 1.5; color: var(--g900); quotes: '„' '”'; overflow-wrap: anywhere; }
+.br-list .search { margin-bottom: 8px; }
+.br-list .chips { margin-bottom: 6px; }
+.br-count { margin: 6px 0; min-height: 1.5em; }
+.br-busy { opacity: 0.55; }
+.br-pages { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.bq-tree { margin-top: 24px; border-top: 1px solid var(--g200); padding-top: 8px; }
+.bq-tree > summary { cursor: pointer; font-size: 15px; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.bq-sure > p { margin: 0 0 8px; }
+.bq-sure .bq-btns { margin-top: 12px; }
 .bt-group { border: 1px solid var(--g300); border-radius: 10px; padding: 4px 14px 10px; margin-block: 10px; }
 .bt-group h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 16px; margin: 10px 0 2px; }
 .bt-group h3 a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
