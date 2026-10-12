@@ -2,3 +2,5 @@
 build/
 test-results/
 playwright-report/
+# the top-task walk's results (scripts/top-tasks.mjs)
+/top-tasks/

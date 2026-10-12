@@ -149,6 +149,29 @@ export type ItemView = {
     name: Record<string, unknown> | null;
     durationMs: number | null;
   }>;
+  /** A sefer's volumes, on a sefer's page and a volume's */
+  outline?: Array<{
+    /** The volume's place (1) */
+    value: string;
+    label: Record<string, unknown> | null;
+    /** How many units it holds */
+    units: number;
+  }>;
+  /** The books that are additions to a sefer, on its page (at most 100) */
+  additions?: Array<{
+    /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+    id: string;
+    path: string | null;
+    name: Record<string, unknown> | null;
+    kind: string | null;
+  }>;
+  /** Set when the path was a volume of a sefer (/likkutei-sichos/12): `item` is the sefer */
+  volume?: {
+    /** The volume's place (12) */
+    value: string;
+    /** Its units in order, without their words */
+    units: Array<Item>;
+  };
 };
 
 export type ShownText = {
@@ -985,6 +1008,8 @@ export interface Operations {
         title: string;
         description?: string;
         project?: number;
+        /** Your own key for it, at most 200 characters: sending the same key again answers the suggestion made then (200), as it stands, instead of making another */
+        key?: string;
       };
     };
     output: Suggestion;
@@ -2206,6 +2231,25 @@ export interface Operations {
       id: string;
     };
   };
+  /** Add or change many items in a draft suggestion in one write: all of them, or none when one is wrong (at most 500 a call) */
+  putSuggestionItems: {
+    input: {
+      id: number;
+      body: {
+        /** The items, as PUT takes one */
+        items: Array<{
+          /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
+          id?: string;
+          type: string;
+          data: Record<string, unknown> | null;
+          path?: string | null;
+        }>;
+      };
+    };
+    output: {
+      ids: Array<string>;
+    };
+  };
   /** The hanacha synced to this recording, paragraph by paragraph */
   recordingHanacha: {
     input: {
@@ -3413,6 +3457,7 @@ export const OPERATIONS = {
   proposeUpload: {"method":"POST","path":"/v1/uploads/propose","pathParams":[],"query":[],"body":"json","answer":"json"},
   protectedResource: {"method":"GET","path":"/.well-known/oauth-protected-resource","pathParams":[],"query":[],"body":null,"answer":"json"},
   putSuggestionItem: {"method":"PUT","path":"/v1/suggestions/{id}/items","pathParams":["id"],"query":[],"body":"json","answer":"json"},
+  putSuggestionItems: {"method":"POST","path":"/v1/suggestions/{id}/items","pathParams":["id"],"query":[],"body":"json","answer":"json"},
   recordingHanacha: {"method":"GET","path":"/v1/recordings/{id}/hanacha","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   recordingsHanacha: {"method":"GET","path":"/v1/recordings/batch/hanacha","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
   recordingTranscript: {"method":"GET","path":"/v1/recordings/{id}/transcript","pathParams":["id"],"query":[],"body":null,"answer":"json"},
@@ -4117,6 +4162,11 @@ export abstract class GeneratedMethods {
   /** Add or change one item in a draft suggestion (data null deletes it) (PUT /v1/suggestions/{id}/items) */
   putSuggestionItem(input: Operations['putSuggestionItem']['input']): Promise<Operations['putSuggestionItem']['output']> {
     return this.call('putSuggestionItem', input ?? {} as Operations['putSuggestionItem']['input']);
+  }
+
+  /** Add or change many items in a draft suggestion in one write: all of them, or none when one is wrong (at most 500 a call) (POST /v1/suggestions/{id}/items) */
+  putSuggestionItems(input: Operations['putSuggestionItems']['input']): Promise<Operations['putSuggestionItems']['output']> {
+    return this.call('putSuggestionItems', input ?? {} as Operations['putSuggestionItems']['input']);
   }
 
   /** The hanacha synced to this recording, paragraph by paragraph (GET /v1/recordings/{id}/hanacha) */

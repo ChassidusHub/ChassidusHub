@@ -71,7 +71,7 @@ export function OtherShelvesScreen({ others }: { others: Promise<Line[]> }) {
   );
 }
 
-/** A Rebbe or a shelf: its sefarim and shelves, then the books on it that are additions. */
+/** A Rebbe or a shelf: its sefarim and shelves (a Rebbe's sefarim first, then his shelves), then the books on it that are additions. */
 export function SetScreen({ data }: { data: SetData }) {
   const edit = useEdit(data.path ?? '');
   return (
@@ -91,6 +91,12 @@ export function SetScreen({ data }: { data: SetData }) {
           <>
             <h2>ספרים</h2>
             <Lines lines={data.lines} />
+          </>
+        )}
+        {data.shelves.length > 0 && (
+          <>
+            <h2>מדפים</h2>
+            <Lines lines={data.shelves} />
           </>
         )}
         {data.additions.length > 0 && (

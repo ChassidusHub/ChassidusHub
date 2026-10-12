@@ -1,4 +1,4 @@
-import { data, redirect, type AppLoadContext } from 'react-router';
+import { data, isRouteErrorResponse, redirect, type AppLoadContext } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
@@ -44,7 +44,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') {
-      const reader = await readerData(view, context, url.origin);
+      const reader = await readerData(view, context, url.origin, url.searchParams.get('language') ?? undefined);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
       // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
       // Said in a header, on the server, so it costs the reader's script nothing.
@@ -58,8 +58,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 }
 
-/** A click to a shelf, a sefer or a volume, drawn in the browser from the catalog snapshot it keeps (app/catalog/clicks.ts). */
-export const clientLoader = ({ request, serverLoader }: Route.ClientLoaderArgs) => import('../catalog/clicks').then((clicks) => clicks.itemClick(request, serverLoader));
+/**
+ * A click to an item's page: a shelf, a sefer or a volume is drawn in the
+ * browser from the catalog snapshot; a sicha shows at once and its words come
+ * after, from where they are kept (app/reader/click.ts).
+ */
+export const clientLoader = ({ request, serverLoader }: Route.ClientLoaderArgs) => import('../reader/click').then((click) => click.sichaClick(request, serverLoader));
 
 /** Where an event or recording is heard: /listen/<year>/<event>, a recording picked with ?r=. */
 async function listeningPage(item: { id: string; type: string; data: unknown }, api: AppLoadContext['api']): Promise<string | null> {
@@ -113,4 +117,15 @@ export default function Item({ loaderData }: Route.ComponentProps) {
         </Placeholder>
       );
   }
+}
+
+/**
+ * A path with nothing at it inside the site's frame like every other page
+ * (this route is inside the shell), so the top bar and the library,
+ * listening and search are a tap away, never a bare page (#264). Any other
+ * failure goes on to the site's own page for it (root.tsx).
+ */
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (!isRouteErrorResponse(error) || error.status !== 404) throw error;
+  return <Placeholder title="הדף לא נמצא" note="" />;
 }

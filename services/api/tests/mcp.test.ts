@@ -251,8 +251,10 @@ describe('the MCP server', () => {
     const unit = { type: 'unit', data: { work: workId, position: [{ level: 'volume', value: '1' }], order: 'V', label: { he: 'א' } } };
     const bad = await tool('suggest_items', { items: [unit, { type: 'unit' }], suggestion, submit: false }, token);
     expect(bad.isError).toBe(true);
-    expect(bad.content[0].text).toMatch(/item 2: give type and data \(suggestion \d+ keeps the 1 before it\)/);
-    const last = await tool('suggest_items', { items: [{ ...unit, data: { ...unit.data, label: { he: 'ב' } } }], suggestion }, token);
+    // A call adds all its items or none.
+    expect(bad.content[0].text).toMatch(/item 2: give type and data \(nothing in this call was added\)/);
+    expect((await catalog.proposals(suggestion)).length).toBe(1);
+    const last = await tool('suggest_items', { items: [unit, { ...unit, data: { ...unit.data, label: { he: 'ב' } } }], suggestion }, token);
     expect(last.isError).toBe(false);
     expect(last.structuredContent.status).toBe('open');
     expect((await catalog.proposals(suggestion)).length).toBe(3);
@@ -290,6 +292,62 @@ describe('the MCP server', () => {
     expect((await tool('reopen_suggestion', { suggestion: stale }, stewardToken)).isError).toBe(false);
     expect((await tool('approve_suggestion', { suggestion: stale, clashes: 'keep_live' }, stewardToken)).isError).toBe(false);
     expect((await catalog.get(workId))!.data).toMatchObject({ title: { he: 'מפתח השיחות' } });
+  });
+
+  it('makes a suggestion once, however often a call with its key is tried again (#270)', async () => {
+    const token = await writeToken((await createPerson(catalog.db, 'Indexer')).id);
+    const work = { type: 'work', path: '/an-index', data: { title: { he: 'מפתח' }, slug: 'an-index', authors: [], genre: 'sichos', levels: ['volume'], sets: [set] } };
+    const units = (workId: string) => ['א', 'ב', 'ג'].map((he, i) => ({ type: 'unit', data: { work: workId, position: [{ level: 'volume', value: String(i + 1) }], order: String(i), label: { he } } }));
+    const mine = async () => (await catalog.db.query<{ n: number }>("SELECT count(*)::int AS n FROM changeset WHERE client_key = 'an-index'")).rows[0]!.n;
+
+    // The first call is told it failed, but went on: the same call again goes on with the same draft, and its new item is the same item.
+    const first = await tool('suggest_items', { items: [work], key: 'an-index', submit: false, title: 'An index' }, token);
+    const again = await tool('suggest_items', { items: [work], key: 'an-index', submit: false, title: 'An index' }, token);
+    expect(again.structuredContent.suggestion).toBe(first.structuredContent.suggestion);
+    expect(again.structuredContent.items[0].id).toBe(first.structuredContent.items[0].id);
+    const suggestion = first.structuredContent.suggestion;
+    expect((await catalog.proposals(suggestion)).length).toBe(1);
+
+    // The last call sends it; tried again, it answers what was sent and adds nothing.
+    const sent = await tool('suggest_items', { items: units(first.structuredContent.items[0].id), suggestion, key: 'an-index' }, token);
+    expect(sent.structuredContent.status).toBe('open');
+    const retried = await tool('suggest_items', { items: [work], key: 'an-index', title: 'An index' }, token);
+    expect(retried.isError).toBe(false);
+    expect(retried.structuredContent).toMatchObject({ suggestion, status: 'open', items: [], already: true });
+    expect(retried.content[0].text).toMatch(/already made with key "an-index" and sent/);
+    // The last call again as it was, naming its suggestion: the same.
+    const named = await tool('suggest_items', { items: units(first.structuredContent.items[0].id), suggestion, key: 'an-index' }, token);
+    expect(named.structuredContent).toMatchObject({ suggestion, status: 'open', items: [], already: true });
+    expect((await catalog.proposals(suggestion)).length).toBe(4);
+    expect(await mine()).toBe(1);
+
+    // The key is its author's: someone else's same key makes their own.
+    const other = await tool('suggest_items', { items: [{ ...work, path: '/another-index' }], key: 'an-index', submit: false }, await writeToken((await createPerson(catalog.db, 'Another')).id));
+    expect(other.structuredContent.suggestion).not.toBe(suggestion);
+    expect(await mine()).toBe(2);
+  });
+
+  it('writes many items into a suggestion in one call, all or none (#270)', async () => {
+    const who = (await createPerson(catalog.db, 'Indexer')).id;
+    await catalog.createAccount({ id: who, displayName: 'Indexer' });
+    const post = (path: string, body: unknown) => app.request(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Test-Account': who }, body: JSON.stringify(body) });
+    const made = await post('/v1/suggestions', { title: 'Labels', key: 'labels' });
+    expect(made.status).toBe(201);
+    const same = await post('/v1/suggestions', { title: 'Labels, again', key: 'labels' });
+    expect(same.status).toBe(200);
+    const { id } = (await made.json()) as { id: number };
+    expect(((await same.json()) as { id: number }).id).toBe(id);
+    expect((await post('/v1/suggestions', { title: 'Bad key', key: '' })).status).toBe(400);
+
+    const work = { type: 'work', path: '/many', data: { title: { he: 'רבים' }, slug: 'many', authors: [], genre: 'sichos', levels: ['volume'], sets: [set] } };
+    const bad = await post(`/v1/suggestions/${id}/items`, { items: [work, { type: 'no-such-type', data: {} }] });
+    expect(bad.status).toBe(422);
+    expect(await catalog.proposals(id)).toEqual([]);
+    const good = await post(`/v1/suggestions/${id}/items`, { items: [work, { type: 'work', path: '/more', data: { ...work.data, slug: 'more' } }] });
+    expect(good.status).toBe(200);
+    expect(((await good.json()) as { ids: string[] }).ids).toHaveLength(2);
+    expect((await catalog.proposals(id)).length).toBe(2);
+    expect((await post(`/v1/suggestions/${id}/items`, { items: Array.from({ length: 501 }, () => work) })).status).toBe(400);
   });
 
   it('adds a few segments to many pages, sending only the new words', async () => {

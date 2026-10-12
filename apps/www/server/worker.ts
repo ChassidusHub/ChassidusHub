@@ -5,6 +5,7 @@ import { pageContext } from '../app/serverOnly';
 import { forEdge, inGroups, mayUseEdge, Seen, seenIn, tagged } from './edge';
 import { apiFiles, bucketFiles, catalogFile, keptAtEdge, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
 import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
+import { pageTiming, withTiming } from './serverTiming';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
 
@@ -62,7 +63,11 @@ export class CachedPage extends WorkerEntrypoint<Env> {
       headers.set('Cache-Control', 'no-cache');
       return api ? api.fetch(input, { ...init, headers }) : fetch(input, { ...init, headers });
     };
-    return tagged(await draw(request, this.env, { fetch: seenIn(fresh, seen) }), seen);
+    // Said in its Server-Timing as `drawn`, with when: the edge keeps the header with the page (server/serverTiming.ts).
+    const started = performance.now();
+    const timing = pageTiming();
+    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }), seen);
+    return withTiming(page, timing.header(performance.now() - started, 'drawn'));
   }
 
   /**
@@ -102,8 +107,17 @@ export default {
     // The catalog snapshot's files, for the browser to keep (/_/ is never a kept page).
     const file = await catalogFile(request, catalogFiles(env), () => apiFor({ binding: env.API, baseUrl: env.API_URL }).transcribedRecordings({ limit: 1000 }));
     if (file) return file;
+    // Every page says how long it took and what it waited on, in its Server-Timing (server/serverTiming.ts).
+    const started = performance.now();
     const cached = ctx.exports?.CachedPage;
-    if (cached && mayUseEdge(request)) return cached.fetch(forEdge(request, serverBuild.assets.version));
-    return draw(request, env, env.API);
+    if (cached && mayUseEdge(request)) {
+      const page = await cached.fetch(forEdge(request, serverBuild.assets.version));
+      const drawn = page.headers.get('Server-Timing');
+      return withTiming(page, `page;dur=${Math.round(performance.now() - started)}${drawn ? `, ${drawn}` : ''}`);
+    }
+    const timing = pageTiming();
+    const send = env.API ? env.API.fetch.bind(env.API) : (input: string, init?: RequestInit) => fetch(input, init);
+    const page = await draw(request, env, { fetch: timing.timed(send) });
+    return withTiming(page, timing.header(performance.now() - started));
   },
 };

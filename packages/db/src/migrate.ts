@@ -36,6 +36,7 @@ import * as unitLeadFill from './migrations/0034_unit_lead_fill.js';
 import * as unitLeadIndex from './migrations/0035_unit_lead_index.js';
 import * as unitPlaceIdCollation from './migrations/0036_unit_place_id_collation.js';
 import * as unitPlacePart from './migrations/0037_unit_place_part.js';
+import * as changesetClientKey from './migrations/0038_changeset_client_key.js';
 import { HOLD_EVERY_TABLE_SQL } from './hold.js';
 
 export interface Migration {
@@ -83,10 +84,31 @@ export const MIGRATIONS: readonly Migration[] = [
   { version: 35, name: 'unit-lead-index', up: unitLeadIndex.up },
   { version: 36, name: 'unit-place-id-collation', up: unitPlaceIdCollation.up },
   { version: 37, name: 'unit-place-part', up: unitPlacePart.up },
+  { version: 38, name: 'changeset-client-key', up: changesetClientKey.up },
 ];
 
-/** Applies the migrations `db` has not had yet, each in its own transaction. Returns the versions applied. */
-export async function migrate(db: Db): Promise<number[]> {
+/** Postgres's code for a statement that gave up waiting for a lock (`lock_timeout`). */
+const LOCK_NOT_AVAILABLE = '55P03';
+
+export interface MigrateOptions {
+  /** How many times a migration that gave up waiting for a lock is tried in all (default 40). */
+  lockTries?: number;
+  /** The pause between those tries (default 3 s). */
+  lockPauseMs?: number;
+  log?: (line: string) => void;
+}
+
+/**
+ * Applies the migrations `db` has not had yet, each in its own transaction. Returns the versions applied.
+ *
+ * A migration that changes a table in use sets a short `lock_timeout`, so it never keeps the site's reads queued
+ * behind it. When a long read holds the table (the catalog snapshot read for 27-43 s on live), the migration gives
+ * up, and the deploy with it: 0038 did, and every deploy after failed the same way. So a migration that gave up on a
+ * lock is tried again after a pause, up to `lockTries` times (two minutes by default), each try a whole new transaction
+ * that waits at most its own `lock_timeout`, so it finds a moment the table is free.
+ */
+export async function migrate(db: Db, options: MigrateOptions = {}): Promise<number[]> {
+  const tries = Math.max(options.lockTries ?? 40, 1);
   await db.exec(`CREATE TABLE IF NOT EXISTS schema_migration (
     version INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -97,10 +119,19 @@ export async function migrate(db: Db): Promise<number[]> {
   const applied: number[] = [];
   for (const migration of MIGRATIONS) {
     if (done.has(migration.version)) continue;
-    await db.transaction(async (tx) => {
-      await tx.exec(migration.up);
-      await tx.query('INSERT INTO schema_migration (version, name) VALUES ($1, $2)', [migration.version, migration.name]);
-    });
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await db.transaction(async (tx) => {
+          await tx.exec(migration.up);
+          await tx.query('INSERT INTO schema_migration (version, name) VALUES ($1, $2)', [migration.version, migration.name]);
+        });
+        break;
+      } catch (error) {
+        if ((error as { code?: string }).code !== LOCK_NOT_AVAILABLE || attempt >= tries) throw error;
+        options.log?.(`migration ${migration.version} (${migration.name}) waited too long for a lock; trying again (${attempt + 1} of ${tries})`);
+        await new Promise((resolve) => setTimeout(resolve, options.lockPauseMs ?? 3000));
+      }
+    }
     applied.push(migration.version);
   }
   // A table a migration added is held while an import runs, like the rest (hold.ts).

@@ -1229,9 +1229,42 @@ export function createApp(options: ApiOptions): Hono {
 
   app.post('/v1/suggestions', async (c) => {
     const by = await signedIn(c);
-    const input = await body<{ title?: string; description?: string; project?: number }>(c);
+    const input = await body<{ title?: string; description?: string; project?: number; key?: unknown }>(c);
     if (!input.title) throw new HttpError(400, 'a suggestion needs a title');
-    return c.json(await catalog.createChangeset(by, { title: input.title, description: input.description, project: input.project }), 201);
+    if (input.key !== undefined && (typeof input.key !== 'string' || !input.key.trim() || input.key.length > 200)) throw new HttpError(400, 'key: a string of your own, at most 200 characters');
+    const key = typeof input.key === 'string' ? input.key.trim() : undefined;
+    // A key already used by this author: the suggestion made then, as it stands, whatever its title (#270).
+    const made = key ? await catalog.changesetByKey(by, key) : null;
+    if (made) return c.json(made, 200);
+    try {
+      return c.json(await catalog.createChangeset(by, { title: input.title, description: input.description, project: input.project, clientKey: key }), 201);
+    } catch (error) {
+      // Two tries at once with one key: the second finds what the first made.
+      const first = key && (error as { code?: string }).code === '23505' ? await catalog.changesetByKey(by, key) : null;
+      if (first) return c.json(first, 200);
+      throw error;
+    }
+  });
+
+  /**
+   * Many items into a draft suggestion in one write (putRevisions): all of
+   * them or, when one is wrong, none. One call for what were 200 calls of a
+   * few statements each, which let a big send outlast the 30 s a caller
+   * waits (#270).
+   */
+  app.post('/v1/suggestions/:id/items', async (c) => {
+    const by = await signedIn(c);
+    const input = await body<{ items?: unknown }>(c);
+    if (!Array.isArray(input.items) || input.items.length === 0) throw new HttpError(400, 'give items: a list of { type, data, id?, path? }');
+    if (input.items.length > SUGGESTION_ITEMS_MAX) throw new HttpError(400, `at most ${SUGGESTION_ITEMS_MAX} items a call; send the rest in another`);
+    const items = (input.items as Array<{ id?: unknown; type?: unknown; data?: Json | null; path?: unknown }>).map((item, i) => {
+      if (!item || typeof item !== 'object' || typeof item.type !== 'string') throw new HttpError(400, `item ${i + 1}: say which type of item this is`);
+      if (item.data === undefined) throw new HttpError(400, `item ${i + 1}: give the item's data (null deletes it)`);
+      if (item.id !== undefined && !isEntityId(item.id)) throw new HttpError(400, `item ${i + 1}: "${String(item.id)}" is not an id`);
+      if (item.path !== undefined && item.path !== null && typeof item.path !== 'string') throw new HttpError(400, `item ${i + 1}: path is a string`);
+      return { id: item.id as EntityId | undefined, type: item.type as EntityType, data: item.data, path: item.path as string | null | undefined };
+    });
+    return c.json({ ids: await catalog.putRevisions(intParam(c.req.param('id'), 'id')!, by, items) });
   });
 
   app.put('/v1/suggestions/:id/items', async (c) => {
@@ -1409,6 +1442,9 @@ export function createApp(options: ApiOptions): Hono {
 }
 
 /** The API's version: /v1 changes only by adding (docs/developers/api.md, Stability). */
+/** Items in one call to POST /v1/suggestions/{id}/items: written in one go, well inside the time a caller waits. */
+export const SUGGESTION_ITEMS_MAX = 500;
+
 export const API_VERSION = '1.0.0';
 
 /**
