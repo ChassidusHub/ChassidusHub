@@ -73,6 +73,18 @@ describe('migrations', () => {
     await db.close();
   });
 
+  it("keeps a unit's id in unit_place in entity's collation, so a plain join uses the key (migration 0036)", async () => {
+    const db = await openPGlite();
+    await migrate(db);
+    const { rows } = await db.query<{ same: boolean }>(
+      `SELECT (SELECT attcollation FROM pg_attribute WHERE attrelid = 'unit_place'::regclass AND attname = 'unit_id')
+            = (SELECT attcollation FROM pg_attribute WHERE attrelid = 'entity'::regclass AND attname = 'id') AS same`,
+    );
+    // While they differed, a join that named neither compared in unit_place's collation and read every row of entity.
+    expect(rows[0]?.same).toBe(true);
+    await db.close();
+  });
+
   it('rolls a failed transaction back', async () => {
     const db = await openPGlite();
     await migrate(db);
