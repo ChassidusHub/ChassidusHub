@@ -2949,6 +2949,34 @@ export interface Operations {
       }>;
     };
   };
+  /** A suggestion's catalog tree before and after: each shelf, sefer or farbrengen it changes what is in (the most changed first, at most twelve), with its children as main holds them now and once it is approved, each marked same, out, in, new, gone, renamed or moved; long runs fold into gaps. For reviewing a catalog batch */
+  suggestionTree: {
+    input: {
+      id: number;
+    };
+    output: {
+      groups: Array<{
+        parent: {
+          id: string;
+          type: string;
+          name: string;
+          path: string | null;
+          isNew: boolean;
+          gone: boolean;
+        };
+        before: Array<Record<string, unknown>>;
+        after: Array<Record<string, unknown>>;
+        counts: {
+          before: number;
+          after: number;
+        };
+        changes: number;
+      }>;
+      more: number;
+      items: number;
+      elsewhere: number;
+    };
+  };
   /** A sefer's shaar, the whole file, sent for review; a file the catalog cannot read is refused with each line that is wrong (`detail.problems`) */
   suggestShaar: {
     input: {
@@ -3434,6 +3462,7 @@ export const OPERATIONS = {
   suggestFix: {"method":"POST","path":"/v1/suggestions/quick","pathParams":[],"query":[],"body":"json","answer":"json"},
   suggestionConversation: {"method":"GET","path":"/v1/suggestions/{id}/conversation","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   suggestionStages: {"method":"GET","path":"/v1/suggestions/stages","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
+  suggestionTree: {"method":"GET","path":"/v1/suggestions/{id}/tree","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   suggestShaar: {"method":"POST","path":"/v1/suggestions/shaar","pathParams":[],"query":[],"body":"json","answer":"json"},
   suggestWords: {"method":"POST","path":"/v1/suggestions/words","pathParams":[],"query":[],"body":"json","answer":"json"},
   textsProgress: {"method":"GET","path":"/v1/texts/batch/progress","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
@@ -4333,6 +4362,11 @@ export abstract class GeneratedMethods {
   /** Where each of several suggestions stands on its way in, for a list's rows in one read: how many items it changes, how many the site changed since it was written (`behind`: they may clash), how many other open suggestions change some of the same items, and whether a failed check stops it (GET /v1/suggestions/stages) */
   suggestionStages(input: Operations['suggestionStages']['input']): Promise<Operations['suggestionStages']['output']> {
     return this.call('suggestionStages', input ?? {} as Operations['suggestionStages']['input']);
+  }
+
+  /** A suggestion's catalog tree before and after: each shelf, sefer or farbrengen it changes what is in (the most changed first, at most twelve), with its children as main holds them now and once it is approved, each marked same, out, in, new, gone, renamed or moved; long runs fold into gaps. For reviewing a catalog batch (GET /v1/suggestions/{id}/tree) */
+  suggestionTree(input: Operations['suggestionTree']['input']): Promise<Operations['suggestionTree']['output']> {
+    return this.call('suggestionTree', input ?? {} as Operations['suggestionTree']['input']);
   }
 
   /** A sefer's shaar, the whole file, sent for review; a file the catalog cannot read is refused with each line that is wrong (`detail.problems`) (POST /v1/suggestions/shaar) */

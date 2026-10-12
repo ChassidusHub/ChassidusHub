@@ -2,6 +2,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { Await, Link, useSearchParams } from 'react-router';
 import type { Decided, LiveChange } from './back-item';
 import type { Piece } from '../back/words';
+import { queueOf, type QueueRow } from '../back/batch';
 import { Waiting, type Stage, type WaitingRow } from '../suggestions/Waiting';
 import { Button, Row, Rows, Say, SectionHead, Segmented, TopBar } from '../ui';
 import type { Route } from './+types/backroom';
@@ -32,10 +33,12 @@ type ToCheck = Awaited<ReturnType<Route.LoaderArgs['context']['api']['machineToC
  * said so; the other still shows.
  */
 async function lists(api: Route.LoaderArgs['context']['api']) {
-  const [live, machine, open] = await Promise.all([
+  const [live, machine, open, conversations] = await Promise.all([
     api.listSuggestions({ postReview: 'true', limit: 30 }).catch(() => null),
     api.machineToCheck({ limit: 50 }).catch(() => null),
     api.listSuggestions({ status: 'open', limit: 100 }).catch(() => null),
+    // The same open ones as conversations, which say what kinds of items each changes: the catalog batches among them.
+    api.listSuggestions({ state: 'open', limit: 100 }).catch(() => null),
   ]);
   // What waits for a keeper (the old /review), and where each stands on its way in, read for them all at once.
   const rows: WaitingRow[] = ((open?.suggestions ?? []) as unknown as (LiveRow & { status?: string })[])
@@ -46,6 +49,7 @@ async function lists(api: Route.LoaderArgs['context']['api']) {
     waiting: open ? { rows, people: (open.people ?? {}) as People, stages } : null,
     live: live ? { rows: (live.suggestions as LiveRow[]).map(({ id, number, title, author, submitted_at, created_at, items }) => ({ id, number, title, author, submitted_at, created_at, items })), people: (live.people ?? {}) as People } : null,
     machine,
+    catalog: conversations ? { rows: queueOf(conversations.suggestions as unknown as Record<string, unknown>[]), people: (conversations.people ?? {}) as People } : null,
   };
 }
 
@@ -77,7 +81,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
   // The old /review comes here as ?tab=waiting; the tab chosen stays in the address, so it can be linked.
   const [params, setParams] = useSearchParams();
   const asked = params.get('tab');
-  const tab: Tab = asked === 'waiting' || asked === 'machine' ? asked : 'live';
+  const tab: Tab = asked === 'waiting' || asked === 'machine' || asked === 'catalog' ? asked : 'live';
   const setTab = (next: Tab) => setParams(next === 'live' ? {} : { tab: next }, { replace: true, preventScrollReset: true });
   return (
     <>
@@ -96,10 +100,10 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
           }
         >
           <Await resolve={loaderData.lists} errorElement={<Say tone="bad">הרשימות לא נטענו. נסו שוב בעוד רגע.</Say>}>
-            {({ live, machine, waiting: queue }) => (
+            {({ live, machine, waiting: queue, catalog }) => (
               <>
-                <Tabs tab={tab} setTab={setTab} waiting={live?.rows.length} toReview={queue?.rows.length} />
-                {tab === 'live' ? <Live live={live} /> : tab === 'waiting' ? <Waiting waiting={queue} /> : <Machine machine={machine} />}
+                <Tabs tab={tab} setTab={setTab} waiting={live?.rows.length} toReview={queue?.rows.length} batches={catalog?.rows.length} />
+                {tab === 'live' ? <Live live={live} /> : tab === 'waiting' ? <Waiting waiting={queue} /> : tab === 'catalog' ? <Catalog catalog={catalog} /> : <Machine machine={machine} />}
               </>
             )}
           </Await>
@@ -109,10 +113,10 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
   );
 }
 
-type Tab = 'waiting' | 'live' | 'machine';
+type Tab = 'waiting' | 'live' | 'catalog' | 'machine';
 
 /** The three lists, each with how many wait in it once the lists have come. */
-function Tabs({ tab, setTab, waiting, toReview }: { tab: Tab; setTab: (next: Tab) => void; waiting?: number; toReview?: number }) {
+function Tabs({ tab, setTab, waiting, toReview, batches }: { tab: Tab; setTab: (next: Tab) => void; waiting?: number; toReview?: number; batches?: number }) {
   return (
     <Segmented
       label="מה לבדוק"
@@ -121,6 +125,7 @@ function Tabs({ tab, setTab, waiting, toReview }: { tab: Tab; setTab: (next: Tab
       options={[
         { value: 'live', label: `עלו לאתר${waiting ? ` (${waiting})` : ''}` },
         { value: 'waiting', label: `לבדיקה${toReview ? ` (${toReview})` : ''}` },
+        { value: 'catalog', label: `קטלוג${batches ? ` (${batches})` : ''}` },
         { value: 'machine', label: 'כתב מכונה' },
       ]}
     />
@@ -136,6 +141,32 @@ function Live({ live }: { live: Lists['live'] }) {
       {live.rows.map((row) => (
         <LiveCard key={row.id} row={row} who={live.people[row.author]} />
       ))}
+    </>
+  );
+}
+
+/**
+ * The catalog queue: batches of changes to the tree, each sent by the
+ * Catalog team with its research note, the oldest first. Each opens on its
+ * own page, with the tree before and after and Approve or Send back.
+ */
+function Catalog({ catalog }: { catalog: { rows: QueueRow[]; people: People } | null }) {
+  if (!catalog) return <Say tone="bad">הרשימה לא נטענה. נסו שוב בעוד רגע.</Say>;
+  if (catalog.rows.length === 0) return <Say>אין עכשיו שינויים בקטלוג שמחכים להחלטה.</Say>;
+  const day = (at: string | null) => (at ? new Intl.DateTimeFormat('he', { day: 'numeric', month: 'long' }).format(new Date(at)) : null);
+  return (
+    <>
+      <p className="faint sm">שינויים בעץ הספרייה: מה זז, מה נכנס, מה מתאחד. כל אחד עם הערת המחקר שלו, הישנים קודם. פותחים, רואים את העץ לפני ואחרי, ומאשרים או מחזירים.</p>
+      <Rows>
+        {catalog.rows.map((row) => (
+          <Row
+            key={row.id}
+            to={`/back/batch/${row.id}`}
+            title={<bdi>{row.title}</bdi>}
+            sub={[row.number ? `#${row.number}` : null, catalog.people[row.author]?.name ?? row.author, day(row.at)].filter(Boolean).join(' · ')}
+          />
+        ))}
+      </Rows>
     </>
   );
 }

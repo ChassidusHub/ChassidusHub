@@ -33,6 +33,8 @@ export const pages: { name: string; path: string }[] = [
         { name: 'A volume', path: '/sample-sichos/12' },
         { name: 'Back room', path: '/back' },
         { name: 'Back room: waiting for review', path: '/back?tab=waiting' },
+        { name: 'Back room: catalog queue', path: '/back?tab=catalog' },
+        { name: 'A catalog batch', path: '/back/batch/405' },
         { name: 'Suggestions', path: '/suggestions' },
         { name: 'A suggestion', path: '/suggestions/42' },
         { name: 'A suggestion, its changes', path: '/suggestions/42?tab=changes' },
