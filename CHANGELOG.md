@@ -10,6 +10,11 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- The web app's catalog (`/v1/app/v1/catalog/…`) answers again: it is built
+  from the farbrengens alone, without reading every sefer's units, which
+  only schema 3 shows and which took longer than a request may (a 502
+  after 30 s).
+
 - The first sicha opened in a volume no longer waits about 2 s for its
   path bar (#221): a sefer's volumes are counted from the unit_place_part
   index (migration 0037) and a volume's sichos found by it, instead of

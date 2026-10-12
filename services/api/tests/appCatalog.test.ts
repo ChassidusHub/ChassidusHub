@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Hono } from 'hono';
-import type { Catalog } from '@chassidushub/core';
+import { Catalog } from '@chassidushub/core';
 import { idForKey, runImport, sichosKodeshOccasionsImporter, sichosKodeshWorksImporter, type CatalogEntry, type SichosKodeshWorksInput } from '@chassidushub/importers';
 import { createApp } from '../src/app.js';
-import { appWorks, driveFileOf, occasionDateKey } from '../src/appCatalog.js';
+import { AppReleases, appWorks, driveFileOf, occasionDateKey } from '../src/appCatalog.js';
 import { add, freshCatalog } from '../../../packages/core/tests/helpers.js';
 
 /**
@@ -195,6 +195,21 @@ describe("the apps' manifests", () => {
     const v3 = (await get('/v1/app/v3/catalog/manifest.json')).body;
     expect(v3).toMatchObject({ version: `0.${head}.0`, missing: ['library'], works: { works: 3, units: 4 } });
     expect(v3.collections).toEqual(Object.fromEntries(LIBRARY_IDS.map((id) => [id, 0])));
+  });
+
+  it("builds the web app's schema 1 without reading a sefer or a unit", async () => {
+    // Reading every unit of every sefer is more than a request has time for: on live, /v1/app/v1 answered 502 after 30 s.
+    const seen: string[] = [];
+    const db = { ...catalog.db, query: (sql: string, params?: readonly unknown[]) => (seen.push(sql), catalog.db.query(sql, params)) } as typeof catalog.db;
+    const releases = new AppReleases();
+    const v1 = await releases.get(new Catalog(db), 1);
+    expect(v1.manifest).toMatchObject({ schemaVersion: 1, occasions: 3 });
+    expect(seen.some((sql) => /e\.type = '(work|unit|author)'/.test(sql))).toBe(false);
+    // Schema 3 reads them, once, and schema 1 is still served from what was read for it.
+    const v3 = await releases.get(new Catalog(db), 3);
+    expect(v3.manifest.works).toEqual({ works: 3, units: 4 });
+    expect(seen.filter((sql) => sql.includes("e.type = 'unit'"))).toHaveLength(1);
+    expect(await releases.get(new Catalog(db), 1)).toBe(v1);
   });
 
   it("gives the changelog alone, and sends 'latest' to the served version", async () => {
