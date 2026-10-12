@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
 import { batchTree, Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
-import { dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords, topicOf } from '@chassidushub/core';
+import { type FieldsRevision, type NewRevision, dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords, topicOf } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, LANGUAGES, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
 import { authRoutes, sessionAuthenticator, type AuthOptions } from './auth.js';
@@ -1257,12 +1257,19 @@ export function createApp(options: ApiOptions): Hono {
     const input = await body<{ items?: unknown }>(c);
     if (!Array.isArray(input.items) || input.items.length === 0) throw new HttpError(400, 'give items: a list of { type, data, id?, path? }');
     if (input.items.length > SUGGESTION_ITEMS_MAX) throw new HttpError(400, `at most ${SUGGESTION_ITEMS_MAX} items a call; send the rest in another`);
-    const items = (input.items as Array<{ id?: unknown; type?: unknown; data?: Json | null; path?: unknown }>).map((item, i) => {
+    const items = (input.items as Array<{ id?: unknown; type?: unknown; data?: Json | null; set?: unknown; path?: unknown }>).map((item, i): NewRevision | FieldsRevision => {
       if (!item || typeof item !== 'object' || typeof item.type !== 'string') throw new HttpError(400, `item ${i + 1}: say which type of item this is`);
-      if (item.data === undefined) throw new HttpError(400, `item ${i + 1}: give the item's data (null deletes it)`);
       if (item.id !== undefined && !isEntityId(item.id)) throw new HttpError(400, `item ${i + 1}: "${String(item.id)}" is not an id`);
       if (item.path !== undefined && item.path !== null && typeof item.path !== 'string') throw new HttpError(400, `item ${i + 1}: path is a string`);
-      return { id: item.id as EntityId | undefined, type: item.type as EntityType, data: item.data, path: item.path as string | null | undefined };
+      const path = item.path as string | null | undefined;
+      // Only some fields of an existing item: changed where the item is, so its words are never sent (#325).
+      if (item.set !== undefined) {
+        if (item.data !== undefined) throw new HttpError(400, `item ${i + 1}: give data or set, not both`);
+        if (item.id === undefined || !item.set || typeof item.set !== 'object' || Array.isArray(item.set)) throw new HttpError(400, `item ${i + 1}: set changes an existing item: give its id, and set as an object of fields`);
+        return { id: item.id as EntityId, type: item.type as EntityType, set: item.set as { [field: string]: Json | null }, path };
+      }
+      if (item.data === undefined) throw new HttpError(400, `item ${i + 1}: give the item's data (null deletes it), or set`);
+      return { id: item.id as EntityId | undefined, type: item.type as EntityType, data: item.data, path };
     });
     return c.json({ ids: await catalog.putRevisions(intParam(c.req.param('id'), 'id')!, by, items) });
   });

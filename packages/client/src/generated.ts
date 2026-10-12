@@ -2241,12 +2241,14 @@ export interface Operations {
     input: {
       id: number;
       body: {
-        /** The items, as PUT takes one */
+        /** The items, as PUT takes one, or with set */
         items: Array<{
           /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
           id?: string;
           type: string;
-          data: Record<string, unknown> | null;
+          data?: Record<string, unknown> | null;
+          /** In place of data, for an existing item (id): these fields replace its own; a field set to null is removed */
+          set?: Record<string, unknown>;
           path?: string | null;
         }>;
       };
