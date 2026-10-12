@@ -1,4 +1,4 @@
-import { drawnWords, readerTitle } from '../reader/load.server';
+import { pageWords } from '../reader/load.server';
 import { wordsAddress, wordsKey } from '../reader/words.server';
 import type { Route } from './+types/words';
 
@@ -23,7 +23,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     if ([404, 400].includes(error?.status ?? 0)) return null;
     throw error;
   });
-  const words = view ? drawnWords(view, readerTitle(view)) : null;
+  const words = view ? (await pageWords(view, context.api, language)).words : null;
   if (!view || !words) return nothing();
   const key = await wordsKey(words);
   if (key !== params.key) return new Response(null, { status: 302, headers: { Location: wordsAddress(view.item.id, key, language), 'Cache-Control': 'no-store' } });
