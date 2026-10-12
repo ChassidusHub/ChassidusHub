@@ -1,4 +1,4 @@
-import { Fragment, Suspense, useState } from 'react';
+import { Fragment, Suspense, useEffect, useState } from 'react';
 import { Await, Link, useNavigate, useSearchParams } from 'react-router';
 import { EditBar, EditFields, Linked, Names } from '../edit/Edit';
 import { libraryLevel, pathLevels } from '../lib/catalog';
@@ -256,6 +256,11 @@ function SeferSearch({ id, title }: { id: string; title: string }) {
 
 /** A sefer: its volumes as a grid of numbers (or a list of named parts), a search in it, its printings and additions. */
 export function WorkScreen({ data }: { data: WorkData }) {
+  // Its volumes' sichos, read from the catalog snapshot once the page has settled, so a volume opens at once.
+  useEffect(() => {
+    const timer = setTimeout(() => void import('../catalog/browser').then((browser) => browser.warmUnits(data.id)).catch(() => undefined), 3000);
+    return () => clearTimeout(timer);
+  }, [data.id]);
   const printings = usePrintings(data.api, data.id, data.printings);
   const scan = useScan(printings);
   const subtitle = [data.author, data.parts.length > 1 ? `${data.parts.length} חלקים` : ''].filter(Boolean).join(' · ');

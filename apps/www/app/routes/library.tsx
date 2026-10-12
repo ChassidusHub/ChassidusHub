@@ -1,3 +1,5 @@
+import type { ChassidusHub } from '@chassidushub/client';
+import { fromSnapshotOr } from '../catalog/localApi';
 import { loadLibrary, loadOtherShelves } from '../library/load';
 import { LibraryScreen, OtherShelvesScreen } from '../library/screens';
 import type { Route } from './+types/library';
@@ -8,11 +10,19 @@ export function meta({ location }: Route.MetaArgs) {
   return [{ title: `${location.search.includes('more') ? 'ספרים נוספים' : 'ספרייה'} · ChassidusHub` }];
 }
 
-/** The other shelves are not waited for: the page goes out at once and they follow in it. */
+/**
+ * The other shelves are not waited for: the page goes out at once and they
+ * follow in it. Both are drawn from the catalog snapshot when the server
+ * holds it (app/catalog), with no API call.
+ */
 export async function loader({ request, context }: Route.LoaderArgs) {
-  if (new URL(request.url).searchParams.has('more')) return { screen: 'more' as const, others: loadOtherShelves(context.api) };
-  return { screen: 'library' as const, ...(await loadLibrary(context.api)) };
+  const read = <T,>(load: (api: ChassidusHub) => Promise<T>) => fromSnapshotOr(context.catalog, context.api, load);
+  if (new URL(request.url).searchParams.has('more')) return { screen: 'more' as const, others: read(loadOtherShelves) };
+  return { screen: 'library' as const, ...(await read(loadLibrary)) };
 }
+
+/** A click to the library, drawn in the browser from the catalog snapshot it keeps (app/catalog/clicks.ts). */
+export const clientLoader = ({ request, serverLoader }: Route.ClientLoaderArgs) => import('../catalog/clicks').then((clicks) => clicks.libraryClick(request, serverLoader));
 
 /**
  * The same page for everyone (who is signed in is asked by the browser), so

@@ -17,6 +17,12 @@ declare module 'react-router' {
      * to the browser as its own; connecting an app; API keys; a takedown.
      */
     forward?: (path: string, request: Request) => Promise<Response>;
+    /**
+     * The API's catalog reads answered from the catalog snapshot the server
+     * holds in memory (app/catalog/localApi.ts), when it has one: the library's
+     * and listening's pages read it first, with no API call.
+     */
+    catalog?: ChassidusHub;
   }
 }
 

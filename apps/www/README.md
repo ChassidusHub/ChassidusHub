@@ -42,5 +42,14 @@ packages/client; through the Worker's service binding on Cloudflare). A route
 names its place in the bar with `handle = { section }`; a page's top is
 `<TopBar path={…} />` or `<TopBar title={…} />`.
 
+The library's pages (the library, a shelf, a sefer, a volume) and a year of
+listening are drawn from the catalog snapshot (docs/catalog-snapshot.md,
+app/catalog) with no API call: the Worker reads it from the public bucket and
+keeps it in memory (`context.catalog`, server/catalog.ts), and the browser
+reads it from `/_/catalog/…` once and keeps it in Cache Storage, so a click
+to another of those pages is drawn at once (each route's `clientLoader`,
+app/catalog/clicks.ts). Anything the snapshot cannot answer is read from the
+API as before. `CATALOG_SNAPSHOT=off` turns it off.
+
 In a cloud session DATABASE_URL is the live database: start anything local with
 `env -u DATABASE_URL`.
