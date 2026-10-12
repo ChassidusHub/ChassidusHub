@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { marksIn, searchPage, searchSuggest, splitDate, topicOf, type Catalog } from '@chassidushub/core';
+import { foldSpelling, marksIn, searchPage, searchSuggest, spellingsOf, splitDate, toNameTsQuery, topicOf, type Catalog } from '@chassidushub/core';
 import { add, freshCatalog, yudShvat } from './helpers.js';
 
 /** How many statements a read takes. */
@@ -144,6 +144,35 @@ describe('the search screen in one read', () => {
     expect(page.works.map((w) => w.id).slice(0, 2)).toEqual([letters, other]);
     // Taking the language out leaves the small words for the title.
     expect((await searchPage(catalog, 'Letters from the Rebbe in English')).works.map((w) => w.id).slice(0, 2)).toEqual([letters, other]);
+  });
+
+  it('finds a sefer spelled full or short alike: "ליקוטי שיחות" is "לקוטי שיחות" (#293)', async () => {
+    const { catalog, set } = await sample();
+    const work = (slug: string, he: string) => add(catalog, 'mendy', 'keeper', 'work', { title: { he }, slug, authors: [], genre: 'sichos', levels: ['volume'], sets: [set] }, `/${slug}`);
+    const ls = await work('likkutei-sichos', 'לקוטי שיחות');
+    const lt = await work('likkutei-torah', 'ליקוטי תורה');
+    // A sicha that only mentions the sefer, in the spelling typed: the sefer still leads.
+    await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ביאורים על ליקוטי שיחות' }, slug: 'biurim', authors: [], genre: 'sichos', levels: [], sets: [set], addition: { kind: 'commentary', to: ls } }, '/biurim');
+    for (const typed of ['ליקוטי שיחות', 'לקוטי שיחות', 'ליקוטי שיחת']) {
+      const { result: page, statements } = await counted(catalog, () => searchPage(catalog, typed));
+      expect(statements).toBeLessThanOrEqual(6);
+      expect(page.works[0]?.id, typed).toBe(ls);
+      expect(page.top?.id, typed).toBe(ls);
+    }
+    expect((await searchPage(catalog, 'לקוטי תורה')).works[0]?.id).toBe(lt);
+    expect((await searchSuggest(catalog, 'ליקוטי שיח')).map((h) => h.id)).toContain(ls);
+  });
+
+  it('spells a Hebrew word full and short, its first and last letters as they are', () => {
+    expect(spellingsOf('ליקוטי')).toContain('לקוטי');
+    expect(spellingsOf('לקוטי')).toContain('ליקוטי');
+    expect(spellingsOf('דבור')).toContain('דיבור');
+    // The last yud of ליקוטי and the first vav of ויאמר are letters of the word.
+    expect(spellingsOf('ליקוטי')).not.toContain('ליקוט');
+    expect(spellingsOf('ויאמר')).not.toContain('יאמר');
+    expect(spellingsOf('ab')).toEqual([]);
+    expect(foldSpelling('ליקוטי שיחות')).toBe(foldSpelling('לקוטי שיחות'));
+    expect(toNameTsQuery('תניא')).toContain('תניא:*');
   });
 
   it('"in English" is a filter on the names, not words; small question words do not decide (#123)', async () => {
