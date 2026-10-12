@@ -17,6 +17,26 @@ import type { Catalog } from '@chassidushub/core';
 /** The site's `CachedPage` entrypoint, through a service binding (wrangler.toml). */
 export interface SitePages {
   forget(ids: string[]): Promise<{ ok: boolean; purges: number; errors: string[] }>;
+  /** Draws a page as a reader's first visit would (warmTodaysPages). */
+  fetch?(request: Request): Promise<Response>;
+}
+
+/**
+ * Home and Listen are kept only until UTC midnight (apps/www app/lib/caching.ts, `todaysPage`): they show the coming
+ * days' farbrengens. Their first reader of the day paid for a read of every event's date, 0.55 s from a cold
+ * database (#314). So at a minute past midnight the API draws them itself, as that reader would, and the reader
+ * after finds the database warm.
+ */
+export const TODAYS_PAGES = ['/', '/listen'];
+export const SITE_ORIGIN = 'https://new.chassidushub.org';
+
+/** At 00:01 UTC, draws today's pages; any other minute, nothing. Answers how many were drawn. */
+export async function warmTodaysPages(site: Pick<SitePages, 'fetch'>, now: Date, origin = SITE_ORIGIN): Promise<number> {
+  if (!site.fetch || now.getUTCHours() !== 0 || now.getUTCMinutes() !== 1) return 0;
+  const drawn = await Promise.all(
+    TODAYS_PAGES.map((path) => site.fetch!(new Request(`${origin}${path}`, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ChassidusHub page warmer)' } })).then((page) => (page.body?.cancel(), page.ok))),
+  );
+  return drawn.filter(Boolean).length;
 }
 
 /** Where the last merge whose pages were forgotten is kept (summaries/site-pages.json in the public bucket, r2.ts keptStore). */
