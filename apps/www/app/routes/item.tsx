@@ -4,6 +4,7 @@ import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
 import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
 import { readerData } from '../reader/load.server';
+import { farbrengenOf } from '../reader/farbrengen.server';
 import { Reader } from '../reader/Reader';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
@@ -44,6 +45,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') {
+      // A farbrengen read as one page (reader/farbrengen.server.ts): its other sichos lead to their place on the first one's page.
+      const farbrengen = farbrengenOf(view);
+      if (farbrengen && item.path && farbrengen.sichos[0]!.path !== item.path) throw redirect(`${farbrengen.sichos[0]!.path}#u-${item.id}`, 302);
       const reader = await readerData(view, context, url.origin, url.searchParams.get('language') ?? undefined);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
       // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
