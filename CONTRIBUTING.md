@@ -108,8 +108,12 @@ pushes or merges; finish the commit locally and wait.
 - **The API is versioned.** Nothing under `/v1` is removed or changes
   meaning; every route is in `services/api/src/openapi.ts`, and a test
   fails when one is not. After changing it, run
-  `npm run generate -w @chassidushub/client` and note the change in
-  [CHANGELOG.md](CHANGELOG.md).
+  `npm run generate -w @chassidushub/client` and add a changelog entry
+  (CI fails an API change without one).
+- **Changelog entries are new files, not edits.** Add
+  `changes/<subject>.md` with the entry; don't edit
+  [CHANGELOG.md](CHANGELOG.md), where every open pull request's entry
+  would conflict with the next merge ([changes/README.md](changes/README.md)).
 
 ### Labels
 

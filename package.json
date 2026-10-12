@@ -27,6 +27,7 @@
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run build:web && npm run build:www && npm test && npm run catalog:check",
     "catalog:check": "tsx services/jobs/src/bin/chassidushub.ts schema-check",
+    "changelog": "node scripts/changelog.cjs",
     "db:migrate": "tsx services/jobs/src/bin/chassidushub.ts migrate",
     "dev:api": "tsx services/api/src/node.ts",
     "chassidushub": "tsx services/jobs/src/bin/chassidushub.ts",
