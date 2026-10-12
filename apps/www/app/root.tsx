@@ -19,6 +19,9 @@ export const links: Route.LinksFunction = () => [
  * before the page paints so it never flashes the other one or jumps to
  * another size. With no choice the system's theme wins.
  */
+/** The service worker (public/sw.js), once the page has loaded, so it never competes with the page itself. */
+const worker = `if('serviceWorker'in navigator)addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})`;
+
 const theme = `try{var d=document.documentElement,t=localStorage.getItem('theme'),s=localStorage.getItem('size');if(t==='light'||t==='dark')d.dataset.theme=t;if(/^(-[12]|[0-5])$/.test(s))d.style.setProperty('--torah-step',s)}catch(e){}`;
 
 /**
@@ -38,6 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <script dangerouslySetInnerHTML={{ __html: worker }} />
         <ScrollRestoration />
         <Scripts />
       </body>

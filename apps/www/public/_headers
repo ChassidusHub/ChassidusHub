@@ -5,3 +5,7 @@
 # The built files themselves are never pages to find.
 /*
   X-Robots-Tag: noindex
+
+# The service worker is checked for a new version on every visit.
+/sw.js
+  Cache-Control: no-cache

@@ -97,3 +97,42 @@ test('without the script, the box still searches', async ({ browser }) => {
   await expect(page.getByRole('searchbox')).toHaveValue('שמיני א');
   await context.close();
 });
+
+test('with the catalog in the browser, names come up at each letter, with no server', async ({ page }) => {
+  // A made-up snapshot: its manifest, and the names file it points to (search/instant.ts).
+  await page.route('**/catalog/manifest.json', (route) => route.fulfill({ json: { version: 't1', names: '/catalog/names-t1.json' } }));
+  await page.route('**/catalog/names-t1.json', (route) =>
+    route.fulfill({ json: { version: 't1', names: [['sefer', 'ספר לדוגמה', null, null, '/sample'], ['volume', 'חלק יב', null, 'ספר לדוגמה', '/sample/12']] } }),
+  );
+  let suggested = 0;
+  await page.route('**/search/suggest*', (route) => {
+    suggested++;
+    return route.continue();
+  });
+  await page.goto('/search');
+  await page.waitForLoadState('networkidle');
+  const box = page.getByRole('searchbox');
+  await box.pressSequentially('ספר לדו');
+  await expect(page.locator('.sugg').getByRole('link', { name: /ספר לדוגמה/ })).toHaveAttribute('href', '/sample');
+  await box.pressSequentially('גמה יב');
+  await expect(page.locator('.sugg').getByRole('link', { name: /חלק יב/ })).toHaveAttribute('href', '/sample/12');
+  expect(suggested).toBe(0);
+});
+
+test('a search from inside the site shows its frame at once, and the answers after', async ({ page }) => {
+  await page.goto('/search');
+  await page.waitForLoadState('networkidle');
+  // The server takes its time; the page does not wait for it.
+  let answer = () => {};
+  const held = new Promise<void>((resolve) => (answer = resolve));
+  await page.route('**/search.data*', async (route) => {
+    await held;
+    await route.continue();
+  });
+  await page.getByRole('link', { name: 'שמיני א' }).click();
+  await expect(page).toHaveURL(/q=/);
+  await expect(page.getByRole('searchbox')).toHaveValue('שמיני א');
+  await expect(page.locator('main')).toContainText('מחפשים בתוך הטקסטים');
+  answer();
+  await expect(page.locator('main')).toContainText('לא נמצא דבר');
+});
