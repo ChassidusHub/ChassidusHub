@@ -1,4 +1,6 @@
 import type { StatusReport } from '@chassidushub/client';
+import { Suspense } from 'react';
+import { Await } from 'react-router';
 import { Meter, SeeAlso } from '../community/parts';
 import { count } from '../community/data';
 import { Icon, SectionHead, TopBar, type IconName } from '../ui';
@@ -21,15 +23,26 @@ const API = 'https://api.chassidushub.org';
  * ninety days of them (services/api/src/status.ts); reading it never asks the
  * database, so it answers when the database does not. When the API itself
  * does not answer, the page says so from here, since it was made: the site
- * is up and the API is not.
+ * is up and the API is not. The page never waits for the report: its frame
+ * shows at once, and the report comes after it.
  */
-export async function loader({ context }: Route.LoaderArgs) {
-  const answer = await context.api.status().catch((error: unknown) => {
-    console.error('status', error);
-    return null;
-  });
-  return { now: answer?.now ?? new Date().toISOString(), report: answer?.report ?? null, apiAnswered: answer !== null };
+export function loader({ context }: Route.LoaderArgs) {
+  const data = context.api
+    .status()
+    .catch((error: unknown) => {
+      console.error('status', error);
+      return null;
+    })
+    .then((answer) => ({ now: answer?.now ?? new Date().toISOString(), report: answer?.report ?? null, apiAnswered: answer !== null }));
+  return { data };
 }
+
+/** Opened from inside the site, the frame is drawn at once; the report follows. */
+export function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  return { data: serverLoader().then((d) => d.data) };
+}
+
+type Answer = Awaited<ReturnType<typeof loader>['data']>;
 
 /** A minute, not the usual few: this page is read when something is wrong. */
 export function headers() {
@@ -94,7 +107,39 @@ function lasted(ms: number): string {
  * are shades of grey, darker for worse.
  */
 export default function Screen({ loaderData }: Route.ComponentProps) {
-  const { report, apiAnswered, now } = loaderData;
+  return (
+    <>
+      <TopBar title="מצב האתר" />
+      <main id="content" className="view">
+        <h1>מצב האתר</h1>
+        <p className="lede">האם האתר, ה-API, שרת ה-MCP ומסד הנתונים עונים. נבדק כל חמש דקות.</p>
+
+        <Suspense fallback={<p className="faint" aria-busy="true">רגע…</p>}>
+          <Await
+            resolve={loaderData.data}
+            errorElement={
+              <>
+                <p className="faint">לא הצלחנו לקרוא את תוצאות הבדיקות כרגע. נסו שוב בעוד רגע.</p>
+                <More />
+              </>
+            }
+          >
+            {(answer) => (
+              <>
+                <Report answer={answer} />
+                <More />
+              </>
+            )}
+          </Await>
+        </Suspense>
+      </main>
+    </>
+  );
+}
+
+/** The report, once it has come: the line on the whole, each part with its ninety days, and the latest incidents. */
+function Report({ answer }: { answer: Answer }) {
+  const { report, apiAnswered, now } = answer;
   const stale = report ? Date.parse(now) - Date.parse(report.checkedAt) > STALE_MS : false;
   const checks = new Map((report?.checks ?? []).map((check) => [check.id, check]));
   if (!apiAnswered) {
@@ -115,116 +160,100 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <TopBar title="מצב האתר" />
-      <main id="content" className="view">
-        <h1>מצב האתר</h1>
-        <p className="lede">האם האתר, ה-API, שרת ה-MCP ומסד הנתונים עונים. נבדק כל חמש דקות.</p>
-
-        <div className={`banner ${banner.state}`} role="status">
-          <Icon name={STATE_ICON[banner.state]} size="l" />
-          <div>
-            <b>{banner.title}</b>
-            <span>{banner.line}</span>
-          </div>
+      <div className={`banner ${banner.state}`} role="status">
+        <Icon name={STATE_ICON[banner.state]} size="l" />
+        <div>
+          <b>{banner.title}</b>
+          <span>{banner.line}</span>
         </div>
+      </div>
 
-        <ul className="checks">
-          {ORDER.map((id) => {
-            const check = checks.get(id);
-            const state: State = check?.state ?? 'unknown';
-            const part = PARTS[id];
-            const up = report ? uptime(report, id) : null;
-            return (
-              <li key={id}>
-                <div className="check-head">
-                  <Icon name={part.icon} className="faint" />
-                  <span className="t">
-                    <b>{part.name}</b>
-                    <span>{part.about}</span>
-                  </span>
-                  <span className={`state ${state}`}>
-                    <Icon name={STATE_ICON[state]} size="s" />
-                    {WORD[state]}
-                    {check?.ms != null && state !== 'unknown' && (
-                      <span className="faint">
-                        {' · '}
-                        <bdi dir="ltr">{count(check.ms)} ms</bdi>
-                      </span>
-                    )}
-                  </span>
-                </div>
-                {check?.detail && state !== 'up' && (
-                  <p className="detail" lang="en" dir="ltr">
-                    {check.detail}
-                  </p>
-                )}
-                {id === 'quota' && report?.quota && (
-                  <div className="detail">
-                    {report.quota.limit ? <Meter part={report.quota.used} whole={report.quota.limit} label={`${count(report.quota.used)} מתוך ${count(report.quota.limit)} שאילתות היום`} /> : null}
-                    <p className="faint sm">
-                      {report.quota.limit ? `${count(report.quota.used)} מתוך ${count(report.quota.limit)} שאילתות למסד הנתונים היום. המונה מתאפס ב-00:00 UTC.` : `${count(report.quota.used)} שאילתות למסד הנתונים היום.`}
-                      {report.quota.runsOutAt ? ` בקצב של היום הן ייגמרו בערך ב-${report.quota.runsOutAt.slice(11, 16)} UTC.` : ''}
-                    </p>
-                  </div>
-                )}
-                {id === 'workers' && report?.workers && (
-                  <ul className="detail workers">
-                    {report.workers.map((load) => (
-                      <li key={load.script}>
-                        <bdi dir="ltr" className="code">
-                          {load.script}
-                        </bdi>{' '}
-                        <span className="faint sm">
-                          {load.requests
-                            ? `${count(load.requests)} בקשות היום · חצי מהן ${load.cpuP50Ms ?? '–'} ms מעבד, האיטיות ביותר (1%) ${load.cpuP99Ms ?? '–'} ms · ${count(load.exceeded)} נעצרו על חריגה`
-                            : 'עוד לא היו בקשות היום.'}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {report && <Days report={report} id={id} up={up} />}
-              </li>
-            );
-          })}
-        </ul>
-
-        <SectionHead title="תקלות אחרונות" />
-        {report?.incidents?.length ? (
-          <ul className="incidents">
-            {report.incidents.map((incident) => (
-              <li key={`${incident.check}-${incident.from}`}>
-                <Icon name={incident.to ? 'check' : STATE_ICON[incident.state]} size="s" />
+      <ul className="checks">
+        {ORDER.map((id) => {
+          const check = checks.get(id);
+          const state: State = check?.state ?? 'unknown';
+          const part = PARTS[id];
+          const up = report ? uptime(report, id) : null;
+          return (
+            <li key={id}>
+              <div className="check-head">
+                <Icon name={part.icon} className="faint" />
                 <span className="t">
-                  <b>
-                    {PARTS[incident.check].name}: {WORD[incident.state]}
-                  </b>
-                  <span>
-                    {when(incident.from)} · {incident.to ? `נמשכה ${lasted(Date.parse(incident.to) - Date.parse(incident.from))}` : 'עדיין נמשכת'}
-                  </span>
-                  {incident.detail && (
-                    <span lang="en" dir="ltr">
-                      {incident.detail}
+                  <b>{part.name}</b>
+                  <span>{part.about}</span>
+                </span>
+                <span className={`state ${state}`}>
+                  <Icon name={STATE_ICON[state]} size="s" />
+                  {WORD[state]}
+                  {check?.ms != null && state !== 'unknown' && (
+                    <span className="faint">
+                      {' · '}
+                      <bdi dir="ltr">{count(check.ms)} ms</bdi>
                     </span>
                   )}
                 </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="faint">לא היו תקלות ב-90 הימים האחרונים.</p>
-        )}
+              </div>
+              {check?.detail && state !== 'up' && (
+                <p className="detail" lang="en" dir="ltr">
+                  {check.detail}
+                </p>
+              )}
+              {id === 'quota' && report?.quota && (
+                <div className="detail">
+                  {report.quota.limit ? <Meter part={report.quota.used} whole={report.quota.limit} label={`${count(report.quota.used)} מתוך ${count(report.quota.limit)} שאילתות היום`} /> : null}
+                  <p className="faint sm">
+                    {report.quota.limit ? `${count(report.quota.used)} מתוך ${count(report.quota.limit)} שאילתות למסד הנתונים היום. המונה מתאפס ב-00:00 UTC.` : `${count(report.quota.used)} שאילתות למסד הנתונים היום.`}
+                    {report.quota.runsOutAt ? ` בקצב של היום הן ייגמרו בערך ב-${report.quota.runsOutAt.slice(11, 16)} UTC.` : ''}
+                  </p>
+                </div>
+              )}
+              {id === 'workers' && report?.workers && (
+                <ul className="detail workers">
+                  {report.workers.map((load) => (
+                    <li key={load.script}>
+                      <bdi dir="ltr" className="code">
+                        {load.script}
+                      </bdi>{' '}
+                      <span className="faint sm">
+                        {load.requests
+                          ? `${count(load.requests)} בקשות היום · חצי מהן ${load.cpuP50Ms ?? '–'} ms מעבד, האיטיות ביותר (1%) ${load.cpuP99Ms ?? '–'} ms · ${count(load.exceeded)} נעצרו על חריגה`
+                          : 'עוד לא היו בקשות היום.'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {report && <Days report={report} id={id} up={up} />}
+            </li>
+          );
+        })}
+      </ul>
 
-        <p className="faint sm">
-          לתוכנות: אותו מידע ב-JSON, ב-
-          <a className="url" href={`${API}/v1/status`} dir="ltr">
-            {`${API}/v1/status`}
-          </a>
-        </p>
-
-        <SectionHead title="עוד" />
-        <SeeAlso links={[{ to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, ואיפה צריך עזרה' }]} />
-      </main>
+      <SectionHead title="תקלות אחרונות" />
+      {report?.incidents?.length ? (
+        <ul className="incidents">
+          {report.incidents.map((incident) => (
+            <li key={`${incident.check}-${incident.from}`}>
+              <Icon name={incident.to ? 'check' : STATE_ICON[incident.state]} size="s" />
+              <span className="t">
+                <b>
+                  {PARTS[incident.check].name}: {WORD[incident.state]}
+                </b>
+                <span>
+                  {when(incident.from)} · {incident.to ? `נמשכה ${lasted(Date.parse(incident.to) - Date.parse(incident.from))}` : 'עדיין נמשכת'}
+                </span>
+                {incident.detail && (
+                  <span lang="en" dir="ltr">
+                    {incident.detail}
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="faint">לא היו תקלות ב-90 הימים האחרונים.</p>
+      )}
     </>
   );
 }
@@ -246,5 +275,22 @@ function Days({ report, id, up }: { report: StatusReport; id: CheckId; up: numbe
         <span>היום</span>
       </p>
     </div>
+  );
+}
+
+/** The same for programs, and where else to look. They come in after the report, so nothing under the waiting line is pushed down when it arrives. */
+function More() {
+  return (
+    <>
+      <p className="faint sm">
+        לתוכנות: אותו מידע ב-JSON, ב-
+        <a className="url" href={`${API}/v1/status`} dir="ltr">
+          {`${API}/v1/status`}
+        </a>
+      </p>
+
+      <SectionHead title="עוד" />
+      <SeeAlso links={[{ to: '/health', icon: 'library', label: 'מצב הקטלוג', sub: 'כמה מלא הקטלוג, ואיפה צריך עזרה' }]} />
+    </>
   );
 }
