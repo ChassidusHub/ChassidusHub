@@ -52,6 +52,8 @@ export function Fixing({
   const range = useRef<Range | null>(null);
   const pop = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLTextAreaElement>(null);
+  // The input holding a phone's keyboard up for a Fix tapped before the page came to life (EARLY_TAPS).
+  const holder = useRef<HTMLInputElement | null>(null);
 
   // The bar follows the selection: shown over words selected inside `root`; on a phone, under them, clear of the
   // phone's own menu (over the words) and of the handles it hangs under their ends for dragging the selection.
@@ -150,6 +152,30 @@ export function Fixing({
     // Only when the page opens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);
+
+  // Fix tapped on the page's own bar before its scripts came (root.tsx, EARLY_TAPS): the box opens for those words
+  // now, and takes the focus from the input that held it, so a phone's keyboard stays up and what was typed is kept.
+  useEffect(() => {
+    const early = (window as { __earlyFix?: { range: Range | null; input: HTMLInputElement } }).__earlyFix;
+    if (!early) return;
+    delete (window as { __earlyFix?: unknown }).__earlyFix;
+    const at = early.range && root.current?.contains(early.range.commonAncestorContainer) ? placeOf(early.range) : null;
+    if (!at) return early.input.remove();
+    range.current = early.range;
+    holder.current = early.input;
+    show(at, early.input.value || at.selected);
+    // Only when the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Once the sheet is drawn (its own focus comes first, as a child's): the box takes the focus, and only then does
+  // the input let go, so the keyboard never drops between them.
+  useEffect(() => {
+    if (!fixing || !holder.current) return;
+    ready();
+    holder.current.remove();
+    holder.current = null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixing]);
 
   const close = useCallback(() => setFixing(null), []);
 

@@ -66,9 +66,39 @@ test('words selected before the scripts come get their Fix bar at once, and Fix 
   const fix = bar.getByRole('button', { name: 'תקן' });
   await fix.click();
   await expect(fix).toHaveAttribute('data-wait', '');
+  // The tap gave the focus to a stand-in input (so iOS raises its keyboard now); what is typed into it is kept.
+  await page.keyboard.type('ראשונית');
   await release();
   await expect(page.getByRole('dialog', { name: 'תיקון' })).toContainText('ראשונה');
+  const box = page.getByLabel('המילים הנכונות');
+  await expect(box).toBeFocused();
+  await expect(box).toHaveValue('ראשונית');
   await expect(page.locator('.pop[data-early]')).toHaveCount(0);
+  await expect(page.locator('input[aria-hidden]')).toHaveCount(0);
+});
+
+test('Fix tapped on the early bar with nothing typed opens with the selected words', async ({ page }) => {
+  const release = await slowScripts(page);
+  await page.goto('/sample/1/1', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => {
+    const root = document.querySelector('#s-p1')!;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const at = node.textContent!.indexOf('ראשונה');
+      if (at < 0) continue;
+      const range = document.createRange();
+      range.setStart(node, at);
+      range.setEnd(node, at + 'ראשונה'.length);
+      getSelection()!.removeAllRanges();
+      getSelection()!.addRange(range);
+      return;
+    }
+  });
+  await page.getByRole('toolbar', { name: 'המילים שסומנו' }).getByRole('button', { name: 'תקן' }).click();
+  await release();
+  const box = page.getByLabel('המילים הנכונות');
+  await expect(box).toBeFocused();
+  await expect(box).toHaveValue('ראשונה');
 });
 
 test('a link tapped before the scripts come shows its page at once, and opens it once they come', async ({ page }) => {
