@@ -86,6 +86,8 @@ export function Fixing({
     };
     document.addEventListener('selectionchange', later);
     addEventListener('scroll', later, { passive: true });
+    // Words already selected before the page's scripts came (a long press on a slow phone) get their bar now.
+    later();
     addEventListener('resize', later);
     document.addEventListener('keydown', keys);
     return () => {
