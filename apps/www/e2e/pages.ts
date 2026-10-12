@@ -41,6 +41,7 @@ export const pages: { name: string; path: string }[] = [
         { name: 'Reader', path: '/sample/1/1' },
         { name: 'Reader, machine words', path: '/sample/1/2' },
         { name: 'Reader, a letter', path: '/sample/1/5' },
+        { name: 'Reader, an index', path: '/sample-sichos-index/12' },
         { name: 'Reports', path: '/issues' },
         { name: 'A report', path: '/issues/12' },
         { name: 'New report', path: '/issues/new?item=rh-aaaaaab1' },

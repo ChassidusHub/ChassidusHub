@@ -623,6 +623,36 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .igros .l-body { text-indent: 1.5em; }
 .igros .torah .l-signature { text-align: end; margin-top: 1em; margin-bottom: 0.15em; }
 .igros .notes ol { font-family: 'DavidCLM', var(--torah); }
+/*
+ * A subject index (app/views/index.tsx), set as printed: each entry's heading
+ * in bold with its pages running on after it, a merged index's volumes each
+ * on a line of their own; the page numbers are links, ע״ע jumps to the other
+ * entry. Letters on top, then the find box.
+ */
+.ix { margin-top: 8px; }
+.ix-find { margin: 0 0 10px; }
+.ix .torah { text-align: start; line-height: 1.7; }
+.ix-ab { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 12px; font-family: var(--title); font-size: 16px; }
+.ix-ab a, .ix-ab span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 6px; color: var(--g700); }
+.ix-ab span { color: var(--g400); }
+.ix-ab a:hover { background: var(--g100); }
+.ix-ab a[aria-current='page'] { background: var(--g900); color: var(--g0); }
+.ix-e { padding: 10px 0; border-bottom: 1px solid var(--g200); scroll-margin-top: 64px; }
+.ix .torah .ix-e > p { display: inline; margin: 0; }
+.ix .torah .ix-e > p.ix-h { font-weight: 700; margin-inline-end: 0.5em; }
+.ix .torah .ix-e > p.ix-v { display: block; margin-top: 0.2em; }
+.ix .torah .ix-v b { font-family: var(--ui); font-size: 0.75em; font-weight: 600; color: var(--g700); }
+.ix .ref { font-family: var(--ui); font-size: 0.72em; font-weight: 500; color: var(--g900); white-space: nowrap; text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.ix span.ref { text-decoration: none; }
+.ix .see { color: var(--g900); text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.ix-pop {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+  margin-top: 8px; padding: 6px 6px 6px 12px; border: 1px solid var(--g300); border-radius: 10px; background: var(--g50);
+  font-family: var(--ui); font-size: 13px; line-height: 1.5; color: var(--g700);
+}
+.ix-pop b { color: var(--g900); font-weight: 600; }
+.ix-pop > span:first-child { flex: 1; min-width: 12em; }
+.ix-open { font-weight: 500; color: var(--g900); text-decoration: underline; text-underline-offset: 3px; }
 .missing { text-align: center; margin: 40px 0; }
 .scan { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .scan img { width: 100%; height: auto; border: 1px solid var(--g300); border-radius: 4px; background: var(--g50); }

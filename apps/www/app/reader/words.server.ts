@@ -38,6 +38,17 @@ export function noteLabels(notes: readonly PageSegment[], unmarked?: ReadonlySet
 export interface WordsLayout {
   classes: (segments: readonly PageSegment[]) => Map<string, string>;
   unmarkedNotes?: boolean;
+  /** The whole body, for a kind that groups its segments its own way (an index's entries); each segment still its own element with its id. */
+  body?: (segments: readonly PageSegment[], context: WordsContext) => string;
+}
+
+/** What a layout that draws the whole body is given: the runs drawn as on any page, and what the page knows around its words. */
+export interface WordsContext {
+  run: (text: readonly PageInline[]) => string;
+  /** The volume the page is, by its position (an index of one volume). */
+  volume?: number;
+  /** The pages beside it at its own level, as the path bar lists them (an index kept one letter a page). */
+  siblings?: { path: string; label: string; current: boolean }[];
 }
 
 /** The notes nothing in the words points to. */
@@ -97,9 +108,10 @@ function segment(s: PageSegment, labels: Map<string, string>, first: boolean, ti
   return `<p id="${sid(s.id)}"${classes.length ? ` class="${classes.join(' ')}"` : ''}>${words}</p>`;
 }
 
-/** The body: every segment in reading order. `title` is the page's own title; `layout`, how its kind of page sets it. */
-export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string, layout?: WordsLayout): string {
+/** The body: every segment in reading order. `title` is the page's own title; `layout`, how its kind of page sets it; `around`, what a layout drawing the whole body may use. */
+export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string, layout?: WordsLayout, around: Omit<WordsContext, 'run'> = {}): string {
   const labels = noteLabels(notes, layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined);
+  if (layout?.body) return layout.body(segments, { ...around, run: (text) => runs(text, labels) });
   const placed = layout?.classes(segments);
   return segments.map((s, at) => segment(s, labels, at === 0, title, placed)).join('');
 }
