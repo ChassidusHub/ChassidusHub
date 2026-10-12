@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { nameOf } from '../lib/catalog';
 import type { ReaderView, ReaderWords } from '../reader/view';
@@ -30,6 +31,14 @@ export function chapterLabel(name: string, part: string): string {
  * three pages, are one chip. Drawn with the page, so nothing moves.
  */
 function ChapterRow({ data }: { data: ReaderData }) {
+  const row = useRef<HTMLElement>(null);
+  // On a phone the row is one line that scrolls sideways: this chapter is brought into view.
+  useEffect(() => {
+    const on = row.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (on && row.current && row.current.scrollWidth > row.current.clientWidth) {
+      row.current.scrollLeft += on.getBoundingClientRect().left - row.current.getBoundingClientRect().left - (row.current.clientWidth - on.offsetWidth) / 2;
+    }
+  }, [data.path]);
   const here = data.pathBar.at(-1);
   const part = nameOf(data.pathBar.at(-2)?.chosen.name);
   const chapters: { path: string; label: string; current: boolean }[] = [];
@@ -43,7 +52,7 @@ function ChapterRow({ data }: { data: ReaderData }) {
   }
   if (chapters.length < 2) return null;
   return (
-    <nav className="chips ch-row" aria-label="הפרקים">
+    <nav ref={row} className="chips ch-row" aria-label="הפרקים">
       {chapters.map((chapter) => (
         <Link key={chapter.path} className={chapter.current ? 'chip on' : 'chip'} to={chapter.path} aria-current={chapter.current ? 'page' : undefined}>
           {chapter.label}

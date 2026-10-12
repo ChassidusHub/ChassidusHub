@@ -724,6 +724,7 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .seg a[aria-current='true'] { background: var(--g200); color: var(--g900); font-weight: 600; }
 .ch-row { justify-content: center; gap: 4px; margin: 0 0 22px; }
 .ch-row .chip { min-width: 34px; justify-content: center; padding-inline: 8px; font-family: var(--title); }
+@media (max-width: 640px) { .ch-row { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 4px; scrollbar-width: none; } .ch-row .chip { flex: none; } }
 .chapters .mk { display: none; }
 .chapters.en .torah, .chapters.en .notes ol, .chapters.paired .notes ol, .chapters .tr { direction: ltr; text-align: left; font-family: var(--title); }
 .chapters.en .torah, .chapters .tr { line-height: 1.7; }
@@ -744,6 +745,7 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
   font-family: var(--ui); font-size: 11px; line-height: 1.4; color: var(--g600); text-align: center; white-space: nowrap;
 }
 .chapters .sa-pre, .chapters .sa-name, .chapters .sa-body { display: block; }
+.chapters .sa-pre, .chapters .sa-name { margin-inline-start: -46px; }
 .chapters .sa-pre { font-size: 0.85em; line-height: 1.65; color: var(--g700); background: var(--g100); border-radius: 8px; padding: 8px 12px; margin: 0 0 1em; }
 .chapters .sa-pre small { font-size: inherit; }
 .chapters .sa-name { font-family: var(--title); font-size: 0.95em; text-align: center; margin: 0 0 0.6em; }
