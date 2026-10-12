@@ -46,5 +46,9 @@
     "services/*/tests",
     "apps/*/tests",
     "vitest.config.ts"
+  ],
+  // The new site's tests are checked with its own settings (apps/www/tsconfig.json): its code is written for its bundler.
+  "exclude": [
+    "apps/www/tests"
   ]
 }

@@ -1,23 +1,19 @@
 import { data, redirect, type AppLoadContext } from 'react-router';
 import { nameOf, pathLevels } from '../lib/catalog';
-import { loadSet, loadVolume, loadWork } from '../library/load';
+import { libraryPage, notFound } from '../library/page';
+import { printingsFrom } from '../library/printings';
 import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
 import { readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
-import { keptWords } from '../reader/words';
+import type { DrawnWords } from '../reader/words.server';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
 import type { Route } from './+types/item';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** Recordings and the events they were said at belong to listening; every other item to the library. */
 const listening = new Set(['event', 'recording']);
-
-/** Whether the API answered "there is nothing there", by its status, not its class: the server's API client and this page's can be two copies of the package. */
-const notFound = (error: unknown) => [404, 400].includes((error as { status?: number } | null)?.status ?? 0);
-
-/** A read the API answered with 404, as nothing; any other failure stays one. */
-const orNothing = <T,>(read: Promise<T>): Promise<T | null> => read.catch((error) => (notFound(error) ? null : Promise.reject(error)));
 
 /**
  * Every item's page, at its readable path (/likkutei-sichos/12/3) or its
@@ -25,57 +21,31 @@ const orNothing = <T,>(read: Promise<T>): Promise<T | null> => read.catch((error
  * path bar, the units before and after it and its best words. An old path
  * that moved answers with a permanent redirect to where it is now. The screen
  * depends on the kind of item: a sicha (a unit) is read here (app/reader); a
- * shelf, a sefer or a volume is the library's (app/library), an event or a
- * recording Home and listening's.
+ * shelf, a sefer or a volume is the library's (app/library/page.ts), an event
+ * or a recording Home and listening's.
  *
- * A path of two words may be a volume of a sefer, which is no item of its own
- * (/likkutei-sichos/12), so its sefer's view is read beside it. Whatever else
- * a library screen draws is read together after that, so it waits on two
- * rounds of reads.
+ * On the server every page is read from the API, so the edge can tag it with
+ * what it shows and forget it when that changes (server/edge.ts); a click in
+ * the browser to a shelf, a sefer or a volume is drawn from the catalog
+ * snapshot instead (`clientLoader`).
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
-  let path: string;
-  try {
-    path = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
-  } catch {
-    // A broken % escape names no item.
-    throw data('not found', { status: 404 });
-  }
-  const words = path.split('/').filter(Boolean);
   const api = context.api;
-  const permanent = /^\/(rh-[\w-]+)$/i.exec(path)?.[1];
-  const language = url.searchParams.get('language') ?? undefined;
-  const options = { scan: url.searchParams.has('scan'), apiBase: api.baseUrl };
-  const maybeVolume = !permanent && words.length === 2 && words[0] !== 'sets';
   try {
-    const [view, parent] = await Promise.all([
-      orNothing(api.itemView(permanent ? { id: permanent, language } : { path, language })),
-      maybeVolume ? orNothing(api.itemView({ path: `/${words[0]}` })) : null,
-    ]);
-    if (!view) {
-      // Nothing at the path: it may be a volume of a sefer.
-      if (parent?.movedTo) throw redirect(`${parent.movedTo}/${words[1]}${url.search}`, 301);
-      const volume = parent ? await loadVolume(api, parent.item, parent.pathBar, words[1]!, options) : null;
-      if (volume) return volume;
-      throw data('not found', { status: 404 });
-    }
-    if (view.movedTo) throw redirect(`${view.movedTo}${url.search}`, 301);
+    const page = await libraryPage(api, url, { scan: printingsFrom });
+    if (page.screen !== 'view') return page;
+    const view = page.view;
     const item = view.item;
     // An event, or one of its recordings, is heard on its listening page.
     if (item.type === 'event' || item.type === 'recording') {
       const to = await listeningPage(item, api);
       if (to) throw redirect(to, 301);
     }
-    if (item.type === 'set') return await loadSet(api, item, view.pathBar);
-    if (item.type === 'work') {
-      const work = await loadWork(api, item, view.pathBar, options);
-      if (work) return work;
-    }
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') {
-      const reader = await readerData(view, context, url.origin, language);
+      const reader = await readerData(view, context, url.origin, url.searchParams.get('language') ?? undefined);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
       // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
       // Said in a header, on the server, so it costs the reader's script nothing.
@@ -90,23 +60,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 /**
- * A click to a sicha: its page's data comes without the words, and the page
- * shows at once while the words come from their own address (`coming`),
- * kept for good by the browser and the service worker (public/sw.js), so a
- * sicha read once opens again with only its small page data, and none of its
- * words over the network. A whole page keeps the words the server drew.
- * With no network, a page whose click data or words were never kept is
- * opened whole, from what the worker kept.
+ * A click to an item's page: a shelf, a sefer or a volume is drawn in the
+ * browser from the catalog snapshot; a sicha shows at once and its words come
+ * after, from where they are kept (app/reader/click.ts).
  */
-export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
-  const whole = () => {
-    window.location.assign(request.url);
-    return new Promise<never>(() => {});
-  };
-  const loaded = await serverLoader().catch((error: unknown) => (error instanceof TypeError ? whole() : Promise.reject(error)));
-  if (loaded.screen !== 'reader' || loaded.reader.text.kind !== 'words' || loaded.reader.text.body !== null) return loaded;
-  return { ...loaded, coming: keptWords(loaded.reader.text.url).catch(whole) };
-}
+export const clientLoader = ({ request, serverLoader }: Route.ClientLoaderArgs) => import('../reader/click').then((click) => click.sichaClick(request, serverLoader));
 
 /** Where an event or recording is heard: /listen/<year>/<event>, a recording picked with ?r=. */
 async function listeningPage(item: { id: string; type: string; data: unknown }, api: AppLoadContext['api']): Promise<string | null> {
@@ -118,11 +76,11 @@ async function listeningPage(item: { id: string; type: string; data: unknown }, 
 
 /**
  * The same page for everyone (who is signed in is asked by the browser), so
- * the edge keeps it (server/pageCache.ts): fresh for two minutes, as the
- * API's own answers are, then shown while it is drawn again behind it.
+ * the edge keeps it until something it shows changes (lib/caching.ts,
+ * server/edge.ts).
  */
 export const headers = ({ loaderHeaders }: Route.HeadersArgs) => ({
-  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=3600',
+  'Cache-Control': KEPT_PAGE,
   ...(loaderHeaders.has('Link') ? { Link: loaderHeaders.get('Link')! } : {}),
 });
 
@@ -143,7 +101,7 @@ export function meta({ data: loaded }: Route.MetaArgs) {
 export default function Item({ loaderData }: Route.ComponentProps) {
   switch (loaderData.screen) {
     case 'reader':
-      return <Reader key={loaderData.reader.path} data={loaderData.reader} coming={'coming' in loaderData ? loaderData.coming : undefined} />;
+      return <Reader key={loaderData.reader.path} data={loaderData.reader} coming={'coming' in loaderData ? (loaderData.coming as Promise<DrawnWords>) : undefined} />;
     case 'set':
       return <SetScreen data={loaderData} />;
     case 'work':

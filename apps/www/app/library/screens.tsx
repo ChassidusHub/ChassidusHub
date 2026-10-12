@@ -282,7 +282,7 @@ export function WorkScreen({ data }: { data: WorkData }) {
             {data.grid ? (
               <nav className="numgrid" aria-label="חלקים">
                 {data.parts.map((part) => (
-                  <Link key={part.value} to={`${data.path}/${part.value}`} className={part.units ? 'has' : undefined} aria-label={part.label}>
+                  <Link key={part.value} to={`${data.path}/${part.value}`} prefetch="intent" className={part.units ? 'has' : undefined} aria-label={part.label}>
                     {part.value}
                   </Link>
                 ))}

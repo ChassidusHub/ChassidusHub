@@ -12,12 +12,14 @@
  * they are kept and never asked for again.
  *
  * Texts, and the last copy of every other page read, are kept by their own
- * section below ("Fast site: texts cached and offline").
+ * section below ("Fast site: texts cached and offline"); the catalog
+ * snapshot keeps its own files (app/catalog/browser.ts).
  */
 
 const PAGES = 'pages-v1';
 const ASSETS = 'assets-v1';
-const KEPT = [PAGES, ASSETS];
+// The catalog snapshot (app/catalog/browser.ts) keeps its own files and lets go of the old ones itself.
+const KEPT = [PAGES, ASSETS, 'chassidushub-catalog'];
 
 /** The pages kept from the first visit on, so the first click to one is already instant. */
 // Not the back room: its page carries the keepers' lists streamed into it, which must never be shown stale.

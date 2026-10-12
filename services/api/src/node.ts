@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server';
-import { Catalog, embedderFromEnv } from '@chassidushub/core';
+import { Catalog, embedderFromEnv, memorySnapshotStore } from '@chassidushub/core';
 import { connectPostgres } from '@chassidushub/db';
 import { openPGlite } from '@chassidushub/db/pglite';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -75,6 +75,8 @@ const app = createApp({
   files: publicFolder,
   uploads: filesDir ? { public: folder('public'), preservation: folder('preservation') } : undefined,
   embedder: embedderFromEnv(process.env),
+  // The catalog snapshot in memory, built afresh whenever a manifest is asked for after a change.
+  catalogSnapshot: { store: memorySnapshotStore() },
   rateLimits: process.env.RATE_LIMIT
     ? { ip: memoryRateLimiter(DEFAULT_IP_PER_MINUTE), key: memoryRateLimiter(DEFAULT_KEY_PER_MINUTE), search: memoryRateLimiter(DEFAULT_SEARCH_PER_MINUTE), ipPerMinute: DEFAULT_IP_PER_MINUTE, keyPerMinute: DEFAULT_KEY_PER_MINUTE, searchPerMinute: DEFAULT_SEARCH_PER_MINUTE }
     : undefined,

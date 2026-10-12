@@ -6,6 +6,7 @@ import type { ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { memoryShowcases } from '../app/stewards/showcase';
+import { apiFiles, catalogFile } from './catalog';
 
 /**
  * The built site on Node, for the browser tests in CI and for trying a build
@@ -21,7 +22,12 @@ const api = apiFor({ baseUrl: process.env.API_URL });
 const forward = forwardFor({ baseUrl: process.env.API_URL });
 // Showcases are kept in memory here: this is the site for local work and the browser tests.
 const showcases = memoryShowcases();
-const pages = createRequestListener({ build, getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, ...pageContext(request) }) });
+// The catalog snapshot's files for the browser, from the API (server/catalog.ts); CATALOG_SNAPSHOT=off hands it none.
+const snapshotFiles = process.env.CATALOG_SNAPSHOT === 'off' ? null : apiFiles(api.baseUrl, (url) => fetch(url));
+const pages = createRequestListener({
+  build,
+  getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, ...pageContext(request) }),
+});
 
 const types: Record<string, string> = {
   '.js': 'text/javascript',
@@ -34,7 +40,16 @@ const types: Record<string, string> = {
   '.json': 'application/json',
 };
 
-createServer((req, res) => {
+createServer(async (req, res) => {
+  // The snapshot's files, for the browser to keep.
+  if (req.url?.startsWith('/_/catalog/')) {
+    const file = await catalogFile(new Request(`http://local${req.url}`, { method: req.method }), snapshotFiles, () => api.transcribedRecordings({ limit: 1000 }));
+    if (file) {
+      res.writeHead(file.status, Object.fromEntries(file.headers));
+      res.end(Buffer.from(await file.arrayBuffer()));
+      return;
+    }
+  }
   let pathname: string;
   try {
     pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://local').pathname);
