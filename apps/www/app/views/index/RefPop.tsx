@@ -19,16 +19,18 @@ export interface AskedRef {
 /**
  * The sicha page here that a reference opens: from the catalog snapshot the
  * browser already holds, read through the sefer the index is an addition to
- * (RFC 0004, `addition.to`). A sefer whose units are its printed pages
+ * (RFC 0004, `addition.to`), on the top shelf `shelf` the page is under. A sefer whose units are its printed pages
  * (Likkutei Sichos 30-39) opens that very page; one whose units are its
  * sichos, each named by the page it starts on ("עמ׳ 49"), opens the sicha the
  * page falls in. Null when the snapshot knows no such page: the reference
  * then offers the index's own PDF, never a broken link.
  */
-export async function sichaAt(index: string | null, volume: number | null, page: number): Promise<string | null> {
+export async function sichaAt(index: string | null, shelf: string | null, volume: number | null, page: number): Promise<string | null> {
   if (!index || !volume) return null;
   const snapshot = browserSnapshot();
-  const core = await snapshot.core();
+  let core = await snapshot.core();
+  // The browser holds the top shelves' files it was asked for; the index's shelf is read now if it is not yet.
+  if (core && !core.byPath.has(index) && shelf && (await snapshot.shelf(shelf))) core = await snapshot.core();
   const work = core?.byPath.get(index);
   const sefer = work && core!.isWork(work) ? work.addition?.to : undefined;
   if (!sefer) return null;
@@ -45,19 +47,19 @@ export async function sichaAt(index: string | null, volume: number | null, page:
 }
 
 /** Under a tapped reference: its page and the sicha it is in, then a way to open it there. */
-export function RefPop({ asked, index, onClose }: { asked: AskedRef; index: string | null; onClose: () => void }) {
+export function RefPop({ asked, index, shelf, onClose }: { asked: AskedRef; index: string | null; shelf: string | null; onClose: () => void }) {
   const [to, setTo] = useState<string | null | undefined>(undefined);
   useEffect(() => {
     let live = true;
     setTo(undefined);
-    sichaAt(index, asked.volume, asked.page).then(
+    sichaAt(index, shelf, asked.volume, asked.page).then(
       (path) => live && setTo(path),
       () => live && setTo(null),
     );
     return () => {
       live = false;
     };
-  }, [index, asked]);
+  }, [index, shelf, asked]);
 
   return createPortal(
     <div className="ix-pop" role="dialog" aria-label={`עמוד ${asked.page}`}>

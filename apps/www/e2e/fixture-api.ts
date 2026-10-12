@@ -222,6 +222,7 @@ const views: Record<string, unknown> = {
   '/sample-sichos-index/12': {
     item: { id: 'rh-aaaaaax1', type: 'unit', path: '/sample-sichos-index/12', rev: 1, data: { label: name('חלק יב'), position: [{ level: 'volume', value: '12' }] } },
     pathBar: [
+      { kind: 'set', chosen: { id: 'rh-aaaaaas3', path: '/sets/the-rebbe', name: name('הרבי') }, choices: [] },
       { kind: 'set', chosen: { id: 'rh-aaaaaal1', path: '/sets/the-rebbe-sample-sichos', name: name('שיחות לדוגמה') }, choices: [] },
       { kind: 'work', chosen: { id: 'rh-aaaaaaw2', path: '/sample-sichos-index', name: name('מפתח לדוגמה') }, choices: [] },
       { kind: 'unit', level: 'volume', chosen: { id: 'rh-aaaaaax1', path: '/sample-sichos-index/12', name: name('חלק יב') }, choices: [{ id: 'rh-aaaaaax1', path: '/sample-sichos-index/12', name: name('חלק יב') }] },

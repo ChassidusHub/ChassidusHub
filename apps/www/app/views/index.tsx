@@ -78,7 +78,7 @@ function IndexWords({ data, words }: { data: ReaderData; words: ReaderWords }) {
       <ServerHtml id={`body:${data.path}`} html={words.body} className={words.machine === 'all' ? 'torah unchecked' : 'torah'} />
       {asked && (
         <Suspense>
-          <RefPop asked={asked} index={data.work?.path ?? null} onClose={() => setAsked(null)} />
+          <RefPop asked={asked} index={data.work?.path ?? null} shelf={data.pathBar[0]?.chosen.id ?? null} onClose={() => setAsked(null)} />
         </Suspense>
       )}
     </div>
