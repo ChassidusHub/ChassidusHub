@@ -14,6 +14,7 @@
 //   RUNS          runs per task (default 3)
 //   OUT           where results.json, report.md and the screenshots go (default top-tasks)
 //   THROTTLE=off  no network or CPU slowdown, to check the walk itself quickly
+//   THINK_MS      how long the person looks at a page before tapping on (default 1000)
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -23,6 +24,7 @@ const base = (process.env.BASE_URL ?? 'https://new.chassidushub.org').replace(/\
 const runs = Number(process.env.RUNS ?? 3);
 const out = process.env.OUT ?? 'top-tasks';
 const throttle = process.env.THROTTLE !== 'off';
+const think = Number(process.env.THINK_MS ?? 1000);
 const only = process.argv.slice(2).map(Number).filter(Boolean);
 
 /**
@@ -52,6 +54,12 @@ const pageScript = () => {
       for (const entry of list.getEntries()) if (!entry.hadRecentInput) total += entry.value;
       sessionStorage.setItem(key, JSON.stringify({ path: location.pathname, total }));
     }).observe({ type: 'layout-shift', buffered: true });
+    // The longest time the page could not answer a tap or a key: its longest task on the main thread.
+    let longest = 0;
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) longest = Math.max(longest, entry.duration);
+      sessionStorage.setItem(key.replace('cls', 'block'), JSON.stringify({ path: location.pathname, longest: Math.round(longest) }));
+    }).observe({ type: 'longtask', buffered: true });
   } catch {}
   const play = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function (...args) {
@@ -123,9 +131,11 @@ class Walk {
     return this.step(`open ${pathname}`, () => this.page.goto(base + pathname, { waitUntil: 'commit' }), { frame, content, arg, kind: 'open' });
   }
 
-  /** A tap that leads somewhere: counted, then timed like any step. */
-  tap(name, locator, wait) {
+  /** A tap that leads somewhere, after a moment's look: counted, then timed like any step. */
+  async tap(name, locator, wait) {
     let tapped = false;
+    // A person looks at what came before tapping on; the time is not counted.
+    await this.page.waitForTimeout(think);
     return this.step(name, async () => {
       // Again: only if the thing is still there to tap.
       if (tapped && !(await locator.isVisible())) return;
@@ -161,6 +171,13 @@ class Walk {
       this.keys++;
       await this.page.keyboard.press('Enter');
     }, wait);
+  }
+
+  /** The longest main-thread task of any page the run opened. */
+  async longestBlock() {
+    const all = await this.page.evaluate(() => Object.keys(sessionStorage).filter((k) => k.startsWith('walk.block.')).map((k) => JSON.parse(sessionStorage.getItem(k)))).catch(() => []);
+    const worst = all.reduce((a, b) => (b.longest > a.longest ? b : a), { longest: 0, path: '' });
+    return { ms: worst.longest, path: worst.path };
   }
 
   /** The worst layout shift of any page the run opened. */
@@ -407,6 +424,7 @@ async function runOnce(browser, task, run, shots) {
   const totalMs = Math.round(performance.now() - started);
   await context.setOffline(false).catch(() => {});
   const shift = await walk.layoutShift();
+  const block = await walk.longestBlock();
   if (shots) await page.screenshot({ path: path.join(shots, `${String(task.n).padStart(2, '0')}-${task.slug}.png` ) }).catch(() => {});
   await context.close();
   const opens = walk.steps.filter((s) => s.kind === 'open');
@@ -424,6 +442,8 @@ async function runOnce(browser, task, run, shots) {
     keys: walk.keys,
     layoutShift: shift.value,
     layoutShiftPage: shift.path,
+    longestBlockMs: block.ms,
+    longestBlockPage: block.path,
     requests: walk.requests,
     kB: Math.round(walk.bytes / 1024),
     consoleErrors: [...new Set(walk.errors)],
@@ -460,15 +480,15 @@ function report(summary, meta) {
   const lines = [
     `# Top-task walk, ${meta.date}`,
     '',
-    `${meta.base}, a phone 390 px wide, ${meta.throttle ? 'slow 4G (562 ms, 1.4 Mb/s) and a 4x slower CPU' : 'no throttling'}, ${meta.runs} runs per task from a fresh profile; the median run.`,
+    `${meta.base}, a phone 390 px wide, ${meta.throttle ? 'slow 4G (562 ms, 1.4 Mb/s) and a 4x slower CPU' : 'no throttling'}, ${meta.runs} runs per task from a fresh profile, ${meta.think} ms looking at each page before a tap (not counted); the median run.`,
     `Budgets: frame after a tap ≤ ${budgets.tapFrameMs} ms, first frame of a page opened cold ≤ ${budgets.openFrameMs} ms, content ≤ ${budgets.contentMs} ms per step, ≤ ${budgets.catalogTaps} taps for a catalog task, layout shift < ${budgets.layoutShift}, no console errors.`,
     '',
-    '| # | Task | Done | First frame | Frame after tap | Content (worst step) | Whole task | Taps | Keys | Shift | Requests | kB | Console errors | Within budget |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| # | Task | Done | First frame | Frame after tap | Content (worst step) | Whole task | Taps | Keys | Shift | Longest block | Requests | kB | Console errors | Within budget |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const s of summary) {
     const m = s.median;
-    lines.push(`| ${s.n} | ${s.name} | ${s.finishedRuns}/${s.runs} | ${fmt(m.openFrameMs)} | ${fmt(m.tapFrameMs)} | ${fmt(m.contentMs)} | ${fmt(m.totalMs)} | ${m.taps} | ${m.keys} | ${m.layoutShift} | ${m.requests} | ${m.kB} | ${m.consoleErrors.length} | ${s.misses.length ? `no: ${s.misses.join('; ')}` : 'yes'} |`);
+    lines.push(`| ${s.n} | ${s.name} | ${s.finishedRuns}/${s.runs} | ${fmt(m.openFrameMs)} | ${fmt(m.tapFrameMs)} | ${fmt(m.contentMs)} | ${fmt(m.totalMs)} | ${m.taps} | ${m.keys} | ${m.layoutShift} | ${fmt(m.longestBlockMs)} | ${m.requests} | ${m.kB} | ${m.consoleErrors.length} | ${s.misses.length ? `no: ${s.misses.join('; ')}` : 'yes'} |`);
   }
   lines.push('', '## Steps of the median run', '');
   for (const s of summary) {
@@ -497,7 +517,7 @@ for (const task of tasks.filter((t) => !only.length || only.includes(t.n))) {
   summary.push(summarize(task, results));
 }
 await browser.close();
-const meta = { date: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', base, runs, throttle, budgets };
+const meta = { date: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', base, runs, throttle, think, budgets };
 writeFileSync(path.join(out, 'results.json'), JSON.stringify({ meta, summary }, null, 2));
 writeFileSync(path.join(out, 'report.md'), report(summary, meta));
 console.log(`\n${path.join(out, 'report.md')}`);
