@@ -102,6 +102,12 @@ export interface SearchSubjectHit {
  * (namedInfo), from its place.
  */
 const NAMED: EntityType[] = ['set', 'work', 'event', 'recording', 'publication', 'author'];
+/**
+ * The kinds as SQL, written into the statement rather than sent with it: only then does every plan, a generic one
+ * too, know they are the kinds `entity_tsv_named` holds and read that small index (migration 0042), not the one over
+ * every item's words.
+ */
+const NAMED_SQL = NAMED.map((t) => `'${t}'`).join(', ');
 const NAME_HITS = 30;
 const DATED_HITS = 20;
 /** A parsha's farbrengens over all the years are many: more of them are listed. */
@@ -172,9 +178,9 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
   // Ranked on the words as typed: ranking on every spelling too took twice as long for a common word.
   const tsQuery = toNameTsQuery(query);
   if (!tsQuery) return [];
-  const typedAt = language ? '$6' : '$4';
-  const foldedAt = language ? '$7' : '$5';
-  const rankAt = language ? '$8' : '$6';
+  const typedAt = language ? '$5' : '$3';
+  const foldedAt = language ? '$6' : '$4';
+  const rankAt = language ? '$7' : '$5';
   const { rows } = await catalog.db.query<Info>(
     // Ranked first, then the facts read for the few kept. Only a sefer's or shelf's revision is read while ranking (its
     // names' tier, and whether it is an addition): a common word is in thousands of farbrengens and recordings, and
@@ -185,8 +191,8 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
               (e.type = 'work' AND r.data ? 'addition') AS addition, 0 AS src, ts_rank(e.search_tsv, to_tsquery('simple', ${rankAt})) AS rank,
               e.path COLLATE "C" AS k1, ''::text COLLATE "C" AS k2
        FROM entity e LEFT JOIN LATERAL (SELECT r.data FROM revision r WHERE r.id = e.main_rev AND ${language ? 'TRUE' : `e.type IN ('work', 'set')`} OFFSET 0) r ON TRUE
-       WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type = ANY($3::text[])
-         ${language ? `AND ${languageSql('$4::text', '$5', NAME_SQL)}` : ''}
+       WHERE e.search_tsv @@ to_tsquery('simple', $1) AND NOT e.deleted AND e.main_rev IS NOT NULL AND e.type IN (${NAMED_SQL})
+         ${language ? `AND ${languageSql('$3::text', '$4', NAME_SQL)}` : ''}
        ORDER BY tier, addition, rank DESC, e.path LIMIT ${limit}),
      unit AS (
        SELECT p.unit_id AS id, ${nameTierSql(['p.name_he', 'p.name_en'], '$2', '$1', typedAt)} AS tier,
@@ -199,8 +205,8 @@ async function namedInfo(catalog: Catalog, query: string, limit: number, languag
        FROM (SELECT * FROM named UNION ALL SELECT * FROM unit) u ORDER BY n LIMIT ${limit})
      SELECT ${INFO} FROM hit JOIN entity e ON e.id = hit.id JOIN revision r ON r.id = e.main_rev ${UNPACKED} ORDER BY hit.n`,
     language
-      ? [tsQuery, normalizeSearchText(query), NAMED, language, languageTitleWords(language), normalizeSearchText(typed), foldSpelling(normalizeSearchText(query)), toTsQuery(query)]
-      : [tsQuery, normalizeSearchText(query), NAMED, normalizeSearchText(typed), foldSpelling(normalizeSearchText(query)), toTsQuery(query)],
+      ? [tsQuery, normalizeSearchText(query), language, languageTitleWords(language), normalizeSearchText(typed), foldSpelling(normalizeSearchText(query)), toTsQuery(query)]
+      : [tsQuery, normalizeSearchText(query), normalizeSearchText(typed), foldSpelling(normalizeSearchText(query)), toTsQuery(query)],
   );
   return rows;
 }

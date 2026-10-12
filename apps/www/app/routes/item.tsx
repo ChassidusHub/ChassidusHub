@@ -4,6 +4,7 @@ import { nameOf, pathLevels } from '../lib/catalog';
 import { libraryPage, notFound } from '../library/page';
 import { printingsFrom } from '../library/printings';
 import { isLetter, readerData } from '../reader/load.server';
+import { farbrengenOf } from '../reader/farbrengen.server';
 import { Placeholder } from './placeholder';
 import type { Section } from '../ui';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
@@ -44,7 +45,15 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') {
+      // A farbrengen read as one page (reader/farbrengen.server.ts): its other sichos lead to their place on the first one's page
+      // (?sicha says which, by its place), unless sent back to their own address (?alone) after the farbrengen could not be read whole.
+      const farbrengen = farbrengenOf(view);
+      const at = farbrengen ? farbrengen.sichos.findIndex((s) => s.path === item.path) : -1;
+      if (farbrengen && at > 0 && !url.searchParams.has('alone')) throw redirect(`${farbrengen.sichos[0]!.path}?sicha=${at}#u-${item.id}`, 302);
       const reader = await readerData(view, context, url.origin, url.searchParams.get('language') ?? undefined);
+      // The farbrengen could not be read whole (a sicha's read failed): the sicha that was asked for, alone, not the first one.
+      const asked = farbrengen && !reader.farbrengen ? farbrengen.sichos[Number(url.searchParams.get('sicha'))] : undefined;
+      if (asked && asked.path !== item.path) throw redirect(`${asked.path}?alone`, 302);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
       // A sicha's words are set in the Torah face, a letter's in David (app/views/letters.tsx): the page asks for it
       // with its first bytes, not once it has drawn. Said in a header, on the server, so it costs the reader's script nothing.
