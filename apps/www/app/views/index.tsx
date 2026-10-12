@@ -1,4 +1,3 @@
-import { normalizeSearchText, unfinal } from '@chassidushub/hebrew';
 import { lazy, Suspense, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import type { ReaderView, ReaderWords } from '../reader/view';
 import type { ReaderData } from '../reader/types';
@@ -8,7 +7,24 @@ import type { AskedRef } from './index/RefPop';
 /** What a tapped reference shows, read only when one is tapped. */
 const RefPop = lazy(() => import('./index/RefPop').then((file) => ({ default: file.RefPop })));
 
-const keyOf = (text: string) => unfinal(normalizeSearchText(text));
+/**
+ * Words as find compares them: no points or quotes, final letters as ordinary
+ * ones (@chassidushub/hebrew's normalizeSearchText and unfinal, kept here so
+ * the reader's own script stays one file).
+ */
+const keyOf = (text: string) =>
+  text
+    .replace(/[\u0591-\u05C7]/g, '')
+    .replace(/[׳״"'`‘’“”]/g, '')
+    .replace(/[^0-9א-ת]+/g, ' ')
+    .replace(/[ךםןףץ]/g, (c) => 'כמנפצ'['ךםןףץ'.indexOf(c)]!)
+    .trim();
+
+/** The volume a reference is in, as the page names it: its line's lead in the merged index ("חלק טו"), else the page's own title ("חלק ל"). */
+function volumeLabel(ref: HTMLElement, title: string): string {
+  const lead = ref.closest('p')?.querySelector('b')?.textContent?.trim() ?? '';
+  return lead.startsWith('חלק') ? lead : title.startsWith('חלק') ? title : '';
+}
 
 /**
  * A subject index (mafteach) read as it was printed: each entry's heading in
@@ -29,9 +45,11 @@ function IndexWords({ data, words }: { data: ReaderData; words: ReaderWords }) {
     const ref = (event.target as HTMLElement).closest<HTMLElement>('.ref[data-p]');
     if (!ref) return;
     event.preventDefault();
+    const volume = ref.dataset.v ? Number(ref.dataset.v) : null;
     setAsked({
       page: Number(ref.dataset.p),
-      volume: ref.dataset.v ? Number(ref.dataset.v) : null,
+      volume,
+      volumeLabel: volume ? volumeLabel(ref, data.title) : '',
       sicha: ref.dataset.s ?? '',
       pdf: ref.getAttribute('href'),
       entry: ref.closest<HTMLElement>('.ix-e') ?? ref.parentElement!,

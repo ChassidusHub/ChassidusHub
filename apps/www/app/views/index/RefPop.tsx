@@ -1,4 +1,3 @@
-import { toHebrewNumeral } from '@chassidushub/hebrew';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
@@ -9,6 +8,8 @@ import { IconButton } from '../../ui';
 export interface AskedRef {
   page: number;
   volume: number | null;
+  /** The volume as a heading names it ("חלק ל"). */
+  volumeLabel: string;
   sicha: string;
   pdf: string | null;
   /** The entry it is in: the answer is drawn at the entry's foot, as the printed line goes on above it. */
@@ -62,7 +63,7 @@ export function RefPop({ asked, index, onClose }: { asked: AskedRef; index: stri
     <div className="ix-pop" role="dialog" aria-label={`עמוד ${asked.page}`}>
       <span>
         <b>
-          {asked.volume ? `חלק ${toHebrewNumeral(asked.volume)}, ` : ''}עמ׳ {asked.page}
+          {asked.volumeLabel ? `${asked.volumeLabel}, ` : ''}עמ׳ {asked.page}
         </b>
         {asked.sicha && ` · ${asked.sicha}`}
       </span>

@@ -209,7 +209,7 @@ test('reads an index as printed: entries, letters, find, ע"ע and a page that o
   // A page names its sicha, then opens it at that page: page 25 is in the sicha that starts on 20.
   await page.locator('.ref', { hasText: '25' }).click();
   const pop = page.getByRole('dialog', { name: 'עמוד 25' });
-  await expect(pop).toContainText('חלק י״ב, עמ׳ 25');
+  await expect(pop).toContainText('חלק יב, עמ׳ 25');
   await expect(pop).toContainText('שיחה לדוגמה');
   await expect(pop.getByRole('link', { name: 'לשיחה, בעמוד הזה' })).toHaveAttribute('href', '/sample-sichos/12/2');
   // A page the catalog does not have offers the index's own scan, never a broken link.
