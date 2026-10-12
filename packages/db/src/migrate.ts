@@ -37,13 +37,22 @@ import * as unitLeadIndex from './migrations/0035_unit_lead_index.js';
 import * as unitPlaceIdCollation from './migrations/0036_unit_place_id_collation.js';
 import * as unitPlacePart from './migrations/0037_unit_place_part.js';
 import * as changesetClientKey from './migrations/0038_changeset_client_key.js';
-import * as searchByKind from './migrations/0039_search_by_kind.js';
 import { HOLD_EVERY_TABLE_SQL } from './hold.js';
 
 export interface Migration {
   version: number;
   name: string;
   up: string;
+  /**
+   * Runs outside a transaction, a statement at a time: what `CREATE INDEX
+   * CONCURRENTLY` needs, which builds an index while the table goes on
+   * taking writes. A plain CREATE INDEX holds every write to its table until
+   * the build ends, and an index over every sicha's words takes minutes on
+   * live. Such a migration must be safe to run again from the start, since
+   * a deploy that stops halfway leaves what it did (an index left invalid
+   * is dropped and built again: `DROP INDEX CONCURRENTLY IF EXISTS` first).
+   */
+  outside?: boolean;
 }
 
 /** Every migration, in order. A migration is never edited once released; a change is a new one. */
@@ -86,7 +95,6 @@ export const MIGRATIONS: readonly Migration[] = [
   { version: 36, name: 'unit-place-id-collation', up: unitPlaceIdCollation.up },
   { version: 37, name: 'unit-place-part', up: unitPlacePart.up },
   { version: 38, name: 'changeset-client-key', up: changesetClientKey.up },
-  { version: 39, name: 'search-by-kind', up: searchByKind.up },
 ];
 
 /** Postgres's code for a statement that gave up waiting for a lock (`lock_timeout`). */
@@ -101,7 +109,8 @@ export interface MigrateOptions {
 }
 
 /**
- * Applies the migrations `db` has not had yet, each in its own transaction. Returns the versions applied.
+ * Applies the migrations `db` has not had yet, each in its own transaction (or, marked `outside`, a statement at a
+ * time). Returns the versions applied.
  *
  * A migration that changes a table in use sets a short `lock_timeout`, so it never keeps the site's reads queued
  * behind it. When a long read holds the table (the catalog snapshot read for 27-43 s on live), the migration gives
@@ -121,6 +130,12 @@ export async function migrate(db: Db, options: MigrateOptions = {}): Promise<num
   const applied: number[] = [];
   for (const migration of MIGRATIONS) {
     if (done.has(migration.version)) continue;
+    if (migration.outside) {
+      for (const statement of statementsOf(migration.up)) await db.exec(statement);
+      await db.query('INSERT INTO schema_migration (version, name) VALUES ($1, $2)', [migration.version, migration.name]);
+      applied.push(migration.version);
+      continue;
+    }
     for (let attempt = 1; ; attempt++) {
       try {
         await db.transaction(async (tx) => {
@@ -139,6 +154,14 @@ export async function migrate(db: Db, options: MigrateOptions = {}): Promise<num
   // A table a migration added is held while an import runs, like the rest (hold.ts).
   if (applied.length && applied.at(-1)! >= 28) await db.exec(HOLD_EVERY_TABLE_SQL);
   return applied;
+}
+
+/** A migration's statements one by one: sent together they would run as one transaction. Statements end in `;` and a newline. */
+export function statementsOf(sql: string): string[] {
+  return sql
+    .split(/;\s*\n/)
+    .map((s) => s.trim().replace(/;$/, ''))
+    .filter((s) => s.length > 0);
 }
 
 /** Creates yearly partitions of `revision` for the years given, so the default partition stays small. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MIGRATIONS, migrate } from '@chassidushub/db';
+import { MIGRATIONS, migrate, statementsOf } from '@chassidushub/db';
 import { openPGlite } from '@chassidushub/db/pglite';
 
 describe('migrations', () => {
@@ -102,13 +102,36 @@ describe('migrations', () => {
     await db.close();
   });
 
-  it("indexes the words of pages, paragraphs and sichos each apart, over their live rows only (migration 0039)", async () => {
+  it('runs a migration marked outside a transaction a statement at a time, so an index can be built CONCURRENTLY', async () => {
     const db = await openPGlite();
     await migrate(db);
-    const { rows } = await db.query<{ indexname: string; indexdef: string }>("SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'entity' AND indexname LIKE 'entity_tsv_%' ORDER BY indexname");
-    expect(rows.map((r) => r.indexname)).toEqual(['entity_tsv_page', 'entity_tsv_segment', 'entity_tsv_unit']);
-    for (const { indexdef } of rows) expect(indexdef).toMatch(/USING gin \(search_tsv\) WHERE .*NOT deleted.*main_rev IS NOT NULL/);
-    await db.close();
+    const last = MIGRATIONS.at(-1)!;
+    await db.exec(`DELETE FROM schema_migration WHERE version = ${last.version}`);
+    const real = { up: last.up, outside: last.outside };
+    // Twice over, as a deploy that stopped halfway would run it again.
+    Object.assign(last, {
+      outside: true,
+      up: `DROP INDEX CONCURRENTLY IF EXISTS entity_try_concurrently;
+CREATE INDEX CONCURRENTLY entity_try_concurrently ON entity (updated_seq) WHERE type = 'unit';
+`,
+    });
+    try {
+      // In one transaction, as every other migration runs, CONCURRENTLY is refused.
+      await expect(db.transaction((tx) => tx.exec(last.up))).rejects.toThrow(/transaction block/);
+      expect(await migrate(db)).toEqual([last.version]);
+      await db.exec(`DELETE FROM schema_migration WHERE version = ${last.version}`);
+      expect(await migrate(db)).toEqual([last.version]);
+      const { rows } = await db.query("SELECT 1 FROM pg_indexes WHERE indexname = 'entity_try_concurrently'");
+      expect(rows).toHaveLength(1);
+    } finally {
+      Object.assign(last, real);
+      await db.exec('DROP INDEX IF EXISTS entity_try_concurrently');
+      await db.close();
+    }
+  });
+
+  it('splits a migration into its statements', () => {
+    expect(statementsOf("SELECT 1;\nSELECT ';';\n\n  SELECT 3;\n")).toEqual(['SELECT 1', "SELECT ';'", 'SELECT 3']);
   });
 
   it('tries a migration again when it gave up waiting for a lock, and gives up after its tries', async () => {
