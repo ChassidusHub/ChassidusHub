@@ -382,6 +382,11 @@ form[role='search'] { margin-block: 8px 4px; }
 /* A button or footnote mark tapped before the page's scripts came: kept, and made once they come (root.tsx, EARLY_TAPS). */
 [data-wait] { cursor: progress; animation: wait 0.7s ease-in-out infinite alternate; }
 @keyframes wait { to { opacity: 0.4; } }
+/* The next page's frame, drawn the moment a link is tapped before the page's scripts came (root.tsx, EARLY_TAPS):
+   its title over quiet lines where its contents will be, under the top bar, until the page itself is there. */
+.first-frame { position: fixed; bottom: 0; z-index: 19; overflow: hidden; background: var(--g0); }
+.ff-line { height: 14px; margin: 18px 0; border-radius: 7px; background: var(--g100); }
+.ff-short { width: 60%; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
