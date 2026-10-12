@@ -218,6 +218,52 @@ const views: Record<string, unknown> = {
     next: null,
     text: { kind: 'words', from: 'body', version: 'he', language: 'he', profile: 'chabad-library', segments: [{ id: 'p1', kind: 'paragraph', text: words('פתגם היום השני לדוגמה.') }], notes: [], machine: 'none', versions: [{ version: 'he', from: 'body', language: 'he' }] },
   },
+  // A subject index (app/views/index.tsx): the index of one volume of the sample sefer (fixture-library.ts, /sample-sichos-index).
+  '/sample-sichos-index/12': {
+    item: { id: 'rh-aaaaaax1', type: 'unit', path: '/sample-sichos-index/12', rev: 1, data: { label: name('חלק יב'), position: [{ level: 'volume', value: '12' }] } },
+    pathBar: [
+      { kind: 'set', chosen: { id: 'rh-aaaaaas3', path: '/sets/the-rebbe', name: name('הרבי') }, choices: [] },
+      { kind: 'set', chosen: { id: 'rh-aaaaaal1', path: '/sets/the-rebbe-sample-sichos', name: name('שיחות לדוגמה') }, choices: [] },
+      { kind: 'work', chosen: { id: 'rh-aaaaaaw2', path: '/sample-sichos-index', name: name('מפתח לדוגמה') }, choices: [] },
+      { kind: 'unit', level: 'volume', chosen: { id: 'rh-aaaaaax1', path: '/sample-sichos-index/12', name: name('חלק יב') }, choices: [{ id: 'rh-aaaaaax1', path: '/sample-sichos-index/12', name: name('חלק יב') }] },
+    ],
+    previous: null,
+    next: null,
+    text: {
+      kind: 'words',
+      from: 'body',
+      version: 'he',
+      language: 'he',
+      profile: 'sichos-kodesh',
+      segments: [
+        { id: 't1', kind: 'heading', level: 2, text: words('אהבה לדוגמה') },
+        {
+          id: 't1.1',
+          kind: 'paragraph',
+          text: [
+            { href: "/read?page=2&title=חי\"ב+ע'+20+(שיחה+לדוגמה)&src=https://drive.google.com/open?id=sample-drive-file-1", text: '25' },
+            { text: ' (הערה קצרה לדוגמה)' },
+            { text: '.' },
+            { text: '.\r\nע"ע תורה לדוגמה' },
+            { text: '.' },
+          ],
+        },
+        // A volume the catalog has no sichos of yet, led by its name as the merged index leads each volume.
+        {
+          id: 't1.2',
+          kind: 'paragraph',
+          text: [{ text: 'חלק צט', marks: ['b'] }, { text: ': ' }, { href: "/read?page=1&title=חצ\"ט+ע'+90+(שיחה+שאינה+באתר)&src=https://drive.google.com/open?id=sample-drive-file-2", text: '90' }, { text: '.' }],
+        },
+        { id: 't2', kind: 'heading', level: 2, text: words('בריאה לדוגמה') },
+        { id: 't2.1', kind: 'paragraph', text: [{ href: "/read?title=חי\"ב+ע'+10+(שיחה+לדוגמה)&src=https://drive.google.com/open?id=sample-drive-file-3", text: '12' }, { text: ' (עוד הערה)' }, { text: '.' }] },
+        { id: 't3', kind: 'heading', level: 2, text: words('תורה לדוגמה') },
+        { id: 't3.1', kind: 'paragraph', text: [{ href: "/read?title=חי\"ב+ע'+30+(שיחה+לדוגמה)&src=https://drive.google.com/open?id=sample-drive-file-4", text: '31' }, { text: ' (הערה שלישית)' }, { text: '.' }] },
+      ],
+      notes: [],
+      machine: 'none',
+      versions: [{ version: 'he', from: 'body', language: 'he' }],
+    },
+  },
   '/sample/1/3': {
     item: { id: 'rh-aaaaaab3', type: 'unit', path: '/sample/1/3', rev: 1, data: { label: name('שיחה שלישית') } },
     pathBar: bar(2),
