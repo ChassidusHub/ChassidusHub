@@ -519,32 +519,18 @@ function tools(siteUrl: string): Tool[] {
             };
           }
         }
-        // An item given as `set` is read as it stands and only those fields change, so a label is changed without sending
-        // back the item's words (a maamar's are some 26 kB). All of them in one read.
-        const setIds = [...new Set(items.filter((item) => item.set !== undefined).map((item) => item.id as string))];
-        const live = new Map<string, any>();
-        for (let at = 0; at < setIds.length; at += 200) {
-          const page = await need(call, 'GET', `/v1/entities/batch?ids=${setIds.slice(at, at + 200).map(encodeURIComponent).join(',')}`);
-          for (const found of page.items as any[]) live.set(found.id, found);
-        }
-        const writes: { id?: string; type: string; data: any; path?: string }[] = [];
-        for (const [i, item] of items.entries()) {
-          let data = item.data;
+        // An item given as `set` changes only those fields, merged where the item is (POST …/items), so its words are
+        // never read here and sent back: 200 sichos' words at once ran the Worker out of memory (#325).
+        const writes: { id?: string; type: string; data?: any; set?: any; path?: string }[] = [];
+        for (const item of items) {
           if (item.set !== undefined) {
-            const found = live.get(item.id);
-            if (!found) throw new ToolError(`item ${i + 1}: no item ${item.id} (nothing in this call was added)`);
-            if (found.withheld) throw new ToolError(`item ${i + 1}: ${found.id} is withheld for its rights; suggest on the site (nothing in this call was added)`);
-            if (found.type !== item.type) throw new ToolError(`item ${i + 1}: ${found.id} is a ${found.type}, not a ${item.type} (nothing in this call was added)`);
-            data = structuredClone(found.data ?? {});
-            for (const [field, value] of Object.entries(item.set as Record<string, unknown>)) {
-              if (value === null) delete data[field];
-              else data[field] = value;
-            }
+            writes.push({ id: item.id, type: item.type, set: item.set, path: item.path });
+            continue;
           }
           // With a key, a new item's id comes from its suggestion, the key and the item, so the same call again writes it
           // over itself (and someone else's same key and item, in their own suggestion, is another item).
-          const id = item.id ?? (key ? await idFromSeed('suggest-items', `${suggestion}\n${key}\n${item.type}\n${item.path ?? JSON.stringify(data)}`) : undefined);
-          writes.push({ id, type: item.type, data, path: item.path });
+          const id = item.id ?? (key ? await idFromSeed('suggest-items', `${suggestion}\n${key}\n${item.type}\n${item.path ?? JSON.stringify(item.data)}`) : undefined);
+          writes.push({ id, type: item.type, data: item.data, path: item.path });
         }
         const answer = await call('POST', `/v1/suggestions/${suggestion}/items`, { items: writes });
         if (answer.status === 409 && key) {
@@ -1188,10 +1174,15 @@ export function mcpRoutes(app: Hono, options: { siteUrl: string; version: string
         const args = (params.arguments ?? {}) as Record<string, unknown>;
         if (typeof args !== 'object' || Array.isArray(args)) return rpcError(id, -32602, 'arguments must be an object');
         if (!tool.annotations.readOnlyHint && !may.write) throw new NeedsSignIn(may.signedIn ? 403 : 401);
+        const started = Date.now();
+        // Which tool ran and how long, so a slow or failed /mcp call can be told apart in the Workers logs (#325).
+        const said = (outcome: string) => console.log(`mcp ${tool.name} ${outcome} in ${Date.now() - started} ms`);
         try {
           const result = await tool.run(args, call);
+          said('answered');
           return { content: [{ type: 'text', text: result.text }], ...(result.structured ? { structuredContent: result.structured as Json } : {}), isError: false };
         } catch (error) {
+          said(error instanceof ToolError ? 'refused' : 'failed');
           if (error instanceof ToolError) return { content: [{ type: 'text', text: error.message }], isError: true };
           throw error;
         }

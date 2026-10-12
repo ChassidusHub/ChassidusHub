@@ -95,3 +95,11 @@ test("the page carries the index, and a Rebbe's page is drawn from the top file 
   await expect(page.locator('main a[href="/sample-sichos"]')).toBeVisible();
   expect(asked).toEqual([]);
 });
+
+test("a year of listening opened from a link is drawn from the snapshot's year file on the server, and kept ten minutes (#321)", async ({ page }) => {
+  const answer = await page.goto('/listen/5732');
+  expect(answer?.headers()['cache-control']).toContain('s-maxage=600');
+  await expect(page.getByText(/עם המילים/)).toBeVisible();
+  // A year listening does not list is not found, as before.
+  expect((await page.goto('/listen/5800'))?.status()).toBe(404);
+});
