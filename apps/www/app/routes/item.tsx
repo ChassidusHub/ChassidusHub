@@ -46,7 +46,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') {
       // A farbrengen read as one page (reader/farbrengen.server.ts): its other sichos lead to their place on the first one's page
-      // (?sicha says which, by its place), unless they are asked for alone (?alone).
+      // (?sicha says which, by its place), unless sent back to their own address (?alone) after the farbrengen could not be read whole.
       const farbrengen = farbrengenOf(view);
       const at = farbrengen ? farbrengen.sichos.findIndex((s) => s.path === item.path) : -1;
       if (farbrengen && at > 0 && !url.searchParams.has('alone')) throw redirect(`${farbrengen.sichos[0]!.path}?sicha=${at}#u-${item.id}`, 302);
