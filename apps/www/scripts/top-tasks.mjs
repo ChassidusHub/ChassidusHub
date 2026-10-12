@@ -273,8 +273,8 @@ const tasks = [
     catalog: true,
     async run(w) {
       await w.open('/library', { frame: pageFrame, content: shown('main a[href="/sets/the-rebbe"]') });
-      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/sets/the-rebbe-likkutei-sichos"]') });
-      await w.tap('Likkutei Sichos', link(w.page, '/sets/the-rebbe-likkutei-sichos'), { frame: both(at('/likkutei-sichos'), pageFrame), content: shown('main a[href="/likkutei-sichos/31"]') });
+      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/likkutei-sichos"]') });
+      await w.tap('Likkutei Sichos', link(w.page, '/likkutei-sichos'), { frame: both(at('/likkutei-sichos'), pageFrame), content: shown('main a[href="/likkutei-sichos/31"]') });
       await w.tap('volume 31', link(w.page, '/likkutei-sichos/31'), { frame: both(at('/likkutei-sichos/31'), pageFrame), content: shown(`main a[href="${sicha}"]`) });
       await w.tap('the first sicha', link(w.page, sicha), { frame: both(at(sicha), pageFrame), content: words });
     },
@@ -318,8 +318,7 @@ const tasks = [
     catalog: true,
     async run(w) {
       await w.open('/library', { frame: pageFrame, content: shown('main a[href="/sets/the-rebbe"]') });
-      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/sets/the-rebbe-sichos"]') });
-      await w.tap('Toras Menachem and sichos', link(w.page, '/sets/the-rebbe-sichos'), { frame: both(at('/sets/the-rebbe-sichos'), pageFrame), content: shown('main a[href="/toras-menachem"]') });
+      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/toras-menachem"]') });
       await w.tap('Toras Menachem', link(w.page, '/toras-menachem'), { frame: both(at('/toras-menachem'), pageFrame), content: shown('main a[href="/toras-menachem/32"]') });
       await w.tap('volume 32, תשכ"ב', link(w.page, '/toras-menachem/32'), { frame: both(at('/toras-menachem/32'), pageFrame), content: shown('main a[href^="/toras-menachem/32/"]') });
       const day = w.page
@@ -338,8 +337,7 @@ const tasks = [
     catalog: true,
     async run(w) {
       await w.open('/library', { frame: pageFrame, content: shown('main a[href="/sets/the-rebbe"]') });
-      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/sets/the-rebbe-igros-kodesh"]') });
-      await w.tap('Igros Kodesh (shelf)', link(w.page, '/sets/the-rebbe-igros-kodesh'), { frame: both(at('/sets/the-rebbe-igros-kodesh'), pageFrame), content: shown('main a[href="/igros-kodesh-rebbe"]') });
+      await w.tap('the Rebbe', link(w.page, '/sets/the-rebbe'), { frame: both(at('/sets/the-rebbe'), pageFrame), content: shown('main a[href="/igros-kodesh-rebbe"]') });
       await w.tap('Igros Kodesh', link(w.page, '/igros-kodesh-rebbe'), { frame: both(at('/igros-kodesh-rebbe'), pageFrame), content: shown('main a[href="/igros-kodesh-rebbe/5"]') });
       await w.tap('volume 5', link(w.page, '/igros-kodesh-rebbe/5'), { frame: both(at('/igros-kodesh-rebbe/5'), pageFrame), content: shown('main a[href^="/igros-kodesh-rebbe/5/"]') });
       const letter = w.page.locator('main a[href^="/igros-kodesh-rebbe/5/"]').filter({ hasText: /^אגרת א'רנ$/ }).first();
