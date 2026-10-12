@@ -255,7 +255,9 @@ const tasks = [
     async run(w) {
       await w.open(pages[kind], shown('main h1'));
       await w.tap('More', w.page.getByRole('button', { name: 'עוד', exact: true }), shown('.sheet.on'));
-      await w.tap('Edit', w.page.locator('.sheet.on').getByRole('button', { name: 'עריכה' }), both(`location.search.includes('edit')`, shown('.editbar'), shown('#f-name-he')));
+      // Timed to the fields on screen: the address (?edit) follows once the router has its route list, unseen.
+      await w.tap('Edit', w.page.locator('.sheet.on').getByRole('button', { name: 'עריכה' }), both(shown('.editbar'), shown('#f-name-he')));
+      await w.page.waitForFunction(`location.search.includes('edit')`, undefined, { timeout: stepTimeout });
       await w.shot('edit');
       const field = w.page.locator('#f-name-en');
       const was = await field.inputValue();
@@ -281,7 +283,12 @@ async function runOnce(browser, task, run, shots) {
     try {
       let total = 0;
       new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) if (!entry.hadRecentInput) total += entry.value;
+        for (const entry of list.getEntries()) {
+          if (entry.hadRecentInput) continue;
+          total += entry.value;
+          // Each shift and what moved, for the report.
+          (window.__walkShifts ??= []).push(`${entry.value.toFixed(3)} at ${Math.round(entry.startTime)} ms: ${(entry.sources ?? []).map((s) => `${s.node?.nodeName}.${s.node?.className ?? ''}`).join(', ')}`);
+        }
         window.__walkShift = total;
       }).observe({ type: 'layout-shift', buffered: true });
     } catch {}
@@ -307,6 +314,8 @@ async function runOnce(browser, task, run, shots) {
     await walk.shot('stopped');
   }
   const shift = await page.evaluate(() => window.__walkShift ?? 0).catch(() => 0);
+  const shifts = await page.evaluate(() => window.__walkShifts ?? []).catch(() => []);
+  if (shifts.length) walk.notes.push(`shifts: ${shifts.join('; ')}`);
   await context.close();
   if (!local && walk.sent.length) throw new Error(`the walk sent ${walk.sent.join(', ')} to ${base}`);
   return { run, finished: !why, why, totalMs: Math.round(performance.now() - started), steps: walk.steps, notes: walk.notes, errors: [...new Set(walk.errors)], shift: Number(shift.toFixed(3)), sent: walk.sent };

@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Icon, useToast } from '../ui';
 import type { EditAnswer, EditAsk } from './types';
 
@@ -19,6 +20,30 @@ export function EditBar({ done }: { done: string }) {
       </Link>
     </div>
   );
+}
+
+/**
+ * Edit is the same page with ?edit: only its own fields. `start` opens it from the corner menu; `done` is the page
+ * without it. The fields are drawn inside the tap itself, before the address changes, so the page moves while the
+ * person's finger is still the cause (a layout shift after a tap counts against the page only after half a second,
+ * and on a slow phone the address took longer).
+ */
+export function useEditMode(path: string) {
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  const [opening, setOpening] = useState(false);
+  useEffect(() => {
+    if (search.has('edit')) setOpening(false);
+  }, [search]);
+  const without = new URLSearchParams(search);
+  without.delete('edit');
+  const start = () => {
+    flushSync(() => setOpening(true));
+    const next = new URLSearchParams(search);
+    next.set('edit', '');
+    navigate(`?${next}`, { replace: true, preventScrollReset: true });
+  };
+  return { editing: search.has('edit') || opening, done: `${path}${without.size ? `?${without}` : ''}`, start };
 }
 
 /** The box of a page's own fields, with a line on how saving works. */

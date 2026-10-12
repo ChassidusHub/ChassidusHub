@@ -134,3 +134,23 @@ test('opening Edit draws the same page at once, without reading it again', async
     expect(reads.filter((url) => !/\.(js|css|svg|woff2)$|^\/__manifest$/.test(new URL(url).pathname))).toEqual([]);
   }
 });
+
+test('Edit\'s fields are drawn inside the tap, before the address waits on the routes\' map', async ({ page }) => {
+  await page.context().addCookies([{ name: 'rh_session', value: 'sample', url: 'http://localhost:3001' }]);
+  for (const path of ['/sample-sichos', '/listen/5732/rh-3dvjfkyc']) {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    // On a slow phone the routes' map took 0.6 s; the page then moved more than half a second after the tap,
+    // which counts as a layout shift (#344).
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/__manifest*', async (route) => (await held, route.continue()));
+    await page.getByRole('button', { name: 'עוד', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'עריכה' }).click();
+    await expect(page.getByRole('region', { name: 'עריכה' })).toBeVisible();
+    await expect(page.locator('#f-name-he')).toBeVisible();
+    release();
+    await expect(page).toHaveURL(/\?edit/);
+    await page.unroute('**/__manifest*');
+  }
+});

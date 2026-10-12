@@ -77,7 +77,7 @@ export async function loadSample(catalog: Catalog, input: { account: string; fil
     return ids as Six;
   }
   const set = (he: string, en: string, slug: string, order: string, parent?: EntityId) =>
-    // Taking small fixes live, as the live shelves will once Shmuly approves it (RFC 0001), so Fix and Undo can be tried here.
+    // Taking small fixes live, as the live shelves will once the owner approves it (RFC 0001), so Fix and Undo can be tried here.
     ({ type: 'set', path: `/sets/${slug}`, data: { name: { he, en }, slug, policy: 'moderated', liveFixes: true, keepers: [me], order, ...(parent ? { parent } : {}) } }) satisfies NewRevision;
 
   // The Rebbeim's shelves, as the live catalog's tree has them (two of the seven), and the farbrengens.
