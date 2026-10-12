@@ -26,6 +26,9 @@ import { sendNotifications, type Mailer } from '@chassidushub/core';
  *   OAI_ADMIN_EMAIL                              OAI-PMH at /oai
  *   RATE_LIMIT=1   count requests per address and per token, as the
  *                  Worker does (in this process's memory)
+ *   LIVE_FIXES=on  a few words fixed go live at once, as on the site, so
+ *                  Fix and Undo can be walked locally; the AI check is a
+ *                  stand-in that says yes, and nothing is sent out
  */
 const url = process.env.DATABASE_URL;
 const db = url ? connectPostgres(url, { max: 4, name: 'chassidushub-api local' }) : await openPGlite(process.env.PGLITE_DIR ?? '.data/pglite');
@@ -80,6 +83,7 @@ const app = createApp({
   rateLimits: process.env.RATE_LIMIT
     ? { ip: memoryRateLimiter(DEFAULT_IP_PER_MINUTE), key: memoryRateLimiter(DEFAULT_KEY_PER_MINUTE), search: memoryRateLimiter(DEFAULT_SEARCH_PER_MINUTE), ipPerMinute: DEFAULT_IP_PER_MINUTE, keyPerMinute: DEFAULT_KEY_PER_MINUTE, searchPerMinute: DEFAULT_SEARCH_PER_MINUTE }
     : undefined,
+  ...(process.env.LIVE_FIXES === 'on' ? { liveFixes: true, fixJudge: async () => true } : {}),
   oai: process.env.OAI_ADMIN_EMAIL ? { adminEmail: process.env.OAI_ADMIN_EMAIL, siteUrl: process.env.SITE_URL } : undefined,
   mirrors: {
     gitUrls: (process.env.CATALOG_GIT_URL ?? '').split(',').filter(Boolean),

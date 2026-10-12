@@ -257,6 +257,11 @@ reverted make a contributor **Trusted**, shown on their account page.
   sets that are all *open* go live at once and wait under *Went live,
   reviewed after* on `/review`, where a keeper keeps or undoes them.
   Catalog facts stay moderated for everyone.
+- **Small fixes** go live for anyone (RFC 0001): a few words (at most 5)
+  of a text, passed by the AI check, within the day's limit, in sets that
+  are all *open* or *moderated* with `liveFixes: true`. A steward turns
+  `liveFixes` on for a set in a suggestion; a set made inside it takes it
+  too. Everything else in such a set is still reviewed first.
 - **Uploads** wait for new accounts: a person who signed up less than 24
   hours ago adds files once that day has passed or a suggestion of theirs
   is approved. After that, contributors add 20 files (1 GB) a day,

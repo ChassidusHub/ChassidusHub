@@ -37,6 +37,8 @@ export interface SetInfo {
   id: string;
   policy: SetPolicy;
   keepers: string[];
+  /** A moderated set that takes small fixes live (SetData.liveFixes). */
+  liveFixes?: boolean;
 }
 
 export function earnedTrust(account: Pick<Account, 'approved_count' | 'reverted_count'>): Account['trust'] {
@@ -110,13 +112,16 @@ export function mayGoLive(author: Account, change: { types: ReadonlySet<string>;
  * corrected, after the API's AI check has said it looks like a typo or a
  * misreading fixed. Bounded so that a bad one does little: so many a day,
  * none in an account's first day before a suggestion of theirs is approved,
- * only in open sets, and only the words (a unit's body, a segment, a page's
+ * only in open sets and moderated sets that take them (`liveFixes`), and only the words (a unit's body, a segment, a page's
  * lines, a sync span). Each is reviewed after, on the keep-or-undo list.
  */
 export const LIVE_FIX_WORDS = 5;
 export const LIVE_FIX_LIMITS = { contributor: 50, trusted: 500 } as const;
 /** How long the author may undo their own live fix themselves. */
 export const LIVE_FIX_UNDO_HOURS = 24;
+
+/** A set a small fix may go live in: an open one, or a moderated one that says so. A locked set never takes one. */
+const takesLiveFixes = (set: SetInfo) => set.policy === 'open' || (set.policy === 'moderated' && set.liveFixes === true);
 
 export function mayFixLive(
   author: Account,
@@ -132,6 +137,6 @@ export function mayFixLive(
   if (!author.is_steward && seen.liveToday >= limit) return { ok: false, reason: 'limit', message: `at most ${limit} fixes go live a day; this one waits for a reviewer` };
   if (!change.onlyWords) return { ok: false, reason: 'kind', message: 'only the words go live; this changes more than that' };
   for (const type of change.types) if (!LIVE_TYPES.has(type as EntityType) && type !== 'unit') return { ok: false, reason: 'kind', message: `changes to ${type} are reviewed first` };
-  if (change.sets.length === 0 || !change.sets.every((s) => s.policy === 'open')) return { ok: false, reason: 'set', message: 'this set reviews every change first' };
+  if (change.sets.length === 0 || !change.sets.every(takesLiveFixes)) return { ok: false, reason: 'set', message: 'this set reviews every change first' };
   return { ok: true };
 }

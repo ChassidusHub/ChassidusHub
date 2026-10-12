@@ -331,7 +331,7 @@ svg.i.filled { fill: currentColor; stroke: none; }
 }
 .scrim.on { opacity: 1; pointer-events: auto; }
 .sheet {
-  position: fixed; inset-inline: 0; bottom: 0; z-index: 80; max-width: 560px; max-height: 86%; margin-inline: auto;
+  position: fixed; inset-inline: 0; bottom: var(--kb, 0px); z-index: 80; max-width: 560px; max-height: calc(86% - var(--kb, 0px)); margin-inline: auto;
   display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--g0); border-radius: 14px 14px 0 0; box-shadow: var(--shadow);
   transform: translateY(calc(100% + 40px)); visibility: hidden;
