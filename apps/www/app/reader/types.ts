@@ -19,6 +19,13 @@ export interface Fact {
   machine?: true;
 }
 
+/** A chip under a page's title that its view sets (a siman's count of seifim, its other edition): a link, or what the page itself is. */
+export interface Chip {
+  label: string;
+  href?: string;
+  current?: true;
+}
+
 /** The words a reading page shows, as its loader sends them. */
 export type ReaderText =
   | {
@@ -36,7 +43,11 @@ export type ReaderText =
       /** Words a machine made and nobody checked yet: none, some, or all of them. */
       machine: 'none' | 'some' | 'all';
       version: string;
-      versions: { version: string; label: string }[];
+      /** The words' language (`he`, `en`), so a translation reads left to right. */
+      language?: string;
+      /** Shown beside their translation, a paragraph to a paragraph (?language=both, the chapters view). */
+      paired?: true;
+      versions: { version: string; label: string; language?: string }[];
       credit?: string;
       source?: string;
     }
@@ -69,6 +80,8 @@ export interface ReaderData {
    * handwritten copy (docs/rfc/0004-view-kinds.md). Only those set are here.
    */
   facts?: Fact[];
+  /** Under the title, from the page's view on the server (views/chapters.layout.ts, `simanChips`). */
+  chips?: Chip[];
   /** The API's path to the page, drawn as the Library draws it (lib/catalog.ts). */
   pathBar: ApiLevel[];
   previous: Neighbour | null;

@@ -261,3 +261,45 @@ test('jumps to a farbrengen’s sections: down the side on a wide screen, in the
     await expect(page.locator('#s-s1')).toBeInViewport();
   }
 });
+
+test('reads a chapter of Tanya: its own name, its part’s chapters, bold openings, no shiur markers', async ({ page }) => {
+  await page.goto('/tanya/1/4');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('פרק א׳');
+  await expect(page.locator('.ssub')).toHaveText('תניא · חלק ראשון, ליקוטי אמרים');
+  const row = page.getByRole('navigation', { name: 'הפרקים' });
+  await expect(row.getByRole('link')).toHaveText(['הסכמות', 'הקדמת המלקט', 'א']);
+  await expect(row.getByRole('link', { name: 'א', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.chapters #s-1 b')).toHaveText('פתיחה');
+  await expect(page.locator('.chapters .mk')).toBeHidden();
+});
+
+test('reads Tanya in English, or both side by side, the translation’s notes under it', async ({ page }) => {
+  await page.goto('/tanya/1/4');
+  await page.waitForLoadState('networkidle');
+  const languages = page.getByRole('navigation', { name: 'שפה' });
+  await expect(languages.getByRole('link', { name: 'עברית' })).toHaveAttribute('aria-current', 'true');
+  await languages.getByRole('link', { name: 'שתיהן' }).click();
+  await expect(page).toHaveURL(/\?language=both$/);
+  await expect(page.locator('.chapters.paired .pair').nth(1).locator('p')).toHaveText(['פסקה שניה לדוגמה.', 'A second paragraph, for example.']);
+  await expect(page.locator('.chapters .tr').first()).toHaveAttribute('dir', 'ltr');
+  await expect(page.locator('.notes li')).toHaveText(/A note of the translation\./);
+  await languages.getByRole('link', { name: 'English' }).click();
+  await expect(page).toHaveURL(/\?language=en$/);
+  await expect(page.locator('.chapters.en .torah p').first()).toHaveText('An opening, for example.1');
+  expect(await page.locator('.chapters.en .torah').evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+});
+
+test('reads a siman with its seifim numbered, its preface and name apart, and its other edition a tap away', async ({ page }) => {
+  await page.goto('/shulchan-aruch-harav/2/2');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('סימן א׳');
+  await expect(page.locator('.ch-head .chip')).toHaveText(['ג׳ סעיפים', 'מהדורא תניינא']);
+  await expect(page.getByRole('link', { name: 'מהדורא תניינא' })).toHaveAttribute('href', '/shulchan-aruch-harav/2/1/1');
+  const words = page.locator('.chapters .torah');
+  await expect(words.locator('#s-1 .sa-pre')).toHaveText('הקדמה לדוגמה.');
+  await expect(words.locator('#s-1 .sa-name')).toHaveText('דין לדוגמה ובו ג׳ סעיפים:');
+  await expect(words.locator('[data-seif]')).toHaveCount(3);
+  expect(await words.locator('#s-3').evaluate((el) => getComputedStyle(el, '::before').content)).toBe('"סעיף ג"');
+  await expect(words.locator('#s-2 .paren')).toHaveText('(מילים בסוגריים)');
+});

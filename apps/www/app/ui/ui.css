@@ -382,6 +382,11 @@ form[role='search'] { margin-block: 8px 4px; }
 /* A button or footnote mark tapped before the page's scripts came: kept, and made once they come (root.tsx, EARLY_TAPS). */
 [data-wait] { cursor: progress; animation: wait 0.7s ease-in-out infinite alternate; }
 @keyframes wait { to { opacity: 0.4; } }
+/* The next page's frame, drawn the moment a link is tapped before the page's scripts came (root.tsx, EARLY_TAPS):
+   its title over quiet lines where its contents will be, under the top bar, until the page itself is there. */
+.first-frame { position: fixed; bottom: 0; z-index: 19; overflow: hidden; background: var(--g0); }
+.ff-line { height: 14px; margin: 18px 0; border-radius: 7px; background: var(--g100); }
+.ff-short { width: 60%; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
@@ -742,6 +747,50 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .ix-pop b { color: var(--g900); font-weight: 600; }
 .ix-pop > span:first-child { flex: 1; min-width: 12em; }
 .ix-open { font-weight: 500; color: var(--g900); text-decoration: underline; text-underline-offset: 3px; }
+/*
+ * A book of chapters or simanim (app/views/chapters.tsx): Tanya and Shulchan
+ * Aruch HaRav. Under the title, the language and a row of the part's chapters
+ * (or a siman's chips). The daily-shiur markers in the source stay hidden, as
+ * on the old site. A translation reads left to right; both languages side by
+ * side, a paragraph to a paragraph (one under the other on a phone). A siman's
+ * seifim are numbered in the margin; words in parentheses a little quieter;
+ * the preface and the siman's name the print sets over its first seif, apart.
+ */
+.ch-head { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin: 0 0 14px; }
+.chip.quiet { color: var(--g600); cursor: default; }
+.chip.quiet:hover { background: none; }
+.seg a { display: grid; place-items: center; height: 34px; min-width: 44px; padding-inline: 10px; font-size: 13px; color: var(--g700); }
+.seg a + a { border-inline-start: 1px solid var(--g300); }
+.seg a[aria-current='true'] { background: var(--g200); color: var(--g900); font-weight: 600; }
+.ch-row { justify-content: center; gap: 4px; margin: 0 0 22px; }
+.ch-row .chip { min-width: 34px; justify-content: center; padding-inline: 8px; font-family: var(--title); }
+@media (max-width: 640px) { .ch-row { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 4px; scrollbar-width: none; } .ch-row .chip { flex: none; } }
+.chapters .mk { display: none; }
+.chapters.en .torah, .chapters.en .notes ol, .chapters.paired .notes ol, .chapters .tr { direction: ltr; text-align: left; font-family: var(--title); }
+.chapters.en .torah, .chapters .tr { line-height: 1.7; }
+.chapters.paired .notes h2 { text-align: start; }
+.reader:has(.chapters.paired) { max-width: 68em; }
+.chapters .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 32px; }
+.chapters .pair > p { margin: 0 0 0.9em; }
+.chapters .tr { font-size: 0.85em; color: var(--g700); }
+@media (max-width: 760px) {
+  .chapters .pair { grid-template-columns: minmax(0, 1fr); }
+  .chapters .pair > p:first-child { margin-bottom: 0.3em; }
+  .chapters .pair { margin-bottom: 0.6em; }
+}
+.chapters .torah:has([data-seif]) { padding-inline-start: 46px; }
+.chapters [data-seif] { position: relative; scroll-margin-top: 64px; }
+.chapters [data-seif]::before {
+  content: 'סעיף ' attr(data-seif); position: absolute; inset-inline-start: -46px; top: 0.9em; width: 40px;
+  font-family: var(--ui); font-size: 11px; line-height: 1.4; color: var(--g600); text-align: center; white-space: nowrap;
+}
+.chapters .sa-pre, .chapters .sa-name, .chapters .sa-body { display: block; }
+.chapters .sa-pre, .chapters .sa-name { margin-inline-start: -46px; }
+.chapters .sa-pre { font-size: 0.85em; line-height: 1.65; color: var(--g700); background: var(--g100); border-radius: 8px; padding: 8px 12px; margin: 0 0 1em; }
+.chapters .sa-pre small { font-size: inherit; }
+.chapters .sa-name { font-family: var(--title); font-size: 0.95em; text-align: center; margin: 0 0 0.6em; }
+.chapters .sa-name b { font-weight: 500; }
+.chapters .paren { color: var(--g600); font-size: 0.92em; }
 .missing { text-align: center; margin: 40px 0; }
 .scan { display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .scan img { width: 100%; height: auto; border: 1px solid var(--g300); border-radius: 4px; background: var(--g50); }
@@ -821,10 +870,11 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .bq-place > a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
 .bq-step { display: inline-flex; gap: 4px; margin-inline-start: auto; }
 .bq-wait { background: var(--g100); border-radius: 8px; }
-h1.bq-wait { width: 70%; }
+/* The title's place while it comes: not a heading (an empty one is no use to a screen reader), the height of one line of h1. */
+.bq-wait-h1 { width: 70%; height: 30px; margin: 8px 0 2px; }
 .bq-wait-note { height: 120px; }
 .bq-wait-tree { height: 320px; }
-.bq-note.bq-cut .sg-said { max-height: 11.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 70%, transparent); }
+.bq-note.bq-cut .sg-said { max-height: 7.5em; overflow: hidden; mask-image: linear-gradient(to bottom, #000 70%, transparent); }
 /* The decision stays within reach of a thumb: at the foot of the screen, over the phone's bottom bar, while the batch is read. */
 .bq-decide {
   position: sticky; bottom: calc(59px + env(safe-area-inset-bottom, 0px)); z-index: 2; margin: 18px -16px 0; padding: 8px 16px 10px;
@@ -835,6 +885,40 @@ h1.bq-wait { width: 70%; }
 .bq-decide .say { margin-block: 6px; }
 .bq-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .bq-btns .btn { min-height: 48px; justify-content: center; }
+/* The batch counted, sampled and listed (#318): a big batch checked on a phone. */
+.bq-wait-sum { height: 168px; }
+.br-sum { border: 1px solid var(--g300); border-radius: 10px; padding: 10px 14px; }
+.br-total { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.br-counts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 15px; }
+.br-counts b { font-variant-numeric: tabular-nums; }
+.br-machine { margin: 8px 0 0; }
+.br-h { display: flex; align-items: baseline; gap: 6px; font-size: 14px; font-weight: 600; margin: 14px 0 4px; }
+.br-flows { list-style: none; margin: 0; padding: 0; }
+.br-flows li { display: flex; align-items: center; gap: 10px; min-height: 36px; border-bottom: 1px solid var(--g200); font-size: 15px; }
+.br-flows li:last-child { border-bottom: 0; }
+.br-flows li > b { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.br-way { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; min-width: 0; margin: 0; font-size: 14px; color: var(--g700); overflow-wrap: anywhere; }
+.br-way a, .br-name a { color: inherit; text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }
+.br-way .i { flex: none; color: var(--g500); }
+.br-old { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.br-rows { list-style: none; margin: 0; padding: 0; border: 1px solid var(--g300); border-radius: 10px; }
+.br-samples .br-rows { margin-bottom: 4px; }
+.br-row { padding: 8px 12px; border-bottom: 1px solid var(--g200); }
+.br-row:last-child { border-bottom: 0; }
+.br-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.br-name { flex: 1 1 60%; min-width: 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.br-gone .br-name { color: var(--g600); text-decoration: line-through; text-decoration-thickness: 1px; }
+.br-words { margin: 2px 0 0; font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.br-first { display: block; width: 100%; font-family: var(--torah); font-size: 16px; line-height: 1.5; color: var(--g900); quotes: '„' '”'; overflow-wrap: anywhere; }
+.br-list .search { margin-bottom: 8px; }
+.br-list .chips { margin-bottom: 6px; }
+.br-count { margin: 6px 0; min-height: 1.5em; }
+.br-busy { opacity: 0.55; }
+.br-pages { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.bq-tree { margin-top: 24px; border-top: 1px solid var(--g200); padding-top: 8px; }
+.bq-tree > summary { cursor: pointer; font-size: 15px; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.bq-sure > p { margin: 0 0 8px; }
+.bq-sure .bq-btns { margin-top: 12px; }
 .bt-group { border: 1px solid var(--g300); border-radius: 10px; padding: 4px 14px 10px; margin-block: 10px; }
 .bt-group h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 16px; margin: 10px 0 2px; }
 .bt-group h3 a { text-decoration: underline; text-decoration-color: var(--g400); text-underline-offset: 3px; }

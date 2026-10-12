@@ -189,6 +189,8 @@ export function suggestionsAnswer(req: IncomingMessage, res: ServerResponse): bo
   }
   const tree = /^\/v1\/suggestions\/(\d+)\/tree$/.exec(path);
   if (tree) return send(res, 200, treeOf(Number(tree[1]))), true;
+  const batch = /^\/v1\/suggestions\/(\d+)\/batch$/.exec(path);
+  if (batch) return send(res, 200, batchOf(Number(batch[1]), url.searchParams)), true;
   const one = /^\/v1\/suggestions\/(\d+)(?:\/([a-z-]+)(?:\/([\w-]+))?)?$/.exec(path);
   const s = one && samples.find((x) => x.id === Number(one[1]));
   if (!one || !s) return false;
@@ -274,4 +276,62 @@ function treeOf(id: number) {
   if (id === 406)
     return { groups: [{ parent: { id: 'rh-aaaaaaw1', type: 'work', name: 'ספר ראשון לדוגמה', path: '/sample-sichos', isNew: false, gone: false }, before: [row('1', 'שיחה א', 'renamed')], after: [row('1', 'שיחה א לדוגמה', 'renamed', { was: 'שיחה א' })], counts: { before: 15, after: 15 }, changes: 1 }], more: 0, items: 1, elsewhere: 0 };
   return { groups: [], more: 0, items: 0, elsewhere: 0 };
+}
+
+type Place = { id: string; name: string; path: string | null };
+type Item = { id: string; type: string; kinds: string[]; name: string; path: string | null; was?: string; from?: Place | null; to?: Place | null; into?: Place | null; facts?: { field: string; before: string | null; after: string | null }[] };
+
+/**
+ * The sample batches counted and listed, as GET /v1/suggestions/:id/batch
+ * answers: #46 is big (a sicha moved, and 240 more sample sichos moved, some
+ * renamed or redated, one sefer merged, two sichos deleted), so the list
+ * pages and the search narrows it; #47 is its one rename.
+ */
+function batchOf(id: number, query: URLSearchParams) {
+  const first: Place = { id: 'rh-aaaaaaw1', name: 'ספר ראשון לדוגמה', path: '/sample-sichos' };
+  const second: Place = { id: 'rh-aaaaaaw2', name: 'ספר שני לדוגמה', path: null };
+  const third: Place = { id: 'rh-aaaaaaw3', name: 'ספר שלישי לדוגמה', path: null };
+  const items: Item[] = [];
+  if (id === 405) {
+    items.push({ id: 'rh-aaaaaac2', type: 'unit', kinds: ['moved'], name: 'שיחה ב', path: '/sample/1/2', from: first, to: second });
+    for (let n = 1; n <= 240; n++) {
+      const item: Item = { id: `rh-sample${String(n).padStart(3, '0')}`, type: 'unit', kinds: ['moved'], name: `שיחה ${n} לדוגמה`, path: `/sample/2/${n}`, from: first, to: n > 200 ? third : second };
+      if (n % 40 === 0) Object.assign(item, { kinds: ['moved', 'renamed'], was: `שיחה לדוגמה ${n}` });
+      if (n % 60 === 7) Object.assign(item, { kinds: [...item.kinds, 'relabelled'], facts: [{ field: 'date', before: '5732', after: '5733' }] });
+      items.push(item);
+    }
+    items.push({ id: 'rh-aaaaaam1', type: 'work', kinds: ['merged'], name: 'ספר כפול לדוגמה', path: '/sample-double', from: null, into: second });
+    items.push({ id: 'rh-aaaaaad1', type: 'unit', kinds: ['deleted'], name: 'שיחה ריקה לדוגמה', path: '/sample/1/90', from: first });
+    items.push({ id: 'rh-aaaaaad2', type: 'unit', kinds: ['deleted'], name: 'שיחה כפולה לדוגמה', path: '/sample/1/91', from: first });
+  } else if (id === 406) items.push({ id: 'rh-aaaaaac1', type: 'unit', kinds: ['renamed'], name: 'שיחה א לדוגמה', was: 'שיחה א', path: '/sample/1/1' });
+  const counts: Record<string, number> = {};
+  for (const item of items) for (const kind of item.kinds) counts[kind] = (counts[kind] ?? 0) + 1;
+  const flows = new Map<string, { way: string; from: Place | null; to: Place | null; count: number }>();
+  for (const item of items.filter((i) => i.kinds.includes('moved') || i.kinds.includes('merged'))) {
+    const key = `${item.from?.id}>${(item.to ?? item.into)?.id}`;
+    const flow = flows.get(key) ?? { way: item.kinds.includes('merged') ? 'merged' : 'moved', from: item.from ?? null, to: item.to ?? item.into ?? null, count: 0 };
+    flow.count++;
+    flows.set(key, flow);
+  }
+  const order = ['moved', 'merged', 'renamed', 'relabelled', 'reordered', 'new', 'words', 'deleted'];
+  const samples = order
+    .filter((k) => counts[k])
+    .map((kind) => {
+      const of = items.filter((i) => i.kinds.includes(kind));
+      return { kind, items: of.length <= 5 ? of : [of[0]!, of[1]!, of[Math.floor(of.length / 2)]!, of[of.length - 2]!, of[of.length - 1]!] };
+    });
+  const kind = query.get('kind');
+  const q = (query.get('q') ?? '').trim();
+  const offset = Number(query.get('offset') ?? 0);
+  const limit = Number(query.get('limit') ?? 30);
+  const found = items.filter((i) => (!kind || i.kinds.includes(kind)) && (!q || q.split(/\s+/).every((w) => `${i.name} ${i.was ?? ''} ${i.from?.name ?? ''} ${i.to?.name ?? ''}`.includes(w))));
+  return {
+    items: items.length,
+    counts,
+    machine: 0,
+    flows: [...flows.values()].sort((a, b) => b.count - a.count),
+    flowsMore: 0,
+    samples,
+    list: { kind: kind || null, q, offset, limit, total: found.length, rows: found.slice(offset, offset + limit) },
+  };
 }

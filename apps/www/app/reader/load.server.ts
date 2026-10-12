@@ -12,11 +12,15 @@ import { daybookLayout } from '../views/daybook.layout';
 import { letterLayout } from '../views/letters.layout';
 import { indexLayout, isIndexWords } from '../views/index.layout';
 import { hisvaaduyosLayout, hisvaaduyosParts, saidThere, type FarbrengenSection, type Muga } from '../views/hisvaaduyos.layout';
+import { chaptersLayout, simanChips } from '../views/chapters.layout';
 import { viewFor } from './views';
 import { notesHtml, unmarkedNotes, wordsAddress, wordsHtml, wordsKey, type DrawnWords, type WordsLayout } from './words.server';
 
 /** How each kind of page sets its words beyond the words themselves, by its view (app/views); a kind not named here is drawn as a sicha. */
-const layouts: Record<string, WordsLayout> = { letters: letterLayout, daybook: daybookLayout, index: indexLayout, hisvaaduyos: hisvaaduyosLayout };
+const layouts: Record<string, WordsLayout> = { letters: letterLayout, daybook: daybookLayout, index: indexLayout, chapters: chaptersLayout, hisvaaduyos: hisvaaduyosLayout };
+
+/** The pseudo-version that reads a chapter beside its translation (views/chapters.tsx): the API gives the original for it. */
+export const BOTH = 'both';
 
 /** Whether a reading page is drawn as a letter (app/views/letters.tsx), so it asks for the letters' face with its first bytes. */
 export const isLetter = (data: Pick<ReaderData, 'level' | 'view'>) => viewFor(data).kind === 'letters';
@@ -49,7 +53,7 @@ const volumeOf = (view: ItemView) => {
  * own `view` (RFC 0004, step 3): Hayom Yom is read as a book of days, as the
  * print and the old site set it. Its units' own levels (`unit`) cannot say so.
  */
-const seferViews: Record<string, string> = { [DAILY_WORKS.hayomYom]: 'daybook' };
+const seferViews: Record<string, string> = { [DAILY_WORKS.hayomYom]: 'daybook', [DAILY_WORKS.tanya]: 'chapters', '/shulchan-aruch-harav': 'chapters' };
 const viewOf = (view: ItemView) => {
   const work = view.pathBar.find((level) => level.kind === 'work')?.chosen.path;
   return work ? seferViews[work] : undefined;
@@ -91,17 +95,60 @@ function withFacts(data: unknown): { facts?: Fact[] } {
   return facts.length ? { facts } : {};
 }
 
+/** The chips a page's view sets under its title (a siman's seifim and editions), when it has any. */
+function chipsOf(view: ItemView): { chips?: ReturnType<typeof simanChips> } {
+  if (view.text?.kind !== 'words' || kindOf(view) !== 'chapters') return {};
+  const chips = simanChips(view, (view.text.segments ?? []) as unknown as PageSegment[]);
+  return chips.length ? { chips } : {};
+}
+
 const languages: Record<string, string> = { he: 'עברית', en: 'אנגלית', yi: 'אידיש', ru: 'רוסית', fr: 'צרפתית', es: 'ספרדית' };
 
 /** A reading page's title: the unit's own label, else its name in the path bar. */
 export const readerTitle = (view: ItemView) => nameOf((view.item.data as { label?: unknown }).label) || nameOf(view.pathBar.at(-1)?.chosen.name);
 
-/** A page's words drawn as the reader shows them, or null when the view has no words. */
-export function drawnWords(view: ItemView, title: string): DrawnWords | null {
+/** The view a page is drawn with, by its sefer's view, else its words, else its unit's level. */
+const kindOf = (view: ItemView) => viewFor({ view: viewNamed(view), level: levelOf(view) }).kind;
+
+/**
+ * The words of a translation, to read beside the page's own (`beside`): the
+ * same segments, and its notes, given ids of their own (`t…`) so they never
+ * stand for the original's notes, in the sheet or in a fix.
+ */
+function translationOf(view: ItemView | null) {
+  if (view?.text?.kind !== 'words' || !view.text.segments?.length) return undefined;
+  const id = (note: string) => `t${note}`;
+  const renote = (segment: PageSegment): PageSegment => ({
+    ...segment,
+    text: segment.text?.map((inline) => ('note' in inline ? { ...inline, note: id(inline.note) } : inline)),
+    ...(segment.children ? { children: segment.children.map(renote) } : {}),
+  });
+  return {
+    segments: (view.text.segments as unknown as PageSegment[]).map(renote),
+    notes: ((view.text.notes ?? []) as unknown as PageSegment[]).map((note) => ({ ...renote(note), id: id(note.id) })),
+    language: view.text.language ?? 'en',
+  };
+}
+
+/**
+ * The translation a chapter is read beside (?language=both): the first
+ * version in another language, read with the page's own. Null for any other
+ * page, or one with no translation.
+ */
+async function besideOf(view: ItemView, api: ChassidusHub, language?: string): Promise<ItemView | null> {
+  if (language !== BOTH || view.text?.kind !== 'words' || kindOf(view) !== 'chapters') return null;
+  const other = (view.text.versions ?? []).find((v) => v.language !== view.text?.language);
+  return other ? api.itemView({ id: view.item.id, language: other.version }).catch(() => null) : null;
+}
+
+/** A page's words drawn as the reader shows them, or null when the view has no words. `beside`: its translation, read beside it. */
+export function drawnWords(view: ItemView, title: string, beside?: ItemView | null): DrawnWords | null {
   if (view.text?.kind !== 'words') return null;
   const segments = (view.text.segments ?? []) as unknown as PageSegment[];
-  const notes = (view.text.notes ?? []) as unknown as PageSegment[];
-  const kind = viewFor({ view: viewNamed(view), level: levelOf(view) }).kind;
+  const translation = translationOf(beside ?? null);
+  // Beside its translation, the notes under the words are the translation's (Tanya's Hebrew has none of its own).
+  const notes = translation ? [...((view.text.notes ?? []) as unknown as PageSegment[]), ...translation.notes] : ((view.text.notes ?? []) as unknown as PageSegment[]);
+  const kind = kindOf(view);
   const layout = layouts[kind];
   const unmarked = layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined;
   const here = view.pathBar.at(-1);
@@ -109,6 +156,7 @@ export function drawnWords(view: ItemView, title: string): DrawnWords | null {
     volume: volumeOf(view),
     siblings: here?.choices?.flatMap((c) => (c.path ? [{ path: c.path, label: nameOf(c.name), current: c.path === here.chosen.path }] : [])),
     ...(kind === 'hisvaaduyos' ? { said: saidOf(view) } : {}),
+    ...(translation ? { beside: { segments: translation.segments, language: translation.language } } : {}),
   };
   return { body: wordsHtml(segments, notes, title, layout, view.item.data, around), notes: notes.length ? notesHtml(notes, unmarked) : '' };
 }
@@ -121,7 +169,7 @@ export function drawnWords(view: ItemView, title: string): DrawnWords | null {
 export async function pageWords(view: ItemView, api: ChassidusHub, language?: string): Promise<{ words: DrawnWords | null; sichos: ItemView[] | null; title: string }> {
   const farbrengen = farbrengenOf(view);
   const sichos = farbrengen ? await farbrengenViews(view, farbrengen.sichos, api, language) : null;
-  if (!farbrengen || !sichos) return { words: drawnWords(view, readerTitle(view)), sichos: null, title: readerTitle(view) };
+  if (!farbrengen || !sichos) return { words: drawnWords(view, readerTitle(view), await besideOf(view, api, language)), sichos: null, title: readerTitle(view) };
   return { words: farbrengenWords(sichos, farbrengen.label, hisvaaduyosLayout), sichos, title: farbrengen.label };
 }
 
@@ -181,6 +229,7 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     sub: middle.join(' · '),
     ...(middle.length > 1 ? { within: middle.slice(1).join(' · ') } : {}),
     ...withFacts(view.item.data),
+    ...chipsOf(view),
     pathBar: view.pathBar,
     previous: neighbour((sichos?.[0] ?? view).previous),
     next: neighbour((sichos?.at(-1) ?? view).next),
@@ -221,7 +270,9 @@ async function shownText(view: ItemView, api: ChassidusHub, context: AppLoadCont
       hasNotes: drawn.notes !== '',
       machine: machine ?? text.machine ?? 'none',
       version: text.version ?? '',
-      versions: (text.versions ?? []).map((v) => ({ version: v.version, label: v.title ?? languages[v.language] ?? v.language })),
+      ...(text.language ? { language: text.language } : {}),
+      ...(language === BOTH && drawn.body.includes('class="pair"') ? { paired: true as const } : {}),
+      versions: (text.versions ?? []).map((v) => ({ version: v.version, label: v.title ?? languages[v.language] ?? v.language, ...(v.language ? { language: v.language } : {}) })),
       ...(text.credit ? { credit: text.credit } : {}),
       ...(text.url ? { source: text.url } : {}),
     };

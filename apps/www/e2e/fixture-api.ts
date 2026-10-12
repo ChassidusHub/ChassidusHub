@@ -76,6 +76,68 @@ const hayomYomDay = (day: 1 | 2) => ({
 });
 const scanned = { by: 'ocr:tesseract-heb+claude' };
 
+/** Tanya (app/views/chapters.tsx): a part's chapters in the path bar, the approbations three pages under one name. */
+const tanyaBar = (chapter: 3 | 4) => [
+  { kind: 'set', chosen: { id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }, choices: [{ id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }] },
+  { kind: 'work', chosen: { id: 'rh-aaaaaat1', path: '/tanya', name: name('תניא') }, choices: [{ id: 'rh-aaaaaat1', path: '/tanya', name: name('תניא') }] },
+  { kind: 'part', chosen: { path: '/tanya/1', name: name('חלק ראשון; ליקוטי אמרים'), value: '1' }, choices: [{ path: '/tanya/1', name: name('חלק ראשון; ליקוטי אמרים'), value: '1' }] },
+  {
+    kind: 'unit',
+    chosen: { id: `rh-aaaaaat${chapter}`, path: `/tanya/1/${chapter}`, name: name(chapter === 3 ? 'חלק ראשון; ליקוטי אמרים, הקדמת המלקט' : 'חלק ראשון; ליקוטי אמרים, פרק א׳'), value: String(chapter) },
+    choices: [
+      { path: '/tanya/1/2/1', name: name('חלק ראשון; ליקוטי אמרים, הסכמות, פרק א׳'), value: '2' },
+      { path: '/tanya/1/2/2', name: name('חלק ראשון; ליקוטי אמרים, הסכמות, פרק ב׳'), value: '2' },
+      { id: 'rh-aaaaaat3', path: '/tanya/1/3', name: name('חלק ראשון; ליקוטי אמרים, הקדמת המלקט'), value: '3' },
+      { id: 'rh-aaaaaat4', path: '/tanya/1/4', name: name('חלק ראשון; ליקוטי אמרים, פרק א׳'), value: '4' },
+    ],
+  },
+];
+const tanyaVersions = [
+  { version: 'he', from: 'body', language: 'he', title: 'Kehot Publication Society' },
+  { version: 'en', from: 'body', language: 'en', title: 'Kehot Publication Society (English Translation)' },
+];
+const tanyaChapter = (language: 'he' | 'en') => ({
+  item: { id: 'rh-aaaaaat4', type: 'unit', path: '/tanya/1/4', rev: 1, data: { label: name('חלק ראשון; ליקוטי אמרים, פרק א׳'), position: [{ level: 'part', value: '1' }, { level: 'chapter', value: '4' }] } },
+  pathBar: tanyaBar(4),
+  previous: { id: 'rh-aaaaaat3', path: '/tanya/1/3', name: name('חלק ראשון; ליקוטי אמרים, הקדמת המלקט') },
+  next: null,
+  text: {
+    kind: 'words',
+    from: 'body',
+    version: language,
+    language,
+    profile: 'sefaria',
+    segments:
+      language === 'he'
+        ? [
+            { n: 1, id: '1', kind: 'verse', text: [{ marker: '[מ: כד כסלו]' }, { text: ' ' }, { text: 'פתיחה', marks: ['b'] }, { text: ' לדוגמה.' }] },
+            { n: 2, id: '2', kind: 'verse', text: words('פסקה שניה לדוגמה.') },
+          ]
+        : [
+            { n: 1, id: '1', kind: 'verse', text: [{ text: 'An opening, for example.' }, { note: 'n1' }] },
+            { n: 2, id: '2', kind: 'verse', text: words('A second paragraph, for example.') },
+          ],
+    notes: language === 'he' ? [] : [{ n: 1, id: 'n1', kind: 'note', text: words('A note of the translation.') }],
+    machine: 'none',
+    versions: tanyaVersions,
+  },
+});
+
+/** Shulchan Aruch HaRav (app/views/chapters.tsx): a siman whose first block holds the print's preface and the siman's name; its Mahadura Tinyana among the path bar's units. */
+const sahBar = [
+  { kind: 'set', chosen: { id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }, choices: [{ id: 'rh-aaaaaaa1', path: '/sets/sample', name: name('מדף לדוגמה') }] },
+  { kind: 'work', chosen: { id: 'rh-aaaaaas0', path: '/shulchan-aruch-harav', name: name('שולחן ערוך') }, choices: [{ id: 'rh-aaaaaas0', path: '/shulchan-aruch-harav', name: name('שולחן ערוך') }] },
+  { kind: 'part', chosen: { path: '/shulchan-aruch-harav/2', name: name('אורח חיים'), value: '2' }, choices: [{ path: '/shulchan-aruch-harav/2', name: name('אורח חיים'), value: '2' }] },
+  {
+    kind: 'unit',
+    chosen: { id: 'rh-aaaaaas2', path: '/shulchan-aruch-harav/2/2', name: name('אורח חיים, סימן א׳'), value: '2' },
+    choices: [
+      { id: 'rh-aaaaaas1', path: '/shulchan-aruch-harav/2/1/1', name: name('אורח חיים, מהדורא תניינא, סימן א׳'), value: '1' },
+      { id: 'rh-aaaaaas2', path: '/shulchan-aruch-harav/2/2', name: name('אורח חיים, סימן א׳'), value: '2' },
+    ],
+  },
+];
+
 const views: Record<string, unknown> = {
   '/sample/1/1': {
     item: { id: 'rh-aaaaaab1', type: 'unit', path: '/sample/1/1', rev: 1, data: { label: name('שיחה ראשונה') } },
@@ -311,6 +373,35 @@ const views: Record<string, unknown> = {
       versions: [{ version: 'he', from: 'body', language: 'he' }],
     },
   },
+  '/tanya/1/4': tanyaChapter('he'),
+  '/tanya/1/4?en': tanyaChapter('en'),
+  '/shulchan-aruch-harav/2/2': {
+    item: {
+      id: 'rh-aaaaaas2',
+      type: 'unit',
+      path: '/shulchan-aruch-harav/2/2',
+      rev: 1,
+      data: { label: name('אורח חיים, סימן א׳'), position: [{ label: name('אורח חיים'), level: 'section', value: '2' }, { level: 'siman', value: '2' }] },
+    },
+    pathBar: sahBar,
+    previous: null,
+    next: null,
+    text: {
+      kind: 'words',
+      from: 'body',
+      version: 'he',
+      language: 'he',
+      profile: 'sefaria',
+      segments: [
+        { n: 1, id: '1', kind: 'verse', text: [{ text: 'הקדמה לדוגמה.', marks: ['small'] }, { br: true }, { text: 'דין לדוגמה ובו ג׳ סעיפים:', marks: ['b'] }, { br: true }, { text: 'סעיף ראשון לדוגמה.' }] },
+        { n: 2, id: '2', kind: 'verse', text: words('סעיף שני לדוגמה (מילים בסוגריים) והמשך.') },
+        { n: 3, id: '3', kind: 'verse', text: words('סעיף שלישי לדוגמה.') },
+      ],
+      notes: [],
+      machine: 'none',
+      versions: [{ version: 'he', from: 'body', language: 'he' }],
+    },
+  },
   '/sample/1/3': {
     item: { id: 'rh-aaaaaab3', type: 'unit', path: '/sample/1/3', rev: 1, data: { label: name('שיחה שלישית') } },
     pathBar: bar(2),
@@ -536,7 +627,9 @@ createServer((req, res) => {
     const found = byId(entity) as { item: unknown } | undefined;
     if (found) return res.end(JSON.stringify(found.item));
   }
-  const view = (url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : undefined) ?? libraryAnswer(url, shelves) ?? listenAnswer(url) ?? snapshotAnswer(url);
+  // Tanya's chapter in English (`?en`), when it is the version asked for.
+  const english = url.searchParams.get('language') === 'en' ? views[`${url.searchParams.get('path') ?? (byId(url.searchParams.get('id')) as { item: { path: string } } | undefined)?.item.path}?en`] : undefined;
+  const view = (url.pathname === '/v1/view' ? (english ?? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? ''])) : undefined) ?? libraryAnswer(url, shelves) ?? listenAnswer(url) ?? snapshotAnswer(url);
   if (!view) {
     res.statusCode = 404;
     return res.end(JSON.stringify({ error: 'not-found', message: 'not found' }));
