@@ -1,5 +1,5 @@
 import type { Context, Hono, MiddlewareHandler } from 'hono';
-import { CatalogError, SNAPSHOT_CLAIM_KEY, SNAPSHOT_FILE_NAME, readManifest, refreshSnapshot, snapshotFileKey, snapshotSeq, type Catalog, type SnapshotManifest, type SnapshotStore } from '@chassidushub/core';
+import { CatalogError, SNAPSHOT_CLAIM_KEY, SNAPSHOT_FILE_NAME, readIndex, readManifest, refreshSnapshot, snapshotFileKey, snapshotSeq, type Catalog, type SnapshotIndex, type SnapshotManifest, type SnapshotStore } from '@chassidushub/core';
 import type { R2Bucket } from './r2.js';
 
 /**
@@ -9,6 +9,7 @@ import type { R2Bucket } from './r2.js';
  * database for each page.
  *
  *   GET /v1/catalog/manifest.json      which files make up the snapshot now (kept a minute)
+ *   GET /v1/catalog/index.json         the same, as the files' names only, for a slow first tap (kept a minute)
  *   GET /v1/catalog/files/<file>       one file, named by its content (kept for good)
  *
  * The files live in the public bucket under `catalog/`. A new snapshot is
@@ -132,26 +133,32 @@ export function catalogSnapshotRoutes(app: Hono, catalog: Catalog, options: Snap
   const { store } = options;
   const base = (c: Context) => `${new URL(c.req.url).origin}/v1/catalog/files/`;
 
-  app.get('/v1/catalog/manifest.json', async (c) => {
-    let manifest: SnapshotManifest | null = await readManifest(store);
-    if (!manifest && options.rebuild && waitUntil) {
-      // None yet (an empty bucket): never built while someone waits, since a whole build on live runs past a
-      // request's 30 s. It starts behind this answer, and the every-minute run builds it too.
+  /**
+   * The snapshot kept now, as the manifest or the index. With none yet (an empty bucket) it is never built while
+   * someone waits, since a whole build on live runs past a request's 30 s: 503, and the build starts behind the
+   * answer (the every-minute run builds it too). Behind the catalog, the answer serves what there is and the next
+   * one has the new snapshot. With no background (local work, tests) it is built now.
+   */
+  const latest = async <T extends { version: string }>(c: Context, read: () => Promise<T | null>, answer: (kept: T) => object) => {
+    let kept = await read();
+    if (!kept && options.rebuild && waitUntil) {
       waitUntil(options.rebuild());
       return c.json({ error: 'busy', message: 'the catalog snapshot is being built; try again shortly' }, 503, { 'Retry-After': '30', 'Cache-Control': 'no-store' });
     }
-    if (!manifest) {
-      // Local work and tests, with no background: built now.
-      manifest = (await refreshSnapshot(catalog.db, store)).manifest;
-    } else if (options.rebuild && waitUntil) {
-      // Behind the catalog: this answer serves what there is, and the next one has the new snapshot.
+    if (kept && options.rebuild && waitUntil) {
       const { seq } = await snapshotSeq(catalog.db);
-      if (seq > manifest.seq) waitUntil(options.rebuild());
+      if (seq > Number(kept.version)) waitUntil(options.rebuild());
     } else {
-      manifest = (await refreshSnapshot(catalog.db, store)).manifest;
+      await refreshSnapshot(catalog.db, store);
+      kept = await read();
     }
-    return c.json({ ...manifest, base: base(c) } satisfies SnapshotManifest, 200, { 'Cache-Control': MANIFEST_CACHE, 'X-Catalog-Version': manifest.version });
-  });
+    if (!kept) throw new CatalogError('not-found', 'the catalog snapshot could not be read');
+    return c.json(answer(kept), 200, { 'Cache-Control': MANIFEST_CACHE, 'X-Catalog-Version': kept.version });
+  };
+
+  app.get('/v1/catalog/manifest.json', (c) => latest(c, () => readManifest(store), (manifest: SnapshotManifest) => ({ ...manifest, base: base(c) }) satisfies SnapshotManifest));
+  // Only the files' names, a few hundred bytes: the first thing a slow phone asks for (#265).
+  app.get('/v1/catalog/index.json', (c) => latest(c, () => readIndex(store), (index: SnapshotIndex) => index));
 
   app.get('/v1/catalog/files/:file', async (c) => {
     const file = c.req.param('file');
