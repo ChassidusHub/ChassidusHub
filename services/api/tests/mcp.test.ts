@@ -388,6 +388,13 @@ describe('the MCP server', () => {
     expect((await tool('suggest_items', { items: [{ type: 'unit', set: { label: { he: 'x' } } }] }, token)).content[0].text).toMatch(/give its id/);
     expect((await tool('suggest_items', { items: [{ type: 'work', id: maamar, set: { label: { he: 'x' } } }] }, token)).content[0].text).toMatch(/is a unit, not a work/);
     expect((await tool('suggest_items', { items: [{ type: 'unit', id: maamar, data: {}, set: {} }] }, token)).content[0].text).toMatch(/data or set, not both/);
+    expect((await tool('suggest_items', { items: [{ type: 'unit', id: 'rh-nothere1', set: { label: { he: 'x' } } }] }, token)).isError).toBe(true);
+    // Merged where the item is, onto the suggestion's own last version of it: a second set in a draft keeps the first.
+    const draft = await tool('suggest_items', { items: [{ type: 'unit', id: maamar, set: { label: { he: 'שם' } } }], submit: false }, token);
+    const more = await tool('suggest_items', { items: [{ type: 'unit', id: maamar, set: { note: 'checked' } }], suggestion: draft.structuredContent.suggestion }, token);
+    expect(more.isError).toBe(false);
+    const [both] = await catalog.proposals(draft.structuredContent.suggestion);
+    expect(both!.rev.data).toMatchObject({ label: { he: 'שם' }, note: 'checked', body });
   });
 
   it('shows the tree and organizes it as suggestions, with a write token', async () => {
