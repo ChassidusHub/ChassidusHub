@@ -1,0 +1,1 @@
+- New site: a Rebbe's page lists his sefarim themselves (Likkutei Sichos, Toras Menachem, Igros Kodesh…), whatever shelf they are on, then the shelves that hold more than those sefarim. A day of Toras Menachem or a letter of Igros Kodesh is now 4 taps from the library, not 5 (#268).

@@ -92,32 +92,50 @@ export async function loadOtherShelves(api: ChassidusHub): Promise<Line[]> {
  * books on it that are additions (those to a sefer here are on that sefer's
  * page). A shelf with one official sefer and no shelves, other than a
  * Rebbe's, sends its page on to that sefer.
+ *
+ * A Rebbe's page lists his official sefarim themselves, shelf by shelf, so
+ * Toras Menachem or Igros Kodesh is one tap from it, not two (#268); then
+ * the shelves that hold more than those sefarim (shelves inside them, or
+ * books that are additions to none of them), to browse the rest. That reads
+ * each of his shelves' sefarim: a round more, on his page only.
  */
 export async function loadSet(api: ChassidusHub, root: Item, levels: ApiLevel[]) {
   const id = root.id;
+  const rebbe = isRebbe(root.path);
   const [sets, works] = await Promise.all([allShelves(api), api.listLinked({ id, field: 'sets', type: 'work', limit: 500 })]);
   const shelves = shelvesIn(sets, id);
-  const official = works.items.filter((work) => !isAdditionItem(work)).sort(inOrder);
-  if (!shelves.length && official.length === 1 && !isRebbe(root.path) && official[0]!.path) throw redirect(official[0]!.path);
-  const here = new Set(official.map((work) => work.id));
+  const official = officialOf(works.items);
+  if (!shelves.length && official.length === 1 && !rebbe && official[0]!.path) throw redirect(official[0]!.path);
   const workLine = (work: Item): Line => ({ key: work.id, title: seferName(work), to: work.path ?? undefined });
+  const onShelves = rebbe ? await Promise.all(shelves.map((set) => api.listLinked({ id: set.id, field: 'sets', type: 'work', limit: 500 }))) : [];
   return {
     screen: 'set' as const,
     id,
     path: root.path,
     title: shelfName(root),
-    rebbe: isRebbe(root.path),
+    rebbe,
     levels,
     ...ownFields(root, levels),
-    lines: [...shelves.map((set) => shelfLine(sets, set)), ...official.map(workLine)],
-    additions: works.items
-      .filter((work) => {
-        const to = (work.data as { addition?: { to?: string } }).addition?.to;
-        return isAdditionItem(work) && !(to && here.has(to));
-      })
-      .sort(inOrder)
-      .map(workLine),
+    lines: rebbe
+      ? [...official, ...onShelves.flatMap((on) => officialOf(on.items))].map(workLine)
+      : [...shelves.map((set) => shelfLine(sets, set)), ...official.map(workLine)],
+    shelves: rebbe ? shelves.filter((set, at) => shelvesIn(sets, set.id).length || looseOf(onShelves[at]!.items).length).map((set) => shelfLine(sets, set)) : [],
+    additions: looseOf(works.items).map(workLine),
   };
+}
+
+/** A shelf's official sefarim, in order. */
+const officialOf = (works: Item[]) => works.filter((work) => !isAdditionItem(work)).sort(inOrder);
+
+/** The books on a shelf that are additions to none of its official sefarim (those are on that sefer's page), in order. */
+function looseOf(works: Item[]): Item[] {
+  const here = new Set(officialOf(works).map((work) => work.id));
+  return works
+    .filter((work) => {
+      const to = (work.data as { addition?: { to?: string } }).addition?.to;
+      return isAdditionItem(work) && !(to && here.has(to));
+    })
+    .sort(inOrder);
 }
 
 /** What an addition is to its sefer, as its row's quiet line says it. */
