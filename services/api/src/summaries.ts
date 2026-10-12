@@ -44,6 +44,21 @@ export async function refreshTranscripts(catalog: Catalog, store: SummaryStore, 
 }
 
 /**
+ * Makes again the first kept summary that is due, and leaves the rest for the next run. Each reads the whole catalog
+ * (the to-check lists took some 40 s, the transcripts' up to 30 s), so together they held the small database a minute
+ * and more while readers waited behind them (#338). Each falls due every SUMMARY_MAX_AGE_MS and a run comes every
+ * 5 minutes, so each still gets its turn. `run` is the scheduled run's own wrapper, which logs and keeps failures.
+ */
+export async function oneSummaryARun(summaries: Array<[name: string, refresh: () => Promise<boolean>]>, run: (name: string, work: () => Promise<unknown>) => Promise<unknown>): Promise<string | null> {
+  for (const [name, refresh] of summaries) {
+    let made = false;
+    await run(name, async () => void (made = await refresh()));
+    if (made) return name;
+  }
+  return null;
+}
+
+/**
  * Other answers kept by name in the same bucket (r2.ts): the list of what
  * the machines wrote that nobody checked (GET /v1/machine/to-check) and the
  * built subject index (GET /v1/mafteach). Each took longer than a request
