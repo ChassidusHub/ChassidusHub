@@ -1,4 +1,5 @@
-import { Link } from 'react-router';
+import { Suspense } from 'react';
+import { Await, Link } from 'react-router';
 import { Button, Icon, Panel, Row, Rows, SectionHead, TopBar, type IconName } from '../ui';
 import type { Route } from './+types/about';
 
@@ -11,11 +12,31 @@ export function meta(_: Route.MetaArgs) {
 
 /**
  * Only how much machine text waits to be checked, the one number on the
- * page; the page still shows when it does not come.
+ * page. The page never waits for it: it comes after, and the page still
+ * shows when it does not come.
  */
-export async function loader({ context }: Route.LoaderArgs) {
-  const toCheck = await context.api.machineToCheck({ limit: 1 }).catch(() => null);
-  return { toCheck: toCheck ? toCheck.totals.transcripts + toCheck.totals.texts + toCheck.totals.scans : null };
+export function loader({ context }: Route.LoaderArgs) {
+  const toCheck = context.api
+    .machineToCheck({ limit: 1 })
+    .then((found) => found.totals.transcripts + found.totals.texts + found.totals.scans)
+    .catch(() => null);
+  return { toCheck };
+}
+
+/** Opened from inside the site, the page is drawn at once; the number follows. */
+export function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  return { toCheck: serverLoader().then((data) => data.toCheck) };
+}
+
+/** The number, when it comes; nothing in its place until then. */
+function Count({ of }: { of: Promise<number | null> }) {
+  return (
+    <Suspense fallback={null}>
+      <Await resolve={of} errorElement={null}>
+        {(count) => (count ? count.toLocaleString('he') : null)}
+      </Await>
+    </Suspense>
+  );
 }
 
 /** The same for everyone, and changes slowly. */
@@ -78,7 +99,7 @@ export default function Screen({ loaderData }: Route.ComponentProps) {
             start={<Icon name="scan" />}
             title="בדיקת מה שמכונה כתבה"
             sub="תמלולים של הקלטות ודפים שנקראו מסריקה. קוראים או מקשיבים, ומתקנים. כל בדיקה מתקנת את האתר ומלמדת את המכונה הבאה."
-            end={toCheck ? toCheck.toLocaleString('he') : undefined}
+            end={<Count of={toCheck} />}
           />
           <Row start={<Icon name="pen" />} title="תיקון טעות" sub="בכל טקסט באתר: מסמנים את המילים ומתקנים. צריך להיכנס לחשבון." />
           <Row to="/add" start={<Icon name="upload" />} title="הוספת חומר חסר" sub="הנחה, הקלטה, ספר או מכתב שאין עדיין באתר. המכונה מציעה לאן זה שייך, ושומרי האוסף בודקים." />
