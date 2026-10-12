@@ -39,6 +39,10 @@ test('labels words a machine read', async ({ page }) => {
   await page.goto('/sample/1/2');
   await expect(page.getByText('נקרא במכונה, עוד לא נבדק בידי אדם')).toBeVisible();
   await expect(page.locator('.torah.unchecked')).toHaveCount(1);
+  // A quiet dot at the start of each paragraph, not a line under the words.
+  const p = page.locator('.torah.unchecked p').first();
+  expect(await p.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe('none');
+  expect(await p.evaluate((el) => getComputedStyle(el, '::before').width)).toBe('5px');
 });
 
 test('keeps the text size the reader picks', async ({ page }) => {

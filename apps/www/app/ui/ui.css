@@ -588,14 +588,20 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .torah .hd { font-weight: 700; text-align: center; margin: 1.2em 0 0.5em; }
 .torah .hd.first { display: none; }
 .torah .end { text-align: end; }
+/* Words a machine read and nobody checked yet: one quiet dot in the margin at the start of each such
+   paragraph or note, all of them or only those, so the words themselves stay clean. The label above the
+   words says what the dot means. */
+.torah.unchecked p, .torah p.m, .fn.m, .it-line.l0 .t { position: relative; }
+.torah.unchecked p::before, .torah p.m::before, .fn.m::before, .it-line.l0 .t::before {
+  content: ""; position: absolute; inset-inline-start: -11px; top: calc(0.925em - 2.5px);
+  width: 5px; height: 5px; border-radius: 50%; pointer-events: none;
+  background: color-mix(in srgb, var(--machine-line) 55%, transparent);
+}
+.fn.m::before { top: calc(0.85em - 2.5px); }
+.it-line.l0 .t::before { inset-inline-start: -7px; top: calc(0.8em - 2.5px); }
 /* A farbrengen read as one page: each sicha under its own name, a little apart from the one before. */
 .torah .fsicha + .fsicha { margin-block-start: 2.2em; }
 .torah .fh { font-family: var(--title); font-weight: 500; font-size: 1.15em; text-align: center; margin: 0 0 0.6em; }
-/* Words a machine read and nobody checked yet: a faint dotted underline, all of them or only those. */
-.torah.unchecked p, .torah p.m, .fn.m .nt {
-  text-decoration: underline dotted color-mix(in srgb, var(--machine-line) 45%, transparent);
-  text-decoration-thickness: 1px; text-underline-offset: 0.32em;
-}
 .ois { font-weight: 700; }
 .mk { font-family: var(--ui); font-size: 0.6em; color: var(--g600); padding-inline: 0.2em; }
 .nm {
@@ -1061,7 +1067,6 @@ pre.it-code { margin: 12px 0; padding: 12px 14px; border: 1px solid var(--g300);
 .it-line .n { flex: none; width: 1.8em; font-size: 12px; color: var(--g600); text-align: end; font-variant-numeric: tabular-nums; }
 .it-line .t { flex: 1; min-width: 0; font-size: 19px; line-height: 1.6; }
 .it-line .r { flex: none; display: flex; align-items: center; gap: 4px; }
-.it-line.l0 .t { text-decoration: underline dotted color-mix(in srgb, var(--machine-line) 45%, transparent); text-underline-offset: 0.32em; }
 .it-line.found { background: var(--g100); }
 .it-line.editing { align-items: flex-start; padding-block: 8px; }
 .it-line.editing form { flex: 1; min-width: 0; }

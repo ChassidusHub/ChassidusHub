@@ -285,6 +285,14 @@ A file named here changes only when what it holds changes: a new event
 changes the years file, not the top or a shelf; a new unit changes its
 shelf's file (its sefer's work file has a new name), not the top.
 
+The new site writes index.json into every page it draws, as
+`<script type="application/json" id="catalog-index">`. The Worker keeps it
+in memory and asks for it again each minute, so a page never waits for it.
+A first visit then asks for the top file and its shelf's file at load, with
+no wait for the index. A page kept at the edge for days may carry an older
+index. Files are never removed, so every file it names is still there, and
+the browser asks for the current index behind it.
+
 ## Changing the format
 
 Add a field freely: readers ignore what they do not know. Removing or
