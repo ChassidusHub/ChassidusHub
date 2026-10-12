@@ -39,6 +39,10 @@ test('labels words a machine read', async ({ page }) => {
   await page.goto('/sample/1/2');
   await expect(page.getByText('נקרא במכונה, עוד לא נבדק בידי אדם')).toBeVisible();
   await expect(page.locator('.torah.unchecked')).toHaveCount(1);
+  // A quiet dot at the start of each paragraph, not a line under the words.
+  const p = page.locator('.torah.unchecked p').first();
+  expect(await p.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe('none');
+  expect(await p.evaluate((el) => getComputedStyle(el, '::before').width)).toBe('5px');
 });
 
 test('keeps the text size the reader picks', async ({ page }) => {
@@ -150,4 +154,69 @@ test('draws a sicha without the letter’s layout', async ({ page }) => {
   await page.goto('/sample/1/1');
   await expect(page.locator('.igros')).toHaveCount(0);
   await expect(page.locator('.torah p.end')).toHaveText('חתימה לדוגמה');
+});
+
+test('sets a day of Hayom Yom as the book prints it: its head, its notices, its shiurim, its sayings', async ({ page }) => {
+  await page.goto('/hayom-yom/1/1');
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('יט כסלו');
+  await expect(page.locator('.eyebrow')).toHaveText('היום יום · כסלו');
+  const day = page.locator('.daybook .torah');
+  await expect(day.locator('.hy-head')).toHaveText(/שבת\s*יט כסלו\s*ה׳תש״ג/);
+  await expect(day.locator('.hy-lead #s-lead-1.m')).toHaveText('מכתב לדוגמה שלפני היום הראשון.');
+  await expect(day.locator('.hy-pre p')).toHaveText('הודעה לדוגמה לפני השיעורים.');
+  expect(await day.locator('.hy-pre').evaluate((el) => getComputedStyle(el).fontStyle)).toBe('italic');
+  // Each shiur opens its words on the site; the Tanya line is the print's, marked as read by a machine.
+  await expect(day.locator('.hy-shiurim a').first()).toHaveAttribute('href', /^\/chumash\/genesis\/\d+/);
+  await expect(day.getByRole('link', { name: 'צ-צו.' })).toHaveAttribute('href', '/tehillim/90');
+  await expect(day.locator('.hy-tanya a')).toHaveAttribute('href', /^\/tanya\//);
+  await expect(day.locator('#s-tanya')).toHaveClass(/\bm\b/);
+  // The sayings come after the shiurim; there are no rules above or under the text, no today and nothing to tick.
+  expect(await day.locator('.hy-shiurim').evaluate((el) => el.compareDocumentPosition(document.getElementById('s-p1')!) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
+  expect(await day.locator('.hy-head').evaluate((el) => getComputedStyle(el).borderTopStyle)).toBe('none');
+  await expect(page.getByText('היום', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+});
+
+test('reads Hayom Yom as a book: a strip of the month’s days, the day after at the foot', async ({ page }) => {
+  await page.goto('/hayom-yom/1/1');
+  await page.waitForLoadState('networkidle');
+  const strip = page.getByRole('navigation', { name: 'ימי החודש' });
+  await expect(strip.getByRole('link', { name: 'יט כסלו' })).toHaveAttribute('aria-current', 'page');
+  await strip.getByRole('link', { name: 'כ כסלו' }).click();
+  await expect(page).toHaveURL(/\/hayom-yom\/1\/2$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('כ כסלו');
+  await expect(page.locator('.daybook .hy-head')).toHaveText(/יום ראשון\s*כ כסלו\s*ה׳תש״ג/);
+  await expect(page.getByRole('link', { name: 'יט כסלו' }).last()).toHaveAttribute('rel', 'prev');
+});
+
+test('reads an index as printed: entries, letters, find, ע"ע and a page that opens its sicha', async ({ page }) => {
+  await page.goto('/sample-sichos-index/12');
+  await page.waitForLoadState('networkidle');
+  const entries = page.locator('.ix .torah .ix-e');
+  await expect(entries).toHaveCount(3);
+  await expect(entries.first().locator('.ix-h')).toHaveText('אהבה לדוגמה');
+  expect(await entries.first().locator('.ix-h').evaluate((el) => getComputedStyle(el).fontWeight)).toBe('700');
+  // The letters on top jump to their first entries; a letter with none is not a link.
+  const letters = page.getByRole('navigation', { name: 'לפי אות' });
+  await expect(letters.getByRole('link')).toHaveText(['א', 'ב', 'ת']);
+  await expect(letters.getByRole('link', { name: 'ב' })).toHaveAttribute('href', '#s-t2');
+  // ע"ע jumps to the entry on this page.
+  await expect(page.locator('.see')).toHaveAttribute('href', '#s-t3');
+  // Find looks in this index only, among its entries.
+  await page.getByRole('searchbox', { name: 'חיפוש במפתח הזה' }).fill('בריאה');
+  await expect(entries.filter({ visible: true })).toHaveCount(1);
+  await page.getByRole('searchbox', { name: 'חיפוש במפתח הזה' }).fill('אין כזה');
+  await expect(page.getByText('אין ערך כזה במפתח הזה.')).toBeVisible();
+  await page.getByRole('searchbox', { name: 'חיפוש במפתח הזה' }).fill('');
+  await expect(entries.filter({ visible: true })).toHaveCount(3);
+  // A page names its sicha, then opens it at that page: page 25 is in the sicha that starts on 20.
+  await page.locator('.ref', { hasText: '25' }).click();
+  const pop = page.getByRole('dialog', { name: 'עמוד 25' });
+  await expect(pop).toContainText('חלק יב, עמ׳ 25');
+  await expect(pop).toContainText('שיחה לדוגמה');
+  await expect(pop.getByRole('link', { name: 'לשיחה, בעמוד הזה' })).toHaveAttribute('href', '/sample-sichos/12/2');
+  // A page the catalog does not have offers the index's own scan, never a broken link.
+  await page.locator('.ref', { hasText: '90' }).click();
+  await expect(page.getByRole('dialog', { name: 'עמוד 90' }).getByRole('link', { name: 'הסריקה של השיחה' })).toHaveAttribute('href', 'https://drive.google.com/file/d/sample-drive-file-2/view');
 });

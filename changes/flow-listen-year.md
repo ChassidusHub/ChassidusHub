@@ -1,0 +1,1 @@
+- New site: a year of listening opened from a link (/listen/5742) is drawn from the catalog snapshot's year file on the server, not the API's events read (about 300 ms), and kept at the edge ten minutes (#321).

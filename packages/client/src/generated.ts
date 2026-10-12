@@ -2241,12 +2241,14 @@ export interface Operations {
     input: {
       id: number;
       body: {
-        /** The items, as PUT takes one */
+        /** The items, as PUT takes one, or with set */
         items: Array<{
           /** A permanent id: rh- and letters and digits (read forgivingly: RH-7K2M-9Q4D works) */
           id?: string;
           type: string;
-          data: Record<string, unknown> | null;
+          data?: Record<string, unknown> | null;
+          /** In place of data, for an existing item (id): these fields replace its own; a field set to null is removed */
+          set?: Record<string, unknown>;
           path?: string | null;
         }>;
       };
@@ -2969,6 +2971,130 @@ export interface Operations {
     };
     output: Suggestion;
   };
+  /** A catalog batch as a keeper checks it: how many items each kind of change has (moved, merged, renamed, relabelled, reordered, new, words, deleted), where things go (from where to where, with how many, the biggest first), a few samples of each kind (the first, the last and the odd ones), and the whole list a page at a time, by kind and words, each item before and after. Names, places, facts and first words; words withheld by their source's terms are left out */
+  suggestionBatch: {
+    input: {
+      id: number;
+      /** Only items with this kind of change */
+      kind?: "new" | "moved" | "merged" | "renamed" | "relabelled" | "reordered" | "words" | "deleted";
+      /** Only items whose names, places, facts or first words hold these words */
+      q?: string;
+      /** Items of the list to skip */
+      offset?: number;
+      /** How many (at most 100) */
+      limit?: number;
+    };
+    output: {
+      items: number;
+      /** How many items have each kind of change */
+      counts: Record<string, unknown>;
+      /** Of the items whose words change, how many a machine read and no person has checked */
+      machine: number;
+      flows: Array<{
+        way: "moved" | "new" | "merged";
+        from: {
+          id: string;
+          name: string;
+          path: string | null;
+        } | null;
+        to: {
+          id: string;
+          name: string;
+          path: string | null;
+        } | null;
+        count: number;
+      }>;
+      flowsMore: number;
+      samples: Array<{
+        kind: string;
+        items: Array<{
+          id: string;
+          type: string;
+          kinds: Array<"new" | "moved" | "merged" | "renamed" | "relabelled" | "reordered" | "words" | "deleted">;
+          /** Its name once approved (for one deleted or merged, its name now) */
+          name: string;
+          /** Renamed: its name now */
+          was?: string;
+          path: string | null;
+          from?: {
+            id: string;
+            name: string;
+            path: string | null;
+          } | null;
+          to?: {
+            id: string;
+            name: string;
+            path: string | null;
+          } | null;
+          into?: {
+            id: string;
+            name: string;
+            path: string | null;
+          } | null;
+          /** Relabelled: the first few facts that change, each side a short line */
+          facts?: Array<{
+            field: string;
+            before: string | null;
+            after: string | null;
+          }>;
+          words?: {
+            paragraphs: number;
+            first: string | null;
+            /** There were no words before */
+            added: boolean;
+            /** A machine read them and no person has checked them */
+            machine: boolean;
+          };
+        }>;
+      }>;
+      list: {
+        kind: string | null;
+        q: string;
+        offset: number;
+        limit: number;
+        total: number;
+        rows: Array<{
+          id: string;
+          type: string;
+          kinds: Array<"new" | "moved" | "merged" | "renamed" | "relabelled" | "reordered" | "words" | "deleted">;
+          /** Its name once approved (for one deleted or merged, its name now) */
+          name: string;
+          /** Renamed: its name now */
+          was?: string;
+          path: string | null;
+          from?: {
+            id: string;
+            name: string;
+            path: string | null;
+          } | null;
+          to?: {
+            id: string;
+            name: string;
+            path: string | null;
+          } | null;
+          into?: {
+            id: string;
+            name: string;
+            path: string | null;
+          } | null;
+          /** Relabelled: the first few facts that change, each side a short line */
+          facts?: Array<{
+            field: string;
+            before: string | null;
+            after: string | null;
+          }>;
+          words?: {
+            paragraphs: number;
+            first: string | null;
+            /** There were no words before */
+            added: boolean;
+            /** A machine read them and no person has checked them */
+            machine: boolean;
+          };
+        }>;
+      };
+    };
+  };
   /** A suggestion's timeline (comments, reviews, events), the reviewers asked, and the issues it closes */
   suggestionConversation: {
     input: {
@@ -3511,6 +3637,7 @@ export const OPERATIONS = {
   status: {"method":"GET","path":"/v1/status","pathParams":[],"query":[],"body":null,"answer":"json"},
   submitSuggestion: {"method":"POST","path":"/v1/suggestions/{id}/submit","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   suggestFix: {"method":"POST","path":"/v1/suggestions/quick","pathParams":[],"query":[],"body":"json","answer":"json"},
+  suggestionBatch: {"method":"GET","path":"/v1/suggestions/{id}/batch","pathParams":["id"],"query":["kind","q","offset","limit"],"body":null,"answer":"json"},
   suggestionConversation: {"method":"GET","path":"/v1/suggestions/{id}/conversation","pathParams":["id"],"query":[],"body":null,"answer":"json"},
   suggestionStages: {"method":"GET","path":"/v1/suggestions/stages","pathParams":[],"query":["ids"],"body":null,"answer":"json"},
   suggestionTree: {"method":"GET","path":"/v1/suggestions/{id}/tree","pathParams":["id"],"query":[],"body":null,"answer":"json"},
@@ -4413,6 +4540,11 @@ export abstract class GeneratedMethods {
   /** Suggest a fix in one step: a new version of one item, with a few words on why, sent for review (POST /v1/suggestions/quick) */
   suggestFix(input: Operations['suggestFix']['input']): Promise<Operations['suggestFix']['output']> {
     return this.call('suggestFix', input ?? {} as Operations['suggestFix']['input']);
+  }
+
+  /** A catalog batch as a keeper checks it: how many items each kind of change has (moved, merged, renamed, relabelled, reordered, new, words, deleted), where things go (from where to where, with how many, the biggest first), a few samples of each kind (the first, the last and the odd ones), and the whole list a page at a time, by kind and words, each item before and after. Names, places, facts and first words; words withheld by their source's terms are left out (GET /v1/suggestions/{id}/batch) */
+  suggestionBatch(input: Operations['suggestionBatch']['input']): Promise<Operations['suggestionBatch']['output']> {
+    return this.call('suggestionBatch', input ?? {} as Operations['suggestionBatch']['input']);
   }
 
   /** A suggestion's timeline (comments, reviews, events), the reviewers asked, and the issues it closes (GET /v1/suggestions/{id}/conversation) */

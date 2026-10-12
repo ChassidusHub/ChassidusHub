@@ -47,9 +47,10 @@ test('the library is clicked through with no server round trip', async ({ page }
 });
 
 test('a page opened from a link reads its own shelf, and the next tap under it is drawn here', async ({ page }) => {
-  const shelf = page.waitForResponse((response) => /\/_\/catalog\/shelf-rh-aaaaaas3\.[\w.-]+\.json$/.test(response.url()));
+  // The shelf's file is read first, then (with it) the sefer's units.
+  const units = page.waitForResponse((response) => /\/_\/catalog\/work-[\w.-]+\.json$/.test(response.url()));
   await page.goto('/sample-sichos');
-  await shelf;
+  await units;
   const asked = serverReads(page);
   await page.getByRole('navigation', { name: 'חלקים' }).getByRole('link', { name: 'חלק י״ב' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toContainText('חלק י״ב');
@@ -79,4 +80,26 @@ test('a year of listening is drawn from the snapshot, with which events can be f
   await expect(page).toHaveURL(/\/listen\/5732$/);
   await expect(page.getByText(/עם המילים/)).toBeVisible();
   expect(asked).toEqual([]);
+});
+
+test("the page carries the index, and a Rebbe's page is drawn from the top file before his shelf's file comes", async ({ page }) => {
+  // His shelf's file never comes here.
+  await page.route(/\/_\/catalog\/shelf-/, (route) => route.abort());
+  const top = page.waitForResponse((response) => /\/_\/catalog\/top\.[\w.-]+\.json$/.test(response.url()));
+  await page.goto('/library');
+  expect(JSON.parse((await page.locator('#catalog-index').textContent()) ?? 'null')).toMatchObject({ format: 2, top: expect.stringMatching(/^top\./) });
+  await top;
+  const asked = serverReads(page);
+  await page.getByRole('link', { name: /^הרבי/ }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('הרבי');
+  await expect(page.locator('main a[href="/sample-sichos"]')).toBeVisible();
+  expect(asked).toEqual([]);
+});
+
+test("a year of listening opened from a link is drawn from the snapshot's year file on the server, and kept ten minutes (#321)", async ({ page }) => {
+  const answer = await page.goto('/listen/5732');
+  expect(answer?.headers()['cache-control']).toContain('s-maxage=600');
+  await expect(page.getByText(/עם המילים/)).toBeVisible();
+  // A year listening does not list is not found, as before.
+  expect((await page.goto('/listen/5800'))?.status()).toBe(404);
 });

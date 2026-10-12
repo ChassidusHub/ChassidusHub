@@ -239,6 +239,20 @@ export interface NewRevision {
   path?: string | null;
 }
 
+/**
+ * Some fields of an existing item changed, the rest left as the suggestion
+ * sees it (its own latest version, else its project's, else main's): a label
+ * changed without the item's words sent back and forth (a sicha's are some
+ * 80 KB, and 200 of them at once ran a Worker out of memory, #325).
+ */
+export interface FieldsRevision {
+  id: EntityId;
+  type: EntityType;
+  /** These fields replace the item's own; a field set to null is removed. */
+  set: { [field: string]: Json | null };
+  path?: string | null;
+}
+
 export type ReportReason = 'wrong-fact' | 'missing-page' | 'bad-scan' | 'audio-problem' | 'wrong-text' | 'duplicate' | 'rights' | 'offensive' | 'other';
 
 /** Reports only stewards and the set's keepers read, whatever the sender chose: rights claims (takedowns) and reports of something offensive. */
@@ -948,7 +962,7 @@ export class Catalog {
    * of about ten round trips each, and loading a season of recordings
    * took most of a day.
    */
-  async putRevisions(changesetId: number, by: string, inputs: NewRevision[]): Promise<EntityId[]> {
+  async putRevisions(changesetId: number, by: string, inputs: Array<NewRevision | FieldsRevision>): Promise<EntityId[]> {
     const ids = inputs.map((input) => input.id ?? newId());
     if (!inputs.length) return ids;
     if (new Set(ids).size !== ids.length) throw invalid('an item is given twice');
@@ -991,17 +1005,27 @@ export class Catalog {
         const type = types.get(id);
         if (type !== undefined && type !== input.type) throw invalid(`${id} is a ${type}, not a ${input.type}`);
         if (type === undefined) {
-          if (input.data === null) throw notFound(`item ${id}`);
+          if ('set' in input || input.data === null) throw notFound(`item ${id}`);
           fresh.push({ id, type: input.type });
         }
         const parent = parents.get(id) ?? null;
-        if (input.data === null && (!parent || parent.data === null)) throw badState(`${id} is already deleted`);
+        let given: Json | null;
+        if ('set' in input) {
+          if (type === undefined || !parent || parent.data === null || typeof parent.data !== 'object' || Array.isArray(parent.data)) throw notFound(`item ${id}`);
+          const merged: { [field: string]: Json } = { ...(parent.data as { [field: string]: Json }) };
+          for (const [field, value] of Object.entries(input.set)) {
+            if (value === null) delete merged[field];
+            else merged[field] = value;
+          }
+          given = merged;
+        } else given = input.data;
+        if (given === null && (!parent || parent.data === null)) throw badState(`${id} is already deleted`);
         let path = input.path === undefined ? (parent?.path ?? null) : input.path;
         if (path !== null) {
           path = path.toLowerCase();
           if (!isEntityPath(path)) throw invalid(`"${path}" is not a path: lower-case letters, digits and hyphens between slashes`);
         }
-        const data = input.data === null ? null : withStructuredBody(input.data);
+        const data = given === null ? null : withStructuredBody(given);
         const hash = await contentHash({ type: input.type, data, path });
         if (parent && parent.hash === hash) continue; // no change
         rows.push({ id, type: input.type, parent: parent ? String(parent.id) : null, data: data === null ? null : JSON.stringify(data), path, hash });

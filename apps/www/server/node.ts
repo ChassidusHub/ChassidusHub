@@ -5,8 +5,9 @@ import { createRequestListener } from '@react-router/node';
 import type { ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
+import { serverCatalog } from '../app/catalog/onServer';
 import { memoryShowcases } from '../app/stewards/showcase';
-import { apiFiles, catalogFile } from './catalog';
+import { apiFiles, catalogFile, indexKeeper } from './catalog';
 
 /**
  * The built site on Node, for the browser tests in CI and for trying a build
@@ -24,9 +25,13 @@ const forward = forwardFor({ baseUrl: process.env.API_URL });
 const showcases = memoryShowcases();
 // The catalog snapshot's files for the browser, from the API (server/catalog.ts); CATALOG_SNAPSHOT=off hands it none.
 const snapshotFiles = process.env.CATALOG_SNAPSHOT === 'off' ? null : apiFiles(api.baseUrl, (url) => fetch(url));
+// Its index, written into each page as the Worker does.
+const catalogIndex = indexKeeper(snapshotFiles);
+// The pages drawn from it on the server (the Listen year page), as the Worker draws them.
+const catalog = snapshotFiles ? serverCatalog(snapshotFiles) : null;
 const pages = createRequestListener({
   build,
-  getLoadContext: (request) => ({ api, visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, ...pageContext(request) }),
+  getLoadContext: (request) => ({ api, ...(catalog ? { catalog: catalog(api) } : {}), visitor: visitorApi(request, (cookie) => apiFor({ baseUrl: process.env.API_URL, cookie })), forward, showcases, ...pageContext(request, catalogIndex()) }),
 });
 
 const types: Record<string, string> = {

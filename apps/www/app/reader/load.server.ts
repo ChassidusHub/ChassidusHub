@@ -1,5 +1,5 @@
 import type { ChassidusHub, ItemView } from '@chassidushub/client';
-import { describeDateKey, isValidDateKey } from '@chassidushub/hebrew';
+import { DAILY_WORKS, describeDateKey, isValidDateKey } from '@chassidushub/hebrew';
 import type { PageSegment } from '@chassidushub/model';
 import type { AppLoadContext } from 'react-router';
 import { namesOf } from '../edit/names';
@@ -8,15 +8,50 @@ import { clock } from '../listen/common';
 import { pdfsOf } from '../lib/pdfs';
 import { farbrengenMachine, farbrengenOf, farbrengenViews, farbrengenWords } from './farbrengen.server';
 import type { Fact, ReaderData, ReaderText } from './types';
+import { daybookLayout } from '../views/daybook.layout';
 import { letterLayout } from '../views/letters.layout';
+import { indexLayout, isIndexWords } from '../views/index.layout';
 import { viewFor } from './views';
 import { notesHtml, unmarkedNotes, wordsAddress, wordsHtml, wordsKey, type DrawnWords, type WordsLayout } from './words.server';
 
 /** How each kind of page sets its words beyond the words themselves, by its view (app/views); a kind not named here is drawn as a sicha. */
-const layouts: Record<string, WordsLayout> = { letters: letterLayout };
+const layouts: Record<string, WordsLayout> = { letters: letterLayout, daybook: daybookLayout, index: indexLayout };
 
 /** Whether a reading page is drawn as a letter (app/views/letters.tsx), so it asks for the letters' face with its first bytes. */
-export const isLetter = (data: Pick<ReaderData, 'level'>) => viewFor(data).kind === 'letters';
+export const isLetter = (data: Pick<ReaderData, 'level' | 'view'>) => viewFor(data).kind === 'letters';
+
+/**
+ * The view the page's sefer names (RFC 0004, `view`, once /v1/view carries
+ * it); until then the one the reader knows its sefer by (`seferViews`), and
+ * an index by its words' shape (views/index.layout.ts), since an index's
+ * units are volumes or letters, levels other books have too.
+ */
+function viewNamed(view: ItemView): string | undefined {
+  const named = (view as { view?: unknown }).view;
+  if (typeof named === 'string' && named) return named;
+  const bySefer = viewOf(view);
+  if (bySefer) return bySefer;
+  if (view.text?.kind === 'words' && isIndexWords((view.text.segments ?? []) as unknown as PageSegment[])) return 'index';
+  return undefined;
+}
+
+/** The volume a unit is, when its first level is one: an index of one volume names its pages by it. */
+const volumeOf = (view: ItemView) => {
+  const first = ((view.item.data as { position?: { level?: unknown; value?: unknown }[] }).position ?? [])[0];
+  const value = first?.level === 'volume' ? Number(first.value) : NaN;
+  return Number.isInteger(value) && value > 0 ? value : undefined;
+};
+
+/**
+ * The view a sefer names, by its path, until /v1/view carries the sefer's
+ * own `view` (RFC 0004, step 3): Hayom Yom is read as a book of days, as the
+ * print and the old site set it. Its units' own levels (`unit`) cannot say so.
+ */
+const seferViews: Record<string, string> = { [DAILY_WORKS.hayomYom]: 'daybook' };
+const viewOf = (view: ItemView) => {
+  const work = view.pathBar.find((level) => level.kind === 'work')?.chosen.path;
+  return work ? seferViews[work] : undefined;
+};
 
 /** What the unit is by its own level: the last level of its position (`letter`), which picks its view. */
 const levelOf = (view: ItemView) => {
@@ -57,9 +92,14 @@ export function drawnWords(view: ItemView, title: string): DrawnWords | null {
   if (view.text?.kind !== 'words') return null;
   const segments = (view.text.segments ?? []) as unknown as PageSegment[];
   const notes = (view.text.notes ?? []) as unknown as PageSegment[];
-  const layout = layouts[viewFor({ level: levelOf(view) }).kind];
+  const layout = layouts[viewFor({ view: viewNamed(view), level: levelOf(view) }).kind];
   const unmarked = layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined;
-  return { body: wordsHtml(segments, notes, title, layout), notes: notes.length ? notesHtml(notes, unmarked) : '' };
+  const here = view.pathBar.at(-1);
+  const around = {
+    volume: volumeOf(view),
+    siblings: here?.choices?.flatMap((c) => (c.path ? [{ path: c.path, label: nameOf(c.name), current: c.path === here.chosen.path }] : [])),
+  };
+  return { body: wordsHtml(segments, notes, title, layout, view.item.data, around), notes: notes.length ? notesHtml(notes, unmarked) : '' };
 }
 
 /**
@@ -91,6 +131,7 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
   const middle = (fromWork >= 0 ? view.pathBar.slice(fromWork, sichos ? -2 : -1) : []).map((level) => nameOf(level.chosen.name));
   const text = await shownText(view, context.api, context, path, title, language, page.words, sichos ? farbrengenMachine(sichos) : undefined);
   const level = levelOf(view);
+  const named = viewNamed(view);
   // On a farbrengen's page, the farbrengens before and after it, by their own names.
   const neighbour = (n: ItemView['previous']) => (n?.path ? { path: n.path, label: sichos ? nameOf(n.name).replace(/, [^,]*$/, '') : nameOf(n.name) } : null);
   return {
@@ -98,6 +139,7 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
     path,
     title,
     ...(level ? { level } : {}),
+    ...(named ? { view: named } : {}),
     sub: middle.join(' · '),
     ...(middle.length > 1 ? { within: middle.slice(1).join(' · ') } : {}),
     ...withFacts(view.item.data),

@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono';
 import { isCatalogHeld, type DbCost } from '@chassidushub/db';
-import { batchTree, Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
-import { dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords, topicOf } from '@chassidushub/core';
+import { batchReview, batchTree, CHANGE_KINDS, Catalog, CatalogError, combineSuggestions, ExportGate, openTranscriptFixes, TAKEDOWN_RESPONSE_DAYS, idsOfUsernames, listSuggestions, proposeClashResolutions, UnresolvedConflictError, type Advisor, type FixJudge, type MergeCheck, adviceFor, anchorSync, chooseSeed, claimNext, comparePrintings, confirmPage, confirmSync, createWebhook, deleteWebhook, fileFromDrive, fixLine, fixParagraph, suggestWords, shaarFile, suggestShaar, getDerivations, getDerivationsOf, getFile, getFiles, getPageFix, getPageFixes, hanachaSyncs, itemsUsingFile, listWebhooks, pageImageCounts, printingsOf, projectTodo, recordingTranscript, transcriptHistory, transcriptPending, releaseClaim, requestTakedown, scanProgress, scanText, similarFiles, uploadOcr, type ChangeKind, type ChangesetStatus, type Embedder, type FileRow, type Mailer, type PageFixRow, type TakedownRelation, type EntityView, type Json, type ReportReason, type Resolution, type OcrFormat, type ProjectFocus, type WordsChange, type MetadataFetch } from '@chassidushub/core';
+import { type FieldsRevision, type NewRevision, dailyLearning, dailyShiurim, itemView, pathBar, peopleOf, shiurimWords, topicOf } from '@chassidushub/core';
 import { parseDateText, describeDateKey } from '@chassidushub/hebrew';
 import { ENTITY_TYPES, isEntityId, LANGUAGES, mayServe, readId, sha256Hex, type EntityId, type EntityType, type Language, type PageInline, type PageSegmentKind } from '@chassidushub/model';
 import { authRoutes, sessionAuthenticator, type AuthOptions } from './auth.js';
@@ -28,7 +28,7 @@ import { appCatalogRoutes, type AppReleases, type ReaderCatalog } from './appCat
 import { machineRoutes, type MachineDispatch } from './machine.js';
 import { mafteachRoutes } from './mafteach.js';
 import { ownersOnly } from './private.js';
-import { catalogSnapshotRoutes, snapshotAfterWrites, type SnapshotOptions } from './catalogSnapshot.js';
+import { catalogSnapshotRoutes, type SnapshotOptions } from './catalogSnapshot.js';
 
 /**
  * The ChassidusHub API, version 1 (docs/developers/api.md). Reading needs
@@ -225,7 +225,6 @@ export function createApp(options: ApiOptions): Hono {
   app.use('*', caching());
   app.use('*', tokenGate(catalog, options.rateLimits));
   if (options.privateTo) app.use('*', ownersOnly(catalog, options.privateTo.owners, authenticate));
-  if (options.catalogSnapshot) app.use('*', snapshotAfterWrites(options.catalogSnapshot, options.waitUntil));
 
   if (options.auth) authRoutes(app, catalog, options.mailer && !options.auth.mailer ? { ...options.auth, mailer: options.mailer } : options.auth);
   adminRoutes(app, catalog, signedIn);
@@ -247,7 +246,7 @@ export function createApp(options: ApiOptions): Hono {
   organizeRoutes(app, catalog, signedIn);
   fixRoutes(app, catalog, signedIn, { judge: options.fixJudge ?? null, liveFixes: options.liveFixes ?? false });
   appCatalogRoutes(app, catalog, options.appReleases, options.readerCatalog);
-  catalogSnapshotRoutes(app, catalog, options.catalogSnapshot, options.waitUntil);
+  catalogSnapshotRoutes(app, catalog, options.catalogSnapshot);
   mafteachRoutes(app, catalog, options.kept);
   machineRoutes(app, catalog, signedIn, { kept: options.kept, dispatch: options.machineDispatch, waitUntil: options.waitUntil ? (_c, work) => options.waitUntil!(work) : undefined });
   scanRoutes(app, catalog, {
@@ -1257,12 +1256,19 @@ export function createApp(options: ApiOptions): Hono {
     const input = await body<{ items?: unknown }>(c);
     if (!Array.isArray(input.items) || input.items.length === 0) throw new HttpError(400, 'give items: a list of { type, data, id?, path? }');
     if (input.items.length > SUGGESTION_ITEMS_MAX) throw new HttpError(400, `at most ${SUGGESTION_ITEMS_MAX} items a call; send the rest in another`);
-    const items = (input.items as Array<{ id?: unknown; type?: unknown; data?: Json | null; path?: unknown }>).map((item, i) => {
+    const items = (input.items as Array<{ id?: unknown; type?: unknown; data?: Json | null; set?: unknown; path?: unknown }>).map((item, i): NewRevision | FieldsRevision => {
       if (!item || typeof item !== 'object' || typeof item.type !== 'string') throw new HttpError(400, `item ${i + 1}: say which type of item this is`);
-      if (item.data === undefined) throw new HttpError(400, `item ${i + 1}: give the item's data (null deletes it)`);
       if (item.id !== undefined && !isEntityId(item.id)) throw new HttpError(400, `item ${i + 1}: "${String(item.id)}" is not an id`);
       if (item.path !== undefined && item.path !== null && typeof item.path !== 'string') throw new HttpError(400, `item ${i + 1}: path is a string`);
-      return { id: item.id as EntityId | undefined, type: item.type as EntityType, data: item.data, path: item.path as string | null | undefined };
+      const path = item.path as string | null | undefined;
+      // Only some fields of an existing item: changed where the item is, so its words are never sent (#325).
+      if (item.set !== undefined) {
+        if (item.data !== undefined) throw new HttpError(400, `item ${i + 1}: give data or set, not both`);
+        if (item.id === undefined || !item.set || typeof item.set !== 'object' || Array.isArray(item.set)) throw new HttpError(400, `item ${i + 1}: set changes an existing item: give its id, and set as an object of fields`);
+        return { id: item.id as EntityId, type: item.type as EntityType, set: item.set as { [field: string]: Json | null }, path };
+      }
+      if (item.data === undefined) throw new HttpError(400, `item ${i + 1}: give the item's data (null deletes it), or set`);
+      return { id: item.id as EntityId | undefined, type: item.type as EntityType, data: item.data, path };
     });
     return c.json({ ids: await catalog.putRevisions(intParam(c.req.param('id'), 'id')!, by, items) });
   });
@@ -1334,6 +1340,18 @@ export function createApp(options: ApiOptions): Hono {
   // A catalog batch's tree before and after (batchTree.ts): each shelf, sefer or farbrengen it changes, its children now
   // and once approved, each marked. Names and places only, never words. Short at the edge: a keeper reads it right after a push.
   app.get('/v1/suggestions/:id/tree', async (c) => c.json(await batchTree(catalog, intParam(c.req.param('id'), 'id')!), 200, { 'Cache-Control': 'public, max-age=0, s-maxage=10' }));
+  // The same batch counted, sampled and listed (batchReview.ts), for checking a big one on a phone. Names, places, facts
+  // and first words; a source's withheld words are left out.
+  app.get('/v1/suggestions/:id/batch', async (c) => {
+    const kind = c.req.query('kind');
+    const review = await batchReview(catalog, intParam(c.req.param('id'), 'id')!, {
+      kind: (CHANGE_KINDS as readonly string[]).includes(kind ?? '') ? (kind as ChangeKind) : null,
+      q: c.req.query('q') ?? '',
+      offset: Math.max(intParam(c.req.query('offset'), 'offset') ?? 0, 0),
+      limit: Math.min(Math.max(intParam(c.req.query('limit'), 'limit') ?? 30, 1), 100),
+    });
+    return c.json(review, 200, { 'Cache-Control': 'public, max-age=0, s-maxage=10' });
+  });
   app.post('/v1/suggestions/:id/merge-check', async (c) => {
     const viewer = (await authenticate?.(c)) ?? null;
     const input = await body<{ resolutions?: unknown }>(c).catch(() => ({}) as { resolutions?: unknown });

@@ -26,7 +26,14 @@ export interface TreeGap {
 export type TreeLine = TreeRow | TreeGap;
 
 export interface TreeGroup {
-  parent: { id: string; type: string; name: string; path: string | null; isNew: boolean; gone: boolean };
+  parent: {
+    id: string;
+    type: string;
+    name: string;
+    path: string | null;
+    isNew: boolean;
+    gone: boolean;
+  };
   before: TreeLine[];
   after: TreeLine[];
   counts: { before: number; after: number };
@@ -70,10 +77,23 @@ export function queueOf(suggestions: readonly Record<string, unknown>[]): QueueR
 }
 
 /** Where this batch stands in the queue, and the ones beside it. */
-export function placeIn(queue: readonly QueueRow[], id: number): { at: number; of: number; previous: QueueRow | null; next: QueueRow | null } {
+export function placeIn(
+  queue: readonly QueueRow[],
+  id: number,
+): {
+  at: number;
+  of: number;
+  previous: QueueRow | null;
+  next: QueueRow | null;
+} {
   const at = queue.findIndex((row) => row.id === id);
   if (at < 0) return { at: -1, of: queue.length, previous: null, next: queue[0] ?? null };
-  return { at, of: queue.length, previous: queue[at - 1] ?? null, next: queue[at + 1] ?? null };
+  return {
+    at,
+    of: queue.length,
+    previous: queue[at - 1] ?? null,
+    next: queue[at + 1] ?? null,
+  };
 }
 
 /** Each mark in a word or two, said beside the item (and to a screen reader), never by colour alone. */
@@ -87,7 +107,14 @@ export const MARK_WORDS: Record<Exclude<TreeMark, 'same'>, string> = {
 };
 
 /** The same, for more than one. */
-const MARKS_WORDS: Record<Exclude<TreeMark, 'same'>, string> = { out: 'יוצאים', in: 'נכנסים', new: 'חדשים', gone: 'נמחקים', renamed: 'עם שם חדש', moved: 'במקום חדש' };
+const MARKS_WORDS: Record<Exclude<TreeMark, 'same'>, string> = {
+  out: 'יוצאים',
+  in: 'נכנסים',
+  new: 'חדשים',
+  gone: 'נמחקים',
+  renamed: 'עם שם חדש',
+  moved: 'במקום חדש',
+};
 
 /** Folded rows in words: "עוד 40", or "עוד 25 נכנסים" when they share a mark. */
 export function gapWords(gap: TreeGap): string {
@@ -110,3 +137,101 @@ export function tally(group: TreeGroup): string {
 
 /** What the person does when they send a batch back: a short note, or this when they write none. */
 export const SENT_BACK = 'הוחזר מתור הקטלוג לבדיקה נוספת.';
+
+/**
+ * The same batch counted, sampled and listed, as the API reads it (GET
+ * /v1/suggestions/:id/batch, core batchReview.ts): how many of each kind of
+ * change, where things go, a few samples of each kind, and a page of the
+ * whole list.
+ */
+export type ChangeKind = 'new' | 'moved' | 'merged' | 'renamed' | 'relabelled' | 'reordered' | 'words' | 'deleted';
+
+export const CHANGE_KINDS: readonly ChangeKind[] = ['moved', 'merged', 'renamed', 'relabelled', 'reordered', 'new', 'words', 'deleted'];
+
+export interface BatchPlace {
+  id: string;
+  name: string;
+  path: string | null;
+}
+
+export interface BatchItem {
+  id: string;
+  type: string;
+  kinds: ChangeKind[];
+  name: string;
+  was?: string;
+  path: string | null;
+  from?: BatchPlace | null;
+  to?: BatchPlace | null;
+  into?: BatchPlace | null;
+  facts?: Array<{ field: string; before: string | null; after: string | null }>;
+  words?: {
+    paragraphs: number;
+    first: string | null;
+    added: boolean;
+    machine: boolean;
+  };
+}
+
+export interface BatchList {
+  kind: ChangeKind | null;
+  q: string;
+  offset: number;
+  limit: number;
+  total: number;
+  rows: BatchItem[];
+}
+
+export interface BatchReview {
+  items: number;
+  counts: Partial<Record<ChangeKind, number>>;
+  machine: number;
+  flows: Array<{
+    way: 'moved' | 'new' | 'merged';
+    from: BatchPlace | null;
+    to: BatchPlace | null;
+    count: number;
+  }>;
+  flowsMore: number;
+  samples: Array<{ kind: ChangeKind; items: BatchItem[] }>;
+  list: BatchList;
+}
+
+/** Each kind of change as the summary names it, and as a mark beside one item. */
+export const KIND_WORDS: Record<ChangeKind, { many: string; one: string }> = {
+  moved: { many: 'מועברים', one: 'מועבר' },
+  merged: { many: 'מאוחדים', one: 'מאוחד' },
+  renamed: { many: 'בשם חדש', one: 'שם חדש' },
+  relabelled: { many: 'בפרטים חדשים', one: 'פרטים' },
+  reordered: { many: 'במקום אחר בסדר', one: 'סדר' },
+  new: { many: 'חדשים', one: 'חדש' },
+  words: { many: 'עם טקסט', one: 'טקסט' },
+  deleted: { many: 'נמחקים', one: 'נמחק' },
+};
+
+/** "120 מועברים · 3 בשם חדש": the batch in one line, for the confirm sheet and the summary's head. */
+export function countsLine(counts: BatchReview['counts']): string {
+  return CHANGE_KINDS.filter((kind) => counts[kind])
+    .map((kind) => `${counts[kind]!.toLocaleString('he')} ${counts[kind] === 1 ? KIND_WORDS[kind].one : KIND_WORDS[kind].many}`)
+    .join(' · ');
+}
+
+/** Facts by the names people know them by; others as the catalog names them. */
+export const FACT_WORDS: Record<string, string> = {
+  date: 'תאריך',
+  position: 'מקום בספר',
+  label: 'כותרת',
+  title: 'שם',
+  name: 'שם',
+  recipient: 'נמען',
+  recipients: 'נמענים',
+  number: 'מספר',
+  kind: 'סוג',
+  editions: 'מהדורות',
+  externalIds: 'מזהים חיצוניים',
+  addition: 'תוספת',
+  languages: 'שפות',
+  language: 'שפה',
+  authors: 'מחברים',
+  genre: 'סוג',
+};

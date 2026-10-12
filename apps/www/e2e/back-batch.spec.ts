@@ -19,6 +19,7 @@ test('a batch shows its research note and where each item goes, and asks to sign
   await expect(page.getByRole('heading', { level: 1 })).toContainText('סידור שיחות בספר לדוגמה');
   await expect(page.getByText('השיחה השנייה שייכת לספר השני')).toBeVisible();
   await expect(page.getByText('1 מתוך 2')).toBeVisible();
+  await page.getByText('העץ, לפני ואחרי').click();
   const second = page.getByRole('region', { name: 'ספר שני לדוגמה' });
   await expect(second.locator('.bt-after .bt-in')).toContainText('שיחה ב');
   await expect(second.locator('.bt-after .bt-in .bt-mark')).toHaveText('נכנס');
@@ -27,6 +28,7 @@ test('a batch shows its research note and where each item goes, and asks to sign
 
 test('on a phone, Before shows what leaves; on a desktop both sides show at once', async ({ page }, info) => {
   await page.goto('/back/batch/405');
+  await page.getByText('העץ, לפני ואחרי').click();
   const first = page.getByRole('region', { name: 'ספר ראשון לדוגמה' });
   const out = first.locator('.bt-before .bt-out');
   if (info.project.name === 'phone') {
@@ -43,13 +45,23 @@ test('a keeper approves a batch with one tap and goes on to the next', async ({ 
   await page.request.get('http://localhost:3002/_suggestions/reset');
   await signIn(page);
   await page.goto('/back/batch/405');
-  await page.getByRole('button', { name: 'לאשר' }).click();
+  await page.getByRole('button', { name: 'לאשר', exact: true }).click();
+  // The sheet says again what is being decided before the second tap.
+  const sheet = page.getByRole('dialog', { name: 'לאשר את ההצעה?' });
+  await expect(sheet).toContainText('244 פריטים: 241 מועברים · 1 מאוחד · 6 בשם חדש');
+  await sheet.getByRole('button', { name: 'כן, לאשר' }).click();
   await expect(page.getByText('אישרתם, והשינוי נכנס לספרייה.')).toBeVisible();
   const done = (await (await page.request.get('http://localhost:3002/_suggestions')).json()) as { id: number; what: string; body: { verdict?: string } }[];
-  expect(done).toContainEqual(expect.objectContaining({ id: 405, what: 'POST reviews', body: expect.objectContaining({ verdict: 'approve' }) }));
+  expect(done).toContainEqual(
+    expect.objectContaining({
+      id: 405,
+      what: 'POST reviews',
+      body: expect.objectContaining({ verdict: 'approve' }),
+    }),
+  );
   await page.getByRole('button', { name: 'להצעה הבאה' }).click();
   await expect(page).toHaveURL(/\/back\/batch\/406$/);
-  await expect(page.getByText('היה: שיחה א')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'בשם חדש' }).locator('.br-old')).toHaveText('שיחה א');
 });
 
 test('sending back one’s own batch closes it with the note, since nobody sends their own back to themselves', async ({ page }, info) => {
@@ -57,11 +69,45 @@ test('sending back one’s own batch closes it with the note, since nobody sends
   await page.request.get('http://localhost:3002/_suggestions/reset');
   await signIn(page);
   await page.goto('/back/batch/406');
-  await page.getByRole('button', { name: 'להוסיף הערה' }).click();
-  await page.getByLabel('הערה (לא חובה)').fill('חסר מקור לדוגמה.');
-  await page.getByRole('button', { name: 'להחזיר' }).click();
+  await page.getByRole('button', { name: 'להחזיר', exact: true }).click();
+  const sheet = page.getByRole('dialog', { name: 'להחזיר את ההצעה?' });
+  await sheet.getByLabel('מה לתקן (לא חובה)').fill('חסר מקור לדוגמה.');
+  await sheet.getByRole('button', { name: 'כן, להחזיר' }).click();
   await expect(page.getByText('ההצעה נסגרה עם ההערה')).toBeVisible();
   const done = (await (await page.request.get('http://localhost:3002/_suggestions')).json()) as { id: number; what: string; body: { body?: string } }[];
   expect(done.filter((d) => d.id === 406).map((d) => d.what)).toEqual(['POST comments', 'POST withdraw']);
   expect(done.find((d) => d.id === 406)!.body.body).toBe('חסר מקור לדוגמה.');
+});
+
+test('a big batch: its counts and where things go first, then samples of each kind, then the whole list a page at a time', async ({ page }) => {
+  await page.goto('/back/batch/405');
+  const summary = page.locator('.br-sum');
+  await expect(summary).toContainText('244 פריטים');
+  await expect(summary).toContainText('241 מועברים');
+  await expect(summary.locator('.br-flows li').first()).toContainText('ספר ראשון לדוגמה');
+  await expect(summary.locator('.br-flows li').first()).toContainText('201');
+  // Samples of each kind, the first and the last among them.
+  const moved = page.getByRole('region', { name: 'מועברים' });
+  await expect(moved.locator('.br-row')).toHaveCount(5);
+  await expect(page.getByRole('region', { name: 'בשם חדש' })).toContainText('שיחה לדוגמה 40');
+  // The list: thirty at a time, the next thirty a tap away, and a search that narrows it.
+  const list = page.locator('.br-list');
+  await expect(list.locator('.br-row')).toHaveCount(30);
+  await expect(list).toContainText('1–30 מתוך 244');
+  await list.getByRole('button', { name: 'הבאים' }).click();
+  await expect(list).toContainText('31–60 מתוך 244');
+  await list.getByRole('searchbox').fill('שיחה 120 לדוגמה');
+  await expect(list.locator('.br-row')).toHaveCount(1);
+  await list.getByRole('searchbox').fill('');
+  await list.getByRole('button', { name: 'נמחקים 2' }).click();
+  await expect(list.locator('.br-row')).toHaveCount(2);
+});
+
+test('approve and send back stay in reach at the foot of the screen while a big batch is read', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/back/batch/405');
+  await expect(page.locator('.br-list .br-row').first()).toBeVisible();
+  await page.mouse.wheel(0, 3000);
+  await expect(page.getByRole('button', { name: 'לאשר', exact: true })).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'להחזיר', exact: true })).toBeInViewport();
 });

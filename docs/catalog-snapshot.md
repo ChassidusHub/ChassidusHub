@@ -40,19 +40,22 @@ that bucket.
 From main, never from anyone's words: units from `unit_place` (migration
 0030), and of every other item only the fields listed below.
 
-- After any write to the API that went through (an Approve, a live fix, an
-  organize, by the site, a token or the MCP server), behind its answer.
-- When a manifest is asked for and main has changed since the one kept: that
-  answer still serves the kept one, and the build runs behind it.
-- By the scheduled run, every minute.
-Never while someone waits: a whole build on live runs longer than a request
-may (30 s). With none built yet (an empty bucket), the manifest answers `503`
-with `Retry-After: 30` and starts a build behind the answer; a reader falls
-back to the API until it answers. Each build logs how long it took, how many
-statements it sent and its slowest one.
+By the scheduled run, every minute, and only there. Never while someone
+waits, and never behind a request either: what a request leaves running is
+cut off 30 s after its answer, and a whole build on live takes 13-27 s,
+longer while the database is busy. Built behind every write and every
+stale manifest, as it once was, builds were cut off 527 times in one day
+(12 October 2026; every draft edit started one), each holding the claim
+below for 90 s and the database for up to 30 s. So a merge reaches the
+snapshot within a minute or so; the manifest is kept a minute at the edge
+in any case. With none built yet (an empty bucket), the manifest answers
+`503` with `Retry-After: 60` until the run has built one; a reader falls
+back to the API until it answers. Each build logs how long it took, how
+many statements it sent and its slowest one.
 
 Each check costs one statement when nothing changed. One build runs at a time
-across all of the API's Workers: a build first takes a claim
+across all of the API's Workers (the run's next minute can start while one
+still builds): a build first takes a claim
 (`catalog/building.json` in the same bucket, written only over the copy just
 read, by its etag), and a Worker that finds it held serves the snapshot there
 is. The claim is handed back when the build is done, or lapses after 90 s if
@@ -281,6 +284,14 @@ sefer elsewhere brings that sefer along, so its link can be drawn.
 A file named here changes only when what it holds changes: a new event
 changes the years file, not the top or a shelf; a new unit changes its
 shelf's file (its sefer's work file has a new name), not the top.
+
+The new site writes index.json into every page it draws, as
+`<script type="application/json" id="catalog-index">`. The Worker keeps it
+in memory and asks for it again each minute, so a page never waits for it.
+A first visit then asks for the top file and its shelf's file at load, with
+no wait for the index. A page kept at the edge for days may carry an older
+index. Files are never removed, so every file it names is still there, and
+the browser asks for the current index behind it.
 
 ## Changing the format
 
