@@ -3,6 +3,7 @@ import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { forEdge, inGroups, mayUseEdge, Seen, seenIn, tagged } from './edge';
+import { apiFiles, bucketFiles, catalogFile, keptAtEdge, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
 import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
 // @ts-ignore - made by `react-router build`
 import * as build from '../build/server/index.js';
@@ -14,6 +15,8 @@ interface Env {
   API_URL?: string;
   /** The public bucket, where showcases are kept (app/stewards/showcase.ts). */
   FILES_PUBLIC?: ShowcaseBucket;
+  /** "off" hands the browser no catalog snapshot, so its clicks are all drawn by the server (server/catalog.ts). */
+  CATALOG_SNAPSHOT?: string;
 }
 
 interface Ctx {
@@ -79,8 +82,26 @@ export class CachedPage extends WorkerEntrypoint<Env> {
   }
 }
 
+/** The catalog snapshot's files, read once per isolate (server/catalog.ts). */
+let snapshotFiles: SnapshotFiles | null = null;
+
+function catalogFiles(env: Env): SnapshotFiles | null {
+  if (env.CATALOG_SNAPSHOT === 'off') return null;
+  // Straight from the bucket the API writes them to, else through the API.
+  snapshotFiles ??= keptAtEdge(
+    env.FILES_PUBLIC
+      ? bucketFiles(env.FILES_PUBLIC as unknown as SnapshotBucket)
+      : apiFiles(env.API_URL ?? 'https://api.chassidushub.org', (url) => (env.API ? env.API.fetch(url) : fetch(url))),
+    (globalThis as { caches?: { default?: EdgeStore } }).caches?.default,
+  );
+  return snapshotFiles;
+}
+
 export default {
-  fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
+    // The catalog snapshot's files, for the browser to keep (/_/ is never a kept page).
+    const file = await catalogFile(request, catalogFiles(env), () => apiFor({ binding: env.API, baseUrl: env.API_URL }).transcribedRecordings({ limit: 1000 }));
+    if (file) return file;
     const cached = ctx.exports?.CachedPage;
     if (cached && mayUseEdge(request)) return cached.fetch(forEdge(request, serverBuild.assets.version));
     return draw(request, env, env.API);

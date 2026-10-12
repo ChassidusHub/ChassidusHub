@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { itemToolsAnswer } from './fixture-item-tools';
 import { libraryAnswer } from './fixture-library';
+import { snapshotAnswer } from './fixture-snapshot';
 import { listenAnswer, paragraphWords, shelves } from './fixture-listen';
 import { searchAnswer } from './fixture-search';
 import { suggestionsAnswer } from './fixture-suggestions';
@@ -334,7 +335,7 @@ createServer((req, res) => {
     const found = byId(entity) as { item: unknown } | undefined;
     if (found) return res.end(JSON.stringify(found.item));
   }
-  const view = (url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : undefined) ?? libraryAnswer(url, shelves) ?? listenAnswer(url);
+  const view = (url.pathname === '/v1/view' ? (url.searchParams.get('id') ? byId(url.searchParams.get('id')) : views[url.searchParams.get('path') ?? '']) : undefined) ?? libraryAnswer(url, shelves) ?? listenAnswer(url) ?? snapshotAnswer(url);
   if (!view) {
     res.statusCode = 404;
     return res.end(JSON.stringify({ error: 'not-found', message: 'not found' }));

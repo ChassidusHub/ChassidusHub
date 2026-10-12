@@ -42,5 +42,14 @@ packages/client; through the Worker's service binding on Cloudflare). A route
 names its place in the bar with `handle = { section }`; a page's top is
 `<TopBar path={…} />` or `<TopBar title={…} />`.
 
+A click to the library, a shelf, a sefer, a volume or a year of listening is
+drawn in the browser from the catalog snapshot (docs/catalog-snapshot.md,
+app/catalog), with no server round trip: the browser reads it from
+`/_/catalog/…` once, a few seconds after the first page, and keeps it in Cache
+Storage (each route's `clientLoader`, app/catalog/clicks.ts). The server
+still draws every page from the API, so the edge can tag it and forget it
+when it changes (server/edge.ts). Anything the snapshot cannot answer is
+asked of the server. `CATALOG_SNAPSHOT=off` turns it off.
+
 In a cloud session DATABASE_URL is the live database: start anything local with
 `env -u DATABASE_URL`.
