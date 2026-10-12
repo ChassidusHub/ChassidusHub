@@ -43,19 +43,15 @@ async function keptWords(url: string): Promise<DrawnWords> {
  * notes' comes a frame later, with the page that has notes.
  */
 async function drawInto(path: string, words: DrawnWords) {
-  let body = false;
-  let notes = !words.notes;
-  for (let frame = 0; frame < 120 && !(body && notes); frame++) {
-    const bodyAt = body ? null : document.querySelector(`[data-html="${CSS.escape(`body:${path}`)}"]`);
-    if (bodyAt) {
-      bodyAt.innerHTML = words.body;
-      body = true;
+  const left = new Map(([['body', words.body], ['notes', words.notes]] as const).filter(([, html]) => html));
+  for (let frame = 0; frame < 120 && left.size; frame++) {
+    for (const [part, html] of left) {
+      const place = document.querySelector(`[data-html="${CSS.escape(`${part}:${path}`)}"]`);
+      if (place) {
+        place.innerHTML = html;
+        left.delete(part);
+      }
     }
-    const notesAt = notes ? null : document.querySelector(`[data-html="${CSS.escape(`notes:${path}`)}"]`);
-    if (notesAt) {
-      notesAt.innerHTML = words.notes;
-      notes = true;
-    }
-    if (!(body && notes)) await new Promise((next) => requestAnimationFrame(next));
+    if (left.size) await new Promise((next) => requestAnimationFrame(next));
   }
 }
