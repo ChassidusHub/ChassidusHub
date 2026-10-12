@@ -10,6 +10,14 @@ any time. `@chassidushub/client` carries the API's version.
 
 ## Unreleased
 
+- Searching a sefer's or set's own name puts it first (#233): on the All
+  tab, the sefarim and sets named just what was typed, in any language,
+  come above the words in the texts and the farbrengens. A language asked
+  for ("Tanya in English") is taken off the name when the whole words name
+  nothing. When nothing has every word ("the Rebbe talks in English"), the
+  page shows what the other words name, in any language, and says so
+  (#123).
+
 - The web app's catalog (`/v1/app/v1/catalog/…`) answers again: it is built
   from the farbrengens alone, without reading every sefer's units, which
   only schema 3 shows and which took longer than a request may (a 502

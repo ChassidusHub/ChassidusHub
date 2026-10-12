@@ -7,6 +7,7 @@ import { itemHead } from '../tools/item.server';
 import { ItemTop } from '../tools/ItemTop';
 import { Button, Icon, Say, Segmented } from '../ui';
 import type { Route } from './+types/history';
+import { KEPT_PAGE } from '../lib/caching';
 
 /**
  * An item's history: every version, newest first, as a pull request's
@@ -20,7 +21,7 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   return { head, history: history.history as unknown as Version[] };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=60, s-maxage=300' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export const handle = { section: 'library' };
 

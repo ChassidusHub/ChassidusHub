@@ -3,6 +3,7 @@ import { dayOf, KINDS, sizeOf } from '../tools/common';
 import { itemName, orNothing } from '../tools/item.server';
 import { Row, Rows, SectionHead, TopBar } from '../ui';
 import type { Route } from './+types/file';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** A file as GET /v1/files/{sha256}/about tells of it. */
 interface FileAbout {
@@ -86,7 +87,7 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=300, s-maxage=3600' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export function meta({ data: file }: Route.MetaArgs) {
   return [{ title: file ? `${kindOf(file.mime)} ${short(file.sha256)} · ChassidusHub` : 'ChassidusHub' }];

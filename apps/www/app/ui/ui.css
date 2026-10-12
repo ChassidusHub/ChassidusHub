@@ -169,7 +169,8 @@ svg.i.filled { fill: currentColor; stroke: none; }
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding-block: 6px;
   border-bottom: 1px solid var(--g300); text-align: start;
 }
-.row:last-child { border-bottom: 0; }
+/* The last row, whatever follows it: a link prefetching the next page (prefetch="intent") may come after it. */
+.row:not(:has(~ .row)) { border-bottom: 0; }
 .row:hover { background: linear-gradient(var(--g50), var(--g50)); }
 .row .t { flex: 1; min-width: 0; }
 .row .t b { display: block; font-weight: 500; }
@@ -472,6 +473,20 @@ form[role='search'] { margin-block: 8px 4px; }
 .hero h1 { font-family: var(--title); font-weight: 500; font-size: 30px; margin: 0 0 6px; }
 .hero p { margin: 0 0 18px; color: var(--g600); font-size: 14px; }
 .hero + .tiles { margin-top: 16px; }
+/*
+ * "Continue" on Home and Listen is drawn in the browser (pages are the same
+ * for everyone, kept at the edge). When this browser has somewhere to
+ * continue, the first-paint script marks <html> (listen/stopped.ts), and the
+ * place is kept open at the height of what comes, so nothing moves.
+ */
+.resume:empty { display: none; }
+:root[data-resume] .resume:empty { display: grid; }
+:root[data-resume] .tiles.resume { min-height: var(--resume-tile); }
+:root[data-resume~="listen"] .resume-listen { min-height: var(--resume-row); }
+:root { --resume-tile: 78px; --resume-row: 83.25px; }
+@media (max-width: 540px) {
+  :root[data-resume~="listen"][data-resume~="read"] .tiles.resume { min-height: calc(2 * var(--resume-tile) + 10px); }
+}
 /* A recording's page: the play button and the machine label under the title. */
 .rec-acts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0 8px; }
 /*
@@ -597,6 +612,8 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 }
 .say.bad { border-inline-start-color: var(--g900); }
 .say svg.i { margin-top: 2px; }
+/* A long address in a message (a showcase's link) breaks inside the box, so a phone's page never grows wider than the screen. */
+.say > div { min-width: 0; overflow-wrap: anywhere; }
 .or { display: flex; align-items: center; gap: 10px; margin: 16px 0 6px; font-size: 13px; color: var(--g600); }
 .or::before, .or::after { content: ''; flex: 1; border-top: 1px solid var(--g300); }
 .panel .chips, .panel .seg { margin-top: 4px; }

@@ -7,6 +7,7 @@ import { itemHead, orNothing } from '../tools/item.server';
 import { ItemTop } from '../tools/ItemTop';
 import { Button, Field, Say, SectionHead } from '../ui';
 import type { Route } from './+types/shaar';
+import { KEPT_PAGE } from '../lib/caching';
 
 /** The header's fields, and what each holds (docs/shaar.md). */
 const FIELDS: Array<[string, string]> = [
@@ -32,7 +33,7 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   return { head, text: file.text, machine: file.machine, sections: SHAAR_SECTIONS.map((s) => `## ${s.he} | ${s.en}`) };
 }
 
-export const headers = () => ({ 'Cache-Control': 'public, max-age=60, s-maxage=300' });
+export const headers = () => ({ 'Cache-Control': KEPT_PAGE });
 
 export const handle = { section: 'library' };
 
