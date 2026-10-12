@@ -39,6 +39,7 @@ import * as unitPlacePart from './migrations/0037_unit_place_part.js';
 import * as changesetClientKey from './migrations/0038_changeset_client_key.js';
 import * as searchTsvPage from './migrations/0039_search_tsv_page.js';
 import * as searchTsvSegment from './migrations/0040_search_tsv_segment.js';
+import * as searchTsvUnit from './migrations/0041_search_tsv_unit.js';
 import { HOLD_EVERY_TABLE_SQL } from './hold.js';
 
 export interface Migration {
@@ -99,6 +100,7 @@ export const MIGRATIONS: readonly Migration[] = [
   { version: 38, name: 'changeset-client-key', up: changesetClientKey.up },
   { version: 39, name: 'search-tsv-page', up: searchTsvPage.up, outside: searchTsvPage.outside },
   { version: 40, name: 'search-tsv-segment', up: searchTsvSegment.up, outside: searchTsvSegment.outside },
+  { version: 41, name: 'search-tsv-unit', up: searchTsvUnit.up, outside: searchTsvUnit.outside },
 ];
 
 /** Postgres's code for a statement that gave up waiting for a lock (`lock_timeout`). */
