@@ -59,6 +59,7 @@ last. A manifest never goes back to an older catalog.
   "builtAt": "2026-10-12T02:00:11.412Z",
   "base": "https://api.chassidushub.org/v1/catalog/files/",
   "tree": { "file": "tree.3f9c0d1e2a4b5c6d.json", "bytes": 512301, "sha256": "3f9c…" },
+  "names": { "file": "names.7e6d5c4b3a291807.json", "bytes": 6120400, "sha256": "7e6d…", "rows": 81200 },
   "works": {                   // each sefer that has units, by id
     "rh-1a2b3c": { "file": "work-rh-1a2b3c.0d1e2f3a4b5c6d7e.json", "bytes": 81233, "sha256": "0d1e…", "units": 1530 }
   },
@@ -164,6 +165,31 @@ and `/v1/transcripts` keeps that list.
   ]
 }
 ```
+
+## names.json
+
+Every name above as one flat list, for finding a name as the person types,
+in the browser, with no server (the reader app's search does the same). One
+row per shelf, sefer, volume (where units sit inside volumes), unit and
+event:
+
+```jsonc
+{
+  "format": 1,
+  "names": [
+    // [kind, title, titleEn, parent, path, date?]
+    ["shelf", "שיחות", null, "הרבי", "/sets/sichos"],
+    ["sefer", "ליקוטי שיחות", null, "שיחות", "/likkutei-sichos"],
+    ["volume", "חלק יב", null, "ליקוטי שיחות", "/likkutei-sichos/12"],
+    ["sicha", "בראשית א", "Bereishis 1", "ליקוטי שיחות חלק יב", "/likkutei-sichos/12/3"],
+    ["farbrengen", "יו״ד שבט תשמ״ב", "Yud Shvat 5742", null, "/events/5742-05-10", "י׳ שבט תשמ״ב"]
+  ]
+}
+```
+
+A unit's kind is its own level (`sicha`, `maamar`, `letter`, `chapter`,
+`siman`…); `parent` is what it is in, so a search may spend words on the
+sefer's name; `date` is an event's Hebrew date in words.
 
 ## Changing the format
 

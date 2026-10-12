@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Catalog, SnapshotManifest, SnapshotTree, SnapshotWorkFile, SnapshotYearFile } from '@chassidushub/core';
+import type { Catalog, SnapshotManifest, SnapshotNamesFile, SnapshotTree, SnapshotWorkFile, SnapshotYearFile } from '@chassidushub/core';
 import { SNAPSHOT_FILE_NAME, SNAPSHOT_MANIFEST_KEY, memorySnapshotStore, readSnapshot, refreshSnapshot, snapshotFileKey, snapshotSeq, writeSnapshot } from '@chassidushub/core';
 import type { EntityId } from '@chassidushub/model';
 import { add, freshCatalog, yudShvat } from './helpers.js';
@@ -64,7 +64,7 @@ describe('catalog snapshot', () => {
     expect(manifest.seq).toBe((await snapshotSeq(catalog.db)).seq);
     expect(manifest.version).toBe(String(manifest.seq));
     expect(manifest.counts).toMatchObject({ units: 3, events: 1 });
-    for (const f of [manifest.tree, ...Object.values(manifest.works), ...Object.values(manifest.years)]) expect(f.file).toMatch(SNAPSHOT_FILE_NAME);
+    for (const f of [manifest.tree, manifest.names, ...Object.values(manifest.works), ...Object.values(manifest.years)]) expect(f.file).toMatch(SNAPSHOT_FILE_NAME);
 
     const tree = await read<SnapshotTree>(manifest.tree.file);
     expect(tree.top[0]).toBe(rebbe);
@@ -98,6 +98,15 @@ describe('catalog snapshot', () => {
     // Letters are left to their sefer.
     expect(Object.keys(manifest.years)).toEqual(['5742']);
     const year = await read<SnapshotYearFile>(manifest.years['5742']!.file);
+    // Every name, flat, for search as the person types.
+    const names = (await read<SnapshotNamesFile>(manifest.names.file)).names;
+    expect(manifest.names.rows).toBe(names.length);
+    expect(names).toContainEqual(['shelf', 'שיחות', null, 'הרבי', '/sets/sichos']);
+    expect(names).toContainEqual(['sefer', 'ליקוטי שיחות', null, 'שיחות', '/likkutei-sichos']);
+    expect(names).toContainEqual(['volume', 'חלק 1', null, 'ליקוטי שיחות', '/likkutei-sichos/1']);
+    expect(names).toContainEqual(['sicha', 'שיחה 2', 'Sicha 2', 'ליקוטי שיחות חלק 1', '/likkutei-sichos/1/2']);
+    expect(names).toContainEqual(['farbrengen', 'יו״ד שבט תשמ״ב', 'Yud Shvat 5742', null, '/events/5742-05-10', 'י׳ שבט תשמ״ב']);
+
     expect(year.events).toEqual([{ id: event, path: '/events/5742-05-10', kind: 'farbrengen', date: '5742-05-10', title: { he: 'יו״ד שבט תשמ״ב', en: 'Yud Shvat 5742' }, recordings: 1, links: ['mugah'] }]);
   });
 
@@ -108,7 +117,7 @@ describe('catalog snapshot', () => {
     expect(first.built).toBe(true);
     expect((await refreshSnapshot(catalog.db, store)).built).toBe(false);
 
-    // A new event: the tree and the sefer keep their files; a new year file and a new manifest.
+    // A new event: the tree and the sefer keep their files; a new year file, new names and a new manifest.
     await add(catalog, 'mendy', 'keeper', 'event', yudShvat(set), '/events/5742-05-10');
     const before = store.keys();
     const second = await refreshSnapshot(catalog.db, store);
@@ -116,7 +125,7 @@ describe('catalog snapshot', () => {
     expect(second.manifest.seq).toBeGreaterThan(first.manifest.seq);
     expect(second.manifest.tree.file).toBe(first.manifest.tree.file);
     expect(second.manifest.works[ls]!.file).toBe(first.manifest.works[ls]!.file);
-    expect(store.keys().filter((k) => !before.includes(k))).toEqual([snapshotFileKey(second.manifest.years['5742']!.file)]);
+    expect(store.keys().filter((k) => !before.includes(k))).toEqual([snapshotFileKey(second.manifest.names.file), snapshotFileKey(second.manifest.years['5742']!.file)].sort());
 
     // A sefer renamed: a new tree file; the old one stays for readers holding the old manifest.
     const cs = await catalog.createChangeset('mendy', { title: 'Rename' });

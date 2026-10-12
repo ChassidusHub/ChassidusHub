@@ -1,4 +1,5 @@
 import type { Db } from '@chassidushub/db';
+import { describeDateKey } from '@chassidushub/hebrew';
 import type { EntityId } from '@chassidushub/model';
 
 /**
@@ -15,6 +16,7 @@ import type { EntityId } from '@chassidushub/model';
  *   tree.<hash>.json         every shelf (Set) and sefer, with each sefer's volumes and how many units each holds
  *   work-<id>.<hash>.json    one sefer's units, by volume
  *   year-<yyyy>.<hash>.json  one Hebrew year's farbrengens and other events, with how many recordings each has
+ *   names.<hash>.json        every name above as one flat list, for finding a name as the person types
  *
  * A file is named by its content's sha256, so a file that did not change in a
  * new snapshot keeps its address, and browsers, the edge and a service worker
@@ -73,6 +75,8 @@ export interface SnapshotManifest {
   /** Where the files are: a file's address is `base` + its `file`. The API serves the manifest with an absolute base. */
   base: string;
   tree: SnapshotFile;
+  /** Every shelf, sefer, volume, unit and event by its name, for search as the person types. */
+  names: SnapshotFile & { rows: number };
   /** Each sefer with units, by id. */
   works: Record<EntityId, SnapshotFile & { units: number }>;
   /** Each Hebrew year with events, by year (`"5742"`). */
@@ -174,6 +178,20 @@ export interface SnapshotYearFile {
   format: typeof SNAPSHOT_FORMAT;
   year: number;
   events: SnapshotEvent[];
+}
+
+/**
+ * One name to find (names.json): what it is (`shelf`, `sefer`, `volume`, a
+ * unit's own level such as `sicha` or `letter`, `farbrengen` or `event`),
+ * its Hebrew and English names, the name of what it is in (a volume's
+ * sefer; a unit's sefer and volume), its path, and an event's Hebrew date
+ * in words (`י׳ שבט תשמ״ב`).
+ */
+export type SnapshotNameRow = [kind: string, title: string, titleEn: string | null, parent: string | null, path: string, date?: string | null];
+
+export interface SnapshotNamesFile {
+  format: typeof SNAPSHOT_FORMAT;
+  names: SnapshotNameRow[];
 }
 
 /** Where a snapshot's files are kept: R2 on Workers, memory in tests and local work. */
@@ -291,6 +309,9 @@ interface PlaceRow {
   path: string | null;
 }
 
+/** A unit's kind for names.json: its own level (`sicha`, `letter`), the last of its position's. */
+type UnitKinds = Map<EntityId, string>;
+
 /** How many units a read of unit_place takes at most: a few MB, well inside a Worker's memory. */
 const UNITS_PER_READ = 5000;
 
@@ -301,6 +322,7 @@ export interface SnapshotParts {
   tree: SnapshotTree;
   works: Map<EntityId, SnapshotWorkFile>;
   years: Map<number, SnapshotYearFile>;
+  names: SnapshotNamesFile;
 }
 
 /** A unit's place in its volume, from the last of its position's labels. */
@@ -317,7 +339,7 @@ function groupOf(position: PlaceRow['position']): string | undefined {
 }
 
 /** Every sefer's units, by volume, from unit_place: a few reads of whole sefarim at a time, in each sefer's order. */
-async function unitsByWork(db: Db): Promise<Map<EntityId, SnapshotWorkFile>> {
+async function unitsByWork(db: Db, kinds: UnitKinds): Promise<Map<EntityId, SnapshotWorkFile>> {
   const { rows: counts } = await db.query<{ work_id: EntityId; n: number }>(`SELECT work_id, count(*)::int AS n FROM unit_place WHERE ${FRESH} GROUP BY work_id ORDER BY work_id`);
   const batches: EntityId[][] = [];
   let batch: EntityId[] = [];
@@ -348,6 +370,8 @@ async function unitsByWork(db: Db): Promise<Map<EntityId, SnapshotWorkFile>> {
         out.set(row.work_id, file);
       }
       file.depth = Math.max(file.depth, Array.isArray(row.position) ? row.position.length : 0);
+      const own = Array.isArray(row.position) ? row.position[row.position.length - 1]?.level : undefined;
+      if (typeof own === 'string' && own) kinds.set(row.unit_id, own);
       const value = row.part ?? '';
       // A volume is where its first unit is, in the sefer's order (as workOutline counts them).
       let part = file.parts.find((p) => p.value === value);
@@ -468,17 +492,48 @@ function treeOf(sets: Array<Picked<SetFields>>, works: Array<Picked<WorkFields>>
   return tree;
 }
 
+/** Every name in the tree, the sefarim's units and the years' events, as one flat list. */
+function namesOf(tree: SnapshotTree, works: Map<EntityId, SnapshotWorkFile>, years: Map<number, SnapshotYearFile>, kinds: UnitKinds): SnapshotNamesFile {
+  const names: SnapshotNameRow[] = [];
+  const en = (name: SnapshotName | null) => name?.en ?? null;
+  for (const set of Object.values(tree.sets)) {
+    if (set.path) names.push(['shelf', set.name.he, en(set.name), set.parent ? (tree.sets[set.parent]?.name.he ?? null) : null, set.path]);
+  }
+  for (const work of Object.values(tree.works)) {
+    if (!work.path) continue;
+    const shelf = work.sets[0] ? (tree.sets[work.sets[0]]?.name.he ?? null) : null;
+    names.push(['sefer', work.title.he, en(work.title), shelf, work.path]);
+    const file = works.get(work.id);
+    if (!file) continue;
+    for (const part of file.parts) {
+      // A volume is a page of its own only where units sit inside volumes (/sefer/12/3).
+      const volume = part.label?.he || part.value;
+      if (file.depth > 1 && part.value) names.push(['volume', volume, en(part.label), work.title.he, `${work.path}/${part.value}`]);
+      const parent = file.depth > 1 ? `${work.title.he} ${volume}` : work.title.he;
+      for (const unit of part.items) if (unit.path) names.push([kinds.get(unit.id) ?? 'sicha', unit.title.he, en(unit.title), parent, unit.path]);
+    }
+  }
+  for (const year of [...years.keys()].sort((a, b) => a - b)) {
+    for (const event of years.get(year)!.events) {
+      if (event.path) names.push([event.kind === 'farbrengen' ? 'farbrengen' : 'event', event.title?.he ?? '', en(event.title), null, event.path, describeDateKey(event.date)]);
+    }
+  }
+  return { format: SNAPSHOT_FORMAT, names };
+}
+
 /** Everything a snapshot is made of, read from main. */
 export async function readSnapshot(db: Db): Promise<SnapshotParts> {
   const { seq, at } = await snapshotSeq(db);
   const sets = await picked<SetFields>(db, 'set', ['name', 'slug', 'parent', 'order']);
   const works = await picked<WorkFields>(db, 'work', ['title', 'slug', 'sets', 'order', 'orderIn', 'addition']);
-  const units = await unitsByWork(db);
+  const kinds: UnitKinds = new Map();
+  const units = await unitsByWork(db, kinds);
   const years = await eventsByYear(db);
   // A unit of a sefer that is not on main (deleted, or never merged) has no page to list it on.
   const live = new Set(works.map((w) => w.id));
   for (const id of [...units.keys()]) if (!live.has(id)) units.delete(id);
-  return { seq, changedAt: at, tree: treeOf(sets, works, units), works: units, years };
+  const tree = treeOf(sets, works, units);
+  return { seq, changedAt: at, tree, works: units, years, names: namesOf(tree, units, years, kinds) };
 }
 
 // ------------------------------------------------------------------ writing it
@@ -516,6 +571,7 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
   const had = new Set<string>();
   if (previous) {
     had.add(previous.tree.file);
+    if (previous.names) had.add(previous.names.file);
     for (const f of Object.values(previous.works)) had.add(f.file);
     for (const f of Object.values(previous.years)) had.add(f.file);
   }
@@ -540,6 +596,7 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
     years[String(year)] = { ...(await put(`year-${year}`, file)), events: file.events.length };
   }
   const tree = await put('tree', parts.tree);
+  const names = { ...(await put('names', parts.names)), rows: parts.names.names.length };
   const manifest: SnapshotManifest = {
     format: SNAPSHOT_FORMAT,
     version: String(parts.seq),
@@ -548,6 +605,7 @@ export async function writeSnapshot(db: Db, store: SnapshotStore, options: { bas
     builtAt: (options.now ?? new Date()).toISOString(),
     base: options.base ?? '',
     tree,
+    names,
     works,
     years,
     counts: {
