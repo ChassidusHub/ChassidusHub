@@ -35,6 +35,57 @@ export function toTsQuery(query: string): string | null {
 }
 
 /**
+ * A Hebrew word spelled full or short (כתיב מלא, כתיב חסר): ליקוטי and
+ * לקוטי, דיבור and דבור, are one word to a reader. The forms one yud or vav
+ * away inside the word: each one dropped, or one added between two letters.
+ * The first and last letters stay, since there a yud or vav is a letter of
+ * the word (ויאמר, ליקוטי), not only a vowel. Most are not words at all and
+ * find nothing; a word longer than a name's ever is gets none.
+ */
+export function spellingsOf(word: string): string[] {
+  if (!/^[א-ת]{3,12}$/.test(word)) return [];
+  const out = new Set<string>();
+  for (let i = 1; i < word.length - 1; i++) {
+    if (word[i] === 'י' || word[i] === 'ו') out.add(word.slice(0, i) + word.slice(i + 1));
+  }
+  for (let i = 1; i < word.length; i++) {
+    for (const letter of ['י', 'ו']) {
+      // Never a third yud or vav in a row: no word is spelled so.
+      if (word[i - 1] === letter && word[i] === letter) continue;
+      out.add(word.slice(0, i) + letter + word.slice(i));
+    }
+  }
+  out.delete(word);
+  return [...out].filter((w) => w.length >= 2);
+}
+
+/**
+ * A query as names are looked for: toTsQuery, each Hebrew word also in its
+ * other spellings (spellingsOf), whole words those, so "ליקוטי שיחות" finds
+ * the sefer titled "לקוטי שיחות" (#293). Only names: a sicha's own words are
+ * matched as typed, where a word one letter away is often another word.
+ */
+export function toNameTsQuery(query: string): string | null {
+  const words = normalizeSearchText(query)
+    .split(' ')
+    .filter((w) => w.length > 0)
+    .slice(0, 12);
+  if (words.length === 0) return null;
+  return words.map((w) => {
+    const others = spellingsOf(w);
+    return others.length > 0 ? `(${[`${w}:*`, ...others].join(' | ')})` : `${w}:*`;
+  }).join(' & ');
+}
+
+/** A name with every yud and vav inside a word dropped, so its full and short spellings are one (spellingsOf). */
+export function foldSpelling(text: string): string {
+  return text.replace(/([^ ])[יו]+/g, '$1');
+}
+
+/** foldSpelling in SQL, over an already normalized name. */
+export const foldedSql = (expr: string) => `regexp_replace(${expr}, '([^ ])[יו]+', '\\1', 'g')`;
+
+/**
  * A name as the search compares it, in SQL: what normalizeSearchText does
  * (niqqud, gershayim and quotes dropped, lower case, whatever is not a
  * letter or a digit a space), so `תניא` is the title `תַּנְיָא`.
@@ -70,10 +121,11 @@ export function searchTierSql(query: string, tsQuery: string, typed: string = qu
  * are the names already normalized (normalizedSql), as SQL expressions: a
  * sefer's title and a sicha's own name (unit_place.label) alike.
  */
-export function nameTierSql(normal: readonly string[], query: string, tsQuery: string, typed: string = query): string {
+export function nameTierSql(normal: readonly string[], query: string, tsQuery: string, typed: string = query, folded?: string): string {
   const forms = typed === query ? [query] : [query, typed];
-  const exact = normal.flatMap((n) => forms.map((q) => `${n} = ${q}`)).join(' OR ');
-  const prefix = normal.flatMap((n) => forms.map((q) => `${n} LIKE ${q} || '%'`)).join(' OR ');
+  // `folded`, when given, is the query foldSpelling'd: a name spelled full or short is the query all the same.
+  const exact = [...normal.flatMap((n) => forms.map((q) => `${n} = ${q}`)), ...(folded ? normal.map((n) => `${foldedSql(n)} = ${folded}`) : [])].join(' OR ');
+  const prefix = [...normal.flatMap((n) => forms.map((q) => `${n} LIKE ${q} || '%'`)), ...(folded ? normal.map((n) => `${foldedSql(n)} LIKE ${folded} || '%'`) : [])].join(' OR ');
   const words = normal.map((n) => `to_tsvector('simple', ${n}) @@ to_tsquery('simple', ${tsQuery})`).join(' OR ');
   return `CASE WHEN ${exact} THEN 0 WHEN ${prefix} THEN 1 WHEN ${words} THEN 2 ELSE 3 END`;
 }
