@@ -31,7 +31,9 @@ export async function action({ request, context }: Route.ActionArgs) {
       body: { operations: [{ op: 'rename', item: ask.item, name: { [ask.language]: value } }], title: `השם של הדף: ${value || ask.before}`.slice(0, 200), apply: true },
     });
     const live = sent.merged;
-    return answer({ ok: true, live, suggestion: sent.suggestion.id, ...(live ? { rev: item.rev + 1 } : {}) });
+    // The page's revision now, read back: a rename can move it on by more than one (each item the rename touches is a revision), and the next field saved is checked against it.
+    const rev = live ? (await context.api.getItem({ id: ask.item }).catch(() => null))?.rev : undefined;
+    return answer({ ok: true, live, suggestion: sent.suggestion.id, ...(typeof rev === 'number' ? { rev } : {}) });
   } catch (error) {
     const status = (error as { status?: number } | null)?.status;
     if (status === 401) return answer({ ok: false, why: 'signin' }, 401);

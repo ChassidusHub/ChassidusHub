@@ -20,8 +20,9 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
     if (!open) return;
     const opener = document.activeElement as HTMLElement | null;
     // The choice already made, else the close button: never the filter box, which would pop a phone's keyboard up.
+    // Unless what opened the sheet has already put focus in it (the fix box, focused in the tap so the keyboard comes).
     const current = panel.current?.querySelector<HTMLElement>('.bd [aria-checked="true"]');
-    (current ?? panel.current?.querySelector<HTMLElement>('.hd button'))?.focus({ preventScroll: true });
+    if (!panel.current?.contains(document.activeElement)) (current ?? panel.current?.querySelector<HTMLElement>('.hd button'))?.focus({ preventScroll: true });
     current?.scrollIntoView({ block: 'center' });
     const keys = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -45,6 +46,23 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
       opener?.focus({ preventScroll: true });
     };
   }, [open, onClose]);
+
+  // A phone's keyboard opened from the sheet (the fix box) is laid over the page, not shrinking it (iOS Safari, and
+  // Android Chrome since 108), so it would cover the sheet's foot, Save with it: the sheet stands on the keyboard instead.
+  useEffect(() => {
+    const view = window.visualViewport;
+    const el = panel.current;
+    if (!open || !view || !el) return;
+    const lift = () => el.style.setProperty('--kb', `${Math.max(0, Math.round(innerHeight - view.height - view.offsetTop))}px`);
+    lift();
+    view.addEventListener('resize', lift);
+    view.addEventListener('scroll', lift);
+    return () => {
+      view.removeEventListener('resize', lift);
+      view.removeEventListener('scroll', lift);
+      el.style.removeProperty('--kb');
+    };
+  }, [open]);
 
   if (!mounted) return null;
   return createPortal(

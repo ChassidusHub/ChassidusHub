@@ -42,14 +42,16 @@ const why: Record<Exclude<EditAnswer, { ok: true }>['why'], string> = {
 /** A page's name in one language, saved when the person leaves the box. */
 export function NameField({ item, rev, language, label, value: start, onSaved }: { item: string; rev: number; language: 'he' | 'en'; label: string; value: string; onSaved: (rev?: number) => void }) {
   const toast = useToast();
+  // The name as the site has it (what a save says it replaces), and the last name sent: one waiting for a second look leaves the site's as it was.
   const [saved, setSaved] = useState(start);
+  const [sent, setSent] = useState(start);
   const [value, setValue] = useState(start);
   const [busy, setBusy] = useState(false);
   const id = `f-name-${language}`;
 
   const save = async () => {
     const typed = value.replace(/\s+/g, ' ').trim();
-    if (typed === saved || busy) return;
+    if (typed === sent || busy) return;
     setBusy(true);
     const ask: EditAsk = { item, rev, field: 'label', language, before: saved, value: typed };
     const answer = await fetch('/_/edit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(ask) })
@@ -60,7 +62,8 @@ export function NameField({ item, rev, language, label, value: start, onSaved }:
       toast(why[answer.why]);
       return;
     }
-    setSaved(typed);
+    if (answer.live) setSaved(typed);
+    setSent(typed);
     setValue(typed);
     onSaved(answer.rev);
     toast(answer.live ? 'נשמר' : 'נשמר. עין שנייה תבדוק לפני שזה עולה');
@@ -79,7 +82,7 @@ export function NameField({ item, rev, language, label, value: start, onSaved }:
         onBlur={save}
         onKeyDown={(event) => {
           if (event.key === 'Enter') (event.target as HTMLInputElement).blur();
-          if (event.key === 'Escape') setValue(saved);
+          if (event.key === 'Escape') setValue(sent);
         }}
       />
     </div>

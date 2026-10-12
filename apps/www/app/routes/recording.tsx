@@ -1,5 +1,5 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactElement, type RefObject } from 'react';
-import { Await, data as answer, redirect, useLoaderData, useNavigate, useSearchParams } from 'react-router';
+import { Await, data as answer, redirect, useLoaderData, useNavigate, useSearchParams, type ShouldRevalidateFunctionArgs } from 'react-router';
 import { EditBar, EditFields, Names } from '../edit/Edit';
 import { YEARS, yearLabel } from '../listen/data.server';
 import { firstWords, recordedEvent, type FirstWords } from '../listen/recording.server';
@@ -28,6 +28,19 @@ export async function loader({ params, context: { api } }: Route.LoaderArgs) {
   });
   if (String(found.year) !== params.year) throw redirect(`/listen/${found.year}/${found.id}`, 301);
   return { ...found, years: YEARS.map((year) => ({ year, label: yearLabel(year) })), first: firstWords(api, found.chapters).catch(() => null) };
+}
+
+/**
+ * Opening Edit (`?edit` added to the address, nothing else changed) draws the same page at once with its own
+ * fields, without reading the page again first, which on a phone on slow 4G took seconds. Leaving Edit reads the
+ * page again, so a name just saved shows. Written out here and in routes/item.tsx, not shared: a module of its own would be
+ * one more script file on the page.
+ */
+export function shouldRevalidate({ currentUrl, nextUrl, defaultShouldRevalidate }: ShouldRevalidateFunctionArgs) {
+  const opening = currentUrl.pathname === nextUrl.pathname && !currentUrl.searchParams.has('edit') && nextUrl.searchParams.has('edit');
+  const rest = new URLSearchParams(nextUrl.search);
+  rest.delete('edit');
+  return opening && rest.toString() === new URLSearchParams(currentUrl.search).toString() ? false : defaultShouldRevalidate;
 }
 
 export const headers = () => ({ 'Cache-Control': KEPT_PAGE });

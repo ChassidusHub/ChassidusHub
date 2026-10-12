@@ -162,6 +162,11 @@ export interface SetData extends CommonFields {
   description?: LocalName;
   /** open: trusted people's line fixes go live; moderated (default): everything reviewed; locked: rights not cleared, nothing served. */
   policy: SetPolicy;
+  /**
+   * A moderated set that takes small fixes live (RFC 0001): a few words of its texts, fixed by a reader and passed
+   * by the AI check, go live at once and wait on the keep-or-undo list; everything else is still reviewed first.
+   */
+  liveFixes?: boolean;
   /** Account ids of the set keepers, who approve suggestions here. */
   keepers: string[];
   /** The set this one sits under, for large collections (Farbrengens → Farbrengens 5742). */

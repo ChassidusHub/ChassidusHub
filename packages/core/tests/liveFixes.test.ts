@@ -7,9 +7,10 @@ import { add, freshCatalog } from './helpers.js';
 
 const body = (words: string) => ({ profile: 'plain', versions: [{ id: 'he', language: 'he', segments: [{ id: 'p1', kind: 'paragraph', text: [{ text: words }] }] }] });
 
-async function sicha(catalog: Catalog, policy: 'open' | 'moderated') {
-  const set = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'סט לדוגמה' }, slug: `sample-${policy}`, policy, keepers: ['keeper'] });
-  const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר לדוגמה' }, slug: `sample-${policy}`, authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] });
+async function sicha(catalog: Catalog, policy: 'open' | 'moderated', liveFixes?: boolean) {
+  const slug = `sample-${policy}${liveFixes ? '-live' : ''}`;
+  const set = await add(catalog, 'steward', 'steward', 'set', { name: { he: 'סט לדוגמה' }, slug, policy, keepers: ['keeper'], ...(liveFixes ? { liveFixes } : {}) });
+  const work = await add(catalog, 'mendy', 'keeper', 'work', { title: { he: 'ספר לדוגמה' }, slug, authors: [], genre: 'sichos', levels: ['sicha'], sets: [set] });
   const unit = await add(catalog, 'mendy', 'keeper', 'unit', { work, position: [{ level: 'sicha', value: '1' }], order: 'V', label: { he: 'שיחה לדוגמה' }, body: body('מלים לדגומה כאן'), sets: [set] });
   return { set, work, unit };
 }
@@ -48,6 +49,25 @@ describe('small fixes that go live', () => {
     const fresh = await fix(catalog, 'chaim', unit, (d) => ({ ...d, body: body('מלים לדוגמא כאן') }));
     expect(fresh.live).toBe(false);
     expect(fresh.reason).toMatch(/new account/);
+  });
+
+  it('puts a small fix live in a moderated set that takes them, and keeps its other changes for review', async () => {
+    const { catalog } = await freshCatalog();
+    const { unit } = await sicha(catalog, 'moderated', true);
+    const live = await fix(catalog, 'mendy', unit, (d) => ({ ...d, body: body('מלים לדוגמה כאן') }));
+    expect(live).toMatchObject({ live: true, reason: null, changeset: { status: 'merged', kind: 'live', post_review: 'pending' } });
+    const renamed = await fix(catalog, 'mendy', unit, (d) => ({ ...d, label: { he: 'שם אחר' } }));
+    expect(renamed).toMatchObject({ live: false, changeset: { status: 'open' } });
+  });
+
+  it('takes small fixes live only in open sets and moderated ones that say so, never in a locked one', () => {
+    const person: Account = { id: 'p', display_name: 'p', trust: 'contributor', is_steward: false, is_bot: false, approved_count: 3, reverted_count: 0, suspended_at: null };
+    const seen = { accountAgeHours: 100, liveToday: 0 };
+    const change = (set: { policy: 'open' | 'moderated' | 'locked'; liveFixes?: boolean }) => ({ types: new Set(['unit']), sets: [{ id: 's', keepers: [], ...set }], onlyWords: true });
+    expect(mayFixLive(person, change({ policy: 'open' }), seen).ok).toBe(true);
+    expect(mayFixLive(person, change({ policy: 'moderated', liveFixes: true }), seen).ok).toBe(true);
+    expect(mayFixLive(person, change({ policy: 'moderated' }), seen)).toMatchObject({ ok: false, reason: 'set' });
+    expect(mayFixLive(person, change({ policy: 'locked', liveFixes: true }), seen)).toMatchObject({ ok: false, reason: 'set' });
   });
 
   it('counts a day of live fixes against the limit, and stewards have none', () => {
