@@ -189,7 +189,7 @@ export function Reader({ data }: { data: ReaderData }) {
           onSelect={data.recordings.length === 1 ? () => (close(), navigate(data.recordings[0]!.path)) : data.recordings.length > 1 ? () => setOpen('recordings') : undefined}
         />
         {data.facts?.map((fact) => (
-          <Option key={fact.kind} icon={factIcons[fact.kind]} label={fact.label} end={fact.value} onSelect={() => (close(), fact.kind === 'manuscript' ? window.open(fact.href, '_blank', 'noopener') : navigate(fact.href))} />
+          <Option key={fact.kind} icon={factIcons[fact.kind]} label={fact.label} end={fact.value} machine={fact.machine} onSelect={() => (close(), fact.kind === 'manuscript' ? window.open(fact.href, '_blank', 'noopener') : navigate(fact.href))} />
         ))}
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
@@ -278,12 +278,14 @@ function Pdf({ pdfs }: { pdfs: ReaderData['pdfs'] }) {
 }
 
 /** A line of the corner menu. Without `onSelect` it is greyed: there is nothing there yet. */
-function Option({ icon, label, end, onSelect, quiet }: { icon: IconName; label: string; end?: string; onSelect?: () => void; quiet?: boolean }) {
+/** `machine`: its value is a machine's guess nobody checked yet, marked as the machine's. */
+function Option({ icon, label, end, onSelect, quiet, machine }: { icon: IconName; label: string; end?: string; onSelect?: () => void; quiet?: boolean; machine?: boolean }) {
   return (
     <button type="button" className={['opt', quiet && 'quiet', !onSelect && 'off'].filter(Boolean).join(' ')} aria-disabled={!onSelect || undefined} onClick={onSelect}>
       <Icon name={icon} />
       <span className="t">{label}</span>
       {end && <span className="r">{end}</span>}
+      {machine && <span className="machine">במכונה, עוד לא נבדק בידי אדם</span>}
     </button>
   );
 }

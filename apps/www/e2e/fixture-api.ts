@@ -151,6 +151,20 @@ const views: Record<string, unknown> = {
       versions: [{ version: 'he', from: 'body', language: 'he' }],
     },
   },
+  // The same letter, its labels a machine's guess nobody checked yet.
+  '/sample/1/6': {
+    item: {
+      id: 'rh-aaaaaab6',
+      type: 'unit',
+      path: '/sample/1/6',
+      rev: 1,
+      data: { label: name('אגרת שניה לדוגמה'), position: [{ level: 'volume', value: '1' }, { level: 'letter', value: '6' }], place: name('עיר לדוגמה'), labelOrigin: { by: 'catalog:labeller', checked: false } },
+    },
+    pathBar: bar(2),
+    previous: null,
+    next: null,
+    text: { kind: 'words', from: 'body', version: 'he', language: 'he', profile: 'sichos-kodesh', segments: [{ id: 'p1', kind: 'paragraph', text: words('גוף המכתב לדוגמה.') }], notes: [], machine: 'none', versions: [{ version: 'he', from: 'body', language: 'he' }] },
+  },
   '/sample/1/3': {
     item: { id: 'rh-aaaaaab3', type: 'unit', path: '/sample/1/3', rev: 1, data: { label: name('שיחה שלישית') } },
     pathBar: bar(2),

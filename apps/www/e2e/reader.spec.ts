@@ -133,8 +133,17 @@ test('keeps a letter’s date, place, addressee and handwritten copy in the corn
   await expect(sheet.getByRole('button', { name: /מקום.*עיר לדוגמה/ })).toBeVisible();
   await expect(sheet.getByRole('button', { name: /אל.*נמען לדוגמה/ })).toBeVisible();
   await expect(sheet.getByRole('button', { name: /כתב יד/ })).toBeVisible();
+  // Labels a person set are not marked as a machine's.
+  await expect(sheet.getByText('במכונה, עוד לא נבדק בידי אדם')).toHaveCount(0);
   await sheet.getByRole('button', { name: /מקום/ }).click();
   await expect(page).toHaveURL(/\/search\?q=/);
+});
+
+test('marks a letter’s labels a machine guessed, until a person checks them', async ({ page }) => {
+  await page.goto('/sample/1/6');
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'עוד' }).click();
+  await expect(page.getByRole('dialog', { name: 'עוד' }).getByRole('button', { name: /מקום.*עיר לדוגמה.*במכונה, עוד לא נבדק בידי אדם/ })).toBeVisible();
 });
 
 test('draws a sicha without the letter’s layout', async ({ page }) => {

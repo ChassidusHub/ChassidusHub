@@ -30,15 +30,17 @@ const levelOf = (view: ItemView) => {
  * set is left out; a page with none has none.
  */
 function withFacts(data: unknown): { facts?: Fact[] } {
-  const fields = data as { date?: unknown; place?: unknown; to?: unknown; editions?: { role?: string; url?: string }[] };
+  const fields = data as { date?: unknown; place?: unknown; to?: unknown; labelOrigin?: { checked?: unknown }; editions?: { role?: string; url?: string }[] };
+  // The labels a machine guessed are the machine's until a person checks them (CLAUDE.md, RFC 0004 `labelOrigin`).
+  const machine = fields.labelOrigin && fields.labelOrigin.checked !== true ? { machine: true as const } : {};
   const found = (q: string) => `/search?q=${encodeURIComponent(q)}`;
   const facts: Fact[] = [];
   const date = typeof fields.date === 'string' && isValidDateKey(fields.date) ? describeDateKey(fields.date) : '';
-  if (date) facts.push({ kind: 'date', label: 'תאריך', value: date, href: found(date) });
+  if (date) facts.push({ kind: 'date', label: 'תאריך', value: date, href: found(date), ...machine });
   const place = nameOf(fields.place);
-  if (place) facts.push({ kind: 'place', label: 'מקום', value: place, href: found(place) });
+  if (place) facts.push({ kind: 'place', label: 'מקום', value: place, href: found(place), ...machine });
   const to = nameOf(fields.to);
-  if (to) facts.push({ kind: 'to', label: 'אל', value: to, href: found(to) });
+  if (to) facts.push({ kind: 'to', label: 'אל', value: to, href: found(to), ...machine });
   const manuscript = fields.editions?.find((edition) => edition.role === 'manuscript' && edition.url?.startsWith('https://'));
   if (manuscript) facts.push({ kind: 'manuscript', label: 'כתב יד', value: 'צילום', href: manuscript.url! });
   return facts.length ? { facts } : {};

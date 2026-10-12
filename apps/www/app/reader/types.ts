@@ -14,6 +14,8 @@ export interface Fact {
   value: string;
   /** Inside the site (what else shares it), or the handwritten copy's own address. */
   href: string;
+  /** A machine's guess nobody checked yet (the unit's `labelOrigin`): shown as the machine's until a person checks it. */
+  machine?: true;
 }
 
 /** The words a reading page shows, as its loader sends them. */
