@@ -1,0 +1,1 @@
+- New site: search reads and searches the catalog's names (about 8 MB) in a worker of its own, once the page is idle, so on a phone the box and the page never freeze while the names arrive; until they do, the rows under the box come from the server as before (#272).
