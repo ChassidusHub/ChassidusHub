@@ -29,6 +29,40 @@ export interface SnapshotFiles {
   file(name: string): Promise<Response>;
 }
 
+/**
+ * The snapshot's index (#265), kept in this isolate's memory for every
+ * page's HTML (app/root.tsx), so the browser asks for the top file and the
+ * page's shelf as soon as the page loads, without first asking for the
+ * index. Asked again at most every minute, behind the page (`later`, the
+ * Worker's waitUntil): a page never waits for it, and goes out without it
+ * until it has come. A page kept at the edge keeps the index it was drawn
+ * with; the files it names stay readable (docs/catalog-snapshot.md).
+ * Answers it as the page writes it: only an index of the small cut's
+ * format, with `<` escaped so it cannot end its script.
+ */
+export function indexKeeper(files: SnapshotFiles | null, { every = 60_000, now = Date.now } = {}) {
+  let text: string | null = null;
+  let asked = -Infinity;
+  let asking: Promise<void> | null = null;
+  return (later: (work: Promise<unknown>) => void = () => undefined): string | null => {
+    if (files?.index && !asking && now() - asked >= every) {
+      asked = now();
+      asking = files
+        .index()
+        .then(async (answer) => {
+          if (!answer.ok) return;
+          const index = JSON.parse(await answer.text()) as { format?: unknown };
+          const written = JSON.stringify(index);
+          if (index?.format === 2 && written.length < 8_000) text = written.replace(/</g, '\\u003c');
+        })
+        .catch(() => undefined)
+        .finally(() => (asking = null));
+      later(asking);
+    }
+    return text;
+  };
+}
+
 /** A file's name, as the manifest names them: nothing that climbs out of the folder. */
 const FILE = /^[\w.-]+\.json$/;
 

@@ -1,6 +1,6 @@
 import { ChassidusHub } from '@chassidushub/client';
 import { describe, expect, it } from 'vitest';
-import { localApi } from '../app/catalog/localApi.js';
+import { localApi, rebbeOnTop } from '../app/catalog/localApi.js';
 import { isNotLocal, snapshotFrom } from '../app/catalog/snapshot.js';
 import { libraryPage } from '../app/library/page.js';
 import { loadLibrary, loadOtherShelves } from '../app/library/load.js';
@@ -125,6 +125,16 @@ describe('the small cut', () => {
     expect(read).not.toContain('tree.1.json');
     expect(await snapshot.hasYear(5747)).toBe(true);
     expect(read).toContain('years.1.json');
+  });
+
+  it("draws a Rebbe's page from the top file alone as the API does (#301)", async () => {
+    const { api, read, snapshot } = standIn(true);
+    const core = (await snapshot.core())!;
+    const fromApi = await page(api, '/sets/the-rebbe');
+    expect(JSON.parse(JSON.stringify(rebbeOnTop(core, '/sets/the-rebbe')))).toEqual(fromApi);
+    expect(read).toEqual(['top.1.json']);
+    // Another Rebbe's shelf, or one that is no Rebbe's, waits for its file.
+    expect(rebbeOnTop(core, '/sets/sample-more')).toBeNull();
   });
 
   it('reads the manifest when there is no index', async () => {

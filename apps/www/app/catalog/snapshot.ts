@@ -87,6 +87,8 @@ export interface Tree {
   top: string[];
   sets: Record<string, SnapshotSet>;
   works: Record<string, SnapshotWork>;
+  /** The small cut's top file, which the tree was made from. */
+  topFile?: TopFile;
 }
 
 export interface SnapshotUnit {
@@ -135,12 +137,29 @@ export interface TopEntry {
   id: string;
   path: string | null;
   name: SnapshotName;
+  /** A top shelf's revision (#301). */
+  rev?: number;
+}
+
+/** One of a Rebbe's shelves in the top file: since #301 also its official sefarim, the names of its first 3 shelves inside, and whether it has additions to none of them. */
+export interface TopInner extends TopEntry {
+  works?: TopEntry[];
+  inner?: SnapshotName[];
+  loose?: true;
+}
+
+/** A top shelf in the top file; a Rebbe's also with the shelves, sefarim and additions (to none of them) on it. */
+export interface TopShelf extends TopEntry {
+  rebbe?: number;
+  sets?: TopInner[];
+  works?: TopEntry[];
+  additions?: TopEntry[];
 }
 
 export interface TopFile {
   format: number;
-  /** Every top shelf, in order; a Rebbe's also with the shelves, sefarim and additions on it. */
-  top: Array<TopEntry & { rebbe?: number; sets?: TopEntry[]; works?: TopEntry[]; additions?: TopEntry[] }>;
+  /** Every top shelf, in order. */
+  top: TopShelf[];
 }
 
 /** One top shelf and everything under it, as in the tree; a sefer with units names its file. */
@@ -214,15 +233,21 @@ export class Core {
     const set = this.tree.sets[id];
     return !!set && !(set as Partial<NamedOnly>).named;
   }
+
+  /** A Rebbe's shelf as the top file has it whole (#301): each of his shelves with its sefarim. Null for any other shelf, or a top file from before. */
+  rebbeOnTop(id: string): TopShelf | null {
+    const shelf = this.tree.topFile?.top.find((entry) => entry.id === id);
+    return shelf?.rebbe && shelf.sets?.every((inner) => inner.works && inner.inner) ? shelf : null;
+  }
 }
 
 /** The tree as far as the small cut has brought it: the top file's shelves, named only, then each shelf's file read, whole. */
 export function treeOf(top: TopFile, shelves: ShelfFile[]): Tree {
-  const tree: Tree = { format: SNAPSHOT_FORMAT, top: top.top.map((shelf) => shelf.id), sets: {}, works: {} };
+  const tree: Tree = { format: SNAPSHOT_FORMAT, top: top.top.map((shelf) => shelf.id), sets: {}, works: {}, topFile: top };
   const named = (entry: TopEntry, parent?: string, inside: string[] = []): NamedOnly => ({
     id: entry.id,
     path: entry.path,
-    rev: 0,
+    rev: entry.rev ?? 0,
     name: entry.name,
     ...(parent ? { parent } : {}),
     sets: inside,

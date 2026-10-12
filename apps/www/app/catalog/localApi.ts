@@ -1,4 +1,5 @@
-import type { ChassidusHub, PathChoice, PathLevel } from '@chassidushub/client';
+import type { ChassidusHub, Item, PathChoice, PathLevel } from '@chassidushub/client';
+import { rebbeFromTop } from '../library/load';
 import { Core, NotLocal, type Snapshot, type SnapshotName, type SnapshotSet, type SnapshotWork } from './snapshot';
 
 /**
@@ -20,7 +21,7 @@ const PATH_CHOICES_MAX = 500;
 /** The catalog's order as the API's items carry it (`order`), for the pages that sort by it: the snapshot's lists are in that order already. */
 const orderAt = (at: number) => String(at).padStart(6, '0');
 
-const setItem = (set: SnapshotSet, at: number) => ({
+export const setItem = (set: SnapshotSet, at: number) => ({
   id: set.id,
   type: 'set',
   path: set.path,
@@ -69,6 +70,15 @@ export function shelvesOf(core: Core, from: { set: SnapshotSet } | { work: Snaps
     levels.push({ kind: 'work', chosen: choice(work, work.title), choices: beside.slice(0, PATH_CHOICES_MAX).map((w) => choice(w, w.title)) });
   }
   return levels;
+}
+
+/** A Rebbe's page at `path`, drawn from the top file alone (library/load.ts, `rebbeFromTop`); null for any other path, or a top file without his shelves' sefarim. */
+export function rebbeOnTop(core: Core, path: string) {
+  const found = core.byPath.get(path);
+  if (!found || core.isWork(found)) return null;
+  const set = found as SnapshotSet;
+  const shelf = core.rebbeOnTop(set.id);
+  return shelf ? rebbeFromTop(setItem(set, 0) as unknown as Item, shelvesOf(core, { set }), shelf) : null;
 }
 
 /** An API error by its status, as the API client throws them (pages read `status`). */

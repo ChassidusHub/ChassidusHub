@@ -3,6 +3,7 @@ import { redirect } from 'react-router';
 import { namesOf } from '../edit/names';
 import type { printingsFrom } from './printings';
 import { isRebbe, nameOf, partLabel, rebbeimFirst } from '../lib/catalog';
+import type { TopEntry, TopShelf } from '../catalog/snapshot';
 
 /**
  * What the library's pages read from the API, cut down on the server to what
@@ -121,6 +122,32 @@ export async function loadSet(api: ChassidusHub, root: Item, levels: ApiLevel[])
       : [...shelves.map((set) => shelfLine(sets, set)), ...official.map(workLine)],
     shelves: rebbe ? shelves.filter((set, at) => shelvesIn(sets, set.id).length || looseOf(onShelves[at]!.items).length).map((set) => shelfLine(sets, set)) : [],
     additions: looseOf(works.items).map(workLine),
+  };
+}
+
+/**
+ * A Rebbe's page as `loadSet` draws it, from the catalog snapshot's top file
+ * alone (#301): his sefarim, his shelves' sefarim, the shelves with more on
+ * them, and his additions. So the browser draws it before his shelf's file
+ * has come (app/catalog/clicks.ts); tests/catalogSnapshot.test.ts holds it
+ * to the API's.
+ */
+export function rebbeFromTop(root: Item, levels: ApiLevel[], shelf: TopShelf) {
+  const line = (entry: TopEntry): Line => ({ key: entry.id, title: nameOf(entry.name, entry.id), to: entry.path ?? undefined });
+  const inners = shelf.sets ?? [];
+  return {
+    screen: 'set' as const,
+    id: root.id,
+    path: root.path,
+    title: shelfName(root),
+    rebbe: true,
+    levels,
+    ...ownFields(root, levels),
+    lines: [...(shelf.works ?? []), ...inners.flatMap((inner) => inner.works ?? [])].map(line),
+    shelves: inners
+      .filter((inner) => inner.inner?.length || inner.loose)
+      .map((inner) => ({ key: inner.id, title: nameOf(inner.name, inner.id), sub: (inner.inner ?? []).map((name) => nameOf(name)).join(' · ') || undefined, to: inner.path ?? undefined })),
+    additions: (shelf.additions ?? []).map(line),
   };
 }
 

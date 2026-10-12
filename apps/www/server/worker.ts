@@ -3,7 +3,7 @@ import { createRequestHandler, type ServerBuild } from 'react-router';
 import { apiFor, forwardFor, visitorApi } from '../app/lib/api';
 import { pageContext } from '../app/serverOnly';
 import { forEdge, inGroups, mayUseEdge, Seen, seenIn, tagged } from './edge';
-import { apiFiles, bucketFiles, catalogFile, keptAtEdge, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
+import { apiFiles, bucketFiles, catalogFile, indexKeeper, keptAtEdge, type EdgeStore, type SnapshotBucket, type SnapshotFiles } from './catalog';
 import { bucketShowcases, type ShowcaseBucket } from '../app/stewards/showcase';
 import { pageTiming, withTiming } from './serverTiming';
 // @ts-ignore - made by `react-router build`
@@ -36,14 +36,18 @@ const handler = createRequestHandler(serverBuild);
 
 type Binding = NonNullable<Env['API']>;
 
-/** A page drawn now. `binding` is how its loaders reach the API (as nobody: no cookie goes with a page's reads). */
-function draw(request: Request, env: Env, binding: Binding | undefined): Promise<Response> {
+/**
+ * A page drawn now. `binding` is how its loaders reach the API (as nobody: no
+ * cookie goes with a page's reads). `later` keeps the catalog snapshot's
+ * index fresh behind the page (the Worker's waitUntil).
+ */
+function draw(request: Request, env: Env, binding: Binding | undefined, later: (work: Promise<unknown>) => void): Promise<Response> {
   return handler(request, {
     api: apiFor({ binding, baseUrl: env.API_URL }),
     visitor: visitorApi(request, (cookie) => apiFor({ binding: env.API, baseUrl: env.API_URL, cookie })),
     forward: forwardFor({ binding: env.API, baseUrl: env.API_URL }),
     showcases: env.FILES_PUBLIC ? bucketShowcases(env.FILES_PUBLIC) : undefined,
-    ...pageContext(request),
+    ...pageContext(request, catalogIndex(env)(later)),
   });
 }
 
@@ -66,7 +70,7 @@ export class CachedPage extends WorkerEntrypoint<Env> {
     // Said in its Server-Timing as `drawn`, with when: the edge keeps the header with the page (server/serverTiming.ts).
     const started = performance.now();
     const timing = pageTiming();
-    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }), seen);
+    const page = await tagged(await draw(request, this.env, { fetch: timing.timed(seenIn(fresh, seen)) }, (work) => this.ctx.waitUntil(work)), seen);
     return withTiming(page, timing.header(performance.now() - started, 'drawn'));
   }
 
@@ -102,6 +106,10 @@ function catalogFiles(env: Env): SnapshotFiles | null {
   return snapshotFiles;
 }
 
+/** The catalog snapshot's index for pages' HTML, kept in this isolate (server/catalog.ts). */
+let keptIndex: ReturnType<typeof indexKeeper> | null = null;
+const catalogIndex = (env: Env) => (keptIndex ??= indexKeeper(catalogFiles(env)));
+
 export default {
   async fetch(request: Request, env: Env, ctx: Ctx): Promise<Response> {
     // The catalog snapshot's files, for the browser to keep (/_/ is never a kept page).
@@ -117,7 +125,7 @@ export default {
     }
     const timing = pageTiming();
     const send = env.API ? env.API.fetch.bind(env.API) : (input: string, init?: RequestInit) => fetch(input, init);
-    const page = await draw(request, env, { fetch: timing.timed(send) });
+    const page = await draw(request, env, { fetch: timing.timed(send) }, (work) => ctx.waitUntil(work));
     return withTiming(page, timing.header(performance.now() - started));
   },
 };

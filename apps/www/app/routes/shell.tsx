@@ -17,7 +17,9 @@ import { AppShell } from '../ui';
  * It reads the small cut: the index and the top file, then the file of the
  * top shelf this page is under, the first level of its path bar (`topShelf`).
  * Each page a person moves to asks again, so a cold link (from search, say)
- * that the server drew still has its shelf read for the next tap.
+ * that the server drew still has its shelf read for the next tap. The page
+ * carries the index (app/root.tsx), so the top file and the shelf's file are
+ * asked for at once (`ask`), while the snapshot's script is still coming.
  */
 export default function Shell() {
   const { pathname } = useLocation();
@@ -33,7 +35,8 @@ export default function Shell() {
     let frame: number | undefined;
     const start = () => {
       loaded.current = true;
-      void import('../catalog/browser').then((browser) => browser.warm(shelf)).catch(() => undefined);
+      ask(shelf);
+      void import('../catalog/browser').then((browser) => browser.warm(shelf, true)).catch(() => undefined);
     };
     // After the next frame is painted, and once the browser has a moment (at most half a second on).
     const begin = () => (frame = requestAnimationFrame(() => idle(start, { timeout: 500 })));
@@ -71,3 +74,20 @@ function topShelf(matches: ReturnType<typeof useMatches>): string | null {
   }
   return null;
 }
+
+/**
+ * Asks for the top file and the shelf's file named in the index the page
+ * carries, now, so they are on their way while the snapshot's script comes;
+ * that script reads them from the browser's cache (they never change).
+ */
+function ask(shelf: string | null) {
+  if ((navigator as { connection?: { saveData?: boolean } }).connection?.saveData) return;
+  try {
+    const index = JSON.parse(document.getElementById('catalog-index')?.textContent || 'null') as { format?: number; top?: string; shelves?: Record<string, string> } | null;
+    if (index?.format !== 2) return;
+    for (const name of [index.top, shelf ? index.shelves?.[shelf] : undefined]) if (name) void fetch(`/_/catalog/${encodeURIComponent(name)}`, { credentials: 'omit' }).catch(() => undefined);
+  } catch {
+    // An index that cannot be read: the snapshot's script asks for it.
+  }
+}
+
