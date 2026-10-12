@@ -4,8 +4,11 @@ import { Fixing } from '../fix/Fixing';
 import { pathLevels } from '../lib/catalog';
 import { Button, Icon, IconButton, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
-import type { ReaderData } from './types';
+import type { Fact, ReaderData } from './types';
 import { viewFor } from './views';
+
+/** A fact's icon in the corner menu (types.ts, `Fact`). */
+const factIcons: Record<Fact['kind'], IconName> = { date: 'list', place: 'globe', to: 'user', manuscript: 'scan' };
 
 /** Edit's parts, read only when the page is edited (./Editing.tsx). */
 const EditBar = lazy(() => import('./Editing').then((file) => ({ default: file.EditBar })));
@@ -31,7 +34,7 @@ export function Reader({ data }: { data: ReaderData }) {
   const text = data.text;
   const words = text.kind === 'words' ? text : null;
   // What differs by the kind of sefer (a letter's facts, how a farbrengen's words are laid out) is its view's (app/views).
-  const { Head, Words } = viewFor(data);
+  const { Title, Head, Words } = viewFor(data);
   // Edit is the same page, with ?edit: only its own fields, and words fixed by selecting them.
   const [search] = useSearchParams();
   const navigate = useNavigate();
@@ -99,8 +102,14 @@ export function Reader({ data }: { data: ReaderData }) {
       )}
       <main id="content" className="view wide">
         <article className="reader">
-          <h1 className="stitle">{data.title}</h1>
-          {data.sub && <p className="ssub">{data.sub}</p>}
+          {Title ? (
+            <Title data={data} />
+          ) : (
+            <>
+              <h1 className="stitle">{data.title}</h1>
+              {data.sub && <p className="ssub">{data.sub}</p>}
+            </>
+          )}
           {Head && <Head data={data} />}
           {editing && (
             <Suspense>
@@ -179,6 +188,9 @@ export function Reader({ data }: { data: ReaderData }) {
           end={data.recordings.length === 1 ? data.recordings[0]!.duration : data.recordings.length > 1 ? `${data.recordings.length} הקלטות` : 'אין הקלטה מקושרת'}
           onSelect={data.recordings.length === 1 ? () => (close(), navigate(data.recordings[0]!.path)) : data.recordings.length > 1 ? () => setOpen('recordings') : undefined}
         />
+        {data.facts?.map((fact) => (
+          <Option key={fact.kind} icon={factIcons[fact.kind]} label={fact.label} end={fact.value} machine={fact.machine} onSelect={() => (close(), fact.kind === 'manuscript' ? window.open(fact.href, '_blank', 'noopener') : navigate(fact.href))} />
+        ))}
         <Option icon="copy" label="העתקה עם מקור" onSelect={words ? copy : undefined} />
         <Option icon="share" label="שיתוף" onSelect={share} />
         <Option icon="history" label="היסטוריה" quiet onSelect={() => (close(), navigate(`/history/${data.id}`))} />
@@ -266,12 +278,14 @@ function Pdf({ pdfs }: { pdfs: ReaderData['pdfs'] }) {
 }
 
 /** A line of the corner menu. Without `onSelect` it is greyed: there is nothing there yet. */
-function Option({ icon, label, end, onSelect, quiet }: { icon: IconName; label: string; end?: string; onSelect?: () => void; quiet?: boolean }) {
+/** `machine`: its value is a machine's guess nobody checked yet, marked as the machine's. */
+function Option({ icon, label, end, onSelect, quiet, machine }: { icon: IconName; label: string; end?: string; onSelect?: () => void; quiet?: boolean; machine?: boolean }) {
   return (
     <button type="button" className={['opt', quiet && 'quiet', !onSelect && 'off'].filter(Boolean).join(' ')} aria-disabled={!onSelect || undefined} onClick={onSelect}>
       <Icon name={icon} />
       <span className="t">{label}</span>
       {end && <span className="r">{end}</span>}
+      {machine && <span className="machine">במכונה, עוד לא נבדק בידי אדם</span>}
     </button>
   );
 }
