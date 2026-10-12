@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { memorySnapshotStore, refreshSnapshot, type SnapshotManifest, type SnapshotTree } from '@chassidushub/core';
+import { memorySnapshotStore, refreshSnapshot, type SnapshotIndex, type SnapshotManifest, type SnapshotTopFile, type SnapshotTree } from '@chassidushub/core';
 import { createApp } from '../src/app.js';
 import { answeredHere } from '../src/reads.js';
 import { singleFlight } from '../src/catalogSnapshot.js';
@@ -37,6 +37,19 @@ describe('GET /v1/catalog', () => {
     expect(again.status).toBe(304);
     expect((await app.request(`${manifest.base}tree.0000000000000000.json`)).status).toBe(404);
     expect((await app.request(`${manifest.base}..%2Fmanifest.json`)).status).toBe(404);
+  });
+
+  it('serves the index, the files’ names only, with the manifest’s caching', async () => {
+    const { catalog, set } = await freshCatalog();
+    await add(catalog, 'mendy', 'keeper', 'work', work(set, 'ספר', 'sefer'), '/sefer');
+    const app = createApp({ catalog, catalogSnapshot: { store: memorySnapshotStore() } });
+    const res = await app.request('https://api.example/v1/catalog/index.json');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=60, s-maxage=60');
+    const index = (await res.json()) as SnapshotIndex;
+    expect(res.headers.get('X-Catalog-Version')).toBe(index.version);
+    const top = (await (await app.request(`https://api.example/v1/catalog/files/${index.top}`)).json()) as SnapshotTopFile;
+    expect(top.top.map((s) => s.id)).toEqual(Object.keys(index.shelves));
   });
 
   it('builds a new snapshot behind the answer once main has changed', async () => {
@@ -82,6 +95,7 @@ describe('GET /v1/catalog', () => {
     expect(background).toHaveLength(1);
     await Promise.all(background);
     expect((await app.request('/v1/catalog/manifest.json')).status).toBe(200);
+    expect((await app.request('/v1/catalog/index.json')).status).toBe(200);
   });
 
   it('is asked of the API, not answered in the site’s Worker', () => {

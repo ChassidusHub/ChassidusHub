@@ -795,6 +795,11 @@ export interface Operations {
     };
     output: Record<string, unknown>;
   };
+  /** The catalog snapshot as the names of its files only: the top shelves' file, one file per top shelf, the years' file and the names file */
+  catalogSnapshotIndex: {
+    input: Record<string, never>;
+    output: Record<string, unknown>;
+  };
   /** The catalog snapshot: which files hold the whole tree now (every shelf and sefer, each sefer's units by volume, each year's events), with their sizes and sha256 */
   catalogSnapshotManifest: {
     input: Record<string, never>;
@@ -3326,6 +3331,7 @@ export const OPERATIONS = {
   appSourceText: {"method":"GET","path":"/v1/app/v3/texts/{sha256}","pathParams":["sha256"],"query":[],"body":null,"answer":"text"},
   authorizationServer: {"method":"GET","path":"/.well-known/oauth-authorization-server","pathParams":[],"query":[],"body":null,"answer":"json"},
   catalogSnapshotFile: {"method":"GET","path":"/v1/catalog/files/{file}","pathParams":["file"],"query":[],"body":null,"answer":"json"},
+  catalogSnapshotIndex: {"method":"GET","path":"/v1/catalog/index.json","pathParams":[],"query":[],"body":null,"answer":"json"},
   catalogSnapshotManifest: {"method":"GET","path":"/v1/catalog/manifest.json","pathParams":[],"query":[],"body":null,"answer":"json"},
   catalogTree: {"method":"GET","path":"/v1/tree","pathParams":[],"query":["root","depth","limit"],"body":null,"answer":"json"},
   checkUpload: {"method":"POST","path":"/v1/uploads/check","pathParams":[],"query":[],"body":"json","answer":"json"},
@@ -3590,6 +3596,11 @@ export abstract class GeneratedMethods {
   /** One file of the catalog snapshot, as the manifest names it (GET /v1/catalog/files/{file}) */
   catalogSnapshotFile(input: Operations['catalogSnapshotFile']['input']): Promise<Operations['catalogSnapshotFile']['output']> {
     return this.call('catalogSnapshotFile', input ?? {} as Operations['catalogSnapshotFile']['input']);
+  }
+
+  /** The catalog snapshot as the names of its files only: the top shelves' file, one file per top shelf, the years' file and the names file (GET /v1/catalog/index.json) */
+  catalogSnapshotIndex(): Promise<Operations['catalogSnapshotIndex']['output']> {
+    return this.call('catalogSnapshotIndex', {} as Operations['catalogSnapshotIndex']['input']);
   }
 
   /** The catalog snapshot: which files hold the whole tree now (every shelf and sefer, each sefer's units by volume, each year's events), with their sizes and sha256 (GET /v1/catalog/manifest.json) */
