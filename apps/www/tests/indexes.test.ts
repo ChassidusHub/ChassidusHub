@@ -29,7 +29,7 @@ const merged: PageSegment[] = [
   { id: 't4.30', kind: 'paragraph', text: [{ text: 'חלק ל', marks: ['b'] }, { text: ': ' }, { href: read(14, 'ח"ל ע\' 1 (בראשית א)'), text: '14' }] },
 ];
 
-const draw = (segments: PageSegment[], around = {}) => wordsHtml(segments, [], 'חלק ל', indexLayout, around);
+const draw = (segments: PageSegment[], around = {}) => wordsHtml(segments, [], 'חלק ל', indexLayout, {}, around);
 
 describe('an index read as printed', () => {
   it('knows an index by its words, and never a sicha', () => {

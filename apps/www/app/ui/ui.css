@@ -624,6 +624,39 @@ h2.try { font-size: 13px; font-weight: 500; color: var(--g600); }
 .igros .torah .l-signature { text-align: end; margin-top: 1em; margin-bottom: 0.15em; }
 .igros .notes ol { font-family: 'DavidCLM', var(--torah); }
 /*
+ * A day of Hayom Yom (app/views/daybook.tsx), set as the book prints it and
+ * as the old site set it (PR #104, #105): the weekday, the day and the year
+ * in one bold row; the notices above and after the shiurim in italics;
+ * "שיעורים." beside its three lines, their names in a column; the words with
+ * each paragraph's first line indented; the closing blessing large under a
+ * star. No rules above or under the text. The month's days, a strip under the title.
+ */
+.daystrip { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; margin: 14px 0 0; padding-bottom: 4px; scrollbar-width: none; }
+.daystrip .chip { flex: none; }
+.daybook { margin-top: 22px; }
+.daybook .torah p { margin-bottom: 0.7em; }
+.daybook .hy-lead, .daybook .hy-pre, .daybook .hy-after, .daybook .hy-close, .daybook .hy-tanya { white-space: pre-line; }
+.daybook .hy-lead { margin-bottom: 1.4em; }
+.daybook .hy-lead .hd { letter-spacing: 0.3em; margin-top: 0; }
+.daybook .hy-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; gap: 12px; font-weight: 700; margin-bottom: 0.5em; }
+.daybook .hy-head > :last-child { text-align: end; }
+.daybook .hy-pre, .daybook .hy-after { font-style: italic; }
+.daybook :is(.hy-pre, .hy-after, .hy-shiurim) { font-size: 0.9em; line-height: 1.6; }
+.daybook :is(.hy-pre, .hy-after) p { margin-bottom: 0.4em; }
+.daybook .hy-shiurim { display: grid; grid-template-columns: auto auto minmax(0, 1fr); column-gap: 0.6em; margin: 0 0 0.9em; padding-inline-start: 1.2em; text-align: start; }
+.daybook .hy-k { grid-column: 1; }
+.daybook .hy-n { grid-column: 2; }
+.daybook .hy-v { grid-column: 3; }
+.daybook .hy-v p { margin: 0; }
+.daybook .hy-shiurim a { text-decoration: underline dotted var(--g500); text-underline-offset: 0.3em; }
+.daybook .hy-shiurim a:hover, .daybook .hy-shiurim a:focus-visible { text-decoration-style: solid; }
+.daybook .hy-lead p:not(.hd), .daybook .hy-pre p, .daybook .hy-after p, .daybook .torah > p { text-indent: 1.5em; }
+.daybook .hy-close { margin-top: 1.2em; text-align: center; font-weight: 700; font-size: 1.2em; }
+.daybook .hy-close p { text-indent: 0; }
+.daybook .hy-star { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.75em; margin-bottom: 0.4em; }
+.daybook .hy-star::before, .daybook .hy-star::after { content: ''; width: 64px; border-top: 1px solid currentColor; }
+@media (max-width: 640px) { .daybook .hy-shiurim { padding-inline-start: 0; } .daybook .hy-head { gap: 8px; } }
+/*
  * A subject index (app/views/index.tsx), set as printed: each entry's heading
  * in bold with its pages running on after it, a merged index's volumes each
  * on a line of their own; the page numbers are links, ע״ע jumps to the other

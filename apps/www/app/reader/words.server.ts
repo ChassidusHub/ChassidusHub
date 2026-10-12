@@ -36,13 +36,19 @@ export function noteLabels(notes: readonly PageSegment[], unmarked?: ReadonlySet
  * its notes nothing points to go unnumbered. From the page's view (app/views).
  */
 export interface WordsLayout {
-  classes: (segments: readonly PageSegment[]) => Map<string, string>;
+  classes?: (segments: readonly PageSegment[]) => Map<string, string>;
   unmarkedNotes?: boolean;
-  /** The whole body, for a kind that groups its segments its own way (an index's entries); each segment still its own element with its id. */
-  body?: (segments: readonly PageSegment[], context: WordsContext) => string;
+  /**
+   * A kind that sets its words among parts of its own (a day of Hayom Yom:
+   * the head the print sets over it, its notices, its shiurim; an index's
+   * entries) draws the whole body here, from the item's data, its segments
+   * and `draw`, which draws any of them as every page draws its paragraphs;
+   * `context` draws single runs and says what the page knows around its words.
+   */
+  body?: (segments: readonly PageSegment[], item: unknown, draw: (segments: readonly PageSegment[]) => string, context: WordsContext) => string;
 }
 
-/** What a layout that draws the whole body is given: the runs drawn as on any page, and what the page knows around its words. */
+/** What a layout that draws the whole body is given besides `draw`: the runs drawn as on any page, and what the page knows around its words. */
 export interface WordsContext {
   run: (text: readonly PageInline[]) => string;
   /** The volume the page is, by its position (an index of one volume). */
@@ -108,12 +114,16 @@ function segment(s: PageSegment, labels: Map<string, string>, first: boolean, ti
   return `<p id="${sid(s.id)}"${classes.length ? ` class="${classes.join(' ')}"` : ''}>${words}</p>`;
 }
 
-/** The body: every segment in reading order. `title` is the page's own title; `layout`, how its kind of page sets it; `around`, what a layout drawing the whole body may use. */
-export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string, layout?: WordsLayout, around: Omit<WordsContext, 'run'> = {}): string {
+/**
+ * The body: every segment in reading order. `title` is the page's own title;
+ * `layout`, how its kind of page sets it; `item`, the item's data, and
+ * `around`, what the page knows around its words, for a layout that reads them.
+ */
+export function wordsHtml(segments: readonly PageSegment[], notes: readonly PageSegment[], title: string, layout?: WordsLayout, item?: unknown, around: Omit<WordsContext, 'run'> = {}): string {
   const labels = noteLabels(notes, layout?.unmarkedNotes ? unmarkedNotes(segments, notes) : undefined);
-  if (layout?.body) return layout.body(segments, { ...around, run: (text) => runs(text, labels) });
-  const placed = layout?.classes(segments);
-  return segments.map((s, at) => segment(s, labels, at === 0, title, placed)).join('');
+  const placed = layout?.classes?.(segments);
+  const draw = (list: readonly PageSegment[]) => list.map((s, at) => segment(s, labels, at === 0 && list[0] === segments[0], title, placed)).join('');
+  return layout?.body ? layout.body(segments, item, draw, { ...around, run: (text) => runs(text, labels) }) : draw(segments);
 }
 
 /**

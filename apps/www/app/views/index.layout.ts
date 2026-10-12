@@ -147,8 +147,7 @@ function lettersHtml(firsts: ReadonlyMap<string, string>, context: WordsContext)
 
 /** The index's entries as the server draws them (see the top of this file). */
 export const indexLayout: WordsLayout = {
-  classes: () => new Map(),
-  body(segments, context) {
+  body(segments, _item, _draw, context) {
     const entries = new Map<string, string>();
     const firsts = new Map<string, string>();
     for (const s of segments) {
