@@ -1,0 +1,1 @@
+- New site: a sicha's page no longer downloads the library's screens, nor a shelf's page the reader, and reading a sicha downloads Edit only when it is edited. A sicha's page sends about 3.6 kB less script, a library page about 6 kB less; the page budget is back at 130 kB (#277).
