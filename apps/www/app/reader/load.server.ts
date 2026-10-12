@@ -36,11 +36,13 @@ export async function readerData(view: ItemView, context: AppLoadContext, origin
   const fromWork = view.pathBar.findIndex((level) => level.kind === 'work');
   const middle = (fromWork >= 0 ? view.pathBar.slice(fromWork, -1) : []).map((level) => nameOf(level.chosen.name));
   const text = await shownText(view, context.api, context, path, title, language);
+  const level = ((view.item.data as { position?: { level?: unknown }[] }).position ?? []).at(-1)?.level;
   const neighbour = (n: ItemView['previous']) => (n?.path ? { path: n.path, label: nameOf(n.name) } : null);
   return {
     id: view.item.id,
     path,
     title,
+    ...(typeof level === 'string' && level ? { level } : {}),
     sub: middle.join(' · '),
     pathBar: view.pathBar,
     previous: neighbour(view.previous),

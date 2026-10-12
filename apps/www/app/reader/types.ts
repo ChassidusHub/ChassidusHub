@@ -43,6 +43,8 @@ export interface ReaderData {
   id: string;
   path: string;
   title: string;
+  /** What the unit is, by its own level (`sicha`, `letter`, `chapter`): the last level of its position. Picks its view (views.ts). */
+  level?: string;
   /** Under the title: the sefer and the volume ("לקוטי שיחות · חלק י״ב"). */
   sub: string;
   /** The API's path to the page, drawn as the Library draws it (lib/catalog.ts). */
