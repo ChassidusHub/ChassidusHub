@@ -72,6 +72,8 @@ export default [
   route('.well-known/security.txt', 'routes/security-txt.ts'),
   // The rows under the search box while typing, as JSON (thread 5, Search).
   route('search/suggest', 'routes/search.suggest.ts'),
+  // A sicha's words at an address made from the words, kept for good (Texts cached and offline).
+  route('_/words/:id/:key', 'routes/words.ts'),
   // A fix and its undo, sent as the person (thread 4, Fixing and Edit). `_` is never in an item's path.
   route('_/fix', 'routes/fix.ts'),
   route('_/fix/:changeset/undo', 'routes/fix-undo.ts'),

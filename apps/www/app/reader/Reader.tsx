@@ -6,6 +6,7 @@ import { pathLevels } from '../lib/catalog';
 import { Button, Icon, IconButton, ServerHtml, Sheet, TopBar, useTheme, useToast, type IconName } from '../ui';
 import { readSize, setSize, SIZE_MAX, SIZE_MIN } from './size';
 import type { ReaderData } from './types';
+import { keepWords } from './words';
 
 type Open = null | 'look' | 'more' | 'versions' | 'recordings' | { note: string };
 
@@ -45,6 +46,10 @@ export function Reader({ data }: { data: ReaderData }) {
     const value = encodeURIComponent(JSON.stringify({ to: data.path, title: data.title.slice(0, 40), sub: data.sub.slice(0, 40) }));
     if (value.length <= 300) document.cookie = `ch_read=${value}; path=/; max-age=31536000; SameSite=Lax`;
   }, [data.path, data.title, data.sub]);
+
+  // The words at their own address, so a click back here reads them from this browser (reader/words.ts).
+  const wordsUrl = words?.url;
+  useEffect(() => (wordsUrl ? keepWords(wordsUrl) : undefined), [wordsUrl]);
 
   const note = open && typeof open === 'object' ? open.note : null;
   useEffect(() => {

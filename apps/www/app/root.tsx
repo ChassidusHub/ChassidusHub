@@ -22,6 +22,12 @@ export const links: Route.LinksFunction = () => [
 const theme = `try{var d=document.documentElement,t=localStorage.getItem('theme'),s=localStorage.getItem('size');if(t==='light'||t==='dark')d.dataset.theme=t;if(/^(-[12]|[0-5])$/.test(s))d.style.setProperty('--torah-step',s)}catch(e){}`;
 
 /**
+ * The service worker (app/offline/sw.ts), asked for once the page is loaded
+ * and quiet, so it never competes with the page itself. Built sites only.
+ */
+const worker = `if('serviceWorker'in navigator)addEventListener('load',function(){(window.requestIdleCallback||setTimeout)(function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})})`;
+
+/**
  * The whole site is Hebrew and right to left from the first byte, so nothing
  * flips after load. Play controls and progress bars set their own direction.
  */
@@ -40,6 +46,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
+        {import.meta.env.PROD && <script dangerouslySetInnerHTML={{ __html: worker }} />}
       </body>
     </html>
   );

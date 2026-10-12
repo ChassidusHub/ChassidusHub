@@ -11,9 +11,15 @@ export interface Neighbour {
 export type ReaderText =
   | {
       kind: 'words';
-      /** The body and the notes as HTML, or null on a whole page: then they are drawn on the server only (Words.tsx). */
+      /**
+       * The body and the notes as HTML. Null as the server sends them: on a
+       * whole page they are drawn on the server only (ui/ServerHtml.tsx); on a
+       * click the browser fetches them from `url` (routes/item.tsx clientLoader).
+       */
       body: string | null;
       notes: string | null;
+      /** Where these words are kept for good: their address changes whenever they do (routes/words.ts). */
+      url: string;
       hasNotes: boolean;
       /** Words a machine made and nobody checked yet: none, some, or all of them. */
       machine: 'none' | 'some' | 'all';

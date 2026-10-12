@@ -4,6 +4,7 @@ import { loadSet, loadVolume, loadWork } from '../library/load';
 import { SetScreen, VolumeScreen, WorkScreen } from '../library/screens';
 import { readerData } from '../reader/load.server';
 import { Reader } from '../reader/Reader';
+import { keptWords } from '../reader/words';
 import type { Section } from '../ui';
 import { Placeholder } from './placeholder';
 import torahFont from '../ui/fonts/frank-ruehl-clm.woff2?url';
@@ -74,7 +75,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const fields = item.data as { label?: unknown; title?: unknown; name?: unknown };
     const name = nameOf(fields.label ?? fields.title ?? fields.name) || item.id;
     if (item.type === 'unit') {
-      const reader = await readerData(view, context, url.origin);
+      const reader = await readerData(view, context, url.origin, language);
       const loaded = { screen: 'reader' as const, type: item.type, name, reader };
       // A sicha's words are set in the Torah face: the page asks for it with its first bytes, not once it has drawn.
       // Said in a header, on the server, so it costs the reader's script nothing.
@@ -86,6 +87,28 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (notFound(error)) throw data('not found', { status: 404 });
     throw error;
   }
+}
+
+/**
+ * A click to a sicha: its page's data comes without the words, which are
+ * fetched from their own address, kept for good by the browser and the
+ * service worker (app/offline/sw.ts), so a sicha read once opens again with
+ * only its small page data, and with none of its words over the network.
+ * A whole page keeps the words the server drew. With no network, a page whose
+ * click data was never kept is opened whole, from what the worker kept.
+ */
+export async function clientLoader({ request, serverLoader }: Route.ClientLoaderArgs) {
+  const loaded = await serverLoader().catch((error: unknown) => {
+    // No network, and no data kept for this click: the whole page may still be kept (app/offline/sw.ts), so open that.
+    if (error instanceof TypeError) {
+      window.location.assign(request.url);
+      return new Promise<never>(() => {});
+    }
+    throw error;
+  });
+  if (loaded.screen !== 'reader' || loaded.reader.text.kind !== 'words' || loaded.reader.text.body !== null) return loaded;
+  const text = loaded.reader.text;
+  return { ...loaded, reader: { ...loaded.reader, text: { ...text, ...(await keptWords(text.url)) } } };
 }
 
 /** Where an event or recording is heard: /listen/<year>/<event>, a recording picked with ?r=. */
