@@ -36,6 +36,6 @@
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
-    "hyparquet": "^1.31.2"
+    "hyparquet": "^1.31.3"
   }
 }
