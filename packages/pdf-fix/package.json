@@ -30,6 +30,6 @@
   "dependencies": {
     "@napi-rs/canvas": "^1.0.10",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^6.3.289"
+    "pdfjs-dist": "^6.4.299"
   }
 }
