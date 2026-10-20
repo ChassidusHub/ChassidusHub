@@ -30,11 +30,11 @@
     "react-router": "^7.18.4"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.64.0",
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
     "@react-router/dev": "^7.18.4",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "vite": "^8.3.2"
+    "vite": "^8.3.4"
   }
 }
