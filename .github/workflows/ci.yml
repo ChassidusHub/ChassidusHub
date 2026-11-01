@@ -28,7 +28,7 @@ jobs:
       entry: ${{ steps.entry.outputs.entry }}
     steps:
       # Sichos Kodesh and the docs have none of these checks: a pull request changing only them skips the rest.
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           predicate-quantifier: every
@@ -41,7 +41,7 @@ jobs:
               - '!**/*.md'
               - '!.github/workflows/sk-*.yml'
       # The new site's browser tests, when it or what it is built from changed (any one of these).
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: www
         with:
           filters: |
@@ -50,7 +50,7 @@ jobs:
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
       # An API change and whether the pull request adds its changelog entry (changes/README.md).
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: entry
         with:
           filters: |
