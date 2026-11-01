@@ -55,7 +55,7 @@ jobs:
           cp packages/catalog/dist-release/v3/manifest.json packages/catalog/dist-release/manifest-v3.json
 
       - name: Publish the GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: ${{ github.ref_name }}
           body_path: reader/packages/catalog/CHANGELOG.md
